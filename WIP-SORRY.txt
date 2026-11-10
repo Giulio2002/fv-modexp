@@ -1,0 +1,2 @@
+lean/FvModexp/Proofs/Arm64/NatSetUint64.lean   first-wave pilot, does not compile yet (to be redone on the v1 conventions)
+lean/FvModexp/Proofs/Arm64/Nat/SetBytesX.lean  exploration scratch for the setBytes pilot
