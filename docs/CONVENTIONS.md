@@ -111,6 +111,12 @@ Rules, one by one:
    callee's `MemFrame` and the writability of its `ws` (NOTES-divmc issue 1).
 8c. **[v2] Written arrays are apart from the stack-guard word**: a precondition that names an array the function writes
    also states `Apart p (8 c) (g + 16) 8` (`g` = `X28`/`R14`), so that `GuardOK` holds at the caller's next call.
+8d. **[v2] amd64 TLS.** amd64 `CallEnv` ends with `TlsOK R s stk above` (`TlsG s`, the slot `FS:-8` outside `R.rt` and apart from
+   the window); written arrays are also apart from `[fsBase - 8, fsBase)`; every amd64 postcondition starts with
+   `s'.fsBase = s.fsBase` (Go reloads `R14` from TLS after ABI0 calls; NOTES-divmc issue 4). Loop invariants carry
+   `S.fsBase = s.fsBase`.
+8e. **[v2] Postcondition defs are `@[reducible]`** (`@[reducible] def Post …`), so that `janus_run … calls [F.sum …]` destructures
+   them into hypotheses (results, `MemFrame`, `LiveFrame`) that the following instructions use.
 9. **Panics.** A function proof is an `Ensures` (no panic, no fault) **under its precondition**; every panic path
    (`panicBounds`, `panicdivide`, nil dereference) must be refuted by the precondition, and if the precondition needed to
    refute it is not implied by Run's call sites, that is a FINDING (BRIEF.md).

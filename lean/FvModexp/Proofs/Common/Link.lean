@@ -118,7 +118,7 @@ open Janus Janus.Arm64
 
 theorem dataLoaded_frame {p : Janus.Program} {m m' : Memory} {rt ws : List (Nat × Nat)} (hd : p.DataLoaded m)
     (hreg : m'.regions = m.regions) (hro : ∀ d ∈ p.data, Outside d.base d.bytes.length rt)
-    (hf : MemFrame m m' (rt ++ ws)) (hws : ∀ r ∈ ws, m.accessible r.1 (r.2 - r.1) true = true) :
+    (hf : MemFrame m m' (rt ++ ws)) (hws : ∀ r ∈ ws, r.1 < r.2 → m.accessible r.1 (r.2 - r.1) true = true) :
     p.DataLoaded m' := by
   intro d hdm
   obtain ⟨hr, hb⟩ := hd d hdm
@@ -127,15 +127,17 @@ theorem dataLoaded_frame {p : Janus.Program} {m m' : Memory} {rt ws : List (Nat 
   have hout : Outside (p.data[k].base + i) 1 (rt ++ ws) := by
     rw [Janus.outside_append]
     refine ⟨(hro _ hdm).of_sub (by omega) (by omega), ?_⟩
-    have : ∀ ws' : List (Nat × Nat), (∀ r ∈ ws', m.accessible r.1 (r.2 - r.1) true = true) →
+    have : ∀ ws' : List (Nat × Nat), (∀ r ∈ ws', r.1 < r.2 → m.accessible r.1 (r.2 - r.1) true = true) →
         Outside (p.data[k].base + i) 1 ws' := by
       intro ws' h
       induction ws' with
       | nil => trivial
       | cons r rs ih =>
         refine ⟨?_, ih fun r' hr' => h r' (List.mem_cons_of_mem _ hr')⟩
-        have := Janus.Tactic.disjoint_of_dataLoaded hd k hk (h r (List.mem_cons_self ..))
-        omega
+        by_cases hlt : r.1 < r.2
+        · have := Janus.Tactic.disjoint_of_dataLoaded hd k hk (h r (List.mem_cons_self ..) hlt)
+          omega
+        · omega
     exact this ws hws
   have := hf.readLE _ 1 hout
   simp only [Memory.readLE_one] at this
@@ -145,7 +147,7 @@ theorem dataLoaded_frame {p : Janus.Program} {m m' : Memory} {rt ws : List (Nat 
 /-- amd64 twin. -/
 theorem dataLoaded_frame64 {p : Janus.Amd64.Program} {m m' : Memory} {rt ws : List (Nat × Nat)} (hd : p.DataLoaded m)
     (hreg : m'.regions = m.regions) (hro : ∀ d ∈ p.data, Outside d.base d.bytes.length rt)
-    (hf : MemFrame m m' (rt ++ ws)) (hws : ∀ r ∈ ws, m.accessible r.1 (r.2 - r.1) true = true) :
+    (hf : MemFrame m m' (rt ++ ws)) (hws : ∀ r ∈ ws, r.1 < r.2 → m.accessible r.1 (r.2 - r.1) true = true) :
     p.DataLoaded m' := by
   intro d hdm
   obtain ⟨hr, hb⟩ := hd d hdm
@@ -154,15 +156,17 @@ theorem dataLoaded_frame64 {p : Janus.Amd64.Program} {m m' : Memory} {rt ws : Li
   have hout : Outside (p.data[k].base + i) 1 (rt ++ ws) := by
     rw [Janus.outside_append]
     refine ⟨(hro _ hdm).of_sub (by omega) (by omega), ?_⟩
-    have : ∀ ws' : List (Nat × Nat), (∀ r ∈ ws', m.accessible r.1 (r.2 - r.1) true = true) →
+    have : ∀ ws' : List (Nat × Nat), (∀ r ∈ ws', r.1 < r.2 → m.accessible r.1 (r.2 - r.1) true = true) →
         Outside (p.data[k].base + i) 1 ws' := by
       intro ws' h
       induction ws' with
       | nil => trivial
       | cons r rs ih =>
         refine ⟨?_, ih fun r' hr' => h r' (List.mem_cons_of_mem _ hr')⟩
-        have := Janus.Amd64.Tactic.disjoint_of_dataLoaded hd k hk (h r (List.mem_cons_self ..))
-        omega
+        by_cases hlt : r.1 < r.2
+        · have := Janus.Amd64.Tactic.disjoint_of_dataLoaded hd k hk (h r (List.mem_cons_self ..) hlt)
+          omega
+        · omega
     exact this ws hws
   have := hf.readLE _ 1 hout
   simp only [Memory.readLE_one] at this
