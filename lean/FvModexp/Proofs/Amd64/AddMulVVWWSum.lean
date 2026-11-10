@@ -881,4 +881,174 @@ theorem ablk_lem {z x y n m a : Nat} (s : State) (hc : Ctx s z x y n m a) :
     case r7 => simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; exact h74
     all_goals (simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega)
 
+theorem aone_lem {z x y n m a : Nat} (s : State) (hc : Ctx s z x y n m a) :
+    ∀ j (S : State) (i C : Nat), i + (j + 1) = n % 8 → C < 2 ^ 64 →
+      S.rip = BitVec.ofNat 64 ahead1 → S.regs 11 = BitVec.ofNat 64 (j + 1) → S.regs 6 = BitVec.ofNat 64 (n / 8) →
+      S.regs 2 = BitVec.ofNat 64 m → S.regs 3 = BitVec.ofNat 64 C → S.regs 7 = 0#64 →
+      S.regs 8 = BitVec.ofNat 64 (x + 8 * i) → S.regs 9 = BitVec.ofNat 64 (y + 8 * i) →
+      S.regs 10 = BitVec.ofNat 64 (z + 8 * i) →
+      lv S.mem z i + 2 ^ (64 * i) * C = lv s.mem x i + lv s.mem y i * m + a →
+      MemFrame s.mem S.mem [(z, z + 8 * i)] → Same64 s S →
+      ReachesRet program (retAddrOf s) S (fun s' => Ret0 s s' (Q s)) := by
+  have hc' := hc
+  obtain ⟨hz, hn, hx, hy, hm, ha, hr, hfb, hfacc, hadx, accz, accx, accy, alx, aly, azf⟩ := hc'
+  have bz := Arm64.Memory.accessible_bound _ accz
+  have bx := Arm64.Memory.accessible_bound _ accx
+  have by' := Arm64.Memory.accessible_bound _ accy
+  have hm64 : m < 2 ^ 64 := hm ▸ FvModexp.Asm.limb_lt _ _
+  intro j
+  induction j with
+  | zero =>
+    intro S i C hi hC hpc h11 h6 h2 h3 h7 h8 h9 h10 hv hf hs
+    have hs' := hs
+    obtain ⟨h4, h5, hfs, hdf, hmx, h87, hfw⟩ := hs'
+    have rx0 := rd_frame (a := x + 8 * i) hf alx (by omega) (by omega) (by omega)
+    have ry0 := rd_frame (a := y + 8 * i) hf aly (by omega) (by omega) (by omega)
+    have hk := (am1 (m * s.mem.readLE (y + 8 * i) 8) C (s.mem.readLE (x + 8 * i) 8)
+      (prod_le _ _ hm64 (FvModexp.Asm.limb_lt _ _)) hC (FvModexp.Asm.limb_lt _ _)).2
+    rcases Nat.eq_zero_or_pos (n / 8) with hq | hq
+    · have hn1 : n = i + 1 := by omega
+      subst hn1
+      janus64_run until [entry + 0x253]
+      try simp only [rx0, ry0, Nat.mod_eq_of_lt hm64, Nat.mod_eq_of_lt hC]
+      exact fin_lem s hc _ 3 _ (Or.inr rfl) (by simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; rfl)
+        (Or.inr ⟨rfl, rfl⟩) hk ((step1 s.mem S.mem z x y i m a C (m * s.mem.readLE (y + 8 * i) 8) hm64 hC (Nat.mul_comm _ _) hv _ (by unfold amr; omega)).1) (frame_ext hf _) (by same64_tac hs)
+    · obtain ⟨q, hq'⟩ : ∃ q, n / 8 = q + 1 := ⟨n / 8 - 1, by omega⟩
+      janus64_run until [entry + 0x176]
+      try simp only [rx0, ry0, Nat.mod_eq_of_lt hm64, Nat.mod_eq_of_lt hC]
+      refine ablk_lem s hc q _ (i + 1) _ (by omega) hk rfl ?r6 ?r2 ?r3 ?r7 ?r8 ?r9 ?r10
+        ((step1 s.mem S.mem z x y i m a C (m * s.mem.readLE (y + 8 * i) 8) hm64 hC (Nat.mul_comm _ _) hv _ (by unfold amr; omega)).1) (frame_ext hf _) (by same64_tac hs)
+      case r6 => simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; rw [h6, hq']
+      case r2 => simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; exact h2
+      case r3 => simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; rfl
+      case r7 => simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; exact h7
+      all_goals (simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega)
+  | succ j ih =>
+    intro S i C hi hC hpc h11 h6 h2 h3 h7 h8 h9 h10 hv hf hs
+    have hs' := hs
+    obtain ⟨h4, h5, hfs, hdf, hmx, h87, hfw⟩ := hs'
+    have rx0 := rd_frame (a := x + 8 * i) hf alx (by omega) (by omega) (by omega)
+    have ry0 := rd_frame (a := y + 8 * i) hf aly (by omega) (by omega) (by omega)
+    have hk := (am1 (m * s.mem.readLE (y + 8 * i) 8) C (s.mem.readLE (x + 8 * i) 8)
+      (prod_le _ _ hm64 (FvModexp.Asm.limb_lt _ _)) hC (FvModexp.Asm.limb_lt _ _)).2
+    janus64_run until [entry + 0x132]
+    try simp only [rx0, ry0, Nat.mod_eq_of_lt hm64, Nat.mod_eq_of_lt hC]
+    refine ih _ (i + 1) _ (by omega) hk rfl ?s11 ?s6 ?s2 ?s3 ?s7 ?s8 ?s9 ?s10
+      ((step1 s.mem S.mem z x y i m a C (m * s.mem.readLE (y + 8 * i) 8) hm64 hC (Nat.mul_comm _ _) hv _ (by unfold amr; omega)).1) (frame_ext hf _) (by same64_tac hs)
+    case s11 =>
+      simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; apply BitVec.eq_of_toNat_eq
+      simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
+    case s6 => simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; exact h6
+    case s2 => simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; exact h2
+    case s3 => simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; rfl
+    case s7 => simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; exact h7
+    all_goals (simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega)
+
+theorem lsr2' (n : Nat) (hn : n < 2 ^ 64) : (BitVec.ofNat 64 n >>> 2).toNat = n / 4 := by
+  rw [BitVec.toNat_ushiftRight, BitVec.toNat_ofNat, Nat.mod_eq_of_lt hn, Nat.shiftRight_eq_div_pow]
+
+theorem lsr3' (n : Nat) (hn : n < 2 ^ 64) : (BitVec.ofNat 64 n >>> 3).toNat = n / 8 := by
+  rw [BitVec.toNat_ushiftRight, BitVec.toNat_ofNat, Nat.mod_eq_of_lt hn, Nat.shiftRight_eq_div_pow]
+
+theorem main_lem {z x y n m a : Nat} (s : State) (hc : Ctx s z x y n m a) (hpc : s.rip = BitVec.ofNat 64 entry) :
+    ReachesRet program (retAddrOf s) s (fun s' => Ret0 s s' (Q s)) := by
+  have hc' := hc
+  obtain ⟨h_rd_arg0, h_rd_arg1, h_rd_arg3, h_rd_arg6, h_rd_arg9, h_rd_arg10, hr, hfb, hfacc, hadx, accz, accx, accy,
+    alx, aly, azf⟩ := hc'
+  have bz := Arm64.Memory.accessible_bound _ accz
+  have hm64 : m < 2 ^ 64 := h_rd_arg9 ▸ FvModexp.Asm.limb_lt _ _
+  have ha64 : a < 2 ^ 64 := h_rd_arg10 ▸ FvModexp.Asm.limb_lt _ _
+  have hn64 : n < 2 ^ 64 := by omega
+  have hz0 : lv s.mem z 0 + 2 ^ (64 * 0) * a = lv s.mem x 0 + lv s.mem y 0 * m + a := by simp [lv_zero]
+  have hs0 := Same64.refl s
+  have h4 := lsr2' n hn64
+  have h8 := lsr3' n hn64
+  janus64_run until [head1, head4, fin, ahead1, ahead8, afin]
+  · rw [h4] at hbr
+    have hn0 : n = 0 := by omega
+    subst hn0
+    exact fin_lem s hc _ 6 a (Or.inl rfl) (by simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]) (Or.inl ⟨rfl, rfl⟩) ha64 hz0 (frame_zero _ _) (by same64_tac hs0)
+  · rw [h4] at hbr
+    obtain ⟨q, hq⟩ : ∃ q, n / 4 = q + 1 := ⟨n / 4 - 1, by omega⟩
+    refine blk_lem s hc q _ 0 a (by omega) ha64 rfl ?r7 ?r3 ?r6 ?r8 ?r9 ?r10 hz0 (frame_zero _ _) (by same64_tac hs0)
+    case r7 => simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; apply BitVec.eq_of_toNat_eq; rw [h4, hq, BitVec.toNat_ofNat, Nat.mod_eq_of_lt (by omega)]
+    all_goals (simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; try simp only [Nat.mul_zero, Nat.add_zero])
+  · obtain ⟨j, hj⟩ : ∃ j, n % 4 = j + 1 := ⟨n % 4 - 1, by omega⟩
+    refine one_lem s hc j _ 0 a (by omega) ha64 rfl ?t11 ?t7 ?t3 ?t6 ?t8 ?t9 ?t10 hz0 (frame_zero _ _) (by same64_tac hs0)
+    case t11 => simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; apply BitVec.eq_of_toNat_eq; rw [and3_toNat, hj, BitVec.toNat_ofNat, Nat.mod_eq_of_lt (by omega)]
+    case t7 => simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; apply BitVec.eq_of_toNat_eq; rw [h4, BitVec.toNat_ofNat, Nat.mod_eq_of_lt (by omega)]
+    all_goals (simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; try simp only [Nat.mul_zero, Nat.add_zero])
+  · rw [h8] at hbr
+    have hn0 : n = 0 := by omega
+    subst hn0
+    exact fin_lem s hc _ 3 a (Or.inr rfl) (by simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]) (Or.inr ⟨rfl, rfl⟩) ha64 hz0 (frame_zero _ _) (by same64_tac hs0)
+  · rw [h8] at hbr
+    obtain ⟨q, hq⟩ : ∃ q, n / 8 = q + 1 := ⟨n / 8 - 1, by omega⟩
+    refine ablk_lem s hc q _ 0 a (by omega) ha64 rfl ?u6 ?u2 ?u3 ?u7 ?u8 ?u9 ?u10 hz0 (frame_zero _ _) (by same64_tac hs0)
+    case u6 => simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; apply BitVec.eq_of_toNat_eq; rw [h8, hq, BitVec.toNat_ofNat, Nat.mod_eq_of_lt (by omega)]
+    all_goals (simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; try simp only [Nat.mul_zero, Nat.add_zero])
+  · obtain ⟨j, hj⟩ : ∃ j, n % 8 = j + 1 := ⟨n % 8 - 1, by omega⟩
+    refine aone_lem s hc j _ 0 a (by omega) ha64 rfl ?w11 ?w6 ?w2 ?w3 ?w7 ?w8 ?w9 ?w10 hz0 (frame_zero _ _) (by same64_tac hs0)
+    case w11 => simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; apply BitVec.eq_of_toNat_eq; rw [and7_toNat, hj, BitVec.toNat_ofNat, Nat.mod_eq_of_lt (by omega)]
+    case w6 => simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; apply BitVec.eq_of_toNat_eq; rw [h8, BitVec.toNat_ofNat, Nat.mod_eq_of_lt (by omega)]
+    all_goals (simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; try simp only [Nat.mul_zero, Nat.add_zero])
+
+/-- `addMulVVWW.abi0` as a callee, for both values of the `hasADX` flag -/
+theorem addMulVVWW_summary : Summary0 program entry Pre Q :=
+  fun s hpc hpre => main_lem s hpre hpc
+
+/-- the standalone contract, for every frame; `adx` is the address of `math/big.hasADX` (readable, any value) -/
+theorem ensures (z zl zc x xl xc y yl yc m a : BitVec 64) :
+    Ensures0 program entry [z, zl, zc, x, xl, xc, y, yl, yc, m, a] 1
+      (fun s => s.mem.accessible adxAddr 1 false = true ∧
+        Ptr s.mem z (8 * zl.toNat) true ∧ Ptr s.mem x (8 * zl.toNat) false ∧
+        Ptr s.mem y (8 * zl.toNat) false ∧
+        (z.toNat = x.toNat ∨ Apart z.toNat (8 * zl.toNat) x.toNat (8 * zl.toNat)) ∧
+        (z.toNat = y.toNat ∨ Apart z.toNat (8 * zl.toNat) y.toNat (8 * zl.toNat)) ∧
+        Apart z.toNat (8 * zl.toNat) (s.regs 4).toNat 104)
+      (fun s s' =>
+        lv s'.mem z.toNat zl.toNat =
+          (lv s.mem x.toNat zl.toNat + lv s.mem y.toNat zl.toNat * m.toNat + a.toNat) % 2 ^ (64 * zl.toNat) ∧
+        results0 s s' 11 1 = [BitVec.ofNat 64
+          ((lv s.mem x.toNat zl.toNat + lv s.mem y.toNat zl.toNat * m.toNat + a.toNat) / 2 ^ (64 * zl.toNat))] ∧
+        MemFrame s.mem s'.mem [(z.toNat, z.toNat + 8 * zl.toNat), ((s.regs 4).toNat + 96, (s.regs 4).toNat + 104)]) := by
+  refine Ensures0.of_summary0 addMulVVWW_summary ?_ ?_
+  · intro ret s hret hs ⟨hadx, ⟨hz1, hz2⟩, ⟨hx1, hx2⟩, ⟨hy1, hy2⟩, alx, aly, azr⟩
+    have a0 := hs.arg (i := 0) (by simp)
+    have a1 := hs.arg (i := 1) (by simp)
+    have a3 := hs.arg (i := 3) (by simp)
+    have a6 := hs.arg (i := 6) (by simp)
+    have a9 := hs.arg (i := 9) (by simp)
+    have a10 := hs.arg (i := 10) (by simp)
+    simp only [List.getElem_cons_zero, List.getElem_cons_succ, Nat.mul_zero, Nat.add_zero,
+      Nat.reduceMul, Nat.add_assoc, Nat.reduceAdd, Janus.Amd64.GoABI.regSP] at a0 a1 a3 a6 a9 a10
+    have hfa := hs.frame_accessible
+    have hfb := hs.frame_bound
+    simp only [List.length_cons, List.length_nil, Janus.Amd64.GoABI.regSP, Nat.reduceAdd, Nat.reduceMul,
+      Nat.add_assoc] at hfa hfb
+    have hr := hs.ret
+    simp only [Amd64.Program.withExit, Janus.Amd64.GoABI.regSP] at hr
+    unfold Pre
+    rw [a0, a3, a6, a9, a10, a1]
+    exact ⟨a0, a1, a3, a6, a9, a10, by rw [hr]; exact hret.user, by omega, hfa, hadx, hz1, hx1, hy1, alx, aly, azr⟩
+  · intro ret s s' hret hs _ hq
+    have a0 := hs.arg (i := 0) (by simp)
+    have a1 := hs.arg (i := 1) (by simp)
+    have a3 := hs.arg (i := 3) (by simp)
+    have a6 := hs.arg (i := 6) (by simp)
+    have a9 := hs.arg (i := 9) (by simp)
+    have a10 := hs.arg (i := 10) (by simp)
+    simp only [List.getElem_cons_zero, List.getElem_cons_succ, Nat.mul_zero, Nat.add_zero,
+      Nat.reduceMul, Nat.add_assoc, Nat.reduceAdd, Janus.Amd64.GoABI.regSP] at a0 a1 a3 a6 a9 a10
+    unfold Q at hq
+    rw [a0, a3, a6, a9, a10, a1] at hq
+    obtain ⟨q1, q3⟩ := hq
+    have hZ := lv_lt s'.mem z.toNat zl.toNat
+    have hP : 0 < 2 ^ (64 * zl.toNat) := Nat.two_pow_pos _
+    refine ⟨?_, ?_, q3⟩
+    · rw [← q1, Nat.add_mul_mod_self_left, Nat.mod_eq_of_lt hZ]
+    · simp only [results0, wordsAt_succ, wordsAt_zero, Janus.Amd64.GoABI.regSP, Nat.reduceMul, Nat.reduceAdd]
+      rw [show (s.regs 4).toNat + 8 + 88 = (s.regs 4).toNat + 96 by omega, ← q1, Nat.add_mul_div_left _ _ hP,
+        Nat.div_eq_of_lt hZ, Nat.zero_add]
+
 end FvModexp.Amd64.AddMulVVWWSum

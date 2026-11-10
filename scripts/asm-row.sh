@@ -13,13 +13,28 @@ case $isa in arm64) dir=Arm64;; amd64) dir=Amd64;; esac
 out=build/ex-$isa-$fn; mkdir -p build
 pf=lean/FvModexp/Proofs/$dir/$fn.lean
 th=(--theorem "FvModexp.$dir.$fn.correctness")
-for w in $(grep -oE '^theorem nonvacuous[A-Za-z0-9_]*' "$pf" | awk '{print $2}'); do th+=(--theorem "FvModexp.$dir.$fn.Witness.$w"); done
+for w in $(python3 - "$pf" <<'PY'
+import sys,re
+ns=[]
+for l in open(sys.argv[1]):
+    m=re.match(r'namespace (\S+)',l)
+    if m: ns.append(m.group(1)); continue
+    m=re.match(r'end (\S+)',l)
+    if m and ns and ns[-1]==m.group(1): ns.pop(); continue
+    m=re.match(r'theorem _root_\.(\S*Witness\.\w+)',l)
+    if m: print(m.group(1)); continue
+    m=re.match(r'theorem (correctness_\w+)',l)
+    if m: print('.'.join(ns+[m.group(1)])); continue
+    m=re.match(r'theorem (nonvacuous\w*)',l)
+    if m: print('.'.join(ns+[m.group(1)]))
+PY
+); do th+=(--theorem "$w"); done
 log=build/log-$isa-$fn; t0=$(date +%s)
 $JANUS extract "$HB/harness-$isa" "$sym" "$out" "$@" >"$log" 2>&1 || { echo "extract failed"; tail "$log"; exit 1; }
 timeout 900 memcap -m 16G $JANUS verify "$out" --proof "$pf" --proof-root lean "${th[@]}" >>"$log" 2>&1 &
 bg=$!; peak=0; cg=""
 while kill -0 $bg 2>/dev/null; do
-  if [ -z "$cg" ]; then p=$(pgrep -f "janus verify $out " | head -1)
+  if [ -z "$cg" ]; then p=$(pgrep -f "^$JANUS verify $out " | head -1)
     if [ -n "$p" ]; then c=$(cut -d: -f3 /proc/$p/cgroup 2>/dev/null); case "$c" in */run-*.scope) cg=$c;; esac; fi; fi
   if [ -n "$cg" ] && [ -r /sys/fs/cgroup$cg/memory.peak ]; then v=$(cat /sys/fs/cgroup$cg/memory.peak 2>/dev/null || echo 0); [ "${v:-0}" -gt $peak ] && peak=$v; fi
   sleep 2
