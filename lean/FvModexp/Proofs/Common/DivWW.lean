@@ -1,6 +1,6 @@
 import FvModexp.Proofs.Common.Words
 /-!
-# `divWW` and `reciprocalWord` (arith.go:221-295)
+# `divWW` and `reciprocalWord` (arith.go:273-339)
 
 `divWW x1 x0 y m` divides the two-word value `x1*2^64 + x0` (with `x1 < y`) by the word `y`, using the precomputed
 approximate reciprocal `m = floor((2^128-1)/d) - 2^64` of the normalised divisor `d = y << nlz y`.
@@ -30,7 +30,7 @@ def divWWfix (x1 x0 d qq : Nat) : Nat × Nat :=
 /-- The normalised body of `divWW` (everything between the `if s != 0 { ... }` block and the final `>> s`). -/
 def divWWn (x1 x0 d m : Nat) : Nat × Nat := divWWfix x1 x0 d (qguess x1 x0 m)
 
-/-- arith.go:221 `divWW(x1, x0, y, m)` -> (q, r). -/
+/-- arith.go:273 `divWW(x1, x0, y, m)` -> (q, r). -/
 def divWW (x1 x0 y m : Nat) : Nat × Nat :=
   let s := nlz y
   let x1' := if s ≠ 0 then ((x1 * 2 ^ s % 2 ^ 64) ||| (x0 / 2 ^ (64 - s))) else x1
@@ -39,7 +39,7 @@ def divWW (x1 x0 y m : Nat) : Nat × Nat :=
   let (q, r) := divWWn x1' x0' y' m
   (q, r / 2 ^ s)
 
-/-- arith.go:289 `reciprocalWord(d1)`: `u := d1 << nlz(d1)`, `bits.Div(^u, _M, u)`. -/
+/-- arith.go:333 `reciprocalWord(d1)`: `u := d1 << nlz(d1)`, `bits.Div(^u, _M, u)`. -/
 def reciprocalWord (d1 : Nat) : Nat :=
   let u := d1 * 2 ^ nlz d1 % 2 ^ 64
   ((2 ^ 64 - 1 - u) * 2 ^ 64 + (2 ^ 64 - 1)) / u

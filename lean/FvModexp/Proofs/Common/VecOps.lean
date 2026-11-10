@@ -7,14 +7,14 @@ Elementwise loops read `x[i]`, `y[i]` before writing `z[i]` (and the machine cod
 independent of whether `z` aliases `x` (or `y`) exactly (`z == x` as slices); this is the "elementwise-alias" fact the callers
 use (`addTo`, `basicMul`, `divBasic`).  All lengths are equal (Go panics / the assembly assumes it): theorems carry `x.length = y.length`.
 
-* `addVVc`/`addVV`     arith.go:61   (`addVV_g`; machine code: arith_amd64.s / arith_arm64.s `addVV`)
+* `addVVc`/`addVV`     arith.go:63   (`addVV_g`; machine code: arith_amd64.s / arith_arm64.s `addVV`)
 * `subVVc`/`subVV`     arith.go:77   (`subVV_g`)
-* `addVW`              arith.go:105  (early-exit carry propagation, copies the tail)
-* `subVW`              arith.go:155
-* `lshVU`              arith.go:196  (`lshVU_g`; for `s != 0`; the callers never pass `s == 0` to `lshVU`, `shlVU` handles it)
-* `rshVU`              arith.go:217
-* `mulAddVWW`          arith.go:237  (`mulAddVWW_g`)
-* `addMulVVWW`         arith.go:249  (`addMulVVWW_g`)
+* `addVW`              arith.go:103  (early-exit carry propagation, copies the tail)
+* `subVW`              arith.go:157
+* `lshVU`              arith.go:198  (`lshVU_g`; for `s != 0`; the callers never pass `s == 0` to `lshVU`, `shlVU` handles it)
+* `rshVU`              arith.go:221
+* `mulAddVWW`          arith.go:244  (`mulAddVWW_g`)
+* `addMulVVWW`         arith.go:255  (`addMulVVWW_g`)
 -/
 namespace FvModexp.Mdl
 
@@ -108,14 +108,14 @@ def decCarry : List Nat → List Nat × Nat
   | [] => ([], 1)
   | x :: xs => if x = 0 then (let t := decCarry xs; ((2 ^ 64 - 1) :: t.1, t.2)) else ((x - 1) :: xs, 0)
 
-/-- arith.go:105 `addVW(z, x, y)`: z = x + y, returns the final carry (`y` itself if `len(z) == 0`). -/
+/-- arith.go:103 `addVW(z, x, y)`: z = x + y, returns the final carry (`y` itself if `len(z) == 0`). -/
 def addVW : List Nat → Nat → List Nat × Nat
   | [], y => ([], y)
   | x0 :: xs, y =>
     let r := addc x0 y 0
     if r.2 = 0 then (r.1 :: xs, 0) else (let t := incCarry xs; (r.1 :: t.1, t.2))
 
-/-- arith.go:155 `subVW(z, x, y)`: z = x - y, returns the final borrow (`y` itself if `len(z) == 0`). -/
+/-- arith.go:157 `subVW(z, x, y)`: z = x - y, returns the final borrow (`y` itself if `len(z) == 0`). -/
 def subVW : List Nat → Nat → List Nat × Nat
   | [], y => ([], y)
   | x0 :: xs, y =>
@@ -258,7 +258,7 @@ def lshVUz (s : Nat) : Nat → List Nat → List Nat
   | _, [] => []
   | prev, x :: xs => ((x * 2 ^ s % 2 ^ 64) ||| (prev / 2 ^ (64 - s))) :: lshVUz s x xs
 
-/-- arith.go:196 `lshVU_g(z, x, s)`: z = x << s, returns the bits shifted out (`c = x[n-1] >> ŝ`). -/
+/-- arith.go:198 `lshVU_g(z, x, s)`: z = x << s, returns the bits shifted out (`c = x[n-1] >> ŝ`). -/
 def lshVU (x : List Nat) (s : Nat) : List Nat × Nat :=
   if s = 0 then (x, 0) else (lshVUz s 0 x, (x.getLast?.getD 0) / 2 ^ (64 - s))
 
@@ -325,7 +325,7 @@ def rshVUz (s : Nat) : List Nat → List Nat
   | [x] => [x / 2 ^ s]
   | x :: y :: ys => ((x / 2 ^ s) ||| (y * 2 ^ (64 - s) % 2 ^ 64)) :: rshVUz s (y :: ys)
 
-/-- arith.go:217 `rshVU_g(z, x, s)`: z = x >> s, returns the bits shifted out (`c = x[0] << ŝ`). -/
+/-- arith.go:221 `rshVU_g(z, x, s)`: z = x >> s, returns the bits shifted out (`c = x[0] << ŝ`). -/
 def rshVU (x : List Nat) (s : Nat) : List Nat × Nat :=
   if s = 0 then (x, 0) else (rshVUz s x, match x with | [] => 0 | x0 :: _ => x0 * 2 ^ (64 - s) % 2 ^ 64)
 
@@ -405,7 +405,7 @@ theorem rshVU_spec (x : List Nat) (s : Nat) (hx : Wd x) (hs1 : 1 ≤ s) (hs : s 
 
 /-! ## multiply-accumulate -/
 
-/-- arith.go:237 `mulAddVWW_g(z, x, y, r)`: z = x*y + r, returns the carry word. -/
+/-- arith.go:244 `mulAddVWW_g(z, x, y, r)`: z = x*y + r, returns the carry word. -/
 def mulAddVWW : List Nat → Nat → Nat → List Nat × Nat
   | [], _, r => ([], r)
   | x :: xs, y, r =>
@@ -413,7 +413,7 @@ def mulAddVWW : List Nat → Nat → Nat → List Nat × Nat
     let t := mulAddVWW xs y p.1
     (p.2 :: t.1, t.2)
 
-/-- arith.go:249 `addMulVVWW_g(z, x, y, m, a)`: z = x + y*m + a, returns the carry word. -/
+/-- arith.go:255 `addMulVVWW_g(z, x, y, m, a)`: z = x + y*m + a, returns the carry word. -/
 def addMulVVWW : List Nat → List Nat → Nat → Nat → List Nat × Nat
   | x :: xs, y :: ys, m, c =>
     let p := mulAddWWW y m x                       -- z1, z0 := mulAddWWW_g(y[i], m, x[i])

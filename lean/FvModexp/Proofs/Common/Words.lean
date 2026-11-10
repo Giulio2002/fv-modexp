@@ -7,12 +7,12 @@ Models over `Nat` with explicit `2^64` arithmetic (uint64 wrap-around is spelled
 Panics (divide by zero, quotient overflow) are *not* modelled: each theorem carries the Go precondition under which the call does not
 panic.
 
-* `mulWW`                 arith.go:42-45   (`bits.Mul` = `Mul64` : (x*y)/2^64, (x*y)%2^64)
-* `mulAddWWW`             arith.go:48-53   (`mulAddWWW_g`)
-* `nlz`                   arith.go:56-58   (`bits.LeadingZeros64`)
+* `mulWW`                 arith.go:43-46   (`bits.Mul` = `Mul64` : (x*y)/2^64, (x*y)%2^64)
+* `mulAddWWW`             arith.go:49-54   (`mulAddWWW_g`)
+* `nlz`                   arith.go:58-60   (`bits.LeadingZeros64`)
 * `div64`                 go1.26 math/bits/bits.go:518-568 (`bits.Div64`, software version; used by arm64 machine code, intrinsified DIVQ on amd64)
-* `divWW`                 arith.go:221-286 (`divWW`: Moller-Granlund style 2-by-1 with approximate reciprocal)
-* `reciprocalWord`        arith.go:289-295
+* `divWW`                 arith.go:273-330 (`divWW`: Moller-Granlund style 2-by-1 with approximate reciprocal)
+* `reciprocalWord`        arith.go:333-339
 -/
 namespace FvModexp.Mdl
 
@@ -25,7 +25,7 @@ def addc (x y c : Nat) : Nat × Nat := ((x + y + c) % 2 ^ 64, (x + y + c) / 2 ^ 
 /-- `bits.Sub64(x, y, b)` = (diff, borrow-out). -/
 def subb (x y b : Nat) : Nat × Nat := ((x + 2 ^ 64 - y - b) % 2 ^ 64, if x < y + b then 1 else 0)
 
-/-- arith.go:48 `mulAddWWW_g`: z1<<64 + z0 = x*y + c. -/
+/-- arith.go:49 `mulAddWWW_g`: z1<<64 + z0 = x*y + c. -/
 def mulAddWWW (x y c : Nat) : Nat × Nat :=
   let (hi, lo) := mulWW x y
   let (lo, cc) := addc lo c 0

@@ -3,8 +3,8 @@ import FvModexp.Proofs.Common.NatBasic
 /-!
 # divWVW, divW (natdiv.go)
 
-* `divWVW`   natdiv.go:  `divWVW(z, xn, x, y)`: (xn:x) / y by word-wise 2-by-1 division with a reciprocal
-* `natDivW`  natdiv.go:  `(z nat) divW(x nat, y Word) (q nat, r Word)`
+* `divWVW`   natdiv.go:579-591  `divWVW(z, xn, x, y)`: (xn:x) / y by word-wise 2-by-1 division with a reciprocal
+* (`nat.divW`, natdiv.go:550-567, is modelled in NatDiv.lean)
 -/
 namespace FvModexp.Mdl
 

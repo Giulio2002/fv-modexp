@@ -2,8 +2,8 @@ import FvModexp.Proofs.Common.Slices
 /-!
 # basicMul, mulAddWW (natmul.go)
 
-* `basicMul`    natmul.go:171   `basicMul(z, x, y)`: schoolbook, row by row with `addMulVVWW`
-* `natMulAddWW` natmul.go:154   `(z nat) mulAddWW(x nat, y, r Word) nat`
+* `basicMul`    natmul.go:151   `basicMul(z, x, y)`: schoolbook, row by row with `addMulVVWW`
+* `natMulAddWW` natmul.go:136   `(z nat) mulAddWW(x nat, y, r Word) nat`
 -/
 namespace FvModexp.Mdl
 
@@ -17,7 +17,7 @@ def basicMulLoop (x : List Nat) : Nat → List Nat → List Nat → List Nat
       else z
     basicMulLoop x (i + 1) z' ys
 
-/-- natmul.go:171 `basicMul(z, x, y)`: returns the contents of `z[0:len(x)+len(y)]` (after `clear`, so independent of the old `z`). -/
+/-- natmul.go:151 `basicMul(z, x, y)`: returns the contents of `z[0:len(x)+len(y)]` (after `clear`, so independent of the old `z`). -/
 def basicMul (x y : List Nat) : List Nat :=
   basicMulLoop x 0 (List.replicate (x.length + y.length) 0) y
 
@@ -121,7 +121,7 @@ theorem basicMul_spec (x y : List Nat) (hx : Wd x) (hy : Wd y) :
   refine ⟨by rw [h1]; simp, h2, ?_⟩
   rw [h3, val_replicate_zero]; simp
 
-/-- natmul.go:154 `(z nat) mulAddWW(x nat, y, r Word) nat`. -/
+/-- natmul.go:136 `(z nat) mulAddWW(x nat, y, r Word) nat`. -/
 def natMulAddWW (x : List Nat) (y r : Nat) : List Nat :=
   if x.length = 0 ∨ y = 0 then natSetWord r else
   let t := mulAddVWW x y r          -- z[m] = mulAddVWW(z[0:m], x, y, r)
@@ -150,7 +150,7 @@ theorem natMulAddWW_spec (x : List Nat) (y r : Nat) (hx : Wd x) (hy : y < 2 ^ 64
     · refine Nat.le_trans (length_norm_le _) ?_
       rw [List.length_append, i1]; simp
 
-/-! ## nat.mul structure (natmul.go:15-70), parametrised by the Karatsuba kernel and the recursive multiplier -/
+/-! ## nat.mul structure (natmul.go:16-63), parametrised by the Karatsuba kernel and the recursive multiplier -/
 
 /-- The loop `for i := n; i < m; i += n { t = t.mul(stk, x[i:min(i+n, len(x))], y); addTo(z[i:], t) }`. -/
 def mulChunks (mulRec : List Nat → List Nat → List Nat) (x y : List Nat) (n : Nat) : Nat → Nat → List Nat → List Nat
@@ -237,7 +237,7 @@ theorem mulChunks_spec (mulRec : List Nat → List Nat → List Nat) (x y : List
 /-- karatsubaThreshold (natmul.go:12). -/
 def karatsubaThreshold : Nat := 40
 
-/-- `(z nat) mul(stk, x, y)` for `len(x) >= len(y)` (natmul.go:15-69), with the Karatsuba kernel `kar` (`karatsuba(stk, z[:2n], x[:n], y)`)
+/-- `(z nat) mul(stk, x, y)` for `len(x) >= len(y)` (natmul.go:16-63), with the Karatsuba kernel `kar` (`karatsuba(stk, z[:2n], x[:n], y)`)
 and the recursive multiplier `mulRec` (`t.mul(stk, ...)`) as parameters. -/
 def natMulM (kar mulRec : List Nat → List Nat → List Nat) (x y : List Nat) : List Nat :=
   let m := x.length
