@@ -1,20 +1,20 @@
 #!/usr/bin/env bash
-# Dev helper (not used by verify-all): compile proof modules that `import Extracted` against an extraction, outside `janus verify`.
-# usage: scripts/dev-lean.sh <isa> <Fn> FILE.lean ...  (Extracted.olean -> build/dev-<isa>-<Fn>/; each FvModexp module -> lean/.lake/build/lib/lean, in order, under memcap 8G)
-# Needs: `make build` (lake build FvModexp) done and build/ex-<isa>-<Fn>/Extracted.lean present.
-set -euo pipefail
-root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-isa="$1"; fn="$2"; shift 2
-out="$root/build/dev-$isa-$fn"; mkdir -p "$out"
-export LEAN_NUM_THREADS="${LEAN_NUM_THREADS:-4}"
-files=(); for f in "$@"; do files+=("$(realpath "$f")"); done
-cd "$root/lean"
-if [ ! -f "$out/Extracted.olean" ] || [ "$root/build/ex-$isa-$fn/Extracted.lean" -nt "$out/Extracted.olean" ]; then
-  LEAN_PATH="$out" lake env lean -R "$root/build/ex-$isa-$fn" -o "$out/Extracted.olean" "$root/build/ex-$isa-$fn/Extracted.lean"
-fi
-for f in "${files[@]}"; do
-  rel="${f#$root/lean/}"; mod="${rel%.lean}"
-  lib="$root/lean/.lake/build/lib/lean"; mkdir -p "$lib/$(dirname "$mod")"
-  echo "== $rel"
-  LEAN_PATH="$out" /usr/bin/time -f "%e s %M KB" memcap -m 8G lake env lean -R "$root/lean" -o "$lib/$mod.olean" "$f"
+# dev-lean.sh FILE.lean ... : development compile of package modules (given in dependency order) against the Janus/EthLib build
+# of a kept `janus verify` workspace (WS = its consumer dir holding janus/ deps/ root/), oleans into $OUT. Prints time + peak RSS.
+# An `Extracted.lean` argument is compiled as module `Extracted`. Not used by verify-all (development only).
+set -e
+WS=${WS:-$(ls -d /srv/fv-modexp-ops/cache-asm/v1/consumer/*/* | grep -v lock | head -1)}
+OUT=${OUT:-/srv/fv-modexp-ops/cache-asm/dev/oleans}
+pkg=$(cd "$(dirname "${BASH_SOURCE[0]}")/../lean" && pwd)
+LP="$OUT:$WS/janus/.lake/build/lib/lean:$WS/deps/ethlibspec/.lake/build/lib/lean:/root/.elan/toolchains/leanprover--lean4---v4.34.1/lib/lean"
+LEAN=/root/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean
+for f in "$@"; do
+  f=$(realpath "$f")
+  case "$(basename "$f")" in
+    Extracted.lean) mod=Extracted; root=$(dirname "$f");;
+    *) rel=$(realpath --relative-to="$pkg" "$f"); mod=${rel%.lean}; root=$pkg;;
+  esac
+  mkdir -p "$OUT/$(dirname "$mod")"
+  echo "== $mod"
+  LEAN_PATH="$LP" LEAN_NUM_THREADS=${LEAN_NUM_THREADS:-4} memcap -m ${CAP:-12G} /usr/bin/time -f "   [%e s, %M KB]" $LEAN --root="$root" -o "$OUT/$mod.olean" "$f"
 done
