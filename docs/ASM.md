@@ -86,3 +86,16 @@ byte to be readable; `main_lem` runs both branches. MULQ path: 1x loop (`one_lem
 limb by limb through the segment lemmas `segM0..3`, which keep the symbolic state small). ADX path: 1x loop
 (`aone_lem`), 8x block (`ablock`: four pair-segment lemmas `segA0..3` carrying `RBX` and the `CF`/`OF` chains as one
 carry word `W = RBX + CF + OF`, `ablkval` bounds `W < 2^64`), loop `ablk_lem`.
+
+### `hasADX` at the real call sites
+The amd64 `addMulVVWW` summary needs the byte `math/big.hasADX` (`.noptrbss`, `Extracted.dataAddr.«…hasADX»` =
+`0xbb6b8a` in the pinned harness) to be readable; any value. In the running process the byte is part of the binary's
+mapped `.noptrbss` segment (written once by the package initializer from CPUID), so a caller's precondition provides it
+like the other writable globals of CONVENTIONS §7: the region holding `0xbb6b8a` readable and the byte outside `R.rt`
+(the summary only reads it, so the fact survives every other call). Callers (basicMul, basicSqr, montgomery) must
+carry this fact (`GlobalIs`-style: readable + Outside R.rt) in their `CallEnv` extension; no value is assumed, both
+code paths are proved.
+
+## Next (asked by the coordinator, 2026-11-11)
+`addVW` / `subVW` (Go, with `copy` → `memmove`) in divmc's `Callees.AddVWEns` shape (NOTES-divmc.md), both ISAs;
+then `lshVU`/`rshVU` (WIP in `wip/`), amd64 `divWW`, arm64 `reciprocalWord`, `divWVW`.
