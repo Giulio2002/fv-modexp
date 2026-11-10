@@ -7,7 +7,7 @@ import (
 	big "github.com/ethereum/go-bigmodexpfix/src/math/big"
 )
 
-var imports = []string{"BitsNat", "MulClosed"}
+var imports = []string{"BitsNat", "MulClosed", "DivBasic"}
 
 func emitMulDiv(r *rand.Rand) {
 	sizes := []int{0, 1, 2, 3, 5, 11, 12, 13, 39, 40, 41, 57, 80, 81, 97}
@@ -27,5 +27,29 @@ func emitMulDiv(r *rand.Rand) {
 			fmt.Printf("#guard karatsubaC %s %s == %s\n", L(x), L(y), L(big.FvKaratsuba(x, y)))
 			fmt.Printf("#guard karatsubaSqrC %s == %s\n", L(x), L(big.FvKaratsubaSqr(x)))
 		}
+	}
+	// divBasic: v normalised (n >= 2), u arbitrary with len(u) >= n, len(q) = m+1 (zeros) or len(q) = m with top digit 0
+	for t := 0; t < 120; t++ {
+		n := 2 + r.Intn(12)
+		m := r.Intn(10)
+		v := topSet(r, n)
+		if r.Intn(4) == 0 { // divisor with many ~0 / 0 limbs below a top word near 2^63
+			for i := 0; i < n-1; i++ { v[i] = ^uint64(0) * uint64(r.Intn(2)) }
+			v[n-1] = 1<<63 + uint64(r.Intn(3))
+		}
+		u := big.FvRandWords(r, m+n)
+		qlen := m + 1
+		if r.Intn(3) == 0 { // divLarge shape: top word of u below v's top word -> len(q) = m
+			u[m+n-1] = uint64(r.Int63n(int64(v[n-1] >> 1)))
+			qlen = m
+		}
+		if r.Intn(5) == 0 { // u = v * k (exact)
+			for i := 0; i < m+n; i++ { u[i] = 0 }
+			copy(u[m:], v)
+			if qlen == m { u[m+n-1] = 0 }
+		}
+		q := make([]uint64, qlen)
+		q2, u2 := big.FvDivBasic(q, u, v)
+		fmt.Printf("#guard divBasic %s %s %s == (%s, %s)\n", L(q), L(u), L(v), L(q2), L(u2))
 	}
 }
