@@ -1,0 +1,17 @@
+# Lake package of proofs that geth v1.17.10's MODEXP machine code meets the EthLib MODEXP specification.
+name = "fvmodexp"
+defaultTargets = ["FvModexp"]
+
+[[require]]
+name = "janus"
+git = "https://github.com/Giulio2002/Janus.git"
+rev = "9ff22946b804c2bd860c038b34817a4e1a06285b"
+
+# ethereum/EthLib MODEXP spec, byte-identical to upstream ffd60c4b (see its UPSTREAM.md), on Lean v4.34.1.
+[[require]]
+name = "ethlibspec"
+git = "https://github.com/Giulio2002/EthLib.git"
+rev = "f4756ef5dc5619357f336e81166fb64a139abcd7"
+
+[[lean_lib]]
+name = "FvModexp"
