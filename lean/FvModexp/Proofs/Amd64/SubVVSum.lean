@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Common.AsmLimbs
+import FvModexp.Proofs.Common.AsmTac
 import FvModexp.Proofs.Lib.SubVVAmd64
 
 /-!
@@ -136,37 +137,10 @@ theorem step4 (m m' : Memory) (z x y i : Nat) (c : Bool)
     omega
   exact sub_step _ _ _ _ _ _ _ _ _ _ hv hsum
 
-/-- the equations every loop state shares with the entry state `s` -/
-structure Same (s S : State) : Prop where
-  r4 : S.regs 4 = s.regs 4
-  r5 : S.regs 5 = s.regs 5
-  fs : S.fsBase = s.fsBase
-  df : S.df = s.df
-  mx : S.mxcsr = s.mxcsr
-  x87 : S.x87 = s.x87
-  fw : S.fpucw = s.fpucw
-
-/-- closes `Same s S'` for a state `S'` reached from a `Same s S` state without touching `RSP`/`RBP` -/
-macro "same_tac " h:ident : tactic => `(tactic| (
-  obtain ⟨h4, h5, hfs, hdf, hmx, h87, hfw⟩ := $h
-  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
-  · simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; first | done | exact h4
-  · simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; first | done | exact h5
-  · first | rfl | exact hfs
-  · first | rfl | exact hdf
-  · first | rfl | exact hmx
-  · first | rfl | exact h87
-  · first | rfl | exact hfw))
-
-theorem Same.upd {s S : State} (hs : Same s S) {R : Nat → BitVec 64} (r f m)
-    (h4 : R 4 = s.regs 4) (h5 : R 5 = s.regs 5) :
-    Same s { S with regs := R, rip := r, flags := f, mem := m } :=
-  ⟨h4, h5, hs.fs, hs.df, hs.mx, hs.x87, hs.fw⟩
-
 theorem fin_lem {z x y n : Nat} (s : State) (hc : Ctx s z x y n) (S : State) (c : Bool)
     (hpc : S.rip = BitVec.ofNat 64 fin) (h10 : S.regs 10 = cw c)
     (hv : lv S.mem z n + lv s.mem y n = lv s.mem x n + 2 ^ (64 * n) * c.toNat)
-    (hf : MemFrame s.mem S.mem [(z, z + 8 * n)]) (hs : Same s S) :
+    (hf : MemFrame s.mem S.mem [(z, z + 8 * n)]) (hs : Same64 s S) :
     ReachesRet program (retAddrOf s) S (fun s' => Ret0 s s' (Q s)) := by
   obtain ⟨hz, hn, hx, hy, hr, hfb, hfacc, accz, accx, accy, alx, aly, azf⟩ := hc
   obtain ⟨h4, h5, hfs, hdf, hmx, h87, hfw⟩ := hs
@@ -202,7 +176,7 @@ theorem blk_lem {z x y n : Nat} (s : State) (hc : Ctx s z x y n) :
       S.regs 6 = BitVec.ofNat 64 (x + 8 * i) → S.regs 7 = BitVec.ofNat 64 (y + 8 * i) →
       S.regs 8 = BitVec.ofNat 64 (z + 8 * i) → S.regs 10 = cw c →
       lv S.mem z i + lv s.mem y i = lv s.mem x i + 2 ^ (64 * i) * c.toNat →
-      MemFrame s.mem S.mem [(z, z + 8 * i)] → Same s S →
+      MemFrame s.mem S.mem [(z, z + 8 * i)] → Same64 s S →
       ReachesRet program (retAddrOf s) S (fun s' => Ret0 s s' (Q s)) := by
   have hc' := hc
   obtain ⟨hz, hn, hx, hy, hr, hfb, hfacc, accz, accx, accy, alx, aly, azf⟩ := hc'
@@ -230,7 +204,7 @@ theorem blk_lem {z x y n : Nat} (s : State) (hc : Ctx s z x y n) :
     simp only [cw_borrow]
     refine fin_lem s hc _ _ rfl ?_ (step4 s.mem S.mem z x y i c hv) (frame_ext4 hf _ _ _ _) ?_
     · simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff, cw_def, decide_eq_true_eq]
-    · same_tac hs
+    · same64_tac hs
   | succ k ih =>
     intro S i c hi hpc h3 h6 h7 h8 h10 hv hf hs
     have hs' := hs
@@ -253,7 +227,7 @@ theorem blk_lem {z x y n : Nat} (s : State) (hc : Ctx s z x y n) :
       omega
     all_goals try (simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega)
     · simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff, cw_def, decide_eq_true_eq]
-    · same_tac hs
+    · same64_tac hs
 
 theorem one_lem {z x y n : Nat} (s : State) (hc : Ctx s z x y n) :
     ∀ j (S : State) (i : Nat) (c : Bool), i + (j + 1) = n % 4 →
@@ -261,7 +235,7 @@ theorem one_lem {z x y n : Nat} (s : State) (hc : Ctx s z x y n) :
       S.regs 6 = BitVec.ofNat 64 (x + 8 * i) → S.regs 7 = BitVec.ofNat 64 (y + 8 * i) →
       S.regs 8 = BitVec.ofNat 64 (z + 8 * i) → S.regs 10 = cw c →
       lv S.mem z i + lv s.mem y i = lv s.mem x i + 2 ^ (64 * i) * c.toNat →
-      MemFrame s.mem S.mem [(z, z + 8 * i)] → Same s S →
+      MemFrame s.mem S.mem [(z, z + 8 * i)] → Same64 s S →
       ReachesRet program (retAddrOf s) S (fun s' => Ret0 s s' (Q s)) := by
   have hc' := hc
   obtain ⟨hz, hn, hx, hy, hr, hfb, hfacc, accz, accx, accy, alx, aly, azf⟩ := hc'
@@ -284,7 +258,7 @@ theorem one_lem {z x y n : Nat} (s : State) (hc : Ctx s z x y n) :
       simp only [cw_borrow]
       refine fin_lem s hc _ _ rfl ?_ (step1 s.mem S.mem z x y i c hv) (frame_ext hf _) ?_
       · simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff, cw_def, decide_eq_true_eq]
-      · same_tac hs
+      · same64_tac hs
     · obtain ⟨q, hq'⟩ : ∃ q, n / 4 = q + 1 := ⟨n / 4 - 1, by omega⟩
       janus64_run until [head4]
       simp only [cw_borrow]
@@ -292,7 +266,7 @@ theorem one_lem {z x y n : Nat} (s : State) (hc : Ctx s z x y n) :
       · simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; rw [h3, hq']
       all_goals try (simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega)
       · simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff, cw_def, decide_eq_true_eq]
-      · same_tac hs
+      · same64_tac hs
   | succ j ih =>
     intro S i c hi hpc h9 h3 h6 h7 h8 h10 hv hf hs
     have hs' := hs
@@ -310,7 +284,7 @@ theorem one_lem {z x y n : Nat} (s : State) (hc : Ctx s z x y n) :
     · simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; exact h3
     all_goals try (simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega)
     · simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff, cw_def, decide_eq_true_eq]
-    · same_tac hs
+    · same64_tac hs
 
 theorem main_lem {z x y n : Nat} (s : State) (hc : Ctx s z x y n) (hpc : s.rip = BitVec.ofNat 64 entry) :
     ReachesRet program (retAddrOf s) s (fun s' => Ret0 s s' (Q s)) := by
@@ -320,7 +294,7 @@ theorem main_lem {z x y n : Nat} (s : State) (hc : Ctx s z x y n) (hpc : s.rip =
   have hn64 : n < 2 ^ 64 := by omega
   have hz0 : lv s.mem z 0 + lv s.mem y 0 = lv s.mem x 0 + 2 ^ (64 * 0) * (false : Bool).toNat := by
     simp [lv_zero]
-  have hs0 : Same s s := ⟨rfl, rfl, rfl, rfl, rfl, rfl, rfl⟩
+  have hs0 : Same64 s s := Same64.refl s
   have hsh : (BitVec.ofNat 64 n >>> 2).toNat = n / 4 := by
     rw [BitVec.toNat_ushiftRight, BitVec.toNat_ofNat, Nat.mod_eq_of_lt hn64, Nat.shiftRight_eq_div_pow]
   janus64_run until [head1, head4, fin]
@@ -328,14 +302,14 @@ theorem main_lem {z x y n : Nat} (s : State) (hc : Ctx s z x y n) (hpc : s.rip =
     have hn0 : n = 0 := by omega
     subst hn0
     refine fin_lem s hc _ false rfl rfl hz0 (MemFrame.refl _ _) ?_
-    same_tac hs0
+    same64_tac hs0
   · rw [hsh] at hbr
     obtain ⟨q, hq⟩ : ∃ q, n / 4 = q + 1 := ⟨n / 4 - 1, by omega⟩
     refine blk_lem s hc q _ 0 false (by omega) rfl ?r3 ?r6 ?r7 ?r8 rfl hz0 (MemFrame.refl _ _) ?hs
     case r3 =>
       simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]
       apply BitVec.eq_of_toNat_eq; rw [hsh, hq, BitVec.toNat_ofNat, Nat.mod_eq_of_lt (by omega)]
-    case hs => same_tac hs0
+    case hs => same64_tac hs0
     all_goals simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff, Nat.mul_zero, Nat.add_zero]
   · obtain ⟨j, hj⟩ : ∃ j, n % 4 = j + 1 := ⟨n % 4 - 1, by omega⟩
     refine one_lem s hc j _ 0 false (by omega) rfl ?r9 ?r3 ?r6 ?r7 ?r8 rfl hz0 (MemFrame.refl _ _) ?hs
@@ -345,7 +319,7 @@ theorem main_lem {z x y n : Nat} (s : State) (hc : Ctx s z x y n) (hpc : s.rip =
     case r3 =>
       simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]
       apply BitVec.eq_of_toNat_eq; rw [hsh, BitVec.toNat_ofNat, Nat.mod_eq_of_lt (by omega)]
-    case hs => same_tac hs0
+    case hs => same64_tac hs0
     all_goals simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff, Nat.mul_zero, Nat.add_zero]
 
 /-- `subVV.abi0` as a callee (library summary: transfers to any program containing these bytes at this address). -/

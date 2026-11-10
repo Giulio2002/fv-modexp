@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Common.AsmLimbs
+import FvModexp.Proofs.Common.AsmTac
 import FvModexp.Proofs.Lib.SubVVA64
 
 /-!
@@ -125,34 +126,6 @@ theorem step4 (m m' : Memory) (z x y i : Nat) (c : Bool)
     omega
   exact sub_step _ _ _ _ _ _ _ _ _ _ hv hsum
 
-/-- the equations every loop state shares with the entry state `s` -/
-structure Same (s S : State) : Prop where
-  sp : S.sp = s.sp
-  r18 : S.regs 18 = s.regs 18
-  r28 : S.regs 28 = s.regs 28
-  r29 : S.regs 29 = s.regs 29
-  r30 : S.regs 30 = s.regs 30
-  fpcr : S.fpcr = s.fpcr
-  tpidr : S.tpidr = s.tpidr
-  dczid : S.dczid = s.dczid
-  excl : S.excl = s.excl
-  exclPass : S.exclPass = s.exclPass
-
-/-- closes `Same s S'` for a state `S'` reached from a `Same s S` state without touching the kept registers -/
-macro "same_tac " h:ident : tactic => `(tactic| (
-  obtain ⟨hsp, h18, h28, h29, h30, hfp, htp, hdc, hex, hep⟩ := $h
-  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
-  · first | rfl | exact hsp
-  · janus_simp
-  · janus_simp
-  · janus_simp
-  · janus_simp
-  · first | rfl | exact hfp
-  · first | rfl | exact htp
-  · first | rfl | exact hdc
-  · first | rfl | exact hex
-  · first | rfl | exact hep))
-
 theorem rd_frame {m m' : Memory} {z i x n a : Nat} (hf : MemFrame m m' [(z, z + 8 * i)])
     (hal : z = x ∨ Apart z (8 * n) x (8 * n)) (hin : x + 8 * i ≤ a) (hle : a + 8 ≤ x + 8 * n) (hi : i ≤ n) :
     m'.readLE a 8 = m.readLE a 8 :=
@@ -169,7 +142,7 @@ theorem borrow_nat (r : BitVec 64) (c : Bool) :
 theorem fin_lem {z x y n : Nat} (s : State) (hc : Ctx s z x y n) (S : State) (c : Bool)
     (hpc : S.pc = BitVec.ofNat 64 fin) (hcf : S.flags.c = c)
     (hv : lv S.mem z n + lv s.mem y n = lv s.mem x n + 2 ^ (64 * n) * (1 - c.toNat))
-    (hf : MemFrame s.mem S.mem [(z, z + 8 * n)]) (hs : Same s S) :
+    (hf : MemFrame s.mem S.mem [(z, z + 8 * n)]) (hs : SameA s S) :
     ReachesRet program (s.regs 30) S (fun s' => Ret0 s s' (Q s)) := by
   obtain ⟨hz, hn, hx, hy, hl4, hl56, hal, hfb, hfacc, accz, accx, accy, alx, aly, azr⟩ := hc
   obtain ⟨hsp, h18, h28, h29, h30, hfp, htp, hdc, hex, hep⟩ := hs
@@ -197,7 +170,7 @@ theorem blk_lem {z x y n : Nat} (s : State) (hc : Ctx s z x y n) :
       S.regs 1 = BitVec.ofNat 64 (x + 8 * i) → S.regs 2 = BitVec.ofNat 64 (y + 8 * i) →
       S.regs 3 = BitVec.ofNat 64 (z + 8 * i) → S.flags.c = c →
       lv S.mem z i + lv s.mem y i = lv s.mem x i + 2 ^ (64 * i) * (1 - c.toNat) →
-      MemFrame s.mem S.mem [(z, z + 8 * i)] → Same s S →
+      MemFrame s.mem S.mem [(z, z + 8 * i)] → SameA s S →
       ReachesRet program (s.regs 30) S (fun s' => Ret0 s s' (Q s)) := by
   have hc' := hc
   obtain ⟨hz, hn, hx, hy, hl4, hl56, hal, hfb, hfacc, accz, accx, accy, alx, aly, azr⟩ := hc'
@@ -256,7 +229,7 @@ theorem one_lem {z x y n : Nat} (s : State) (hc : Ctx s z x y n) :
       S.regs 1 = BitVec.ofNat 64 (x + 8 * i) → S.regs 2 = BitVec.ofNat 64 (y + 8 * i) →
       S.regs 3 = BitVec.ofNat 64 (z + 8 * i) → S.flags.c = c →
       lv S.mem z i + lv s.mem y i = lv s.mem x i + 2 ^ (64 * i) * (1 - c.toNat) →
-      MemFrame s.mem S.mem [(z, z + 8 * i)] → Same s S →
+      MemFrame s.mem S.mem [(z, z + 8 * i)] → SameA s S →
       ReachesRet program (s.regs 30) S (fun s' => Ret0 s s' (Q s)) := by
   have hc' := hc
   obtain ⟨hz, hn, hx, hy, hl4, hl56, hal, hfb, hfacc, accz, accx, accy, alx, aly, azr⟩ := hc'
@@ -319,7 +292,7 @@ theorem main_lem {z x y n : Nat} (s : State) (hc : Ctx s z x y n) (hpc : s.pc = 
   have hn64 : n < 2 ^ 64 := by omega
   have hz0 : lv s.mem z 0 + lv s.mem y 0 = lv s.mem x 0 + 2 ^ (64 * 0) * (1 - (true : Bool).toNat) := by
     simp [lv_zero]
-  have hs0 : Same s s := ⟨rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl⟩
+  have hs0 : SameA s s := SameA.refl s
   have hmod := lsr2_mod n hn64
   janus_run until [head1, head4, fin]
   · rw [hmod] at hbr
