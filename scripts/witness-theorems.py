@@ -4,7 +4,8 @@ A witness theorem is a theorem declared inside a namespace whose name contains `
 ...Grow.Witness.nonvacuous, ...Witness.big) whose statement is an existential (`: ∃ ...`).  Helper theorems in the Witness namespace
 (setup, hpre, hret, ...) are not existentials and are skipped."""
 import re, sys
-src = open(sys.argv[1], errors='ignore').read()
+mains = sys.argv[1] == '--mains'
+src = open(sys.argv[-1], errors='ignore').read()
 # strip comments (-- line and /- -/ block, non-nested enough for these files)
 src = re.sub(r'/-.*?-/', '', src, flags=re.S)
 src = re.sub(r'--[^\n]*', '', src)
@@ -19,6 +20,11 @@ for k, m in enumerate(ms):
         if ns and ns[-1] == m.group(3): ns.pop()
         continue
     name = m.group(4)
+    if mains:
+        # main theorems: `correctness` / `correctness_<x>` outside any Witness namespace
+        if not any('Witness' in n for n in ns) and re.fullmatch(r'correctness(_\w+)?', name):
+            out.append('.'.join(ns + [name]))
+        continue
     if not any('Witness' in n for n in ns): continue
     end = ms[k + 1].start() if k + 1 < len(ms) else len(src)
     body = src[m.end():end]
@@ -32,6 +38,6 @@ for k, m in enumerate(ms):
     flat = ''.join(flat)
     # UP3d (03aa338e): strict by-name pairing: `Witness.nonvacuous` pairs with `correctness`; any other `Witness.<X>` needs a main named `<X>`, so only the nonvacuous witnesses are passed to janus verify
     # (the other witness theorems stay in the module and are kernel-checked with it, but are not audited as witnesses)
-    if name == 'nonvacuous' and re.match(r'\s*:\s*∃', flat):
+    if re.fullmatch(r'nonvacuous(_\w+)?', name) and re.match(r'\s*:\s*∃', flat):
         out.append('.'.join(ns + [name]) if not name.startswith('_root_') else name)
 print('\n'.join(out))
