@@ -16,6 +16,9 @@ open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Contracts
 @[reducible] def win (s : State) (stk above : Nat) : List (Nat × Nat) :=
   [((s.regs 4).toNat - stk, (s.regs 4).toNat + above)]
 
+/-- The extraction's read-only data lies outside the runtime-owned ranges (`FvModexp.dataLoaded_frame64`). -/
+def RoOut (R : RtInv) : Prop := ∀ d ∈ Extracted.program.data, Outside d.base d.bytes.length R.rt
+
 /-- The call environment of a summary (amd64): the stack-growth prologues fall through, `RSP` 8-aligned, the window
 writable, the read-only data loaded, the window and the `stackguard0` slot outside the runtime-owned ranges and apart,
 no live object in the window. -/
@@ -25,7 +28,7 @@ def CallEnv (R : RtInv) (L : List (Nat × Nat)) (s : State) (stk above : Nat) : 
     Outside ((s.regs 4).toNat - stk) (stk + above) R.rt ∧
     Apart ((s.regs 14).toNat + 16) 8 ((s.regs 4).toNat - stk) (stk + above) ∧
     Outside ((s.regs 14).toNat + 16) 8 R.rt ∧
-    LiveSep L (win s stk above)
+    LiveSep L (win s stk above) ∧ RoOut R
 
 /-- The address of a runtime contract of the extraction. -/
 @[reducible] def cA (name : String) : Nat := Extracted.program.contractAddr name

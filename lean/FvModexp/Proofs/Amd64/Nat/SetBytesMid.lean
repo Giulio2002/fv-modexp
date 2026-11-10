@@ -10,7 +10,8 @@ namespace FvModexp.Amd64.SetBytes
 theorem mid_of_reuse {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc bp bl : BitVec 64} {s : State} {ret : Nat}
     {M0 : Janus.Arm64.Memory} (hlive : NatLive s.mem R L zp.toNat zc.toNat)
     (hzb : 0 < zc.toNat → Apart zp.toNat (8 * zc.toNat) bp.toNat bl.toNat)
-    (hzw : 0 < zc.toNat → Outside zp.toNat (8 * zc.toNat) (win s 4160 48))
+    (hzw : 0 < zc.toNat → Outside zp.toNat (8 * zc.toNat) (win s 4160 48) ∧
+      Apart zp.toNat (8 * zc.toNat) ((s.regs 14).toNat + 16) 8)
     (hLs : LiveSep L (win s 4160 48)) (hout : Outside ((s.regs 4).toNat - 4160) (4160 + 48) R.rt) (hsp : 4160 ≤ (s.regs 4).toNat)
     (hinv : R.inv b L (s.regs 14).toNat (view R.rt L s.mem)) (hnz : nW bl ≤ zc.toNat) (hz0 : 0 < zc.toNat)
     (h1 : M0.readLE (s.regs 4).toNat 8 = ret) (h2 : M0.readLE ((s.regs 4).toNat - 8) 8 = (s.regs 5).toNat)
@@ -18,7 +19,7 @@ theorem mid_of_reuse {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc bp bl 
     (hF : MemFrame s.mem M0 (win s 4160 48)) :
     Mid R b L zp zc bp bl s ret zp.toNat zc.toNat L b M0 := by
   obtain ⟨h8, hheld, hacc, hle⟩ := hlive hz0
-  have hw := hzw hz0
+  have hw := (hzw hz0).1
   simp only [Outside, and_true] at hw
   refine ⟨h1, h2, hbuf, hnz, h8, hle, by rw [hF.accessible]; exact hacc, hzb hz0, by unfold Apart; omega, hheld,
     LiveExt.refl R L, Nat.sub_le _ _, ?_, Or.inl ⟨rfl, rfl⟩, ?_, ?_⟩

@@ -18,7 +18,7 @@ theorem ens (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc bp bl bc : BitVec 64) :
     Ensures ((Extracted.program.onlySegments [fn]).link impl) (segAddr Extracted.program fn) [zp, zl, zc, bp, bl, bc]
       (Pre R b L zp zc bp bl) (Post R b L zp zc bp bl) := by
-  intro ret hret s hs ⟨⟨hg, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, hLs⟩, hty, hlive, hbl, hbp, hbacc,
+  intro ret hret s hs ⟨⟨hg, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, hLs, hro⟩, hty, hlive, hbl, hbp, hbacc,
     hheld, hbwin, hzb, hzw, hinv, hok⟩
   have hmk' := MakesliceLiveContract64.of_codeIn (codeIn_ofImpl_restrict_of_apart64 hap [fn]) hmk
   have hLs0 := hLs

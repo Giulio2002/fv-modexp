@@ -1,6 +1,6 @@
 # Conventions for function proofs (fv-modexp)
 
-Owner: agent `top`. Status: **v1** (2026-11-10). Every machine-code proof of a function that `(*bigModExp).Run` reaches
+Owner: agent `top`. Status: **v2** (2026-11-11; v2 changes are marked **[v2]**). Every machine-code proof of a function that `(*bigModExp).Run` reaches
 follows these rules, so that summaries compose bottom-up into the Run theorem. Lean vocabulary:
 `lean/FvModexp/Proofs/Common/{Conv,Link}.lean` (ISA independent), `lean/FvModexp/Proofs/{Arm64,Amd64}/Conv.lean` (per ISA).
 Pilot proofs that follow every rule: `lean/FvModexp/Proofs/{Arm64,Amd64}/Nat/SetBytes*.lean` (see §9).
@@ -91,14 +91,26 @@ Rules, one by one:
    are in `L'` (`NatLive s'.mem R L' p' c'`); in the "fresh" case also `ApartAll p' (8c') L` and `InRanges p' (8c') R.rt`.
    Scratch objects the function drops stay in `L'` (the collector, not the program, frees memory) unless given back with
    `PoolPutLive` (then they leave `L'` via `removeRanges`/`dropAll`).
-7. **Requests served** (`R.ok`). The pre states `R.ok addr args` for exactly the requests the function makes, as functions of
+7. **Requests served** (`R.ok`). **[v2]** Functions below the `*Int` layer (exp, div, mul, stack/pool) take the bounded
+   `RunIface.Serves R` (every request up to 1 MiB / 2^17 elements) instead of per-request facts. Small leaf functions
+   (setBytes, getData, padding) keep the precise form below, so that `Run`'s precondition can require only the requests of
+   its error path unguarded (the non-vacuity witness runs that path) and `Serves R` under `LengthsPass data`. The pre states `R.ok addr args` for exactly the requests the function makes, as functions of
    its inputs (`R.ok (cA "runtime.makeslice") [wordT, n, makeCap n]`), guarded by the condition under which the request is
    made (`zc < n → …`). A request whose argument is a runtime-chosen pointer is quantified: `∀ d, R.ok (cA "runtime.memmove")
    [d, src, n]`. Do not assume `∀ args, R.ok …` (the Witness runtime must be able to serve the requests: toy memmove /
    memclr stubs serve fixed sizes).
-8. **Frame.** `MemFrame s.mem s'.mem (R.rt ++ win s stk above ++ ws) ∧ LiveFrame s.mem s'.mem L ws`, `ws` = the caller-visible
+8. **Frame.** **[v2] arm64:** `MemFrame s.mem s'.mem (R.rt ++ winA s stk above ++ ws)` with
+   `winA = [(SP - stk, SP - 8), (SP + 8, SP + above)]` (the caller's saved `X29` at `SP - 8` and `X30` at `SP` are not in it:
+   the caller reloads them; `liveSep_winA`, `inv_frame_winA` in Arm64/Conv). amd64 keeps `win`. Generic form:
+   `MemFrame s.mem s'.mem (R.rt ++ win s stk above ++ ws) ∧ LiveFrame s.mem s'.mem L ws`, `ws` = the caller-visible
    ranges the function writes (a reused `z` array: `[(zp, zp + 8 zc)]`). Registers: nothing (the `Ensures` gives
    `ABIReturn`, `toSummaryIn` keeps `SP`, `X28`, `X29`, `X18` / amd64 `RSP+8`, `RBP`, `R14`, `X15`; Go callers reload the rest).
+8b. **[v2] Read-only data across calls.** `CallEnv` ends with `RoOut R` (every data object outside `R.rt`). After a call,
+   `DataLoaded` of the new memory follows from `FvModexp.dataLoaded_frame` (`…64` on amd64; Common/Link.lean) with the
+   regions equality of the run (`set_option janus.callRegions true` adds `hrg : s'.mem.regions = s.mem.regions`), the
+   callee's `MemFrame` and the writability of its `ws` (NOTES-divmc issue 1).
+8c. **[v2] Written arrays are apart from the stack-guard word**: a precondition that names an array the function writes
+   also states `Apart p (8 c) (g + 16) 8` (`g` = `X28`/`R14`), so that `GuardOK` holds at the caller's next call.
 9. **Panics.** A function proof is an `Ensures` (no panic, no fault) **under its precondition**; every panic path
    (`panicBounds`, `panicdivide`, nil dereference) must be refuted by the precondition, and if the precondition needed to
    refute it is not implied by Run's call sites, that is a FINDING (BRIEF.md).

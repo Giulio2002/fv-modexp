@@ -9,7 +9,7 @@ that `Run`'s body can be proved against them as premises (hypothesis-first) and 
 * `IntV m a`: the value of the `*Int` at `a` (`neg` byte at `a`, `abs = (ptr, len, cap)` at `a + 8, + 16, + 24`).
 * `IntOK m R L a`: the header is a held, writable, 8-aligned 32-byte object and its `abs` array is `NatLive`, normalised,
   `neg = false`.
-* `Serves R`: the runtime serves every request of the contracts the Run extraction lists (the budget, not `R.ok`, bounds them).
+* `Serves R`: the runtime serves every request of the Run extraction's contracts up to a size bound (the budget bounds the total).
 * `names*`: the functions each callee executes (call graph closure in the Run extraction, deferred wrappers included).
 -/
 
@@ -158,12 +158,19 @@ def IntOK (m : Memory) (R : RtInv) (L : List (Nat × Nat)) (a : Nat) : Prop :=
     NatNorm m (m.readLE (a + 8) 8) (m.readLE (a + 16) 8) ∧
     (0 < m.readLE (a + 24) 8 → Apart a 32 (m.readLE (a + 8) 8) (8 * m.readLE (a + 24) 8))
 
-/-- Every request of the Run extraction's contracts is served. -/
+/-- The requests of the Run extraction's contracts the runtime serves: every request up to a size bound (1 MiB for a copy or
+clear, 2^17 elements for a new or grown slice; Run's operands are at most 1024 bytes by EIP-7823). Pointer arguments are
+unconstrained. Bounded so that a real runtime meets it (an unbounded request throws `out of memory`); the non-vacuity
+witness of row 1 does not need it (its input fails the EIP-7823 check, where `Run` requires only the requests of
+`RunServes`, see `RunDefs`). -/
 def Serves (R : RtInv) : Prop :=
-  ∀ args, R.ok (cA "runtime.makeslice") args ∧ R.ok (cA "runtime.memmove") args ∧ R.ok (cA "runtime.newobject") args ∧
-    R.ok (cA "runtime.memclrNoHeapPointers") args ∧ R.ok (cA "runtime.growslice") args ∧
-    R.ok (cA "runtime.gcWriteBarrier2") args ∧ R.ok (cA "runtime.gcWriteBarrier4") args ∧
-    R.ok (cA "sync.(*Pool).Get") args ∧ R.ok (cA "sync.(*Pool).Put") args
+  (∀ t n c, c ≤ 2 ^ 17 → R.ok (cA "runtime.makeslice") [t, n, c]) ∧
+  (∀ d sr n, n ≤ 2 ^ 20 → R.ok (cA "runtime.memmove") [d, sr, n]) ∧
+  (∀ d n, n ≤ 2 ^ 20 → R.ok (cA "runtime.memclrNoHeapPointers") [d, n]) ∧
+  (∀ o n c k t, n ≤ 2 ^ 17 → R.ok (cA "runtime.growslice") [o, n, c, k, t]) ∧
+  (∀ args, R.ok (cA "runtime.newobject") args) ∧ (∀ args, R.ok (cA "runtime.gcWriteBarrier2") args) ∧
+  (∀ args, R.ok (cA "runtime.gcWriteBarrier4") args) ∧ (∀ args, R.ok (cA "sync.(*Pool).Get") args) ∧
+  (∀ args, R.ok (cA "sync.(*Pool).Put") args)
 
 /-- The writable globals the big callees read, at their initial values (`natmul.go:12,68,69`, `natdiv.go:733`), outside
 the runtime-owned ranges. (`natOne`, `intOne`, `stackPool` are added when a proof needs them.) -/
