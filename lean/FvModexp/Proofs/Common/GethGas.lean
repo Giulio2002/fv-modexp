@@ -52,6 +52,22 @@ def osakaModexpGas (baseLen expLen modLen expHead : Nat) : Nat :=
     let ic := iterationCount expLen expHead 16
     if 2 ^ 64 ≤ ic * mc then maxU64 else max (ic * mc) 500
 
+/-- The part of `osakaModexpGas` after the multiplication complexity `mc` is known (contracts.go:588-597). -/
+def osakaTail (mc expLen expHead : Nat) : Nat :=
+  if mc = maxU64 then maxU64
+  else
+    let ic := iterationCount expLen expHead 16
+    if 2 ^ 64 ≤ ic * mc then maxU64 else max (ic * mc) 500
+
+theorem osakaModexpGas_tail (b e m h : Nat) :
+    osakaModexpGas b e m h = osakaTail (osakaMultComplexity (max b m)) e h := rfl
+
+theorem iterationCount_lt (e h : Nat) : iterationCount e h 16 < 2 ^ 64 := by
+  unfold iterationCount maxU64
+  dsimp only
+  repeat' split
+  all_goals omega
+
 theorem log2_eq_bitLen (h : Nat) : Nat.log2 h = Aux.bitLen h - 1 := by
   unfold Aux.bitLen
   by_cases h0 : h = 0
