@@ -227,4 +227,120 @@ theorem p2win_correct (w L x y : Nat) (hw : w = 2 ∨ w = 4) (hx : x % 2 = 1) (h
     rw [hrun.2]
     exact pow_mod_phi x L _ y hx hL1 (by rw [hTe]; exact he0)
 
+/-! ### expNNPowerOfTwo (nat.go:906) -/
+
+/-- `expNNPowerOfTwo`; `f` is a recursion budget (the Go function recurses at most once, on an odd base). -/
+def expNNPowerOfTwo : Nat → Nat → Nat → Nat → Nat
+  | 0, _, _, _ => 0
+  | f + 1, x, y, L =>
+    if L = 1 then x % 2                                         -- return z.setWord(x[0] & 1)
+    else if x % 2 = 0 then                                       -- x[0]&1 == 0
+      if 1 < nlen y then 0                                       -- len(y) > 1
+      else
+        let i := tz x
+        let prod := i * wd y 0                                    -- bits.Mul64(i, y[0])
+        if prod / B ≠ 0 ∨ prod % B ≥ L then 0
+        else
+          let xOdd := x / 2 ^ i
+          expNNPowerOfTwo f xOdd y (L - prod % B) * 2 ^ (prod % B)   -- z.lsh(z, adicity)
+    else if L ≥ 48 ∧ bitLen y ≥ 48 then p2win 4 L x y else p2win 2 L x y
+
+theorem tz_spec {x : Nat} (hx : 0 < x) : x = 2 ^ tz x * (x / 2 ^ tz x) ∧ (x / 2 ^ tz x) % 2 = 1 := by
+  induction x using Nat.strongRecOn with
+  | _ x ih =>
+    unfold tz
+    rw [dif_neg (by omega)]
+    by_cases h : x % 2 = 1
+    · simp [h]
+    · simp only [h, if_false]
+      have h2 : x % 2 = 0 := by omega
+      have := ih (x / 2) (by omega) (by omega)
+      obtain ⟨h1, h3⟩ := this
+      rw [Nat.pow_add, Nat.pow_one]
+      have e : x / (2 * 2 ^ tz (x / 2)) = x / 2 / 2 ^ tz (x / 2) := by
+        rw [Nat.div_div_eq_div_mul]
+      rw [e]
+      refine ⟨?_, h3⟩
+      have hx2 : x = 2 * (x / 2) := by omega
+      grind
+
+theorem pow_mod_one_odd (x y : Nat) (hy : 0 < y) : x ^ y % 2 = x % 2 := by
+  rw [Nat.pow_mod]
+  rcases Nat.mod_two_eq_zero_or_one x with h | h
+  · rw [h, Nat.zero_pow hy]
+  · rw [h, Nat.one_pow]
+
+theorem pow_even_mod_zero (x y L : Nat) (hx : x % 2 = 0) (hLy : L ≤ y) : x ^ y % 2 ^ L = 0 := by
+  obtain ⟨x', rfl⟩ : ∃ x', x = 2 * x' := ⟨x / 2, by omega⟩
+  rw [Nat.mul_pow]
+  exact Nat.mod_eq_zero_of_dvd (Nat.dvd_mul_right_of_dvd (Nat.pow_dvd_pow 2 hLy) _)
+
+/-- `expNNPowerOfTwo` on an odd base (any fuel ≥ 1). -/
+theorem expNNPowerOfTwo_odd (f x y L : Nat) (hf : 1 ≤ f) (hx : x % 2 = 1) (hy : 0 < y) (hL : 1 ≤ L) :
+    expNNPowerOfTwo f x y L = x ^ y % 2 ^ L := by
+  obtain ⟨f', rfl⟩ : ∃ f', f = f' + 1 := ⟨f - 1, by omega⟩
+  unfold expNNPowerOfTwo
+  by_cases hL1 : L = 1
+  · rw [if_pos hL1, hL1, pow_mod_one_odd x y hy]
+  · rw [if_neg hL1, if_neg (by omega : ¬ x % 2 = 0)]
+    have hL2 : 2 ≤ L := by omega
+    split
+    · exact p2win_correct 4 L x y (Or.inr rfl) hx hy hL2
+    · exact p2win_correct 2 L x y (Or.inl rfl) hx hy hL2
+
+/-- `expNNPowerOfTwo`, any positive base (fuel ≥ 2), for `2^L` with `L < 2^64`. -/
+theorem expNNPowerOfTwo_correct (f x y L : Nat) (hf : 2 ≤ f) (hx : 0 < x) (hy : 0 < y) (hL : 1 ≤ L)
+    (hLB : L < B) : expNNPowerOfTwo f x y L = x ^ y % 2 ^ L := by
+  by_cases hxo : x % 2 = 1
+  · exact expNNPowerOfTwo_odd f x y L (by omega) hxo hy hL
+  have hxe : x % 2 = 0 := by omega
+  obtain ⟨f', rfl⟩ : ∃ f', f = f' + 1 := ⟨f - 1, by omega⟩
+  unfold expNNPowerOfTwo
+  by_cases hL1 : L = 1
+  · rw [if_pos hL1, hL1, pow_mod_one_odd x y hy]
+  rw [if_neg hL1, if_pos hxe]
+  by_cases hy1 : 1 < nlen y
+  · rw [if_pos hy1]
+    have : B ≤ y := by
+      refine Nat.not_lt.mp (fun h => ?_)
+      have := nlen_le_iff (x := y) (n := 1)
+      rw [Nat.pow_one] at this
+      have := this.mpr h; omega
+    exact (pow_even_mod_zero x y L hxe (by omega)).symm
+  · rw [if_neg hy1]
+    have hyB : y < B := by
+      have := nlen_le_iff (x := y) (n := 1)
+      rw [Nat.pow_one] at this
+      exact this.mp (by omega)
+    have hw0 : wd y 0 = y := by unfold wd; simp [Nat.mod_eq_of_lt hyB]
+    obtain ⟨hxs, hxodd⟩ := tz_spec hx
+    simp only [hw0]
+    obtain ⟨i, hi⟩ : ∃ i, i = tz x := ⟨_, rfl⟩
+    rw [← hi] at hxs hxodd ⊢
+    have hxe' : x = 2 ^ i * (x / 2 ^ i) := hxs
+    have hi1 : 1 ≤ i := by
+      refine Nat.one_le_iff_ne_zero.mpr (fun h0 => ?_)
+      rw [h0] at hxodd hxe'; simp at hxodd hxe'; omega
+    obtain ⟨xo, hxo⟩ : ∃ xo, xo = x / 2 ^ i := ⟨_, rfl⟩
+    rw [← hxo] at hxe' hxodd ⊢
+    have hpow : x ^ y = 2 ^ (i * y) * xo ^ y := by
+      have : x ^ y = (2 ^ i * xo) ^ y := congrArg (· ^ y) hxe'
+      rw [this, Nat.mul_pow, ← Nat.pow_mul]
+    by_cases hge : L ≤ i * y
+    · have hc : (i * y / B ≠ 0 ∨ i * y % B ≥ L) := by
+        by_cases hlt : i * y < B
+        · right; rw [Nat.mod_eq_of_lt hlt]; exact hge
+        · left; intro h0; rw [Nat.div_eq_zero_iff] at h0
+          omega
+      rw [if_pos hc, hpow]
+      exact (Nat.mod_eq_zero_of_dvd (Nat.dvd_mul_right_of_dvd (Nat.pow_dvd_pow 2 hge) _)).symm
+    · have hlt : i * y < B := by omega
+      have hc : ¬ (i * y / B ≠ 0 ∨ i * y % B ≥ L) := by
+        rw [Nat.div_eq_of_lt hlt, Nat.mod_eq_of_lt hlt]; omega
+      rw [if_neg hc, Nat.mod_eq_of_lt hlt]
+      rw [expNNPowerOfTwo_odd f' xo y (L - i * y) (by omega) hxodd hy (by omega)]
+      rw [hpow, Nat.mul_comm (2 ^ (i * y)) (xo ^ y)]
+      have e : 2 ^ L = 2 ^ (L - i * y) * 2 ^ (i * y) := by rw [← Nat.pow_add]; congr 1; omega
+      rw [e, Nat.mul_mod_mul_right]
+
 end FvModexp.Exp
