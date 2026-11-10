@@ -32,10 +32,6 @@ open FvModexp.Exp
 abbrev loopWs (zp n sp : Nat) : List (Nat × Nat) :=
   [(zp, zp + 16 * n), (sp + 8, sp + 104), (sp + 128, sp + 168), (sp + 176, sp + 184)]
 
-theorem montIter_c_le (n x y m k : Nat) : ∀ j, (montIter n x y m k j).2 ≤ 1
-  | 0 => by simp [montIter]
-  | j + 1 => by simp only [montIter, montStep]; split <;> omega
-
 /-- What the loop (with the exit path) guarantees, relative to the memory `M0` at the first arrival at the head. -/
 abbrev LoopPost (R : RtInv) (L : List (Nat × Nat)) (b : Nat) (s : State) (sp zp cap n X Y Mv k : Nat) (M0 : Memory)
     (s' : State) : Prop :=
@@ -45,19 +41,6 @@ abbrev LoopPost (R : RtInv) (L : List (Nat × Nat)) (b : Nat) (s : State) (sp zp
   R.inv b L (s.regs 28).toNat (view R.rt L s'.mem) ∧
   MemFrame M0 s'.mem (R.rt ++ [(sp - 4096, sp + 312), (zp, zp + 16 * n)]) ∧
   LiveFrame M0 s'.mem L [(zp, zp + 16 * n)]
-
-/-- The store `z[n+i] = cy` closes the iteration's value. -/
-theorem final_val (m2 : Memory) (zp n i c c2 c3 : Nat) (hi : i < n) :
-    (m2.writeLE (zp + (i + n) * 8) 8 (c3 + (c + c2))).readLE zp (8 * (2 * n)) =
-      setWin (m2.readLE zp (8 * (2 * n))) (n + i) 1 (((c + c2) % B + c3) % B) := by
-  refine FvModexp.Expmc.readLE_setWin zp (n + i) 1 (2 * n) _ (by omega) ?_ ?_ ?_
-  · exact Memory.readLE_writeLE_of_disjoint _ _ (by omega)
-  · exact Memory.readLE_writeLE_of_disjoint _ _ (by omega)
-  · rw [show zp + 8 * (n + i) = zp + (i + n) * 8 by omega, Nat.mul_one, Memory.readLE_writeLE_self, B_eq]
-    omega
-
-theorem succ_reg (i : Nat) : BitVec.ofNat 64 i + 1#64 = BitVec.ofNat 64 (i + 1) := by
-  apply BitVec.eq_of_toNat_eq; simp
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
@@ -113,7 +96,7 @@ theorem loop (impl : List Segment) (R : RtInv)
     intro S i c M hir hpc hsp h0 h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 h12 h13 h18 h28 hmem hF hval hcv
     have hin : i = n := by omega
     subst i
-    have hc1 : c ≤ 1 := hcv ▸ montIter_c_le _ _ _ _ _ _
+    have hc1 : c ≤ 1 := hcv ▸ FvModexp.Expmc.montIter_c_le _ _ _ _ _ _
     -- reads through the loop frame
     have hwo : ∀ a k, sp - 4096 ≤ a → a + k ≤ sp + 312 → (a + k ≤ sp + 8 ∨ sp + 104 ≤ a) →
         (a + k ≤ sp + 128 ∨ sp + 168 ≤ a) → (a + k ≤ sp + 176 ∨ sp + 184 ≤ a) → Outside a k (loopWs zp n sp) := by
@@ -169,7 +152,7 @@ theorem loop (impl : List Segment) (R : RtInv)
   | succ r ih =>
     intro S i c M hir hpc hsp h0 h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 h12 h13 h18 h28 hmem hF hval hcv
     have hi : i < n := by omega
-    have hc1 : c ≤ 1 := hcv ▸ montIter_c_le _ _ _ _ _ _
+    have hc1 : c ≤ 1 := hcv ▸ FvModexp.Expmc.montIter_c_le _ _ _ _ _ _
     janus_run [r104, r112, r168, r224, r232, r240, r248, r272, r280, r288, r296, r304,
       FvModexp.mask_sub_lt i cap (by omega) (by omega), amvVal] until [segAddr LibMont.program fn + 0x248] calls [hamv]
     rename_i m1 V1 C2 F1 _ _ _ _ m2 V2 C3 F2
@@ -210,7 +193,7 @@ theorem loop (impl : List Segment) (R : RtInv)
     clear hstep hpair hd e0 e4 e5 V1 V2
     janus_run [r104, r112, r168, r224, r232, r240, r248, r272, r280, r288, r296, r304] until [head]
     all_goals first
-      | (apply ih _ (i + 1) 1 _ (by omega) <;> first | rfl | (janus_simp; done) | exact succ_reg i | (simp only [loopWs]; janus_frame) | (rw [hsucc]; exact final_val m2 zp n i c _ _ hi) | (rw [hsucc]; simp only [B_eq]; split <;> omega))
-      | (apply ih _ (i + 1) 0 _ (by omega) <;> first | rfl | (janus_simp; done) | exact succ_reg i | (simp only [loopWs]; janus_frame) | (rw [hsucc]; exact final_val m2 zp n i c _ _ hi) | (rw [hsucc]; simp only [B_eq]; split <;> omega))
+      | (apply ih _ (i + 1) 1 _ (by omega) <;> first | rfl | (janus_simp; done) | exact FvModexp.Expmc.succ_reg i | (simp only [loopWs]; janus_frame) | (rw [hsucc]; exact FvModexp.Expmc.final_val m2 zp n i c _ _ hi) | (rw [hsucc]; simp only [B_eq]; split <;> omega))
+      | (apply ih _ (i + 1) 0 _ (by omega) <;> first | rfl | (janus_simp; done) | exact FvModexp.Expmc.succ_reg i | (simp only [loopWs]; janus_frame) | (rw [hsucc]; exact FvModexp.Expmc.final_val m2 zp n i c _ _ hi) | (rw [hsucc]; simp only [B_eq]; split <;> omega))
 
 end FvModexp.Arm64.MontLoop

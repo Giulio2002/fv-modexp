@@ -93,3 +93,43 @@ theorem montStep_eq (n x m k d i Z c w0 v1 c2 Z1 v2 c3 Z2 z1i : Nat)
   rw [e0, e4, e5]
 
 end FvModexp.Expmc
+
+namespace FvModexp.Expmc
+open Janus Janus.Arm64 FvModexp.Exp
+
+theorem montIter_c_le (n x y m k : Nat) : ∀ j, (montIter n x y m k j).2 ≤ 1
+  | 0 => by simp [montIter]
+  | j + 1 => by simp only [montIter, montStep]; split <;> omega
+
+/-- The store `z[n+i] = cy` closes the iteration's value. -/
+theorem final_val (m2 : Memory) (zp n i c c2 c3 : Nat) (hi : i < n) :
+    (m2.writeLE (zp + (i + n) * 8) 8 (c3 + (c + c2))).readLE zp (8 * (2 * n)) =
+      setWin (m2.readLE zp (8 * (2 * n))) (n + i) 1 (((c + c2) % B + c3) % B) := by
+  refine readLE_setWin zp (n + i) 1 (2 * n) _ (by omega) ?_ ?_ ?_
+  · exact Memory.readLE_writeLE_of_disjoint _ _ (by omega)
+  · exact Memory.readLE_writeLE_of_disjoint _ _ (by omega)
+  · rw [show zp + 8 * (n + i) = zp + (i + n) * 8 by omega, Nat.mul_one, Memory.readLE_writeLE_self, B_eq]
+    omega
+
+theorem succ_reg (i : Nat) : BitVec.ofNat 64 i + 1#64 = BitVec.ofNat 64 (i + 1) := by
+  apply BitVec.eq_of_toNat_eq; simp
+
+end FvModexp.Expmc
+
+namespace FvModexp.Expmc
+open Janus Janus.Arm64 FvModexp.Exp
+
+/-- The store `z[n+i] = v` with `v ≡ cy (mod 2^64)` closes the iteration's value. -/
+theorem final_val_gen (m2 : Memory) (zp n i v cy : Nat) (hi : i < n) (hv : v % 2 ^ 64 = cy) :
+    (m2.writeLE (zp + (i + n) * 8) 8 v).readLE zp (8 * (2 * n)) = setWin (m2.readLE zp (8 * (2 * n))) (n + i) 1 cy := by
+  refine readLE_setWin zp (n + i) 1 (2 * n) _ (by omega) ?_ ?_ ?_
+  · exact Memory.readLE_writeLE_of_disjoint _ _ (by omega)
+  · exact Memory.readLE_writeLE_of_disjoint _ _ (by omega)
+  · rw [show zp + 8 * (n + i) = zp + (i + n) * 8 by omega, Nat.mul_one, Memory.readLE_writeLE_self]
+    rw [← hv]
+
+theorem bv_mul_toNat (a b : Nat) (ha : a < 2 ^ 64) (hb : b < 2 ^ 64) :
+    (BitVec.ofNat 64 a * BitVec.ofNat 64 b).toNat = a * b % B := by
+  rw [BitVec.toNat_mul, BitVec.toNat_ofNat, BitVec.toNat_ofNat, Nat.mod_eq_of_lt ha, Nat.mod_eq_of_lt hb, B_def]
+
+end FvModexp.Expmc
