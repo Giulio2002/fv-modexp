@@ -189,6 +189,39 @@ theorem winRun_rep (hw : 0 < w) (hK : (64 / w) * w = 64) (hw64 : w ≤ 64) (hs :
     grind
   rw [hsum] at this
   exact this
+
+/-- Any predicate `Q` established by every `step` holds after the loops, provided at least one step ran
+(or `Q` held initially). -/
+theorem wordLoop_Q (Q : Nat → Prop) (hs : ∀ z d, Q (step z d)) :
+    ∀ c v z, (0 < c ∨ Q z) → Q (wordLoop w step c v z) := by
+  intro c
+  induction c with
+  | zero =>
+    intro v z h
+    rcases h with h | h
+    · omega
+    · simpa [wordLoop] using h
+  | succ c ih =>
+    intro v z _
+    simp only [wordLoop]
+    exact ih _ _ (Or.inr (hs _ _))
+
+theorem outerLoop_Q (Q : Nat → Prop) (hs : ∀ z d, Q (step z d)) (y : Nat) (hK : 0 < 64 / w) :
+    ∀ i yi c z, (0 < i ∨ 0 < c ∨ Q z) → Q (outerLoop w step y (64 / w) i yi c z) := by
+  intro i
+  induction i with
+  | zero =>
+    intro yi c z h
+    refine wordLoop_Q w step Q hs c yi z ?_
+    rcases h with h | h | h
+    · omega
+    · exact Or.inl h
+    · exact Or.inr h
+  | succ i ih =>
+    intro yi c z _
+    simp only [outerLoop]
+    exact ih _ _ _ (Or.inr (Or.inl hK))
+
 end generic
 
 end FvModexp.Exp
