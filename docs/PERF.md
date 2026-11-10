@@ -76,3 +76,8 @@ no heartbeat/timeout options are used anywhere.
 | DivRecMath | 0.8 s | 0.53 GB | | Words | 2.5 s | 0.57 GB |
 
 Sum of all 36 mathdiv modules: 74 s; slowest DivWW 13.9 s / 1.1 GB, DivRecLoop 8.5 s / 0.92 GB.
+
+**Update (same day).** The library constant does not need copied words: `program := { Extracted.program with segments :=
+[Extracted.seg24, Extracted.seg59, Extracted.seg65] }` (generated, `lean/FvModexp/Proofs/<Isa>/Exp/Lib*.lean`) gives the same
+28 s for the montgomery iteration (vs 254 s on `onlySegments … link impl`), and `eq_only : program = Extracted.program.onlySegments
+names` is proved by `congr 1` in ~6 s — so the summaries keep top's statement shape (CONVENTIONS §3) via `eq_only ▸`.
