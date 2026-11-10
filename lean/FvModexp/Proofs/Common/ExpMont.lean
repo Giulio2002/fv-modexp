@@ -374,13 +374,13 @@ theorem montgomery_spec (n x y m k : Nat) (hn : 1 ≤ n) (hx : x < B ^ n) (hy : 
   rw [hw]
   generalize (montIter n x y m k n).2 = c at *
   rcases Nat.le_one_iff_eq_zero_or_eq_one.mp hc with h0 | h1
-  · subst h0; simp
+  · subst h0; simp; intro h; exact absurd h (Nat.not_le.mpr hV)
   · subst h1
     have hVm : V < m := by omega
     have hmle : m ≤ B ^ n := Nat.le_of_lt hm
     simp only [ne_eq, Nat.one_ne_zero, not_false_eq_true, if_true, Nat.one_mul]
     rw [if_pos (by omega)]
     have : V + B ^ n - m < B ^ n := by omega
-    rw [Nat.mod_eq_of_lt this]; omega
+    rw [Nat.mod_eq_of_lt this]
 
 end FvModexp.Exp
