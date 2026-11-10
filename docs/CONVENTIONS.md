@@ -79,7 +79,8 @@ Rules, one by one:
    Bridge to EthLib (`bytesToNat (bufferRead …)`) only in `Run`.
 5. **Objects** (aliasing). An input array the function only reads: `s.mem.accessible p n false ∧ p + n ≤ 2^48 ∧
    Held R L p n ∧ Outside p n (win s stk above)`. An array it may write (a nat `z` it reuses): `NatLive s.mem R L p c`
-   (`Held` + aligned + writable) and its range is in the post's `ws`. Distinct objects are related with `Apart a n b k`
+   (`Held` + aligned + writable) `∧ (0 < c → Outside p (8 c) (win s stk above))` (a held range may be caller stack memory,
+   so it must be stated outside the callee's window), and its range is in the post's `ws`. Distinct objects are related with `Apart a n b k`
    (one atomic fact each; never a big disjunction — PROOFS.md §Performance), stated only when the code needs it
    (`0 < zc → Apart zp (8 zc) bp bl`). `Held R L a n := InRanges a n L ∨ Outside a n R.rt`: a heap object of the caller or
    caller memory outside the runtime (stack buffers, data). **A held range is unchanged by every runtime call and every
@@ -158,8 +159,20 @@ held range keeps it (`inv_store_held`).
 `FvModexp.Spec.bytesAt m p n` (infra) is the `ByteArray` of a Go `[]byte`; `beVal m p n = bytesToNat (bytesAt m p n).toList`
 (`Common/Bytes.lean`). Statements never use EthLib instances (`Spec.PostFusaka`).
 
-## 9. Pilot
+## 9. Pilot (arm64 DONE 2026-11-10, amd64 in progress)
 
 `nat.setBytes` (both copies), arm64 + amd64: `FvModexp.Arm64.SetBytes.ens`, `FvModexp.Arm64.SetBytesStd.ens`,
 `FvModexp.Amd64.SetBytes.ens`, `FvModexp.Amd64.SetBytesStd.ens` — a runtime call (`makeslice` through the inlined
 `nat.make`), three loops, `nat.norm`, both the reuse and the allocation branch. Timings in `docs/PERF.md`.
+
+Pilot files (arm64, no sorry, `#print axioms`: propext, Classical.choice, Quot.sound):
+`Proofs/Arm64/Nat/SetBytes{Defs,Norm,Byte,Word,Mid,}.lean` and the `SetBytesStd*` twins (generated from them by `sed`: only `fn`,
+`wordT` and the namespace differ). Pattern to copy for a function with loops and a runtime call:
+* `Defs`: `Pre`, `Post`, and `Mid` = everything that holds at every loop head after the runtime call (frame record values,
+  inputs unchanged, the new object's facts, `L'`, `b'`, `R.inv`, the two frames). `Mid.store` (a store into the object keeps `Mid`).
+* one module per loop, each a `Reaches` lemma by induction over the iterations left, taking `Mid … m` and register equations;
+  each loop exits by `refine nextLoop …` (the later loops are proved first).
+* `Mid` module: `mid_of_reuse` / `mid_of_alloc` build `Mid` from the entry facts / from the contract postcondition
+  (`LiveFrame M0 m L []`, `MemFrame M0 m (R.rt ++ calleeWindow)`, `ApartAll`, `InRanges`, `R.inv (b - round) (L ++ [obj])`).
+* main module: per path `janus_run … until [loopHead] calls [hmk'.pos]`, `rename_i ptr _ _ _ m _ _ hLF hMF hAp hIn hle hacc h8 …`
+  to name the contract's results, then `refine loopLemma … (mid_of_alloc …) (by janus_simp) …`.
