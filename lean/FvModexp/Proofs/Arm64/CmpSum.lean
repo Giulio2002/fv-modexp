@@ -1,5 +1,6 @@
 import FvModexp.Proofs.Common.AsmCmp
 import FvModexp.Proofs.Lib.CmpA64
+import FvModexp.Proofs.Common.AsmDivEns
 
 /-!
 # `math/big.nat.cmp(x, y nat) (r int)` (go-bigmodexpfix nat.go:152-180, Go ABIInternal, arm64): summary
@@ -237,5 +238,44 @@ theorem cmp_summary : Summary program entry Pre Post := by
       exact Nat.mod_eq_of_lt (s.regs 29).isLt
     · simp (disch := omega) only [Memory.readLE_writeLE_of_disjoint, Memory.readLE_writeLE_self]
       exact Nat.mod_eq_of_lt (s.regs 30).isLt
+
+/-- the standalone contract (statement in Janus vocabulary only) -/
+theorem ensures (x xl xc y yl yc : BitVec 64) :
+    Ensures program entry [x, xl, xc, y, yl, yc]
+      (fun s => GuardOK s 0 ∧ StackOK s 24 40 ∧
+        (xl.toNat = 0 ∨ (s.mem.accessible x.toNat (8 * xl.toNat) false = true ∧
+          Apart x.toNat (8 * xl.toNat) (s.sp.toNat - 24) 64)) ∧
+        (yl.toNat = 0 ∨ (s.mem.accessible y.toNat (8 * yl.toNat) false = true ∧
+          Apart y.toNat (8 * yl.toNat) (s.sp.toNat - 24) 64)))
+      (fun s s' => results 1 s' =
+          [if xl.toNat < yl.toNat then 18446744073709551615#64 else if yl.toNat < xl.toNat then 1#64
+            else if s.mem.readLE x.toNat (8 * xl.toNat) < s.mem.readLE y.toNat (8 * yl.toNat) then 18446744073709551615#64
+            else if s.mem.readLE y.toNat (8 * yl.toNat) < s.mem.readLE x.toNat (8 * xl.toNat) then 1#64 else 0#64] ∧
+        MemFrame s.mem s'.mem [(s.sp.toNat - 24, s.sp.toNat - 8), (s.sp.toNat + 8, s.sp.toNat + 16),
+          (s.sp.toNat + 32, s.sp.toNat + 40)]) := by
+  refine FvModexp.AsmDiv.A64.ensures_of_summary _ _ cmp_summary ?_ ?_
+  · intro ret hret s hsu ⟨hg, hs, hx, hy⟩
+    have h0 : s.regs 0 = x := by have := hsu.args 0 (by simp); simpa using this
+    have h1 : s.regs 1 = xl := by have := hsu.args 1 (by simp); simpa using this
+    have h3 : s.regs 3 = y := by have := hsu.args 3 (by simp); simpa using this
+    have h4 : s.regs 4 = yl := by have := hsu.args 4 (by simp); simpa using this
+    have h30 : s.regs 30 = BitVec.ofNat 64 ret := hsu.lr
+    have ha := hret.aligned
+    have hu := hret.user
+    refine ⟨?_, ?_, hg, hs, ?_, ?_⟩
+    · rw [h30]; simp only [BitVec.toNat_ofNat]; rw [show ret % 2 ^ 64 = ret from Nat.mod_eq_of_lt (by omega)]; omega
+    · rw [h30]; simp only [BitVec.toNat_ofNat]; rw [show ret % 2 ^ 64 = ret from Nat.mod_eq_of_lt (by omega)]; omega
+    · unfold SliceOK; rw [h0, h1]; exact hx
+    · unfold SliceOK; rw [h3, h4]; exact hy
+  · intro ret hret s hsu _ s' ⟨v1, v2, v4, v5, v16, f, m, he, hf⟩
+    have h0 : s.regs 0 = x := by have := hsu.args 0 (by simp); simpa using this
+    have h1 : s.regs 1 = xl := by have := hsu.args 1 (by simp); simpa using this
+    have h3 : s.regs 3 = y := by have := hsu.args 3 (by simp); simpa using this
+    have h4 : s.regs 4 = yl := by have := hsu.args 4 (by simp); simpa using this
+    subst he
+    refine ⟨⟨rfl, rfl, rfl, rfl⟩, ?_, hf⟩
+    simp only [results, List.range_succ, List.range_zero, List.nil_append, List.map_cons, List.map_nil,
+      setReg, cmpRes, lv, h0, h1, h3, h4]
+    simp
 
 end FvModexp.Arm64.CmpSum
