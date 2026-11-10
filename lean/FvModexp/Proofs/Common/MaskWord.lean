@@ -42,3 +42,26 @@ theorem mask_neg_sub_lt (x a b : Nat) (hx : x < 2 ^ 64) (h : a < b) (hb : b < 2 
     rw [BitVec.toNat_sub, BitVec.toNat_sub, BitVec.toNat_ofNat, BitVec.toNat_ofNat]; simp; omega)
 
 end FvModexp
+
+namespace FvModexp
+
+/-- The arm64 `AND Rm->63` (an arithmetic shift by 63 decoded as `SBFM`) in the form the executor leaves it:
+all ones when `a < b < 2^63`, so masking `x` keeps `x`. -/
+theorem asr63_mask (a b x : Nat) (h : a < b) (hb : b < 2 ^ 63) (hx : x < 2 ^ 64) :
+    (((if (BitVec.ofNat 64 a - BitVec.ofNat 64 b).getLsbD 63 = true then 18446744073709551615#64 else 0#64).toNat &&&
+        18446744073709551614 ||| ((BitVec.ofNat 64 a - BitVec.ofNat 64 b).rotateRight 63).toNat % 2) &&& x) = x := by
+  have hv : 2 ^ 63 ≤ (BitVec.ofNat 64 a - BitVec.ofNat 64 b).toNat := by
+    rw [BitVec.toNat_sub, BitVec.toNat_ofNat, BitVec.toNat_ofNat]; omega
+  have h63 : (BitVec.ofNat 64 a - BitVec.ofNat 64 b).getLsbD 63 = true := by
+    rw [BitVec.getLsbD_eq_getElem (by omega), BitVec.getElem_eq_testBit_toNat, Nat.testBit_eq_decide_div_mod_eq]
+    simp only [BitVec.toNat_sub, BitVec.toNat_ofNat, decide_eq_true_eq]; omega
+  have hr : ((BitVec.ofNat 64 a - BitVec.ofNat 64 b).rotateRight 63).toNat % 2 = 1 := by
+    have h0 : ((BitVec.ofNat 64 a - BitVec.ofNat 64 b).rotateRight 63).getLsbD 0 = true := by
+      rw [BitVec.getLsbD_rotateRight]; simpa using h63
+    rw [BitVec.getLsbD, Nat.testBit_zero] at h0
+    exact of_decide_eq_true h0
+  rw [if_pos h63, hr]
+  have : ((18446744073709551615#64).toNat &&& 18446744073709551614 ||| 1 : Nat) = 2 ^ 64 - 1 := by decide
+  rw [this, Nat.and_comm, Nat.and_two_pow_sub_one_eq_mod, Nat.mod_eq_of_lt hx]
+
+end FvModexp
