@@ -59,7 +59,8 @@ theorem h1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
       rcases hr with (rfl | rfl) | rfl <;> refine ⟨?_, ?_, ?_⟩ <;> dsimp only <;> omega
     clear hd
     janus_run [natLive_zero, toInt_ite, toNat_ite, toInt_small, hc] until [pcB1] calls [hS]
-    refine hk _ ?L1 ?b1 ?_ (by janus_simp)
+    refine hk _ ?L1 ?b1 ?rel (by janus_simp)
+    case rel =>
     unfold RelH
     refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
     all_goals try (janus_simp; done)
