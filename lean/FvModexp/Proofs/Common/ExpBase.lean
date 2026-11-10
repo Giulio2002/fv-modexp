@@ -95,6 +95,11 @@ theorem nlen_le_iff {x n : Nat} : nlen x ≤ n ↔ x < B ^ n := by
         exact Nat.le_trans (Nat.pow_le_pow_right (by omega) (by omega)) this
       omega
 
+/-- `f^[j] z` (sequence of `j` squarings in the unrolled loops). -/
+def iter (f : Nat → Nat) : Nat → Nat → Nat
+  | 0, z => z
+  | j + 1, z => iter f j (f z)
+
 theorem wd_lt (x i : Nat) : wd x i < B := Nat.mod_lt _ B_pos
 
 end FvModexp.Exp
