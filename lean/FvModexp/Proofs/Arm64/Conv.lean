@@ -38,3 +38,19 @@ def CallEnv (R : RtInv) (L : List (Nat × Nat)) (s : State) (stk above : Nat) : 
 @[reducible] def cA (name : String) : Nat := Extracted.program.contractAddr name
 
 end FvModexp.Arm64
+
+namespace FvModexp.Arm64
+
+open Janus Janus.Arm64 Janus.Tactic Janus.Spec
+
+/-- A read-only data object (`x`, `l` inside data object `k`) is apart from every writable range: one `Apart`
+fact instead of `janus_data hd [hw]`'s one disjunction per data object (49 of them, which make `omega` slow). -/
+theorem apart_of_data {m : Memory} (hd : Extracted.program.DataLoaded m) (k : Nat)
+    (hk : k < Extracted.program.data.length) {x l a n : Nat}
+    (hin : (Extracted.program.data[k]).base ≤ x ∧
+      x + l ≤ (Extracted.program.data[k]).base + (Extracted.program.data[k]).bytes.length)
+    (hw : m.accessible a n true = true) : Apart x l a n := by
+  have := Janus.Tactic.disjoint_of_dataLoaded hd k hk hw
+  unfold Apart; omega
+
+end FvModexp.Arm64

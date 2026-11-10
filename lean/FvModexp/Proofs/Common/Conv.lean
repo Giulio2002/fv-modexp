@@ -1,5 +1,6 @@
 import Janus
 import FvModexp.Proofs.Common.Link
+import FvModexp.Proofs.Common.BitLemmas
 
 /-!
 # Conventions for function summaries: the ISA-independent vocabulary
@@ -110,6 +111,29 @@ theorem beVal_liveFrame {m m' : Memory} {L ws : List (Nat × Nat)} (h : LiveFram
   have h1 := h.readLE (p + i) 1 (hin.sub (by omega) (by omega)) (Outside.of_sub ho (by omega) (by omega))
   simp only [Memory.readLE_one] at h1
   exact BitVec.eq_of_toNat_eq h1
+
+
+/-- The byte reversal of a little-endian read is the big-endian read (arm64 `REV`, amd64 `BSWAP`). -/
+theorem revBytesNat_readLE (m : Memory) (a k : Nat) : revBytesNat k (m.readLE a k) = beVal m a k := by
+  induction k generalizing a with
+  | zero => rfl
+  | succ k ih =>
+    rw [show k + 1 = 1 + k by omega, beVal_add, show 1 + k = k + 1 by omega]
+    simp only [revBytesNat, Memory.readLE, beVal_succ, beVal_zero, Nat.zero_mul, Nat.zero_add, Nat.add_zero]
+    have h1 : ((m.bytes a).toNat + 256 * m.readLE (a + 1) k) % 256 = (m.bytes a).toNat := by
+      have := (m.bytes a).isLt; omega
+    have h2 : ((m.bytes a).toNat + 256 * m.readLE (a + 1) k) / 256 = m.readLE (a + 1) k := by
+      have := (m.bytes a).isLt; omega
+    rw [h1, h2, ih]
+
+/-- `REV` of a loaded word, as the executor leaves it. -/
+theorem revContainers_readLE8 (m : Memory) (a : Nat) :
+    revContainersNat 8 1 (m.readLE a 8) = beVal m a 8 := by
+  have hc : ∀ x, revContainersNat 8 1 x = revBytesNat 8 (x % 256 ^ 8) := by
+    intro x; simp only [revContainersNat]; omega
+  have hm : m.readLE a 8 % 256 ^ 8 = m.readLE a 8 := Nat.mod_eq_of_lt (Memory.readLE_lt m a 8)
+  rw [hc, hm]
+  exact revBytesNat_readLE m a 8
 
 /-! ## Objects and the runtime -/
 
