@@ -788,4 +788,97 @@ theorem ablock {z x y n m a : Nat} (s : State) (hc : Ctx s z x y n m a) (ret : B
   exact hk S4 v0 v1 v2 v3 v4 v5 v6 v7 H1 H2 H3 H4 cf1 cf2 cf3 cf4 of1 of2 of3 of4 pf4 af4 zf4 sf4 hpc4 h24 h34 hH4 hfl4
     (by rw [h64, h63, h62, h61]) h74 h84 h94 h104 hm4 hs4 he0 he1 he2 he3
 
+set_option exponentiation.threshold 1024 in
+/-- the value of an ADX 8x block from its four pair equations, and the bound on the new carry word -/
+theorem ablkval (v0 v1 v2 v3 v4 v5 v6 v7 x0 x1 x2 x3 x4 x5 x6 x7 y0 y1 y2 y3 y4 y5 y6 y7 m W W1 W2 W3 W4 : Nat)
+    (hy0 : y0 < 2 ^ 64) (hy1 : y1 < 2 ^ 64) (hy2 : y2 < 2 ^ 64) (hy3 : y3 < 2 ^ 64) (hy4 : y4 < 2 ^ 64)
+    (hy5 : y5 < 2 ^ 64) (hy6 : y6 < 2 ^ 64) (hy7 : y7 < 2 ^ 64)
+    (hx0 : x0 < 2 ^ 64) (hx1 : x1 < 2 ^ 64) (hx2 : x2 < 2 ^ 64) (hx3 : x3 < 2 ^ 64) (hx4 : x4 < 2 ^ 64)
+    (hx5 : x5 < 2 ^ 64) (hx6 : x6 < 2 ^ 64) (hx7 : x7 < 2 ^ 64) (hm : m < 2 ^ 64) (hW : W < 2 ^ 64)
+    (e0 : v0 % 2 ^ 64 + 2 ^ 64 * (v1 % 2 ^ 64) + 2 ^ 128 * W1 = (x0 + 2 ^ 64 * x1) + (m * y0 + 2 ^ 64 * (m * y1)) + W)
+    (e1 : v2 % 2 ^ 64 + 2 ^ 64 * (v3 % 2 ^ 64) + 2 ^ 128 * W2 = (x2 + 2 ^ 64 * x3) + (m * y2 + 2 ^ 64 * (m * y3)) + W1)
+    (e2 : v4 % 2 ^ 64 + 2 ^ 64 * (v5 % 2 ^ 64) + 2 ^ 128 * W3 = (x4 + 2 ^ 64 * x5) + (m * y4 + 2 ^ 64 * (m * y5)) + W2)
+    (e3 : v6 % 2 ^ 64 + 2 ^ 64 * (v7 % 2 ^ 64) + 2 ^ 128 * W4 = (x6 + 2 ^ 64 * x7) + (m * y6 + 2 ^ 64 * (m * y7)) + W3) :
+    (v0 % 2 ^ 64 + 2 ^ 64 * (v1 % 2 ^ 64) + 2 ^ 128 * (v2 % 2 ^ 64) + 2 ^ 192 * (v3 % 2 ^ 64) + 2 ^ 256 * (v4 % 2 ^ 64) +
+      2 ^ 320 * (v5 % 2 ^ 64) + 2 ^ 384 * (v6 % 2 ^ 64) + 2 ^ 448 * (v7 % 2 ^ 64)) + 2 ^ 512 * W4 =
+      (x0 + 2 ^ 64 * x1 + 2 ^ 128 * x2 + 2 ^ 192 * x3 + 2 ^ 256 * x4 + 2 ^ 320 * x5 + 2 ^ 384 * x6 + 2 ^ 448 * x7) +
+      (y0 + 2 ^ 64 * y1 + 2 ^ 128 * y2 + 2 ^ 192 * y3 + 2 ^ 256 * y4 + 2 ^ 320 * y5 + 2 ^ 384 * y6 + 2 ^ 448 * y7) * m + W ∧
+    W4 < 2 ^ 64 := by
+  have hYm : (y0 + 2 ^ 64 * y1 + 2 ^ 128 * y2 + 2 ^ 192 * y3 + 2 ^ 256 * y4 + 2 ^ 320 * y5 + 2 ^ 384 * y6 +
+      2 ^ 448 * y7) * m ≤ (2 ^ 512 - 1) * (2 ^ 64 - 1) := Nat.mul_le_mul (by omega) (by omega)
+  have hsum : (y0 + 2 ^ 64 * y1 + 2 ^ 128 * y2 + 2 ^ 192 * y3 + 2 ^ 256 * y4 + 2 ^ 320 * y5 + 2 ^ 384 * y6 +
+      2 ^ 448 * y7) * m = m * y0 + 2 ^ 64 * (m * y1) + 2 ^ 128 * (m * y2) + 2 ^ 192 * (m * y3) + 2 ^ 256 * (m * y4) +
+      2 ^ 320 * (m * y5) + 2 ^ 384 * (m * y6) + 2 ^ 448 * (m * y7) := by
+    rw [Nat.mul_comm]; simp only [Nat.mul_add, Nat.mul_left_comm m]
+  rw [hsum] at hYm ⊢
+  generalize m * y0 = p0 at *
+  generalize m * y1 = p1 at *
+  generalize m * y2 = p2 at *
+  generalize m * y3 = p3 at *
+  generalize m * y4 = p4 at *
+  generalize m * y5 = p5 at *
+  generalize m * y6 = p6 at *
+  generalize m * y7 = p7 at *
+  have := Nat.mod_lt v0 (show 0 < 2 ^ 64 by decide)
+  constructor <;> omega
+
+theorem ablk_lem {z x y n m a : Nat} (s : State) (hc : Ctx s z x y n m a) :
+    ∀ k (S : State) (i W : Nat), i + 8 * (k + 1) = n → W < 2 ^ 64 →
+      S.rip = BitVec.ofNat 64 ahead8 → S.regs 6 = BitVec.ofNat 64 (k + 1) →
+      S.regs 2 = BitVec.ofNat 64 m → S.regs 3 = BitVec.ofNat 64 W → S.regs 7 = 0#64 →
+      S.regs 8 = BitVec.ofNat 64 (x + 8 * i) → S.regs 9 = BitVec.ofNat 64 (y + 8 * i) →
+      S.regs 10 = BitVec.ofNat 64 (z + 8 * i) →
+      lv S.mem z i + 2 ^ (64 * i) * W = lv s.mem x i + lv s.mem y i * m + a →
+      MemFrame s.mem S.mem [(z, z + 8 * i)] → Same64 s S →
+      ReachesRet program (retAddrOf s) S (fun s' => Ret0 s s' (Q s)) := by
+  have hm64 : m < 2 ^ 64 := hc.hm ▸ FvModexp.Asm.limb_lt _ _
+  have bz := Arm64.Memory.accessible_bound _ hc.accz
+  intro k
+  induction k with
+  | zero =>
+    intro S i W hi hW hpc h6 h2 h3 h7 h8 h9 h10 hv hf hs
+    have hn8 : n = i + 8 := by omega
+    refine ablock s hc _ _ S i W (by omega) hW hpc h2 h3 h7 h8 h9 h10 hf hs ?_
+    intro S4 v0 v1 v2 v3 v4 v5 v6 v7 H1 H2 H3 H4 cf1 cf2 cf3 cf4 of1 of2 of3 of4 pf af zf sf hpc4 h24 h34 hH4 hfl4 h64 h74
+      h84 h94 h104 hm4 hs4 e0 e1 e2 e3
+    obtain ⟨hval, hW4⟩ := ablkval _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ m W _ _ _ _ (FvModexp.Asm.limb_lt s.mem (y + 8 * i)) (FvModexp.Asm.limb_lt s.mem (y + 8 * i + 8)) (FvModexp.Asm.limb_lt s.mem (y + 8 * i + 16)) (FvModexp.Asm.limb_lt s.mem (y + 8 * i + 24)) (FvModexp.Asm.limb_lt s.mem (y + 8 * i + 32)) (FvModexp.Asm.limb_lt s.mem (y + 8 * i + 40)) (FvModexp.Asm.limb_lt s.mem (y + 8 * i + 48)) (FvModexp.Asm.limb_lt s.mem (y + 8 * i + 56)) (FvModexp.Asm.limb_lt s.mem (x + 8 * i)) (FvModexp.Asm.limb_lt s.mem (x + 8 * i + 8)) (FvModexp.Asm.limb_lt s.mem (x + 8 * i + 16)) (FvModexp.Asm.limb_lt s.mem (x + 8 * i + 24)) (FvModexp.Asm.limb_lt s.mem (x + 8 * i + 32)) (FvModexp.Asm.limb_lt s.mem (x + 8 * i + 40)) (FvModexp.Asm.limb_lt s.mem (x + 8 * i + 48)) (FvModexp.Asm.limb_lt s.mem (x + 8 * i + 56))
+      hm64 hW e0 e1 e2 e3
+    have hvb : lv S4.mem z (i + 8) + 2 ^ (64 * (i + 8)) * (H4 + cf4.toNat + of4.toNat) =
+        lv s.mem x (i + 8) + lv s.mem y (i + 8) * m + a := by
+      rw [hm4, lv_write8, lv_add8 s.mem x, lv_add8 s.mem y, pow_i8]
+      exact addmul_step _ _ _ _ _ _ _ _ _ _ _ _ hv hval
+    have hfz : MemFrame s.mem S4.mem [(z, z + 8 * (i + 8))] := by rw [hm4]; exact frame_ext8 hf _ _ _ _ _ _ _ _
+    rw [hm4] at hvb hfz
+    have hcw : (H4 + cf4.toNat) % 2 ^ 64 + of4.toNat < 2 ^ 64 ∧ ((H4 + cf4.toNat) % 2 ^ 64 + of4.toNat) = H4 + cf4.toNat + of4.toNat := by
+      have := toNat_le_one cf4; have := toNat_le_one of4; constructor <;> omega
+    subst hn8
+    janus64_run until [entry + 0x253]
+    exact fin_lem s hc _ 3 _ (Or.inr rfl) (by simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff])
+      (Or.inr ⟨rfl, rfl⟩) hW4 hvb hfz (by same64_tac hs4)
+  | succ k ih =>
+    intro S i W hi hW hpc h6 h2 h3 h7 h8 h9 h10 hv hf hs
+    refine ablock s hc _ _ S i W (by omega) hW hpc h2 h3 h7 h8 h9 h10 hf hs ?_
+    intro S4 v0 v1 v2 v3 v4 v5 v6 v7 H1 H2 H3 H4 cf1 cf2 cf3 cf4 of1 of2 of3 of4 pf af zf sf hpc4 h24 h34 hH4 hfl4 h64 h74
+      h84 h94 h104 hm4 hs4 e0 e1 e2 e3
+    obtain ⟨hval, hW4⟩ := ablkval _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ m W _ _ _ _ (FvModexp.Asm.limb_lt s.mem (y + 8 * i)) (FvModexp.Asm.limb_lt s.mem (y + 8 * i + 8)) (FvModexp.Asm.limb_lt s.mem (y + 8 * i + 16)) (FvModexp.Asm.limb_lt s.mem (y + 8 * i + 24)) (FvModexp.Asm.limb_lt s.mem (y + 8 * i + 32)) (FvModexp.Asm.limb_lt s.mem (y + 8 * i + 40)) (FvModexp.Asm.limb_lt s.mem (y + 8 * i + 48)) (FvModexp.Asm.limb_lt s.mem (y + 8 * i + 56)) (FvModexp.Asm.limb_lt s.mem (x + 8 * i)) (FvModexp.Asm.limb_lt s.mem (x + 8 * i + 8)) (FvModexp.Asm.limb_lt s.mem (x + 8 * i + 16)) (FvModexp.Asm.limb_lt s.mem (x + 8 * i + 24)) (FvModexp.Asm.limb_lt s.mem (x + 8 * i + 32)) (FvModexp.Asm.limb_lt s.mem (x + 8 * i + 40)) (FvModexp.Asm.limb_lt s.mem (x + 8 * i + 48)) (FvModexp.Asm.limb_lt s.mem (x + 8 * i + 56))
+      hm64 hW e0 e1 e2 e3
+    have hvb : lv S4.mem z (i + 8) + 2 ^ (64 * (i + 8)) * (H4 + cf4.toNat + of4.toNat) =
+        lv s.mem x (i + 8) + lv s.mem y (i + 8) * m + a := by
+      rw [hm4, lv_write8, lv_add8 s.mem x, lv_add8 s.mem y, pow_i8]
+      exact addmul_step _ _ _ _ _ _ _ _ _ _ _ _ hv hval
+    have hfz : MemFrame s.mem S4.mem [(z, z + 8 * (i + 8))] := by rw [hm4]; exact frame_ext8 hf _ _ _ _ _ _ _ _
+    rw [hm4] at hvb hfz
+    have hcw : (H4 + cf4.toNat) % 2 ^ 64 + of4.toNat < 2 ^ 64 ∧ ((H4 + cf4.toNat) % 2 ^ 64 + of4.toNat) = H4 + cf4.toNat + of4.toNat := by
+      have := toNat_le_one cf4; have := toNat_le_one of4; constructor <;> omega
+    rw [h6] at h64
+    janus64_run until [entry + 0x176]
+    refine ih _ (i + 8) _ (by omega) hW4 rfl ?r6 ?r2 ?r3 ?r7 ?r8 ?r9 ?r10 hvb hfz (by same64_tac hs4)
+    case r6 =>
+      simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; apply BitVec.eq_of_toNat_eq
+      simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
+    case r2 => simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; exact h24
+    case r3 => simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]
+    case r7 => simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; exact h74
+    all_goals (simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega)
+
 end FvModexp.Amd64.AddMulVVWWSum
