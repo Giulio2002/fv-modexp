@@ -1,0 +1,60 @@
+package big
+
+import "math/rand"
+
+type FvNat = nat
+
+func FvFromWords(w []uint64) nat {
+	z := make(nat, len(w))
+	for i, v := range w {
+		z[i] = Word(v)
+	}
+	return z.norm()
+}
+func FvToInt(z nat) *Int { return new(Int).SetBits(z.toWords()) }
+func (z nat) toWords() []Word { return []Word(z) }
+
+func FvRand(r *rand.Rand, words int) nat {
+	z := make(nat, words)
+	for i := range z {
+		z[i] = Word(r.Uint64())
+		if r.Intn(4) == 0 {
+			z[i] = 0
+		}
+		if r.Intn(5) == 0 {
+			z[i] = ^Word(0)
+		}
+	}
+	return z.norm()
+}
+
+func FvMontgomery(x, y, m nat, k uint64, n int) nat {
+	pad := func(a nat) nat { b := make(nat, n); copy(b, a); return b }
+	return nat(nil).montgomery(pad(x), pad(y), pad(m), Word(k), n).norm()
+}
+func FvK0(m0 uint64) uint64 { return uint64(computeMontgomeryk0(Word(m0))) }
+func FvModInvP2(x nat, n uint) nat {
+	stk := getStack(); defer stk.free()
+	return nat(nil).modularInverseModPowerOfTwo(stk, x, n)
+}
+func FvSubMod2N(x, y nat, n uint) nat { return nat(nil).subMod2N(nat(nil).set(x), y, n) }
+func FvOdd(x, y, m nat, w int) nat {
+	stk := getStack(); defer stk.free()
+	if w == 4 {
+		return nat(nil).expNNOddMontgomeryWindowSize4(stk, x, y, m)
+	}
+	return nat(nil).expNNOddMontgomeryWindowSize2(stk, x, y, m)
+}
+func FvPow2(x, y nat, logM uint) nat {
+	stk := getStack(); defer stk.free()
+	return nat(nil).expNNPowerOfTwo(stk, x, y, logM)
+}
+func FvSlow(x, y, m nat) nat {
+	stk := getStack(); defer stk.free()
+	return nat(nil).expNNSlow(stk, x, y, m)
+}
+func FvEven(x, y, m nat) nat {
+	stk := getStack(); defer stk.free()
+	return nat(nil).expNNEven(stk, x, y, m)
+}
+func FvExpNN(x, y, m nat) nat { return nat(nil).expNN(nil, x, y, m, false) }
