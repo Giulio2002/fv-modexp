@@ -87,3 +87,14 @@ theorem neg_sshr_land_lt (x a b : Nat) (hx : x < 2 ^ 64) (h : a < b) (hb : b < 2
   rw [Nat.and_comm]; exact mask_neg_sub_lt x a b hx h hb
 
 end FvModexp
+
+namespace FvModexp
+
+theorem toInt_add_self (n : Nat) (h : n + n < 2 ^ 63) :
+    BitVec.toInt (BitVec.ofNat 64 n + BitVec.ofNat 64 n) = ((n + n : Nat) : Int) := by
+  rw [BitVec.toInt_eq_toNat_cond]
+  have : (BitVec.ofNat 64 n + BitVec.ofNat 64 n).toNat = n + n := by
+    rw [BitVec.toNat_add, BitVec.toNat_ofNat]; omega
+  rw [this]; split <;> omega
+
+end FvModexp
