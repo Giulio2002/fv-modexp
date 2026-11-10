@@ -42,6 +42,11 @@ theorem ival_nonneg_neg_false (x : GInt) (hx : x.Ok) (hc : x.Canon) (h : 0 ≤ x
   refine ⟨this, ?_⟩
   unfold GInt.ival; rw [this]; simp
 
+/-- `MulContract` restricted to operands shorter than `k` words (what the recursion through `nat.mul` provides). -/
+def MulContractLt (k : Nat) (mul : List Nat → List Nat → List Nat) : Prop :=
+  ∀ a b : List Nat, Wd a → Wd b → a.length < k → b.length < k →
+    Wd (mul a b) ∧ val (mul a b) = val a * val b ∧ Normed (mul a b) ∧ (mul a b).length ≤ a.length + b.length
+
 /-! ## the model -/
 
 /-- `n2 := (n + 1) / 2` (natmul.go:196). -/
@@ -111,7 +116,7 @@ structure KaraFacts (mul : List Nat → List Nat → List Nat) (x y : List Nat) 
 
 theorem ival_false (l : List Nat) : (⟨false, l⟩ : GInt).ival = ((val l : Nat) : Int) := by simp [GInt.ival]
 
-theorem karatsuba_facts (mul : List Nat → List Nat → List Nat) (hm : MulContract mul) (x y : List Nat)
+theorem karatsuba_facts (mul : List Nat → List Nat → List Nat) (x y : List Nat) (hm : MulContractLt y.length mul)
     (hx : Wd x) (hy : Wd y) (hl : x.length = y.length) (hn : 40 ≤ y.length) : KaraFacts mul x y := by
   generalize hnn : y.length = n at *
   have hn2 : kN2 n = (n + 1) / 2 := rfl
@@ -170,15 +175,15 @@ theorem karatsuba_facts (mul : List Nat → List Nat → List Nat) (hm : MulCont
     · rw [ty3']; generalize 2 ^ (64 * n2) = P at *; generalize 2 ^ (64 * (n - n2)) = Q at *; omega
     · rw [ty3']; generalize 2 ^ (64 * n2) = P at *; generalize 2 ^ (64 * (n - n2)) = Q at *; omega
   -- z1 = tx * ty
-  obtain ⟨m1, m2, m3, m4⟩ := intMul_ne_spec mul (fun _ => []) hm _ _ tx1 ty1
+  obtain ⟨m1, m2, m3, m4⟩ := intMul_ne_spec mul (fun _ => []) _ _ tx1 ty1 (fun w1 w2 => hm _ _ w1 w2 (by omega) (by omega))
   change (kZ1m mul x y n2).Ok at m1
   change (kZ1m mul x y n2).Canon at m2
   change (kZ1m mul x y n2).ival = (kTx x n2).ival * (kTy y n2).ival at m3
   change (kZ1m mul x y n2).abs.length ≤ (kTx x n2).abs.length + (kTy y n2).abs.length at m4
   have m4' : (kZ1m mul x y n2).abs.length ≤ 2 * n2 := by omega
   -- z0, z2
-  obtain ⟨z01, z02, z03, z04⟩ := hm _ _ hx0W hy0W
-  obtain ⟨z21, z22, z23, z24⟩ := hm _ _ hx1W hy1W
+  obtain ⟨z01, z02, z03, z04⟩ := hm _ _ hx0W hy0W (by omega) (by omega)
+  obtain ⟨z21, z22, z23, z24⟩ := hm _ _ hx1W hy1W (by omega) (by omega)
   rw [val_norm, val_norm] at z02 z22
   change Wd (kZ0 mul x y n2) at z01
   change val (kZ0 mul x y n2) = val (x.take n2) * val (y.take n2) at z02
@@ -287,7 +292,7 @@ theorem karatsuba_facts (mul : List Nat → List Nat → List Nat) (hm : MulCont
   generalize val (kZ n n2 (kZ0 mul x y n2) (kZ2 mul x y n2)) = Zv at *
   grind
 
-theorem karatsuba_spec (mul : List Nat → List Nat → List Nat) (hm : MulContract mul) (x y : List Nat)
+theorem karatsuba_spec (mul : List Nat → List Nat → List Nat) (x y : List Nat) (hm : MulContractLt y.length mul)
     (hx : Wd x) (hy : Wd y) (hl : x.length = y.length) :
     (karatsuba mul x y).length = 2 * y.length ∧ Wd (karatsuba mul x y) ∧ val (karatsuba mul x y) = val x * val y := by
   unfold karatsuba
@@ -298,7 +303,7 @@ theorem karatsuba_spec (mul : List Nat → List Nat → List Nat) (hm : MulContr
     exact ⟨by omega, b, c⟩
   · rw [if_neg hb]
     have hn : 40 ≤ y.length := by unfold karatsubaThreshold at hb; omega
-    obtain ⟨_, _, _, _, _, _, _, _, _, _, _, fl2, _, fok, fzw, fzl, ftot, fno⟩ := karatsuba_facts mul hm x y hx hy hl hn
+    obtain ⟨_, _, _, _, _, _, _, _, _, _, _, fl2, _, fok, fzw, fzl, ftot, fno⟩ := karatsuba_facts mul x y hm hx hy hl hn
     generalize hn2 : kN2 y.length = n2 at *
     have hn2' : n2 = (y.length + 1) / 2 := by rw [← hn2]; rfl
     generalize hzz : kZ y.length n2 (kZ0 mul x y n2) (kZ2 mul x y n2) = zz at *

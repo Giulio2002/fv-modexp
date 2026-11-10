@@ -377,8 +377,11 @@ def natSqrP (ksqr : List Nat → List Nat) (x : List Nat) : List Nat :=
   if n < karatsubaSqrThreshold then norm (basicSqr (List.replicate (2 * n) 0) x) else
   norm (ksqr x)
 
-theorem natSqrP_spec (ksqr : List Nat → List Nat) (hk : KSqrContract ksqr) : SqrContract (natSqrP ksqr) := by
-  intro x hx
+theorem natSqrP_at (ksqr : List Nat → List Nat) (x : List Nat) (hx : Wd x)
+    (hk : karatsubaSqrThreshold ≤ x.length →
+      (ksqr x).length = 2 * x.length ∧ Wd (ksqr x) ∧ val (ksqr x) = val x * val x) :
+    Wd (natSqrP ksqr x) ∧ val (natSqrP ksqr x) = val x * val x ∧ Normed (natSqrP ksqr x) ∧
+      (natSqrP ksqr x).length ≤ 2 * x.length := by
   unfold natSqrP
   simp only []
   by_cases h0 : x.length = 0
@@ -424,7 +427,10 @@ theorem natSqrP_spec (ksqr : List Nat → List Nat) (hk : KSqrContract ksqr) : S
     obtain ⟨a, b, c⟩ := basicSqr_spec (List.replicate (2 * x.length) 0) x (Wd_replicate_zero _) hx h12 (by simp)
     exact ⟨Wd_norm b, by rw [val_norm, c], normed_norm _, Nat.le_trans (length_norm_le _) (by omega)⟩
   · rw [if_neg h3]
-    obtain ⟨a, b, c⟩ := hk x hx (by omega)
+    obtain ⟨a, b, c⟩ := hk (by omega)
     exact ⟨Wd_norm b, by rw [val_norm, c], normed_norm _, Nat.le_trans (length_norm_le _) (by omega)⟩
+
+theorem natSqrP_spec (ksqr : List Nat → List Nat) (hk : KSqrContract ksqr) : SqrContract (natSqrP ksqr) :=
+  fun x hx => natSqrP_at ksqr x hx (hk x hx)
 
 end FvModexp.Mdl
