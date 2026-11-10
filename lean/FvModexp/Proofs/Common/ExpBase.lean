@@ -95,6 +95,15 @@ theorem nlen_le_iff {x n : Nat} : nlen x ≤ n ↔ x < B ^ n := by
         exact Nat.le_trans (Nat.pow_le_pow_right (by omega) (by omega)) this
       omega
 
+theorem nlen_pos {x : Nat} (hx : 0 < x) : 1 ≤ nlen x := by
+  unfold nlen; simp only [Nat.ne_of_gt hx, ite_false]; omega
+
+theorem nlen_minimal {y : Nat} (hy : 0 < y) : B ^ (nlen y - 1) ≤ y := by
+  refine Nat.not_lt.mp (fun h => ?_)
+  have := nlen_le_iff.mpr h
+  have := nlen_pos hy
+  omega
+
 /-- `f^[j] z` (sequence of `j` squarings in the unrolled loops). -/
 def iter (f : Nat → Nat) : Nat → Nat → Nat
   | 0, z => z

@@ -114,15 +114,6 @@ def expNNOddMont (w : Nat) (x y m : Nat) : Nat :=
 def expNNOdd (x y m : Nat) : Nat :=
   if nlen y > 1 then expNNOddMont 4 x y m else expNNOddMont 2 x y m
 
-theorem nlen_pos {x : Nat} (hx : 0 < x) : 1 ≤ nlen x := by
-  unfold nlen; simp only [Nat.ne_of_gt hx, ite_false]; omega
-
-theorem nlen_minimal {y : Nat} (hy : 0 < y) : B ^ (nlen y - 1) ≤ y := by
-  refine Nat.not_lt.mp (fun h => ?_)
-  have := nlen_le_iff.mpr h
-  have := nlen_pos hy
-  omega
-
 theorem montK0_hk (m : Nat) (hm : m % 2 = 1) : (montK0 (m % B) * m + 1) % B = 0 := by
   have h := montK0_spec (m % B) (by
     have : m % B % 2 = m % 2 := by
