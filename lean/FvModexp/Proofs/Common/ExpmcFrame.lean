@@ -82,4 +82,37 @@ theorem liveFrame_of_frame {m m' : Memory} {L ws rs : List (Nat × Nat)} (h : Me
     (ho : ∀ a k, InRanges a k L → Outside a k ws → Outside a k rs) : LiveFrame m m' L ws :=
   ⟨fun a k hin hout => h.readLE a k (ho a k hin hout)⟩
 
+/-- A held range outside the extra written ranges keeps its bytes through a live call (`MemFrame` over
+`rt ++ ws1 ++ ws2`, `LiveFrame` exempting `ws2`). -/
+theorem held_readLE {rt L ws1 ws2 : List (Nat × Nat)} {m m' : Memory} {a n : Nat}
+    (hh : InRanges a n L ∨ Outside a n rt) (hf : MemFrame m m' (rt ++ ws1 ++ ws2)) (hl : LiveFrame m m' L ws2)
+    (h1 : Outside a n ws1) (h2 : Outside a n ws2) : m'.readLE a n = m.readLE a n := by
+  rcases hh with hh | hh
+  · exact hl.readLE a n hh h2
+  · exact hf.readLE a n (by simp only [outside_append]; exact ⟨⟨hh, h1⟩, h2⟩)
+
+theorem bv_ofNat_toNat (x : BitVec 64) : BitVec.ofNat 64 x.toNat = x := by
+  apply BitVec.eq_of_toNat_eq; simp
+
+/-- A read through a live call's frame at a stack slot (inside a window outside `rt`). -/
+theorem slot_read {rt cs z : List (Nat × Nat)} {base w : Memory} (F : MemFrame base w (rt ++ cs ++ z))
+    {lo len a k : Nat} (hwin : Outside lo len rt) (h1 : lo ≤ a) (h2 : a + k ≤ lo + len)
+    (hcs : Outside a k cs) (hz : Outside a k z) : w.readLE a k = base.readLE a k :=
+  F.readLE a k (by simp only [outside_append]; exact ⟨⟨hwin.of_sub h1 h2, hcs⟩, hz⟩)
+
+theorem readLE_writeLE_same {m : Memory} {a b k v : Nat} (h : a = b) : (m.writeLE a k v).readLE b k = v % 256 ^ k := by
+  subst h; exact Memory.readLE_writeLE_self _ _ _ _
+
+theorem readLE_zeroed {m : Memory} {a n : Nat} (h : Mem.Zeroed m a n) : m.readLE a n = 0 := by
+  induction n generalizing a with
+  | zero => rfl
+  | succ n ih =>
+    rw [Memory.readLE_succ, ih (fun i hi => by
+      have := h (i + 1) (by omega); rwa [show a + (i + 1) = a + 1 + i by omega] at this)]
+    have := h 0 (by omega); rw [Nat.add_zero] at this; rw [this]; rfl
+
+theorem sp_sub (x : BitVec 64) (k : Nat) (hk : k ≤ x.toNat) (hk' : k < 2 ^ 64) :
+    x - BitVec.ofNat 64 k = BitVec.ofNat 64 (x.toNat - k) := by
+  apply BitVec.eq_of_toNat_eq; rw [BitVec.toNat_sub, BitVec.toNat_ofNat, BitVec.toNat_ofNat]; omega
+
 end FvModexp.Expmc
