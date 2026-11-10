@@ -74,4 +74,12 @@ theorem frame_widen_rt {m m' : Memory} {rt ws : List (Nat × Nat)} (h : MemFrame
     MemFrame m m' (rt ++ ws) :=
   h.mono fun a k hk => by simp only [outside_append] at hk; exact hk.2
 
+theorem liveFrame_widen {m m' : Memory} {L ws ws' : List (Nat × Nat)} (h : LiveFrame m m' L ws)
+    (sub : ∀ a k, Outside a k ws' → Outside a k ws) : LiveFrame m m' L ws' :=
+  ⟨fun a k hin hout => h.readLE a k hin (sub a k hout)⟩
+
+theorem liveFrame_of_frame {m m' : Memory} {L ws rs : List (Nat × Nat)} (h : MemFrame m m' rs)
+    (ho : ∀ a k, InRanges a k L → Outside a k ws → Outside a k rs) : LiveFrame m m' L ws :=
+  ⟨fun a k hin hout => h.readLE a k (ho a k hin hout)⟩
+
 end FvModexp.Expmc

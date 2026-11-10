@@ -73,3 +73,23 @@ theorem readLE_setWin {m m' : Memory} (p i n N v : Nat) (h : i + n ≤ N)
   rw [e1, e2, Nat.mul_comm (B ^ i) v, Nat.mul_comm (B ^ (i + n))]
 
 end FvModexp.Expmc
+
+namespace FvModexp.Expmc
+open FvModexp.Exp
+
+theorem B_pow (n : Nat) : B ^ n = 2 ^ (64 * n) := by rw [B_def, ← Nat.pow_mul]
+
+/-- One `nat.montgomery` loop iteration (`montStep`) in terms of the intermediate values a run produces. -/
+theorem montStep_eq (n x m k d i Z c w0 v1 c2 Z1 v2 c3 Z2 z1i : Nat)
+    (e0 : win Z i n = w0) (e1 : v1 = (w0 + x * d) % B ^ n) (e2 : c2 = (w0 + x * d) / B ^ n)
+    (e3 : Z1 = setWin Z i n v1) (e4 : win Z1 i n = v1) (e5 : wd Z1 i = z1i)
+    (e6 : v2 = (v1 + m * (z1i * k % B)) % B ^ n) (e7 : c3 = (v1 + m * (z1i * k % B)) / B ^ n)
+    (e8 : Z2 = setWin Z1 i n v2) :
+    montStep n x m k d i (Z, c) =
+      (setWin Z2 (n + i) 1 (((c + c2) % B + c3) % B),
+        if (c + c2) % B < c2 ∨ ((c + c2) % B + c3) % B < c3 then 1 else 0) := by
+  subst e1 e2 e3 e6 e7 e8
+  simp only [montStep]
+  rw [e0, e4, e5]
+
+end FvModexp.Expmc
