@@ -5,7 +5,7 @@ import FvModexp.Proofs.Common.IntOps
 
 * `addMulStep`   the statement `z[len(x)+i] = addMulVVWW(z[i:i+len(x)], z[i:i+len(x)], x, d, 0)` (natmul.go:155, 129)
 * `basicSqr`     natmul.go:113 `basicSqr(stk, z, x)` (returns `z[0:2n]`)
-* `natSqr`       natmul.go:73 `(z nat) sqr(stk, x)`, parametrised by the `karatsubaSqr` kernel `ksqr`
+* `natSqrP`       natmul.go:73 `(z nat) sqr(stk, x)`, parametrised by the `karatsubaSqr` kernel `ksqr`
 -/
 namespace FvModexp.Mdl
 
@@ -369,7 +369,7 @@ def KSqrContract (ksqr : List Nat → List Nat) : Prop :=
     (ksqr x).length = 2 * x.length ∧ Wd (ksqr x) ∧ val (ksqr x) = val x * val x
 
 /-- natmul.go:73 `(z nat) sqr(stk, x)`.  `z.make(2n)` contents are irrelevant (all of `z[0:2n]` is overwritten): zeros are passed. -/
-def natSqr (ksqr : List Nat → List Nat) (x : List Nat) : List Nat :=
+def natSqrP (ksqr : List Nat → List Nat) (x : List Nat) : List Nat :=
   let n := x.length
   if n = 0 then [] else
   if n = 1 then (let q := mulWW (x.getD 0 0) (x.getD 0 0); norm [q.2, q.1]) else
@@ -377,9 +377,9 @@ def natSqr (ksqr : List Nat → List Nat) (x : List Nat) : List Nat :=
   if n < karatsubaSqrThreshold then norm (basicSqr (List.replicate (2 * n) 0) x) else
   norm (ksqr x)
 
-theorem natSqr_spec (ksqr : List Nat → List Nat) (hk : KSqrContract ksqr) : SqrContract (natSqr ksqr) := by
+theorem natSqrP_spec (ksqr : List Nat → List Nat) (hk : KSqrContract ksqr) : SqrContract (natSqrP ksqr) := by
   intro x hx
-  unfold natSqr
+  unfold natSqrP
   simp only []
   by_cases h0 : x.length = 0
   · rw [if_pos h0]

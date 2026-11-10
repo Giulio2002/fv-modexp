@@ -257,4 +257,17 @@ theorem intMul_spec (nmul : List Nat → List Nat → List Nat) (nsqr : List Nat
     rw [mkInt_ival, a2]; unfold GInt.ival
     cases hxn : x.neg <;> cases hyn : y.neg <;> simp [Int.natCast_mul, Int.neg_mul, Int.mul_neg]
 
+/-- `Int.mul` with `x != y` as pointers: only the nat multiplier is needed. -/
+theorem intMul_ne_spec (nmul : List Nat → List Nat → List Nat) (nsqr : List Nat → List Nat)
+    (hm : MulContract nmul) (x y : GInt) (hx : x.Ok) (hy : y.Ok) :
+    (intMul nmul nsqr false x y).Ok ∧ (intMul nmul nsqr false x y).Canon ∧
+    (intMul nmul nsqr false x y).ival = x.ival * y.ival ∧
+    (intMul nmul nsqr false x y).abs.length ≤ x.abs.length + y.abs.length := by
+  unfold intMul
+  simp only [Bool.false_eq_true, if_false]
+  obtain ⟨a1, a2, a3, a4⟩ := hm x.abs y.abs hx.1 hy.1
+  refine ⟨⟨a1, a3⟩, mkInt_canon _ _, ?_, a4⟩
+  rw [mkInt_ival, a2]; unfold GInt.ival
+  cases hxn : x.neg <;> cases hyn : y.neg <;> simp [Int.natCast_mul, Int.neg_mul, Int.mul_neg]
+
 end FvModexp.Mdl
