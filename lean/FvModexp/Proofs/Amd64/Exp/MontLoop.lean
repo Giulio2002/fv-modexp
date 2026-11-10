@@ -82,7 +82,73 @@ theorem loop (impl : List Amd64.Segment) (R : RtInv)
   induction r with
   | zero =>
     intro S i c M hir hpc hsp h0 h1 h2 h3 h6 h7 h8 h9 h10 h11 h12 h14 h15 hdf hfs hmem hF hval hcv
-    sorry
+    have hin : i = n := by omega
+    subst i
+    have hc1 : c ≤ 1 := hcv ▸ FvModexp.Expmc.montIter_c_le _ _ _ _ _ _
+    have hwo : ∀ a k, sp - 4104 ≤ a → a + k ≤ sp + 288 → (a + k ≤ sp - 8 ∨ sp + 0x60 ≤ a) →
+        (a + k ≤ sp + 0x78 ∨ sp + 0xa0 ≤ a) → (a + k ≤ sp + 0xa8 ∨ sp + 0xb0 ≤ a) → Outside a k (loopWs zp n sp) := by
+      intro a k h1 h2 h3 h4 h5
+      have := hzs; unfold Apart at this
+      simp only [loopWs, outside_cons, outside_nil, and_true]; omega
+    have hfo : ∀ a k, Apart a k zp (8 * cap) → Apart a k (sp - 4104) (4104 + 288) → Outside a k (loopWs zp n sp) := by
+      intro a k h1 h2
+      unfold Apart at h1 h2
+      simp only [loopWs, outside_cons, outside_nil, and_true]; omega
+    have eA : ∀ a k w, M.accessible a k w = M0.accessible a k w := hF.accessible
+    have hinvM : R.inv b L (s.regs 14).toNat (view R.rt L M) := by
+      refine FvModexp.Expmc.inv_frame hF (fun r hr => ?_) hinv
+      simp only [loopWs, List.mem_cons, List.mem_nil_iff, or_false] at hr
+      rcases hr with rfl | rfl | rfl | rfl
+      · exact hzh.imp (fun h => h.sub (Nat.le_refl _) (by omega)) (fun h => h.of_sub (Nat.le_refl _) (by omega))
+      all_goals exact Or.inr (hwin.of_sub (by omega) (by omega))
+    have rd : ∀ a v, sp - 4104 ≤ a → a + 8 ≤ sp + 288 → (a + 8 ≤ sp - 8 ∨ sp + 0x60 ≤ a) →
+        (a + 8 ≤ sp + 0x78 ∨ sp + 0xa0 ≤ a) → (a + 8 ≤ sp + 0xa8 ∨ sp + 0xb0 ≤ a) → M0.readLE a 8 = v →
+        M.readLE a 8 = v := fun a v h1 h2 h3 h4 h5 h => by rw [hF.readLE _ _ (hwo a 8 h1 h2 h3 h4 h5)]; exact h
+    rw [← hfs] at htb htr htg hts htz
+    refine Amd64.Tactic.Reaches.mono (MontExit.exit (impl := impl) (R := R) (hsub := hsub) (hmv := hmv) (ret := ret)
+      (hret := hret) (s := s) (L := L) (b := b) (S := S) (sp := sp) (zp := zp) (cap := cap) (mp := mp) (mc := mc)
+      (n := n) (c := c) (M := M) (hpc := hpc) (hsp := hsp) (hsps := hsps) (h0 := h0) (h1 := h1) (h2 := h2) (h3 := h3)
+      (h10 := h10) (h11 := h11) (h12 := h12) (h14 := h14) (h15 := h15) (hmem := hmem) (hx15 := hx15) (hdf := hdf)
+      (hal := hal) (hsp4 := hsp4) (hsp48 := hsp48) (hacc := by rw [eA]; exact hacc)
+      (hret0 := rd _ _ (by omega) (by omega) (by omega) (by omega) (by omega) hret0)
+      (hbp := rd _ _ (by omega) (by omega) (by omega) (by omega) (by omega) hbp)
+      (hn := hn) (hn2 := hn2) (hcap := hcap) (hc := hc1) (hmc := hmc) (hmc' := hmc') (hzp := hzp)
+      (hzacc := by rw [eA]; exact hzacc) (hmacc := by rw [eA]; exact hmacc) (hmp := hmp) (hzm := hzm) (hzs := hzs)
+      (hms := hms)
+      (r68 := rd _ _ (by omega) (by omega) (by omega) (by omega) (by omega) r68)
+      (ra0 := rd _ _ (by omega) (by omega) (by omega) (by omega) (by omega) ra0)
+      (rc0 := rd _ _ (by omega) (by omega) (by omega) (by omega) (by omega) rc0)
+      (rd0 := rd _ _ (by omega) (by omega) (by omega) (by omega) (by omega) rd0)
+      (re0 := rd _ _ (by omega) (by omega) (by omega) (by omega) (by omega) re0)
+      (htb := htb) (htr := by rw [eA]; exact htr) (htg := by rw [hF.readLE _ _ (hfo _ _ htz hts)]; exact htg)
+      (hts := hts) (htz := htz) (hg := hg) (hgacc := by rw [eA]; exact hgacc) (hgs := hgs) (hgz := hgz)
+      (hguard := by rw [hF.readLE _ _ (hfo _ _ hgz hgs)]; exact hguard) (hgrt := hgrt) (hwin := hwin) (hzh := hzh)
+      (hLs := hLs) (hinv := hinvM) (hok := hok)) ?_
+    intro o ho
+    cases o with
+    | stub _ _ _ => exact ho.elim
+    | returned s' =>
+      simp only [isReturn_returned] at ho ⊢
+      obtain ⟨e1, e2, e3, e4, e5, e6, e7, ev, ei, ef, el⟩ := ho
+      refine ⟨e1, e2, e3, e4, e5, e6, e7, ?_, ei, ?_, ?_⟩
+      · rw [ev, hcv, hF.readLE _ _ (hfo _ _ (hzm.symm) hms),
+          FvModexp.Expmc.readLE_win M zp n n (2 * n) (by omega), hval]
+        unfold montgomery
+        rw [FvModexp.Expmc.B_pow]
+      · refine hF.trans ef (fun a k hk => ?_)
+        simp only [loopWs, outside_append, outside_cons, outside_nil, and_true] at hk ⊢
+        obtain ⟨hrt, hw, hz⟩ := hk
+        exact ⟨⟨by omega, by omega, by omega, by omega⟩, hrt, by omega, by omega⟩
+      · refine (FvModexp.Expmc.liveFrame_of_frame hF ?_).trans
+          (FvModexp.Expmc.liveFrame_widen el ?_) (fun _ _ h => h)
+        · intro a k hin hout
+          obtain ⟨r, hr, h1, h2⟩ := hin
+          have := hLs r hr
+          simp only [loopWs, outside_cons, outside_nil, and_true] at this hout ⊢
+          omega
+        · intro a k h
+          simp only [outside_cons, outside_nil, and_true] at h ⊢
+          omega
   | succ r ih =>
     intro S i c M hir hpc hsp h0 h1 h2 h3 h6 h7 h8 h9 h10 h11 h12 h14 h15 hdf hfs hmem hF hval hcv
     have hi : i < n := by omega
