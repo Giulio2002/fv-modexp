@@ -150,4 +150,30 @@ theorem cmp_model (m : Memory) (x y lx ly : Nat) (r : BitVec 64)
       · simp [h1, h2]; try rfl
       · simp [h1, h2]; try rfl
 
+/-- a memory slice and a carry with the same value as a model output of the same length are that output -/
+theorem limbs_of_value (m' : Memory) (z n c : Nat) (L : List Nat) (c' : Nat) (hL : Mdl.Wd L) (hlen : L.length = n)
+    (h : lv m' z n + 2 ^ (64 * n) * c = Mdl.val L + 2 ^ (64 * n) * c') : limbs m' z n = L ∧ c = c' := by
+  have hlt := Mdl.val_lt hL
+  rw [hlen] at hlt
+  obtain ⟨e1, e2⟩ := split_unique (lv_lt m' z n) hlt h
+  exact ⟨eq_of_val (Wd_limbs m' z n) hL (by simp [hlen]) (by rw [val_limbs]; exact e1), e2⟩
+
+/-- `mulAddVWW` (value form `Z + 2^(64 n) c = X·y + r`) agrees with the model `Mdl.mulAddVWW` (arith.go:244) -/
+theorem mulAddVWW_model (m m' : Memory) (z x n y r c : Nat) (hy : y < 2 ^ 64) (hr : r < 2 ^ 64)
+    (h : lv m' z n + 2 ^ (64 * n) * c = lv m x n * y + r) :
+    limbs m' z n = (Mdl.mulAddVWW (limbs m x n) y r).1 ∧ c = (Mdl.mulAddVWW (limbs m x n) y r).2 := by
+  obtain ⟨hl, hw, -, hv⟩ := Mdl.mulAddVWW_spec (limbs m x n) y r (Wd_limbs m x n) hy hr
+  simp only [length_limbs, val_limbs] at hl hv
+  exact limbs_of_value m' z n c _ _ hw hl (by rw [h, hv])
+
+/-- `addMulVVWW` (value form `Z + 2^(64 n) c = X + Y·m + a`) agrees with the model `Mdl.addMulVVWW` (arith.go:255) -/
+theorem addMulVVWW_model (m0 m' : Memory) (z x y n mv a c : Nat) (hm : mv < 2 ^ 64) (ha : a < 2 ^ 64)
+    (h : lv m' z n + 2 ^ (64 * n) * c = lv m0 x n + lv m0 y n * mv + a) :
+    limbs m' z n = (Mdl.addMulVVWW (limbs m0 x n) (limbs m0 y n) mv a).1 ∧
+      c = (Mdl.addMulVVWW (limbs m0 x n) (limbs m0 y n) mv a).2 := by
+  obtain ⟨hl, hw, -, hv⟩ := Mdl.addMulVVWW_spec (limbs m0 x n) (limbs m0 y n) mv a (Wd_limbs m0 x n) (Wd_limbs m0 y n)
+    (by simp) hm ha
+  simp only [length_limbs, val_limbs] at hl hv
+  exact limbs_of_value m' z n c _ _ hw hl (by rw [h, hv])
+
 end FvModexp.Asm
