@@ -17,3 +17,12 @@ module elaboration profiles: `docs/PERF.md`.
 | `github.com/ethereum/go-ethereum/core/vm.(*bigModExp).RequiredGas` | infra | in progress | in progress | row 2: lengths pass -> `requiredGas fork data (parseLengths data)` for `.fusaka ≤ fork` (receiver = Osaka flags) |
 
 Pure-Lean row 3 (no machine code): `FvModexp.Proofs.Compose.composition` in `lean/FvModexp/Proofs/Common/Compose.lean`, checked by `make build`.
+
+## Function summaries feeding row 1 (owner top unless noted; all about the Run extraction)
+
+| Function | arm64 | amd64 | Module / theorem |
+|---|---|---|---|
+| go-bigmodexpfix `nat.setBytes` | proved (no sorry) | proved (no sorry) | `Proofs/<Isa>/Nat/SetBytes.lean`: `FvModexp.<Isa>.SetBytes.{ens,sum}` |
+| math/big `nat.setBytes` | proved (no sorry) | proved (no sorry) | `Proofs/<Isa>/Nat/SetBytesStd.lean`: `FvModexp.<Isa>.SetBytesStd.{ens,sum}` |
+| `(*Int).Mod`, `(*Int).exp`, `(*Int).Bytes` | hypothesis (interface draft v1) | todo | `Proofs/Arm64/Top/RunIface.lean`: `ModSpec`, `ExpSpec`, `BytesSpec` |
+| `(*bigModExp).Run` body | todo | todo | — |
