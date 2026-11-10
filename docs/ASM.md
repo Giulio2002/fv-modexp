@@ -44,7 +44,7 @@ Machine-code SUMMARY theorems for the leaf routines `(*bigModExp).Run` reaches (
 | `divWW` | amd64 | — | — | todo |
 | `reciprocalWord` | arm64 | — | — | todo |
 | `reciprocalWord` | amd64 | — (inlined into its callers) | — | n/a |
-| `lshVU.abi0`, `rshVU.abi0` | both | WIP (`wip/LshVUSum.lean.wip`, Nat lemmas in `Common/AsmShift.lean`) | — | todo |
+| `lshVU.abi0`, `rshVU.abi0` | both | WIP (`wip/LshVUSum.lean.wip`, `wip/AsmShift.lean.wip`: unfinished, moved out of the Lean tree) | — | todo |
 | `divWVW`, `addVW`, `subVW`, `nat.mulAddWW`, `nat.setBytes`, `nat.bytes`/`Int.Bytes` | both | — | — | todo |
 
 ## Preconditions and the real call sites (go-bigmodexpfix f9e208c548ab, `src/math/big`)
