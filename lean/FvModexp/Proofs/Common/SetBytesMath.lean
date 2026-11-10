@@ -94,3 +94,52 @@ theorem byte_or_step (m : Memory) (a t : Nat) (ht : t < 8) (D SH : BitVec 64) (h
     beVal_byte_step]
 
 end FvModexp
+
+namespace FvModexp
+
+open Janus Janus.Arm64
+
+theorem byte64_toNat (m : Memory) (a : Nat) :
+    (BitVec.setWidth 64 (BitVec.setWidth 32 (BitVec.ofNat 8 (m.readLE a 1)))).toNat = (m.bytes a).toNat := by
+  simp only [BitVec.toNat_setWidth, BitVec.toNat_ofNat, Memory.readLE_one]
+  have := (m.bytes a).isLt
+  rw [Nat.mod_eq_of_lt this, Nat.mod_eq_of_lt (by omega), Nat.mod_eq_of_lt (by omega)]
+
+/-- One iteration of the byte loop as the amd64 executor leaves it (`SHLQ CL`, the `SBBQ` mask, `ORQ`). -/
+theorem byte_or_step64 (m : Memory) (a t : Nat) (ht : t < 8) (D SH : BitVec 64) (hSH : SH.toNat = 8 * t)
+    (hD : D.toNat = beVal m (a + 1) t) :
+    (D ||| (BitVec.setWidth 64 (BitVec.setWidth 32 (BitVec.ofNat 8 (m.readLE a 1))) <<< (SH.toNat % 64) &&&
+      if SH.toNat < 64 then 18446744073709551615#64 else 0#64)).toNat = beVal m a (t + 1) := by
+  have hlt : SH.toNat < 64 := by omega
+  rw [if_pos hlt]
+  have hb := (m.bytes a).isLt
+  have hpow : 2 ^ (8 * t) ≤ 2 ^ 56 := Nat.pow_le_pow_right (by decide) (by omega)
+  have hprod : (m.bytes a).toNat * 2 ^ (8 * t) < 2 ^ 64 := by
+    calc (m.bytes a).toNat * 2 ^ (8 * t) < 256 * 2 ^ 56 :=
+          Nat.mul_lt_mul_of_lt_of_le hb hpow (Nat.two_pow_pos _)
+      _ = 2 ^ 64 := by decide
+  have h1 : (18446744073709551615#64).toNat = 2 ^ 64 - 1 := rfl
+  rw [BitVec.toNat_or, BitVec.toNat_and, h1, Nat.and_two_pow_sub_one_eq_mod, BitVec.toNat_shiftLeft, byte64_toNat,
+    hSH, Nat.mod_eq_of_lt (show 8 * t < 64 by omega), Nat.shiftLeft_eq, Nat.mod_mod, Nat.mod_eq_of_lt hprod, hD,
+    or_shift_eq_add _ _ _ (by
+      have := beVal_lt m (a + 1) t
+      rwa [show (256 : Nat) ^ t = 2 ^ (8 * t) by rw [show (256 : Nat) = 2 ^ 8 by rfl, ← Nat.pow_mul]] at this),
+    beVal_byte_step]
+
+end FvModexp
+
+namespace FvModexp
+
+open Janus Janus.Arm64
+
+/-- The same when the executor took `SHLQ CL` with `CL = 0` (no shift: the first byte, `t = 0`). -/
+theorem byte_or_step64_zero (m : Memory) (a t : Nat) (D SH : BitVec 64) (hSH : SH.toNat = 8 * t) (h0 : SH.toNat % 64 = 0)
+    (ht : t < 8) (hD : D.toNat = beVal m (a + 1) t) :
+    (D ||| (BitVec.setWidth 64 (BitVec.setWidth 32 (BitVec.ofNat 8 (m.readLE a 1))) &&&
+      if SH.toNat < 64 then 18446744073709551615#64 else 0#64)).toNat = beVal m a (t + 1) := by
+  have ht0 : t = 0 := by omega
+  subst ht0
+  have := byte_or_step64 m a 0 (by omega) D SH hSH hD
+  rwa [h0, BitVec.shiftLeft_zero] at this
+
+end FvModexp

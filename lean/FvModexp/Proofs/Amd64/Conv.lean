@@ -31,3 +31,19 @@ def CallEnv (R : RtInv) (L : List (Nat × Nat)) (s : State) (stk above : Nat) : 
 @[reducible] def cA (name : String) : Nat := Extracted.program.contractAddr name
 
 end FvModexp.Amd64
+
+namespace FvModexp.Amd64
+
+open Janus Janus.Amd64
+
+/-- A read-only data object (`x`, `l` inside data object `k`) is apart from every writable range (amd64; see the arm64
+twin: never `janus64_data hd [hw]` on the Run extraction). -/
+theorem apart_of_data {m : Janus.Arm64.Memory} (hd : Extracted.program.DataLoaded m) (k : Nat)
+    (hk : k < Extracted.program.data.length) {x l a n : Nat}
+    (hin : (Extracted.program.data[k]).base ≤ x ∧
+      x + l ≤ (Extracted.program.data[k]).base + (Extracted.program.data[k]).bytes.length)
+    (hw : m.accessible a n true = true) : Apart x l a n := by
+  have := Janus.Amd64.Tactic.disjoint_of_dataLoaded hd k hk hw
+  unfold Apart; omega
+
+end FvModexp.Amd64
