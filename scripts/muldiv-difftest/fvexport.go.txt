@@ -1,0 +1,82 @@
+package big
+
+// Exports of unexported go-bigmodexpfix internals for the mul/div differential test (scripts/muldiv-difftest).
+
+import "math/rand"
+
+func w2n(w []uint64) nat {
+	z := make(nat, len(w))
+	for i, v := range w {
+		z[i] = Word(v)
+	}
+	return z
+}
+func n2w(z nat) []uint64 {
+	w := make([]uint64, len(z))
+	for i, v := range z {
+		w[i] = uint64(v)
+	}
+	return w
+}
+
+// FvRandWords: random limbs biased to 0 / MaxUint64 (raw, not normalised).
+func FvRandWords(r *rand.Rand, n int) []uint64 {
+	z := make([]uint64, n)
+	for i := range z {
+		z[i] = r.Uint64()
+		switch r.Intn(6) {
+		case 0:
+			z[i] = 0
+		case 1:
+			z[i] = ^uint64(0)
+		}
+	}
+	return z
+}
+
+func FvMul(x, y []uint64) []uint64 { return n2w(nat(nil).mul(nil, w2n(x), w2n(y))) }
+func FvSqr(x []uint64) []uint64    { return n2w(nat(nil).sqr(nil, w2n(x))) }
+func FvBasicSqr(x []uint64) []uint64 {
+	stk := getStack()
+	defer stk.free()
+	z := make(nat, 2*len(x))
+	basicSqr(stk, z, w2n(x))
+	return n2w(z)
+}
+func FvKaratsuba(x, y []uint64) []uint64 {
+	stk := getStack()
+	defer stk.free()
+	z := make(nat, 2*len(x))
+	karatsuba(stk, z, w2n(x), w2n(y))
+	return n2w(z)
+}
+func FvKaratsubaSqr(x []uint64) []uint64 {
+	stk := getStack()
+	defer stk.free()
+	z := make(nat, 2*len(x))
+	karatsubaSqr(stk, z, w2n(x))
+	return n2w(z)
+}
+
+// FvDivBasic: q (given contents), u (in place), v; returns final q, u.
+func FvDivBasic(q, u, v []uint64) ([]uint64, []uint64) {
+	stk := getStack()
+	defer stk.free()
+	qq, uu := w2n(q), w2n(u)
+	qq.divBasic(stk, uu, w2n(v))
+	return n2w(qq), n2w(uu)
+}
+func FvDivRecursive(q, u, v []uint64) ([]uint64, []uint64) {
+	stk := getStack()
+	defer stk.free()
+	qq, uu := w2n(q), w2n(u)
+	qq.divRecursive(stk, uu, w2n(v))
+	return n2w(qq), n2w(uu)
+}
+func FvDiv(u, v []uint64) ([]uint64, []uint64) {
+	q, r := nat(nil).div(nil, nil, w2n(u), w2n(v))
+	return n2w(q), n2w(r)
+}
+func FvSetBytes(b []byte) []uint64 { return n2w(nat(nil).setBytes(b)) }
+func FvBytes(x []uint64) []byte    { return new(Int).SetBits(w2n(x)).Bytes() }
+func FvBitLen(x []uint64) int      { return w2n(x).bitLen() }
