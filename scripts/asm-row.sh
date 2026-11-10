@@ -19,7 +19,8 @@ $JANUS extract "$HB/harness-$isa" "$sym" "$out" "$@" >"$log" 2>&1 || { echo "ext
 timeout 900 memcap -m 16G $JANUS verify "$out" --proof "$pf" --proof-root lean "${th[@]}" >>"$log" 2>&1 &
 bg=$!; peak=0; cg=""
 while kill -0 $bg 2>/dev/null; do
-  if [ -z "$cg" ]; then p=$(pgrep -P $bg -f "janus verify" | head -1); [ -n "$p" ] && cg=$(cut -d: -f3 /proc/$p/cgroup 2>/dev/null); fi
+  if [ -z "$cg" ]; then p=$(pgrep -f "janus verify $out " | head -1)
+    if [ -n "$p" ]; then c=$(cut -d: -f3 /proc/$p/cgroup 2>/dev/null); case "$c" in */run-*.scope) cg=$c;; esac; fi; fi
   if [ -n "$cg" ] && [ -r /sys/fs/cgroup$cg/memory.peak ]; then v=$(cat /sys/fs/cgroup$cg/memory.peak 2>/dev/null || echo 0); [ "${v:-0}" -gt $peak ] && peak=$v; fi
   sleep 2
 done
