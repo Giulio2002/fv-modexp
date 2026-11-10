@@ -65,3 +65,25 @@ theorem asr63_mask (a b x : Nat) (h : a < b) (hb : b < 2 ^ 63) (hx : x < 2 ^ 64)
   rw [this, Nat.and_comm, Nat.and_two_pow_sub_one_eq_mod, Nat.mod_eq_of_lt hx]
 
 end FvModexp
+
+namespace FvModexp
+
+/-- amd64 form (mask on the left): `((a - b) >>s 63) & x = x` for `a < b < 2^63`. -/
+theorem sshr_land_lt (a b x : Nat) (h : a < b) (hb : b < 2 ^ 63) (hx : x < 2 ^ 64) :
+    ((BitVec.ofNat 64 a - BitVec.ofNat 64 b).sshiftRight 63).toNat &&& x = x := by
+  rw [Nat.and_comm]
+  exact land_sshr63 x _ hx (by rw [BitVec.toNat_sub, BitVec.toNat_ofNat, BitVec.toNat_ofNat]; omega)
+
+theorem two_sub_one (n : Nat) (h : n < 2 ^ 62) :
+    BitVec.ofNat 64 (2 * n) - BitVec.ofNat 64 n = BitVec.ofNat 64 n := by
+  apply BitVec.eq_of_toNat_eq; rw [BitVec.toNat_sub, BitVec.toNat_ofNat, BitVec.toNat_ofNat]; simp; omega
+
+end FvModexp
+
+namespace FvModexp
+
+theorem neg_sshr_land_lt (x a b : Nat) (hx : x < 2 ^ 64) (h : a < b) (hb : b < 2 ^ 63) :
+    ((0#64 - (BitVec.ofNat 64 b - BitVec.ofNat 64 a)).sshiftRight 63).toNat &&& x = x := by
+  rw [Nat.and_comm]; exact mask_neg_sub_lt x a b hx h hb
+
+end FvModexp

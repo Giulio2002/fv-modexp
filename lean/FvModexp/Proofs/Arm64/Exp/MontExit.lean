@@ -19,24 +19,6 @@ namespace FvModexp.Arm64.MontExit
 open FvModexp.Arm64.MontHyp
 
 
-/-- The frame facts of an exit path whose stores lie in the window and in `z[:n]`. -/
-theorem close_frame {R : RtInv} {L : List (Nat × Nat)} {b g lo hi zp n : Nat} {M w : Memory}
-    (hF : MemFrame M w [(lo, hi), (zp, zp + 8 * n)]) (hwin : Outside lo (hi - lo) R.rt)
-    (hzh : InRanges zp (8 * n) L ∨ Outside zp (8 * n) R.rt) (hLs : LiveSep L [(lo, hi)])
-    (hinv : R.inv b L g (view R.rt L M)) :
-    R.inv b L g (view R.rt L w) ∧ MemFrame M w (R.rt ++ [(lo, hi), (zp, zp + 8 * n)]) ∧
-      LiveFrame M w L [(zp, zp + 8 * n)] := by
-  refine ⟨FvModexp.Expmc.inv_frame hF (fun r hr => ?_) hinv, FvModexp.Expmc.frame_widen_rt hF, ?_⟩
-  · simp only [List.mem_cons, List.mem_nil_iff, or_false] at hr
-    rcases hr with rfl | rfl
-    · exact Or.inr hwin
-    · simpa using hzh
-  · refine ⟨fun a k hin hout => hF.readLE a k ?_⟩
-    obtain ⟨r, hr, h1, h2⟩ := hin
-    have := hLs r hr
-    simp only [outside_cons, outside_nil, and_true] at this hout ⊢
-    omega
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 theorem exit (impl : List Segment) (R : RtInv)
@@ -98,6 +80,6 @@ theorem exit (impl : List Segment) (R : RtInv)
     · exact FvModexp.Expmc.frame_widen2 (by janus_assumption : MemFrame M _ _) (by omega) (by omega) (by omega) (by omega)
   · -- subVV(z[:n], z[n:], m)
     exact ⟨hspq, (by janus_assumption : _ = _),
-      close_frame (by janus_frame) (by rw [show sp + 312 - (sp - 4096) = 4096 + 312 by omega]; exact hwin) hzh8 hLs hinv⟩
+      FvModexp.Expmc.close_frame (by janus_frame) (by rw [show sp + 312 - (sp - 4096) = 4096 + 312 by omega]; exact hwin) hzh8 hLs hinv⟩
 
 end FvModexp.Arm64.MontExit

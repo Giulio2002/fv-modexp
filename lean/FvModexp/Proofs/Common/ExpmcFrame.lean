@@ -115,4 +115,42 @@ theorem sp_sub (x : BitVec 64) (k : Nat) (hk : k ≤ x.toNat) (hk' : k < 2 ^ 64)
     x - BitVec.ofNat 64 k = BitVec.ofNat 64 (x.toNat - k) := by
   apply BitVec.eq_of_toNat_eq; rw [BitVec.toNat_sub, BitVec.toNat_ofNat, BitVec.toNat_ofNat]; omega
 
+/-- The frame facts of an exit path whose stores lie in the window and in `z[:n]`. -/
+theorem close_frame {R : RtInv} {L : List (Nat × Nat)} {b g lo hi zp n : Nat} {M w : Memory}
+    (hF : MemFrame M w [(lo, hi), (zp, zp + 8 * n)]) (hwin : Outside lo (hi - lo) R.rt)
+    (hzh : InRanges zp (8 * n) L ∨ Outside zp (8 * n) R.rt) (hLs : LiveSep L [(lo, hi)])
+    (hinv : R.inv b L g (view R.rt L M)) :
+    R.inv b L g (view R.rt L w) ∧ MemFrame M w (R.rt ++ [(lo, hi), (zp, zp + 8 * n)]) ∧
+      LiveFrame M w L [(zp, zp + 8 * n)] := by
+  refine ⟨inv_frame hF (fun r hr => ?_) hinv, frame_widen_rt hF, ?_⟩
+  · simp only [List.mem_cons, List.mem_nil_iff, or_false] at hr
+    rcases hr with rfl | rfl
+    · exact Or.inr hwin
+    · simpa using hzh
+  · refine ⟨fun a k hin hout => hF.readLE a k ?_⟩
+    obtain ⟨r, hr, h1, h2⟩ := hin
+    have := hLs r hr
+    simp only [outside_cons, outside_nil, and_true] at this hout ⊢
+    omega
+
+/-- Widening a callee's two stack ranges and its destination into the caller's window and range. -/
+theorem frame_widen2' {m m' : Memory} {rt : List (Nat × Nat)} {a1 b1 a2 b2 lo hi z1 z2 y1 y2 : Nat}
+    (h : MemFrame m m' (rt ++ [(a1, b1), (a2, b2)] ++ [(z1, z2)])) (h1 : lo ≤ a1) (h2 : b1 ≤ hi) (h3 : lo ≤ a2)
+    (h4 : b2 ≤ hi) (h5 : y1 ≤ z1) (h6 : z2 ≤ y2) : MemFrame m m' (rt ++ [(lo, hi), (y1, y2)]) :=
+  h.mono fun a k hk => by
+    simp only [outside_append, outside_cons, outside_nil, and_true] at hk ⊢
+    obtain ⟨hrt, hw, hz⟩ := hk
+    exact ⟨⟨hrt, by omega, by omega⟩, by omega⟩
+
+/-- A range inside a window that no live object meets is outside the live set. -/
+theorem outside_of_liveSep {L : List (Nat × Nat)} {lo hi a k : Nat} (hLs : LiveSep L [(lo, hi)]) (h1 : lo ≤ a)
+    (h2 : a + k ≤ hi) : Outside a k L := by
+  induction L with
+  | nil => trivial
+  | cons r L ih =>
+    obtain ⟨r1, r2⟩ := r
+    have := hLs (r1, r2) (List.mem_cons_self ..)
+    simp only [outside_cons, outside_nil, and_true] at this ⊢
+    exact ⟨by omega, ih (fun r hr => hLs r (List.mem_cons_of_mem _ hr))⟩
+
 end FvModexp.Expmc
