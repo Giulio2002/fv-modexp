@@ -66,3 +66,35 @@ def Mid (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc bp bl : BitVec 64) 
     LiveFrame s.mem m L [(zp.toNat, zp.toNat + 8 * zc.toNat)]
 
 end FvModexp.Arm64.SetBytes
+
+namespace FvModexp.Arm64.SetBytes
+
+open Janus Janus.Arm64 Janus.Tactic Janus.Spec Janus.Contracts
+
+/-- A store of a limb into the array keeps the loop-head facts. -/
+theorem Mid.store {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc bp bl : BitVec 64} {s : State}
+    {ret p c : Nat} {L' : List (Nat × Nat)} {b' : Nat} {m : Memory}
+    (h : Mid R b L zp zc bp bl s ret p c L' b' m) {a : Nat} (v : Nat) (h1 : p ≤ a) (h2 : a + 8 ≤ p + 8 * c) :
+    Mid R b L zp zc bp bl s ret p c L' b' (m.writeLE a 8 v) := by
+  obtain ⟨hm1, hm2, hbuf, hnc, hp8, hp48, hpacc, hpb, hpw, hpheld, hext, hb', hinv, hor, hfr, hlf⟩ := h
+  unfold Apart at hpb hpw
+  have hs : 4160 ≤ s.sp.toNat → True := fun _ => trivial
+  refine ⟨?_, ?_, ?_, hnc, hp8, hp48, ?_, by unfold Apart; omega, by unfold Apart; omega, hpheld, hext, hb', ?_, hor, ?_, ?_⟩
+  · rw [Memory.readLE_writeLE_of_disjoint _ _ (by omega)]; exact hm1
+  · rw [Memory.readLE_writeLE_of_disjoint _ _ (by omega)]; exact hm2
+  · intro x k hx1 hx2
+    by_cases hk : k = 0
+    · subst hk; rfl
+    · rw [Memory.readLE_writeLE_of_disjoint _ _ (by omega)]; exact hbuf x k hx1 hx2
+  · simpa only [Memory.accessible_writeLE] using hpacc
+  · exact inv_store_held hinv (hpheld.sub h1 h2)
+  · rcases hor with ⟨rfl, rfl⟩ | ⟨hin, -⟩
+    · exact MemFrame.writeLE_inRanges hfr v ⟨(zp.toNat, zp.toNat + 8 * zc.toNat), by simp, h1, h2⟩
+    · obtain ⟨r, hr, hr1, hr2⟩ := hin
+      exact MemFrame.writeLE_inRanges hfr v ⟨r, by simp [hr], by omega, by omega⟩
+  · rcases hor with ⟨rfl, rfl⟩ | ⟨-, hap⟩
+    · exact LiveFrame.writeLE_ws hlf v ⟨(zp.toNat, zp.toNat + 8 * zc.toNat), by simp, h1, h2⟩
+    · exact LiveFrame.writeLE hlf v (ApartAll.outside (fun r hr => by
+        have := hap r hr; unfold Apart at this ⊢; omega))
+
+end FvModexp.Arm64.SetBytes

@@ -69,3 +69,28 @@ theorem natVal_zero_top (m : Memory) (p k : Nat) (h : m.readLE (p + 8 * k) 8 = 0
   rw [natVal_succ, h, Nat.mul_zero, Nat.add_zero]
 
 end FvModexp
+
+namespace FvModexp
+
+open Janus Janus.Arm64
+
+/-- One iteration of the byte loop as the arm64 executor leaves it (`LSL` by `SH`, `CSEL` on `SH < 64`, `ORR`). -/
+theorem byte_or_step (m : Memory) (a t : Nat) (ht : t < 8) (D SH : BitVec 64) (hSH : SH.toNat = 8 * t)
+    (hD : D.toNat = beVal m (a + 1) t) :
+    (D ||| (if SH.toNat < 64 then BitVec.ofNat 64 (m.readLE a 1 * 2 ^ (SH.toNat % 64)) else 0#64)).toNat =
+      beVal m a (t + 1) := by
+  have hlt : SH.toNat < 64 := by omega
+  rw [ite_eq_left hlt, BitVec.toNat_or, BitVec.toNat_ofNat, hSH, Nat.mod_eq_of_lt (show 8 * t < 64 by omega)]
+  have hb := (m.bytes a).isLt
+  have hpow : 2 ^ (8 * t) ≤ 2 ^ 56 := Nat.pow_le_pow_right (by decide) (by omega)
+  have hprod : (m.bytes a).toNat * 2 ^ (8 * t) < 2 ^ 64 := by
+    calc (m.bytes a).toNat * 2 ^ (8 * t) < 256 * 2 ^ 56 :=
+          Nat.mul_lt_mul_of_lt_of_le hb hpow (Nat.two_pow_pos _)
+      _ = 2 ^ 64 := by decide
+  simp only [Memory.readLE_one]
+  rw [Nat.mod_eq_of_lt hprod, hD, or_shift_eq_add _ _ _ (by
+    have := beVal_lt m (a + 1) t
+    rwa [show (256 : Nat) ^ t = 2 ^ (8 * t) by rw [show (256 : Nat) = 2 ^ 8 by rfl, ← Nat.pow_mul]] at this),
+    beVal_byte_step]
+
+end FvModexp
