@@ -495,4 +495,297 @@ theorem one_lem {z x y n m a : Nat} (s : State) (hc : Ctx s z x y n m a) :
     case s6 => simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; rfl
     all_goals (simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega)
 
+/-! ### the ADX path: `MULXQ`, carry chains in `CF` (`ADCXQ`) and `OF` (`ADOXQ`) -/
+
+/-- one ADX limb: `t = (m·y) mod B + H + cf` (`ADCXQ`), `u = t mod B + x + of` (`ADOXQ`) -/
+theorem toNat_le_one (c : Bool) : c.toNat ≤ 1 := by cases c <;> simp
+
+theorem adx1 (p H xa c o : Nat) (hp : p ≤ 18446744073709551615 * 18446744073709551615)
+    (hH : H < 18446744073709551616) (hx : xa < 18446744073709551616) (hc : c ≤ 1) (ho : o ≤ 1) :
+    ((p % 18446744073709551616 + H + c) % 18446744073709551616 + xa + o) % 18446744073709551616 +
+      18446744073709551616 * (p / 18446744073709551616 +
+        (decide (18446744073709551616 ≤ p % 18446744073709551616 + H + c)).toNat +
+        (decide (18446744073709551616 ≤ (p % 18446744073709551616 + H + c) % 18446744073709551616 + xa + o)).toNat) =
+    xa + p + (H + c + o) := by
+  have e : 18446744073709551615 * 18446744073709551615 = 340282366920938463426481119284349108225 := by decide
+  have hq : p / 18446744073709551616 < 18446744073709551616 - 1 := Nat.div_lt_of_lt_mul (by omega)
+  have h1 := Nat.mod_add_div p 18446744073709551616
+  have h3 : p % 18446744073709551616 < 18446744073709551616 := Nat.mod_lt _ (by decide)
+  clear hp e
+  generalize p % 18446744073709551616 = r at *
+  generalize p / 18446744073709551616 = q at *
+  by_cases h : 18446744073709551616 ≤ r + H + c
+  · simp only [h, decide_true, Bool.toNat_true]
+    by_cases h' : 18446744073709551616 ≤ (r + H + c) % 18446744073709551616 + xa + o
+    · simp only [h', decide_true, Bool.toNat_true]; omega
+    · simp only [h', decide_false, Bool.toNat_false]; omega
+  · simp only [h, decide_false, Bool.toNat_false]
+    by_cases h' : 18446744073709551616 ≤ (r + H + c) % 18446744073709551616 + xa + o
+    · simp only [h', decide_true, Bool.toNat_true]; omega
+    · simp only [h', decide_false, Bool.toNat_false]; omega
+
+/-- adjacent limbs of `v` and `z` (equal or disjoint slices) do not overlap -/
+theorem dpair {m m' : Memory} {z v i n : Nat} {oa : Nat} (_hf : MemFrame m m' [(z, z + 8 * i)])
+    (hal : z = v ∨ Apart z (8 * n) v (8 * n)) (hb : i * 8 + oa + 16 ≤ 8 * n) :
+    v + 8 * i + (oa + 8) + 8 ≤ z + 8 * i + oa ∨ z + 8 * i + oa + 8 ≤ v + 8 * i + (oa + 8) := by
+  unfold Apart at hal; omega
+
+/-- limbs 0, 1 of the ADX 8x block, `entry+0x17c` → `entry+0x1a7`: with the carry word
+`W = H + cf + of` (`RBX` and the two flag chains) -/
+theorem segA0 (s : State) (ret : BitVec 64) (Q : State → Prop) (x y z i n m H xa xb ya yb : Nat) (cf of : Bool)
+    (pf af zf sf : Option Bool) (M : Memory) (S : State)
+    (hm : m < 2 ^ 64) (hH : H < 2 ^ 64) (hxa : xa < 2 ^ 64) (hxb : xb < 2 ^ 64) (hya : ya < 2 ^ 64)
+    (hyb : yb < 2 ^ 64) (hi : i + 8 ≤ n)
+    (bz : z + 8 * n ≤ 2 ^ 48) (bx : x + 8 * n ≤ 2 ^ 48) (by' : y + 8 * n ≤ 2 ^ 48)
+    (accz : s.mem.accessible z (8 * n) true = true) (accx : s.mem.accessible x (8 * n) false = true)
+    (accy : s.mem.accessible y (8 * n) false = true) (hf : MemFrame s.mem M [(z, z + 8 * n)])
+    (hpc : S.rip = BitVec.ofNat 64 (entry + 0x17c)) (h2 : S.regs 2 = BitVec.ofNat 64 m)
+    (h3 : S.regs 3 = BitVec.ofNat 64 H) (hfl : S.flags = ⟨some cf, pf, af, zf, sf, some of⟩)
+    (h7 : S.regs 7 = 0#64) (h8 : S.regs 8 = BitVec.ofNat 64 (x + 8 * i))
+    (h9 : S.regs 9 = BitVec.ofNat 64 (y + 8 * i)) (h10 : S.regs 10 = BitVec.ofNat 64 (z + 8 * i))
+    (hmem : S.mem = M) (h_rdxa : M.readLE (x + 8 * i) 8 = xa) (h_rdya : M.readLE (y + 8 * i) 8 = ya)
+    (hdx : x + 8 * i + 8 + 8 ≤ z + 8 * i ∨ z + 8 * i + 8 ≤ x + 8 * i + 8)
+    (hdy : y + 8 * i + 8 + 8 ≤ z + 8 * i ∨ z + 8 * i + 8 ≤ y + 8 * i + 8)
+    (h_rdxb : M.readLE (x + 8 * i + 8) 8 = xb) (h_rdyb : M.readLE (y + 8 * i + 8) 8 = yb)
+    (hs : Same64 s S)
+    (hk : ∀ (S' : State) (va vb H' : Nat) (cf' of' : Bool) (pf' af' zf' sf' : Option Bool),
+      S'.rip = BitVec.ofNat 64 (entry + 0x1a7) → S'.regs 2 = BitVec.ofNat 64 m →
+      S'.regs 3 = BitVec.ofNat 64 H' → H' < 2 ^ 64 → S'.flags = ⟨some cf', pf', af', zf', sf', some of'⟩ →
+      S'.regs 6 = S.regs 6 → S'.regs 7 = 0#64 →
+      S'.regs 8 = BitVec.ofNat 64 (x + 8 * i) → S'.regs 9 = BitVec.ofNat 64 (y + 8 * i) →
+      S'.regs 10 = BitVec.ofNat 64 (z + 8 * i) →
+      va % 2 ^ 64 + 2 ^ 64 * (vb % 2 ^ 64) + 2 ^ 128 * (H' + cf'.toNat + of'.toNat) =
+        (xa + 2 ^ 64 * xb) + (m * ya + 2 ^ 64 * (m * yb)) + (H + cf.toNat + of.toNat) →
+      S'.mem = (M.writeLE (z + 8 * i) 8 va).writeLE (z + 8 * i + 8) 8 vb → Same64 s S' → ReachesRet program ret S' Q) :
+    ReachesRet program ret S Q := by
+  have hs' := hs
+  obtain ⟨h4, h5, hfs, hdf, hmx, h87, hfw⟩ := hs'
+  janus64_run until [entry + 0x1a7]
+  have ea := adx1 (m * ya) H xa cf.toNat of.toNat (prod_le _ _ hm hya) hH hxa (toNat_le_one cf) (toNat_le_one of)
+  have ha2 : m * ya / 18446744073709551616 < 18446744073709551616 := Nat.div_lt_of_lt_mul (by
+    have := prod_le _ _ hm hya; omega)
+  have eb := adx1 (m * yb) (m * ya / 18446744073709551616) xb
+    (decide (18446744073709551616 ≤ m * ya % 18446744073709551616 + H + cf.toNat)).toNat
+    (decide (18446744073709551616 ≤ (m * ya % 18446744073709551616 + H + cf.toNat) % 18446744073709551616 + xa +
+      of.toNat)).toNat (prod_le _ _ hm hyb) ha2 hxb (toNat_le_one _) (toNat_le_one _)
+  have hb2 : m * yb / 18446744073709551616 < 18446744073709551616 := Nat.div_lt_of_lt_mul (by
+    have := prod_le _ _ hm hyb; omega)
+  refine hk _ _ _ _ _ _ _ _ _ _ rfl ?_ ?_ hb2 rfl ?_ ?_ ?_ ?_ ?_ ?_ rfl (by same64_tac hs)
+  all_goals try (simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; first | done | janus_assumption)
+  omega
+
+/-- limbs 2, 3 of the ADX 8x block, `entry+0x1a7` → `entry+0x1d5`: with the carry word
+`W = H + cf + of` (`RBX` and the two flag chains) -/
+theorem segA1 (s : State) (ret : BitVec 64) (Q : State → Prop) (x y z i n m H xa xb ya yb : Nat) (cf of : Bool)
+    (pf af zf sf : Option Bool) (M : Memory) (S : State)
+    (hm : m < 2 ^ 64) (hH : H < 2 ^ 64) (hxa : xa < 2 ^ 64) (hxb : xb < 2 ^ 64) (hya : ya < 2 ^ 64)
+    (hyb : yb < 2 ^ 64) (hi : i + 8 ≤ n)
+    (bz : z + 8 * n ≤ 2 ^ 48) (bx : x + 8 * n ≤ 2 ^ 48) (by' : y + 8 * n ≤ 2 ^ 48)
+    (accz : s.mem.accessible z (8 * n) true = true) (accx : s.mem.accessible x (8 * n) false = true)
+    (accy : s.mem.accessible y (8 * n) false = true) (hf : MemFrame s.mem M [(z, z + 8 * n)])
+    (hpc : S.rip = BitVec.ofNat 64 (entry + 0x1a7)) (h2 : S.regs 2 = BitVec.ofNat 64 m)
+    (h3 : S.regs 3 = BitVec.ofNat 64 H) (hfl : S.flags = ⟨some cf, pf, af, zf, sf, some of⟩)
+    (h7 : S.regs 7 = 0#64) (h8 : S.regs 8 = BitVec.ofNat 64 (x + 8 * i))
+    (h9 : S.regs 9 = BitVec.ofNat 64 (y + 8 * i)) (h10 : S.regs 10 = BitVec.ofNat 64 (z + 8 * i))
+    (hmem : S.mem = M) (h_rdxa : M.readLE (x + 8 * i + 16) 8 = xa) (h_rdya : M.readLE (y + 8 * i + 16) 8 = ya)
+    (hdx : x + 8 * i + 24 + 8 ≤ z + 8 * i + 16 ∨ z + 8 * i + 16 + 8 ≤ x + 8 * i + 24)
+    (hdy : y + 8 * i + 24 + 8 ≤ z + 8 * i + 16 ∨ z + 8 * i + 16 + 8 ≤ y + 8 * i + 24)
+    (h_rdxb : M.readLE (x + 8 * i + 24) 8 = xb) (h_rdyb : M.readLE (y + 8 * i + 24) 8 = yb)
+    (hs : Same64 s S)
+    (hk : ∀ (S' : State) (va vb H' : Nat) (cf' of' : Bool) (pf' af' zf' sf' : Option Bool),
+      S'.rip = BitVec.ofNat 64 (entry + 0x1d5) → S'.regs 2 = BitVec.ofNat 64 m →
+      S'.regs 3 = BitVec.ofNat 64 H' → H' < 2 ^ 64 → S'.flags = ⟨some cf', pf', af', zf', sf', some of'⟩ →
+      S'.regs 6 = S.regs 6 → S'.regs 7 = 0#64 →
+      S'.regs 8 = BitVec.ofNat 64 (x + 8 * i) → S'.regs 9 = BitVec.ofNat 64 (y + 8 * i) →
+      S'.regs 10 = BitVec.ofNat 64 (z + 8 * i) →
+      va % 2 ^ 64 + 2 ^ 64 * (vb % 2 ^ 64) + 2 ^ 128 * (H' + cf'.toNat + of'.toNat) =
+        (xa + 2 ^ 64 * xb) + (m * ya + 2 ^ 64 * (m * yb)) + (H + cf.toNat + of.toNat) →
+      S'.mem = (M.writeLE (z + 8 * i + 16) 8 va).writeLE (z + 8 * i + 24) 8 vb → Same64 s S' → ReachesRet program ret S' Q) :
+    ReachesRet program ret S Q := by
+  have hs' := hs
+  obtain ⟨h4, h5, hfs, hdf, hmx, h87, hfw⟩ := hs'
+  janus64_run until [entry + 0x1d5]
+  have ea := adx1 (m * ya) H xa cf.toNat of.toNat (prod_le _ _ hm hya) hH hxa (toNat_le_one cf) (toNat_le_one of)
+  have ha2 : m * ya / 18446744073709551616 < 18446744073709551616 := Nat.div_lt_of_lt_mul (by
+    have := prod_le _ _ hm hya; omega)
+  have eb := adx1 (m * yb) (m * ya / 18446744073709551616) xb
+    (decide (18446744073709551616 ≤ m * ya % 18446744073709551616 + H + cf.toNat)).toNat
+    (decide (18446744073709551616 ≤ (m * ya % 18446744073709551616 + H + cf.toNat) % 18446744073709551616 + xa +
+      of.toNat)).toNat (prod_le _ _ hm hyb) ha2 hxb (toNat_le_one _) (toNat_le_one _)
+  have hb2 : m * yb / 18446744073709551616 < 18446744073709551616 := Nat.div_lt_of_lt_mul (by
+    have := prod_le _ _ hm hyb; omega)
+  refine hk _ _ _ _ _ _ _ _ _ _ rfl ?_ ?_ hb2 rfl ?_ ?_ ?_ ?_ ?_ ?_ rfl (by same64_tac hs)
+  all_goals try (simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; first | done | janus_assumption)
+  omega
+
+/-- limbs 4, 5 of the ADX 8x block, `entry+0x1d5` → `entry+0x203`: with the carry word
+`W = H + cf + of` (`RBX` and the two flag chains) -/
+theorem segA2 (s : State) (ret : BitVec 64) (Q : State → Prop) (x y z i n m H xa xb ya yb : Nat) (cf of : Bool)
+    (pf af zf sf : Option Bool) (M : Memory) (S : State)
+    (hm : m < 2 ^ 64) (hH : H < 2 ^ 64) (hxa : xa < 2 ^ 64) (hxb : xb < 2 ^ 64) (hya : ya < 2 ^ 64)
+    (hyb : yb < 2 ^ 64) (hi : i + 8 ≤ n)
+    (bz : z + 8 * n ≤ 2 ^ 48) (bx : x + 8 * n ≤ 2 ^ 48) (by' : y + 8 * n ≤ 2 ^ 48)
+    (accz : s.mem.accessible z (8 * n) true = true) (accx : s.mem.accessible x (8 * n) false = true)
+    (accy : s.mem.accessible y (8 * n) false = true) (hf : MemFrame s.mem M [(z, z + 8 * n)])
+    (hpc : S.rip = BitVec.ofNat 64 (entry + 0x1d5)) (h2 : S.regs 2 = BitVec.ofNat 64 m)
+    (h3 : S.regs 3 = BitVec.ofNat 64 H) (hfl : S.flags = ⟨some cf, pf, af, zf, sf, some of⟩)
+    (h7 : S.regs 7 = 0#64) (h8 : S.regs 8 = BitVec.ofNat 64 (x + 8 * i))
+    (h9 : S.regs 9 = BitVec.ofNat 64 (y + 8 * i)) (h10 : S.regs 10 = BitVec.ofNat 64 (z + 8 * i))
+    (hmem : S.mem = M) (h_rdxa : M.readLE (x + 8 * i + 32) 8 = xa) (h_rdya : M.readLE (y + 8 * i + 32) 8 = ya)
+    (hdx : x + 8 * i + 40 + 8 ≤ z + 8 * i + 32 ∨ z + 8 * i + 32 + 8 ≤ x + 8 * i + 40)
+    (hdy : y + 8 * i + 40 + 8 ≤ z + 8 * i + 32 ∨ z + 8 * i + 32 + 8 ≤ y + 8 * i + 40)
+    (h_rdxb : M.readLE (x + 8 * i + 40) 8 = xb) (h_rdyb : M.readLE (y + 8 * i + 40) 8 = yb)
+    (hs : Same64 s S)
+    (hk : ∀ (S' : State) (va vb H' : Nat) (cf' of' : Bool) (pf' af' zf' sf' : Option Bool),
+      S'.rip = BitVec.ofNat 64 (entry + 0x203) → S'.regs 2 = BitVec.ofNat 64 m →
+      S'.regs 3 = BitVec.ofNat 64 H' → H' < 2 ^ 64 → S'.flags = ⟨some cf', pf', af', zf', sf', some of'⟩ →
+      S'.regs 6 = S.regs 6 → S'.regs 7 = 0#64 →
+      S'.regs 8 = BitVec.ofNat 64 (x + 8 * i) → S'.regs 9 = BitVec.ofNat 64 (y + 8 * i) →
+      S'.regs 10 = BitVec.ofNat 64 (z + 8 * i) →
+      va % 2 ^ 64 + 2 ^ 64 * (vb % 2 ^ 64) + 2 ^ 128 * (H' + cf'.toNat + of'.toNat) =
+        (xa + 2 ^ 64 * xb) + (m * ya + 2 ^ 64 * (m * yb)) + (H + cf.toNat + of.toNat) →
+      S'.mem = (M.writeLE (z + 8 * i + 32) 8 va).writeLE (z + 8 * i + 40) 8 vb → Same64 s S' → ReachesRet program ret S' Q) :
+    ReachesRet program ret S Q := by
+  have hs' := hs
+  obtain ⟨h4, h5, hfs, hdf, hmx, h87, hfw⟩ := hs'
+  janus64_run until [entry + 0x203]
+  have ea := adx1 (m * ya) H xa cf.toNat of.toNat (prod_le _ _ hm hya) hH hxa (toNat_le_one cf) (toNat_le_one of)
+  have ha2 : m * ya / 18446744073709551616 < 18446744073709551616 := Nat.div_lt_of_lt_mul (by
+    have := prod_le _ _ hm hya; omega)
+  have eb := adx1 (m * yb) (m * ya / 18446744073709551616) xb
+    (decide (18446744073709551616 ≤ m * ya % 18446744073709551616 + H + cf.toNat)).toNat
+    (decide (18446744073709551616 ≤ (m * ya % 18446744073709551616 + H + cf.toNat) % 18446744073709551616 + xa +
+      of.toNat)).toNat (prod_le _ _ hm hyb) ha2 hxb (toNat_le_one _) (toNat_le_one _)
+  have hb2 : m * yb / 18446744073709551616 < 18446744073709551616 := Nat.div_lt_of_lt_mul (by
+    have := prod_le _ _ hm hyb; omega)
+  refine hk _ _ _ _ _ _ _ _ _ _ rfl ?_ ?_ hb2 rfl ?_ ?_ ?_ ?_ ?_ ?_ rfl (by same64_tac hs)
+  all_goals try (simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; first | done | janus_assumption)
+  omega
+
+/-- limbs 6, 7 of the ADX 8x block, `entry+0x203` → `entry+0x231`: with the carry word
+`W = H + cf + of` (`RBX` and the two flag chains) -/
+theorem segA3 (s : State) (ret : BitVec 64) (Q : State → Prop) (x y z i n m H xa xb ya yb : Nat) (cf of : Bool)
+    (pf af zf sf : Option Bool) (M : Memory) (S : State)
+    (hm : m < 2 ^ 64) (hH : H < 2 ^ 64) (hxa : xa < 2 ^ 64) (hxb : xb < 2 ^ 64) (hya : ya < 2 ^ 64)
+    (hyb : yb < 2 ^ 64) (hi : i + 8 ≤ n)
+    (bz : z + 8 * n ≤ 2 ^ 48) (bx : x + 8 * n ≤ 2 ^ 48) (by' : y + 8 * n ≤ 2 ^ 48)
+    (accz : s.mem.accessible z (8 * n) true = true) (accx : s.mem.accessible x (8 * n) false = true)
+    (accy : s.mem.accessible y (8 * n) false = true) (hf : MemFrame s.mem M [(z, z + 8 * n)])
+    (hpc : S.rip = BitVec.ofNat 64 (entry + 0x203)) (h2 : S.regs 2 = BitVec.ofNat 64 m)
+    (h3 : S.regs 3 = BitVec.ofNat 64 H) (hfl : S.flags = ⟨some cf, pf, af, zf, sf, some of⟩)
+    (h7 : S.regs 7 = 0#64) (h8 : S.regs 8 = BitVec.ofNat 64 (x + 8 * i))
+    (h9 : S.regs 9 = BitVec.ofNat 64 (y + 8 * i)) (h10 : S.regs 10 = BitVec.ofNat 64 (z + 8 * i))
+    (hmem : S.mem = M) (h_rdxa : M.readLE (x + 8 * i + 48) 8 = xa) (h_rdya : M.readLE (y + 8 * i + 48) 8 = ya)
+    (hdx : x + 8 * i + 56 + 8 ≤ z + 8 * i + 48 ∨ z + 8 * i + 48 + 8 ≤ x + 8 * i + 56)
+    (hdy : y + 8 * i + 56 + 8 ≤ z + 8 * i + 48 ∨ z + 8 * i + 48 + 8 ≤ y + 8 * i + 56)
+    (h_rdxb : M.readLE (x + 8 * i + 56) 8 = xb) (h_rdyb : M.readLE (y + 8 * i + 56) 8 = yb)
+    (hs : Same64 s S)
+    (hk : ∀ (S' : State) (va vb H' : Nat) (cf' of' : Bool) (pf' af' zf' sf' : Option Bool),
+      S'.rip = BitVec.ofNat 64 (entry + 0x231) → S'.regs 2 = BitVec.ofNat 64 m →
+      S'.regs 3 = BitVec.ofNat 64 H' → H' < 2 ^ 64 → S'.flags = ⟨some cf', pf', af', zf', sf', some of'⟩ →
+      S'.regs 6 = S.regs 6 → S'.regs 7 = 0#64 →
+      S'.regs 8 = BitVec.ofNat 64 (x + 8 * i) → S'.regs 9 = BitVec.ofNat 64 (y + 8 * i) →
+      S'.regs 10 = BitVec.ofNat 64 (z + 8 * i) →
+      va % 2 ^ 64 + 2 ^ 64 * (vb % 2 ^ 64) + 2 ^ 128 * (H' + cf'.toNat + of'.toNat) =
+        (xa + 2 ^ 64 * xb) + (m * ya + 2 ^ 64 * (m * yb)) + (H + cf.toNat + of.toNat) →
+      S'.mem = (M.writeLE (z + 8 * i + 48) 8 va).writeLE (z + 8 * i + 56) 8 vb → Same64 s S' → ReachesRet program ret S' Q) :
+    ReachesRet program ret S Q := by
+  have hs' := hs
+  obtain ⟨h4, h5, hfs, hdf, hmx, h87, hfw⟩ := hs'
+  janus64_run until [entry + 0x231]
+  have ea := adx1 (m * ya) H xa cf.toNat of.toNat (prod_le _ _ hm hya) hH hxa (toNat_le_one cf) (toNat_le_one of)
+  have ha2 : m * ya / 18446744073709551616 < 18446744073709551616 := Nat.div_lt_of_lt_mul (by
+    have := prod_le _ _ hm hya; omega)
+  have eb := adx1 (m * yb) (m * ya / 18446744073709551616) xb
+    (decide (18446744073709551616 ≤ m * ya % 18446744073709551616 + H + cf.toNat)).toNat
+    (decide (18446744073709551616 ≤ (m * ya % 18446744073709551616 + H + cf.toNat) % 18446744073709551616 + xa +
+      of.toNat)).toNat (prod_le _ _ hm hyb) ha2 hxb (toNat_le_one _) (toNat_le_one _)
+  have hb2 : m * yb / 18446744073709551616 < 18446744073709551616 := Nat.div_lt_of_lt_mul (by
+    have := prod_le _ _ hm hyb; omega)
+  refine hk _ _ _ _ _ _ _ _ _ _ rfl ?_ ?_ hb2 rfl ?_ ?_ ?_ ?_ ?_ ?_ rfl (by same64_tac hs)
+  all_goals try (simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; first | done | janus_assumption)
+  omega
+
+theorem ablock {z x y n m a : Nat} (s : State) (hc : Ctx s z x y n m a) (ret : BitVec 64) (Q' : State → Prop)
+    (S : State) (i W : Nat) (hi : i + 8 ≤ n) (hW : W < 2 ^ 64)
+    (hpc : S.rip = BitVec.ofNat 64 ahead8) (h2 : S.regs 2 = BitVec.ofNat 64 m) (h3 : S.regs 3 = BitVec.ofNat 64 W)
+    (h7 : S.regs 7 = 0#64) (h8 : S.regs 8 = BitVec.ofNat 64 (x + 8 * i)) (h9 : S.regs 9 = BitVec.ofNat 64 (y + 8 * i))
+    (h10 : S.regs 10 = BitVec.ofNat 64 (z + 8 * i)) (hf : MemFrame s.mem S.mem [(z, z + 8 * i)]) (hs : Same64 s S)
+    (hk : ∀ (S4 : State) (v0 v1 v2 v3 v4 v5 v6 v7 H1 H2 H3 H4 : Nat) (cf1 cf2 cf3 cf4 of1 of2 of3 of4 : Bool)
+      (pf af zf sf : Option Bool),
+      S4.rip = BitVec.ofNat 64 (entry + 0x231) → S4.regs 2 = BitVec.ofNat 64 m → S4.regs 3 = BitVec.ofNat 64 H4 →
+      H4 < 2 ^ 64 → S4.flags = ⟨some cf4, pf, af, zf, sf, some of4⟩ → S4.regs 6 = S.regs 6 → S4.regs 7 = 0#64 →
+      S4.regs 8 = BitVec.ofNat 64 (x + 8 * i) → S4.regs 9 = BitVec.ofNat 64 (y + 8 * i) →
+      S4.regs 10 = BitVec.ofNat 64 (z + 8 * i) →
+      S4.mem = ((((((((S.mem.writeLE (z + 8 * i) 8 v0).writeLE (z + 8 * i + 8) 8 v1).writeLE (z + 8 * i + 16) 8 v2).writeLE (z + 8 * i + 24) 8 v3).writeLE (z + 8 * i + 32) 8 v4).writeLE (z + 8 * i + 40) 8 v5).writeLE (z + 8 * i + 48) 8 v6).writeLE (z + 8 * i + 56) 8 v7) → Same64 s S4 →
+      v0 % 2 ^ 64 + 2 ^ 64 * (v1 % 2 ^ 64) + 2 ^ 128 * (H1 + cf1.toNat + of1.toNat) = (s.mem.readLE (x + 8 * i) 8 + 2 ^ 64 * s.mem.readLE (x + 8 * i + 8) 8) + (m * s.mem.readLE (y + 8 * i) 8 + 2 ^ 64 * (m * s.mem.readLE (y + 8 * i + 8) 8)) + W →
+      v2 % 2 ^ 64 + 2 ^ 64 * (v3 % 2 ^ 64) + 2 ^ 128 * (H2 + cf2.toNat + of2.toNat) = (s.mem.readLE (x + 8 * i + 16) 8 + 2 ^ 64 * s.mem.readLE (x + 8 * i + 24) 8) + (m * s.mem.readLE (y + 8 * i + 16) 8 + 2 ^ 64 * (m * s.mem.readLE (y + 8 * i + 24) 8)) + (H1 + cf1.toNat + of1.toNat) →
+      v4 % 2 ^ 64 + 2 ^ 64 * (v5 % 2 ^ 64) + 2 ^ 128 * (H3 + cf3.toNat + of3.toNat) = (s.mem.readLE (x + 8 * i + 32) 8 + 2 ^ 64 * s.mem.readLE (x + 8 * i + 40) 8) + (m * s.mem.readLE (y + 8 * i + 32) 8 + 2 ^ 64 * (m * s.mem.readLE (y + 8 * i + 40) 8)) + (H2 + cf2.toNat + of2.toNat) →
+      v6 % 2 ^ 64 + 2 ^ 64 * (v7 % 2 ^ 64) + 2 ^ 128 * (H4 + cf4.toNat + of4.toNat) = (s.mem.readLE (x + 8 * i + 48) 8 + 2 ^ 64 * s.mem.readLE (x + 8 * i + 56) 8) + (m * s.mem.readLE (y + 8 * i + 48) 8 + 2 ^ 64 * (m * s.mem.readLE (y + 8 * i + 56) 8)) + (H3 + cf3.toNat + of3.toNat) →
+      ReachesRet program ret S4 Q') :
+    ReachesRet program ret S Q' := by
+  have hc' := hc
+  obtain ⟨hz, hn, hx, hy, hm, ha, hr, hfb, hfacc, hadx, accz, accx, accy, alx, aly, azf⟩ := hc'
+  have bz := Arm64.Memory.accessible_bound _ accz
+  have bx := Arm64.Memory.accessible_bound _ accx
+  have by' := Arm64.Memory.accessible_bound _ accy
+  have hm64 : m < 2 ^ 64 := hm ▸ FvModexp.Asm.limb_lt _ _
+  have rx0 := rd_frame (a := x + 8 * i) hf alx (by omega) (by omega) (by omega)
+  have rx1 := rd_frame (a := x + 8 * i + 8) hf alx (by omega) (by omega) (by omega)
+  have rx2 := rd_frame (a := x + 8 * i + 16) hf alx (by omega) (by omega) (by omega)
+  have rx3 := rd_frame (a := x + 8 * i + 24) hf alx (by omega) (by omega) (by omega)
+  have rx4 := rd_frame (a := x + 8 * i + 32) hf alx (by omega) (by omega) (by omega)
+  have rx5 := rd_frame (a := x + 8 * i + 40) hf alx (by omega) (by omega) (by omega)
+  have rx6 := rd_frame (a := x + 8 * i + 48) hf alx (by omega) (by omega) (by omega)
+  have rx7 := rd_frame (a := x + 8 * i + 56) hf alx (by omega) (by omega) (by omega)
+  have ry0 := rd_frame (a := y + 8 * i) hf aly (by omega) (by omega) (by omega)
+  have ry1 := rd_frame (a := y + 8 * i + 8) hf aly (by omega) (by omega) (by omega)
+  have ry2 := rd_frame (a := y + 8 * i + 16) hf aly (by omega) (by omega) (by omega)
+  have ry3 := rd_frame (a := y + 8 * i + 24) hf aly (by omega) (by omega) (by omega)
+  have ry4 := rd_frame (a := y + 8 * i + 32) hf aly (by omega) (by omega) (by omega)
+  have ry5 := rd_frame (a := y + 8 * i + 40) hf aly (by omega) (by omega) (by omega)
+  have ry6 := rd_frame (a := y + 8 * i + 48) hf aly (by omega) (by omega) (by omega)
+  have ry7 := rd_frame (a := y + 8 * i + 56) hf aly (by omega) (by omega) (by omega)
+  have hdx10 : x + 8 * i + 8 + 8 ≤ z + 8 * i ∨ z + 8 * i + 8 ≤ x + 8 * i + 8 := dpair hf alx (by omega)
+  have hdx32 : x + 8 * i + 24 + 8 ≤ z + 8 * i + 16 ∨ z + 8 * i + 16 + 8 ≤ x + 8 * i + 24 := dpair hf alx (by omega)
+  have hdx54 : x + 8 * i + 40 + 8 ≤ z + 8 * i + 32 ∨ z + 8 * i + 32 + 8 ≤ x + 8 * i + 40 := dpair hf alx (by omega)
+  have hdx76 : x + 8 * i + 56 + 8 ≤ z + 8 * i + 48 ∨ z + 8 * i + 48 + 8 ≤ x + 8 * i + 56 := dpair hf alx (by omega)
+  have hdy10 : y + 8 * i + 8 + 8 ≤ z + 8 * i ∨ z + 8 * i + 8 ≤ y + 8 * i + 8 := dpair hf aly (by omega)
+  have hdy32 : y + 8 * i + 24 + 8 ≤ z + 8 * i + 16 ∨ z + 8 * i + 16 + 8 ≤ y + 8 * i + 24 := dpair hf aly (by omega)
+  have hdy54 : y + 8 * i + 40 + 8 ≤ z + 8 * i + 32 ∨ z + 8 * i + 32 + 8 ≤ y + 8 * i + 40 := dpair hf aly (by omega)
+  have hdy76 : y + 8 * i + 56 + 8 ≤ z + 8 * i + 48 ∨ z + 8 * i + 48 + 8 ≤ y + 8 * i + 56 := dpair hf aly (by omega)
+  have alx' := alx
+  have aly' := aly
+  unfold Apart at alx' aly'
+  have hfn : MemFrame s.mem S.mem [(z, z + 8 * n)] := frame_mono hf (fun a n' h => by simp only [outside_cons, outside_nil, and_true] at h ⊢; omega)
+  have hy0 := FvModexp.Asm.limb_lt s.mem (y + 8 * i); have hx0 := FvModexp.Asm.limb_lt s.mem (x + 8 * i)
+  have hy1 := FvModexp.Asm.limb_lt s.mem (y + 8 * i + 8); have hx1 := FvModexp.Asm.limb_lt s.mem (x + 8 * i + 8)
+  have hy2 := FvModexp.Asm.limb_lt s.mem (y + 8 * i + 16); have hx2 := FvModexp.Asm.limb_lt s.mem (x + 8 * i + 16)
+  have hy3 := FvModexp.Asm.limb_lt s.mem (y + 8 * i + 24); have hx3 := FvModexp.Asm.limb_lt s.mem (x + 8 * i + 24)
+  have hy4 := FvModexp.Asm.limb_lt s.mem (y + 8 * i + 32); have hx4 := FvModexp.Asm.limb_lt s.mem (x + 8 * i + 32)
+  have hy5 := FvModexp.Asm.limb_lt s.mem (y + 8 * i + 40); have hx5 := FvModexp.Asm.limb_lt s.mem (x + 8 * i + 40)
+  have hy6 := FvModexp.Asm.limb_lt s.mem (y + 8 * i + 48); have hx6 := FvModexp.Asm.limb_lt s.mem (x + 8 * i + 48)
+  have hy7 := FvModexp.Asm.limb_lt s.mem (y + 8 * i + 56); have hx7 := FvModexp.Asm.limb_lt s.mem (x + 8 * i + 56)
+  janus64_run until [entry + 0x17c]
+  refine segA0 s _ _ x y z i n m W _ _ _ _ false false _ _ _ _ _ _ hm64 hW hx0 hx1 hy0 hy1 (by omega) bz bx by' accz accx accy hfn rfl
+    (by simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; exact h2) (by simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; exact h3) rfl
+    (by simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; exact h7) (by simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; exact h8)
+    (by simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; exact h9) (by simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; exact h10) rfl
+    (by rw [rx0]) (by rw [ry0]) hdx10 hdy10 (by rw [rx1]) (by rw [ry1]) (by same64_tac hs) ?_
+  intro S1 v0 v1 H1 cf1 of1 pf1 af1 zf1 sf1 hpc1 h21 h31 hH1 hfl1 h61 h71 h81 h91 h101 he0 hm1 hs1
+  have hf1 : MemFrame s.mem ((S.mem.writeLE (z + 8 * i) 8 v0).writeLE (z + 8 * i + 8) 8 v1) [(z, z + 8 * n)] := MemFrame.writeLE (MemFrame.writeLE hfn _ (r := (z, z + 8 * n)) (by simp) (by omega) (by omega)) _ (r := (z, z + 8 * n)) (by simp) (by omega) (by omega)
+  refine segA1 s _ _ x y z i n m H1 _ _ _ _ cf1 of1 _ _ _ _ _ S1 hm64 hH1 hx2 hx3 hy2 hy3 (by omega) bz bx by' accz accx accy hf1 hpc1 h21 h31 hfl1
+    h71 h81 h91 h101 hm1 (by simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint]; rw [rx2]) (by simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint]; rw [ry2]) hdx32 hdy32 (by simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint]; rw [rx3]) (by simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint]; rw [ry3]) hs1 ?_
+  intro S2 v2 v3 H2 cf2 of2 pf2 af2 zf2 sf2 hpc2 h22 h32 hH2 hfl2 h62 h72 h82 h92 h102 he1 hm2 hs2
+  have hf2 : MemFrame s.mem ((((S.mem.writeLE (z + 8 * i) 8 v0).writeLE (z + 8 * i + 8) 8 v1).writeLE (z + 8 * i + 16) 8 v2).writeLE (z + 8 * i + 24) 8 v3) [(z, z + 8 * n)] := MemFrame.writeLE (MemFrame.writeLE hf1 _ (r := (z, z + 8 * n)) (by simp) (by omega) (by omega)) _ (r := (z, z + 8 * n)) (by simp) (by omega) (by omega)
+  refine segA2 s _ _ x y z i n m H2 _ _ _ _ cf2 of2 _ _ _ _ _ S2 hm64 hH2 hx4 hx5 hy4 hy5 (by omega) bz bx by' accz accx accy hf2 hpc2 h22 h32 hfl2
+    h72 h82 h92 h102 hm2 (by simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint]; rw [rx4]) (by simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint]; rw [ry4]) hdx54 hdy54 (by simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint]; rw [rx5]) (by simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint]; rw [ry5]) hs2 ?_
+  intro S3 v4 v5 H3 cf3 of3 pf3 af3 zf3 sf3 hpc3 h23 h33 hH3 hfl3 h63 h73 h83 h93 h103 he2 hm3 hs3
+  have hf3 : MemFrame s.mem ((((((S.mem.writeLE (z + 8 * i) 8 v0).writeLE (z + 8 * i + 8) 8 v1).writeLE (z + 8 * i + 16) 8 v2).writeLE (z + 8 * i + 24) 8 v3).writeLE (z + 8 * i + 32) 8 v4).writeLE (z + 8 * i + 40) 8 v5) [(z, z + 8 * n)] := MemFrame.writeLE (MemFrame.writeLE hf2 _ (r := (z, z + 8 * n)) (by simp) (by omega) (by omega)) _ (r := (z, z + 8 * n)) (by simp) (by omega) (by omega)
+  refine segA3 s _ _ x y z i n m H3 _ _ _ _ cf3 of3 _ _ _ _ _ S3 hm64 hH3 hx6 hx7 hy6 hy7 (by omega) bz bx by' accz accx accy hf3 hpc3 h23 h33 hfl3
+    h73 h83 h93 h103 hm3 (by simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint]; rw [rx6]) (by simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint]; rw [ry6]) hdx76 hdy76 (by simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint]; rw [rx7]) (by simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint]; rw [ry7]) hs3 ?_
+  intro S4 v6 v7 H4 cf4 of4 pf4 af4 zf4 sf4 hpc4 h24 h34 hH4 hfl4 h64 h74 h84 h94 h104 he3 hm4 hs4
+  exact hk S4 v0 v1 v2 v3 v4 v5 v6 v7 H1 H2 H3 H4 cf1 cf2 cf3 cf4 of1 of2 of3 of4 pf4 af4 zf4 sf4 hpc4 h24 h34 hH4 hfl4
+    (by rw [h64, h63, h62, h61]) h74 h84 h94 h104 hm4 hs4 he0 he1 he2 he3
+
 end FvModexp.Amd64.AddMulVVWWSum
