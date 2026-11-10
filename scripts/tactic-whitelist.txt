@@ -1,0 +1,1 @@
+# files that legitimately define tactics / syntax (scripts/lint_source.py). Format: sha256<TAB>path.  Regenerate with scripts/lint_source.py --update-whitelist AFTER reviewing each file.
