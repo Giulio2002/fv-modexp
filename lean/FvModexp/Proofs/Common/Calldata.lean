@@ -54,4 +54,46 @@ theorem readNat_bytesAt (m : Memory) (p len start size : Nat) :
       split <;> simp [byteOf_toNat]
     · apply fromBE_congr; intro i _; congr 1; omega
 
+theorem pad_lt (m : Memory) (p len j : Nat) : pad m p len j < 256 := by
+  unfold pad; split
+  · exact (m.bytes (p + j)).isLt
+  · omega
+
+theorem fromBE_lt (f : Nat → Nat) (n : Nat) (h : ∀ i, i < n → f i < 256) : Aux.fromBE f n < 256 ^ n := by
+  induction n generalizing f with
+  | zero => simp [Aux.fromBE]
+  | succ n ih =>
+    simp only [Aux.fromBE]
+    have h0 := h 0 (by omega)
+    have h1 := ih (fun i => f (i + 1)) (fun i hi => h (i + 1) (by omega))
+    have : f 0 * 256 ^ n ≤ 255 * 256 ^ n := Nat.mul_le_mul_right _ (by omega)
+    rw [Nat.pow_succ]; omega
+
+theorem fromBE_zero (f : Nat → Nat) (n : Nat) (h : ∀ i, i < n → f i = 0) : Aux.fromBE f n = 0 := by
+  induction n generalizing f with
+  | zero => rfl
+  | succ n ih =>
+    simp only [Aux.fromBE, h 0 (by omega), Nat.zero_mul, Nat.zero_add]
+    exact ih _ (fun i hi => h (i + 1) (by omega))
+
+/-- The call-data word at `start` (32 bytes, zero-padded). -/
+abbrev word (m : Memory) (p len start : Nat) : Nat := Aux.fromBE (fun i => pad m p len (start + i)) 32
+
+theorem word_lt (m : Memory) (p len start : Nat) : word m p len start < 2 ^ 256 := by
+  have := fromBE_lt (fun i => pad m p len (start + i)) 32 (fun i _ => pad_lt _ _ _ _)
+  simpa using this
+
+/-- `uint256.Int.Uint64()` capped at `MaxUint64` unless `IsUint64()` (contracts.go:612-623), from the limbs. -/
+theorem sat_limbs (l0 l1 l2 l3 : Nat) (h0 : l0 < 2 ^ 64) (h1 : l1 < 2 ^ 64) (h2 : l2 < 2 ^ 64) :
+    (if l3 ||| (l2 ||| l1) = 0 then l0 else 2 ^ 64 - 1) =
+      (if l0 + 2 ^ 64 * l1 + 2 ^ 128 * l2 + 2 ^ 192 * l3 < 2 ^ 64 then l0 + 2 ^ 64 * l1 + 2 ^ 128 * l2 + 2 ^ 192 * l3
+        else 2 ^ 64 - 1) := by
+  simp only [Nat.or_eq_zero_iff]
+  by_cases h : l3 = 0 ∧ l2 = 0 ∧ l1 = 0
+  · obtain ⟨a, b, c⟩ := h; subst a b c; simp [h0]
+  · rw [if_neg h, if_neg]
+    intro hc; apply h
+    refine ⟨?_, ?_, ?_⟩ <;> (apply Classical.byContradiction; intro hne; have := Nat.pos_of_ne_zero hne
+                             simp only [Nat.reducePow] at *; omega)
+
 end FvModexp.Calldata

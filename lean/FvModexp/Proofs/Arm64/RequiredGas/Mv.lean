@@ -13,7 +13,7 @@ set_option maxHeartbeats 64000000 in
 set_option maxRecDepth 100000 in
 theorem mv : Summary Extracted.program mvA (fun s => MvPre (s.regs 2).toNat s ∧ (s.regs 2).toNat ≤ 32)
     (fun s s' => MvPost (s.regs 2).toNat s s') := by
-  intro s hpc ⟨⟨⟨hr1, hr2⟩, _hl0, hd48, hs48, hdw, hsr, hdj⟩, hn⟩
+  intro s hpc ⟨⟨⟨hr1, hr2⟩, _hl0, hd48, hs48, hdw, hsr, hdj, hdl⟩, hn⟩
   simp only [Disjoint] at hdj
   generalize hk : (s.regs 2).toNat = k at *
   have hlt : k < 33 := by omega
@@ -23,13 +23,14 @@ theorem mv : Summary Extracted.program mvA (fun s => MvPre (s.regs 2).toNat s �
     janus_run
     all_goals first
       | (exfalso; omega)
-      | (refine Ret.retX_intro rfl rfl rfl rfl rfl rfl rfl rfl rfl (fun i hi => by simp at hi) (by janus_frame) ?_
-         intro i hi
-         dsimp only
-         try simp only [Memory.bytes_writeLE]
-         repeat' split
-         all_goals first
-           | (exfalso; omega)
-           | ((try simp (disch := decide) only [Bytes.readLE_mod64]); rw [Bytes.byte_readLE_at _ _ _ _ _ (by omega) (by omega)]; congr 1; omega))
+      | (refine Ret.retX_intro rfl rfl rfl rfl rfl rfl rfl rfl rfl (fun i hi => by simp at hi) (by janus_frame) ⟨?_, ?_⟩
+         · intro i hi
+           dsimp only
+           try simp only [Memory.bytes_writeLE]
+           repeat' split
+           all_goals first
+             | (exfalso; omega)
+             | ((try simp (disch := decide) only [Bytes.readLE_mod64]); rw [Bytes.byte_readLE_at _ _ _ _ _ (by omega) (by omega)]; congr 1; omega)
+         · dl_close)
 
 end FvModexp.Arm64.RG

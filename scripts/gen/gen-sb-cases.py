@@ -38,10 +38,11 @@ theorem sb{n} : Summary Extracted.program sbA (SbPre {n}) (SbPost {n}) := by
   janus_run
   all_goals first
     | (exfalso; omega)
-    | (refine Ret.retX_intro rfl rfl rfl rfl rfl rfl rfl rfl rfl (fun i hi => ?_) (by janus_frame) ?_
+    | (refine Ret.retX_intro rfl rfl rfl rfl rfl rfl rfl rfl rfl (fun i hi => ?_) (by janus_frame) ⟨?_, ?_⟩
        · simp at hi; subst hi; rfl
        · janus_simp
-         {close})
+         {close}
+       · dl_close)
 
 '''
 for name, rng in (('SbA', range(0, 11)), ('SbB', range(11, 22)), ('SbC', range(22, 33))):
