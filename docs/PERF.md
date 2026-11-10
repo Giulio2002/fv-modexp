@@ -44,3 +44,20 @@ no heartbeat/timeout options are used anywhere.
 | DivRecMath | 0.8 s | 0.53 GB | | Words | 2.5 s | 0.57 GB |
 
 Sum of all 36 mathdiv modules: 74 s; slowest DivWW 13.9 s / 1.1 GB, DivRecLoop 8.5 s / 0.92 GB.
+
+## Mul/div machine summaries (agent divmc), 2026-11-11
+Dev compile `scripts/dev-lean-divmc.sh -x <isa> FILE` (Lean 4.34.1, Janus v0.2.0 oleans, `LEAN_NUM_THREADS=4`, `memcap 8G`),
+against the pinned Run extraction; every summary is proved on a restricted-program constant (`Lib*`, as expmc), never on
+`Extracted.program.onlySegments`. Wall / max RSS of the whole module (no profiling fix needed so far, no heartbeat options
+beyond `maxHeartbeats 0` on the executor theorems):
+
+| module | arm64 | amd64 |
+|---|---|---|
+| Nat/LibAddTo, Nat/LibBasicMul (restricted programs + `eq_only`) | 6–9 s / 2.7 GB | 6–7 s / 2.7 GB |
+| Nat/Callees (premise shapes, `Summary0.live`, `toSummaryRegs7`) | 1.2 s / 2.0 GB | 1.3 s / 2.0 GB |
+| Nat/AddTo (`addTo`, 5 paths, addVV.abi0 + addVW calls) | 89 s / 4.4 GB | 125 s / 5.4 GB |
+| Nat/BasicMul (`basicMul`: memclr + loop with addMulVVWW.abi0; loop lemma + pure step lemmas) | 74 s / 4.7 GB | 143 s / 5.5 GB |
+| Common/DivmcNat, DivmcBits, DivmcMem | ≤ 1 s | — |
+
+Cost drivers: each `by_cases` branch re-executes the prologue (AddTo: 3 runs); amd64 steps ~1.5× arm64. Next optimisation if
+a module approaches the cap: one `janus_run` with conditional rewrite rules instead of `by_cases` before the run.
