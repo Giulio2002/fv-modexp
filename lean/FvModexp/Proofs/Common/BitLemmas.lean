@@ -47,7 +47,7 @@ theorem asr_small_toNat (x : BitVec 64) (h : x.toNat < 2 ^ 63) (k M Q : Nat) (hk
     (hQ : Q = 2 ^ (64 - k)) :
     ((if x.getLsbD 63 = true then 18446744073709551615#64 else 0#64).toNat &&& M |||
       (x.rotateRight k).toNat % Q) = x.toNat / 2 ^ k := by
-  rw [getLsbD63_false x h, hQ, rotr_mod x k hk]
+  rw [getLsbD63_false x h, hQ, rotr_mod x k ⟨hk.1, by omega⟩]
   simp
 
 /-- A logical right shift by at least one is non-negative as a signed number. -/
@@ -62,5 +62,17 @@ theorem toInt_ushiftRight (x : BitVec 64) (n : Nat) (hn : 0 < n) :
     have : x.toNat / 2 ^ n ≤ x.toNat / 2 := Nat.div_le_div_left this (by decide)
     omega
   rw [toInt_small _ (by rw [h1]; exact h2), h1]
+
+/-- `ASR #k` (an `SBFM`) of a value below `2^63`, in the `BitVec` form the executor leaves: the logical shift. -/
+theorem asr_small_bv (x : BitVec 64) (h : x.toNat < 2 ^ 63) (k : Nat) (M Mk : BitVec 64) (hk : 0 < k ∧ k < 63)
+    (hMk : Mk.toNat = 2 ^ (64 - k) - 1) :
+    ((if x.getLsbD 63 = true then 18446744073709551615#64 else 0#64) &&& M |||
+      x.rotateRight k &&& 18446744073709551615#64 &&& Mk) = x >>> k := by
+  rw [getLsbD63_false x h]
+  apply BitVec.eq_of_toNat_eq
+  simp only [Bool.false_eq_true, ↓reduceIte, BitVec.zero_and, BitVec.zero_or, BitVec.toNat_and, hMk,
+    BitVec.toNat_ushiftRight, Nat.shiftRight_eq_div_pow]
+  have h1 : (18446744073709551615#64).toNat = 2 ^ 64 - 1 := rfl
+  rw [h1, Nat.and_two_pow_sub_one_eq_mod _ 64, Nat.mod_eq_of_lt (x.rotateRight k).isLt, Nat.and_two_pow_sub_one_eq_mod, rotr_mod x k ⟨hk.1, by omega⟩]
 
 end FvModexp

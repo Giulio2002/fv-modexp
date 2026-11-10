@@ -36,6 +36,7 @@ def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc bp bl : BitVec 64) 
     bp.toNat + bl.toNat ≤ 2 ^ 48 ∧ s.mem.accessible bp.toNat bl.toNat false = true ∧
     Held R L bp.toNat bl.toNat ∧ Outside bp.toNat bl.toNat (win s 4160 48) ∧
     (0 < zc.toNat → Apart zp.toNat (8 * zc.toNat) bp.toNat bl.toNat) ∧
+    (0 < zc.toNat → Outside zp.toNat (8 * zc.toNat) (win s 4160 48)) ∧
     R.inv b L (s.regs 28).toNat (view R.rt L s.mem) ∧
     (zc.toNat < nW bl → R.ok (cA "runtime.makeslice") [wordT, nW bl, makeCap (nW bl)] ∧ makeCost (nW bl) ≤ b)
 
