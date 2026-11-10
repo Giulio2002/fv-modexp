@@ -202,6 +202,18 @@ theorem divLarge_spec (dr : List Nat → List Nat → List Nat → List Nat × L
     calc val uIn * 2 ^ s < val vIn * 2 ^ (64 * (uIn.length - vIn.length + 1)) * 2 ^ s := this
       _ = val vIn * 2 ^ s * 2 ^ (64 * (uIn.length - vIn.length + 1)) := by grind
   have hulen : u.length - v.length = qs.length := by omega
+  have hH : 2 * val u < 2 ^ (64 * u.length) := by
+    have e1 : val uIn < 2 ^ (64 * uIn.length) := val_lt hu
+    have e2 : val uIn * 2 ^ s < 2 ^ (64 * uIn.length) * 2 ^ s := Nat.mul_lt_mul_of_pos_right e1 (Nat.two_pow_pos s)
+    have e3 : 2 * 2 ^ s ≤ 2 ^ 64 := by
+      rw [← Nat.pow_succ']; exact Nat.pow_le_pow_right (by decide) (by omega)
+    have e4 : 2 ^ (64 * u.length) = 2 ^ (64 * uIn.length) * 2 ^ 64 := by
+      rw [u2, Nat.mul_add, Nat.mul_one, Nat.pow_add]
+    rw [u3, e4]
+    have := Nat.mul_le_mul_left (2 ^ (64 * uIn.length)) e3
+    calc 2 * (val uIn * 2 ^ s) < 2 * (2 ^ (64 * uIn.length) * 2 ^ s) := by omega
+      _ = 2 ^ (64 * uIn.length) * (2 * 2 ^ s) := by grind
+      _ ≤ _ := this
   have hquo : val u / val v = val uIn / val vIn := by rw [u3, v3]; exact Nat.mul_div_mul_right _ _ (Nat.two_pow_pos s)
   have hrem : val u % val v = (val uIn % val vIn) * 2 ^ s := by
     rw [u3, v3]; exact Nat.mul_mod_mul_right _ _ _
@@ -216,7 +228,7 @@ theorem divLarge_spec (dr : List Nat → List Nat → List Nat → List Nat × L
       refine ⟨(divBasic qs u v).1, (divBasic qs u v).2, c3, c4, c1, c2, ?_, ?_, by rw [if_pos h40]⟩
       · rw [← hquo, ← c5, List.take_of_length_le (by omega)]
       · rw [← hrem]; exact c7
-    · have hc := hdr qs u v hqs u1 v1 (by omega) v4 (by omega) hulen.symm hlt
+    · have hc := hdr qs u v hqs u1 v1 (by omega) v4 (by omega) hulen.symm hH
       obtain ⟨c1, c2, c3, c4, c5, c6, c7⟩ := hc
       refine ⟨(dr qs u v).1, (dr qs u v).2, c3, c4, c1, c2, ?_, ?_, by rw [if_neg h40]⟩
       · rw [← hquo]; exact c5

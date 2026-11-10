@@ -7,7 +7,7 @@ import (
 	big "github.com/ethereum/go-bigmodexpfix/src/math/big"
 )
 
-var imports = []string{"BitsNat", "MulClosed", "DivBasic"}
+var imports = []string{"BitsNat", "MulClosed", "DivBasic", "DivClosed"}
 
 func emitMulDiv(r *rand.Rand) {
 	sizes := []int{0, 1, 2, 3, 5, 11, 12, 13, 39, 40, 41, 57, 80, 81, 97}
@@ -51,5 +51,29 @@ func emitMulDiv(r *rand.Rand) {
 		q := make([]uint64, qlen)
 		q2, u2 := big.FvDivBasic(q, u, v)
 		fmt.Printf("#guard divBasic %s %s %s == (%s, %s)\n", L(q), L(u), L(v), L(q2), L(u2))
+	}
+	// divRecursive in the divLarge shape: n >= 40, len(q) = len(u) - n, top limb of u < 2^63
+	for t := 0; t < 30; t++ {
+		n := 40 + r.Intn(60)
+		m := r.Intn(70)
+		v := topSet(r, n)
+		u := big.FvRandWords(r, m+n)
+		u[m+n-1] >>= 1 + uint(r.Intn(63))
+		q := make([]uint64, m)
+		q2, u2 := big.FvDivRecursive(q, u, v)
+		fmt.Printf("#guard divRecursiveC %s %s %s == (%s, %s)\n", L(q), L(u), L(v), L(q2), L(u2))
+	}
+	// nat.div on normalised operands, all size regimes (divW, u < v, divBasic, divRecursive)
+	for t := 0; t < 80; t++ {
+		n := 1 + r.Intn(100)
+		m := r.Intn(130)
+		v := big.FvRandWords(r, n)
+		v[n-1] |= uint64(1) << uint(r.Intn(64))
+		u := big.FvRandWords(r, m)
+		for len(u) > 0 && u[len(u)-1] == 0 {
+			u = u[:len(u)-1]
+		}
+		q2, r2 := big.FvDiv(u, v)
+		fmt.Printf("#guard natDivC %s %s == (%s, %s)\n", L(u), L(v), L(q2), L(r2))
 	}
 }

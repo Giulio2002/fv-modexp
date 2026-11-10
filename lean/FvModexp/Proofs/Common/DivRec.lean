@@ -80,7 +80,7 @@ theorem conc_small2 (z z' u0 u1 v : List Nat) (hz0 : ∀ d ∈ z', d = 0) (hzl :
 theorem short_lt (u v : List Nat) (hu : Wd u) (hv : Wd v) (h2 : v ≠ []) (htop : 2 ^ 63 ≤ topLimb v)
     (hlt : u.length < v.length) : val u < val v := by
   have h1 := val_lt hu
-  have hvge := val_ge_top h2 htop
+  have hvge := val_ge_top63 h2 htop
   have : 2 ^ (64 * u.length) ≤ 2 ^ (64 * (v.length - 1)) := Nat.pow_le_pow_right (by decide) (by omega)
   have : 2 ^ (64 * (v.length - 1)) ≤ 2 ^ 63 * 2 ^ (64 * (v.length - 1)) := Nat.le_mul_of_pos_left _ (Nat.two_pow_pos _)
   omega
@@ -89,7 +89,7 @@ theorem short_lt (u v : List Nat) (hu : Wd u) (hv : Wd v) (h2 : v ≠ []) (htop 
 theorem fit_of_H (v u : List Nat) (hv : Wd v) (htop : 2 ^ 63 ≤ topLimb v) (hn : v.length = n) (k : Nat)
     (hH : 2 * val u < 2 ^ (64 * (n + k))) : val u < val v * 2 ^ (64 * k) := by
   have hne : v ≠ [] := by intro e; subst e; simp [topLimb] at htop
-  have h := val_ge_top hne htop
+  have h := val_ge_top63 hne htop
   rw [hn] at h
   have e : 2 ^ (64 * (n + k)) = 2 * (2 ^ 63 * 2 ^ (64 * (n - 1))) * 2 ^ (64 * k) := by
     have hn1 : 1 ≤ n := by
@@ -114,10 +114,10 @@ theorem drs_basic (db : List Nat → List Nat → List Nat → List Nat × List 
   have hfit := fit_of_H v u0 hv htop rfl z.length hH
   have hvp : 0 < val v := by
     have hne' : v ≠ [] := by intro e; subst e; simp at h2
-    have := val_ge_top hne' htop
+    have := val_ge_top63 hne' htop
     have : 0 < 2 ^ 63 * 2 ^ (64 * (v.length - 1)) := Nat.mul_pos (Nat.two_pow_pos _) (Nat.two_pow_pos _)
     omega
-  have hvge := val_ge_top (by intro e; subst e; simp at h2) htop
+  have hvge := val_ge_top63 (by intro e; subst e; simp at h2) htop
   obtain ⟨hd1, hd2⟩ := hdb z (norm u0) v hz hnu hv h2 htop
   by_cases hlt : (norm u0).length < v.length
   · have hdb1 := hd1 hlt
@@ -177,7 +177,7 @@ theorem drs_big (rec : List Nat → List Nat → List Nat → List Nat × List N
   have hnu : Wd (norm u0) := Wd_norm hu
   have hvu := val_norm u0
   have hfit := fit_of_H v u0 hv htop hnd z.length hH
-  have hvge := val_ge_top (by intro e; subst e; simp at hnd; omega : v ≠ []) htop
+  have hvge := val_ge_top63 (by intro e; subst e; simp at hnd; omega : v ≠ []) htop
   rw [hnd] at hvge
   have hvlt : val v < 2 ^ (64 * n) := by have := val_lt hv; rwa [hnd] at this
   have hvp : 0 < val v := by
@@ -226,7 +226,7 @@ theorem drs_step (db : List Nat → List Nat → List Nat → List Nat × List N
   have hnorm : norm v0 = v0 := normed_of_top v0 htop
   have hv0ne : v0 ≠ [] := by intro e; subst e; simp at h2
   have hvp : 0 < val v0 := by
-    have := val_ge_top hv0ne htop
+    have := val_ge_top63 hv0ne htop
     have : 0 < 2 ^ 63 * 2 ^ (64 * (v0.length - 1)) := Nat.mul_pos (Nat.two_pow_pos _) (Nat.two_pow_pos _)
     omega
   have hvu := val_norm u0
@@ -277,16 +277,8 @@ theorem drs_spec (db : List Nat → List Nat → List Nat → List Nat × List N
 /-- `DivRecursiveContract` (DivContract.lean) with the extra hypothesis `2·val u < β^len u` (the top word of `u` is `< 2^63`:
 in `divLarge` it holds only the bits shifted out of `uIn`, natdiv.go:608-614).  See the report: without it the model's
 `addTo(z[j-B:], qhat)` can see `len(qhat) = len(z[j-B:]) + 1`. -/
-def DivRecursiveContractH (dr : List Nat → List Nat → List Nat → List Nat × List Nat) : Prop :=
-  ∀ q u v : List Nat, Wd q → Wd u → Wd v → 40 ≤ v.length → 2 ^ 63 ≤ topLimb v →
-    v.length ≤ u.length → q.length = u.length - v.length → 2 * val u < 2 ^ (64 * u.length) →
-      (dr q u v).1.length = q.length ∧ (dr q u v).2.length = u.length ∧
-      Wd (dr q u v).1 ∧ Wd (dr q u v).2 ∧
-      val (dr q u v).1 = val u / val v ∧ val (dr q u v).2 = val u % val v ∧
-      (∀ d ∈ (dr q u v).2.drop v.length, d = 0)
-
 theorem divRecursive_contract (db : List Nat → List Nat → List Nat → List Nat × List Nat) (hdb : DivBasicContract db)
-    (mul : List Nat → List Nat → List Nat) (hmul : MulContract mul) : DivRecursiveContractH (divRecursive db mul) := by
+    (mul : List Nat → List Nat → List Nat) (hmul : MulContract mul) : DivRecursiveContract (divRecursive db mul) := by
   intro q u v hq hu hv h40 htop hle hql hH
   unfold divRecursive
   have := drs_spec db hdb mul hmul v.length (List.replicate q.length 0) u v (fun d hd => List.eq_of_mem_replicate hd)

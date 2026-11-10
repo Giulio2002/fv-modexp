@@ -189,7 +189,7 @@ theorem Ctx.v1S_ge {v n s B ql L} (c : Ctx v n s B ql L) : 2 ^ 63 * 2 ^ (64 * (n
   have hs := c.s_lt
   have hne : v.drop s ≠ [] := by
     intro e; have := congrArg List.length e; simp at this; have := c.hn; omega
-  have h := val_ge_top hne (by rw [topLimb_drop v s (by have := c.hn; omega)]; exact c.htop)
+  have h := val_ge_top63 hne (by rw [topLimb_drop v s (by have := c.hn; omega)]; exact c.htop)
   have hl : (v.drop s).length - 1 = n - s - 1 := by simp; have := c.hn; omega
   rw [hl] at h
   unfold v1S

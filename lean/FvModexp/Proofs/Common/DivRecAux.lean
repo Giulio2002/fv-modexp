@@ -57,7 +57,7 @@ theorem topLimb_mul_le_val : ∀ (l : List Nat), l ≠ [] → topLimb l * 2 ^ (6
     rw [e2]
     omega
 
-theorem val_ge_top {l : List Nat} (hne : l ≠ []) (h : 2 ^ 63 ≤ topLimb l) :
+theorem val_ge_top63 {l : List Nat} (hne : l ≠ []) (h : 2 ^ 63 ≤ topLimb l) :
     2 ^ 63 * 2 ^ (64 * (l.length - 1)) ≤ val l :=
   Nat.le_trans (Nat.mul_le_mul_right _ h) (topLimb_mul_le_val l hne)
 

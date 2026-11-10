@@ -35,11 +35,15 @@ def DivBasicContract (db : List Nat → List Nat → List Nat → List Nat × Li
       (∀ d ∈ (db q u v).2.drop v.length, d = 0))
 
 /-- Contract of `(z nat) divRecursive(stk, u, v)` (natdiv.go:740-743) as used by `divLarge` (natdiv.go:626-630):
-`len(v) >= divRecursiveThreshold`, `v` normalised (top bit set), `len(q) = len(u) - len(v)` and the quotient fits in `len(q)`
-words (true in `divLarge` because `u[len(u)-1]` holds only the bits shifted out of `uIn`). -/
+`len(v) >= divRecursiveThreshold`, `v` normalised (top bit set), `len(q) = len(u) - len(v)`, and the top limb of `u` is below
+`2^63` (`2 * val u < 2^(64 len u)`; true in `divLarge` because `u[len(u)-1]` holds only the `shift ≤ 63` bits shifted out of
+`uIn`).  The top-limb bound (which implies the quotient fits in `len(q)` words) is NEEDED: with only
+`val u < val v * 2^(64 len q)` the first wide-digit step can produce `len(qhat.norm()) = len(z[j-B:]) + 1` and
+`addTo(z[j-B:], qhat)` would slice out of bounds (agent mathdiv-C: n = 40, m = 30, `u = v·2^(64·30) - 1`).  This input is
+not reachable from `divLarge`. -/
 def DivRecursiveContract (dr : List Nat → List Nat → List Nat → List Nat × List Nat) : Prop :=
   ∀ q u v : List Nat, Wd q → Wd u → Wd v → 40 ≤ v.length → 2 ^ 63 ≤ topLimb v →
-    v.length ≤ u.length → q.length = u.length - v.length → val u < val v * 2 ^ (64 * q.length) →
+    v.length ≤ u.length → q.length = u.length - v.length → 2 * val u < 2 ^ (64 * u.length) →
       (dr q u v).1.length = q.length ∧ (dr q u v).2.length = u.length ∧
       Wd (dr q u v).1 ∧ Wd (dr q u v).2 ∧
       val (dr q u v).1 = val u / val v ∧ val (dr q u v).2 = val u % val v ∧

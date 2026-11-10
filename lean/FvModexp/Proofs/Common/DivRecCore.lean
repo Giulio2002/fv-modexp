@@ -18,7 +18,7 @@ def RecOk (rec : List Nat → List Nat → List Nat → List Nat × List Nat) (N
 theorem v1_pos {v : List Nat} {n s : Nat} (hvn : v.length = n) (hs : s < n) (htop : 2 ^ 63 ≤ topLimb v) :
     0 < val (v.drop s) := by
   have hne : v.drop s ≠ [] := by intro e; have := congrArg List.length e; simp at this; omega
-  have h := val_ge_top hne (by rw [topLimb_drop v s (by omega)]; exact htop)
+  have h := val_ge_top63 hne (by rw [topLimb_drop v s (by omega)]; exact htop)
   have : 0 < 2 ^ 63 * 2 ^ (64 * ((v.drop s).length - 1)) := Nat.mul_pos (Nat.two_pow_pos _) (Nat.two_pow_pos _)
   omega
 
