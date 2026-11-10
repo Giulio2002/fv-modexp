@@ -1,0 +1,1 @@
+lean/scout/*.lean  (expmc perf scouting only; not imported by the library, never claimed done)
