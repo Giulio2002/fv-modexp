@@ -1,0 +1,3 @@
+RequiredGas
+OsakaModexpGas
+ModexpIterationCount

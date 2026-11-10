@@ -45,6 +45,49 @@ no heartbeat/timeout options are used anywhere.
 
 Sum of all 36 mathdiv modules: 74 s; slowest DivWW 13.9 s / 1.1 GB, DivRecLoop 8.5 s / 0.92 GB.
 
+## Function proofs, agent top (2026-11-10/11)
+Dev compile, one module at a time (`build/dbuild.sh <isa> …`, `LEAN_NUM_THREADS=4`, under `memcap -m 16G`), wall / max RSS.
+Lesson (before → after): the first setBytes exploration with `janus_data hd [hw]` did not finish 30 instructions in
+> 5 min (49 rodata disjunctions in every `omega`); with `janus_data hd` + one `apart_of_data` fact: 24 s for the whole prefix.
+
+| module | arm64 | amd64 |
+|---|---|---|
+| Nat/SetBytesDefs | 2.6 s, 2.2 GB | 1.6 s, 2.1 GB |
+| Nat/SetBytesNorm (nat.norm loop + return) | 5.7 s, 2.2 GB | 7.9 s, 2.2 GB |
+| Nat/SetBytesByte (byte loop) | 18.2 s, 2.2 GB | 33.1 s, 2.3 GB |
+| Nat/SetBytesWord (word loop) | 7.3 s, 2.2 GB | 11.7 s, 2.2 GB |
+| Nat/SetBytesMid | 2.8 s, 2.1 GB | 2.2 s, 2.1 GB |
+| Nat/SetBytes (`ens`, 4 paths, makeslice) | 41.3 s, 2.4 GB | 42.0 s, 2.5 GB |
+| Nat/SetBytesStd* (std copy) | same ±10 % (40.3 s max) | same (44.6 s max) |
+(The ~2 GB floor is loading the Run `Extracted` olean.)
+# Performance record (proof elaboration and `janus verify` rows)
+
+Project sanity goal: every `janus verify` row <= 15 min wall and <= 16 GB (hard, `scripts/verify-all.sh` has no override); every proof module's
+`lake build` / elaboration <= 5 min and <= 8 GB (target; anything above is profiled and fixed, never given more heartbeats/timeouts/memory);
+median row <= 3 min; full run (both ISAs, 6 rows in parallel) <= 2 h.
+
+Procedure for a slow module: `set_option trace.profiler true`, `janus.omega.log` (Janus PROOFS.md section Performance), then split segments,
+use summaries, normalise to `Nat`, keep `omega` contexts small, use reducible closers. Record BEFORE and AFTER here.
+
+| date | module / row | before (s, GB) | change | after (s, GB) |
+|---|---|---|---|---|
+
+## Mul/div machine summaries (agent divmc), 2026-11-11
+Dev compile `scripts/dev-lean-divmc.sh -x <isa> FILE` (Lean 4.34.1, Janus v0.2.0 oleans, `LEAN_NUM_THREADS=4`, `memcap 8G`),
+against the pinned Run extraction; every summary is proved on a restricted-program constant (`Lib*`, as expmc), never on
+`Extracted.program.onlySegments`. Wall / max RSS of the whole module (no profiling fix needed so far, no heartbeat options
+beyond `maxHeartbeats 0` on the executor theorems):
+
+| module | arm64 | amd64 |
+|---|---|---|
+| Nat/LibAddTo, Nat/LibBasicMul (restricted programs + `eq_only`) | 6–9 s / 2.7 GB | 6–7 s / 2.7 GB |
+| Nat/Callees (premise shapes, `Summary0.live`, `toSummaryRegs7`) | 1.2 s / 2.0 GB | 1.3 s / 2.0 GB |
+| Nat/AddTo (`addTo`, 5 paths, addVV.abi0 + addVW calls) | 89 s / 4.4 GB | 125 s / 5.4 GB |
+| Nat/BasicMul (`basicMul`: memclr + loop with addMulVVWW.abi0; loop lemma + pure step lemmas) | 74 s / 4.7 GB | 143 s / 5.5 GB |
+| Common/DivmcNat, DivmcBits, DivmcMem | ≤ 1 s | — |
+
+Cost drivers: each `by_cases` branch re-executes the prologue (AddTo: 3 runs); amd64 steps ~1.5× arm64. Next optimisation if
+a module approaches the cap: one `janus_run` with conditional rewrite rules instead of `by_cases` before the run.
 ## Leaf routines / assembly kernels (agent asm), 2026-11-11
 
 Module elaboration: `scripts/asm-perf.sh` (each module from scratch with `scripts/dev-lean.sh`, `LEAN_NUM_THREADS=4`,

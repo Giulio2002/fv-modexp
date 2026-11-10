@@ -36,3 +36,4 @@ import FvModexp.Proofs.Common.Slices
 import FvModexp.Proofs.Common.VecOps
 import FvModexp.Proofs.Common.WordFacts
 import FvModexp.Proofs.Common.Words
+import FvModexp.Proofs.Common.Compose
