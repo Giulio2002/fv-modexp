@@ -38,4 +38,12 @@ theorem split_mod (a h n k : Nat) :
 /-- `(a + B^n h) % B^n = a % B^n` style: a value below `B^n` is its own residue. -/
 theorem mod_self_lt {a n : Nat} (h : a < 2 ^ (64 * n)) : a % 2 ^ (64 * n) = a := Nat.mod_eq_of_lt h
 
+/-- One row of the schoolbook product (`basicMul`'s iteration `i`): the window `z[i : i + n]` (value `W`) receives
+`W + X·d` with carry `c` into limb `i + n` (which was `0`), the low `i` limbs (value `Lo`) unchanged. -/
+theorem bm_row (Lo W W' X Y d c i n : Nat)
+    (hrow : W' + 2 ^ (64 * n) * c = W + X * d)
+    (hinv : Lo + 2 ^ (64 * i) * W = X * Y) :
+    Lo + 2 ^ (64 * i) * (W' + 2 ^ (64 * n) * c) = X * (Y + 2 ^ (64 * i) * d) := by
+  rw [hrow, Nat.mul_add, ← Nat.add_assoc, hinv, Nat.mul_add, Nat.mul_left_comm]
+
 end FvModexp

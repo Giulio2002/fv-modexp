@@ -35,4 +35,17 @@ theorem liveFrame_of_frame {m m' : Memory} {L ws : List (Nat × Nat)} {rs : List
     have := hrs r hr
     omega)⟩
 
+/-- A read inside a zeroed range is `0`. -/
+theorem readLE_of_zeroed {m : Memory} {a n : Nat} (h : Mem.Zeroed m a n) :
+    ∀ k b, a ≤ b → b + k ≤ a + n → m.readLE b k = 0 := by
+  intro k
+  induction k with
+  | zero => intro b _ _; rfl
+  | succ k ih =>
+    intro b h1 h2
+    rw [Memory.readLE_succ, ih (b + 1) (by omega) (by omega)]
+    have := h (b - a) (by omega)
+    rw [show a + (b - a) = b by omega] at this
+    rw [this]; rfl
+
 end FvModexp
