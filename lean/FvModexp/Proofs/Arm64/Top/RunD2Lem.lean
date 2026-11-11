@@ -20,3 +20,17 @@ theorem sliceMask_le (e c : Nat) (h : e ≤ c) (hc : c < 2 ^ 63) :
     simp
 
 end FvModexp.Arm64.Run
+
+namespace FvModexp.Arm64.Run
+
+open Janus Janus.Arm64 Janus.Tactic
+
+/-- A `memmove` into a stack buffer of the window: its frame (runtime ranges, callee stack, the buffer) is inside
+`R.rt ∪ winA`. -/
+theorem out_csw {rt : List (Nat × Nat)} {sp a n d k : Nat} (hsp : 4800 ≤ sp) (hd1 : sp - 4800 ≤ d) (hd2 : d + k ≤ sp - 8)
+    (h : Outside a n (rt ++ [(sp - 4800, sp - 8), (sp + 8, sp + 40)])) :
+    Outside a n (rt ++ [(sp - 624 - 4096, sp - 624 - 8), (sp - 624 + 8, sp - 624 + 8 + 24)] ++ [(d, d + k)]) := by
+  simp only [Janus.outside_append, Janus.outside_cons, Janus.outside_nil, and_true] at h ⊢
+  exact ⟨⟨h.1, by omega, by omega⟩, by omega⟩
+
+end FvModexp.Arm64.Run
