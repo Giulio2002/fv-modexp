@@ -109,7 +109,7 @@ theorem d1join (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
   refine hk _ L2 b2 (RelD.mk' hin0 (by janus_simp [hsp]) (by janus_simp [h28]) (by janus_simp [h29])
     (by janus_simp [h18]) (by janus_simp [hm1]) (by janus_simp [hm2]) (by janus_simp [hm3]) (by janus_simp [hm4])
     (by janus_simp [hm5]) (by janus_simp [hm6]) (by janus_simp [hs1]) (by janus_simp [hs2]) (by janus_simp [hs3])
-    (by janus_simp [hs4]) (by janus_simp [hs5]) (by janus_simp [hs6]) hl0 hl1 hl2 hnz ?_ ?_ (hext.trans hext2) ?_ ?_
+    (by janus_simp [hs4]) (by janus_simp [hs5]) (by janus_simp [hs6]) hl0 hl1 hl2 hnz ?_ (fun h => absurd h (by decide)) ?_ (hext.trans hext2) ?_ ?_
     (hext2.liveSep hLsL1 hwrt) ?_ ?_ ?_) (by janus_simp)
   · intro _
     constructor

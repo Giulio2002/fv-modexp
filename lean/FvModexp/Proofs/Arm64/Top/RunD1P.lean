@@ -27,7 +27,7 @@ theorem d1p (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     (hr12 : (T.regs 12).toNat = hdrV s p len 2)
     (hr1 : (T.regs 1).toNat = p.toNat + (if 96 < len.toNat then 96 else 0))
     (hr3 : (T.regs 3).toNat = cp.toNat - (if 96 < len.toNat then 96 else 0)) (hr7 : (T.regs 7).toNat = len.toNat - 96)
-    (hbudD : 3 * makeCost 4 + 3 * dCost ≤ b) (hndir : len.toNat - 96 < hdrV s p len 0)
+    (hbudD : 3 * makeCost 4 + 3 * dCost ≤ b) (hndir : len.toNat - 96 < hdrV s p len 0) (hsm0 : hdrV s p len 0 ≤ 32)
     (hokM : ∀ d sr n, n ≤ 2 ^ 20 → R.ok (cA "runtime.memmove") [d, sr, n])
     (hokB : ∀ n, n ≤ 1024 → R.ok (cA "runtime.makeslice") [uint8T, n, n])
     (hk : ∀ S2 L2 b2, RelD R b L c p len cp s ret 1 L2 b2 S2 → S2.pc = BitVec.ofNat 64 pcD1 →
@@ -125,7 +125,7 @@ theorem d1p (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     refine hk _ L2 b2 (RelD.mk' hin0 (by janus_simp [hsp]) (by janus_simp [h28, hT28]) (by janus_simp [h29, hT29])
       (by janus_simp [h18, hT18]) (by janus_simp [hm1]) (by janus_simp [hm2]) (by janus_simp [hm3]) (by janus_simp [hm4])
       (by janus_simp [hm5]) (by janus_simp [hm6]) (by janus_simp [hr8]) (by janus_simp [hr11]) (by janus_simp [hr12])
-      (by janus_simp [hr7]) (by janus_simp [hr3]) (by janus_simp [hr1]) hl0 hl1 hl2 hnz ?_ ?_ (hext.trans hext2) ?_ ?_
+      (by janus_simp [hr7]) (by janus_simp [hr3]) (by janus_simp [hr1]) hl0 hl1 hl2 hnz ?_ (fun h => absurd h (by decide)) ?_ (hext.trans hext2) ?_ ?_
       (hext2.liveSep hLsL1 hwrt) ?_ ?_ ?_) (by janus_simp)
     · intro _
       have hmin : min (hdrV s p len 0) (len.toNat - 96) = len.toNat - 96 := by omega
@@ -180,6 +180,6 @@ theorem d1p (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
           rcases (by omega : j < 8 ∨ (8 ≤ j ∧ j < 16) ∨ (16 ≤ j ∧ j < 24) ∨ 24 ≤ j) with h | h | h | h <;>
           simp (disch := omega) only [Memory.readLE_writeLE_of_disjoint, Memory.readLE_writeLE_inside, Nat.zero_div,
             Nat.zero_mod]
-  · sorry
+  · exact absurd hsm0 hsm
 
 end FvModexp.Arm64.Run

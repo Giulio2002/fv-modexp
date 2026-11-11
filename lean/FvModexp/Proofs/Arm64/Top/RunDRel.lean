@@ -59,6 +59,7 @@ def RelD (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64) 
   hdrV s p len 0 ≤ 1024 ∧ hdrV s p len 1 ≤ 1024 ∧ hdrV s p len 2 ≤ 1024 ∧ ¬(hdrV s p len 0 = 0 ∧ hdrV s p len 2 = 0) ∧
   (1 ≤ k → S.mem.readLE (s.sp.toNat - 504) 8 = min (hdrV s p len 0) (len.toNat - 96) ∧
     S.mem.readLE (s.sp.toNat - 512) 8 = min (hdrV s p len 0) (len.toNat - 96) + hdrV s p len 1) ∧
+  (2 ≤ k → S.mem.readLE (s.sp.toNat - 552) 8 = hdrV s p len 1 + hdrV s p len 0) ∧
   Extracted.program.DataLoaded S.mem ∧
   (∀ a n, p.toNat ≤ a → a + n ≤ p.toNat + len.toNat → S.mem.readLE a n = s.mem.readLE a n) ∧
   S.mem.readLE c.toNat 3 = s.mem.readLE c.toNat 3 ∧
@@ -89,6 +90,7 @@ theorem RelD.mk' {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c p len cp : Bit
     (lnz : ¬(hdrV s p len 0 = 0 ∧ hdrV s p len 2 = 0))
     (k1 : 1 ≤ k → S.mem.readLE (s.sp.toNat - 504) 8 = min (hdrV s p len 0) (len.toNat - 96) ∧
       S.mem.readLE (s.sp.toNat - 512) 8 = min (hdrV s p len 0) (len.toNat - 96) + hdrV s p len 1)
+    (k2 : 2 ≤ k → S.mem.readLE (s.sp.toNat - 552) 8 = hdrV s p len 1 + hdrV s p len 0)
     (h12 : Extracted.program.DataLoaded S.mem)
     (h15 : LiveExt R L Lk) (h16 : b - (3 * makeCost 4 + k * dCost) ≤ bk)
     (h17 : R.inv bk Lk (s.regs 28).toNat (view R.rt Lk S.mem)) (h18 : LiveSep Lk (win s stk 40))
@@ -97,7 +99,7 @@ theorem RelD.mk' {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c p len cp : Bit
     RelD R b L c p len cp s ret k Lk bk S := by
   obtain ⟨-, -, hch, hcw, -, -, -, -, hh, hpw⟩ := hin
   have hLw := LiveFrame.of_nil' h20 (winA s stk 40)
-  refine ⟨h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, s1, s2, s3, s4, s5, s6, l0, l1, l2, lnz, k1, h12,
+  refine ⟨h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, s1, s2, s3, s4, s5, s6, l0, l1, l2, lnz, k1, k2, h12,
     fun a n ha hb => ?_, ?_, h15, h16, h17, h18, h19, h20, h21⟩
   · refine (hh.sub ha hb).readLE h19 hLw ?_
     simp only [win, winA, Janus.outside_cons, Janus.outside_nil, and_true] at hpw ⊢
@@ -168,5 +170,32 @@ theorem OpDone.transport {m m' : Memory} {s : State} {p len : BitVec 64} {L1 L2 
   · rw [h1, h3]; intro hc
     obtain ⟨a1, a2, a3, a4⟩ := hin hc
     exact ⟨hsub _ _ a1, a2, a3, a4⟩
+
+end FvModexp.Arm64.Run
+
+namespace FvModexp.Arm64.Run
+
+open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
+
+/-! Range inclusions used to compose the frames of Run's runtime calls (stated on plain numbers, proved once). -/
+
+theorem out_wA {rt : List (Nat × Nat)} {sp a n : Nat}
+    (h : Outside a n (rt ++ [(sp - 4800, sp - 8), (sp + 8, sp + 40)])) :
+    Outside a n [(sp - 4800, sp - 8), (sp + 8, sp + 40)] := (Janus.outside_append _ _ _ _ |>.mp h).2
+
+theorem out_cs {rt : List (Nat × Nat)} {sp a n : Nat} (hsp : 4800 ≤ sp)
+    (h : Outside a n (rt ++ [(sp - 4800, sp - 8), (sp + 8, sp + 40)])) :
+    Outside a n (rt ++ [(sp - 624 - 4096, sp - 624 - 8), (sp - 624 + 8, sp - 624 + 8 + 24)]) := by
+  simp only [Janus.outside_append, Janus.outside_cons, Janus.outside_nil, and_true] at h ⊢
+  exact ⟨h.1, by omega, by omega⟩
+
+theorem out_csd {rt : List (Nat × Nat)} {sp a n d k : Nat} (hsp : 4800 ≤ sp) (hd : InRanges d k rt)
+    (h : Outside a n (rt ++ [(sp - 4800, sp - 8), (sp + 8, sp + 40)])) :
+    Outside a n (rt ++ [(sp - 624 - 4096, sp - 624 - 8), (sp - 624 + 8, sp - 624 + 8 + 24)] ++ [(d, d + k)]) := by
+  have h1 := out_cs hsp h
+  simp only [Janus.outside_append, Janus.outside_cons, Janus.outside_nil, and_true] at h h1 ⊢
+  have := InRanges.apart hd h.1
+  unfold Apart at this
+  exact ⟨h1, by omega⟩
 
 end FvModexp.Arm64.Run

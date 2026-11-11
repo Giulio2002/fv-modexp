@@ -27,7 +27,7 @@ theorem d1x (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     (hr12 : (T.regs 12).toNat = hdrV s p len 2)
     (hr1 : (T.regs 1).toNat = p.toNat + (if 96 < len.toNat then 96 else 0))
     (hr3 : (T.regs 3).toNat = cp.toNat - (if 96 < len.toNat then 96 else 0)) (hr7 : (T.regs 7).toNat = len.toNat - 96)
-    (hbudD : 3 * makeCost 4 + 3 * dCost ≤ b)
+    (hbudD : 3 * makeCost 4 + 3 * dCost ≤ b) (hdir0 : hdrV s p len 0 ≤ len.toNat - 96)
     (hk : ∀ S2 L2 b2, RelD R b L c p len cp s ret 1 L2 b2 S2 → S2.pc = BitVec.ofNat 64 pcD1 →
       Reaches ((LibRun.program.link impl).withExit ret) S2 Q) :
     Reaches ((LibRun.program.link impl).withExit ret) T Q := by
@@ -94,7 +94,7 @@ theorem d1x (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     refine hk _ L2 b2 (RelD.mk' hin0 (by janus_simp [hsp]) (by janus_simp [h28, hT28]) (by janus_simp [h29, hT29])
       (by janus_simp [h18, hT18]) (by janus_simp [hm1]) (by janus_simp [hm2]) (by janus_simp [hm3]) (by janus_simp [hm4])
       (by janus_simp [hm5]) (by janus_simp [hm6]) (by janus_simp [hr8]) (by janus_simp [hr11]) (by janus_simp [hr12])
-      (by janus_simp [hr7]) (by janus_simp [hr3]) (by janus_simp [hr1]) hl0 hl1 hl2 hnz ?_ ?_ (hext.trans hext2) ?_ ?_
+      (by janus_simp [hr7]) (by janus_simp [hr3]) (by janus_simp [hr1]) hl0 hl1 hl2 hnz ?_ (fun h => absurd h (by decide)) ?_ (hext.trans hext2) ?_ ?_
       (hext2.liveSep hLsL1 hwrt) ?_ ?_ ?_) (by janus_simp)
     · intro _
       have hmin : min (hdrV s p len 0) (len.toNat - 96) = hdrV s p len 0 := by omega
@@ -141,6 +141,6 @@ theorem d1x (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
           rw [h0]; rfl
     all_goals trace_state
     all_goals sorry
-  · sorry
+  · exact absurd hdir0 hdir
 
 end FvModexp.Arm64.Run

@@ -97,24 +97,34 @@ theorem d1l (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     simp only [calleeStack, List.mem_cons, List.not_mem_nil, or_false] at hr
     rcases hr with rfl | rfl <;> refine ⟨?_, ?_, ?_⟩ <;> dsimp only <;> omega
   clear hdS hinv
+  have hlen1 : 0 < len.toNat := by
+    refine Nat.pos_of_ne_zero fun h0 => hnz ⟨?_, ?_⟩ <;>
+      (simp only [hdrV]; exact padBE_past _ _ _ _ _ (by omega))
+  obtain ⟨off, hoffd⟩ : ∃ off, (if 96 < len.toNat then 96 else 0) = off := ⟨_, rfl⟩
+  have hoffc : (96 < len.toNat ∧ off = 96) ∨ (len.toNat ≤ 96 ∧ off = 0) := by
+    subst hoffd; split <;> omega
+  have hr1n : (T.regs 1).toNat = p.toNat + off := by rw [hr1, hoffd]
   have hmvok : R.ok (cA "runtime.memmove") [ptr.toNat, (T.regs 1).toNat, len.toNat - 96] := hokM _ _ _ (by omega)
-  have hs1 : (T.regs 1).toNat + (len.toNat - 96) ≤ 2 ^ 48 := by rw [hr1]; split <;> omega
+  have hs1 : (T.regs 1).toNat + (len.toNat - 96) ≤ 2 ^ 48 := by rw [hr1n]; omega
   have hs2 : s.mem.accessible (T.regs 1).toNat (len.toNat - 96) false = true := by
-    rw [hr1]; exact Memory.accessible_mono _ hpacc (by split <;> omega) (by split <;> omega)
+    rw [hr1n]; exact Memory.accessible_mono _ hpacc (by omega) (by omega)
   have hs3 : (T.regs 1).toNat + (len.toNat - 96) ≤ BitVec.toNat s.sp - 624 - 4096 ∨
-      BitVec.toNat s.sp - 624 - 8 ≤ (T.regs 1).toNat := by rw [hr1]; split <;> omega
+      BitVec.toNat s.sp - 624 - 8 ≤ (T.regs 1).toNat := by rw [hr1n]; omega
   have hs4 : (T.regs 1).toNat + (len.toNat - 96) ≤ BitVec.toNat s.sp - 624 + 8 ∨
-      BitVec.toNat s.sp - 624 + 8 + 24 ≤ (T.regs 1).toNat := by rw [hr1]; split <;> omega
+      BitVec.toNat s.sp - 624 + 8 + 24 ≤ (T.regs 1).toNat := by rw [hr1n]; omega
   have hpo : ptr.toNat + blockSize (hdrV s p len 0) true ≤ s.sp.toNat - 4800 ∨ s.sp.toNat + 40 ≤ ptr.toNat := by
     have := InRanges.apart hink hout; unfold Apart at this; omega
   have hpI : (T.regs 1).toNat + (len.toNat - 96) ≤ ptr.toNat ∨ ptr.toNat + blockSize (hdrV s p len 0) true ≤ (T.regs 1).toNat := by
     have h1 : Outside (T.regs 1).toNat (len.toNat - 96) R.rt ∨ InRanges (T.regs 1).toNat (len.toNat - 96) L1 := by
-      rw [hr1]; exact (hext.held (hheld.sub (by split <;> omega) (by split <;> omega))).symm
+      rw [hr1n]; exact (hext.held (hheld.sub (by omega) (by omega))).symm
     rcases h1 with h1 | h1
     · have := InRanges.apart hink h1; unfold Apart at this; omega
     · have := hapk.apart_of_inRanges h1; unfold Apart at this; omega
-  by_cases hz : len.toNat - 96 = 0
-  · sorry
+  have hsrcA : (T.regs 1).toNat + 1 ≤ ptr.toNat ∨ ptr.toNat + blockSize (hdrV s p len 0) true ≤ (T.regs 1).toNat := by
+    rw [hr1n]
+    rcases hext.held (hheld.sub (a := p.toNat + off) (n := 1) (by omega) (by omega)) with h | h
+    · have := hapk.apart_of_inRanges h; unfold Apart at this; omega
+    · have := InRanges.apart hink h; unfold Apart at this; omega
   have hne : (ptr.toNat = (T.regs 1).toNat) = False := by
     simp only [eq_iff_iff, iff_false]; omega
   have hne' : ((T.regs 1).toNat = ptr.toNat) = False := by
@@ -132,6 +142,8 @@ theorem d1l (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     exact hout.of_sub (Nat.le_refl _) (by omega)
   have hext' : LiveExt R L1 (L1 ++ [(ptr.toNat, ptr.toNat + blockSize (hdrV s p len 0) true)]) :=
     LiveExt.single (by simpa using hink) (by simpa using hapk)
+  have hlr : len.toNat - 96 ≤ blockSize (hdrV s p len 0) true := by omega
+  have hink' : InRanges ptr.toNat (len.toNat - 96) R.rt := hink.sub (Nat.le_refl _) (by omega)
   have hm : ∀ a n w, mk.accessible a n w = s.mem.accessible a n w := fun a n w => by
     simp only [hMFk.accessible, Memory.accessible_writeLE, hMF.accessible]
   have hdk' : Extracted.program.DataLoaded (mk.writeLE (BitVec.toNat s.sp - 248) 8 (BitVec.toNat ptr)) :=
@@ -143,20 +155,14 @@ theorem d1l (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     rcases hr with (rfl | rfl) | rfl
     · rw [hm]; exact Memory.accessible_mono _ hw (by omega) (by omega)
     · rw [hm]; exact Memory.accessible_mono _ hw (by omega) (by omega)
-    · rw [hm]; exact Memory.accessible_mono _ hack (by simp) (by simp; omega)
+    · rw [hm]; exact Memory.accessible_mono _ hack (Nat.le_refl _)
+        (by dsimp only; rw [Nat.add_sub_cancel_left]; exact Nat.add_le_add_left hlr _)
   have hMF2 : MemFrame s.mem m2 (R.rt ++ winA s stk 40) := by
-    refine ⟨fun a n h => ?_, fun a n w => by simp only [hMFm.accessible, Memory.accessible_writeLE, hm]⟩
-    have h' := h
-    simp only [winA, stk, Janus.outside_append, Janus.outside_cons, Janus.outside_nil, and_true] at h'
-    have hd1 := InRanges.apart hink h'.1
-    unfold Apart at hd1
-    rw [hMFm.readLE _ _ (by
-      simp only [Janus.outside_append, Janus.outside_cons, Janus.outside_nil, and_true]
-      exact ⟨⟨h'.1, by omega, by omega⟩, by omega⟩), Memory.readLE_writeLE_of_disjoint _ _ (by omega), hMFk.readLE _ _ (by
-      simp only [calleeStack, Janus.outside_append, Janus.outside_cons, Janus.outside_nil, and_true]
-      exact ⟨h'.1, by omega⟩)]
-    repeat rw [Memory.readLE_writeLE_of_disjoint _ _ (by omega)]
-    exact hMF.readLE _ _ h
+    simp only [winA, stk] at hMF ⊢
+    refine (((hMF.trans ?w1 fun a n h => ⟨h, out_wA h⟩).trans hMFk fun a n h => ⟨h, out_cs hb' h⟩).trans ?w2
+      fun a n h => ⟨h, out_wA h⟩).trans hMFm fun a n h => ⟨h, out_csd hb' hink' h⟩
+    case w1 => janus_frame
+    case w2 => janus_frame
   have hdst : LiveSep L1 [(ptr.toNat, ptr.toNat + (len.toNat - 96))] := by
     intro r hr; have := hapk r hr; unfold Apart at this
     simp only [Janus.outside_cons, Janus.outside_nil, and_true]; omega
@@ -209,8 +215,9 @@ theorem d1l (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     unfold padByte
     split
     · rename_i hjl
+      obtain ⟨-, rfl⟩ : 96 < len.toNat ∧ off = 96 := by omega
       have hcj := hcp j (by omega)
-      rw [hcj, ← Memory.readLE_one, hr1, if_pos (by omega)]
+      rw [hcj, ← Memory.readLE_one, hr1n]
       have hH : Held R (L1 ++ [(ptr.toNat, ptr.toNat + blockSize (hdrV s p len 0) true)]) (p.toNat + 96 + j) 1 :=
         (hext.trans hext').held (hheld.sub (by omega) (by omega))
       rw [← hH.readLE (by rw [List.append_assoc] at hMFm; exact hMFm) hLFw (by
