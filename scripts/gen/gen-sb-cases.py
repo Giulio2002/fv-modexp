@@ -26,7 +26,7 @@ def case(n):
         close = ((haves + '\n         ') if n else '') + \
             '(try simp only [Util.chunk8, Util.chunk4, Util.chunk2, Util.chunk2n, Util.rot0])\n         ' \
             'all_goals (simp only [Aux.fromBE, Nat.add_zero, Nat.reducePow, Nat.reduceAdd, Nat.add_assoc, Nat.zero_add]; ' \
-            '(try simp (disch := omega) only [Util.or_hi16, Util.or_hi24, Util.or_hi32, Util.or_hi40, Util.or_hi48, Util.or_hi56, Nat.mod_eq_of_lt]); (try omega))'
+            '(try simp (disch := omega) only [Util.or_hi16, Util.or_hi24, Util.or_hi32, Util.or_hi40, Util.or_hi48, Util.or_hi56, Nat.mod_eq_of_lt]); (try (first | (simp only [Nat.mul_add, Nat.mul_assoc, Nat.reduceMul, Nat.mul_one]; ac_rfl) | omega)))'
     return f'''set_option maxHeartbeats 64000000 in
 set_option maxRecDepth 100000 in
 set_option linter.unusedSimpArgs false in
