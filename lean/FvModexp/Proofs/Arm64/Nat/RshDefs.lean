@@ -59,11 +59,13 @@ def wordT : Nat := Extracted.dataAddr.«type:big.Word#51b931e8»
       MemFrame s.mem s'.mem (R.rt ++ winA s stk above ++ [(zp, zp + 8 * zc)]) ∧
       LiveFrame s.mem s'.mem L [(zp, zp + 8 * zc)]
 
-/-- **The premise shape of `z.rsh(x, s)`** (`z` X0..X2, `x` X3..X5, `s` X6). -/
+/-- **The premise shape of `z.rsh(x, s)`** (`z` X0..X2, `x` X3..X5, `s` X6; `len x ≤ cap x < 2^40` for the
+`x[m-n:]` slice mask). -/
 def Hyp (impl : List Segment) (R : RtInv) (ns : List String) (stk above : Nat) : Prop :=
   ∀ (b : Nat) (L : List (Nat × Nat)) (z zl zc x xl xc sh : BitVec 64),
     Ensures ((Extracted.program.onlySegments ns).link impl) (segAddr Extracted.program fn) [z, zl, zc, x, xl, xc, sh]
-      (fun s => RshPre R b L stk above z.toNat zl.toNat zc.toNat x.toNat xl.toNat sh.toNat s)
+      (fun s => RshPre R b L stk above z.toNat zl.toNat zc.toNat x.toNat xl.toNat sh.toNat s ∧
+        xl.toNat ≤ xc.toNat ∧ xc.toNat < 2 ^ 40)
       (fun s s' => RshPost R b L stk above z.toNat zc.toNat x.toNat xl.toNat sh.toNat s s')
 
 @[reducible] def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zl zc x xl sh : Nat) (s : State) : Prop :=
