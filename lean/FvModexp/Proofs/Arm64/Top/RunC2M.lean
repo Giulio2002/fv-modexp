@@ -1,5 +1,5 @@
 import FvModexp.Proofs.Arm64.Top.RunC2Sum
-import FvModexp.Proofs.Arm64.Top.RunC2Lem2
+import FvModexp.Proofs.Arm64.Top.RunC2Lem3
 
 /-! # `Run` (arm64): `C2` to `V` when `base = 1` (`base.BitLen() == 1`): `v = base.Mod(base, mod).Bytes()` -/
 
@@ -9,6 +9,7 @@ namespace FvModexp.Arm64.Run
 
 theorem clz_one : clzNat 64 1 = 63 := by decide
 
+set_option profiler true in
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 theorem c2m (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv) (stkM aboveM : Nat)
@@ -57,14 +58,29 @@ theorem c2m (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     exact ⟨0, 2, by omega, by omega, by simp only [opAt]; omega, by simp only [opAt]; omega⟩
   have hBm : RunIface.ModBudget (max (RunIface.lenW T.mem (s.sp.toNat - 136)) (RunIface.lenW T.mem (s.sp.toNat - 200)))
       ≤ b1 := by
-    sorry
+    have l0 : RunIface.lenW T.mem (s.sp.toNat - 136) ≤ opW s p len 0 := lenW_op (hop 0 (by omega)) (by omega)
+    have l2 : RunIface.lenW T.mem (s.sp.toNat - 200) ≤ opW s p len 2 := lenW_op (hop 2 (by omega)) (by omega)
+    have hbB' := hbB
+    simp only [okB, callB] at hbB'
+    have := budget_mod (w := wMax s p len) (lb := 0)
+      (Nat.le_trans l0 (Nat.le_trans (Nat.le_max_left _ _) (Nat.le_max_left _ _)))
+      (Nat.le_trans l2 (Nat.le_max_right _ _)) (Nat.zero_le _) hbud hbB'
+    omega
+  obtain ⟨-, hval2, -, h1282, -, -⟩ := hop 2 (by omega)
+  simp only [opAt, show s.sp.toNat - 136 - 32 * 2 = s.sp.toNat - 200 by omega,
+    show s.sp.toNat - 200 + 16 = s.sp.toNat - 184 by omega] at hval2 h1282
+  have hy0 : 0 < RunIface.IntV T.mem (s.sp.toNat - 200) := by rw [intV_eq]; rw [hval2]; exact hv2
+  have hzl : RunIface.IntLenLe T.mem (s.sp.toNat - 136) RunIface.maxW := by
+    unfold RunIface.IntLenLe RunIface.maxW; rw [show s.sp.toNat - 136 + 16 = s.sp.toNat - 120 by omega]; exact h1280
+  have hyl : RunIface.IntLenLe T.mem (s.sp.toNat - 200) RunIface.maxW := by
+    unfold RunIface.IntLenLe RunIface.maxW; rw [show s.sp.toNat - 200 + 16 = s.sp.toNat - 184 by omega]; exact h1282
   have hIP : ∀ t : State, t.sp = T.sp → t.mem = T.mem → t.regs 28 = s.regs 28 →
       RunIface.IntPre R b1 (RunIface.ModBudget (max (RunIface.lenW T.mem (s.sp.toNat - 136))
         (RunIface.lenW T.mem (s.sp.toNat - 200)))) L1 stkM aboveM [s.sp.toNat - 136, s.sp.toNat - 200] t :=
     fun t h1 h2 h3 => intPre_ops _ (by rw [h1]; exact hspn) h2 h3 henvW0 hW hW1 hab hglob hgL hsv hBm hdS hext hinv hMF
       hop hopA hxs hpw
   have hMod := modW impl hap R stkM aboveM hM b1 L1 T.sp (s.regs 28) T.mem (s.sp.toNat - 136) (s.sp.toNat - 200) hIP
-    sorry sorry sorry
+    hy0 hzl hyl
   janus_run [hn1, hx1, h7, clz_one, hb0'] until [segAddr Extracted.program fn + 0x85c, segAddr Extracted.program fn + 0x864] calls [hP := hMod]
   obtain ⟨⟨⟨hsp1, h281, h291, h181⟩, hr01, hpost, hyv⟩, hrg1⟩ := hP
   dsimp only at hsp1 h281 h291 h181 hrg1
@@ -78,7 +94,15 @@ theorem c2m (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     intro hc
     exact InRanges.apart (hlive0 hc).2.2.2.2.1 hglob.2.2.2.2.2.2.2.2.1
   have hlb : RunIface.lenW s'.mem (s.sp.toNat - 136) ≤ RunIface.maxW := by
-    sorry
+    have hp' := hpost
+    obtain ⟨hvz, L', b', -, -, -, hokz, -⟩ := hp'
+    have hn := hokz.2.2.2.2.2.2.2.1
+    have hlt : RunIface.IntV s'.mem (s.sp.toNat - 136) < RunIface.IntV T.mem (s.sp.toNat - 200) := by
+      rw [hvz]; exact Nat.mod_lt _ hy0
+    unfold RunIface.IntV at hlt
+    have := len_le_of_lt_norm _ _ _ _ _ _ hn hlt
+    unfold RunIface.IntLenLe at hyl
+    unfold RunIface.lenW; omega
   have hBB : RunIface.ModBudget (max (RunIface.lenW T.mem (s.sp.toNat - 136)) (RunIface.lenW T.mem (s.sp.toNat - 200))) +
       RunIface.BytesBudget (RunIface.lenW s'.mem (s.sp.toNat - 136)) ≤ b1 := by
     have l0 : RunIface.lenW T.mem (s.sp.toNat - 136) ≤ opW s p len 0 := lenW_op (hop 0 (by omega)) (by omega)
@@ -91,7 +115,70 @@ theorem c2m (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   have hBy' := bytesW impl hap R stkM aboveM hBy b2 L2 (s.sp - 624#64) (s.regs 28) s'.mem (s.sp.toNat - 136)
     (fun t h1 h2 h3 => hIPb t h1 h2 (h3.trans (by janus_simp [h28]))) hlb
   have hz136 : (s.sp - 136#64).toNat = s.sp.toNat - 136 := by rw [BitVec.toNat_sub]; simp; omega
+  -- facts about the `Mod` return state, named before the next run shadows `s'`
+  have hsp624 : (s.sp - 624#64).toNat = s.sp.toNat - 624 := by rw [← hsp]; exact hspn
+  have hcap0 : 0 < T.mem.readLE (s.sp.toNat - 112) 8 := by omega
+  have harrR : 0 < T.mem.readLE (s.sp.toNat - 136 + 24) 8 → InRanges (T.mem.readLE (s.sp.toNat - 136 + 8) 8)
+      (8 * T.mem.readLE (s.sp.toNat - 136 + 24) 8) R.rt := fun _ => by
+    rw [show s.sp.toNat - 136 + 24 = s.sp.toNat - 112 by omega, show s.sp.toNat - 136 + 8 = s.sp.toNat - 128 by omega]
+    exact (hlive0 hcap0).2.2.2.2.1
+  have harrL : 0 < T.mem.readLE (s.sp.toNat - 136 + 24) 8 → ApartAll (T.mem.readLE (s.sp.toNat - 136 + 8) 8)
+      (8 * T.mem.readLE (s.sp.toNat - 136 + 24) 8) L := fun _ => by
+    rw [show s.sp.toNat - 136 + 24 = s.sp.toNat - 112 by omega, show s.sp.toNat - 136 + 8 = s.sp.toNat - 128 by omega]
+    exact (hlive0 hcap0).2.2.2.2.2
+  have hIV0 : RunIface.IntV T.mem (s.sp.toNat - 136) = 1 := by
+    unfold RunIface.IntV
+    rw [show s.sp.toNat - 136 + 8 = s.sp.toNat - 128 by omega, show s.sp.toNat - 136 + 16 = s.sp.toNat - 120 by omega]
+    exact hval0
+  have hIV2 : RunIface.IntV T.mem (s.sp.toNat - 200) = opV s p len 2 := by rw [intV_eq]; exact hval2
+  have l0 : RunIface.lenW T.mem (s.sp.toNat - 136) ≤ wMax s p len :=
+    Nat.le_trans (lenW_op (hop 0 (by omega)) (by omega)) (Nat.le_trans (Nat.le_max_left _ _) (Nat.le_max_left _ _))
+  have l2 : RunIface.lenW T.mem (s.sp.toNat - 200) ≤ wMax s p len :=
+    Nat.le_trans (lenW_op (hop 2 (by omega)) (by omega)) (Nat.le_max_right _ _)
+  have hspW : W ≤ s.sp.toNat := by omega
+  have hTw : T.mem.accessible (s.sp.toNat - W) (W + 40) true = true := by rw [hMF.accessible]; exact hw
+  have hz1 : s.sp.toNat - W ≤ s.sp.toNat - 136 := by omega
+  have hz2 : s.sp.toNat - 136 + 32 ≤ s.sp.toNat + 40 := by omega
+  have hwsW : ∀ r ∈ win s W 40, s.sp.toNat - W ≤ r.1 ∧ r.1 ≤ r.2 ∧ r.2 ≤ s.sp.toNat - W + (W + 40) := by
+    intro r hr; simp only [win, List.mem_singleton] at hr; subst hr; dsimp only; omega
+  have hsl : ∀ (M2 : Memory) (t : State), t.sp = s.sp - 624#64 → MemFrame s'.mem M2 (R.rt ++ winA t stkM aboveM) →
+      M2.readLE (s.sp.toNat - 624) 8 = ret ∧ M2.readLE (s.sp.toNat - 632) 8 = (s.regs 29).toNat ∧
+      M2.readLE (s.sp.toNat - 464) 8 = hdrV s p len 2 := by
+    intro M2 t ht h3
+    have o1 : Outside (s.sp.toNat - 624) 8 R.rt := hout.of_sub (by omega) (by omega)
+    have o2 : Outside (s.sp.toNat - 632) 8 R.rt := hout.of_sub (by omega) (by omega)
+    have o3 : Outside (s.sp.toNat - 464) 8 R.rt := hout.of_sub (by omega) (by omega)
+    exact ⟨(slot_TV (h1 := hMF2) (h2 := h3) ht hsp624 o1 (by omega) (by omega) harrR).trans hm1,
+      (slot_TV (h1 := hMF2) (h2 := h3) ht hsp624 o2 (by omega) (by omega) harrR).trans hm2,
+      (slot_TV (h1 := hMF2) (h2 := h3) ht hsp624 o3 (by omega) (by omega) harrR).trans hs3⟩
   janus_run [hsp1, h281', hr01, hz136] until [pcCV] calls [hQ := hBy']
-  all_goals (trace_state; sorry)
+  obtain ⟨⟨hsp2, h282, h292, h182⟩, vp, vn, vc, hvp, hvn, -, -, hbe, hmin, Lb, bb, hext3, hb3, hinv3, hfr3, hMF3,
+    hLF3⟩ := hQ.1
+  have hrg3 := hQ.2
+  clear hQ hBy' hIPb hIP
+  have hval : beVal s'.mem vp vn = resV s p len := by
+    rw [hbe, hv1, hIV0, hIV2, resV_eq _ _ _ hv2, hv0, Nat.one_pow]
+  have hvlt : vn ≤ hdrV s p len 2 :=
+    beLen_le _ _ _ _ hmin (by rw [hbe, hv1, hIV0, hIV2]; exact lt_modLen s p len (Nat.mod_lt _ hv2))
+  have hMFTV := frame_TV (sp := s.sp.toNat) hW hab hspW hsp624 hsp624 hz1 hz2 harrR hMF2 hMF3
+  have hMFall : MemFrame s.mem s'.mem (R.rt ++ win s W 40) :=
+    (memFrame_win hW1 hMF).trans hMFTV fun _ _ h => ⟨h, h⟩
+  have hLFall : LiveFrame s.mem s'.mem L [] :=
+    hLF.trans (liveFrame_TV hext hext2 hLs hz1 hz2 harrL hLF2 hLF3) fun _ _ h => h
+  have hextB := (hext.trans hext2).trans hext3
+  obtain ⟨e1, e2, e3⟩ := hsl _ _ rfl hMF3
+  refine hk _ Lb bb ⟨rfl, by janus_simp [h282, h281'], by janus_simp [h292, h291, h29], by janus_simp [h182, h181, h18],
+    e1, e2, e3, hl2, dataLoaded_win hdS (hrg3.trans hrg1) hro hMFTV hTw hwsW, ?vn, ?vv, ?fr, hextB, ?bud, hinv3,
+    liveSep_W hextB hLs hout hspW, hMFall, hLFall⟩ (by janus_simp)
+  case vn => show (s'.regs 1).toNat ≤ _; rw [hvn]; exact hvlt
+  case vv => show beVal s'.mem (s'.regs 0).toNat (s'.regs 1).toNat = _; rw [hvp, hvn]; exact hval
+  case fr =>
+    show 0 < (s'.regs 1).toNat → _
+    rw [hvp, hvn]; intro h
+    obtain ⟨a1, a2, -, a4, a5⟩ := hfr3 h
+    exact ⟨a1, a2, a4, a5⟩
+  case bud =>
+    unfold callB
+    exact budget_c2m l0 l2 hlb hbud hb2 hb3
 
 end FvModexp.Arm64.Run

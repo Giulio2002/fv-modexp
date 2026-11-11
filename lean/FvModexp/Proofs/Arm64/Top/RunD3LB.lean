@@ -65,6 +65,12 @@ theorem d3lB (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
   have hmin : (if ((nb : Nat) : Int) < ((hdrV s p len 2 : Nat) : Int) then BitVec.ofNat 64 nb
       else BitVec.ofNat 64 (hdrV s p len 2)) = BitVec.ofNat 64 nb := by
     rw [if_pos (by omega)]
+  have hLSc : ∀ r ∈ L0, (r.fst + (r.snd - r.fst) ≤ s.sp.toNat - 624 - 4096 ∨ s.sp.toNat - 624 - 8 ≤ r.fst) ∧
+      (r.fst + (r.snd - r.fst) ≤ s.sp.toNat - 624 + 8 ∨ s.sp.toNat - 624 + 8 + 24 ≤ r.fst) := by
+    intro r hr; have := hLsS r (List.mem_append_left _ hr)
+    simp only [win, Janus.outside_cons, Janus.outside_nil, and_true] at this; omega
+  have hBS := hLsS _ (List.mem_append_right _ (List.mem_singleton_self _))
+  simp only [win, Janus.outside_cons, Janus.outside_nil, and_true] at hBS
   set_option janus.callRegions true in
   janus_run [hm1, hm2, hm3, hm4, hm5, hm6, hs2, hs3, hs4, hs5, hs6, hy1, hy2, hr0', hIe, toInt_small, hn1, hn2, hn3, hn4, hgt,
     hmin]
@@ -117,9 +123,9 @@ theorem d3lB (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     · rename_i hjl
       rw [← Memory.readLE_one, hLFm.readLE _ _ (hIn.sub (by omega) (by omega)) (by
           simp only [Janus.outside_append, Janus.outside_cons, Janus.outside_nil, and_true]
-          refine ⟨⟨by omega, by omega⟩, by omega⟩),
+          omega),
         Memory.readLE_writeLE_of_disjoint _ _ (by omega), Memory.readLE_one, hBv j hj]
-  refine d3join impl hap R hmk hokS b L c p len cp ret hret s henv0 hin0 Q hbudD hk _ _ bk B ?hj (by janus_simp)
+  refine d3join impl hap R hmk hokS b L c p len cp ret hret s henv0 hin0 Q hbudD hk _ (L0 ++ [(B, B + blockSize (hdrV s p len 2) true)]) bk B ?hj (by janus_simp)
   case hj =>
   refine ⟨by janus_simp [hsp], by janus_simp [h28], by janus_simp [h29], by janus_simp [h18],
      by janus_simp [hm1], by janus_simp [hm2], by janus_simp [hm3], by janus_simp [hm4], by janus_simp [hm5],

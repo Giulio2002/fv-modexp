@@ -1,5 +1,6 @@
 import FvModexp.Proofs.Arm64.Top.RunD2Lem
 import FvModexp.Proofs.Arm64.Top.RunD3J
+import FvModexp.Proofs.Arm64.Top.RunArith
 
 /-! # `Run` (arm64): `D1` to `J2`, exponent operand longer than the input rest, at most 32 bytes: stack buffer, `memmove` -/
 
@@ -77,7 +78,7 @@ theorem d3p (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   have hoffc : (96 < len.toNat ∧ off = 96) ∨ (len.toNat ≤ 96 ∧ off = 0) := by
     subst hoffd; simp only [inOff]; split <;> omega
   rw [hoffd] at hs5 hs6
-  have hcap : min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96) ≤ cp.toNat - off := by omega
+  have hcap : min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96) ≤ cp.toNat - off := cap_le _ _ _ _ (Nat.min_le_right _ _) hlcp hoffc
   obtain ⟨mN, hmNd⟩ : ∃ mN, (if min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96) < cp.toNat - off then
       min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96) else 0) = mN := ⟨_, rfl⟩
   have hmN : mN ≤ min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96) ∧
@@ -89,17 +90,12 @@ theorem d3p (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     apply BitVec.eq_of_toNat_eq
     rw [sliceMask_le _ _ hcap (by omega), hmNd, BitVec.toNat_ofNat, Nat.mod_eq_of_lt (by omega)]
   have hsub : BitVec.ofNat 64 (len.toNat - 96) - BitVec.ofNat 64 (min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96)) =
-      BitVec.ofNat 64 (len.toNat - 96 - min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96)) := by
-    apply BitVec.eq_of_toNat_eq; rw [BitVec.toNat_sub]; simp only [BitVec.toNat_ofNat]
-    rw [Nat.mod_eq_of_lt (a := min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96)) (by omega),
-      Nat.mod_eq_of_lt (a := len.toNat - 96) (by omega),
-      Nat.mod_eq_of_lt (a := len.toNat - 96 - min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96)) (by omega)]; omega
+      BitVec.ofNat 64 (len.toNat - 96 - min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96)) :=
+    bv_sub_of_le _ _ (Nat.min_le_right _ _) (Nat.lt_of_le_of_lt (Nat.sub_le _ _) len.isLt)
   have hcsub : BitVec.ofNat 64 (cp.toNat - off) - BitVec.ofNat 64 (min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96)) =
-      BitVec.ofNat 64 (cp.toNat - off - min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96)) := by
-    apply BitVec.eq_of_toNat_eq; rw [BitVec.toNat_sub]; simp only [BitVec.toNat_ofNat]
-    rw [Nat.mod_eq_of_lt (a := min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96)) (by omega),
-      Nat.mod_eq_of_lt (a := cp.toNat - off) (by omega),
-      Nat.mod_eq_of_lt (a := cp.toNat - off - min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96)) (by omega)]; omega
+      BitVec.ofNat 64 (cp.toNat - off - min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96)) :=
+    bv_sub_of_le _ _ hcap (Nat.lt_of_le_of_lt (Nat.sub_le _ _) cp.isLt)
+  obtain ⟨hr1, hr2, hr3⟩ := rng_le p.toNat len.toNat off mN _ hmN.1 (Nat.min_le_right _ _) hoffc hmN.2
   have hsrc : BitVec.ofNat 64 mN + BitVec.ofNat 64 (p.toNat + off) = BitVec.ofNat 64 (p.toNat + off + mN) := by
     apply BitVec.eq_of_toNat_eq; rw [BitVec.toNat_add]; simp only [BitVec.toNat_ofNat]
     rw [Nat.mod_eq_of_lt (a := mN) (by omega), Nat.mod_eq_of_lt (a := p.toNat + off) (by omega),
@@ -108,8 +104,8 @@ theorem d3p (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   have hmvok : R.ok (cA "runtime.memmove") [s.sp.toNat - 456, p.toNat + off + mN,
       len.toNat - 96 - min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96)] := hokM _ _ _ (by omega)
   have hsA : s.mem.accessible (p.toNat + off + mN) (len.toNat - 96 - min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96)) false
-      = true := Memory.accessible_mono _ hpacc (by omega) (by omega)
-  have hne : (BitVec.toNat s.sp - 456 = p.toNat + off + mN) = False := by simp only [eq_iff_iff, iff_false]; omega
+      = true := Memory.accessible_mono _ hpacc hr1 hr2
+  have hne : (BitVec.toNat s.sp - 456 = p.toNat + off + mN) = False := stk_ne _ _ _ _ _ _ hpw hr3 hb' (by decide) (by decide)
   set_option janus.callRegions true in
   janus_run [hm1, hm2, hm3, hm4, hm5, hm6, hs1, hs2, hs3, hs4, hs5, hs6, hk1a, hk1b, hk2a, hS1, hS1n, hadd, hmod, hc, hc32, hIe, hIa, hmask, hsub,
     hcsub, hsrc, hne, toInt_ite, toNat_ite, toInt_small] until [segAddr Extracted.program fn + 0x728] calls [hmv']
