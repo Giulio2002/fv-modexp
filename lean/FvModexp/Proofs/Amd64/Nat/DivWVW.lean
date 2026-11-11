@@ -53,7 +53,7 @@ theorem divww (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progr
 
 /-- the precondition (`xl = zl` separately) -/
 @[reducible] def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zl xn xp y : BitVec 64) (s : State) : Prop :=
-  CallEnv R L s 64 72 ∧ y.toNat ≠ 0 ∧ xn.toNat < y.toNat ∧
+  CallEnvND R L s 64 72 ∧ y.toNat ≠ 0 ∧ xn.toNat < y.toNat ∧
     NatLive s.mem R L zp.toNat zl.toNat ∧ Outside zp.toNat (8 * zl.toNat) (win s 64 72) ∧
     s.mem.accessible xp.toNat (8 * zl.toNat) false = true ∧ xp.toNat + 8 * zl.toNat ≤ 2 ^ 48 ∧
     Held R L xp.toNat (8 * zl.toNat) ∧ Outside xp.toNat (8 * zl.toNat) (win s 64 72) ∧
@@ -112,7 +112,7 @@ theorem fin (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat × 
     (hrel : Rel R b L ret zp.toNat xp.toNat zl.toNat y.toNat rec 0 s S) (hv : Val s zp zl xn xp y 0 r S) :
     Reaches ((LibDivWVW.program.link impl).withExit ret) S
       (IsReturn fun s' => ABIReturn s s' ∧ Post R b L zp zl xn xp y s s') := by
-  obtain ⟨⟨hg, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, hLs, -, -⟩, hy, hxn, -⟩ := hpre
+  obtain ⟨⟨hg, ⟨hb', ha, hw⟩, hal, hout, hga, hgr, hLs, -⟩, hy, hxn, -⟩ := hpre
   try simp only [regSP] at hb' ha hw
   obtain ⟨hpc, h0, h7, h9, h6, h8, h10⟩ := hh
   obtain ⟨hsp, h5', h14, h15, hx15, hdf, hfs, h_rd_lr, h_rd_fp, -, -, -, -, -, hmf, hlf, hinv⟩ := hrel
@@ -163,7 +163,7 @@ theorem rel_next (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (ret : Nat) (s : 
     (h14' : S'.regs 14 = s.regs 14) (hx' : S'.xmm 15 = s.xmm 15) (hdf' : S'.df = false)
     (hfs' : S'.fsBase = s.fsBase) (hm' : S'.mem = T.mem.writeLE (zp.toNat + (k - 1) * 8) 8 v) :
     Rel R b L ret zp.toNat xp.toNat zl.toNat y.toNat rec (k - 1) s S' := by
-  obtain ⟨⟨-, ⟨hb', ha, hw⟩, -, -, hout, -, -, hLs, -, -⟩, -, -, hzl, hzw, -, -, -, -, -, -⟩ := hpre
+  obtain ⟨⟨-, ⟨hb', ha, hw⟩, -, hout, -, -, hLs, -⟩, -, -, hzl, hzw, -, -, -, -, -, -⟩ := hpre
   try simp only [regSP] at hb' ha hw
   obtain ⟨hzal, hzh, hzacc, hz48⟩ := hzl (by omega)
   simp only [Outside, and_true] at hzw
@@ -248,7 +248,7 @@ theorem tail (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat ×
     Reaches ((LibDivWVW.program.link impl).withExit ret) T
       (IsReturn fun s' => ABIReturn s s' ∧ Post R b L zp zl xn xp y s s') := by
   have hpre' := hpre
-  obtain ⟨⟨hg, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, hLs, -, -⟩, hy, hxn, hzl, hzw, hxacc, hx48, hxh,
+  obtain ⟨⟨hg, ⟨hb', ha, hw⟩, hal, hout, hga, hgr, hLs, -⟩, hy, hxn, hzl, hzw, hxacc, hx48, hxh,
     hxw, hzx, -⟩ := hpre'
   try simp only [regSP] at hb' ha hw
   have hrel' := hrel
@@ -311,7 +311,7 @@ theorem body (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
       (IsReturn fun s' => ABIReturn s s' ∧ Post R b L zp zl xn xp y s s') := by
   have h_rd_xk := rel_x R b L ret s zp zl xn xp y hpre _ k S hrel ((k - 1) * 8) 8 (by omega) (fun _ => by omega)
   have hpre' := hpre
-  obtain ⟨⟨hg, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, hLs, -, -⟩, hy, hxn, hzl, hzw, hxacc, hx48, hxh,
+  obtain ⟨⟨hg, ⟨hb', ha, hw⟩, hal, hout, hga, hgr, hLs, -⟩, hy, hxn, hzl, hzw, hxacc, hx48, hxh,
     hxw, hzx, -⟩ := hpre'
   try simp only [regSP] at hb' ha hw
   obtain ⟨hpc, h0, h7, h9, h6, h8, h10⟩ := hh
@@ -363,7 +363,7 @@ theorem rel_init (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (ret : Nat) (s : 
     (hx' : S'.xmm 15 = s.xmm 15) (hdf' : S'.df = false) (hfs' : S'.fsBase = s.fsBase)
     (hm' : S'.mem = M0 s zp zl xp y rec) :
     Rel R b L ret zp.toNat xp.toNat zl.toNat y.toNat rec zl.toNat s S' := by
-  obtain ⟨⟨-, ⟨hb', ha, hw⟩, -, -, hout, -, -, hLs, -, -⟩, -, -, -, -, -, -, -, -, -, hinv⟩ := hpre
+  obtain ⟨⟨-, ⟨hb', ha, hw⟩, -, hout, -, -, hLs, -⟩, -, -, -, -, -, -, -, -, -, hinv⟩ := hpre
   try simp only [regSP] at hb' ha hw
   have hW : MemFrame s.mem S'.mem (win s 64 72) := by
     rw [hm']; simp only [M0, win]; janus_frame
@@ -432,7 +432,7 @@ theorem gen (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
     Reaches ((LibDivWVW.program.link impl).withExit ret) s
       (IsReturn fun s' => ABIReturn s s' ∧ Post R b L zp zl xn xp y s s') := by
   have hpre' := hpre
-  obtain ⟨⟨hg, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, hLs, -, -⟩, hy, hxn, -⟩ := hpre'
+  obtain ⟨⟨hg, ⟨hb', ha, hw⟩, hal, hout, hga, hgr, hLs, -⟩, hy, hxn, -⟩ := hpre'
   have hgl := hg.load
   have hg3 := hg.below
   have hg1 := hg.noWrap
@@ -507,7 +507,7 @@ theorem one (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat × 
     Reaches ((LibDivWVW.program.link impl).withExit ret) s
       (IsReturn fun s' => ABIReturn s s' ∧ Post R b L zp zl xn xp y s s') := by
   have hpre' := hpre
-  obtain ⟨⟨hg, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, hLs, -, -⟩, hy, hxn, hzl, hzw, hxacc, hx48, hxh,
+  obtain ⟨⟨hg, ⟨hb', ha, hw⟩, hal, hout, hga, hgr, hLs, -⟩, hy, hxn, hzl, hzw, hxacc, hx48, hxh,
     hxw, hzx, hinv⟩ := hpre'
   have hgl := hg.load
   have hg3 := hg.below
