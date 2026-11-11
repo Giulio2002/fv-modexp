@@ -153,7 +153,7 @@ theorem Pre.adx {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl
 
 /-- The postcondition. -/
 @[reducible] def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (st zp zl xp xl : Nat) (s s' : State) : Prop :=
-  s'.fsBase = s.fsBase ∧ natVal s'.mem zp zl = natVal s.mem xp xl * natVal s.mem xp xl ∧
+  s'.fsBase = s.fsBase ∧ s'.df = s.df ∧ natVal s'.mem zp zl = natVal s.mem xp xl * natVal s.mem xp xl ∧
     ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b - stackNatCost (stLen s.mem st) (2 * xl) ≤ b' ∧
       R.inv b' L' (s.regs 14).toNat (view R.rt L' s'.mem) ∧ StackBack R L L' st s.mem s'.mem ∧
       MemFrame s.mem s'.mem (R.rt ++ win s 4424 64 ++ ws s.mem st zp zl) ∧

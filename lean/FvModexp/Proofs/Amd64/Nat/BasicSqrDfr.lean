@@ -24,7 +24,7 @@ theorem dsum (impl : List Amd64.Segment) :
   unfold Apart at hsa' hfa'
   simp only [fnD, reduceSegAddr] at hpc
   janus64_run
-  refine ⟨?_, rfl, rfl, rfl, rfl, ?_, by janus_frame⟩
+  refine ⟨?_, rfl, rfl, rfl, rfl, rfl, ?_, by janus_frame⟩
   · simp [setRegF]
   simp (disch := omega) only [Janus.Arm64.Memory.readLE_writeLE_of_disjoint, FvModexp.Expmc.readLE_writeLE_same]
   simp only [Nat.reducePow]

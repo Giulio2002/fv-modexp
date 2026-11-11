@@ -35,7 +35,7 @@ def Pre (s : State) : Prop :=
 /-- What it guarantees (`RSP` popped, `RBP`, `R14`, `X15` kept). -/
 @[reducible] def Post (s s' : State) : Prop :=
   s'.regs 4 = s.regs 4 + 8 ∧ s'.regs 5 = s.regs 5 ∧ s'.regs 14 = s.regs 14 ∧ s'.xmm 15 = s.xmm 15 ∧
-    s'.fsBase = s.fsBase ∧
+    s'.fsBase = s.fsBase ∧ s'.df = s.df ∧
     s'.mem.readLE (s.mem.readLE ((s.regs 2).toNat + 8) 8 + 8) 8 = s.mem.readLE ((s.regs 2).toNat + 16) 8 ∧
     MemFrame s.mem s'.mem [((s.regs 4).toNat - 8, (s.regs 4).toNat),
       (s.mem.readLE ((s.regs 2).toNat + 8) 8 + 8, s.mem.readLE ((s.regs 2).toNat + 8) 8 + 16)]
