@@ -1,5 +1,5 @@
 import Extracted
-import FvModexp.Proofs.Arm64.RequiredGas.Fin1
+import FvModexp.Proofs.Arm64.RequiredGas.Blk2
 
 /-!
 # `(*bigModExp).RequiredGas(input []byte) uint64` (arm64), go-ethereum v1.17.10 core/vm/contracts.go:606-646
@@ -23,12 +23,29 @@ theorem correctness (c ptr len cap : BitVec 64) :
   janus_intro hs
   janus_data hd [hw]
   simp only [Disjoint] at hd1 hd2 hdg
-  by_cases c32 : len.toNat < 32 <;> by_cases c64 : len.toNat < 64 <;> by_cases c96 : len.toNat < 96 <;>
-    by_cases d0 : len.toNat < cap.toNat <;> by_cases d32 : 32 < cap.toNat <;> by_cases d64 : 64 < cap.toNat
-  all_goals try (exfalso; omega)
-  all_goals janus_run [c32, c64, c96, d0, d32, d64, BitArith.and_asr63, BitArith.and_asr63_lit, Nat.lt_add_right_iff_pos, Nat.mod_eq_of_lt]
-    until [Extracted.entry + 0x200] calls [sb, mv]
-  all_goals trace_state
-  all_goals sorry
+  by_cases c32 : len.toNat < 32 <;> by_cases d0 : len.toNat < cap.toNat
+  all_goals janus_run [c32, d0, BitArith.and_asr63, BitArith.and_asr63_lit, Nat.lt_add_right_iff_pos, Nat.mod_eq_of_lt]
+    until [Extracted.entry + 0xc4] calls [sb, mv]
+  all_goals
+    refine reaches_of_returns (rg_blk2 c ptr len cap ret hret s _ hpre' ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_)
+      (fun s' h => h)
+    all_goals first
+      | with_reducible rfl
+      | (with_reducible show MemFrame _ _ _; janus_frame)
+      | (with_reducible show Extracted.program.DataLoaded _; dl_close)
+      | (with_reducible show val256 _ _ = Calldata.word _ _ _ 0
+         rw [val256_limbs]; dsimp only; simp only [Nat.reducePow]
+         refine Eq.trans (by assumption) ?_
+         refine fromBE_eq_of (by omega) (fun i hi => ?_)
+         rg_byte)
+      | (with_reducible show State.regs _ _ = _; dsimp only; simp only [setReg_apply, callRegs_apply]; decide)
+      | (with_reducible show State.regs _ _ = _; dsimp only; simp only [setReg_apply, callRegs_apply,
+           Nat.reduceEqDiff, ite_true, ite_false, or_self, or_false, false_or, getD_cons_zero]
+         first
+           | done
+           | rfl
+           | (apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_add, BitVec.toNat_ofNat]; omega))
+      | (with_reducible show Memory.readLE _ _ _ = _; janus_simp)
+      | (trace_state; sorry)
 
 end FvModexp.Arm64.RequiredGas
