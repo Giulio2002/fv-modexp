@@ -102,3 +102,44 @@ theorem lenRegs_nz {m : Memory} {pt n v : Nat} {bl u : BitVec 64} (hv : v = natV
     rw [hv, natVal_one, BitVec.toNat_ofNat, Nat.mod_eq_of_lt (by have := Memory.readLE_lt m pt 8; simpa using this)]
 
 end FvModexp.Arm64.Run
+
+namespace FvModexp.Arm64.Run
+
+theorem ite_lt_max_int (a b : Int) : (if a < b then b else a) = max a b := by
+  by_cases h : a < b <;> simp [h, Int.max_def] <;> omega
+
+theorem ite_lt_max_nat (a b : Nat) : (if a < b then b else a) = max a b := by
+  by_cases h : a < b <;> simp [h, Nat.max_def] <;> omega
+
+end FvModexp.Arm64.Run
+
+namespace FvModexp.Arm64.Run
+
+theorem err_of_big {v0 v1 v2 : Nat} {b0 b1 b2 u0 u1 u2 : BitVec 64} (h0 : LenRegs v0 b0 u0) (h1 : LenRegs v1 b1 u1)
+    (h2 : LenRegs v2 b2 u2) (h : 64 < b0.toNat ∨ 64 < b1.toNat ∨ 64 < b2.toNat) :
+    1024 < v0 ∨ 1024 < v1 ∨ 1024 < v2 := by
+  rcases h with h | h | h
+  · have := h0.2.1.1 h; omega
+  · have := h1.2.1.1 h; omega
+  · have := h2.2.1.1 h; omega
+
+theorem err_of_u {v0 v1 v2 : Nat} {b0 b1 b2 u0 u1 u2 : BitVec 64} (h0 : LenRegs v0 b0 u0) (h1 : LenRegs v1 b1 u1)
+    (h2 : LenRegs v2 b2 u2) (hb : b0.toNat ≤ 64 ∧ b1.toNat ≤ 64 ∧ b2.toNat ≤ 64)
+    (h : 1024 < u0.toNat ∨ 1024 < u1.toNat ∨ 1024 < u2.toNat) : 1024 < v0 ∨ 1024 < v1 ∨ 1024 < v2 := by
+  have e0 := h0.2.2 hb.1; have e1 := h1.2.2 hb.2.1; have e2 := h2.2.2 hb.2.2; omega
+
+end FvModexp.Arm64.Run
+
+namespace FvModexp.Arm64.Run
+
+/-- The two `CSEL GT` of `max(BitLen …)`, compared with `CMP $64; BGT`. -/
+theorem ite3_int_gt (a b c k : Int) :
+    (k < if (if a < b then b else a) < c then c else (if a < b then b else a)) ↔ (k < a ∨ k < b ∨ k < c) := by
+  split <;> split <;> omega
+
+/-- The two `CSEL HI` of `max(Uint64 …)`, compared with `CMP $1024; BLS`. -/
+theorem ite3_nat_le (a b c k : Nat) :
+    ((if (if a < b then b else a) < c then c else (if a < b then b else a)) ≤ k) ↔ (a ≤ k ∧ b ≤ k ∧ c ≤ k) := by
+  split <;> split <;> omega
+
+end FvModexp.Arm64.Run
