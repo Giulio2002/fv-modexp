@@ -73,18 +73,19 @@ theorem globals_c {R : RtInv} {s T : State} {M : Memory} {W stkM aboveM : Nat}
     (hsW : W ≤ s.sp.toNat)
     (hglob : RunIface.Globals R s.mem (win s W 40)) (hMF : MemFrame s.mem M (R.rt ++ winA s 4800 40)) :
     RunIface.Globals R M (win T stkM aboveM) := by
-  obtain ⟨h1, h2, h3, h4, e1, e2, e3, hacc, hrt, hw⟩ := hglob
+  obtain ⟨h1, h2, h3, h4, e1, e2, e3, hacc, hrt, hw, hwa, hwr, hww⟩ := hglob
   have hw' := hw
   simp only [win, Janus.outside_cons, Janus.outside_nil, and_true] at hw'
   have hout : ∀ k, k + 8 ≤ 32 → Outside (RunIface.gA + k) 8 (R.rt ++ winA s 4800 40) := fun k hk => by
     simp only [winA, Janus.outside_append, Janus.outside_cons, Janus.outside_nil, and_true]
     exact ⟨hrt.of_sub (by omega) (by omega), by omega, by omega⟩
-  refine ⟨?_, ?_, ?_, ?_, e1, e2, e3, by rw [hMF.accessible]; exact hacc, hrt, ?_⟩
+  refine ⟨?_, ?_, ?_, ?_, e1, e2, e3, by rw [hMF.accessible]; exact hacc, hrt, ?_, by rw [hMF.accessible]; exact hwa, hwr, ?_⟩
   · rw [e1, hMF.readLE _ _ (hout 8 (by omega)), ← e1]; exact h1
   · rw [e2, hMF.readLE _ _ (hout 16 (by omega)), ← e2]; exact h2
   · rw [e3, hMF.readLE _ _ (hout 24 (by omega)), ← e3]; exact h3
   · rw [hMF.readLE _ _ (by simpa using hout 0 (by omega))]; exact h4
   · simp only [win, Janus.outside_cons, Janus.outside_nil, and_true]; rw [hT]; omega
+  · simp only [win, Janus.outside_cons, Janus.outside_nil, and_true] at hww ⊢; rw [hT]; omega
 
 end FvModexp.Arm64.Run
 

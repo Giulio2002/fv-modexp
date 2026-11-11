@@ -9,7 +9,6 @@ namespace FvModexp.Arm64.Run
 
 theorem clz_one : clzNat 64 1 = 63 := by decide
 
-set_option profiler true in
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 theorem c2m (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv) (stkM aboveM : Nat)
