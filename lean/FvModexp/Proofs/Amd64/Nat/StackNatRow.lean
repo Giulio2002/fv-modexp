@@ -87,7 +87,6 @@ theorem pre : StackNat.Pre R 0x1000 [] 4192 24 OA 1 s0 := by
     | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
         show s0.mem = mem0 from rfl, acc0]; decide +kernel)
     | decide +kernel
-    | (trace_state; sorry)
 
 /-- Every hypothesis of `correctness` and every conjunct of its precondition hold together (the call `stk.nat(1)` on a
 stack with room), one call-site state per runtime contract. -/

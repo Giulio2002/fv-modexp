@@ -101,7 +101,6 @@ theorem pre : BasicSqr.Pre R 0x1000 [] ST OA 2 2 OB 1 s0 := by
     | (simp only [NatLive, Held, InRanges, outside_cons, outside_nil, and_true, rt_eq, show s0.mem = mem0 from rfl,
         acc0]; decide +kernel)
     | decide +kernel
-    | (trace_state; sorry)
 
 /-- Every hypothesis of `correctness` and every conjunct of its precondition hold together: the shared witness runtime,
 budget `0x1000`, empty live set, `basicSqr(stk, z, x)` with `x = 3` (`len 1`, the `basicMul` path), `len z = 2`; one
