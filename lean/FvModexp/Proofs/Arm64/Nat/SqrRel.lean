@@ -83,6 +83,30 @@ theorem chain {R : RtInv} {wa ss ts : List (Nat × Nat)} {m0 m1 m2 m3 : Memory} 
     exact ⟨⟨h.1.1.1, h.1.1.2⟩, ⟨h.1.1.1, h.1.1.2⟩, this, h.2⟩
   · refine ⟨h, ?_⟩; simp only [outside_append] at h; exact h.1.1.2
 
+/-- `z` reused (`2n ≤ cap z`), memory changed in the window only -/
+theorem core_reuse {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp xl xc : Nat} {s : State} {M : Memory}
+    (hpre : SPre R b L W zp zc st xp xl xc s) (hc : 2 * xl ≤ zc) (hF : MemFrame s.mem M (winA s W 64)) :
+    Core R b L W zp zc st xp xl xc s zp zc L b M := by
+  have hpre' := hpre
+  obtain ⟨hce, -, -, -, -, -, -, -, -, -, -, hzc40, hzl, hzw, -, -, -, -, -, -, hinv⟩ := hpre'
+  obtain ⟨-, ⟨hal, hb', ha, hw⟩, -, hout, -, -, hLs, -⟩ := hce
+  refine ⟨hpre, hF.mono fun a n h => by simp only [outside_append] at h; exact h.2, lf_win [] hF hLs,
+    LiveExt.refl R L, Nat.sub_le b _, inv_frame_winA hF hout (by omega) (by decide) hinv, hc, hzc40, ?_, hzw,
+    Or.inl ⟨rfl, rfl⟩, fun _ _ => ⟨rfl, rfl⟩⟩
+  intro h; obtain ⟨q1, q2, q3, q4⟩ := hzl h; exact ⟨q1, q2, by rw [hF.accessible]; exact q3, q4⟩
+
+/-- the stack is untouched (`n < 12`: no scratch) -/
+theorem stackBack_keep {R : RtInv} {L L2 : List (Nat × Nat)} {st : Nat} {m m' : Memory} {rs : List (Nat × Nat)}
+    (h : StkOK m R L st) (hF : MemFrame m m' rs) (ho : Outside st 24 rs) (he : LiveExt R L L2) :
+    StackBack R L L2 st m m' := by
+  have e1 : m'.readLE (st + 8) 8 = m.readLE (st + 8) 8 := hF.readLE _ _ (ho.of_sub (by omega) (by omega))
+  have h' := stkOK_frame h hF ho
+  obtain ⟨h1, h2, h3, h4, h5, h6, h7⟩ := h'
+  refine ⟨⟨h1, he.held h2, h3, h4, ?_, h6, h7⟩, by simp only [stLen]; rw [e1], Or.inl ⟨?_, ?_⟩⟩
+  · intro hc; obtain ⟨q1, q2, q3, q4⟩ := h5 hc; exact ⟨q1, he.held q2, q3, q4⟩
+  · simp only [stW]; exact hF.readLE _ _ (ho.of_sub (Nat.le_refl _) (by omega))
+  · simp only [stCap]; exact hF.readLE _ _ (ho.of_sub (by omega) (by omega))
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- **The post builder**: from `Core` at `M`, the call state's memory `MS` (window stores only), the callee's results
