@@ -47,8 +47,8 @@ copies, to any runtime-chosen destination). -/
 def PreS (stk : Nat) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl xc yp yl yc : BitVec 64) (s : State) : Prop :=
   CallEnv R L s stk 80 ∧ Outside wordT 16 R.rt ∧ xl.toNat ≤ xc.toNat ∧ yl.toNat ≤ yc.toNat ∧ xc.toNat < 2 ^ 40 ∧ yc.toNat < 2 ^ 40 ∧ xl.toNat < 2 ^ 40 ∧ yl.toNat < 2 ^ 40 ∧ zc.toNat < 2 ^ 40 ∧
     NatLive s.mem R L zp.toNat zc.toNat ∧
-    (0 < zc.toNat → Outside zp.toNat (8 * zc.toNat) (win s stk 80) ∧
-      Apart zp.toNat (8 * zc.toNat) ((s.regs 28).toNat + 16) 8 ∧
+    Outside zp.toNat (8 * zc.toNat) (win s stk 80) ∧
+    (0 < zc.toNat → Apart zp.toNat (8 * zc.toNat) ((s.regs 28).toNat + 16) 8 ∧
       (zp = xp ∨ Apart zp.toNat (8 * zc.toNat) xp.toNat (8 * xl.toNat)) ∧
       (zp = yp ∨ Apart zp.toNat (8 * zc.toNat) yp.toNat (8 * yl.toNat))) ∧
     s.mem.accessible xp.toNat (8 * xl.toNat) false = true ∧ xp.toNat + 8 * xl.toNat ≤ 2 ^ 48 ∧
@@ -97,13 +97,11 @@ theorem callEnv_mono {R : RtInv} {L : List (Nat × Nat)} {s : State} {stk stk' a
 theorem preS_mono {stk stk' : Nat} (hk : stk' ≤ stk) {R : RtInv} {b : Nat} {L : List (Nat × Nat)}
     {zp zc xp xl xc yp yl yc : BitVec 64} {s : State} (h : PreS stk R b L zp zc xp xl xc yp yl yc s) :
     PreS stk' R b L zp zc xp xl xc yp yl yc s := by
-  obtain ⟨hce, h1, h2, h3, h4, h5, h6, h7, h8, h9, hzw, h10, h11, h12, h13, h14, hxw, h15, h16, h17, hyw, h18⟩ := h
+  obtain ⟨hce, h1, h2, h3, h4, h5, h6, h7, h8, h9, hzo, hzw, h10, h11, h12, h13, h14, hxw, h15, h16, h17, hyw, h18⟩ := h
   have hsp := hce.2.1.2.1
-  refine ⟨callEnv_mono hk hce, h1, h2, h3, h4, h5, h6, h7, h8, h9, fun hz => ?_, h10, h11, h12, h13, h14, ?_, h15, h16,
+  refine ⟨callEnv_mono hk hce, h1, h2, h3, h4, h5, h6, h7, h8, h9, ?_, hzw, h10, h11, h12, h13, h14, ?_, h15, h16,
     h17, ?_, h18⟩
-  · obtain ⟨a, b, c, d⟩ := hzw hz
-    refine ⟨?_, b, c, d⟩
-    simp only [win, outside_cons, outside_nil, and_true] at a ⊢; omega
+  · simp only [win, outside_cons, outside_nil, and_true] at hzo ⊢; omega
   · simp only [win, outside_cons, outside_nil, and_true] at hxw ⊢; omega
   · simp only [win, outside_cons, outside_nil, and_true] at hyw ⊢; omega
 

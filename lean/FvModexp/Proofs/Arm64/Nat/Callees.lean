@@ -261,6 +261,44 @@ theorem AddMulVVWWHyp.live {P : Program}
     · left; simpa using ho
   · simp only [Outside, and_true]; unfold Apart at ha1 ha2; omega
 
+/-! ## `subVV.abi0` (asm; `FvModexp.Arm64.SubVVSum.subVV_summary`) -/
+
+def subVVfn : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.subVV.abi0"
+
+/-- = asm `SubVVSum.Q` (`lv` = `natVal`): `Z' + Y = X + B^n c`, `c = [X < Y]`. -/
+abbrev SubVVQ (s : State) (m : Memory) : Prop :=
+  natVal m (s.mem.readLE (s.sp.toNat + 8) 8) (s.mem.readLE (s.sp.toNat + 16) 8) +
+      natVal s.mem (s.mem.readLE (s.sp.toNat + 56) 8) (s.mem.readLE (s.sp.toNat + 16) 8) =
+    natVal s.mem (s.mem.readLE (s.sp.toNat + 32) 8) (s.mem.readLE (s.sp.toNat + 16) 8) +
+      2 ^ (64 * s.mem.readLE (s.sp.toNat + 16) 8) * m.readLE (s.sp.toNat + 80) 8 ∧
+  m.readLE (s.sp.toNat + 80) 8 =
+    (if natVal s.mem (s.mem.readLE (s.sp.toNat + 32) 8) (s.mem.readLE (s.sp.toNat + 16) 8) <
+        natVal s.mem (s.mem.readLE (s.sp.toNat + 56) 8) (s.mem.readLE (s.sp.toNat + 16) 8) then 1 else 0) ∧
+  MemFrame s.mem m [(s.mem.readLE (s.sp.toNat + 8) 8,
+      s.mem.readLE (s.sp.toNat + 8) 8 + 8 * s.mem.readLE (s.sp.toNat + 16) 8), (s.sp.toNat + 80, s.sp.toNat + 88)]
+
+def SubVVHyp (impl : List Segment) : Prop :=
+  Summary0 ((Extracted.program.onlySegments [subVVfn]).link impl) (segAddr Extracted.program subVVfn) VVPre SubVVQ
+
+abbrev SubVVLQ (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (s : State) (m : Memory) : Prop :=
+  SubVVQ s m ∧ R.inv b L (s.regs 28).toNat (view R.rt L m) ∧
+    m.readLE ((s.regs 28).toNat + 16) 8 = s.mem.readLE ((s.regs 28).toNat + 16) 8
+
+theorem SubVVHyp.live {P : Program} (h : Summary0 P (segAddr Extracted.program subVVfn) VVPre SubVVQ) (R : RtInv)
+    (b : Nat) (L : List (Nat × Nat)) :
+    Summary0 P (segAddr Extracted.program subVVfn) (VVLPre R b L) (SubVVLQ R b L) := by
+  refine Summary0.mono (Summary0.live h (fun s => [(s.mem.readLE (s.sp.toNat + 8) 8,
+      s.mem.readLE (s.sp.toNat + 8) 8 + 8 * s.mem.readLE (s.sp.toNat + 16) 8),
+      (s.sp.toNat + 80, s.sp.toNat + 88)]) (fun s m _ hq => hq.2.2) R b L) ?_ (fun _ _ _ hq => hq)
+  intro s ⟨hp, hi, hh, ho, ha1, ha2⟩
+  refine ⟨hp, hi, ?_, ?_⟩
+  · intro r hr
+    simp only [List.mem_cons, List.mem_nil_iff, or_false] at hr
+    rcases hr with rfl | rfl
+    · simp only [Nat.add_sub_cancel_left]; exact hh.symm
+    · left; simpa using ho
+  · simp only [Outside, and_true]; unfold Apart at ha1 ha2; omega
+
 /-! ## `addVW` (asm; Go ABIInternal; PLANNED shape) -/
 
 def addVWfn : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.addVW"

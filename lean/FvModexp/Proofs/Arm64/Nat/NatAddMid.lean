@@ -90,10 +90,18 @@ theorem liveFrame_of_memFrame {m m' : Memory} {L ws : List (Nat × Nat)} (h : Me
     LiveFrame m m' L ws :=
   ⟨fun a n _ ho => h.readLE a n ho⟩
 
+/-- A held range outside a runtime call's stack window keeps its bytes. -/
+theorem held_keep {R : RtInv} {L cs : List (Nat × Nat)} {M0 m : Memory} {a n : Nat} (hh : Held R L a n)
+    (hLF : LiveFrame M0 m L []) (hMF : MemFrame M0 m (R.rt ++ cs)) (ho : Outside a n cs) :
+    m.readLE a n = M0.readLE a n := by
+  rcases hh with hin | hout
+  · exact hLF.readLE a n hin trivial
+  · exact hMF.readLE a n (by rw [outside_append]; exact ⟨hout, ho⟩)
+
 /-- The stack ranges and array parts a callee may write. -/
 def WsOK (s : State) (p c : Nat) (ws : List (Nat × Nat)) : Prop :=
-  ∀ r ∈ ws, (s.sp.toNat - 4304 ≤ r.1 ∧ r.2 ≤ s.sp.toNat - 168) ∨ (s.sp.toNat - 152 ≤ r.1 ∧ r.2 ≤ s.sp.toNat - 32) ∨
-    (s.sp.toNat - 24 ≤ r.1 ∧ r.2 ≤ s.sp.toNat - 8) ∨ (p ≤ r.1 ∧ r.2 ≤ p + 8 * c)
+  ∀ r ∈ ws, r.1 ≤ r.2 ∧ ((s.sp.toNat - 4304 ≤ r.1 ∧ r.2 ≤ s.sp.toNat - 168) ∨ (s.sp.toNat - 152 ≤ r.1 ∧ r.2 ≤ s.sp.toNat - 32) ∨
+    (s.sp.toNat - 24 ≤ r.1 ∧ r.2 ≤ s.sp.toNat - 8) ∨ (p ≤ r.1 ∧ r.2 ≤ p + 8 * c))
 
 /-- **A call keeps `Mid`**: the callee wrote only inside `R.rt`, its stack window parts below the spills, and the
 result array (`WsOK`), extending the live set. -/
@@ -116,7 +124,7 @@ theorem Mid.frame {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl xc 
       M2.readLE a 8 = M.readLE a 8 := by
     intro a ha
     refine hf.readLE a 8 (key a 8 (by omega) (by omega) fun r hr => ?_)
-    rcases hws r hr with h' | h' | h' | h' <;> omega
+    rcases (hws r hr).2 with h' | h' | h' | h' <;> omega
   refine { h with
       lr := ?_
       fp := ?_
@@ -153,7 +161,7 @@ theorem Mid.frame {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl xc 
     refine hf.readLE _ _ ?_
     simp only [outside_append]
     refine ⟨h.grt, outside_of_forall fun r hr => ?_⟩
-    rcases hws r hr with h' | h' | h' | h' <;> omega
+    rcases (hws r hr).2 with h' | h' | h' | h' <;> omega
   · rw [hf.accessible]; exact h.pacc
   · rw [hf.accessible]; exact h.xacc
   · rw [hf.accessible]; exact h.yacc
@@ -170,7 +178,7 @@ theorem Mid.frame {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl xc 
     simp only [outside_append, winA, outside_cons, outside_nil, and_true] at ho ⊢
     obtain ⟨⟨hrt, hw1, hw2⟩, hz⟩ := ho
     refine ⟨hrt, outside_of_forall fun r hr => ?_⟩
-    rcases hws r hr with h' | h' | h' | h'
+    rcases (hws r hr).2 with h' | h' | h' | h'
     · omega
     · omega
     · omega
@@ -183,7 +191,7 @@ theorem Mid.frame {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl xc 
     · obtain ⟨q, hq, hq1, hq2⟩ := hin
       have hsep := h.lsep q (h.ext.mem_old hq)
       simp only [win, outside_cons, outside_nil, and_true] at hsep hz
-      rcases hws r hr with h' | h' | h' | h'
+      rcases (hws r hr).2 with h' | h' | h' | h'
       · omega
       · omega
       · omega
@@ -200,7 +208,8 @@ theorem Mid.frame0 {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl xc
   have hsp0 := h.sp0
   refine h.frame hws (hf.widen R.rt) (liveFrame_of_memFrame hf) (LiveExt.refl R L') (Nat.le_refl _) ?_
   refine RtInv.inv_frame' hf (fun r hr => ?_) h.inv
-  rcases hws r hr with h' | h' | h' | h'
+  have h0 := (hws r hr).1
+  rcases (hws r hr).2 with h' | h' | h' | h'
   · exact Or.inl (h.wrt.of_sub (by omega) (by omega))
   · exact Or.inl (h.wrt.of_sub (by omega) (by omega))
   · exact Or.inl (h.wrt.of_sub (by omega) (by omega))
@@ -289,9 +298,9 @@ theorem mid_of_reuse {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl 
     (r7 : M.readLE (s.sp.toNat - 32) 8 = xl.toNat + 1) :
     Mid R b L zp zc xp xl xc yp yl s zp.toNat zc.toNat L b M := by
   obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, _, hout, hga, hgr, hLs, _⟩, _, hxc, hyc, hxc40, hyc40, hx40, hy40,
-    hz40, hzl, hzw, hxacc, hx48, hxh, _, _, hxw, hyacc, hy48, hyh, hyw, hinv, _, hmv⟩ := hpre
+    hz40, hzl, hzw', hzw, hxacc, hx48, hxh, _, _, hxw, hyacc, hy48, hyh, hyw, hinv, _, hmv⟩ := hpre
   obtain ⟨hzal, hzh, hzacc, hz48⟩ := hzl (by omega)
-  obtain ⟨hzw', hzg, hzx, hzy⟩ := hzw (by omega)
+  obtain ⟨hzg, hzx, hzy⟩ := hzw (by omega)
   simp only [win, outside_cons, outside_nil, and_true] at hzw' hxw hyw
   unfold Apart at hga
   have hFo : ∀ a n, (a + n ≤ s.sp.toNat - 4304 ∨ s.sp.toNat + 80 ≤ a) → Outside a n (winA s 4304 80) := by
@@ -342,7 +351,7 @@ theorem mid_of_alloc {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl 
     (hsz : 8 * (xl.toNat + 5) ≤ round) (hcost : round ≤ makeCost (xl.toNat + 1)) :
     Mid R b L zp zc xp xl xc yp yl s ptr (xl.toNat + 5) (L ++ [(ptr, ptr + round)]) (b - round) m := by
   obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, _, hout, hga, hgr, hLs, _⟩, _, hxc, hyc, hxc40, hyc40, hx40, hy40,
-    hz40, hzl, hzw, hxacc, hx48, hxh, _, _, hxw, hyacc, hy48, hyh, hyw, hinv0, _, hmv⟩ := hpre
+    hz40, hzl, hzw', hzw, hxacc, hx48, hxh, _, _, hxw, hyacc, hy48, hyh, hyw, hinv0, _, hmv⟩ := hpre
   simp only [win, outside_cons, outside_nil, and_true] at hxw hyw
   unfold Apart at hga
   have hext : LiveExt R L (L ++ [(ptr, ptr + round)]) := LiveExt.single (by simpa using hIn) (by simpa using hAp)

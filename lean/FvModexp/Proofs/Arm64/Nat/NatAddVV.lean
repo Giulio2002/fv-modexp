@@ -49,7 +49,7 @@ theorem vv_after {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl xc y
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 theorem vv (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
-    (hVW : ∀ b L zp zl zc xp xl xc y, AddVWEns impl R b L zp zl zc xp xl xc y)
+    (hmv : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
     (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl xc yp yl yc : BitVec 64)
     (s : State) (p c : Nat) (L' : List (Nat × Nat)) (b' : Nat) (M : Memory)
     (h : Mid R b L zp zc xp xl xc yp yl s p c L' b' M) (hyx : yl.toNat ≤ xl.toNat) (hy0 : 0 < yl.toNat)
@@ -97,8 +97,8 @@ theorem vv (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
   obtain ⟨hm2, hps, hcs, hhi⟩ := vv_after h hyx (by janus_frame) hfr (by janus_simp) (by janus_simp)
   have hlo : natVal w p yl.toNat + 2 ^ (64 * yl.toNat) * w.readLE (s.sp.toNat - 80) 8 =
       natVal s.mem xp.toNat yl.toNat + natVal s.mem yp.toNat yl.toNat := by
-    rw [hv, show s.sp.toNat - 80 = s.sp.toNat - 160 + 80 by omega, hc, Nat.mod_add_div, ← hvx, ← hvy]; rfl
-  exact afterVV impl hap R hVW b L zp zc xp xl xc yp yl s p c L' b' w hm2 hyx hy0 hxc hxc63 hps hcs hlo
+    rw [hv, show s.sp.toNat - 80 = s.sp.toNat - 160 + 80 by omega, hc, Nat.mod_add_div, ← hvx, ← hvy]
+  exact afterVV impl hap R hmv b L zp zc xp xl xc yp yl s p c L' b' w hm2 hyx hy0 hxc hxc63 hps hcs hlo
     (hhi.trans hvh) _ rfl (by janus_simp) h28 (by janus_simp) h18 rfl
 
 end FvModexp.Arm64.NatAdd

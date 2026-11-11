@@ -12,7 +12,7 @@ namespace FvModexp.Arm64.NatAdd
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 theorem reuse (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
-    (hVW : ∀ b L zp zl zc xp xl xc y, AddVWEns impl R b L zp zl zc xp xl xc y)
+    (hmv : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc yp yl yc : BitVec 64) (s : State)
     (hpc : s.pc = BitVec.ofNat 64 (segAddr Extracted.program fn))
     (hl4 : (s.regs 30).toNat % 4 = 0) (hl48 : (s.regs 30).toNat < 2 ^ 48) (h0 : s.regs 0 = zp) (h1 : s.regs 1 = zl)
@@ -24,16 +24,16 @@ theorem reuse (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
         PostS 4304 R b L zp zc xp xl yp yl s s' := by
   have hpre' := hpre
   obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, -, hout, hga, -, -, -⟩, -, hxc, -, hxc40, -, hx40, hy40,
-    hz40, -, hzw, hxacc, hx48, -, -, -, hxw, hyacc, hy48, -, hyw, -, -, -⟩ := hpre'
-  obtain ⟨hzw', -, -, -⟩ := hzw (by omega)
+    hz40, -, hzw', -, hxacc, hx48, -, -, -, hxw, hyacc, hy48, -, hyw, -, -, -⟩ := hpre'
   simp only [win, outside_cons, outside_nil, and_true] at hzw' hxw hyw
   janus_run until [hMid]
-  have hF : MemFrame s.mem _ (winA s 4304 80) := by janus_frame
   have hWo : ∀ a n, (a + n ≤ s.sp.toNat - 4304 ∨ s.sp.toNat + 80 ≤ a) → Outside a n (winA s 4304 80) := by
     intro a n h; simp only [winA, outside_cons, outside_nil, and_true]; omega
-  refine vv impl hap R hVW b L zp zc xp xl xc yp yl yc s zp.toNat zc.toNat L b _
-    (mid_of_reuse hpre hyx hl4 hl48 hz hF ?_ ?_ ?_ ?_ ?_ ?_ ?_) hyx hy0 hxc (by omega)
-    (natVal_frame hF (hWo _ _ (by omega))) (natVal_frame hF (hWo _ _ (by omega))) _ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?_ ?_ ?_ rfl
+  refine vv impl hap R hmv b L zp zc xp xl xc yp yl yc s zp.toNat zc.toNat L b _
+    (mid_of_reuse hpre hyx hl4 hl48 hz ?hF ?_ ?_ ?_ ?_ ?_ ?_ ?_) hyx hy0 hxc (by omega)
+    (natVal_frame ?hF (hWo _ _ (by omega))) (natVal_frame ?hF (hWo _ _ (by omega)))
+    (natVal_frame ?hF (hWo _ _ (by omega))) _ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?_ ?_ ?_ rfl
+  case hF => simp only [winA]; janus_frame
   all_goals janus_simp
 
 end FvModexp.Arm64.NatAdd

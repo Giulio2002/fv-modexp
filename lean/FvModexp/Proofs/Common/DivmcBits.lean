@@ -42,4 +42,12 @@ theorem sub_mod64 (a b : Nat) (h : a ≤ b) (hb : b < 2 ^ 64) :
 
 theorem mod64_of_lt (a : Nat) (h : a < 2 ^ 64) : a % 18446744073709551616 = a := Nat.mod_eq_of_lt h
 
+/-- amd64 `NEGQ d; SARQ $63, d; ANDQ y, d` (the `z[n:]` pointer mask): `y` when `0 < d ≤ 2^63`. -/
+theorem neg_sshr63_and (d y : BitVec 64) (h : 0 < d.toNat) (hd : d.toNat ≤ 2 ^ 63) :
+    ((0#64 - d).sshiftRight 63 &&& y) = y := by
+  have hm := sshr63_of_lt (0#64) d (by simpa using h) hd
+  apply BitVec.eq_of_toNat_eq
+  rw [BitVec.toNat_and, hm, Nat.and_comm]
+  exact and_ones64 _ y.isLt
+
 end FvModexp
