@@ -308,4 +308,115 @@ theorem chain (s T : State) {ret : W64} {Q : State → Prop} (c : Nat) (hpc : T.
   · rw [rs_small (by omega)]; simp only [setReg, if_true, BitVec.toNat_ofNat]
     exact (cs_leaf 66 _ _ (by decide) (fun x hx => Nat.lt_of_le_of_lt (show x ≤ 28672 by revert x hx; decide) (by omega)) hc8 (by omega)).symm
 
+/-- What the copy keeps: `Kp`, `X1` (`newLen`), `X9` (`K`), `X10` (`BUMP`), `X11` (`p`). -/
+def CK (s : State) (v9 v10 v11 : W64) (T : State) : Prop :=
+  Kp s T ∧ T.regs 1 = s.regs 1 ∧ T.regs 9 = v9 ∧ T.regs 10 = v10 ∧ T.regs 11 = v11
+
+macro "ck_tac" : tactic =>
+  `(tactic| (refine ⟨⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩, ?_, ?_, ?_, ?_⟩ <;>
+    first | rfl | assumption | simp [setReg, *]))
+
+theorem g_fwd (s : State) (v9 v10 v11 : W64) {Q : State → Prop} (d src n : Nat)
+    (hsrc : n = 0 ∨ s.mem.accessible src n false = true) (hdst : s.mem.accessible d n true = true)
+    (hsrc48 : src + n ≤ 2 ^ 48) (hle : d ≤ src)
+    (hk : ∀ T, T.pc = BitVec.ofNat 64 gDONE → CK s v9 v10 v11 T → MemFrame s.mem T.mem [(d, d + n)] →
+      Mem.Copied s.mem T.mem d src n → ReachesRet grProg (s.regs 30) T Q) :
+    ∀ k (T : State) (i : Nat), i + k = n → T.pc = BitVec.ofNat 64 gFWD →
+      (T.regs 14).toNat = d + i → (T.regs 15).toNat = src + i → (T.regs 13).toNat = k → CK s v9 v10 v11 T →
+      MemFrame s.mem T.mem [(d, d + i)] → Mem.Copied s.mem T.mem d src i →
+      ReachesRet grProg (s.regs 30) T Q := by
+  have hbd := Memory.accessible_bound _ hdst
+  intro k
+  induction k with
+  | zero =>
+    intro T i hi hpc h0 h1 h2 hK hf hc
+    have h2' : T.regs 13 = 0#64 := BitVec.eq_of_toNat_eq (by simpa using h2)
+    janus_run until [gDONE]
+    exact hk _ rfl (by obtain ⟨⟨_, _, _, _, _, _, _, _, _⟩, _, _, _, _⟩ := hK; ck_tac) (by rw [← hi, Nat.add_zero]; exact hf)
+      (by rw [← hi, Nat.add_zero]; exact hc)
+  | succ k ih =>
+    intro T i hi hpc h0 h1 h2 hK hf hc
+    have h2' : T.regs 13 ≠ 0#64 := fun h => by simp [h] at h2
+    have hsrcA : s.mem.accessible src n false = true := hsrc.resolve_left (by omega)
+    have hr : T.mem.accessible (T.regs 15).toNat 1 false = true := by
+      rw [hf.accessible, h1]; exact Memory.accessible_mono _ hsrcA (by omega) (by omega)
+    have hw : T.mem.accessible (T.regs 14).toNat 1 true = true := by
+      rw [hf.accessible, h0]; exact Memory.accessible_mono _ hdst (by omega) (by omega)
+    janus_run until [gFWD]
+    have e0 : (T.regs 14 + 1#64).toNat = d + (i + 1) := by rw [toNat_add_one (by omega), h0]; omega
+    have e1 : (T.regs 15 + 1#64).toNat = src + (i + 1) := by rw [toNat_add_one (by omega), h1]; omega
+    refine ih _ (i + 1) (by omega) rfl (by simpa [setReg] using e0) (by simpa [setReg] using e1)
+      (by simpa [setReg] using toNat_sub_one h2)
+      (by obtain ⟨⟨_, _, _, _, _, _, _, _, _⟩, _, _, _, _⟩ := hK; ck_tac) ?_ ?_
+    · rw [h0]
+      refine (hf.mono fun a n h => ?_).writeLE _ (List.mem_singleton_self _) (by simp <;> omega) (by simp <;> omega)
+      simp only [outside_cons, outside_nil, and_true] at h ⊢; omega
+    · intro j hj
+      rw [h0, h1]
+      by_cases hji : j = i
+      · subst hji
+        rw [Memory.bytes_writeLE_inside _ (by omega) (by omega)]
+        exact byte_copy _ _
+      · rw [Memory.bytes_writeLE_outside _ (by omega)]; exact hc j (by omega)
+
+theorem g_bwd (s : State) (v9 v10 v11 : W64) {Q : State → Prop} (d src n : Nat)
+    (hsrc' : n = 0 ∨ s.mem.accessible src n false = true) (hsrc48 : src + n ≤ 2 ^ 48) (hdst : s.mem.accessible d n true = true) (hlt : src < d)
+    (hk : ∀ T, T.pc = BitVec.ofNat 64 gDONE → CK s v9 v10 v11 T → MemFrame s.mem T.mem [(d, d + n)] →
+      Mem.Copied s.mem T.mem d src n → ReachesRet grProg (s.regs 30) T Q) :
+    ∀ k (T : State), k ≤ n → T.pc = BitVec.ofNat 64 gBWDL →
+      (T.regs 14).toNat = d + k → (T.regs 15).toNat = src + k → (T.regs 13).toNat = k → CK s v9 v10 v11 T →
+      MemFrame s.mem T.mem [(d + k, d + n)] →
+      (∀ j, k ≤ j → j < n → T.mem.bytes (d + j) = s.mem.bytes (src + j)) →
+      ReachesRet grProg (s.regs 30) T Q := by
+  have hbd := Memory.accessible_bound _ hdst
+  intro k
+  induction k with
+  | zero =>
+    intro T hk0 hpc h0 h1 h2 hK hf hc
+    have h2' : T.regs 13 = 0#64 := BitVec.eq_of_toNat_eq (by simpa using h2)
+    janus_run until [gDONE]
+    exact hk _ rfl (by obtain ⟨⟨_, _, _, _, _, _, _, _, _⟩, _, _, _, _⟩ := hK; ck_tac) (by simpa using hf)
+      (fun j hj => hc j (Nat.zero_le _) hj)
+  | succ k ih =>
+    intro T hk0 hpc h0 h1 h2 hK hf hc
+    have h2' : T.regs 13 ≠ 0#64 := fun h => by simp [h] at h2
+    have hsrc : s.mem.accessible src n false = true := hsrc'.resolve_left (by omega)
+    have e2 := toNat_sub_one h2
+    have ea : (T.regs 15 - 1#64).toNat = src + k := toNat_sub_one (by omega)
+    have eb : (T.regs 14 - 1#64).toNat = d + k := toNat_sub_one (by omega)
+    have hr : T.mem.accessible (T.regs 15 - 1#64).toNat 1 false = true := by
+      rw [hf.accessible, ea]; exact Memory.accessible_mono _ hsrc (by omega) (by omega)
+    have hw : T.mem.accessible (T.regs 14 - 1#64).toNat 1 true = true := by
+      rw [hf.accessible, eb]; exact Memory.accessible_mono _ hdst (by omega) (by omega)
+    janus_run until [gBWDL]
+    refine ih _ (by omega) rfl (by simpa [setReg] using eb) (by simpa [setReg] using ea)
+      (by simpa [setReg] using e2)
+      (by obtain ⟨⟨_, _, _, _, _, _, _, _, _⟩, _, _, _, _⟩ := hK; ck_tac) ?_ ?_
+    · refine (hf.mono fun a n h => ?_).writeLE _ (List.mem_singleton_self _) (by simp <;> omega) (by simp <;> omega)
+      simp only [outside_cons, outside_nil, and_true] at h ⊢; omega
+    · intro j hj1 hj2
+      by_cases hji : j = k
+      · subst hji; rw [Memory.bytes_writeLE_inside _ (by omega) (by omega),
+          show (T.regs 15).toNat - 1 = src + j by omega, show d + j = (T.regs 14).toNat - 1 by omega]
+        exact byte_copy _ _
+      · rw [Memory.bytes_writeLE_outside _ (by omega)]; exact hc j (by omega) hj2
+
+/-- The copy of `n` bytes `src → d` from `CPY` (forward when `d ≤ src`, backward otherwise). -/
+theorem g_copy (s T : State) (v9 v10 v11 : W64) {Q : State → Prop} (d src n : Nat)
+    (hsrc : n = 0 ∨ s.mem.accessible src n false = true) (hdst : s.mem.accessible d n true = true)
+    (hsrc48 : src + n ≤ 2 ^ 48) (hpc : T.pc = BitVec.ofNat 64 gCPY) (hK : CK s v9 v10 v11 T) (hm : T.mem = s.mem)
+    (h14 : (T.regs 14).toNat = d) (h15 : (T.regs 15).toNat = src) (h13 : (T.regs 13).toNat = n)
+    (hk : ∀ T, T.pc = BitVec.ofNat 64 gDONE → CK s v9 v10 v11 T → MemFrame s.mem T.mem [(d, d + n)] →
+      Mem.Copied s.mem T.mem d src n → ReachesRet grProg (s.regs 30) T Q) :
+    ReachesRet grProg (s.regs 30) T Q := by
+  have hbd := Memory.accessible_bound _ hdst
+  obtain ⟨⟨hsp, h18, h28, h29, h30, hdz, htp, hfc, hfs⟩, hK1, hK9, hK10, hK11⟩ := hK
+  janus_run until [gFWD, gBWDL]
+  · refine g_bwd s v9 v10 v11 d src n hsrc hsrc48 hdst (by omega) hk n _ (Nat.le_refl _) rfl
+      ?_ ?_ ?_ (by ck_tac) (by first | exact MemFrame.refl _ _ | (rw [hm]; exact MemFrame.refl _ _))
+      (fun j _ hj => absurd hj (by omega)) <;> simp [setReg, BitVec.toNat_add] <;> omega
+  · refine g_fwd s v9 v10 v11 d src n hsrc hdst hsrc48 (by omega) hk n _ 0 (by simp) rfl ?_ ?_ ?_ (by ck_tac)
+      (by first | exact MemFrame.refl _ _ | (rw [hm]; exact MemFrame.refl _ _))
+      (fun j hj => absurd hj (Nat.not_lt_zero _)) <;> simp [setReg] <;> omega
+
 end FvModexp.Arm64.Stubs
