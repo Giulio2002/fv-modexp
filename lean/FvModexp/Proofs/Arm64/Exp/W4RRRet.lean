@@ -47,7 +47,7 @@ theorem rrRet (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     (hserv : RunIface.Serves R)
     (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret)
     (b : Nat) (L : List (Nat × Nat)) (g sp n mp mc t rp rl rc xp xc yp ylen Y yi zp zc zzp zzc st n0 : Nat)
-    (M : Memory) (r18 r29 : BitVec 64)
+    (M : Memory) (r18 r29 f29 : BitVec 64)
     (he : Env R L g sp M) (hce : CallW.CEnv R L g sp 4304 1040 M)
     (hn : 0 < n) (hn128 : n ≤ 128) (hmc : n ≤ mc) (hmc' : mc < 2 ^ 40) (ht : t < 2 ^ 64)
     (hm : Inp R L sp n M mp) (hx : Inp R L sp n M xp)
@@ -100,7 +100,7 @@ theorem rrRet (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     (hzz0 : M.readLE (zzp + 8 * rl) (8 * (n - rl)) = 0)
     (S : State) (hpc : S.pc = BitVec.ofNat 64 divRet) (hsp : S.sp = BitVec.ofNat 64 sp)
     (h3 : S.regs 3 = BitVec.ofNat 64 rp) (h4 : S.regs 4 = BitVec.ofNat 64 rl) (h5 : S.regs 5 = BitVec.ofNat 64 rc)
-    (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = r29) (hmem : S.mem = M) :
+    (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = f29) (hmem : S.mem = M) :
     Reaches ((LibExp.program.link impl).withExit ret) S
       (IsReturn (fun s' => ∃ (M1 : Memory) (rrp rrc onep : Nat) (M2 : Memory) (L2 : List (Nat × Nat)) (b2 : Nat),
         RRPost R b L g sp n rp rl rc zzp zzc M M1 rrp rrc ∧ OneChain R b L L2 b2 sp n st M1 M2 ∧
@@ -116,7 +116,7 @@ theorem rrRet (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
   have hmvL := MemmoveLive.of_codeIn hc hmv
   -- the continuation at `oneJ`
   have K : ∀ (S' : State) (M1 : Memory) (rrp rrc : Nat), S'.pc = BitVec.ofNat 64 oneJ → S'.sp = BitVec.ofNat 64 sp →
-      S'.regs 0 = BitVec.ofNat 64 n → S'.regs 18 = r18 → S'.regs 28 = BitVec.ofNat 64 g → S'.regs 29 = r29 →
+      S'.regs 0 = BitVec.ofNat 64 n → S'.regs 18 = r18 → S'.regs 28 = BitVec.ofNat 64 g → S'.regs 29 = f29 →
       S'.mem = M1 → RRPost R b L g sp n rp rl rc zzp zzc M M1 rrp rrc →
       Reaches ((LibExp.program.link impl).withExit ret) S'
         (IsReturn (fun s' => ∃ (M1 : Memory) (rrp rrc onep : Nat) (M2 : Memory) (L2 : List (Nat × Nat)) (b2 : Nat),
@@ -219,7 +219,7 @@ theorem rrRet (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     obtain ⟨hrr1, hrS1, hrF1⟩ := hrr1
     have hrrv : M1.readLE rrp (8 * n) = M.readLE rp (8 * rl) := hrv
     refine reaches_mono (oneRet impl hap R hclr hmv hmk hSN hserv ret hret b L g sp n mp mc t rrp rrc xp xc yp ylen Y yi
-      zp zc zzp zzc st n0 M1 r18 r29 he1 hce1 hn hn128 hmc hmc' ht (inp1 _ _ hm) hrr1 (inp1 _ _ hx)
+      zp zc zzp zzc st n0 M1 r18 r29 f29 he1 hce1 hn hn128 hmc hmc' ht (inp1 _ _ hm) hrr1 (inp1 _ _ hx)
       (by rw [rs 1016 (by omega)]; exact r1016) (by rw [rs 1024 (by omega)]; exact r1024)
       (by rw [rs 1032 (by omega)]; exact r1032) (by rw [rs 224 (by omega)]; exact r224)
       (by rw [rs 128 (by omega)]; exact r128) q832 q256 q264
@@ -240,10 +240,10 @@ theorem rrRet (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     exact ⟨M1, rrp, rrc, onep, M2, L2, b2, hP, hC, hR⟩
   by_cases hrn : rl = n
   · subst hrn
-    exact rrA impl ret hret _ R L g sp rl rp rl rc zzp zzc M r18 r29 he (by omega) (Nat.le_refl _) (by omega) hrc hrp
+    exact rrA impl ret hret _ R L g sp rl rp rl rc zzp zzc M r18 f29 he (by omega) (Nat.le_refl _) (by omega) hrc hrp
       (Nat.le_refl _) (by unfold Apart at hrw ⊢; omega) b hinv (by omega) hzzc r1024 r168 r400 S hpc hsp h3 h4 h5 h18
       h28 h29 hmem K
-  · exact rrB impl R hmvL ret hret _ L g sp n rp rl rc zzp zzc M r18 r29 he (by omega) hrl0 (by omega) hrc hra hr48 hrh
+  · exact rrB impl R hmvL ret hret _ L g sp n rp rl rc zzp zzc M r18 f29 he (by omega) hrl0 (by omega) hrc hra hr48 hrh
       (by unfold Apart at hrw ⊢; omega) hzn hzzc hzacc hz48 hzh hzw hzr hzz0
       (hserv.2.1 _ _ _ (by omega)) b hinv r1024 r168 r400 S hpc hsp h3 h4 h5 h18 h28 h29 hmem K
 

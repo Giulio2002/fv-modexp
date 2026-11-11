@@ -70,7 +70,7 @@ theorem p01Ret (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     (hserv : RunIface.Serves R)
     (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret)
     (b : Nat) (L : List (Nat × Nat)) (g sp n mp mc t bp onep rrp rrc xp xc yp ylen Y yi zp zc zzp zzc st n0 : Nat)
-    (M : Memory) (r18 r29 : BitVec 64)
+    (M : Memory) (r18 r29 f29 : BitVec 64)
     (he : Env R L g sp M) (hce : CallW.CEnv R L g sp 4304 1040 M)
     (hn : 0 < n) (hn16 : n ≤ 2 ^ 16) (hmc : n ≤ mc) (hmc' : mc < 2 ^ 40) (ht : t < 2 ^ 64)
     (hm : Inp R L sp n M mp)
@@ -114,7 +114,7 @@ theorem p01Ret (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     (S : State) (hpc : S.pc = BitVec.ofNat 64 p01) (hsp : S.sp = BitVec.ofNat 64 sp)
     (h0 : S.regs 0 = BitVec.ofNat 64 bp) (h1 : S.regs 1 = BitVec.ofNat 64 (17 * n))
     (h2 : S.regs 2 = BitVec.ofNat 64 (17 * n))
-    (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = r29) (hmem : S.mem = M) :
+    (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = f29) (hmem : S.mem = M) :
     Reaches ((LibExp.program.link impl).withExit ret) S
       (IsReturn (fun s' => ∃ (Mj M' : Memory) (zp' zc' : Nat) (L' : List (Nat × Nat)) (b' : Nat),
         MemFrame M Mj (R.rt ++ tw sp bp n) ∧ LiveFrame M Mj L [(bp, bp + 8 * (17 * n))] ∧
@@ -125,7 +125,7 @@ theorem p01Ret (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
           (zjVal n (M.readLE mp (8 * n)) ((2 ^ 64 - t) % 2 ^ 64)
             (Exp.montPow n (M.readLE mp (8 * n)) ((2 ^ 64 - t) % 2 ^ 64) (M.readLE xp (8 * n)) (M.readLE rrp (8 * n)))
             Y ylen yi) st n0 onep r18 r29 M' s')) := by
-  refine p01pow impl hap R hclr hmv ret hret _ b L g sp n mp mc t bp onep rrp rrc xp xc M r18 r29 he hn hn16 hmc
+  refine p01pow impl hap R hclr hmv ret hret _ b L g sp n mp mc t bp onep rrp rrc xp xc M r18 f29 he hn hn16 hmc
     hmc' ht hm hba hbb hbh hbw hbg hbm hone hbo hone1 hrr hbR hx hbx r1016 r1024 r1032 r224 r128 r816 r832 r256 r264
     r904 r328 r320 hok hinv S hpc hsp h0 h1 h2 h18 h28 h29 hmem ?_
   intro S' Mj c1 c2 c3 c4 c5 c6 hF hL hinvj hrgj m224 hE
@@ -223,7 +223,7 @@ theorem p01Ret (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
   refine reaches_mono (j4Ret impl hap R hclr hmv hmk hserv ret hret b L g sp n mp mc ((2 ^ 64 - t) % 2 ^ 64) yp ylen Y
     yi bp zp zc zzp zzc
     (Exp.montPow n (M.readLE mp (8 * n)) ((2 ^ 64 - t) % 2 ^ 64) (M.readLE xp (8 * n)) (M.readLE rrp (8 * n)))
-    Mj r18 r29 onep st n0 he' hce' hn hn16 hmc hmc' (Nat.mod_lt _ (by decide)) hyl hyl' hm' hy' hYr hyi' hyi0 hzc
+    Mj r18 r29 f29 onep st n0 he' hce' hn hn16 hmc hmc' (Nat.mod_lt _ (by decide)) hyl hyl' hm' hy' hYr hyi' hyi0 hzc
     hz' hold' (buf_frame hzz hF) hzz8 hzzm hzzy (fun d hd => apart_ent hzzb hd) hzz4 hzzo hzzs hE hbuf hd' hro hty
     (by rw [rs 952 (by omega)]; exact r952) (by rw [rs 936 (by omega)]; exact r936)
     (by rw [rs 128 (by omega)]; exact r128) (by rw [rs 168 (by omega)]; exact r168)

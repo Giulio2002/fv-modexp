@@ -88,7 +88,7 @@ theorem exitRet (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (hserv : RunIface.Serves R)
     (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret)
     (b : Nat) (L : List (Nat × Nat)) (g sp n mp mc k0 yp ylen Y : Nat) (tbl pp pcap : Nat → Nat)
-    {ext : List (Nat × Nat)} (M0 : Memory) (r18 r29 : BitVec 64) (onep st n0 : Nat)
+    {ext : List (Nat × Nat)} (M0 : Memory) (r18 r29 f29 : BitVec 64) (onep st n0 : Nat)
     (hst : Static R L g sp n mp mc k0 yp ylen Y tbl pp pcap M0) (hce0 : CallW.CEnv R L g sp 4304 1040 M0)
     (hmw4 : Apart mp (8 * n) (sp - 4304) 16) (hnm0 : NatNorm M0 mp n)
     (hone : OneIn R L sp n M0 onep) (hone1 : M0.readLE onep (8 * n) = 1) (r816 : M0.readLE (sp + 816) 8 = onep)
@@ -101,7 +101,7 @@ theorem exitRet (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (h13 : S.regs 13 = BitVec.ofNat 64 n) (h14 : S.regs 14 = BitVec.ofNat 64 zc) (h15 : S.regs 15 = BitVec.ofNat 64 zzc)
     (h2 : S.regs 2 = BitVec.ofNat 64 n) (h3 : S.regs 3 = BitVec.ofNat 64 n) (h9 : S.regs 9 = BitVec.ofNat 64 mp)
     (h11 : S.regs 11 = BitVec.ofNat 64 mc) (h12 : S.regs 12 = BitVec.ofNat 64 k0)
-    (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = r29) (hmem : S.mem = M)
+    (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = f29) (hmem : S.mem = M)
     (hB : Bufs R L g sp n mp yp ylen pp ext M0 zp zc zzp zzc) (hM : Mem R b L g sp M0 M zp zc zzp zzc) :
     Reaches ((LibExp.program.link impl).withExit ret) S
       (IsReturn (TailPost R b L g sp n mp k0 st n0 zp zc zzp zzc r18 r29 M0 M)) := by
@@ -113,11 +113,11 @@ theorem exitRet (impl : List Segment) (hap : ImplApart Extracted.program impl) (
   obtain ⟨he, hn, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -⟩ := hst'
   obtain ⟨-, hsp1, -, -, -, -, -, hwrt, -, hgrt, -⟩ := he
   have hgw4 : Apart (g + 16) 8 (sp - 4304) (4304 + 1040) := hce0.2.2.2.2.2.2.2.2.1
-  refine exA impl hap R hclr hmv ret hret _ b L g sp n mp mc k0 yp ylen Y tbl pp pcap M0 r18 r29 onep hst hone hone1
+  refine exA impl hap R hclr hmv ret hret _ b L g sp n mp mc k0 yp ylen Y tbl pp pcap M0 r18 f29 onep hst hone hone1
     r816 S zp zc zzp zzc M hpc hsp h0 h1 h13 h14 h15 h2 h3 h9 h11 h12 h18 h28 h29 hmem hB hM ho.1 ho.2 ?_
   intro S' M' a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 hM' q400 q160 q168 hval
   have hZ : M.readLE zp (8 * n) < Exp.B ^ n := FvModexp.Expmc.readLE_lt_B M zp n
-  refine exB impl hap R hmk hmv hserv ret hret _ b L g sp n mp mc k0 yp ylen Y tbl pp pcap M0 r18 r29 hst hce0 hmw4
+  refine exB impl hap R hmk hmv hserv ret hret _ b L g sp n mp mc k0 yp ylen Y tbl pp pcap M0 r18 f29 hst hce0 hmw4
     hnm0 S' zp zc zzp zzc M' a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 hB hM' q400 q160 q168
     (by rw [hval]; exact Exp.mont_one_le n _ _ k0 hn hZ hmB hk) ?_
   intro Sj p l c Mj b1 b2 b3 b4 b5 b6 b7 b8 b9 hJ

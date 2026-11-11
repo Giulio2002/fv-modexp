@@ -28,7 +28,7 @@ theorem rrRetC (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     (hserv : RunIface.Serves R)
     (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret)
     (b : Nat) (L : List (Nat × Nat)) (g sp K n mp mc Mv xp xc Xv yp ylen Y yi zp zc st n0 l0 t rp rl rc zzp zzc : Nat)
-    (M : Memory) (r18 r29 : BitVec 64) (ex : List (Nat × Nat))
+    (M : Memory) (r18 r29 f29 : BitVec 64) (ex : List (Nat × Nat))
     (hC : Ctx R L g sp K n mp mc Mv xp xc Xv yp ylen Y yi zp zc st n0 l0 ret r29 ex M)
     (hZ : ZZ R L g sp n mp xp yp ylen zp zc st l0 zzp zzc M)
     (ht : t < 2 ^ 64) (r224 : M.readLE (sp + 224) 8 = t) (r128 : M.readLE (sp + 128) 8 = 2 * n)
@@ -44,7 +44,7 @@ theorem rrRetC (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     (hzr : Apart zzp (8 * zzc) rp (8 * rl)) (hzz0 : M.readLE (zzp + 8 * rl) (8 * (n - rl)) = 0)
     (S : State) (hpc : S.pc = BitVec.ofNat 64 divRet) (hsp : S.sp = BitVec.ofNat 64 sp)
     (h3 : S.regs 3 = BitVec.ofNat 64 rp) (h4 : S.regs 4 = BitVec.ofNat 64 rl) (h5 : S.regs 5 = BitVec.ofNat 64 rc)
-    (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = r29) (hmem : S.mem = M) :
+    (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = f29) (hmem : S.mem = M) :
     Reaches ((LibExp.program.link impl).withExit ret) S
       (IsReturn (fun s' => ∃ (M1 : Memory) (rrp rrc onep : Nat) (M2 : Memory) (L2 : List (Nat × Nat)) (b2 : Nat),
         RRPost R b L g sp n rp rl rc zzp zzc M M1 rrp rrc ∧ OneChain R b L L2 b2 sp n st M1 M2 ∧
@@ -72,7 +72,7 @@ theorem rrRetC (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     exact ⟨hzzz h, a1, a2, w16 _ _ o.2.1, o.2.2.1, fr _ _ o.2.2.2.1⟩
   have hwba := hgl.2.2.2.2.2.2.2.2.2.2.1
   refine reaches_mono (rrRet impl hap R hclr hmv hmk hSN hserv ret hret b L g sp n mp mc t rp rl rc xp xc yp ylen Y yi
-    zp zc zzp zzc st n0 M r18 r29 he (CallW.CEnv.mono hce hK (Nat.le_refl _)) hn hn128 hmc hmc' ht hm hx r1016 r1024
+    zp zc zzp zzc st n0 M r18 r29 f29 he (CallW.CEnv.mono hce hK (Nat.le_refl _)) hn hn128 hmc hmc' ht hm hx r1016 r1024
     r1032 r224 r128 r904 r328 r320
     (fun p => ⟨hserv.2.2.1 _ _ (by omega), hserv.2.1 _ _ _ (by omega)⟩) hyl hyl' hy hY hyi hyi0 hzc
     (fun h => ⟨(hz h).1, (hz h).2.1⟩) hsv hzz hzz8 hzzm hzzy hzz4 hzzs (fr _ _ hzzU) hro hty r952 r936 r168 r400 r1000 r992

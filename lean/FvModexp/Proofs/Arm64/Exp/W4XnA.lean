@@ -118,7 +118,7 @@ theorem xnA2K (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     (hserv : RunIface.Serves R)
     (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret)
     (b : Nat) (L : List (Nat × Nat)) (g sp K n mp mc Mv Xv yp ylen Y yi zp zc st n0 l0 xp xl xc qp k : Nat)
-    (M : Memory) (r18 r29 : BitVec 64) (hKD : stkD ≤ K) (hKL : stkL ≤ K)
+    (M : Memory) (r18 r29 f29 : BitVec 64) (hKD : stkD ≤ K) (hKL : stkL ≤ K)
     (hB : CtxB R L g sp K n mp mc Mv yp ylen Y yi zp zc st n0 l0 ret r29 [(qp, 8 * k)] M)
     (hlen : stLen M st = l0 + StackNat.rnd k + StackNat.rnd n)
     (hk0 : 0 < k) (hk40 : k < 2 ^ 40) (hq8 : qp % 8 = 0) (hqH : Held R L qp (8 * k))
@@ -142,7 +142,7 @@ theorem xnA2K (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     (S : State) (hpc : S.pc = BitVec.ofNat 64 aSn2Ret) (hsp : S.sp = BitVec.ofNat 64 sp)
     (h0 : S.regs 0 = BitVec.ofNat 64 (stW M st + 8 * (l0 + StackNat.rnd k))) (h1 : S.regs 1 = BitVec.ofNat 64 n)
     (h2 : S.regs 2 = BitVec.ofNat 64 n)
-    (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = r29) (hmem : S.mem = M) :
+    (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = f29) (hmem : S.mem = M) :
     Reaches ((LibExp.program.link impl).withExit ret) S
       (IsReturn (XnPost R g sp n mp mc Mv (Xv % Mv) yp ylen Y yi zp zc st n0 l0 r18 r29)) := by
   have hB0 := hB
@@ -188,7 +188,7 @@ theorem xnA2K (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     · simp only [stUp, Apart] at o4 m4 hsu
       exact ⟨by unfold Apart; omega, by unfold Apart; omega, by unfold Apart; omega, by unfold Apart; omega⟩
   refine divCallG impl hap R nsD stkD costD hDiv hnsD hnsW ret hret _ b L g sp K st qp k k
-    (stW M st + 8 * (l0 + StackNat.rnd k)) n n xp xl xc mp n mc aDivRet M r18 r29 hRA (by decide) hpre (by omega)
+    (stW M st + 8 * (l0 + StackNat.rnd k)) n n xp xl xc mp n mc aDivRet M r18 f29 hRA (by decide) hpre (by omega)
     (by omega) (by omega) (by omega) hxc (by have := hm.2.1; omega) (by omega)
     S4 d1 d2 d3 d4 d5 d6 (by rw [d7, h0]) (by rw [d8, h1]) (by rw [d9, h2]) d10 d11 d12 d13 d14 d15 d16
     (by rw [d17, h18]) (by rw [d18, h28]) (by rw [d19, h29]) (by rw [d20])
@@ -207,7 +207,7 @@ theorem xnA2K (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     (fun S6 g1 g2 g3 g4 g5 g6 g7 g8 g9 g10 g11 g12 g13 => ?_)
   have hB6 := CtxB.raise (CtxB.dropEx hB5) (l1 := stLen M5 st) (by omega) (Nat.le_refl _)
   refine reaches_mono (xnJStep impl hap R hclr hmv hmk hSN nsD stkD costD hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL
-    hserv ret hret b5 L5 g sp K n mp mc Mv (Xv % Mv) yp ylen Y yi zp zc st n0 (stLen M5 st) r rl rc rc M5 r18 r29
+    hserv ret hret b5 L5 g sp K n mp mc Mv (Xv % Mv) yp ylen Y yi zp zc st n0 (stLen M5 st) r rl rc rc M5 r18 r29 f29
     hKD hKL hB6 rfl hxi (by rw [hval, hxv]) hrln (by have := hxi.2.2.1; omega) hmB hMo hM1
     (by rw [hlen5, hlen]; omega) (by rw [hlen5, hlen]; unfold xjBud at hbC ⊢; omega)
     (by rw [hlen5, hlen]; unfold xjBud at hbB ⊢; omega) hD.2.2.2.1 S6 g1 g2 g3 (by rw [g4, e3]) (by rw [g5, e4])

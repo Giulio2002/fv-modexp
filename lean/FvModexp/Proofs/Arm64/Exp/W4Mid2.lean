@@ -84,7 +84,7 @@ theorem j4Ret (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     (hserv : RunIface.Serves R)
     (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret)
     (b : Nat) (L : List (Nat × Nat)) (g sp n mp mc k0 yp ylen Y yi bp zp zc zzp zzc : Nat) (tbl : Nat → Nat)
-    (M : Memory) (r18 r29 : BitVec 64) (onep st n0 : Nat)
+    (M : Memory) (r18 r29 f29 : BitVec 64) (onep st n0 : Nat)
     (he : Env R L g sp M) (hce : CallW.CEnv R L g sp 4304 1040 M)
     (hn : 0 < n) (hn16 : n ≤ 2 ^ 16) (hmc : n ≤ mc) (hmc' : mc < 2 ^ 40) (hk0 : k0 < 2 ^ 64)
     (hyl : 0 < ylen) (hyl' : ylen < 2 ^ 40)
@@ -117,7 +117,7 @@ theorem j4Ret (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     (hfe : FinEnv sp g st n0 r29 ret M) (hsth : InRanges st 24 L ∨ Outside st 24 R.rt)
     (hstw4 : Apart st 24 (sp - 4304) (4304 + 1040))
     (S : State) (hpc : S.pc = BitVec.ofNat 64 j4) (hsp : S.sp = BitVec.ofNat 64 sp)
-    (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = r29) (hmem : S.mem = M) :
+    (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = f29) (hmem : S.mem = M) :
     Reaches ((LibExp.program.link impl).withExit ret) S
       (IsReturn (fun s' => ∃ (M' : Memory) (zp' zc' : Nat) (L' : List (Nat × Nat)) (b' : Nat),
         ZPost R L L' b b' g sp n M M' zp zc zp' zc' ∧
@@ -126,7 +126,7 @@ theorem j4Ret (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
   have hc := codeIn_ofImpl_restrict_of_apart hap LibExp.names
   rw [← LibExp.eq_only] at hc
   have hmkL := MakesliceLiveContract.of_codeIn hc hmk
-  refine zmake impl R hmkL ret hret _ b L g sp n zp zc M r18 r29 he hn hn16 hzc hz hd hro hty r952 r936 r1024 r128
+  refine zmake impl R hmkL ret hret _ b L g sp n zp zc M r18 f29 he hn hn16 hzc hz hd hro hty r952 r936 r1024 r128
     hokm hinv S hpc hsp h18 h28 h29 hmem ?_
   intro S' M' zp' zc' L' b' hpc' hsp' h0' h13' h14' h18' h28' h29' hm' hZ
   have hZ0 := hZ
@@ -221,7 +221,7 @@ theorem j4Ret (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
       · exact Or.inl (h1.sub (by omega) (by omega))
       · exact Or.inr (h1.of_sub (by omega) (by omega))
   refine reaches_mono (zjRet impl hap R hclr hmv hmk hserv ret hret b' L' g sp n mp mc k0 yp ylen Y yi bp zp' zc' zzp
-    zzc tbl M' r18 r29 onep st n0 he' hce' hn hn16 hmc hmc' hk0 hyl hyl' (inp_ext hx hm hF) (inp_ext hx hy hF)
+    zzc tbl M' r18 r29 f29 onep st n0 he' hce' hn hn16 hmc hmc' hk0 hyl hyl' (inp_ext hx hm hF) (inp_ext hx hy hF)
     (by rw [rdo _ _ hy.2.2.1 hy.2.2.2]; exact hY) hyi' hyi0 hz' hzz' hent' (fun d hd => inp_ext hx (hbuf d hd) hF)
     hB' (by rw [rs 168 (by omega) (by omega)]; exact r168) (by rw [rs 400 (by omega) (by omega)]; exact r400)
     (by rw [rs 1000 (by omega) (by omega)]; exact r1000) (by rw [rs 992 (by omega) (by omega)]; exact r992)

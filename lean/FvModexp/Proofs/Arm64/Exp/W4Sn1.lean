@@ -56,7 +56,7 @@ theorem sn1Step (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (hserv : RunIface.Serves R)
     (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret)
     (b : Nat) (L : List (Nat × Nat)) (g sp K n mp mc Mv xp xc Xv yp ylen Y yi zp zc st n0 l0 t : Nat)
-    (M : Memory) (r18 r29 : BitVec 64) (hKD : stkD ≤ K) (hKL : stkL ≤ K)
+    (M : Memory) (r18 r29 f29 : BitVec 64) (hKD : stkD ≤ K) (hKL : stkL ≤ K)
     (hC : Ctx R L g sp K n mp mc Mv xp xc Xv yp ylen Y yi zp zc st n0 l0 ret r29 [] M) (hl0e : stLen M st = l0)
     (ht : t < 2 ^ 64) (r224 : M.readLE (sp + 224) 8 = t) (r128 : M.readLE (sp + 128) 8 = 2 * n)
     (hkk : ((2 ^ 64 - t) % 2 ^ 64 * Mv + 1) % Exp.B = 0) (hmB : Mv < Exp.B ^ n) (hMo : Mv % 2 = 1) (hM1 : 1 < Mv)
@@ -68,7 +68,7 @@ theorem sn1Step (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (S : State) (hpc : S.pc = BitVec.ofNat 64 snE) (hsp : S.sp = BitVec.ofNat 64 sp)
     (h0 : S.regs 0 = BitVec.ofNat 64 st) (h1 : S.regs 1 = BitVec.ofNat 64 (2 * n))
     (h30 : S.regs 30 = BitVec.ofNat 64 sn1Ret)
-    (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = r29) (hmem : S.mem = M) :
+    (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = f29) (hmem : S.mem = M) :
     Reaches ((LibExp.program.link impl).withExit ret) S
       (IsReturn (fun s' => ∃ zzp zzc : Nat, DivRetPost R g sp n mp mc Mv Xv t yp ylen Y yi zp zc st n0 zzp zzc
         (l0 + 2 * StackNat.rnd (2 * n)) r18 r29 s')) := by
@@ -91,7 +91,7 @@ theorem sn1Step (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     CallW.retAddr_restrict hap (cs := Extracted.seg34) (ns := StackNat.names)
       (by simp only [Extracted.program, Extracted.segments, List.mem_cons, true_or, or_true]) (by decide) 229
       (by decide) (by decide) (by decide)
-  refine snCallK impl hap R hSN ret hret _ b L g sp (2 * n) st sn1Ret M r18 r29 hRA (by decide) hpre (by omega)
+  refine snCallK impl hap R hSN ret hret _ b L g sp (2 * n) st sn1Ret M r18 f29 hRA (by decide) hpre (by omega)
     (by omega) S hpc hsp h0 h1 h30 h18 h28 h29 hmem (fun S2 M2 L2 b2 f1 f2 f3 f4 f5 f6 f7 f8 f9 hS => ?_)
   have hk := keeps_sn hC (by omega) hS
   have hC2 := Ctx.keep hC hk
@@ -120,7 +120,7 @@ theorem sn1Step (impl : List Segment) (hap : ImplApart Extracted.program impl) (
   have hlenE : stLen M2 st = l0 + StackNat.rnd (2 * n) := hlen2
   have h2r : l0 + StackNat.rnd (2 * n) + StackNat.rnd (2 * n) = l0 + 2 * StackNat.rnd (2 * n) := by omega
   refine reaches_mono (lshStep impl hap R hclr hmv hmk hSN nsD stkD costD hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL hserv
-    ret hret b2 L2 g sp K n mp mc Mv xp xc Xv yp ylen Y yi zp zc st n0 l0 t (stW M2 st + 8 * l0) M2 r18 r29 hKD hKL hC3
+    ret hret b2 L2 g sp K n mp mc Mv xp xc Xv yp ylen Y yi zp zc st n0 l0 t (stW M2 st + 8 * l0) M2 r18 r29 f29 hKD hKL hC3
     hrL (in_stUp huw2.symm hin.1 hin.2).symm (in_stUp hug2.symm hin.1 hin.2).symm (in_stUp hsu2 hin.1 hin.2).symm
     (Or.inl ⟨Nat.le_refl _, by rw [hlenE]; omega⟩) ht
     (by rw [sl 224 (by omega) (by omega)]; exact r224) (by rw [sl 128 (by omega) (by omega)]; exact r128)
