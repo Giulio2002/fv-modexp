@@ -372,3 +372,9 @@ critical path: next trims are Fin1 (89 s, one run) and SbD (116 s).
 | Nat/BasicSqrBody (`body2`: addMulVVWW call → head) | 82 s / 4.5 GB | before: 353 s / 7.0 GB: `refine hk _ ?_ …` + `all_goals (try janus_simp)` on 12 register goals over a huge state literal; after: per-goal `simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, <slot facts>]` |
 | Nat/BasicSqrLoop (`loop`: head → CALL, induction) | 44 s / 2.8 GB | before: 182 s / 7.2 GB with body2 in the same module and the callee's `R.inv` closed by simp over the stores; after: split + `RtInv.inv_frame' (by janus_frame)` |
 | Nat/BasicSqrFin (WIP: fin1, fin2 call) | 17 s / 2.6 GB | |
+
+### asm s6: nat.divW rows (janus-provfix, memcap 16G / timeout 900, cold-ish cache-asm)
+| row | verdict | wall | peak |
+|---|---|---|---|
+| arm64 DivWRow | PASS | 357 s | 5.2 GB |
+| amd64 DivWRow | PASS | 500 s | 4.8 GB |
