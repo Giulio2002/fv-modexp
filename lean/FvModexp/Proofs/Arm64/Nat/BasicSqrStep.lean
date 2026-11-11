@@ -82,7 +82,7 @@ theorem inv_step {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp x
     (hz1 : S1m.readLE (zp + 16 * i + 8) 8 = s.mem.readLE (xp + 8 * i) 8 * s.mem.readLE (xp + 8 * i) 8 / 2 ^ 64)
     (hFw : MemFrame S1m w [(t + 8 * i, t + 8 * i + 8 * i), (s.sp.toNat - 112, s.sp.toNat - 104)])
     (hval : natVal w (t + 8 * i) i + 2 ^ (64 * i) * w.readLE (s.sp.toNat - 112) 8 =
-      natVal S1m (t + 8 * i) i + natVal S1m xp i * s.mem.readLE (xp + 8 * i) 8 + 0)
+      natVal S1m (t + 8 * i) i + natVal S1m xp i * s.mem.readLE (xp + 8 * i) 8)
     (hinvw : R.inv b1 L1 (s.regs 28).toNat (view R.rt L1 w)) :
     Inv R L st zp zl zc xp xl xc s t L1 b1 w1 c1 (i + 1)
       (w.writeLE (t + 16 * i) 8 (w.readLE (s.sp.toNat - 112) 8)) := by
@@ -194,13 +194,88 @@ theorem inv_step {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp x
     generalize natVal s.mem xp i = X at hval ⊢
     generalize s.mem.readLE (xp + 8 * i) 8 = d at hval ⊢
     generalize 2 ^ (64 * i) = Q at hval ⊢
-    have h2 : W + Q * c = Mt + X * d := by omega
-    rw [Nat.mul_zero, Nat.add_zero, h2, Nat.mul_add, Nat.mul_comm Q (X * d), Nat.mul_comm X d]
+    rw [Nat.mul_zero, Nat.add_zero, hval, Nat.mul_add, Nat.mul_comm Q (X * d), Nat.mul_comm X d]
     omega
   case zero =>
     intro a n h1 h2
     have := hl.tw; have := hl.tz
     rw [keep a n (by omega) (by omega) (by omega)]
     exact hzero a n (by omega) h2
+
+end FvModexp.Arm64.BasicSqr
+
+namespace FvModexp.Arm64.BasicSqr
+
+open Janus Janus.Arm64 Janus.Tactic Janus.Spec Janus.Contracts
+
+/-- after `lshVU(t[1:2n-1], t[1:2n-1], 1)` and `t[2n-1] = c`: `t[0:2n] = 2 · Σ_{j<n} x_j·x[0:j]·B^j` -/
+theorem tval {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl xc : Nat} {s : State}
+    {t : Nat} {L1 : List (Nat × Nat)} {b1 w1 c1 : Nat}
+    (hE : Env R b L st zp zl zc xp xl s t L1 b1 w1 c1) {M C w : Memory}
+    (hI : Inv R L st zp zl zc xp xl xc s t L1 b1 w1 c1 xl M)
+    (hF : MemFrame M C [(s.sp.toNat - 200, s.sp.toNat - 144), (s.sp.toNat - 56, s.sp.toNat - 48)])
+    (q1 : natVal w (t + 8) (2 * xl - 2) = (natVal C (t + 8) (2 * xl - 2) * 2) % 2 ^ (64 * (2 * xl - 2)))
+    (q2 : w.readLE (s.sp.toNat - 144) 8 = (natVal C (t + 8) (2 * xl - 2) * 2) / 2 ^ (64 * (2 * xl - 2)))
+    (q3 : MemFrame C w [(t + 8, t + 8 + 8 * (2 * xl - 2)), (s.sp.toNat - 144, s.sp.toNat - 136)]) :
+    natVal (w.writeLE (t + 8 * (2 * xl - 1)) 8 (w.readLE (s.sp.toNat - 144) 8)) t (2 * xl) =
+      2 * SqrMath.sqT (SqrMath.lim s.mem xp) xl := by
+  have hl := hE.lay
+  have hx0 := hl.x0; have hbig := hE.big; have hsp0 := hl.sp0
+  obtain ⟨-, -, hvt, -⟩ := hI
+  have htw := hl.tw
+  -- the old value: T = t0 + B (V + B^(2n-2) top)
+  have hC : natVal C (t + 8) (2 * xl - 2) = natVal M (t + 8) (2 * xl - 2) :=
+    hF.readLE _ _ (by simp only [outside_cons, outside_nil, and_true]; omega)
+  rw [hC] at q1 q2
+  have e1 := natVal_add M t 1 (2 * xl - 1)
+  have e2 := natVal_add M (t + 8 * 1) (2 * xl - 2) 1
+  rw [show 1 + (2 * xl - 1) = 2 * xl by omega, hvt] at e1
+  rw [show 2 * xl - 2 + 1 = 2 * xl - 1 by omega, show t + 8 * 1 = t + 8 by omega] at e2
+  have e3 : natVal M t 1 = M.readLE t 8 := rfl
+  have e4 : natVal M (t + 8 + 8 * (2 * xl - 2)) 1 = M.readLE (t + 8 * (2 * xl - 1)) 8 := by
+    show M.readLE _ (8 * 1) = _; congr 1; omega
+  rw [e2, e3, e4, show (64 * 1) = 64 by rfl] at e1
+  have hmod := SqrMath.sqT_mod (SqrMath.lim s.mem xp) xl
+  have hlt := SqrMath.sqT_lt (SqrMath.lim s.mem xp) (SqrMath.lim_lt s.mem xp) (xl - 1)
+  rw [show xl - 1 + 1 = xl by omega, show 2 * (xl - 1) + 1 = 2 * xl - 1 by omega] at hlt
+  -- the new value
+  have f1 := natVal_add (w.writeLE (t + 8 * (2 * xl - 1)) 8 (w.readLE (s.sp.toNat - 144) 8)) t 1 (2 * xl - 1)
+  have f2 := natVal_add (w.writeLE (t + 8 * (2 * xl - 1)) 8 (w.readLE (s.sp.toNat - 144) 8)) (t + 8 * 1) (2 * xl - 2) 1
+  rw [show 1 + (2 * xl - 1) = 2 * xl by omega] at f1
+  rw [show 2 * xl - 2 + 1 = 2 * xl - 1 by omega, show t + 8 * 1 = t + 8 by omega] at f2
+  have g0 : natVal (w.writeLE (t + 8 * (2 * xl - 1)) 8 (w.readLE (s.sp.toNat - 144) 8)) t 1 = M.readLE t 8 := by
+    show Memory.readLE _ t (8 * 1) = _
+    rw [Memory.readLE_writeLE_of_disjoint _ _ (by omega),
+      q3.readLE _ _ (by simp only [outside_cons, outside_nil, and_true]; omega),
+      hF.readLE _ _ (by simp only [outside_cons, outside_nil, and_true]; omega)]
+  have g1 : natVal (w.writeLE (t + 8 * (2 * xl - 1)) 8 (w.readLE (s.sp.toNat - 144) 8)) (t + 8) (2 * xl - 2) =
+      natVal w (t + 8) (2 * xl - 2) := Memory.readLE_writeLE_of_disjoint _ _ (by omega)
+  have g2 : natVal (w.writeLE (t + 8 * (2 * xl - 1)) 8 (w.readLE (s.sp.toNat - 144) 8)) (t + 8 + 8 * (2 * xl - 2)) 1 =
+      w.readLE (s.sp.toNat - 144) 8 := by
+    show Memory.readLE _ _ (8 * 1) = _
+    rw [show t + 8 + 8 * (2 * xl - 2) = t + 8 * (2 * xl - 1) by omega, Memory.readLE_writeLE_self,
+      Nat.mod_eq_of_lt (Memory.readLE_lt _ _ _)]
+  rw [f1, f2, g0, g1, g2, q1, q2, Nat.mod_add_div]
+  have ht0 : M.readLE t 8 < 2 ^ 64 := by have := Memory.readLE_lt M t 8; simpa using this
+  have eP : 2 ^ (64 * (2 * xl - 1)) = 2 ^ 64 * 2 ^ (64 * (2 * xl - 2)) := by
+    rw [← Nat.pow_add, show 64 + 64 * (2 * xl - 2) = 64 * (2 * xl - 1) by omega]
+  rw [eP] at hlt
+  rw [e1] at hmod hlt
+  generalize natVal M (t + 8) (2 * xl - 2) = V at hmod hlt e1 ⊢
+  generalize M.readLE t 8 = t0 at hmod hlt e1 ht0 ⊢
+  generalize M.readLE (t + 8 * (2 * xl - 1)) 8 = top at hmod hlt e1
+  generalize 2 ^ (64 * (2 * xl - 2)) = P at hmod hlt e1 ⊢
+  rw [Nat.add_mul_mod_self_left, Nat.mod_eq_of_lt ht0] at hmod
+  subst hmod
+  have htop : top = 0 := by
+    rcases Nat.eq_zero_or_pos top with h | h
+    · exact h
+    · exfalso
+      have h1 : P ≤ V + P * top := by have := Nat.le_mul_of_pos_right P h; omega
+      have h2 : 2 ^ 64 * P ≤ 2 ^ 64 * (V + P * top) := Nat.mul_le_mul_left _ h1
+      omega
+  subst htop
+  rw [e1]; simp only [Nat.mul_zero, Nat.add_zero, Nat.zero_add]
+  rw [Nat.mul_comm V 2, Nat.mul_left_comm]
 
 end FvModexp.Arm64.BasicSqr

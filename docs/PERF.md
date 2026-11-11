@@ -353,3 +353,13 @@ on a host with load average ~40 (dev compiles there ran ~2x their idle time). Mo
 SbD 116, SbE 27, SbF 33, SbG 60, Mv 63, IcLL 38, IcLN 7, IcHL 68, IcHN 24, Og 14, FinA 57, FinB 19, FinC 23, FinD 33, FinE 11, Fin1 89,
 Blk3Lt 43, Blk3Ge 46, Blk2Lt 35, Blk2Ge 40, RequiredGas 49 s; every module <= 4.3 GB. The row's wall is total work / parallelism, not the
 critical path: next trims are Fin1 (89 s, one run) and SbD (116 s).
+### divmc basicSqr arm64 (2026-11-11, session 3; dev compile `scripts/dev-lean-divmc.sh -x arm64`, wall / max RSS)
+| module | wall / RSS | note |
+|---|---|---|
+| Nat/LibRestore + Restore (7 stk.restore closures) | 20 s + 14 s / 2.2 GB | |
+| Nat/Callees2 (lshVU/rshVU premises, toSummaryRegs2/9) | 8 s / 2.3 GB | |
+| Nat/BasicSqrSmall (n < 12 → basicMul) | 43 s / 4.2 GB | |
+| Nat/BasicSqrStep (`inv_step`, `tval`: pure memory/arith) | 31 s / 3.2 GB | before: **> 900 s (killed)**: 9 unfolded disjointness disjunctions in context + `rw [keep _ _ (by omega)]` with metavariable arguments (omega on mvars) + `congr 1`/`ac_rfl` on memory terms. After: disjunctions folded in a `Lay` structure (`have := hl.tz` right before the omega that needs it), instances stated explicitly, atoms `generalize`d before the arithmetic |
+| Nat/BasicSqrBody (`body2`: addMulVVWW call → head) | 82 s / 4.5 GB | before: 353 s / 7.0 GB: `refine hk _ ?_ …` + `all_goals (try janus_simp)` on 12 register goals over a huge state literal; after: per-goal `simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, <slot facts>]` |
+| Nat/BasicSqrLoop (`loop`: head → CALL, induction) | 44 s / 2.8 GB | before: 182 s / 7.2 GB with body2 in the same module and the callee's `R.inv` closed by simp over the stores; after: split + `RtInv.inv_frame' (by janus_frame)` |
+| Nat/BasicSqrFin (WIP: fin1, fin2 call) | 17 s / 2.6 GB | |
