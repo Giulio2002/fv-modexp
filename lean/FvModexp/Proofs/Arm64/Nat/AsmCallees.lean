@@ -1,6 +1,7 @@
 import FvModexp.Proofs.Arm64.Nat.Callees
 import FvModexp.Proofs.Arm64.AddVVSum
 import FvModexp.Proofs.Arm64.AddMulVVWWSum
+import FvModexp.Proofs.Arm64.SubVVSum
 
 /-!
 # The asm premises of the mul/div summaries, discharged by agent asm's library summaries (arm64)
@@ -36,5 +37,16 @@ theorem addMulVVWWHyp (impl : List Segment) (hap : ImplApart Extracted.program i
     (Summary0.mono FvModexp.Arm64.AddMulVVWWSum.addMulVVWW_summary ?_ (fun _ _ _ hq => hq))
   intro s ⟨a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17⟩
   exact ⟨a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17⟩
+
+theorem subVVHyp (impl : List Segment) (hap : ImplApart Extracted.program impl) : SubVVHyp impl := by
+  have hseg : FvModexp.Lib.SubVVA64.segments = [Extracted.program.segments[24]'(by decide)] := rfl
+  have hc := codeIn_single (lp := FvModexp.Lib.SubVVA64.program) (ns := [subVVfn]) hap hseg
+    (List.getElem_mem (l := Extracted.program.segments) (n := 24) (by decide)) (by decide)
+  have he : segAddr Extracted.program subVVfn = FvModexp.Lib.SubVVA64.entry := by decide
+  unfold SubVVHyp; rw [he]
+  refine Janus.Contracts.EqHashModel.Summary.of_codeIn hc
+    (Summary0.mono FvModexp.Arm64.SubVVSum.subVV_summary ?_ (fun _ _ _ hq => hq))
+  intro s ⟨a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15⟩
+  exact ⟨a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15⟩
 
 end FvModexp.Arm64.Callees

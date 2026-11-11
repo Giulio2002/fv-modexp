@@ -44,6 +44,30 @@ theorem add_two_piece (a h n k : Nat) :
   have := Nat.mod_add_div a (2 ^ (64 * n))
   omega
 
+/-- `nat.sub`, `m = n`: no borrow when `Y ≤ X`. -/
+theorem sub_one_piece {lo Bv A c B : Nat} (hlo : lo + Bv = A + B * c) (hl : lo < B) (hc : c ≤ 1) (hge : Bv ≤ A) :
+    c = 0 ∧ lo = A - Bv := by
+  rcases Nat.le_one_iff_eq_zero_or_eq_one.1 hc with rfl | rfl
+  · omega
+  · omega
+
+/-- `nat.sub`, `m > n`: `subVV` on the low `n` limbs (borrow `c`), `subVW` on the high `k`: when `Y ≤ X` the final
+borrow is `0` and the result is `X - Y`. -/
+theorem sub_two_piece {lo Bv A c H Bn Bk : Nat} (hlo : lo + Bv = A + Bn * c) (hl : lo < Bn) (hc : c ≤ 1)
+    (hH : H < Bk) (hge : Bv ≤ A + Bn * H) (hBk : 0 < Bk) :
+    c ≤ H ∧ (H + Bk - c) % Bk = H - c ∧ lo + Bn * (H - c) = A + Bn * H - Bv := by
+  have hcH : c ≤ H := by
+    rcases Nat.le_one_iff_eq_zero_or_eq_one.1 hc with rfl | rfl
+    · omega
+    · rcases Nat.eq_zero_or_pos H with rfl | hp
+      · simp at hge hlo; omega
+      · omega
+  refine ⟨hcH, ?_, ?_⟩
+  · rw [show H + Bk - c = (H - c) + Bk by omega, Nat.add_mod_right, Nat.mod_eq_of_lt (by omega)]
+  · have h1 : Bn * (H - c) = Bn * H - Bn * c := Nat.mul_sub_left_distrib _ _ _
+    have h2 : Bn * c ≤ Bn * H := Nat.mul_le_mul_left _ hcH
+    omega
+
 /-- A low part below `B` and a carry that make `A` are `A % B` and `A / B`. -/
 theorem div_mod_of_lt {lo c B A : Nat} (hB : 0 < B) (hlo : lo < B) (h : lo + B * c = A) : A % B = lo ∧ A / B = c := by
   subst h
