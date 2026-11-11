@@ -1,5 +1,8 @@
 import Extracted
 import FvModexp.Proofs.Arm64.RequiredGas.Blk2
+import FvModexp.Proofs.Arm64.RequiredGas.Blk3
+import FvModexp.Proofs.Arm64.RequiredGas.Fin1
+import FvModexp.Proofs.Arm64.RequiredGas.Fin
 
 /-!
 # `(*bigModExp).RequiredGas(input []byte) uint64` (arm64), go-ethereum v1.17.10 core/vm/contracts.go:606-646
@@ -27,7 +30,7 @@ theorem run (c ptr len cap : BitVec 64) :
   all_goals janus_run [c32, d0, BitArith.and_asr63, BitArith.and_asr63_lit, Nat.lt_add_right_iff_pos, Nat.mod_eq_of_lt]
     until [Extracted.entry + 0xc4] calls [sb, mv]
   all_goals
-    refine reaches_of_returns (rg_blk2 c ptr len cap ret hret s _ hpre' ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_)
+    refine reaches_of_returns (rg_blk2 (rg_blk3 (rg_fin1 rg_fin2)) c ptr len cap ret hret s _ hpre' ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ trivial)
       (fun s' h => h)
     all_goals first
       | with_reducible rfl

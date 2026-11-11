@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Build the harness for both ISAs, then extract and `janus verify` every row of docs/COVERAGE.md whose status says `verified` for an ISA.
 # adapted from fv-uint256 scripts/verify-all.sh.
-# Usage: JANUS=/path/to/janus scripts/verify-all.sh [FN ...]        (default: all rows; FN = row function name, e.g. RequiredGas)
+# Usage: [JANUS=/path/to/janus] scripts/verify-all.sh [FN ...]        (default: all rows; FN = row function name, e.g. RequiredGas)
 # Env:   SKIP_WARMUP=1 (skip the cache warm-up), ONLY_ISA=arm64|amd64, ROWS=N (rows in parallel, default 1; the release run uses 6), JANUS_CACHE_DIR (default: a FRESH empty build/jcache-<stamp>;
 #        a non-empty dir is refused unless ALLOW_WARM_CACHE=1, a dev-run convenience that is never used for the release), WITNESS (default 1),
 #        SKIP_HARNESS=1 (reuse build/harness-*; the hash check still runs), LEAN_NUM_THREADS (default 4), JANUS_JOBS (2).
@@ -12,7 +12,10 @@ set -uo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$root"
 readonly ROW_MEMCAP=16G ROW_TIMEOUT=900
-JANUS="${JANUS:-janus}"
+# Janus binary: until the Janus PR fix/own-compile-module-data (olean provenance of Lean `module` files, which EthLib uses) is merged and
+# released, the default is the fixed v0.2.0 build; the Lean framework is unchanged (lakefile pin 9ff22946). Override with JANUS=...
+JANUS_FIXED=/srv/fv-modexp-ops/janus-provfix
+if [ -z "${JANUS:-}" ]; then if [ -x "$JANUS_FIXED" ]; then JANUS="$JANUS_FIXED"; else JANUS=janus; fi; fi
 export LEAN_NUM_THREADS="${LEAN_NUM_THREADS:-4}" JANUS_JOBS="${JANUS_JOBS:-2}"
 WITNESS="${WITNESS:-1}"; NPAR="${ROWS:-1}"
 command -v memcap >/dev/null || { echo "error: memcap not found (every row must run under a memory cap)" >&2; exit 2; }
@@ -64,14 +67,18 @@ for row in "${rows[@]}"; do
   done
 done
 
+isa_dir() { case "$1" in arm64) echo Arm64;; amd64) echo Amd64;; esac; }
+pf_of() {   # pf_of isa fn: the proof module (FnMain.lean, when it exists and holds `theorem correctness`, is the full-spec proof and wins)
+  local dir; dir="$(isa_dir "$1")"
+  if [ -f "lean/FvModexp/Proofs/$dir/${2}Main.lean" ] && grep -q "theorem correctness" "lean/FvModexp/Proofs/$dir/${2}Main.lean"; then echo "${2}Main"; else echo "$2"; fi
+}
 run_job() {   # run_job isa fn sym
   local isa="$1" fn="$2" sym="$3" dir out cflags pf wt mt w r t0 rss tf; export JANUS_MEM_MAX="$ROW_MEMCAP"
   t0=$(date +%s); tf="build/time-$isa-$fn"; rm -f "$tf"; out="build/ex-$isa-$fn"
-  case "$isa" in arm64) dir=Arm64;; amd64) dir=Amd64;; esac
+  dir="$(isa_dir "$isa")"
   cflags="$(contract_flags "$fn")"
   if ! contract_known "$fn"; then echo "no contract-flags case for $fn: add it to scripts/contract-flags.sh (or scripts/noflags.txt)" >"build/log-$isa-$fn"; echo "FAIL(no-flags-case) 0 0 0" >"build/res/$isa-$fn"; return; fi
-  # FnMain.lean, when it exists and holds `theorem correctness`, is the full-spec proof and wins over Fn.lean
-  pf="$fn"; if [ -f "lean/FvModexp/Proofs/$dir/${fn}Main.lean" ] && grep -q "theorem correctness" "lean/FvModexp/Proofs/$dir/${fn}Main.lean"; then pf="${fn}Main"; fi
+  pf="$(pf_of "$isa" "$fn")"
   if [ ! -f "lean/FvModexp/Proofs/$dir/$pf.lean" ]; then echo "missing proof module lean/FvModexp/Proofs/$dir/$pf.lean" >"build/log-$isa-$fn"; echo "FAIL(no-module) 0 0 0" >"build/res/$isa-$fn"; return; fi
   # every main theorem (`correctness`, `correctness_<x>`) and every existential witness (`Witness.nonvacuous*`, paired by name by Janus)
   mt=(); while IFS= read -r w; do [ -n "$w" ] && mt+=(--theorem "$w"); done < <(python3 "$root/scripts/witness-theorems.py" --mains "lean/FvModexp/Proofs/$dir/$pf.lean")
@@ -113,11 +120,22 @@ if [ -z "${SKIP_WARMUP:-}" ]; then
     echo "cache warm-up: $(( $(date +%s) - tw )) s (build/log-warmup; not a row)"
   fi
 fi
+# ---- ROW CAP RULE (BRIEF): all rows share the ONE fresh cache above; Janus's olean store reuses consumer modules compiled by earlier
+# rows, so rows run BOTTOM-UP (scripts/row-order.py: by import-closure size) and a row starts only after every row it shares a proof
+# module with has finished: the shared modules are then charged to the lower row, and each row's caps measure its own modules.
 t_start=$(date +%s)
-for i in "${!jobs_fn[@]}"; do
-  [ "${jobs_sym[$i]}" = "-" ] && continue
+order=(); declare -A deps_of
+while read -r i d; do order+=("$i"); deps_of[$i]="$d"; done < <(
+  for i in "${!jobs_fn[@]}"; do
+    [ "${jobs_sym[$i]}" = "-" ] && continue
+    echo "$i FvModexp/Proofs/$(isa_dir "${jobs_isa[$i]}")/$(pf_of "${jobs_isa[$i]}" "${jobs_fn[$i]}").lean"
+  done | python3 "$root/scripts/row-order.py")
+deps_done() { local d; [ "${deps_of[$1]}" = "-" ] && return 0
+  for d in ${deps_of[$1]//,/ }; do [ -s "build/res/${jobs_isa[$d]}-${jobs_fn[$d]}" ] || return 1; done; }
+for i in "${order[@]}"; do
+  echo "row ${jobs_isa[$i]} ${jobs_fn[$i]} (after: ${deps_of[$i]})"
   while :; do
-    [ "$(jobs -rp | wc -l)" -lt "$NPAR" ] && admit && break
+    [ "$(jobs -rp | wc -l)" -lt "$NPAR" ] && deps_done "$i" && admit && break
     sleep 3
   done
   run_job "${jobs_isa[$i]}" "${jobs_fn[$i]}" "${jobs_sym[$i]}" &

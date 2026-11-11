@@ -2,6 +2,10 @@ import Extracted
 import FvModexp.Proofs.Arm64.RequiredGas.SbA
 import FvModexp.Proofs.Arm64.RequiredGas.SbB
 import FvModexp.Proofs.Arm64.RequiredGas.SbC
+import FvModexp.Proofs.Arm64.RequiredGas.SbD
+import FvModexp.Proofs.Arm64.RequiredGas.SbE
+import FvModexp.Proofs.Arm64.RequiredGas.SbF
+import FvModexp.Proofs.Arm64.RequiredGas.SbG
 
 /-! `(*uint256.Int).SetBytes` for every length `≤ 32` (arm64): the 33 per-length summaries combined. -/
 

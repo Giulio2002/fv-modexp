@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Generate the per-length SetBytes summaries of the RequiredGas proof (arm64): lean/FvModexp/Proofs/Arm64/RequiredGas/Sb{A,B,C}.lean.
+"""Generate the per-length SetBytes summaries of the RequiredGas proof (arm64): lean/FvModexp/Proofs/Arm64/RequiredGas/Sb{A..G}.lean.
 Each case `sbN : Summary Extracted.program sbA (SbPre N) (SbPost N)` (N = 0..32) runs the extracted SetBytes (and the SetBytesK it calls)
 symbolically with the literal length N; adapted from fv-uint256 lean/Fv256/Proofs/Arm64/SbCases/Case*.lean.
-usage: scripts/gen/gen-sb-cases.py   (rewrites the three files)"""
+usage: scripts/gen/gen-sb-cases.py   (rewrites the seven files)"""
 import os
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 D = os.path.join(ROOT, 'lean/FvModexp/Proofs/Arm64/RequiredGas')
@@ -45,6 +45,9 @@ theorem sb{n} : Summary Extracted.program sbA (SbPre {n}) (SbPost {n}) := by
        · dl_close)
 
 '''
-for name, rng in (('SbA', range(0, 11)), ('SbB', range(11, 22)), ('SbC', range(22, 33))):
+# groups balanced by elaboration time (the longer lengths cost more), so that no module is on the row's critical path for long
+GROUPS = (('SbA', range(0, 13)), ('SbB', range(13, 19)), ('SbC', range(19, 23)), ('SbD', range(23, 26)), ('SbE', range(26, 29)),
+          ('SbF', range(29, 31)), ('SbG', range(31, 33)))
+for name, rng in GROUPS:
     with open(os.path.join(D, name + '.lean'), 'w') as f:
         f.write(HDR + ''.join(case(n) for n in rng) + 'end FvModexp.Arm64.RG\n')
