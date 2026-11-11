@@ -45,7 +45,7 @@ theorem innerLoop (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (N
     intro S m J D hJ hI hD hpc hsp hr0 hr1 hr2 hr3 hr6 hr7 hr8 hr9 hr14 hx15 hfs hdf hm
     have hJ8 : J.toNat = 8 := by omega
     janus64_run [BitVec.msb_eq_decide] until [hOuter]
-    refine hcont _ m (by rw [show 8 * (k + 1) = 8 * k + J.toNat by omega]; exact hI) ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ hfs hdf ?_
+    refine hcont _ m (by rw [show 8 * (k + 1) = 8 * k + J.toNat by omega]; exact hI) ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ hfs (by first | exact hdf | (dsimp only; exact hdf) | simp [hdf] | (janus64_simp; try exact hdf)) ?_
     all_goals janus64_simp
     all_goals first
       | rfl
@@ -65,7 +65,7 @@ theorem innerLoop (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (N
       rw [Nat.mod_mod, hD, show 8 - J.toNat = (8 - J.toNat - 1) + 1 by omega, byte_of_read])
     have hJ1 : (J + 1#64).toNat = J.toNat + 1 := by rw [BitVec.toNat_add]; simp; omega
     refine ih _ _ (J + 1#64) (D >>> 8) (by omega) (by rw [hJ1, ← Nat.add_assoc]; exact hst) ?_
-      ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ hfs hdf ?_
+      ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ hfs (by first | exact hdf | (dsimp only; exact hdf) | simp [hdf] | (janus64_simp; try exact hdf)) ?_
     · rw [BitVec.toNat_ushiftRight, Nat.shiftRight_eq_div_pow, hD, hJ1,
         show 8 - J.toNat = (8 - (J.toNat + 1)) + 1 by omega, read_div,
         show ap + (8 * k + J.toNat) + 1 = ap + (8 * k + (J.toNat + 1)) by omega]
@@ -103,7 +103,7 @@ theorem outerLoop (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (N
     rw [h0] at hr7
     janus64_run [BitVec.msb_eq_decide] until [hSkip]
     refine skipLoop impl R b L x ret hret s q ap N L' b' m (by have := hI; rwa [hkN] at this) hap hN hN1 hsp hw N _ 0#64
-      (by simp) (fun j hj => absurd hj (by simp)) ?_ ?_ ?_ ?_ ?_ ?_ ?_ hfs hdf ?_
+      (by simp) (fun j hj => absurd hj (by simp)) ?_ ?_ ?_ ?_ ?_ ?_ ?_ hfs (by first | exact hdf | (dsimp only; exact hdf) | simp [hdf] | (janus64_simp; try exact hdf)) ?_
     all_goals janus64_simp
     all_goals first | rfl | (apply BitVec.eq_of_toNat_eq; simp; omega)
   | succ r ih =>
@@ -117,7 +117,7 @@ theorem outerLoop (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (N
       (fun S' m' hI' h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 h12 =>
         ih S' m' (k + 1) (by omega) hI' h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 h12)
       8 _ m 0#64 (BitVec.ofNat 64 (s.mem.readLE (ap + k * 8) 8)) (by simp) (by simpa using hI) ?_
-      ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ hfs hdf ?_
+      ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ hfs (by first | exact hdf | (dsimp only; exact hdf) | simp [hdf] | (janus64_simp; try exact hdf)) ?_
     · simp only [BitVec.toNat_ofNat]
       rw [Nat.mod_eq_of_lt (Janus.Arm64.Memory.readLE_lt _ _ _), show 8 * k + 0 % 2 ^ 64 = k * 8 by omega,
         show 8 - 0 % 2 ^ 64 = 8 by rfl]

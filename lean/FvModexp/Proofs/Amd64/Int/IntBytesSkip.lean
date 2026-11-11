@@ -84,7 +84,7 @@ theorem skipLoop (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Na
     have hq0 : (BitVec.ofNat 64 q).toNat = q := by simp; omega
     janus64_run [hm1, hm2, BitVec.msb_eq_decide]
     have hzN : ∀ j, j < N → (m.bytes (q + j)).toNat = 0 := fun j hj => hz j (by simp; omega)
-    refine post_intro hI hap hN _ N q 0 hfs hdf rfl ?_ ?_ ?_ hzN (Nat.le_refl _) (Or.inl ⟨rfl, rfl, rfl⟩)
+    refine post_intro hI hap hN _ N q 0 hfs (by first | exact hdf | (dsimp only; exact hdf) | simp [hdf] | (janus64_simp; try exact hdf)) rfl ?_ ?_ ?_ hzN (Nat.le_refl _) (Or.inl ⟨rfl, rfl, rfl⟩)
     all_goals janus64_simp
     all_goals omega
   | succ k ih =>
@@ -94,7 +94,7 @@ theorem skipLoop (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Na
     have hmk := mask_lt I (BitVec.ofNat 64 N - I) hX0 (by omega)
     janus64_run [hm1, hm2, BitVec.msb_eq_decide] until [hSkip]
     · refine ih _ (I + 1#64) (by janus64_simp; omega) (fun j hj => ?_) (by janus64_simp) (by janus64_simp)
-        (by janus64_simp) (by janus64_simp) (by janus64_simp) (by janus64_simp) (by janus64_simp) hfs hdf
+        (by janus64_simp) (by janus64_simp) (by janus64_simp) (by janus64_simp) (by janus64_simp) hfs (by first | exact hdf | (dsimp only; exact hdf) | simp [hdf] | (janus64_simp; try exact hdf))
         (by janus64_simp)
       have h := byte8_zero (by janus_assumption :
         BitVec.setWidth 8 (BitVec.setWidth 64 (BitVec.setWidth 32 (BitVec.ofNat 8 (m.readLE (q + I.toNat) 1)))) = 0#8)
@@ -108,7 +108,7 @@ theorem skipLoop (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Na
         ¬BitVec.setWidth 8 (BitVec.setWidth 64 (BitVec.setWidth 32 (BitVec.ofNat 8 (m.readLE (q + I.toNat) 1)))) = 0#8)
       rw [Janus.Arm64.Memory.readLE_one] at h
       have hb := (m.bytes (q + I.toNat)).isLt
-      refine post_intro hI hap hN _ I.toNat (q + I.toNat) (N - I.toNat) hfs hdf rfl ?_ ?_ ?_ hz (by omega)
+      refine post_intro hI hap hN _ I.toNat (q + I.toNat) (N - I.toNat) hfs (by first | exact hdf | (dsimp only; exact hdf) | simp [hdf] | (janus64_simp; try exact hdf)) rfl ?_ ?_ ?_ hz (by omega)
         (Or.inr ⟨by omega, rfl, rfl, by omega⟩)
       all_goals janus64_simp
       all_goals first
