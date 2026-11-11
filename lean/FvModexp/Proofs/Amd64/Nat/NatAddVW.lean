@@ -87,7 +87,7 @@ theorem afterVV (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.pro
       sub_mod64 yl.toNat xl.toNat (by omega) xl.isLt, sub_mod64 yl.toNat xc.toNat (by omega) xc.isLt,
       sub_mod64 yl.toNat c (by omega) (by omega), mod64_of_lt c (by omega), mod64_of_lt (p + 8 * yl.toNat) (by omega),
       mod64_of_lt (xp.toNat + 8 * yl.toNat) (by omega)] until [hTail] calls [hVW']
-    rename_i _ _ _ _ _ hfs2 L2 b2 hext hbb hc0 hv2 hinv2 hF2 hLF2
+    rename_i _ _ _ _ _ hfs2 _ L2 b2 hext hbb hc0 hv2 hinv2 hF2 hLF2
     have e152 : (s.regs 4 - 152#64).toNat = (s.regs 4).toNat - 152 := by
       simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
     have ea : yl.toNat * 8 + p = p + 8 * yl.toNat := by omega

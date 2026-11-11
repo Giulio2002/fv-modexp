@@ -243,8 +243,7 @@ theorem fin4 (impl : List Amd64.Segment) (R : RtInv)
   janus_grab hFF xmm 15 as hx'
   have hxx : s'.xmm 15 = s.xmm 15 := by rw [hx']; show E.xmm 15 = s.xmm 15; rw [hx15, hE.x15]
   have hfs2 : s'.fsBase = E.fsBase := by assumption
-  have hdf2 : s'.df = E.df := by rename_i hd _ _; exact hd
-  refine ⟨⟨?_, ?_, ?_, hxx⟩, post_fin hE hI hFE hz hinvE hFF' hlen _ rfl (hfs2.trans hfs) (hdf2.trans (hdf.trans hE.df0.symm))⟩
+  refine ⟨⟨?_, ?_, ?_, hxx⟩, post_fin hE hI hFE hz hinvE hFF' hlen _ rfl (hfs2.trans hfs) hE.df0.symm⟩
   all_goals try janus64_simp
   all_goals first | exact hfs | skip
 
