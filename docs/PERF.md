@@ -671,3 +671,23 @@ the callee's window form BEFORE the run (`hLs'`, `hfw`, `htP'` in BasicSqrPro).
 | Amd64/Int/IntBytes (with df threading) | 96 s | 2.3 GB |
 | Amd64/Top/LibRun (generated) | 56 s | 3.1 GB |
 | Amd64/Top/RunH1 (entry -> B1) | 141 s | 2.7 GB |
+
+### expmc session 11 (arm64, dev compile, host load ~30), wall / max RSS
+| module | wall | RSS |
+|---|---|---|
+| W4Div (divCallK) | 5 s | 2.3 GB |
+| W4DivR (toDiv run) | 6 s | 2.3 GB |
+| W4DivK (keeps_div, ZZ.keep, …) | 115 s → 10 s | 2.5 GB |
+| W4DivM (rem_div, slot_div) | 28 s | 2.9 GB |
+| W4DivS (divStep) | 5 s | 2.3 GB |
+| W4Sn2K / W4Sn2R / W4Sn2 | 4 s / 4 s / 12 s | ≤ 2.4 GB |
+| W4Lsh / W4LshR / W4LshK / W4LshS | 5 s / 7 s / 8 s / 8 s | ≤ 2.5 GB |
+| W4Sn1 (sn1Step, Ctx.addEx) | 5 s | 2.3 GB |
+| W4CtxB / W4XjR / W4Xj | 7 s / 8 s / 5 s | ≤ 2.4 GB |
+| W4SnK (trim) | 87 s → 19 s | 2.8 GB |
+* LESSON (all agents): `omega` case-splits on EVERY disjunction in the context — `Apart` facts unfolded with
+  `simp only [Apart] at …` are disjunctions, so 10+ unfolded facts in a context make each `omega` exponential
+  (keeps_div: one bullet 73 s). `clear` the unfolded `Apart` facts a bullet does not need (keeps_div 115 s → 10 s,
+  keeps_sn 87 s → 19 s); keep `Apart` folded (it is opaque to omega) until needed.
+* Compositions over an opaque context predicate (`Ctx`, `KeepsB`, call lemmas with continuations, run lemmas with a
+  frame-only post) stay at 5–12 s per step: no step re-proves another's facts.

@@ -82,29 +82,38 @@ theorem keeps_sn {R : RtInv} {L L' : List (Nat × Nat)}
   have hr : 0 < StackNat.rnd k := by simp only [StackNat.rnd]; omega
   have hstg := hfe.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
   simp only [AW, Apart, stUp] at hstw huw hug hsu hga hstg
+  clear hLs hd hro' hfe
   refine keeps_of hce hK hxS (by simpa only [List.append_assoc] using hFS) hLS hrgS ?_ ?_ ?_ ?_ ?_ ?_ hsok2
     (by omega) ?_ ?_
-  · intro r hr' hlt
+  · clear hstw huw hug hsu hga hstg
+    intro r hr' hlt
     simp only [stkWs, List.cons_append, List.nil_append, List.mem_cons, List.not_mem_nil, or_false] at hr'
     rcases hr' with rfl | rfl | rfl | rfl
     · exact M.accessible_sub hacc (Or.inr rfl) (by simp only; omega) (by simp only; omega)
     · exact M.accessible_sub hacc (Or.inr rfl) (by simp only; omega) (by simp only; omega)
     · simpa using hstacc
     · simp only at hlt ⊢; exact M.accessible_sub laacc (Or.inr rfl) (by omega) (by omega)
-  · simp only [stkWs, List.cons_append, List.nil_append, outside_cons, outside_nil, and_true]; omega
-  · intro a k' ho
+  · clear hstw huw hsu
+    simp only [stkWs, List.cons_append, List.nil_append, outside_cons, outside_nil, and_true]; omega
+  · clear hstw huw hug hsu hga hstg
+    intro a k' ho
     obtain ⟨-, o2, o3, o4, -⟩ := ho
     simp only [AW, Apart, stUp] at o2 o3 o4
     simp only [stkWs, List.cons_append, List.nil_append, outside_cons, outside_nil, and_true]
     omega
-  · intro j hj
+  · clear hug hsu hga hstg
+    intro j hj
     simp only [stkWs, List.cons_append, List.nil_append, outside_cons, outside_nil, and_true]; omega
-  · simp only [stkWs, List.cons_append, List.nil_append, outside_cons, outside_nil, and_true]; omega
-  · simp only [stkWs, List.cons_append, List.nil_append, outside_cons, outside_nil, and_true]; omega
-  · by_cases hc : stLen M st + StackNat.rnd k ≤ stCap M st
+  · clear hug hsu hga hstg
+    simp only [stkWs, List.cons_append, List.nil_append, outside_cons, outside_nil, and_true]; omega
+  · clear hug hsu hga hstg
+    simp only [stkWs, List.cons_append, List.nil_append, outside_cons, outside_nil, and_true]; omega
+  · clear hstw huw hug hsu hga hstg
+    by_cases hc : stLen M st + StackNat.rnd k ≤ stCap M st
     · exact Or.inl (hkept hc)
     · exact Or.inr (hfresh (by omega))
-  · intro _
+  · clear hstw huw hug hsu hga hstg
+    intro _
     by_cases hc : stLen M st + StackNat.rnd k ≤ stCap M st
     · rw [(hkept hc).2]; exact hcap
     · have := hsok2.2.2.2.2.2.1; simp only [stLen, stCap] at hlen2 this ⊢; omega
