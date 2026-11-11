@@ -14,7 +14,7 @@ Callees at `SP' = SP - 240`: `sqr`, `mul` (stack bound `kc`, a parameter), `trun
 
 Statement restrictions (all callers: `expNNEven` nat.go:842 `m1.modularInverseModPowerOfTwo(stk, m2, n)`):
 `x` normalised and odd (`len(x) > 0`: else `x[0]` panics), `z`'s array apart from `x`'s (so `alias(z, x)` is false),
-`1 ≤ n ≤ 2^15`, `len(x) ≤ 2^12`, a non-nil `stk`.
+`1 ≤ n ≤ 2^15`, `len(x) ≤ 2^12`, a non-nil `stk`, `cap z > 0` (`m1 = m1.lsh(natOne, n)` has a word).
 -/
 
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvModexp
@@ -53,13 +53,13 @@ abbrev A : Nat := 72
 @[reducible] def Pre (R : RtInv) (kc : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
     (L : List (Nat × Nat)) (zp zl zc st xp xl xc n : Nat) (s : State) : Prop :=
   CallEnv R L s (K kc) A ∧ Serves R ∧ RunIface.Globals R s.mem ∧
-    1 ≤ n ∧ n ≤ 2 ^ 15 ∧ zl ≤ zc ∧ WrOut R L s (K kc) A zp zc ∧
+    1 ≤ n ∧ n ≤ 2 ^ 15 ∧ zl ≤ zc ∧ zp < 2 ^ 64 ∧ 0 < zc ∧ WrOut R L s (K kc) A zp zc ∧
     0 < xl ∧ xl ≤ xc ∧ xc < 2 ^ 40 ∧ xl ≤ 2 ^ 12 ∧ RdIn R L s (K kc) A xp xl ∧ NatNorm s.mem xp xl ∧
     natVal s.mem xp xl % 2 = 1 ∧ (0 < zc → Apart zp (8 * zc) xp (8 * xc)) ∧
     StkIn R L s (K kc) A st ∧ stLen s.mem st + 8 * NW n + 72 ≤ 2 ^ 16 ∧
     StkApart s.mem st zp (8 * zc) ∧ StkApart s.mem st xp (8 * xl) ∧
     cost sqrC mulC n ≤ b ∧ R.inv b L (s.regs 28).toNat (view R.rt L s.mem) ∧
-    (s.regs 30).toNat % 4 = 0 ∧ (s.regs 30).toNat < 2 ^ 48
+    (s.regs 30).toNat % 4 = 0 ∧ (s.regs 30).toNat < 2 ^ 48 ∧ Outside NatAdd.wordT 16 R.rt
 
 @[reducible] def Post (R : RtInv) (kc : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
     (L : List (Nat × Nat)) (zp zc st xp xl n : Nat) (s s' : State) : Prop :=
