@@ -109,3 +109,23 @@ here and the constant is raised (never the proof weakened). Request sizes stay a
    Janus' stub library only has fixed-size / ≤N-size copies. Work item for top (or infra), tracked in NOTES-top.md.
 3. Satisfiability of `Serves R` for the worst case (requirement (a)) follows from 2's stubs: they serve every request up to the
    bounds, sized with a heap ≥ the Run budget.
+
+## 5. Tactic-definition files (`scripts/tactic-whitelist.txt`)
+
+Metaprogramming (`macro`/`elab`/`syntax`/non-proof attributes) is rejected by `scripts/lint_source.py` outside the files listed in
+`scripts/tactic-whitelist.txt` (sha256-pinned: under RELEASE a changed file fails until it is re-reviewed and the whitelist regenerated).
+Tactics cannot weaken a result (the kernel checks every proof term; `#print axioms` / `janus verify` see any axiom), but a
+metaprogram could do IO or tamper with the environment, so each listed file was read. Review (infra s7, 2026-11-11):
+
+| file | constructs | verdict |
+|---|---|---|
+| Common/GenReg.lean | `gen_reg` (generalize a register value) | proof tactic only (earlier review) |
+| Common/AsmTac.lean | macros `same_tac`, `same64_tac` (`obtain`/`refine`/`rfl`/`janus_simp`/`exact`) | proof tactics only; no IO, axioms, env changes |
+| Common/Util.lean (adapted fv-uint256) | `partial def collectDecToNat` (pure `Expr` traversal), `elab dec_facts` / `dec_goal` (for each `(decide p).toNat` run `have := FvModexp.Util.dec_toNat p`) | proof tactics only; read-only `MetaM`/`TacticM` (`getMainTarget`, `getLCtx`, `evalTactic` of a `have`); no IO, axioms, `addDecl`, env changes |
+| Arm64/RequiredGas/Defs.lean, Amd64/RequiredGas/Defs.lean | macro `dl_close` (`dsimp`/`assumption`/`DataLoaded.writeLE`) | proof tactic only |
+| Arm64/RequiredGas/Pre.lean, Amd64/RequiredGas/Pre.lean | macros `rg_byte`, `rg_byte64` (`unfold`/`split`/`omega`/`simp only`/`exact` over lemmas of the same file) | proof tactics only |
+| Arm64/Exp/Mont.lean, Amd64/Exp/Mont.lean | `local macro` `slotv`, `inputv` (`rw`/`simp only`/`omega`) | proof tactics only |
+| Arm64/Witness/StubsGrow.lean, Amd64/Witness/StubsGrow.lean | macros `pre0_tac`, `ck_tac`, `ck2_tac` (`refine`/`rfl`/`assumption`/`simp`) | proof tactics only |
+| Arm64/Witness/StubsMem.lean | macro `kp_tac` (same pattern) | proof tactics only |
+
+Any later change to one of these files must be re-reviewed (diff) before `scripts/lint_source.py --update-whitelist`.

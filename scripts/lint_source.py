@@ -19,7 +19,7 @@
    .lean file in the repo (except .git, .lake, build/ and the regression fixtures scripts/lint-tests/).
 5. Heartbeats (BRIEF HEARTBEAT RULE): every `maxHeartbeats` option (incl. `synthInstance.maxHeartbeats`) needs a literal value in
    1..64000000; `0` (unlimited) is forbidden.  Regression fixtures: scripts/lint-tests/heartbeats (`--selftest`, run by no-sorry.sh).
-Usage: scripts/lint_source.py [--imports-json OUT] [--update-whitelist] [--selftest] ; exit 1 on any finding.
+Usage: scripts/lint_source.py [--imports-json OUT] [--update-whitelist] [--selftest] [--io-check] ; exit 1 on any finding.
 """
 import hashlib, json, os, re, subprocess, sys
 try:
@@ -219,12 +219,31 @@ def selftest():
     return fail
 
 
+IO_RX = re.compile(r'IO\.FS|System\.FilePath|FilePath|pathExists|IO\.getEnv|IO\.Process|IO\.appendFile|\breadFile\b|\bwriteFile\b|IO\.getRandom|'
+                   r'IO\.getStd|IO\.sleep|IO\.setStd|\bbuiltin_initialize\b|^[ \t]*initialize\b|\bunsafe\b|IO\.Prim|IO\.rand', re.M)
+
+
+def io_check():
+    """host IO / environment dependence in lean/** (called by no-sorry.sh); comment- and string-aware (a doc comment that mentions
+    `unsafe.Pointer` is not code)"""
+    fail = 0
+    for f in lean_files():
+        s = strip(open(f, errors='ignore').read())
+        m = IO_RX.search(s)
+        if m:
+            ln = s.count('\n', 0, m.start()); line = open(f, errors='ignore').read().split('\n')[ln]
+            print('FAIL: IO / host dependence in %s:%d: %s' % (f, ln + 1, line.strip()[:120])); fail = 1
+    return fail
+
+
 def main():
     fail = 0
+    if len(sys.argv) > 1 and sys.argv[1] == '--io-check':
+        return io_check()
     if len(sys.argv) > 1 and sys.argv[1] == '--selftest':
         return selftest()
     files = lean_files()
-    wl = load_whitelist(); release = bool(os.environ.get('RELEASE')); metafiles = {}
+    wl = load_whitelist(); release = os.environ.get('RELEASE', '') not in ('', '0'); metafiles = {}
     if len(sys.argv) > 1 and sys.argv[1] == '--update-whitelist':
         for f in files:
             if meta_hits(strip(open(f, errors='ignore').read())): metafiles[f] = sha256(f)
