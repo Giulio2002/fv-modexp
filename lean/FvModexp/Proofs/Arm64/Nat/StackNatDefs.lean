@@ -22,7 +22,8 @@ The store `s.w = …` is a pointer store into the header: write barrier (`runtim
 explored; `gcWriteBarrier2`).
 
 Amendments to expmc's posted shape (forced by the code; NOTES-divmc "[divmc s5] StackNat landed"):
-* pre: `runtime.writeBarrier`'s flag word readable (`wbA`, a `.noptrbss` global, not in the extraction's data); the
+* pre: `runtime.writeBarrier`'s flag word readable (`wbA`, a `.noptrbss` global, not in the extraction's data) and apart
+  from the header (it is read after the header's `len`/`cap` stores); the
   header apart from the free part of the array (the result's first word is stored there before the return);
 * post: `X0` (the result pointer) is stated for `0 < n` (Go returns `s.w[off:off:off]`, whose pointer is masked to the
   array base, for `n = 0`); "array kept" when `len + nr ≤ cap` (not `len + n ≤ cap`: the code grows when
@@ -49,7 +50,7 @@ abbrev wbA : Nat := Extracted.dataAddr.«runtime.writeBarrier»
     (0 < stCap s.mem st → Outside (stW s.mem st) (8 * stCap s.mem st) (win s stk above) ∧
       Apart (stW s.mem st) (8 * stCap s.mem st) ((s.regs 28).toNat + 16) 8) ∧
     n ≤ 2 ^ 16 ∧ stLen s.mem st + n + 3 ≤ 2 ^ 16 ∧ stackNatCost (stLen s.mem st) n ≤ b ∧
-    R.inv b L (s.regs 28).toNat (view R.rt L s.mem) ∧ s.mem.accessible wbA 4 false = true ∧
+    R.inv b L (s.regs 28).toNat (view R.rt L s.mem) ∧ s.mem.accessible wbA 4 false = true ∧ Apart st 24 wbA 4 ∧
     Apart st 24 (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st))
 
 @[reducible] def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (stk above st n : Nat) (s s' : State) : Prop :=

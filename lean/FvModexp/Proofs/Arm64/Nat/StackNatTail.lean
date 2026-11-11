@@ -38,7 +38,7 @@ theorem tail (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat))
         Post R b L 4208 24 st.toNat n.toNat s s' := by
   have hpre := h.pre
   obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, hd, hout, hga, hgr, hLs, hro⟩, hsv, hok, hstw, harr, hn16, hln,
-    hcost, hinv0, hwb⟩ := hpre
+    hcost, hinv0, hwb, hwbA, hfa⟩ := hpre
   obtain ⟨hst8, hsth, hstacc, hst48, hnl, hlc, hcb⟩ := hok
   have hc1len := h.c1len
   have hc1b := h.c1b

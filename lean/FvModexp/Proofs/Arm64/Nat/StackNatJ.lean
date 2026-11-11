@@ -48,7 +48,7 @@ theorem J.hdr {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st n : Nat} {s : St
     {b1 w1 c1 : Nat} {M : Memory} (h : J R b L st n s L1 b1 w1 c1 M) (hn : 0 < n) :
     Apart st 24 (w1 + 8 * stLen s.mem st) 8 := by
   have hpre := h.pre
-  obtain ⟨-, -, hok, -, -, -, -, -, -, -, hfa⟩ := hpre
+  obtain ⟨-, -, hok, -, -, -, -, -, -, -, -, hfa⟩ := hpre
   obtain ⟨-, hsth, -, -, -, hlc, -⟩ := hok
   have hr4 : 4 ≤ rnd n := by simp only [rnd]; omega
   have hc1len := h.c1len
