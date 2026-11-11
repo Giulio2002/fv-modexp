@@ -1,5 +1,6 @@
 import FvModexp.Proofs.Amd64.Nat.LibAddTo
 import FvModexp.Proofs.Amd64.Nat.AsmCallees
+import FvModexp.Proofs.Amd64.Nat.AddVW
 import FvModexp.Proofs.Common.DivmcNat
 import FvModexp.Proofs.Common.DivmcBits
 
@@ -22,7 +23,7 @@ def names : List String := LibAddTo.names
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
-    (hVW : ∀ b L zp zl zc xp xl xc y, AddVWEns impl R b L zp zl zc xp xl xc y)
+    (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc : BitVec 64) :
     Ensures ((Extracted.program.onlySegments names).link impl) (segAddr Extracted.program fn)
       [zp, zl, zc, xp, xl, xc]
@@ -48,8 +49,9 @@ theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
   have hc2 : CodeIn64 ((Extracted.program.onlySegments [addVWfn]).link impl) (LibAddTo.program.link impl) := by
     rw [LibAddTo.eq_only]; exact A64.codeIn_restrict_mono64 hap (sub_of_all (by decide))
   have hVV' := AddVVHyp.live (Janus.Contracts.EqHashModel.Summary.of_codeIn64 hc1 hVV) R b L
+  have hVW := fun b L zp zl zc xp xl xc y => AddVW.ens impl hap R hmv b L zp zl zc xp xl xc y
   have hVW' := fun b L => Ensures.toSummaryRegs7 (hVW b L) (A64.noExit_restrict64 hap [addVWfn]) hc2
-  clear hc1 hc2 hVV hVW
+  clear hc1 hc2 hVV hVW hmv
   janus64_intro hs
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw htg
   have hfs : (18446744073709551608 + s.fsBase.toNat) % 18446744073709551616 = s.fsBase.toNat - 8 := by omega
