@@ -525,6 +525,13 @@ theorem site_mv : Mem.EqPre 4096 3 sMv ∧
     ⟨by decide +kernel, by decide +kernel, by simp only [calleeStack, outside_cons, outside_nil, and_true]; decide +kernel,
       Or.inr (by rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)⟩⟩
 
+/-- The returning run, exactly as `correctness` states it at the witness. -/
+theorem returnsF : Returns ((Extracted.program.link implAt).withExit ret) s0 fun s' =>
+    ABIReturn s0 s' ∧ (RunArm64.ErrRet s' ∧
+      RunArm64.Frame R 0x1000 (3 * RunArm64.blockBound 64 + RunArm64.blockBound 16) [] s0 s') :=
+  FvModexp.Arm64.Run.correctness implAt hap R (by rw [addr_mk]; exact model_mk) (by rw [addr_mv]; exact model_mv)
+    (by rw [addr_no]; exact model_no) 0x1000 [] c0 p0 96 96 ret hret s0 setup pre
+
 /-- All hypotheses of `correctness` hold together, with every conjunct of its precondition: the toy runtime, an empty live
 set, budget `0x1000`, and the call `Run(c, p, 96, 96)` on 96 header bytes whose base length is 1025. -/
 theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64)
@@ -554,11 +561,14 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
       s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.newobject") ∧
       (NewobjectPre 4096 s_c ∧ StackRoom s_c 4096 1 ∧
         LiveAt R (Extracted.program.contractAddr "runtime.newobject") [(s_c.regs 0).toNat] L b (newobjectRound s_c)
-          (s_c.regs 28).toNat s_c.mem (calleeStack s_c 4096 1))) :=
+          (s_c.regs 28).toNat s_c.mem (calleeStack s_c 4096 1))) ∧
+    Returns ((Extracted.program.link impl).withExit ret) s fun s' =>
+      ABIReturn s s' ∧ (RunArm64.ErrRet s' ∧
+        RunArm64.Frame R b (3 * RunArm64.blockBound 64 + RunArm64.blockBound 16) L s s') :=
   ⟨implAt, R, 0x1000, [], c0, p0, 96, 96, ret, s0, hap, by rw [addr_mk]; exact model_mk, by rw [addr_mv]; exact model_mv,
     by rw [addr_no]; exact model_no, hret, setup, pre.1, pre.2.1, pre.2.2.1, pre.2.2.2.1, pre.2.2.2.2.1, pre.2.2.2.2.2,
     ⟨[], 0x1000, sMk, by rw [addr_mk]; rfl, by rw [addr_mk]; exact site_mk⟩,
     ⟨[], 0x1000, sMv, by rw [addr_mv]; rfl, by rw [addr_mv]; exact site_mv⟩,
-    ⟨[], 0x1000, sNo, by rw [addr_no]; rfl, by rw [addr_no]; exact site_no⟩⟩
+    ⟨[], 0x1000, sNo, by rw [addr_no]; rfl, by rw [addr_no]; exact site_no⟩, returnsF⟩
 
 end FvModexp.Arm64.Run.Witness
