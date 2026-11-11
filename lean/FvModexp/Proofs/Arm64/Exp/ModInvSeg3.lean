@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Arm64.Exp.ModInvZZ
+import FvModexp.Proofs.Arm64.Exp.ModInvRt
 
 /-!
 # `nat.modularInverseModPowerOfTwo` (arm64): the Hensel loop head `J2` (agent infra)
@@ -114,5 +114,55 @@ theorem rtM_stk {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat 
     simp only [winA, List.mem_cons, List.not_mem_nil, or_false] at hr
     rcases hr with rfl | rfl <;> (dsimp only; simp only [K, A]; exact hout.of_sub (by omega) (by omega))
   · rw [e0, e2]; exact a8
+
+theorem outside_of_apartAll {p n a k : Nat} {L : List (Nat × Nat)} (h : ApartAll p n L) (h1 : p ≤ a)
+    (h2 : a + k ≤ p + n) : Outside a k L := by
+  induction L with
+  | nil => trivial
+  | cons r L ih =>
+    have hr := h r (List.mem_cons_self ..)
+    unfold Apart at hr
+    exact ⟨by omega, ih fun q hq => h q (List.mem_cons_of_mem _ hq)⟩
+
+/-- an owned array stays owned across a memory change that keeps accessibility and the stack header, and a live-set
+extension -/
+theorem own_mono {R : RtInv} {kc : Nat} {L L1 L2 : List (Nat × Nat)} {s : State} {zp zc st xp xl : Nat} {M M' : Memory}
+    {p c : Nat} (h : Own R kc L L1 s zp zc st xp xl M p c) (hLE : LiveExt R L1 L2)
+    (hacc : ∀ a k w, M'.accessible a k w = M.accessible a k w)
+    (e0 : stW M' st = stW M st) (e1 : stLen M' st = stLen M st) (e2 : stCap M' st = stCap M st) :
+    Own R kc L L2 s zp zc st xp xl M' p c := by
+  obtain ⟨a1, a2, a3, a4, a5, a6, a7, a8⟩ := h
+  refine ⟨a1, a2, fun hc => ?_, a4, a5, a6, a7, ?_⟩
+  · obtain ⟨c1, c2, c3, c4⟩ := a3 hc
+    exact ⟨c1, hLE.held c2, by rw [hacc]; exact c3, c4⟩
+  · unfold StkApart; rw [e0, e1, e2]; exact a8
+
+set_option maxRecDepth 20000 in
+/-- a word store into an owned array keeps the runtime facts -/
+theorem rtM_store {R : RtInv} {kc : Nat} {L : List (Nat × Nat)} {s : State} {zp zc st xp xl : Nat} {M : Memory}
+    {L1 : List (Nat × Nat)} {b1 p c : Nat} (hrt : RtM R kc L s zp zc st M L1 b1)
+    (hown : Own R kc L L1 s zp zc st xp xl M p c) {a v : Nat} (h1 : p ≤ a) (h2 : a + 8 ≤ p + 8 * c) :
+    RtM R kc L s zp zc st (M.writeLE a 8 v) L1 b1 := by
+  obtain ⟨r0, F0, LF0, LE0, inv0, stk0, len0, arr0⟩ := hrt
+  obtain ⟨-, -, live, own, -, -, -, sa⟩ := hown
+  obtain ⟨-, hheld, -, -⟩ := live (by omega)
+  obtain ⟨sa1, -⟩ := sa (by omega)
+  unfold Apart at sa1
+  have hst : Outside st 24 [(a, a + 8)] := by simp only [outside_cons, outside_nil, and_true]; omega
+  have hF1 : MemFrame M (M.writeLE a 8 v) [(a, a + 8)] :=
+    (MemFrame.refl M _).writeLE_inRanges _ ⟨(a, a + 8), by simp, by simp only; omega, by simp only; omega⟩
+  obtain ⟨hstk, e0, e1, e2⟩ := stkOK_frame stk0 hF1 hst (LiveExt.refl R L1)
+  have hlen : stLen (M.writeLE a 8 v) st = stLen M st := e1
+  refine ⟨by rw [Memory.regions_writeLE]; exact r0, ?_, ?_, LE0, inv_store_held inv0 (hheld.sub h1 h2), hstk,
+    hlen.trans len0, by rw [e0, e2]; exact arr0⟩
+  · refine F0.writeLE_inRanges v ?_
+    rcases own with ⟨rfl, rfl⟩ | ⟨hIn, -⟩
+    · exact ⟨(p, p + 8 * c), List.mem_append_left _ (List.mem_append_right _ (List.mem_singleton_self _)),
+        by simp only; omega, by simp only; omega⟩
+    · exact ((hIn.sub h1 h2).append_left _).append_left _ |>.append_left _
+  · rcases own with ⟨rfl, rfl⟩ | ⟨-, hAp⟩
+    · exact FvModexp.LiveFrame.writeLE_ws LF0 v ⟨(p, p + 8 * c), List.mem_append_left _ (List.mem_singleton_self _),
+        by simp only; omega, by simp only; omega⟩
+    · exact LF0.writeLE v (outside_of_apartAll hAp h1 h2)
 
 end FvModexp.Arm64.ModInv
