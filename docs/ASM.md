@@ -41,10 +41,13 @@ Machine-code SUMMARY theorems for the leaf routines `(*bigModExp).Run` reaches (
 | `math/bits.Div64` | arm64 | `FvModexp.Arm64.Div64Sum.div64_summary` (adapted from fv-uint256) | `FvModexp.Arm64.Div64` | verified |
 | `math/bits.Div64` | amd64 | — (intrinsic `DIVQ`, no function) | — | n/a |
 | `divWW` | arm64 | `FvModexp.Arm64.DivWWSum.divWW_summary` | `FvModexp.Arm64.DivWW` | verified |
-| `divWW` | amd64 | — | — | todo |
-| `reciprocalWord` | arm64 | — | — | todo |
+| `divWW` | amd64 | `FvModexp.Amd64.DivWWSum.divWW_summary` | `FvModexp.Amd64.DivWW` | verified |
+| `reciprocalWord` | arm64 | `FvModexp.Arm64.RecipWordSum.recip_summary` (callee `Div64` moved in by `codeIn_div`) | `FvModexp.Arm64.RecipWord` | verified |
 | `reciprocalWord` | amd64 | — (inlined into its callers) | — | n/a |
-| `lshVU.abi0`, `rshVU.abi0` | both | WIP (`wip/LshVUSum.lean.wip`; its math `Common/AsmShift.lean` is in the tree, 1.7 s) | — | todo |
+| `lshVU.abi0` | arm64 | `FvModexp.Arm64.LshVUSum.lshVU_summary` | `FvModexp.Arm64.LshVU` | verified |
+| `lshVU.abi0` | amd64 | `FvModexp.Amd64.LshVUSum.lshVU_summary` | `FvModexp.Amd64.LshVU` | verified |
+| `rshVU.abi0` | arm64 | `FvModexp.Arm64.RshVUSum.rshVU_summary` | `FvModexp.Arm64.RshVU` | verified |
+| `rshVU.abi0` | amd64 | `FvModexp.Amd64.RshVUSum.rshVU_summary` | `FvModexp.Amd64.RshVU` | verified |
 | `addVW` (Go, `copy`→live `memmove`) | arm64 | `FvModexp.Arm64.AddVW.{ens,sum}` (CONVENTIONS §3/§4 shape) | — (needs a memmove stub runtime witness) | proved |
 | `addVW` | amd64 | `FvModexp.Amd64.AddVW.{ens,sum}` | — | proved |
 | `subVW` | arm64 | `FvModexp.Arm64.SubVW.{ens,sum}` | — | proved |
@@ -70,8 +73,8 @@ address), which holds for every Go caller (the frame is the caller's outgoing-ar
 | mulAddVWW | natdiv.go:693 `mulAddVWW(qhatv[0:n], v, qhat, 0)` | disjoint |
 | mulAddVWW | natconv.go:533 `mulAddVWW(larger, larger, b, 0)` | `z = x` (not reachable from Run) |
 | addMulVVWW | natmul.go:129 basicSqr, natmul.go:155 basicMul, nat.go:201/203 montgomery | `z = x`, `y` disjoint |
-| lshVU | nat.go:417 `nat.lsh` `lshVU(z[n-m:n], x, s)`; natdiv.go:614-615 divLarge; natmul.go:131 | backward loop: `z ≥ x` or disjoint (not yet proved) |
-| rshVU | nat.go:446 `nat.rsh` `rshVU(z, x[m-n:], s)`; natdiv.go:636 `rshVU(u, u, shift)` | forward loop: `z ≤ x` or disjoint (not yet proved) |
+| lshVU | nat.go:417 `nat.lsh` `lshVU(z[n-m:n], x, s)`; natdiv.go:614-615 divLarge; natmul.go:131 | backward loop: summary allows `x ≤ z` or disjoint |
+| rshVU | nat.go:446 `nat.rsh` `rshVU(z, x[m-n:], s)`; natdiv.go:636 `rshVU(u, u, shift)` | forward loop: summary allows `z ≤ x` or disjoint |
 | nat.cmp | everywhere (`x.cmp(y)`) | read-only; slices may be empty (`len = 0`, any pointer, e.g. nil) |
 
 Other preconditions: lengths are those of `z` (`len(x), len(y) ≥ len(z)` at every call site); the `n` limbs of each
@@ -81,7 +84,9 @@ passes `1 ≤ s ≤ 63`.
 `nat.cmp` compares **lengths first** (as Go does); it is the value comparison only for normalized inputs
 (`cmp_model` + `Mdl.natCmp_spec`).
 `Div64` (arm64): `y ≠ 0`, `hi < y`, `GuardOK s 0`, `StackOK s 40 0`. `divWW` (arm64): `y ≠ 0`, `x1 < y`,
-`m = reciprocal of y` (as `reciprocalWord` computes), frameless.
+`m = reciprocal of y` (as `reciprocalWord` computes), frameless. `divWW` (amd64): the same, args `RAX, RBX, RCX, RDI`,
+results `RAX, RBX`; Pre adds the return slot `[RSP]` readable with value `< 2^47`; Post = `Amd64.DivWWSum.Post`
+(rip = return address, `RSP + 8`, results, registers outside `RAX..RDX, RSI, RDI, R8..R11` kept, memory, `X15`, FS, DF).
 
 ## amd64 `addMulVVWW`: how both paths are covered
 
@@ -111,6 +116,21 @@ Proof split (one `janus_run` per declaration): `ret0`, `copy` (amd64: `copyA`/`c
 the `memmove`), `rel_store`, `step_inplace`/`step_copy`, `fin1`, `body`, `loop` (induction), `entry_rel`, `ens_lib`
 (on the one-segment library program), `ens` (`eq_only` + `MemmoveLive.of_codeIn`), `sum`.
 
+## `lshVU` / `rshVU` (both ISAs)
+Pre (frame words `z, len, cap, x, len, cap, s`, result word 7 at `SP+64`/`RSP+64`): `z[0:n]` writable, `x[0:n]`
+readable, `1 ≤ s ≤ 63`, lsh: `x ≤ z ∨ Apart`, rsh: `z ≤ x ∨ Apart` (the loop direction makes any such overlap safe),
+`z` apart from the result word (amd64: from the whole frame `[RSP, RSP+72)` incl. the return address), `x` apart from the
+result word. Results: lsh `Z = (X·2^s) mod 2^(64n)`, `c = (X·2^s) / 2^(64n)`; rsh `Z = X / 2^s`,
+`c = (X mod 2^s)·2^(64-s)`. Invariants `LInv` (backward) / `RInv` (forward) in `Common/AsmShift.lean`; amd64 `SHLD`/`SHRD`
+appear in Janus as `((hi·2^64 + lo)·2^s) / 2^64` / `(hi·2^64 + lo) / 2^s` (`shld_w`, `shrd_w`).
+Proof split (one `janus_run` per declaration): `zero_lem`, `pos_lem`, `one_lem` (1x loop, induction), `h4_lem`,
+`blk_lem` (4x loop, induction; the whole 4x body is one run of ~18 instructions), `fin_lem`. Modules 8–13 s, ≤ 2.4 GB.
+
+`reciprocalWord` (arm64): `d1 ≠ 0` (all call sites: natdiv.go:586 `divW`, 655 `divBasic`, normalised top words),
+`GuardOK s 48`, `StackOK s 88 0` (own 48-byte frame + `Div64`'s 40), guard word apart from `[SP-88, SP)`; Post
+`RecipWordSum.Post`: `X0 = recipWord d1`, SP/R18/g/FP/LR kept, regs outside `X0..X12, X16, X29, X30` kept, memory only
+`[SP-88, SP)`.
+
 ## Next
-`lshVU`/`rshVU` (WIP in `wip/`), amd64 `divWW`, arm64 `reciprocalWord`, `divWVW`, `nat.mulAddWW`; standalone rows for
+`divWVW`, `nat.mulAddWW`; standalone rows for
 addVW/subVW need a Witness runtime serving `memmove` (Janus stub runtimes).

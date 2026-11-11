@@ -2,7 +2,7 @@
 # asm-row.sh ISA Fn SYMBOL [contract flags...]: extract SYMBOL from the pinned build/harness-ISA (main checkout) and
 # `janus verify` lean/FvModexp/Proofs/<Arm64|Amd64>/<Fn>.lean (theorem correctness + every Witness.nonvacuous*) under the
 # project caps (memcap 16G, timeout 900 s). Appends "isa fn verdict wall_s peak_MB" to build/asm-rows.tsv; peak_MB is the
-# memory.peak of the memcap cgroup (whole process tree, sandboxed Lean included).
+# max(memory.peak of the memcap scope (janus driver), memGuard.peakBytes of verified.json (the sandboxed lake/lean jobs)).
 set -uo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"; cd "$root"
 isa=$1 fn=$2 sym=$3; shift 3
@@ -40,6 +40,10 @@ while kill -0 $bg 2>/dev/null; do
   sleep 2
 done
 wait $bg; rc=$?; r=PASS; [ $rc = 0 ] || r=FAIL
+# the sandboxed lake/lean jobs run in their own janus-job-*.scope (Janus memguard), outside the memcap scope:
+# their peak is recorded by janus in verified.json (memGuard.peakBytes); report the larger of the two
+jp=$(grep -o '"peakBytes": *[0-9]*' "$out/verified.json" 2>/dev/null | grep -o '[0-9]*$' | sort -n | tail -1)
+[ -n "$jp" ] && [ "$jp" -gt "$peak" ] && peak=$jp
 grep -qE '^Verified: FvModexp' "$log" || r=FAIL
 echo -e "$isa\t$fn\t$r\t$(( $(date +%s) - t0 ))\t$(( peak / 1048576 ))" | tee -a build/asm-rows.tsv
 grep -E "^(Verified|error|FAILED)|Kernel replay|error:" "$log" | head -20

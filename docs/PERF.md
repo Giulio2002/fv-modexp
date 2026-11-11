@@ -155,17 +155,27 @@ under `memcap`), wall / max RSS of the `lean` process (≈1.9 GB of it is the Ja
 | Arm64/AddMulVVWWSum | 13.9 s | 2.30 GB | | Amd64/AddMulVVWWSum (both paths) | 46.4 s | 2.92 GB |
 | Arm64/CmpSum | 5.8 s | 2.18 GB | | Amd64/CmpSum | 5.2 s | 2.15 GB |
 | Arm64/Div64Sum | 16.2 s | 2.59 GB | | Common/AsmMul, AsmAddMul | 2.8 s, 3.2 s | 2.06 GB |
-| Arm64/DivWWSum | 4.1 s | 2.17 GB | | Common/AsmLimbs, AsmTac, AsmCmp, AsmModel, AsmDiv* | ≤ 2.3 s each | ≤ 2.05 GB |
+| Arm64/DivWWSum | 4.1 s | 2.17 GB | | Arm64/RecipWordSum | 4.7 s | 2.10 GB |
+| (cont.) | | | | Common/AsmLimbs, AsmTac, AsmCmp, AsmModel, AsmDiv* | ≤ 2.3 s each | ≤ 2.05 GB |
 | Lib/* (library programs) | ≤ 1.2 s each | ≤ 2.0 GB | | Arm64/Amd64 AsmModels | 0.9 s | 2.0 GB |
 | Arm64/Nat/AddVW | 23–28 s | 2.63 GB | | Amd64/Nat/AddVW | 23 s | 2.76 GB |
 | Arm64/Nat/SubVW | 24–27 s | 2.62 GB | | Amd64/Nat/SubVW | 24 s | 2.72 GB |
 | Arm64/Nat/LibAddVW, LibSubVW | 5.5 s | 2.5 GB | | Amd64/Nat/LibAddVW, LibSubVW | 5.4 s | 2.5 GB |
+| Arm64/LshVUSum | 10.1 s | 2.41 GB | | Amd64/LshVUSum | 13.2 s | 2.40 GB |
+| Arm64/RshVUSum | 7.7 s | 2.23 GB | | Amd64/RshVUSum | 10.5 s | 2.25 GB |
+| Common/AsmShift (lsh + rsh + SHLD/SHRD) | 1.9 s | 2.04 GB | | Amd64/DivWWSum | 7.6 s | 2.21 GB |
 
 addVW/subVW (2026-11-11): the first version ran the whole function (limb 0 + `copy` + `memmove`) in one declaration and
 blew the 200000-heartbeat budget proving the `memmove` precondition; the loop version blew it in the loop body
 (heartbeats are per declaration). Fix: one `janus_run` per declaration (`ret0`, `copy*`, `body`, `fin1`, `ens_lib`),
 the loop induction (`loop`) and the post-call memory reasoning (`after`, `cont`, `call_norm`) in run-free lemmas, the
 executor's state literals handed over through `?_` field goals (a `rfl` on a `retState64` field whnf'd > 200k).
+
+lshVU/rshVU (2026-11-11): the inherited arm64 draft's `blk_lem` "exceeded 200k heartbeats after 53 instructions" — not
+a size problem: its `until [head4, fin]` missed the loop-back target (`CBNZ` jumps to `body4`, not `head4`), so the run
+unrolled the loop. With `until [body4, fin]` the 18-instruction 4x body runs in one declaration. The other two
+timeouts were closers: `rfl` / `assumption` / `janus_simp; assumption` on state-literal goals whnf'd > 200k; fixed by
+`with_reducible rfl` first and `exact h` on named hypotheses only. All four modules 8–13 s.
 
 Before/after (amd64 `addMulVVWW`, the only module that needed work): one `janus64_run` over the whole 4x `MULQ` block
 exceeded the 200000-heartbeat default budget (the carry terms nest four deep and are re-simplified at every step), and
@@ -186,11 +196,18 @@ of the Janus framework — the first row of a fresh cache spends ~6.5 min replay
 | AddMulVVWW | PASS 47 s | PASS 14 s (4 theorems: both paths) |
 | Cmp (`nat.cmp`) | PASS 22 s | PASS 22 s |
 | Div64 (`math/bits.Div64`) | PASS 42 s | n/a (intrinsic) |
-| DivWW | PASS 16 s | todo |
+| RecipWord (`reciprocalWord`) | PASS 20 s | n/a (inlined) |
+| DivWW | PASS 16 s | PASS 24 s |
+| LshVU | PASS 30 s | PASS 37 s |
+| RshVU | PASS 28 s | PASS 33 s |
 
-Row peak memory: the sandboxed `leanchecker` runs inside the memcap scope; the scope's `memory.peak` was ~0.83–0.89 GB
-where it was captured (`build/asm-rows.tsv`; some entries show the `janus` driver only, the measurement hook is fixed
-in `scripts/asm-row.sh`).
+Row peak memory (2026-11-11, measured properly): Janus runs the sandboxed `lake`/`lean`/`leanchecker` jobs in their own
+`janus-job-*.scope` (memguard), NOT inside the `memcap` scope of the driver — the earlier `memory.peak` numbers
+(0.8–0.9 GB, and 86 MB for a fully cached Cmp row) were the driver only. The jobs' peak is recorded by Janus in
+`verified.json` (`memGuard.peakBytes`); `scripts/asm-row.sh` now reports the max of both. Peaks from `verified.json`:
+2.7 GiB for every asm row (AddVV, SubVV, MulAddVWW, AddMulVVWW, Cmp, DivWW, LshVU, RshVU, both ISAs where present),
+Div64 3.0 GiB, RecipWord 1.7 GiB, arm64 AddVV 5.5 GiB (the cold-cache row that also built the Janus framework once),
+fully cached re-run 235 MiB. All far below the 16 GB cap.
 
 ### divmc rows (2026-11-11)
 * First `janus verify` of a divmc summary: `FvModexp.Arm64.BasicMulRow.correctness` (= `BasicMul.ens` moved to
