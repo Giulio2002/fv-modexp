@@ -37,6 +37,12 @@ open FvModexp.Arm64.RunIface (Serves P)
     (need ≤ zc → p' = zp ∧ c' = zc) ∧
     (zc < need → 0 < c' → InRanges p' (8 * c') R.rt ∧ ApartAll p' (8 * c') L)
 
+/-- an old-or-fresh result nat: the caller's array `(zp, zc)` or a fresh runtime object of capacity `≥ need`
+(amended by expmc s9 for `nat.div`: `setWord`/`set` reuse `z2` even when `cap z2 < len u + 1`) -/
+@[reducible] def NatOF (R : RtInv) (L L' : List (Nat × Nat)) (m' : Memory) (zp zc need p' l' c' v : Nat) : Prop :=
+  natVal m' p' l' = v ∧ NatNorm m' p' l' ∧ l' ≤ c' ∧ c' < 2 ^ 40 ∧ NatLive m' R L' p' c' ∧
+    ((p' = zp ∧ c' = zc) ∨ (need ≤ c' ∧ InRanges p' (8 * c') R.rt ∧ ApartAll p' (8 * c') L))
+
 /-- the runtime-side post of every shape: live set grown, budget, invariant -/
 @[reducible] def RtPost (R : RtInv) (b cost : Nat) (L L' : List (Nat × Nat)) (b' : Nat) (s s' : State) : Prop :=
   LiveExt R L L' ∧ b - cost ≤ b' ∧ R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem)
@@ -103,6 +109,7 @@ def fnLsh : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.nat.lsh"
   ∃ (p' l' c' : Nat), s'.regs 0 = BitVec.ofNat 64 p' ∧ s'.regs 1 = BitVec.ofNat 64 l' ∧ s'.regs 2 = BitVec.ofNat 64 c' ∧
     ∃ (L' : List (Nat × Nat)) (b' : Nat),
       NatRes R L L' s'.mem zp zc (xl + sh / 64 + 1) p' l' c' (natVal s.mem x xl * 2 ^ sh) ∧
+      (zc < xl + sh / 64 + 1 → xl + sh / 64 + 1 ≤ c') ∧
       RtPost R b (makeCost (xl + sh / 64 + 1)) L L' b' s s' ∧
       MemFrame s.mem s'.mem (R.rt ++ winA s stk above ++ [(zp, zp + 8 * zc)]) ∧
       LiveFrame s.mem s'.mem L [(zp, zp + 8 * zc)]
@@ -168,8 +175,8 @@ def fnDiv : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.nat.div"
     s'.regs 2 = BitVec.ofNat 64 qc ∧ s'.regs 3 = BitVec.ofNat 64 r ∧ s'.regs 4 = BitVec.ofNat 64 rl ∧
     s'.regs 5 = BitVec.ofNat 64 rc ∧
     ∃ (L' : List (Nat × Nat)) (b' : Nat),
-      NatRes R L L' s'.mem zp zc (ul + 1) q ql qc (natVal s.mem u ul / natVal s.mem v vl) ∧
-      NatRes R L L' s'.mem z2 z2c (ul + 1) r rl rc (natVal s.mem u ul % natVal s.mem v vl) ∧
+      NatOF R L L' s'.mem zp zc 1 q ql qc (natVal s.mem u ul / natVal s.mem v vl) ∧
+      NatOF R L L' s'.mem z2 z2c 1 r rl rc (natVal s.mem u ul % natVal s.mem v vl) ∧
       RtPost R b cost L L' b' s s' ∧ StackBack R L L' st s.mem s'.mem ∧
       MemFrame s.mem s'.mem (R.rt ++ winA s stk above ++ [(zp, zp + 8 * zc), (z2, z2 + 8 * z2c)] ++ stWs s.mem st) ∧
       LiveFrame s.mem s'.mem L ([(zp, zp + 8 * zc), (z2, z2 + 8 * z2c)] ++ stWs s.mem st)
