@@ -14,7 +14,7 @@ module elaboration profiles: `docs/PERF.md`.
 | Symbol | Owner | arm64 | amd64 | Notes |
 |---|---|---|---|---|
 | `github.com/ethereum/go-ethereum/core/vm.(*bigModExp).Run` | top | todo | todo | row 1: Osaka receiver; lengths fail -> (nil, error), else (compute data (parseLengths data), nil); contracts: see `scripts/contract-flags.sh` |
-| `github.com/ethereum/go-ethereum/core/vm.(*bigModExp).RequiredGas` | infra | verified (janus-provfix 57c1094c, fresh cache: warm-up 889 s, row 748 s, peak 3.9 GiB/job, correctness + Witness.nonvacuous, olean provenance checked; e2e of da06a30) | in progress | row 2: lengths pass -> `requiredGas fork data (parseLengths data)` for `.fusaka ≤ fork` (receiver = Osaka flags) |
+| `github.com/ethereum/go-ethereum/core/vm.(*bigModExp).RequiredGas` | infra | verified (janus-provfix 57c1094c, fresh cache, correctness + Witness.nonvacuous, olean provenance checked: da06a30 row 748 s / 3.9 GiB per job; split tree ee8a255 via verify-all: warm-up 807 s, row 824 s / 4.9 GiB per job, host load ~40) | in progress | row 2: lengths pass -> `requiredGas fork data (parseLengths data)` for `.fusaka ≤ fork` (receiver = Osaka flags) |
 
 Pure-Lean row 3 (no machine code): `FvModexp.Proofs.Compose.composition` in `lean/FvModexp/Proofs/Common/Compose.lean`, checked by `make build`.
 

@@ -342,3 +342,11 @@ and `(2^64 - 8 + fsBase) % 2^64 = fsBase - 8` as run lemmas; register reads of a
 | Witness/StubsGrowFin (alloc + live return + transport) | 22 s | `janus_run` before the toy-allocator facts enter the context (else heartbeat timeout in the run's `omega`s) |
 | Witness/Stubs (Run extraction: impl, hap, 9 contracts, Serves) | 18 s | |
 | row | Run arm64 error path (`Run.correctness` + `Witness.nonvacuous`), janus-provfix 57c1094c | PASS 271 s wall, 3.8 GiB peak (warm cache-top) |
+## RequiredGas arm64 row (agent infra), 2026-11-11
+`janus verify` (janus-provfix 57c1094c, fresh cache after the warm-up, JANUS_JOBS=2: Lake build of the closure, janus's own compile
+(4 jobs) and leanchecker replay, i.e. every row module is elaborated twice): da06a30 (chained segments) 748 s, peak 3.9 GiB/job;
+ee8a255 (segments decoupled through `Seg`, Sb/Ic/Fin/Blk split) 824 s, peak 4.9 GiB/job — both under the 900 s cap but measured
+on a host with load average ~40 (dev compiles there ran ~2x their idle time). Module dev compiles (same load): SbA 68, SbB 87, SbC 53,
+SbD 116, SbE 27, SbF 33, SbG 60, Mv 63, IcLL 38, IcLN 7, IcHL 68, IcHN 24, Og 14, FinA 57, FinB 19, FinC 23, FinD 33, FinE 11, Fin1 89,
+Blk3Lt 43, Blk3Ge 46, Blk2Lt 35, Blk2Ge 40, RequiredGas 49 s; every module <= 4.3 GB. The row's wall is total work / parallelism, not the
+critical path: next trims are Fin1 (89 s, one run) and SbD (116 s).
