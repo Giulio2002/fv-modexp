@@ -39,5 +39,7 @@ while (todo or running) and not failed:
         if p.returncode != 0:
             print(o[:8000], flush=True); failed = True
         else: done.add(f)
-for p, _ in running.values(): p.wait()
+for f, (p, tf) in running.items():  # failure: let the running jobs finish and still print their output
+    p.wait(); tf.seek(0); o = tf.read(); tf.close()
+    print(o[:8000], flush=True)
 sys.exit(1 if failed else 0)

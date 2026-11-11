@@ -1,4 +1,5 @@
-import FvModexp.Proofs.Amd64.Exp.SubMod2NS2
+import FvModexp.Proofs.Amd64.Exp.SubMod2NS3L
+import FvModexp.Proofs.Amd64.Exp.SubMod2NS3G
 
 /-!
 # `nat.subMod2N` (amd64): `J2` → `x.cmp(y)` → `z.sub(x, y)` + return, or `z.sub(y, x)` → `J3` (agent infra)
@@ -52,8 +53,18 @@ theorem cmp_nonneg' {m : Memory} {p q l1 l2 : Nat} (h1 : NatNorm m p l1) (h2 : N
   · exact ⟨1, by omega, rfl⟩
   · exact ⟨0, by omega, rfl⟩
 
+/-- the frame words survive stores below `e - 8` -/
+theorem fw_lo {s : State} {M M' : Memory} {zp zl zc yp n lo : Nat} (hs : 152 ≤ (s.regs 4).toNat)
+    (h : Fw s M zp zl zc yp n) (hF : MemFrame M M' [(lo, (s.regs 4).toNat - 8)]) :
+    Fw s M' zp zl zc yp n := by
+  obtain ⟨f1, f2, f3, f4, f5, f6, f7⟩ := h
+  have r : ∀ a, (s.regs 4).toNat - 8 ≤ a → M'.readLE a 8 = M.readLE a 8 :=
+    fun a ha => hF.readLE a 8 (by simp only [outside_cons, outside_nil, and_true]; omega)
+  refine ⟨(r _ ?_).trans f1, (r _ ?_).trans f2, (r _ ?_).trans f3, (r _ ?_).trans f4, (r _ ?_).trans f5,
+    (r _ ?_).trans f6, (r _ ?_).trans f7⟩ <;> omega
+
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 16000000 in
+set_option maxHeartbeats 64000000 in
 /-- from the entry of `x'.cmp(y')` (`RSP_c = e - 136`, return address `+0x26c`) -/
 theorem s3c (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
     (hsub : SubHypR impl R)
@@ -138,21 +149,82 @@ theorem s3c (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
   have b48 : (s.regs 4).toNat - 128 + 80 = (s.regs 4).toNat - 48 := by omega
   have hx0 : S'.xmm 15 = 0 := by rw [hxm, hx15]; exact hent.2.2.2.1
   have hdf0 : S'.df = false := by rw [hdf', hdf]
+  have b136 : (s.regs 4).toNat - 128 - 8 = (s.regs 4).toNat - 136 := by omega
+  have fr : ∀ M', MemFrame S'.mem M' (win s K A) →
+      natVal M' zp l1 = natVal s.mem zp zl % 2 ^ n ∧ natVal M' p2 l2 = natVal s.mem yp yl % 2 ^ n ∧
+      NatNorm M' zp l1 ∧ NatNorm M' p2 l2 ∧ M'.accessible zp (8 * l1) false = true ∧
+      M'.accessible p2 (8 * l2) false = true := fun M' h =>
+    ⟨(natVal_frame h hzA).trans hv1', (natVal_frame h hyA).trans hv2', natNorm_frame h hzA hn1',
+      natNorm_frame h hyA hn2', by rw [h.accessible]; exact hacc1', by rw [h.accessible]; exact hacc2'⟩
   by_cases hlt : natVal S.mem zp l1 < natVal S.mem p2 l2
   · have hR : S'.regs 0 = 18446744073709551615#64 := hr0.trans (cmp_neg hn1 hn2 hlt)
     have hll := (SubMod2N.cmp_lt_iff S.mem zp l1 p2 l2 hn1 hn2).2 hlt
-    janus64_run [hR, hsp1, a16, a24, a32, b16, b40, b32, b24, b56, b48, f3, f4, f5, q16, q40, q32, q24, q56, q48]
+    janus64_run [hR, b136, hsp1, a16, a24, a32, b16, b40, b32, b24, b56, b48, f3, f4, f5, q16, q40, q32, q24, q56, q48]
       until [6183136]
-    trace_state
-    sorry
+    all_goals first | (exact absurd hbr (by decide)) | skip
+    refine s3lt impl hap hsub hpre _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
+      (rt_stk hpre hrt' ?_ ?_) (fw_lo (lo := (s.regs 4).toNat - 4576) (by omega) ⟨f1, f2, f3, f4, f5, f6, f7⟩ ?_)
+      (fr _ ?_).1 (fr _ ?_).2.2.1 hW1 (fr _ ?_).2.1 (fr _ ?_).2.2.2.1 hW2 hlc2 hc2 (by omega) (fr _ ?_).2.2.2.2.1
+      (fr _ ?_).2.2.2.2.2 h482 hh2 hw2 hzp2 k3 (by rw [← hv1, ← hv2]; exact hlt)
+    all_goals first
+      | (simp only [win, K, A]; janus_frame)
+      | janus_frame
+      | (janus64_simp; done)
+      | (janus64_simp <;> first | exact hx0 | exact hdf0 | exact h14' | exact hfs'.trans hfs | exact tN (by omega) | omega)
   · obtain ⟨v, hv01, hcv⟩ := cmp_nonneg' hn1 hn2 hlt
     have hR : S'.regs 0 = BitVec.ofNat 64 v := hr0.trans hcv
     have h63 : (BitVec.ofNat 64 v).msb = false := by
       rw [BitVec.msb_eq_decide]; simp; omega
     have hll := mt (SubMod2N.cmp_lt_iff S.mem zp l1 p2 l2 hn1 hn2).1 hlt
-    janus64_run [hR, h63, hsp1, a16, a24, a32, b16, b40, b32, b24, b56, b48, f3, f4, f5, q16, q40, q32, q24, q56, q48]
+    janus64_run [hR, h63, b136, hsp1, a16, a24, a32, b16, b40, b32, b24, b56, b48, f3, f4, f5, q16, q40, q32, q24, q56, q48]
       until [6183136]
-    trace_state
-    sorry
+    all_goals first | (exact absurd h63 hbr) | skip
+    refine s3ge impl hap hsub hpre _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
+      (rt_stk hpre hrt' ?_ ?_) (fw_lo (lo := (s.regs 4).toNat - 4576) (by omega) ⟨f1, f2, f3, f4, f5, f6, f7⟩ ?_)
+      (fr _ ?_).1 (fr _ ?_).2.2.1 hW1 (fr _ ?_).2.1 (fr _ ?_).2.2.2.1 hW2 hlc2 hc2 (by omega) (fr _ ?_).2.2.2.2.1
+      (fr _ ?_).2.2.2.2.2 h482 hh2 hw2 hzp2 (by rw [← hv1, ← hv2]; exact hlt)
+    all_goals first
+      | (simp only [win, K, A]; janus_frame)
+      | janus_frame
+      | (janus64_simp; done)
+      | (janus64_simp <;> first | exact hx0 | exact hdf0 | exact h14' | exact hfs'.trans hfs | exact tN (by omega) | omega)
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 64000000 in
+/-- `J2` → `x'.cmp(y')` (spill `y'`, call at `+0x267`) → `s3c` -/
+theorem s3 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
+    (hsub : SubHypR impl R) (b : Nat) (L : List (Nat × Nat)) (op zp zl zc yp yl yc n : Nat) (s : State)
+    (k3 : J3 impl R b L op zp zl zc yp yl yc n s) : J2 impl R b L op zp zl zc yp yl yc n s := by
+  intro S l1 p2 l2 c2 L2 b2 hpre hpc hsp hab h7 h6 h8 h9 h10 h11 hfw r16 r40 r32 hrt hv1 hn1 hW1 hv2 hn2 hW2 hlc2 hc2
+    hacc2 h482 hh2 hw2 hzp2
+  obtain ⟨⟨-, ⟨hb', ha, hw⟩, -, -, hout, -, -, -, -, -⟩, -, -, -, -, -, -, -, hzl, hW, hzc, -, -,
+    -, -, hzlive, hzw, -⟩ := id hpre
+  have hent := ent_of hpre
+  obtain ⟨h14, hfs, hx15, hdf⟩ := hab
+  simp only [W] at hW hW1 hW2
+  simp only [win, K, A, regSP, outside_cons, outside_nil, and_true] at hzw hout hb' ha hw
+  have hacc : S.mem.accessible ((s.regs 4).toNat - 4576) (4576 + 88) true = true := by
+    rw [hrt.2.1.accessible]; exact hw
+  have hzA : Outside zp (8 * l1) (win s K A) := by simp only [win, K, A, outside_cons, outside_nil, and_true]; omega
+  have hyA : Outside p2 (8 * l2) (win s K A) := by simp only [win, K, A, outside_cons, outside_nil, and_true]; omega
+  obtain ⟨f1, f2, f3, f4, f5, f6, f7⟩ := hfw
+  have b24 : (s.regs 4).toNat - 128 + 104 = (s.regs 4).toNat - 24 := by omega
+  have b56 : (s.regs 4).toNat - 128 + 72 = (s.regs 4).toNat - 56 := by omega
+  have b48 : (s.regs 4).toNat - 128 + 80 = (s.regs 4).toNat - 48 := by omega
+  have b136 : (s.regs 4).toNat - 128 - 8 = (s.regs 4).toNat - 136 := by omega
+  unfold Goal
+  janus64_run [hsp, b24, b56, b48, b136] until [6184128]
+  refine s3c impl hap hsub k3 hpre _ ?_ ?_ ⟨?_, ?_, ?_, ?_⟩ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ (rt_stk hpre hrt ?_ ?_)
+    ((natVal_frame (rs := win s K A) ?_ hzA).trans hv1) (natNorm_frame (rs := win s K A) ?_ hzA hn1) hW1
+    ((natVal_frame (rs := win s K A) ?_ hyA).trans hv2) (natNorm_frame (rs := win s K A) ?_ hyA hn2) hW2 hlc2 hc2 ?_
+    h482 hh2 hw2 hzp2
+  all_goals first
+    | (simp only [win, K, A]; janus_frame)
+    | (janus64_simp; done)
+    | exact fw_lo (lo := (s.regs 4).toNat - 4576) (by omega) ⟨f1, f2, f3, f4, f5, f6, f7⟩ (by janus_frame)
+    | (janus64_simp <;> first | exact h14 | exact hfs | exact hx15 | exact hdf)
+    | (janus64_simp <;> first | exact r16 | exact r40 | exact r32 | exact hacc2)
+    | (janus64_simp <;> first | exact tN (by omega) | exact Nat.mod_eq_of_lt (by omega))
+    | (janus64_simp <;> (apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega))
 
 end FvModexp.Amd64.SubMod2N
