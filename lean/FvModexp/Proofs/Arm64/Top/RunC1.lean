@@ -28,7 +28,7 @@ theorem c1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
     Reaches ((LibRun.program.link impl).withExit ret) S Q := by
   obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, hd, hout, hga, hgr, hLs, hro⟩ := henv
   obtain ⟨hsp, h28, h29, h18, hm1, hm2, hm3, hm4, hm5, hm6, hs1, hs2, hs3, hs4, hs5, hs6, hl0, hl1, hl2, hnz, -, -,
-    hdS, -, -, hext, hbud, hinv, hLsS, hMF, hLF, hop⟩ := hrel
+    hdS, -, -, hext, hbud, hinv, hLsS, hMF, hLF, hop, hopA⟩ := hrel
   simp only [stk] at hg3 hb' ha hw hout hga hLs hLsS hMF hW
   obtain ⟨hneg, hval, hnorm, h128, hlc, hlive⟩ := hop 2 (by omega)
   simp only [opAt] at hneg hval hnorm h128 hlc hlive

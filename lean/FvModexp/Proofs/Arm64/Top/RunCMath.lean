@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Arm64.Top.RunLMath
+import FvModexp.Proofs.Common.RunMath
 
 /-! # `Run` (arm64): arithmetic facts for the compute part (`mod.BitLen()`, `base.BitLen() == 1` for operands of up to 128
 limbs) -/
@@ -69,5 +70,73 @@ theorem blr_one (x X n : Nat) (hx0 : 0 < x) (hxX : x ≤ X) (hX1 : x = 1 → X =
       omega
   · rintro ⟨rfl, rfl⟩
     rw [hX1 rfl]; decide
+
+end FvModexp.Arm64.Run
+
+namespace FvModexp.Arm64.Run
+
+open Janus Janus.Arm64
+
+/-- `n` padded call-data bytes are below `256^n`. -/
+theorem padBE_lt (m : Memory) (p len start n : Nat) : padBE m p len start n < 256 ^ n := by
+  induction n with
+  | zero => simp [padBE]
+  | succ n ih =>
+    have hb : padByte m p len (start + n) < 256 := by
+      unfold padByte; split
+      · exact (m.bytes _).isLt
+      · omega
+    simp only [padBE, Nat.pow_succ]
+    have : padBE m p len start n * 256 + 256 ≤ 256 ^ n * 256 := by
+      have := Nat.mul_le_mul_right 256 (Nat.succ_le_of_lt ih); rw [Nat.succ_mul] at this; exact this
+    omega
+
+/-- A normalised nat of `n` limbs is at least `2^(64 (n - 1))` (`n ≥ 1`). -/
+theorem natVal_ge_norm (m : Memory) (p n : Nat) (hn : NatNorm m p n) (h1 : 1 ≤ n) :
+    2 ^ (64 * (n - 1)) ≤ natVal m p n := by
+  obtain ⟨k, rfl⟩ : ∃ k, n = k + 1 := ⟨n - 1, by omega⟩
+  have ht : m.readLE (p + 8 * k) 8 ≠ 0 := by
+    rcases hn with h | h
+    · omega
+    · simpa using h
+  rw [natVal_succ, show k + 1 - 1 = k by omega]
+  have : 2 ^ (64 * k) ≤ 2 ^ (64 * k) * m.readLE (p + 8 * k) 8 := Nat.le_mul_of_pos_right _ (Nat.pos_of_ne_zero ht)
+  omega
+
+/-- A normalised nat below `2^(8 h)` has at most `⌈h / 8⌉` limbs. -/
+theorem len_le_of_lt (m : Memory) (p n h : Nat) (hn : NatNorm m p n) (hv : natVal m p n < 2 ^ (8 * h)) :
+    n ≤ (h + 7) / 8 := by
+  rcases Nat.eq_zero_or_pos n with h0 | h0
+  · omega
+  · have := natVal_ge_norm m p n hn h0
+    have h2 : 2 ^ (64 * (n - 1)) < 2 ^ (8 * h) := Nat.lt_of_le_of_lt this hv
+    have := (Nat.pow_lt_pow_iff_right (by omega)).1 h2
+    omega
+
+/-- A normalised nat is below a normalised nat of more limbs... used as: a value below `y` has at most `len y` limbs. -/
+theorem len_le_of_lt_norm (m m' : Memory) (p n p' n' : Nat) (hn : NatNorm m p n)
+    (hv : natVal m p n < natVal m' p' n') : n ≤ n' := by
+  rcases Nat.eq_zero_or_pos n with h0 | h0
+  · omega
+  · have := natVal_ge_norm m p n hn h0
+    have := natVal_lt m' p' n'
+    have h2 : 2 ^ (64 * (n - 1)) < 2 ^ (64 * n') := by omega
+    have := (Nat.pow_lt_pow_iff_right (by omega)).1 h2
+    omega
+
+/-- A minimal big-endian byte string (no leading zero byte) below `256^h` has at most `h` bytes. -/
+theorem beLen_le (m : Memory) (q n h : Nat) (hmin : n = 0 ∨ (m.bytes q).toNat ≠ 0) (hv : beVal m q n < 256 ^ h) :
+    n ≤ h := by
+  rcases Nat.eq_zero_or_pos n with h0 | h0
+  · omega
+  · have hb : (m.bytes q).toNat ≠ 0 := hmin.resolve_left (by omega)
+    have hs := beVal_add m q 1 (n - 1)
+    rw [show 1 + (n - 1) = n by omega] at hs
+    have h1 : beVal m q 1 = (m.bytes q).toNat := by simp [beVal]
+    rw [h1] at hs
+    have : 256 ^ (n - 1) ≤ (m.bytes q).toNat * 256 ^ (n - 1) := Nat.le_mul_of_pos_left _ (Nat.pos_of_ne_zero hb)
+    have h2 : 256 ^ (n - 1) < 256 ^ h := by omega
+    have := (Nat.pow_lt_pow_iff_right (by omega)).1 h2
+    omega
 
 end FvModexp.Arm64.Run

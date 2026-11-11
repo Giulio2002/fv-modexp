@@ -46,30 +46,6 @@ def JoinZ3 (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64
   LiveExt R L Lk ∧ b - (3 * makeCost 4 + 2 * dCost + allocCost 1024) ≤ bk ∧
   R.inv bk Lk (s.regs 28).toNat (view R.rt Lk U.mem) ∧ LiveSep Lk (win s stk 40) ∧
   MemFrame s.mem U.mem (R.rt ++ winA s stk 40) ∧ LiveFrame s.mem U.mem L [] ∧ OpDone U.mem s p len Lk 0 ∧
-  OpDone U.mem s p len Lk 1
-
-end FvModexp.Arm64.Run
-
-namespace FvModexp.Arm64.Run
-
-open Janus Janus.Arm64
-
-/-! Small arithmetic helpers, proved once in a small context (an `omega` inside a segment proof costs seconds). -/
-
-theorem bv_sub_of_le (a b : Nat) (h : b ≤ a) (ha : a < 2 ^ 64) :
-    BitVec.ofNat 64 a - BitVec.ofNat 64 b = BitVec.ofNat 64 (a - b) := by
-  apply BitVec.eq_of_toNat_eq; rw [BitVec.toNat_sub]; simp only [BitVec.toNat_ofNat]
-  rw [Nat.mod_eq_of_lt (a := b) (by omega), Nat.mod_eq_of_lt (a := a) ha, Nat.mod_eq_of_lt (a := a - b) (by omega)]
-  omega
-
-theorem bv_add_of_lt (a b : Nat) (h : a + b < 2 ^ 64) :
-    BitVec.ofNat 64 a + BitVec.ofNat 64 b = BitVec.ofNat 64 (b + a) := by
-  apply BitVec.eq_of_toNat_eq; rw [BitVec.toNat_add]; simp only [BitVec.toNat_ofNat]
-  rw [Nat.mod_eq_of_lt (a := a) (by omega), Nat.mod_eq_of_lt (a := b) (by omega), Nat.mod_eq_of_lt (a := b + a) (by omega)]
-  omega
-
-theorem outA_of {s : State} {a n : Nat} (h : a + n ≤ s.sp.toNat - 4800 ∨ s.sp.toNat + 40 ≤ a) :
-    Outside a n (winA s stk 40) := by
-  simp only [winA, stk, Janus.outside_cons, Janus.outside_nil, and_true]; omega
+  OpDone U.mem s p len Lk 1 ∧ OpsApart U.mem s 2
 
 end FvModexp.Arm64.Run

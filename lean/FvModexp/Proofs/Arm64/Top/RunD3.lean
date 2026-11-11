@@ -31,7 +31,7 @@ theorem d3x (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   have hin0 := hin
   obtain ⟨hcacc, hc48, hcheld, hcw, hp, hlcp, hcp48, hpacc, hheld, hpw⟩ := hin
   obtain ⟨hsp, h28, h29, h18, hm1, hm2, hm3, hm4, hm5, hm6, hs1, hs2, hs3, hs4, hs5, hs6, hl0, hl1, hl2, hnz, hk1, hk2,
-    hdS, hinS, hcS, hext, hbud, hinv, hLsS, hMF, hLF, hop⟩ := hrel
+    hdS, hinS, hcS, hext, hbud, hinv, hLsS, hMF, hLF, hop, hopA⟩ := hrel
   obtain ⟨hk1a, hk1b⟩ := hk1 (by omega)
   have hk2a := hk2 (by omega)
   have hS1n : (if len.toNat - 96 < hdrV s p len 1 + hdrV s p len 0 then len.toNat - 96 else hdrV s p len 1 + hdrV s p len 0) =
@@ -129,7 +129,15 @@ theorem d3x (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
       (by janus_simp [hm5]) (by janus_simp [hm6]) (by janus_simp [hs1]) (by janus_simp [hs2]) (by janus_simp [hs3])
       (by janus_simp [hs4]) (by janus_simp [hs5, hoffd]) (by janus_simp [hs6, hoffd]) hl0 hl1 hl2 hnz
       (fun _ => ⟨by janus_simp [hk1a], by janus_simp [hk1b]⟩) (fun _ => by janus_simp [hk2a]) ?_ (hext.trans hext2) ?_ ?_
-      (hext2.liveSep hLsL1 hwrt) ?_ ?_ ?_) (by janus_simp [hp2]) (by janus_simp [hn2]) (by janus_simp)
+      (hext2.liveSep hLsL1 hwrt) ?_ ?_ ?_ ?opsA) (by janus_simp [hp2]) (by janus_simp [hn2]) (by janus_simp)
+    case opsA =>
+      clear hoffc hmN hcap hdir hdir0 hpw hcw hga hW hsrcL hB48 hS1n hmod hk1a hk2a hS1 hadd hmask hsub hcsub hsrc hH hAcc
+      refine OpsApart.step' (p2 := p2) (c2 := c2) hopA (fun i hi => ?_) (fun i hi hc => opDone_inRanges (hop i (by omega)) hc)
+        (by janus_simp [hp2, opAt]) (by janus_simp [hc2, opAt]) (fun hc => ?_)
+      · rcases (show i = 0 ∨ i = 1 by omega) with rfl | rfl <;> exact ⟨by janus_simp [opAt], by janus_simp [opAt]⟩
+      · rcases hor2 with ⟨-, h⟩ | ⟨-, h⟩
+        · simp at h; omega
+        · exact h
     · janus_callpre
     · have hD : allocCost (8 * 132) ≤ dCost := Nat.le_add_left _ _
       clear hoffc hmN hcap hdir hdir0 hpw hcw hga hW hsrcL hB48 hS1n hmod hk1a hk2a hS1 hadd hmask hsub hcsub hsrc hH hAcc

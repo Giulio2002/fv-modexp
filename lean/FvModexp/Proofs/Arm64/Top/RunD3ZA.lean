@@ -29,7 +29,7 @@ theorem d3zA (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
   have hin0 := hin
   obtain ⟨hcacc, hc48, hcheld, hcw, hp, hlcp, hcp48, hpacc, hheld, hpw⟩ := hin
   obtain ⟨hsp, h28, h29, h18, hm1, hm2, hm3, hm4, hm5, hm6, hs1, hs2, hs3, hs4, hs5, hs6, hl0, hl1, hl2, hnz, hk1, hk2,
-    hdS, hinS, hcS, hext, hbud, hinv, hLsS, hMF, hLF, hop⟩ := hrel
+    hdS, hinS, hcS, hext, hbud, hinv, hLsS, hMF, hLF, hop, hopA⟩ := hrel
   obtain ⟨hk1a, hk1b⟩ := hk1 (by omega)
   have hk2a := hk2 (by omega)
   have hS1n : (if len.toNat - 96 < hdrV s p len 1 + hdrV s p len 0 then len.toNat - 96 else hdrV s p len 1 + hdrV s p len 0) =
@@ -92,7 +92,7 @@ theorem d3zA (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     bv_sub_of_le _ _ hcap (by omega)
   have hsrc : BitVec.ofNat 64 mN + BitVec.ofNat 64 (p.toNat + off) = BitVec.ofNat 64 (p.toNat + off + mN) :=
     bv_add_of_lt _ _ (by omega)
-  have hpast : len.toNat ≤ 96 + hdrV s p len 0 := by omega
+  have hpast : len.toNat ≤ 96 + (hdrV s p len 0 + hdrV s p len 1) := by omega
   have hsrcb : p.toNat ≤ p.toNat + off + mN ∧ p.toNat + off + mN ≤ p.toNat + len.toNat := by omega
   have hpo' : Outside p.toNat len.toNat (winA s stk 40) := outA_of hpw
   have hco' : Outside c.toNat 3 (winA s stk 40) := outA_of hcw
@@ -158,7 +158,7 @@ theorem d3zA (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     unfold padByte
     rw [if_neg (Nat.not_lt.2 (Nat.le_trans hpast (Nat.le_add_right _ _))), hzk j hj]
     rfl
-  have hbudk : b - (3 * makeCost 4 + dCost + allocCost 1024) ≤ b1 - blockSize (hdrV s p len 2) true := by
+  have hbudk : b - (3 * makeCost 4 + 2 * dCost + allocCost 1024) ≤ b1 - blockSize (hdrV s p len 2) true := by
     have hBS' := blockSize_le_allocCost (hdrV s p len 2) true
     simp only [dCost, allocCost] at hbud hBS' ⊢; omega
   have hacc' : s.mem.accessible ptr.toNat (hdrV s p len 2) true = true :=
@@ -183,6 +183,7 @@ theorem d3zA (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
      OpDone.transport (hop 0 (by omega)) (by janus_simp [opAt]) (by janus_simp [opAt]) (by janus_simp [opAt])
        (by janus_simp [opAt]) hLFS (fun _ _ h => hext'.inRanges_old h),
      OpDone.transport (hop 1 (by omega)) (by janus_simp [opAt]) (by janus_simp [opAt]) (by janus_simp [opAt])
-       (by janus_simp [opAt]) hLFS (fun _ _ h => hext'.inRanges_old h)⟩ (by janus_simp)
+       (by janus_simp [opAt]) hLFS (fun _ _ h => hext'.inRanges_old h), OpsApart.transport hopA (fun i hi => by
+       rcases (show i = 0 ∨ i = 1 by omega) with rfl | rfl <;> exact ⟨by janus_simp [opAt], by janus_simp [opAt]⟩)⟩ (by janus_simp)
 
 end FvModexp.Arm64.Run

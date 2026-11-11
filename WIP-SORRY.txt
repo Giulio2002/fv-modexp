@@ -1,2 +1,3 @@
 # files allowed to contain `sorry` while in progress: path<TAB>owner<TAB>note. MUST be empty at release (RELEASE=1 scripts/no-sorry.sh enforces it).
 lean/FvModexp/Proofs/Arm64/Top/RunX.lean	top	exploration scratch
+lean/FvModexp/Proofs/Arm64/Top/RunCP2.lean	top	len(v)=0 memmove branch of LeftPadBytes: blocked by Janus n=0 memmove/makeslice(0) contract strength (JANUS-ISSUES.md)
