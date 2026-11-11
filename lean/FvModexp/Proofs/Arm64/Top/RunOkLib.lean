@@ -38,7 +38,7 @@ theorem okRet_spec {s S' : State} {p len : BitVec 64} (h : OkRet S' (resV s p le
   obtain ⟨h3, h1, hv⟩ := h
   refine ⟨h3, ?_⟩
   obtain ⟨e0, e1, e2⟩ := parse_hdr s p len
-  rw [compute_eq, bytesAt_eq_natToBytes, hv, h1]
+  rw [compute_eq, bytesAt_eq_natToBytes, h1, hv]
   simp only [e0, e1, e2, resV, opV, opStart, opLen, show ((2 : Nat) = 0) = False by decide,
     show ((2 : Nat) = 1) = False by decide, show ((1 : Nat) = 0) = False by decide, if_false, if_true, Nat.add_assoc]
 
@@ -62,14 +62,14 @@ theorem ensOkLib (impl : List Segment) (hap : ImplApart Extracted.program impl) 
       (fun s s' => RunArm64.OkRet (bytesAt s.mem p.toNat len.toNat) s' ∧
         RunArm64.FrameW R b (RunArm64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat))) L W s s') := by
   intro ret hret s hs ⟨⟨henvW, hgL⟩, hin, hrecv, hinv, hsv, hglob, hbud, hpass⟩
-  rw [okB_spec] at hbud ⊢
+  rw [okB_spec] at hbud
   obtain ⟨n, o, hrun, hQ⟩ := okReach impl hap R hmk hmv hmz hno stkM aboveM hM hE hBy hsv b L c p len cp ret hret s hs
     W henvW hW hW1 hab hin hinv (osaka_read hrecv) hglob hgL hbud (pass_hdr hpass)
     (fun o => ∃ s', o = .returned s' ∧ ABIReturn s s' ∧ RunArm64.OkRet (bytesAt s.mem p.toNat len.toNat) s' ∧
-      RunArm64.FrameW R b (okB s p len) L W s s')
+      RunArm64.FrameW R b (RunArm64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat))) L W s s')
     (fun S' habi hret' hfr => ⟨S', rfl, habi, okRet_spec hret', by
       obtain ⟨L', b', hext, hb', hinv', hheld, hMF, hLF⟩ := hfr
-      exact ⟨L', b', hext, hb', hinv', by rw [hret'.2.1]; exact hheld, hMF, hLF⟩⟩)
+      exact ⟨L', b', hext, by rw [okB_spec]; exact hb', hinv', by rw [hret'.2.1]; exact hheld, hMF, hLF⟩⟩)
   obtain ⟨s', rfl, h⟩ := hQ
   exact ⟨n, s', hrun, h⟩
 
