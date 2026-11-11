@@ -82,8 +82,8 @@ theorem Scr.outside {R : RtInv} {L L1 : List (Nat × Nat)} {m0 m : Memory} {st t
 /-- `Scr` from `(*stack).nat`'s postcondition (expmc's `StackNatPost` shape). -/
 theorem Scr.of_post {R : RtInv} {L L1 : List (Nat × Nat)} {m0 m : Memory} {st len0 k : Nat}
     (hok : StkOK m R L1 st) (hlen : stLen m st = len0 + (k + 3) / 4 * 4) (hk : 0 < k)
-    (hsame : len0 + k ≤ stCap m0 st → stW m st = stW m0 st ∧ stCap m st = stCap m0 st)
-    (hgrow : stCap m0 st < len0 + k → InRanges (stW m st) (8 * stCap m st) R.rt ∧
+    (hsame : len0 + (k + 3) / 4 * 4 ≤ stCap m0 st → stW m st = stW m0 st ∧ stCap m st = stCap m0 st)
+    (hgrow : stCap m0 st < len0 + (k + 3) / 4 * 4 → InRanges (stW m st) (8 * stCap m st) R.rt ∧
       ApartAll (stW m st) (8 * stCap m st) L)
     (hl0 : len0 = stLen m0 st) :
     Scr R L L1 m0 m st (stW m st + 8 * len0) k := by
@@ -91,7 +91,7 @@ theorem Scr.of_post {R : RtInv} {L L1 : List (Nat × Nat)} {m0 m : Memory} {st l
   have hcap : len0 + k ≤ stCap m st := by omega
   obtain ⟨hal, hh, hacc, h48⟩ := hnl (by omega)
   refine ⟨by omega, Memory.accessible_mono _ hacc (by omega) (by omega), by omega, hh.sub (by omega) (by omega), ?_⟩
-  by_cases hc : len0 + k ≤ stCap m0 st
+  by_cases hc : len0 + (k + 3) / 4 * 4 ≤ stCap m0 st
   · obtain ⟨e1, e2⟩ := hsame hc
     left; subst hl0; refine ⟨by omega, by omega, by omega⟩
   · obtain ⟨hin, hap⟩ := hgrow (by omega)
