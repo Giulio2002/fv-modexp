@@ -178,4 +178,130 @@ theorem xnBK (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
   obtain ⟨zzp, zzc, h⟩ := h
   exact ⟨l0 + StackNat.rnd n, zzp, zzc, by omega, h⟩
 
+theorem obj_sub {R : RtInv} {L : List (Nat × Nat)} {sp K st l0 a k b k' : Nat} {ex : List (Nat × Nat)} {M : Memory}
+    (h : Obj R L sp K st l0 ex M a k) (h1 : a ≤ b) (h2 : b + k' ≤ a + k) : Obj R L sp K st l0 ex M b k' := by
+  obtain ⟨o1, o2, o3, o4, o5⟩ := h
+  refine ⟨held_sub o1 h1 h2, by simp only [AW, Apart] at o2 ⊢; omega, by unfold Apart at o3 ⊢; omega,
+    by simp only [Apart] at o4 ⊢; omega, fun e he => by have := o5 e he; unfold Apart at this ⊢; omega⟩
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 64000000 in
+/-- the `x` join `j238` (`len x ≤ n`) to the function's `RET`: path C (`len x = n`, nothing to do) or path B
+(`rr := stk.nat(n)`, copy, clear) -/
+theorem xnJStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+    (hclr : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl)
+      (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
+    (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
+    (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
+    (hSN : StackNat.Hyp impl R StackNat.names 4208 24)
+    (nsD : List String) (stkD costD : Nat) (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costD)
+    (hnsD : ∀ x, nsD.contains x = true → LibExp.names.contains x = true)
+    (hnsW : nsD.contains Extracted.seg34.name = false)
+    (nsL : List String) (stkL : Nat) (hLsh : ExpHyp.LshHyp impl R nsL stkL 64)
+    (hnsL : ∀ x, nsL.contains x = true → LibExp.names.contains x = true)
+    (hnsWL : nsL.contains Extracted.seg34.name = false)
+    (hserv : RunIface.Serves R)
+    (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret)
+    (b : Nat) (L : List (Nat × Nat)) (g sp K n mp mc Mv Xv yp ylen Y yi zp zc st n0 l0 xp xl xr xc : Nat)
+    (M : Memory) (r18 r29 : BitVec 64) (hKD : stkD ≤ K) (hKL : stkL ≤ K)
+    (hB : CtxB R L g sp K n mp mc Mv yp ylen Y yi zp zc st n0 l0 ret r29 [] M) (hl0e : stLen M st = l0)
+    (hx : XIn R L sp K st l0 M xp xl xr) (hxv : M.readLE xp (8 * xl) = Xv) (hxln : xl ≤ n) (hxc : xc < 2 ^ 64)
+    (hmB : Mv < Exp.B ^ n) (hMo : Mv % 2 = 1) (hM1 : 1 < Mv)
+    (hslen : l0 + StackNat.rnd n + 2 * StackNat.rnd (2 * n) + 17 * n + 68 ≤ 2 ^ 16)
+    (hbC : xjBud n costD l0 ≤ b) (hbB : stackNatCost l0 n + xjBud n costD (l0 + StackNat.rnd n) ≤ b)
+    (hinv : R.inv b L g (view R.rt L M))
+    (S : State) (hpc : S.pc = BitVec.ofNat 64 j238) (hsp : S.sp = BitVec.ofNat 64 sp)
+    (h3 : S.regs 3 = BitVec.ofNat 64 st) (h4 : S.regs 4 = BitVec.ofNat 64 xp) (h5 : S.regs 5 = BitVec.ofNat 64 xl)
+    (h6 : S.regs 6 = BitVec.ofNat 64 xc) (h8 : S.regs 8 = BitVec.ofNat 64 ylen) (h10 : S.regs 10 = BitVec.ofNat 64 mp)
+    (h11 : S.regs 11 = BitVec.ofNat 64 n)
+    (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = r29) (hmem : S.mem = M) :
+    Reaches ((LibExp.program.link impl).withExit ret) S
+      (IsReturn (XnPost R g sp n mp mc Mv Xv yp ylen Y yi zp zc st n0 l0 r18 r29)) := by
+  have hB0 := hB
+  obtain ⟨he, hce, hK, -, hn, hn128, -, -, -, -, -, -, -, -, -, -, -, -, -,
+    -, -, -, -, hstw, hsok, -, -, hcap, harr, -, huw, hsu, hgl, -, hstwb, -, -,
+    -, -, -, -, -, -, -, -⟩ := hB0
+  have hce0 := hce
+  obtain ⟨hal, hK0, hA, hacc, -, -, -, hrt, -, -, -, -, -⟩ := hce0
+  have hx0 := hx
+  obtain ⟨hxl', hxr0, hxr40, hxa, hx48, hxO⟩ := hx0
+  have hst48 := hsok.2.2.2.1
+  refine xnJ impl ret hret _ sp st xp xl n M hal (by omega) hA (M.accessible_sub hacc (Or.inr rfl) (by omega) (by omega))
+    (by omega) (by omega) (by omega) hn128 S hpc hsp h3 h4 h5 h11 hmem ?_ ?_
+  · -- path C: `len x = n`
+    intro hc S' c1 c2 c3 c4
+    have hxn : xl = n := by omega
+    subst hxn
+    have hxO' := hxO
+    obtain ⟨o1, o2, -, -, -⟩ := hxO'
+    simp only [AW, Apart] at o2
+    refine reaches_mono (xjStep impl hap R hclr hmv hmk hSN nsD stkD costD hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL
+      hserv ret hret b L g sp K xl mp mc Mv xp xc Xv yp ylen Y yi zp zc st n0 l0 M r18 r29 hKD hKL hB hl0e
+      ⟨M.accessible_sub hxa (Or.inl rfl) (Nat.le_refl _) (by omega), by omega, held_sub o1 (Nat.le_refl _) (by omega),
+        by unfold Apart; omega⟩
+      (obj_sub hxO (Nat.le_refl _) (by omega)) hxv hxc hmB hMo hM1 (by omega) hbC hinv S' c1 (by rw [c2, hsp])
+      (by rw [c4, h3]) (by rw [c4, h4]) (by rw [c4, h5]) (by rw [c4, h6]) (by rw [c4, h8]) (by rw [c4, h10])
+      (by rw [c4, h11]) (by rw [c4, h18]) (by rw [c4, h28]) (by rw [c4, h29]) (by rw [c3, hmem]))
+      (isReturn_mono fun s' h => ?_)
+    obtain ⟨zzp, zzc, h⟩ := h
+    exact ⟨l0, zzp, zzc, Nat.le_refl _, h⟩
+  · -- path B: `len x < n`
+    intro hc S1 M1 c1 c2 c3 c4 c5 c6 c7 c8 cm hmf hrg q312 q896
+    have ws_in : ∀ r ∈ [(sp + 312, sp + 320), (sp + 896, sp + 904)], sp + 8 ≤ r.1 ∧ r.2 ≤ sp + 1040 := by
+      intro r hr; simp only [List.mem_cons, List.not_mem_nil, or_false] at hr
+      rcases hr with rfl | rfl <;> (simp only; omega)
+    have hk1 := keeps_ownB hB hmf hrg ws_in (fun j hj => by simp only [outside_cons, outside_nil, and_true]; omega)
+    have hB1 := CtxB.keep hB hk1
+    have hlen1 : stLen M1 st = l0 := by
+      rw [← hl0e]; exact hmf.readLE _ _ (by
+        have := hstw; simp only [AW, Apart] at this; simp only [outside_cons, outside_nil, and_true]; omega)
+    have hl01 : l0 ≤ stCap M1 st := by rw [← hlen1]; exact hk1.2.2.2.2.2.2.2.2.1.2.2.2.2.2.1
+    have hx1 := XIn.keep hx hk1 hl01
+    have hxv1 : M1.readLE xp (8 * xl) = Xv := by
+      rw [hk1.2.2.2.1 _ _ (obj_sub hxO (Nat.le_refl _) (by omega))]; exact hxv
+    have hinv1 : R.inv b L g (view R.rt L M1) := by
+      refine FvModexp.Expmc.inv_frame hmf (fun r hr => Or.inr ?_) hinv
+      simp only [List.mem_cons, List.not_mem_nil, or_false] at hr
+      rcases hr with rfl | rfl <;> exact hrt.of_sub (by omega) (by omega)
+    have hB1' := hB1
+    obtain ⟨-, hce1, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -,
+      -, -, -, -, hstw1, hsok1, -, -, hcap1, harr1, -, huw1, hsu1, hgl1, -, hstwb1, -, -,
+      -, -, -, -, -, -, -, -⟩ := hB1'
+    have hrn : n ≤ StackNat.rnd n := by simp only [StackNat.rnd]; omega
+    have hpre : SnPre R b L g sp st n M1 := by
+      refine ⟨CallW.CEnv.mono hce1 hK (Nat.le_refl _), hserv, hsok1,
+        Apart.sub hstw1 (Nat.le_refl _) (Nat.le_refl _) (by omega) (by omega),
+        fun hc => ⟨Apart.sub (harr1 hc).1 (Nat.le_refl _) (Nat.le_refl _) (by omega) (by omega), (harr1 hc).2⟩,
+        by omega, by rw [hlen1]; omega, by rw [hlen1]; unfold xjBud at hbB; omega, hinv1, hgl1.2.2.2.2.2.2.2.2.2.2.1,
+        hstwb1, (in_stUp hsu1 (by simp only [stFree]; rw [hlen1]; omega) (by simp only [stFree]; omega))⟩
+    have hRA : RetAddr ((Extracted.program.onlySegments StackNat.names).link impl) bSnRet :=
+      CallW.retAddr_restrict hap (cs := Extracted.seg34) (ns := StackNat.names)
+        (by simp only [Extracted.program, Extracted.segments, List.mem_cons, true_or, or_true]) (by decide) 149
+        (by decide) (by decide) (by decide)
+    refine snCallK impl hap R hSN ret hret _ b L g sp n st bSnRet M1 r18 r29 hRA (by decide) hpre (by omega)
+      (by omega) S1 c1 c2 c3 c4 c5 (by rw [c6, h18]) (by rw [c7, h28]) (by rw [c8, h29]) cm
+      (fun S2 M2 L2 b2 f1 f2 f3 f4 f5 f6 f7 f8 f9 hS => ?_)
+    have hk2 := keeps_snB hB1 hn hS
+    have hB2 := CtxB.keep hB1 hk2
+    have hS0 := hS
+    obtain ⟨hx2, hb2, hinv2, hsok2, hlen2, -, -, -, -, -⟩ := hS0
+    rw [hlen1] at f3 hlen2 hb2
+    have hl02 : l0 ≤ stCap M2 st := by have := hsok2.2.2.2.2.2.1; omega
+    have hxI2 := XIn.keep hx1 hk2 hl02
+    have hxv2 : M2.readLE xp (8 * xl) = Xv := by
+      rw [hk2.2.2.2.1 _ _ (obj_sub hx1.2.2.2.2.2 (Nat.le_refl _) (by omega))]; exact hxv1
+    have hrt4 : Outside (sp - 4304) (4304 + 1040) R.rt := hrt.of_sub (by omega) (by omega)
+    have hfw : Apart (stFree M1 st).1 (stFree M1 st).2 (sp - 4304) (4304 + 1040) :=
+      Apart.sub (in_stUp huw1.symm (by simp only [stFree]; rw [hlen1]; omega) (by simp only [stFree]; omega)).symm
+        (Nat.le_refl _) (Nat.le_refl _) (by omega) (by omega)
+    have sl : ∀ j, 24 ≤ j → j + 8 ≤ 1040 → M2.readLE (sp + j) 8 = M1.readLE (sp + j) 8 := fun j a b =>
+      slot_sn hS hrt4 (by omega) (Apart.sub hstw1 (Nat.le_refl _) (Nat.le_refl _) (by omega) (by omega)) hfw j a b
+    refine reaches_mono (xnBK impl hap R hclr hmv hmk hSN nsD stkD costD hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL hserv
+      ret hret b2 L2 g sp K n mp mc Mv Xv yp ylen Y yi zp zc st n0 l0 xp xl xr M2 r18 r29 hKD hKL hB2 hlen2 hxI2 hxv2
+      (by omega) hmB hMo hM1 hslen (by omega) hinv2
+      (by rw [sl 312 (by omega) (by omega)]; exact q312) (by rw [sl 896 (by omega) (by omega)]; exact q896)
+      S2 f1 f2 f3 f4 f5 f6 f7 f8 f9) (isReturn_mono fun s' h => ?_)
+    obtain ⟨l1, zzp, zzc, hl1, h⟩ := h
+    exact ⟨l1, zzp, zzc, by omega, h⟩
+
 end FvModexp.Arm64.W4Pro
