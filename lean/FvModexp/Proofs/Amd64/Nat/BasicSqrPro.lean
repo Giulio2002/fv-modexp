@@ -1,5 +1,4 @@
-import FvModexp.Proofs.Amd64.Nat.BasicSqrClr
-import FvModexp.Proofs.Amd64.Nat.BasicSqrEnv
+import FvModexp.Proofs.Amd64.Nat.BasicSqrPro3
 import FvModexp.Proofs.Amd64.Nat.BasicSqrSmall
 import FvModexp.Proofs.Amd64.Nat.StackNatDefs
 
@@ -15,35 +14,6 @@ open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.GoABI0 Janus.Amd64.Tactic J
 open FvModexp.Amd64.Callees Janus.Contracts.EqHashModel
 
 namespace FvModexp.Amd64.BasicSqr
-
-/-- the `CALL (*stack).nat` -/
-abbrev callNat : Nat := segAddr Extracted.program fn + 0xb9
-
-/-- the facts at the `CALL (*stack).nat` (state `P`) -/
-structure AtNat (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (st zp zl zc xp xl xc : Nat) (s P : State) : Prop where
-  pc : P.rip = BitVec.ofNat 64 callNat
-  sp : P.regs 4 = s.regs 4 - 192#64
-  r5 : P.regs 5 = s.regs 4 - 8#64
-  r14 : P.regs 14 = s.regs 14
-  fs : P.fsBase = s.fsBase
-  x15 : P.xmm 15 = 0#128
-  df : P.df = false
-  r0 : P.regs 0 = BitVec.ofNat 64 st
-  r3 : P.regs 3 = BitVec.ofNat 64 (2 * xl)
-  fr : MemFrame s.mem P.mem [((s.regs 4).toNat - 89, (s.regs 4).toNat - 88), ((s.regs 4).toNat - 40, (s.regs 4).toNat),
-    ((s.regs 4).toNat + 16, (s.regs 4).toNat + 64)]
-  reg : P.mem.regions = s.mem.regions
-  bp : P.mem.readLE ((s.regs 4).toNat - 8) 8 = (s.regs 5).toNat
-  dfn : P.mem.readLE ((s.regs 4).toNat - 40) 8 = segAddr LibBasicSqr.program (fn ++ ".deferwrap1")
-  dst : P.mem.readLE ((s.regs 4).toNat - 32) 8 = st
-  dn : P.mem.readLE ((s.regs 4).toNat - 24) 8 = stLen s.mem st
-  dp : P.mem.readLE ((s.regs 4).toNat - 16) 8 = (s.regs 4).toNat - 40
-  s1 : P.mem.readLE ((s.regs 4).toNat + 16) 8 = zp
-  s2 : P.mem.readLE ((s.regs 4).toNat + 24) 8 = zl
-  s3 : P.mem.readLE ((s.regs 4).toNat + 32) 8 = zc
-  s4 : P.mem.readLE ((s.regs 4).toNat + 40) 8 = xp
-  s5 : P.mem.readLE ((s.regs 4).toNat + 48) 8 = xl
-  s6 : P.mem.readLE ((s.regs 4).toNat + 56) 8 = xc
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
@@ -121,6 +91,14 @@ theorem pro2 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
   have hstwb := hpre.stwb; unfold Apart at hstwb
   have hstfr := hpre.stfree; simp only [freeP, freeN, stW, stLen, stCap] at hstfr; unfold Apart at hstfr
   have hst24 : st.toNat < 2 ^ 64 := st.isLt
+  have e200 : (s.regs 4 - 200#64).toNat = (s.regs 4).toNat - 200 := by
+    simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
+  have hws : stkWs (P.mem.writeLE ((s.regs 4).toNat - 200) 8 6231390) st.toNat = stkWs s.mem st.toNat := by
+    simp only [stkWs, stW, stLen, stCap]
+    rw [Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega),
+      Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega),
+      Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega), hrd _ _ (by omega), hrd _ _ (by omega),
+      hrd _ _ (by omega)]
   by_cases hc0 : 0 < s.mem.readLE (st.toNat + 16) 8
   · have hnl := hpre.stok.2.2.2.2.1
     simp only [NatLive, stW, stCap] at hnl
@@ -131,8 +109,29 @@ theorem pro2 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
     have a2' : InRanges (s.mem.readLE st.toNat 8) (8 * s.mem.readLE (st.toNat + 16) 8) L ∨
       Outside (s.mem.readLE st.toNat 8) (8 * s.mem.readLE (st.toNat + 16) 8) R.rt := a2
     janus64_run [p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, hn2, hgP, htP', hfs] until [callNat + 5] calls [hSN' b L]
-    trace_state
-    sorry
-  · sorry
+    rename_i hpc' hsp' h5' h14' hx15' hfs' hdf' hr3' hr1' L1 b1 hext hr0' hbud hinv2 k1 k2 k3 k4 k5 k6 k7 hlen2 hsame
+      hgrow hF2 hLF2
+    simp only [win, Janus.Amd64.Tactic.setRegF_apply, ↓reduceIte, e200, hws] at hF2 hLF2
+    exact pro3 impl R hmc hLsh hVV hMV' b L st zp zl zc xp xl xc s hpre hbig hra hx15s hdfs P hP s'
+      (by rw [hpc']; try janus64_simp) (by rw [hsp']; try janus64_simp) (by rw [h5']; try janus64_simp)
+      (by rw [h14']; try janus64_simp) (by rw [hfs']) (by rw [hx15']; try exact hx15) (by rw [hdf']; try exact hdf)
+      (hr0' (by omega)) (by rw [hr3']; try janus64_simp)
+      (by rw [hr1']; try janus64_simp)
+      L1 b1 hext hbud hinv2
+      ⟨k1, k2, by rw [hF2.accessible, Janus.Arm64.Memory.accessible_writeLE, hPacc]; exact k3, by omega, k5, k6, k7⟩
+      hlen2 hsame hgrow hF2 hLF2
+  · janus64_run [p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, hn2, hgP, htP', hfs] until [callNat + 5] calls [hSN' b L]
+    rename_i hpc' hsp' h5' h14' hx15' hfs' hdf' hr3' hr1' L1 b1 hext hr0' hbud hinv2 k1 k2 k3 k4 k5 k6 k7 hlen2 hsame
+      hgrow hF2 hLF2
+    simp only [win, Janus.Amd64.Tactic.setRegF_apply, ↓reduceIte, e200, hws] at hF2 hLF2
+    exact pro3 impl R hmc hLsh hVV hMV' b L st zp zl zc xp xl xc s hpre hbig hra hx15s hdfs P hP s'
+      (by rw [hpc']; try janus64_simp) (by rw [hsp']; try janus64_simp) (by rw [h5']; try janus64_simp)
+      (by rw [h14']; try janus64_simp) (by rw [hfs']) (by rw [hx15']; try exact hx15) (by rw [hdf']; try exact hdf)
+      (hr0' (by omega)) (by rw [hr3']; try janus64_simp)
+      (by rw [hr1']; try janus64_simp)
+      L1 b1 hext hbud hinv2
+      ⟨k1, k2, by rw [hF2.accessible, Janus.Arm64.Memory.accessible_writeLE, hPacc]; exact k3, by omega, k5, k6, k7⟩
+      hlen2 hsame hgrow hF2 hLF2
+
 
 end FvModexp.Amd64.BasicSqr

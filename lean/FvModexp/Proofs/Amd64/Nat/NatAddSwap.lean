@@ -39,8 +39,8 @@ theorem preS_mono {stk stk' : Nat} (hk : stk' ≤ stk) {R : RtInv} {b : Nat} {L 
 theorem postS_mono {stk stk' : Nat} (hk : stk ≤ stk') {R : RtInv} {b : Nat} {L : List (Nat × Nat)}
     {zp zc xp xl yp yl : BitVec 64} {s s' : State} (hsp : stk' ≤ (s.regs 4).toNat)
     (h : PostS stk R b L zp zc xp xl yp yl s s') : PostS stk' R b L zp zc xp xl yp yl s s' := by
-  obtain ⟨hfs, p', n', c', h0, h1, h2, hv, hn, hnc, hnm, L', b', hext, hb, hinv, hl, hor, hmf, hlf⟩ := h
-  refine ⟨hfs, p', n', c', h0, h1, h2, hv, hn, hnc, hnm, L', b', hext, hb, hinv, hl, hor,
+  obtain ⟨hfs, hdf, p', n', c', h0, h1, h2, hv, hn, hnc, hnm, L', b', hext, hb, hinv, hl, hor, hmf, hlf⟩ := h
+  refine ⟨hfs, hdf, p', n', c', h0, h1, h2, hv, hn, hnc, hnm, L', b', hext, hb, hinv, hl, hor,
     hmf.mono fun a n h => ?_, hlf⟩
   have e1 : (s.regs 4).toNat - stk' ≤ (s.regs 4).toNat - stk := Nat.sub_le_sub_left hk _
   simp only [outside_append, win, outside_cons, outside_nil, and_true] at h ⊢
@@ -49,9 +49,10 @@ theorem postS_mono {stk stk' : Nat} (hk : stk ≤ stk') {R : RtInv} {b : Nat} {L
 
 theorem postS_congr {stk : Nat} {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl yp yl : BitVec 64}
     {s s2 s3 : State} (h : PostS stk R b L zp zc xp xl yp yl s s2) (h0 : s3.regs 0 = s2.regs 0)
-    (h1 : s3.regs 3 = s2.regs 3) (h2 : s3.regs 1 = s2.regs 1) (hm : s3.mem = s2.mem) (hfs : s3.fsBase = s2.fsBase) :
+    (h1 : s3.regs 3 = s2.regs 3) (h2 : s3.regs 1 = s2.regs 1) (hm : s3.mem = s2.mem) (hfs : s3.fsBase = s2.fsBase)
+    (hdf : s3.df = s2.df) :
     PostS stk R b L zp zc xp xl yp yl s s3 := by
-  unfold PostS; rw [h0, h1, h2, hm, hfs]; exact h
+  unfold PostS; rw [h0, h1, h2, hm, hfs, hdf]; exact h
 
 set_option maxRecDepth 20000 in
 theorem preS_swap {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl xc yp yl yc : BitVec 64} {s S1 : State}
@@ -109,7 +110,8 @@ theorem preS_swap {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl xc 
 set_option maxRecDepth 20000 in
 theorem postS_swap {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl xc yp yl yc : BitVec 64}
     {s S1 s' : State} (hpre : PreS 4440 R b L zp zc xp xl xc yp yl yc s) (hsp : S1.regs 4 = s.regs 4 - 152#64)
-    (h14 : S1.regs 14 = s.regs 14) (hfs : S1.fsBase = s.fsBase) (hF : MemFrame s.mem S1.mem (win s 4440 80))
+    (h14 : S1.regs 14 = s.regs 14) (hfs : S1.fsBase = s.fsBase) (hdf : S1.df = s.df)
+    (hF : MemFrame s.mem S1.mem (win s 4440 80))
     (hq : PostS 4288 R b L zp zc yp yl xp xl S1 s') :
     PostS 4440 R b L zp zc xp xl yp yl s s' := by
   have hsp0 : 4440 ≤ (s.regs 4).toNat := by
@@ -122,10 +124,10 @@ theorem postS_swap {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl xc
     rw [hsp]; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
   have hFo : ∀ a n, (a + n ≤ (s.regs 4).toNat - 4440 ∨ (s.regs 4).toNat + 80 ≤ a) → Outside a n (win s 4440 80) := by
     intro a n h; simp only [win, outside_cons, outside_nil, and_true]; omega
-  obtain ⟨hfs', p', n', c', h0, h1, h2, hv, hn, hnc, hnm, L', b', hext, hb, hinv, hl, hor, hmf, hlf⟩ := hq
+  obtain ⟨hfs', hdf', p', n', c', h0, h1, h2, hv, hn, hnc, hnm, L', b', hext, hb, hinv, hl, hor, hmf, hlf⟩ := hq
   rw [h14] at hinv
   rw [need_comm] at hb
-  refine ⟨hfs'.trans hfs, p', n', c', h0, h1, h2, ?_, hn, hnc, by rw [mx_comm] at hnm; exact hnm, L', b', hext, hb, hinv,
+  refine ⟨hfs'.trans hfs, hdf'.trans hdf, p', n', c', h0, h1, h2, ?_, hn, hnc, by rw [mx_comm] at hnm; exact hnm, L', b', hext, hb, hinv,
     hl, hor, hF.trans hmf fun a n ho => ⟨?_, ?_⟩, ⟨fun a n hin hz => ?_⟩⟩
   · rw [hv, natVal_frame hF (hFo _ _ (by omega)), natVal_frame hF (hFo _ _ (by omega)), Nat.add_comm]
   · simp only [outside_append, win, outside_cons, outside_nil, and_true] at ho ⊢
@@ -151,7 +153,7 @@ theorem postR_swap {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl xc
     (hq : PostR 4288 R b L zp zc yp yl xp xl S1 s') :
     PostR 4440 R b L zp zc xp xl yp yl s s' := by
   obtain ⟨hq, hr, hc⟩ := hq
-  refine ⟨postS_swap hpre hsp h14 hfs hF hq, fun h => hr (by rw [need_comm]; exact h),
+  refine ⟨postS_swap hpre hsp h14 hfs hdf hF hq, fun h => hr (by rw [need_comm]; exact h),
     fun h => hc (by rw [mx_comm]; exact h)⟩
 
 theorem postR_congr {stk : Nat} {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl yp yl : BitVec 64}
@@ -159,6 +161,6 @@ theorem postR_congr {stk : Nat} {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {z
     (h1 : s3.regs 3 = s2.regs 3) (h2 : s3.regs 1 = s2.regs 1) (hm : s3.mem = s2.mem) (hfs : s3.fsBase = s2.fsBase)
     (hdf : s3.df = s2.df) :
     PostR stk R b L zp zc xp xl yp yl s s3 := by
-  unfold PostR PostS; rw [h0, h1, h2, hm, hfs]; exact h
+  unfold PostR PostS; rw [h0, h1, h2, hm, hfs, hdf]; exact h
 
 end FvModexp.Amd64.NatAdd

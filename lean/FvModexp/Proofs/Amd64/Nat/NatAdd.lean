@@ -51,7 +51,7 @@ theorem full (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
     all_goals try janus64_simp
     intro s2 hpc2 ⟨⟨hs2, h5', h14', hx15'⟩, hq⟩
     have hq' := hq
-    obtain ⟨⟨_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, hmf, _⟩, _⟩ := hq'
+    obtain ⟨⟨_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, hmf, _⟩, _⟩ := hq'
     have e152 : (s.regs 4 - 152#64).toNat = (s.regs 4).toNat - 152 := by
       simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
     have hzo : Outside zp.toNat (8 * zc.toNat) (win s 4440 80) := hpre.2.2.2.2.2.2.2.2.2.2.1
@@ -69,7 +69,10 @@ theorem full (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
     have hr2 : s2.mem.readLE ((s.regs 4).toNat - 8) 8 = (s.regs 5).toNat := by
       rw [hrd _ (by omega) (by omega)]; janus64_simp
     janus64_run [hr1, hr2]
-    refine ⟨⟨?_, ?_, ?_, ?_⟩, postR_congr (postR_swap hpre (by janus64_simp) (by janus64_simp) (by janus64_simp) (by janus64_simp) hF1 hq) ?_ ?_ ?_ rfl rfl rfl⟩
+    refine ⟨⟨?_, ?_, ?_, ?_⟩, postR_congr (postR_swap hpre (by janus64_simp) (by janus64_simp) (by janus64_simp) (by janus64_simp) hF1 hq) ?_ ?_ ?_ rfl rfl ?dfc⟩
+    case dfc =>
+      have hd2 := hq.1.2.1
+      rw [hd2]
     all_goals try janus64_simp
     all_goals try rw [h14']
     all_goals try rw [hx15']

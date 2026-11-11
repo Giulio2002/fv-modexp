@@ -90,10 +90,7 @@ theorem inv1 (gp : Nat) : R.inv 0x1000 [] gp (view R.rt [] mem0) := by
   unfold toyBytes
   rw [if_neg (by simp only [BUMP, HEAP] at *; omega), if_neg (by simp only [T0, HEAP] at *; omega),
     if_neg (by simp only [SP0, HEAP] at *; omega)]
-  unfold g
-  rw [if_neg (by simp only [OB, HEAP] at *; omega), if_neg (by simp only [ST, OA, HEAP] at *; omega),
-    if_neg (by simp only [ST, OA, HEAP] at *; omega), if_neg (by simp only [ST, OA, HEAP] at *; omega),
-    if_neg (by simp only [BasicSqr.thrA, HEAP] at *; first | decide | omega)]
+  rw [if_neg (show ¬ i < HEAP from Nat.not_lt.mpr hi)]
 
 theorem pre : BasicSqr.Pre R 0x1000 [] ST OA 2 2 OB 1 s0 := by
   unfold BasicSqr.Pre

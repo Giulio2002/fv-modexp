@@ -291,12 +291,12 @@ theorem Mid.post {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl xc y
     {p c : Nat} {L' : List (Nat × Nat)} {b' : Nat} {M : Janus.Arm64.Memory}
     (h : Mid R b L zp zc xp xl xc yp yl s p c L' b' M) (s' : State) (n' : Nat)
     (hm : s'.mem = M) (h0 : (s'.regs 0).toNat = p) (h1 : (s'.regs 3).toNat = n') (h2 : (s'.regs 1).toNat = c)
-    (hfs : s'.fsBase = s.fsBase) (hn : n' ≤ xl.toNat)
+    (hfs : s'.fsBase = s.fsBase) (hdf : s'.df = false) (hn : n' ≤ xl.toNat)
     (hv : natVal M p n' = natVal s.mem xp.toNat xl.toNat - natVal s.mem yp.toNat yl.toNat) (hnorm : NatNorm M p n') :
     PostR 4288 R b L zp zc xp xl yp yl s s' := by
   subst hm
   refine ⟨?_, fun hle => ⟨h0.trans (h.ru hle).1, h2.trans (h.ru hle).2⟩, fun hx => by rw [h2]; exact h.c40 hx⟩
-  exact ⟨hfs, p, n', c, h0, h1, h2, hv, hnorm, by have := h.cap; omega, hn, L', b', h.ext, h.bud, h.inv,
+  exact ⟨hfs, hdf.trans h.df0.symm, p, n', c, h0, h1, h2, hv, hnorm, by have := h.cap; omega, hn, L', b', h.ext, h.bud, h.inv,
     fun _ => ⟨h.p8, h.pheld, h.pacc, h.p48⟩, h.ror, h.mf, h.lf⟩
 
 

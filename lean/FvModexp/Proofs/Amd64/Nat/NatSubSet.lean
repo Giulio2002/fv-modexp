@@ -81,7 +81,7 @@ theorem SetMid.post {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl y
   refine ⟨?_, fun hle => ⟨h0.trans (h.ru hle).1, h2.trans (h.ru hle).2⟩, fun hx => by rw [h2]; exact h.c40 hx⟩
   have hpw := h.pw; have hsp0 := h.sp0; have hcap := h.cap
   unfold Apart at hpw
-  refine ⟨hfs, p, xl.toNat, c, h0, h1, h2, ?_, Or.inr ?_, hcap, Nat.le_refl _, L', b', h.ext,
+  refine ⟨hfs, hdf'.trans h.df0.symm, p, xl.toNat, c, h0, h1, h2, ?_, Or.inr ?_, hcap, Nat.le_refl _, L', b', h.ext,
     h.bud, hinv, fun _ => ⟨h.p8, h.pheld, by rw [hF.accessible]; exact h.pacc, h.p48⟩, h.ror, ?_, ?_⟩
   · rw [show natVal s'.mem p xl.toNat = s'.mem.readLE p (8 * xl.toNat) from rfl, hcp, hy0, natVal_zero,
       Nat.sub_zero]; exact h.xv

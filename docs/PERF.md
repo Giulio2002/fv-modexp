@@ -703,3 +703,17 @@ and `TailN` (store, 124 s). Times this session: Nat 71 s, Rec 112-127 s / 5.0 GB
 nat.trunc arm64 modules (dev, load ~35): TruncDefs 2 s, Mid 9 s, Norm 8 s, SetC 18 s, Mask 11 s, Copy 28 s, Main 59 s, Zero 16 s,
 Set 60 s, Trunc 7 s (all ≤ 2.6 GB). TruncSet was 400 s+ until `wOf n % 2^64 = wOf n` was given to janus_run (undecided branch →
 the run walked the main path and unrolled the norm loop).
+
+### divmc session 9 (2026-11-11 night; dev compile, host load 44–66), wall / max RSS
+| module | amd64 | note |
+|---|---|---|
+| Nat/BasicSqrPro3 (`pro3`: stk.nat result → spills → `clr`) | 57 s / 4.4 GB | new module (split out of BasicSqrPro) |
+| Nat/BasicSqrPro (`pro2`: stk.nat call, both `cap > 0` branches) | 130 s / 3.8 GB | the two branches re-run the call (by_cases); merge them if it grows |
+| Nat/BasicSqr (`pro1`, `full`, `ens`, `sum`) | 26 s / 2.6 GB | |
+| Nat/BasicSqrRow (dev compile) | 7 s / 2.2 GB | |
+| Nat/BasicSqrBody (re-measured) | 24 s / 3.0 GB | was 81–115 s / 7.6 GB (s7, before the Defs/Step rework); profile: `janus64_run … calls [hMV']` 6.5 s, one `omega` in `rdw` 3.1 s — no trim needed |
+| Nat/BasicSqrSmall (df closer fixed) | 74 s / 3.5 GB | |
+| Nat/BasicMul, Nat/AddTo (re-measured, load ~60) | 223 s / 5.5 GB, 272 s / 5.5 GB | within the 5 min cap only at load ≤ 60: TRIM next (split the by_cases paths into modules) |
+| Nat/NatAdd*, Nat/NatSub* (DF threading) | each ≤ 82 s / 2.5 GB | |
+Row `FvModexp.Amd64.BasicSqrRow` (cache-divmc, first attempt, load 66): FAIL 902 s (timeout while compiling the ~25
+new amd64 modules; StackNat's were cached) — re-run bottom-up on the warm cache (see asm-rows.tsv).

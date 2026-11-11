@@ -25,7 +25,7 @@ theorem zeroPath (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Na
   have hyz : yl = 0#64 := BitVec.eq_of_toNat_eq (by simp; omega)
   subst hxz hyz
   janus64_run [BitVec.msb_eq_decide]
-  refine ⟨⟨?_, ?_, ?_, ?_⟩, ⟨rfl, zp.toNat, 0, zc.toNat, ?_, ?_, ?_, by simp, Or.inl rfl, by omega, by omega, L, b,
+  refine ⟨⟨?_, ?_, ?_, ?_⟩, ⟨rfl, ?df, zp.toNat, 0, zc.toNat, ?_, ?_, ?_, by simp, Or.inl rfl, by omega, by omega, L, b,
     LiveExt.refl R L, Nat.sub_le _ _, inv_win ?hF hout hb' hinv, fun hc => ?nl, Or.inl ⟨rfl, rfl⟩,
     MemFrame.mono ?hF fun a n h => by simp only [outside_append] at h; exact h.1.2,
     liveFrame_of_frame (rs := win s 4288 80) (MemFrame.mono ?hF fun a n h => by
@@ -36,6 +36,7 @@ theorem zeroPath (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Na
         simp only [win, List.mem_cons, List.not_mem_nil, or_false] at hr
         subst hr; simp only; omega)⟩, fun _ => ⟨?_, ?_⟩, fun _ => ?_⟩
   case hF => simp only [win]; janus_frame
+  case df => exact hdf.symm
   case nl =>
     obtain ⟨hzal, hzh, hzacc, hz48⟩ := hzl hc
     exact ⟨hzal, hzh, by janus64_simp; exact hzacc, hz48⟩

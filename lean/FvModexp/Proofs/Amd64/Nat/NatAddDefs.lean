@@ -43,7 +43,7 @@ def PreS (stk : Nat) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl 
 
 @[reducible] def PostS (stk : Nat) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl yp yl : BitVec 64) (s s' : State) :
     Prop :=
-  s'.fsBase = s.fsBase ∧
+  s'.fsBase = s.fsBase ∧ s'.df = s.df ∧
   ∃ p' n' c' : Nat, (s'.regs 0).toNat = p' ∧ (s'.regs 3).toNat = n' ∧ (s'.regs 1).toNat = c' ∧
     natVal s'.mem p' n' = natVal s.mem xp.toNat xl.toNat + natVal s.mem yp.toNat yl.toNat ∧
     NatNorm s'.mem p' n' ∧ n' ≤ c' ∧ n' ≤ mx xl yl + 1 ∧

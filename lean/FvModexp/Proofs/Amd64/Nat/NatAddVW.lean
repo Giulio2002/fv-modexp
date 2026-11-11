@@ -46,7 +46,7 @@ theorem afterVV (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.pro
   · janus64_run [hm, r1, r2, hps, hcs, htls, hfs, BitVec.msb_eq_decide,
       (show (18446744073709551608 + s.fsBase.toNat) % 18446744073709551616 = s.fsBase.toNat - 8 by omega)] until [hTail]
     refine tail impl R b L zp zc xp xl xc yp yl s p c L' b' M h hyx hy0 hps hcs _ (by simpa using hcw) ?_ _ rfl
-      ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl
+      ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl
     · rw [← hxy]; exact hlo
     all_goals try janus64_simp
     all_goals first | exact h.x15.symm | exact hdf | exact h.df0
@@ -87,7 +87,7 @@ theorem afterVV (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.pro
       sub_mod64 yl.toNat xl.toNat (by omega) xl.isLt, sub_mod64 yl.toNat xc.toNat (by omega) xc.isLt,
       sub_mod64 yl.toNat c (by omega) (by omega), mod64_of_lt c (by omega), mod64_of_lt (p + 8 * yl.toNat) (by omega),
       mod64_of_lt (xp.toNat + 8 * yl.toNat) (by omega)] until [hTail] calls [hVW']
-    rename_i _ _ _ _ _ hfs2 _ L2 b2 hext hbb hc0 hv2 hinv2 hF2 hLF2
+    rename_i _ _ _ _ _ hfs2 hdf2 L2 b2 hext hbb hc0 hv2 hinv2 hF2 hLF2
     have e152 : (s.regs 4 - 152#64).toNat = (s.regs 4).toNat - 152 := by
       simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
     have ea : yl.toNat * 8 + p = p + 8 * yl.toNat := by omega
@@ -143,8 +143,8 @@ theorem afterVV (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.pro
       omega
     refine tail impl R b L zp zc xp xl xc yp yl s p c L2 b2 s'.mem hM2 hyx hy0
       ((rd _ (by omega) (by omega) (by omega)).trans hps) ((rd _ (by omega) (by omega) (by omega)).trans hcs)
-      _ (s'.regs 0).isLt hval _ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl
+      _ (s'.regs 0).isLt hval _ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl
     all_goals try janus64_simp
-    all_goals first | exact h.x15.symm | exact hfs2 | exact hdf | exact h.df0 | skip
+    all_goals first | exact h.x15.symm | exact hfs2 | exact hdf | exact h.df0 | exact hdf2.trans h.df0 | skip
 
 end FvModexp.Amd64.NatAdd
