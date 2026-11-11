@@ -226,7 +226,7 @@ theorem setmid_of_alloc {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp 
     mv := fun d src k hk => hmv d src k (by unfold mx; omega) }
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem setTail (impl : List Segment) (R : RtInv)
     (hmv : MemmoveLive (LibNatAdd.program.link impl) (cA "runtime.memmove") 4096 R)
     (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl yp yl : BitVec 64)

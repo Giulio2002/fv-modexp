@@ -20,7 +20,7 @@ theorem natVal_drop_zero {M : Janus.Arm64.Memory} {p i : Nat} (h : M.readLE (p +
     natVal M p (i + 1) = natVal M p i := by rw [natVal_succ, h]; simp
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem norm (impl : List Amd64.Segment) (s : State) (M : Janus.Arm64.Memory) (p c n0 V : Nat)
     (Q : State → Prop)
     (hfin : ∀ (s' : State) (n' : Nat), s'.mem = M → (s'.regs 0).toNat = p → (s'.regs 3).toNat = n' →

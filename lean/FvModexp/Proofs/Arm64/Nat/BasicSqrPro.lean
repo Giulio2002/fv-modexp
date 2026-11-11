@@ -42,7 +42,7 @@ structure AtNat (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (st zp zl zc xp xl
   s6 : P.mem.readLE (s.sp.toNat + 56) 8 = xc
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 /-- after `(*stack).nat` returned (state `S2`): the three result spills, up to `clear(t)` -/
 theorem pro3 (impl : List Segment) (R : RtInv) (stkSN abSN : Nat) (hk1 : stkSN ≤ 4224) (hk2 : abSN ≤ 96)
@@ -172,7 +172,7 @@ theorem pro3 (impl : List Segment) (R : RtInv) (stkSN abSN : Nat) (hk1 : stkSN �
   all_goals janus_simp
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 theorem pro2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (stkSN abSN : Nat) (hSN : ExpHyp.StackNatHyp impl R [ExpHyp.fnStackNat] stkSN abSN)

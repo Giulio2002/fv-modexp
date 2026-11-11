@@ -15,7 +15,7 @@ namespace FvModexp.Amd64.StackNat
 abbrev pGR : Nat := segAddr Extracted.program fn + 0x85
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem g2 (impl : List Amd64.Segment) (R : RtInv)
     (hgr : GrowsliceLiveContract64 (LibStackNat.program.link impl) (cA "runtime.growslice") 4096 R)
     (hmc : MemclrNoHeapPointersLive64 (LibStackNat.program.link impl) (cA "runtime.memclrNoHeapPointers") 4096 R)

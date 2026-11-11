@@ -16,7 +16,7 @@ namespace FvModexp.Arm64.BasicSqr
 abbrev callClr : Nat := segAddr Extracted.program fn + 0x98
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 theorem clr (impl : List Segment) (R : RtInv)
     (hmc : MemclrNoHeapPointersLive (LibBasicSqr.program.link impl) (cA "runtime.memclrNoHeapPointers") 4096 R)

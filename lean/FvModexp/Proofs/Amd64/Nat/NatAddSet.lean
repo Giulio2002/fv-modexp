@@ -228,7 +228,7 @@ namespace FvModexp.Amd64.NatAdd
 open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Spec Janus.Contracts
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem setTail (impl : List Amd64.Segment) (R : RtInv)
     (hmv : MemmoveLive64 (LibNatAdd.program.link impl) (cA "runtime.memmove") 4096 R)
     (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl yp yl : BitVec 64)

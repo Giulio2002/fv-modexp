@@ -14,7 +14,7 @@ theorem rnd_bv (n : BitVec 64) (h : n.toNat ≤ 2 ^ 16) :
   rw [stackRound_toNat n (by omega), BitVec.toNat_ofNat, Nat.mod_eq_of_lt (by simp only [rnd]; omega)]
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem noGrow (impl : List Segment) (R : RtInv)
     (hwb : WbLiveContract (LibStackNat.program.link impl) (cA "runtime.gcWriteBarrier2") 4096 R 2)
     (b : Nat) (L : List (Nat × Nat)) (st n : BitVec 64) (s : State)

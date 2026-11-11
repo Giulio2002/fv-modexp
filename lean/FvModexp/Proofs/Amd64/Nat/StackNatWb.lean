@@ -14,7 +14,7 @@ theorem lf_of_mf {m m' : Janus.Arm64.Memory} {L ws : List (Nat × Nat)} (h : Mem
   ⟨fun a n _ ho => h.readLE a n ho⟩
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem joinW (impl : List Amd64.Segment) (R : RtInv)
     (hwb : WbLiveContract64 (LibStackNat.program.link impl) (cA "runtime.gcWriteBarrier2") 4096 R 2)
     (b : Nat) (L : List (Nat × Nat)) (st n : BitVec 64) (s : State)

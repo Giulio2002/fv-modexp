@@ -50,44 +50,106 @@ abbrev thrA : Nat := Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/sr
 @[reducible] def freeP (m : Memory) (st : Nat) : Nat := stW m st + 8 * stLen m st
 @[reducible] def freeN (m : Memory) (st : Nat) : Nat := 8 * (stCap m st - stLen m st)
 
-/-- The precondition (args `st`, `z = (zp, zl, zc)`, `x = (xp, xl, _)`). -/
-structure Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (st zp zl zc xp xl : Nat) (s : State) : Prop where
-  ce : CallEnv R L s 4432 64
-  sv : Serves R
-  thA : s.mem.accessible thrA 8 false = true
-  thV : s.mem.readLE thrA 8 = 12
-  thO : Outside thrA 8 (win s 4432 64)
-  x0 : 0 < xl
-  zl2 : zl = 2 * xl
-  zlc : zl ≤ zc
-  zcb : zc < 2 ^ 40
-  zlive : NatLive s.mem R L zp zl
-  zw : Outside zp (8 * zl) (win s 4432 64)
-  zg : Apart zp (8 * zl) ((s.regs 28).toNat + 16) 8
-  xacc : s.mem.accessible xp (8 * xl) false = true
-  x48 : xp + 8 * xl ≤ 2 ^ 48
-  xh : Held R L xp (8 * xl)
-  xw : Outside xp (8 * xl) (win s 4432 64)
-  zx : Apart zp (8 * zl) xp (8 * xl)
-  stok : StkOK s.mem R L st
-  stw : Outside st 24 (win s 4432 64)
-  stg : Apart st 24 ((s.regs 28).toNat + 16) 8
-  starr : 0 < stCap s.mem st → Outside (stW s.mem st) (8 * stCap s.mem st) (win s 4432 64) ∧
-    Apart (stW s.mem st) (8 * stCap s.mem st) ((s.regs 28).toNat + 16) 8
-  /-- the free part apart from the guard word (for `cap = 0` an empty range, which a frame must still not straddle) -/
-  stgf : Apart (freeP s.mem st) (freeN s.mem st) ((s.regs 28).toNat + 16) 8
-  stlen : stLen s.mem st + 2 * xl + 3 ≤ 2 ^ 16
-  stz : Apart st 24 zp (8 * zl)
-  stx : Apart st 24 xp (8 * xl)
-  /-- the free part (an empty range when `cap = 0`, which a frame must still not straddle) apart from `z`, `x` -/
-  free : Apart zp (8 * zl) (freeP s.mem st) (freeN s.mem st) ∧ Apart xp (8 * xl) (freeP s.mem st) (freeN s.mem st)
-  stfree : Apart st 24 (freeP s.mem st) (freeN s.mem st)
-  stfw : Outside (freeP s.mem st) (freeN s.mem st) (win s 4432 64)
-  cost : ExpHyp.stackNatCost (stLen s.mem st) (2 * xl) ≤ b
-  inv : R.inv b L (s.regs 28).toNat (view R.rt L s.mem)
-  /-- `runtime.writeBarrier`'s flag word readable and apart from the stack header (`(*stack).nat`'s pre) -/
-  wba : s.mem.accessible StackNat.wbA 4 false = true
-  stwb : Apart st 24 StackNat.wbA 4
+/-- The precondition (args `st`, `z = (zp, zl, zc)`, `x = (xp, xl, _)`), a plain conjunction (Janus' audit accepts only
+plain defs in statements); the conjuncts in order: ce, sv, thA, thV, thO, x0, zl2, zlc, zcb, zlive, zw, zg, xacc, x48, xh, xw, zx, stok, stw, stg, starr, stgf, stlen, stz, stx, free, stfree, stfw, cost, inv, wba, stwb (accessors `Pre.<name>` below). -/
+def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (st zp zl zc xp xl : Nat) (s : State) : Prop :=
+  (CallEnv R L s 4432 64) ∧
+    (Serves R) ∧
+    (s.mem.accessible thrA 8 false = true) ∧
+    (s.mem.readLE thrA 8 = 12) ∧
+    (Outside thrA 8 (win s 4432 64)) ∧
+    (0 < xl) ∧
+    (zl = 2 * xl) ∧
+    (zl ≤ zc) ∧
+    (zc < 2 ^ 40) ∧
+    (NatLive s.mem R L zp zl) ∧
+    (Outside zp (8 * zl) (win s 4432 64)) ∧
+    (Apart zp (8 * zl) ((s.regs 28).toNat + 16) 8) ∧
+    (s.mem.accessible xp (8 * xl) false = true) ∧
+    (xp + 8 * xl ≤ 2 ^ 48) ∧
+    (Held R L xp (8 * xl)) ∧
+    (Outside xp (8 * xl) (win s 4432 64)) ∧
+    (Apart zp (8 * zl) xp (8 * xl)) ∧
+    (StkOK s.mem R L st) ∧
+    (Outside st 24 (win s 4432 64)) ∧
+    (Apart st 24 ((s.regs 28).toNat + 16) 8) ∧
+    (0 < stCap s.mem st → Outside (stW s.mem st) (8 * stCap s.mem st) (win s 4432 64) ∧ Apart (stW s.mem st) (8 * stCap s.mem st) ((s.regs 28).toNat + 16) 8) ∧
+    (Apart (freeP s.mem st) (freeN s.mem st) ((s.regs 28).toNat + 16) 8) ∧
+    (stLen s.mem st + 2 * xl + 3 ≤ 2 ^ 16) ∧
+    (Apart st 24 zp (8 * zl)) ∧
+    (Apart st 24 xp (8 * xl)) ∧
+    (Apart zp (8 * zl) (freeP s.mem st) (freeN s.mem st) ∧ Apart xp (8 * xl) (freeP s.mem st) (freeN s.mem st)) ∧
+    (Apart st 24 (freeP s.mem st) (freeN s.mem st)) ∧
+    (Outside (freeP s.mem st) (freeN s.mem st) (win s 4432 64)) ∧
+    (ExpHyp.stackNatCost (stLen s.mem st) (2 * xl) ≤ b) ∧
+    (R.inv b L (s.regs 28).toNat (view R.rt L s.mem)) ∧
+    (s.mem.accessible StackNat.wbA 4 false = true) ∧
+    (Apart st 24 StackNat.wbA 4)
+
+theorem Pre.ce {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl : Nat} {s : State}
+    (h : Pre R b L st zp zl zc xp xl s) : CallEnv R L s 4432 64 := h.1
+theorem Pre.sv {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl : Nat} {s : State}
+    (h : Pre R b L st zp zl zc xp xl s) : Serves R := h.2.1
+theorem Pre.thA {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl : Nat} {s : State}
+    (h : Pre R b L st zp zl zc xp xl s) : s.mem.accessible thrA 8 false = true := h.2.2.1
+theorem Pre.thV {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl : Nat} {s : State}
+    (h : Pre R b L st zp zl zc xp xl s) : s.mem.readLE thrA 8 = 12 := h.2.2.2.1
+theorem Pre.thO {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl : Nat} {s : State}
+    (h : Pre R b L st zp zl zc xp xl s) : Outside thrA 8 (win s 4432 64) := h.2.2.2.2.1
+theorem Pre.x0 {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl : Nat} {s : State}
+    (h : Pre R b L st zp zl zc xp xl s) : 0 < xl := h.2.2.2.2.2.1
+theorem Pre.zl2 {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl : Nat} {s : State}
+    (h : Pre R b L st zp zl zc xp xl s) : zl = 2 * xl := h.2.2.2.2.2.2.1
+theorem Pre.zlc {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl : Nat} {s : State}
+    (h : Pre R b L st zp zl zc xp xl s) : zl ≤ zc := h.2.2.2.2.2.2.2.1
+theorem Pre.zcb {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl : Nat} {s : State}
+    (h : Pre R b L st zp zl zc xp xl s) : zc < 2 ^ 40 := h.2.2.2.2.2.2.2.2.1
+theorem Pre.zlive {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl : Nat} {s : State}
+    (h : Pre R b L st zp zl zc xp xl s) : NatLive s.mem R L zp zl := h.2.2.2.2.2.2.2.2.2.1
+theorem Pre.zw {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl : Nat} {s : State}
+    (h : Pre R b L st zp zl zc xp xl s) : Outside zp (8 * zl) (win s 4432 64) := h.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.zg {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl : Nat} {s : State}
+    (h : Pre R b L st zp zl zc xp xl s) : Apart zp (8 * zl) ((s.regs 28).toNat + 16) 8 := h.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.xacc {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl : Nat} {s : State}
+    (h : Pre R b L st zp zl zc xp xl s) : s.mem.accessible xp (8 * xl) false = true := h.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.x48 {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl : Nat} {s : State}
+    (h : Pre R b L st zp zl zc xp xl s) : xp + 8 * xl ≤ 2 ^ 48 := h.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.xh {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl : Nat} {s : State}
+    (h : Pre R b L st zp zl zc xp xl s) : Held R L xp (8 * xl) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.xw {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl : Nat} {s : State}
+    (h : Pre R b L st zp zl zc xp xl s) : Outside xp (8 * xl) (win s 4432 64) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.zx {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl : Nat} {s : State}
+    (h : Pre R b L st zp zl zc xp xl s) : Apart zp (8 * zl) xp (8 * xl) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.stok {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl : Nat} {s : State}
+    (h : Pre R b L st zp zl zc xp xl s) : StkOK s.mem R L st := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.stw {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl : Nat} {s : State}
+    (h : Pre R b L st zp zl zc xp xl s) : Outside st 24 (win s 4432 64) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.stg {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl : Nat} {s : State}
+    (h : Pre R b L st zp zl zc xp xl s) : Apart st 24 ((s.regs 28).toNat + 16) 8 := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.starr {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl : Nat} {s : State}
+    (h : Pre R b L st zp zl zc xp xl s) : 0 < stCap s.mem st → Outside (stW s.mem st) (8 * stCap s.mem st) (win s 4432 64) ∧ Apart (stW s.mem st) (8 * stCap s.mem st) ((s.regs 28).toNat + 16) 8 := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.stgf {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl : Nat} {s : State}
+    (h : Pre R b L st zp zl zc xp xl s) : Apart (freeP s.mem st) (freeN s.mem st) ((s.regs 28).toNat + 16) 8 := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.stlen {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl : Nat} {s : State}
+    (h : Pre R b L st zp zl zc xp xl s) : stLen s.mem st + 2 * xl + 3 ≤ 2 ^ 16 := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.stz {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl : Nat} {s : State}
+    (h : Pre R b L st zp zl zc xp xl s) : Apart st 24 zp (8 * zl) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.stx {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl : Nat} {s : State}
+    (h : Pre R b L st zp zl zc xp xl s) : Apart st 24 xp (8 * xl) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.free {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl : Nat} {s : State}
+    (h : Pre R b L st zp zl zc xp xl s) : Apart zp (8 * zl) (freeP s.mem st) (freeN s.mem st) ∧ Apart xp (8 * xl) (freeP s.mem st) (freeN s.mem st) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.stfree {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl : Nat} {s : State}
+    (h : Pre R b L st zp zl zc xp xl s) : Apart st 24 (freeP s.mem st) (freeN s.mem st) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.stfw {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl : Nat} {s : State}
+    (h : Pre R b L st zp zl zc xp xl s) : Outside (freeP s.mem st) (freeN s.mem st) (win s 4432 64) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.cost {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl : Nat} {s : State}
+    (h : Pre R b L st zp zl zc xp xl s) : ExpHyp.stackNatCost (stLen s.mem st) (2 * xl) ≤ b := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.inv {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl : Nat} {s : State}
+    (h : Pre R b L st zp zl zc xp xl s) : R.inv b L (s.regs 28).toNat (view R.rt L s.mem) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.wba {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl : Nat} {s : State}
+    (h : Pre R b L st zp zl zc xp xl s) : s.mem.accessible StackNat.wbA 4 false = true := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.stwb {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl : Nat} {s : State}
+    (h : Pre R b L st zp zl zc xp xl s) : Apart st 24 StackNat.wbA 4 := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2
 
 /-- The writes a caller sees: `z[0:2n]`, the stack header and the free part of the stack array. -/
 @[reducible] def ws (m : Memory) (st zp zl : Nat) : List (Nat × Nat) := (zp, zp + 8 * zl) :: stkWs m st

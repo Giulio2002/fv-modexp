@@ -13,7 +13,7 @@ open FvModexp.Arm64.Callees Janus.Contracts.EqHashModel
 namespace FvModexp.Arm64.BasicSqr
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem pro1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (stkSN abSN : Nat) (hSN : ExpHyp.StackNatHyp impl R [ExpHyp.fnStackNat] stkSN abSN)
     (hk1 : stkSN ≤ 4224) (hk2 : abSN ≤ 96)

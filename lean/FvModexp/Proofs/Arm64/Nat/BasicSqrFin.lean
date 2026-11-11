@@ -29,7 +29,7 @@ theorem lshQ {C : State} {m : Memory} {z n : Nat} (hz : C.mem.readLE (C.sp.toNat
 abbrev retVV : Nat := segAddr Extracted.program fn + 0x260
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 /-- from the `CALL lshVU.abi0` (state `C`, memory = the head's `M` with the frame stores) to the `CALL addVV.abi0` -/
 theorem fin2 (impl : List Segment) (R : RtInv)
@@ -125,7 +125,7 @@ theorem fin2 (impl : List Segment) (R : RtInv)
   all_goals janus_simp
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 theorem fin1 (impl : List Segment) (R : RtInv)
     (hLsh : ∀ b L, Summary0 (LibBasicSqr.program.link impl) (segAddr Extracted.program lshVUfn) (LshLPre R b L)

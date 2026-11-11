@@ -32,7 +32,7 @@ def fn : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.addTo"
 def names : List String := LibAddTo.names
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc : BitVec 64) :

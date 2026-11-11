@@ -16,7 +16,7 @@ open FvModexp.Arm64.Callees
 namespace FvModexp.Arm64.BasicSqr
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 theorem loop (impl : List Segment) (R : RtInv)
     (hMV' : ∀ b L, Summary0 (LibBasicSqr.program.link impl) (segAddr Extracted.program addMulVVWWfn)
