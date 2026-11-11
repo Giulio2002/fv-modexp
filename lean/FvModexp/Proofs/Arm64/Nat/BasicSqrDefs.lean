@@ -85,6 +85,9 @@ structure Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (st zp zl zc xp xl :
   stfw : Outside (freeP s.mem st) (freeN s.mem st) (win s 4432 64)
   cost : ExpHyp.stackNatCost (stLen s.mem st) (2 * xl) ≤ b
   inv : R.inv b L (s.regs 28).toNat (view R.rt L s.mem)
+  /-- `runtime.writeBarrier`'s flag word readable and apart from the stack header (`(*stack).nat`'s pre) -/
+  wba : s.mem.accessible StackNat.wbA 4 false = true
+  stwb : Apart st 24 StackNat.wbA 4
 
 /-- The writes a caller sees: `z[0:2n]`, the stack header and the free part of the stack array. -/
 @[reducible] def ws (m : Memory) (st zp zl : Nat) : List (Nat × Nat) := (zp, zp + 8 * zl) :: stkWs m st
