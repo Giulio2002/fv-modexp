@@ -644,3 +644,8 @@ amd64 rows after the DF change (s10, janus-provfix): AddVWRow PASS 88 s / 3.0 GB
 PASS 63 s / 2.0 GB, MulAddWWRow PASS 270 s / 3.6 GB, DivWRow PASS 203 s / 5.6 GB.
 arm64 DivBasicRow: FAIL — timeout 900 s while compiling its 25 own modules (first build in cache-asm, host load ~45);
 needs trimming (DivBasicRec 141 s, DivBasicNat 90-156 s, DivBasicStep 56 s are the big ones).
+* RunRA (setBytes return sites, 12 run sites in H*/D*) + full forced arm64 Top rebuild (J=2, host shared), all 60 OK:
+  RunH1 134→96 s, RunH2S 242→173 s, RunH3S 248→212 s (all ≤ 4.7 GB); RunC2EX 89 s / 3.05 GB, RunC2M 120 s / 2.94 GB.
+  Still over target: RunD1L 258 s / 7.67 GB, RunD2L 292 s / 7.07 GB, RunD3ZA 279 s / 6.38 GB, RunD1P 254 s / 6.15 GB —
+  these carry makeslice/memmove contract calls, not RetAddr; next: per-declaration skipKernelTC profile and split.
+  RunErr 137 s / 5.67 GB, RunOkRow 7 s.
