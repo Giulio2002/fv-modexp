@@ -1,0 +1,50 @@
+import FvModexp.Proofs.Arm64.Exp.CallW
+import FvModexp.Proofs.Common.BitLenA64
+import FvModexp.Proofs.Common.GenReg
+
+open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvModexp
+
+namespace FvModexp.Arm64.SubMod2N
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+theorem s1test (impl : List Segment) (zp zl zc yp yl yc n : Nat)
+    (s : State) (hpc : s.pc = BitVec.ofNat 64 1805584)
+    (h0 : s.regs 0 = BitVec.ofNat 64 zp) (h1 : s.regs 1 = BitVec.ofNat 64 zl) (h2 : s.regs 2 = BitVec.ofNat 64 zc)
+    (h3 : s.regs 3 = BitVec.ofNat 64 zp) (h4 : s.regs 4 = BitVec.ofNat 64 zl) (h5 : s.regs 5 = BitVec.ofNat 64 zc)
+    (h6 : s.regs 6 = BitVec.ofNat 64 yp) (h7 : s.regs 7 = BitVec.ofNat 64 yl) (h8 : s.regs 8 = BitVec.ofNat 64 yc)
+    (h9 : s.regs 9 = BitVec.ofNat 64 n)
+    (hg : GuardOK s 4608) (hst : StackOK s 4608 88)
+    (hn1 : 1 ≤ n) (hn2 : n ≤ 2 ^ 15) (hzl : zl ≤ zc) (hW : (n + 63) / 64 ≤ zc) (hzc : zc < 2 ^ 40)
+    (hzl' : zl ≤ 2 ^ 12) (hz48 : zp + 8 * zc ≤ 2 ^ 48)
+    (hza : s.mem.accessible zp (8 * zl) false = true)
+    (hzo : Apart zp (8 * zc) (s.sp.toNat - 4608) (4608 + 88))
+    (Q : State → Prop) :
+    ReachesRet (LibExp.program.link impl) (s.regs 30) s Q := by
+  obtain ⟨hg1, hg2, hg3⟩ := hg
+  obtain ⟨hal, hb', ha, hw⟩ := hst
+  unfold Apart at hzo
+  by_cases hz0 : zl = 0
+  · subst hz0
+    janus_run until [1786000, 1805836]
+    all_goals sorry
+  have e1 : (zp + 8 * (18446744073709551615 + zl)) % 18446744073709551616 = zp + 8 * (zl - 1) := by omega
+  have h63 : (BitVec.ofNat 64 zl - 1#64).getLsbD 63 = false := by
+    have e : (BitVec.ofNat 64 zl - 1#64).toNat = zl - 1 := by
+      rw [BitVec.toNat_sub, BitVec.toNat_ofNat, BitVec.toNat_ofNat]; omega
+    show (BitVec.ofNat 64 zl - 1#64).toNat.testBit 63 = false
+    rw [e]; exact Nat.testBit_lt_two_pow (by omega)
+  janus_run [e1, h63] until [1805636, 1786000, 1805836]
+  generalize hxd : BitVec.ofNat 64 (s.mem.readLE (zp + 8 * (zl - 1)) 8) = x
+  janus_run until [1805660]
+  gen_reg 11 as t with hT
+  janus_run until [1805676]
+  gen_reg 10 as bl with hBl
+  have hbl : bl.toNat = 64 * (zl - 1) + Aux.bitLen (s.mem.readLE (zp + 8 * (zl - 1)) 8) := by
+    rw [← hBl, ← hT, ← BitLenA64.smearBV, BitLenA64.clz_smear, ← hxd, BitVec.toNat_ofNat,
+      Nat.mod_eq_of_lt (Util.readLE8_lt _ _)]
+    exact BitLenA64.bl_exact _ _ (Util.readLE8_lt _ _) (by omega) (by omega)
+  janus_run until [1786000, 1805836]
+  all_goals (trace_state; sorry)
+
+end FvModexp.Arm64.SubMod2N

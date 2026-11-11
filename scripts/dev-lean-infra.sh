@@ -13,6 +13,7 @@ if [ ! -f $OUT/Extracted.olean ]; then
   LEAN_PATH=$LP $TC/bin/lean -R $X -o $OUT/Extracted.olean $X/Extracted.lean
 fi
 for f in "$@"; do
+  case "$f" in /*) ;; *) f=$root/$f;; esac
   f=$(realpath "$f"); rel=${f#$root/lean/}; mod=${rel%.lean}
   mkdir -p "$OUT/$(dirname "$mod")"
   echo "== $mod ($isa)"
