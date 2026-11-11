@@ -5,6 +5,8 @@
 set -uo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"; cd "$root"
 allow="WIP-SORRY.txt"
+# RELEASE mode: RELEASE set to anything but "" or "0" (RELEASE=0 = development mode)
+rel=""; case "${RELEASE:-}" in ""|0) ;; *) rel=1;; esac
 [ -f "$allow" ] || { echo "missing $allow"; exit 2; }
 declare -A ok=()
 nok=0
@@ -14,7 +16,7 @@ while IFS=$'\t' read -r path owner note; do
   [ -f "$path" ] || { echo "FAIL: $allow lists missing file $path"; exit 1; }
   ok["$path"]=1; nok=$((nok+1))
 done < "$allow"
-if [ -n "${RELEASE:-}" ] && [ "$nok" -gt 0 ]; then echo "FAIL (RELEASE): $allow is not empty ($nok entries)"; exit 1; fi
+if [ -n "$rel" ] && [ "$nok" -gt 0 ]; then echo "FAIL (RELEASE): $allow is not empty ($nok entries)"; exit 1; fi
 fail=0
 while IFS= read -r f; do
   # (not `grep -q` in a pipe: with pipefail an early-exiting grep SIGPIPEs sed and the test would falsely say 'no sorry' on big files)
@@ -24,16 +26,13 @@ while IFS= read -r f; do
 done < <(find lean/FvModexp -name '*.lean' | sort)
 # no proof may do host IO or depend on host files/environment (the Janus sandbox is read-only: an IO tactic that "works" on a dev machine
 # silently takes other branches in the verifier). Forbidden in lean/** (outside .lake): file system, paths, env, processes, streams, clocks-as-input.
-iopat='IO\.FS|System\.FilePath|FilePath|pathExists|IO\.getEnv|IO\.Process|IO\.appendFile|\breadFile\b|\bwriteFile\b|IO\.getRandom|IO\.getStd|IO\.sleep|IO\.setStd|\bbuiltin_initialize\b|^[[:space:]]*initialize\b|\bunsafe\b|IO\.Prim|IO\.rand'
-while IFS= read -r f; do
-  hits="$(sed 's/--.*$//' "$f" | grep -nE "$iopat" | head -3)"
-  if [ -n "$hits" ]; then echo "FAIL: IO / host dependence in $f: $(echo "$hits" | head -1 | cut -c1-120)"; fail=1; fi
-done < <(find lean -name '*.lean' -not -path '*/.lake/*' | sort)
+# (comment/string-aware, scripts/lint_source.py --io-check)
+python3 scripts/lint_source.py --io-check || fail=1
 # second-layer lints (do not rely on literal tokens): (1) source-level: compile-time commands (#eval, run_cmd, run_tac, run_elab, run_meta, #exit,
 # initialize, @[init], unsafe), lakefile code-execution settings, and imports parsed by Lean's own header parser (no prelude / import all / foreign roots);
-python3 scripts/lint_source.py --selftest && python3 scripts/lint_source.py || fail=1
+python3 scripts/lint_source.py --selftest && RELEASE="$rel" python3 scripts/lint_source.py || fail=1
 # (2) Lean-level (RELEASE): every constant defined in an FvModexp module is checked after elaboration for IO types / IO primitives / initializers
 # (scripts/check-lean-lint; needs build/harness-*, a janus binary and the janus lake package, as scripts/check-spec-closure).
-if [ -n "${RELEASE:-}" ]; then python3 scripts/check-lean-lint && python3 scripts/check-spec-closure || fail=1; fi
+if [ -n "$rel" ]; then python3 scripts/check-lean-lint && python3 scripts/check-spec-closure || fail=1; fi
 [ $fail = 0 ] && echo "no-sorry: OK" || echo "no-sorry: FAILED"
 exit $fail

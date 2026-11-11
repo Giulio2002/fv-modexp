@@ -1,4 +1,4 @@
 # files allowed to contain `sorry` while in progress: path<TAB>owner<TAB>note. MUST be empty at release (RELEASE=1 scripts/no-sorry.sh enforces it).
-wip/SubMod2N_S1T_explore.lean.wip	infra	subMod2N arm64 entry segment exploration (not compiled; sorry closers)
+wip/SubMod2NS3_amd64.lean.wip	infra	subMod2N amd64 S3 draft (cmp + sub calls; sorry after the runs to nat.sub)
 lean/FvModexp/Proofs/Arm64/Exp/W4Zc.lean	expmc	window-4 zj -> test (zz reuse, bitLen, first-window copy): WIP
 lean/FvModexp/Proofs/Arm64/Top/RunC2E.lean	top	exp path C2 -> exp block: bitLen != 1 branch in progress
