@@ -221,3 +221,14 @@ Row `FvModexp.Arm64.DivBasicRow` (witness u = [5, 2^63+1], v = [0, 2^63], q one 
 Posts now state `s'.df = s.df`: AddVW, SubVW (Rel field `df0`), DivWVW (Rel `df0`), MulAddWW and DivW (`Post` = statement
 with DF; internal lemmas prove `RegsOK ∧ PostI`, `RegsOK` carries `s'.df = false`). ABI0 asm summaries (`Summary0` →
 `Ret0` = `retState0 s …`) keep `s.df` structurally; `DivWWSum.Post` already had it.
+
+## `nat.trunc`, `nat.lsh`, `nat.rsh` arm64 (sessions 11-12) — PROVED (rows not yet run)
+* `FvModexp.Arm64.Trunc.ens : Trunc.Hyp2 impl R names 4208 64` — infra's `EvenHyp.TruncPre` + `(NatNorm x ∨ ⌈n/64⌉ ≤ len x)`
+  + empty-copy disjunct; post `EvenHyp.TruncPost`.
+* `FvModexp.Arm64.Lsh.ens : Lsh.Hyp2 impl R names 4256 64` — `EvenHyp.LshPreA` (z = x allowed) + `0 < s ∧ 0 < len x`;
+  post `ExpHyp.LshPost`. `Lsh.ensZ : Lsh.HypZ …` — `z.lsh(z, s)` (nat.go:955, `s` may be 0), NatOF-style post.
+  Premises: live makeslice, memmove, memclrNoHeapPointers; lshVU.abi0 from `Callees.lshVUHyp`.
+* `FvModexp.Arm64.Rsh.ens : Rsh.Hyp impl R names 4240 64` — `Rsh.RshPre` (z apart x, x normalised & non-empty,
+  `0 < s ∨ cap z = 0`) + `len x ≤ cap x < 2^40`; post `Rsh.RshPost` (`X / 2^s`, need `len x - s/64`). Premises: live
+  makeslice, memmove; rshVU.abi0 from `Callees.rshVUHyp`.
+Shapes: NOTES-conventions "[asm s11]", "[asm s12]".
