@@ -53,7 +53,7 @@ abbrev thrA : Nat := Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/sr
 /-- The precondition (args `st`, `z = (zp, zl, zc)`, `x = (xp, xl, _)`). -/
 def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (st zp zl zc xp xl : Nat) (s : State) : Prop :=
   CallEnv R L s 4432 64 ∧ Serves R ∧
-    s.mem.accessible thrA 8 false = true ∧ s.mem.readLE thrA 8 = 12 ∧
+    s.mem.accessible thrA 8 false = true ∧ s.mem.readLE thrA 8 = 12 ∧ Outside thrA 8 (win s 4432 64) ∧
     0 < xl ∧ zl = 2 * xl ∧ zl ≤ zc ∧ zc < 2 ^ 40 ∧
     NatLive s.mem R L zp zl ∧ Outside zp (8 * zl) (win s 4432 64) ∧ Apart zp (8 * zl) ((s.regs 28).toNat + 16) 8 ∧
     s.mem.accessible xp (8 * xl) false = true ∧ xp + 8 * xl ≤ 2 ^ 48 ∧ Held R L xp (8 * xl) ∧

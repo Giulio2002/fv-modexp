@@ -25,6 +25,22 @@ theorem Ensures.toSummaryRegs2 {p0 P : Program} {entry : Nat}
   intro s hpc ⟨hret, hpre⟩
   exact Ensures.toSummaryIn (h (s.regs 0) (s.regs 1)) hx hc s hpc ⟨hret, by simp [ArgsFrom], hpre⟩
 
+theorem Ensures.toSummaryRegs9 {p0 P : Program} {entry : Nat}
+    {pre : W64 → W64 → W64 → W64 → W64 → W64 → W64 → W64 → W64 → State → Prop}
+    {post : W64 → W64 → W64 → W64 → W64 → W64 → W64 → W64 → W64 → State → State → Prop}
+    (h : ∀ a0 a1 a2 a3 a4 a5 a6 a7 a8, Ensures p0 entry [a0, a1, a2, a3, a4, a5, a6, a7, a8]
+      (pre a0 a1 a2 a3 a4 a5 a6 a7 a8) (post a0 a1 a2 a3 a4 a5 a6 a7 a8))
+    (hx : p0.fetch p0.exitAddr = none) (hc : CodeIn p0 P) :
+    Summary P entry
+      (fun s => RetAddr p0 (s.regs 30).toNat ∧
+        pre (s.regs 0) (s.regs 1) (s.regs 2) (s.regs 3) (s.regs 4) (s.regs 5) (s.regs 6) (s.regs 7) (s.regs 8) s)
+      (fun s s' => (s'.sp = s.sp ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧
+        s'.regs 18 = s.regs 18) ∧
+        post (s.regs 0) (s.regs 1) (s.regs 2) (s.regs 3) (s.regs 4) (s.regs 5) (s.regs 6) (s.regs 7) (s.regs 8) s s') := by
+  intro s hpc ⟨hret, hpre⟩
+  exact Ensures.toSummaryIn (h (s.regs 0) (s.regs 1) (s.regs 2) (s.regs 3) (s.regs 4) (s.regs 5) (s.regs 6)
+    (s.regs 7) (s.regs 8)) hx hc s hpc ⟨hret, by simp [ArgsFrom], hpre⟩
+
 /-! ## `lshVU.abi0` -/
 
 def lshVUfn : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.lshVU.abi0"
