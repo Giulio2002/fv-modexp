@@ -75,7 +75,7 @@ theorem FL.readOne {R : RtInv} {L : List (Nat × Nat)} {sp n zp zc zzp zzc p : N
 
 set_option maxRecDepth 20000 in
 set_option janus.callRegions true in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 /-- loop exit → entry of the first `zz.cmp(m)` (after `zz = zz.montgomery(z, one, …)`) -/
 theorem exA (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)

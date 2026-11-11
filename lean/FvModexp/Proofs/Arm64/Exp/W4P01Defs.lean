@@ -124,7 +124,7 @@ theorem OneIn.disj {R : RtInv} {L : List (Nat × Nat)} {sp n p : Nat} {M : Memor
 theorem rd_self8 {m : Memory} {a v : Nat} : (m.writeLE a 8 v).readLE a 8 = v % 18446744073709551616 := by
   rw [Memory.readLE_writeLE_self]
 
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 /-- everything `p01 → powHead` establishes, from the two montgomery posts -/
 theorem p01post {R : RtInv} {L : List (Nat × Nat)} {b g sp n mp t bp onep rrp xp : Nat} {M M1 M2 : Memory}
     (he : Env R L g sp M) (hn : 0 < n) (hn16 : n ≤ 2 ^ 16) (ht : t < 2 ^ 64) (hm : Inp R L sp n M mp)

@@ -28,7 +28,7 @@ abbrev LoopPost (R : RtInv) (L : List (Nat × Nat)) (b : Nat) (s : State) (sp zp
   LiveFrame M0 s'.mem L [(zp, zp + 16 * n)]
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 theorem loop (impl : List Amd64.Segment) (R : RtInv)
     (hamv : Summary0 (LibMont.program.link impl) (segAddr LibMont.program amvFn) AmvPre AmvQ)

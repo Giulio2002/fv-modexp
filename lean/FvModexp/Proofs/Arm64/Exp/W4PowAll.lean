@@ -18,7 +18,7 @@ open FvModexp.Arm64.W4Loop (Env Inp Buf)
 @[reducible] def tw (sp bp n : Nat) : List (Nat × Nat) := qw sp ++ pw sp ++ [(bp, bp + 8 * (17 * n))]
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem p01pow (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hclr : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)

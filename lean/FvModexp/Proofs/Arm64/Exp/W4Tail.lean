@@ -78,7 +78,7 @@ theorem finEnv_chain {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {g sp n zp zc
     FinPost sp g st n0 p (Expmc.normL Mj p l) c r18 r29 Mj s'
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 /-- window-4 from the main loop's exit to the return -/
 theorem exitRet (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hclr : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl)

@@ -50,7 +50,7 @@ theorem toNat_lt {v : Nat} (h : v < 2 ^ 64) : (BitVec.ofNat 64 v).toNat = v := b
   rw [BitVec.toNat_ofNat]; exact Nat.mod_eq_of_lt h
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 /-- the second `zz.cmp(m)` with `len zz = 0 < len m`: result `-1`, reload `zz`, jump to the join -/
 theorem exCmp2 (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret) (Q : Outcome → Prop)
@@ -105,7 +105,7 @@ theorem exCmp2 (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program
   [(sp - 24, sp - 8), (sp + 8, sp + 80), (sp + 160, sp + 176), (sp + 400, sp + 408)]
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 /-- after `zz = zz.sub(zz, m)` (result length 0): spills, the second `zz.cmp(m)`, the join -/
 theorem exSubT (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret) (Q : Outcome → Prop)
@@ -148,7 +148,7 @@ theorem exSubT (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program
     · rw [hrg2]; simp only [Memory.regions_writeLE]
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 set_option janus.callRegions true in
 /-- the subtract path, from `nat.sub`'s entry to the join -/

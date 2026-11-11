@@ -71,7 +71,7 @@ local macro "inputv" h:term : tactic => `(tactic| (
   simp (disch := omega) only [Memory.readLE_writeLE_of_disjoint]))
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem ens' (impl : List Segment) (R : RtInv)
     (hclr : MemclrNoHeapPointersLive (LibMont.program.link impl) (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive (LibMont.program.link impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)

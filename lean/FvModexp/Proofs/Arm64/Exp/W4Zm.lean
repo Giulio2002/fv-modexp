@@ -71,7 +71,7 @@ theorem fresh_post {R : RtInv} {L : List (Nat × Nat)} {b g sp n zp zc p r : Nat
 
 set_option maxRecDepth 20000 in
 set_option janus.callRegions true in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 theorem zmake (impl : List Segment) (R : RtInv)
     (hmk : MakesliceLiveContract (LibExp.program.link impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
