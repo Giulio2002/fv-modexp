@@ -429,3 +429,45 @@ IcHN 43, Sb* 25-47, main 16 s.
 | Nat/BasicSqr (`pro1`: entry → stk.nat call; `full`, `ens`, `sum`) | 33 s / 2.6 GB | |
 | arm64 DivWVWRow (re-verified, pre `CallEnvND`) | PASS | 91 s | 4.9 GB |
 | amd64 DivWVWRow (re-verified, pre `CallEnvND`) | PASS | 26 s | 1.3 GB |
+### expmc session 5 (2026-11-11), arm64 dev compile (machine shared with other agents), wall / max RSS
+| module | time | note |
+|---|---|---|
+| Exp/W4Body1, W4Body2 (Mem + regions, Bufs + ext) | 114 s / 3.3 GB, 132 s / 4.5 GB (in parallel; ~45-85 s alone before) | re-proved; regions via `janus.callRegions` |
+| Exp/W4Loop, W4Fin, W4Exit | 14 s, 40 s, 28 s | |
+| Exp/CmpW, CallW | 3 s, 3 s | |
+| Exp/W4ExitB (exLt, exGe) | 11 s / 2.3 GB | |
+| Exp/W4ExitS (exCmp2, exSubT, exSub) | before: > 8 min (janus_run inline after the by-hand nat.sub call, plus `rfl` on state-literal memory goals) → 58-65 s / 4.0 GB | run moved into `exSubT` (small context); `first \| (janus_simp; done) \| skip`, no `rfl` |
+| Exp/W4ExitC (exB) | 32-36 s / 3.6 GB | |
+| Exp/W4Tail (exitRet) | 9 s / 2.3 GB | |
+
+### expmc session 6 (2026-11-11), arm64 dev compile (load 40-55), wall / max RSS
+| module | time | note |
+|---|---|---|
+| Exp/W4Defs (fw without the n ≤ 4 `one` buffer) | 4 s / 2.1 GB | |
+| Exp/W4Body1, W4Body2, W4Loop (rebuilt) | 118 s / 3.3 GB, 135 s / 4.5 GB, 14 s | in parallel with another build |
+| Exp/W4Exit (OneIn), W4ExitB, W4ExitS, W4ExitC, W4Tail | 26 s, 12 s, 68 s / 4.0 GB, 38 s, 10 s | |
+| Exp/W4PowDefs (ents_step, ent_new) | 10 s / 2.3 GB | `ents_step` first version with `assumption` hit the 8 GB memcap → explicit `exact qN`: 8 s |
+| Exp/W4Pow (powStep) | 58 s / 3.7 GB | post bookkeeping moved into W4PowDefs lemmas |
+| Exp/W4PowLoop (powLoop) | 3 s | |
+| Exp/W4P01Defs (p01post) | 42 s / 3.0 GB | |
+| Exp/W4P01 (p01run) | 49 s / 3.1 GB | |
+| Exp/W4PowAll (p01pow) | 24 s / 3.1 GB | |
+
+### divmc `(*stack).nat` (2026-11-11, session 5; dev compile, host load high), wall / max RSS
+| module | arm64 | amd64 |
+|---|---|---|
+| Nat/StackNatDefs, StackNatCall (growslice/memclr call pres, pure) | 2 s, 5 s / 2.1 GB | 2 s / 2.0 GB, — |
+| Nat/StackNatJ (join relation, `post_fin`, pure) | 11 s / 2.0 GB | 12 s / 2.0 GB |
+| Nat/StackNatTail (`+0xec`/`+0x101` → RET) | 18 s / 2.3 GB | 27 s / 2.4 GB |
+| Nat/StackNatWb (join → write barrier both flag values) | 15 s / 2.3 GB | 27 s / 2.4 GB |
+| Nat/StackNatN (no-grow entry → join) | 13 s / 2.3 GB | 13 s / 2.3 GB |
+| Nat/StackNatG3 / G2 / G (memclr call / growslice call / entry) | 12 s / 24 s / 16 s | (next session) |
+| Nat/StackNat (`full`/`ens`/`sum`/`hyp`) | 5 s / 2.2 GB | (next session) |
+
+Lessons: (1) `janus_run … calls [hgr]` with the live `growslice` contract: the call-precondition closer ran > 6 min (killed);
+stopping at the callee entry and proving the pre with a pure lemma over an ABSTRACT call state (`gcall_pre`/`mcall_pre`
+via Janus `call_pre`) + `ReachesRet.call` = 5 s. (2) A continuation lemma whose argument shape does not SYNTACTICALLY match
+the executor's state literal (here `growCap8 … (S.regs 2).toNat` vs `growCap8 … cap`) makes `exact`/`refine` hang in
+defeq (unfolds `growCap8`/`writeLE`): pass the register equations to `janus_run` so the literal is in normal form, and give
+continuation arguments as `?_` goals closed afterwards (never big terms inside the `refine`). (3) `first | rfl | …` on goals
+about state literals: put `rfl` LAST (or `with_reducible rfl`), it whnf's readLE-over-writeLE goals for minutes.

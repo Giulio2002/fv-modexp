@@ -17,7 +17,8 @@ open FvModexp.Arm64.ExpHyp (RdIn WrOut NatRes RtPost)
 /-! ## `z.trunc(x, n)` (nat.go:530) — z X0..X2, x X3..X5, n X6; result `x mod 2^n` normalised
 
 Go: `w := (n + 63) / 64; if len(x) < w { return z.set(x) }; z = z.make(w); copy(z, x); mask the top word; z.norm()`,
-so the capacity it needs is `min (len x) w` (`z.make`), and it copies with `memmove`. `z = x` is allowed. -/
+so the capacity it needs is `min (len x) w` (`z.make`), and it copies with `memmove`. `z = x` is allowed. A fresh
+array (`cap z < need`) has capacity at least `need` (`nat.make`). -/
 
 def fnTrunc : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.nat.trunc"
 
@@ -35,6 +36,7 @@ def fnTrunc : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.nat.tr
   ∃ (p' l' c' : Nat), s'.regs 0 = BitVec.ofNat 64 p' ∧ s'.regs 1 = BitVec.ofNat 64 l' ∧ s'.regs 2 = BitVec.ofNat 64 c' ∧
     ∃ (L' : List (Nat × Nat)) (b' : Nat),
       NatRes R L L' s'.mem zp zc (truncNeed xl n) p' l' c' (natVal s.mem x xl % 2 ^ n) ∧
+      (zc < truncNeed xl n → truncNeed xl n ≤ c') ∧
       RtPost R b (makeCost (truncNeed xl n)) L L' b' s s' ∧
       MemFrame s.mem s'.mem (R.rt ++ winA s stk above ++ [(zp, zp + 8 * zc)]) ∧
       LiveFrame s.mem s'.mem L [(zp, zp + 8 * zc)]

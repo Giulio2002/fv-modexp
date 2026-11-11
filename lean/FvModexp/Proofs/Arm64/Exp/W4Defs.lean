@@ -34,7 +34,8 @@ abbrev step (n Mv k : Nat) (tbl : Nat → Nat) (z d : Nat) : Nat :=
 
 /-- the frame ranges the loop writes (callee windows + spills), without the two buffers -/
 @[reducible] def fw (sp : Nat) : List (Nat × Nat) :=
-  [(sp - 4288, sp - 8), (sp + 8, sp + 224), (sp + 232, sp + 432), (sp + 864, sp + 872), (sp + 904, sp + 912)]
+  [(sp - 4288, sp - 8), (sp + 8, sp + 224), (sp + 232, sp + 336), (sp + 368, sp + 432), (sp + 864, sp + 872),
+    (sp + 904, sp + 912)]
 
 /-- everything the loop may change since the anchor `M0` -/
 @[reducible] def lw (R : RtInv) (sp zp zc zzp zzc : Nat) : List (Nat × Nat) :=
@@ -120,19 +121,23 @@ def Static (R : RtInv) (L : List (Nat × Nat)) (g sp n mp mc k0 yp ylen Y : Nat)
     R.ok (Extracted.program.contractAddr "runtime.memmove") [rp, rp + n * 8, 8 * n])
 
 /-- the two buffers at a loop state -/
-@[reducible] def Bufs (R : RtInv) (L : List (Nat × Nat)) (g sp n mp yp ylen : Nat) (pp : Nat → Nat) (M0 : Memory)
+@[reducible] def Bufs (R : RtInv) (L : List (Nat × Nat)) (g sp n mp yp ylen : Nat) (pp : Nat → Nat)
+    (ext : List (Nat × Nat)) (M0 : Memory)
     (zp zc zzp zzc : Nat) : Prop :=
   Buf R L g sp n M0 zp zc ∧ Buf R L g sp n M0 zzp zzc ∧ Apart zp (8 * zc) zzp (8 * zzc) ∧
   Apart zp (8 * zc) mp (8 * n) ∧ Apart zzp (8 * zzc) mp (8 * n) ∧
   Apart zp (8 * zc) yp (8 * ylen) ∧ Apart zzp (8 * zzc) yp (8 * ylen) ∧
   (∀ d, d < 16 → Apart zp (8 * zc) (pp d) (8 * n) ∧ Apart zzp (8 * zzc) (pp d) (8 * n)) ∧
-  zp % 8 = 0 ∧ zzp % 8 = 0 ∧ Apart zp (8 * zc) (sp - 4304) 16 ∧ Apart zzp (8 * zzc) (sp - 4304) 16
+  zp % 8 = 0 ∧ zzp % 8 = 0 ∧ Apart zp (8 * zc) (sp - 4304) 16 ∧ Apart zzp (8 * zzc) (sp - 4304) 16 ∧
+  (∀ q ∈ ext, Apart zp (8 * zc) q.1 q.2 ∧ Apart zzp (8 * zzc) q.1 q.2)
 
-theorem Bufs.swap {R : RtInv} {L : List (Nat × Nat)} {g sp n mp yp ylen : Nat} {pp : Nat → Nat} {M0 : Memory}
-    {zp zc zzp zzc : Nat} (h : Bufs R L g sp n mp yp ylen pp M0 zp zc zzp zzc) :
-    Bufs R L g sp n mp yp ylen pp M0 zzp zzc zp zc := by
-  obtain ⟨a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12⟩ := h
-  exact ⟨a2, a1, a3.symm, a5, a4, a7, a6, fun d hd => ⟨(a8 d hd).2, (a8 d hd).1⟩, a10, a9, a12, a11⟩
+theorem Bufs.swap {R : RtInv} {L : List (Nat × Nat)} {g sp n mp yp ylen : Nat} {pp : Nat → Nat}
+    {ext : List (Nat × Nat)} {M0 : Memory}
+    {zp zc zzp zzc : Nat} (h : Bufs R L g sp n mp yp ylen pp ext M0 zp zc zzp zzc) :
+    Bufs R L g sp n mp yp ylen pp ext M0 zzp zzc zp zc := by
+  obtain ⟨a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13⟩ := h
+  exact ⟨a2, a1, a3.symm, a5, a4, a7, a6, fun d hd => ⟨(a8 d hd).2, (a8 d hd).1⟩, a10, a9, a12, a11,
+    fun q hq => ⟨(a13 q hq).2, (a13 q hq).1⟩⟩
 
 /-- the memory facts at a loop state `M` -/
 @[reducible] def Mem (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (g sp : Nat) (M0 M : Memory) (zp zc zzp zzc : Nat) :
@@ -145,14 +150,15 @@ theorem Bufs.swap {R : RtInv} {L : List (Nat × Nat)} {g sp n mp yp ylen : Nat} 
 
 theorem FL.write {R : RtInv} {L : List (Nat × Nat)} {sp zp zc zzp zzc : Nat} {M0 M : Memory}
     (h : FL R L sp zp zc zzp zzc M0 M) (hLs : LiveSep L [(sp - 4288, sp + 1040)]) {a k : Nat} (v : Nat)
-    (hw : (sp - 4288 ≤ a ∧ a + k ≤ sp - 8) ∨ (sp + 8 ≤ a ∧ a + k ≤ sp + 224) ∨ (sp + 232 ≤ a ∧ a + k ≤ sp + 432) ∨
-      (sp + 864 ≤ a ∧ a + k ≤ sp + 872) ∨ (sp + 904 ≤ a ∧ a + k ≤ sp + 912)) :
+    (hw : (sp - 4288 ≤ a ∧ a + k ≤ sp - 8) ∨ (sp + 8 ≤ a ∧ a + k ≤ sp + 224) ∨ (sp + 232 ≤ a ∧ a + k ≤ sp + 336) ∨
+      (sp + 368 ≤ a ∧ a + k ≤ sp + 432) ∨ (sp + 864 ≤ a ∧ a + k ≤ sp + 872) ∨ (sp + 904 ≤ a ∧ a + k ≤ sp + 912)) :
     FL R L sp zp zc zzp zzc M0 (M.writeLE a k v) := by
   refine ⟨h.1.writeLE_inRanges v ?_, h.2.writeLE v (FvModexp.Expmc.outside_of_liveSep hLs (by omega) (by omega))⟩
-  rcases hw with ⟨h1, h2⟩ | ⟨h1, h2⟩ | ⟨h1, h2⟩ | ⟨h1, h2⟩ | ⟨h1, h2⟩
+  rcases hw with ⟨h1, h2⟩ | ⟨h1, h2⟩ | ⟨h1, h2⟩ | ⟨h1, h2⟩ | ⟨h1, h2⟩ | ⟨h1, h2⟩
   · exact ⟨(sp - 4288, sp - 8), by simp [lw, fw], h1, h2⟩
   · exact ⟨(sp + 8, sp + 224), by simp [lw, fw], h1, h2⟩
-  · exact ⟨(sp + 232, sp + 432), by simp [lw, fw], h1, h2⟩
+  · exact ⟨(sp + 232, sp + 336), by simp [lw, fw], h1, h2⟩
+  · exact ⟨(sp + 368, sp + 432), by simp [lw, fw], h1, h2⟩
   · exact ⟨(sp + 864, sp + 872), by simp [lw, fw], h1, h2⟩
   · exact ⟨(sp + 904, sp + 912), by simp [lw, fw], h1, h2⟩
 

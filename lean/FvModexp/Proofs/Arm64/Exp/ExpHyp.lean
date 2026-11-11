@@ -2,6 +2,7 @@ import FvModexp.Proofs.Arm64.Exp.LibExp
 import FvModexp.Proofs.Arm64.Top.RunIface
 import FvModexp.Proofs.Common.ExpHypVal
 import FvModexp.Proofs.Common.StackScr
+import FvModexp.Proofs.Arm64.Nat.StackNatDefs
 
 /-!
 # Callee premises of the exponentiation layer (arm64), CONVENTIONS §3 shape — hypotheses until the owners land theirs
@@ -121,34 +122,22 @@ def LshHyp (impl : List Segment) (R : RtInv) (ns : List String) (stk above : Nat
 
 /-! ## `stk.nat(n)` (nat.go:?? `(*stack).nat`, top) — X0 = st, X1 = n; result the new nat `(w' + 8 len, n, n)` -/
 
-def fnStackNat : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.(*stack).nat"
+abbrev fnStackNat : String := StackNat.fn
 
-/-- top's `B_nat n` budget bound (a grow allocates at most `2·(len + round4 n) + 4` words) -/
-def stackNatCost (len n : Nat) : Nat := allocCost (8 * (2 * (len + n + 3) + 4))
+/-- top's `B_nat n` budget bound — now `FvModexp.stackNatCost` (Common/StackNatMath.lean) -/
+abbrev stackNatCost (len n : Nat) : Nat := FvModexp.stackNatCost len n
 
-@[reducible] def StackNatPre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (stk above st n : Nat) (s : State) : Prop :=
-  CallEnv R L s stk above ∧ Serves R ∧ StackOK' s.mem R L st ∧ Outside st 24 (win s stk above) ∧
-    (0 < stCap s.mem st → Outside (stW s.mem st) (8 * stCap s.mem st) (win s stk above) ∧
-      Apart (stW s.mem st) (8 * stCap s.mem st) ((s.regs 28).toNat + 16) 8) ∧
-    n ≤ 2 ^ 16 ∧ stLen s.mem st + n + 3 ≤ 2 ^ 16 ∧ stackNatCost (stLen s.mem st) n ≤ b ∧
-    R.inv b L (s.regs 28).toNat (view R.rt L s.mem)
+/-- `(*stack).nat`'s statement: divmc's PROVED shape `FvModexp.Arm64.StackNat.{Pre,Post,Hyp}` (Arm64/Nat/StackNatDefs.lean;
+expmc's original shape amended there: write-barrier flag readable and apart from the header, header apart from the free
+part, `X0` for `0 < n`, "kept"/"fresh" split at `len + nr` vs `cap`). Proof: `FvModexp.Arm64.StackNat.hyp`. -/
+abbrev StackNatPre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (stk above st n : Nat) (s : State) : Prop :=
+  StackNat.Pre R b L stk above st n s
 
-@[reducible] def StackNatPost (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (stk above st n : Nat) (s s' : State) :
-    Prop :=
-  s'.regs 0 = BitVec.ofNat 64 (stW s'.mem st + 8 * stLen s.mem st) ∧ s'.regs 1 = BitVec.ofNat 64 n ∧
-    s'.regs 2 = BitVec.ofNat 64 n ∧
-    ∃ (L' : List (Nat × Nat)) (b' : Nat), RtPost R b (stackNatCost (stLen s.mem st) n) L L' b' s s' ∧
-      StackOK' s'.mem R L' st ∧ stLen s'.mem st = stLen s.mem st + (n + 3) / 4 * 4 ∧
-      (stLen s.mem st + n ≤ stCap s.mem st → stW s'.mem st = stW s.mem st ∧ stCap s'.mem st = stCap s.mem st) ∧
-      (stCap s.mem st < stLen s.mem st + n → InRanges (stW s'.mem st) (8 * stCap s'.mem st) R.rt ∧
-        ApartAll (stW s'.mem st) (8 * stCap s'.mem st) L) ∧
-      MemFrame s.mem s'.mem (R.rt ++ winA s stk above ++ stWs s.mem st) ∧ LiveFrame s.mem s'.mem L (stWs s.mem st)
+abbrev StackNatPost (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (stk above st n : Nat) (s s' : State) : Prop :=
+  StackNat.Post R b L stk above st n s s'
 
-def StackNatHyp (impl : List Segment) (R : RtInv) (ns : List String) (stk above : Nat) : Prop :=
-  ∀ (b : Nat) (L : List (Nat × Nat)) (st n : BitVec 64),
-    Ensures ((Extracted.program.onlySegments ns).link impl) (segAddr Extracted.program fnStackNat) [st, n]
-      (fun s => StackNatPre R b L stk above st.toNat n.toNat s)
-      (fun s s' => StackNatPost R b L stk above st.toNat n.toNat s s')
+abbrev StackNatHyp (impl : List Segment) (R : RtInv) (ns : List String) (stk above : Nat) : Prop :=
+  StackNat.Hyp impl R ns stk above
 
 /-! ## `z.div(stk, z2, u, v)` (natdiv.go:?? `nat.div`, divmc) — z X0..X2, st X3, z2 X4..X6, u X7..X9, v X10..X12;
 results q X0..X2 = `u / v`, r X3..X5 = `u % v` (both normalised). `u`, `v` normalised, `v ≠ 0`. -/
