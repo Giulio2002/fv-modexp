@@ -60,4 +60,33 @@ def JM (impl : List Segment) (R : RtInv) (kc : Nat) (sqrC : Nat → Nat) (mulC :
     b - makeCost (NW n + 1) ≤ b1 → Own R kc L L1 s zp zc st xp xl S.mem zp' zc' → NW n + 1 ≤ zc' →
     Goal impl R kc sqrC mulC b L zp zc st xp xl n s S
 
+set_option maxRecDepth 20000 in
+/-- after stack-only stores: the runtime facts with the entry live set and budget, and `z` owned -/
+theorem rt0 {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
+    {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State} (hkc : 4608 ≤ kc)
+    (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory}
+    (hF : MemFrame s.mem M (winA s (K kc) A)) (hreg : M.regions = s.mem.regions) :
+    RtM R kc L s zp zc st M L b ∧ Own R kc L L s zp zc st xp xl M zp zc := by
+  have hpre' := hpre
+  obtain ⟨⟨-, ⟨hal, -, -, -⟩, -, hout, -, -, hLs, -⟩, -, -, -, -, -, hzp, hzc0, ⟨hzc40, hzlive, hzw⟩, hx0, hxc, -, -,
+    -, -, -, hzx, ⟨hst, hstw, -⟩, -, hsz, -, -, hinv, -⟩ := hpre'
+  have hst' : Outside st 24 (winA s (K kc) A) := by
+    simp only [win, winA, outside_cons, outside_nil, and_true] at hstw ⊢; simp only [K] at hstw ⊢; omega
+  obtain ⟨hstk, e0, e1, e2⟩ := stkOK_frame hst hF hst' (LiveExt.refl R L)
+  refine ⟨⟨hreg, hF.mono fun a k h => ?_, ?_, LiveExt.refl R L, ?_, hstk, e1, Or.inl ⟨e0, e2⟩⟩,
+    hzc40, hzp, ?_, Or.inl ⟨rfl, rfl⟩, (hzw hzc0).1, (hzw hzc0).2, (hzx hzc0).mono (Nat.le_refl _) (by omega), ?_⟩
+  · simp only [outside_append] at h; exact h.1.1.2
+  · refine Expmc.liveFrame_of_frame hF fun a k hin hws => ?_
+    obtain ⟨r, hr, h1, h2⟩ := hin
+    have := hLs r hr
+    simp only [win, winA, outside_cons, outside_nil, and_true] at this ⊢; omega
+  · refine Expmc.inv_frame hF (fun r hr => Or.inr ?_) hinv
+    simp only [winA, List.mem_cons, List.not_mem_nil, or_false] at hr
+    simp only [K, A] at hal hout
+    rcases hr with rfl | rfl <;> (dsimp only; simp only [K, A]; exact hout.of_sub (by omega) (by omega))
+  · intro hc
+    obtain ⟨a1, a2, a3, a4⟩ := hzlive hc
+    exact ⟨a1, a2, by rw [hF.accessible]; exact a3, a4⟩
+  · unfold StkApart; rw [e0, e1, e2]; exact hsz
+
 end FvModexp.Arm64.ModInv

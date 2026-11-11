@@ -4,3 +4,4 @@ lean/FvModexp/Proofs/Arm64/Top/RunC2E.lean	top	exp path C2 -> exp block: bitLen 
 lean/FvModexp/Proofs/Amd64/Nat/BasicSqrEnd.lean	divmc	basicSqr amd64 WIP
 lean/FvModexp/Proofs/Amd64/Nat/BasicSqrBody.lean	divmc	basicSqr amd64 WIP
 lean/FvModexp/Proofs/Amd64/Nat/BasicSqrLoop.lean	divmc	basicSqr amd64 WIP
+lean/FvModexp/Proofs/Arm64/Exp/ModInvMake.lean	infra	modInv arm64 J0 -> JM: reuse path done, alloc (makeslice) path WIP (sorry); module slow (600 s) -> split alloc path
