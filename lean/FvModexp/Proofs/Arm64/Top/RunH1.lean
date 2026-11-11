@@ -59,19 +59,23 @@ theorem h1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
       rcases hr with (rfl | rfl) | rfl <;> refine ⟨?_, ?_, ?_⟩ <;> dsimp only <;> omega
     clear hd
     janus_run [natLive_zero, toInt_ite, toNat_ite, toInt_small, hc] until [pcB1] calls [hS]
-    refine hk _ ?L1 ?b1 ?rel (by janus_simp)
-    case rel =>
-    unfold RelH
-    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
-    all_goals try (janus_simp; done)
-    all_goals try (with_reducible assumption)
-    all_goals trace_state
     all_goals sorry
   · have hH0 : InRanges p.toNat 32 L ∨ Outside p.toNat 32 R.rt := hheld.sub (Nat.le_refl _) (by omega)
     have hW0 : p.toNat + 32 ≤ BitVec.toNat s.sp - 624 - 4160 ∨ BitVec.toNat s.sp - 624 + 48 ≤ p.toNat := by omega
     have hc : (len.toNat < 32) = False := by simp; omega
     clear hokm
-    janus_run [natLive_zero, toInt_ite, toNat_ite, toInt_small, hc] until [pcB1] calls [hS]
+    janus_run [natLive_zero, toInt_ite, toNat_ite, toInt_small, hc] until [pcB1] calls [hP := hS]
+    obtain ⟨⟨-, p1, n1, c1, hp1, hn1, hc1, hv1, hnorm1, hnc1, hnw1, L1, b1, hext1, hb1, hinv1, hlive1, hor1, hMF1, hLF1⟩, hd1⟩ := hP
+    refine hk _ L1 b1 ?rel (by janus_simp)
+    case rel =>
+    unfold RelH
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+    all_goals try (janus_simp; done)
+    all_goals try (with_reducible assumption)
+    case refine_11 => intro _; refine ⟨?_, ?_⟩ <;> (janus_simp; try omega)
+    case refine_12 => janus_callpre
+    case refine_16 => simpa [SetBytesStd.nW] using hb1
+    case refine_17 => janus_live
     all_goals trace_state
     all_goals sorry
 
