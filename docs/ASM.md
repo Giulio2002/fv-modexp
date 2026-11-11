@@ -52,7 +52,9 @@ Machine-code SUMMARY theorems for the leaf routines `(*bigModExp).Run` reaches (
 | `addVW` | amd64 | `FvModexp.Amd64.AddVW.{ens,sum}` | — | proved |
 | `subVW` | arm64 | `FvModexp.Arm64.SubVW.{ens,sum}` | — | proved |
 | `subVW` | amd64 | `FvModexp.Amd64.SubVW.{ens,sum}` | — | proved |
-| `divWVW`, `nat.mulAddWW`, `nat.bytes`/`Int.Bytes` | both | — | — | todo |
+| `divWVW` (Go; callees `reciprocalWord`, `Div64`, `divWW`) | arm64 | `FvModexp.Arm64.DivWVW.{ens,sum}` (CONVENTIONS §3/§4 shape) | — (statement over the Run extraction) | proved |
+| `divWVW` (Go; `reciprocalWord`, `bits.Div` inlined, callee `divWW`) | amd64 | `FvModexp.Amd64.DivWVW.{ens,sum}` | — | proved |
+| `nat.mulAddWW`, `nat.bytes`/`Int.Bytes` | both | — | — | todo |
 
 ## Preconditions and the real call sites (go-bigmodexpfix f9e208c548ab, `src/math/big`)
 
@@ -129,8 +131,23 @@ Proof split (one `janus_run` per declaration): `zero_lem`, `pos_lem`, `one_lem` 
 `reciprocalWord` (arm64): `d1 ≠ 0` (all call sites: natdiv.go:586 `divW`, 655 `divBasic`, normalised top words),
 `GuardOK s 48`, `StackOK s 88 0` (own 48-byte frame + `Div64`'s 40), guard word apart from `[SP-88, SP)`; Post
 `RecipWordSum.Post`: `X0 = recipWord d1`, SP/R18/g/FP/LR kept, regs outside `X0..X12, X16, X29, X30` kept, memory only
-`[SP-88, SP)`.
+`[SP-88, SP-40)` (tightened in session 3: the caller's saved FP at `SP-8` survives — needed by `divWVW`).
+
+## `divWVW` (both ISAs)
+`divWVW(z, xn, x, y)` (natdiv.go:579; reached from `nat.divW`, natdiv.go:564, `divWVW(z, 0, x, y)` with
+`len z = len x = m ≥ 1`). Statement (CONVENTIONS §3): `xl = zl`, `y ≠ 0`, `xn < y`, z live and outside the window, x
+readable/held/outside the window, `z = x` or apart (the loop writes `z[i]` after reading `x[i]`, descending, so in-place
+is safe); result `X0 = (xn·B^n + x) mod y`, `z = (xn·B^n + x) / y`, frame `R.rt ++ winA s 152 72 ++ [z]` (amd64
+`win s 64 72`). Window: arm64 own 64 bytes + `reciprocalWord` 88 below `SP`, spills up to `SP+72`; amd64 `PUSH RBP; SUB
+$0x30` + the `divWW` return slot (64), spills up to `RSP+72`. Loop invariant (`Common/AsmDivVW.lean`):
+`H k = xn·B^(n-k) + x[k:n]`, `r = H k mod y`, `z[k:n] = H k / y` (`H_step`, `dstep`, `digit_lt`, `inv_step`, `q_store`).
+Proof split (one `janus_run` per declaration): `fin`, `body` (head → return from `divWW`), `tail` (→ head; the callee's
+`MemFrame []` memory is re-read through `hT`), `rel_next`, `val_next`, `loop` (induction), arm64 `gen1` (→ return from
+`reciprocalWord`) + `gen2` + `rel_init`, `one1` (→ return from `Div64`) + `one2`; amd64 `gen` (the inlined
+`reciprocalWord`: `BSR`, `SHL CL`, mask, `DIVQ`; split on `clz = 0` because the `SHL` by 0 keeps the flags), `one`
+(inlined `DIVQ`), `rel_init`; `ens_lib`, `ens`, `sum`. Callees moved into the restricted program by `codeIn_lib`
+(arm64, multi-segment `RecipA64`) / `codeIn_single`.
 
 ## Next
-`divWVW`, `nat.mulAddWW`; standalone rows for
+`nat.mulAddWW`; standalone rows for
 addVW/subVW need a Witness runtime serving `memmove` (Janus stub runtimes).

@@ -164,6 +164,8 @@ under `memcap`), wall / max RSS of the `lean` process (≈1.9 GB of it is the Ja
 | Arm64/LshVUSum | 10.1 s | 2.41 GB | | Amd64/LshVUSum | 13.2 s | 2.40 GB |
 | Arm64/RshVUSum | 7.7 s | 2.23 GB | | Amd64/RshVUSum | 10.5 s | 2.25 GB |
 | Common/AsmShift (lsh + rsh + SHLD/SHRD) | 1.9 s | 2.04 GB | | Amd64/DivWWSum | 7.6 s | 2.21 GB |
+| Arm64/Nat/DivWVW (session 3) | 20.6 s | 2.62 GB | | Amd64/Nat/DivWVW | 18.7 s | 2.67 GB |
+| Common/AsmDivVW | 1.3 s | 2.0 GB | | Arm64/Amd64 Nat/LibDivWVW | ≤ 1.5 s | 2.1 GB |
 
 addVW/subVW (2026-11-11): the first version ran the whole function (limb 0 + `copy` + `memmove`) in one declaration and
 blew the 200000-heartbeat budget proving the `memmove` precondition; the loop version blew it in the loop body
@@ -196,7 +198,7 @@ of the Janus framework — the first row of a fresh cache spends ~6.5 min replay
 | AddMulVVWW | PASS 47 s | PASS 14 s (4 theorems: both paths) |
 | Cmp (`nat.cmp`) | PASS 22 s | PASS 22 s |
 | Div64 (`math/bits.Div64`) | PASS 42 s | n/a (intrinsic) |
-| RecipWord (`reciprocalWord`) | PASS 20 s | n/a (inlined) |
+| RecipWord (`reciprocalWord`) | PASS 20 s (re-run 16 s / 1.6 GiB after the frame was tightened, session 3) | n/a (inlined) |
 | DivWW | PASS 16 s | PASS 24 s |
 | LshVU | PASS 30 s | PASS 37 s |
 | RshVU | PASS 28 s | PASS 33 s |

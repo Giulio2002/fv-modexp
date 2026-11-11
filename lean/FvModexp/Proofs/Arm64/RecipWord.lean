@@ -8,7 +8,7 @@ import FvModexp.Proofs.Arm64.RecipWordSum
 below `SP` (its frame and the frame of the callee `math/bits.Div64`), the guard word apart from that area: the call
 returns (no fault, no panic, no `morestack`), restores `SP`, `g`, `FP`, `R18`, and returns in `X0`
 `recipWord d1 = floor((2^128 - 1) / (d1 << nlz d1)) - 2^64` (the reciprocal `divWW` takes); memory changes only in the
-88 bytes below `SP`. Library summary: `RecipWordSum.ensures` (the extraction of this row is the library program,
+bytes `[SP - 88, SP - 40)`. Library summary: `RecipWordSum.ensures` (the extraction of this row is the library program,
 `reciprocalWord` + `Div64` and their stubs).
 -/
 
