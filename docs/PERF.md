@@ -372,3 +372,10 @@ critical path: next trims are Fin1 (89 s, one run) and SbD (116 s).
 | Nat/BasicSqrBody (`body2`: addMulVVWW call → head) | 82 s / 4.5 GB | before: 353 s / 7.0 GB: `refine hk _ ?_ …` + `all_goals (try janus_simp)` on 12 register goals over a huge state literal; after: per-goal `simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, <slot facts>]` |
 | Nat/BasicSqrLoop (`loop`: head → CALL, induction) | 44 s / 2.8 GB | before: 182 s / 7.2 GB with body2 in the same module and the callee's `R.inv` closed by simp over the stores; after: split + `RtInv.inv_frame' (by janus_frame)` |
 | Nat/BasicSqrFin (WIP: fin1, fin2 call) | 17 s / 2.6 GB | |
+
+### expmc session 4 (2026-11-11), arm64 dev compile, wall / max RSS
+| module | before | change | after |
+|---|---|---|---|
+| Exp/W4Fin (`fin`, norm loop) | hang > 7 min (janus_run under `induction` with `∀ l` goal) | one loop test as `finIter` (continuation form, one run `until [njoin, tailPc]`), induction run-free | 38 s / 2.6 GB |
+| Exp/W4Exit (`exA`) | hang > 15 min (BL target vs `until` pc via `segAddr LibExp.program …`) | `fnBase` literal run lemma, literal pcs | 13 s / 3.1 GB |
+| Exp/Mont, MontLoop, MontExit (frame now excludes caller FP/LR) | — | re-proved | 140 s / 4.6 GB, 103 s / 3.4 GB, 34 s / 2.4 GB |
