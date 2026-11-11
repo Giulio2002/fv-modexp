@@ -9,7 +9,7 @@ StackNatDefs); `sum`: `ens` as a callee summary; `hyp`: `Hyp impl R names 4208 2
 Runtime contracts: live `growslice`, `memclrNoHeapPointers`, `gcWriteBarrier2`.
 -/
 
-open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
+open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts Janus.Contracts.EqHashModel
 
 namespace FvModexp.Arm64.StackNat
 
