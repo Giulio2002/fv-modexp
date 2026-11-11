@@ -717,3 +717,15 @@ the run walked the main path and unrolled the norm loop).
 | Nat/NatAdd*, Nat/NatSub* (DF threading) | each ≤ 82 s / 2.5 GB | |
 Row `FvModexp.Amd64.BasicSqrRow` (cache-divmc, first attempt, load 66): FAIL 902 s (timeout while compiling the ~25
 new amd64 modules; StackNat's were cached); attempt 2 on the warm cache: **PASS 389 s / 5.8 GB**.
+
+## divmc session 10 — `(*Int).Add/Sub` arm64 (dev compile, load ~60)
+| module | time | mem |
+|---|---|---|
+| IntASDefs / Call / Post / Val | 4 / 7 / 13 / 2 s | ≤ 2.3 GB |
+| IntASTail (6 sites: 2 fns × 3 call sites, wb on/off) | 78 s | 2.8 GB |
+| IntASA / IntASB | 5 / 5 s | 2.2 GB |
+| IntASC (cmp + dispatch) | 102 s → **17–24 s** | 2.3 GB |
+| IntAS (entry + ens) | 9 min (killed) → **13 s** | 2.2 GB |
+Lessons: (1) `janus_run` destructures every conjunction in the context: hide a big `Pre` in `Box P` before the run
+(102 s → 17 s). (2) never close post-run goals with generic `first | rfl | decide | janus_simp` over all goals: `rfl`/
+`decide` on memory/state goals whnf huge write chains (9 min); close each `?_` by name (`case h30 => …`).
