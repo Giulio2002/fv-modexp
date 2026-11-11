@@ -746,3 +746,17 @@ new amd64 modules; StackNat's were cached); attempt 2 on the warm cache: **PASS 
 | Arm64/Exp/ModInvJ2 (dl_rt, newton64_pos, zz_j2) | OOM 8 GB (killed) | 11 s / 2.4 GB | cause: `rw [← hv]` with `hv : natVal (m.writeLE zp' 8 k) zp' 1 = k` rewrote `k` INSIDE the memory term too (self-referential motive blow-up) → rewrite `hv` instead; budget goal moved to a 1-line `budget_aux` (omega over the full context avoided) |
 | Arm64/Exp/ModInvMkZZ (stk3, mkzz) | — | 14 s / 2.4 GB | spills as a `mem3` def + pure `stk3`; wT facts from `dl_rt` (DataLoaded through RtM's frame), no `janus_data` |
 | Arm64/Exp/ModInvSeg3 (+own_mono, rtM_store) | 4 s | 4 s | |
+new amd64 modules; StackNat's were cached) — re-run bottom-up on the warm cache (see asm-rows.tsv).
+
+### asm s12: nat.lsh / nat.rsh arm64, nat.trunc arm64 re-check (dev `mkp.py`, host load ~50, peak RSS per module)
+| module | time / RSS | note |
+|---|---|---|
+| Arm64/Nat/LshDefs, LshMid, LshZero, Lsh | 2.3 s, 8.4 s, 7.3 s, 8.4 s / ≤ 2.3 GB | |
+| Arm64/Nat/LshFin (clear + norm + post) | 32 s / 2.5 GB | |
+| Arm64/Nat/LshCopy (s%64 = 0) | 61 s / 2.5 GB | |
+| Arm64/Nat/LshShiftF / LshShiftC / LshShift | 3.6 s / 161 s / 12.6 s; 3.4 GB | ShiftC = lshVU call + post-call run; perf candidate |
+| Arm64/Nat/LshMain (entry → join, reuse/alloc × copy/shift) | 75 s / 2.6 GB | |
+| Arm64/Nat/RshDefs, RshMid, RshFin, RshZero, Rsh | 2.5, 11.4, 11.4, 11.2, 5.1 s / ≤ 2.3 GB | |
+| Arm64/Nat/RshCopy, RshShift, RshMain | 21 s, 27 s, 18 s / ≤ 2.6 GB | |
+| Arm64/Nat/RshAlloc, RshSet, RshSetA | 69 s, 19.5 s, 54 s / ≤ 2.6 GB | |
+| Arm64/Nat/Trunc* after the NatNorm-or pre change | ≤ 63 s each (TruncMain 63 s, TruncSet 59 s) | |
