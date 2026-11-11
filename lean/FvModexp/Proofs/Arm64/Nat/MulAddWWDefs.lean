@@ -122,8 +122,21 @@ abbrev VLPre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (s : State) : Prop :=
     Apart (s.mem.readLE (s.sp.toNat + 8) 8) (8 * s.mem.readLE (s.sp.toNat + 16) 8) ((s.regs 28).toNat + 16) 8 ∧
     Apart (s.sp.toNat + 72) 8 ((s.regs 28).toNat + 16) 8
 
+/-- = asm `MulAddVWWSum.Q` (`lv` = `natVal`), reducible so that `janus_run` destructures it. -/
+abbrev VQ (s : State) (m : Memory) : Prop :=
+  natVal m (s.mem.readLE (s.sp.toNat + 8) 8) (s.mem.readLE (s.sp.toNat + 16) 8) =
+      (natVal s.mem (s.mem.readLE (s.sp.toNat + 32) 8) (s.mem.readLE (s.sp.toNat + 16) 8) *
+          s.mem.readLE (s.sp.toNat + 56) 8 + s.mem.readLE (s.sp.toNat + 64) 8) %
+        2 ^ (64 * s.mem.readLE (s.sp.toNat + 16) 8) ∧
+  m.readLE (s.sp.toNat + 72) 8 =
+      (natVal s.mem (s.mem.readLE (s.sp.toNat + 32) 8) (s.mem.readLE (s.sp.toNat + 16) 8) *
+          s.mem.readLE (s.sp.toNat + 56) 8 + s.mem.readLE (s.sp.toNat + 64) 8) /
+        2 ^ (64 * s.mem.readLE (s.sp.toNat + 16) 8) ∧
+  MemFrame s.mem m [(s.mem.readLE (s.sp.toNat + 8) 8,
+      s.mem.readLE (s.sp.toNat + 8) 8 + 8 * s.mem.readLE (s.sp.toNat + 16) 8), (s.sp.toNat + 72, s.sp.toNat + 80)]
+
 abbrev VLQ (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (s : State) (m : Memory) : Prop :=
-  MulAddVWWSum.Q s m ∧ R.inv b L (s.regs 28).toNat (view R.rt L m) ∧
+  VQ s m ∧ R.inv b L (s.regs 28).toNat (view R.rt L m) ∧
     m.readLE ((s.regs 28).toNat + 16) 8 = s.mem.readLE ((s.regs 28).toNat + 16) 8
 
 theorem vww_live (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv) (b : Nat)
@@ -184,6 +197,7 @@ structure Mid (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl : BitVe
   -- the operand
   xacc : M.accessible xp.toNat (8 * xl.toNat) false = true
   x48 : xp.toNat + 8 * xl.toNat ≤ 2 ^ 48
+  xw : Apart xp.toNat (8 * xl.toNat) (s.sp.toNat - 4208) (4208 + 72)
   -- runtime
   ext : LiveExt R L L'
   bud : b - makeCost (xl.toNat + 1) ≤ b'
