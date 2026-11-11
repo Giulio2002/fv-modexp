@@ -15,7 +15,7 @@ namespace FvModexp.Amd64.DivW
 abbrev hNorm : Nat := segAddr Extracted.program fn + 0x200
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem norm (impl : List Amd64.Segment) (s : State) (M : Janus.Arm64.Memory) (p c n0 V : Nat) (r : BitVec 64)
     (Q : State → Prop)
     (hfin : ∀ (s' : State) (n' : Nat), s'.mem = M → (s'.regs 0).toNat = p → (s'.regs 3).toNat = n' →

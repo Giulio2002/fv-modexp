@@ -13,7 +13,7 @@ set_option linter.janusRenameI false
 namespace FvModexp.Arm64.MulAddWW
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem alloc (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hmk : MakesliceLiveContract (LibMulAddWW.program.link impl) (cA "runtime.makeslice") 4096 R)
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc y r : BitVec 64) (s : State)

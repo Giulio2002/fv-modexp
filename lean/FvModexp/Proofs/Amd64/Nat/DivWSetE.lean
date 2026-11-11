@@ -11,7 +11,7 @@ set_option linter.janusRenameI false
 namespace FvModexp.Amd64.DivW
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem setPath (impl : List Amd64.Segment) (R : RtInv)
     (hmk : MakesliceLiveContract64 (LibDivW.program.link impl) (cA "runtime.makeslice") 4096 R)
     (hmv : MemmoveLive64 (LibDivW.program.link impl) (cA "runtime.memmove") 4096 R)

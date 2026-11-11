@@ -19,7 +19,7 @@ abbrev hMid : Nat := segAddr Extracted.program fn + 0xfb
 abbrev hAfter : Nat := segAddr Extracted.program fn + 0x125
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem tail (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl y : BitVec 64)
     (s : State) (p c : Nat) (L' : List (Nat × Nat)) (b' : Nat) (M : Janus.Arm64.Memory)
     (h : Mid R b L zp zc xp xl s p c L' b' M)
@@ -43,7 +43,7 @@ theorem tail (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat ×
   all_goals first | exact hfs | exact hx15
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem call (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
     (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl xc y : BitVec 64)
     (s : State) (p c : Nat) (L' : List (Nat × Nat)) (b' : Nat) (M : Janus.Arm64.Memory)

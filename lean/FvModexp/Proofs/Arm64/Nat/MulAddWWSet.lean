@@ -36,7 +36,7 @@ theorem SetRel.need {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl y
   unfold MulAddWW.need; rw [if_pos hxy]
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem setZero (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl y r : BitVec 64)
     (s : State) (M : Memory) (h : SetRel R b L zp zc xp xl y r s M) (hr : r.toNat = 0)
     (S : State) (hpc : S.pc = BitVec.ofNat 64 hSet) (h0 : S.regs 0 = zp) (h2 : S.regs 2 = zc) (h7 : S.regs 7 = r)
@@ -66,7 +66,7 @@ theorem setZero (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Na
   all_goals janus_simp
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem setReuse (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl y r : BitVec 64)
     (s : State) (M : Memory) (h : SetRel R b L zp zc xp xl y r s M) (hr : r.toNat ≠ 0) (hzc : zc.toNat ≠ 0)
     (S : State) (hpc : S.pc = BitVec.ofNat 64 hSet) (h0 : S.regs 0 = zp) (h2 : S.regs 2 = zc) (h7 : S.regs 7 = r)
@@ -107,7 +107,7 @@ theorem setReuse (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × N
   · exact LiveFrame.writeLE_ws hlf _ ⟨(zp.toNat, zp.toNat + 8 * zc.toNat), by simp, Nat.le_refl _, by simp only; omega⟩
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem setAlloc (impl : List Segment) (R : RtInv)
     (hmk : MakesliceLiveContract (LibMulAddWW.program.link impl) (cA "runtime.makeslice") 4096 R)
     (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl y r : BitVec 64)

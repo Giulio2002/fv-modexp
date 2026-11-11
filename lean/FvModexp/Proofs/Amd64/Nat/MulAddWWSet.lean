@@ -48,7 +48,7 @@ theorem setLF {L : List (Nat × Nat)} {s : State} {M : Janus.Arm64.Memory} {zp z
       subst hr; simp only; omega)
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem setZero (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat))
     (zp zc xp xl y r : BitVec 64) (s : State) (M : Janus.Arm64.Memory) (h : SetRel R b L zp zc xp xl y r s M)
     (hr : r.toNat = 0)
@@ -73,7 +73,7 @@ theorem setZero (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat
   all_goals first | exact hfs | exact hx15
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem setReuse (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat))
     (zp zc xp xl y r : BitVec 64) (s : State) (M : Janus.Arm64.Memory) (h : SetRel R b L zp zc xp xl y r s M)
     (hr : r.toNat ≠ 0) (hzc : zc.toNat ≠ 0)
@@ -112,7 +112,7 @@ theorem setReuse (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Na
   all_goals first | exact hfs | exact hx15
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem setAlloc (impl : List Amd64.Segment) (R : RtInv)
     (hmk : MakesliceLiveContract64 (LibMulAddWW.program.link impl) (cA "runtime.makeslice") 4096 R)
     (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl y r : BitVec 64)

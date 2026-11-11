@@ -9,7 +9,7 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
 namespace FvModexp.Arm64.MulAddWW
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem reuse (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc y r : BitVec 64) (s : State)
     (hpc : s.pc = BitVec.ofNat 64 (segAddr Extracted.program fn))

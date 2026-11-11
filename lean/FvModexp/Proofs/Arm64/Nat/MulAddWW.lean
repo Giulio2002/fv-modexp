@@ -33,7 +33,7 @@ theorem setPath (impl : List Segment) (R : RtInv)
   · exact setReuse impl R b L zp zc xp xl y r s M h hr hzc S hpc h0 h2 h7 hsp h28 h29 h18 hm
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem toSet (impl : List Segment) (R : RtInv)
     (hmk : MakesliceLiveContract (LibMulAddWW.program.link impl) (cA "runtime.makeslice") 4096 R)
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc y r : BitVec 64) (s : State)
@@ -76,7 +76,7 @@ theorem toSet (impl : List Segment) (R : RtInv)
     all_goals janus_simp
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem full (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc y r : BitVec 64) :

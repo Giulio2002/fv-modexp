@@ -13,7 +13,7 @@ set_option linter.janusRenameI false
 namespace FvModexp.Amd64.DivW
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem genReuse (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc y : BitVec 64) (s : State)
     (he : Entry s zp zl zc xp xl xc y) (hx0 : 0 < xl.toNat) (hy0 : y.toNat ≠ 0) (hy1 : y.toNat ≠ 1)
@@ -37,7 +37,7 @@ theorem genReuse (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.pr
   all_goals first | exact hx15 | skip
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem genAlloc (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
     (hmk : MakesliceLiveContract64 (LibDivW.program.link impl) (cA "runtime.makeslice") 4096 R)
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc y : BitVec 64) (s : State)
