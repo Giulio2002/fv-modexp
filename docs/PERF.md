@@ -210,3 +210,20 @@ amd64 `Mont` exceed 600 s (killed) — unfold only the facts a proof needs, loca
 (2) a hypothesis `C : m.readLE a 8 = v` whose address syntactically matches a later load is used by the executor as a rewrite
 rule, which changed the shape of stored values (amd64 loop) — `clear` such facts before the next `janus_run`;
 (3) `rfl` for a register goal with a metavariable memory assigns `{…}.mem`: close those goals with `dsimp only` first.
+
+### divmc nat.add arm64 (2026-11-11), one module per segment (load ~40)
+| module | wall | RSS |
+|---|---|---|
+| Nat/NatAddDefs, NatAddNorm, NatAddMid, NatAddSwap, NatAddBody, NatAdd | 1–7 s each | ≤ 2.4 GB |
+| Nat/NatAddTail (`z[m] = c` + norm) | 10 s | 2.2 GB |
+| Nat/NatAddVW (`afterVV`: m = n, or `addVW` call) | 19 s | 2.9 GB |
+| Nat/NatAddVV (`addVV.abi0` call) | 7 s | 2.3 GB |
+| Nat/NatAddReuse / NatAddAlloc (entry → `+0x94`) | 6 s / 21 s | 2.4 GB |
+| Nat/NatAddSet / NatAddSetE (`z.set(x)`: memmove; 3 make cases) | 9 s / 23 s | 2.4 GB |
+
+Before: one module per path to the `addVW` call 260 s (predecessor), and `afterVV` > 500 s (timed out).
+**Root cause: equations with `% 2^64` in the local context** (`(2^64 - n + m) % 2^64 = m - n`, `(p + 8n) % 2^64 = p + 8n`, ...
+passed to `janus_run` as hypotheses): every `omega` call (the dischargers', and plain `have … := by omega`) sees them
+and introduces a quotient variable with 2^64 coefficients for each. Fix: pass them only as proof terms in the
+`janus_run [...]` lemma list (`janus_run [sub_mod64 a b (by omega) h, mod64_of_lt x (by omega)]`), never as context
+hypotheses: 500+ s → 19 s.

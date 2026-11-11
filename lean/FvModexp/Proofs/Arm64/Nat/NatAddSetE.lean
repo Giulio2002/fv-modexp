@@ -25,7 +25,7 @@ theorem setPath (impl : List Segment) (R : RtInv)
         PostS 4304 R b L zp zc xp xl yp yl s s' := by
   have hpre' := hpre
   obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, hd, hout, hga, hgr, hLs, hro⟩, hty, hxc, -, hxc40, -, hx40, hy40,
-    hz40, -, -, hxacc, hx48, hxh, -, -, hxw, -, -, -, -, hinv, hok, -⟩ := hpre'
+    hz40, -, -, -, hxacc, hx48, hxh, -, -, hxw, -, -, -, -, hinv, hok, -⟩ := hpre'
   have hneed : need xl yl = xl.toNat := by unfold need mx; rw [if_pos (by omega)]; omega
   rw [hneed] at hok
   have hWo : ∀ a n, (a + n ≤ s.sp.toNat - 4304 ∨ s.sp.toNat + 80 ≤ a) → Outside a n (winA s 4304 80) := by

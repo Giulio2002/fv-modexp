@@ -110,9 +110,9 @@ theorem setmid_of_reuse {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp 
     (r1 : M.readLE (s.sp.toNat - 160) 8 = (s.regs 30).toNat) (r2 : M.readLE (s.sp.toNat - 168) 8 = (s.regs 29).toNat) :
     SetMid R b L zp zc xp xl s zp.toNat zc.toNat L b M := by
   obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, _, hout, hga, hgr, hLs, _⟩, _, hxc, hyc, hxc40, hyc40, hx40, hy40,
-    hz40, hzl, hzw, hxacc, hx48, hxh, hxn, _, hxw, hyacc, hy48, hyh, hyw, hinv, _, hmv⟩ := hpre
+    hz40, hzl, hzw', hzw, hxacc, hx48, hxh, hxn, _, hxw, hyacc, hy48, hyh, hyw, hinv, _, hmv⟩ := hpre
   obtain ⟨hzal, hzh, hzacc, hz48⟩ := hzl (by omega)
-  obtain ⟨hzw', hzg, hzx, hzy⟩ := hzw (by omega)
+  obtain ⟨hzg, hzx, hzy⟩ := hzw (by omega)
   simp only [win, outside_cons, outside_nil, and_true] at hzw' hxw hyw
   unfold Apart at hga
   have hFo : ∀ a n, (a + n ≤ s.sp.toNat - 4304 ∨ s.sp.toNat + 80 ≤ a) → Outside a n (winA s 4304 80) := by
@@ -158,7 +158,7 @@ theorem setmid_of_alloc {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp 
     (hc1 : xl.toNat ≤ c) (hc2 : c ≤ xl.toNat + 4) (hsz : 8 * c ≤ round) (hcost : round ≤ makeCost xl.toNat) :
     SetMid R b L zp zc xp xl s ptr c (L ++ [(ptr, ptr + round)]) (b - round) m := by
   obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, _, hout, hga, hgr, hLs, _⟩, _, hxc, hyc, hxc40, hyc40, hx40, hy40,
-    hz40, hzl, hzw, hxacc, hx48, hxh, hxn, _, hxw, hyacc, hy48, hyh, hyw, hinv0, _, hmv⟩ := hpre
+    hz40, hzl, hzw', hzw, hxacc, hx48, hxh, hxn, _, hxw, hyacc, hy48, hyh, hyw, hinv0, _, hmv⟩ := hpre
   simp only [win, outside_cons, outside_nil, and_true] at hxw hyw
   unfold Apart at hga
   have hext : LiveExt R L (L ++ [(ptr, ptr + round)]) := LiveExt.single (by simpa using hIn) (by simpa using hAp)

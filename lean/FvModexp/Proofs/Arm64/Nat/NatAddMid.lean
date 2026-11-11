@@ -298,9 +298,9 @@ theorem mid_of_reuse {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl 
     (r7 : M.readLE (s.sp.toNat - 32) 8 = xl.toNat + 1) :
     Mid R b L zp zc xp xl xc yp yl s zp.toNat zc.toNat L b M := by
   obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, _, hout, hga, hgr, hLs, _⟩, _, hxc, hyc, hxc40, hyc40, hx40, hy40,
-    hz40, hzl, hzw, hxacc, hx48, hxh, _, _, hxw, hyacc, hy48, hyh, hyw, hinv, _, hmv⟩ := hpre
+    hz40, hzl, hzw', hzw, hxacc, hx48, hxh, _, _, hxw, hyacc, hy48, hyh, hyw, hinv, _, hmv⟩ := hpre
   obtain ⟨hzal, hzh, hzacc, hz48⟩ := hzl (by omega)
-  obtain ⟨hzw', hzg, hzx, hzy⟩ := hzw (by omega)
+  obtain ⟨hzg, hzx, hzy⟩ := hzw (by omega)
   simp only [win, outside_cons, outside_nil, and_true] at hzw' hxw hyw
   unfold Apart at hga
   have hFo : ∀ a n, (a + n ≤ s.sp.toNat - 4304 ∨ s.sp.toNat + 80 ≤ a) → Outside a n (winA s 4304 80) := by
@@ -351,7 +351,7 @@ theorem mid_of_alloc {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl 
     (hsz : 8 * (xl.toNat + 5) ≤ round) (hcost : round ≤ makeCost (xl.toNat + 1)) :
     Mid R b L zp zc xp xl xc yp yl s ptr (xl.toNat + 5) (L ++ [(ptr, ptr + round)]) (b - round) m := by
   obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, _, hout, hga, hgr, hLs, _⟩, _, hxc, hyc, hxc40, hyc40, hx40, hy40,
-    hz40, hzl, hzw, hxacc, hx48, hxh, _, _, hxw, hyacc, hy48, hyh, hyw, hinv0, _, hmv⟩ := hpre
+    hz40, hzl, hzw', hzw, hxacc, hx48, hxh, _, _, hxw, hyacc, hy48, hyh, hyw, hinv0, _, hmv⟩ := hpre
   simp only [win, outside_cons, outside_nil, and_true] at hxw hyw
   unfold Apart at hga
   have hext : LiveExt R L (L ++ [(ptr, ptr + round)]) := LiveExt.single (by simpa using hIn) (by simpa using hAp)

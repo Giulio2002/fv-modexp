@@ -24,8 +24,7 @@ theorem reuse (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
         PostS 4304 R b L zp zc xp xl yp yl s s' := by
   have hpre' := hpre
   obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, -, hout, hga, -, -, -⟩, -, hxc, -, hxc40, -, hx40, hy40,
-    hz40, -, hzw, hxacc, hx48, -, -, -, hxw, hyacc, hy48, -, hyw, -, -, -⟩ := hpre'
-  obtain ⟨hzw', -, -, -⟩ := hzw (by omega)
+    hz40, -, hzw', -, hxacc, hx48, -, -, -, hxw, hyacc, hy48, -, hyw, -, -, -⟩ := hpre'
   simp only [win, outside_cons, outside_nil, and_true] at hzw' hxw hyw
   janus_run until [hMid]
   have hWo : ∀ a n, (a + n ≤ s.sp.toNat - 4304 ∨ s.sp.toNat + 80 ≤ a) → Outside a n (winA s 4304 80) := by

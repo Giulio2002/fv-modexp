@@ -25,7 +25,7 @@ theorem alloc (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
         PostS 4304 R b L zp zc xp xl yp yl s s' := by
   have hpre' := hpre
   obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, hd, hout, hga, hgr, hLs, hro⟩, hty, hxc, -, hxc40, -, hx40, hy40,
-    hz40, -, -, hxacc, hx48, hxh, -, -, hxw, hyacc, hy48, hyh, hyw, hinv, hok, -⟩ := hpre'
+    hz40, -, -, -, hxacc, hx48, hxh, -, -, hxw, hyacc, hy48, hyh, hyw, hinv, hok, -⟩ := hpre'
   have hneed : need xl yl = xl.toNat + 1 := by unfold need mx; rw [if_neg (by omega)]; omega
   rw [hneed] at hok
   obtain ⟨hok1, hcost⟩ := hok (by omega)
