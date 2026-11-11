@@ -570,4 +570,174 @@ theorem g_bwd (s : State) (v10 v12 : W64) {Q : State → Prop} (d src n : Nat)
         exact byte_copy' _ _
       · rw [Janus.Arm64.Memory.bytes_writeLE_outside _ (by omega)]; exact hc j (by omega) hj2
 
+/-! ## Allocation and the live return -/
+
+/-- The precondition of `GrowsliceLiveContract64` at the stub. -/
+@[reducible] def GPre (R : RtInv) (L : List (Nat × Nat)) (b : Nat) (s : State) : Prop :=
+  GrowslicePre64 4096 s ∧ StackRoom64 s 4096 5 ∧
+    LiveAt R grA (growsliceArgs64 s) L b (growsliceRound64 s) (s.regs 14).toNat s.mem (liveWin64 s 4096 5)
+
+/-- Its postcondition. -/
+@[reducible] def GPost (R : RtInv) (L : List (Nat × Nat)) (b : Nat) (s s' : State) : Prop :=
+  LiveAllocRet64 R 4096 5
+      (fun ptr => [ptr, s.regs 3, BitVec.ofNat 64 (growCap8 (s.regs 3).toNat (s.regs 1).toNat)])
+      L b (growsliceRound64 s) (growsliceRound64 s) s s' fun m ptr =>
+        growsliceObj64 R.rt s m ptr ∧ ApartAll ptr (growsliceRound64 s) L
+
+theorem bytes_of_frame {m m' : Memory} {ws : List (Nat × Nat)} (h : MemFrame m m' ws) {x : Nat}
+    (hx : Outside x 1 ws) : m'.bytes x = m.bytes x := by
+  have := h.readLE x 1 hx
+  simp only [Janus.Arm64.Memory.readLE_one] at this
+  exact BitVec.eq_of_toNat_eq this
+
+/-- The live return of the stub: the final state `fin` (result registers, kept ABI fields, memory = the copy's memory
+`M` with the bump cell advanced by `16·K`) meets the contract's postcondition. -/
+theorem g_post (tys : Tys) (hty : TysOK tys) (ok : Nat → List Nat → Prop) (L : List (Nat × Nat)) (b : Nat)
+    (s fin : State) (M : Memory) (K p ob : Nat) (pre : GPre (toyR tys ok) L b s)
+    (hKr : 8 * growCap8 (s.regs 3).toNat (s.regs 1).toNat = K)
+    (hp : s.mem.readLE BUMP 8 = p) (hob : ob = 8 * ((s.regs 3).toNat - (s.regs 7).toNat))
+    (hMF : MemFrame s.mem M [(p, p + ob)]) (hCp : Mem.Copied s.mem M p (s.regs 0).toNat ob)
+    (hrip : fin.rip = retAddrOf s) (h4 : fin.regs 4 = s.regs 4 + 8#64) (h5 : fin.regs 5 = s.regs 5)
+    (h14 : fin.regs 14 = s.regs 14) (hx : fin.xmm 15 = s.xmm 15) (hfs : fin.fsBase = s.fsBase)
+    (hdf : fin.df = s.df) (hmx : fin.mxcsr = s.mxcsr) (hx87 : fin.x87 = s.x87) (hfw : fin.fpucw = s.fpucw)
+    (h0 : fin.regs 0 = BitVec.ofNat 64 p) (h3 : fin.regs 3 = s.regs 3)
+    (h1 : fin.regs 1 = BitVec.ofNat 64 (growCap8 (s.regs 3).toNat (s.regs 1).toNat))
+    (hmem : fin.mem = M.writeLE BUMP 8 (p + 16 * K)) :
+    GPost (toyR tys ok) L b s fin := by
+  obtain ⟨⟨⟨hcall, htyok, hsz, hpb, h71, h1n3, h13, hn40⟩, hold⟩, hroom, hok, hinv, hcost, hLs, hWs⟩ := pre
+  have hinvT : toyInv tys b L (s.regs 14).toNat (view (toyRt tys) L s.mem) := hinv
+  have hround : growsliceRound64 s = K := by simp only [growsliceRound64]; omega
+  have hcostK : K ≤ b := by rw [← hround]; exact hcost
+  have hc1 := le_growCap8 (s.regs 3).toNat (s.regs 1).toNat
+  obtain ⟨p', hpm, hH, h16, hend, hMF1, hLF1, hap1, hz1, hacc1, hinv1⟩ :=
+    toy_alloc hty (A := 16 * K) (K := K) (by omega) (by omega) (by omega) hcostK hinvT
+  have hpp : p' = p := by rw [← hpm, ← hp]
+  subst hpp
+  obtain ⟨junk, f, x, yh, m, zh, kr, hs⟩ := retState64_intro
+    (res := [BitVec.ofNat 64 p', s.regs 3, BitVec.ofNat 64 (growCap8 (s.regs 3).toNat (s.regs 1).toNat)])
+    hrip h4 h5 h14 hx hfs hdf hmx (by simpa using h0) (by simpa using h3) (by simpa using h1) hx87 hfw
+  have hm : fin.mem = m := by rw [hs]; rfl
+  rw [hm] at hmem; subst hmem
+  have hobK : ob ≤ K := by omega
+  have hHB : BUMP + 8 ≤ HEAP := by simp [BUMP, HEAP]
+  have hm31 : ∀ x, (x < p' ∨ p' + ob ≤ x) →
+      (M.writeLE BUMP 8 (p' + 16 * K)).bytes x = (s.mem.writeLE BUMP 8 (p' + 16 * K)).bytes x := by
+    intro x hx
+    by_cases hb : BUMP ≤ x ∧ x < BUMP + 8
+    · rw [Janus.Arm64.Memory.bytes_writeLE_inside _ hb.1 hb.2, Janus.Arm64.Memory.bytes_writeLE_inside _ hb.1 hb.2]
+    · rw [Janus.Arm64.Memory.bytes_writeLE_outside _ (by omega), Janus.Arm64.Memory.bytes_writeLE_outside _ (by omega),
+        bytes_of_frame hMF (by simp only [outside_cons, outside_nil, and_true]; omega)]
+  have hacc3 : ∀ a n w, (M.writeLE BUMP 8 (p' + 16 * K)).accessible a n w = s.mem.accessible a n w := by
+    intro a n w; rw [Janus.Arm64.Memory.accessible_writeLE, hMF.accessible]
+  have hMF13 : MemFrame (s.mem.writeLE BUMP 8 (p' + 16 * K)) (M.writeLE BUMP 8 (p' + 16 * K)) [(p', p' + ob)] := by
+    refine ⟨fun a k hout => Janus.Arm64.Memory.readLE_congr fun i hi => ?_, fun a k w => ?_⟩
+    · simp only [outside_cons, outside_nil, and_true] at hout
+      exact hm31 (a + i) (by omega)
+    · rw [hacc3, Janus.Arm64.Memory.accessible_writeLE]
+  have hpK : p' + K ≤ HEND := by simp only [HEND, HEAP, HSIZE] at hend ⊢; omega
+  have hpn : (BitVec.ofNat 64 p').toNat = p' := by rw [BitVec.toNat_ofNat]; simp only [HEND, HEAP, HSIZE] at hpK; omega
+  unfold GPost; rw [hround]
+  refine ⟨BitVec.ofNat 64 p', junk, f, x, yh, _, zh, kr, hs, ?fr, ?lf, ⟨⟨?fresh, ?cp, ?zb⟩, by rw [hpn]; exact hap1⟩,
+    ?apw, ?inv⟩
+  case fr =>
+    refine ⟨fun a k hout => ?_, fun a k w => hacc3 a k w⟩
+    have hrt : Outside a k (toyRt tys) := by simp only [outside_append] at hout; exact hout.1
+    have hHB' := LiveStub.outside_toyRt_heap_bump hrt
+    refine Janus.Arm64.Memory.readLE_congr fun i hi => ?_
+    rw [hm31 _ (by simp only [HEND, HEAP, HSIZE] at hHB' hpK hH; omega),
+      Janus.Arm64.Memory.bytes_writeLE_outside _ (by simp [BUMP] at hHB' ⊢; omega)]
+  case lf =>
+    refine ⟨fun a k hin _ => ?_⟩
+    obtain ⟨r, hr, r1, r2⟩ := hin
+    have hA := hap1 r hr
+    unfold Apart at hA
+    rw [← hLF1.readLE a k ⟨r, hr, r1, r2⟩ trivial]
+    exact Janus.Arm64.Memory.readLE_congr fun i hi => hm31 _ (by omega)
+  case fresh =>
+    rw [hpn]
+    refine ⟨inRanges_heap hH (by omega), by simp only [HEND, HEAP, HSIZE] at hpK ⊢; omega, ?_, fun _ => by omega,
+      fun _ _ => h16, fun h => absurd h (by simp), by omega⟩
+    rw [hacc3]; rw [Janus.Arm64.Memory.accessible_writeLE] at hacc1
+    exact Janus.Arm64.Memory.accessible_mono _ hacc1 (Nat.le_refl _) (by omega)
+  case cp =>
+    rw [hpn]
+    intro i hi
+    rw [Janus.Arm64.Memory.bytes_writeLE_outside _ (by simp [HEAP, BUMP] at hH ⊢; omega)]
+    exact hCp i (by omega)
+  case zb =>
+    rw [hpn]
+    intro i hi
+    rw [show p' + 8 * (s.regs 3).toNat + i = p' + (8 * (s.regs 3).toNat + i) by omega, hm31 _ (by omega)]
+    exact hz1 _ (by omega)
+  case apw => rw [hpn]; exact apart_win (inRanges_heap (tys := tys) hH hpK) hWs
+  case inv =>
+    rw [hpn]
+    exact RtInv.inv_frame' (R := toyR tys ok) hMF13 (fun r hr => by
+      simp only [List.mem_singleton] at hr; subst hr
+      exact Or.inr ⟨(p', p' + K), List.mem_append_right _ (List.mem_singleton_self _), Nat.le_refl _, by simp; omega⟩)
+      hinv1
+
+/-- `DONE` to the return: the bump cell advanced, the result registers, the live return (`g_post`). -/
+theorem g_done (tys : Tys) (hty : TysOK tys) (ok : Nat → List Nat → Prop) (L : List (Nat × Nat)) (b : Nat)
+    (s T : State) (v10 v12 : W64) (K p ob : Nat) (pre : GPre (toyR tys ok) L b s)
+    (hpc : T.rip = BitVec.ofNat 64 gDONE) (hK : CK s v10 v12 T) (hv10 : v10.toNat = K)
+    (hKr : 8 * growCap8 (s.regs 3).toNat (s.regs 1).toNat = K) (hv12 : v12 = BitVec.ofNat 64 p)
+    (hp : s.mem.readLE BUMP 8 = p) (hob : ob = 8 * ((s.regs 3).toNat - (s.regs 7).toNat))
+    (hMF : MemFrame s.mem T.mem [(p, p + ob)]) (hCp : Mem.Copied s.mem T.mem p (s.regs 0).toNat ob) :
+    ReachesRet P (retAddrOf s) T (GPost (toyR tys ok) L b s) := by
+  have pre0 := pre
+  obtain ⟨⟨⟨hcall, -⟩, -⟩, -, -, hinv, hcost, -, hWs⟩ := pre0
+  obtain ⟨h4, h5, h14, hx, hfs, hdf, hmx, h87, hfw, h3, h10, h11, h12⟩ := hK
+  have hinvT : toyInv tys b L (s.regs 14).toNat (view (toyRt tys) L s.mem) := hinv
+  have hround : growsliceRound64 s = K := by simp only [growsliceRound64]; omega
+  have hcostK : K ≤ b := by rw [← hround]; exact hcost
+  obtain ⟨p', hpm, hH, -, hend, -⟩ := toy_alloc hty (A := 16 * K) (K := K) (by omega) (by omega) (by omega) hcostK hinvT
+  have hpp : p' = p := by rw [← hpm, ← hp]
+  subst hpp
+  obtain ⟨-, -, -, -, hbud, -⟩ := hinvT
+  have hc1 := le_growCap8 (s.regs 3).toNat (s.regs 1).toNat
+  -- the return slot is outside the runtime's ranges, hence apart from the heap block and the bump cell
+  have hret := hWs ((s.regs 4).toNat, (s.regs 4).toNat + 8) (by simp [liveWin64])
+  simp only [Nat.add_sub_cancel_left] at hret
+  have hHB := LiveStub.outside_toyRt_heap_bump (tys := tys) hret
+  have hsp : s.mem.accessible (s.regs 4).toNat 8 false = true :=
+    Janus.Arm64.Memory.accessible_sub _ hcall.2.2.2.2 (Or.inl rfl) (by omega) (by omega)
+  have hspT : T.mem.accessible (T.regs 4).toNat 8 false = true := by rw [hMF.accessible, h4]; exact hsp
+  have hrT : T.mem.readLE (T.regs 4).toNat 8 = s.mem.readLE (s.regs 4).toNat 8 := by
+    rw [h4]; refine hMF.readLE _ 8 ?_
+    simp only [outside_cons, outside_nil, and_true]; simp only [HEND, HEAP, HSIZE, BUMP] at *; omega
+  have hraT : T.mem.readLE (s.regs 4).toNat 8 < 2 ^ 47 := by
+    have := hrT; rw [h4] at this; rw [this]; exact hcall.1
+  have hrT' : T.mem.readLE (s.regs 4).toNat 8 = s.mem.readLE (s.regs 4).toNat 8 := by
+    have := hrT; rw [h4] at this; exact this
+  have hcap : v10 >>> 3 = BitVec.ofNat 64 (growCap8 (s.regs 3).toNat (s.regs 1).toNat) := by
+    apply BitVec.eq_of_toNat_eq
+    rw [BitVec.toNat_ushiftRight, hv10, Nat.shiftRight_eq_div_pow, BitVec.toNat_ofNat]
+    simp only [HEND, HEAP, HSIZE, BUMP] at *; omega
+  have hacB : T.mem.accessible 4194304 8 true = true := by rw [hMF.accessible]; exact LiveSat.bump_acc hinv
+  have hK16 : K * 16 % 18446744073709551616 = 16 * K := by simp only [HEND, HEAP, HSIZE, BUMP] at *; omega
+  have hpn : (BitVec.ofNat 64 p').toNat = p' := by rw [BitVec.toNat_ofNat]; simp only [HEND, HEAP, HSIZE, BUMP] at *; omega
+  janus64_run [hrT']
+  refine g_post tys hty ok L b s _ T.mem K p' ob pre hKr hp hob hMF hCp ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
+  · simp only [retAddrOf]
+  · simp only [setRegF]; rfl
+  · simp only [setRegF, if_neg (show (5 : Nat) ≠ 4 by decide), if_neg (show (5 : Nat) ≠ 2 by decide),
+      if_neg (show (5 : Nat) ≠ 1 by decide), if_neg (show (5 : Nat) ≠ 0 by decide)]; exact h5
+  · simp only [setRegF, if_neg (show (14 : Nat) ≠ 4 by decide), if_neg (show (14 : Nat) ≠ 2 by decide),
+      if_neg (show (14 : Nat) ≠ 1 by decide), if_neg (show (14 : Nat) ≠ 0 by decide)]; exact h14
+  · exact hx
+  · exact hfs
+  · rfl
+  · rfl
+  · exact h87
+  · exact hfw
+  · simp only [setRegF, if_neg (show (0 : Nat) ≠ 4 by decide), if_neg (show (0 : Nat) ≠ 2 by decide),
+      if_neg (show (0 : Nat) ≠ 1 by decide), if_true]; exact hv12
+  · simp only [setRegF, if_neg (show (3 : Nat) ≠ 4 by decide), if_neg (show (3 : Nat) ≠ 2 by decide),
+      if_neg (show (3 : Nat) ≠ 1 by decide), if_neg (show (3 : Nat) ≠ 0 by decide)]; exact h3
+  · simp only [setRegF, if_neg (show (1 : Nat) ≠ 4 by decide), if_neg (show (1 : Nat) ≠ 2 by decide), if_true]
+    exact hcap
+  · show T.mem.writeLE 4194304 8 (v10.toNat * 16 + v12.toNat) = T.mem.writeLE 4194304 8 (p' + 16 * K)
+    rw [hv10, hv12, hpn]; congr 1; omega
+
 end FvModexp.Amd64.WStubs
