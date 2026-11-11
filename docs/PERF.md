@@ -418,3 +418,26 @@ IcHN 43, Sb* 25-47, main 16 s.
 | Nat/BasicSqr (`pro1`: entry → stk.nat call; `full`, `ens`, `sum`) | 33 s / 2.6 GB | |
 | arm64 DivWVWRow (re-verified, pre `CallEnvND`) | PASS | 91 s | 4.9 GB |
 | amd64 DivWVWRow (re-verified, pre `CallEnvND`) | PASS | 26 s | 1.3 GB |
+
+## nat.subMod2N arm64 (agent infra, session 5), 2026-11-11
+Dev compile (plain `lean`, LEAN_NUM_THREADS=4, host load 20-60), `lean/FvModexp/Proofs/Arm64/Exp/SubMod2N*.lean`:
+| module | wall | peak RSS | content |
+|---|---|---|---|
+| SubMod2NSeg | 10 s | 2.4 GB | join statements J1-J3, Rt/Fw composition, trunc call helper |
+| SubMod2NCall | 20 s | 2.9 GB | Nat-level sub/add/cmp call helpers, subPre_of/addPre_of |
+| SubMod2NSeg2 | 3 s | 2.2 GB | J4/J5, rt_zstore |
+| SubMod2NS1 | 59 s | 2.6 GB | entry -> J1 (bitLen smear+CLZ, trunc(x)) |
+| SubMod2NS2 | 66 s | 3.1 GB | J1 -> J2 (bitLen y, trunc(nil,y)) |
+| SubMod2NS3 | 37-73 s | 3.8 GB | J2 -> cmp -> sub+return / sub -> J3 |
+| SubMod2NS4A | 6 s | 2.3 GB | append loop (iteration lemma + induction) |
+| SubMod2NS4B | 7 s | 2.3 GB | complement loop |
+| SubMod2NS4C | 44 s | 3.4 GB | trunc(z) + add(z, natOne) + return |
+| SubMod2N | 3 s | 2.4 GB | composition + ens/sum |
+Lessons: (1) every `until`/start pc must be a LITERAL computed correctly (a wrong `until` pc lets janus_run go round a
+loop forever: 0x260 = 608, not 592!); a start pc stated as `1805584 + 0x260` must be rewritten to a literal first.
+(2) Named holes / `rfl` inside `refine` arguments unify implicit states too early (`rfl : S.mem = M` picks `S := S'`):
+pass `?_` and close with `rfl` afterwards. (3) Callee posts in Nat form (subCall/addCall destructure the BitVec post
+once) keep the continuation goals small; janus_simp then closes the register goals of the literal states.
+(4) One loop iteration per lemma (continuation `KL`), induction separately: each loop module < 10 s.
+RequiredGas housekeeping (session 5, trimmed tree, warm cache fresh4, load ~25): arm64 PASS 336 s / 3.6 GB,
+amd64 PASS 483 s / 3.8 GB (build/verify-rg-s5.out).
