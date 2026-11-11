@@ -100,20 +100,22 @@ theorem inv1 (gp : Nat) : R.inv 0x1000 [] gp (view R.rt [] mem0) := by
 
 theorem pre (sub : Bool) : IntAS.Pre R 0x1000 [] (BitVec.ofNat 64 OA).toNat (BitVec.ofNat 64 (OA + 0x40)).toNat
     (BitVec.ofNat 64 (OA + 0x80)).toNat (s0 sub) := by
-  have hm : (s0 sub).mem = mem0 := rfl
-  refine ⟨⟨⟨by decide +kernel, by rw [hm, acc0]; decide +kernel, by decide +kernel⟩,
-    ⟨by decide +kernel, by decide +kernel, by decide +kernel, by rw [hm, acc0]; decide +kernel⟩,
-    dataLoaded _ _, ?_, ?_, ?_, fun r hr => by simp at hr, roOut⟩, WStubs.serves [], ?_,
-    ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, Or.inr ?_, Or.inr ?_, ?_⟩,
-    ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, Or.inr ?_, Or.inr ?_, ?_⟩,
-    ?_, ?_, ?_, Or.inr ?_, ?_, ?_, Or.inr ?_, ?_, ?_, fun _ => ⟨?_, Or.inr ?_, ?_, ?_⟩, ?_, fun _ => ⟨?_, ?_, Or.inr ?_, Or.inr ?_⟩,
-    ?_, ?_, inv1 _⟩
-  all_goals first
-    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
-    | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
-    | (simp only [Apart]; decide +kernel)
-    | (simp only [hm, acc0]; decide +kernel)
-    | decide +kernel
+  cases sub
+  all_goals
+    have hm : ∀ b, (s0 b).mem = mem0 := fun _ => rfl
+    refine ⟨⟨⟨by decide +kernel, by rw [hm, acc0]; decide +kernel, by decide +kernel⟩,
+      ⟨by decide +kernel, by decide +kernel, by decide +kernel, by rw [hm, acc0]; decide +kernel⟩,
+      dataLoaded _ _, ?_, ?_, ?_, fun r hr => by simp at hr, roOut⟩, WStubs.serves [], ?_,
+      ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, Or.inr ?_, Or.inr ?_, ?_⟩,
+      ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, Or.inr ?_, Or.inr ?_, ?_⟩,
+      ?_, ?_, ?_, Or.inr ?_, ?_, ?_, Or.inr ?_, ?_, ?_, fun _ => ⟨?_, Or.inr ?_, ?_, ?_⟩, ?_, fun _ => ⟨?_, ?_, Or.inr ?_, Or.inr ?_⟩,
+      ?_, ?_, inv1 _⟩
+    all_goals first
+      | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+      | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
+      | (simp only [Apart]; decide +kernel)
+      | (simp only [hm, acc0]; decide +kernel)
+      | decide +kernel
 
 /-- Every hypothesis of `correctness` and every conjunct of its precondition hold together: the shared witness runtime
 (toy `makeslice`, looping `memmove`, toy write barrier), budget `0x1000`, empty live set, the call `z.Add(x, y)` with
