@@ -235,7 +235,6 @@ theorem zcopy (impl : List Segment) (R : RtInv)
     have := hLs r hr
     simp only [outside_cons, outside_nil, and_true] at this ⊢
     omega
-  refine KT _ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?mf ?lf ?iv ?rg ?vl ?r2
   have hFw := mf_chain (W := cw sp) (W2 := R.rt ++ cw sp ++ [(zp, zp + 8 * n)]) (h1 := hF1) (by
       repeat' first
         | exact MemFrame.refl _ _
@@ -244,9 +243,11 @@ theorem zcopy (impl : List Segment) (R : RtInv)
            omega))
     (fun a k ho => by
       simp only [cw, outside_append, outside_cons, outside_nil, and_true] at ho ⊢
-      exact ⟨ho.1.2, ho.1.1, by omega⟩)
+      exact ⟨ho.1.2, ⟨ho.1.1, by omega⟩, ho.2⟩)
+  refine KT _ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?mf ?lf ?iv ?rg ?vl ?r2
   case mf =>
-    exact hFw.writeLE_inRanges _ ⟨(sp + 240, sp + 248), by simp [cw], by simp only; omega, by simp only; omega⟩
+    refine hFw.writeLE_inRanges _ ?_
+    exact ⟨(sp + 240, sp + 248), by simp [cw], by simp only; omega, by simp only; omega⟩
   case lf =>
     refine (lf_chain (h1 := hL1) (W := cw sp) (by
       repeat' first
