@@ -1,5 +1,5 @@
 import FvModexp.Proofs.Amd64.Nat.LibBasicMul
-import FvModexp.Proofs.Amd64.Nat.Callees
+import FvModexp.Proofs.Amd64.Nat.AsmCallees
 import FvModexp.Proofs.Common.DivmcNat
 import FvModexp.Proofs.Common.DivmcBits
 
@@ -260,12 +260,12 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
     (hmc : MemclrNoHeapPointersLive64 (Extracted.program.ofImpl impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
-    (hMV : AddMulVVWWHyp impl)
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc yp yl yc : BitVec 64) :
     Ensures ((Extracted.program.onlySegments names).link impl) (segAddr Extracted.program fn)
       [zp, zl, zc, xp, xl, xc, yp, yl, yc]
       (Pre R b L zp zl zc xp xl yp yl) (Post R b L zp xp xl yp yl) := by
   rw [show names = LibBasicMul.names from rfl, ← LibBasicMul.eq_only]
+  have hMV := addMulVVWWHyp impl hap
   intro ret hret s hs hpre
   have hpre' := hpre
   obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, hout, hga, hgr, hLs, ⟨htb, htr, htg⟩, htrt, htw⟩, hxyz, hzc, hz40,
