@@ -52,7 +52,8 @@ def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp yp mp k n : Bit
         (s.mem.readLE mp.toNat (8 * n.toNat)) k.toNat ∧
     ∃ (L' : List (Nat × Nat)) (b' : Nat), L' = L ∧ b' = b ∧
       R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem) ∧
-      MemFrame s.mem s'.mem (R.rt ++ [(s.sp.toNat - 4288, s.sp.toNat + 120)] ++ [(zp.toNat, zp.toNat + 8 * zc.toNat)]) ∧
+      MemFrame s.mem s'.mem (R.rt ++ [(s.sp.toNat - 4288, s.sp.toNat - 8), (s.sp.toNat + 8, s.sp.toNat + 120)] ++
+        [(zp.toNat, zp.toNat + 8 * zc.toNat)]) ∧
       LiveFrame s.mem s'.mem L [(zp.toNat, zp.toNat + 8 * zc.toNat)]
 
 set_option hygiene false in
@@ -163,7 +164,7 @@ theorem ens' (impl : List Segment) (R : RtInv)
     | returned s' =>
       simp only [isReturn_returned] at ho ⊢
       obtain ⟨e1, e2, e3, e4, e5, e6, e7, ev, ei, ef, el⟩ := ho
-      have hF0 : MemFrame s.mem w (R.rt ++ [(s.sp.toNat - 4288, s.sp.toNat + 120),
+      have hF0 : MemFrame s.mem w (R.rt ++ [(s.sp.toNat - 4288, s.sp.toNat - 8), (s.sp.toNat + 8, s.sp.toNat + 120),
           (zp.toNat, zp.toNat + 8 * (n.toNat + n.toNat))]) := by janus_frame
       have hL0 : LiveFrame s.mem w L [(zp.toNat, zp.toNat + 8 * (n.toNat + n.toNat))] := by
         refine ⟨fun a k hin hout => ?_⟩
@@ -176,7 +177,7 @@ theorem ens' (impl : List Segment) (R : RtInv)
         by rw [e7, FvModexp.Expmc.bv_ofNat_toNat], by rw [ev, hX, hY, hM], L, b, rfl, rfl, ei, ?_, ?_⟩
       · refine hF0.trans ef (fun a k hk => ?_)
         simp only [outside_append, outside_cons, outside_nil, and_true] at hk ⊢
-        exact ⟨⟨hk.1.1, by omega, by omega⟩, ⟨hk.1.1, by omega, by omega⟩⟩
+        exact ⟨⟨hk.1.1, by omega, by omega, by omega⟩, ⟨hk.1.1, by omega, by omega, by omega⟩⟩
       · refine FvModexp.Expmc.liveFrame_widen (hL0.trans (FvModexp.Expmc.liveFrame_widen el ?_) (fun _ _ h => h)) ?_
         · intro a k h; simp only [outside_cons, outside_nil, and_true] at h ⊢; omega
         · intro a k h; simp only [outside_cons, outside_nil, and_true] at h ⊢; omega

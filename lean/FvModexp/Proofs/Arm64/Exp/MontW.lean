@@ -40,7 +40,7 @@ def MCall (R : RtInv) (L : List (Nat × Nat)) (g gv sp n mp mc rp rc xp yp : Nat
   s'.mem.readLE rp (8 * n) =
     Exp.montgomery n (s.mem.readLE xp (8 * n)) (s.mem.readLE yp (8 * n)) (s.mem.readLE mp (8 * n)) k ∧
   R.inv b L g (view R.rt L s'.mem) ∧
-  MemFrame s.mem s'.mem (R.rt ++ [(sp - 4288, sp + 120)] ++ [(rp, rp + 8 * rc)]) ∧
+  MemFrame s.mem s'.mem (R.rt ++ [(sp - 4288, sp - 8), (sp + 8, sp + 120)] ++ [(rp, rp + 8 * rc)]) ∧
   LiveFrame s.mem s'.mem L [(rp, rp + 8 * rc)]
 
 theorem sub_of_all {ns ms : List String} (h : ns.all ms.contains = true) :

@@ -133,6 +133,36 @@ theorem close_frame {R : RtInv} {L : List (Nat × Nat)} {b g lo hi zp n : Nat} {
     simp only [outside_cons, outside_nil, and_true] at this hout ⊢
     omega
 
+/-- Widening a callee's two stack ranges and its destination into the caller's window with a hole `[m1, m2)` (the
+caller's saved FP/LR words, arm64) and its range. -/
+theorem frame_widen2h {m m' : Memory} {rt : List (Nat × Nat)} {a1 b1 a2 b2 lo m1 m2 hi z1 z2 : Nat}
+    (h : MemFrame m m' (rt ++ [(a1, b1), (a2, b2)] ++ [(z1, z2)])) (h1 : lo ≤ a1) (h2 : b1 ≤ m1) (h3 : lo ≤ a2)
+    (h4 : b2 ≤ m1) : MemFrame m m' (rt ++ [(lo, m1), (m2, hi), (z1, z2)]) :=
+  h.mono fun a k hk => by
+    simp only [outside_append, outside_cons, outside_nil, and_true] at hk ⊢
+    obtain ⟨hrt, hw, hw2, hz⟩ := hk
+    exact ⟨⟨hrt, by omega, by omega⟩, hz⟩
+
+/-- `close_frame` for a window with a hole: `[lo1, hi1) ∪ [lo2, hi2)` inside `[lo1, hi2)`. -/
+theorem close_frame2 {R : RtInv} {L : List (Nat × Nat)} {b g lo1 hi1 lo2 hi2 zp n : Nat} {M w : Memory}
+    (hF : MemFrame M w [(lo1, hi1), (lo2, hi2), (zp, zp + 8 * n)]) (h12 : lo1 ≤ hi1) (h12' : hi1 ≤ lo2)
+    (h22 : lo2 ≤ hi2) (hwin : Outside lo1 (hi2 - lo1) R.rt)
+    (hzh : InRanges zp (8 * n) L ∨ Outside zp (8 * n) R.rt) (hLs : LiveSep L [(lo1, hi2)])
+    (hinv : R.inv b L g (view R.rt L M)) :
+    R.inv b L g (view R.rt L w) ∧ MemFrame M w (R.rt ++ [(lo1, hi1), (lo2, hi2), (zp, zp + 8 * n)]) ∧
+      LiveFrame M w L [(zp, zp + 8 * n)] := by
+  refine ⟨inv_frame hF (fun r hr => ?_) hinv, frame_widen_rt hF, ?_⟩
+  · simp only [List.mem_cons, List.mem_nil_iff, or_false] at hr
+    rcases hr with rfl | rfl | rfl
+    · exact Or.inr (hwin.of_sub (by omega) (by omega))
+    · exact Or.inr (hwin.of_sub (by omega) (by omega))
+    · simpa using hzh
+  · refine ⟨fun a k hin hout => hF.readLE a k ?_⟩
+    obtain ⟨r, hr, h1, h2⟩ := hin
+    have := hLs r hr
+    simp only [outside_cons, outside_nil, and_true] at this hout ⊢
+    omega
+
 /-- Widening a callee's two stack ranges and its destination into the caller's window and range. -/
 theorem frame_widen2' {m m' : Memory} {rt : List (Nat × Nat)} {a1 b1 a2 b2 lo hi z1 z2 y1 y2 : Nat}
     (h : MemFrame m m' (rt ++ [(a1, b1), (a2, b2)] ++ [(z1, z2)])) (h1 : lo ≤ a1) (h2 : b1 ≤ hi) (h3 : lo ≤ a2)
