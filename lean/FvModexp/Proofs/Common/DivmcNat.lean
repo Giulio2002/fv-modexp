@@ -44,6 +44,13 @@ theorem add_two_piece (a h n k : Nat) :
   have := Nat.mod_add_div a (2 ^ (64 * n))
   omega
 
+/-- A low part below `B` and a carry that make `A` are `A % B` and `A / B`. -/
+theorem div_mod_of_lt {lo c B A : Nat} (hB : 0 < B) (hlo : lo < B) (h : lo + B * c = A) : A % B = lo ∧ A / B = c := by
+  subst h
+  refine ⟨?_, ?_⟩
+  · rw [Nat.add_mul_mod_self_left, Nat.mod_eq_of_lt hlo]
+  · rw [Nat.add_mul_div_left _ _ hB, Nat.div_eq_of_lt hlo, Nat.zero_add]
+
 /-- `(a + B^n h) % B^n = a % B^n` style: a value below `B^n` is its own residue. -/
 theorem mod_self_lt {a n : Nat} (h : a < 2 ^ (64 * n)) : a % 2 ^ (64 * n) = a := Nat.mod_eq_of_lt h
 
