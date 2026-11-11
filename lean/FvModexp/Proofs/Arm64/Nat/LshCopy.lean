@@ -15,8 +15,6 @@ set_option linter.janusRenameI false
 
 namespace FvModexp.Arm64.Lsh
 
-abbrev hJoin : Nat := segAddr Extracted.program fn + 0x16c
-
 set_option maxRecDepth 20000 in
 /-- memory facts after `memmove` and `z[n] = 0` (pure) -/
 theorem copy_facts {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc x xl sh : Nat} {s : State}

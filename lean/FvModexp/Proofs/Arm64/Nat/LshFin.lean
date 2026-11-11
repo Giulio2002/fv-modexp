@@ -21,6 +21,7 @@ namespace FvModexp.Arm64.Lsh
 
 abbrev hNorm : Nat := segAddr Extracted.program fn + 0x26c
 abbrev hClr : Nat := segAddr Extracted.program fn + 0x234
+abbrev hJoin : Nat := segAddr Extracted.program fn + 0x16c
 
 theorem natVal_drop_zero {M : Memory} {p i : Nat} (h : M.readLE (p + 8 * i) 8 = 0) :
     natVal M p (i + 1) = natVal M p i := by rw [natVal_succ, h]; simp
