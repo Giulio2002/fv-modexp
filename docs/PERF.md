@@ -390,6 +390,17 @@ critical path: next trims are Fin1 (89 s, one run) and SbD (116 s).
 | Top/RunC1, RunCP1, RunCP2 | — | new (budget facts as pure lemmas `bs_le`, `bud_pad`) | 24-30 s, 20 s, 24 s, ≤ 2.4 GB |
 Lesson: an `omega` that FAILS in a large context reports "maximum recursion depth" instead of a counterexample — look for a
 missing hypothesis (here `B ≤ b`) before suspecting anything else.
+
+### Run arm64 success path (agent top s6, 2026-11-11, host load 45-80 on 48 cores: wall times inflated ~2x)
+| module | before | change | after |
+|---|---|---|---|
+| Top/RunD3P | 262 s / 9.2 GB | `trace.profiler`: `have hsub` = 97 s (one `omega` in the ~120-hyp context), `hsA` 29 s, `hne` 19 s, `hcap` 11 s → `bv_sub_of_le` with term-mode side facts, `RunArith` lemmas (`cap_le`, `rng_le`, `stk_ne`) taking only the facts they need | 188 s / 5.7 GB |
+| Top/RunD2L | 211 s / 7.8 GB | same (`cap_le`, `rng_le`, `off_of`, `bv_sub_of_le`) | 410 s wall under load ~70 / 7.1 GB |
+| Top/RunD3LB (new, `d3lB`) | — | memmove call needs the callee-stack `LiveSep` facts as `∀ r ∈ L0, …` + the block's | 115 s / 3.6 GB |
+| Top/RunC2M | (WIP, 151 s with trace) | first full version 437 s (and a killed one > 13 CPU-min / 8 GB): `omega`s after the second `janus_run` (context with the big post-call records) → all window/slot side facts proved BEFORE the run (`hsl`: slot equations for any post-memory, `hz1/hz2`, `hwsW`), frames/slots/budget as pure lemmas (`RunC2Lem3`: `frame_TV`, `slot_TV`, `liveFrame_TV`, `budget_c2m`) | 249 s / 6.5 GB |
+| Top/RunC2EX (new, exp call → V) | — | as RunC2M | 214 s / 7.7 GB (marginal: trim next) |
+| Top/RunC2E (new, C2 → exp block, bitLen ≠ 1) | — | `gen_reg 5 as bl` + `blr_one` | 6 s |
+| Top/RunCP2 (+ len(v) = 0 branch via `MemmoveZeroLive`) | 24 s | — | 33 s / 2.5 GB |
 ### asm s6: nat.divW rows (janus-provfix, memcap 16G / timeout 900, cold-ish cache-asm)
 | row | verdict | wall | peak |
 |---|---|---|---|
