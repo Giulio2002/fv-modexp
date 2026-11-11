@@ -395,3 +395,5 @@ missing hypothesis (here `B ≤ b`) before suspecting anything else.
 |---|---|---|---|
 | arm64 DivWRow | PASS | 357 s | 5.2 GB |
 | amd64 DivWRow | PASS | 500 s | 4.8 GB |
+| arm64 DivWVWRow (re-verified, pre `CallEnvND`) | PASS | 91 s | 4.9 GB |
+| amd64 DivWVWRow (re-verified, pre `CallEnvND`) | PASS | 26 s | 1.3 GB |
