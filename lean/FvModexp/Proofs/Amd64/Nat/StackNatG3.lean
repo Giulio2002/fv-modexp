@@ -21,7 +21,7 @@ theorem g3 (impl : List Amd64.Segment) (R : RtInv)
     (hmc : MemclrNoHeapPointersLive64 (LibStackNat.program.link impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
     (hwb : WbLiveContract64 (LibStackNat.program.link impl) (cA "runtime.gcWriteBarrier2") 4096 R 2)
     (b : Nat) (L : List (Nat × Nat)) (st n : BitVec 64) (s : State)
-    (hra : s.mem.readLE (s.regs 4).toNat 8 < 2 ^ 47) (hx15s : s.xmm 15 = 0#128)
+    (hra : s.mem.readLE (s.regs 4).toNat 8 < 2 ^ 47) (hx15s : s.xmm 15 = 0#128) (hdf0 : s.df = false)
     (hpre : Pre R b L 4192 24 st.toNat n.toNat s)
     (hk : stCap s.mem st.toNat < stLen s.mem st.toNat + rnd n.toNat) (p : Nat)
     (hpin : InRanges p (8 * growCap8 (stLen s.mem st.toNat + rnd n.toNat) (stCap s.mem st.toNat)) R.rt)
@@ -105,7 +105,7 @@ theorem g3 (impl : List Amd64.Segment) (R : RtInv)
       List.pairwise_singleton _ _⟩
   have hJ : J R b L st.toNat n.toNat s (L ++ [(p, p + 8 * gc)]) (b - 8 * gc) p gc m3 := by
     refine ⟨hpre, hra, rra, rbp, ?_, ?_, hext, by omega, by rw [← h14]; exact hinv3, ?_, hgcl, hgcb, by omega,
-      fun h => absurd h (by omega), fun _ => ⟨hpin, hapL⟩, hLs1, ?_⟩
+      fun h => absurd h (by omega), fun _ => ⟨hpin, hapL⟩, hLs1, ?_, hdf0⟩
     · refine hF.trans hMF3 fun a k ho => ⟨ho, ?_⟩
       simp only [wJ, win, outside_append, outside_cons, outside_nil, and_true] at ho ⊢
       obtain ⟨hrt, h1⟩ := ho

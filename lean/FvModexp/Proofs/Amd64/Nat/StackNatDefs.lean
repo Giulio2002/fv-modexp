@@ -54,7 +54,7 @@ abbrev wbA : Nat := Extracted.dataAddr.«runtime.writeBarrier»
     Apart st 24 (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st))
 
 @[reducible] def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (stk above st n : Nat) (s s' : State) : Prop :=
-  s'.fsBase = s.fsBase ∧
+  s'.fsBase = s.fsBase ∧ s'.df = s.df ∧
   (0 < n → s'.regs 0 = BitVec.ofNat 64 (stW s'.mem st + 8 * stLen s.mem st)) ∧ s'.regs 3 = BitVec.ofNat 64 n ∧
     s'.regs 1 = BitVec.ofNat 64 n ∧
     ∃ (L' : List (Nat × Nat)) (b' : Nat), (LiveExt R L L' ∧ b - stackNatCost (stLen s.mem st) n ≤ b' ∧
