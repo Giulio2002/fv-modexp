@@ -83,6 +83,45 @@ theorem chain {R : RtInv} {wa ss ts : List (Nat × Nat)} {m0 m1 m2 m3 : Memory} 
     exact ⟨⟨h.1.1.1, h.1.1.2⟩, ⟨h.1.1.1, h.1.1.2⟩, this, h.2⟩
   · refine ⟨h, ?_⟩; simp only [outside_append] at h; exact h.1.1.2
 
+theorem Core.hdr {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp xl xc : Nat} {s : State}
+    {p c : Nat} {L1 : List (Nat × Nat)} {b1 : Nat} {M : Memory}
+    (hJ : Core R b L W zp zc st xp xl xc s p c L1 b1 M) (k : Nat) (hk : k + 8 ≤ 24) :
+    M.readLE (st + k) 8 = s.mem.readLE (st + k) 8 := by
+  obtain ⟨-, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, ⟨-, ⟨-, hsth, -⟩, hstw, -⟩, -, -, -, -⟩ := hJ.pre
+  exact hJ.rd (hsth.sub (by omega) (by omega)) (hstw.of_sub (by omega) (by omega))
+
+/-- the stack object at `M` -/
+theorem Core.stk {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp xl xc : Nat} {s : State}
+    {p c : Nat} {L1 : List (Nat × Nat)} {b1 : Nat} {M : Memory}
+    (hJ : Core R b L W zp zc st xp xl xc s p c L1 b1 M) : StkOK M R L1 st := by
+  obtain ⟨-, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, ⟨-, hstok, -⟩, -, -, -, -⟩ := hJ.pre
+  obtain ⟨h1, h2, h3, h4, h5, h6, h7⟩ := hstok
+  have e0 := hJ.hdr 0 (by omega); have e1 := hJ.hdr 8 (by omega); have e2 := hJ.hdr 16 (by omega)
+  simp only [Nat.add_zero] at e0
+  refine ⟨h1, hJ.ext.held h2, by rw [hJ.F.accessible]; exact h3, h4, ?_, ?_, ?_⟩
+  · simp only [stW, stCap] at h5 ⊢; rw [e0, e2]; intro hc
+    obtain ⟨q1, q2, q3, q4⟩ := h5 hc; exact ⟨q1, hJ.ext.held q2, by rw [hJ.F.accessible]; exact q3, q4⟩
+  · simp only [stLen, stCap] at h6 ⊢; rw [e1, e2]; exact h6
+  · simp only [stCap] at h7 ⊢; rw [e2]; exact h7
+
+/-- the result array is apart from the stack header -/
+theorem Core.pst {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp xl xc : Nat} {s : State}
+    {p c : Nat} {L1 : List (Nat × Nat)} {b1 : Nat} {M : Memory}
+    (hJ : Core R b L W zp zc st xp xl xc s p c L1 b1 M) (hc : 0 < c) : Apart p (8 * c) st 24 := by
+  obtain ⟨-, -, -, -, -, -, -, -, -, -, -, -, -, -, hzs, -, ⟨-, ⟨-, hsth, -⟩, -⟩, -, -, -, -⟩ := hJ.pre
+  rcases hJ.kind with ⟨rfl, rfl⟩ | ⟨hin, hap, -⟩
+  · have := (hzs hc).2.1; unfold Apart at this ⊢; omega
+  · exact apart_of_held hsth hin hap
+
+/-- the live set after `make` is outside the window -/
+theorem Core.lsep {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp xl xc : Nat} {s : State}
+    {p c : Nat} {L1 : List (Nat × Nat)} {b1 : Nat} {M : Memory}
+    (hJ : Core R b L W zp zc st xp xl xc s p c L1 b1 M) : LiveSep L1 (win s W 64) := by
+  obtain ⟨⟨-, ⟨-, hb', -⟩, -, hout, -, -, hLs, -⟩, -⟩ := hJ.pre
+  exact IntAS.liveSep_ext hJ.ext hLs fun r hr => by
+    simp only [win, List.mem_cons, List.not_mem_nil, or_false] at hr; subst hr; simp only
+    rw [show s.sp.toNat + 64 - (s.sp.toNat - W) = W + 64 by omega]; exact hout
+
 /-- `z` reused (`2n ≤ cap z`), memory changed in the window only -/
 theorem core_reuse {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp xl xc : Nat} {s : State} {M : Memory}
     (hpre : SPre R b L W zp zc st xp xl xc s) (hc : 2 * xl ≤ zc) (hF : MemFrame s.mem M (winA s W 64)) :
@@ -106,6 +145,31 @@ theorem stackBack_keep {R : RtInv} {L L2 : List (Nat × Nat)} {st : Nat} {m m' :
   · intro hc; obtain ⟨q1, q2, q3, q4⟩ := h5 hc; exact ⟨q1, he.held q2, q3, q4⟩
   · simp only [stW]; exact hF.readLE _ _ (ho.of_sub (Nat.le_refl _) (by omega))
   · simp only [stCap]; exact hF.readLE _ _ (ho.of_sub (by omega) (by omega))
+
+/-- `z` fresh from `makeslice(Word, 2n, c)` (called one frame down with the contract's window `cs` inside ours) -/
+theorem core_alloc {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp xl xc : Nat} {s : State}
+    {M0 m : Memory} {cs : List (Nat × Nat)} {ptr round c : Nat}
+    (hpre : SPre R b L W zp zc st xp xl xc s) (hF : MemFrame s.mem M0 (winA s W 64))
+    (hcs : ∀ a n, Outside a n (winA s W 64) → Outside a n cs)
+    (hLF : LiveFrame M0 m L []) (hMF : MemFrame M0 m (R.rt ++ cs))
+    (hAp : ApartAll ptr round L) (hIn : InRanges ptr round R.rt) (hle : ptr + round ≤ 2 ^ 48)
+    (hacc : m.accessible ptr round true = true) (h8 : ptr % 8 = 0)
+    (hinv : R.inv (b - round) (L ++ [(ptr, ptr + round)]) (s.regs 28).toNat (view R.rt (L ++ [(ptr, ptr + round)]) m))
+    (hsz : 8 * c ≤ round) (hcost : round ≤ makeB (2 * xl)) (hcap : 2 * xl ≤ c) (hc40 : c < 2 ^ 40) (hc0 : 0 < c)
+    (hz : zc < 2 * xl ∨ zp + 8 * zc = xp + 8 * xc) :
+    Core R b L W zp zc st xp xl xc s ptr c (L ++ [(ptr, ptr + round)]) (b - round) m := by
+  have hpre' := hpre
+  obtain ⟨⟨-, ⟨hal, hb', ha, hw⟩, -, hout, -, -, hLs, -⟩, -⟩ := hpre'
+  have hin1 : InRanges ptr (8 * c) (L ++ [(ptr, ptr + round)]) :=
+    ⟨(ptr, ptr + round), by simp, by simp, by simp only; omega⟩
+  have hpo := NatAdd.outside_of_inRanges hout hIn
+  refine ⟨hpre, MemFrame.trans hF hMF fun a n h => ?_, LiveFrame.trans (lf_win [] hF hLs) hLF fun _ _ h => h,
+    LiveExt.single (by simpa using hIn) (by simpa using hAp), by omega, hinv, hcap, hc40, fun _ =>
+    ⟨h8, Or.inl hin1, Memory.accessible_mono _ hacc (Nat.le_refl _) (by omega), by omega⟩, ?_,
+    Or.inr ⟨hIn.sub (Nat.le_refl _) (by omega), ApartAll.sub' hAp (Nat.le_refl _) (by omega), hin1⟩,
+    fun h1 h2 => by omega⟩
+  · simp only [outside_append] at h ⊢; exact ⟨h.2, h.1, hcs a n h.2⟩
+  · simp only [win, outside_cons, outside_nil, and_true]; omega
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
