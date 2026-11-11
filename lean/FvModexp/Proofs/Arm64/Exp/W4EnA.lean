@@ -105,6 +105,6 @@ theorem enA (impl : List Segment) (ret0 : Nat) (hret : RetAddr (LibExp.program.l
     all_goals first | (janus_simp; done) | skip
     all_goals simp (disch := omega) only [Memory.readLE_writeLE_of_disjoint, Memory.readLE_writeLE_self,
       BitVec.toNat_ofNat, Nat.reducePow, Nat.reduceMod]
-    all_goals first | omega | trace_state
+    all_goals omega
 
 end FvModexp.Arm64.W4En
