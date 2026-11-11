@@ -33,7 +33,7 @@ theorem ESl.keep {M1 M3 : Memory} {sp st : Nat} {r29 : BitVec 64} {ret zp zc xp 
   ∃ (M : Memory) (L1 : List (Nat × Nat)) (b1 : Nat),
     MemFrame s.mem M (R.rt ++ [(sp - K, sp + 920), (sp + 936, sp + 1040), (st, st + 24)]) ∧
     LiveFrame s.mem M L [(st, st + 24)] ∧ LiveExt R L L1 ∧ b - stackNatCost (stLen s.mem st) (23 * n) ≤ b1 ∧
-    ArrKF R L st s.mem M ∧ stLen M st = stLen s.mem st + StackNat.rnd (23 * n) ∧
+    ArrKF R L st s.mem M ∧ stLen M st = stLen s.mem st + StackNat.rnd (23 * n) ∧ stLen M st ≤ stCap M st ∧
     XnPost R L1 K (b1 - W4Pro.xnPre n costD (stLen s.mem st + StackNat.rnd (23 * n)) (xl - n + 1)) M g sp n mp mc
       (s.mem.readLE mp (8 * n)) Xv' yp ylen (s.mem.readLE yp (8 * ylen)) (s.mem.readLE (yp + 8 * (ylen - 1)) 8) zp zc
       st (stLen s.mem st) (stLen s.mem st + StackNat.rnd (23 * n)) (s.regs 18) (s.regs 29) s'
@@ -141,7 +141,7 @@ theorem enStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
       (d4.trans c4) (d5.trans c5) (d6.trans c6) (d7.trans c7) (d8.trans c8) (d9.trans c9) (d10.trans c14) d11
       (d12.trans c16) d13)
       (isReturn_mono fun s' ⟨Xv', h1, h1', h2⟩ => ⟨Xv', h1, h1', M3, L, b, hFp, hLF, LiveExt.refl R L, Nat.sub_le _ _,
-        Or.inl ⟨q1, q3⟩, q2, h2⟩)
+        Or.inl ⟨q1, q3⟩, q2, hcap3, h2⟩)
     intro hc
     simp only [stW, stCap] at q1 q3 hc ⊢
     rw [q3] at hc; rw [q1, q3]
@@ -216,7 +216,7 @@ theorem enStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
       hbC hbB hbA hbAC hbP M3 _ _ hF hLF (hrg3.trans (hrg2.trans hrg1)) hx hkfG q2 hcap3 hc3 ?_ hsl3
       (by omega) hinv3 S3 e1 e2 e3 (e4.trans d4) (e5.trans d5) (e6.trans d6) (e7.trans d7) (e8.trans d8) (e9.trans d9)
       ((e10.trans d14).trans c9) e11 ((e12.trans d16).trans c11) e13)
-      (isReturn_mono fun s' ⟨Xv', h1, h1', h2⟩ => ⟨Xv', h1, h1', M3, _, _, hFp, hLF, hx, Nat.sub_le_sub_left hcostG _, hkfG, q2, h2⟩)
+      (isReturn_mono fun s' ⟨Xv', h1, h1', h2⟩ => ⟨Xv', h1, h1', M3, _, _, hFp, hLF, hx, Nat.sub_le_sub_left hcostG _, hkfG, q2, hcap3, h2⟩)
     · intro hc
       simp only [stW, stCap] at q1 q3 hc ⊢
       rw [q1, q3]
