@@ -416,3 +416,5 @@ IcHN 43, Sb* 25-47, main 16 s.
 | Nat/BasicSqrEnv (`env_of`, pure) | 2 s / 2.0 GB | |
 | Nat/BasicSqrPro (`pro3`: stk.nat result → memclr call; `pro2`: stk.nat call, by_cases cap > 0) | 138 s / 3.7 GB | a version closing the 8 register goals after the call with `simp only [...] at *` + a `first` cascade ran > 900 s (killed): `simp at *` rewrites every huge state literal in the context. After: one targeted `rw [h]; simp only [setReg_apply, …]` per goal |
 | Nat/BasicSqr (`pro1`: entry → stk.nat call; `full`, `ens`, `sum`) | 33 s / 2.6 GB | |
+| arm64 DivWVWRow (re-verified, pre `CallEnvND`) | PASS | 91 s | 4.9 GB |
+| amd64 DivWVWRow (re-verified, pre `CallEnvND`) | PASS | 26 s | 1.3 GB |

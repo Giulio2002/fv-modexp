@@ -204,7 +204,8 @@ arm64 runtime code: top's `WStubs.impl` (looping memmove, bump makeslice). amd64
 `memmove`, `m = 0`, `z.make(m)` reuse / `makeslice(1,1)` / `makeslice(m, m+4)`, `divWVW`, inlined `norm`). Result
 `X / y` normalised in `z`'s array or a fresh one, remainder in X3 / DI. Premises: live makeslice + memmove. Shared
 `Mid` structure after `z.make(m)` for both the `divWVW` and the `set` path. Pre extra conjunct for `m = 0`, `y = 1`
-(memmove of 0 bytes, see JANUS-ISSUES.md). `divWVW`'s pre now uses `CallEnvND` (no DataLoaded). Rows `DivWRow`.
+(memmove of 0 bytes, see JANUS-ISSUES.md). `divWVW`'s pre now uses `CallEnvND` (no DataLoaded); rows `DivWVWRow` re-verified PASS both ISAs (s7). Rows `DivWRow`
+PASS both ISAs (PERF.md).
 
 ## Next
 Remaining asm items: none on the coordinator's list (all rows of the asm routines verified on both ISAs).
