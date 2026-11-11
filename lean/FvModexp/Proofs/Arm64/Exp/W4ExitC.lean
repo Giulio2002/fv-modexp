@@ -46,17 +46,15 @@ theorem top_limb (m : Memory) (p n : Nat) (hn : 0 < n) :
   rw [e, Memory.readLE_add]
   have hlt := Memory.readLE_lt m p (8 * (n - 1))
   have hpos : 0 < 256 ^ (8 * (n - 1)) := Nat.pow_pos (by decide)
-  rw [Nat.add_comm, Nat.mul_comm, Nat.add_mul_div_right _ _ hpos, Nat.div_eq_of_lt hlt, Nat.zero_add]
+  rw [Nat.add_mul_div_left _ _ hpos, Nat.div_eq_of_lt hlt, Nat.zero_add]
 
 theorem norm_of_eq {m m' : Memory} {p q n : Nat} (h : m.readLE p (8 * n) = m'.readLE q (8 * n))
     (hq : NatNorm m' q n) : NatNorm m p n := by
+  rcases Nat.eq_zero_or_pos n with h0 | hn
+  · exact Or.inl h0
   rcases hq with h0 | h1
   · exact Or.inl h0
   · right
-    have hn : 0 < n := by
-      rcases Nat.eq_zero_or_pos n with h0 | h0
-      · subst h0; simp at h1
-      · exact h0
     rw [top_limb m p n hn, h, ← top_limb m' q n hn]; exact h1
 
 theorem readLE_lt64 (m : Memory) (a : Nat) : m.readLE a 8 < 2 ^ 64 := by
@@ -100,7 +98,8 @@ theorem exB (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   have hLs4 := hce0.2.2.2.2.2.2.2.2.2.2.1
   -- the environment at `M`
   have hceM : CallW.CEnv R L g sp 4304 1040 M := by
-    refine CallW.CEnv.frame hce0 (hF.mono fun a k hk => by simpa [lw, List.append_assoc] using hk) hrg0 ?_ ?_
+    refine CallW.CEnv.frame hce0 (ws := fw sp ++ [(zp, zp + 8 * zc), (zzp, zzp + 8 * zzc)])
+      (by simpa only [lw, List.append_assoc] using hF) hrg0 ?_ ?_
     · intro r hr hlt
       simp only [fw, List.mem_append, List.mem_cons, List.mem_nil_iff, or_false] at hr
       rcases hr with (rfl | rfl | rfl | rfl | rfl) | (rfl | rfl)
@@ -115,16 +114,16 @@ theorem exB (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   obtain ⟨_, _, _, haccM, _, hg2M, hg3M, _, _, _, _, _, _⟩ := hceM'
   have FL0 : FL R L sp zp zc zzp zzc M0 M := ⟨hF, hLF⟩
   have eMv : M.readLE mp (8 * n) = M0.readLE mp (8 * n) := FL.read FL0 hmh hmw hsp1 hzm hzzm
-  have rdS : ∀ a, sp + 232 ≤ a → a + 8 ≤ sp + 432 ∨ (sp + 912 ≤ a ∧ a + 8 ≤ sp + 1040) →
+  have rdS : ∀ a, sp + 912 ≤ a → a + 8 ≤ sp + 1040 →
       M.readLE a 8 = M0.readLE a 8 := by
     intro a h1 h2
     refine hF.readLE _ _ ?_
     unfold Apart at hzw hzzw
     simp only [lw, fw, outside_append, outside_cons, outside_nil, and_true]
-    exact ⟨hwrt.of_sub (by omega) (by omega), by omega⟩
-  have r1016M := (rdS (sp + 1016) (by omega) (Or.inr ⟨by omega, by omega⟩)).trans r1016
-  have r1024M := (rdS (sp + 1024) (by omega) (Or.inr ⟨by omega, by omega⟩)).trans r1024
-  have r1032M := (rdS (sp + 1032) (by omega) (Or.inr ⟨by omega, by omega⟩)).trans r1032
+    exact ⟨⟨hwrt.of_sub (by omega) (by omega), by omega⟩, by omega⟩
+  have r1016M := (rdS (sp + 1016) (by omega) (by omega)).trans r1016
+  have r1024M := (rdS (sp + 1024) (by omega) (by omega)).trans r1024
+  have r1032M := (rdS (sp + 1032) (by omega) (by omega)).trans r1032
   have tn := toNat_lt (v := n) (by omega)
   have tz := toNat_lt (v := zzp) (by omega)
   have tm := toNat_lt (v := mp) (by omega)
@@ -136,7 +135,7 @@ theorem exB (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   refine CmpW.call ((CmpW.sum impl).withExit hret) hpc
     (CmpW.pre_of hsp h28 h30 h0 h1 h3 h4 (by decide) (by decide) hal (by omega) (by omega) hSacc hg1
       (by rw [hmem]; exact hg2M) (by rw [hmem]; omega)
-      (Or.inr ⟨by omega, by rw [hmem]; exact M.accessible_sub hzza (Or.inr rfl) (Nat.le_refl _) (by omega),
+      (Or.inr ⟨by omega, by rw [hmem, hF.accessible]; exact M0.accessible_sub hzza (Or.inr rfl) (Nat.le_refl _) (by omega),
         by unfold Apart; omega⟩)
       (Or.inr ⟨hmb, by rw [hmem, hF.accessible]; exact hma, by unfold Apart; omega⟩)) ?_
   intro S1 hpc1 hsp1' hr0 hr3 hr18 hr28 hr29 hcf hrg1
@@ -148,7 +147,7 @@ theorem exB (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   rw [h18] at hr18
   rw [h28] at hr28
   rw [h29] at hr29
-  have rdC : ∀ a k, (a + k ≤ sp + 8 ∨ sp + 40 ≤ a) → sp - 24 ≤ a ∨ a + k ≤ sp - 24 →
+  have rdC : ∀ a k, (a + k ≤ sp + 8 ∨ sp + 40 ≤ a) → (a + k ≤ sp - 24 ∨ sp - 8 ≤ a) →
       (a + k ≤ sp + 16 ∨ sp + 32 ≤ a) → S1.mem.readLE a k = M.readLE a k := by
     intro a k h1 h2 h3
     refine hcf.readLE _ _ ?_
