@@ -98,7 +98,7 @@ theorem s4b (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) 
   janus_run until [1806260]
   refine compl impl k5 hpre S.mem _ _ 0 L3 b3 rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ hfw hrt hlt hv (Nat.zero_le _) ?_ ?_
   all_goals try janus_simp
-  · omega
+  · have := natVal_lt S.mem zp 0; rw [Nat.mul_zero, Nat.pow_zero] at this; omega
   · intros; trivial
 
 end FvModexp.Arm64.SubMod2N
