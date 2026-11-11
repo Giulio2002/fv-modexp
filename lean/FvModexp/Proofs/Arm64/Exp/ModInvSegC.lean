@@ -225,3 +225,31 @@ theorem store_zz {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat
   · exact ((own_read m2.2.2.2.1 F3 hk).trans (own_read m1.2.2.2.1 F2 hk)).trans (own_read hmid.2.2.2.1 F1 hk)
 
 end FvModexp.Arm64.ModInv
+
+namespace FvModexp.Arm64.ModInv
+
+/-- one loop round's value, in the joins' terms (`x[:k]` as a prefix of the normalised `x`) -/
+theorem round_step {m : Memory} {xp xl Zv j : Nat} (hx : NatNorm m xp xl)
+    (hc : natVal m xp xl * Zv % 2 ^ (2 ^ j * 32) = 1 % 2 ^ (2 ^ j * 32)) :
+    natVal m xp xl * Exp.subMod2N (Zv * 2) (Zv * Zv % 2 ^ (2 ^ j * 64) * natVal m xp (min (2 ^ j) xl) %
+      2 ^ (2 ^ j * 64)) (2 ^ j * 64) % 2 ^ (2 ^ (j + 1) * 32) = 1 % 2 ^ (2 ^ (j + 1) * 32) := by
+  have e : natVal m xp (min (2 ^ j) xl) = natVal m xp xl % Exp.B ^ min (2 ^ j) (Exp.nlen (natVal m xp xl)) := by
+    rw [SubMod2N.norm_nlen m xp xl hx]; exact Exp.natVal_prefix m xp _ xl (Nat.min_le_right _ _)
+  rw [e]; exact Exp.round_inv _ _ _ hc
+
+/-- the final round's value -/
+theorem final_step {m : Memory} {xp xl Zv j n : Nat} (hx : NatNorm m xp xl) (hodd : natVal m xp xl % 2 = 1)
+    (hn : 64 < n) (hj : NW n ≤ 2 ^ j) (hc : natVal m xp xl * Zv % 2 ^ (2 ^ j * 32) = 1 % 2 ^ (2 ^ j * 32)) :
+    Exp.subMod2N (Zv * 2) (Zv * Zv % 2 ^ n * natVal m xp (min (NW n) xl) % 2 ^ n) n = val (natVal m xp xl) n := by
+  have e : natVal m xp (min (NW n) xl) = natVal m xp xl % Exp.B ^ min ((n + 63) / 64) (Exp.nlen (natVal m xp xl)) := by
+    rw [SubMod2N.norm_nlen m xp xl hx]; exact Exp.natVal_prefix m xp _ xl (Nat.min_le_right _ _)
+  rw [e]; exact Exp.final_val _ _ _ _ hodd hn hj hc
+
+theorem spent_succ (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (n j : Nat) (hj : 1 ≤ j) :
+    spent sqrC mulC n (j + 1) = spent sqrC mulC n j + roundCost sqrC mulC n := by
+  simp only [spent, Nat.add_sub_cancel]
+  have : j * roundCost sqrC mulC n = (j - 1) * roundCost sqrC mulC n + roundCost sqrC mulC n := by
+    rw [← Nat.succ_mul, show (j - 1).succ = j by omega]
+  omega
+
+end FvModexp.Arm64.ModInv
