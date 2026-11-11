@@ -27,9 +27,20 @@ A final statement may not use an instance or class of a dependency, so these pla
 
 ## 2. The main theorem statements
 
-* Row 2 `FvModexp.<Arm64|Amd64>.RequiredGas.correctness` (`Proofs/<ISA>/RequiredGas*.lean`): for every receiver with `OsakaReceiver`, every input slice `(ptr, len, cap)` and every `fork` with
-  `PostFusaka fork`, if `LengthsPass (bytesAt mem ptr len)` then the call returns normally with `u64 result = requiredGas fork data (parseLengths data)`; otherwise it returns without panic or fault (any value).
-  Plus the Go ABI, stack and frame conditions printed by `janus verify`.
+* Row 2 `FvModexp.Arm64.RequiredGas.correctness` (`Proofs/Arm64/RequiredGas.lean`; amd64: todo). Arguments `[c, ptr, len, cap]` = receiver
+  `*bigModExp` and the input slice. Precondition: the stack-growth check falls through with 464 bytes to spare (`GuardOK s 464`), the stack
+  window `[SP-504, SP+40)` is writable (`StackOK s 504 40`; it covers RequiredGas's frame, the callees' frames and the argument spill slots),
+  the `SetBytes` jump table is loaded (`DataLoaded`), `len ≤ cap < 2^48`, the `len` input bytes and the 3 receiver bytes are readable and
+  apart from the window and from the stack-guard slot, and `Spec.OsakaReceiver s.mem c` (the three `bool` fields are `true`).
+  Postcondition (besides the Go ABI, which `Ensures` adds): `∀ fork, Spec.PostFusaka fork → Spec.LengthsPass data →
+  Spec.u64 (X0) = requiredGas fork data (parseLengths data)` with `data = Spec.bytesAt s.mem ptr len`. `Ensures` itself gives termination
+  without panic or fault for EVERY input (also when the lengths fail EIP-7823). No runtime contract is assumed: `runtime.memmove` is
+  executed from its extracted machine code (for the sizes ≤ 32 RequiredGas uses).
+  Non-vacuity: `FvModexp.Arm64.RequiredGas.Witness.nonvacuous` (receiver `{1,1,1}`, 96 zero input bytes).
+  Intermediate models (proof-internal, not in the statement): `Proofs/Common/GethGas.lean` (geth's `modexpIterationCount`,
+  `osakaMultComplexity`, `osakaModexpGas` with uint64 saturation, contracts.go:470-598, proved equal to EthLib `gasCost` under EIP-7823:
+  `Geth.osaka_gas_eq`) and `Proofs/Common/RgSpec.lean` (geth's reading of the input: `Uint64()`/`IsUint64()` saturation and `expHead`,
+  contracts.go:606-646; `RgSpec.gas_eq` = EthLib `requiredGas`). geth and EthLib agree on every input passing EIP-7823 (no finding).
 * Row 1 `FvModexp.<ISA>.Run.correctness` (agent `top`): see its module header.
 * Row 3 `FvModexp.Proofs.Compose.composition` (`Proofs/Common/Compose.lean`): pure Lean. From the guarantees of rows 1 and 2 (hypothesis structure `RowsHold`), geth's `runPrecompiled` agrees with EthLib's
   `modexp fork data gas`: failure iff failure (error length bound, or out of gas), otherwise equal outputs and remaining gas `gas - cost` with `cost` = EthLib's `chargedGas`.

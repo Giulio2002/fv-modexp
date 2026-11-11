@@ -9,6 +9,12 @@ use summaries, normalise to `Nat`, keep `omega` contexts small, use reducible cl
 
 | date | module / row | before (s, GB) | change | after (s, GB) |
 |---|---|---|---|---|
+| 2026-11-11 | Arm64/RequiredGas (one run entry→return, calls summarized) | >13 min (killed) | split at join points +0xc4/+0x160/+0x204/+0x260 into opaque-state lemmas (Blk2, Blk3, Fin1, Fin) | Blk2 51 s 3.3 GB, Blk3 57 s 3.4 GB, Fin1 60 s 2.3 GB, Fin 96-125 s 4.4 GB, main 30 s 3.4 GB |
+| 2026-11-11 | Arm64/RequiredGas/Fin closers | 6+ min per path | `show P` pattern guards unify at default transparency (unfolding `readLE` of huge terms): use `with_reducible show`; `congr 2` → `congrArg`; no `simp` over whole states | 2-5 s per path |
+| 2026-11-11 | Arm64/RequiredGas/Og (osakaModexpGas) | >8 GB (killed) | case split on `max` operand, rewrite `rotateRight 3 & mask` as `>>> 3`, tail lemma from +0x74 | 8 s 2.4 GB |
+
+Module elaboration (dev compile, `LEAN_NUM_THREADS=4`), arm64 RequiredGas: SbA 22 s, SbB 61 s, SbC 98-113 s (2.9 GB), Mv 25-34 s,
+Ic 81-95 s (3.4 GB), Og 8 s, Sb 1 s, Pre 1 s, Fin3 3 s, Fin 96-125 s (4.4 GB), Fin1 50-63 s, Blk3 57 s, Blk2 51 s, RequiredGas 30 s.
 
 ## Nat-level exponentiation layer (agent mathexp), 2026-11-10
 `LEAN_NUM_THREADS=4 memcap -m 16G lake env lean <file>` (dependencies prebuilt), wall / max RSS:
@@ -117,6 +123,12 @@ use summaries, normalise to `Nat`, keep `omega` contexts small, use reducible cl
 
 | date | module / row | before (s, GB) | change | after (s, GB) |
 |---|---|---|---|---|
+| 2026-11-11 | Arm64/RequiredGas (one run entry→return, calls summarized) | >13 min (killed) | split at join points +0xc4/+0x160/+0x204/+0x260 into opaque-state lemmas (Blk2, Blk3, Fin1, Fin) | Blk2 51 s 3.3 GB, Blk3 57 s 3.4 GB, Fin1 60 s 2.3 GB, Fin 96-125 s 4.4 GB, main 30 s 3.4 GB |
+| 2026-11-11 | Arm64/RequiredGas/Fin closers | 6+ min per path | `show P` pattern guards unify at default transparency (unfolding `readLE` of huge terms): use `with_reducible show`; `congr 2` → `congrArg`; no `simp` over whole states | 2-5 s per path |
+| 2026-11-11 | Arm64/RequiredGas/Og (osakaModexpGas) | >8 GB (killed) | case split on `max` operand, rewrite `rotateRight 3 & mask` as `>>> 3`, tail lemma from +0x74 | 8 s 2.4 GB |
+
+Module elaboration (dev compile, `LEAN_NUM_THREADS=4`), arm64 RequiredGas: SbA 22 s, SbB 61 s, SbC 98-113 s (2.9 GB), Mv 25-34 s,
+Ic 81-95 s (3.4 GB), Og 8 s, Sb 1 s, Pre 1 s, Fin3 3 s, Fin 96-125 s (4.4 GB), Fin1 50-63 s, Blk3 57 s, Blk2 51 s, RequiredGas 30 s.
 
 ## Mul/div machine summaries (agent divmc), 2026-11-11
 Dev compile `scripts/dev-lean-divmc.sh -x <isa> FILE` (Lean 4.34.1, Janus v0.2.0 oleans, `LEAN_NUM_THREADS=4`, `memcap 8G`),
