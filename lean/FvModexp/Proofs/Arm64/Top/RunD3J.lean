@@ -110,6 +110,7 @@ theorem d3join (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
   have hMC : makeCost (SetBytes.nW (BitVec.ofNat 64 (hdrV s p len 2))) ≤ bk := by
     simp only [dCost, allocCost] at hbudD hMC0 hbud ⊢; omega
   janus_data hdS
+  have hRA := raSB impl hap 0x203814 (by decide)
   janus_run [hm1, hm2, hm3, hm4, hm5, hm6, hgS, hr2', hz1, hz2, hz3, natLive_zero] until [pcD3] calls [hP := hS]
   obtain ⟨⟨-, p2, n2, c2, hp2, hn2, hc2, hv2, hnorm2, hnc2, hnw2, L2, b2, hext2, hb2, hinv2, hlive2, hor2, hMF2, hLF2⟩,
     hd2⟩ := hP

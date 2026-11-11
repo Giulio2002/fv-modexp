@@ -59,6 +59,7 @@ theorem h1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
       simp only [List.mem_append, List.mem_cons, List.not_mem_nil, or_false] at hr
       rcases hr with (rfl | rfl) | rfl <;> refine ⟨?_, ?_, ?_⟩ <;> dsimp only <;> omega
     clear hd
+    have hRA := raSBS impl hap 0x203194 (by decide)
     janus_run [natLive_zero, toInt_ite, toNat_ite, toInt_small, hc] until [pcB1] calls [hP := hS]
     obtain ⟨⟨-, p1, n1, c1, hp1, hn1, hc1, hv1, hnorm1, hnc1, hnw1, L1, b1, hext1, hb1, hinv1, hlive1, hor1, hMF1, hLF1⟩, hd1⟩ := hP
     have hspn : (s.sp - 624#64).toNat = s.sp.toNat - 624 := by rw [BitVec.toNat_sub]; simp; omega
@@ -135,6 +136,7 @@ theorem h1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
     have hW0 : p.toNat + 32 ≤ BitVec.toNat s.sp - 624 - 4160 ∨ BitVec.toNat s.sp - 624 + 48 ≤ p.toNat := by omega
     have hc : (len.toNat < 32) = False := by simp; omega
     clear hokm
+    have hRA := raSBS impl hap 0x203194 (by decide)
     janus_run [natLive_zero, toInt_ite, toNat_ite, toInt_small, hc] until [pcB1] calls [hP := hS]
     obtain ⟨⟨-, p1, n1, c1, hp1, hn1, hc1, hv1, hnorm1, hnc1, hnw1, L1, b1, hext1, hb1, hinv1, hlive1, hor1, hMF1, hLF1⟩, hd1⟩ := hP
     have hspn : (s.sp - 624#64).toNat = s.sp.toNat - 624 := by rw [BitVec.toNat_sub]; simp; omega

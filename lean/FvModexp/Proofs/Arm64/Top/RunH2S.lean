@@ -91,6 +91,7 @@ theorem h2s (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
       simp only [List.mem_append, List.mem_cons, List.not_mem_nil, or_false] at hr
       rcases hr with (rfl | rfl) | rfl <;> refine ⟨?_, ?_, ?_⟩ <;> dsimp only <;> omega
     clear hdS
+    have hRA := raSBS impl hap 0x20324c (by decide)
     janus_run [hm1, hm2, hm3, hm4, hm5, hm6, hsl1, hsl2, hgS, hmin, hc, BitVec.sub_self, natLive_zero, toInt_ite, toNat_ite,
       toInt_small] until [pcB2] calls [hP := hS]
     obtain ⟨⟨-, p2, n2, c2, hp2, hn2, hc2, hv2, hnorm2, hnc2, hnw2, L2, b2, hext2, hb2, hinv2, hlive2, hor2, hMF2, hLF2⟩, hd2⟩ := hP
@@ -181,6 +182,7 @@ theorem h2s (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
       simp only [List.mem_append, List.mem_cons, List.not_mem_nil, or_false] at hr
       rcases hr with (rfl | rfl) | rfl <;> refine ⟨?_, ?_, ?_⟩ <;> dsimp only <;> omega
     clear hdS
+    have hRA := raSBS impl hap 0x20324c (by decide)
     janus_run [hm1, hm2, hm3, hm4, hm5, hm6, hsl1, hsl2, hgS, hmin, hc, natLive_zero, toInt_ite, toNat_ite,
       hl32, toInt_small] until [pcB2] calls [hP := hS]
     obtain ⟨⟨-, p2, n2, c2, hp2, hn2, hc2, hv2, hnorm2, hnc2, hnw2, L2, b2, hext2, hb2, hinv2, hlive2, hor2, hMF2, hLF2⟩, hd2⟩ := hP

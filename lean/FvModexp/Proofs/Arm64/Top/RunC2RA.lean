@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Arm64.Top.RunC2Sum
+import FvModexp.Proofs.Arm64.Top.RunRA
 
 /-! # `Run` (arm64): the return sites of the `Mod` and `exp` calls are admissible return addresses of the callees'
 programs
@@ -14,27 +15,6 @@ callers as hypotheses (`janus_run` uses a `RetAddr` hypothesis from the context)
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
 
 namespace FvModexp.Arm64.Run
-
-/-- A return site inside `Run`'s segment (the extraction's first) is admissible for a callee program that does not keep
-`Run`. -/
-theorem raRun (impl : List Segment) (hap : ImplApart Extracted.program impl) (names : List String)
-    (hfn : names.contains fn = false) (ret : Nat) (hal : ret % 4 = 0)
-    (hin : ∀ seg0 rest, Extracted.program.segments = seg0 :: rest →
-      seg0.name = fn ∧ seg0.base ≤ ret ∧ ret < seg0.base + 4 * seg0.words.length ∧ ret < 2 ^ 48)
-    (hst : ∀ st ∈ Extracted.program.stubs, st.addr ≠ ret) :
-    RetAddr ((Extracted.program.onlySegments names).link impl) ret := by
-  obtain ⟨seg0, rest, hs⟩ : ∃ a l, Extracted.program.segments = a :: l := ⟨_, _, rfl⟩
-  obtain ⟨hnm, h1, h2, hu⟩ := hin seg0 rest hs
-  have hpw := hap.1
-  rw [hs, List.cons_append, List.pairwise_cons] at hpw
-  refine RetAddr.of_placement hal hu ⟨seg0, by rw [hs]; exact List.mem_cons_self .., h1, h2⟩ hap.1 ?_ hst
-  intro seg hm hn
-  rw [hs] at hm
-  rcases List.mem_cons.1 hm with rfl | hm
-  · rw [hnm, hfn] at hn; exact absurd hn (by decide)
-  · have ha := hpw.1 seg (List.mem_append_left _ hm)
-    unfold Segment.Apart at ha
-    omega
 
 set_option maxRecDepth 20000 in
 theorem raExp (impl : List Segment) (hap : ImplApart Extracted.program impl) :

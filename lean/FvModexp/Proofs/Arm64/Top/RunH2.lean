@@ -57,6 +57,7 @@ theorem h2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
     have hc32 : (len.toNat < 32) = False := by simp; omega
     have hc64 : (len.toNat < 64) = False := by simp; omega
     have hmin : min len.toNat 32 = 32 := by omega
+    have hRA := raSBS impl hap 0x20324c (by decide)
     janus_run [hm1, hm2, hm3, hm4, hm5, hm6, hsl1, hsl2, hgS, hmin, natLive_zero, toInt_ite, toNat_ite, toInt_small, hc32, hc64,
       sliceMask_lt, sliceMask_eq] until [pcB2]
       calls [hP := hS]

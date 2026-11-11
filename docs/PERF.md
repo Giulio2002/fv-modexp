@@ -568,3 +568,8 @@ by a `@[reducible] def` (`stS`, `stA`) and prove all memory facts in a pure `fin
   the same fact costs 7.1 GB, all in `names.contains` over the 84 segments) and handed to `janus_run` as a context
   hypothesis (`have hRA := raExp impl hap`). RunC2EX 182 s / 7.58 GB → 85 s / 3.00 GB; RunC2M 225 s / 6.51 GB →
   103 s / 2.90 GB. Applies to every `calls [hP := …]` with an `onlySegments` callee (setBytes sites in H*/D* next).
+* RunRA (setBytes return sites, 12 run sites in H*/D*) + full forced arm64 Top rebuild (J=2, host shared), all 60 OK:
+  RunH1 134→96 s, RunH2S 242→173 s, RunH3S 248→212 s (all ≤ 4.7 GB); RunC2EX 89 s / 3.05 GB, RunC2M 120 s / 2.94 GB.
+  Still over target: RunD1L 258 s / 7.67 GB, RunD2L 292 s / 7.07 GB, RunD3ZA 279 s / 6.38 GB, RunD1P 254 s / 6.15 GB —
+  these carry makeslice/memmove contract calls, not RetAddr; next: per-declaration skipKernelTC profile and split.
+  RunErr 137 s / 5.67 GB, RunOkRow 7 s.
