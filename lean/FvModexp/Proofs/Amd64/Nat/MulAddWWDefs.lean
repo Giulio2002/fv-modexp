@@ -44,7 +44,7 @@ def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl y r : BitVec 
       makeCost (need xl y r) ≤ b)
 
 /-- The postcondition: a normalised nat `(p', n', c')` holding `X·y + r`, `z`'s array or a fresh one. -/
-@[reducible] def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl y r : BitVec 64) (s s' : State) :
+@[reducible] def PostI (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl y r : BitVec 64) (s s' : State) :
     Prop :=
   s'.fsBase = s.fsBase ∧
   ∃ p' n' c' : Nat, (s'.regs 0).toNat = p' ∧ (s'.regs 3).toNat = n' ∧ (s'.regs 1).toNat = c' ∧
@@ -56,9 +56,23 @@ def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl y r : BitVec 
       MemFrame s.mem s'.mem (R.rt ++ win s 4208 72 ++ [(zp.toNat, zp.toNat + 8 * zc.toNat)]) ∧
       LiveFrame s.mem s'.mem L [(zp.toNat, zp.toNat + 8 * zc.toNat)]
 
+/-- the postcondition (AMD64 DF CONVENTION: `s'.df = s.df`) -/
+@[reducible] def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl y r : BitVec 64) (s s' : State) :
+    Prop :=
+  s'.fsBase = s.fsBase ∧ s'.df = s.df ∧
+  ∃ p' n' c' : Nat, (s'.regs 0).toNat = p' ∧ (s'.regs 3).toNat = n' ∧ (s'.regs 1).toNat = c' ∧
+    natVal s'.mem p' n' = natVal s.mem xp.toNat xl.toNat * y.toNat + r.toNat ∧
+    NatNorm s'.mem p' n' ∧ n' ≤ c' ∧ n' ≤ xl.toNat + 1 ∧
+    ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b - makeCost (need xl y r) ≤ b' ∧
+      R.inv b' L' (s.regs 14).toNat (view R.rt L' s'.mem) ∧ NatLive s'.mem R L' p' c' ∧
+      ((p' = zp.toNat ∧ c' = zc.toNat) ∨ (InRanges p' (8 * c') R.rt ∧ ApartAll p' (8 * c') L)) ∧
+      MemFrame s.mem s'.mem (R.rt ++ win s 4208 72 ++ [(zp.toNat, zp.toNat + 8 * zc.toNat)]) ∧
+      LiveFrame s.mem s'.mem L [(zp.toNat, zp.toNat + 8 * zc.toNat)]
+
 /-- The registers every path keeps. -/
 @[reducible] def RegsOK (s s' : State) : Prop :=
-  s'.regs 4 = s.regs 4 + 8 ∧ s'.regs 5 = s.regs 5 ∧ s'.regs 14 = s.regs 14 ∧ s'.xmm 15 = s.xmm 15
+  s'.regs 4 = s.regs 4 + 8 ∧ s'.regs 5 = s.regs 5 ∧ s'.regs 14 = s.regs 14 ∧ s'.xmm 15 = s.xmm 15 ∧
+    s'.df = false
 
 /-- The entry state. -/
 @[reducible] def Entry (s : State) (zp zl zc xp xl xc y r : BitVec 64) : Prop :=
@@ -258,7 +272,7 @@ theorem Mid.post {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl : Bi
     (hm : s'.mem = M) (h0 : (s'.regs 0).toNat = p) (h1 : (s'.regs 3).toNat = n') (h2 : (s'.regs 1).toNat = c)
     (hfs : s'.fsBase = s.fsBase) (hn : n' ≤ xl.toNat + 1)
     (hv : natVal M p n' = natVal s.mem xp.toNat xl.toNat * y.toNat + r.toNat) (hnorm : NatNorm M p n') :
-    Post R b L zp zc xp xl y r s s' := by
+    PostI R b L zp zc xp xl y r s s' := by
   subst hm
   have hneed : need xl y r = xl.toNat + 1 := by unfold need; rw [if_neg (by omega)]
   refine ⟨hfs, p, n', c, h0, h1, h2, hv, hnorm, by have := h.cap; omega, hn, L', b', h.ext, ?_, h.inv,
