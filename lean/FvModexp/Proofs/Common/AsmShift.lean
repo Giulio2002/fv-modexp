@@ -294,4 +294,16 @@ theorem shld_w (lo hi s : Nat) (hlo : lo < 2 ^ 64) (h1 : 1 ≤ s) (h2 : s ≤ 63
   have hlt := shift_sum_lt lo hi s hlo h1 h2
   rw [Nat.add_mod, Nat.mod_eq_of_lt (Nat.lt_of_le_of_lt (Nat.div_le_self _ _) hlo), Nat.mod_eq_of_lt hlt]
 
+/-- amd64 `SHRQ CX, hi, lo` (`SHRD`) as Janus computes it: `(hi · 2^64 + lo) / 2^s` -/
+theorem shrd_w (lo hi s : Nat) (hlo : lo < 2 ^ 64) (h1 : 1 ≤ s) (h2 : s ≤ 63) :
+    ((hi * 18446744073709551616 + lo) / 2 ^ s) % 2 ^ 64 = lo / 2 ^ s + hi * 2 ^ (64 - s) % 2 ^ 64 := by
+  have e : (18446744073709551616 : Nat) = 2 ^ s * 2 ^ (64 - s) := by
+    rw [← Nat.pow_add, show s + (64 - s) = 64 by omega]
+  have e1 : hi * 18446744073709551616 + lo = lo + 2 ^ s * (hi * 2 ^ (64 - s)) := by
+    rw [e, Nat.add_comm]; congr 1
+    generalize 2 ^ s = S; generalize 2 ^ (64 - s) = E; ac_rfl
+  rw [e1, Nat.add_mul_div_left _ _ (Nat.two_pow_pos s)]
+  have hlt := shr_sum_lt lo hi s hlo h1 h2
+  rw [Nat.add_mod, Nat.mod_eq_of_lt (Nat.lt_of_le_of_lt (Nat.div_le_self _ _) hlo), Nat.mod_eq_of_lt hlt]
+
 end FvModexp.Asm
