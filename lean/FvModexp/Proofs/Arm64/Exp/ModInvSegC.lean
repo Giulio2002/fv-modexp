@@ -170,3 +170,58 @@ theorem mid_frame (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M M'
 end
 
 end FvModexp.Arm64.ModInv
+
+namespace FvModexp.Arm64.ModInv
+
+open FvModexp.Arm64.EvenHyp
+
+/-- the memory after `zz`'s spills to `SP - 24 / - 128 / - 120` -/
+@[reducible] def memZZ (s : State) (M : Memory) (q ql qc : Nat) : Memory :=
+  ((M.writeLE (s.sp.toNat - 240 + 216) 8 q).writeLE (s.sp.toNat - 240 + 112) 8 ql).writeLE
+    (s.sp.toNat - 240 + 120) 8 qc
+
+set_option maxRecDepth 20000 in
+/-- `zz`'s spills: the round facts survive, `zz`'s slots hold it, other slots and the owned arrays unchanged -/
+theorem store_zz {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
+    {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
+    (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory}
+    {L1 : List (Nat × Nat)} {b1 p l c q ql qc : Nat} (hmid : Mid R kc L s zp zc st xp xl xc n M L1 b1 p l c q ql qc)
+    (hq : q < 2 ^ 64) (hql : ql < 2 ^ 64) (hqc : qc < 2 ^ 64) (hkc : 4608 ≤ kc) :
+    Mid R kc L s zp zc st xp xl xc n (memZZ s M q ql qc) L1 b1 p l c q ql qc ∧ QS s (memZZ s M q ql qc) q ql qc ∧
+      (∀ a, (a + 8 ≤ s.sp.toNat - 128 ∨ s.sp.toNat - 112 ≤ a ∧ a + 8 ≤ s.sp.toNat - 24 ∨ s.sp.toNat - 16 ≤ a) →
+        (memZZ s M q ql qc).readLE a 8 = M.readLE a 8) ∧
+      (∀ k, k ≤ c → (memZZ s M q ql qc).readLE p (8 * k) = M.readLE p (8 * k)) ∧
+      (∀ k, k ≤ qc → (memZZ s M q ql qc).readLE q (8 * k) = M.readLE q (8 * k)) := by
+  have hK := sp_K hpre
+  have hsp0 : 248 ≤ s.sp.toNat := by omega
+  have F1 := frame_slot (s := s) (kc := kc) M q (a := s.sp.toNat - 240 + 216) (by omega) (by omega)
+  have F2 := frame_slot (s := s) (kc := kc) (M.writeLE (s.sp.toNat - 240 + 216) 8 q) ql
+    (a := s.sp.toNat - 240 + 112) (by omega) (by omega)
+  have F3 := frame_slot (s := s) (kc := kc) ((M.writeLE (s.sp.toNat - 240 + 216) 8 q).writeLE
+    (s.sp.toNat - 240 + 112) 8 ql) qc (a := s.sp.toNat - 240 + 120) (by omega) (by omega)
+  have w1 := fw2_slot (a := s.sp.toNat - 240 + 216) hmid.1 q hsp0 (by omega) (by omega) (by omega)
+  have w2 := fw2_slot (a := s.sp.toNat - 240 + 112) w1 ql hsp0 (by omega) (by omega) (by omega)
+  have w3 := fw2_slot (a := s.sp.toNat - 240 + 120) w2 qc hsp0 (by omega) (by omega) (by omega)
+  have m1 := mid_frame hpre hmid F1 (Memory.regions_writeLE _ _ _ _) w1
+  have m2 := mid_frame hpre m1 F2 (Memory.regions_writeLE _ _ _ _) w2
+  have m3 := mid_frame hpre m2 F3 (Memory.regions_writeLE _ _ _ _) w3
+  have hlc := hmid.2.2.2.2.2.1
+  refine ⟨m3, ⟨?_, ?_, ?_⟩, fun a ha => ?_, fun k hk => ?_, fun k hk => ?_⟩
+  · simp only [memZZ]
+    rw [Memory.readLE_writeLE_of_disjoint _ _ (by omega), Memory.readLE_writeLE_of_disjoint _ _ (by omega),
+      show s.sp.toNat - 24 = s.sp.toNat - 240 + 216 by omega, Memory.readLE_writeLE_self,
+      show (256 : Nat) ^ 8 = 2 ^ 64 from rfl, Nat.mod_eq_of_lt hq]
+  · simp only [memZZ]
+    rw [Memory.readLE_writeLE_of_disjoint _ _ (by omega),
+      show s.sp.toNat - 128 = s.sp.toNat - 240 + 112 by omega, Memory.readLE_writeLE_self,
+      show (256 : Nat) ^ 8 = 2 ^ 64 from rfl, Nat.mod_eq_of_lt hql]
+  · simp only [memZZ]
+    rw [show s.sp.toNat - 120 = s.sp.toNat - 240 + 120 by omega, Memory.readLE_writeLE_self,
+      show (256 : Nat) ^ 8 = 2 ^ 64 from rfl, Nat.mod_eq_of_lt hqc]
+  · simp only [memZZ]
+    rw [Memory.readLE_writeLE_of_disjoint _ _ (by omega), Memory.readLE_writeLE_of_disjoint _ _ (by omega),
+      Memory.readLE_writeLE_of_disjoint _ _ (by omega)]
+  · exact ((own_read m2.2.2.1 F3 hk).trans (own_read m1.2.2.1 F2 hk)).trans (own_read hmid.2.2.1 F1 hk)
+  · exact ((own_read m2.2.2.2.1 F3 hk).trans (own_read m1.2.2.2.1 F2 hk)).trans (own_read hmid.2.2.2.1 F1 hk)
+
+end FvModexp.Arm64.ModInv
