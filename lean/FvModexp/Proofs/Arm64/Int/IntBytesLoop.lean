@@ -87,4 +87,54 @@ theorem innerLoop (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × 
       | rfl
       | (apply BitVec.eq_of_toNat_eq; simp; omega)
 
+set_option maxRecDepth 20000 in
+/-- The outer loop over the words `k … al - 1`, then the zero-skip loop and the return. -/
+theorem outerLoop (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (x : BitVec 64)
+    (ret : Nat) (hret : RetAddr ((Extracted.program.onlySegments [fn]).link impl) ret) (s : State)
+    (q ap N : Nat) (L' : List (Nat × Nat)) (b' : Nat) (hN1 : N ≤ 1024)
+    (hap : ap = s.mem.readLE (x.toNat + 8) 8) (hN : N = 8 * s.mem.readLE (x.toNat + 16) 8)
+    (hapacc : s.mem.accessible ap N false = true) (hap48 : ap + N ≤ 2 ^ 48)
+    (hsp : 4160 ≤ s.sp.toNat ∧ s.sp.toNat + 16 ≤ 2 ^ 48 ∧ s.sp.toNat % 16 = 0)
+    (hw : s.mem.accessible (s.sp.toNat - 4160) (4160 + 16) true = true) :
+    ∀ r (S : State) (m : Memory) (k : Nat), k + r = N / 8 → Inv R b L x s ret q ap N (8 * k) L' b' m →
+      S.pc = BitVec.ofNat 64 hOuter → S.sp = s.sp - 64#64 → S.regs 0 = BitVec.ofNat 64 q →
+      S.regs 1 = BitVec.ofNat 64 N → S.regs 2 = BitVec.ofNat 64 k → S.regs 3 = BitVec.ofNat 64 ap →
+      S.regs 4 = BitVec.ofNat 64 (N / 8) → S.regs 5 = BitVec.ofNat 64 (N / 8) →
+      S.regs 6 = BitVec.ofNat 64 (N - 8 * k) → S.regs 28 = s.regs 28 → S.regs 18 = s.regs 18 → S.mem = m →
+      Reaches (((Extracted.program.onlySegments [fn]).link impl).withExit ret) S
+        (IsReturn fun s' => ABIReturn s s' ∧ Post R b L x s s') := by
+  have hN8 : N % 8 = 0 := by omega
+  have h88 : N / 8 * 8 = N := by omega
+  have hsp' := hsp
+  obtain ⟨hs1, hs2, hs3⟩ := hsp'
+  intro r
+  induction r with
+  | zero =>
+    intro S m k hk hI hpc hsp0 hr0 hr1 hr2 hr3 hr4 hr5 hr6 hr28 hr18 hm
+    have hkN : 8 * k = N := by omega
+    have h0 : BitVec.ofNat 64 (N - 8 * k) = 0#64 := by rw [hkN, Nat.sub_self]
+    rw [h0] at hr6
+    janus_run [h88] until [hSkip]
+    refine skipLoop impl R b L x ret hret s q ap N L' b' m (by have := hI; rwa [hkN] at this) hap hN hN1 hsp hw N _ 0#64
+      (by simp) (fun j hj => absurd hj (by simp)) ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
+    all_goals janus_simp
+    all_goals first | rfl | (apply BitVec.eq_of_toNat_eq; simp; omega)
+  | succ r ih =>
+    intro S m k hk hI hpc hsp0 hr0 hr1 hr2 hr3 hr4 hr5 hr6 hr28 hr18 hm
+    have hI' := hI
+    obtain ⟨hm1, hm2, habs, hN0, hq48, hqacc, -, -, -, -, -, -, -, -, -, hfr, -⟩ := hI'
+    have hkl : 8 * k + 8 ≤ N := by omega
+    have hrd : m.readLE (ap + 8 * k) 8 = s.mem.readLE (ap + 8 * k) 8 := habs _ _ (by omega) (by omega)
+    janus_run [h88, hrd] until [hInner]
+    refine innerLoop impl R b L x ret hret s q ap N L' b' hN1 hN8 hsp hw k hkl
+      (fun S' m' hI' h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 h12 =>
+        ih S' m' (k + 1) (by omega) hI' h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 h12)
+      8 _ m 0#64 (BitVec.ofNat 64 (s.mem.readLE (ap + k * 8) 8)) (by simp) (by simpa using hI) ?_
+      ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
+    · simp only [BitVec.toNat_ofNat]
+      rw [Nat.mod_eq_of_lt (Memory.readLE_lt _ _ _), show 8 * k + 0 % 2 ^ 64 = k * 8 by omega,
+        show 8 - 0 % 2 ^ 64 = 8 by rfl]
+    all_goals janus_simp
+    all_goals first | rfl | (apply BitVec.eq_of_toNat_eq; simp; omega)
+
 end FvModexp.Arm64.IntBytes
