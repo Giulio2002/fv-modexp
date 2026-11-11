@@ -193,4 +193,88 @@ theorem linv_init (m0 M : Memory) (x z m sh : Nat) (h1 : 1 ≤ sh) (h2 : sh ≤ 
   simp only [Nat.mul_add, Nat.add_mul]
   ac_rfl
 
+/-! ## `rshVU` (forward loop) -/
+
+theorem shr_lo_eq (v s : Nat) (h1 : 1 ≤ s) (h2 : s ≤ 63) : v * 2 ^ (64 - s) % 2 ^ 64 = 2 ^ (64 - s) * (v % 2 ^ s) := by
+  have := shl_lo_eq v (64 - s) (by omega) (by omega)
+  rwa [show 64 - (64 - s) = s by omega] at this
+
+/-- `(b << (64-s)) ||| (a >>> s)` as a sum, for `a < 2^64` -/
+theorem or_shr (a b s : Nat) (ha : a < 2 ^ 64) (h1 : 1 ≤ s) (h2 : s ≤ 63) :
+    (b * 2 ^ (64 - s) % 2 ^ 64) ||| (a / 2 ^ s) = a / 2 ^ s + b * 2 ^ (64 - s) % 2 ^ 64 := by
+  have := or_shift a b (64 - s) ha (by omega) (by omega)
+  rw [show 64 - (64 - s) = s by omega] at this
+  rw [Nat.or_comm, this]
+
+theorem shr_sum_lt (a b sh : Nat) (ha : a < 2 ^ 64) (h1 : 1 ≤ sh) (h2 : sh ≤ 63) :
+    a / 2 ^ sh + b * 2 ^ (64 - sh) % 2 ^ 64 < 2 ^ 64 := by
+  have := shift_sum_lt a b (64 - sh) ha (by omega) (by omega)
+  rwa [show 64 - (64 - sh) = sh by omega] at this
+
+/-- one limb of `rshVU`: `Z` the written low limbs, `h` the pending word `x[u] >> s`, `v = x[u+1]` -/
+theorem rsh_step (X Z P h v s r : Nat) (h1 : 1 ≤ s) (h2 : s ≤ 63) (hI : X = 2 ^ s * (Z + P * h) + r) :
+    X + P * 2 ^ 64 * v = 2 ^ s * ((Z + P * (h + v * 2 ^ (64 - s) % 2 ^ 64)) + P * 2 ^ 64 * (v / 2 ^ s)) + r := by
+  rw [shr_lo_eq v s h1 h2, hI]
+  have e : (2 : Nat) ^ 64 = 2 ^ s * 2 ^ (64 - s) := by rw [← Nat.pow_add]; congr 1; omega
+  have hv := Nat.mod_add_div v (2 ^ s)
+  rw [e]
+  conv => lhs; rw [← hv]
+  generalize 2 ^ s = S at *
+  generalize 2 ^ (64 - s) = E
+  generalize v % S = A
+  generalize v / S = B
+  simp only [Nat.mul_add, Nat.add_mul, Nat.mul_assoc]
+  ac_rfl
+
+/-- the invariant of the forward shift loop: with `m0` the memory at the entry, `x[0..u]` read, `z[0..u-1]` written in
+`M`, the pending partial word is `x[u] >> s` -/
+def RInv (m0 M : Memory) (x z sh u : Nat) : Prop :=
+  lv m0 x (u + 1) = 2 ^ sh * (lv M z u + 2 ^ (64 * u) * (m0.readLE (x + 8 * u) 8 / 2 ^ sh)) + m0.readLE x 8 % 2 ^ sh
+
+theorem rinv_init (m0 M : Memory) (x z sh : Nat) : RInv m0 M x z sh 0 := by
+  unfold RInv
+  rw [lv_succ, lv_zero, lv_zero]
+  simp only [Nat.mul_zero, Nat.add_zero, Nat.pow_zero, Nat.one_mul, Nat.zero_add]
+  exact (Nat.div_add_mod _ _).symm
+
+theorem rinv_step1 (m0 M : Memory) (x z sh u w : Nat) (h1 : 1 ≤ sh) (h2 : sh ≤ 63) (hI : RInv m0 M x z sh u)
+    (hw : w % 2 ^ 64 = m0.readLE (x + 8 * u) 8 / 2 ^ sh + m0.readLE (x + 8 * (u + 1)) 8 * 2 ^ (64 - sh) % 2 ^ 64) :
+    RInv m0 (M.writeLE (z + 8 * u) 8 w) x z sh (u + 1) := by
+  unfold RInv at hI ⊢
+  rw [lv_succ m0 x (u + 1), lv_write_succ, hw, show 2 ^ (64 * (u + 1)) = 2 ^ (64 * u) * 2 ^ 64 from pow_succ64 u]
+  exact rsh_step _ _ _ _ _ sh _ h1 h2 hI
+
+theorem rinv_step4 (m0 M : Memory) (x z sh u w0 w1 w2 w3 : Nat) (h1 : 1 ≤ sh) (h2 : sh ≤ 63)
+    (hI : RInv m0 M x z sh u)
+    (hw0 : w0 % 2 ^ 64 = m0.readLE (x + 8 * u) 8 / 2 ^ sh + m0.readLE (x + 8 * (u + 1)) 8 * 2 ^ (64 - sh) % 2 ^ 64)
+    (hw1 : w1 % 2 ^ 64 = m0.readLE (x + 8 * (u + 1)) 8 / 2 ^ sh + m0.readLE (x + 8 * (u + 2)) 8 * 2 ^ (64 - sh) % 2 ^ 64)
+    (hw2 : w2 % 2 ^ 64 = m0.readLE (x + 8 * (u + 2)) 8 / 2 ^ sh + m0.readLE (x + 8 * (u + 3)) 8 * 2 ^ (64 - sh) % 2 ^ 64)
+    (hw3 : w3 % 2 ^ 64 = m0.readLE (x + 8 * (u + 3)) 8 / 2 ^ sh + m0.readLE (x + 8 * (u + 4)) 8 * 2 ^ (64 - sh) % 2 ^ 64) :
+    RInv m0 ((((M.writeLE (z + 8 * u) 8 w0).writeLE (z + 8 * u + 8) 8 w1).writeLE
+      (z + 8 * u + 16) 8 w2).writeLE (z + 8 * u + 24) 8 w3) x z sh (u + 4) := by
+  have A := rinv_step1 m0 M x z sh u w0 h1 h2 hI hw0
+  have B := rinv_step1 m0 _ x z sh (u + 1) w1 h1 h2 A hw1
+  have C := rinv_step1 m0 _ x z sh (u + 1 + 1) w2 h1 h2 B (by rw [show u + 1 + 1 = u + 2 by omega]; exact hw2)
+  have D := rinv_step1 m0 _ x z sh (u + 1 + 1 + 1) w3 h1 h2 C
+    (by rw [show u + 1 + 1 + 1 = u + 3 by omega]; exact hw3)
+  rw [show z + 8 * (u + 1) = z + 8 * u + 8 by omega, show z + 8 * (u + 1 + 1) = z + 8 * u + 16 by omega,
+    show z + 8 * (u + 1 + 1 + 1) = z + 8 * u + 24 by omega, show u + 1 + 1 + 1 + 1 = u + 4 by omega] at D
+  exact D
+
+/-- the final store and the value: `Z = X >> s`, `X mod 2^s = x[0] mod 2^s` -/
+theorem rinv_fin (m0 M : Memory) (x z sh t w : Nat) (hI : RInv m0 M x z sh t)
+    (hw : w % 2 ^ 64 = m0.readLE (x + 8 * t) 8 / 2 ^ sh) :
+    lv (M.writeLE (z + 8 * t) 8 w) z (t + 1) = lv m0 x (t + 1) / 2 ^ sh ∧
+      lv m0 x (t + 1) % 2 ^ sh = m0.readLE x 8 % 2 ^ sh := by
+  unfold RInv at hI
+  rw [lv_write_succ, hw]
+  have hr := Nat.mod_lt (m0.readLE x 8) (Nat.two_pow_pos sh)
+  rw [hI, show lv M z t + 2 ^ (64 * t) * (m0.readLE (x + 8 * t) 8 / 2 ^ sh) =
+    m0.readLE (x + 8 * t) 8 / 2 ^ sh * 2 ^ (64 * t) + lv M z t by rw [Nat.mul_comm]; omega]
+  generalize m0.readLE (x + 8 * t) 8 / 2 ^ sh * 2 ^ (64 * t) + lv M z t = K
+  generalize m0.readLE x 8 % 2 ^ sh = r at hr ⊢
+  rw [Nat.add_comm, Nat.mul_comm, Nat.add_mul_div_right _ _ (Nat.two_pow_pos sh), Nat.div_eq_of_lt hr,
+    Nat.add_mul_mod_self_right, Nat.mod_eq_of_lt hr]
+  simp
+
 end FvModexp.Asm
