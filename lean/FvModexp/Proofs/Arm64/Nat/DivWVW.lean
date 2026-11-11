@@ -411,4 +411,289 @@ theorem body (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
   · rw [h28T]; try janus_simp
   · rw [h29T]; try janus_simp
 
+/-- the memory at the call of `reciprocalWord`: prologue stores and spills -/
+@[reducible] def M0 (s : State) (ret : Nat) (zp zl xn xp y : BitVec 64) : Memory :=
+  (((((((((s.mem.writeLE (s.sp.toNat - 64) 8 ret).writeLE (s.sp.toNat - 72) 8 (s.regs 29).toNat).writeLE
+        (s.sp.toNat + 40) 8 xp.toNat).writeLE (s.sp.toNat + 16) 8 zl.toNat).writeLE (s.sp.toNat + 8) 8 zp.toNat).writeLE
+        (s.sp.toNat + 32) 8 xn.toNat).writeLE (s.sp.toNat + 64) 8 y.toNat).writeLE (s.sp.toNat + 40) 8 xp.toNat).writeLE
+        (s.sp.toNat + 48) 8 zl.toNat)
+
+set_option maxRecDepth 20000 in
+theorem rd0 (s : State) (ret : Nat) (zp zl xn xp y : BitVec 64) (T : State)
+    (hmT : MemFrame (M0 s ret zp zl xn xp y) T.mem [(s.sp.toNat - 64 - 88, s.sp.toNat - 64 - 40)])
+    (a : Nat) (ha : s.sp.toNat - 104 ≤ a) : T.mem.readLE a 8 = (M0 s ret zp zl xn xp y).readLE a 8 :=
+  hmT.readLE a 8 (by simp only [outside_cons, outside_nil, and_true]; omega)
+
+set_option maxRecDepth 20000 in
+/-- `Rel` at the loop head (`k = len z`), from the memory after `reciprocalWord` and the store of `rec` -/
+theorem rel_init (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (ret : Nat) (s : State) (zp zl xn xp y : BitVec 64)
+    (hpre : Pre R b L zp zl xn xp y s) (hret : ret < 2 ^ 48) (rec : Nat) (hrec : rec < 2 ^ 64) (T S' : State)
+    (hmT : MemFrame (M0 s ret zp zl xn xp y) T.mem [(s.sp.toNat - 64 - 88, s.sp.toNat - 64 - 40)])
+    (hsp' : S'.sp = s.sp - 64#64) (h28' : S'.regs 28 = s.regs 28) (h29' : S'.regs 29 = s.sp - 72#64)
+    (h18' : S'.regs 18 = s.regs 18) (hm' : S'.mem = T.mem.writeLE (s.sp.toNat - 24) 8 rec) :
+    Rel R b L ret zp.toNat xp.toNat zl.toNat y.toNat rec zl.toNat s S' := by
+  obtain ⟨⟨-, ⟨hal, hb', ha, hw⟩, -, hout, -, -, hLs, -⟩, -, -, -, -, -, -, -, -, -, hinv⟩ := hpre
+  have hW0 : MemFrame s.mem (M0 s ret zp zl xn xp y) (winA s 152 72) := by
+    simp only [M0, winA]; janus_frame
+  have hW1 := Janus.Contracts.Libc.memFrame_trans hW0 hmT
+  have hW : MemFrame s.mem S'.mem (winA s 152 72) := by
+    rw [hm']
+    refine ⟨fun a n h => ?_, fun a n w => ?_⟩
+    · have h' := h
+      simp only [winA, outside_cons, outside_nil, and_true] at h'
+      rw [Memory.readLE_writeLE_of_disjoint (m := T.mem) _ (by omega)]
+      exact hW1.readLE a n (by simp only [winA, outside_append, outside_cons, outside_nil, and_true]; omega)
+    · rw [Memory.accessible_writeLE, hW1.accessible]
+  have hrd : ∀ a, s.sp.toNat - 104 ≤ a → (a + 8 ≤ s.sp.toNat - 24 ∨ s.sp.toNat - 16 ≤ a) →
+      S'.mem.readLE a 8 = (M0 s ret zp zl xn xp y).readLE a 8 := by
+    intro a h1 h2
+    rw [hm', Memory.readLE_writeLE_of_disjoint (m := T.mem) _ (by omega), rd0 s ret zp zl xn xp y T hmT a h1]
+  have hLs' : ∀ r ∈ L, r.1 + (r.2 - r.1) ≤ s.sp.toNat - 152 ∨ s.sp.toNat + 72 ≤ r.1 := by
+    intro r hr; have := hLs r hr; simp only [Outside, and_true] at this; exact this
+  have hwin : ∀ r ∈ winA s 152 72, s.sp.toNat - 152 ≤ r.1 ∧ r.2 ≤ s.sp.toNat + 72 := by
+    simp only [winA, List.mem_cons, List.mem_nil_iff, or_false]
+    rintro r (rfl | rfl) <;> simp only <;> omega
+  refine ⟨hsp', h28', h29', h18', ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  · rw [hrd _ (by omega) (by omega)]
+    simp (disch := omega) only [M0, Memory.readLE_writeLE_of_disjoint, Memory.readLE_writeLE_self]
+    exact Nat.mod_eq_of_lt (by omega)
+  · rw [hrd _ (by omega) (by omega)]
+    simp (disch := omega) only [M0, Memory.readLE_writeLE_of_disjoint, Memory.readLE_writeLE_self]
+    exact Nat.mod_eq_of_lt (s.regs 29).isLt
+  · rw [hrd _ (by omega) (by omega)]
+    simp (disch := omega) only [M0, Memory.readLE_writeLE_of_disjoint, Memory.readLE_writeLE_self]
+    exact Nat.mod_eq_of_lt zp.isLt
+  · rw [hrd _ (by omega) (by omega)]
+    simp (disch := omega) only [M0, Memory.readLE_writeLE_of_disjoint, Memory.readLE_writeLE_self]
+    exact Nat.mod_eq_of_lt xp.isLt
+  · rw [hrd _ (by omega) (by omega)]
+    simp (disch := omega) only [M0, Memory.readLE_writeLE_of_disjoint, Memory.readLE_writeLE_self]
+    exact Nat.mod_eq_of_lt zl.isLt
+  · rw [hrd _ (by omega) (by omega)]
+    simp (disch := omega) only [M0, Memory.readLE_writeLE_of_disjoint, Memory.readLE_writeLE_self]
+    exact Nat.mod_eq_of_lt y.isLt
+  · rw [hm', Memory.readLE_writeLE_self]; exact Nat.mod_eq_of_lt hrec
+  · exact hW.mono fun a n h => by
+      simp only [outside_append] at h; exact h.1.2
+  · refine liveFrame_of_frame (rs := winA s 152 72) ?_ hLs' hwin
+    exact hW.mono fun a n h => by simp only [outside_append] at h; exact h.1
+  · exact inv_frame_winA hW hout (by omega) (by omega) hinv
+
+/-- the loop, by induction on the number `k` of limbs left -/
+theorem loop (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv) (b : Nat)
+    (L : List (Nat × Nat)) (ret : Nat)
+    (hret : RetAddr (LibDivWVW.program.link impl) ret) (s : State) (zp zl xn xp y : BitVec 64)
+    (hpre : Pre R b L zp zl xn xp y s) :
+    ∀ k r (S : State), k ≤ zl.toNat → AtHead (FvModexp.AsmDiv.recipWord y.toNat) k r S →
+      Rel R b L ret zp.toNat xp.toNat zl.toNat y.toNat (FvModexp.AsmDiv.recipWord y.toNat) k s S →
+      Val s zp zl xn xp y k r S →
+      Reaches ((LibDivWVW.program.link impl).withExit ret) S
+        (IsReturn fun s' => ABIReturn s s' ∧ Post R b L zp zl xn xp y s s') := by
+  intro k
+  induction k with
+  | zero => intro r S _ hh hrel hv; exact fin impl R b L ret hret s zp zl xn xp y hpre _ r S hh hrel hv
+  | succ k ih =>
+    intro r S hk hh hrel hv
+    exact body impl hap R b L ret hret s zp zl xn xp y hpre r (k + 1) (by omega) hk S hh hrel hv
+      (fun r' S' h1 h2 h3 => ih r' S' (by omega) h1 h2 h3)
+
+set_option maxRecDepth 20000 in
+/-- after `reciprocalWord` returned (`+0x44`): store `rec`, `i = len z - 1`, `r = xn`, to the loop head, then `loop` -/
+theorem gen2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv) (b : Nat)
+    (L : List (Nat × Nat)) (ret : Nat)
+    (hret : RetAddr (LibDivWVW.program.link impl) ret) (s : State) (zp zl xn xp y : BitVec 64)
+    (hpre : Pre R b L zp zl xn xp y s) (T : State)
+    (hpcT : T.pc = BitVec.ofNat 64 (entry + 0x44)) (hspT : T.sp = s.sp - 64#64)
+    (h0T : T.regs 0 = BitVec.ofNat 64 (FvModexp.AsmDiv.recipWord y.toNat))
+    (h18T : T.regs 18 = s.regs 18) (h28T : T.regs 28 = s.regs 28) (h29T : T.regs 29 = s.sp - 72#64)
+    (hmT : MemFrame (M0 s ret zp zl xn xp y) T.mem [(s.sp.toNat - 64 - 88, s.sp.toNat - 64 - 40)]) :
+    Reaches ((LibDivWVW.program.link impl).withExit ret) T
+      (IsReturn fun s' => ABIReturn s s' ∧ Post R b L zp zl xn xp y s s') := by
+  have hpre' := hpre
+  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, -, -, -, -, -, -⟩, hy, hxn, -⟩ := hpre'
+  have hTa : ∀ a n w, T.mem.accessible a n w = s.mem.accessible a n w := by
+    intro a n w; rw [hmT.accessible]; simp only [M0, Memory.accessible_writeLE]
+  have hacc : T.mem.accessible (s.sp.toNat - 152) (152 + 72) true = true := by rw [hTa]; exact hw
+  have hspn : T.sp.toNat = s.sp.toNat - 64 := by rw [hspT, BitVec.toNat_sub]; simp; omega
+  have h_rd_zl : T.mem.readLE (s.sp.toNat + 16) 8 = zl.toNat := by
+    rw [rd0 s ret zp zl xn xp y T hmT _ (by omega)]
+    simp (disch := omega) only [M0, Memory.readLE_writeLE_of_disjoint, Memory.readLE_writeLE_self]
+    exact Nat.mod_eq_of_lt zl.isLt
+  have h_rd_xn : T.mem.readLE (s.sp.toNat + 32) 8 = xn.toNat := by
+    rw [rd0 s ret zp zl xn xp y T hmT _ (by omega)]
+    simp (disch := omega) only [M0, Memory.readLE_writeLE_of_disjoint, Memory.readLE_writeLE_self]
+    exact Nat.mod_eq_of_lt xn.isLt
+  have hrecl := recipWord_lt y.toNat hy y.isLt
+  have hrecv : (BitVec.ofNat 64 (FvModexp.AsmDiv.recipWord y.toNat)).toNat = FvModexp.AsmDiv.recipWord y.toNat := by
+    rw [BitVec.toNat_ofNat]; exact Nat.mod_eq_of_lt hrecl
+  have hret48 : ret < 2 ^ 48 := hret.user
+  janus_run [hrecv] until [entry + 0xc4]
+  refine loop impl hap R b L ret hret s zp zl xn xp y hpre zl.toNat xn.toNat _ (Nat.le_refl _) ⟨rfl, ?_, ?_, ?_⟩
+    (rel_init R b L ret s zp zl xn xp y hpre hret48 _ hrecl T _ hmT ?_ ?_ ?_ ?_ ?_) ⟨?_, ?_⟩
+  all_goals first | with_reducible rfl | janus_simp | skip
+  · rw [FvModexp.AsmDivVW.H_top, Nat.mod_eq_of_lt hxn]
+  · rw [Nat.sub_self, Nat.mul_zero, Memory.readLE_zero_eq, FvModexp.AsmDivVW.H_top, Nat.div_eq_of_lt hxn]
+
+set_option maxRecDepth 20000 in
+/-- the entry for `len x ≠ 1`: prologue, spills, `reciprocalWord(y)` -/
+theorem gen1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv) (b : Nat)
+    (L : List (Nat × Nat)) (ret : Nat)
+    (hret : RetAddr (LibDivWVW.program.link impl) ret) (s : State) (zp zl zc xn xp xc y : BitVec 64)
+    (hs : s.pc = BitVec.ofNat 64 entry) (hx0 : s.regs 0 = zp) (hx1 : s.regs 1 = zl) (hx2 : s.regs 2 = zc)
+    (hx3 : s.regs 3 = xn) (hx4 : s.regs 4 = xp) (hx5 : s.regs 5 = zl) (hx6 : s.regs 6 = xc) (hx7 : s.regs 7 = y)
+    (h30 : s.regs 30 = BitVec.ofNat 64 ret)
+    (hpre : Pre R b L zp zl xn xp y s) (hne : zl.toNat ≠ 1) :
+    Reaches ((LibDivWVW.program.link impl).withExit ret) s
+      (IsReturn fun s' => ABIReturn s s' ∧ Post R b L zp zl xn xp y s s') := by
+  have hpre' := hpre
+  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, -, hout, hga, -, hLs, -⟩, hy, hxn, -⟩ := hpre'
+  have hne' : (zl = 1#64) = False := by
+    simp only [eq_iff_iff, iff_false]; intro h; apply hne; rw [h]; rfl
+  clear hLs hout
+  janus_run [hne'] until [entry + 0x44] calls [recip impl hap]
+  rename_i _ hpcT hspT h0T h18T h28T h29T hmT
+  refine gen2 impl hap R b L ret hret s zp zl xn xp y hpre s' ?_ ?_ ?_ ?_ ?_ ?_ hmT
+  · rw [hpcT]; try janus_simp
+  · rw [hspT]; try janus_simp
+  · rw [h0T]; try janus_simp
+  · rw [h18T]; try janus_simp
+  · rw [h28T]; try janus_simp
+  · rw [h29T]; try janus_simp
+
+/-- the memory at the call of `math/bits.Div64` (`len x = 1`) -/
+@[reducible] def M1 (s : State) (ret : Nat) (zp xp : BitVec 64) : Memory :=
+  (((((s.mem.writeLE (s.sp.toNat - 64) 8 ret).writeLE (s.sp.toNat - 72) 8 (s.regs 29).toNat).writeLE
+        (s.sp.toNat + 40) 8 xp.toNat).writeLE (s.sp.toNat + 16) 8 1).writeLE (s.sp.toNat + 8) 8 zp.toNat)
+
+set_option maxRecDepth 20000 in
+/-- after `Div64` returned (`len x = 1`, `+0x68`): store `z[0]`, return the remainder -/
+theorem one2 (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (ret : Nat)
+    (hret : RetAddr (LibDivWVW.program.link impl) ret) (s : State) (zp zl xn xp y : BitVec 64)
+    (hpre : Pre R b L zp zl xn xp y s) (hz1 : zl.toNat = 1) (T : State)
+    (hpcT : T.pc = BitVec.ofNat 64 (entry + 0x68)) (hspT : T.sp = s.sp - 64#64)
+    (h0T : (T.regs 0).toNat = (xn.toNat * 2 ^ 64 + s.mem.readLE xp.toNat 8) / y.toNat)
+    (h1T : (T.regs 1).toNat = (xn.toNat * 2 ^ 64 + s.mem.readLE xp.toNat 8) % y.toNat)
+    (h18T : T.regs 18 = s.regs 18) (h28T : T.regs 28 = s.regs 28) (h29T : T.regs 29 = s.sp - 72#64)
+    (hmT : MemFrame (M1 s ret zp xp) T.mem [(s.sp.toNat - 64 - 40, s.sp.toNat - 64 - 24)]) :
+    Reaches ((LibDivWVW.program.link impl).withExit ret) T
+      (IsReturn fun s' => ABIReturn s s' ∧ Post R b L zp zl xn xp y s s') := by
+  have hpre' := hpre
+  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, -, hout, -, -, hLs, -⟩, hy, hxn, hzl, hzw, -, -, -, -, -, hinv⟩ := hpre'
+  obtain ⟨hzal, hzh, hzacc, hz48⟩ := hzl (by omega)
+  simp only [Outside, and_true] at hzw
+  have hW0 : MemFrame s.mem (M1 s ret zp xp) (winA s 152 72) := by
+    simp only [M1, winA]; janus_frame
+  have hW1' := Janus.Contracts.Libc.memFrame_trans hW0 hmT
+  have hW1 : MemFrame s.mem T.mem (winA s 152 72) := hW1'.mono fun a n h => by
+    simp only [winA, outside_append, outside_cons, outside_nil, and_true] at h ⊢; omega
+  have hTa : ∀ a n w, T.mem.accessible a n w = s.mem.accessible a n w := fun a n w => hW1.accessible a n w
+  have hacc : T.mem.accessible (s.sp.toNat - 152) (152 + 72) true = true := by rw [hTa]; exact hw
+  have hzacc' : T.mem.accessible zp.toNat (8 * zl.toNat) true = true := by rw [hTa]; exact hzacc
+  have hspn : T.sp.toNat = s.sp.toNat - 64 := by rw [hspT, BitVec.toNat_sub]; simp; omega
+  have hrd : ∀ a, s.sp.toNat - 64 ≤ a → T.mem.readLE a 8 = (M1 s ret zp xp).readLE a 8 :=
+    fun a h => hmT.readLE a 8 (by simp only [outside_cons, outside_nil, and_true]; omega)
+  have h_rd_zl : T.mem.readLE (s.sp.toNat + 16) 8 = 1 := by
+    rw [hrd _ (by omega)]
+    simp (disch := omega) only [M1, Memory.readLE_writeLE_of_disjoint, Memory.readLE_writeLE_self]
+  have h_rd_z : T.mem.readLE (s.sp.toNat + 8) 8 = zp.toNat := by
+    rw [hrd _ (by omega)]
+    simp (disch := omega) only [M1, Memory.readLE_writeLE_of_disjoint, Memory.readLE_writeLE_self]
+    exact Nat.mod_eq_of_lt zp.isLt
+  have h_rd_fp : T.mem.readLE (s.sp.toNat - 72) 8 = (s.regs 29).toNat := by
+    rw [hmT.readLE _ 8 (by simp only [outside_cons, outside_nil, and_true]; omega)]
+    simp (disch := omega) only [M1, Memory.readLE_writeLE_of_disjoint, Memory.readLE_writeLE_self]
+    exact Nat.mod_eq_of_lt (s.regs 29).isLt
+  have h_rd_lr : T.mem.readLE (s.sp.toNat - 64) 8 = ret := by
+    rw [hrd _ (by omega)]
+    simp (disch := omega) only [M1, Memory.readLE_writeLE_of_disjoint, Memory.readLE_writeLE_self]
+    exact Nat.mod_eq_of_lt (by have := hret.user; omega)
+  have hLs' : ∀ r ∈ L, r.1 + (r.2 - r.1) ≤ s.sp.toNat - 152 ∨ s.sp.toNat + 72 ≤ r.1 := by
+    intro r hr; have := hLs r hr; simp only [Outside, and_true] at this; exact this
+  have hwin : ∀ r ∈ winA s 152 72, s.sp.toNat - 152 ≤ r.1 ∧ r.2 ≤ s.sp.toNat + 72 := by
+    simp only [winA, List.mem_cons, List.mem_nil_iff, or_false]
+    rintro r (rfl | rfl) <;> simp only <;> omega
+  have hWz : ∀ v, MemFrame s.mem (T.mem.writeLE zp.toNat 8 v) (winA s 152 72 ++ [(zp.toNat, zp.toNat + 8 * zl.toNat)]) := by
+    intro v
+    refine ⟨fun a n h => ?_, fun a n w => by rw [Memory.accessible_writeLE]; exact hW1.accessible a n w⟩
+    have h' := h
+    simp only [winA, outside_append, outside_cons, outside_nil, and_true] at h'
+    rw [Memory.readLE_writeLE_of_disjoint (m := T.mem) _ (by omega)]
+    exact hW1.readLE a n (by simp only [winA, outside_cons, outside_nil, and_true]; omega)
+  have hq := FvModexp.AsmDivVW.digit_lt xn.toNat (s.mem.readLE xp.toNat 8) y.toNat hxn
+    (by have := Memory.readLE_lt s.mem xp.toNat 8; simpa using this)
+  have hinvT : R.inv b L (s.regs 28).toNat (view R.rt L T.mem) := inv_frame_winA hW1 hout (by omega) (by omega) hinv
+  clear hLs
+  janus_run
+  refine ⟨?_, ?_, L, b, LiveExt.refl R L, Nat.le_refl _, ?_, ?_, ?_⟩
+  · show (T.regs 1).toNat = (xn.toNat * 2 ^ (64 * zl.toNat) + s.mem.readLE xp.toNat (8 * zl.toNat)) % y.toNat
+    rw [h1T, hz1]
+  · show (T.mem.writeLE zp.toNat 8 (T.regs 0).toNat).readLE zp.toNat (8 * zl.toNat) =
+      (xn.toNat * 2 ^ (64 * zl.toNat) + s.mem.readLE xp.toNat (8 * zl.toNat)) / y.toNat
+    rw [hz1, Nat.mul_one, Nat.mul_one, Memory.readLE_writeLE_self, h0T]
+    exact Nat.mod_eq_of_lt hq
+  · exact inv_store_held hinvT (hzh.sub (Nat.le_refl _) (by omega))
+  · exact (hWz _).mono fun a n h => by simp only [outside_append] at h ⊢; exact ⟨h.1.2, h.2⟩
+  · exact liveFrame_of_frame (rs := winA s 152 72) (hWz _) hLs' hwin
+
+set_option maxRecDepth 20000 in
+/-- the entry for `len x = 1`: prologue, `bits.Div(xn, x[0], y)` -/
+theorem one1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv) (b : Nat)
+    (L : List (Nat × Nat)) (ret : Nat)
+    (hret : RetAddr (LibDivWVW.program.link impl) ret) (s : State) (zp zl zc xn xp xc y : BitVec 64)
+    (hs : s.pc = BitVec.ofNat 64 entry) (hx0 : s.regs 0 = zp) (hx1 : s.regs 1 = zl) (hx2 : s.regs 2 = zc)
+    (hx3 : s.regs 3 = xn) (hx4 : s.regs 4 = xp) (hx5 : s.regs 5 = zl) (hx6 : s.regs 6 = xc) (hx7 : s.regs 7 = y)
+    (h30 : s.regs 30 = BitVec.ofNat 64 ret)
+    (hpre : Pre R b L zp zl xn xp y s) (h1 : zl.toNat = 1) :
+    Reaches ((LibDivWVW.program.link impl).withExit ret) s
+      (IsReturn fun s' => ABIReturn s s' ∧ Post R b L zp zl xn xp y s s') := by
+  have hpre' := hpre
+  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, -, hout, hga, -, hLs, -⟩, hy, hxn, hzl, hzw, hxacc, hx48, -,
+    hxw, -⟩ := hpre'
+  simp only [Outside, and_true] at hxw
+  have he : (zl = 1#64) = True := by
+    simp only [eq_iff_iff, iff_true]; exact BitVec.eq_of_toNat_eq (by rw [h1]; rfl)
+  clear hLs hout
+  janus_run [he] until [entry + 0x68] calls [div64 impl hap]
+  rename_i _ hpcT hspT h28T h29T h18T h0T h1T hmT
+  refine one2 impl R b L ret hret s zp zl xn xp y hpre h1 s' ?_ ?_ h0T h1T ?_ ?_ ?_ hmT
+  · rw [hpcT]; try janus_simp
+  · rw [hspT]; try janus_simp
+  · rw [h18T]; try janus_simp
+  · rw [h28T]; try janus_simp
+  · rw [h29T]; try janus_simp
+
+/-- `divWVW` on the library program -/
+theorem ens_lib (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+    (b : Nat) (L : List (Nat × Nat)) (zp zl zc xn xp xl xc y : BitVec 64) :
+    Ensures (LibDivWVW.program.link impl) entry [zp, zl, zc, xn, xp, xl, xc, y]
+      (fun s => xl = zl ∧ Pre R b L zp zl xn xp y s) (fun s s' => Post R b L zp zl xn xp y s s') := by
+  intro ret hret s hs ⟨hxz, hpre⟩
+  janus_intro hs
+  subst hxz
+  have hpc : s.pc = BitVec.ofNat 64 entry := by rw [h_pc]; rfl
+  by_cases h1 : xl.toNat = 1
+  · refine Janus.Tactic.returns_of_reaches ?_
+    exact one1 impl hap R b L ret hret s zp xl zc xn xp xc y hpc h_x0 h_x1 h_x2 h_x3 h_x4 h_x5 h_x6 h_x7 h_lr hpre h1
+  · refine Janus.Tactic.returns_of_reaches ?_
+    exact gen1 impl hap R b L ret hret s zp xl zc xn xp xc y hpc h_x0 h_x1 h_x2 h_x3 h_x4 h_x5 h_x6 h_x7 h_lr hpre h1
+
+/-- **`divWVW` (arm64)**, CONVENTIONS §3 shape (`Pre`/`Post` above; `xl = zl` is Go's `len(z) = len(x)` contract):
+`X0 = (xn·B^n + x) mod y`, `z[0:n] = (xn·B^n + x) / y` for `y ≠ 0`, `xn < y`, `z = x` or apart -/
+theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+    (b : Nat) (L : List (Nat × Nat)) (zp zl zc xn xp xl xc y : BitVec 64) :
+    Ensures ((Extracted.program.onlySegments names).link impl) (segAddr Extracted.program fn)
+      [zp, zl, zc, xn, xp, xl, xc, y]
+      (fun s => xl = zl ∧ Pre R b L zp zl xn xp y s) (fun s s' => Post R b L zp zl xn xp y s s') := by
+  have e : Extracted.program.onlySegments names = LibDivWVW.program := LibDivWVW.eq_only.symm
+  rw [e]
+  exact ens_lib impl hap R b L zp zl zc xn xp xl xc y
+
+set_option linter.defProp false in
+/-- `ens` as a callee summary inside a caller whose program keeps the functions `ms ⊇ names` (CONVENTIONS §4) -/
+def sum (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+    (b : Nat) (L : List (Nat × Nat)) (zp zl zc xn xp xl xc y : BitVec 64) (ms : List String)
+    (hsub : ∀ x, names.contains x = true → ms.contains x = true) :=
+  Ensures.toSummaryIn (ens impl hap R b L zp zl zc xn xp xl xc y) (noExit_restrict hap names)
+    (codeIn_restrict_mono hap hsub)
+
 end FvModexp.Arm64.DivWVW
