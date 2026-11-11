@@ -38,7 +38,7 @@ def fnSqr : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.nat.sqr"
 
 @[reducible] def SqrPre (R : RtInv) (b c : Nat) (L : List (Nat × Nat)) (stk above zp zl zc st x xl : Nat) (s : State) :
     Prop :=
-  CallEnv R L s stk above ∧ Serves R ∧ RunIface.Globals R s.mem ∧ zl ≤ zc ∧ WrOut R L s stk above zp zc ∧
+  CallEnv R L s stk above ∧ Serves R ∧ RunIface.Globals R s.mem (win s stk above) ∧ zl ≤ zc ∧ WrOut R L s stk above zp zc ∧
     RdIn R L s stk above x xl ∧ xl ≤ 2 ^ 12 ∧ (zp = x ∨ (0 < zc → 0 < xl → Apart zp (8 * zc) x (8 * xl))) ∧
     StkIn R L s stk above st ∧ stLen s.mem st + 4 * (2 * xl) + 64 ≤ 2 ^ 16 ∧
     StkApart s.mem st zp (8 * zc) ∧ StkApart s.mem st x (8 * xl) ∧
@@ -51,18 +51,17 @@ def fnSqr : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.nat.sqr"
       NatOF R L L' s'.mem zp zc (2 * xl) p' l' c' (natVal s.mem x xl * natVal s.mem x xl) ∧
       RtPost R b c L L' b' s s' ∧ StackBack R L L' st s.mem s'.mem ∧
       -- a fresh result is apart from a re-allocated stack array (both may be allocated inside the call)
-      (¬ (p' = zp ∧ c' = zc) → 0 < c' → 0 < stCap s'.mem st →
-        ¬ (stW s'.mem st = stW s.mem st ∧ stCap s'.mem st = stCap s.mem st) →
-        Apart p' (8 * c') (stW s'.mem st) (8 * stCap s'.mem st)) ∧
+      (¬ (p' = zp ∧ c' = zc) → 0 < c' → 0 < stCap s'.mem st → Apart p' (8 * c') (stW s'.mem st) (8 * stCap s'.mem st)) ∧
       MemFrame s.mem s'.mem (R.rt ++ winA s stk above ++ [(zp, zp + 8 * zc)] ++ stWs s.mem st) ∧
       LiveFrame s.mem s'.mem L ([(zp, zp + 8 * zc)] ++ stWs s.mem st)
 
-/-- `cost xl`: the owner's budget bound of one `sqr` of an `xl`-word operand -/
-def SqrHyp (impl : List Segment) (R : RtInv) (ns : List String) (stk above : Nat) (cost : Nat → Nat) : Prop :=
+/-- `cost ℓ xl`: the owner's budget bound of one `sqr` of an `xl`-word operand with the stack object's length `ℓ` at
+entry (a growing `stk.nat` allocates about `2 (ℓ + n)` words) -/
+def SqrHyp (impl : List Segment) (R : RtInv) (ns : List String) (stk above : Nat) (cost : Nat → Nat → Nat) : Prop :=
   ∀ (b : Nat) (L : List (Nat × Nat)) (z zl zc st x xl xc : BitVec 64),
     Ensures ((Extracted.program.onlySegments ns).link impl) (segAddr Extracted.program fnSqr) [z, zl, zc, st, x, xl, xc]
-      (fun s => SqrPre R b (cost xl.toNat) L stk above z.toNat zl.toNat zc.toNat st.toNat x.toNat xl.toNat s)
-      (fun s s' => SqrPost R b (cost xl.toNat) L stk above z.toNat zc.toNat st.toNat x.toNat xl.toNat s s')
+      (fun s => SqrPre R b (cost (stLen s.mem st.toNat) xl.toNat) L stk above z.toNat zl.toNat zc.toNat st.toNat x.toNat xl.toNat s)
+      (fun s s' => SqrPost R b (cost (stLen s.mem st.toNat) xl.toNat) L stk above z.toNat zc.toNat st.toNat x.toNat xl.toNat s s')
 
 /-! ## `z.mul(stk, x, y)` (nat.go:? `nat.mul`) — z X0..X2, st X3, x X4..X6, y X7..X9; result `X · Y` normalised -/
 
@@ -70,7 +69,7 @@ def fnMul : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.nat.mul"
 
 @[reducible] def MulPre (R : RtInv) (b c : Nat) (L : List (Nat × Nat)) (stk above zp zl zc st x xl y yl : Nat)
     (s : State) : Prop :=
-  CallEnv R L s stk above ∧ Serves R ∧ RunIface.Globals R s.mem ∧ zl ≤ zc ∧ WrOut R L s stk above zp zc ∧
+  CallEnv R L s stk above ∧ Serves R ∧ RunIface.Globals R s.mem (win s stk above) ∧ zl ≤ zc ∧ WrOut R L s stk above zp zc ∧
     RdIn R L s stk above x xl ∧ RdIn R L s stk above y yl ∧ xl ≤ 2 ^ 12 ∧ yl ≤ 2 ^ 12 ∧
     (zp = x ∨ (0 < zc → 0 < xl → Apart zp (8 * zc) x (8 * xl))) ∧
     (zp = y ∨ (0 < zc → 0 < yl → Apart zp (8 * zc) y (8 * yl))) ∧
@@ -85,20 +84,19 @@ def fnMul : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.nat.mul"
       NatOF R L L' s'.mem zp zc (xl + yl) p' l' c' (natVal s.mem x xl * natVal s.mem y yl) ∧
       RtPost R b c L L' b' s s' ∧ StackBack R L L' st s.mem s'.mem ∧
       -- a fresh result is apart from a re-allocated stack array (both may be allocated inside the call)
-      (¬ (p' = zp ∧ c' = zc) → 0 < c' → 0 < stCap s'.mem st →
-        ¬ (stW s'.mem st = stW s.mem st ∧ stCap s'.mem st = stCap s.mem st) →
-        Apart p' (8 * c') (stW s'.mem st) (8 * stCap s'.mem st)) ∧
+      (¬ (p' = zp ∧ c' = zc) → 0 < c' → 0 < stCap s'.mem st → Apart p' (8 * c') (stW s'.mem st) (8 * stCap s'.mem st)) ∧
       MemFrame s.mem s'.mem (R.rt ++ winA s stk above ++ [(zp, zp + 8 * zc)] ++ stWs s.mem st) ∧
       LiveFrame s.mem s'.mem L ([(zp, zp + 8 * zc)] ++ stWs s.mem st)
 
-/-- `cost xl yl`: the owner's budget bound of one `mul` -/
-def MulHyp (impl : List Segment) (R : RtInv) (ns : List String) (stk above : Nat) (cost : Nat → Nat → Nat) : Prop :=
+/-- `cost ℓ xl yl`: the owner's budget bound of one `mul` (`ℓ` the stack object's length at entry) -/
+def MulHyp (impl : List Segment) (R : RtInv) (ns : List String) (stk above : Nat) (cost : Nat → Nat → Nat → Nat) :
+    Prop :=
   ∀ (b : Nat) (L : List (Nat × Nat)) (z zl zc st x xl xc y yl yc : BitVec 64),
     Ensures ((Extracted.program.onlySegments ns).link impl) (segAddr Extracted.program fnMul)
       [z, zl, zc, st, x, xl, xc, y, yl, yc]
-      (fun s => MulPre R b (cost xl.toNat yl.toNat) L stk above z.toNat zl.toNat zc.toNat st.toNat x.toNat xl.toNat
+      (fun s => MulPre R b (cost (stLen s.mem st.toNat) xl.toNat yl.toNat) L stk above z.toNat zl.toNat zc.toNat st.toNat x.toNat xl.toNat
         y.toNat yl.toNat s)
-      (fun s s' => MulPost R b (cost xl.toNat yl.toNat) L stk above z.toNat zc.toNat st.toNat x.toNat xl.toNat y.toNat
+      (fun s s' => MulPost R b (cost (stLen s.mem st.toNat) xl.toNat yl.toNat) L stk above z.toNat zc.toNat st.toNat x.toNat xl.toNat y.toNat
         yl.toNat s s')
 
 /-! ## `z.lsh(x, sh)` with `z = x` allowed — expmc's `LshPost` -/
