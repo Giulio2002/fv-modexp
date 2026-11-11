@@ -69,6 +69,54 @@ theorem subCall {impl : List Segment} (hap : ImplApart Extracted.program impl) {
     obtain ⟨a1, a2⟩ := hr1 h
     exact ⟨by rw [← q0, a1], by rw [← q2, a2]⟩
 
+set_option maxRecDepth 20000 in
+/-- a call of `nat.add` (premise `AddHypR`) at its entry `1781184` with `SP = sp'`, continuation form over the
+destructured (Nat-level) postcondition -/
+theorem addCall {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} (hadd : AddHypR impl R)
+    {b : Nat} {L : List (Nat × Nat)} {zp zl zc xp xl xc yp yl yc : Nat} {sp' g : Nat} {M : Memory}
+    {S : State} {ret : BitVec 64} {Q : State → Prop} {ra : Nat}
+    (hra : RetAddr ((Extracted.program.onlySegments NatAdd.names).link impl) ra) (bra : ra < 2 ^ 64)
+    (bz : zp < 2 ^ 64) (bzc : zc < 2 ^ 64) (bx : xp < 2 ^ 64) (bxl : xl < 2 ^ 64) (by' : yp < 2 ^ 64)
+    (byl : yl < 2 ^ 64) (bsp : sp' < 2 ^ 64)
+    (hpc : S.pc = BitVec.ofNat 64 1781184) (h30 : S.regs 30 = BitVec.ofNat 64 ra)
+    (h0 : S.regs 0 = BitVec.ofNat 64 zp) (h1 : S.regs 1 = BitVec.ofNat 64 zl) (h2 : S.regs 2 = BitVec.ofNat 64 zc)
+    (h3 : S.regs 3 = BitVec.ofNat 64 xp) (h4 : S.regs 4 = BitVec.ofNat 64 xl) (h5 : S.regs 5 = BitVec.ofNat 64 xc)
+    (h6 : S.regs 6 = BitVec.ofNat 64 yp) (h7 : S.regs 7 = BitVec.ofNat 64 yl) (h8 : S.regs 8 = BitVec.ofNat 64 yc)
+    (hS : S.mem = M) (hsp : S.sp = BitVec.ofNat 64 sp') (h28 : (S.regs 28).toNat = g)
+    (hpre : NatAdd.Pre R b L (BitVec.ofNat 64 zp) (BitVec.ofNat 64 zc) (BitVec.ofNat 64 xp) (BitVec.ofNat 64 xl)
+      (BitVec.ofNat 64 xc) (BitVec.ofNat 64 yp) (BitVec.ofNat 64 yl) (BitVec.ofNat 64 yc) S)
+    (K : ∀ (s' : State) (p' n' c' : Nat) (L' : List (Nat × Nat)) (b' : Nat), s'.pc = BitVec.ofNat 64 ra →
+      s'.sp = BitVec.ofNat 64 sp' → s'.regs 28 = S.regs 28 → s'.regs 29 = S.regs 29 → s'.regs 18 = S.regs 18 →
+      s'.mem.regions = M.regions → s'.regs 0 = BitVec.ofNat 64 p' → s'.regs 1 = BitVec.ofNat 64 n' →
+      s'.regs 2 = BitVec.ofNat 64 c' → natVal s'.mem p' n' = natVal M xp xl + natVal M yp yl →
+      NatNorm s'.mem p' n' → n' ≤ c' → n' ≤ max xl yl + 1 → LiveExt R L L' →
+      b - makeCost (if min xl yl = 0 then max xl yl else max xl yl + 1) ≤ b' →
+      R.inv b' L' g (view R.rt L' s'.mem) → NatLive s'.mem R L' p' c' →
+      ((p' = zp ∧ c' = zc) ∨ (InRanges p' (8 * c') R.rt ∧ ApartAll p' (8 * c') L)) →
+      MemFrame M s'.mem (R.rt ++ [(sp' - 4464, sp' - 8), (sp' + 8, sp' + 80)] ++ [(zp, zp + 8 * zc)]) →
+      LiveFrame M s'.mem L [(zp, zp + 8 * zc)] →
+      ((if min xl yl = 0 then max xl yl else max xl yl + 1) ≤ zc → p' = zp ∧ c' = zc) → c' < 2 ^ 40 →
+      ReachesRet (LibExp.program.link impl) ret s' Q) :
+    ReachesRet (LibExp.program.link impl) ret S Q := by
+  have hS' := CallW.hypSum hap add_names (hadd b L (BitVec.ofNat 64 zp) (BitVec.ofNat 64 zl) (BitVec.ofNat 64 zc)
+    (BitVec.ofNat 64 xp) (BitVec.ofNat 64 xl) (BitVec.ofNat 64 xc) (BitVec.ofNat 64 yp) (BitVec.ofNat 64 yl)
+    (BitVec.ofNat 64 yc))
+  rw [show segAddr Extracted.program NatAdd.fn = 1781184 by decide] at hS'
+  refine ReachesRet.call_regions hS' hpc ⟨?_, ?_, hpre⟩ fun s' hr ⟨⟨e1, e2, e3, e4⟩, hq, hr1, hr2⟩ hrg => ?_
+  · rw [h30, tN bra]; exact hra
+  · simp only [ArgsFrom]; exact ⟨h0, h1, h2, h3, h4, h5, h6, h7, h8, trivial⟩
+  · obtain ⟨p', n', c', q0, q1, q2, hv, hn, hlc, hln, L', b', hLE, hb, hinv, hlive, hor, hF, hLF⟩ := hq
+    have hspT : S.sp.toNat = sp' := by rw [hsp]; exact tN bsp
+    rw [tN bz, tN bzc, tN bx, tN bxl, tN by', tN byl, hS] at *
+    simp only [winA, hspT, h28] at hF hinv
+    simp only [NatAdd.mx, NatAdd.need, tN bxl, tN byl] at hln hb hr1
+    rw [hS] at hrg
+    refine K s' p' n' c' L' b' (hr.trans h30) (e1.trans hsp) e2 e3 e4 hrg (by rw [← q0, Expmc.bv_ofNat_toNat])
+      (by rw [← q1, Expmc.bv_ofNat_toNat]) (by rw [← q2, Expmc.bv_ofNat_toNat]) hv hn hlc hln hLE hb hinv hlive hor
+      hF hLF (fun h => ?_) (by rw [← q2]; exact hr2)
+    obtain ⟨a1, a2⟩ := hr1 h
+    exact ⟨by rw [← q0, a1], by rw [← q2, a2]⟩
+
 /-- a call of `nat.cmp` (asm's `cmp_summary`) at its entry, `ReachesRet` continuation form -/
 theorem cmpCall {impl : List Segment} {S : State} {ret : BitVec 64} {Q : State → Prop}
     (hpc : S.pc = BitVec.ofNat 64 1782608) (hpre : CmpSum.Pre S)
@@ -157,6 +205,62 @@ theorem subPre_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {op zp zl zc yp 
   refine ⟨hce, hwt, hyx, hYX, hxc, hyc, hxc40, hyc40, by omega, by omega, hzc, hlive, by omega,
     fun _ => ⟨by unfold Apart at hzg ⊢; omega, ?_, ?_⟩, hxa, hx48, hxh, hxn, hyn, by omega, hya, hy48, hyh, by omega, hinv,
     fun h => absurd h (by omega), fun d src k hk => hserv.2.1 d src k (by omega)⟩
+  · rcases hzx with h | h
+    · exact Or.inl (by rw [h])
+    · exact Or.inr h
+  · rcases hzy with h | h
+    · exact Or.inl (by rw [h])
+    · exact Or.inr h
+
+end FvModexp.Arm64.SubMod2N
+
+namespace FvModexp.Arm64.SubMod2N
+
+set_option maxRecDepth 20000 in
+/-- the precondition of `z.add(x, y)` at `SP - 144` (`len x, len y ≤ ⌈n/64⌉`; at most `k ≤ 4` budgeted calls before) -/
+theorem addPre_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {op zp zl zc yp yl yc n : Nat} {s : State}
+    (hpre : Pre R b L op zp zl zc yp yl yc n s) {M : Memory} {L1 : List (Nat × Nat)} {b1 k : Nat}
+    (hrt : Rt R b L s zp zc n k M L1 b1) (hk : k ≤ 4) {S : State} (hS : S.mem = M)
+    (hsp : S.sp = BitVec.ofNat 64 (s.sp.toNat - 144)) (h28 : S.regs 28 = s.regs 28)
+    {xp xl xc yp' yl' yc' : Nat} (hxc : xl ≤ xc) (hyc : yl' ≤ yc') (hxc40 : xc < 2 ^ 40) (hyc40 : yc' < 2 ^ 40)
+    (hxW : xl ≤ W n) (hyW : yl' ≤ W n)
+    (hzx : zp = xp ∨ Apart zp (8 * zc) xp (8 * xl)) (hzy : zp = yp' ∨ Apart zp (8 * zc) yp' (8 * yl'))
+    (hxa : M.accessible xp (8 * xl) false = true) (hx48 : xp + 8 * xl ≤ 2 ^ 48) (hxh : Held R L1 xp (8 * xl))
+    (hxn : NatNorm M xp xl) (hxw : xp + 8 * xl ≤ s.sp.toNat - 4608 ∨ s.sp.toNat - 56 ≤ xp)
+    (hya : M.accessible yp' (8 * yl') false = true) (hy48 : yp' + 8 * yl' ≤ 2 ^ 48) (hyh : Held R L1 yp' (8 * yl'))
+    (hyn : NatNorm M yp' yl') (hyw : yp' + 8 * yl' ≤ s.sp.toNat - 4608 ∨ s.sp.toNat - 56 ≤ yp') :
+    NatAdd.Pre R b1 L1 (BitVec.ofNat 64 zp) (BitVec.ofNat 64 zc) (BitVec.ofNat 64 xp) (BitVec.ofNat 64 xl)
+      (BitVec.ofNat 64 xc) (BitVec.ofNat 64 yp') (BitVec.ofNat 64 yl') (BitVec.ofNat 64 yc') S := by
+  have hce := CallW.callEnv_of (cenv_of hpre hrt (dl_of hpre hrt)) hsp (h28.trans (Expmc.bv_ofNat_toNat _).symm) hS
+    (show 4464 ≤ 4464 by omega) (show 80 ≤ 88 by omega)
+  have hsp4 : 4608 ≤ s.sp.toNat := hpre.1.2.1.2.1
+  have hspT : S.sp.toNat = s.sp.toNat - 144 := by rw [hsp]; exact tN (by omega)
+  have hW := hpre.2.2.2.2.2.2.2.2.2.1
+  have hn2 := hpre.2.2.2.2.2.2.2.1
+  have hzc := hpre.2.2.2.2.2.2.2.2.2.2.1
+  have hzw := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hzg := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hz48 : zp + 8 * zc ≤ 2 ^ 48 := (hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1 (by simp only [W] at hW; omega)).2.2.2
+  have hcost := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hserv := hpre.2.1
+  have hwt := hpre.2.2.1
+  obtain ⟨-, -, -, -, hbud, hinv, hlive⟩ := hrt
+  have hmk : makeCost (if min xl yl' = 0 then max xl yl' else max xl yl' + 1) ≤ wCost n :=
+    makeCost_le_w (by split <;> omega)
+  simp only [W] at hW hxW hyW
+  simp only [cost] at hcost
+  have hkw : k * wCost n ≤ 4 * wCost n := Nat.mul_le_mul_right _ hk
+  have hxp : xp < 2 ^ 64 := by omega
+  have hyp : yp' < 2 ^ 64 := by omega
+  unfold NatAdd.Pre NatAdd.PreS
+  simp only [NatAdd.need, NatAdd.mx]
+  rw [tN (show zp < 2 ^ 64 by omega), tN (show zc < 2 ^ 64 by omega), tN hxp, tN (show xl < 2 ^ 64 by omega),
+    tN (show xc < 2 ^ 64 by omega), tN hyp, tN (show yl' < 2 ^ 64 by omega), tN (show yc' < 2 ^ 64 by omega), hS]
+  simp only [win, hspT, h28, K, A, outside_cons, outside_nil, and_true] at hzw ⊢
+  refine ⟨hce, hwt, hxc, hyc, hxc40, hyc40, by omega, by omega, hzc, hlive, by omega,
+    fun _ => ⟨by unfold Apart at hzg ⊢; omega, ?_, ?_⟩, hxa, hx48, hxh, hxn, hyn, by omega, hya, hy48, hyh, by omega, hinv,
+    fun _ => ⟨hserv.1 _ _ _ (by unfold makeCap; split <;> split <;> omega), by omega⟩,
+    fun d src k hk => hserv.2.1 d src k (by omega)⟩
   · rcases hzx with h | h
     · exact Or.inl (by rw [h])
     · exact Or.inr h
