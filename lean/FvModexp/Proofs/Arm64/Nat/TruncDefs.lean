@@ -27,7 +27,8 @@ entry `SP`, `SP' = SP - 112`): saved `X30` at `SP - 112`, `X29` at `SP - 120`; s
 
 The statement is infra's `EvenHyp.TruncPre`/`TruncPost` (window 4208/64) with two more precondition facts the code
 forces:
-* `NatNorm x`: `z.set(x)` (the `len(x) < w` path) copies `x` without normalising it;
+* `NatNorm x ∨ ⌈n/64⌉ ≤ len x`: `z.set(x)` (the `len(x) < w` path) copies `x` without normalising it (infra s9:
+  the weaker disjunction, since the main path normalises itself);
 * `zp = x ∨ 0 < zc ∨ (0 < xl ∧ 0 < n)`: when `min(len x, w) = 0` Go's `copy` still calls `memmove(z, x, 0)` unless the
   pointers agree, and Janus v0.2.0's `MemmoveLive` needs the (empty) destination inside a mapped region — true for a
   `z` with an array (`0 < zc`), not for an arbitrary `nil` pointer (JANUS-ISSUES "[asm s6] memmove n = 0"; lifted by
@@ -50,7 +51,7 @@ def wordT : Nat := Extracted.dataAddr.«type:big.Word#51b931e8»
 
 /-- The precondition: infra's `TruncPre` (window `4208 / 64`) and the two code-forced facts. -/
 def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zl zc x xl n : Nat) (s : State) : Prop :=
-  EvenHyp.TruncPre R b L 4208 64 zp zl zc x xl n s ∧ NatNorm s.mem x xl ∧ (zp = x ∨ 0 < zc ∨ (0 < xl ∧ 0 < n))
+  EvenHyp.TruncPre R b L 4208 64 zp zl zc x xl n s ∧ (NatNorm s.mem x xl ∨ wOf n ≤ xl) ∧ (zp = x ∨ 0 < zc ∨ (0 < xl ∧ 0 < n))
 
 /-- The postcondition: infra's `TruncPost` (window `4208 / 64`). -/
 @[reducible] def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc x xl n : Nat) (s s' : State) : Prop :=
@@ -62,7 +63,7 @@ def Hyp2 (impl : List Segment) (R : RtInv) (ns : List String) (stk above : Nat) 
     Ensures ((Extracted.program.onlySegments ns).link impl) (segAddr Extracted.program fn)
       [z, zl, zc, x, xl, xc, n]
       (fun s => EvenHyp.TruncPre R b L stk above z.toNat zl.toNat zc.toNat x.toNat xl.toNat n.toNat s ∧
-        NatNorm s.mem x.toNat xl.toNat ∧ (z.toNat = x.toNat ∨ 0 < zc.toNat ∨ (0 < xl.toNat ∧ 0 < n.toNat)))
+        (NatNorm s.mem x.toNat xl.toNat ∨ (n.toNat + 63) / 64 ≤ xl.toNat) ∧ (z.toNat = x.toNat ∨ 0 < zc.toNat ∨ (0 < xl.toNat ∧ 0 < n.toNat)))
       (fun s s' => EvenHyp.TruncPost R b L stk above z.toNat zc.toNat x.toNat xl.toNat n.toNat s s')
 
 /-- The segment-boundary facts after the result array `(p, c)` of `z.make(k)` is chosen (`0 < c`). -/

@@ -35,7 +35,7 @@ theorem setReuse (impl : List Segment) (R : RtInv)
   have hwm : wOf n % 18446744073709551616 = wOf n := Nat.mod_eq_of_lt (by unfold wOf; omega)
   janus_run [hsh, hsh2, hwm] until [hJoinS]
   refine copyS impl R hmv b L zp zc x xl n s zp zc L b _
-    (mid_of_reuse hpre (Nat.le_refl _) hz hz0 hl4 hl48 ?hF ?_ ?_ (fun h => absurd h (by omega))) hw hpre.2.1 _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl
+    (mid_of_reuse hpre (Nat.le_refl _) hz hz0 hl4 hl48 ?hF ?_ ?_ (fun h => absurd h (by omega))) hw (hpre.2.1.resolve_right (by omega)) _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl
   case hF => simp only [winA]; janus_frame
   all_goals janus_simp
   all_goals first | omega | (apply BitVec.eq_of_toNat_eq; simp)
@@ -85,7 +85,7 @@ theorem setAlloc (impl : List Segment) (R : RtInv)
     have hmid := fun hF r1 r2 rn => mid_of_alloc (c := 1) (k := 1) hpre (Nat.le_refl _) hz hl4 hl48 hF r1 r2 rn hLF hMF hAp
       hIn (by omega) (by rw [hMF.accessible]; simpa only [Memory.accessible_writeLE] using hacc) h8 hinv'
       (by omega) (by omega) (by omega) (by decide)
-    refine copyS impl R hmv b L zp zc x 1 n s ptr.toNat 1 _ _ m (hmid ?hF ?_ ?_ (fun h => absurd h (by omega))) hw hpre.2.1 _ ?_ ?_ ?_ ?_ ?_ ?_ ?_
+    refine copyS impl R hmv b L zp zc x 1 n s ptr.toNat 1 _ _ m (hmid ?hF ?_ ?_ (fun h => absurd h (by omega))) hw (hpre.2.1.resolve_right (by omega)) _ ?_ ?_ ?_ ?_ ?_ ?_ ?_
       ?_ ?_ ?_ rfl
     case hF => simp only [winA]; janus_frame
     all_goals janus_simp
@@ -102,7 +102,7 @@ theorem setAlloc (impl : List Segment) (R : RtInv)
     have hmid := fun hF r1 r2 rn => mid_of_alloc (c := xl + 4) (k := xl) hpre (Nat.le_refl _) hz hl4 hl48 hF r1 r2 rn hLF
       hMF hAp hIn hle (by rw [hMF.accessible]; simpa only [Memory.accessible_writeLE] using hacc)
       (h8 (Or.inr (by omega))) hinv' (by omega) (by omega) hrb (by omega)
-    refine copyS impl R hmv b L zp zc x xl n s ptr.toNat (xl + 4) _ _ m (hmid ?hF ?_ ?_ (fun h => absurd h (by omega))) hw hpre.2.1 _ ?_ ?_ ?_ ?_
+    refine copyS impl R hmv b L zp zc x xl n s ptr.toNat (xl + 4) _ _ m (hmid ?hF ?_ ?_ (fun h => absurd h (by omega))) hw (hpre.2.1.resolve_right (by omega)) _ ?_ ?_ ?_ ?_
       ?_ ?_ ?_ ?_ ?_ ?_ rfl
     case hF => simp only [winA]; janus_frame
     all_goals janus_simp
