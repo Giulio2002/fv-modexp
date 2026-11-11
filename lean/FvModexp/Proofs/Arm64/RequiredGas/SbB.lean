@@ -11,44 +11,6 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
 set_option maxHeartbeats 64000000 in
 set_option maxRecDepth 100000 in
 set_option linter.unusedSimpArgs false in
-theorem sb11 : Summary Extracted.program sbA (SbPre 11) (SbPost 11) := by
-  intro s hpc ⟨⟨hr1, hr2⟩, ⟨hg1, hg2, hg3⟩, ⟨hal, hb, ha, hw⟩, hd, hl, hlc, hc48, ⟨hz, hz'⟩, ⟨hp, hp'⟩, hd1, hd2, hd3, hdg⟩
-  have hl' : s.regs 2 = BitVec.ofNat 64 11 := BitVec.eq_of_toNat_eq (by simp [hl])
-  janus_data hd [hw]
-  simp only [Disjoint] at hd1 hd2 hd3 hdg
-  janus_run
-  all_goals first
-    | (exfalso; omega)
-    | (refine Ret.retX_intro rfl rfl rfl rfl rfl rfl rfl rfl rfl (fun i hi => ?_) (by janus_frame) ⟨?_, ?_⟩
-       · simp at hi; subst hi; rfl
-       · janus_simp
-         have := Util.rd1_lt s.mem (s.regs 1).toNat; have := Util.rd1_lt s.mem ((s.regs 1).toNat + 1); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 2); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 3); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 4); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 5); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 6); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 7); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 8); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 9); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 10)
-         (try simp only [Util.chunk8, Util.chunk4, Util.chunk2, Util.chunk2n, Util.rot0])
-         all_goals (simp only [Aux.fromBE, Nat.add_zero, Nat.reducePow, Nat.reduceAdd, Nat.add_assoc, Nat.zero_add]; (try simp (disch := omega) only [Util.or_hi16, Util.or_hi24, Util.or_hi32, Util.or_hi40, Util.or_hi48, Util.or_hi56, Nat.mod_eq_of_lt]); (try omega))
-       · dl_close)
-
-set_option maxHeartbeats 64000000 in
-set_option maxRecDepth 100000 in
-set_option linter.unusedSimpArgs false in
-theorem sb12 : Summary Extracted.program sbA (SbPre 12) (SbPost 12) := by
-  intro s hpc ⟨⟨hr1, hr2⟩, ⟨hg1, hg2, hg3⟩, ⟨hal, hb, ha, hw⟩, hd, hl, hlc, hc48, ⟨hz, hz'⟩, ⟨hp, hp'⟩, hd1, hd2, hd3, hdg⟩
-  have hl' : s.regs 2 = BitVec.ofNat 64 12 := BitVec.eq_of_toNat_eq (by simp [hl])
-  janus_data hd [hw]
-  simp only [Disjoint] at hd1 hd2 hd3 hdg
-  janus_run
-  all_goals first
-    | (exfalso; omega)
-    | (refine Ret.retX_intro rfl rfl rfl rfl rfl rfl rfl rfl rfl (fun i hi => ?_) (by janus_frame) ⟨?_, ?_⟩
-       · simp at hi; subst hi; rfl
-       · janus_simp
-         have := Util.rd1_lt s.mem (s.regs 1).toNat; have := Util.rd1_lt s.mem ((s.regs 1).toNat + 1); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 2); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 3); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 4); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 5); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 6); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 7); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 8); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 9); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 10); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 11)
-         (try simp only [Util.chunk8, Util.chunk4, Util.chunk2, Util.chunk2n, Util.rot0])
-         all_goals (simp only [Aux.fromBE, Nat.add_zero, Nat.reducePow, Nat.reduceAdd, Nat.add_assoc, Nat.zero_add]; (try simp (disch := omega) only [Util.or_hi16, Util.or_hi24, Util.or_hi32, Util.or_hi40, Util.or_hi48, Util.or_hi56, Nat.mod_eq_of_lt]); (try omega))
-       · dl_close)
-
-set_option maxHeartbeats 64000000 in
-set_option maxRecDepth 100000 in
-set_option linter.unusedSimpArgs false in
 theorem sb13 : Summary Extracted.program sbA (SbPre 13) (SbPost 13) := by
   intro s hpc ⟨⟨hr1, hr2⟩, ⟨hg1, hg2, hg3⟩, ⟨hal, hb, ha, hw⟩, hd, hl, hlc, hc48, ⟨hz, hz'⟩, ⟨hp, hp'⟩, hd1, hd2, hd3, hdg⟩
   have hl' : s.regs 2 = BitVec.ofNat 64 13 := BitVec.eq_of_toNat_eq (by simp [hl])
@@ -156,63 +118,6 @@ theorem sb18 : Summary Extracted.program sbA (SbPre 18) (SbPost 18) := by
        · simp at hi; subst hi; rfl
        · janus_simp
          have := Util.rd1_lt s.mem (s.regs 1).toNat; have := Util.rd1_lt s.mem ((s.regs 1).toNat + 1); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 2); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 3); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 4); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 5); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 6); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 7); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 8); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 9); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 10); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 11); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 12); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 13); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 14); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 15); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 16); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 17)
-         (try simp only [Util.chunk8, Util.chunk4, Util.chunk2, Util.chunk2n, Util.rot0])
-         all_goals (simp only [Aux.fromBE, Nat.add_zero, Nat.reducePow, Nat.reduceAdd, Nat.add_assoc, Nat.zero_add]; (try simp (disch := omega) only [Util.or_hi16, Util.or_hi24, Util.or_hi32, Util.or_hi40, Util.or_hi48, Util.or_hi56, Nat.mod_eq_of_lt]); (try omega))
-       · dl_close)
-
-set_option maxHeartbeats 64000000 in
-set_option maxRecDepth 100000 in
-set_option linter.unusedSimpArgs false in
-theorem sb19 : Summary Extracted.program sbA (SbPre 19) (SbPost 19) := by
-  intro s hpc ⟨⟨hr1, hr2⟩, ⟨hg1, hg2, hg3⟩, ⟨hal, hb, ha, hw⟩, hd, hl, hlc, hc48, ⟨hz, hz'⟩, ⟨hp, hp'⟩, hd1, hd2, hd3, hdg⟩
-  have hl' : s.regs 2 = BitVec.ofNat 64 19 := BitVec.eq_of_toNat_eq (by simp [hl])
-  janus_data hd [hw]
-  simp only [Disjoint] at hd1 hd2 hd3 hdg
-  janus_run
-  all_goals first
-    | (exfalso; omega)
-    | (refine Ret.retX_intro rfl rfl rfl rfl rfl rfl rfl rfl rfl (fun i hi => ?_) (by janus_frame) ⟨?_, ?_⟩
-       · simp at hi; subst hi; rfl
-       · janus_simp
-         have := Util.rd1_lt s.mem (s.regs 1).toNat; have := Util.rd1_lt s.mem ((s.regs 1).toNat + 1); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 2); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 3); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 4); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 5); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 6); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 7); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 8); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 9); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 10); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 11); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 12); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 13); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 14); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 15); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 16); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 17); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 18)
-         (try simp only [Util.chunk8, Util.chunk4, Util.chunk2, Util.chunk2n, Util.rot0])
-         all_goals (simp only [Aux.fromBE, Nat.add_zero, Nat.reducePow, Nat.reduceAdd, Nat.add_assoc, Nat.zero_add]; (try simp (disch := omega) only [Util.or_hi16, Util.or_hi24, Util.or_hi32, Util.or_hi40, Util.or_hi48, Util.or_hi56, Nat.mod_eq_of_lt]); (try omega))
-       · dl_close)
-
-set_option maxHeartbeats 64000000 in
-set_option maxRecDepth 100000 in
-set_option linter.unusedSimpArgs false in
-theorem sb20 : Summary Extracted.program sbA (SbPre 20) (SbPost 20) := by
-  intro s hpc ⟨⟨hr1, hr2⟩, ⟨hg1, hg2, hg3⟩, ⟨hal, hb, ha, hw⟩, hd, hl, hlc, hc48, ⟨hz, hz'⟩, ⟨hp, hp'⟩, hd1, hd2, hd3, hdg⟩
-  have hl' : s.regs 2 = BitVec.ofNat 64 20 := BitVec.eq_of_toNat_eq (by simp [hl])
-  janus_data hd [hw]
-  simp only [Disjoint] at hd1 hd2 hd3 hdg
-  janus_run
-  all_goals first
-    | (exfalso; omega)
-    | (refine Ret.retX_intro rfl rfl rfl rfl rfl rfl rfl rfl rfl (fun i hi => ?_) (by janus_frame) ⟨?_, ?_⟩
-       · simp at hi; subst hi; rfl
-       · janus_simp
-         have := Util.rd1_lt s.mem (s.regs 1).toNat; have := Util.rd1_lt s.mem ((s.regs 1).toNat + 1); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 2); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 3); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 4); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 5); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 6); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 7); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 8); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 9); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 10); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 11); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 12); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 13); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 14); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 15); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 16); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 17); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 18); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 19)
-         (try simp only [Util.chunk8, Util.chunk4, Util.chunk2, Util.chunk2n, Util.rot0])
-         all_goals (simp only [Aux.fromBE, Nat.add_zero, Nat.reducePow, Nat.reduceAdd, Nat.add_assoc, Nat.zero_add]; (try simp (disch := omega) only [Util.or_hi16, Util.or_hi24, Util.or_hi32, Util.or_hi40, Util.or_hi48, Util.or_hi56, Nat.mod_eq_of_lt]); (try omega))
-       · dl_close)
-
-set_option maxHeartbeats 64000000 in
-set_option maxRecDepth 100000 in
-set_option linter.unusedSimpArgs false in
-theorem sb21 : Summary Extracted.program sbA (SbPre 21) (SbPost 21) := by
-  intro s hpc ⟨⟨hr1, hr2⟩, ⟨hg1, hg2, hg3⟩, ⟨hal, hb, ha, hw⟩, hd, hl, hlc, hc48, ⟨hz, hz'⟩, ⟨hp, hp'⟩, hd1, hd2, hd3, hdg⟩
-  have hl' : s.regs 2 = BitVec.ofNat 64 21 := BitVec.eq_of_toNat_eq (by simp [hl])
-  janus_data hd [hw]
-  simp only [Disjoint] at hd1 hd2 hd3 hdg
-  janus_run
-  all_goals first
-    | (exfalso; omega)
-    | (refine Ret.retX_intro rfl rfl rfl rfl rfl rfl rfl rfl rfl (fun i hi => ?_) (by janus_frame) ⟨?_, ?_⟩
-       · simp at hi; subst hi; rfl
-       · janus_simp
-         have := Util.rd1_lt s.mem (s.regs 1).toNat; have := Util.rd1_lt s.mem ((s.regs 1).toNat + 1); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 2); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 3); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 4); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 5); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 6); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 7); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 8); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 9); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 10); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 11); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 12); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 13); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 14); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 15); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 16); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 17); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 18); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 19); have := Util.rd1_lt s.mem ((s.regs 1).toNat + 20)
          (try simp only [Util.chunk8, Util.chunk4, Util.chunk2, Util.chunk2n, Util.rot0])
          all_goals (simp only [Aux.fromBE, Nat.add_zero, Nat.reducePow, Nat.reduceAdd, Nat.add_assoc, Nat.zero_add]; (try simp (disch := omega) only [Util.or_hi16, Util.or_hi24, Util.or_hi32, Util.or_hi40, Util.or_hi48, Util.or_hi56, Nat.mod_eq_of_lt]); (try omega))
        · dl_close)
