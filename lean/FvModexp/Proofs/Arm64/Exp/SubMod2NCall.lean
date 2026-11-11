@@ -96,6 +96,7 @@ theorem addCall {impl : List Segment} (hap : ImplApart Extracted.program impl) {
       MemFrame M s'.mem (R.rt ++ [(sp' - 4464, sp' - 8), (sp' + 8, sp' + 80)] ++ [(zp, zp + 8 * zc)]) →
       LiveFrame M s'.mem L [(zp, zp + 8 * zc)] →
       ((if min xl yl = 0 then max xl yl else max xl yl + 1) ≤ zc → p' = zp ∧ c' = zc) → c' < 2 ^ 40 →
+      p' < 2 ^ 64 ∧ n' < 2 ^ 64 →
       ReachesRet (LibExp.program.link impl) ret s' Q) :
     ReachesRet (LibExp.program.link impl) ret S Q := by
   have hS' := CallW.hypSum hap add_names (hadd b L (BitVec.ofNat 64 zp) (BitVec.ofNat 64 zl) (BitVec.ofNat 64 zc)
@@ -113,7 +114,7 @@ theorem addCall {impl : List Segment} (hap : ImplApart Extracted.program impl) {
     rw [hS] at hrg
     refine K s' p' n' c' L' b' (hr.trans h30) (e1.trans hsp) e2 e3 e4 hrg (by rw [← q0, Expmc.bv_ofNat_toNat])
       (by rw [← q1, Expmc.bv_ofNat_toNat]) (by rw [← q2, Expmc.bv_ofNat_toNat]) hv hn hlc hln hLE hb hinv hlive hor
-      hF hLF (fun h => ?_) (by rw [← q2]; exact hr2)
+      hF hLF (fun h => ?_) (by rw [← q2]; exact hr2) ⟨by rw [← q0]; exact BitVec.isLt _, by rw [← q1]; exact BitVec.isLt _⟩
     obtain ⟨a1, a2⟩ := hr1 h
     exact ⟨by rw [← q0, a1], by rw [← q2, a2]⟩
 
