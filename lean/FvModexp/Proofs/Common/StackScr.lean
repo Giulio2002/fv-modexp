@@ -47,7 +47,7 @@ structure Scr (R : RtInv) (L L1 : List (Nat × Nat)) (m0 m : Memory) (st t k : N
   acc : m.accessible t (8 * k) true = true
   al : t % 8 = 0
   held : Held R L1 t (8 * k)
-  loc : (stW m0 st + 8 * stLen m0 st ≤ t ∧ t + 8 * k ≤ stW m0 st + 8 * stCap m0 st) ∨
+  loc : (0 < stCap m0 st ∧ stW m0 st + 8 * stLen m0 st ≤ t ∧ t + 8 * k ≤ stW m0 st + 8 * stCap m0 st) ∨
     (InRanges t (8 * k) R.rt ∧ ApartAll t (8 * k) L)
 
 theorem ApartAll.sub' {a n b k : Nat} {L : List (Nat × Nat)} (h : ApartAll b k L) (h1 : b ≤ a) (h2 : a + n ≤ b + k) :
@@ -56,9 +56,10 @@ theorem ApartAll.sub' {a n b k : Nat} {L : List (Nat × Nat)} (h : ApartAll b k 
 /-- A scratch nat is apart from every object held in `L` and apart from the old free part. -/
 theorem Scr.apart {R : RtInv} {L L1 : List (Nat × Nat)} {m0 m : Memory} {st t k p n : Nat}
     (h : Scr R L L1 m0 m st t k) (hp : Held R L p n)
-    (hf : Apart p n (stW m0 st + 8 * stLen m0 st) (8 * (stCap m0 st - stLen m0 st))) : Apart t (8 * k) p n := by
-  rcases h.loc with ⟨h1, h2⟩ | ⟨hin, hap⟩
-  · unfold Apart at hf ⊢; omega
+    (hf : 0 < stCap m0 st → Apart p n (stW m0 st + 8 * stLen m0 st) (8 * (stCap m0 st - stLen m0 st))) :
+    Apart t (8 * k) p n := by
+  rcases h.loc with ⟨h0, h1, h2⟩ | ⟨hin, hap⟩
+  · have hf := hf h0; unfold Apart at hf ⊢; omega
   · rcases hp with hpL | hpO
     · exact hap.apart_of_inRanges hpL
     · exact (hin.apart hpO).symm
@@ -66,7 +67,7 @@ theorem Scr.apart {R : RtInv} {L L1 : List (Nat × Nat)} {m0 m : Memory} {st t k
 /-- A scratch nat is outside every range list that is outside `R.rt` and outside the old free part. -/
 theorem Scr.outside {R : RtInv} {L L1 : List (Nat × Nat)} {m0 m : Memory} {st t k : Nat} {rs : List (Nat × Nat)}
     (h : Scr R L L1 m0 m st t k) (hrt : ∀ r ∈ rs, Outside r.1 (r.2 - r.1) R.rt)
-    (hf : ∀ r ∈ rs, Apart r.1 (r.2 - r.1) (stW m0 st + 8 * stLen m0 st) (8 * (stCap m0 st - stLen m0 st))) :
+    (hf : ∀ r ∈ rs, 0 < stCap m0 st → Apart r.1 (r.2 - r.1) (stW m0 st + 8 * stLen m0 st) (8 * (stCap m0 st - stLen m0 st))) :
     Outside t (8 * k) rs := by
   induction rs with
   | nil => trivial
@@ -92,7 +93,7 @@ theorem Scr.of_post {R : RtInv} {L L1 : List (Nat × Nat)} {m0 m : Memory} {st l
   refine ⟨by omega, Memory.accessible_mono _ hacc (by omega) (by omega), by omega, hh.sub (by omega) (by omega), ?_⟩
   by_cases hc : len0 + k ≤ stCap m0 st
   · obtain ⟨e1, e2⟩ := hsame hc
-    left; subst hl0; constructor <;> omega
+    left; subst hl0; refine ⟨by omega, by omega, by omega⟩
   · obtain ⟨hin, hap⟩ := hgrow (by omega)
     right; exact ⟨hin.sub (by omega) (by omega), ApartAll.sub' hap (by omega) (by omega)⟩
 

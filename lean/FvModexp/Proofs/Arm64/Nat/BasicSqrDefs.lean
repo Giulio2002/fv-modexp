@@ -51,20 +51,37 @@ abbrev thrA : Nat := Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/sr
 @[reducible] def freeN (m : Memory) (st : Nat) : Nat := 8 * (stCap m st - stLen m st)
 
 /-- The precondition (args `st`, `z = (zp, zl, zc)`, `x = (xp, xl, _)`). -/
-def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (st zp zl zc xp xl : Nat) (s : State) : Prop :=
-  CallEnv R L s 4432 64 ∧ Serves R ∧
-    s.mem.accessible thrA 8 false = true ∧ s.mem.readLE thrA 8 = 12 ∧ Outside thrA 8 (win s 4432 64) ∧
-    0 < xl ∧ zl = 2 * xl ∧ zl ≤ zc ∧ zc < 2 ^ 40 ∧
-    NatLive s.mem R L zp zl ∧ Outside zp (8 * zl) (win s 4432 64) ∧ Apart zp (8 * zl) ((s.regs 28).toNat + 16) 8 ∧
-    s.mem.accessible xp (8 * xl) false = true ∧ xp + 8 * xl ≤ 2 ^ 48 ∧ Held R L xp (8 * xl) ∧
-    Outside xp (8 * xl) (win s 4432 64) ∧ Apart zp (8 * zl) xp (8 * xl) ∧
-    StkOK s.mem R L st ∧ Outside st 24 (win s 4432 64) ∧ Apart st 24 ((s.regs 28).toNat + 16) 8 ∧
-    (0 < stCap s.mem st → Outside (stW s.mem st) (8 * stCap s.mem st) (win s 4432 64) ∧
-      Apart (stW s.mem st) (8 * stCap s.mem st) ((s.regs 28).toNat + 16) 8) ∧
-    stLen s.mem st + 2 * xl + 3 ≤ 2 ^ 16 ∧
-    Apart st 24 zp (8 * zl) ∧ Apart st 24 xp (8 * xl) ∧
-    Apart zp (8 * zl) (freeP s.mem st) (freeN s.mem st) ∧ Apart xp (8 * xl) (freeP s.mem st) (freeN s.mem st) ∧
-    ExpHyp.stackNatCost (stLen s.mem st) (2 * xl) ≤ b ∧ R.inv b L (s.regs 28).toNat (view R.rt L s.mem)
+structure Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (st zp zl zc xp xl : Nat) (s : State) : Prop where
+  ce : CallEnv R L s 4432 64
+  sv : Serves R
+  thA : s.mem.accessible thrA 8 false = true
+  thV : s.mem.readLE thrA 8 = 12
+  thO : Outside thrA 8 (win s 4432 64)
+  x0 : 0 < xl
+  zl2 : zl = 2 * xl
+  zlc : zl ≤ zc
+  zcb : zc < 2 ^ 40
+  zlive : NatLive s.mem R L zp zl
+  zw : Outside zp (8 * zl) (win s 4432 64)
+  zg : Apart zp (8 * zl) ((s.regs 28).toNat + 16) 8
+  xacc : s.mem.accessible xp (8 * xl) false = true
+  x48 : xp + 8 * xl ≤ 2 ^ 48
+  xh : Held R L xp (8 * xl)
+  xw : Outside xp (8 * xl) (win s 4432 64)
+  zx : Apart zp (8 * zl) xp (8 * xl)
+  stok : StkOK s.mem R L st
+  stw : Outside st 24 (win s 4432 64)
+  stg : Apart st 24 ((s.regs 28).toNat + 16) 8
+  starr : 0 < stCap s.mem st → Outside (stW s.mem st) (8 * stCap s.mem st) (win s 4432 64) ∧
+    Apart (stW s.mem st) (8 * stCap s.mem st) ((s.regs 28).toNat + 16) 8
+  stlen : stLen s.mem st + 2 * xl + 3 ≤ 2 ^ 16
+  stz : Apart st 24 zp (8 * zl)
+  stx : Apart st 24 xp (8 * xl)
+  free : 0 < stCap s.mem st → Apart zp (8 * zl) (freeP s.mem st) (freeN s.mem st) ∧
+    Apart xp (8 * xl) (freeP s.mem st) (freeN s.mem st)
+  stfree : 0 < stCap s.mem st → Apart st 24 (freeP s.mem st) (freeN s.mem st)
+  cost : ExpHyp.stackNatCost (stLen s.mem st) (2 * xl) ≤ b
+  inv : R.inv b L (s.regs 28).toNat (view R.rt L s.mem)
 
 /-- The writes a caller sees: `z[0:2n]`, the stack header and the free part of the stack array. -/
 @[reducible] def ws (m : Memory) (st zp zl : Nat) : List (Nat × Nat) := (zp, zp + 8 * zl) :: stkWs m st
@@ -120,5 +137,17 @@ structure Mem (R : RtInv) (L : List (Nat × Nat)) (st zp zl zc xp xl xc : Nat) (
   fr : MemFrame s.mem M (R.rt ++ winA s 4432 64 ++ [(zp, zp + 8 * zl), (t, t + 16 * xl)] ++ stkWs s.mem st)
   lf : LiveFrame s.mem M L ([(zp, zp + 8 * zl), (t, t + 16 * xl)] ++ stkWs s.mem st)
   inv : R.inv b1 L1 (s.regs 28).toNat (view R.rt L1 M)
+
+/-- the loop head (`CMP R6, R3`, `R6 = i`) -/
+abbrev head : Nat := segAddr Extracted.program fn + 0x140
+
+/-- what holds at the loop head in iteration `i` (memory `M`): the frame record, `z[0:2i] = Σ_{j<i} x_j² B^(2j)`,
+`t[0:2i] = Σ_{j<i} x_j·x[0:j]·B^j`, the rest of `t` still zero. -/
+def Inv (R : RtInv) (L : List (Nat × Nat)) (st zp zl zc xp xl xc : Nat) (s : State)
+    (t : Nat) (L1 : List (Nat × Nat)) (b1 w1 c1 : Nat) (i : Nat) (M : Memory) : Prop :=
+  Mem R L st zp zl zc xp xl xc s t L1 b1 w1 c1 (2 * xl) (stLen s.mem st + (2 * xl + 3) / 4 * 4) M ∧
+    natVal M zp (2 * i) = SqrMath.sqS (SqrMath.lim s.mem xp) i ∧
+    natVal M t (2 * i) = SqrMath.sqT (SqrMath.lim s.mem xp) i ∧
+    ∀ a n, t + 16 * i ≤ a → a + n ≤ t + 16 * xl → M.readLE a n = 0
 
 end FvModexp.Arm64.BasicSqr

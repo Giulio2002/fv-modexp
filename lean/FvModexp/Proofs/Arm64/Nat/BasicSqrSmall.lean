@@ -41,8 +41,9 @@ theorem small2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     BasicMul.ens impl hap R hmc b L a0 a1 a2 a3 a4 a5 a6 a7 a8) (noExit_restrict hap BasicMul.names) hc
   clear hc
   simp only [BasicMul.Pre, CallEnv] at hBM
-  have hpre' := hpre
-  obtain ⟨hce, hsv, -, -, -, hx0, hzl, hzc, hzc40, hzl', hzw, hzg, hxacc, hx48, hxh, hxw, hzx, -⟩ := hpre'
+  have hce := hpre.ce; have hsv := hpre.sv; have hx0 := hpre.x0; have hzl := hpre.zl2; have hzc := hpre.zlc
+  have hzc40 := hpre.zcb; have hzl' := hpre.zlive; have hzw := hpre.zw; have hzg := hpre.zg
+  have hxacc := hpre.xacc; have hx48 := hpre.x48; have hxh := hpre.xh; have hxw := hpre.xw; have hzx := hpre.zx
   have hsp0 : 4432 ≤ s.sp.toNat := hce.2.1.2.1
   have hsp' : S.sp.toNat = s.sp.toNat - 208 := by rw [hsp]; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
   have hFw : MemFrame s.mem S.mem (win s 4432 64) := hF.mono fun a n h => by
@@ -54,7 +55,7 @@ theorem small2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
   rw [hsp'] at hg3 hga
   unfold Apart at hga
   have hinv : R.inv b L (s.regs 28).toNat (view R.rt L S.mem) :=
-    inv_frame_winA hF hce.2.2.2.1 hsp0 (by decide) hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2
+    inv_frame_winA hF hce.2.2.2.1 hsp0 (by decide) hpre.inv
   unfold RoOut at hro
   obtain ⟨hzal, hzh, hzacc, hz48⟩ := hzl' (by omega)
   have e2 : 8 * zl.toNat = 8 * (xl.toNat + xl.toNat) := by omega
@@ -72,8 +73,7 @@ theorem small2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
   simp only [winA, e208] at hF2
   have hout0 := hce.2.2.2.1
-  have hst := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2
-  obtain ⟨hstok, hstw, hstg, hstarr, -, hstz, hstx, -, -, -, -⟩ := hst
+  have hstok := hpre.stok; have hstw := hpre.stw; have hstz := hpre.stz
   have hrd : ∀ a, s.sp.toNat - 216 ≤ a → a + 8 ≤ s.sp.toNat - 200 → s'.mem.readLE a 8 = S.mem.readLE a 8 := by
     intro a h1 h2
     refine hF2.readLE _ _ ?_
@@ -149,8 +149,8 @@ theorem small (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
   have hBM := fun b L => Ensures.toSummaryRegs9 (fun a0 a1 a2 a3 a4 a5 a6 a7 a8 =>
     BasicMul.ens impl hap R hmc b L a0 a1 a2 a3 a4 a5 a6 a7 a8) (noExit_restrict hap BasicMul.names) hc
   clear hc
-  have hpre' := hpre
-  obtain ⟨hce, hsv, hthA, hthV, hthO, hx0, hzl, hzc, hzc40, hzl', hzw, hzg, hxacc, hx48, hxh, hxw, hzx, -⟩ := hpre'
+  have hce := hpre.ce; have hthA := hpre.thA; have hthV := hpre.thV; have hthO := hpre.thO
+  have hx0 := hpre.x0; have hzl := hpre.zl2; have hzc40 := hpre.zcb; have hzc := hpre.zlc
   have hce' := hce
   obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, -, hout, hga, hgr, hLs, -⟩ := hce'
   have eA : thrA = 7147152 := rfl
