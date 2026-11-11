@@ -34,9 +34,10 @@ abbrev zjVal (n Mv k0 : Nat) (tbl : Nat → Nat) (Y ylen yi : Nat) : Nat :=
     (tbl (yi / 2 ^ (kTop yi * 4)))
 
 /-- what `zj → RET` establishes: the anchor `M0` (frame from `M`), the exit buffers and `TailPost` -/
-@[reducible] def ZjPost (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (g sp n mp mc k0 yp ylen bp zp zc : Nat)
+@[reducible] def ZjPost (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (g sp n mp mc k0 yp ylen bp zp zc zzp zzc : Nat)
     (tbl : Nat → Nat) (V : Nat) (st n0 onep : Nat) (r18 r29 : BitVec 64) (M : Memory) (s' : State) : Prop :=
   ∃ (M0 : Memory) (zp' zc' zzp' zzc' : Nat) (Mx : Memory),
+    ((zp' = zp ∧ zc' = zc ∧ zzp' = zzp ∧ zzc' = zzc) ∨ (zp' = zzp ∧ zc' = zzc ∧ zzp' = zp ∧ zzc' = zc)) ∧
     MemFrame M M0 (R.rt ++ cw sp ++ [(zp, zp + 8 * n)]) ∧ LiveFrame M M0 L [(zp, zp + 8 * n)] ∧
     M0.regions = M.regions ∧
     Bufs R L g sp n mp yp ylen (fun d => bp + 8 * (d * n)) [(onep, 8 * n), (st, 24)] M0 zp' zc' zzp' zzc' ∧
@@ -85,7 +86,7 @@ theorem zjRet (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     (h0 : S.regs 0 = BitVec.ofNat 64 zp) (h13 : S.regs 13 = BitVec.ofNat 64 n) (h14 : S.regs 14 = BitVec.ofNat 64 zc)
     (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = f29) (hmem : S.mem = M) :
     Reaches ((LibExp.program.link impl).withExit ret) S
-      (IsReturn (ZjPost R b L g sp n mp mc k0 yp ylen bp zp zc tbl
+      (IsReturn (ZjPost R b L g sp n mp mc k0 yp ylen bp zp zc zzp zzc tbl
         (zjVal n (M.readLE mp (8 * n)) k0 tbl Y ylen yi) st n0 onep r18 r29 M)) := by
   have hc := codeIn_ofImpl_restrict_of_apart hap LibExp.names
   rw [← LibExp.eq_only] at hc
@@ -195,18 +196,20 @@ theorem zjRet (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
   have hmB' : M0.readLE mp (8 * n) < Exp.B ^ n := by rw [hmr]; exact hmB
   have hmw4' := hmw4
   refine W4Loop.loop impl hap R hclr hmv ret hret _ b L g sp n mp mc k0 yp ylen Y tbl (fun d => bp + 8 * (d * n))
-    (fun _ => 2 * n) (ext := [(onep, 8 * n), (st, 24)]) M0 r18 f29 (zjVal n (M.readLE mp (8 * n)) k0 tbl Y ylen yi) hst
+    (fun _ => 2 * n) (ext := [(onep, 8 * n), (st, 24)]) M0 r18 f29 (zjVal n (M.readLE mp (8 * n)) k0 tbl Y ylen yi)
+    (fun a b c d => (a = zp ∧ b = zc ∧ c = zzp ∧ d = zzc) ∨ (a = zzp ∧ b = zzc ∧ c = zp ∧ d = zc))
+    (fun a b c d h => by rcases h with ⟨h1, h2, h3, h4⟩ | ⟨h1, h2, h3, h4⟩ <;> simp [h1, h2, h3, h4]) hst
     ?hexit _ S' (ylen - 1) (kTop yi) ((yi * 2 ^ (64 - kTop yi * 4)) % 2 ^ 64) zp zc zzp zzc M0 rfl ?_ (by omega)
     (Nat.mod_lt _ (by omega)) (by rw [test_eq]; exact hpc') hsp' h0' h13' h14' h1' h3' h15' h2' h9' h11' h12' h16'
-    h17' h19' h20' h21' h18' h28' h29' hm' hB' hM' h240 ?_
+    h17' h19' h20' h21' h18' h28' h29' hm' hB' hM' h240 ?_ (Or.inl ⟨rfl, rfl, rfl, rfl⟩)
   case hexit =>
-    intro Sx zp' zc' zzp' zzc' Mx hpcx hspx h0x h1x h13x h14x h15x h2x h3x h9x h11x h12x h18x h28x h29x hmx hBx hMx hvx
+    intro Sx zp' zc' zzp' zzc' Mx hpcx hspx h0x h1x h13x h14x h15x h2x h3x h9x h11x h12x h18x h28x h29x hmx hBx hMx hvx hPx
     exact reaches_mono (W4Loop.exitRet impl hap R hclr hmv hmk hserv ret hret b L g sp n mp mc k0 yp ylen Y tbl
       (fun d => bp + 8 * (d * n)) (fun _ => 2 * n) M0 r18 r29 f29 onep st n0 hst hce' hmw4' hnm' hone' hone1'
       (by rw [rs 816] <;> omega) hkk' hmB' hfe' hsth hstw4 (List.mem_cons_self ..)
       (List.mem_cons_of_mem _ (List.mem_cons_self ..)) Sx zp' zc' zzp' zzc' Mx hpcx hspx h0x h1x h13x h14x h15x h2x
       h3x h9x h11x h12x h18x h28x h29x hmx hBx hMx)
-      (isReturn_mono (fun s h => ⟨M0, zp', zc', zzp', zzc', Mx, hF, hL, hrg, hBx, hMx, hvx, h⟩))
+      (isReturn_mono (fun s h => ⟨M0, zp', zc', zzp', zzc', Mx, hPx, hF, hL, hrg, hBx, hMx, hvx, h⟩))
   · have := (kTop_le yi hyi0 (by rw [← hyi]; exact Util.readLE8_lt _ _)).1; omega
   · rw [hmr, hv]
 

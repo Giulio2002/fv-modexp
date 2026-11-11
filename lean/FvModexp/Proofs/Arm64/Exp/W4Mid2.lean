@@ -121,7 +121,7 @@ theorem j4Ret (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     Reaches ((LibExp.program.link impl).withExit ret) S
       (IsReturn (fun s' => ∃ (M' : Memory) (zp' zc' : Nat) (L' : List (Nat × Nat)) (b' : Nat),
         ZPost R L L' b b' g sp n M M' zp zc zp' zc' ∧
-        ZjPost R b' L' g sp n mp mc k0 yp ylen bp zp' zc' tbl
+        ZjPost R b' L' g sp n mp mc k0 yp ylen bp zp' zc' zzp zzc tbl
           (zjVal n (M.readLE mp (8 * n)) k0 tbl Y ylen yi) st n0 onep r18 r29 M' s')) := by
   have hc := codeIn_ofImpl_restrict_of_apart hap LibExp.names
   rw [← LibExp.eq_only] at hc
