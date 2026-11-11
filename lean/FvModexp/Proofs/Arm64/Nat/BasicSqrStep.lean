@@ -82,7 +82,7 @@ theorem inv_step {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp x
     (hz1 : S1m.readLE (zp + 16 * i + 8) 8 = s.mem.readLE (xp + 8 * i) 8 * s.mem.readLE (xp + 8 * i) 8 / 2 ^ 64)
     (hFw : MemFrame S1m w [(t + 8 * i, t + 8 * i + 8 * i), (s.sp.toNat - 112, s.sp.toNat - 104)])
     (hval : natVal w (t + 8 * i) i + 2 ^ (64 * i) * w.readLE (s.sp.toNat - 112) 8 =
-      natVal S1m (t + 8 * i) i + natVal S1m xp i * s.mem.readLE (xp + 8 * i) 8 + 0)
+      natVal S1m (t + 8 * i) i + natVal S1m xp i * s.mem.readLE (xp + 8 * i) 8)
     (hinvw : R.inv b1 L1 (s.regs 28).toNat (view R.rt L1 w)) :
     Inv R L st zp zl zc xp xl xc s t L1 b1 w1 c1 (i + 1)
       (w.writeLE (t + 16 * i) 8 (w.readLE (s.sp.toNat - 112) 8)) := by
@@ -194,8 +194,7 @@ theorem inv_step {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp x
     generalize natVal s.mem xp i = X at hval ⊢
     generalize s.mem.readLE (xp + 8 * i) 8 = d at hval ⊢
     generalize 2 ^ (64 * i) = Q at hval ⊢
-    have h2 : W + Q * c = Mt + X * d := by omega
-    rw [Nat.mul_zero, Nat.add_zero, h2, Nat.mul_add, Nat.mul_comm Q (X * d), Nat.mul_comm X d]
+    rw [Nat.mul_zero, Nat.add_zero, hval, Nat.mul_add, Nat.mul_comm Q (X * d), Nat.mul_comm X d]
     omega
   case zero =>
     intro a n h1 h2

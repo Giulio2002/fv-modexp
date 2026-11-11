@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Arm64.Nat.BasicSqrStep
+import FvModexp.Proofs.Arm64.Nat.BasicSqrBody
 import FvModexp.Proofs.Common.DivmcBits
 import FvModexp.Proofs.Common.BitLemmas
 
@@ -14,42 +14,6 @@ open Janus Janus.Arm64 Janus.GoABI Janus.GoABI0 Janus.Tactic Janus.Spec Janus.Co
 open FvModexp.Arm64.Callees
 
 namespace FvModexp.Arm64.BasicSqr
-
-/-- the `CALL addMulVVWW.abi0` of the loop body -/
-abbrev callMV : Nat := segAddr Extracted.program fn + 0x1b8
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
-set_option linter.janusRenameI false in
-/-- the rest of an iteration, from the call (state `S1`, memory = the head's `M` with the two `z` words and the
-frame stores): the call, `t[2i] = c`, back to the head. -/
-theorem body2 (impl : List Segment) (R : RtInv)
-    (hMV' : ∀ b L, Summary0 (LibBasicSqr.program.link impl) (segAddr Extracted.program addMulVVWWfn)
-      (VVWWLPre R b L) (VVWWLQ R b L))
-    (b : Nat) (L : List (Nat × Nat)) (st zp zl zc xp xl xc : BitVec 64) (s : State)
-    (t : Nat) (L1 : List (Nat × Nat)) (b1 w1 c1 : Nat)
-    (hE : Env R b L st.toNat zp.toNat zl.toNat zc.toNat xp.toNat xl.toNat s t L1 b1 w1 c1) (Q : State → Prop)
-    (i : Nat) (hi1 : 1 ≤ i) (hiy : i < xl.toNat) (M : Memory)
-    (hI : Inv R L st.toNat zp.toNat zl.toNat zc.toNat xp.toNat xl.toNat xc.toNat s t L1 b1 w1 c1 i M)
-    (hk : ∀ S : State, S.pc = BitVec.ofNat 64 head →
-      S.sp = s.sp - 208#64 → S.regs 28 = s.regs 28 → S.regs 29 = s.sp - 216#64 → S.regs 18 = s.regs 18 →
-      S.regs 0 = BitVec.ofNat 64 t → S.regs 2 = BitVec.ofNat 64 (2 * xl.toNat) → S.regs 3 = xl → S.regs 4 = zl →
-      S.regs 5 = xp → S.regs 6 = BitVec.ofNat 64 (i + 1) → S.regs 8 = zp →
-      Inv R L st.toNat zp.toNat zl.toNat zc.toNat xp.toNat xl.toNat xc.toNat s t L1 b1 w1 c1 (i + 1) S.mem →
-      ReachesRet (LibBasicSqr.program.link impl) (s.regs 30) S Q)
-    (S1 : State) (hpc : S1.pc = BitVec.ofNat 64 callMV) (hsp : S1.sp = s.sp - 208#64) (h28 : S1.regs 28 = s.regs 28)
-    (h29 : S1.regs 29 = s.sp - 216#64) (h18 : S1.regs 18 = s.regs 18)
-    (hF : MemFrame M S1.mem [(zp.toNat + 16 * i, zp.toNat + 16 * i + 16), (s.sp.toNat - 200, s.sp.toNat - 112),
-      (s.sp.toNat - 72, s.sp.toNat - 56)])
-    (hz0 : S1.mem.readLE (zp.toNat + 16 * i) 8 = (s.mem.readLE (xp.toNat + 8 * i) 8 * s.mem.readLE (xp.toNat + 8 * i) 8) % 2 ^ 64)
-    (hz1 : S1.mem.readLE (zp.toNat + 16 * i + 8) 8 = s.mem.readLE (xp.toNat + 8 * i) 8 * s.mem.readLE (xp.toNat + 8 * i) 8 / 2 ^ 64)
-    (f1 : S1.mem.readLE (s.sp.toNat - 200) 8 = t + 8 * i) (f2 : S1.mem.readLE (s.sp.toNat - 192) 8 = i)
-    (f3 : S1.mem.readLE (s.sp.toNat - 176) 8 = t + 8 * i) (f4 : S1.mem.readLE (s.sp.toNat - 152) 8 = xp.toNat)
-    (f5 : S1.mem.readLE (s.sp.toNat - 128) 8 = s.mem.readLE (xp.toNat + 8 * i) 8)
-    (f6 : S1.mem.readLE (s.sp.toNat - 120) 8 = 0) (f7 : S1.mem.readLE (s.sp.toNat - 72) 8 = i)
-    (hinv1 : R.inv b1 L1 (s.regs 28).toNat (view R.rt L1 S1.mem)) :
-    ReachesRet (LibBasicSqr.program.link impl) (s.regs 30) S1 Q := by
-  sorry
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
