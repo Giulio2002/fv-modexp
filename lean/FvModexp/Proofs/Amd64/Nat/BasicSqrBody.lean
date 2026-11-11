@@ -31,10 +31,10 @@ set_option maxHeartbeats 64000000 in
 theorem body3 (impl : List Amd64.Segment) (R : RtInv)
     (b : Nat) (L : List (Nat × Nat)) (st zp zl zc xp xl xc : BitVec 64) (s : State)
     (t : Nat) (L1 : List (Nat × Nat)) (b1 w1 c1 : Nat) (Q : State → Prop)
-    (i : Nat) (hiy : i < xl.toNat) (hx48 : 16 * xl.toNat < 2 ^ 40) (ht48 : t + 16 * xl.toNat ≤ 2 ^ 48)
+    (i : Nat) (hiy : i < xl.toNat) (hx48 : 16 * xl.toNat < 2 ^ 44) (ht48 : t + 16 * xl.toNat ≤ 2 ^ 48)
     (htb : 8 ≤ s.fsBase.toNat ∧ s.fsBase.toNat ≤ 2 ^ 48)
     (htw : t + 16 * xl.toNat ≤ (s.regs 4).toNat - 4424 ∨ (s.regs 4).toNat + 64 ≤ t)
-    (hsp0 : 4424 ≤ (s.regs 4).toNat) (hft : t + 16 * xl.toNat ≤ s.fsBase.toNat - 8 ∨ s.fsBase.toNat ≤ t)
+    (hsp0 : 4424 ≤ (s.regs 4).toNat) (hsp1 : (s.regs 4).toNat + 64 ≤ 2 ^ 48) (hft : t + 16 * xl.toNat ≤ s.fsBase.toNat - 8 ∨ s.fsBase.toNat ≤ t)
     (hk : HeadK impl R L st zp zl zc xp xl xc s t L1 b1 w1 c1 Q (i + 1)) (W : Memory)
     (hI2 : Inv R L st.toNat zp.toNat zl.toNat zc.toNat xp.toNat xl.toNat xc.toNat s t L1 b1 w1 c1 (i + 1)
       (W.writeLE (t + 16 * i) 8 (W.readLE ((s.regs 4).toNat - 104) 8)))
@@ -45,6 +45,7 @@ theorem body3 (impl : List Amd64.Segment) (R : RtInv)
     (w40 : W.readLE ((s.regs 4).toNat + 40) 8 = xp.toNat) (w48' : W.readLE ((s.regs 4).toNat + 48) 8 = xl.toNat)
     (wtl : W.readLE (s.fsBase.toNat - 8) 8 = (s.regs 14).toNat)
     (wtacc : W.accessible (s.fsBase.toNat - 8) 8 false = true)
+    (wwacc : W.accessible ((s.regs 4).toNat - 4424) (4424 + 64) true = true)
     (hwacc2 : W.accessible (t + 16 * i) 8 true = true)
     (S2 : State) (hpc : S2.rip = BitVec.ofNat 64 (callMV + 5)) (hsp : S2.regs 4 = s.regs 4 - 192#64)
     (h5 : S2.regs 5 = s.regs 4 - 8#64) (hfs : S2.fsBase = s.fsBase) (hdf : S2.df = false) (hm : S2.mem = W) :
@@ -180,8 +181,8 @@ theorem body2 (impl : List Amd64.Segment) (R : RtInv)
     rw [hFw'.accessible, hacc]
     exact Janus.Arm64.Memory.accessible_mono _ hE.scr.acc (by omega) (by omega)
   have hI2 := inv_step hE hi1 hiy hI hF hz0 hz1 hFw' hval hinvw
-  refine body3 impl R b L st zp zl zc xp xl xc s t L1 b1 w1 c1 Q i hiy (by omega) ht48 htb hE.lay.tw hsp0 hE.lay.ft hk w hI2
-    w56 w64 w72 w88 w80 w48 w16 w24 w40 w48' wtl (by rw [hFw'.accessible, hacc]; exact htr) hwacc2 _ ?_ ?_ ?_ ?_ ?_ ?_
+  refine body3 impl R b L st zp zl zc xp xl xc s t L1 b1 w1 c1 Q i hiy (by have := hE.pre.zcb; have := hE.pre.zlc; omega) ht48 htb hE.lay.tw hsp0 hsp1 hE.lay.ft hk w hI2
+    w56 w64 w72 w88 w80 w48 w16 w24 w40 w48' wtl (by rw [hFw'.accessible, hacc]; exact htr) (by rw [hFw'.accessible, hacc]; exact hw) hwacc2 _ ?_ ?_ ?_ ?_ ?_ ?_
   all_goals janus64_simp
 
 end FvModexp.Amd64.BasicSqr
