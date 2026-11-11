@@ -65,9 +65,9 @@ theorem pro3 (impl : List Segment) (R : RtInv) (stkSN abSN : Nat) (hk1 : stkSN �
     (hbud : b - ExpHyp.stackNatCost (stLen s.mem st.toNat) (2 * xl.toNat) ≤ b1)
     (hinv2 : R.inv b1 L1 (s.regs 28).toNat (view R.rt L1 S2.mem)) (hok : StkOK S2.mem R L1 st.toNat)
     (hlen2 : stLen S2.mem st.toNat = stLen s.mem st.toNat + (2 * xl.toNat + 3) / 4 * 4)
-    (hsame : stLen s.mem st.toNat + 2 * xl.toNat ≤ stCap s.mem st.toNat →
+    (hsame : stLen s.mem st.toNat + (2 * xl.toNat + 3) / 4 * 4 ≤ stCap s.mem st.toNat →
       stW S2.mem st.toNat = stW s.mem st.toNat ∧ stCap S2.mem st.toNat = stCap s.mem st.toNat)
-    (hgrow : stCap s.mem st.toNat < stLen s.mem st.toNat + 2 * xl.toNat →
+    (hgrow : stCap s.mem st.toNat < stLen s.mem st.toNat + (2 * xl.toNat + 3) / 4 * 4 →
       InRanges (stW S2.mem st.toNat) (8 * stCap S2.mem st.toNat) R.rt ∧
         ApartAll (stW S2.mem st.toNat) (8 * stCap S2.mem st.toNat) L)
     (hF2 : MemFrame P.mem S2.mem (R.rt ++ [(s.sp.toNat - 208 - stkSN, s.sp.toNat - 216),
@@ -227,13 +227,16 @@ theorem pro2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
   have hlen := hpre.stlen
   have r0' : P.regs 0 = st := by rw [r0]; simp
   have e208 : (s.sp - 208#64).toNat = s.sp.toNat - 208 := by simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
-  have eW : ExpHyp.stW P.mem st.toNat = stW s.mem st.toNat := hrd _ _ (by omega)
-  have eL : ExpHyp.stLen P.mem st.toNat = stLen s.mem st.toNat := hrd _ _ (by omega)
-  have eC : ExpHyp.stCap P.mem st.toNat = stCap s.mem st.toNat := hrd _ _ (by omega)
+  have eW : stW P.mem st.toNat = stW s.mem st.toNat := hrd _ _ (by omega)
+  have eL : stLen P.mem st.toNat = stLen s.mem st.toNat := hrd _ _ (by omega)
+  have eC : stCap P.mem st.toNat = stCap s.mem st.toNat := hrd _ _ (by omega)
   have hn2 : 2 * xl.toNat % 18446744073709551616 = 2 * xl.toNat := Nat.mod_eq_of_lt (by simp only [stLen] at hlen; omega)
   have hcost := hpre.cost
   have hstarr := hpre.starr
   simp only [stW, stCap, stLen] at hlen hcost hstarr
+  have hwbP : P.mem.accessible StackNat.wbA 4 false = true := by rw [hPacc]; exact hpre.wba
+  have hstwb := hpre.stwb; unfold Apart at hstwb
+  have hstfr := hpre.stfree; simp only [freeP, freeN, stW, stLen, stCap] at hstfr; unfold Apart at hstfr
   by_cases hc0 : 0 < s.mem.readLE (st.toNat + 16) 8
   · have hnl := hpre.stok.2.2.2.2.1
     simp only [NatLive, stW, stCap] at hnl
@@ -244,19 +247,19 @@ theorem pro2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     have a2' : InRanges (s.mem.readLE st.toNat 8) (8 * s.mem.readLE (st.toNat + 16) 8) L ∨
       Outside (s.mem.readLE st.toNat 8) (8 * s.mem.readLE (st.toNat + 16) 8) R.rt := a2
     janus_run [p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, hn2] until [callNat + 4] calls [hSN' b L]
-    rename_i hpc' hsp' h28' h29' h18' hr0 hr1 hr2 L1 b1 hext hbud hinv2 k1 k2 k3 k4 k5 k6 k7 hlen2 _ hsame hgrow hF2 hLF2
+    rename_i hpc' hsp' h28' h29' h18' hr1 hr2 L1 b1 hext hr0 hbud hinv2 k1 k2 k3 k4 k5 k6 k7 hlen2 hsame hgrow hF2 hLF2
     refine pro3 impl R stkSN abSN hk1 hk2 hmc hLsh hVV hMV' b L st zp zl zc xp xl xc s hpre hbig hl4 hl48 P
       ⟨hpc, hsp, h28, h29, h18, r0, r1, hF, hreg, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13⟩ s'
       ?qpc ?qsp ?q28 ?q29 ?q18 ?q0 ?q1 ?q2 L1 b1 hext hbud hinv2
       ⟨k1, k2, by rw [hF2.accessible, hF.accessible]; exact k3, by omega, k5, k6, k7⟩ hlen2 hsame hgrow ?F2 ?LF2
     case F2 =>
-      simp only [winA, ExpHyp.stWs, e208, eW, eL, eC, show s.sp.toNat - 208 - 8 = s.sp.toNat - 216 by omega,
+      simp only [winA, stkWs, e208, eW, eL, eC, show s.sp.toNat - 208 - 8 = s.sp.toNat - 216 by omega,
         show s.sp.toNat - 208 + 8 = s.sp.toNat - 200 by omega] at hF2
       exact hF2
     case LF2 =>
-      simp only [ExpHyp.stWs, eW, eL, eC] at hLF2
+      simp only [stkWs, eW, eL, eC] at hLF2
       exact hLF2
-    case q0 => rw [hr0]; simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, r0', eL]
+    case q0 => exact hr0 (by omega)
     case q1 => rw [hr1]; simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, r1, BitVec.toNat_ofNat, hn2]
     case q2 => rw [hr2]; simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, r1, BitVec.toNat_ofNat, hn2]
     case q28 => rw [h28']; simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, h28]
@@ -265,19 +268,19 @@ theorem pro2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     case qsp => rw [hsp']
     case qpc => rw [hpc']; janus_simp
   · janus_run [p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, hn2] until [callNat + 4] calls [hSN' b L]
-    rename_i hpc' hsp' h28' h29' h18' hr0 hr1 hr2 L1 b1 hext hbud hinv2 k1 k2 k3 k4 k5 k6 k7 hlen2 _ hsame hgrow hF2 hLF2
+    rename_i hpc' hsp' h28' h29' h18' hr1 hr2 L1 b1 hext hr0 hbud hinv2 k1 k2 k3 k4 k5 k6 k7 hlen2 hsame hgrow hF2 hLF2
     refine pro3 impl R stkSN abSN hk1 hk2 hmc hLsh hVV hMV' b L st zp zl zc xp xl xc s hpre hbig hl4 hl48 P
       ⟨hpc, hsp, h28, h29, h18, r0, r1, hF, hreg, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13⟩ s'
       ?qpc ?qsp ?q28 ?q29 ?q18 ?q0 ?q1 ?q2 L1 b1 hext hbud hinv2
       ⟨k1, k2, by rw [hF2.accessible, hF.accessible]; exact k3, by omega, k5, k6, k7⟩ hlen2 hsame hgrow ?F2 ?LF2
     case F2 =>
-      simp only [winA, ExpHyp.stWs, e208, eW, eL, eC, show s.sp.toNat - 208 - 8 = s.sp.toNat - 216 by omega,
+      simp only [winA, stkWs, e208, eW, eL, eC, show s.sp.toNat - 208 - 8 = s.sp.toNat - 216 by omega,
         show s.sp.toNat - 208 + 8 = s.sp.toNat - 200 by omega] at hF2
       exact hF2
     case LF2 =>
-      simp only [ExpHyp.stWs, eW, eL, eC] at hLF2
+      simp only [stkWs, eW, eL, eC] at hLF2
       exact hLF2
-    case q0 => rw [hr0]; simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, r0', eL]
+    case q0 => exact hr0 (by omega)
     case q1 => rw [hr1]; simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, r1, BitVec.toNat_ofNat, hn2]
     case q2 => rw [hr2]; simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, r1, BitVec.toNat_ofNat, hn2]
     case q28 => rw [h28']; simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, h28]

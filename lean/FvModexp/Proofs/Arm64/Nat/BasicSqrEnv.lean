@@ -15,8 +15,8 @@ theorem env_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl 
     {L1 : List (Nat × Nat)} {b1 : Nat} (hext : LiveExt R L L1)
     (hbud : b - ExpHyp.stackNatCost (stLen P st) (2 * xl) ≤ b1) (hok : StkOK S2 R L1 st)
     (hlen : stLen S2 st = stLen P st + (2 * xl + 3) / 4 * 4)
-    (hsame : stLen P st + 2 * xl ≤ stCap P st → stW S2 st = stW P st ∧ stCap S2 st = stCap P st)
-    (hgrow : stCap P st < stLen P st + 2 * xl → InRanges (stW S2 st) (8 * stCap S2 st) R.rt ∧
+    (hsame : stLen P st + (2 * xl + 3) / 4 * 4 ≤ stCap P st → stW S2 st = stW P st ∧ stCap S2 st = stCap P st)
+    (hgrow : stCap P st < stLen P st + (2 * xl + 3) / 4 * 4 → InRanges (stW S2 st) (8 * stCap S2 st) R.rt ∧
       ApartAll (stW S2 st) (8 * stCap S2 st) L)
     (hacc2 : ∀ a n v, S2.accessible a n v = P.accessible a n v) :
     Env R b L st zp zl zc xp xl s (stW S2 st + 8 * stLen s.mem st) L1 b1 (stW S2 st) (stCap S2 st) := by
@@ -31,7 +31,7 @@ theorem env_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl 
   obtain ⟨-, -, -, -, hnl, hlc, hcb⟩ := hok'
   refine ⟨hpre, hbig, rfl, ⟨hscr.b48, ?_, hscr.al, hscr.held, hscr.loc⟩, hext, hbud, ?_, ?_, hcb, ?_⟩
   · rw [← hPacc, ← hacc2]; exact hscr.acc
-  · by_cases hc : stLen s.mem st + 2 * xl ≤ stCap s.mem st
+  · by_cases hc : stLen s.mem st + (2 * xl + 3) / 4 * 4 ≤ stCap s.mem st
     · left; exact hsame hc
     · right; exact hgrow (by omega)
   · rw [← hlen]; exact hlc
