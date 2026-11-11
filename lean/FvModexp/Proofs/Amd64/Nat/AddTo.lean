@@ -138,7 +138,7 @@ theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
     · refine liveFrame_of_frame (rs := [((s.regs 4).toNat - 4232, (s.regs 4).toNat + 48)]) ?_ hLs' hwin
       simp only [List.cons_append, List.nil_append]; janus_frame
   · -- carry: `addVW(z[n:], z[n:], 1)`
-    rename_i w _ _ hv hc hfr hinvw hg _ hc0 hpc hsp hfp hg14 hx15 hfs2 L' b' hext hbb hres hv2 hinv2 hF2 hLF2
+    rename_i w _ _ hv hc hfr hinvw hg _ hc0 hpc hsp hfp hg14 hx15 hfs2 _ L' b' hext hbb hres hv2 hinv2 hF2 hLF2
     try rw [e16] at hc
     have hF : MemFrame s.mem w [((s.regs 4).toNat - 4232, (s.regs 4).toNat + 48),
         (zp.toNat, zp.toNat + 8 * xl.toNat)] := by janus_frame
