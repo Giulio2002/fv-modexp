@@ -28,8 +28,8 @@ theorem rrRetC (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     (hserv : RunIface.Serves R)
     (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret)
     (b : Nat) (L : List (Nat × Nat)) (g sp K n mp mc Mv xp xc Xv yp ylen Y yi zp zc st n0 l0 t rp rl rc zzp zzc : Nat)
-    (M : Memory) (r18 r29 : BitVec 64)
-    (hC : Ctx R L g sp K n mp mc Mv xp xc Xv yp ylen Y yi zp zc st n0 l0 ret r29 M)
+    (M : Memory) (r18 r29 : BitVec 64) (ex : List (Nat × Nat))
+    (hC : Ctx R L g sp K n mp mc Mv xp xc Xv yp ylen Y yi zp zc st n0 l0 ret r29 ex M)
     (hZ : ZZ R L g sp n mp xp yp ylen zp zc st l0 zzp zzc M)
     (ht : t < 2 ^ 64) (r224 : M.readLE (sp + 224) 8 = t) (r128 : M.readLE (sp + 128) 8 = 2 * n)
     (r168 : M.readLE (sp + 168) 8 = zzc) (r400 : M.readLE (sp + 400) 8 = zzp)
@@ -69,7 +69,7 @@ theorem rrRetC (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
       Apart zp (8 * zc) (stFree M st).1 (stFree M st).2) := by
     intro h
     obtain ⟨-, -, o, a1, a2⟩ := hz h
-    exact ⟨hzzz h, a1, a2, w16 _ _ o.2.1, o.2.2.1, fr _ _ o.2.2.2⟩
+    exact ⟨hzzz h, a1, a2, w16 _ _ o.2.1, o.2.2.1, fr _ _ o.2.2.2.1⟩
   have hwba := hgl.2.2.2.2.2.2.2.2.2.2.1
   refine reaches_mono (rrRet impl hap R hclr hmv hmk hSN hserv ret hret b L g sp n mp mc t rp rl rc xp xc yp ylen Y yi
     zp zc zzp zzc st n0 M r18 r29 he (CallW.CEnv.mono hce hK (Nat.le_refl _)) hn hn128 hmc hmc' ht hm hx r1016 r1024
@@ -79,7 +79,7 @@ theorem rrRetC (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     (fun _ => hserv.1 _ _ _ (by omega)) (fun p d => hserv.2.1 _ _ _ (by omega)) (w16 _ _ hmO.2.1) hnm
     (by rw [hmV]; exact hkk) (by rw [hmV]; exact hmB) hfe hsth (w4 _ _ hstw) hsok (by omega) hcap (frl _ _ hug)
     (fun h => ⟨w4 _ _ (harr h).1, (harr h).2⟩) (frl _ _ (w4 _ _ huw)) hslen hwba hstwb (fr _ _ hsu)
-    hmO.2.2.1 (fr _ _ hmO.2.2.2) hxO.2.2.1 (fr _ _ hxO.2.2.2) hyO.2.2.1 (fr _ _ hyO.2.2.2) hbud r960
+    hmO.2.2.1 (fr _ _ hmO.2.2.2.1) hxO.2.2.1 (fr _ _ hxO.2.2.2.1) hyO.2.2.1 (fr _ _ hyO.2.2.2.1) hbud r960
     (fun _ => hserv.1 _ _ _ (by omega)) hinv hrl0 hrln hrc hrp hra hr48 hrh hrw hrS hrF hzr hzzx hzz0 S hpc hsp h3 h4 h5
     h18 h28 h29 hmem) ?_
   refine isReturn_mono fun s' h => ?_
