@@ -1,5 +1,4 @@
-import FvModexp.Proofs.Arm64.Nat.DivBasicMul
-
+import FvModexp.Proofs.Arm64.Nat.DivBasicRel
 /-!
 # `divBasic` (arm64): the memory after `subVV` (pure)
 

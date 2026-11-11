@@ -1,6 +1,5 @@
-import FvModexp.Proofs.Arm64.Nat.DivBasicSub
 import FvModexp.Proofs.Arm64.Nat.DivBasicAddFin
-
+import FvModexp.Proofs.Arm64.Nat.DivBasicCorr
 /-!
 # `divBasic` (arm64): the add-back `if c != 0 { c := addVV(u[j:j+n], u[j:j+n], v); if n < qhl { u[j+n] += c }; qhat-- }`
 (natdiv.go:710-720), `+0x230 → +0x2d8`
@@ -11,18 +10,7 @@ open FvModexp.Arm64.Callees Janus.Contracts.EqHashModel
 
 namespace FvModexp.Arm64.DivBasic
 
-abbrev tailPt : Nat := segAddr Extracted.program fn + 0x2d8
 
-/-- what the continuation of the add-back gets (`S` at `+0x230`, `S'` at `+0x2d8`) -/
-@[reducible] def AddK (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (qp ql st up ul uc vp vl vc : Nat) (s : State)
-    (t : Nat) (L1 : List (Nat × Nat)) (b1 w1 c1 : Nat) (S S' : State) (j qhat q bw : Nat) : Prop :=
-  Bd R b L qp ql st up ul uc vp vl vc s t L1 b1 w1 c1 S' tailPt j ∧ S'.regs 0 = BitVec.ofNat 64 vl ∧
-    S'.regs 4 = BitVec.ofNat 64 ul ∧ S'.regs 7 = BitVec.ofNat 64 up ∧
-    S'.regs 2 = BitVec.ofNat 64 (if bw = 0 then qhat else (qhat + 2 ^ 64 - 1) % 2 ^ 64) ∧
-    MemFrame S.mem S'.mem (scr s ++ [(up + 8 * j, up + 8 * j + 8 * q)]) ∧
-    (bw = 0 → ∀ a n, S'.mem.readLE a n = S.mem.readLE a n) ∧
-    (bw ≠ 0 → ∃ ca, natVal S'.mem (up + 8 * j) vl + 2 ^ (64 * vl) * ca = natVal S.mem (up + 8 * j) vl + natVal s.mem vp vl ∧
-      (vl < q → S'.mem.readLE (up + 8 * j + 8 * vl) 8 = (S.mem.readLE (up + 8 * j + 8 * vl) 8 + ca) % 2 ^ 64))
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in

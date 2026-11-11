@@ -1,7 +1,4 @@
-import FvModexp.Proofs.Arm64.Nat.DivBasicNat
-import FvModexp.Proofs.Arm64.Nat.DivBasicMemF
-import FvModexp.Proofs.Common.AsmDivVW
-
+import FvModexp.Proofs.Arm64.Nat.DivBasicRel
 /-!
 # `divBasic` (arm64): after `stk.nat` — `vn1 := v[n-1]`, `rec := reciprocalWord(vn1)`, `j := m`, `ujn := 0`, to the
 loop head (natdiv.go:654-662)
@@ -43,22 +40,7 @@ theorem env_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc 
     exact ⟨a1, a2, by rw [← hacc2]; exact a3, a4⟩
 
 
-/-- the `CALL reciprocalWord` -/
-abbrev callRec : Nat := segAddr Extracted.program fn + 0xac
 
-/-- the state at the loop head (`R1 = r1` = `j` as a 64-bit word, `R2 = ujn`, `R0 = rec`) with `Env` and `Mem` -/
-structure Hd (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (qp ql st up ul uc vp vl vc : Nat) (s : State)
-    (t : Nat) (L1 : List (Nat × Nat)) (b1 w1 c1 : Nat) (S : State) (r1 ujn : Nat) : Prop where
-  pc : S.pc = BitVec.ofNat 64 head
-  sp : S.sp = s.sp - 240#64
-  r28 : S.regs 28 = s.regs 28
-  r29 : S.regs 29 = s.sp - 248#64
-  r18 : S.regs 18 = s.regs 18
-  r0 : S.regs 0 = BitVec.ofNat 64 (AsmDiv.recipWord (s.mem.readLE (vp + 8 * (vl - 1)) 8))
-  r1 : S.regs 1 = BitVec.ofNat 64 r1
-  r2 : S.regs 2 = BitVec.ofNat 64 ujn
-  env : Env R b L qp ql st up ul uc vp vl s t L1 b1 w1 c1
-  mem : Mem R L qp ql st up ul uc vp vl vc s t L1 b1 w1 c1 S.mem
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in

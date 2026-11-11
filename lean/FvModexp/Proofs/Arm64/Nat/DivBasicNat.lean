@@ -1,6 +1,5 @@
-import FvModexp.Proofs.Arm64.Nat.DivBasicPro
+import FvModexp.Proofs.Arm64.Nat.DivBasicRel
 import FvModexp.Proofs.Arm64.Nat.Callees2
-
 /-!
 # `divBasic` (arm64): the call `qhatv := stk.nat(n + 1)` (natdiv.go:651)
 
@@ -13,29 +12,6 @@ open FvModexp.Arm64.Callees Janus.Contracts.EqHashModel
 
 namespace FvModexp.Arm64.DivBasic
 
-/-- the facts right after `(*stack).nat` returned (state `S2`; `P` the call state) -/
-structure AfterNat (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (st vl : Nat) (s P S2 : State) (stkSN abSN : Nat)
-    (L1 : List (Nat × Nat)) (b1 : Nat) : Prop where
-  pc : S2.pc = BitVec.ofNat 64 (callNat + 4)
-  sp : S2.sp = s.sp - 240#64
-  r28 : S2.regs 28 = s.regs 28
-  r29 : S2.regs 29 = s.sp - 248#64
-  r18 : S2.regs 18 = s.regs 18
-  r0 : S2.regs 0 = BitVec.ofNat 64 (stW S2.mem st + 8 * stLen s.mem st)
-  r1 : S2.regs 1 = BitVec.ofNat 64 (vl + 1)
-  r2 : S2.regs 2 = BitVec.ofNat 64 (vl + 1)
-  ext : LiveExt R L L1
-  bud : b - ExpHyp.stackNatCost (stLen s.mem st) (vl + 1) ≤ b1
-  inv : R.inv b1 L1 (s.regs 28).toNat (view R.rt L1 S2.mem)
-  ok : StkOK S2.mem R L1 st
-  len : stLen S2.mem st = stLen s.mem st + (vl + 1 + 3) / 4 * 4
-  same : stLen s.mem st + (vl + 1 + 3) / 4 * 4 ≤ stCap s.mem st →
-    stW S2.mem st = stW s.mem st ∧ stCap S2.mem st = stCap s.mem st
-  grow : stCap s.mem st < stLen s.mem st + (vl + 1 + 3) / 4 * 4 →
-    InRanges (stW S2.mem st) (8 * stCap S2.mem st) R.rt ∧ ApartAll (stW S2.mem st) (8 * stCap S2.mem st) L
-  F2 : MemFrame P.mem S2.mem (R.rt ++ [(s.sp.toNat - 240 - stkSN, s.sp.toNat - 248),
-    (s.sp.toNat - 232, s.sp.toNat - 240 + abSN)] ++ stkWs s.mem st)
-  LF2 : LiveFrame P.mem S2.mem L (stkWs s.mem st)
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
