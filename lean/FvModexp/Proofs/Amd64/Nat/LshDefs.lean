@@ -1,6 +1,7 @@
 import FvModexp.Proofs.Amd64.Nat.LibLsh
 import FvModexp.Proofs.Amd64.Nat.NatAddMid
 import FvModexp.Proofs.Amd64.Exp.EvenHyp
+import FvModexp.Proofs.Common.DivmcBits
 
 /-!
 # `nat.lsh` (go-bigmodexpfix nat.go:395), amd64: statement and segment-boundary facts
@@ -83,6 +84,31 @@ def Hyp2 (impl : List Amd64.Segment) (R : RtInv) (ns : List String) (stk above :
     s.xmm 15 = 0#128 ∧ s.df = false ∧ s.regs 0 = BitVec.ofNat 64 zp ∧ s.regs 3 = BitVec.ofNat 64 zl ∧
     s.regs 1 = BitVec.ofNat 64 zc ∧ s.regs 7 = BitVec.ofNat 64 x ∧ s.regs 6 = BitVec.ofNat 64 xl ∧
     s.regs 8 = BitVec.ofNat 64 xc ∧ s.regs 9 = BitVec.ofNat 64 sh
+
+/-- the slice mask `(x - y) >>ₛ 63 & z` with `x < y` (`z[q:]`, `q < cap`) -/
+theorem sub_sshr63_and (x y z : BitVec 64) (h : x.toNat < y.toNat) (hy : y.toNat ≤ 2 ^ 63) :
+    ((x - y).sshiftRight 63 &&& z) = z := by
+  have hm := sshr63_of_lt x y h hy
+  apply BitVec.eq_of_toNat_eq
+  rw [BitVec.toNat_and, hm, Nat.and_comm]
+  exact and_ones64 _ z.isLt
+
+theorem shl3 (q : Nat) (h : 8 * q < 2 ^ 64) : BitVec.ofNat 64 q <<< 3 = BitVec.ofNat 64 (8 * q) := by
+  apply BitVec.eq_of_toNat_eq
+  simp only [BitVec.toNat_shiftLeft, BitVec.toNat_ofNat, Nat.shiftLeft_eq]; omega
+
+/-- `z[q:]`'s pointer offset `(q - c) >>ₛ 63 & (q << 3)` with `q < c` -/
+theorem sub_shr_mask (q c : Nat) (hq : q < c) (hc : c < 2 ^ 40) :
+    ((BitVec.ofNat 64 q - BitVec.ofNat 64 c).sshiftRight 63 &&& BitVec.ofNat 64 q <<< 3) =
+      BitVec.ofNat 64 q <<< 3 :=
+  sub_sshr63_and _ _ _ (by simp only [BitVec.toNat_ofNat]; omega) (by simp only [BitVec.toNat_ofNat]; omega)
+
+/-- the same with `NEGQ` (`0 - (c - q)`) -/
+theorem neg_shr_mask (q c : Nat) (hq : q < c) (hc : c < 2 ^ 40) :
+    ((0#64 - (BitVec.ofNat 64 c - BitVec.ofNat 64 q)).sshiftRight 63 &&& BitVec.ofNat 64 q <<< 3) =
+      BitVec.ofNat 64 q <<< 3 :=
+  neg_sshr63_and _ _ (by simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega)
+    (by simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega)
 
 abbrev hJoin : Nat := segAddr Extracted.program fn + 0x1d1
 abbrev callLsh : Nat := segAddr Extracted.program fn + 0x28d
