@@ -1,21 +1,13 @@
-import FvModexp.Proofs.Amd64.Top.RunLaDefs
+import FvModexp.Proofs.Amd64.Top.RunLLo
+import FvModexp.Proofs.Amd64.Top.RunLHi
 
-/-! # `Run` (amd64): `P1` to `C0` — EIP-7823 (`max BitLen > 64` or `max Uint64 > 1024`: `errors.New`), the empty case,
-the input slice
-
-amd64 code: `max` of the bit lengths (`CMOVG`), `input[96:]` (`len > 96`: `DI = cap - 96`, `BX = p + 96`,
-`R9 = len - 96`; else `R9 = 0`), the receiver's `eip7823` byte (`CMPB 1(R11), $0`), `CMPQ DX, $64; JG` → error,
-`max` of the `Uint64`s (`CMOVA`, `CX` = baseLen), `CMPQ R10, $1024; JBE` → empty test (`CX`, `AX`) or `C0 = 0x654907`;
-error: `newobject(errT)` at `0x6548b0`, two stores, `(nil, 0, 0, itab, obj)`. -/
+/-! # `Run` (amd64): `P1` to `C0` — composition of `lbLo` (`len ≤ 96`) and `lbHi` (`96 < len`) -/
 
 open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Spec Janus.Contracts
 
 namespace FvModexp.Amd64.Run
 
-abbrev pcC0 : Nat := segAddr Extracted.program fn + 0x5c7
-
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 64000000 in
 theorem lb (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hno : NewobjectLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.newobject") 4096 R)
     (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64) (ret : Nat)
@@ -43,61 +35,8 @@ theorem lb (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl) 
       (T'.regs 7).toNat = cp.toNat - (if 96 < len.toNat then 96 else 0) → (T'.regs 9).toNat = len.toNat - 96 →
       Reaches ((LibRun.program.link impl).withExit ret) T' Q) :
     Reaches ((LibRun.program.link impl).withExit ret) T Q := by
-  obtain ⟨hg, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, hLs, hro, htls⟩ := henv
-  obtain ⟨hcacc, hc48, hcheld, hcw, hp, hlcp, hcp48, hpacc, hheld, hpw⟩ := hin
-  obtain ⟨hsp, h14, h5, hx15, hfs, hdf, hm1, hm2, hm3, hm4, hm5, hm6, -, hdS, hinS, hcS, hext, hbud, hinv, hLsS, hMF,
-    hLF, -⟩ := hrel
-  have hno' : NewobjectLiveContract64 (LibRun.program.link impl) (cA "runtime.newobject") 4096 R :=
-    NewobjectLiveContract64.of_codeIn (by rw [LibRun.eq_only]; exact codeIn_ofImpl_restrict_of_apart64 hap LibRun.names) hno
-  have hgl := hg.load
-  have hg3 := hg.below
-  have hg1 := hg.noWrap
-  have hg2 := hg.readable
-  simp only [regSP, Janus.Amd64.GoABI.regG, Janus.Amd64.GoABI.stackguard0Offset,
-    Janus.Amd64.GoABI.stackguard0] at hgl hg3 hg1 hg2 hb' ha hw hout hal hga hgr
-  simp only [stk] at hg3 hb' ha hw hout hga hLs hpw hcw hLsS hMF
-  obtain ⟨⟨hfs8, hfsacc, hfsg⟩, hfsrt, hfsw⟩ := htls
-  unfold Apart at hfsw hga
-  simp only [stk] at hfsw
-  have hgS : S.mem.readLE ((s.regs 14).toNat + 16) 8 = s.mem.readLE ((s.regs 14).toNat + 16) 8 :=
-    hMF.readLE _ _ (by
-      simp only [win, Janus.outside_append, Janus.outside_cons, Janus.outside_nil, and_true]
-      exact ⟨hgr, by omega⟩)
-  have htS : S.mem.readLE (s.fsBase.toNat - 8) 8 = (s.regs 14).toNat := by
-    rw [hMF.readLE _ _ (by
-      simp only [win, Janus.outside_append, Janus.outside_cons, Janus.outside_nil, and_true]
-      exact ⟨hfsrt, by omega⟩)]
-    simpa [regG] using hfsg
-  rw [hdf0] at hdf
-  have hc1 : S.mem.readLE (c.toNat + 1) 1 = 1 := by
-    rw [← hcS] at hrecv
-    have h3 := Janus.Arm64.Memory.readLE_add S.mem c.toNat 1 2
-    have h4 := Janus.Arm64.Memory.readLE_add S.mem (c.toNat + 1) 1 1
-    have l1 := Janus.Arm64.Memory.readLE_lt S.mem c.toNat 1
-    have l2 := Janus.Arm64.Memory.readLE_lt S.mem (c.toNat + 1) 1
-    have l3 := Janus.Arm64.Memory.readLE_lt S.mem (c.toNat + 1 + 1) 1
-    rw [hrecv] at h3; rw [h4] at h3; omega
-  have hLSn : ∀ r ∈ L1, (r.1 + (r.2 - r.1) ≤ BitVec.toNat (s.regs 4) - 616 - 4096 ∨ BitVec.toNat (s.regs 4) - 616 ≤ r.1) ∧
-      (r.1 + (r.2 - r.1) ≤ BitVec.toNat (s.regs 4) - 616 ∨ BitVec.toNat (s.regs 4) - 616 + 8 ≤ r.1) := by
-    intro r hr; have := hLsS r hr; simp only [LiveSep, win, Outside, and_true] at this; omega
-  janus64_data hdS
-  janus_eval_nat h_e : errT
-  rw [h_e] at hokn
-  have hnoP := hno'.pos L1 b1
-  have hL0' := hL0
-  have hL1' := hL1
-  have hL2' := hL2
-  obtain ⟨hB0, hO0, hU0⟩ := hL0
-  obtain ⟨hB1, hO1, hU1⟩ := hL1
-  obtain ⟨hB2, hO2, hU2⟩ := hL2
-  have hI2 := toInt_small (T.regs 2) (by omega)
-  have hI9 := toInt_small (T.regs 9) (by omega)
-  have hI11 := toInt_small (T.regs 11) (by omega)
-  have hIl : len.toInt = (len.toNat : Int) := toInt_small len (by omega)
-  clear hinS hcS hLs hcheld hheld hpw hcw hpacc hd hno hro hrecv
-  janus64_run [hTm, hT4, hT14, hT5, hTx, hTfs, hTdf, hsp, hm1, hm2, hm3, hm4, hm5, hm6, hc1, hgS, htS, hfs, hdf, hx15, hI2, hI9, hI11, hIl, toInt_ite, toNat_ite,
-    ite3_int_gt, ite3_nat_le, BitVec.msb_eq_decide] until [pcC0, segAddr Extracted.program fn + 0x575] calls [hnoP]
-  all_goals trace_state
-  all_goals sorry
+  by_cases h96 : len.toNat ≤ 96
+  · exact lbLo impl hap R hno b L c p len cp ret hret s hdf0 henv hin hrecv h96 hokn hcostE Q S L1 b1 hrel T hTpc hTm hT4 hT14 hT5 hTx hTfs hTdf hL0 hL1 hL2 hErr hZero hk
+  · exact lbHi impl hap R hno b L c p len cp ret hret s hdf0 henv hin hrecv (by omega) hokn hcostE Q S L1 b1 hrel T hTpc hTm hT4 hT14 hT5 hTx hTfs hTdf hL0 hL1 hL2 hErr hZero hk
 
 end FvModexp.Amd64.Run

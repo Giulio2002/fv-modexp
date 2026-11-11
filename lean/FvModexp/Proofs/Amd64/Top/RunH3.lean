@@ -158,8 +158,8 @@ theorem h3 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl) 
         rw [hv1, hdrV, show 32 * 2 = 64 from rfl, padBE_inside _ _ _ _ _ (show 64 + 32 ≤ len.toNat by omega)]
         apply beVal_of_reads
         intro i hi
-        simp only [BitVec.toNat_ofNat] at hi
+        try simp only [BitVec.toNat_ofNat] at hi
         janus64_simp
-        exact hinS _ _ (by omega) (by omega)
+        try exact hinS _ _ (by omega) (by omega)
 
 end FvModexp.Amd64.Run
