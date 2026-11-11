@@ -220,3 +220,42 @@ theorem borrow0 (a : Nat) (ha : a < 2 ^ 64) (y : BitVec 64) :
     simp
 
 end FvModexp.Asm
+
+namespace FvModexp.Asm
+open Janus
+
+/-- amd64 `SUB; LEA -1; NEG; SAR $63; AND (i+1)<<3` (the loop's `copy(z[i+1:], x[i+1:])` pointer offset) -/
+theorem maskB64 (c : BitVec 64) (i : Nat) (hc : c.toNat < 2 ^ 63) (hi : i + 1 ≤ c.toNat) (hi8 : i < 2 ^ 60) :
+    ((0#64 - (c - BitVec.ofNat 64 (i + 1))).sshiftRight 63 &&& BitVec.ofNat 64 (i + 1) <<< 3).toNat =
+      if i + 1 < c.toNat then 8 * (i + 1) else 0 := by
+  rw [sshr63]
+  have hv : (0#64 - (c - BitVec.ofNat 64 (i + 1))).toNat = (2 ^ 64 - (c.toNat - (i + 1))) % 2 ^ 64 := by
+    simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
+  rw [hv]
+  by_cases h : i + 1 < c.toNat
+  · have e : 2 ^ 63 ≤ (2 ^ 64 - (c.toNat - (i + 1))) % 2 ^ 64 := by omega
+    simp only [e, ite_true, h, BitVec.allOnes_and, BitVec.toNat_shiftLeft, BitVec.toNat_ofNat, Nat.shiftLeft_eq]
+    omega
+  · have e : ¬ 2 ^ 63 ≤ (2 ^ 64 - (c.toNat - (i + 1))) % 2 ^ 64 := by omega
+    simp only [e, ite_false, h, BitVec.zero_and, BitVec.toNat_ofNat]
+
+end FvModexp.Asm
+
+namespace FvModexp.Asm
+open Janus
+
+/-- amd64 `LEA -1; NEG; SAR $63; AND $8` (32-bit `AND`, zero-extended) of a slice capacity: `x[1:]`'s pointer offset -/
+theorem mask8_64 (c : BitVec 64) (hc : c.toNat < 2 ^ 63) (h1 : 1 ≤ c.toNat) :
+    (BitVec.setWidth 64 (BitVec.setWidth 32 ((0#64 - (c - 1#64)).sshiftRight 63) &&& 8#32)).toNat =
+      if 1 < c.toNat then 8 else 0 := by
+  rw [sshr63]
+  have hv : (0#64 - (c - 1#64)).toNat = (2 ^ 64 - (c.toNat - 1)) % 2 ^ 64 := by
+    simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
+  rw [hv]
+  by_cases h : 1 < c.toNat
+  · have e : 2 ^ 63 ≤ (2 ^ 64 - (c.toNat - 1)) % 2 ^ 64 := by omega
+    simp only [e, ite_true, h]; decide
+  · have e : ¬ 2 ^ 63 ≤ (2 ^ 64 - (c.toNat - 1)) % 2 ^ 64 := by omega
+    simp only [e, ite_false, h]; decide
+
+end FvModexp.Asm
