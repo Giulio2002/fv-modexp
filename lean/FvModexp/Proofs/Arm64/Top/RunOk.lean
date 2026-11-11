@@ -66,8 +66,8 @@ theorem okReach (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (hOk : ∀ S' : State, ABIReturn s S' → OkRet S' (resV s p len) (hdrV s p len 2) →
       OkFrame R b (okB s p len) L W s S' (S'.regs 0).toNat (hdrV s p len 2) → Q (.returned S')) :
     Reaches ((LibRun.program.link impl).withExit ret) s Q := by
-  obtain ⟨hS1, hS2, -, -, hS5, -⟩ := hsv
   have hsv' : RunIface.Serves R := hsv
+  obtain ⟨hS1, hS2, -, -, hS5, -⟩ := hsv
   have hokS : ∀ n, n ≤ 128 → R.ok (cA "runtime.makeslice") [SetBytes.wordT, n, makeCap n] :=
     fun n hn => hS1 _ _ _ (by unfold makeCap; split <;> omega)
   have hokB : ∀ n, n ≤ 1024 → R.ok (cA "runtime.makeslice") [uint8T, n, n] := fun n hn => hS1 _ _ _ (by omega)
