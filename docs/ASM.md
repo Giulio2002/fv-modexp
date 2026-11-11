@@ -41,7 +41,7 @@ Machine-code SUMMARY theorems for the leaf routines `(*bigModExp).Run` reaches (
 | `math/bits.Div64` | arm64 | `FvModexp.Arm64.Div64Sum.div64_summary` (adapted from fv-uint256) | `FvModexp.Arm64.Div64` | verified |
 | `math/bits.Div64` | amd64 | — (intrinsic `DIVQ`, no function) | — | n/a |
 | `divWW` | arm64 | `FvModexp.Arm64.DivWWSum.divWW_summary` | `FvModexp.Arm64.DivWW` | verified |
-| `divWW` | amd64 | — | — | todo |
+| `divWW` | amd64 | `FvModexp.Amd64.DivWWSum.divWW_summary` | `FvModexp.Amd64.DivWW` | verified |
 | `reciprocalWord` | arm64 | — | — | todo |
 | `reciprocalWord` | amd64 | — (inlined into its callers) | — | n/a |
 | `lshVU.abi0` | arm64 | `FvModexp.Arm64.LshVUSum.lshVU_summary` | `FvModexp.Arm64.LshVU` | verified |
@@ -84,7 +84,9 @@ passes `1 ≤ s ≤ 63`.
 `nat.cmp` compares **lengths first** (as Go does); it is the value comparison only for normalized inputs
 (`cmp_model` + `Mdl.natCmp_spec`).
 `Div64` (arm64): `y ≠ 0`, `hi < y`, `GuardOK s 0`, `StackOK s 40 0`. `divWW` (arm64): `y ≠ 0`, `x1 < y`,
-`m = reciprocal of y` (as `reciprocalWord` computes), frameless.
+`m = reciprocal of y` (as `reciprocalWord` computes), frameless. `divWW` (amd64): the same, args `RAX, RBX, RCX, RDI`,
+results `RAX, RBX`; Pre adds the return slot `[RSP]` readable with value `< 2^47`; Post = `Amd64.DivWWSum.Post`
+(rip = return address, `RSP + 8`, results, registers outside `RAX..RDX, RSI, RDI, R8..R11` kept, memory, `X15`, FS, DF).
 
 ## amd64 `addMulVVWW`: how both paths are covered
 
@@ -125,5 +127,5 @@ Proof split (one `janus_run` per declaration): `zero_lem`, `pos_lem`, `one_lem` 
 `blk_lem` (4x loop, induction; the whole 4x body is one run of ~18 instructions), `fin_lem`. Modules 8–13 s, ≤ 2.4 GB.
 
 ## Next
-amd64 `divWW`, arm64 `reciprocalWord`, `divWVW`, `nat.mulAddWW`; standalone rows for
+arm64 `reciprocalWord`, `divWVW`, `nat.mulAddWW`; standalone rows for
 addVW/subVW need a Witness runtime serving `memmove` (Janus stub runtimes).
