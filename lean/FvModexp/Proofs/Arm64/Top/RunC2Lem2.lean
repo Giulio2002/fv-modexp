@@ -74,7 +74,7 @@ theorem intPre_one {R : RtInv} {b2 B2 : Nat} {L1 L2 : List (Nat × Nat)} {T : St
   intro t hsp hm h28
   obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, hd, hout, hga, hgr, hLs, hro⟩ := hce
   rw [hTm] at hg2 hg3 hw hd
-  obtain ⟨e0, e1, e2, e3, a1, a2, a3, hacc, hrt, hwg⟩ := hgl
+  obtain ⟨e0, e1, e2, e3, a1, a2, a3, hacc, hrt, hwg, hwbA, hwbR, hwbW⟩ := hgl
   have hacc1 : ∀ a n w, M1.accessible a n w = M.accessible a n w := hMF1.accessible
   have hgM : M1.readLE ((T.regs 28).toNat + 16) 8 = M.readLE ((T.regs 28).toNat + 16) 8 :=
     hMF1.readLE _ _ (out_post hgr hga hzg.symm fun hc => (harr hc).2.1.symm)
@@ -89,7 +89,8 @@ theorem intPre_one {R : RtInv} {b2 B2 : Nat} {L1 L2 : List (Nat × Nat)} {T : St
   unfold IntPre CallEnv GuardOK StackOK win
   rw [hsp, hm, h28]
   refine ⟨⟨⟨hg1, by rw [hacc1]; exact hg2, by rw [hgM]; exact hg3⟩, ⟨hal, hb', ha, by rw [hacc1]; exact hw⟩, ?dl,
-    hout, hga, hgr, hext.liveSep hLs hwr, hro⟩, hsv, ⟨?g1, ?g2, ?g3, ?g4, a1, a2, a3, by rw [hacc1]; exact hacc, hrt, hwg⟩,
+    hout, hga, hgr, hext.liveSep hLs hwr, hro⟩, hsv, ⟨?g1, ?g2, ?g3, ?g4, a1, a2, a3, by rw [hacc1]; exact hacc, hrt, hwg,
+      by rw [hacc1]; exact hwbA, hwbR, hwbW⟩,
     hB, hinv2, ?ints, List.pairwise_singleton _ _⟩
   case dl =>
     refine dataLoaded_frame hd hreg hro (by rw [List.append_assoc] at hMF1; exact hMF1) fun r hr hlt => ?_

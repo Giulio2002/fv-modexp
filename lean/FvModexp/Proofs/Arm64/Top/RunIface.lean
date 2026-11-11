@@ -175,11 +175,16 @@ def Serves (R : RtInv) : Prop :=
 /-- The address of the first threshold global (`divRecursiveThreshold`); the other three follow at `+8, +16, +24`. -/
 @[reducible] def gA : Nat := Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.divRecursiveThreshold»
 
+/-- `runtime.writeBarrier`'s flag word (a `.noptrbss` global; not in the extraction's data, but its address is known). -/
+@[reducible] def wbA : Nat := Extracted.dataAddr.«runtime.writeBarrier»
+
 /-- The writable globals the big callees read, at their initial values (`natmul.go:12,68,69`, `natdiv.go:733`), outside
 the runtime-owned ranges. The four words are contiguous, `divRecursiveThreshold` first (`gA`, 32 bytes, both ISAs):
 readable, outside the runtime-owned ranges and outside the stack ranges `w` (`IntPre` passes the callee's window), so a
 load does not fault and the values survive stack stores. (`natOne`, `intOne`, `stackPool` are added when a proof needs
 them.) -/
+-- (`runtime.writeBarrier`'s flag word `wbA` is read by the pointer stores of `(*stack).nat` (divmc's StackNat pre); its
+-- value is irrelevant (both branches are proved), only readability and separation are stated.)
 def Globals (R : RtInv) (m : Memory) (w : List (Nat × Nat) := []) : Prop :=
   m.readLE (Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.karatsubaThreshold») 8 = 40 ∧
   m.readLE (Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.basicSqrThreshold») 8 = 12 ∧
@@ -188,7 +193,8 @@ def Globals (R : RtInv) (m : Memory) (w : List (Nat × Nat) := []) : Prop :=
   Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.karatsubaThreshold» = gA + 8 ∧
   Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.basicSqrThreshold» = gA + 16 ∧
   Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.karatsubaSqrThreshold» = gA + 24 ∧
-  m.accessible gA 32 false = true ∧ Outside gA 32 R.rt ∧ Outside gA 32 w
+  m.accessible gA 32 false = true ∧ Outside gA 32 R.rt ∧ Outside gA 32 w ∧
+  m.accessible wbA 4 false = true ∧ Outside wbA 4 R.rt ∧ Outside wbA 4 w
 
 /-- The callee frame shared by the three specs: the `*Int` objects `xs` (headers on the caller's frame or the heap) are
 outside the callee's window and apart from the `stackguard0` word, `Globals`, `Serves`, the invariant, the budget `B`.
