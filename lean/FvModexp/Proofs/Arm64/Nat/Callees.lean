@@ -27,12 +27,42 @@ abbrev CallEnvND (R : RtInv) (L : List (Nat × Nat)) (s : State) (stk above : Na
     Outside ((s.regs 28).toNat + 16) 8 R.rt ∧
     LiveSep L (win s stk above)
 
-/-- The bytes of the stack a summary may write (arm64): its frames below `SP - 8` and the spill slots above `SP + 8`,
-but NOT the words at `SP - 8` (the caller's saved `X29`, stored below the caller's `SP`) and at `SP` (the caller's
-saved `X30`), which the caller reloads after the call — as the runtime contracts' `calleeStack`. PROPOSAL to top
-(NOTES-divmc.md): CONVENTIONS' `win s stk above = [(SP - stk, SP + above)]` in a `MemFrame` loses both. -/
-@[reducible] def winA (s : State) (stk above : Nat) : List (Nat × Nat) :=
-  [(s.sp.toNat - stk, s.sp.toNat - 8), (s.sp.toNat + 8, s.sp.toNat + above)]
+/-- A fetch from one segment of a pairwise-apart code layout is a fetch from the layout. -/
+theorem fetchIn_of_mem {segs : List Segment} {seg : Segment} (hp : segs.Pairwise Segment.Apart)
+    (hm : seg ∈ segs) {pc w : Nat} (h : Program.fetchIn [seg] pc = some w) : Program.fetchIn segs pc = some w := by
+  obtain ⟨s1, hs1, i, hi, hpc⟩ := Program.fetchIn_index h
+  have e : s1 = seg := by simpa using hs1
+  rw [e] at hi hpc; subst hpc
+  induction segs with
+  | nil => simp at hm
+  | cons x rest ih =>
+    rcases List.mem_cons.1 hm with rfl | hm'
+    · rw [Program.fetchIn_cons]; rw [Program.fetchIn_cons] at h
+      rw [if_pos (by omega)] at h ⊢
+      cases hw : seg.words[(seg.base + 4 * i - seg.base) / 4]? with
+      | none => rw [hw] at h; simp [Program.fetchIn] at h
+      | some v => rw [hw] at h; exact h
+    · have hap := (List.pairwise_cons.1 hp).1 seg hm'
+      unfold Segment.Apart at hap
+      rw [Program.fetchIn_cons_miss (by omega)]
+      exact ih (List.pairwise_cons.1 hp).2 hm'
+
+/-- **A one-segment library program (agent asm's `Lib.*`) is code of a restricted program containing that segment.** -/
+theorem codeIn_single {P lp : Program} {impl : List Segment} (hap : ImplApart P impl) {ns : List String}
+    {seg : Segment} (hl : lp.segments = [seg]) (hm : seg ∈ P.segments) (hn : ns.contains seg.name = true) :
+    CodeIn lp ((P.onlySegments ns).link impl) := by
+  intro pc w hf
+  have hf' : Program.fetchIn [seg] pc = some w := by rw [← hl]; exact hf
+  obtain ⟨s1, hs1, i, hi, hpc⟩ := Program.fetchIn_index hf'
+  have e : s1 = seg := by simpa using hs1
+  rw [e] at hi hpc
+  have hmem : seg ∈ (P.segments.filter fun s => ns.contains s.name) ++ impl :=
+    List.mem_append_left _ (List.mem_filter.2 ⟨hm, hn⟩)
+  have hpw : ((P.segments.filter fun s => ns.contains s.name) ++ impl).Pairwise Segment.Apart :=
+    hap.1.sublist ((List.filter_sublist).append_right impl)
+  obtain ⟨h1, h2⟩ := hap.2 seg (List.mem_append_left _ hm) i hi
+  subst hpc
+  exact ⟨fetchIn_of_mem hpw hmem hf', h1, h2⟩
 
 /-! ## Internal calls with the argument words read from the registers -/
 
@@ -242,15 +272,17 @@ def VWMoves (R : RtInv) (zp zl zc xp xc : Nat) : Prop :=
     R.ok (cA "runtime.memmove") [if j < zc then zp + 8 * j else zp, if j < xc then xp + 8 * j else xp, 8 * (zl - j)]
 
 /-- `addVW(z, x []Word, y Word) (c Word)` (arith.go:103): `z = x + y` over `len z = len x` limbs, carry out. Frame 48,
-`memmove` (4096) → `stk = 4144`; spills `X0`, `X3` (`above = 32`). -/
+`memmove` (4096) → `stk = 4144`; spills `X0`, `X3` (`X3` at caller `SP+32..SP+40`: `above = 40`; asm amendment 2026-11-11). -/
 def AddVWEns (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat))
     (zp zl zc xp xl xc y : W64) : Prop :=
   Ensures ((Extracted.program.onlySegments [addVWfn]).link impl) (segAddr Extracted.program addVWfn)
     [zp, zl, zc, xp, xl, xc, y]
-    (fun s => CallEnvND R L s 4144 32 ∧ xl = zl ∧ zl.toNat ≤ zc.toNat ∧ zl.toNat ≤ xc.toNat ∧
-      NatLive s.mem R L zp.toNat zl.toNat ∧ Outside zp.toNat (8 * zl.toNat) (win s 4144 32) ∧
+    (fun s => CallEnvND R L s 4144 40 ∧ xl = zl ∧ zl.toNat ≤ zc.toNat ∧ zl.toNat ≤ xc.toNat ∧
+      zc.toNat < 2 ^ 63 ∧ xc.toNat < 2 ^ 63 ∧
+      NatLive s.mem R L zp.toNat zl.toNat ∧ Outside zp.toNat (8 * zl.toNat) (win s 4144 40) ∧
+      (0 < zl.toNat → Apart zp.toNat (8 * zl.toNat) ((s.regs 28).toNat + 16) 8) ∧
       s.mem.accessible xp.toNat (8 * zl.toNat) false = true ∧ xp.toNat + 8 * zl.toNat ≤ 2 ^ 48 ∧
-      Held R L xp.toNat (8 * zl.toNat) ∧ Outside xp.toNat (8 * zl.toNat) (win s 4144 32) ∧
+      Held R L xp.toNat (8 * zl.toNat) ∧ Outside xp.toNat (8 * zl.toNat) (win s 4144 40) ∧
       (zp = xp ∨ Apart zp.toNat (8 * zl.toNat) xp.toNat (8 * zl.toNat)) ∧
       R.inv b L (s.regs 28).toNat (view R.rt L s.mem) ∧
       (if zp = xp then True else VWMoves R zp.toNat zl.toNat zc.toNat xp.toNat xc.toNat))
@@ -258,7 +290,7 @@ def AddVWEns (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat))
       natVal s'.mem zp.toNat zl.toNat = (natVal s.mem xp.toNat zl.toNat + y.toNat) % 2 ^ (64 * zl.toNat) ∧
       ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b ≤ b' ∧
         R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem) ∧
-        MemFrame s.mem s'.mem (R.rt ++ winA s 4144 32 ++ [(zp.toNat, zp.toNat + 8 * zl.toNat)]) ∧
+        MemFrame s.mem s'.mem (R.rt ++ winA s 4144 40 ++ [(zp.toNat, zp.toNat + 8 * zl.toNat)]) ∧
         LiveFrame s.mem s'.mem L [(zp.toNat, zp.toNat + 8 * zl.toNat)])
 
 end FvModexp.Arm64.Callees

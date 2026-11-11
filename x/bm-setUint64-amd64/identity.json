@@ -1,0 +1,64 @@
+{
+  "schema": 2,
+  "extractorVersion": "0.2.0",
+  "binary": "../../build/harness-amd64",
+  "binarySha256": "992cfced62f3693a21f5b665558bcb744612d544f8647801147fef3cf9303689",
+  "goVersion": "go1.26.10",
+  "mainModule": "fvmodexp",
+  "goos": "linux",
+  "goarch": "amd64",
+  "goamd64": "v1",
+  "symbolSource": "symtab",
+  "symbol": "github.com/ethereum/go-bigmodexpfix/src/math/big.nat.setUint64",
+  "address": "0x5e54c0",
+  "size": 139,
+  "maxFunctions": 64,
+  "functions": [
+    {
+      "name": "github.com/ethereum/go-bigmodexpfix/src/math/big.nat.setUint64",
+      "address": "0x5e54c0",
+      "size": 139,
+      "words": 0,
+      "bytes": 139
+    }
+  ],
+  "stubs": [
+    {
+      "name": "runtime.morestack_noctxt.abi0",
+      "address": "0x488d20",
+      "kind": "morestack"
+    }
+  ],
+  "contractPatterns": [
+    "runtime.makeslice",
+    "runtime.memclrNoHeapPointers",
+    "runtime.memmove"
+  ],
+  "contracts": [
+    {
+      "name": "runtime.makeslice",
+      "address": "0x485340",
+      "pinned": true
+    }
+  ],
+  "unresolvedBranches": [],
+  "data": [
+    {
+      "name": ".rodata+0x24ea0",
+      "address": "0x6e5ea0",
+      "size": 256,
+      "section": ".rodata",
+      "sha256": "349bfb717cc4c2965501b036532b59051e7bbad30c23b00084ebfe92d4f1d230"
+    }
+  ],
+  "dataReferences": [
+    {
+      "from": "0x5e54ea",
+      "target": "0x6e5ea0",
+      "kind": "rip-lea"
+    }
+  ],
+  "skippedData": [],
+  "extracted": "Extracted.lean",
+  "extractedSha256": "118be5f20102e561661163e993bfdfc5f75b9c60fcc6f320e244d5bb941921b9"
+}

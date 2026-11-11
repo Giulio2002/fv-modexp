@@ -1,5 +1,5 @@
 import FvModexp.Proofs.Amd64.Nat.LibAddTo
-import FvModexp.Proofs.Amd64.Nat.Callees
+import FvModexp.Proofs.Amd64.Nat.AsmCallees
 import FvModexp.Proofs.Common.DivmcNat
 import FvModexp.Proofs.Common.DivmcBits
 
@@ -22,26 +22,26 @@ def names : List String := LibAddTo.names
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
-    (hVV : AddVVHyp impl)
     (hVW : ∀ b L zp zl zc xp xl xc y, AddVWEns impl R b L zp zl zc xp xl xc y)
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc : BitVec 64) :
     Ensures ((Extracted.program.onlySegments names).link impl) (segAddr Extracted.program fn)
       [zp, zl, zc, xp, xl, xc]
-      (fun s => CallEnvND R L s 4232 48 ∧ xl.toNat ≤ zl.toNat ∧ zl.toNat ≤ zc.toNat ∧ zl.toNat < 2 ^ 40 ∧
+      (fun s => CallEnv R L s 4232 48 ∧ xl.toNat ≤ zl.toNat ∧ zl.toNat ≤ zc.toNat ∧ zl.toNat < 2 ^ 40 ∧
         NatLive s.mem R L zp.toNat zl.toNat ∧ Outside zp.toNat (8 * zl.toNat) (win s 4232 48) ∧ zc.toNat < 2 ^ 63 ∧
         s.mem.accessible xp.toNat (8 * xl.toNat) false = true ∧ xp.toNat + 8 * xl.toNat ≤ 2 ^ 48 ∧
         Held R L xp.toNat (8 * xl.toNat) ∧ Outside xp.toNat (8 * xl.toNat) (win s 4232 48) ∧
         (0 < xl.toNat → Apart zp.toNat (8 * zl.toNat) xp.toNat (8 * xl.toNat)) ∧
         Apart zp.toNat (8 * zl.toNat) ((s.regs 14).toNat + 16) 8 ∧ Apart zp.toNat (8 * zl.toNat) (s.fsBase.toNat - 8) 8 ∧
         R.inv b L (s.regs 14).toNat (view R.rt L s.mem))
-      (fun s s' => natVal s'.mem zp.toNat zl.toNat =
+      (fun s s' => s'.fsBase = s.fsBase ∧ natVal s'.mem zp.toNat zl.toNat =
           (natVal s.mem zp.toNat zl.toNat + natVal s.mem xp.toNat xl.toNat) % 2 ^ (64 * zl.toNat) ∧
         ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b ≤ b' ∧
           R.inv b' L' (s.regs 14).toNat (view R.rt L' s'.mem) ∧
           MemFrame s.mem s'.mem (R.rt ++ win s 4232 48 ++ [(zp.toNat, zp.toNat + 8 * zl.toNat)]) ∧
           LiveFrame s.mem s'.mem L [(zp.toNat, zp.toNat + 8 * zl.toNat)]) := by
   rw [show names = LibAddTo.names from rfl, ← LibAddTo.eq_only]
-  intro ret hret s hs ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, hout, hga, hgr, hLs, ⟨htb, htr, htg⟩, htrt, htw⟩, hxz,
+  have hVV := addVVHyp impl hap
+  intro ret hret s hs ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, _, hout, hga, hgr, hLs, _, ⟨htb, htr, htg⟩, htrt, htw⟩, hxz,
     hzc, hz40, hzl, hzw, hzc63, hxacc, hx48, hxh, hxw, hzx, hzg, hzt, hinv⟩
   have hc1 : CodeIn64 ((Extracted.program.onlySegments [addVVfn]).link impl) (LibAddTo.program.link impl) := by
     rw [LibAddTo.eq_only]; exact A64.codeIn_restrict_mono64 hap (sub_of_all (by decide))
@@ -62,6 +62,7 @@ theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
     rintro r rfl; simp only; omega
   by_cases hx0 : xl.toNat = 0
   · janus64_run [hfs] calls [hVV', hVW']
+    try (refine ⟨?_, ?_⟩; (first | rfl | (janus64_simp; done)))
     refine ⟨?_, L, b, LiveExt.refl R L, Nat.le_refl _, by janus_live, ?_, ?_⟩
     · simp only [natVal_zero, Nat.add_zero]; exact (Nat.mod_eq_of_lt (natVal_lt _ _ _)).symm
     · simp only [List.append_assoc, List.cons_append, List.nil_append]; janus_frame
@@ -80,6 +81,7 @@ theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
   by_cases hxl : xl.toNat = zl.toNat
   · janus64_run [hfs] calls [hVV', hVW']
     all_goals
+      try (refine ⟨?_, ?_⟩; (first | rfl | (janus64_simp; done)))
       refine ⟨by rw [← hxl]; janus_assumption, L, b, LiveExt.refl R L, Nat.le_refl _, by janus_assumption, ?_, ?_⟩
       · simp only [List.append_assoc, List.cons_append, List.nil_append]; janus_frame
       · refine liveFrame_of_frame (rs := [((s.regs 4).toNat - 4232, (s.regs 4).toNat + 48)]) ?_ hLs' hwin
@@ -127,13 +129,14 @@ theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
       rw [hv]; exact Nat.mod_eq_of_lt hlt'
     have hb := natVal_lt w zp.toNat zl.toNat
     rw [hsplit, hv', hhi] at hb
+    try (refine ⟨?_, ?_⟩; (first | rfl | (janus64_simp; done)))
     refine ⟨?_, L, b, LiveExt.refl R L, Nat.le_refl _, hinvw, ?_, ?_⟩
     · rw [hsplit, hsplit s.mem, hv', hhi, Nat.mod_eq_of_lt (by omega)]; omega
     · simp only [List.append_assoc, List.cons_append, List.nil_append]; janus_frame
     · refine liveFrame_of_frame (rs := [((s.regs 4).toNat - 4232, (s.regs 4).toNat + 48)]) ?_ hLs' hwin
       simp only [List.cons_append, List.nil_append]; janus_frame
   · -- carry: `addVW(z[n:], z[n:], 1)`
-    rename_i w _ _ hv hc hfr hinvw hg _ hc0 hpc hsp hfp hg14 hx15 L' b' hext hbb hres hv2 hinv2 hF2 hLF2
+    rename_i w _ _ hv hc hfr hinvw hg _ hc0 hpc hsp hfp hg14 hx15 hfs2 L' b' hext hbb hres hv2 hinv2 hF2 hLF2
     try rw [e16] at hc
     have hF : MemFrame s.mem w [((s.regs 4).toNat - 4232, (s.regs 4).toNat + 48),
         (zp.toNat, zp.toNat + 8 * xl.toNat)] := by janus_frame
@@ -148,6 +151,7 @@ theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
       refine Held.readLE2 hzh' hF2' hLF2' ?_ ?_
       · simp only [Outside, and_true]; omega
       · simp only [Outside, and_true]; omega
+    try (refine ⟨?_, ?_⟩; (first | rfl | exact hfs2 | (simp only [hfs2]; done)))
     refine ⟨?_, L', b', hext, hbb, hinv2, ?_, ?_⟩
     · rw [hsplit s'.mem, hlow, hv, hv2, hc, split_mod, Nat.add_sub_cancel' hxz, hsplit s.mem]
       unfold natVal

@@ -36,19 +36,20 @@ def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc bp bl : BitVec 64) 
     bp.toNat + bl.toNat ≤ 2 ^ 48 ∧ s.mem.accessible bp.toNat bl.toNat false = true ∧
     Held R L bp.toNat bl.toNat ∧ Outside bp.toNat bl.toNat (win s 4160 48) ∧
     (0 < zc.toNat → Apart zp.toNat (8 * zc.toNat) bp.toNat bl.toNat) ∧
-    (0 < zc.toNat → Outside zp.toNat (8 * zc.toNat) (win s 4160 48)) ∧
+    (0 < zc.toNat → Outside zp.toNat (8 * zc.toNat) (win s 4160 48) ∧
+      Apart zp.toNat (8 * zc.toNat) ((s.regs 28).toNat + 16) 8) ∧
     R.inv b L (s.regs 28).toNat (view R.rt L s.mem) ∧
     (zc.toNat < nW bl → R.ok (cA "runtime.makeslice") [wordT, nW bl, makeCap (nW bl)] ∧ makeCost (nW bl) ≤ b)
 
 /-- The postcondition: `z.setBytes(buf)` returns a normalised nat `(p', n', c')` holding the big-endian value of
 `buf`, either `z`'s array or a fresh one, with the runtime invariant for the live set with it. -/
-def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc bp bl : BitVec 64) (s s' : State) : Prop :=
+@[reducible] def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc bp bl : BitVec 64) (s s' : State) : Prop :=
   ∃ p' n' c' : Nat, (s'.regs 0).toNat = p' ∧ (s'.regs 1).toNat = n' ∧ (s'.regs 2).toNat = c' ∧
     natVal s'.mem p' n' = beVal s.mem bp.toNat bl.toNat ∧ NatNorm s'.mem p' n' ∧ n' ≤ c' ∧ n' ≤ nW bl ∧
     ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b - makeCost (nW bl) ≤ b' ∧
       R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem) ∧ NatLive s'.mem R L' p' c' ∧
       ((p' = zp.toNat ∧ c' = zc.toNat) ∨ (InRanges p' (8 * c') R.rt ∧ ApartAll p' (8 * c') L)) ∧
-      MemFrame s.mem s'.mem (R.rt ++ win s 4160 48 ++ [(zp.toNat, zp.toNat + 8 * zc.toNat)]) ∧
+      MemFrame s.mem s'.mem (R.rt ++ winA s 4160 48 ++ [(zp.toNat, zp.toNat + 8 * zc.toNat)]) ∧
       LiveFrame s.mem s'.mem L [(zp.toNat, zp.toNat + 8 * zc.toNat)]
 
 /-- What holds at every loop head once the array `[p, p + 8c)` is chosen (`nat.make` done), about the memory `m`
@@ -63,7 +64,7 @@ def Mid (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc bp bl : BitVec 64) 
     Held R L' p (8 * c) ∧ LiveExt R L L' ∧ b - makeCost (nW bl) ≤ b' ∧
     R.inv b' L' (s.regs 28).toNat (view R.rt L' m) ∧
     ((p = zp.toNat ∧ c = zc.toNat) ∨ (InRanges p (8 * c) R.rt ∧ ApartAll p (8 * c) L)) ∧
-    MemFrame s.mem m (R.rt ++ win s 4160 48 ++ [(zp.toNat, zp.toNat + 8 * zc.toNat)]) ∧
+    MemFrame s.mem m (R.rt ++ winA s 4160 48 ++ [(zp.toNat, zp.toNat + 8 * zc.toNat)]) ∧
     LiveFrame s.mem m L [(zp.toNat, zp.toNat + 8 * zc.toNat)]
 
 end FvModexp.Arm64.SetBytes

@@ -1,5 +1,5 @@
 import FvModexp.Proofs.Amd64.Nat.LibBasicMul
-import FvModexp.Proofs.Amd64.Nat.Callees
+import FvModexp.Proofs.Amd64.Nat.AsmCallees
 import FvModexp.Proofs.Common.DivmcNat
 import FvModexp.Proofs.Common.DivmcBits
 
@@ -34,7 +34,7 @@ abbrev head : Nat := segAddr Extracted.program fn + 0xcf
 
 /-- The precondition. -/
 def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl yp yl : BitVec 64) (s : State) : Prop :=
-  CallEnvND R L s 4224 72 ∧ xl.toNat + yl.toNat ≤ zl.toNat ∧ zl.toNat ≤ zc.toNat ∧ zc.toNat < 2 ^ 40 ∧
+  CallEnv R L s 4224 72 ∧ xl.toNat + yl.toNat ≤ zl.toNat ∧ zl.toNat ≤ zc.toNat ∧ zc.toNat < 2 ^ 40 ∧
     NatLive s.mem R L zp.toNat (xl.toNat + yl.toNat) ∧
     Outside zp.toNat (8 * (xl.toNat + yl.toNat)) (win s 4224 72) ∧
     Apart zp.toNat (8 * (xl.toNat + yl.toNat)) ((s.regs 14).toNat + 16) 8 ∧
@@ -49,8 +49,8 @@ def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl yp yl : Bi
     R.inv b L (s.regs 14).toNat (view R.rt L s.mem)
 
 /-- The postcondition: `z[0 : len x + len y] = x · y`, nothing else written but the stack window and `R.rt`. -/
-def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp xp xl yp yl : BitVec 64) (s s' : State) : Prop :=
-  natVal s'.mem zp.toNat (xl.toNat + yl.toNat) = natVal s.mem xp.toNat xl.toNat * natVal s.mem yp.toNat yl.toNat ∧
+@[reducible] def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp xp xl yp yl : BitVec 64) (s s' : State) : Prop :=
+  s'.fsBase = s.fsBase ∧ natVal s'.mem zp.toNat (xl.toNat + yl.toNat) = natVal s.mem xp.toNat xl.toNat * natVal s.mem yp.toNat yl.toNat ∧
     ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b ≤ b' ∧
       R.inv b' L' (s.regs 14).toNat (view R.rt L' s'.mem) ∧
       MemFrame s.mem s'.mem (R.rt ++ win s 4224 72 ++ [(zp.toNat, zp.toNat + 8 * (xl.toNat + yl.toNat))]) ∧
@@ -180,9 +180,10 @@ theorem inv_call {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zl zc xp xl x
 
 /-- The exit (`i = len y`): the postcondition. -/
 theorem post_of_inv {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zl zc xp xl xc yp yl : BitVec 64} {s s' : State}
-    {ret : Nat} (hI : Inv R b L zp zl zc xp xl xc yp yl s ret yl.toNat s'.mem) : Post R b L zp xp xl yp yl s s' := by
+    {ret : Nat} (hI : Inv R b L zp zl zc xp xl xc yp yl s ret yl.toNat s'.mem) (hfs : s'.fsBase = s.fsBase) :
+    Post R b L zp xp xl yp yl s s' := by
   obtain ⟨-, -, -, -, -, -, -, -, -, -, -, hv, -, -, -, hF, hLF, hinv⟩ := hI
-  exact ⟨hv, L, b, LiveExt.refl R L, Nat.le_refl _, hinv, hF, hLF⟩
+  exact ⟨hfs, hv, L, b, LiveExt.refl R L, Nat.le_refl _, hinv, hF, hLF⟩
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
@@ -199,7 +200,7 @@ theorem loop (impl : List Amd64.Segment) (R : RtInv) (hMV' : ∀ b L, Summary0 (
       Inv R b L zp zl zc xp xl xc yp yl s ret i S.mem →
       Reaches ((LibBasicMul.program.link impl).withExit ret) S
         (IsReturn fun s' => ABIReturn s s' ∧ Post R b L zp xp xl yp yl s s') := by
-  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, hout, hga, hgr, hLs, ⟨htb, htr, htg⟩, htrt, htw⟩, hxyz, hzc, hz40,
+  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, hLs, -, ⟨htb, htr, htg⟩, htrt, htw⟩, hxyz, hzc, hz40,
     hzl, hzw, hzg, hzt, hadx, hxacc, hx48, hxh, hxw, hyacc, hy48, hyh, hyw, hap1, hinv0⟩ := hpre
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw htg
   have hfs : (18446744073709551608 + s.fsBase.toNat) % 18446744073709551616 = s.fsBase.toNat - 8 := by omega
@@ -219,7 +220,7 @@ theorem loop (impl : List Amd64.Segment) (R : RtInv) (hMV' : ∀ b L, Summary0 (
     obtain ⟨hr1, hr2, hr0, hs0, hs1, hs2, hs3, hs4, hs5, hs6, hs7, hv, hzero, hxs, hys, hF, hLF, hinv⟩ := hI
     janus64_run [hr1, hr2]
     rw [show i = yl.toNat by omega] at hI'
-    exact post_of_inv hI'
+    exact post_of_inv hI' (by first | rfl | exact hfsb | janus64_simp)
   | succ k ih =>
     intro S i hi hpc h0' h1 h2 h3 h4 h5 h6 h7 h8 hsp h14 h5' h15 hfsb hI
     have hI' := hI
@@ -260,15 +261,15 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
     (hmc : MemclrNoHeapPointersLive64 (Extracted.program.ofImpl impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
-    (hMV : AddMulVVWWHyp impl)
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc yp yl yc : BitVec 64) :
     Ensures ((Extracted.program.onlySegments names).link impl) (segAddr Extracted.program fn)
       [zp, zl, zc, xp, xl, xc, yp, yl, yc]
       (Pre R b L zp zl zc xp xl yp yl) (Post R b L zp xp xl yp yl) := by
   rw [show names = LibBasicMul.names from rfl, ← LibBasicMul.eq_only]
+  have hMV := addMulVVWWHyp impl hap
   intro ret hret s hs hpre
   have hpre' := hpre
-  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, hout, hga, hgr, hLs, ⟨htb, htr, htg⟩, htrt, htw⟩, hxyz, hzc, hz40,
+  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, hLs, -, ⟨htb, htr, htg⟩, htrt, htw⟩, hxyz, hzc, hz40,
     hzl, hzw, hzg, hzt, hadx, hxacc, hx48, hxh, hxw, hyacc, hy48, hyh, hyw, hap1, hinv⟩ := hpre'
   have hc1 : CodeIn64 ((Extracted.program.onlySegments [addMulVVWWfn]).link impl) (LibBasicMul.program.link impl) := by
     rw [LibBasicMul.eq_only]; exact A64.codeIn_restrict_mono64 hap (sub_of_all (by decide))
@@ -289,7 +290,7 @@ theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
   by_cases h0 : xl.toNat + yl.toNat = 0
   · have hx0 : xl.toNat = 0 := by omega
     janus64_run calls [hmc', hMV']
-    refine ⟨?_, L, b, LiveExt.refl R L, Nat.le_refl _, by janus_live, ?_, ?_⟩
+    refine ⟨by first | rfl | janus64_simp, ?_, L, b, LiveExt.refl R L, Nat.le_refl _, by janus_live, ?_, ?_⟩
     · rw [h0]; simp [hx0]
     · simp only [win, List.append_assoc, List.cons_append, List.nil_append]; janus_frame
     · refine liveFrame_of_frame (rs := win s 4224 72) ?_ hLs' hwin
