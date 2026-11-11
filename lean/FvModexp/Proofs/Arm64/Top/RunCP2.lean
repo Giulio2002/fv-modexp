@@ -1,5 +1,6 @@
 import FvModexp.Proofs.Arm64.Top.RunCPDefs
 import FvModexp.Proofs.Common.GenReg
+import FvModexp.Proofs.Arm64.MemmoveZero
 
 /-! # `Run` (arm64): `P` to the return — `copy(buf[modLen - len(v):], v)` (`memmove`, or skipped) -/
 
@@ -11,6 +12,7 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 theorem cp2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
+    (hmz : MemmoveZeroLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
     (hokM : ∀ d sr n, n ≤ 1024 → R.ok (cA "runtime.memmove") [d, sr, n])
     (b : Nat) (L : List (Nat × Nat)) (p len : BitVec 64) (ret : Nat)
     (hret : RetAddr (LibRun.program.link impl) ret) (s : State) (W : Nat) (hW : 4800 ≤ W)
@@ -64,16 +66,60 @@ theorem cp2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     unfold Apart at hga
     have hbW : buf + hdrV s p len 2 ≤ s.sp.toNat - W ∨ s.sp.toNat + 40 ≤ buf := by
       have := InRanges.apart hBrt hout; unfold Apart at this; omega
-    rcases Nat.eq_zero_or_pos vn with hv0 | hv0
-    · sorry -- `memmove(dst, v, 0)`: blocked by the Janus contract strength issue (JANUS-ISSUES.md, n = 0 memmove)
-    obtain ⟨hv48, hvacc, hvap, hvw⟩ := hvf hv0
-    unfold Apart at hvap
-    have hd1 : d + vn = hdrV s p len 2 := by omega
     have hLSc : ∀ r ∈ Lk, (r.fst + (r.snd - r.fst) ≤ s.sp.toNat - 624 - 4096 ∨ s.sp.toNat - 624 - 8 ≤ r.fst) ∧
         (r.fst + (r.snd - r.fst) ≤ s.sp.toNat - 624 + 8 ∨ s.sp.toNat - 624 + 8 + 24 ≤ r.fst) := by
       intro r hr; have := hLsS r hr
       simp only [win, Janus.outside_cons, Janus.outside_nil, and_true] at this; omega
     have hwS : U.mem.accessible (s.sp.toNat - W) (W + 40) true = true := by rw [hMF.accessible]; exact hw
+    rcases Nat.eq_zero_or_pos vn with hv0 | hv0
+    · -- `memmove(buf, v, 0)` (`len(v) = 0`, `v`'s pointer arbitrary): the zero-length contract (Janus PR #2)
+      subst hv0
+      have hd0 : d = 0 := by omega
+      subst hd0
+      have hmz' : MemmoveZeroLive (LibRun.program.link impl) (cA "runtime.memmove") 4096 R :=
+        MemmoveZeroLive.of_codeIn (by rw [LibRun.eq_only]; exact codeIn_ofImpl_restrict_of_apart hap LibRun.names) hmz
+      have hmvok : R.ok (cA "runtime.memmove") [0 + buf, vp, 0] := hokM _ _ _ (by omega)
+      have hr0 : resV s p len = 0 := by rw [← hvv]; rfl
+      set_option janus.callRegions true in
+      janus_run [hm1, hm2, hs3, hsv, hsn, hr0', hI4, hmask, hlenv, hda, hgS] until
+        [segAddr Extracted.program fn + 0x8e8] calls [hmz']
+      rename_i m2 _ _ hLFm _ hMFm hinvm
+      have hslot : m2.readLE (s.sp.toNat - 208) 8 = buf := by
+        rw [hMFm.readLE _ _ (by
+          simp only [Janus.outside_append, Janus.outside_cons, Janus.outside_nil, and_true]
+          exact ⟨hout.of_sub (by omega) (by omega), by omega, by omega⟩), Memory.readLE_writeLE_self]
+        exact Nat.mod_eq_of_lt (by omega)
+      have hbuf : buf < 2 ^ 64 := by omega
+      janus_run [hm1, hm2, hs3, hslot]
+      refine hOk _ ⟨by janus_simp [hsp], by janus_simp [h28], by janus_simp [h29, hm2, regFP],
+        by janus_simp [h18, regPlatform]⟩ ⟨by janus_simp, by janus_simp [hs3], ?vv⟩
+        ⟨Lk, bk, hext, hbud, ?inv, ?held, ?mf, ?lf⟩
+      case vv =>
+        janus_simp
+        rw [hr0]
+        refine beVal_zeros fun i hi => ?_
+        have h1 := hLFm.readLE (buf + i) 1 (hBL.sub (by omega) (by omega)) (by simp only [Janus.outside_nil])
+        rw [Memory.readLE_writeLE_of_disjoint _ _ (by omega)] at h1
+        simp only [Memory.readLE_one] at h1
+        rw [h1]; exact hBz i (by omega)
+      case inv => dsimp only; exact hinvm
+      case held => janus_simp; intro _; exact Or.inl hBL
+      case mf =>
+        dsimp only
+        refine (hMF.trans ?w1 fun a n h => ⟨h, outW_w h⟩).trans hMFm fun a n h => ⟨h, ?w2⟩
+        case w1 => simp only [win]; janus_frame
+        case w2 => simpa only [List.append_nil] using outW_cs hW h
+      case lf =>
+        dsimp only
+        refine hLF.trans ⟨fun a n hin _ => ?_⟩ (fun _ _ h => h)
+        have hin' := hext.inRanges_old hin
+        have hU := (LiveFrame.of_win (L := L) (ex := []) (m := U.mem) (m' := U.mem.writeLE (s.sp.toNat - 208) 8 buf)
+          (by simp only [win]; janus_frame) (fun r hr => hLsS r (hext.mem_old hr))).readLE a n hin trivial
+        rw [← hU]
+        exact hLFm.readLE a n hin' (by simp only [Janus.outside_nil])
+    obtain ⟨hv48, hvacc, hvap, hvw⟩ := hvf hv0
+    unfold Apart at hvap
+    have hd1 : d + vn = hdrV s p len 2 := by omega
     set_option janus.callRegions true in
     janus_run [hm1, hm2, hs3, hsv, hsn, hr0', hI4, hmask, hlenv, hda, hgS] until
       [segAddr Extracted.program fn + 0x8e8] calls [hmv']
