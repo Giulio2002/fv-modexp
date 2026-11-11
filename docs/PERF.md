@@ -534,3 +534,20 @@ the one big `c2eX` term; clearing hypotheses before the second janus_run did not
 Bytes call (two declarations, kernel-checked separately) — TODO.
 IntBytes: arm64 ens 27 s, amd64 ens ~130 s (under load), loops/skip ≤ 15 s, < 3 GB.
 Row RunErr (arm64, janus-provfix, cache-top after all Top modules changed): PASS, 696 s wall, peak 6.39 GB.
+### asm s9: divBasic arm64 segment modules (dev compile `mk.py`, LEAN_NUM_THREADS=4, host shared), wall / max RSS
+| module | wall | RSS | note |
+|---|---|---|---|
+| DivBasicNat (pro2, stk.nat call) | 134 s | 3.3 GB | perf candidate (two janus_runs, cap>0 split) |
+| DivBasicRec (pro3, recip call → head) | 82–102 s | 5.0 GB | |
+| DivBasicMemF (Mem.frame) | 13 s | 2.8 GB | was >200k hb: one omega over the Lay disjunctions + `m1..m24` mod facts → clear them |
+| DivBasicQh (est: divWW + corr) | 19–25 s | 2.6 GB | |
+| DivBasicMul (mulAddVWW.abi0) | 32–38 s | 3.0 GB | |
+| DivBasicSubFin / SubA / SubB / Sub | 16 / 39 / 33 / 2 s | ≤ 2.8 GB | was ONE module, 228 s / 6.2 GB, then 413 s with `try` closers → split per `qhl` + pure `finS` on a reducible stores def `stS` |
+| DivBasicAddFin / AddA / AddB / Add | 6 / 23 / 100 / 6 s | ≤ 2.9 GB | AddB: two runs around the call (stop at +0x290, `finA`) |
+| DivBasicTail | 151 s | 2.5 GB | was 258 s with `all_goals try …` closers; ordered bullets per goal |
+| DivBasicInv / DivBasicStep | 2 / 51 s | 3.1 GB | pure + CPS composition |
+| Common/DivBasicList, DivBasicBridge | < 10 s | 2 GB | |
+LESSONS: (1) after a janus_run through a callee, never reason about the literal store chain in the big context: name it
+by a `@[reducible] def` (`stS`, `stA`) and prove all memory facts in a pure `fin*` lemma (16 s vs minutes);
+(2) `all_goals try (… omega …)` over janus goals is the slowest thing in a module: close goals in order with bullets;
+(3) never `omega` with the 24 `Mem` field equalities (`… % 2^64`, `/4*4`) in context.
