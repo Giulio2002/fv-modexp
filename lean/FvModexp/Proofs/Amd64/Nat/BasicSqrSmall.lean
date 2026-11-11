@@ -69,7 +69,7 @@ theorem small (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progr
   rw [eA] at hthA hthV hthO
   clear hzl'
   janus64_run [hfs, hthV, BitVec.msb_eq_decide] until [callBM + 5] calls [hBM]
-  rename_i _ _ _ _ hfs2 L' b' hext hbb hval hinv2 hF2 hLF2
+  rename_i _ _ _ _ hfs2 hdf2 L' b' hext hbb hval hinv2 hF2 hLF2
   have e200 : (s.regs 4 - 200#64).toNat = (s.regs 4).toNat - 200 := by
     simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
   simp only [win, Janus.Amd64.Tactic.setRegF_apply, Nat.reduceEqDiff, ↓reduceIte, e200] at hF2
@@ -127,10 +127,11 @@ theorem small (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progr
     simp only [ws, stkWs, outside_cons, outside_nil, and_true] at hws
     exact hkeep a n (Or.inl hin) (by simp only [win, outside_cons, outside_nil, and_true]; omega)
       (by unfold Apart; omega)
-  refine ⟨⟨?r4, ?r5, ?r14, ?x15⟩, ?fs, ?val, L', b', hext, by omega, ?inv,
+  refine ⟨⟨?r4, ?r5, ?r14, ?x15⟩, ?fs, ?df, ?val, L', b', hext, by omega, ?inv,
     ⟨⟨hst8, hext.held hsth, ?sacc, hst48, ?snl, ?slc, ?sc40⟩, ?slen, ?sarr⟩, hFall, hLFall⟩
   case inv => janus_assumption
   case fs => show s'.fsBase = s.fsBase; rw [hfs2]
+  case df => show s'.df = s.df; rw [hdf2]; first | rfl | janus64_simp | exact hdf.trans hdf.symm
   case val =>
     show natVal s'.mem _ _ = _
     rw [show zl.toNat = xl.toNat + xl.toNat by omega]; exact hval

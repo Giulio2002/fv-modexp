@@ -102,7 +102,7 @@ theorem post_fin {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp x
     (hz : natVal E zp zl = natVal s.mem xp xl * natVal s.mem xp xl)
     (hinvE : R.inv b1 L1 (s.regs 14).toNat (view R.rt L1 E))
     (hFF : MemFrame E F (wsF (s.regs 4).toNat st)) (hlen : F.readLE (st + 8) 8 = stLen s.mem st)
-    (s' : State) (hs' : s'.mem = F) (hfs : s'.fsBase = s.fsBase) :
+    (s' : State) (hs' : s'.mem = F) (hfs : s'.fsBase = s.fsBase) (hdf : s'.df = s.df) :
     Post R b L st zp zl xp xl s s' := by
   subst hs'
   have hl := hE.lay
@@ -129,7 +129,7 @@ theorem post_fin {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp x
       (by simp only [outside_cons, outside_nil, and_true]; omega)]; exact m19
   have hzF : natVal s'.mem zp zl = natVal E zp zl :=
     hFF.readLE _ _ (by simp only [outside_cons, outside_nil, and_true]; omega)
-  refine ⟨hfs, hzF.trans hz, L1, b1, hE.ext, hE.bud, ?inv, ?sb, ?mf, ?lf⟩
+  refine ⟨hfs, hdf, hzF.trans hz, L1, b1, hE.ext, hE.bud, ?inv, ?sb, ?mf, ?lf⟩
   case inv =>
     refine RtInv.inv_frame' hFF (fun r hr => ?_) hinvE
     simp only [List.mem_cons, List.not_mem_nil, or_false] at hr
@@ -243,7 +243,8 @@ theorem fin4 (impl : List Amd64.Segment) (R : RtInv)
   janus_grab hFF xmm 15 as hx'
   have hxx : s'.xmm 15 = s.xmm 15 := by rw [hx']; show E.xmm 15 = s.xmm 15; rw [hx15, hE.x15]
   have hfs2 : s'.fsBase = E.fsBase := by assumption
-  refine ⟨⟨?_, ?_, ?_, hxx⟩, post_fin hE hI hFE hz hinvE hFF' hlen _ rfl (hfs2.trans hfs)⟩
+  have hdf2 : s'.df = E.df := by rename_i hd _ _; exact hd
+  refine ⟨⟨?_, ?_, ?_, hxx⟩, post_fin hE hI hFE hz hinvE hFF' hlen _ rfl (hfs2.trans hfs) (hdf2.trans (hdf.trans hE.df0.symm))⟩
   all_goals try janus64_simp
   all_goals first | exact hfs | skip
 
