@@ -90,6 +90,14 @@ theorem liveFrame_of_memFrame {m m' : Memory} {L ws : List (Nat × Nat)} (h : Me
     LiveFrame m m' L ws :=
   ⟨fun a n _ ho => h.readLE a n ho⟩
 
+/-- A held range outside a runtime call's stack window keeps its bytes. -/
+theorem held_keep {R : RtInv} {L cs : List (Nat × Nat)} {M0 m : Memory} {a n : Nat} (hh : Held R L a n)
+    (hLF : LiveFrame M0 m L []) (hMF : MemFrame M0 m (R.rt ++ cs)) (ho : Outside a n cs) :
+    m.readLE a n = M0.readLE a n := by
+  rcases hh with hin | hout
+  · exact hLF.readLE a n hin trivial
+  · exact hMF.readLE a n (by rw [outside_append]; exact ⟨hout, ho⟩)
+
 /-- The stack ranges and array parts a callee may write. -/
 def WsOK (s : State) (p c : Nat) (ws : List (Nat × Nat)) : Prop :=
   ∀ r ∈ ws, r.1 ≤ r.2 ∧ ((s.sp.toNat - 4304 ≤ r.1 ∧ r.2 ≤ s.sp.toNat - 168) ∨ (s.sp.toNat - 152 ≤ r.1 ∧ r.2 ≤ s.sp.toNat - 32) ∨

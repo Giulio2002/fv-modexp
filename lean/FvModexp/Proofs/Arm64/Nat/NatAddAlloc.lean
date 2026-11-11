@@ -9,14 +9,6 @@ open FvModexp.Arm64.Callees
 
 namespace FvModexp.Arm64.NatAdd
 
-/-- A held range outside a runtime call's stack window keeps its bytes. -/
-theorem held_keep {R : RtInv} {L cs : List (Nat × Nat)} {M0 m : Memory} {a n : Nat} (hh : Held R L a n)
-    (hLF : LiveFrame M0 m L []) (hMF : MemFrame M0 m (R.rt ++ cs)) (ho : Outside a n cs) :
-    m.readLE a n = M0.readLE a n := by
-  rcases hh with hin | hout
-  · exact hLF.readLE a n hin trivial
-  · exact hMF.readLE a n (by rw [outside_append]; exact ⟨hout, ho⟩)
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 theorem alloc (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
