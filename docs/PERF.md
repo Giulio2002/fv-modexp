@@ -150,6 +150,15 @@ under `memcap`), wall / max RSS of the `lean` process (≈1.9 GB of it is the Ja
 | Arm64/Div64Sum | 16.2 s | 2.59 GB | | Common/AsmMul, AsmAddMul | 2.8 s, 3.2 s | 2.06 GB |
 | Arm64/DivWWSum | 4.1 s | 2.17 GB | | Common/AsmLimbs, AsmTac, AsmCmp, AsmModel, AsmDiv* | ≤ 2.3 s each | ≤ 2.05 GB |
 | Lib/* (library programs) | ≤ 1.2 s each | ≤ 2.0 GB | | Arm64/Amd64 AsmModels | 0.9 s | 2.0 GB |
+| Arm64/Nat/AddVW | 23–28 s | 2.63 GB | | Amd64/Nat/AddVW | 23 s | 2.76 GB |
+| Arm64/Nat/SubVW | 24–27 s | 2.62 GB | | Amd64/Nat/SubVW | 24 s | 2.72 GB |
+| Arm64/Nat/LibAddVW, LibSubVW | 5.5 s | 2.5 GB | | Amd64/Nat/LibAddVW, LibSubVW | 5.4 s | 2.5 GB |
+
+addVW/subVW (2026-11-11): the first version ran the whole function (limb 0 + `copy` + `memmove`) in one declaration and
+blew the 200000-heartbeat budget proving the `memmove` precondition; the loop version blew it in the loop body
+(heartbeats are per declaration). Fix: one `janus_run` per declaration (`ret0`, `copy*`, `body`, `fin1`, `ens_lib`),
+the loop induction (`loop`) and the post-call memory reasoning (`after`, `cont`, `call_norm`) in run-free lemmas, the
+executor's state literals handed over through `?_` field goals (a `rfl` on a `retState64` field whnf'd > 200k).
 
 Before/after (amd64 `addMulVVWW`, the only module that needed work): one `janus64_run` over the whole 4x `MULQ` block
 exceeded the 200000-heartbeat default budget (the carry terms nest four deep and are re-simplified at every step), and
@@ -184,3 +193,20 @@ in `scripts/asm-row.sh`).
   objects loaded for `CallEnv`'s `DataLoaded`) is the next step.
 * After CONVENTIONS v2 migration: AddTo arm64 105 s / 4.4 GB, amd64 107 s / 5.4 GB; BasicMul arm64 83 s / 4.7 GB,
   amd64 155 s / 5.5 GB.
+
+### expmc: proved modules (clean dev build, 2026-11-11; `scripts/expmc-build.sh ISA`, wall / max RSS)
+
+| module | arm64 | amd64 |
+|---|---|---|
+| Exp/LibMont (restricted program + `eq_only`) | 7.7 s / 2.8 GB | 7.6 s / 2.8 GB |
+| Exp/MontExit (exit path: subVV / memmove) | 15 s / 2.4 GB | 28 s / 2.6 GB |
+| Exp/MontLoop (loop induction, one iteration = 2 ABI0 calls) | 69 s / 3.4 GB | 134 s / 5.0 GB |
+| Exp/Mont (entry + memclr + loop + exit, `ens'`, `ens`) | 84 s / 4.6 GB | 64–73 s / 3.5 GB |
+| Exp/MontAsm (asm summaries → montgomery shapes) | 1.6 s | 3.7 s |
+| Exp/Defer (5 `stk.restore` closures) | 6.3 s / 2.2 GB | 4.9 s / 2.2 GB |
+
+Lessons (cost of mistakes measured on the way): (1) unfolding ~11 `Apart` facts into the context at once made one `omega` in
+amd64 `Mont` exceed 600 s (killed) — unfold only the facts a proof needs, locally (`have h := hzx; unfold Apart at h`): 22 s;
+(2) a hypothesis `C : m.readLE a 8 = v` whose address syntactically matches a later load is used by the executor as a rewrite
+rule, which changed the shape of stored values (amd64 loop) — `clear` such facts before the next `janus_run`;
+(3) `rfl` for a register goal with a metavariable memory assigns `{…}.mem`: close those goals with `dsimp only` first.

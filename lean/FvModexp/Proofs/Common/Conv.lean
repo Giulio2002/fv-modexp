@@ -269,3 +269,37 @@ theorem inv_store_held {R : RtInv} {b g a n v : Nat} {L : List (Nat × Nat)} {m 
   hh.elim (inv_store_live h) (inv_store_out h)
 
 end FvModexp
+
+namespace FvModexp
+
+open Janus Janus.Arm64 Janus.Contracts Janus.Spec
+
+/-- New objects of a `LiveExt` are runtime objects, so a window outside `R.rt` stays apart from the larger live set. -/
+theorem LiveExt.liveSep {R : RtInv} {L L' w : List (Nat × Nat)} (h : LiveExt R L L') (hs : LiveSep L w)
+    (hw : ∀ r ∈ w, Outside r.1 (r.2 - r.1) R.rt) : LiveSep L' w := by
+  obtain ⟨ns, rfl, hns, -⟩ := h
+  intro r hr
+  rcases List.mem_append.1 hr with hr | hr
+  · exact hs r hr
+  · obtain ⟨hin, -⟩ := hns r hr
+    refine Janus.Contracts.outside_of_forall ?_
+    intro q hq
+    have := InRanges.disjoint hin (hw q hq)
+    omega
+
+/-- A live frame whose only written range is empty. -/
+theorem LiveFrame.of_empty {m m' : Memory} {L : List (Nat × Nat)} (h : LiveFrame m m' L [(0, 0)])
+    (ws : List (Nat × Nat)) : LiveFrame m m' L ws :=
+  ⟨fun a n hin _ => h.readLE a n hin (by simp only [Janus.outside_cons, Janus.outside_nil, and_true]; omega)⟩
+
+/-- A held range that is also inside `R.rt` is in the live set. -/
+theorem Held.inRanges_of_rt {R : RtInv} {L : List (Nat × Nat)} {p n : Nat} (hh : Held R L p n)
+    (hin : InRanges p n R.rt) (hn : 0 < n) : InRanges p n L := by
+  rcases hh with h | h
+  · exact h
+  · exfalso
+    obtain ⟨r, hr, h1, h2⟩ := hin
+    have := MemFrame.outside_mem h hr
+    omega
+
+end FvModexp

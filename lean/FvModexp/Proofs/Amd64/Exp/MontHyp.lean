@@ -23,7 +23,7 @@ abbrev hasADX : Nat := 0xbb6b8a
 /-- assumed shape of the `addMulVVWW.abi0` summary (frame words z,zl,zc,x,xl,xc,y,yl,yc,m,a at sp+8..; result c at sp+96):
 `z = (x + y*m + a) mod 2^(64n)`, `c = (x + y*m + a) / 2^(64n)` (values before the call). -/
 abbrev AmvPre (s : State) : Prop :=
-  (s.regs 4).toNat % 8 = 0 ∧ (s.regs 4).toNat + 104 ≤ 2 ^ 48 ∧
+  (s.regs 4).toNat % 8 = 0 ∧ (s.regs 4).toNat + 104 ≤ 2 ^ 48 ∧ s.mem.readLE (s.regs 4).toNat 8 < 2 ^ 47 ∧
   s.mem.accessible ((s.regs 4).toNat) 104 true = true ∧ s.mem.accessible hasADX 1 false = true ∧
   s.mem.accessible (s.mem.readLE ((s.regs 4).toNat + 8) 8) (8 * s.mem.readLE ((s.regs 4).toNat + 16) 8) true = true ∧
   s.mem.accessible (s.mem.readLE ((s.regs 4).toNat + 32) 8) (8 * s.mem.readLE ((s.regs 4).toNat + 16) 8) false = true ∧
@@ -33,7 +33,7 @@ abbrev AmvPre (s : State) : Prop :=
       (s.mem.readLE ((s.regs 4).toNat + 32) 8) (8 * s.mem.readLE ((s.regs 4).toNat + 16) 8)) ∧
   Apart (s.mem.readLE ((s.regs 4).toNat + 8) 8) (8 * s.mem.readLE ((s.regs 4).toNat + 16) 8)
       (s.mem.readLE ((s.regs 4).toNat + 56) 8) (8 * s.mem.readLE ((s.regs 4).toNat + 16) 8) ∧
-  Apart (s.mem.readLE ((s.regs 4).toNat + 8) 8) (8 * s.mem.readLE ((s.regs 4).toNat + 16) 8) ((s.regs 4).toNat + 96) 8
+  Apart (s.mem.readLE ((s.regs 4).toNat + 8) 8) (8 * s.mem.readLE ((s.regs 4).toNat + 16) 8) ((s.regs 4).toNat) 104
 
 abbrev amvVal (s : State) : Nat :=
   s.mem.readLE (s.mem.readLE ((s.regs 4).toNat + 32) 8) (8 * s.mem.readLE ((s.regs 4).toNat + 16) 8) +
@@ -49,7 +49,7 @@ abbrev AmvQ (s : State) (m : Memory) : Prop :=
 
 /-- assumed shape of the `subVV.abi0` summary (frame words z,zl,zc,x,xl,xc,y,yl,yc at sp+8.., result at sp+80) -/
 abbrev SubPre (s : State) : Prop :=
-  (s.regs 4).toNat % 8 = 0 ∧ (s.regs 4).toNat + 88 ≤ 2 ^ 48 ∧
+  (s.regs 4).toNat % 8 = 0 ∧ (s.regs 4).toNat + 88 ≤ 2 ^ 48 ∧ s.mem.readLE (s.regs 4).toNat 8 < 2 ^ 47 ∧
   s.mem.accessible ((s.regs 4).toNat) 88 true = true ∧
   s.mem.accessible (s.mem.readLE ((s.regs 4).toNat + 8) 8) (8 * s.mem.readLE ((s.regs 4).toNat + 16) 8) true = true ∧
   s.mem.accessible (s.mem.readLE ((s.regs 4).toNat + 32) 8) (8 * s.mem.readLE ((s.regs 4).toNat + 16) 8) false = true ∧
@@ -58,7 +58,7 @@ abbrev SubPre (s : State) : Prop :=
       (s.mem.readLE ((s.regs 4).toNat + 32) 8) (8 * s.mem.readLE ((s.regs 4).toNat + 16) 8) ∧
   Apart (s.mem.readLE ((s.regs 4).toNat + 8) 8) (8 * s.mem.readLE ((s.regs 4).toNat + 16) 8)
       (s.mem.readLE ((s.regs 4).toNat + 56) 8) (8 * s.mem.readLE ((s.regs 4).toNat + 16) 8) ∧
-  Apart (s.mem.readLE ((s.regs 4).toNat + 8) 8) (8 * s.mem.readLE ((s.regs 4).toNat + 16) 8) ((s.regs 4).toNat + 80) 8
+  Apart (s.mem.readLE ((s.regs 4).toNat + 8) 8) (8 * s.mem.readLE ((s.regs 4).toNat + 16) 8) ((s.regs 4).toNat) 88
 
 abbrev SubQ (s : State) (m : Memory) : Prop :=
   m.readLE (s.mem.readLE ((s.regs 4).toNat + 8) 8) (8 * s.mem.readLE ((s.regs 4).toNat + 16) 8) =
