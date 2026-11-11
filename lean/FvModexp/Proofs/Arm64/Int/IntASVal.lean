@@ -21,19 +21,19 @@ theorem resA (sub : Bool) {nx ny X Y : Nat} (hnx : nx ≤ 1) (hny : ny ≤ 1) (h
     (if nx = 0 ∨ X + Y = 0 then ((X + Y : Nat) : Int) else -((X + Y : Nat) : Int)) =
       resZ sub (sgnZ nx X) (sgnZ ny Y) := by
   rcases (by omega : nx = 0 ∨ nx = 1) with rfl | rfl <;> rcases (by omega : ny = 0 ∨ ny = 1) with rfl | rfl <;>
-    cases sub <;> simp at hc <;> by_cases h0 : X + Y = 0 <;> simp [resZ, h0] <;> omega
+    cases sub <;> simp at hc <;> by_cases h0 : X + Y = 0 <;> simp [resZ, sgnZ, h0] <;> omega
 
 theorem resB (sub : Bool) {nx ny X Y : Nat} (hnx : nx ≤ 1) (hny : ny ≤ 1) (hc : sub = true ↔ nx = ny) (hYX : Y ≤ X) :
     (if nx = 0 ∨ X - Y = 0 then ((X - Y : Nat) : Int) else -((X - Y : Nat) : Int)) =
       resZ sub (sgnZ nx X) (sgnZ ny Y) := by
   rcases (by omega : nx = 0 ∨ nx = 1) with rfl | rfl <;> rcases (by omega : ny = 0 ∨ ny = 1) with rfl | rfl <;>
-    cases sub <;> simp at hc <;> by_cases h0 : X - Y = 0 <;> simp [resZ, h0] <;> omega
+    cases sub <;> simp at hc <;> by_cases h0 : X - Y = 0 <;> simp [resZ, sgnZ, h0] <;> omega
 
 theorem resC (sub : Bool) {nx ny X Y : Nat} (hnx : nx ≤ 1) (hny : ny ≤ 1) (hc : sub = true ↔ nx = ny) (hXY : X < Y) :
     (if 1 - nx = 0 ∨ Y - X = 0 then ((Y - X : Nat) : Int) else -((Y - X : Nat) : Int)) =
       resZ sub (sgnZ nx X) (sgnZ ny Y) := by
   rcases (by omega : nx = 0 ∨ nx = 1) with rfl | rfl <;> rcases (by omega : ny = 0 ∨ ny = 1) with rfl | rfl <;>
-    cases sub <;> simp at hc <;> by_cases h0 : Y - X = 0 <;> simp [resZ, h0] <;> omega
+    cases sub <;> simp at hc <;> by_cases h0 : Y - X = 0 <;> simp [resZ, sgnZ, h0] <;> omega
 
 /-- bit 0 of `nx ^ ny` (the code's first test) -/
 theorem bit_xor {nx ny : Nat} (hnx : nx ≤ 1) (hny : ny ≤ 1) :

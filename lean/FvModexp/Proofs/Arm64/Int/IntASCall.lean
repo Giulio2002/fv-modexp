@@ -137,4 +137,78 @@ theorem subPre_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {z x y u v : Nat
   · rw [h28]; exact RtInv.inv_frame hF hrout hinv
   · unfold makeCap; split <;> omega
 
+/-! ## Return addresses (adapted from agent infra's `CallW.retAddr_restrict`) -/
+
+theorem pairwise_ne {α : Type} {R : α → α → Prop} (hR : ∀ a b, R a b → R b a) :
+    ∀ {l : List α}, l.Pairwise R → ∀ {a b : α}, a ∈ l → b ∈ l → a ≠ b → R a b
+  | [], _, _, _, ha, _, _ => absurd ha (List.not_mem_nil)
+  | x :: xs, hp, a, b, ha, hb, hne => by
+    rw [List.pairwise_cons] at hp
+    rcases List.mem_cons.1 ha with rfl | ha'
+    · rcases List.mem_cons.1 hb with rfl | hb'
+      · exact absurd rfl hne
+      · exact hp.1 b hb'
+    · rcases List.mem_cons.1 hb with rfl | hb'
+      · exact hR _ _ (hp.1 a ha')
+      · exact pairwise_ne hR hp.2 ha' hb' hne
+
+theorem find_none_of {α : Type} {p : α → Bool} : ∀ {l : List α}, l.find? p = none → ∀ x ∈ l, p x = false
+  | [], _, _, hx => absurd hx (List.not_mem_nil)
+  | y :: ys, h, x, hx => by
+    rw [List.find?_cons] at h
+    split at h
+    · exact absurd h (by simp)
+    · rename_i hy
+      rcases List.mem_cons.1 hx with rfl | hx'
+      · simpa using hy
+      · exact find_none_of h x hx'
+
+/-- A return address inside the code of a segment `cs` of `P` whose name is not in `ns` is a `RetAddr` of the
+restricted program of `ns`. -/
+theorem retAddr_restrict {P : Program} {impl : List Segment} (hap : ImplApart P impl) {ns : List String}
+    {cs : Segment} (hcs : cs ∈ P.segments) (hn : ns.contains cs.name = false) (i : Nat) (hi : i < cs.words.length)
+    (hu : cs.base + 4 * i < 2 ^ 48) (ha : cs.base % 4 = 0) :
+    RetAddr ((P.onlySegments ns).link impl) (cs.base + 4 * i) := by
+  refine ⟨by omega, hu, fun seg hseg => ?_, fun st hst => ?_⟩
+  · have hseg' : seg ∈ P.segments ++ impl := by
+      rcases List.mem_append.1 hseg with h | h
+      · exact List.mem_append_left _ (List.mem_filter.1 h).1
+      · exact List.mem_append_right _ h
+    have hne : seg ≠ cs := by
+      rintro rfl
+      rcases List.mem_append.1 hseg with h | h
+      · have := (List.mem_filter.1 h).2
+        rw [hn] at this; exact absurd this (by decide)
+      · have := hap.1
+        rw [List.pairwise_append] at this
+        have := this.2.2 seg hcs seg h
+        unfold Segment.Apart at this
+        have hl : 0 < seg.words.length := by omega
+        omega
+    have := pairwise_ne (fun a b h => by unfold Segment.Apart at h ⊢; omega) hap.1 hseg'
+      (List.mem_append_left _ hcs) hne
+    unfold Segment.Apart at this
+    omega
+  · have h1 := (hap.2 cs (List.mem_append_left _ hcs) i hi).1
+    unfold Program.stubAt at h1
+    have := find_none_of h1 st hst
+    simp at this
+    exact this
+
+/-- the return address `entry sub + 4 i` of a call from `(*Int).Add/Sub` into a callee whose functions exclude both -/
+theorem ra_of {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns : List String}
+    (hns : ns.contains fnAdd = false ∧ ns.contains fnSub = false) (sub : Bool) (i : Nat) (hi : i < 101) :
+    RetAddr ((Extracted.program.onlySegments ns).link impl) (entry sub + 4 * i) := by
+  cases sub
+  · have := retAddr_restrict hap (cs := Extracted.seg8)
+      (show Extracted.seg8 ∈ Extracted.program.segments from List.getElem_mem (l := Extracted.program.segments) (n := 8) (by decide))
+      (show ns.contains Extracted.seg8.name = false from hns.1) i
+      (by simp [Extracted.seg8]; omega) (by simp [Extracted.seg8]; omega) (by decide)
+    simpa [Extracted.seg8, entry] using this
+  · have := retAddr_restrict hap (cs := Extracted.seg7)
+      (show Extracted.seg7 ∈ Extracted.program.segments from List.getElem_mem (l := Extracted.program.segments) (n := 7) (by decide))
+      (show ns.contains Extracted.seg7.name = false from hns.2) i
+      (by simp [Extracted.seg7]; omega) (by simp [Extracted.seg7]; omega) (by decide)
+    simpa [Extracted.seg7, entry] using this
+
 end FvModexp.Arm64.IntAS
