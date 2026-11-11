@@ -135,6 +135,86 @@ theorem natNorm_frame {m m' : Memory} {rs : List (Nat × Nat)} (h : MemFrame m m
   · refine Or.inr ?_
     rw [h.readLE _ _ (ho.of_sub (by omega) (by omega))]; exact hn
 
+/-- **J2** (`+0x1c8`): `x'` as at `J1` (`X3..X5`), `y' = y mod 2^n` (`X6..X8`: `y`'s or a fresh array); the locals
+`x'` at `SP - 16 / - 40 / - 32` stored -/
+def J2 (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (op zp zl zc yp yl yc n : Nat)
+    (s : State) : Prop :=
+  ∀ (S : State) (l1 p2 l2 c2 : Nat) (L2 : List (Nat × Nat)) (b2 : Nat),
+    Pre R b L op zp zl zc yp yl yc n s →
+    S.pc = BitVec.ofNat 64 (1805584 + 0x1c8) → S.sp = BitVec.ofNat 64 (s.sp.toNat - 144) →
+    S.regs 28 = s.regs 28 → S.regs 18 = s.regs 18 →
+    S.regs 3 = BitVec.ofNat 64 zp → S.regs 4 = BitVec.ofNat 64 l1 → S.regs 5 = BitVec.ofNat 64 zc →
+    S.regs 6 = BitVec.ofNat 64 p2 → S.regs 7 = BitVec.ofNat 64 l2 → S.regs 8 = BitVec.ofNat 64 c2 →
+    Fw s S.mem zp zl zc yp n → S.mem.readLE (s.sp.toNat - 16) 8 = zp → S.mem.readLE (s.sp.toNat - 40) 8 = l1 →
+    S.mem.readLE (s.sp.toNat - 32) 8 = zc → Rt R b L s zp zc n 2 S.mem L2 b2 →
+    natVal S.mem zp l1 = natVal s.mem zp zl % 2 ^ n → NatNorm S.mem zp l1 → l1 ≤ W n →
+    natVal S.mem p2 l2 = natVal s.mem yp yl % 2 ^ n → NatNorm S.mem p2 l2 → l2 ≤ W n → l2 ≤ c2 → c2 < 2 ^ 40 →
+    S.mem.accessible p2 (8 * l2) false = true → p2 + 8 * l2 ≤ 2 ^ 48 → Held R L2 p2 (8 * l2) →
+    (p2 + 8 * l2 ≤ s.sp.toNat - 4608 ∨ s.sp.toNat + 88 ≤ p2) → Apart zp (8 * zc) p2 (8 * l2) →
+    Goal impl R b L zp zl zc yp yl n s S
+
+/-- a normalised nat below `2^n` has at most `⌈n/64⌉` limbs -/
+theorem len_le_W {m : Memory} {p l n : Nat} (hn : NatNorm m p l) (hv : natVal m p l < 2 ^ n) : l ≤ W n := by
+  rcases Nat.eq_zero_or_pos l with rfl | hl
+  · exact Nat.zero_le _
+  have h1 := SubMod2N.natVal_lower m p l hn hl
+  have h2 : 2 ^ (64 * (l - 1)) < 2 ^ n := Nat.lt_of_le_of_lt h1 hv
+  have := (Nat.pow_lt_pow_iff_right (by omega)).1 h2
+  unfold W; omega
+
+theorem rt_mono {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {s : State} {zp zc n k k' : Nat} {M : Memory}
+    {L1 : List (Nat × Nat)} {b1 : Nat} (h : Rt R b L s zp zc n k M L1 b1) (hk : k ≤ k') :
+    Rt R b L s zp zc n k' M L1 b1 := by
+  obtain ⟨a1, a2, a3, a4, a5, a6, a7⟩ := h
+  refine ⟨a1, a2, a3, a4, ?_, a6, a7⟩
+  have := Nat.mul_le_mul_right (wCost n) hk
+  omega
+
+set_option maxRecDepth 20000 in
+/-- stack stores (inside `winA`) keep the runtime facts -/
+theorem rt_stk {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {op zp zl zc yp yl yc n : Nat} {s : State}
+    (hpre : Pre R b L op zp zl zc yp yl yc n s) {M M' : Memory} {L1 : List (Nat × Nat)} {b1 k : Nat}
+    (h : Rt R b L s zp zc n k M L1 b1) (hF : MemFrame M M' (winA s K A)) (hreg : M'.regions = M.regions) :
+    Rt R b L s zp zc n k M' L1 b1 := by
+  obtain ⟨⟨-, ⟨-, -, -, -⟩, -, hout, -, -, hLs, -⟩, -⟩ := hpre
+  obtain ⟨a1, a2, a3, a4, a5, a6, a7⟩ := h
+  have hwr : ∀ r ∈ winA s K A, Outside r.1 (r.2 - r.1) R.rt := by
+    intro r hr
+    simp only [winA, List.mem_cons, List.not_mem_nil, or_false] at hr
+    rcases hr with rfl | rfl <;> exact hout.of_sub (by simp only [K]; omega) (by simp only [K, A]; omega)
+  have hLs1 := LiveExt.liveSep a4 hLs (fun r hr => by
+    simp only [win, List.mem_cons, List.not_mem_nil, or_false] at hr; subst hr
+    simp only [K, A] at hout ⊢; exact hout.of_sub (by omega) (by omega))
+  refine ⟨hreg.trans a1, a2.trans hF fun x m hx => ?_, a3.trans (Expmc.liveFrame_of_frame hF fun x m hin _ => ?_)
+    fun x m h => a4.inRanges_old h, a4, a5, Expmc.inv_frame hF (fun r hr => Or.inr (hwr r hr)) a6, fun hc => ?_⟩
+  · refine ⟨hx, ?_⟩; simp only [outside_append] at hx; exact hx.1.2
+  · exact inRanges_outside_win hLs1 hin
+  · obtain ⟨c1, c2, c3, c4⟩ := a7 hc
+    exact ⟨c1, c2, by rw [hF.accessible]; exact c3, c4⟩
+
+/-- a range held by the entry live set, outside the window and apart from `z`, keeps its bytes -/
+theorem rd_held {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {s : State} {zp zc n k : Nat} {M : Memory}
+    {L1 : List (Nat × Nat)} {b1 : Nat} (h : Rt R b L s zp zc n k M L1 b1) {a m : Nat} (hh : Held R L a m)
+    (hw : Outside a m (winA s K A)) (hz : Apart a m zp (8 * zc)) : M.readLE a m = s.mem.readLE a m := by
+  refine Expmc.held_readLE hh h.2.1 h.2.2.1 hw ?_
+  simp only [outside_cons, outside_nil, and_true]; unfold Apart at hz; omega
+
+theorem apart_fresh {R : RtInv} {L : List (Nat × Nat)} {a n p k : Nat} (h : Held R L a n)
+    (hAp : ApartAll p k L) (hIn : InRanges p k R.rt) : Apart a n p k := by
+  rcases h with ⟨q, hq, h1, h2⟩ | ho
+  · have := hAp q hq; unfold Apart at this ⊢; omega
+  · obtain ⟨r, hr, h1, h2⟩ := hIn
+    have := MemFrame.outside_mem ho hr; unfold Apart; omega
+
+/-- the frame words survive stores to the locals `[SP - 56, SP - 8)` -/
+theorem fw_loc {s : State} {M M' : Memory} {zp zl zc yp n : Nat} (hs : 152 ≤ s.sp.toNat) (h : Fw s M zp zl zc yp n)
+    (hF : MemFrame M M' [(s.sp.toNat - 56, s.sp.toNat - 8)]) : Fw s M' zp zl zc yp n := by
+  obtain ⟨f1, f2, f3, f4, f5, f6, f7⟩ := h
+  have r : ∀ a, (a + 8 ≤ s.sp.toNat - 56 ∨ s.sp.toNat - 8 ≤ a) → M'.readLE a 8 = M.readLE a 8 := fun a ha =>
+    hF.readLE a 8 (by simp only [outside_cons, outside_nil, and_true]; exact ha)
+  refine ⟨(r _ ?_).trans f1, (r _ ?_).trans f2, (r _ ?_).trans f3, (r _ ?_).trans f4, (r _ ?_).trans f5,
+    (r _ ?_).trans f6, (r _ ?_).trans f7⟩ <;> omega
+
 /-! ## The call environment of a callee at `SP - 144` -/
 
 theorem liveSep_sub {L : List (Nat × Nat)} {lo hi lo' hi' : Nat} (h : LiveSep L [(lo, hi)]) (h1 : lo ≤ lo')
@@ -232,5 +312,51 @@ theorem truncCall {impl : List Segment} (hap : ImplApart Extracted.program impl)
   · rw [tN bz, tN hzl, tN bzc, tN bx, tN bxl, tN bn]; exact hpre
   · rw [tN bz, tN bzc, tN bx, tN bxl, tN bn] at hq
     exact K s' (hr.trans h30) e1 e2 e3 e4 hrg hq
+
+end FvModexp.Arm64.SubMod2N
+
+namespace FvModexp.Arm64.SubMod2N
+
+open FvModexp.Arm64.RunIface (Serves)
+open FvModexp.Arm64.EvenHyp
+
+set_option maxRecDepth 20000 in
+/-- the precondition of a `trunc` call at `SP - 144` (`z' = z` or nil, `x` readable and below `SP - 56`) -/
+theorem truncPre_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {op zp zl zc yp yl yc n : Nat} {s : State}
+    (hpre : Pre R b L op zp zl zc yp yl yc n s) {M : Memory} {L1 : List (Nat × Nat)} {b1 k : Nat}
+    (hrt : Rt R b L s zp zc n k M L1 b1) (hk : k ≤ 4) {S : State} (hS : S.mem = M)
+    (hsp : S.sp = BitVec.ofNat 64 (s.sp.toNat - 144)) (h28 : S.regs 28 = s.regs 28)
+    {stk above : Nat} (hkT : stk ≤ 4464) (haT : above ≤ 88)
+    {zp' zl' zc' : Nat} (hz' : (zp' = zp ∧ zc' = zc) ∨ zc' = 0) (hzl' : zl' ≤ zc')
+    {x xl : Nat} (hx40 : xl < 2 ^ 40) (hxa : M.accessible x (8 * xl) false = true) (hx48 : x + 8 * xl ≤ 2 ^ 48)
+    (hxh : Held R L1 x (8 * xl)) (hxw : x + 8 * xl ≤ s.sp.toNat - 4608 ∨ s.sp.toNat - 56 ≤ x) (hxl : xl ≤ 2 ^ 16)
+    (halias : zp' = x ∨ (0 < zc' → 0 < xl → Apart zp' (8 * zc') x (8 * xl))) :
+    TruncPre R b1 L1 stk above zp' zl' zc' x xl n S := by
+  have hce := CallW.callEnv_of (cenv_of hpre hrt (dl_of hpre hrt)) hsp (h28.trans (Expmc.bv_ofNat_toNat _).symm) hS
+    hkT haT
+  have hsp4 : 4608 ≤ s.sp.toNat := hpre.1.2.1.2.1
+  have hspT : S.sp.toNat = s.sp.toNat - 144 := by rw [hsp]; exact tN (by omega)
+  have hb := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  obtain ⟨-, -, -, -, hbud, hinv, hlive⟩ := hrt
+  refine ⟨hce, hpre.2.1, hzl', ⟨?_, ?_, fun hc => ?_⟩, ⟨hx40, by rw [hS]; exact hxa, hx48, hxh, ?_⟩, hxl,
+    by have := hpre.2.2.2.2.2.2.2.1; omega, halias, ?_, by rw [hS, h28]; exact hinv⟩
+  · rcases hz' with ⟨-, rfl⟩ | rfl
+    · have := hpre.2.2.2.2.2.2.2.2.2.2.1; omega
+    · omega
+  · rcases hz' with ⟨rfl, rfl⟩ | rfl
+    · rw [hS]; exact hlive
+    · simp
+  · rcases hz' with ⟨rfl, rfl⟩ | rfl
+    · have hzw := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+      have hzg := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+      simp only [win, K, A, hspT, h28, outside_cons, outside_nil, and_true] at hzw ⊢
+      exact ⟨by omega, hzg⟩
+    · omega
+  · simp only [win, hspT, outside_cons, outside_nil, and_true]; omega
+  · have h1 := truncNeed_le_w xl n
+    simp only [cost] at hb
+    rw [Nat.mul_comm] at hbud
+    have h2 : wCost n * k ≤ wCost n * 4 := Nat.mul_le_mul_left _ hk
+    omega
 
 end FvModexp.Arm64.SubMod2N

@@ -54,7 +54,7 @@ theorem s1t (impl : List Segment) {R : RtInv} {b : Nat} {L : List (Nat × Nat)} 
     Goal impl R b L zp zl zc yp yl n s s' := by
   obtain ⟨⟨⟨-, -, -⟩, ⟨hal, hb', ha, hw⟩, -, hout, -, -, -, -⟩, -, -, -, -, -, -, -, hzl, -, hzc, -, -, -, -, -,
     hzw, -⟩ := id hpre
-  obtain ⟨p', l', c', e0, e1, e2, L', b', ⟨hv, hnorm, hlc, -, hlive, hreuse, -⟩, ⟨hLE, hbud, hinv⟩, hF, hLF⟩ := hpost
+  obtain ⟨p', l', c', e0, e1, e2, L', b', ⟨hv, hnorm, hlc, -, hlive, hreuse, -⟩, -, ⟨hLE, hbud, hinv⟩, hF, hLF⟩ := hpost
   obtain ⟨rfl, rfl⟩ := hreuse (by unfold truncNeed; omega)
   have hspT : S0.sp.toNat = s.sp.toNat - 144 := by rw [hsp0]; exact tN (by omega)
   simp only [winA, hspT] at hF
