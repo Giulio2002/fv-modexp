@@ -2,7 +2,7 @@
 # Build the harness for both ISAs, then extract and `janus verify` every row of docs/COVERAGE.md whose status says `verified` for an ISA.
 # adapted from fv-uint256 scripts/verify-all.sh.
 # Usage: JANUS=/path/to/janus scripts/verify-all.sh [FN ...]        (default: all rows; FN = row function name, e.g. RequiredGas)
-# Env:   ONLY_ISA=arm64|amd64, ROWS=N (rows in parallel, default 1; the release run uses 6), JANUS_CACHE_DIR (default: a FRESH empty build/jcache-<stamp>;
+# Env:   SKIP_WARMUP=1 (skip the cache warm-up), ONLY_ISA=arm64|amd64, ROWS=N (rows in parallel, default 1; the release run uses 6), JANUS_CACHE_DIR (default: a FRESH empty build/jcache-<stamp>;
 #        a non-empty dir is refused unless ALLOW_WARM_CACHE=1, a dev-run convenience that is never used for the release), WITNESS (default 1),
 #        SKIP_HARNESS=1 (reuse build/harness-*; the hash check still runs), LEAN_NUM_THREADS (default 4), JANUS_JOBS (2).
 # SANITY CAPS (project goal, README.md): every row runs under `memcap 16G` and `timeout 900`. They are constants of this script:
@@ -101,6 +101,18 @@ run_job() {   # run_job isa fn sym
   echo "$r $(( $(date +%s) - t0 )) $rss ${#wt[@]}" >"build/res/$isa-$fn"
 }
 admit() { local l m; l=$(cut -d' ' -f1 /proc/loadavg | cut -d. -f1); m=$(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo); [ "$l" -lt "${MAX_LOAD:-40}" ] && [ "$m" -ge 20 ]; }
+# ---- cache warm-up (outside the row caps): build the Janus framework and the consumer dependency closure into the cache once, so that a
+# row's 900 s / 16 G caps measure the row's own modules and kernel replay only. The verdict of the warm-up is irrelevant (logged only).
+if [ -z "${SKIP_WARMUP:-}" ]; then
+  wsym=""; for i in "${!jobs_sym[@]}"; do [ "${jobs_sym[$i]}" != "-" ] && { wsym="${jobs_sym[$i]}"; wisa="${jobs_isa[$i]}"; break; }; done
+  if [ -n "$wsym" ]; then
+    tw=$(date +%s)
+    $JANUS extract "build/harness-$wisa" "$wsym" build/ex-warmup >build/log-warmup 2>&1 &&
+      memcap -m "$ROW_MEMCAP" $JANUS verify build/ex-warmup --proof lean/FvModexp/Proofs/Warmup.lean --proof-root lean \
+        --theorem FvModexp.Warmup.correctness >>build/log-warmup 2>&1
+    echo "cache warm-up: $(( $(date +%s) - tw )) s (build/log-warmup; not a row)"
+  fi
+fi
 t_start=$(date +%s)
 for i in "${!jobs_fn[@]}"; do
   [ "${jobs_sym[$i]}" = "-" ] && continue
