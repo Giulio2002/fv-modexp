@@ -10,7 +10,7 @@ namespace FvModexp.Arm64.Run
 theorem le_or_left' {a b c : Nat} (h : a ≤ b) : a ≤ b ||| c := Nat.le_trans h Nat.left_le_or
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem c2e (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv) (stkM aboveM : Nat)
     (hE : RunIface.ExpSpec impl R stkM aboveM) (hBy : RunIface.BytesSpec impl R stkM aboveM) (hsv : RunIface.Serves R)
     (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64) (ret : Nat)
