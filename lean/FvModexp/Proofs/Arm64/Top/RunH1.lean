@@ -21,6 +21,7 @@ theorem h1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
       Reaches ((LibRun.program.link impl).withExit ret) S Q) :
     Reaches ((LibRun.program.link impl).withExit ret) s Q := by
   obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, hd, hout, hga, hgr, hLs, hro⟩ := henv
+  have hin0 := hin
   obtain ⟨hcacc, hc48, hcheld, hcw, hp, hlcp, hcp48, hpacc, hheld, hpw⟩ := hin
   obtain ⟨hok, hcost, hokm⟩ := hokr
   have hmv' : MemmoveLive (LibRun.program.link impl) (cA "runtime.memmove") 4096 R :=
@@ -66,17 +67,52 @@ theorem h1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
     clear hokm
     janus_run [natLive_zero, toInt_ite, toNat_ite, toInt_small, hc] until [pcB1] calls [hP := hS]
     obtain ⟨⟨-, p1, n1, c1, hp1, hn1, hc1, hv1, hnorm1, hnc1, hnw1, L1, b1, hext1, hb1, hinv1, hlive1, hor1, hMF1, hLF1⟩, hd1⟩ := hP
-    refine hk _ L1 b1 ?rel (by janus_simp)
-    case rel =>
-    unfold RelH
-    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+    have hspn : (s.sp - 624#64).toNat = s.sp.toNat - 624 := by rw [BitVec.toNat_sub]; simp; omega
+    simp only [winA, hspn] at hMF1
+    refine hk _ L1 b1 (RelH.mk' hin0 ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ hext1 ?_ ?_ ?_ ?_ ?_ ?_) (by janus_simp)
     all_goals try (janus_simp; done)
-    all_goals try (with_reducible assumption)
     case refine_11 => intro _; refine ⟨?_, ?_⟩ <;> (janus_simp; try omega)
     case refine_12 => janus_callpre
-    case refine_16 => simpa [SetBytesStd.nW] using hb1
-    case refine_17 => janus_live
-    all_goals trace_state
-    all_goals sorry
+    case refine_13 => simpa [SetBytesStd.nW] using hb1
+    case refine_14 =>
+      dsimp only
+      rw [view_writeLE_out (hout.of_sub (by omega) (by omega)), view_writeLE_out (hout.of_sub (by omega) (by omega)),
+        view_writeLE_out (hout.of_sub (by omega) (by omega)), view_writeLE_out (hout.of_sub (by omega) (by omega))]
+      exact hinv1
+    case refine_15 => exact hext1.liveSep hLs0 (fun r hr => by
+      simp only [win, stk, List.mem_cons, List.not_mem_nil, or_false] at hr; subst hr
+      exact hout.of_sub (Nat.le_refl _) (by omega))
+    case refine_16 => dsimp only; simp only [winA, stk]; janus_frame
+    case refine_17 =>
+      dsimp only
+      refine ((LiveFrame.of_win (by simp only [win, stk]; janus_frame) hLs0).trans (LiveFrame.of_empty hLF1 [])
+        (fun _ _ h => h)).trans (LiveFrame.of_win (by simp only [win, stk]; janus_frame) (hext1.liveSep hLs0 ?_))
+        (fun _ _ h => hext1.inRanges_old h)
+      intro r hr
+      simp only [win, stk, List.mem_cons, List.not_mem_nil, or_false] at hr; subst hr
+      exact hout.of_sub (Nat.le_refl _) (by omega)
+    case refine_18 =>
+      intro i hi
+      obtain rfl : i = 0 := by omega
+      dsimp only
+      have hstk : stk = 4800 := rfl
+      refine hdrDone_of (m := s'.mem) ?rd (by janus_simp [hp1, hdrAt]) (by janus_simp [hn1, hdrAt]) (by janus_simp [hc1, hdrAt]) ?v hnorm1
+        (by simpa [SetBytesStd.nW] using hnw1) hnc1 ?fr hlive1 (by rw [hstk]; exact hout)
+      case rd =>
+        intro a n h
+        simp only [win, hstk, Janus.outside_cons, Janus.outside_nil, and_true] at h
+        rw [Memory.readLE_writeLE_of_disjoint _ _ (by omega), Memory.readLE_writeLE_of_disjoint _ _ (by omega),
+          Memory.readLE_writeLE_of_disjoint _ _ (by omega), Memory.readLE_writeLE_of_disjoint _ _ (by omega)]
+      case fr =>
+        intro hc
+        rcases hor1 with ⟨-, h⟩ | ⟨h, -⟩
+        · simp at h; omega
+        · exact h
+      case v =>
+        rw [hv1, hdrV, Nat.mul_zero, padBE_inside _ _ _ _ _ (by omega), Nat.add_zero]
+        apply beVal_of_reads
+        intro i hi
+        simp only [BitVec.toNat_ofNat] at hi
+        janus_simp
 
 end FvModexp.Arm64.Run
