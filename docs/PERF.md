@@ -148,7 +148,8 @@ under `memcap`), wall / max RSS of the `lean` process (≈1.9 GB of it is the Ja
 | Arm64/AddMulVVWWSum | 13.9 s | 2.30 GB | | Amd64/AddMulVVWWSum (both paths) | 46.4 s | 2.92 GB |
 | Arm64/CmpSum | 5.8 s | 2.18 GB | | Amd64/CmpSum | 5.2 s | 2.15 GB |
 | Arm64/Div64Sum | 16.2 s | 2.59 GB | | Common/AsmMul, AsmAddMul | 2.8 s, 3.2 s | 2.06 GB |
-| Arm64/DivWWSum | 4.1 s | 2.17 GB | | Common/AsmLimbs, AsmTac, AsmCmp, AsmModel, AsmDiv* | ≤ 2.3 s each | ≤ 2.05 GB |
+| Arm64/DivWWSum | 4.1 s | 2.17 GB | | Arm64/RecipWordSum | 4.7 s | 2.10 GB |
+| (cont.) | | | | Common/AsmLimbs, AsmTac, AsmCmp, AsmModel, AsmDiv* | ≤ 2.3 s each | ≤ 2.05 GB |
 | Lib/* (library programs) | ≤ 1.2 s each | ≤ 2.0 GB | | Arm64/Amd64 AsmModels | 0.9 s | 2.0 GB |
 | Arm64/Nat/AddVW | 23–28 s | 2.63 GB | | Amd64/Nat/AddVW | 23 s | 2.76 GB |
 | Arm64/Nat/SubVW | 24–27 s | 2.62 GB | | Amd64/Nat/SubVW | 24 s | 2.72 GB |
@@ -188,6 +189,7 @@ of the Janus framework — the first row of a fresh cache spends ~6.5 min replay
 | AddMulVVWW | PASS 47 s | PASS 14 s (4 theorems: both paths) |
 | Cmp (`nat.cmp`) | PASS 22 s | PASS 22 s |
 | Div64 (`math/bits.Div64`) | PASS 42 s | n/a (intrinsic) |
+| RecipWord (`reciprocalWord`) | PASS 20 s | n/a (inlined) |
 | DivWW | PASS 16 s | PASS 24 s |
 | LshVU | PASS 30 s | PASS 37 s |
 | RshVU | PASS 28 s | PASS 33 s |

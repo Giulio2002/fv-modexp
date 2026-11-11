@@ -42,7 +42,7 @@ Machine-code SUMMARY theorems for the leaf routines `(*bigModExp).Run` reaches (
 | `math/bits.Div64` | amd64 | — (intrinsic `DIVQ`, no function) | — | n/a |
 | `divWW` | arm64 | `FvModexp.Arm64.DivWWSum.divWW_summary` | `FvModexp.Arm64.DivWW` | verified |
 | `divWW` | amd64 | `FvModexp.Amd64.DivWWSum.divWW_summary` | `FvModexp.Amd64.DivWW` | verified |
-| `reciprocalWord` | arm64 | — | — | todo |
+| `reciprocalWord` | arm64 | `FvModexp.Arm64.RecipWordSum.recip_summary` (callee `Div64` moved in by `codeIn_div`) | `FvModexp.Arm64.RecipWord` | verified |
 | `reciprocalWord` | amd64 | — (inlined into its callers) | — | n/a |
 | `lshVU.abi0` | arm64 | `FvModexp.Arm64.LshVUSum.lshVU_summary` | `FvModexp.Arm64.LshVU` | verified |
 | `lshVU.abi0` | amd64 | `FvModexp.Amd64.LshVUSum.lshVU_summary` | `FvModexp.Amd64.LshVU` | verified |
@@ -126,6 +126,11 @@ appear in Janus as `((hi·2^64 + lo)·2^s) / 2^64` / `(hi·2^64 + lo) / 2^s` (`s
 Proof split (one `janus_run` per declaration): `zero_lem`, `pos_lem`, `one_lem` (1x loop, induction), `h4_lem`,
 `blk_lem` (4x loop, induction; the whole 4x body is one run of ~18 instructions), `fin_lem`. Modules 8–13 s, ≤ 2.4 GB.
 
+`reciprocalWord` (arm64): `d1 ≠ 0` (all call sites: natdiv.go:586 `divW`, 655 `divBasic`, normalised top words),
+`GuardOK s 48`, `StackOK s 88 0` (own 48-byte frame + `Div64`'s 40), guard word apart from `[SP-88, SP)`; Post
+`RecipWordSum.Post`: `X0 = recipWord d1`, SP/R18/g/FP/LR kept, regs outside `X0..X12, X16, X29, X30` kept, memory only
+`[SP-88, SP)`.
+
 ## Next
-arm64 `reciprocalWord`, `divWVW`, `nat.mulAddWW`; standalone rows for
+`divWVW`, `nat.mulAddWW`; standalone rows for
 addVW/subVW need a Witness runtime serving `memmove` (Janus stub runtimes).
