@@ -1,7 +1,7 @@
 import Extracted
 import FvModexp.Proofs.Arm64.RequiredGas.Fin
 
-/-! `RequiredGas` (arm64) from `+0x200` (the three length words are parsed into `uint256`s) to the return: `Uint64()`/`IsUint64()`
+/-! `RequiredGas` (arm64) from `+0x204` (the three length words are parsed into `uint256`s) to the return: `Uint64()`/`IsUint64()`
 saturation (contracts.go:612-623), then `rg_fin2`. -/
 
 namespace FvModexp.Arm64.RG
@@ -28,8 +28,8 @@ set_option maxHeartbeats 64000000 in
 set_option maxRecDepth 100000 in
 theorem rg_fin1 (c ptr len cap : BitVec 64) (ret : Nat) (hret : RetAddr Extracted.program ret) (s S : State)
     (hpre : RgPre c ptr len cap s)
-    (hpc : S.pc = BitVec.ofNat 64 (janus_eval% (segAddr Extracted.program "github.com/ethereum/go-ethereum/core/vm.(*bigModExp).RequiredGas" + 0x200)))
-    (hsp : S.sp = s.sp - 416#64) (h0 : S.regs 0 = s.sp - 216#64) (h18 : S.regs 18 = s.regs 18) (h28 : S.regs 28 = s.regs 28)
+    (hpc : S.pc = BitVec.ofNat 64 (janus_eval% (segAddr Extracted.program "github.com/ethereum/go-ethereum/core/vm.(*bigModExp).RequiredGas" + 0x204)))
+    (hsp : S.sp = s.sp - 416#64) (h0 : S.regs 0 = s.sp - 216#64) (h4 : S.regs 4 = BitVec.ofNat 64 (s.sp.toNat - 88)) (h18 : S.regs 18 = s.regs 18) (h28 : S.regs 28 = s.regs 28)
     (h29 : S.regs 29 = s.sp - 424#64)
     (hf : MemFrame s.mem S.mem [(s.sp.toNat - 504, s.sp.toNat + 40)]) (hdl : Extracted.program.DataLoaded S.mem)
     (m_ret : S.mem.readLE (s.sp.toNat - 416) 8 = ret) (m_fp : S.mem.readLE (s.sp.toNat - 424) 8 = (s.regs 29).toNat)
@@ -43,7 +43,7 @@ theorem rg_fin1 (c ptr len cap : BitVec 64) (ret : Nat) (hret : RetAddr Extracte
   have hpre' := hpre
   obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb, ha, hw⟩, hd, hlc, hc48, ⟨hp, hp'⟩, ⟨hcr, hcr'⟩, ⟨ho0, ho1, ho2⟩, hd1, hd2, hdg⟩ := hpre
   simp only [Disjoint] at hd1 hd2 hdg
-  janus_run [hsp, h0, h18, h28, h29, m_z0, m_z1] until [Extracted.entry + 0x260]
+  janus_run [hsp, h0, h4, h18, h28, h29, m_z0, m_z1] until [Extracted.entry + 0x260]
   all_goals
     refine reaches_of_returns (rg_fin2' c ptr len cap ret hret s _ hpre' ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_)
       (fun s' h => h)
