@@ -1,6 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.LibExp
 import FvModexp.Proofs.Arm64.Top.RunIface
 import FvModexp.Proofs.Common.ExpHypVal
+import FvModexp.Proofs.Common.StackScr
 
 /-!
 # Callee premises of the exponentiation layer (arm64), CONVENTIONS §3 shape — hypotheses until the owners land theirs
@@ -113,25 +114,10 @@ def LshHyp (impl : List Segment) (R : RtInv) (ns : List String) (stk above : Nat
 
 /-! ## The `*stack` object (top's `stackOK`) -/
 
-/-- header `(w, len, cap)` at `st` -/
-@[reducible] def stW (m : Memory) (st : Nat) : Nat := m.readLE st 8
-@[reducible] def stLen (m : Memory) (st : Nat) : Nat := m.readLE (st + 8) 8
-@[reducible] def stCap (m : Memory) (st : Nat) : Nat := m.readLE (st + 16) 8
-
-/-- top's `stackOK` (NOTES-top "planned shapes") -/
-@[reducible] def StackOK' (m : Memory) (R : RtInv) (L : List (Nat × Nat)) (st : Nat) : Prop :=
-  st % 8 = 0 ∧ Held R L st 24 ∧ m.accessible st 24 true = true ∧ st + 24 ≤ 2 ^ 48 ∧
-    NatLive m R L (stW m st) (stCap m st) ∧ stLen m st ≤ stCap m st ∧ stCap m st < 2 ^ 40
-
-/-- the stack after a callee that used it as scratch: same `len`, the words below `len` keep their value (the array may
-have moved: the old one stays live), header `(w', len, cap')` again `StackOK'` -/
-@[reducible] def StackKept (R : RtInv) (L' : List (Nat × Nat)) (st : Nat) (m m' : Memory) : Prop :=
-  StackOK' m' R L' st ∧ stLen m' st = stLen m st ∧
-    m'.readLE (stW m' st) (8 * stLen m st) = m.readLE (stW m st) (8 * stLen m st)
-
-/-- the ranges a stack user may write: the header and the free part of the array -/
-@[reducible] def stWs (m : Memory) (st : Nat) : List (Nat × Nat) :=
-  [(st, st + 24), (stW m st + 8 * stLen m st, stW m st + 8 * stCap m st)]
+/-- the stack header reads, `stackOK` and the written ranges are divmc's `FvModexp.stW/stLen/stCap`, `StkOK`, `stkWs`
+(Common/StackScr.lean); the names below are kept as abbreviations. -/
+@[reducible] def StackOK' (m : Memory) (R : RtInv) (L : List (Nat × Nat)) (st : Nat) : Prop := StkOK m R L st
+@[reducible] def stWs (m : Memory) (st : Nat) : List (Nat × Nat) := stkWs m st
 
 /-! ## `stk.nat(n)` (nat.go:?? `(*stack).nat`, top) — X0 = st, X1 = n; result the new nat `(w' + 8 len, n, n)` -/
 
@@ -153,7 +139,6 @@ def stackNatCost (len n : Nat) : Nat := allocCost (8 * (2 * (len + n + 3) + 4))
     s'.regs 2 = BitVec.ofNat 64 n ∧
     ∃ (L' : List (Nat × Nat)) (b' : Nat), RtPost R b (stackNatCost (stLen s.mem st) n) L L' b' s s' ∧
       StackOK' s'.mem R L' st ∧ stLen s'.mem st = stLen s.mem st + (n + 3) / 4 * 4 ∧
-      s'.mem.readLE (stW s'.mem st) (8 * stLen s.mem st) = s.mem.readLE (stW s.mem st) (8 * stLen s.mem st) ∧
       (stLen s.mem st + n ≤ stCap s.mem st → stW s'.mem st = stW s.mem st ∧ stCap s'.mem st = stCap s.mem st) ∧
       (stCap s.mem st < stLen s.mem st + n → InRanges (stW s'.mem st) (8 * stCap s'.mem st) R.rt ∧
         ApartAll (stW s'.mem st) (8 * stCap s'.mem st) L) ∧
@@ -196,7 +181,7 @@ def fnDiv : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.nat.div"
     ∃ (L' : List (Nat × Nat)) (b' : Nat),
       NatRes R L L' s'.mem zp zc (ul + 1) q ql qc (natVal s.mem u ul / natVal s.mem v vl) ∧
       NatRes R L L' s'.mem z2 z2c (ul + 1) r rl rc (natVal s.mem u ul % natVal s.mem v vl) ∧
-      RtPost R b cost L L' b' s s' ∧ StackKept R L' st s.mem s'.mem ∧
+      RtPost R b cost L L' b' s s' ∧ StackBack R L L' st s.mem s'.mem ∧
       MemFrame s.mem s'.mem (R.rt ++ winA s stk above ++ [(zp, zp + 8 * zc), (z2, z2 + 8 * z2c)] ++ stWs s.mem st) ∧
       LiveFrame s.mem s'.mem L ([(zp, zp + 8 * zc), (z2, z2 + 8 * z2c)] ++ stWs s.mem st)
 
