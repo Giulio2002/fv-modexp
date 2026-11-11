@@ -1,1 +1,2 @@
 # files that legitimately define tactics / syntax (scripts/lint_source.py). Format: sha256<TAB>path.  Regenerate with scripts/lint_source.py --update-whitelist AFTER reviewing each file.
+e2c7c90c69620e5fe0de7e26847b59443704e143c647552356e6e73faf5e3a1f	lean/FvModexp/Proofs/Common/GenReg.lean
