@@ -84,9 +84,9 @@ theorem post_zero {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {x : BitVec 64} 
     (hLs : LiveSep L (win s 4160 16)) (hsp : 4160 ≤ (s.regs 4).toNat)
     (hF : MemFrame s.mem M0 (win s 4160 16)) (hLF : LiveFrame M0 m L []) (hMF : MemFrame M0 m (R.rt ++ csW s))
     (hinv : R.inv b L (s.regs 14).toNat (view R.rt L m)) (hl0 : s.mem.readLE (x.toNat + 16) 8 = 0)
-    (hfs : s'.fsBase = s.fsBase) (hm : s'.mem = m) (h1 : (s'.regs 3).toNat = 0) (h2 : (s'.regs 1).toNat = 0) :
+    (hfs : s'.fsBase = s.fsBase) (hdf : s'.df = s.df) (hm : s'.mem = m) (h1 : (s'.regs 3).toNat = 0) (h2 : (s'.regs 1).toNat = 0) :
     Post R b L x s s' := by
-  refine ⟨hfs, _, 0, 0, rfl, h1, h2, Nat.le_refl _, ?_, Or.inl rfl, L, b, LiveExt.refl R L, Nat.sub_le _ _,
+  refine ⟨hfs, hdf, _, 0, 0, rfl, h1, h2, Nat.le_refl _, ?_, Or.inl rfl, L, b, LiveExt.refl R L, Nat.sub_le _ _,
     by rw [hm]; exact hinv, fun h => absurd h (Nat.lt_irrefl _), by rw [hm]; exact frame_call hsp hF hMF, ?_⟩
   · simp only [beVal_zero, IntV, hl0]; rfl
   · rw [hm]; exact (LiveFrame.of_win hF hLs).trans hLF fun _ _ h => h

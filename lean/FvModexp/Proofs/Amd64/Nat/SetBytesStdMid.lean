@@ -94,11 +94,11 @@ open Janus Janus.Amd64 Janus.Amd64.Tactic Janus.Spec Janus.Contracts
 
 /-- The empty buffer: `z[:0]` is returned, only the frame's stack slots were written. -/
 theorem post_empty {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc bp bl : BitVec 64} {s s' : State}
-    (hfs : s'.fsBase = s.fsBase) (hF : MemFrame s.mem s'.mem (win s 4160 48)) (h0 : (s'.regs 0).toNat = zp.toNat) (h1 : (s'.regs 3).toNat = 0)
+    (hfs : s'.fsBase = s.fsBase) (hdf : s'.df = s.df) (hF : MemFrame s.mem s'.mem (win s 4160 48)) (h0 : (s'.regs 0).toNat = zp.toNat) (h1 : (s'.regs 3).toNat = 0)
     (h2 : (s'.regs 1).toNat = zc.toNat) (hbl : bl.toNat = 0) (hlive : NatLive s.mem R L zp.toNat zc.toNat)
     (hLs : LiveSep L (win s 4160 48)) (hout : Outside ((s.regs 4).toNat - 4160) (4160 + 48) R.rt)
     (hinv : R.inv b L (s.regs 14).toNat (view R.rt L s.mem)) : Post R b L zp zc bp bl s s' := by
-  refine ⟨hfs, zp.toNat, 0, zc.toNat, h0, h1, h2, by simp [hbl], Or.inl rfl,
+  refine ⟨hfs, hdf, zp.toNat, 0, zc.toNat, h0, h1, h2, by simp [hbl], Or.inl rfl,
     Nat.zero_le _, Nat.zero_le _, L, b, LiveExt.refl R L, Nat.sub_le _ _, ?_, ?_, Or.inl ⟨rfl, rfl⟩, ?_, ?_⟩
   · refine RtInv.inv_frame' hF (fun r hr => ?_) hinv
     simp only [win, List.mem_cons, List.not_mem_nil, or_false] at hr

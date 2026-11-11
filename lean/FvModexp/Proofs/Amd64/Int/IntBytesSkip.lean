@@ -12,7 +12,7 @@ namespace FvModexp.Amd64.IntBytes
 theorem post_intro {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {x : BitVec 64} {s : State} {ret q ap N : Nat}
     {L' : List (Nat × Nat)} {b' : Nat} {m : Janus.Arm64.Memory} (hI : Inv R b L x s ret q ap N N L' b' m)
     (hap : ap = s.mem.readLE (x.toNat + 8) 8) (hN : N = 8 * s.mem.readLE (x.toNat + 16) 8)
-    (s' : State) (i p n : Nat) (hfs : s'.fsBase = s.fsBase) (hm : s'.mem = m) (h0 : (s'.regs 0).toNat = p)
+    (s' : State) (i p n : Nat) (hfs : s'.fsBase = s.fsBase) (hdf : s'.df = s.df) (hm : s'.mem = m) (h0 : (s'.regs 0).toNat = p)
     (h1 : (s'.regs 3).toNat = n) (h2 : (s'.regs 1).toNat = n) (hz : ∀ j, j < i → (m.bytes (q + j)).toNat = 0) (hi : i ≤ N)
     (hcase : (i = N ∧ p = q ∧ n = 0) ∨ (i < N ∧ p = q + i ∧ n = N - i ∧ (m.bytes (q + i)).toNat ≠ 0)) :
     Post R b L x s s' := by
@@ -22,7 +22,7 @@ theorem post_intro {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {x : BitVec 64}
   have hrev : beVal s'.mem q N = s.mem.readLE ap N := beVal_rev hw
   have hlen : N / 8 = lenW s.mem x.toNat := by simp only [lenW, hN]; omega
   rw [hlen] at hb'
-  refine ⟨hfs, p, n, n, h0, h1, h2, Nat.le_refl _, ?_, ?_, L', b', hext, hb', hinv, ?_, hfr, hlf⟩
+  refine ⟨hfs, hdf, p, n, n, h0, h1, h2, Nat.le_refl _, ?_, ?_, L', b', hext, hb', hinv, ?_, hfr, hlf⟩
   · rcases hcase with ⟨rfl, rfl, rfl⟩ | ⟨hiN, rfl, rfl, -⟩
     · have := beVal_skip (n := 0) hz
       rw [Nat.add_zero, hrev, beVal_zero] at this
@@ -69,7 +69,7 @@ theorem skipLoop (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Na
     ∀ k (S : State) (I : BitVec 64), I.toNat + k = N → (∀ j, j < I.toNat → (m.bytes (q + j)).toNat = 0) →
       S.rip = BitVec.ofNat 64 hSkip → S.regs 4 = s.regs 4 - 40#64 → S.regs 0 = BitVec.ofNat 64 q →
       S.regs 1 = BitVec.ofNat 64 N → S.regs 7 = I →
-      S.regs 14 = s.regs 14 → S.xmm 15 = s.xmm 15 → S.fsBase = s.fsBase → S.mem = m →
+      S.regs 14 = s.regs 14 → S.xmm 15 = s.xmm 15 → S.fsBase = s.fsBase → S.df = s.df → S.mem = m →
       Reaches (((Extracted.program.onlySegments [fn]).link impl).withExit ret) S
         (IsReturn fun s' => ABIReturn s s' ∧ Post R b L x s s') := by
   have hI' := hI
@@ -78,23 +78,23 @@ theorem skipLoop (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Na
   intro k
   induction k with
   | zero =>
-    intro S I hI0 hz hpc hsp hr0 hr1 hr7 hr14 hx15 hfs hm
+    intro S I hI0 hz hpc hsp hr0 hr1 hr7 hr14 hx15 hfs hdf hm
     have hIN : I = BitVec.ofNat 64 N := BitVec.eq_of_toNat_eq (by simp; omega)
     subst hIN
     have hq0 : (BitVec.ofNat 64 q).toNat = q := by simp; omega
     janus64_run [hm1, hm2, BitVec.msb_eq_decide]
     have hzN : ∀ j, j < N → (m.bytes (q + j)).toNat = 0 := fun j hj => hz j (by simp; omega)
-    refine post_intro hI hap hN _ N q 0 hfs rfl ?_ ?_ ?_ hzN (Nat.le_refl _) (Or.inl ⟨rfl, rfl, rfl⟩)
+    refine post_intro hI hap hN _ N q 0 hfs hdf rfl ?_ ?_ ?_ hzN (Nat.le_refl _) (Or.inl ⟨rfl, rfl, rfl⟩)
     all_goals janus64_simp
     all_goals omega
   | succ k ih =>
-    intro S I hI0 hz hpc hsp hr0 hr1 hr7 hr14 hx15 hfs hm
+    intro S I hI0 hz hpc hsp hr0 hr1 hr7 hr14 hx15 hfs hdf hm
     have hX0 : 0 < (BitVec.ofNat 64 N - I).toNat := by rw [BitVec.toNat_sub]; simp; omega
     have hX1 : (BitVec.ofNat 64 N - I).toNat = N - I.toNat := by rw [BitVec.toNat_sub]; simp; omega
     have hmk := mask_lt I (BitVec.ofNat 64 N - I) hX0 (by omega)
     janus64_run [hm1, hm2, BitVec.msb_eq_decide] until [hSkip]
     · refine ih _ (I + 1#64) (by janus64_simp; omega) (fun j hj => ?_) (by janus64_simp) (by janus64_simp)
-        (by janus64_simp) (by janus64_simp) (by janus64_simp) (by janus64_simp) (by janus64_simp) hfs
+        (by janus64_simp) (by janus64_simp) (by janus64_simp) (by janus64_simp) (by janus64_simp) hfs hdf
         (by janus64_simp)
       have h := byte8_zero (by janus_assumption :
         BitVec.setWidth 8 (BitVec.setWidth 64 (BitVec.setWidth 32 (BitVec.ofNat 8 (m.readLE (q + I.toNat) 1)))) = 0#8)
@@ -108,7 +108,7 @@ theorem skipLoop (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Na
         ¬BitVec.setWidth 8 (BitVec.setWidth 64 (BitVec.setWidth 32 (BitVec.ofNat 8 (m.readLE (q + I.toNat) 1)))) = 0#8)
       rw [Janus.Arm64.Memory.readLE_one] at h
       have hb := (m.bytes (q + I.toNat)).isLt
-      refine post_intro hI hap hN _ I.toNat (q + I.toNat) (N - I.toNat) hfs rfl ?_ ?_ ?_ hz (by omega)
+      refine post_intro hI hap hN _ I.toNat (q + I.toNat) (N - I.toNat) hfs hdf rfl ?_ ?_ ?_ hz (by omega)
         (Or.inr ⟨by omega, rfl, rfl, by omega⟩)
       all_goals janus64_simp
       all_goals first
