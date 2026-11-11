@@ -41,6 +41,7 @@ theorem mul1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
       S'.mem.readLE (s.sp.toNat - 96) 8 = qhat →
       natVal S'.mem t vl = natVal s.mem vp vl * qhat % 2 ^ (64 * vl) →
       S'.mem.readLE (s.sp.toNat - 168) 8 = natVal s.mem vp vl * qhat / 2 ^ (64 * vl) →
+      MemFrame S.mem S'.mem (scr s ++ [(t, t + 8 * vl)]) →
       ReachesRet (LibDivBasic.program.link impl) (s.regs 30) S' Q) :
     ReachesRet (LibDivBasic.program.link impl) (s.regs 30) S Q := by
   obtain ⟨hpc, hsp, h28, h29, h18, hM, hj⟩ := hB
@@ -84,7 +85,11 @@ theorem mul1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     obtain ⟨h1, h2, h3, h4, h5, h6, h7, h8, h9⟩ := ho
     refine ⟨?_, ?_, ?_⟩ <;> omega
   have hM' := Mem.frame hE hM hF
-  refine k _ ⟨?_, ?_, ?_, ?_, ?_, hM', ?jj⟩ ?q1 hval hcar
+  have hF2 : MemFrame S.mem w (scr s ++ [(t, t + 8 * vl)]) := by
+    refine (mfTrans hst hFw).mono fun a n ho => ?_
+    simp only [scr, outside_append, outside_cons, outside_nil, and_true, and_assoc] at ho ⊢
+    refine ⟨?_, ?_, ?_, ?_⟩ <;> omega
+  refine k _ ⟨?_, ?_, ?_, ?_, ?_, hM', ?jj⟩ ?q1 hval hcar hF2
   case jj =>
     show w.readLE _ _ = _
     have := hl.tw
