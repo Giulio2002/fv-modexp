@@ -46,7 +46,7 @@ def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc bp bl : BitVec 64) 
 /-- The postcondition: `z.setBytes(buf)` returns a normalised nat `(p', n', c')` holding the big-endian value of
 `buf`, either `z`'s array or a fresh one, with the runtime invariant for the live set with it. -/
 @[reducible] def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc bp bl : BitVec 64) (s s' : State) : Prop :=
-  s'.fsBase = s.fsBase ∧ ∃ p' n' c' : Nat, (s'.regs 0).toNat = p' ∧ (s'.regs 3).toNat = n' ∧ (s'.regs 1).toNat = c' ∧
+  s'.fsBase = s.fsBase ∧ s'.df = s.df ∧ ∃ p' n' c' : Nat, (s'.regs 0).toNat = p' ∧ (s'.regs 3).toNat = n' ∧ (s'.regs 1).toNat = c' ∧
     natVal s'.mem p' n' = beVal s.mem bp.toNat bl.toNat ∧ NatNorm s'.mem p' n' ∧ n' ≤ c' ∧ n' ≤ nW bl ∧
     ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b - makeCost (nW bl) ≤ b' ∧
       R.inv b' L' (s.regs 14).toNat (view R.rt L' s'.mem) ∧ NatLive s'.mem R L' p' c' ∧

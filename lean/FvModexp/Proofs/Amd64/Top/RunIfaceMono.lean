@@ -46,19 +46,19 @@ theorem intPost_mono {R : RtInv} {b B : Nat} {L : List (Nat × Nat)} {z v : Nat}
 
 theorem BytesSpec.mono {impl : List Janus.Amd64.Segment} {R : RtInv} {k a k' a' : Nat} (h : BytesSpec impl R k a)
     (hk : k ≤ k') (ha : a ≤ a') : BytesSpec impl R k' a' := fun b L x =>
-  (h b L x).mono (fun _ ⟨hp, hl⟩ => ⟨intPre_mono hk ha hp, hl⟩) fun _ _ _ ⟨hfs, p, n, c, h0, h1, h2, h3, h4, h5, L', b', h6,
+  (h b L x).mono (fun _ ⟨hp, hl⟩ => ⟨intPre_mono hk ha hp, hl⟩) fun _ _ _ ⟨hfs, hdf, p, n, c, h0, h1, h2, h3, h4, h5, L', b', h6,
     h7, h8, h9, h10, h11⟩ =>
-    ⟨hfs, p, n, c, h0, h1, h2, h3, h4, h5, L', b', h6, h7, h8, h9,
+    ⟨hfs, hdf, p, n, c, h0, h1, h2, h3, h4, h5, L', b', h6, h7, h8, h9,
       (memFrame_win_mono (ws := []) hk ha (by simpa using h10)).mono fun _ _ hx => by simpa using hx, h11⟩
 
 theorem ModSpec.mono {impl : List Janus.Amd64.Segment} {R : RtInv} {k a k' a' : Nat} (h : ModSpec impl R k a)
     (hk : k ≤ k') (ha : a ≤ a') : ModSpec impl R k' a' := fun b L z y =>
-  (h b L z y).mono (fun _ ⟨hp, h1, h2, h3⟩ => ⟨intPre_mono hk ha hp, h1, h2, h3⟩) fun _ _ _ ⟨hfs, h0, h1, h2⟩ =>
-    ⟨hfs, h0, intPost_mono hk ha h1, h2⟩
+  (h b L z y).mono (fun _ ⟨hp, h1, h2, h3⟩ => ⟨intPre_mono hk ha hp, h1, h2, h3⟩) fun _ _ _ ⟨hfs, hdf, h0, h1, h2⟩ =>
+    ⟨hfs, hdf, h0, intPost_mono hk ha h1, h2⟩
 
 theorem ExpSpec.mono {impl : List Janus.Amd64.Segment} {R : RtInv} {k a k' a' : Nat} (h : ExpSpec impl R k a)
     (hk : k ≤ k') (ha : a ≤ a') : ExpSpec impl R k' a' := fun b L z y mm =>
-  (h b L z y mm).mono (fun _ ⟨hp, h1, h2, h3, h4⟩ => ⟨intPre_mono hk ha hp, h1, h2, h3, h4⟩) fun _ _ _ ⟨hfs, h0, h1⟩ =>
-    ⟨hfs, h0, intPost_mono hk ha h1⟩
+  (h b L z y mm).mono (fun _ ⟨hp, h1, h2, h3, h4⟩ => ⟨intPre_mono hk ha hp, h1, h2, h3, h4⟩) fun _ _ _ ⟨hfs, hdf, h0, h1⟩ =>
+    ⟨hfs, hdf, h0, intPost_mono hk ha h1⟩
 
 end FvModexp.Amd64.RunIface

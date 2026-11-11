@@ -32,7 +32,7 @@ abbrev hSkip : Nat := segAddr Extracted.program fn + 0x95
 
 /-- The postcondition (`RunIface.BytesSpec` at `stk = 4160`, `above = 16`). -/
 @[reducible] def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (x : BitVec 64) (s s' : State) : Prop :=
-  s'.fsBase = s.fsBase ∧ ∃ p n c : Nat, (s'.regs 0).toNat = p ∧ (s'.regs 3).toNat = n ∧ (s'.regs 1).toNat = c ∧ n ≤ c ∧
+  s'.fsBase = s.fsBase ∧ s'.df = s.df ∧ ∃ p n c : Nat, (s'.regs 0).toNat = p ∧ (s'.regs 3).toNat = n ∧ (s'.regs 1).toNat = c ∧ n ≤ c ∧
     beVal s'.mem p n = IntV s.mem x.toNat ∧ (n = 0 ∨ (s'.mem.bytes p).toNat ≠ 0) ∧
     ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b - (BytesBudget (lenW s.mem x.toNat)) ≤ b' ∧
       R.inv b' L' (s.regs 14).toNat (view R.rt L' s'.mem) ∧ (0 < n → InRanges p n L' ∧ InRanges p n R.rt ∧

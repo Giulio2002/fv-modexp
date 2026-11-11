@@ -264,7 +264,7 @@ def ModSpec (impl : List Janus.Amd64.Segment) (R : RtInv) (stk above : Nat) : Pr
       (fun s => IntPre R b (ModBudget (max (lenW s.mem z.toNat) (lenW s.mem y.toNat))) L stk above [z.toNat, y.toNat] s ∧
         0 < IntV s.mem y.toNat ∧
         IntLenLe s.mem z.toNat maxW ∧ IntLenLe s.mem y.toNat maxW)
-      (fun s s' => s'.fsBase = s.fsBase ∧ s'.regs 0 = z ∧
+      (fun s s' => s'.fsBase = s.fsBase ∧ s'.df = s.df ∧ s'.regs 0 = z ∧
         IntPost R b (ModBudget (max (lenW s.mem z.toNat) (lenW s.mem y.toNat)))
           L stk above z.toNat (IntV s.mem z.toNat % IntV s.mem y.toNat) s s' ∧
         IntV s'.mem y.toNat = IntV s.mem y.toNat)
@@ -278,7 +278,7 @@ def ExpSpec (impl : List Janus.Amd64.Segment) (R : RtInv) (stk above : Nat) : Pr
       (fun s => IntPre R b (ExpBudget (max (max (lenW s.mem z.toNat) (lenW s.mem y.toNat)) (lenW s.mem mm.toNat)) (lenW s.mem y.toNat))
         L stk above [z.toNat, y.toNat, mm.toNat] s ∧ 0 < IntV s.mem mm.toNat ∧
         IntLenLe s.mem z.toNat maxW ∧ IntLenLe s.mem y.toNat maxW ∧ IntLenLe s.mem mm.toNat maxW)
-      (fun s s' => s'.fsBase = s.fsBase ∧ s'.regs 0 = z ∧
+      (fun s s' => s'.fsBase = s.fsBase ∧ s'.df = s.df ∧ s'.regs 0 = z ∧
         IntPost R b (ExpBudget (max (max (lenW s.mem z.toNat) (lenW s.mem y.toNat)) (lenW s.mem mm.toNat)) (lenW s.mem y.toNat))
           L stk above z.toNat (IntV s.mem z.toNat ^ IntV s.mem y.toNat % IntV s.mem mm.toNat) s s')
 
@@ -288,7 +288,7 @@ def BytesSpec (impl : List Janus.Amd64.Segment) (R : RtInv) (stk above : Nat) : 
   ∀ (b : Nat) (L : List (Nat × Nat)) (x : BitVec 64),
     Ensures ((Extracted.program.onlySegments [fnBytes]).link impl) (segAddr Extracted.program fnBytes) [x]
       (fun s => IntPre R b (BytesBudget (lenW s.mem x.toNat)) L stk above [x.toNat] s ∧ IntLenLe s.mem x.toNat maxW)
-      (fun s s' => s'.fsBase = s.fsBase ∧ ∃ p n c : Nat, (s'.regs 0).toNat = p ∧ (s'.regs 3).toNat = n ∧
+      (fun s s' => s'.fsBase = s.fsBase ∧ s'.df = s.df ∧ ∃ p n c : Nat, (s'.regs 0).toNat = p ∧ (s'.regs 3).toNat = n ∧
         (s'.regs 1).toNat = c ∧ n ≤ c ∧
         beVal s'.mem p n = IntV s.mem x.toNat ∧ (n = 0 ∨ (s'.mem.bytes p).toNat ≠ 0) ∧
         ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b - (BytesBudget (lenW s.mem x.toNat)) ≤ b' ∧

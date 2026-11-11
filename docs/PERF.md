@@ -664,3 +664,10 @@ Lessons: (1) janus amd64 state literals omit `df` (= the structure default `fals
 defeq: close DF goals with `hE.df0.symm`/`rfl`, and a callee's `s'.df = {…}.df` hypothesis is `s'.df = false`.
 (2) a failing callee precondition in janus64_run costs ~15 min when the context is large: derive `LiveSep`/TLS facts in
 the callee's window form BEFORE the run (`hLs'`, `hfw`, `htP'` in BasicSqrPro).
+## agent top s10 (amd64, host load ~45-55)
+| module | time | peak |
+|---|---|---|
+| Amd64/Nat/SetBytes{,Std} (with df threading) | 98 / 95 s | 2.4 GB |
+| Amd64/Int/IntBytes (with df threading) | 96 s | 2.3 GB |
+| Amd64/Top/LibRun (generated) | 56 s | 3.1 GB |
+| Amd64/Top/RunH1 (entry -> B1) | 141 s | 2.7 GB |

@@ -73,7 +73,7 @@ theorem ens (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
     have hxk := read_kept (hbuf := by intro a k h1 h2; janus64_simp) hb' hxheld hxw' hLF hMF
     have hx16 : m.readLE (x.toNat + 16) 8 = 0 := by rw [hxk _ _ (by omega) (by omega)]; exact hal0
     janus64_run [hx16, hal0, BitVec.msb_eq_decide]
-    refine post_zero hLs0 hb' ?_ hLF hMF hinv' hal0 (by janus64_simp) rfl (by janus64_simp) (by janus64_simp)
+    refine post_zero hLs0 hb' ?_ hLF hMF hinv' hal0 (by janus64_simp) (by janus64_simp) rfl (by janus64_simp) (by janus64_simp)
     simp only [win]; janus_frame
   · have hmkP := hmk'.pos L b
     janus64_run [hsh, hU2, hU3, hIp, BitVec.msb_eq_decide] until [hOuter] calls [hmkP]
@@ -93,7 +93,7 @@ theorem ens (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
     refine outerLoop impl R b L x ret hret s ptr.toNat _ _ _ _ (by omega) rfl rfl
       (Janus.Arm64.Memory.accessible_read_of_write _ (Janus.Arm64.Memory.accessible_mono _ habsA (Nat.le_refl _) (by omega)))
       (by omega) ⟨hb', ha, hal⟩ hw (s.mem.readLE (x.toNat + 16) 8) _ m 0 (by omega) (by simpa using hI)
-      ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ (by janus64_simp) rfl
+      ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ (by janus64_simp) (by janus64_simp) rfl
     all_goals janus64_simp [hx8', hx16']
     all_goals first
       | rw [show 8 * s.mem.readLE (x.toNat + 16) 8 / 8 = s.mem.readLE (x.toNat + 16) 8 by omega]
