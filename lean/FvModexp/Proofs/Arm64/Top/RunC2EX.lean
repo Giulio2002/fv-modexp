@@ -100,7 +100,8 @@ theorem c2eX (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
       rw [hvz]; exact Nat.mod_lt _ hy0
     unfold RunIface.IntV at hlt
     have := len_le_of_lt_norm _ _ _ _ _ _ hn hlt
-    unfold RunIface.lenW; omega
+    unfold RunIface.IntLenLe RunIface.maxW at hml
+    unfold RunIface.lenW RunIface.maxW; omega
   have hBB : RunIface.ExpBudget (max (max (RunIface.lenW T.mem (s.sp.toNat - 136))
         (RunIface.lenW T.mem (s.sp.toNat - 168))) (RunIface.lenW T.mem (s.sp.toNat - 200)))
         (RunIface.lenW T.mem (s.sp.toNat - 168)) + RunIface.BytesBudget (RunIface.lenW s'.mem (s.sp.toNat - 136)) ≤ b1 :=
@@ -150,7 +151,7 @@ theorem c2eX (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     hLF.trans (liveFrame_TV hext hext2 hLs hz1 hz2 harrL hLF2 hLF3) fun _ _ h => h
   have hextB := (hext.trans hext2).trans hext3
   obtain ⟨e1, e2, e3⟩ := hsl _ _ rfl hMF3
-  refine hk _ Lb bb ⟨rfl, by janus_simp [h282, h281'], by janus_simp [h292, h291, h29], by janus_simp [h182, h181, h18],
+  refine hk _ Lb bb ⟨by first | rfl | janus_simp [hsp2, hsp1, hsp], by janus_simp [h282, h281'], by janus_simp [h292, h291, h29], by janus_simp [h182, h181, h18],
     e1, e2, e3, hl2, dataLoaded_win hdS (hrg3.trans hrg1) hro hMFTV hTw hwsW, ?vn, ?vv, ?fr, hextB, ?bud, hinv3,
     liveSep_W hextB hLs hout hspW, hMFall, hLFall⟩ (by janus_simp)
   case vn => show (s'.regs 1).toNat ≤ _; rw [hvn]; exact hvlt
