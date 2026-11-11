@@ -362,4 +362,11 @@ critical path: next trims are Fin1 (89 s, one run) and SbD (116 s).
 | Nat/BasicSqrStep (`inv_step`, `tval`: pure memory/arith) | 31 s / 3.2 GB | before: **> 900 s (killed)**: 9 unfolded disjointness disjunctions in context + `rw [keep _ _ (by omega)]` with metavariable arguments (omega on mvars) + `congr 1`/`ac_rfl` on memory terms. After: disjunctions folded in a `Lay` structure (`have := hl.tz` right before the omega that needs it), instances stated explicitly, atoms `generalize`d before the arithmetic |
 | Nat/BasicSqrBody (`body2`: addMulVVWW call → head) | 82 s / 4.5 GB | before: 353 s / 7.0 GB: `refine hk _ ?_ …` + `all_goals (try janus_simp)` on 12 register goals over a huge state literal; after: per-goal `simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, <slot facts>]` |
 | Nat/BasicSqrLoop (`loop`: head → CALL, induction) | 44 s / 2.8 GB | before: 182 s / 7.2 GB with body2 in the same module and the callee's `R.inv` closed by simp over the stores; after: split + `RtInv.inv_frame' (by janus_frame)` |
-| Nat/BasicSqrFin (WIP: fin1, fin2 call) | 17 s / 2.6 GB | |
+| Nat/BasicSqrFin (`fin1`, `fin2`: lshVU call) | 22 s / 2.8 GB | |
+| Nat/BasicSqrDfr (`dsum`: the restore closure re-run on LibBasicSqr) | 2 s / 2.1 GB | |
+| Nat/BasicSqrEnd (`post_fin` pure, `fin4`: closure call + epilogue) | 17 s / 3.2 GB | |
+| Nat/BasicSqrVV (`fin3`: addVV call) | 11 s / 2.6 GB | |
+| Nat/BasicSqrClr (`clr`: memclr, z[0:2], Inv 1, loop) | 33 s / 2.8 GB | before: **> 9 min (killed)**: `rw [ks _ (by omega)]` with a metavariable address (omega on mvars, lesson 1 again) inside an `all_goals first | …` cascade + ~10 unfolded `Lay` disjunctions in the context of every `omega`. After: each field given explicitly (`(ks (s.sp.toNat - 208) (by omega)).trans m1`), Lay facts introduced only inside the `have` that needs them |
+| Nat/BasicSqrEnv (`env_of`, pure) | 2 s / 2.0 GB | |
+| Nat/BasicSqrPro (`pro3`: stk.nat result → memclr call; `pro2`: stk.nat call, by_cases cap > 0) | 138 s / 3.7 GB | a version closing the 8 register goals after the call with `simp only [...] at *` + a `first` cascade ran > 900 s (killed): `simp at *` rewrites every huge state literal in the context. After: one targeted `rw [h]; simp only [setReg_apply, …]` per goal |
+| Nat/BasicSqr (`pro1`: entry → stk.nat call; `full`, `ens`, `sum`) | 33 s / 2.6 GB | |
