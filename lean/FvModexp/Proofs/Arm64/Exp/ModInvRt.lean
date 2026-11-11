@@ -64,7 +64,7 @@ theorem alloc_jm {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat
       b - makeCost (NW n + 1) ≤ b - r ∧ Own R kc L (L ++ [(p, p + r)]) s zp zc st xp xl m p (NW n + 5) := by
   have hrt := rt0 hkc hpre hF0 hreg0
   obtain ⟨⟨-, ⟨-, hal, -, -⟩, -, hout, hga, hgrt, hLs, -⟩, -, -, hn1, hn2, -, -, -, -, -, -, -, -,
-    ⟨-, -, -, hxh, -⟩, -, -, -, ⟨-, hstw, hsta⟩, -, -, -, -, -, -⟩ := hpre
+    ⟨-, -, -, hxh, -⟩, -, -, -, ⟨-, hstw, -, hsta⟩, -, -, -, -, -, -⟩ := hpre
   obtain ⟨hMF, hLF, hrg, hIn, hAp, hle, hacc, h8, hsz, hbr, hinv⟩ := hap
   have hstk := hrt.1.2.2.2.2.2.1
   have hmc : makeCost (NW n + 1) = allocCost (8 * (NW n + 5)) := by

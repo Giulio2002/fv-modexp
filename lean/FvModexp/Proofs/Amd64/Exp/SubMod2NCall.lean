@@ -58,9 +58,9 @@ theorem subCall {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.pro
     (BitVec.ofNat 64 yc))
   rw [show segAddr Extracted.program NatSub.fn = 6183136 by decide] at hS'
   refine ReachesRet.call_regions hS' hpc ⟨by rw [hrd]; exact hra, hx15, ?_, hdf, hpre⟩
-    fun s' hr ⟨⟨e1, _, e3, e4⟩, hq, hr1, hr2, hdf'⟩ hrg => ?_
+    fun s' hr ⟨⟨e1, _, e3, e4⟩, hq, hr1, hr2⟩ hrg => ?_
   · simp [ArgsFrom64, argReg, intArgRegs, h0, h3, h1, h7, h6, h8, h9, h10, h11]
-  · obtain ⟨hfs, p', n', c', q0, q1, q2, hv, hn, hlc, hln, L', b', hLE, hb, hinv, hlive, hor, hF, hLF⟩ := hq
+  · obtain ⟨hfs, hdf', p', n', c', q0, q1, q2, hv, hn, hlc, hln, L', b', hLE, hb, hinv, hlive, hor, hF, hLF⟩ := hq
     rw [tN bz, tN bzc, tN bx, tN bxl, tN by', tN byl, hS] at *
     simp only [win, hsp, h14] at hF hinv
     rw [hS] at hrg
@@ -108,9 +108,9 @@ theorem addCall {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.pro
     (BitVec.ofNat 64 yc))
   rw [show segAddr Extracted.program NatAdd.fn = 6182240 by decide] at hS'
   refine ReachesRet.call_regions hS' hpc ⟨by rw [hrd]; exact hra, hx15, ?_, hdf, hpre⟩
-    fun s' hr ⟨⟨e1, _, e3, e4⟩, hq, hr1, hr2, hdf'⟩ hrg => ?_
+    fun s' hr ⟨⟨e1, _, e3, e4⟩, hq, hr1, hr2⟩ hrg => ?_
   · simp [ArgsFrom64, argReg, intArgRegs, h0, h3, h1, h7, h6, h8, h9, h10, h11]
-  · obtain ⟨hfs, p', n', c', q0, q1, q2, hv, hn, hlc, hln, L', b', hLE, hb, hinv, hlive, hor, hF, hLF⟩ := hq
+  · obtain ⟨hfs, hdf', p', n', c', q0, q1, q2, hv, hn, hlc, hln, L', b', hLE, hb, hinv, hlive, hor, hF, hLF⟩ := hq
     rw [tN bz, tN bzc, tN bx, tN bxl, tN by', tN byl, hS] at *
     simp only [win, hsp, h14] at hF hinv
     simp only [NatAdd.mx, NatAdd.need, tN bxl, tN byl] at hln hb hr1 hr2

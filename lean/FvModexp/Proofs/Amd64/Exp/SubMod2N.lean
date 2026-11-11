@@ -44,13 +44,26 @@ theorem full (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
 
 def names : List String := LibExp.names
 
+/-- divmc's verified `nat.sub` (`NatSub.ensR`) is the `SubHypR` premise -/
+theorem subHypR_of (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
+    (hmk : MakesliceLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
+    (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R) : SubHypR impl R :=
+  fun b L zp zl zc xp xl xc yp yl yc => NatSub.ensR impl hap R hmk hmv b L zp zl zc xp xl xc yp yl yc
+
+/-- divmc's verified `nat.add` (`NatAdd.ensR`) is the `AddHypR` premise -/
+theorem addHypR_of (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
+    (hmk : MakesliceLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
+    (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R) : AddHypR impl R :=
+  fun b L zp zl zc xp xl xc yp yl yc => NatAdd.ensR impl hap R hmk hmv b L zp zl zc xp xl xc yp yl yc
+
 /-- **`nat.subMod2N`** (amd64), `z.subMod2N(z, y, n)`: a normalised nat holding `Exp.subMod2N Z Y n`, in `z`'s array
 or a fresh one; writes only `z`'s array, the window and runtime memory; no panic, no fault. (`n` is passed on the
 stack: `Pre`'s `Ent` conjunct.) -/
 theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
     {ns : List String} (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
     {stkT aboveT : Nat} (hkT : stkT ≤ 4440) (haT : aboveT ≤ 80) (htr : TruncHyp impl R ns stkT aboveT)
-    (hsub : SubHypR impl R) (hadd : AddHypR impl R)
+    (hmk : MakesliceLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
+    (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
     (b : Nat) (L : List (Nat × Nat)) (op zp zl zc yp yl yc n : Nat) :
     Ensures ((Extracted.program.onlySegments names).link impl) (segAddr Extracted.program fn)
       [BitVec.ofNat 64 zp, BitVec.ofNat 64 zl, BitVec.ofNat 64 zc, BitVec.ofNat 64 zp, BitVec.ofNat 64 zl,
@@ -59,7 +72,7 @@ theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
   rw [show names = LibExp.names from rfl, ← LibExp.eq_only, show segAddr Extracted.program fn = 6215840 by decide]
   intro ret hret s hs hpre
   janus64_intro hs
-  refine Summary.returns (full impl hap R hns hnf hkT haT htr hsub hadd b L op zp zl zc yp yl yc n) hret
+  refine Summary.returns (full impl hap R hns hnf hkT haT htr (subHypR_of impl hap R hmk hmv) (addHypR_of impl hap R hmk hmv) b L op zp zl zc yp yl yc n) hret
     (by rw [h_rip]) (by rw [retAddrOf, h_ret])
     ⟨h_a0, h_a1, h_a2, h_a3, h_a4, h_a5, h_a6, h_a7, h_a8, hpre⟩ fun s' ⟨⟨a, b, c, d⟩, hq⟩ => ⟨⟨a, b, c, d⟩, hq⟩
 
@@ -68,9 +81,10 @@ set_option linter.defProp false in
 def sum (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
     {ns : List String} (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
     {stkT aboveT : Nat} (hkT : stkT ≤ 4440) (haT : aboveT ≤ 80) (htr : TruncHyp impl R ns stkT aboveT)
-    (hsub : SubHypR impl R) (hadd : AddHypR impl R)
+    (hmk : MakesliceLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
+    (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
     (b : Nat) (L : List (Nat × Nat)) (op zp zl zc yp yl yc n : Nat) :=
   CallW.hypSum hap (fun _ h => h) (by simp [numIntRegs])
-    (ens impl hap R hns hnf hkT haT htr hsub hadd b L op zp zl zc yp yl yc n)
+    (ens impl hap R hns hnf hkT haT htr hmk hmv b L op zp zl zc yp yl yc n)
 
 end FvModexp.Amd64.SubMod2N

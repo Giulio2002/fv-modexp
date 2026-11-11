@@ -731,3 +731,11 @@ new amd64 modules; StackNat's were cached); attempt 2 on the warm cache: **PASS 
   memory after the first call (`m1.readLE (g+16) 8 + 4096 < sp`), which the closer cannot derive. Fix: stop at the
   first call's return (`until [mvRet]`), derive the fact from the first post's `MemFrame`, continue with a second
   `janus_run … calls [hclr L b]` in the same proof (xnB, 44 s).
+
+## infra session 9 (2026-11-11 night): modInv arm64 J0 → JM, zz make; amd64 subMod2N rebuild (dev compile, load ~35)
+| module | before | after | note |
+|---|---|---|---|
+| Arm64/Exp/ModInvMake | 600 s, failing (alloc path inline) | 78–130 s / 2.6 GB | alloc path moved to small-context `ModInvAlloc.zalloc` |
+| Arm64/Exp/ModInvAlloc | — | 12–15 s / 2.3 GB | makeslice call over an abstract state, no `janus_data` in context |
+| Arm64/Exp/ModInvRt / ModInvZZ / ModInvSeg3 | — | 6 s / 24 s / 4 s | pure frame lemmas; zz make + setWord |
+| Amd64/Exp/SubMod2N chain (DF from divmc's ensR) | — | max S1T 170 s, S2T 147 s / ≤ 3.8 GB | unchanged proofs, posts shifted |

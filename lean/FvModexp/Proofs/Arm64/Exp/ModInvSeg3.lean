@@ -1,0 +1,118 @@
+import FvModexp.Proofs.Arm64.Exp.ModInvZZ
+
+/-!
+# `nat.modularInverseModPowerOfTwo` (arm64): the Hensel loop head `J2` (agent infra)
+
+`J2` (`+0x3c0` = `0x1b6fb0`, nat.go:1325 `i < numWords` test, before the stores of `z` to `SP+192/184/224`):
+`X0 = i = 2^j`, `z = (X14, X1, X2)` (`p, l, c`), `zz = (X13, X12, X11)` (`q, ql, qc`), `X3 … X9 = stk, x, n, n + 63,
+numWords`. Invariant: `henselLoop X numWords j Z = henselLoop X numWords 1 Z0` for the value `Z0` after `setWord(k0)`
+(`Z0 mod 2^64 = k0`), both arrays owned (caller's `z` or fresh), apart; `cap z ≥ numWords + 1`; budget after the two
+`make`s and `j - 1` rounds.
+-/
+
+open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvModexp
+
+namespace FvModexp.Arm64.ModInv
+
+open FvModexp.Arm64.EvenHyp
+
+/-- the saved LR / FP and the spills the loop reloads (`stk`, `x`, `n`, `n + 63`, `numWords`) -/
+@[reducible] def Fw2 (s : State) (M : Memory) (st xp xl xc n : Nat) : Prop :=
+  Fw0 s M ∧ M.readLE (s.sp.toNat + 32) 8 = st ∧ M.readLE (s.sp.toNat + 40) 8 = xp ∧
+    M.readLE (s.sp.toNat + 48) 8 = xl ∧ M.readLE (s.sp.toNat + 56) 8 = xc ∧ M.readLE (s.sp.toNat + 64) 8 = n ∧
+    M.readLE (s.sp.toNat - 40) 8 = n + 63 ∧ M.readLE (s.sp.toNat - 112) 8 = NW n
+
+/-- the budget spent before round `j` -/
+@[reducible] def spent (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (n j : Nat) : Nat :=
+  makeCost (NW n + 1) + makeCost (2 * NW n) + (j - 1) * roundCost sqrC mulC n
+
+/-- **J2**: the loop head (see the module doc) -/
+def J2 (impl : List Segment) (R : RtInv) (kc : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
+    (L : List (Nat × Nat)) (zp zl zc st xp xl xc n : Nat) (s : State) : Prop :=
+  ∀ (S : State) (j p l c q ql qc Z0 : Nat) (L1 : List (Nat × Nat)) (b1 : Nat),
+    Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s → 64 < n →
+    S.pc = BitVec.ofNat 64 1798064 → S.sp = BitVec.ofNat 64 (s.sp.toNat - 240) →
+    S.regs 28 = s.regs 28 → S.regs 18 = s.regs 18 →
+    S.regs 0 = BitVec.ofNat 64 (2 ^ j) → S.regs 1 = BitVec.ofNat 64 l → S.regs 2 = BitVec.ofNat 64 c →
+    S.regs 14 = BitVec.ofNat 64 p → S.regs 11 = BitVec.ofNat 64 qc → S.regs 12 = BitVec.ofNat 64 ql →
+    S.regs 13 = BitVec.ofNat 64 q →
+    S.regs 3 = BitVec.ofNat 64 st → S.regs 4 = BitVec.ofNat 64 xp → S.regs 5 = BitVec.ofNat 64 xl →
+    S.regs 6 = BitVec.ofNat 64 xc → S.regs 7 = BitVec.ofNat 64 n → S.regs 8 = BitVec.ofNat 64 (n + 63) →
+    S.regs 9 = BitVec.ofNat 64 (NW n) →
+    Fw2 s S.mem st xp xl xc n → RtM R kc L s zp zc st S.mem L1 b1 → b - spent sqrC mulC n j ≤ b1 →
+    Own R kc L L1 s zp zc st xp xl S.mem p c → Own R kc L L1 s zp zc st xp xl S.mem q qc →
+    NW n + 1 ≤ c → l ≤ NW n + 1 → l ≤ c → ql ≤ qc → 0 < qc → 1 ≤ j → 2 ^ (j - 1) < NW n →
+    Apart p (8 * c) q (8 * qc) → Z0 % Exp.B = k0 s xp xl n →
+    Exp.henselLoop (natVal s.mem xp xl) (NW n) j (natVal S.mem p l) =
+      Exp.henselLoop (natVal s.mem xp xl) (NW n) 1 Z0 →
+    Goal impl R kc sqrC mulC b L zp zc st xp xl n s S
+
+/-- a frame read byte by byte (an empty range in the frame never matters for a single byte) -/
+theorem frame_bytes {m m' : Memory} {rs : List (Nat × Nat)} (hF : MemFrame m m' rs) {a n : Nat}
+    (h : ∀ i, i < n → Outside (a + i) 1 rs) : m'.readLE a n = m.readLE a n := by
+  apply Memory.readLE_congr
+  intro i hi
+  have := hF.readLE (a + i) 1 (h i hi)
+  simp only [Memory.readLE_one] at this
+  exact BitVec.eq_of_toNat_eq this
+
+set_option maxRecDepth 20000 in
+/-- the frame environment at any memory the runtime facts describe -/
+theorem env_rt {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
+    {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
+    (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory} {L1 : List (Nat × Nat)} {b1 : Nat}
+    (hrt : RtM R kc L s zp zc st M L1 b1) : Env R L1 (s.regs 28).toNat (s.sp.toNat - 240) kc M := by
+  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, -, hout, hga, hgrt, hLs, -⟩, -, -, -, -, -, -, hzc0,
+    ⟨-, -, hzw⟩, -, -, -, -, -, -, -, -, ⟨⟨-, -, -, -, -, hlc, -⟩, -, hstg, hsta⟩, -⟩ := hpre
+  obtain ⟨-, hF, -, hLE, -, -, -, -⟩ := hrt
+  obtain ⟨-, hzg⟩ := hzw hzc0
+  simp only [K, A] at hw hout hb' ha hga hg3 hLs
+  unfold Apart at hga hzg hstg
+  have hgr : M.readLE ((s.regs 28).toNat + 16) 8 = s.mem.readLE ((s.regs 28).toNat + 16) 8 := by
+    refine frame_bytes hF fun i hi => ?_
+    simp only [outside_append, ExpHyp.stWs, stkWs, winA, K, A, outside_cons, outside_nil, and_true]
+    refine ⟨⟨⟨(hgrt.of_sub (by omega) (by omega)), by omega, by omega⟩, by omega⟩, by omega, ?_⟩
+    rcases Nat.lt_or_ge (stLen s.mem st) (stCap s.mem st) with h | h
+    · have := (hsta (by omega)).2; unfold Apart at this; omega
+    · omega
+  refine ⟨by omega, by omega, by omega, ?_, hg1, by rw [hF.accessible]; exact hg2, by rw [hgr]; omega, ?_, ?_, hgrt, ?_⟩
+  · rw [hF.accessible]; rw [show s.sp.toNat - 240 - kc = s.sp.toNat - (240 + kc) by omega,
+      show kc + 312 = 240 + kc + 72 by omega]; exact hw
+  · rw [show s.sp.toNat - 240 - kc = s.sp.toNat - (240 + kc) by omega, show kc + 312 = 240 + kc + 72 by omega]
+    exact hout
+  · unfold Apart; omega
+  · refine hLE.liveSep (fun q hq => ?_) (fun r hr => ?_)
+    · have := hLs q hq
+      simp only [win, outside_cons, outside_nil, and_true] at this ⊢; omega
+    · simp only [List.mem_cons, List.not_mem_nil, or_false] at hr; subst hr
+      rw [show s.sp.toNat - 240 - kc = s.sp.toNat - (240 + kc) by omega]
+      exact hout.of_sub (by omega) (by omega)
+
+set_option maxRecDepth 20000 in
+/-- stack-slot stores (inside `winA`) keep the runtime facts -/
+theorem rtM_stk {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
+    {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
+    (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M M' : Memory} {L1 : List (Nat × Nat)} {b1 : Nat}
+    (hrt : RtM R kc L s zp zc st M L1 b1) (hF : MemFrame M M' (winA s (K kc) A)) (hreg : M'.regions = M.regions) :
+    RtM R kc L s zp zc st M' L1 b1 := by
+  have he := env_rt hpre hrt
+  obtain ⟨⟨-, ⟨-, hal, -, -⟩, -, hout, -, -, hLs, -⟩, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -,
+    ⟨-, hstw, -, -⟩, -⟩ := hpre
+  obtain ⟨-, -, -, -, -, -, -, -, -, -, hLs1⟩ := he
+  simp only [K, A] at hal hout hstw
+  obtain ⟨a1, a2, a3, a4, a5, a6, a7, a8⟩ := hrt
+  have hst' : Outside st 24 (winA s (240 + kc) 72) := by
+    simp only [win, winA, outside_cons, outside_nil, and_true] at hstw ⊢; omega
+  obtain ⟨hstk, e0, e1, e2⟩ := stkOK_frame a6 hF hst' (LiveExt.refl R L1)
+  refine ⟨hreg.trans a1, a2.trans hF fun x m hx => ⟨hx, ?_⟩,
+    ⟨fun x m hin hout' => (hF.readLE x m ?_).trans (a3.readLE x m hin hout')⟩, a4, ?_, hstk, e1.trans a7, ?_⟩
+  · simp only [outside_append] at hx; exact hx.1.1.2
+  · obtain ⟨q, hq, h1, h2⟩ := a4.inRanges_old hin
+    have := hLs1 q hq
+    simp only [winA, K, A, outside_cons, outside_nil, and_true] at this ⊢; omega
+  · refine Expmc.inv_frame hF (fun r hr => Or.inr ?_) a5
+    simp only [winA, List.mem_cons, List.not_mem_nil, or_false] at hr
+    rcases hr with rfl | rfl <;> (dsimp only; simp only [K, A]; exact hout.of_sub (by omega) (by omega))
+  · rw [e0, e2]; exact a8
+
+end FvModexp.Arm64.ModInv
