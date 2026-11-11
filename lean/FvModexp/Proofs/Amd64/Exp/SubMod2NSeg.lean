@@ -388,7 +388,7 @@ def SubHypR (impl : List Amd64.Segment) (R : RtInv) : Prop :=
       (NatSub.Pre R b L zp zc xp xl xc yp yl yc)
       (fun s s' => NatSub.Post R b L zp zc xp xl yp yl s s' ∧
         (xl.toNat ≤ zc.toNat → (s'.regs 0).toNat = zp.toNat ∧ (s'.regs 1).toNat = zc.toNat) ∧
-        (xl.toNat < 2 ^ 39 → (s'.regs 1).toNat < 2 ^ 40) ∧ s'.df = s.df)
+        (xl.toNat < 2 ^ 39 → (s'.regs 1).toNat < 2 ^ 40))
 
 def AddHypR (impl : List Amd64.Segment) (R : RtInv) : Prop :=
   ∀ (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc yp yl yc : BitVec 64),
@@ -397,7 +397,7 @@ def AddHypR (impl : List Amd64.Segment) (R : RtInv) : Prop :=
       (NatAdd.Pre R b L zp zc xp xl xc yp yl yc)
       (fun s s' => NatAdd.Post R b L zp zc xp xl yp yl s s' ∧
         (NatAdd.need xl yl ≤ zc.toNat → (s'.regs 0).toNat = zp.toNat ∧ (s'.regs 1).toNat = zc.toNat) ∧
-        (NatAdd.mx xl yl < 2 ^ 39 → (s'.regs 1).toNat < 2 ^ 40) ∧ s'.df = s.df)
+        (NatAdd.mx xl yl < 2 ^ 39 → (s'.regs 1).toNat < 2 ^ 40))
 
 /-- **J3** (`+0x2ac`, after `z = z.sub(y', x')` with `x' < y'`): `z = (zp, l3, zc)` (`RAX, RBX, RCX`) holds `y' - x'` -/
 def J3 (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (op zp zl zc yp yl yc n : Nat)
