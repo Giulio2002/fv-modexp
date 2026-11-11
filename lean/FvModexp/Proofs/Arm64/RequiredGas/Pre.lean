@@ -75,6 +75,44 @@ theorem sat_bv (m : Memory) (z : Nat) :
   · rw [BitVec.toNat_ofNat, Nat.mod_eq_of_lt h0]
   · rfl
 
+theorem rd_frame' {m0 m : Memory} {rs : List (Nat × Nat)} (hf : MemFrame m0 m rs) {a b : Nat} (ho : Outside a 1 rs)
+    (h : a = b) : m.readLE a 1 = (m0.bytes b).toNat := by
+  subst h; exact rd_frame hf ho
+
+theorem rd_self {m : Memory} {a b : Nat} (h : a = b) : m.readLE a 1 = (m.bytes b).toNat := by
+  subst h; exact Memory.readLE_one m a
+
+theorem val256_frame {m0 m : Memory} {rs : List (Nat × Nat)} (hf : MemFrame m0 m rs) {a : Nat} (ho : Outside a 32 rs) :
+    val256 m a = val256 m0 a := hf.readLE a 32 ho
+
+set_option hygiene false in
+/-- One byte of a `getData` + `SetBytes` source: the zero-padded call-data byte. Goal
+`X.readLE (a + i) 1 = if off + i < len then (s.mem.bytes (ptr + (off + i))).toNat else 0`; `hf` relates `s.mem` to the frame base
+(or is absent when the base is `s.mem`). -/
+macro "rg_byte" : tactic => `(tactic| (
+  unfold Calldata.pad
+  split
+  · first
+      | (exfalso; omega)
+      | (refine (copy_rd (by assumption) (by omega)).trans ?_
+         simp (disch := omega) only [Memory.readLE_writeLE_of_disjoint]
+         first
+           | exact rd_frame' hf (by simp only [outside_cons, outside_nil, and_true]; omega) (by omega)
+           | exact rd_self (by omega))
+      | (simp (disch := omega) only [Memory.readLE_writeLE_of_disjoint]
+         first
+           | exact rd_frame' hf (by simp only [outside_cons, outside_nil, and_true]; omega) (by omega)
+           | exact rd_self (by omega))
+  · first
+      | (exfalso; omega)
+      | (refine (rd_out (by assumption) (by omega)).trans ?_
+         rcases (show i < 8 ∨ (8 ≤ i ∧ i < 16) ∨ (16 ≤ i ∧ i < 24) ∨ (24 ≤ i ∧ i < 32) by omega) with hq | hq | hq | hq <;>
+           simp (disch := omega) only [Memory.readLE_writeLE_of_disjoint, Memory.readLE_writeLE_inside, Nat.zero_div,
+             Nat.zero_mod])
+      | (rcases (show i < 8 ∨ (8 ≤ i ∧ i < 16) ∨ (16 ≤ i ∧ i < 24) ∨ (24 ≤ i ∧ i < 32) by omega) with hq | hq | hq | hq <;>
+           simp (disch := omega) only [Memory.readLE_writeLE_of_disjoint, Memory.readLE_writeLE_inside, Nat.zero_div,
+             Nat.zero_mod])))
+
 /-- The final value of the run is EthLib's `requiredGas` (when the lengths pass). -/
 theorem rgPost_of (ptr len B E M : BitVec 64) (s s' : State)
     (hB : B.toNat = RgSpec.sat (Calldata.word s.mem ptr.toNat len.toNat 0))
