@@ -26,7 +26,7 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 theorem tail (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (st n : BitVec 64) (s : State)
     (L1 : List (Nat × Nat)) (b1 w1 c1 : Nat) (M M2 : Janus.Arm64.Memory) (h : J R b L st.toNat n.toNat s L1 b1 w1 c1 M)
-    (hf : MemFrame M M2 (R.rt ++ [(st.toNat, st.toNat + 24), ((s.regs 4).toNat - 4192, (s.regs 4).toNat - 96)]))
+    (hf : MemFrame M M2 (R.rt ++ [(st.toNat, st.toNat + 24), ((s.regs 4).toNat - 4192, (s.regs 4).toNat - 88)]))
     (hl : LiveFrame M M2 L1 [(st.toNat, st.toNat + 24)])
     (hinv : R.inv b1 L1 (s.regs 14).toNat (view R.rt L1 M2))
     (hlen : M2.readLE (st.toNat + 8) 8 = stLen s.mem st.toNat) (hcap : M2.readLE (st.toNat + 16) 8 = c1)

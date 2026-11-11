@@ -94,7 +94,7 @@ write barrier's writes in `R.rt` and its stack), `M3` = `M2` with the header and
 (`k = 1`, `n > 0`) written. -/
 theorem post_fin {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st n : Nat} {s : State} {L1 : List (Nat × Nat)}
     {b1 w1 c1 : Nat} {M : Memory} (h : J R b L st n s L1 b1 w1 c1 M) {M2 M3 : Memory}
-    (hf : MemFrame M M2 (R.rt ++ [(st, st + 24), ((s.regs 4).toNat - 4192, (s.regs 4).toNat - 96)]))
+    (hf : MemFrame M M2 (R.rt ++ [(st, st + 24), ((s.regs 4).toNat - 4192, (s.regs 4).toNat - 88)]))
     (hl : LiveFrame M M2 L1 [(st, st + 24)])
     (hinv : R.inv b1 L1 (s.regs 14).toNat (view R.rt L1 M2)) (k : Nat) (hk : k ≤ 1) (hkn : 0 < k → 0 < n)
     (hF3 : MemFrame M2 M3 ((st, st + 24) :: List.replicate k (w1 + 8 * stLen s.mem st, w1 + 8 * stLen s.mem st + 8)))
