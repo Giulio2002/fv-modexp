@@ -218,7 +218,7 @@ theorem afterOne (impl : List Segment) (hap : ImplApart Extracted.program impl) 
     (hserv : RunIface.Serves R)
     (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret)
     (b : Nat) (L : List (Nat × Nat)) (g sp n mp mc t rrp rrc xp xc yp ylen Y yi zp zc zzp zzc st n0 : Nat)
-    (M : Memory) (r18 r29 : BitVec 64)
+    (M : Memory) (r18 r29 f29 : BitVec 64)
     (he : Env R L g sp M) (hce : CallW.CEnv R L g sp 4304 1040 M)
     (hn : 0 < n) (hn128 : n ≤ 128) (hmc : n ≤ mc) (hmc' : mc < 2 ^ 40) (ht : t < 2 ^ 64)
     (hm : Inp R L sp n M mp) (hrr : Inp R L sp n M rrp) (hx : Inp R L sp n M xp)
@@ -267,7 +267,7 @@ theorem afterOne (impl : List Segment) (hap : ImplApart Extracted.program impl) 
     (S : State) (hpc : S.pc = BitVec.ofNat 64 snE) (hsp : S.sp = BitVec.ofNat 64 sp)
     (h0 : S.regs 0 = BitVec.ofNat 64 st) (h1 : S.regs 1 = BitVec.ofNat 64 (17 * n))
     (h30 : S.regs 30 = BitVec.ofNat 64 p01)
-    (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = r29) (hmem : S.mem = M1) :
+    (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = f29) (hmem : S.mem = M1) :
     Reaches ((LibExp.program.link impl).withExit ret) S
       (IsReturn (fun s' => ∃ (M2 : Memory) (L2 : List (Nat × Nat)) (b2 : Nat),
         OneChain R b L L2 b2 sp n st M M2 ∧
@@ -310,7 +310,7 @@ theorem afterOne (impl : List Segment) (hap : ImplApart Extracted.program impl) 
   have hpre1 : SnPre R b1 L1 g sp st (17 * n) M1 := by
     refine ⟨hce1, hserv, hsok1, hstw4, by rw [e1, e3]; exact harr, by omega, by rw [e2]; omega, by rw [e2]; exact hbud1,
       hinvO, by rw [hFO.accessible]; exact hwba, hstwb, by rw [hFE]; exact hstf⟩
-  refine snCall impl hap R hSN ret hret _ b1 L1 g sp n st M1 r18 r29 hpre1 (by omega) hn S hpc hsp h0 h1 h30 h18
+  refine snCall impl hap R hSN ret hret _ b1 L1 g sp n st M1 r18 f29 hpre1 (by omega) hn S hpc hsp h0 h1 h30 h18
     h28 h29 hmem ?_
   intro S2 M2 L2 b2 c1 c2 c3 c4 c5 c6 c7 c8 c9 hS
   rw [e2] at c3
@@ -441,7 +441,7 @@ theorem afterOne (impl : List Segment) (hap : ImplApart Extracted.program impl) 
     have hb := (hz h).1
     exact ⟨a1, a2, a3, bapL _ _ hb.2.2.2.2.1 a6, a4, hoA _ _ hb.2.2.2.2.1 hb.2.2.2.2.2.1, a5⟩
   refine reaches_mono (p01Ret impl hap R hclr hmv hmk hserv ret hret b2 L2 g sp n mp mc t (stW M2 st + 8 * stLen M st)
-    onep rrp rrc xp xc yp ylen Y yi zp zc zzp zzc st n0 M2 r18 r29 he2 hce2 hn (by omega) hmc hmc' ht (inpT _ _ hm)
+    onep rrp rrc xp xc yp ylen Y yi zp zc zzp zzc st n0 M2 r18 r29 f29 he2 hce2 hn (by omega) hmc hmc' ht (inpT _ _ hm)
     hba hbb hbh (by unfold Apart at hbw ⊢; omega) hbg (flip _ _ _ _ (bapL _ _ hm.2.2.1 hmF)) hone2 hbo hone12
     (inpT _ _ hrr) (flip _ _ _ _ (bapL _ _ hrr.2.2.1 hrF)) (inpT _ _ hx) (flip _ _ _ _ (bapL _ _ hx.2.2.1 hxF))
     (by rw [rs 1016 (by omega)]; exact r1016) (by rw [rs 1024 (by omega)]; exact r1024)

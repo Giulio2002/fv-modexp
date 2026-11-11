@@ -41,7 +41,7 @@ theorem lshStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (hserv : RunIface.Serves R)
     (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret)
     (b : Nat) (L : List (Nat × Nat)) (g sp K n mp mc Mv xp xc Xv yp ylen Y yi zp zc st n0 l0 t rrp : Nat)
-    (M : Memory) (r18 r29 : BitVec 64) (hKD : stkD ≤ K) (hKL : stkL ≤ K)
+    (M : Memory) (r18 r29 f29 : BitVec 64) (hKD : stkD ≤ K) (hKL : stkL ≤ K)
     (hC : Ctx R L g sp K n mp mc Mv xp xc Xv yp ylen Y yi zp zc st n0 l0 ret r29 [(rrp, 8 * (2 * n))] M)
     (hrL : NatLive M R L rrp (2 * n)) (hrW : AW sp K rrp (8 * (2 * n))) (hrG : Apart rrp (8 * (2 * n)) (g + 16) 8)
     (hrS : Apart rrp (8 * (2 * n)) st 24)
@@ -55,7 +55,7 @@ theorem lshStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (hinv : R.inv b L g (view R.rt L M))
     (S : State) (hpc : S.pc = BitVec.ofNat 64 sn1Ret) (hsp : S.sp = BitVec.ofNat 64 sp)
     (h0 : S.regs 0 = BitVec.ofNat 64 rrp) (h2 : S.regs 2 = BitVec.ofNat 64 (2 * n))
-    (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = r29) (hmem : S.mem = M) :
+    (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = f29) (hmem : S.mem = M) :
     Reaches ((LibExp.program.link impl).withExit ret) S
       (IsReturn (fun s' => ∃ zzp zzc : Nat, DivRetPost R g sp n mp mc Mv Xv t yp ylen Y yi zp zc st n0 zzp zzc
         (stLen M st + StackNat.rnd (2 * n)) r18 r29 s')) := by
@@ -95,7 +95,7 @@ theorem lshStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
       hrH.imp (fun h => h.sub (by omega) (by omega)) (fun h => h.of_sub (by omega) (by omega)),
       Apart.mono hrW (by omega) (Nat.le_refl _), by omega, hinv1⟩
     rw [hmf.accessible]; exact M.accessible_sub hracc (Or.inl rfl) (Nat.le_refl _) (by omega)
-  refine lshCallK impl hap R nsL stkL hLsh hnsL hnsWL ret hret _ b L g sp K rrp n M1 r18 r29 hpre (by omega)
+  refine lshCallK impl hap R nsL stkL hLsh hnsL hnsWL ret hret _ b L g sp K rrp n M1 r18 f29 hpre (by omega)
     S1 e1 e2 e3 e4 e5 e6 e7 e8 e9 e10 (e11.trans h18) (e12.trans h28) (e13.trans h29) em
     (fun S2 M2 L2 b2 p l c f1 f2 f3 f4 f5 f6 f7 f8 f9 hD => ?_)
   obtain ⟨hk2, e0', e1', e2'⟩ := keeps_lsh hC1 hKL hD
@@ -114,7 +114,7 @@ theorem lshStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     hmf.readLE _ _ (by simp only [outside_cons, outside_nil, and_true]; omega)
   have hlenE : stLen M2 st = stLen M st := by rw [e1', k1]
   refine reaches_mono (sn2Step impl hap R hclr hmv hmk hSN nsD stkD costD hDiv hnsD hnsW hserv ret hret b2 L2 g sp K n
-    mp mc Mv xp xc Xv yp ylen Y yi zp zc st n0 l0 t rrp p c M2 r18 r29 hKD hC2 hZ hzzK hzl hzv hzzr hrL2 hrW hrG hrS
+    mp mc Mv xp xc Xv yp ylen Y yi zp zc st n0 l0 t rrp p c M2 r18 r29 f29 hKD hC2 hZ hzzK hzl hzv hzzr hrL2 hrW hrG hrS
     hrB2 (by rw [sl 408 (by omega) (by omega)]; exact q408) (by rw [sl 176 (by omega) (by omega)]; exact q176) ht
     (by rw [sl 224 (by omega) (by omega), rs1 224 (by omega) (by omega)]; exact r224)
     (by rw [sl 128 (by omega) (by omega), rs1 128 (by omega) (by omega)]; exact r128)

@@ -103,7 +103,7 @@ theorem xjStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     (hserv : RunIface.Serves R)
     (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret)
     (b : Nat) (L : List (Nat × Nat)) (g sp K n mp mc Mv xp xc Xv yp ylen Y yi zp zc st n0 l0 : Nat)
-    (M : Memory) (r18 r29 : BitVec 64) (hKD : stkD ≤ K) (hKL : stkL ≤ K)
+    (M : Memory) (r18 r29 f29 : BitVec 64) (hKD : stkD ≤ K) (hKL : stkL ≤ K)
     (hB : CtxB R L g sp K n mp mc Mv yp ylen Y yi zp zc st n0 l0 ret r29 [] M) (hl0e : stLen M st = l0)
     (hx : Inp R L sp n M xp) (hxO : Obj R L sp K st l0 [] M xp (8 * n)) (hxv : M.readLE xp (8 * n) = Xv)
     (hxc : xc < 2 ^ 64)
@@ -117,7 +117,7 @@ theorem xjStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     (h3 : S.regs 3 = BitVec.ofNat 64 st) (h4 : S.regs 4 = BitVec.ofNat 64 xp) (h5 : S.regs 5 = BitVec.ofNat 64 n)
     (h6 : S.regs 6 = BitVec.ofNat 64 xc) (h8 : S.regs 8 = BitVec.ofNat 64 ylen) (h10 : S.regs 10 = BitVec.ofNat 64 mp)
     (h11 : S.regs 11 = BitVec.ofNat 64 n)
-    (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = r29) (hmem : S.mem = M) :
+    (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = f29) (hmem : S.mem = M) :
     Reaches ((LibExp.program.link impl).withExit ret) S
       (IsReturn (fun s' => ∃ zzp zzc : Nat, DivRetPost R g sp n mp mc Mv Xv (Exp.newton 64 (Mv % Exp.B)) yp ylen Y yi
         zp zc st n0 zzp zzc (l0 + 2 * StackNat.rnd (2 * n)) r18 r29 s')) := by
@@ -178,7 +178,7 @@ theorem xjStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
       have := hB.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
       simp only [AW, Apart] at this; simp only [outside_cons, outside_nil, and_true]; omega)
   exact sn1Step impl hap R hclr hmv hmk hSN nsD stkD costD hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL hserv ret hret b L
-    g sp K n mp mc Mv xp xc Xv yp ylen Y yi zp zc st n0 l0 (Exp.newton 64 (Mv % Exp.B)) M1 r18 r29 hKD hKL hC hlen1 htl
+    g sp K n mp mc Mv xp xc Xv yp ylen Y yi zp zc st n0 l0 (Exp.newton 64 (Mv % Exp.B)) M1 r18 r29 f29 hKD hKL hC hlen1 htl
     q224 q128 (hkk_of hMo) hmB hMo hM1 hslen hbud (FvModexp.Expmc.inv_frame hmf (fun r hr => Or.inr (by
       have := ws_in r hr
       simp only [List.mem_cons, List.not_mem_nil, or_false] at hr

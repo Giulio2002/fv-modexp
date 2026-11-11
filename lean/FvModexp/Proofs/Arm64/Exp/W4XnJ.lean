@@ -120,7 +120,7 @@ theorem xnBK (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     (hserv : RunIface.Serves R)
     (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret)
     (b : Nat) (L : List (Nat × Nat)) (g sp K n mp mc Mv Xv yp ylen Y yi zp zc st n0 l0 xp xl xr : Nat)
-    (M : Memory) (r18 r29 : BitVec 64) (hKD : stkD ≤ K) (hKL : stkL ≤ K)
+    (M : Memory) (r18 r29 f29 : BitVec 64) (hKD : stkD ≤ K) (hKL : stkL ≤ K)
     (hB : CtxB R L g sp K n mp mc Mv yp ylen Y yi zp zc st n0 l0 ret r29 [] M)
     (hlen : stLen M st = l0 + StackNat.rnd n)
     (hx : XIn R L sp K st l0 M xp xl xr) (hxv : M.readLE xp (8 * xl) = Xv) (hxl : xl < n)
@@ -132,7 +132,7 @@ theorem xnBK (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     (S : State) (hpc : S.pc = BitVec.ofNat 64 bSnRet) (hsp : S.sp = BitVec.ofNat 64 sp)
     (h0 : S.regs 0 = BitVec.ofNat 64 (stW M st + 8 * l0)) (h1 : S.regs 1 = BitVec.ofNat 64 n)
     (h2 : S.regs 2 = BitVec.ofNat 64 n)
-    (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = r29) (hmem : S.mem = M) :
+    (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = f29) (hmem : S.mem = M) :
     Reaches ((LibExp.program.link impl).withExit ret) S
       (IsReturn (XnPost R g sp n mp mc Mv Xv yp ylen Y yi zp zc st n0 l0 r18 r29)) := by
   have hB0 := hB
@@ -159,7 +159,7 @@ theorem xnBK (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     (by unfold Apart; omega) (M.accessible_sub laacc (Or.inr rfl) (by omega) (by omega)) (by omega)
     (held_sub lah (by omega) (by omega)) (by unfold Apart; omega) (by unfold Apart; omega) (by omega)
     (by unfold Apart; omega) (hserv.2.1 _ _ _ (by omega)) (hserv.2.2.1 _ _ (by omega)) b hinv r1024 r312 r896
-    S hpc hsp h0 h1 h2 r960 r1000 r1016 r18 r29 h18 h29 h28 hmem
+    S hpc hsp h0 h1 h2 r960 r1000 r1016 r18 f29 h18 h29 h28 hmem
     (fun S3 M3 k1 k2 k3 k4 k5 k6 k7 k8 k9 k10 k11 k12 k13 hF hL hI hrg hv => ?_)
   obtain ⟨hk, hlen3, hW3, hcap3⟩ := keeps_xb hB hrin hF hL hrg
   have hB3 := CtxB.keep hB hk
@@ -172,7 +172,7 @@ theorem xnBK (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     · have := hsu; simp only [Apart, stUp] at this ⊢; omega
     · simp only [stUp, Apart]; rw [hW3, hcap3]; omega
   refine reaches_mono (xjStep impl hap R hclr hmv hmk hSN nsD stkD costD hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL hserv
-    ret hret b L g sp K n mp mc Mv (stW M st + 8 * l0) n Xv yp ylen Y yi zp zc st n0 (l0 + StackNat.rnd n) M3 r18 r29
+    ret hret b L g sp K n mp mc Mv (stW M st + 8 * l0) n Xv yp ylen Y yi zp zc st n0 (l0 + StackNat.rnd n) M3 r18 r29 f29
     hKD hKL hB4 (by rw [hlen3, hlen]) hx3 hxO3 (by rw [hv, hxv]) (by omega) hmB hMo hM1 (by omega) hbud hI
     S3 k1 k2 k3 k4 k5 k6 k7 k8 k9 k10 k11 k12 k13) (isReturn_mono fun s' h => ?_)
   obtain ⟨zzp, zzc, h⟩ := h
@@ -203,7 +203,7 @@ theorem xnJStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (hserv : RunIface.Serves R)
     (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret)
     (b : Nat) (L : List (Nat × Nat)) (g sp K n mp mc Mv Xv yp ylen Y yi zp zc st n0 l0 xp xl xr xc : Nat)
-    (M : Memory) (r18 r29 : BitVec 64) (hKD : stkD ≤ K) (hKL : stkL ≤ K)
+    (M : Memory) (r18 r29 f29 : BitVec 64) (hKD : stkD ≤ K) (hKL : stkL ≤ K)
     (hB : CtxB R L g sp K n mp mc Mv yp ylen Y yi zp zc st n0 l0 ret r29 [] M) (hl0e : stLen M st = l0)
     (hx : XIn R L sp K st l0 M xp xl xr) (hxv : M.readLE xp (8 * xl) = Xv) (hxln : xl ≤ n) (hxc : xc < 2 ^ 64)
     (hmB : Mv < Exp.B ^ n) (hMo : Mv % 2 = 1) (hM1 : 1 < Mv)
@@ -214,7 +214,7 @@ theorem xnJStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (h3 : S.regs 3 = BitVec.ofNat 64 st) (h4 : S.regs 4 = BitVec.ofNat 64 xp) (h5 : S.regs 5 = BitVec.ofNat 64 xl)
     (h6 : S.regs 6 = BitVec.ofNat 64 xc) (h8 : S.regs 8 = BitVec.ofNat 64 ylen) (h10 : S.regs 10 = BitVec.ofNat 64 mp)
     (h11 : S.regs 11 = BitVec.ofNat 64 n)
-    (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = r29) (hmem : S.mem = M) :
+    (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = f29) (hmem : S.mem = M) :
     Reaches ((LibExp.program.link impl).withExit ret) S
       (IsReturn (XnPost R g sp n mp mc Mv Xv yp ylen Y yi zp zc st n0 l0 r18 r29)) := by
   have hB0 := hB
@@ -236,7 +236,7 @@ theorem xnJStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     obtain ⟨o1, o2, -, -, -⟩ := hxO'
     simp only [AW, Apart] at o2
     refine reaches_mono (xjStep impl hap R hclr hmv hmk hSN nsD stkD costD hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL
-      hserv ret hret b L g sp K xl mp mc Mv xp xc Xv yp ylen Y yi zp zc st n0 l0 M r18 r29 hKD hKL hB hl0e
+      hserv ret hret b L g sp K xl mp mc Mv xp xc Xv yp ylen Y yi zp zc st n0 l0 M r18 r29 f29 hKD hKL hB hl0e
       ⟨M.accessible_sub hxa (Or.inl rfl) (Nat.le_refl _) (by omega), by omega, held_sub o1 (Nat.le_refl _) (by omega),
         by unfold Apart; omega⟩
       (obj_sub hxO (Nat.le_refl _) (by omega)) hxv hxc hmB hMo hM1 (by omega) hbC hinv S' c1 (by rw [c2, hsp])
@@ -278,7 +278,7 @@ theorem xnJStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
       CallW.retAddr_restrict hap (cs := Extracted.seg34) (ns := StackNat.names)
         (by simp only [Extracted.program, Extracted.segments, List.mem_cons, true_or, or_true]) (by decide) 149
         (by decide) (by decide) (by decide)
-    refine snCallK impl hap R hSN ret hret _ b L g sp n st bSnRet M1 r18 r29 hRA (by decide) hpre (by omega)
+    refine snCallK impl hap R hSN ret hret _ b L g sp n st bSnRet M1 r18 f29 hRA (by decide) hpre (by omega)
       (by omega) S1 c1 c2 c3 c4 c5 (by rw [c6, h18]) (by rw [c7, h28]) (by rw [c8, h29]) cm
       (fun S2 M2 L2 b2 f1 f2 f3 f4 f5 f6 f7 f8 f9 hS => ?_)
     have hk2 := keeps_snB hB1 hn hS
@@ -297,7 +297,7 @@ theorem xnJStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     have sl : ∀ j, 24 ≤ j → j + 8 ≤ 1040 → M2.readLE (sp + j) 8 = M1.readLE (sp + j) 8 := fun j a b =>
       slot_sn hS hrt4 (by omega) (Apart.sub hstw1 (Nat.le_refl _) (Nat.le_refl _) (by omega) (by omega)) hfw j a b
     refine reaches_mono (xnBK impl hap R hclr hmv hmk hSN nsD stkD costD hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL hserv
-      ret hret b2 L2 g sp K n mp mc Mv Xv yp ylen Y yi zp zc st n0 l0 xp xl xr M2 r18 r29 hKD hKL hB2 hlen2 hxI2 hxv2
+      ret hret b2 L2 g sp K n mp mc Mv Xv yp ylen Y yi zp zc st n0 l0 xp xl xr M2 r18 r29 f29 hKD hKL hB2 hlen2 hxI2 hxv2
       (by omega) hmB hMo hM1 hslen (by omega) hinv2
       (by rw [sl 312 (by omega) (by omega)]; exact q312) (by rw [sl 896 (by omega) (by omega)]; exact q896)
       S2 f1 f2 f3 f4 f5 f6 f7 f8 f9) (isReturn_mono fun s' h => ?_)

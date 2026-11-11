@@ -21,7 +21,7 @@ theorem oneRet (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     (hserv : RunIface.Serves R)
     (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret)
     (b : Nat) (L : List (Nat × Nat)) (g sp n mp mc t rrp rrc xp xc yp ylen Y yi zp zc zzp zzc st n0 : Nat)
-    (M : Memory) (r18 r29 : BitVec 64)
+    (M : Memory) (r18 r29 f29 : BitVec 64)
     (he : Env R L g sp M) (hce : CallW.CEnv R L g sp 4304 1040 M)
     (hn : 0 < n) (hn128 : n ≤ 128) (hmc : n ≤ mc) (hmc' : mc < 2 ^ 40) (ht : t < 2 ^ 64)
     (hm : Inp R L sp n M mp) (hrr : Inp R L sp n M rrp) (hx : Inp R L sp n M xp)
@@ -70,7 +70,7 @@ theorem oneRet (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     (hinv : R.inv b L g (view R.rt L M))
     (S : State) (hpc : S.pc = BitVec.ofNat 64 oneJ) (hsp : S.sp = BitVec.ofNat 64 sp)
     (h0 : S.regs 0 = BitVec.ofNat 64 n)
-    (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = r29) (hmem : S.mem = M) :
+    (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = f29) (hmem : S.mem = M) :
     Reaches ((LibExp.program.link impl).withExit ret) S
       (IsReturn (fun s' => ∃ (onep : Nat) (M2 : Memory) (L2 : List (Nat × Nat)) (b2 : Nat),
         OneChain R b L L2 b2 sp n st M M2 ∧
@@ -83,19 +83,19 @@ theorem oneRet (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
   rw [← LibExp.eq_only] at hc
   have hmkL := MakesliceLiveContract.of_codeIn hc hmk
   by_cases h4 : n ≤ 4
-  · exact oneSmall impl ret hret _ R b L g sp n st M r18 r29 he hn h4 r1024 r960 hinv S hpc hsp h0 h18 h28 h29 hmem
+  · exact oneSmall impl ret hret _ R b L g sp n st M r18 f29 he hn h4 r1024 r960 hinv S hpc hsp h0 h18 h28 h29 hmem
       (fun S' M' onep L' b' c1 c2 c3 c4 c5 c6 c7 c8 c9 hO =>
         reaches_mono (afterOne impl hap R hclr hmv hmk hSN hserv ret hret b L g sp n mp mc t rrp rrc xp xc yp ylen Y yi zp
-        zc zzp zzc st n0 M r18 r29 he hce hn hn128 hmc hmc' ht hm hrr hx r1016 r1024 r1032 r224 r128 r832 r256 r264 r904
+        zc zzp zzc st n0 M r18 r29 f29 he hce hn hn128 hmc hmc' ht hm hrr hx r1016 r1024 r1032 r224 r128 r832 r256 r264 r904
         r328 r320 hok hyl hyl' hy hY hyi hyi0 hzc hz hold hzz hzz8 hzzm hzzy hzz4 hzzs hzzF hro hty r952 r936 r168 r400
         r1000 r992 hokz hokM hmw4 hnm hkk hmB hfe hsth hstw4 hsok hn0 hcap hfg harr hfw hslen hwba hstwb hstf hmS hmF hrS
         hrF hxS hxF hyS hyF hbud L' b' onep M' hO S' c1 c2 c3 c4 c5 c6 c7 c8 c9)
         (isReturn_mono fun s h => ⟨onep, h⟩))
-  · exact oneLarge impl R hmkL ret hret _ b L g sp n st M r18 r29 he (by omega) (by omega) hd hro hty r1024 r960
+  · exact oneLarge impl R hmkL ret hret _ b L g sp n st M r18 f29 he (by omega) (by omega) hd hro hty r1024 r960
       ⟨hokone (by omega), by omega⟩ hinv S hpc hsp h0 h18 h28 h29 hmem
       (fun S' M' onep L' b' c1 c2 c3 c4 c5 c6 c7 c8 c9 hO =>
         reaches_mono (afterOne impl hap R hclr hmv hmk hSN hserv ret hret b L g sp n mp mc t rrp rrc xp xc yp ylen Y yi zp
-        zc zzp zzc st n0 M r18 r29 he hce hn hn128 hmc hmc' ht hm hrr hx r1016 r1024 r1032 r224 r128 r832 r256 r264 r904
+        zc zzp zzc st n0 M r18 r29 f29 he hce hn hn128 hmc hmc' ht hm hrr hx r1016 r1024 r1032 r224 r128 r832 r256 r264 r904
         r328 r320 hok hyl hyl' hy hY hyi hyi0 hzc hz hold hzz hzz8 hzzm hzzy hzz4 hzzs hzzF hro hty r952 r936 r168 r400
         r1000 r992 hokz hokM hmw4 hnm hkk hmB hfe hsth hstw4 hsok hn0 hcap hfg harr hfw hslen hwba hstwb hstf hmS hmF hrS
         hrF hxS hxF hyS hyF hbud L' b' onep M' hO S' c1 c2 c3 c4 c5 c6 c7 c8 c9)
