@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Arm64.Nat.StackNatCall
+import FvModexp.Proofs.Arm64.Nat.StackNatG2
 import FvModexp.Proofs.Common.DivmcBits
 
 /-!
