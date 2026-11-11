@@ -19,10 +19,10 @@ if [ ! -f "$base/Extracted.lean" ]; then
   $JANUS extract "$HB/harness-$isa" 'github.com/ethereum/go-ethereum/core/vm.(*bigModExp).Run' "$base" \
     $(contract_flags Run) --max-functions 100 >"$log" 2>&1 || { echo "extract failed"; tail "$log"; exit 1; }
 fi
-rm -rf "$out"; cp -r "$base" "$out"
+rm -rf "$out"; cp -r "$base" "$out"; : >"$log"
 pf=lean/FvModexp/Proofs/$dir/${ROWDIR:-Nat}/$row.lean
 timeout 900 memcap -m 16G $JANUS verify "$out" --proof "$pf" --proof-root lean \
-  --theorem "FvModexp.$dir.$row.correctness" --theorem "FvModexp.$dir.$row.Witness.nonvacuous" >>"$log" 2>&1 &
+  --theorem "FvModexp.$dir.$row.correctness" --theorem "FvModexp.$dir.$row.Witness.nonvacuous" ${EXTRA_THMS:-} >>"$log" 2>&1 &
 bg=$!; peak=0; cg=""
 while kill -0 $bg 2>/dev/null; do
   if [ -z "$cg" ]; then p=$(pgrep -f "^$JANUS verify $out " | head -1)
