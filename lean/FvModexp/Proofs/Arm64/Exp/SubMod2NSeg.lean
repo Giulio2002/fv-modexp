@@ -83,7 +83,7 @@ theorem rt_stack {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {op zp zl zc yp y
     (hpre : Pre R b L op zp zl zc yp yl yc n s) {M : Memory} (k : Nat) (hF : MemFrame s.mem M (winA s K A))
     (hreg : M.regions = s.mem.regions) : Rt R b L s zp zc n k M L b := by
   obtain ⟨⟨-, ⟨-, -, -, -⟩, -, hout, -, -, hLs, -⟩, -, -, -, -, -, -, -, -, -, -, -, -, -, -, hzl, -, -, -, -, -, -, -, -, -,
-    -, hinv⟩ := hpre
+    -, hinv, -⟩ := hpre
   refine ⟨hreg, hF.mono fun a n h => by simp only [outside_append] at h; exact h.1.2,
     Expmc.liveFrame_of_frame hF fun a k hin _ => inRanges_outside_win hLs hin, LiveExt.refl R L, Nat.sub_le _ _,
     Expmc.inv_frame hF (fun r hr => Or.inr ?_) ?_, fun hc => ?_⟩
