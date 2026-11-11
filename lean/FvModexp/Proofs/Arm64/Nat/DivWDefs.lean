@@ -38,7 +38,9 @@ def names : List String := LibDivW.names
 def wordT : Nat := Extracted.dataAddr.«type:big.Word#51b931e8»
 
 /-- The precondition: `y ≠ 0`, `x` normalised, the `makeslice` request of `z.make(m)` when `z` is too small and the
-`memmove` requests of `z.set(x)`. -/
+`memmove` requests of `z.set(x)`. The last conjunct is for `z.set(x)` with `m = 0`: Go's `copy` still calls
+`memmove(zp, xp, 0)` when `zp ≠ xp`, and Janus' `memmove` contract asks for the (empty) ranges to be accessible and
+held even for `n = 0` (JANUS-ISSUES.md, asm s6); a nil `z` with a nil `x` takes the `zp = xp` branch. -/
 def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl y : BitVec 64) (s : State) : Prop :=
   CallEnv R L s 4240 64 ∧ Outside wordT 16 R.rt ∧ y.toNat ≠ 0 ∧ xl.toNat < 2 ^ 40 ∧ zc.toNat < 2 ^ 40 ∧
     NatLive s.mem R L zp.toNat zc.toNat ∧
@@ -51,7 +53,9 @@ def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl y : BitVec 64
     R.inv b L (s.regs 28).toNat (view R.rt L s.mem) ∧
     (zc.toNat < xl.toNat → R.ok (cA "runtime.makeslice") [wordT, xl.toNat, makeCap xl.toNat] ∧
       makeCost xl.toNat ≤ b) ∧
-    (∀ d src k, k ≤ 8 * xl.toNat → R.ok (cA "runtime.memmove") [d, src, k])
+    (∀ d src k, k ≤ 8 * xl.toNat → R.ok (cA "runtime.memmove") [d, src, k]) ∧
+    (xl.toNat = 0 → y.toNat = 1 → zp = xp ∨
+      (s.mem.accessible zp.toNat 0 true = true ∧ zp.toNat ≤ 2 ^ 48 ∧ Held R L zp.toNat 0))
 
 /-- The postcondition: a normalised nat `(p', n', c')` holding `X / y` (in `z`'s array or a fresh one) and `R3 = X % y`. -/
 @[reducible] def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl y : BitVec 64) (s s' : State) :
