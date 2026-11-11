@@ -313,3 +313,4 @@ and `(2^64 - 8 + fsBase) % 2^64 = fsBase - 8` as run lemmas; register reads of a
 | Witness/StubsGrow (nextslicecap loop, 67-class chain, copy loops) | 33 s | before: chain leaves closed by `simp_all` over 67 nested `if`s: >3 min (killed); after: generated per-leaf `cs_leaf k` (`fal_drop` + `decide` on the class prefix) |
 | Witness/StubsGrowFin (alloc + live return + transport) | 22 s | `janus_run` before the toy-allocator facts enter the context (else heartbeat timeout in the run's `omega`s) |
 | Witness/Stubs (Run extraction: impl, hap, 9 contracts, Serves) | 18 s | |
+| row | Run arm64 error path (`Run.correctness` + `Witness.nonvacuous`), janus-provfix 57c1094c | PASS 271 s wall, 3.8 GiB peak (warm cache-top) |
