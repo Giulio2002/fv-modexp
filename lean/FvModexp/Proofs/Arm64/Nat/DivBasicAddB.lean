@@ -1,5 +1,5 @@
-import FvModexp.Proofs.Arm64.Nat.DivBasicAddA
-
+import FvModexp.Proofs.Arm64.Nat.DivBasicAddFin
+import FvModexp.Proofs.Arm64.Nat.DivBasicCorr
 /-!
 # `divBasic` (arm64): the add-back `if c != 0 { c := addVV(u[j:j+n], u[j:j+n], v); if n < qhl { u[j+n] += c }; qhat-- }`
 (natdiv.go:710-720), `+0x230 → +0x2d8`

@@ -1,7 +1,6 @@
-import FvModexp.Proofs.Arm64.Nat.DivBasicSubA
+import FvModexp.Proofs.Arm64.Nat.DivBasicSubFin
 import FvModexp.Proofs.Common.BitLemmas
 import FvModexp.Proofs.Common.DivmcMem
-
 /-!
 # `divBasic` (arm64): `qhatv[n] = c`, `qhl`, `c := subVV(u[j:j+qhl], u[j:j+qhl], qhatv[:qhl])` (natdiv.go:703-709),
 `+0x194 → +0x230`

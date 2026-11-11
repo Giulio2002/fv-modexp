@@ -1,6 +1,9 @@
+import FvModexp.Proofs.Arm64.Nat.DivBasicQh
+import FvModexp.Proofs.Arm64.Nat.DivBasicMul
+import FvModexp.Proofs.Arm64.Nat.DivBasicSub
+import FvModexp.Proofs.Arm64.Nat.DivBasicAdd
 import FvModexp.Proofs.Arm64.Nat.DivBasicTail
 import FvModexp.Proofs.Arm64.Nat.DivBasicInv
-
 /-!
 # `divBasic` (arm64): one loop iteration, head (`j`) → head (`j - 1`), with the invariant
 

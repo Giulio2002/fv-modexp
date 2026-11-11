@@ -1,6 +1,4 @@
-import FvModexp.Proofs.Arm64.Nat.DivBasicMemF
-import FvModexp.Proofs.Arm64.Nat.DivBasicRec
-
+import FvModexp.Proofs.Arm64.Nat.DivBasicRel
 /-!
 # `divBasic` (arm64): the postcondition at the return (pure)
 

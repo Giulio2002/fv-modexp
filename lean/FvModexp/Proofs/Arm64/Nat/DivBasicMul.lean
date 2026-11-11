@@ -1,6 +1,4 @@
-import FvModexp.Proofs.Arm64.Nat.DivBasicQh
-import FvModexp.Proofs.Arm64.Nat.DivBasicMemF
-
+import FvModexp.Proofs.Arm64.Nat.DivBasicRel
 /-!
 # `divBasic` (arm64): `qhatv[n] = mulAddVWW(qhatv[0:n], v, qhat, 0)` (natdiv.go:703), `+0x160 → +0x194`
 -/
@@ -10,24 +8,8 @@ open FvModexp.Arm64.Callees Janus.Contracts.EqHashModel
 
 namespace FvModexp.Arm64.DivBasic
 
-/-- the frame facts at a point `pc` of the loop body (`j` stored at `SP-80`) -/
-structure Bd (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (qp ql st up ul uc vp vl vc : Nat) (s : State)
-    (t : Nat) (L1 : List (Nat × Nat)) (b1 w1 c1 : Nat) (S : State) (pc j : Nat) : Prop where
-  pc : S.pc = BitVec.ofNat 64 pc
-  sp : S.sp = s.sp - 240#64
-  r28 : S.regs 28 = s.regs 28
-  r29 : S.regs 29 = s.sp - 248#64
-  r18 : S.regs 18 = s.regs 18
-  mem : Mem R L qp ql st up ul uc vp vl vc s t L1 b1 w1 c1 S.mem
-  jj : S.mem.readLE (s.sp.toNat - 80) 8 = j
 
-/-- a store into the stack window keeps the runtime's view -/
-theorem view_win {R : RtInv} {lo n0 : Nat} (hout : Outside lo n0 R.rt) (L : List (Nat × Nat)) (m : Memory)
-    (a n v : Nat) (h1 : lo ≤ a) (h2 : a + n ≤ lo + n0) : view R.rt L (m.writeLE a n v) = view R.rt L m :=
-  view_writeLE_out (hout.of_sub h1 h2)
 
-abbrev callVww : Nat := segAddr Extracted.program fn + 0x190
-abbrev afterVww : Nat := segAddr Extracted.program fn + 0x194
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in

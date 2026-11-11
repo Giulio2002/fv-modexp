@@ -1,6 +1,5 @@
-import FvModexp.Proofs.Arm64.Nat.DivBasicRec
+import FvModexp.Proofs.Arm64.Nat.DivBasicRel
 import FvModexp.Proofs.Arm64.Nat.DivBasicCorr
-
 /-!
 # `divBasic` (arm64): the loop head and the estimate `qhat` (natdiv.go:667-697)
 
@@ -14,21 +13,8 @@ open FvModexp.Arm64.Callees Janus.Contracts.EqHashModel
 
 namespace FvModexp.Arm64.DivBasic
 
-/-- `qhatv[0:n] = mulAddVWW(…)` setup point -/
-abbrev mulPt : Nat := segAddr Extracted.program fn + 0x160
 
-/-- the facts at `mulPt` (state `S'`), `S` the head state -/
-structure AtMul (s S S' : State) (j qhat : Nat) : Prop where
-  pc : S'.pc = BitVec.ofNat 64 mulPt
-  sp : S'.sp = s.sp - 240#64
-  r28 : S'.regs 28 = s.regs 28
-  r29 : S'.regs 29 = s.sp - 248#64
-  r18 : S'.regs 18 = s.regs 18
-  r2 : S'.regs 2 = BitVec.ofNat 64 qhat
-  fr : MemFrame S.mem S'.mem [(s.sp.toNat - 80, s.sp.toNat - 72), (s.sp.toNat - 64, s.sp.toNat - 56)]
-  jj : S'.mem.readLE (s.sp.toNat - 80) 8 = j
 
-abbrev callWW : Nat := segAddr Extracted.program fn + 0x110
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in

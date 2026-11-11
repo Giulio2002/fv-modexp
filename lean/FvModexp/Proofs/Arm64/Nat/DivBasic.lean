@@ -1,7 +1,6 @@
 import FvModexp.Proofs.Arm64.Nat.DivBasicLoop
-import FvModexp.Proofs.Arm64.Nat.DivBasicPro
 import FvModexp.Proofs.Arm64.Nat.DivBasicNat
-
+import FvModexp.Proofs.Arm64.Nat.DivBasicRec
 /-!
 # `(q nat) divBasic(stk *stack, u, v nat)` (go-bigmodexpfix natdiv.go:646), arm64: the summary
 

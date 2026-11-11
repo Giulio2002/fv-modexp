@@ -12,10 +12,7 @@ open FvModexp.Arm64.Callees Janus.Contracts.EqHashModel
 
 namespace FvModexp.Arm64.DivBasic
 
-abbrev afterSub : Nat := segAddr Extracted.program fn + 0x230
 
-/-- `qhl` (natdiv.go:705-708) -/
-@[reducible] def qhlOf (j vl ul c : Nat) : Nat := if ul < j + (vl + 1) ∧ c = 0 then vl else vl + 1
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
