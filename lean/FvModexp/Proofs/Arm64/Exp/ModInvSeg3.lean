@@ -1,12 +1,13 @@
 import FvModexp.Proofs.Arm64.Exp.ModInvRt
+import FvModexp.Proofs.Common.ModInvRound
 
 /-!
 # `nat.modularInverseModPowerOfTwo` (arm64): the Hensel loop head `J2` (agent infra)
 
 `J2` (`+0x3c0` = `0x1b6fb0`, nat.go:1325 `i < numWords` test, before the stores of `z` to `SP+192/184/224`):
 `X0 = i = 2^j`, `z = (X14, X1, X2)` (`p, l, c`), `zz = (X13, X12, X11)` (`q, ql, qc`), `X3 … X9 = stk, x, n, n + 63,
-numWords`. Invariant: `henselLoop X numWords j Z = henselLoop X numWords 1 Z0` for the value `Z0` after `setWord(k0)`
-(`Z0 mod 2^64 = k0`), both arrays owned (caller's `z` or fresh), apart; `cap z ≥ numWords + 1`; budget after the two
+numWords`. Invariant: `X · Z ≡ 1 (mod 2^(2^j · 32))` (`Exp.round_inv`; at `j = 1` from `Z mod 2^64 = k0`), both
+arrays owned (caller's `z` or fresh), apart; `cap z ≥ numWords + 1`; budget after the two
 `make`s and `j - 1` rounds.
 -/
 
@@ -29,7 +30,7 @@ open FvModexp.Arm64.EvenHyp
 /-- **J2**: the loop head (see the module doc) -/
 def J2 (impl : List Segment) (R : RtInv) (kc : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
     (L : List (Nat × Nat)) (zp zl zc st xp xl xc n : Nat) (s : State) : Prop :=
-  ∀ (S : State) (j p l c q ql qc Z0 : Nat) (L1 : List (Nat × Nat)) (b1 : Nat),
+  ∀ (S : State) (j p l c q ql qc : Nat) (L1 : List (Nat × Nat)) (b1 : Nat),
     Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s → 64 < n →
     S.pc = BitVec.ofNat 64 1798064 → S.sp = BitVec.ofNat 64 (s.sp.toNat - 240) →
     S.regs 28 = s.regs 28 → S.regs 18 = s.regs 18 →
@@ -42,9 +43,8 @@ def J2 (impl : List Segment) (R : RtInv) (kc : Nat) (sqrC : Nat → Nat) (mulC :
     Fw2 s S.mem st xp xl xc n → RtM R kc L s zp zc st S.mem L1 b1 → b - spent sqrC mulC n j ≤ b1 →
     Own R kc L L1 s zp zc st xp xl S.mem p c → Own R kc L L1 s zp zc st xp xl S.mem q qc →
     NW n + 1 ≤ c → l ≤ NW n + 1 → l ≤ c → ql ≤ qc → 0 < qc → 1 ≤ j → 2 ^ (j - 1) < NW n →
-    Apart p (8 * c) q (8 * qc) → Z0 % Exp.B = k0 s xp xl n →
-    Exp.henselLoop (natVal s.mem xp xl) (NW n) j (natVal S.mem p l) =
-      Exp.henselLoop (natVal s.mem xp xl) (NW n) 1 Z0 →
+    Apart p (8 * c) q (8 * qc) →
+    natVal s.mem xp xl * natVal S.mem p l % 2 ^ (2 ^ j * 32) = 1 % 2 ^ (2 ^ j * 32) →
     Goal impl R kc sqrC mulC b L zp zc st xp xl n s S
 
 /-- a frame read byte by byte (an empty range in the frame never matters for a single byte) -/

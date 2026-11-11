@@ -152,8 +152,9 @@ theorem mkzz (impl : List Segment) (R : RtInv)
     intro S'' f1 f2 f3 f4 fr fm
     obtain ⟨g1, g2, g3, g4, g5, g6, g7⟩ := zz_j2 hkc hpre hn hfw3 hrt3 hb hown3 hcap hk0 hap
     have fr' : ∀ i, i ≠ 0 → i ≠ 14 → i < 31 → S''.regs i = S'.regs i := fr
-    refine kJ S'' 1 zp' (NW n + 1) zc' q (2 * NW n) (2 * NW n + 4)
-      (natVal (m.writeLE zp' 8 (k0 s xp xl n)) zp' (NW n + 1)) _ _ hpre hn f1 f2 ?q28 ?q18 (by rw [f3])
+    have hz0i := Exp.z0_inv _ _ hx1 (show natVal (m.writeLE zp' 8 (k0 s xp xl n)) zp' (NW n + 1) % Exp.B = _ by
+      rw [g7, k0, Nat.min_eq_left (by omega)])
+    refine kJ S'' 1 zp' (NW n + 1) zc' q (2 * NW n) (2 * NW n + 4) _ _ hpre hn f1 f2 ?q28 ?q18 (by rw [f3])
       (by rw [fr' 1 (by decide) (by decide) (by decide), k1']) (by rw [fr' 2 (by decide) (by decide) (by decide), k2'])
       f4 (by rw [fr' 11 (by decide) (by decide) (by decide), k11])
       (by rw [fr' 12 (by decide) (by decide) (by decide), k12])
@@ -163,8 +164,7 @@ theorem mkzz (impl : List Segment) (R : RtInv)
       (by rw [fr' 7 (by decide) (by decide) (by decide), k7]) (by rw [fr' 8 (by decide) (by decide) (by decide), k8])
       (by rw [fr' 9 (by decide) (by decide) (by decide), k9])
       (by rw [fm]; exact g1) (by rw [fm]; exact g2) g3 (by rw [fm]; exact g4) (by rw [fm]; exact g5) hcap
-      (Nat.le_refl _) hcap (by omega) (by omega) (Nat.le_refl _) (by rw [Nat.sub_self, Nat.pow_zero]; omega) g6 g7
-      (by rw [fm])
+      (Nat.le_refl _) hcap (by omega) (by omega) (Nat.le_refl _) (by rw [Nat.sub_self, Nat.pow_zero]; omega) g6 (by rw [fm]; exact hz0i)
     case q28 =>
       rw [fr' 28 (by decide) (by decide) (by decide), k28, BitVec.ofNat_toNat, BitVec.setWidth_eq]
     case q18 => rw [fr' 18 (by decide) (by decide) (by decide), k18, h18]
