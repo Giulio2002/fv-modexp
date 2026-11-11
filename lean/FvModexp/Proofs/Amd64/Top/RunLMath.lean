@@ -177,3 +177,17 @@ theorem top_ne64 {m : Janus.Arm64.Memory} {a : Nat} (h : m.readLE a 8 ≠ 0) : (
   have := toNat_ofNat_readLE_pos m a h; omega
 
 end FvModexp.Amd64.Run
+
+namespace FvModexp.Amd64.Run
+
+/-- An empty header: `len - 1 = -1` is negative (`TESTQ; JL` jumps). -/
+theorem msb_m1 : (BitVec.ofNat 64 0 - 1#64).msb = true := by decide
+theorem msb_m1' : (0#64 - 1#64).msb = true := by decide
+
+end FvModexp.Amd64.Run
+
+namespace FvModexp.Amd64.Run
+
+theorem msb_allones : (18446744073709551615#64).msb = true := by decide
+
+end FvModexp.Amd64.Run

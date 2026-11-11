@@ -98,10 +98,11 @@ theorem h3 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl) 
   have hH1 : InRanges (p.toNat + 64) 32 L ∨ Outside (p.toNat + 64) 32 R.rt := hheld.sub (by omega) (by omega)
   have hH1' : InRanges (p.toNat + 64) 32 L1 ∨ Outside (p.toNat + 64) 32 R.rt := hext.held hH1
   have hp32 : (p + 64#64).toNat = p.toNat + 64 := by rw [BitVec.toNat_add]; simp; omega
+  have hMB2 : (if 64 < cp.toNat then 64#64 else 0#64) = 64#64 := if_pos (show 64 < cp.toNat by omega)
   have htS' : S.mem.readLE (s.fsBase.toNat - 8) 8 = (s.regs 14).toNat := by rw [htS]; simpa [regG] using hfsg
   clear hokm
   have hRA := raSBS impl hap 0x65467a (by decide)
-  janus64_run [natLive_zero, hm1, hm2, hm3, hm4, hm5, hm6, hsl1, hsl2, hgS, htS, htS', hfs, hx15, hdf, hmin, hc, hc96, hM, hmB, hmB', hMB, hp32,
+  janus64_run [natLive_zero, hm1, hm2, hm3, hm4, hm5, hm6, hsl1, hsl2, hgS, htS, htS', hfs, hx15, hdf, hmin, hc, hc96, hM, hmB, hmB', hMB, hMB2, hp32,
     toInt_ite, toNat_ite, toInt_small, BitVec.msb_eq_decide] until [pcB3] calls [hP := hS]
   obtain ⟨⟨-, hfs1, hdf1, p1, n1, c1, hp1, hn1, hc1, hv1, hnorm1, hnc1, hnw1, L2, b2, hext2, hb2, hinv2, hlive2, hor2,
     hMF2, hLF2⟩, hd2⟩ := hP
@@ -153,7 +154,8 @@ theorem h3 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl) 
         · simp at h; omega
         · exact h
       case v =>
-        rw [hv1, hdrV, show 32 * 2 = 64 from rfl, padBE_inside _ _ _ _ _ (by omega)]
+        try simp only [hMB2, hp32, show (32#64).toNat = 32 from rfl, show (64#64).toNat = 64 from rfl] at hv1
+        rw [hv1, hdrV, show 32 * 2 = 64 from rfl, padBE_inside _ _ _ _ _ (show 64 + 32 ≤ len.toNat by omega)]
         apply beVal_of_reads
         intro i hi
         simp only [BitVec.toNat_ofNat] at hi

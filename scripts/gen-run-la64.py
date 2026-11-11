@@ -70,7 +70,7 @@ BASE=['hm1','hm2','hm3','hm4','hm5','hm6',"hr0'","hr3'",'hsp']
 def body(zs):
     pre=[]; lem=list(BASE)
     for i,(a,n,_,_) in enumerate(H):
-        if zs[i]: lem.append(f'hz{i}')
+        if zs[i]: lem.append(f'hz{i}'); lem.append('msb_m1') if 'msb_m1' not in lem else None; lem.append("msb_m1'") if "msb_m1'" not in lem else None; lem.append('msb_allones') if 'msb_allones' not in lem else None
         else:
             pre.append(f"have ⟨ha{i}, hb{i}⟩ := hA {i} (by omega) (by rw [e{i}, f{i}]; exact hz{i})")
             pre.append(f"rw [e{i}, f{i}] at ha{i} hb{i}")
@@ -116,24 +116,26 @@ def emit(depth, zs):
     s+=f"{ind}· " + emit(depth+1, zs+[False]).lstrip()
     return s
 D='/srv/fv-modexp-top/lean/FvModexp/Proofs/Amd64/Top/'
-for z0 in (True,False):
-  for z1 in (True,False):
-    k=('T' if z0 else 'F')+('T' if z1 else 'F')
-    ex=f"(hz0 : S.mem.readLE ((s.regs 4).toNat - 24) 8 {'=' if z0 else '≠'} 0) (hz1 : S.mem.readLE ((s.regs 4).toNat - 56) 8 {'=' if z1 else '≠'} 0)"
-    h=head.replace("NAME","la"+k).replace("EXTRA",ex).replace("RunLa.lean","RunLa"+k+".lean").replace("(8 cases: each header empty or not)",f"(case `{k}`: headers 0/1 empty = T)")
-    open(D+f'RunLa{k}.lean','w').write(h+emit(1,[z0,z1])+"\nend FvModexp.Amd64.Run\n")
+import itertools, os
+for f0 in ('TT','TF','FT','FF'):
+    p=D+f'RunLa{f0}.lean'
+    if os.path.exists(p): os.remove(p)
+for zs in itertools.product((True,False),repeat=3):
+    k=''.join('T' if z else 'F' for z in zs)
+    ex=' '.join(f"(hz{i} : S.mem.readLE ((s.regs 4).toNat - {H[i][1]}) 8 {'=' if zs[i] else '≠'} 0)" for i in range(3))
+    h=head.replace("NAME","la"+k).replace("EXTRA",ex).replace("(8 cases: each header empty or not)",f"(case `{k}`: header i empty = T)")
+    body_txt=''.join('  '+l.replace('\n','\n  ')+'\n' for l in body(zs))
+    open(D+f'RunLa{k}.lean','w').write(h+body_txt+"\nend FvModexp.Amd64.Run\n")
 # composition
-h=head.replace("NAME","la").replace(" EXTRA","").replace("(8 cases: each header empty or not)","(composition of the four `RunLaXY` cases)")
+h=head.replace("NAME","la").replace(" EXTRA","").replace("(8 cases: each header empty or not)","(composition of the eight `RunLaXYZ` cases)")
 h=h.replace("import FvModexp.Proofs.Amd64.Top.RunLaDefs\nimport FvModexp.Proofs.Amd64.Top.RunLMath\nimport FvModexp.Proofs.Common.GenReg\n",
-  "import FvModexp.Proofs.Amd64.Top.RunLaTT\nimport FvModexp.Proofs.Amd64.Top.RunLaTF\nimport FvModexp.Proofs.Amd64.Top.RunLaFT\nimport FvModexp.Proofs.Amd64.Top.RunLaFF\n")
+  ''.join(f"import FvModexp.Proofs.Amd64.Top.RunLa{''.join(x)}\n" for x in itertools.product('TF',repeat=3)))
 h=h[:h.index("  obtain ⟨hg,")]
 args="impl hap R b L c p len cp ret hret s henv Q S L1 b1 hrel hpc"
-h+=f"""  by_cases hz0 : S.mem.readLE ((s.regs 4).toNat - 24) 8 = 0 <;> by_cases hz1 : S.mem.readLE ((s.regs 4).toNat - 56) 8 = 0
-  · exact laTT {args} hz0 hz1 hr0 hr3 hk
-  · exact laTF {args} hz0 hz1 hr0 hr3 hk
-  · exact laFT {args} hz0 hz1 hr0 hr3 hk
-  · exact laFF {args} hz0 hz1 hr0 hr3 hk
-
-end FvModexp.Amd64.Run
+h+="""  by_cases hz0 : S.mem.readLE ((s.regs 4).toNat - 24) 8 = 0 <;> by_cases hz1 : S.mem.readLE ((s.regs 4).toNat - 56) 8 = 0 <;>
+    by_cases hz2 : S.mem.readLE ((s.regs 4).toNat - 88) 8 = 0
 """
+for x in itertools.product('TF',repeat=3):
+    h+=f"  · exact la{''.join(x)} {args} hz0 hz1 hz2 hr0 hr3 hk\n"
+h+="\nend FvModexp.Amd64.Run\n"
 open(D+'RunLa.lean','w').write(h)

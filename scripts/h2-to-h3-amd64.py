@@ -20,8 +20,8 @@ def common(t):
     assert blk0
     t=t[:blk0.end()]+blk0.group(0).replace("hhd 0","hhd 1")+t[blk0.end():]
     t=R(t,"rcases (show i = 0 ∨ i = 1 by omega) with rfl | rfl","rcases (show i = 0 ∨ i = 1 ∨ i = 2 by omega) with rfl | rfl | rfl")
-    t=re.sub(r"rw \[hv1, hdrV, (padBE_inside _ _ _ _ _ \(by omega\), )?Nat\.mul_one\]",lambda m:"rw [hv1, hdrV, show 32 * 2 = 64 from rfl, "+(m.group(1) or "")+"]",t)
-    t=t.replace(", ]","]")
+    t=t.replace("rw [hv1, hdrV, Nat.mul_one, padBE_inside _ _ _ _ _ (show 32 + 32 ≤ len.toNat by omega)]","rw [hv1, hdrV, show 32 * 2 = 64 from rfl, padBE_inside _ _ _ _ _ (show 64 + 32 ≤ len.toNat by omega)]")
+    t=t.replace("rw [hv1, hdrV, Nat.mul_one]","rw [hv1, hdrV, show 32 * 2 = 64 from rfl]")
     t=t.replace("32 + j","64 + j")
     t=t.replace("- 328","- 360")
     t=t.replace("header 1 = `expLen`: `getData(input, 32, 32)`","header 2 = `modLen`: `getData(input, 64, 32)`")
@@ -81,5 +81,7 @@ t=R(t,"have hMB : (if (32#64).toNat < cp.toNat then 32#64 else 0#64) = 32#64 := 
       "have hMB : (if (64#64).toNat < cp.toNat then 64#64 else 0#64) = 64#64 := if_pos (show (64#64).toNat < cp.toNat by simp; omega)")
 t=t.replace("(p.toNat + 32) 32","(p.toNat + 64) 32")
 t=R(t,"have hp32 : (p + 32#64).toNat = p.toNat + 32","have hp32 : (p + 64#64).toNat = p.toNat + 64")
+t=R(t,"have hMB2 : (if 32 < cp.toNat then 32#64 else 0#64) = 32#64 := if_pos (show 32 < cp.toNat by omega)","have hMB2 : (if 64 < cp.toNat then 64#64 else 0#64) = 64#64 := if_pos (show 64 < cp.toNat by omega)")
+t=R(t,"try simp only [hMB2, hp32, show (32#64).toNat = 32 from rfl] at hv1","try simp only [hMB2, hp32, show (32#64).toNat = 32 from rfl, show (64#64).toNat = 64 from rfl] at hv1")
 open(D+'RunH3.lean','w').write(t)
 print("ok")
