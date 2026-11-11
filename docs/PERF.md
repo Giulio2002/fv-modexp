@@ -772,3 +772,8 @@ new amd64 modules; StackNat's were cached) — re-run bottom-up on the warm cach
 Lessons: (1) `janus_run` destructures every conjunction in the context: hide a big `Pre` in `Box P` before the run
 (102 s → 17 s). (2) never close post-run goals with generic `first | rfl | decide | janus_simp` over all goals: `rfl`/
 `decide` on memory/state goals whnf huge write chains (9 min); close each `?_` by name (`case h30 => …`).
+### expmc session 13 (arm64, dev compile, wall / max RSS)
+W4 chain rebuild after the r29/f29 split (sequential, light load): all ≤ 46 s except W4OneRet 157 s / 5.2 GB.
+New entry modules: W4EnDefs 2 s, W4EnA 38 s / 2.4 GB, W4EnG 46 s / 2.3 GB, W4EnG2 15 s / 2.3 GB, W4EnJ 10 s / 2.2 GB,
+W4EnPre 2 s, W4EnCtx 18 s / 2.9 GB, W4EnX 4 s / 2.3 GB. W4EnJ: `refine K _ _ … rfl …` after a gcWriteBarrier2 call hung
+(> 10 min); `apply K` + bullets fixed it (649 s → 10 s).
