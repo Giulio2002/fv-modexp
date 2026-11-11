@@ -408,3 +408,11 @@ Blk2Lt: 17 of 27 s). amd64: every SetBytes case spends ~5 s in KERNEL typechecki
 `janus64_run` emits (~0.2 s each; amd64 SbA: 90 s of "type checking" in `--profile`); not in this repo's control (Janus amd64 step
 proofs) — reported to the coordinator. amd64 module dev times (load ~40-90): Blk2 46, Blk3 48, FinC 47, FinD 36, FinA 25, IcHZ 37,
 IcHN 43, Sb* 25-47, main 16 s.
+| Nat/BasicSqrFin (`fin1`, `fin2`: lshVU call) | 22 s / 2.8 GB | |
+| Nat/BasicSqrDfr (`dsum`: the restore closure re-run on LibBasicSqr) | 2 s / 2.1 GB | |
+| Nat/BasicSqrEnd (`post_fin` pure, `fin4`: closure call + epilogue) | 17 s / 3.2 GB | |
+| Nat/BasicSqrVV (`fin3`: addVV call) | 11 s / 2.6 GB | |
+| Nat/BasicSqrClr (`clr`: memclr, z[0:2], Inv 1, loop) | 33 s / 2.8 GB | before: **> 9 min (killed)**: `rw [ks _ (by omega)]` with a metavariable address (omega on mvars, lesson 1 again) inside an `all_goals first | …` cascade + ~10 unfolded `Lay` disjunctions in the context of every `omega`. After: each field given explicitly (`(ks (s.sp.toNat - 208) (by omega)).trans m1`), Lay facts introduced only inside the `have` that needs them |
+| Nat/BasicSqrEnv (`env_of`, pure) | 2 s / 2.0 GB | |
+| Nat/BasicSqrPro (`pro3`: stk.nat result → memclr call; `pro2`: stk.nat call, by_cases cap > 0) | 138 s / 3.7 GB | a version closing the 8 register goals after the call with `simp only [...] at *` + a `first` cascade ran > 900 s (killed): `simp at *` rewrites every huge state literal in the context. After: one targeted `rw [h]; simp only [setReg_apply, …]` per goal |
+| Nat/BasicSqr (`pro1`: entry → stk.nat call; `full`, `ens`, `sum`) | 33 s / 2.6 GB | |

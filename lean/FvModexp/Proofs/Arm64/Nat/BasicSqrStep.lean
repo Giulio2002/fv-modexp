@@ -46,10 +46,10 @@ theorem Env.lay {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl
   have hfr : ∀ p n, Held R L p n → (0 < stCap s.mem st → Apart p n (freeP s.mem st) (freeN s.mem st)) →
       Apart t (8 * (2 * xl)) p n := fun p n h1 h2 => hscr.apart h1 h2
   have htz := hfr zp (8 * zl) (hpre.zlive (by have := hpre.x0; have := hpre.zl2; omega)).2.1
-    (fun h => (hpre.free h).1)
+    (fun _ => hpre.free.1)
   have e : 8 * (2 * xl) = 16 * xl := by omega
-  have htx := hfr xp (8 * xl) hpre.xh (fun h => (hpre.free h).2)
-  have hts := hfr st 24 hpre.stok.2.1 hpre.stfree
+  have htx := hfr xp (8 * xl) hpre.xh (fun _ => hpre.free.2)
+  have hts := hfr st 24 hpre.stok.2.1 (fun _ => hpre.stfree)
   have htw : Outside t (8 * (2 * xl)) (win s 4432 64) := by
     refine hscr.outside ?_ ?_
     · intro r hr; simp only [win, List.mem_singleton] at hr; subst hr

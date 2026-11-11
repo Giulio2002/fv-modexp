@@ -79,9 +79,10 @@ structure Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (st zp zl zc xp xl :
   stlen : stLen s.mem st + 2 * xl + 3 ≤ 2 ^ 16
   stz : Apart st 24 zp (8 * zl)
   stx : Apart st 24 xp (8 * xl)
-  free : 0 < stCap s.mem st → Apart zp (8 * zl) (freeP s.mem st) (freeN s.mem st) ∧
-    Apart xp (8 * xl) (freeP s.mem st) (freeN s.mem st)
-  stfree : 0 < stCap s.mem st → Apart st 24 (freeP s.mem st) (freeN s.mem st)
+  /-- the free part (an empty range when `cap = 0`, which a frame must still not straddle) apart from `z`, `x` -/
+  free : Apart zp (8 * zl) (freeP s.mem st) (freeN s.mem st) ∧ Apart xp (8 * xl) (freeP s.mem st) (freeN s.mem st)
+  stfree : Apart st 24 (freeP s.mem st) (freeN s.mem st)
+  stfw : Outside (freeP s.mem st) (freeN s.mem st) (win s 4432 64)
   cost : ExpHyp.stackNatCost (stLen s.mem st) (2 * xl) ≤ b
   inv : R.inv b L (s.regs 28).toNat (view R.rt L s.mem)
 
