@@ -59,7 +59,7 @@ abbrev A : Nat := 72
     StkIn R L s (K kc) A st ∧ stLen s.mem st + 8 * NW n + 72 ≤ 2 ^ 16 ∧
     StkApart s.mem st zp (8 * zc) ∧ StkApart s.mem st xp (8 * xl) ∧
     cost sqrC mulC n ≤ b ∧ R.inv b L (s.regs 28).toNat (view R.rt L s.mem) ∧
-    (s.regs 30).toNat % 4 = 0 ∧ (s.regs 30).toNat < 2 ^ 48
+    (s.regs 30).toNat % 4 = 0 ∧ (s.regs 30).toNat < 2 ^ 48 ∧ Outside NatAdd.wordT 16 R.rt
 
 @[reducible] def Post (R : RtInv) (kc : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
     (L : List (Nat × Nat)) (zp zc st xp xl n : Nat) (s s' : State) : Prop :=

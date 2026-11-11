@@ -30,7 +30,7 @@ theorem entry (impl : List Segment) (R : RtInv) (kc : Nat) (sqrC : Nat → Nat) 
     Goal impl R kc sqrC mulC b L zp zc st xp xl n s s := by
   have hpre' := hpre
   obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, -, hout, hga, -, -, -⟩, -, -, hn1, hn2, -, hzp, -, -, hx0, hxc, hxc40, -,
-    ⟨-, hxa, hx48, -, hxw⟩, -, -, -, -, -, -, -, -, -, -, -⟩ := hpre'
+    ⟨-, hxa, hx48, -, hxw⟩, -, -, -, -, -, -, -, -, -, -, -, -⟩ := hpre'
   simp only [win, outside_cons, outside_nil, and_true] at hxw hout
   simp only [K, A] at hw hout hxw hg3 hb' ha hga
   have hxa8 : s.mem.accessible xp 8 false = true := Memory.accessible_sub _ hxa (Or.inl rfl) (Nat.le_refl _) (by omega)

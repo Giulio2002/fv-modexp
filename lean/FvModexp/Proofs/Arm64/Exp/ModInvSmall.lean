@@ -52,7 +52,7 @@ theorem post_keep {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Na
     Post R kc sqrC mulC b L zp zc st xp xl n s s' := by
   have hpre' := hpre
   obtain ⟨⟨-, -, -, hout, -, -, hLs, -⟩, -, -, -, -, -, -, -, ⟨hzc40, hzlive, -⟩, -, -, -, -, -, -, -, -,
-    ⟨hst, hstw, -⟩, -, hsz, -, -, -, -, -⟩ := hpre'
+    ⟨hst, hstw, -⟩, -, hsz, -, -, -, -, -, -⟩ := hpre'
   have hFb : MemFrame s.mem s'.mem (R.rt ++ winA s (K kc) A ++ [(zp, zp + 8 * zc)] ++ stWs s.mem st) := by
     refine hF.mono fun a k h => ?_
     simp only [outside_append] at h ⊢
@@ -144,7 +144,7 @@ theorem small (impl : List Segment) (R : RtInv)
         rw [Memory.readLE_writeLE_of_disjoint _ _ (by simp only [K, A] at hzo; omega)]; exact f1
       have g2 : (S.mem.writeLE zp 8 m.toNat).readLE (s.sp.toNat - 240 - 8) 8 = (s.regs 29).toNat := by
         rw [Memory.readLE_writeLE_of_disjoint _ _ (by simp only [K, A] at hzo; omega)]; exact f2'
-      have hl48 := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2
+      have hl48 := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
       janus_run [hmz, hz', g1, g2, hl48]
       have hzh : Held R L zp 8 := zh.sub (Nat.le_refl _) (by omega)
       refine ⟨?_, post_keep (l' := 1) hkc hpre [(zp, zp + 8 * zc)] (Or.inr ⟨by omega, rfl⟩) _ ?_ ?_ ?_ ?_ ?_ ?_ ?_
