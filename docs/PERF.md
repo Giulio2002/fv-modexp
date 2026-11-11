@@ -150,6 +150,15 @@ under `memcap`), wall / max RSS of the `lean` process (≈1.9 GB of it is the Ja
 | Arm64/Div64Sum | 16.2 s | 2.59 GB | | Common/AsmMul, AsmAddMul | 2.8 s, 3.2 s | 2.06 GB |
 | Arm64/DivWWSum | 4.1 s | 2.17 GB | | Common/AsmLimbs, AsmTac, AsmCmp, AsmModel, AsmDiv* | ≤ 2.3 s each | ≤ 2.05 GB |
 | Lib/* (library programs) | ≤ 1.2 s each | ≤ 2.0 GB | | Arm64/Amd64 AsmModels | 0.9 s | 2.0 GB |
+| Arm64/Nat/AddVW | 23–28 s | 2.63 GB | | Amd64/Nat/AddVW | 23 s | 2.76 GB |
+| Arm64/Nat/SubVW | 24–27 s | 2.62 GB | | Amd64/Nat/SubVW | 24 s | 2.72 GB |
+| Arm64/Nat/LibAddVW, LibSubVW | 5.5 s | 2.5 GB | | Amd64/Nat/LibAddVW, LibSubVW | 5.4 s | 2.5 GB |
+
+addVW/subVW (2026-11-11): the first version ran the whole function (limb 0 + `copy` + `memmove`) in one declaration and
+blew the 200000-heartbeat budget proving the `memmove` precondition; the loop version blew it in the loop body
+(heartbeats are per declaration). Fix: one `janus_run` per declaration (`ret0`, `copy*`, `body`, `fin1`, `ens_lib`),
+the loop induction (`loop`) and the post-call memory reasoning (`after`, `cont`, `call_norm`) in run-free lemmas, the
+executor's state literals handed over through `?_` field goals (a `rfl` on a `retState64` field whnf'd > 200k).
 
 Before/after (amd64 `addMulVVWW`, the only module that needed work): one `janus64_run` over the whole 4x `MULQ` block
 exceeded the 200000-heartbeat default budget (the carry terms nest four deep and are re-simplified at every step), and

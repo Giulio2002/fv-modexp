@@ -45,7 +45,11 @@ Machine-code SUMMARY theorems for the leaf routines `(*bigModExp).Run` reaches (
 | `reciprocalWord` | arm64 | — | — | todo |
 | `reciprocalWord` | amd64 | — (inlined into its callers) | — | n/a |
 | `lshVU.abi0`, `rshVU.abi0` | both | WIP (`wip/LshVUSum.lean.wip`, `wip/AsmShift.lean.wip`: unfinished, moved out of the Lean tree) | — | todo |
-| `divWVW`, `addVW`, `subVW`, `nat.mulAddWW`, `nat.setBytes`, `nat.bytes`/`Int.Bytes` | both | — | — | todo |
+| `addVW` (Go, `copy`→live `memmove`) | arm64 | `FvModexp.Arm64.AddVW.{ens,sum}` (CONVENTIONS §3/§4 shape) | — (needs a memmove stub runtime witness) | proved |
+| `addVW` | amd64 | `FvModexp.Amd64.AddVW.{ens,sum}` | — | proved |
+| `subVW` | arm64 | `FvModexp.Arm64.SubVW.{ens,sum}` | — | proved |
+| `subVW` | amd64 | `FvModexp.Amd64.SubVW.{ens,sum}` | — | proved |
+| `divWVW`, `nat.mulAddWW`, `nat.bytes`/`Int.Bytes` | both | — | — | todo |
 
 ## Preconditions and the real call sites (go-bigmodexpfix f9e208c548ab, `src/math/big`)
 
@@ -96,6 +100,17 @@ like the other writable globals of CONVENTIONS §7: the region holding `0xbb6b8a
 carry this fact (`GlobalIs`-style: readable + Outside R.rt) in their `CallEnv` extension; no value is assumed, both
 code paths are proved.
 
-## Next (asked by the coordinator, 2026-11-11)
-`addVW` / `subVW` (Go, with `copy` → `memmove`) in divmc's `Callees.AddVWEns` shape (NOTES-divmc.md), both ISAs;
-then `lshVU`/`rshVU` (WIP in `wip/`), amd64 `divWW`, arm64 `reciprocalWord`, `divWVW`.
+## `addVW` / `subVW` (both ISAs)
+Statement = divmc's `Callees.AddVWEns` shape with three amendments forced by the code (NOTES-divmc.md):
+arm64 `above = 40` (the `X3` spill at caller `SP+32`); `zc, xc < 2^63` (the `copy(z[j:], x[j:])` pointers are masked
+with `ASR #63` / `SAR $63` of `-(cap - j)`, which equals `if j < cap then p + 8j else p` only for caps below 2^63 — Go caps
+always are); `0 < zl → z apart from g+16` (and on amd64 from the TLS slot `fsBase-8`), CONVENTIONS 8c/8d. `VWMoves` =
+exactly the `memmove` requests of the `copy` (`R.ok` for each possible `j`). Results: addVW `X0 = (x+y) / B^n`,
+`z = (x+y) mod B^n`; subVW `X0 = (n = 0 ? y : [x < y])` (Go's `return y` for empty slices), `z = (x + B^n - y) mod B^n`.
+Proof split (one `janus_run` per declaration): `ret0`, `copy` (amd64: `copyA`/`copyB`), `after`/`cont` (memory after
+the `memmove`), `rel_store`, `step_inplace`/`step_copy`, `fin1`, `body`, `loop` (induction), `entry_rel`, `ens_lib`
+(on the one-segment library program), `ens` (`eq_only` + `MemmoveLive.of_codeIn`), `sum`.
+
+## Next
+`lshVU`/`rshVU` (WIP in `wip/`), amd64 `divWW`, arm64 `reciprocalWord`, `divWVW`, `nat.mulAddWW`; standalone rows for
+addVW/subVW need a Witness runtime serving `memmove` (Janus stub runtimes).
