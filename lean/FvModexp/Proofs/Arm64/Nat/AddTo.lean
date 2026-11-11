@@ -37,7 +37,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc : BitVec 64) :
     Ensures ((Extracted.program.onlySegments names).link impl) (segAddr Extracted.program fn)
       [zp, zl, zc, xp, xl, xc]
-      (fun s => CallEnvND R L s 4240 48 ∧ xl.toNat ≤ zl.toNat ∧ zl.toNat ≤ zc.toNat ∧ zl.toNat < 2 ^ 40 ∧
+      (fun s => CallEnv R L s 4240 48 ∧ xl.toNat ≤ zl.toNat ∧ zl.toNat ≤ zc.toNat ∧ zl.toNat < 2 ^ 40 ∧
         NatLive s.mem R L zp.toNat zl.toNat ∧ Outside zp.toNat (8 * zl.toNat) (win s 4240 48) ∧ zc.toNat < 2 ^ 63 ∧
         s.mem.accessible xp.toNat (8 * xl.toNat) false = true ∧ xp.toNat + 8 * xl.toNat ≤ 2 ^ 48 ∧
         Held R L xp.toNat (8 * xl.toNat) ∧ Outside xp.toNat (8 * xl.toNat) (win s 4240 48) ∧
@@ -52,7 +52,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
           LiveFrame s.mem s'.mem L [(zp.toNat, zp.toNat + 8 * zl.toNat)]) := by
   rw [show names = LibAddTo.names from rfl, ← LibAddTo.eq_only]
   have hVV := addVVHyp impl hap
-  intro ret hret s hs ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, hout, hga, hgr, hLs⟩, hxz, hzc, hz40, hzl, hzw, hzc63,
+  intro ret hret s hs ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, _, hout, hga, hgr, hLs, _⟩, hxz, hzc, hz40, hzl, hzw, hzc63,
     hxacc, hx48, hxh, hxw, hzx, hzg, hinv⟩
   have hc1 : CodeIn ((Extracted.program.onlySegments [addVVfn]).link impl) (LibAddTo.program.link impl) := by
     rw [LibAddTo.eq_only]; exact codeIn_restrict_mono hap (sub_of_all (by decide))
