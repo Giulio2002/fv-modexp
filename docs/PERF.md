@@ -194,9 +194,13 @@ of the Janus framework — the first row of a fresh cache spends ~6.5 min replay
 | LshVU | PASS 30 s | PASS 37 s |
 | RshVU | PASS 28 s | PASS 33 s |
 
-Row peak memory: the sandboxed `leanchecker` runs inside the memcap scope; the scope's `memory.peak` was ~0.83–0.89 GB
-where it was captured (`build/asm-rows.tsv`; some entries show the `janus` driver only, the measurement hook is fixed
-in `scripts/asm-row.sh`).
+Row peak memory (2026-11-11, measured properly): Janus runs the sandboxed `lake`/`lean`/`leanchecker` jobs in their own
+`janus-job-*.scope` (memguard), NOT inside the `memcap` scope of the driver — the earlier `memory.peak` numbers
+(0.8–0.9 GB, and 86 MB for a fully cached Cmp row) were the driver only. The jobs' peak is recorded by Janus in
+`verified.json` (`memGuard.peakBytes`); `scripts/asm-row.sh` now reports the max of both. Peaks from `verified.json`:
+2.7 GiB for every asm row (AddVV, SubVV, MulAddVWW, AddMulVVWW, Cmp, DivWW, LshVU, RshVU, both ISAs where present),
+Div64 3.0 GiB, RecipWord 1.7 GiB, arm64 AddVV 5.5 GiB (the cold-cache row that also built the Janus framework once),
+fully cached re-run 235 MiB. All far below the 16 GB cap.
 
 ### divmc rows (2026-11-11)
 * First `janus verify` of a divmc summary: `FvModexp.Arm64.BasicMulRow.correctness` (= `BasicMul.ens` moved to
