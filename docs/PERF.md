@@ -253,3 +253,11 @@ expmc before/after (2026-11-11): `eq_only` of a 44/79-name restricted program: `
 one `decide +kernel` over all 84 segments → 25 s / 7.0 GB (kernel string compares); chunked masks (one theorem per 6
 segments) + `filter_mask` → 45 s / 2.9 GB. Row calibration: `MontRow.correctness` (arm64, Run extraction) audit + kernel
 replay pass, 588 s wall cold (incl. the one-time dependency build), 2.4 GB peak; stops at non-vacuity (no witness yet).
+
+### expmc session 3 (2026-11-11): window-4 main loop arm64
+| module | before | change | after |
+|---|---|---|---|
+| Exp/W4Loop (single lemma, 5 calls, sorries) | 175 s, 3.6 GB | split W4Body1/W4Body2/W4Loop | 47 s / 3.2 GB + 45 s / 4.0 GB + 6 s |
+| Exp/W4Body2 | 242 s (q-facts `congr 1`: 75 s each) | `rw` with omega address equation | 89 s, 6.9 GB |
+| Exp/W4Body2 | 89 s, 6.9 GB (`simp (disch := omega)` on 3 value facts: 43 s) | discharger `rd_slot` | 45 s, 4.0 GB |
+| Exp/W4Fin.tail | 60 s (generic closer list) | targeted `case` closers | 17 s, 2.7 GB |

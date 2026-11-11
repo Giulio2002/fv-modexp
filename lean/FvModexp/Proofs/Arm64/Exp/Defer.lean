@@ -18,7 +18,7 @@ str x1, [x0, #8]         ; stk.w = stk.w[:n]  (only len changes)
 
 **Summary** (`sum fn`): from any entry state whose context register `X26` points at a readable closure, whose captured
 `stk` points at a writable 24-byte slice header with `n ≤ cap(stk.w)`, the closure returns (no panic) with `SP`, `g`,
-`FP`, `R18` kept, `len(stk.w) = n`, and memory changed only in its frame `[SP-24, SP)` and the `len` word.
+`FP`, `R18` kept, `len(stk.w) = n`, and memory changed only in its frame `[SP-24, SP-8)` (the caller's saved `X29` at `SP-8` is kept) and the `len` word.
 -/
 
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
@@ -36,10 +36,10 @@ def Pre (s : State) : Prop :=
     Apart ((s.regs 26).toNat + 8) 16 (s.sp.toNat - 24) 24
 
 /-- What it guarantees. -/
-def Post (s s' : State) : Prop :=
+@[reducible] def Post (s s' : State) : Prop :=
   s'.sp = s.sp ∧ s'.regs 18 = s.regs 18 ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧
     s'.mem.readLE (s.mem.readLE ((s.regs 26).toNat + 8) 8 + 8) 8 = s.mem.readLE ((s.regs 26).toNat + 16) 8 ∧
-    MemFrame s.mem s'.mem [(s.sp.toNat - 24, s.sp.toNat),
+    MemFrame s.mem s'.mem [(s.sp.toNat - 24, s.sp.toNat - 8),
       (s.mem.readLE ((s.regs 26).toNat + 8) 8 + 8, s.mem.readLE ((s.regs 26).toNat + 8) 8 + 16)]
 
 set_option maxRecDepth 20000 in
