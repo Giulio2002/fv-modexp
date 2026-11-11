@@ -621,3 +621,8 @@ hbr (by decide) | skip`) before `refine`. In `first` cascades never put a `sorry
 | W4Ctx (Ctx/Keeps/keeps_of) | 12 s | 2.4 GB |
 | W4RRC (rrRetC) | 5 s | 2.3 GB |
 | W4SnK (snCallK, keeps_sn) | 87 s | 4.7 GB |
+* FIX (top s9): callee `RetAddr (onlySegments names …)` proved ONCE per return site from the layout (Top/RunC2RA:
+  `raRun` — Run is segment 0, the callee program does not keep Run, segments pairwise apart; 6 s / 2.4 GB; a `decide` of
+  the same fact costs 7.1 GB, all in `names.contains` over the 84 segments) and handed to `janus_run` as a context
+  hypothesis (`have hRA := raExp impl hap`). RunC2EX 182 s / 7.58 GB → 85 s / 3.00 GB; RunC2M 225 s / 6.51 GB →
+  103 s / 2.90 GB. Applies to every `calls [hP := …]` with an `onlySegments` callee (setBytes sites in H*/D* next).
