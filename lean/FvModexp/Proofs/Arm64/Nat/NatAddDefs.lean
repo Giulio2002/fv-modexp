@@ -78,3 +78,43 @@ def PreS (stk : Nat) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl 
 @[reducible] def Post := PostS 4464
 
 end FvModexp.Arm64.NatAdd
+
+namespace FvModexp.Arm64.NatAdd
+
+open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
+
+/-- A call environment for more stack is one for less. -/
+theorem callEnv_mono {R : RtInv} {L : List (Nat × Nat)} {s : State} {stk stk' above : Nat} (hk : stk' ≤ stk)
+    (h : CallEnv R L s stk above) : CallEnv R L s stk' above := by
+  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb, ha, hw⟩, hd, hout, hga, hgr, hLs, hro⟩ := h
+  unfold Apart at hga
+  refine ⟨⟨hg1, hg2, by omega⟩, ⟨hal, by omega, ha, Memory.accessible_mono _ hw (by omega) (by omega)⟩, hd,
+    hout.of_sub (by omega) (by omega), by unfold Apart; omega, hgr, fun r hr => ?_, hro⟩
+  have := hLs r hr
+  simp only [win, outside_cons, outside_nil, and_true] at this ⊢
+  omega
+
+theorem preS_mono {stk stk' : Nat} (hk : stk' ≤ stk) {R : RtInv} {b : Nat} {L : List (Nat × Nat)}
+    {zp zc xp xl xc yp yl yc : BitVec 64} {s : State} (h : PreS stk R b L zp zc xp xl xc yp yl yc s) :
+    PreS stk' R b L zp zc xp xl xc yp yl yc s := by
+  obtain ⟨hce, h1, h2, h3, h4, h5, h6, h7, h8, h9, hzw, h10, h11, h12, h13, h14, hxw, h15, h16, h17, hyw, h18⟩ := h
+  have hsp := hce.2.1.2.1
+  refine ⟨callEnv_mono hk hce, h1, h2, h3, h4, h5, h6, h7, h8, h9, fun hz => ?_, h10, h11, h12, h13, h14, ?_, h15, h16,
+    h17, ?_, h18⟩
+  · obtain ⟨a, b, c, d⟩ := hzw hz
+    refine ⟨?_, b, c, d⟩
+    simp only [win, outside_cons, outside_nil, and_true] at a ⊢; omega
+  · simp only [win, outside_cons, outside_nil, and_true] at hxw ⊢; omega
+  · simp only [win, outside_cons, outside_nil, and_true] at hyw ⊢; omega
+
+theorem postS_mono {stk stk' : Nat} (hk : stk ≤ stk') {R : RtInv} {b : Nat} {L : List (Nat × Nat)}
+    {zp zc xp xl yp yl : BitVec 64} {s s' : State} (hsp : stk' ≤ s.sp.toNat) (h : PostS stk R b L zp zc xp xl yp yl s s') :
+    PostS stk' R b L zp zc xp xl yp yl s s' := by
+  obtain ⟨p', n', c', h0, h1, h2, hv, hn, hnc, hnm, L', b', hext, hb, hinv, hl, hor, hmf, hlf⟩ := h
+  refine ⟨p', n', c', h0, h1, h2, hv, hn, hnc, hnm, L', b', hext, hb, hinv, hl, hor, hmf.mono fun a n h => ?_, hlf⟩
+  have e1 : s.sp.toNat - stk' ≤ s.sp.toNat - stk := Nat.sub_le_sub_left hk _
+  simp only [outside_append, winA, outside_cons, outside_nil, and_true] at h ⊢
+  obtain ⟨⟨hr, h1, h2⟩, h3⟩ := h
+  exact ⟨⟨hr, by omega, h2⟩, h3⟩
+
+end FvModexp.Arm64.NatAdd

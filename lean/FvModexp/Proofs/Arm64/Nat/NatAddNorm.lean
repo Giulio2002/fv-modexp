@@ -21,7 +21,7 @@ theorem norm (impl : List Segment) (s : State) (M : Memory) (p c n0 V : Nat)
     (Q : State → Prop)
     (hfin : ∀ (s' : State) (n' : Nat), s'.mem = M → (s'.regs 0).toNat = p → (s'.regs 1).toNat = n' →
       (s'.regs 2).toNat = c → n' ≤ n0 → natVal M p n' = V → NatNorm M p n' → Q s')
-    (hn0 : n0 ≤ c) (hc : c < 2 ^ 40) (hp : p + 8 * n0 ≤ 2 ^ 48) (hacc : M.accessible p (8 * n0) false = true)
+    (hn0 : n0 ≤ c) (hc : c < 2 ^ 41) (hp : p + 8 * n0 ≤ 2 ^ 48) (hacc : M.accessible p (8 * n0) false = true)
     (hr1 : M.readLE (s.sp.toNat - 160) 8 = (s.regs 30).toNat) (hr2 : M.readLE (s.sp.toNat - 168) 8 = (s.regs 29).toNat)
     (hr3 : M.readLE (s.sp.toNat - 64) 8 = c) (hal : s.sp.toNat % 16 = 0) (hsp0 : 4304 ≤ s.sp.toNat) (hsp1 : s.sp.toNat + 80 ≤ 2 ^ 48)
     (hsacc : M.accessible (s.sp.toNat - 4304) (4304 + 80) true = true) (hl4 : (s.regs 30).toNat % 4 = 0) (hl48 : (s.regs 30).toNat < 2 ^ 48) :
