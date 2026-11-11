@@ -84,6 +84,23 @@ theorem rot60 (yi : Nat) (h : yi < 2 ^ 64) :
   have : yi / 2 ^ (60 % 64) < 2 ^ 4 := by simp; omega
   rw [Nat.mod_eq_of_lt this]
 
+/-- `LSL $4` as the executor states it (rotate + masks) -/
+theorem lsl4 (x : BitVec 64) :
+    x.rotateRight 60 &&& 18446744073709551600#64 &&& 18446744073709551615#64 = x <<< 4 := by
+  ext i hi
+  have c1 : ∀ i (h : i < 64), (18446744073709551600#64)[i] = decide (4 ≤ i) := by decide
+  have c2 : ∀ i (h : i < 64), (18446744073709551615#64)[i] = true := by decide
+  simp only [BitVec.getElem_and, BitVec.getElem_rotateRight, BitVec.getElem_shiftLeft, c1 i hi, c2 i hi]
+  by_cases h : i < 4
+  · simp [h]
+  · simp [h]; omega
+
+theorem lsl4' (yi : Nat) :
+    (BitVec.ofNat 64 yi).rotateRight 60 &&& 18446744073709551600#64 &&& 18446744073709551615#64 =
+      BitVec.ofNat 64 ((yi * 2 ^ 4) % 2 ^ 64) := by
+  rw [lsl4]; apply BitVec.eq_of_toNat_eq
+  simp [BitVec.toNat_shiftLeft, Nat.shiftLeft_eq]
+
 /-- the static facts of the loop (anchor memory `M0` = the memory at the first arrival at the test) -/
 def Static (R : RtInv) (L : List (Nat × Nat)) (g sp n mp mc k0 yp ylen Y : Nat) (tbl pp pcap : Nat → Nat)
     (M0 : Memory) : Prop :=
@@ -104,6 +121,12 @@ def Static (R : RtInv) (L : List (Nat × Nat)) (g sp n mp mc k0 yp ylen Y : Nat)
   Apart zp (8 * zc) mp (8 * n) ∧ Apart zzp (8 * zzc) mp (8 * n) ∧
   Apart zp (8 * zc) yp (8 * ylen) ∧ Apart zzp (8 * zzc) yp (8 * ylen) ∧
   (∀ d, d < 16 → Apart zp (8 * zc) (pp d) (8 * n) ∧ Apart zzp (8 * zzc) (pp d) (8 * n))
+
+theorem Bufs.swap {R : RtInv} {L : List (Nat × Nat)} {g sp n mp yp ylen : Nat} {pp : Nat → Nat} {M0 : Memory}
+    {zp zc zzp zzc : Nat} (h : Bufs R L g sp n mp yp ylen pp M0 zp zc zzp zzc) :
+    Bufs R L g sp n mp yp ylen pp M0 zzp zzc zp zc :=
+  ⟨h.2.1, h.1, h.2.2.1.symm, h.2.2.2.2.1, h.2.2.2.1, h.2.2.2.2.2.2.1, h.2.2.2.2.2.1,
+    fun d hd => ⟨(h.2.2.2.2.2.2.2 d hd).2, (h.2.2.2.2.2.2.2 d hd).1⟩⟩
 
 /-- the memory facts at a loop state `M` -/
 @[reducible] def Mem (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (g sp : Nat) (M0 M : Memory) (zp zc zzp zzc : Nat) :
