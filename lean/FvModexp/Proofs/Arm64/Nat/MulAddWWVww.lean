@@ -36,7 +36,7 @@ theorem vww_after {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl : B
   · rw [hfr.readLE _ _ (by simp only [outside_cons, outside_nil, and_true]; omega)]; exact r32
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem vww (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl xc y r : BitVec 64)
     (s : State) (p c : Nat) (L' : List (Nat × Nat)) (b' : Nat) (M : Memory)

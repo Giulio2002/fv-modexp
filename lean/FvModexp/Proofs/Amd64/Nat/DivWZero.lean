@@ -44,7 +44,7 @@ theorem post_zero_win {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl
       subst hr; simp only; omega)
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem zeroPath (impl : List Amd64.Segment) (b : Nat) (R : RtInv) (L : List (Nat × Nat))
     (zp zl zc xp xc y : BitVec 64) (s : State)
     (he : Entry s zp zl zc xp 0#64 xc y) (hy0 : y.toNat ≠ 0) (hy1 : y.toNat ≠ 1)
@@ -62,7 +62,7 @@ theorem zeroPath (impl : List Amd64.Segment) (b : Nat) (R : RtInv) (L : List (Na
   all_goals first | omega | skip
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem setZero (impl : List Amd64.Segment) (R : RtInv)
     (hmv : MemmoveLive64 (LibDivW.program.link impl) (cA "runtime.memmove") 4096 R)
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xc : BitVec 64) (s : State)

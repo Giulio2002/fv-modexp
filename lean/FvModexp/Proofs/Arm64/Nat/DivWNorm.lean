@@ -17,7 +17,7 @@ theorem natVal_drop_zero {M : Memory} {p i : Nat} (h : M.readLE (p + 8 * i) 8 = 
     natVal M p (i + 1) = natVal M p i := by rw [natVal_succ, h]; simp
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem norm (impl : List Segment) (s : State) (M : Memory) (p c n0 V : Nat) (r : BitVec 64)
     (Q : State → Prop)
     (hfin : ∀ (s' : State) (n' : Nat), s'.mem = M → (s'.regs 0).toNat = p → (s'.regs 1).toNat = n' →

@@ -48,7 +48,7 @@ theorem post_zero_win {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl
       rcases hr with rfl | rfl <;> simp only <;> omega)
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem zeroPath (impl : List Segment) (b : Nat) (R : RtInv) (L : List (Nat × Nat)) (zp zl zc xp xc y : BitVec 64)
     (s : State) (hpc : s.pc = BitVec.ofNat 64 (segAddr Extracted.program fn))
     (hl4 : (s.regs 30).toNat % 4 = 0) (hl48 : (s.regs 30).toNat < 2 ^ 48) (h0 : s.regs 0 = zp) (h1 : s.regs 1 = zl)
@@ -67,7 +67,7 @@ theorem zeroPath (impl : List Segment) (b : Nat) (R : RtInv) (L : List (Nat × N
   all_goals janus_simp
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem setZero (impl : List Segment) (R : RtInv)
     (hmv : MemmoveLive (LibDivW.program.link impl) (cA "runtime.memmove") 4096 R)
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xc : BitVec 64)

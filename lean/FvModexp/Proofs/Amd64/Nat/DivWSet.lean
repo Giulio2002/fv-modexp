@@ -59,7 +59,7 @@ theorem Mid.setPost {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl :
       · have := hap q hq; unfold Apart at this; omega
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem setTail (impl : List Amd64.Segment) (R : RtInv)
     (hmv : MemmoveLive64 (LibDivW.program.link impl) (cA "runtime.memmove") 4096 R)
     (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl : BitVec 64)

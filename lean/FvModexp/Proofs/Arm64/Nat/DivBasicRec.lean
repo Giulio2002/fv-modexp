@@ -1,5 +1,5 @@
 import FvModexp.Proofs.Arm64.Nat.DivBasicNat
-import FvModexp.Proofs.Arm64.Nat.DivBasicLay
+import FvModexp.Proofs.Arm64.Nat.DivBasicMemF
 import FvModexp.Proofs.Common.AsmDivVW
 
 /-!
@@ -43,13 +43,6 @@ theorem env_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc 
     exact ⟨a1, a2, by rw [← hacc2]; exact a3, a4⟩
 
 
-theorem mfTrans {m₀ m₁ m₂ : Memory} {rs rs' : List (Nat × Nat)} (h₁ : MemFrame m₀ m₁ rs)
-    (h₂ : MemFrame m₁ m₂ rs') : MemFrame m₀ m₂ (rs ++ rs') where
-  readLE a k ho := by
-    rw [outside_append] at ho
-    rw [h₂.readLE a k ho.2, h₁.readLE a k ho.1]
-  accessible a k w := by rw [h₂.accessible, h₁.accessible]
-
 /-- the `CALL reciprocalWord` -/
 abbrev callRec : Nat := segAddr Extracted.program fn + 0xac
 
@@ -68,7 +61,7 @@ structure Hd (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (qp ql st up ul uc vp
   mem : Mem R L qp ql st up ul uc vp vl vc s t L1 b1 w1 c1 S.mem
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 /-- after `stk.nat` returned (`S2`): `vn1 := v[n-1]`, `rec := reciprocalWord(vn1)`, `j := m`, `ujn := 0` → the head -/
 theorem pro3 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv) (stkSN abSN : Nat)

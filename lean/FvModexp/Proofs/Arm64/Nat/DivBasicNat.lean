@@ -38,7 +38,7 @@ structure AfterNat (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (st vl : Nat) (
   LF2 : LiveFrame P.mem S2.mem L (stkWs s.mem st)
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 theorem pro2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (stkSN abSN : Nat) (hSN : ExpHyp.StackNatHyp impl R [ExpHyp.fnStackNat] stkSN abSN)

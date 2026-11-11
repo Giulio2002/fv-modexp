@@ -32,7 +32,7 @@ theorem setPath (impl : List Amd64.Segment) (R : RtInv)
   · exact setReuse impl R b L zp zc xp xl y r s M h hr hzc S hpc h0 h1 h10 hsp h14 h5 hx15 hfs hdf hm
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem toSet (impl : List Amd64.Segment) (R : RtInv)
     (hmk : MakesliceLiveContract64 (LibMulAddWW.program.link impl) (cA "runtime.makeslice") 4096 R)
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc y r : BitVec 64) (s : State)
@@ -74,7 +74,7 @@ theorem toSet (impl : List Amd64.Segment) (R : RtInv)
     all_goals janus64_simp
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem full (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
     (hmk : MakesliceLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc y r : BitVec 64) :
