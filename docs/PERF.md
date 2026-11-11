@@ -691,3 +691,15 @@ the callee's window form BEFORE the run (`hLs'`, `hfw`, `htP'` in BasicSqrPro).
   keeps_sn 87 s → 19 s); keep `Apart` folded (it is opaque to omega) until needed.
 * Compositions over an opaque context predicate (`Ctx`, `KeepsB`, call lemmas with continuations, run lemmas with a
   frame-only post) stay at 5–12 s per step: no step re-proves another's facts.
+
+### asm s11: divBasic arm64 row trim (dev `mkp.py`, host load 30-45)
+Module DAG restructured for Janus' parallel own-module compile (≤ 4 at once): the segment relations (`AfterNat`, `Hd`,
+`AtMul`, `Bd`, `AddK`, pc abbrevs, `qhlOf`, `skipQ`, `view_win`) moved to `DivBasicRel` (imports Pro + MemF only), so
+Nat / Rec / Qh / Mul / Sub* / Add* / Tail* compile in parallel; `DivBasicTail` (182 s) split into `TailS` (skip, 53 s)
+and `TailN` (store, 124 s). Times this session: Nat 71 s, Rec 112-127 s / 5.0 GB, AddB 106 s, Step 51-75 s, rest < 50 s.
+| row | ISA | verdict | wall | peak |
+|---|---|---|---|---|
+| DivBasicRow | arm64 | PASS | 587 s (was FAIL > 900 s) | 5.0 GB |
+nat.trunc arm64 modules (dev, load ~35): TruncDefs 2 s, Mid 9 s, Norm 8 s, SetC 18 s, Mask 11 s, Copy 28 s, Main 59 s, Zero 16 s,
+Set 60 s, Trunc 7 s (all ≤ 2.6 GB). TruncSet was 400 s+ until `wOf n % 2^64 = wOf n` was given to janus_run (undecided branch →
+the run walked the main path and unrolled the norm loop).
