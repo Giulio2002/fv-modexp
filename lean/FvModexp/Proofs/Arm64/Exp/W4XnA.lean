@@ -139,12 +139,17 @@ theorem xnA2K (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     (hinv : R.inv b L g (view R.rt L M))
     (r904 : M.readLE (sp + 904) 8 = qp) (r328 : M.readLE (sp + 328) 8 = k) (r320 : M.readLE (sp + 320) 8 = k)
     (r968 : M.readLE (sp + 968) 8 = xp) (r976 : M.readLE (sp + 976) 8 = xl) (r984 : M.readLE (sp + 984) 8 = xc)
+    (L0 : List (Nat × Nat)) (bA : Nat) (M0 : Memory) (hAn : Anc R L0 sp K st M0 L M)
+    (hbAC : bA + (costD + xjBudA n costD (l0 + StackNat.rnd k + StackNat.rnd n)) ≤ b)
+    (hbAB : bA + (costD + (stackNatCost (l0 + StackNat.rnd k + StackNat.rnd n) n +
+      xjBudA n costD (l0 + StackNat.rnd k + StackNat.rnd n + StackNat.rnd n))) ≤ b)
+    (hl0A : stLen M0 st ≤ l0) (hexA : ALoc R L0 st M0 (qp, 8 * k))
     (S : State) (hpc : S.pc = BitVec.ofNat 64 aSn2Ret) (hsp : S.sp = BitVec.ofNat 64 sp)
     (h0 : S.regs 0 = BitVec.ofNat 64 (stW M st + 8 * (l0 + StackNat.rnd k))) (h1 : S.regs 1 = BitVec.ofNat 64 n)
     (h2 : S.regs 2 = BitVec.ofNat 64 n)
     (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = f29) (hmem : S.mem = M) :
     Reaches ((LibExp.program.link impl).withExit ret) S
-      (IsReturn (XnPost R g sp n mp mc Mv (Xv % Mv) yp ylen Y yi zp zc st n0 l0 r18 r29)) := by
+      (IsReturn (XnPost R L0 K bA M0 g sp n mp mc Mv (Xv % Mv) yp ylen Y yi zp zc st n0 l0 r18 r29)) := by
   have hB0 := hB
   obtain ⟨he, hce, hK, -, hn, hn128, -, hmc', hm, hmO, hmV, hnm, -, -, -, -, -, -, -,
     -, -, -, hsth, hstw, hsok, -, -, hcap, harr, -, -, hsu, hgl, -, -, -, -,
@@ -195,6 +200,9 @@ theorem xnA2K (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     (fun S5 M5 L5 b5 r rl rc e1 e2 e3 e4 e5 e6 e7 e8 e9 hD => ?_)
   have hk5 := keeps_divB hB hKD (List.mem_cons_self ..) hqa hqW hqG hzin (by omega) hD
   have hB5 := CtxB.keep hB hk5
+  have hAn5 := Anc.keepB hAn hk5 hl0A
+    (by rw [hlen] at hlc; exact Nat.le_trans (Nat.le_trans (Nat.le_add_right _ _) (Nat.le_add_right _ _)) hlc) (fun e he => by
+    simp only [List.mem_singleton] at he; subst he; exact hexA) hce.2.2.2.2.2.2.2.2.2.2.1 hK0
   have hcap5 : 0 < stCap M5 st := hk5.2.2.2.2.2.2.2.2.2.2.2 hcap
   have hlen5 : stLen M5 st = stLen M st := hD.2.2.2.2.1.2.1
   obtain ⟨hxi, hval, hrln, hr64⟩ := rem_xin hrt hsth hsu hsok hcap harr0.1 hzin hn hmV hmB (by omega) hD hcap5
@@ -210,7 +218,10 @@ theorem xnA2K (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     hserv ret hret b5 L5 g sp K n mp mc Mv (Xv % Mv) yp ylen Y yi zp zc st n0 (stLen M5 st) r rl rc rc M5 r18 r29 f29
     hKD hKL hB6 rfl hxi (by rw [hval, hxv]) hrln (by have := hxi.2.2.1; omega) hmB hMo hM1
     (by rw [hlen5, hlen]; omega) (by rw [hlen5, hlen]; unfold xjBud at hbC ⊢; omega)
-    (by rw [hlen5, hlen]; unfold xjBud at hbB ⊢; omega) hD.2.2.2.1 S6 g1 g2 g3 (by rw [g4, e3]) (by rw [g5, e4])
+    (by rw [hlen5, hlen]; unfold xjBud at hbB ⊢; omega) hD.2.2.2.1
+    L0 bA M0 hAn5 (by rw [hlen5, hlen]; exact ble2 hbAC hb5) (by rw [hlen5, hlen]; exact ble2 hbAB hb5)
+    (by rw [hlen5, hlen]; exact Nat.le_trans hl0A (Nat.le_trans (Nat.le_add_right _ _) (Nat.le_add_right _ _)))
+    S6 g1 g2 g3 (by rw [g4, e3]) (by rw [g5, e4])
     (by rw [g6, e5]) g7 g8 g9 (by rw [g10, e6]) (by rw [g11, e7]) (by rw [g12, e8]) g13)
     (isReturn_mono fun s' h => ?_)
   obtain ⟨l1, zzp, zzc, hl1, h⟩ := h

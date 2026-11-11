@@ -65,12 +65,16 @@ theorem sn1Step (impl : List Segment) (hap : ImplApart Extracted.program impl) (
       (costD + (blockSize (8 * n) true + stackNatCost (l0 + 2 * StackNat.rnd (2 * n)) (17 * n) +
         blockSize (8 * (2 * n + 4)) true)))) ≤ b)
     (hinv : R.inv b L g (view R.rt L M))
+    (L0 : List (Nat × Nat)) (bA : Nat) (M0 : Memory) (hAn : Anc R L0 sp K st M0 L M)
+    (hbA : bA + (stackNatCost l0 (2 * n) + (makeCost (1 + 128 * n / 64 + 1) +
+      (stackNatCost (l0 + StackNat.rnd (2 * n)) (2 * n) + costD))) ≤ b) (hl0A : stLen M0 st ≤ l0)
     (S : State) (hpc : S.pc = BitVec.ofNat 64 snE) (hsp : S.sp = BitVec.ofNat 64 sp)
     (h0 : S.regs 0 = BitVec.ofNat 64 st) (h1 : S.regs 1 = BitVec.ofNat 64 (2 * n))
     (h30 : S.regs 30 = BitVec.ofNat 64 sn1Ret)
     (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = f29) (hmem : S.mem = M) :
     Reaches ((LibExp.program.link impl).withExit ret) S
-      (IsReturn (fun s' => ∃ zzp zzc : Nat, DivRetPost R g sp n mp mc Mv Xv t yp ylen Y yi zp zc st n0 zzp zzc
+      (IsReturn (fun s' => ∃ zzp zzc : Nat, (2 * n + 1 ≤ zzc ∧ InRanges zzp (8 * zzc) R.rt ∧ ApartAll zzp (8 * zzc) L0) ∧
+        DivRetPost R L0 K bA M0 g sp n mp mc Mv Xv t yp ylen Y yi zp zc st n0 zzp zzc
         (l0 + 2 * StackNat.rnd (2 * n)) r18 r29 s')) := by
   have hC0 := hC
   obtain ⟨-, hce, hK, -, hn, hn128, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -,
@@ -95,6 +99,7 @@ theorem sn1Step (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (by omega) S hpc hsp h0 h1 h30 h18 h28 h29 hmem (fun S2 M2 L2 b2 f1 f2 f3 f4 f5 f6 f7 f8 f9 hS => ?_)
   have hk := keeps_sn hC (by omega) hS
   have hC2 := Ctx.keep hC hk
+  have hAn2 := Anc.keep hAn hk hl0A (by rw [← hl0e]; exact hlc) (fun e he => by simp at he) hce.2.2.2.2.2.2.2.2.2.2.1 hK0
   have hS0 := hS
   obtain ⟨hx2, hb2, hinv2, hsok2, hlen2, -, -, -, -, -⟩ := hS0
   have hlc2 := hsok2.2.2.2.2.2.1
@@ -125,9 +130,11 @@ theorem sn1Step (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (Or.inl ⟨Nat.le_refl _, by rw [hlenE]; omega⟩) ht
     (by rw [sl 224 (by omega) (by omega)]; exact r224) (by rw [sl 128 (by omega) (by omega)]; exact r128)
     hkk hmB hMo hM1 (by rw [hlenE]; omega) (by rw [hlenE, h2r]; rw [hl0e] at hb2; omega) hinv2
+    L0 bA M0 hAn2 (by rw [hlenE]; rw [hl0e] at hb2; exact ble2 hbA hb2) hl0A
+    (aloc_of_anc hAn2 hl0A (cap8 hlenE hr2 hlc2))
     S2 f1 f2 f3 f5 f6 f7 f8 f9) (isReturn_mono fun s' h => ?_)
-  obtain ⟨zzp, zzc, h⟩ := h
-  refine ⟨zzp, zzc, ?_⟩
+  obtain ⟨zzp, zzc, hfr, h⟩ := h
+  refine ⟨zzp, zzc, hfr, ?_⟩
   rw [hlenE, Nat.add_assoc, ← Nat.two_mul] at h
   exact h
 

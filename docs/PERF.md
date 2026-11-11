@@ -789,3 +789,9 @@ W4EnPre 2 s, W4EnCtx 18 s / 2.9 GB, W4EnX 4 s / 2.3 GB. W4EnJ: `refine K _ _ …
 | Amd64/Nat/RshCopy, RshShiftC, RshShift, RshMain | 22.5 s, 28.5 s / 3.0 GB, 18 s, 32 s | |
 | Amd64/Nat/RshMainA (alloc n ≠ 1) / RshMainB (alloc n = 1) | 131 s / 110 s; 2.7 GB | two makeslice runs each (copy/shift): perf candidates (split per path like Lsh) |
 | Amd64/Nat/RshSet / RshSetA | 28 s / 83 s | |
+### expmc session 14 (arm64, dev compile, host load 30-50, wall / max RSS)
+Function-level frame plumbing: W4Anc 2.6 s / 2.2 GB, W4FunV 1.3 s, W4FunO 3.3 s / 2.3 GB, W4Fun (post_of + helpers)
+6.3 s / 2.4 GB, chain modules after adding the anchor: DivS 4.2 s, Sn2 8.8 s, LshS 18.5 s, Sn1 6.0 s, CtxB 7.8 s,
+EnCtx 14 s, En 23 s / 2.7 GB (others unchanged ±20%). LESSON: a single `by omega` in a chain lemma's context (dozens
+of unfolded Apart/stack disjunctions) made W4DivS run > 5 min (4.5 s before): every arithmetic side goal of the new
+anchor plumbing goes through tiny lemmas (`ble1/ble2/ble3/le_cap_of/cap8/le_drop/bP`, W4Anc) — no omega in big contexts.

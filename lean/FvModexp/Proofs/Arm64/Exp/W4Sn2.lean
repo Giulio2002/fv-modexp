@@ -43,12 +43,15 @@ theorem sn2Step (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (hbud : stackNatCost (stLen M st) (2 * n) + (costD + (blockSize (8 * n) true +
       stackNatCost (stLen M st + StackNat.rnd (2 * n)) (17 * n) + blockSize (8 * (2 * n + 4)) true)) ≤ b)
     (hinv : R.inv b L g (view R.rt L M))
+    (L0 : List (Nat × Nat)) (bA : Nat) (M0 : Memory) (hAn : Anc R L0 sp K st M0 L M)
+    (hbA : bA + (stackNatCost (stLen M st) (2 * n) + costD) ≤ b) (hl0A : stLen M0 st ≤ l0)
+    (hexA : ALoc R L0 st M0 (rrp, 8 * (2 * n)))
     (S : State) (hpc : S.pc = BitVec.ofNat 64 lshRet) (hsp : S.sp = BitVec.ofNat 64 sp)
     (h0 : S.regs 0 = BitVec.ofNat 64 zzp) (h1 : S.regs 1 = BitVec.ofNat 64 (2 * n + 1))
     (h2 : S.regs 2 = BitVec.ofNat 64 zzc)
     (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = f29) (hmem : S.mem = M) :
     Reaches ((LibExp.program.link impl).withExit ret) S
-      (IsReturn (DivRetPost R g sp n mp mc Mv Xv t yp ylen Y yi zp zc st n0 zzp zzc (stLen M st + StackNat.rnd (2 * n))
+      (IsReturn (DivRetPost R L0 K bA M0 g sp n mp mc Mv Xv t yp ylen Y yi zp zc st n0 zzp zzc (stLen M st + StackNat.rnd (2 * n))
         r18 r29)) := by
   have hC0 := hC
   obtain ⟨-, hce, hK, -, hn, hn128, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -,
@@ -69,6 +72,8 @@ theorem sn2Step (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     rcases hr with rfl | rfl <;> (simp only; omega)
   have hk1 := keeps_own hC hmf hrg ws_in (fun j hj => by simp only [outside_cons, outside_nil, and_true]; omega)
   have hC1 := Ctx.keep hC hk1
+  have hAn1 := Anc.keep hAn hk1 hl0A (Nat.le_trans hl0 hsok.2.2.2.2.2.1) (fun e he => by
+    simp only [List.mem_singleton] at he; subst he; exact hexA) hce.2.2.2.2.2.2.2.2.2.2.1 hK0
   have ow : ∀ a k, Apart a k (sp - K) (K + 1040) → M1.readLE a k = M.readLE a k := fun a k h =>
     hmf.readLE a k (outside_ws_of_win (lo := sp - K) (hi := sp + 1040) (by unfold Apart at h; omega)
       (fun r hr => by have := ws_in r hr; omega))
@@ -112,6 +117,8 @@ theorem sn2Step (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (fun S2 M2 L2 b2 f1 f2 f3 f4 f5 f6 f7 f8 f9 hS => ?_)
   have hk2 := keeps_sn hC1 (by omega) hS
   have hC2 := Ctx.keep hC1 hk2
+  have hAn2 := Anc.keep hAn1 hk2 hl0A hl01 (fun e he => by
+    simp only [List.mem_singleton] at he; subst he; exact hexA) hce1.2.2.2.2.2.2.2.2.2.2.1 hK0
   have hS0 := hS
   obtain ⟨hx2, hb2, hinv2, hsok2, hlen2, -, -, hF2, -, -⟩ := hS0
   have hst2 := hk2.2.2.2.2.2.2.2.2.2.2.1
@@ -154,6 +161,7 @@ theorem sn2Step (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (by rw [sl 224 (by omega) (by omega), rs1 224 (by omega)]; exact r224)
     (by rw [sl 128 (by omega) (by omega), rs1 128 (by omega)]; exact r128)
     hkk hmB hMo hM1 (by rw [hlenM2]; omega) (by rw [hlenM2]; rw [hlen1] at hb2; omega) hinv2
+    L0 bA M0 hAn2 (by rw [hlen1] at hb2; exact ble2 hbA hb2) hl0A hexA
     S2 f1 f2 f3 f4 f5 f6 f7 f8 f9) (isReturn_mono fun s' h => ?_)
   rw [hlenM2] at h
   exact h

@@ -113,13 +113,16 @@ theorem xjStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
       (costD + (blockSize (8 * n) true + stackNatCost (l0 + 2 * StackNat.rnd (2 * n)) (17 * n) +
         blockSize (8 * (2 * n + 4)) true)))) ≤ b)
     (hinv : R.inv b L g (view R.rt L M))
+    (L0 : List (Nat × Nat)) (bA : Nat) (M0 : Memory) (hAn : Anc R L0 sp K st M0 L M)
+    (hbA : bA + xjBudA n costD l0 ≤ b) (hl0A : stLen M0 st ≤ l0)
     (S : State) (hpc : S.pc = BitVec.ofNat 64 xJ) (hsp : S.sp = BitVec.ofNat 64 sp)
     (h3 : S.regs 3 = BitVec.ofNat 64 st) (h4 : S.regs 4 = BitVec.ofNat 64 xp) (h5 : S.regs 5 = BitVec.ofNat 64 n)
     (h6 : S.regs 6 = BitVec.ofNat 64 xc) (h8 : S.regs 8 = BitVec.ofNat 64 ylen) (h10 : S.regs 10 = BitVec.ofNat 64 mp)
     (h11 : S.regs 11 = BitVec.ofNat 64 n)
     (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = f29) (hmem : S.mem = M) :
     Reaches ((LibExp.program.link impl).withExit ret) S
-      (IsReturn (fun s' => ∃ zzp zzc : Nat, DivRetPost R g sp n mp mc Mv Xv (Exp.newton 64 (Mv % Exp.B)) yp ylen Y yi
+      (IsReturn (fun s' => ∃ zzp zzc : Nat, (2 * n + 1 ≤ zzc ∧ InRanges zzp (8 * zzc) R.rt ∧ ApartAll zzp (8 * zzc) L0) ∧
+        DivRetPost R L0 K bA M0 g sp n mp mc Mv Xv (Exp.newton 64 (Mv % Exp.B)) yp ylen Y yi
         zp zc st n0 zzp zzc (l0 + 2 * StackNat.rnd (2 * n)) r18 r29 s')) := by
   have hB0 := hB
   obtain ⟨-, hce, hK, -, hn, hn128, -, -, hm, -, hmV, -, -, -, -, -, -, hyl, hyl',
@@ -163,6 +166,8 @@ theorem xjStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     rcases hr with rfl | rfl | rfl | rfl <;> (simp only; omega)
   have hk := keeps_ownB hB hmf hrg ws_in (fun j hj => by simp only [outside_cons, outside_nil, and_true]; omega)
   have hB1 := CtxB.keep hB hk
+  have hAn1 := Anc.keepB hAn hk hl0A (by rw [← hl0e]; exact hsok.2.2.2.2.2.1) (fun e he => by simp at he)
+    hce.2.2.2.2.2.2.2.2.2.2.1 hK0
   have hxO' := hxO
   obtain ⟨-, hxW, -, -, -⟩ := hxO'
   simp only [AW, Apart] at hxW
@@ -183,6 +188,7 @@ theorem xjStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
       have := ws_in r hr
       simp only [List.mem_cons, List.not_mem_nil, or_false] at hr
       rcases hr with rfl | rfl | rfl | rfl <;> exact hrt.of_sub (by omega) (by omega))) hinv)
+    L0 bA M0 hAn1 hbA hl0A
     S3 c1 c2 c3 c4 c5 (by rw [c6, a5 18 (by decide) (by decide) (by decide) (by decide), k12, h18])
     (by rw [c7, a5 28 (by decide) (by decide) (by decide) (by decide), k13, h28])
     (by rw [c8, a5 29 (by decide) (by decide) (by decide) (by decide), k14, h29]) cm
