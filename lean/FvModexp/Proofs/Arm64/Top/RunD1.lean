@@ -139,8 +139,6 @@ theorem d1x (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
           exact hinS _ _ (by omega) (by omega)
         · have h0 : hdrV s p len 0 = 0 := by omega
           rw [h0]; rfl
-    all_goals trace_state
-    all_goals sorry
   · exact absurd hdir0 hdir
 
 end FvModexp.Arm64.Run
