@@ -52,7 +52,7 @@ def Ctx (R : RtInv) (L : List (Nat × Nat)) (g sp K n mp mc Mv xp xc Xv yp ylen 
 def Keeps (R : RtInv) (L L' : List (Nat × Nat)) (g sp K st l0 : Nat) (M M' : Memory) : Prop :=
   LiveExt R L L' ∧ (∀ a k w, M'.accessible a k w = M.accessible a k w) ∧ CallW.CEnv R L' g sp K 1040 M' ∧
   (∀ a k, Obj R L sp K st l0 M a k → M'.readLE a k = M.readLE a k) ∧
-  (∀ j, (320 ≤ j ∧ j + 8 ≤ 336 ∨ 824 ≤ j ∧ j + 8 ≤ 1040) → M'.readLE (sp + j) 8 = M.readLE (sp + j) 8) ∧
+  (∀ j, (128 ≤ j ∧ j + 8 ≤ 136 ∨ 224 ≤ j ∧ j + 8 ≤ 232 ∨ 320 ≤ j ∧ j + 8 ≤ 336 ∨ 824 ≤ j ∧ j + 8 ≤ 1040) → M'.readLE (sp + j) 8 = M.readLE (sp + j) 8) ∧
   M'.readLE (sp - 8) 8 = M.readLE (sp - 8) 8 ∧ M'.readLE sp 8 = M.readLE sp 8 ∧
   M'.readLE (g + 16) 8 = M.readLE (g + 16) 8 ∧
   StkOK M' R L' st ∧ stLen M st ≤ stLen M' st ∧
@@ -108,7 +108,7 @@ theorem Ctx.keep {R : RtInv} {L L' : List (Nat × Nat)}
     r1016, r1024, r1032, r952, r936, r1000, r992, r960, r904, r328, r320⟩ := h
   have hk0 := hk
   obtain ⟨hx', hacc, hce', hrd, hsl, hsl8, hsl0, hgr, hsok', hlen, hst, hcp⟩ := hk0
-  have rs : ∀ j, (320 ≤ j ∧ j + 8 ≤ 336 ∨ 824 ≤ j ∧ j + 8 ≤ 1040) → M'.readLE (sp + j) 8 = M.readLE (sp + j) 8 := hsl
+  have rs : ∀ j, (128 ≤ j ∧ j + 8 ≤ 136 ∨ 224 ≤ j ∧ j + 8 ≤ 232 ∨ 320 ≤ j ∧ j + 8 ≤ 336 ∨ 824 ≤ j ∧ j + 8 ≤ 1040) → M'.readLE (sp + j) 8 = M.readLE (sp + j) 8 := hsl
   have hcap' : 0 < stCap M' st := hcp hcap
   have hl0' : l0 ≤ stCap M' st := Nat.le_trans hl0 (Nat.le_trans hlen hsok'.2.2.2.2.2.1)
   have he0 := he
@@ -200,7 +200,7 @@ theorem keeps_of {R : RtInv} {L L' : List (Nat × Nat)} {g sp K st l0 : Nat} {M 
     (hF : MemFrame M M' (R.rt ++ ws)) (hL : LiveFrame M M' L ws') (hreg : M'.regions = M.regions)
     (hwa : ∀ r ∈ ws, r.1 < r.2 → M.accessible r.1 (r.2 - r.1) true = true) (hg : Outside (g + 16) 8 ws)
     (hobj : ∀ a k, Obj R L sp K st l0 M a k → Outside a k ws ∧ Outside a k ws')
-    (hsl : ∀ j, (320 ≤ j ∧ j + 8 ≤ 336 ∨ 824 ≤ j ∧ j + 8 ≤ 1040) → Outside (sp + j) 8 ws)
+    (hsl : ∀ j, (128 ≤ j ∧ j + 8 ≤ 136 ∨ 224 ≤ j ∧ j + 8 ≤ 232 ∨ 320 ≤ j ∧ j + 8 ≤ 336 ∨ 824 ≤ j ∧ j + 8 ≤ 1040) → Outside (sp + j) 8 ws)
     (hsl8 : Outside (sp - 8) 8 ws) (hsl0 : Outside sp 8 ws)
     (hsok : StkOK M' R L' st) (hlen : stLen M st ≤ stLen M' st)
     (hst : (stW M' st = stW M st ∧ stCap M' st = stCap M st) ∨
