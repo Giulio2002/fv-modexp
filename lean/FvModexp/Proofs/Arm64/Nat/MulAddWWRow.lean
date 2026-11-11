@@ -78,8 +78,14 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
     RetAddr (Extracted.program.link impl) ret ∧
     CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program MulAddWW.fn)
       [zp, zl, zc, xp, xl, xc, y, r] s ∧
-    MulAddWW.Pre R b L zp zc xp xl y r s :=
+    MulAddWW.Pre R b L zp zc xp xl y r s ∧
+    (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
+      s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.makeslice") ∧
+      mkSite R (Extracted.program.contractAddr "runtime.makeslice") L b s_c) ∧
+    Returns ((Extracted.program.link impl).withExit ret) s fun s' => ABIReturn s s' ∧ MulAddWW.Post R b L zp zc xp xl y r s s' :=
   ⟨WStubs.impl, R, 0x1000, [], BitVec.ofNat 64 OA, 0, 0, BitVec.ofNat 64 OB, 2, 2, 3, 0, RET, s0, WStubs.hap,
-    by rw [WStubs.addr_mk]; exact WStubs.mk [] (by intro t ht; simp at ht) _, hret, setup, pre⟩
+    by rw [WStubs.addr_mk]; exact WStubs.mk [] (by intro t ht; simp at ht) _, hret, setup, pre,
+    ⟨[], 0x1000, callS WStubs.mkA Extracted.dataAddr.«type:big.Word#51b931e8» 1 1, by rw [WStubs.addr_mk]; rfl, by rw [WStubs.addr_mk]; exact site_mk _⟩,
+    correctness WStubs.impl WStubs.hap R (by rw [WStubs.addr_mk]; exact WStubs.mk [] (by intro t ht; simp at ht) _) 0x1000 [] (BitVec.ofNat 64 OA) 0 0 (BitVec.ofNat 64 OB) 2 2 3 0 RET hret s0 setup pre⟩
 
 end FvModexp.Arm64.MulAddWWRow.Witness

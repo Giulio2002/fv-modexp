@@ -76,8 +76,10 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
     RetAddr (Extracted.program.link impl) ret ∧
     CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program DivWVW.fn)
       [zp, zl, zc, xn, xp, xl, xc, y] s ∧
-    (xl = zl ∧ DivWVW.Pre R b L zp zl xn xp y s) :=
+    (xl = zl ∧ DivWVW.Pre R b L zp zl xn xp y s) ∧
+    Returns ((Extracted.program.link impl).withExit ret) s fun s' => ABIReturn s s' ∧ DivWVW.Post R b L zp zl xn xp y s s' :=
   ⟨WStubs.impl, R, 0x1000, [], BitVec.ofNat 64 OA, 2, 2, 0, BitVec.ofNat 64 OB, 2, 2, 7, RET, s0, WStubs.hap,
-    hret, setup, pre⟩
+    hret, setup, pre,
+    correctness WStubs.impl WStubs.hap R 0x1000 [] (BitVec.ofNat 64 OA) 2 2 0 (BitVec.ofNat 64 OB) 2 2 7 RET hret s0 setup pre⟩
 
 end FvModexp.Arm64.DivWVWRow.Witness

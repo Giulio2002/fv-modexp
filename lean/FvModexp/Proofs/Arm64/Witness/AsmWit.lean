@@ -102,4 +102,93 @@ theorem inv0 (g : Nat → Byte) (hbump : (wmem (toyBytes g) stdRegs).readLE BUMP
     unfold toyBytes
     rw [if_neg (by simp only [BUMP, HEAP] at *; omega), if_neg (by omega)]
 
+/-! ## Call-site states of the runtime contracts (Janus U-WITNESS-CALLSITE)
+
+A row witness must exhibit, for each contract hypothesis, a state at the contract's entry satisfying its precondition
+(at the witness's `R`). `callS addr x y z`: a call with `X0..X2 = x, y, z` and the callee's frame just below `SP0`,
+in the all-zero standard memory. -/
+
+def memZ : Memory := wmem (toyBytes fun _ => 0) stdRegs
+
+theorem bumpZ : memZ.readLE BUMP 8 = HEAP := by decide +kernel
+
+def callS (addr x y z : Nat) : State :=
+  { regs := fun i => if i = 0 then BitVec.ofNat 64 x else if i = 1 then BitVec.ofNat 64 y
+      else if i = 2 then BitVec.ofNat 64 z else if i = 28 then BitVec.ofNat 64 G0
+      else if i = 30 then BitVec.ofNat 64 RET else 0,
+    sp := BitVec.ofNat 64 (SP0 - 16), pc := BitVec.ofNat 64 addr,
+    flags := ⟨false, false, false, false⟩, mem := memZ }
+
+@[simp] theorem cs_sp (a x y z : Nat) : (callS a x y z).sp = BitVec.ofNat 64 (SP0 - 16) := rfl
+@[simp] theorem cs_mem (a x y z : Nat) : (callS a x y z).mem = memZ := rfl
+@[simp] theorem cs_g (a x y z : Nat) : (callS a x y z).regs 28 = BitVec.ofNat 64 G0 := rfl
+@[simp] theorem cs_lr (a x y z : Nat) : (callS a x y z).regs 30 = BitVec.ofNat 64 RET := rfl
+@[simp] theorem cs_r0 (a x y z : Nat) : (callS a x y z).regs 0 = BitVec.ofNat 64 x := rfl
+@[simp] theorem cs_r1 (a x y z : Nat) : (callS a x y z).regs 1 = BitVec.ofNat 64 y := rfl
+@[simp] theorem cs_r2 (a x y z : Nat) : (callS a x y z).regs 2 = BitVec.ofNat 64 z := rfl
+
+theorem memZ_acc (a n : Nat) (w : Bool) : memZ.accessible a n w = (wmem (fun _ => 0) stdRegs).accessible a n w :=
+  acc_eq _ a n w
+
+theorem cs_callOK (a x y z n : Nat) (hn : n ≤ 3) : CallOK (callS a x y z) 4096 n := by
+  have hw : memZ.accessible (SP0 - 16 - 4096) (4096 + 8 + 8 * 3) true = true := by rw [memZ_acc]; decide +kernel
+  have hs : (BitVec.ofNat 64 (SP0 - 16)).toNat = SP0 - 16 := by decide
+  simp only [CallOK, cs_lr, cs_sp, cs_mem, hs]
+  refine ⟨by decide, by decide, by decide, by decide, by decide, by simp only [SP0]; omega, ?_⟩
+  exact Memory.accessible_mono _ hw (Nat.le_refl _) (by omega)
+
+theorem cs_guard (a x y z : Nat) : GuardOK (callS a x y z) 4096 := by
+  simp only [GuardOK, cs_g, cs_mem, cs_sp]
+  exact ⟨by decide, by rw [memZ_acc]; decide +kernel, by decide +kernel⟩
+
+theorem cs_room (a x y z n : Nat) (hn : n ≤ 3) : StackRoom (callS a x y z) 4096 n := by
+  refine ⟨cs_guard a x y z, ?_⟩
+  simp only [calleeStack, cs_g, cs_sp, outside_cons, outside_nil, and_true, BitVec.toNat_ofNat]
+  simp only [G0, SP0]; omega
+
+theorem cs_winR (a x y z n : Nat) (hn : n ≤ 3) : LiveSep (calleeStack (callS a x y z) 4096 n) R.rt := by
+  intro x' hx
+  simp only [calleeStack, cs_sp, List.mem_cons, List.not_mem_nil, or_false, BitVec.toNat_ofNat] at hx
+  rw [rt_eq]
+  rcases hx with rfl | rfl <;>
+    simp only [outside_cons, outside_nil, and_true, SP0, HEAP, HEND, BUMP, WBUF, HSIZE] <;> omega
+
+theorem cs_inv (a x y z : Nat) : R.inv 0x1000 [] ((callS a x y z).regs 28).toNat (view R.rt [] (callS a x y z).mem) :=
+  inv0 _ bumpZ _
+
+/-- the premise of `MemmoveLive` (and of the other live copy contracts) at a call -/
+@[reducible] def mvSite (R : RtInv) (addr : Nat) (L : List (Nat × Nat)) (b : Nat) (s : State) : Prop :=
+  Mem.EqPre 4096 3 s ∧
+  LiveMemAt R addr [(s.regs 0).toNat, (s.regs 1).toNat, (s.regs 2).toNat] L b s (calleeStack s 4096 3) ∧
+  Mem.Input s 4096 3 (s.regs 1).toNat (s.regs 2).toNat ∧
+  LiveDest R L s 4096 3 (s.regs 0).toNat (s.regs 2).toNat
+
+/-- a `memmove(OA, OB, 8)` call satisfies it -/
+theorem site_mv (addr : Nat) : mvSite R addr [] 0x1000 (callS addr OA OB 8) := by
+  have hcs : calleeStack (callS addr OA OB 8) 4096 3 =
+      [(SP0 - 16 - 4096, SP0 - 16 - 8), (SP0 - 16 + 8, SP0 - 16 + 8 + 24)] := rfl
+  refine ⟨⟨(guardOK_iff _ _).1 (cs_guard _ _ _ _), cs_callOK _ _ _ _ 3 (by omega), ?_⟩,
+    ⟨trivial, cs_inv _ _ _ _, fun r hr => by simp at hr, cs_winR _ _ _ _ 3 (by omega)⟩,
+    ⟨?_, ?_, ?_⟩, ⟨?_, ?_, ?_, Or.inr ?_⟩⟩
+  all_goals simp only [hcs, cs_g, cs_mem, cs_r0, cs_r1, cs_r2, BitVec.toNat_ofNat]
+  all_goals first
+    | (simp only [outside_cons, outside_nil, and_true]; decide)
+    | (rw [memZ_acc]; decide +kernel)
+    | decide
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide)
+
+/-- the premise of `MakesliceLiveContract` at a call -/
+@[reducible] def mkSite (R : RtInv) (addr : Nat) (L : List (Nat × Nat)) (b : Nat) (s : State) : Prop :=
+  MakeslicePre 4096 s ∧ StackRoom s 4096 3 ∧
+    LiveAt R addr [(s.regs 0).toNat, (s.regs 1).toNat, (s.regs 2).toNat] L b (makesliceRound s)
+      (s.regs 28).toNat s.mem (calleeStack s 4096 3)
+
+/-- a `makeslice(Word, 1, 1)` call satisfies it (the `Word` type descriptor is read-only data of the extraction) -/
+theorem site_mk (addr : Nat) : mkSite R addr [] 0x1000
+    (callS addr Extracted.dataAddr.«type:big.Word#51b931e8» 1 1) := by
+  refine ⟨⟨cs_callOK _ _ _ _ 3 (by omega), ?_, ?_, ?_, ?_⟩, cs_room _ _ _ _ 3 (by omega),
+    trivial, cs_inv _ _ _ _, ?_, fun r hr => absurd hr (by simp), cs_winR _ _ _ _ 3 (by omega)⟩
+  all_goals try simp only [makesliceRound, TypeOK, cs_mem, cs_r0, cs_r1, cs_r2, BitVec.toNat_ofNat]
+  all_goals first | decide +kernel | exact ⟨by decide +kernel, by rw [memZ_acc]; decide +kernel⟩
+
 end FvModexp.Arm64.AsmWit

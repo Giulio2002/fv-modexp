@@ -75,8 +75,14 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
     RetAddr (Extracted.program.link impl) ret ∧
     CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program SubVW.fn)
       [zp, zl, zc, xp, xl, xc, y] s ∧
-    (xl = zl ∧ SubVW.Pre R b L zp zl zc xp xc s) :=
+    (xl = zl ∧ SubVW.Pre R b L zp zl zc xp xc s) ∧
+    (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
+      s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.memmove") ∧
+      mvSite R (Extracted.program.contractAddr "runtime.memmove") L b s_c) ∧
+    Returns ((Extracted.program.link impl).withExit ret) s fun s' => ABIReturn s s' ∧ SubVW.Post R b L zp zl xp y s s' :=
   ⟨WStubs.impl, R, 0x1000, [], BitVec.ofNat 64 OA, 2, 2, BitVec.ofNat 64 OB, 2, 2, 1, RET, s0, WStubs.hap,
-    by rw [WStubs.addr_mv]; exact WStubs.mv R, hret, setup, pre⟩
+    by rw [WStubs.addr_mv]; exact WStubs.mv R, hret, setup, pre,
+    ⟨[], 0x1000, callS WStubs.mvA OA OB 8, by rw [WStubs.addr_mv]; rfl, by rw [WStubs.addr_mv]; exact site_mv _⟩,
+    correctness WStubs.impl WStubs.hap R (by rw [WStubs.addr_mv]; exact WStubs.mv R) 0x1000 [] (BitVec.ofNat 64 OA) 2 2 (BitVec.ofNat 64 OB) 2 2 1 RET hret s0 setup pre⟩
 
 end FvModexp.Arm64.SubVWRow.Witness
