@@ -173,3 +173,50 @@ theorem carry0 (a : Nat) (ha : a < 2 ^ 64) (y : BitVec 64) :
     constructor <;> intro hh <;> first | omega | simp
 
 end FvModexp.Asm
+
+namespace FvModexp.Asm
+open Janus Janus.Arm64
+
+/-- the borrow passes limb `i = 0` (`z[i] = 2^64 - 1`) -/
+theorem v_zero (m m0 : Memory) (zp xp i y : Nat)
+    (hval : m.readLE zp (8 * i) + y = m0.readLE xp (8 * i) + 2 ^ (64 * i))
+    (hx : m0.readLE (xp + i * 8) 8 = 0) :
+    (m.writeLE (zp + i * 8) 8 (2 ^ 64 - 1)).readLE zp (8 * (i + 1)) + y = m0.readLE xp (8 * (i + 1)) + 2 ^ (64 * (i + 1)) := by
+  rw [readLE_write_top, readLE_limb_split m0, hx, show 64 * (i + 1) = 64 * i + 64 by omega, Nat.pow_add]
+  have : 2 ^ (64 * i) * (2 ^ 64 - 1) + 2 ^ (64 * i) = 2 ^ (64 * i) * 2 ^ 64 := by
+    rw [Nat.mul_sub_one]; have := Nat.two_pow_pos (64 * i)
+    have : 2 ^ (64 * i) ≤ 2 ^ (64 * i) * 2 ^ 64 := Nat.le_mul_of_pos_right _ (by decide)
+    omega
+  rw [Nat.mod_eq_of_lt (by decide : 2 ^ 64 - 1 < 2 ^ 64), Nat.mul_zero, Nat.add_zero]
+  omega
+
+/-- the borrow stops at limb `i`, `x[i] ≠ 0` (`z[i] = x[i] - 1`) -/
+theorem v_dec (m m0 : Memory) (zp xp i y : Nat)
+    (hval : m.readLE zp (8 * i) + y = m0.readLE xp (8 * i) + 2 ^ (64 * i))
+    (hx : m0.readLE (xp + i * 8) 8 ≠ 0) :
+    (m.writeLE (zp + i * 8) 8 (m0.readLE (xp + i * 8) 8 - 1)).readLE zp (8 * (i + 1)) + y =
+      m0.readLE xp (8 * (i + 1)) := by
+  have hl := Memory.readLE_lt m0 (xp + i * 8) 8
+  rw [readLE_write_top, readLE_limb_split m0, Nat.mod_eq_of_lt (by simp at hl; omega), Nat.mul_sub_one]
+  have : 2 ^ (64 * i) ≤ 2 ^ (64 * i) * m0.readLE (xp + i * 8) 8 := Nat.le_mul_of_pos_right _ (by omega)
+  omega
+
+/-- limb 0: the `SUBS; NGC XZR; NEG; CBZ` borrow test, in the executor's form -/
+theorem borrow0 (a : Nat) (ha : a < 2 ^ 64) (y : BitVec 64) :
+    ((18446744073709551616 - (addWithCarry (0#64) (18446744073709551615#64)
+        (addSub (BitVec.ofNat 64 a) y true).snd.c).fst.toNat) % 18446744073709551616 = 0) = (y.toNat ≤ a) := by
+  have hc : (addSub (BitVec.ofNat 64 a) y true).snd.c = decide (y.toNat ≤ a) := by
+    simp only [addSub, ite_true]
+    rw [addWithCarry_c64]
+    simp only [BitVec.toNat_not, BitVec.toNat_ofNat, Nat.mod_eq_of_lt ha, Bool.toNat_true]
+    have := y.isLt
+    by_cases h : y.toNat ≤ a
+    · simp only [h, decide_true]; apply decide_eq_true; omega
+    · simp only [h, decide_false]; apply decide_eq_false; omega
+  rw [hc, addWithCarry_fst_toNat]
+  by_cases h : y.toNat ≤ a
+  · simp only [h, decide_true, Bool.toNat_true]; decide
+  · simp only [h, decide_false, Bool.toNat_false, BitVec.toNat_ofNat]
+    simp
+
+end FvModexp.Asm
