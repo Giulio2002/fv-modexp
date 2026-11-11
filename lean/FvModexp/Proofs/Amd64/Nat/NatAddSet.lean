@@ -82,7 +82,7 @@ theorem SetMid.post {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl y
   unfold Apart at hpw
   have hneed : need xl yl = xl.toNat := by unfold need mx; rw [if_pos (by omega)]; omega
   refine ⟨?_, fun hle => ⟨h0.trans (h.ru (by omega)).1, h2.trans (h.ru (by omega)).2⟩, fun hx => by rw [h2]; exact h.c40 (by unfold mx at hx; omega)⟩
-  refine ⟨hfs, p, xl.toNat, c, h0, h1, h2, ?_, Or.inr ?_, hcap, by unfold mx; omega, L', b', h.ext,
+  refine ⟨hfs, hdf'.trans h.df0.symm, p, xl.toNat, c, h0, h1, h2, ?_, Or.inr ?_, hcap, by unfold mx; omega, L', b', h.ext,
     by rw [hneed]; exact h.bud, hinv, fun _ => ⟨h.p8, h.pheld, by rw [hF.accessible]; exact h.pacc, h.p48⟩, h.ror, ?_, ?_⟩
   · show s'.mem.readLE p (8 * xl.toNat) = _ + natVal s.mem yp.toNat yl.toNat
     rw [hcp, hy0, natVal_zero, Nat.add_zero]; exact h.xv

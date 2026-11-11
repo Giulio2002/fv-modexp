@@ -25,16 +25,16 @@ theorem tail (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat ×
     (hv : natVal M p xl.toNat = natVal s.mem xp.toNat xl.toNat - natVal s.mem yp.toNat yl.toNat)
     (S : State) (hpc : S.rip = BitVec.ofNat 64 hTail) (h9 : S.regs 9 = 0#64)
     (hsp : S.regs 4 = s.regs 4 - 144#64) (h14 : S.regs 14 = s.regs 14) (h5 : S.regs 5 = s.regs 4 - 8#64)
-    (hx15 : S.xmm 15 = s.xmm 15) (hfs : S.fsBase = s.fsBase) (hm : S.mem = M) :
+    (hx15 : S.xmm 15 = s.xmm 15) (hfs : S.fsBase = s.fsBase) (hdf : S.df = false) (hm : S.mem = M) :
     ReachesRet (LibNatSub.program.link impl) (retAddrOf s) S fun s' =>
       RegsOK s s' ∧ PostR 4288 R b L zp zc xp xl yp yl s s' := by
   have hsp0 := h.sp0; have hsp1 := h.sp1; have hcap := h.cap; have hc41 := h.c41; have hp48 := h.p48
   have hxl := h.xl40; have hsacc := h.sacc; have hal := h.al; have hpacc := h.pacc; have hp8 := h.p8
   janus64_run [hm, hps, hms] until [hNorm]
-  refine norm impl s M p c xl.toNat _ _ (fun s' n' hm' h0' h1' h2' hfs' hn' hv' hnm' =>
-      h.post s' n' hm' h0' h1' h2' hfs' hn' hv' hnm') hcap (by omega) (by omega)
+  refine norm impl s M p c xl.toNat _ _ (fun s' n' hm' h0' h1' h2' hfs' hdf' hn' hv' hnm' =>
+      h.post s' n' hm' h0' h1' h2' hfs' hdf' hn' hv' hnm') hcap (by omega) (by omega)
     (Janus.Arm64.Memory.accessible_weaken _ (Janus.Arm64.Memory.accessible_mono _ hpacc (Nat.le_refl _) (by omega)))
-    h.lr h.fp hcs hal hsp0 hsp1 hsacc h.ra47 xl.toNat _ (Nat.le_refl _) rfl ?_ ?_ ?_ h14 ?_ ?_ ?_ rfl hv
-  all_goals (try janus64_simp) <;> exact hfs
+    h.lr h.fp hcs hal hsp0 hsp1 hsacc h.ra47 xl.toNat _ (Nat.le_refl _) rfl ?_ ?_ ?_ h14 ?_ ?_ ?_ ?_ rfl hv
+  all_goals (try janus64_simp) <;> first | exact hfs | exact hdf
 
 end FvModexp.Amd64.NatSub

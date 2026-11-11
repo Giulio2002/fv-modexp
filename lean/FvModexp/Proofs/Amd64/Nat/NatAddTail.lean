@@ -28,7 +28,7 @@ theorem tail (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat ×
     (S : State) (hpc : S.rip = BitVec.ofNat 64 hTail) (h9 : S.regs 9 = BitVec.ofNat 64 cw)
     (h6 : S.regs 6 = BitVec.ofNat 64 xl.toNat)
     (hsp : S.regs 4 = s.regs 4 - 144#64) (h14 : S.regs 14 = s.regs 14) (h5 : S.regs 5 = s.regs 4 - 8#64)
-    (hx15 : S.xmm 15 = s.xmm 15) (hfs : S.fsBase = s.fsBase) (hm : S.mem = M) :
+    (hx15 : S.xmm 15 = s.xmm 15) (hfs : S.fsBase = s.fsBase) (hdf : S.df = false) (hm : S.mem = M) :
     ReachesRet (LibNatAdd.program.link impl) (retAddrOf s) S fun s' =>
       RegsOK s s' ∧ PostR 4288 R b L zp zc xp xl yp yl s s' := by
   have hsp0 := h.sp0; have hsp1 := h.sp1; have hcap := h.cap; have hc41 := h.c41; have hp48 := h.p48
@@ -46,12 +46,12 @@ theorem tail (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat ×
     rw [natVal_succ, Janus.Arm64.Memory.readLE_writeLE_self, ← hv, Nat.mod_eq_of_lt (by simpa using hcw)]
     congr 1
     exact Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega)
-  refine norm impl s _ p c (xl.toNat + 1) _ _ (fun s' n' hm' h0' h1' h2' hfs' hn' hv' hnm' =>
-      hst.post hyx hy0 s' n' hm' h0' h1' h2' hfs' hn' hv' hnm') hcap (by omega) (by omega)
+  refine norm impl s _ p c (xl.toNat + 1) _ _ (fun s' n' hm' h0' h1' h2' hfs' hdf' hn' hv' hnm' =>
+      hst.post hyx hy0 s' n' hm' h0' h1' h2' hfs' hdf' hn' hv' hnm') hcap (by omega) (by omega)
     (by simpa only [Janus.Arm64.Memory.accessible_writeLE] using hpw8)
     hst.lr hst.fp (by rw [Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega)]; exact hcs)
-    hal hsp0 hsp1 hst.sacc h.ra47 (xl.toNat + 1) _ (Nat.le_refl _) rfl ?_ ?_ ?_ h14 ?_ ?_ ?_
+    hal hsp0 hsp1 hst.sacc h.ra47 (xl.toNat + 1) _ (Nat.le_refl _) rfl ?_ ?_ ?_ h14 ?_ ?_ ?_ ?_
     (by show M.writeLE _ 8 cw = _; rw [Nat.mul_comm xl.toNat 8]) hval
-  all_goals (try janus64_simp) <;> exact hfs
+  all_goals (try janus64_simp) <;> first | exact hfs | exact hdf
 
 end FvModexp.Amd64.NatAdd

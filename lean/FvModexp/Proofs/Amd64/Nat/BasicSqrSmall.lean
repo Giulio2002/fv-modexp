@@ -131,7 +131,7 @@ theorem small (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progr
     ⟨⟨hst8, hext.held hsth, ?sacc, hst48, ?snl, ?slc, ?sc40⟩, ?slen, ?sarr⟩, hFall, hLFall⟩
   case inv => janus_assumption
   case fs => show s'.fsBase = s.fsBase; rw [hfs2]
-  case df => show s'.df = s.df; rw [hdf2]; first | rfl | janus64_simp | exact hdf.trans hdf.symm
+  case df => exact hdf.symm
   case val =>
     show natVal s'.mem _ _ = _
     rw [show zl.toNat = xl.toNat + xl.toNat by omega]; exact hval
