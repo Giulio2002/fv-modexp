@@ -91,4 +91,42 @@ theorem pre_facts {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul 
     Asm.limbs_getD _ _ _ _ (by omega)
   simp only [Mdl.dbStep, htop, Asm.length_limbs, qhatM, f1, f2, f3]
 
+theorem corrLoop_lt (vn1 vn2 un2 : Nat) : ∀ (F qh rh x1 x2 : Nat), qh < 2 ^ 64 →
+    Mdl.corrLoop vn1 vn2 un2 F qh rh x1 x2 < 2 ^ 64
+  | 0, qh, _, _, _, h => by simp [Mdl.corrLoop, h]
+  | F + 1, qh, rh, x1, x2, h => by
+    simp only [Mdl.corrLoop]
+    split
+    · split
+      · exact Nat.mod_lt _ (by omega)
+      · exact corrLoop_lt vn1 vn2 un2 F _ _ _ _ (Nat.mod_lt _ (by omega))
+    · exact h
+
+/-- the estimate is a word -/
+theorem qhatM_lt {s : State} {vp vl : Nat} (M : Memory) (up j ujn : Nat)
+    (hv1 : 2 ^ 63 ≤ s.mem.readLE (vp + 8 * (vl - 1)) 8) (hle : ujn ≤ s.mem.readLE (vp + 8 * (vl - 1)) 8) :
+    qhatM s vp vl M up j ujn < 2 ^ 64 := by
+  have h1 := Memory.readLE_lt s.mem (vp + 8 * (vl - 1)) 8
+  have h2 := Memory.readLE_lt M (up + 8 * (j + vl - 1)) 8
+  simp only [qhatM]
+  rw [Mdl.qhatEst_eq _ _ _ _ _ hv1 (by simpa using h1) hle (by simpa using h2)]
+  split
+  · apply corrLoop_lt
+    apply Nat.div_lt_of_lt_mul
+    have : ujn < s.mem.readLE (vp + 8 * (vl - 1)) 8 := by omega
+    have h3 : (ujn + 1) * 2 ^ 64 ≤ s.mem.readLE (vp + 8 * (vl - 1)) 8 * 2 ^ 64 := Nat.mul_le_mul_right _ (by omega)
+    have h4 : M.readLE (up + 8 * (j + vl - 1)) 8 < 2 ^ 64 := by simpa using h2
+    rw [Nat.add_mul, Nat.one_mul] at h3
+    rw [Nat.mul_comm (s.mem.readLE _ 8)]; omega
+  · omega
+
+/-- the carry of `mulAddVWW(x, y, 0)` -/
+theorem mav_carry (V : List Nat) (y : Nat) (hV : Mdl.Wd V) (hy : y < 2 ^ 64) :
+    (Mdl.mulAddVWW V y 0).2 = Mdl.val V * y / 2 ^ (64 * V.length) := by
+  obtain ⟨hl, hw, -, hv⟩ := Mdl.mulAddVWW_spec V y 0 hV hy (by omega)
+  have := Mdl.val_lt hw
+  rw [hl] at this
+  rw [Nat.add_zero] at hv
+  rw [← hv, Nat.add_mul_div_left _ _ (Nat.two_pow_pos _), Nat.div_eq_of_lt this, Nat.zero_add]
+
 end FvModexp.Arm64.DivBasic
