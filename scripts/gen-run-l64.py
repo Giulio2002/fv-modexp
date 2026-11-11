@@ -1,28 +1,30 @@
 """(agent top) Generate RunLLo/RunLHi (P1 -> C0/error/empty, split on `96 < len`) and the composition RunL (amd64)."""
 D='/srv/fv-modexp-top/lean/FvModexp/Proofs/Amd64/Top/'
-t=open('/tmp/claude-0/-root/158ba489-000e-4771-a5cb-fabc328941b9/scratchpad/RunL.tmpl').read()
+t=open('/srv/fv-modexp-top/scripts/RunL64.tmpl').read()
 pre=t[:t.index("abbrev pcC0")].replace('import FvModexp.Proofs.Amd64.Top.RunLaDefs','import FvModexp.Proofs.Amd64.Top.RunLDefs')
 abbr="abbrev pcC0 : Nat := segAddr Extracted.program fn + 0x5c7\n\n"
 thm=t[t.index("set_option maxRecDepth 20000 in\nset_option maxHeartbeats"):t.index("  all_goals trace_state")]
 CLOSE = r'''  all_goals first
-  | (have hx0 : (T.regs 2).toNat ≤ 64 := by omega
+  | ((try simp (disch := omega) only [cmova_max] at *)
+     have hx0 : (T.regs 2).toNat ≤ 64 := by omega
      have hx1 : (T.regs 9).toNat ≤ 64 := by omega
      have hx2 : (T.regs 11).toNat ≤ 64 := by omega
      have hv0 := hU0 hx0
      have hv1 := hU1 hx1
      have hv2 := hU2 hx2
      refine hk _ (by janus64_simp) (by janus64_simp [hTm]) (by janus64_simp [hT4]) (by janus64_simp [hT14])
-       (by janus64_simp [hT5]) (by janus64_simp [hTx]) (by janus64_simp [hTfs]) (by janus64_simp [hTdf])
-       (by omega) (by omega) (by omega) (by janus64_simp at *; omega) (by janus64_simp; omega) (by janus64_simp; omega)
+       (by janus64_simp [hT5]) (by janus64_simp [hTx]) (by janus64_simp [hTfs, hfs]) (by janus64_simp [hTdf, hdf])
+       (by omega) (by omega) (by omega) (by first | omega | bv_omega) (by janus64_simp; omega) (by janus64_simp; omega)
        (by janus64_simp; omega) ?_ ?_ ?_ <;>
      (janus64_simp <;> (try simp only [BitVec.toNat_add, BitVec.toNat_sub, BitVec.toNat_ofNat]) <;> (try split) <;> omega))
-  | (have hx0 : (T.regs 2).toNat ≤ 64 := by omega
+  | ((try simp (disch := omega) only [cmova_max] at *)
+     have hx0 : (T.regs 2).toNat ≤ 64 := by omega
      have hx1 : (T.regs 9).toNat ≤ 64 := by omega
      have hx2 : (T.regs 11).toNat ≤ 64 := by omega
      have hv0 := hU0 hx0
      have hv1 := hU1 hx1
      have hv2 := hU2 hx2
-     refine hZero _ (by janus64_simp at *; omega) (by omega) (by janus64_simp at *; omega)
+     refine hZero _ (by first | omega | bv_omega) (by omega) (by first | omega | bv_omega)
        ⟨by janus64_simp [hsp, hT4], by janus64_simp [hm2, regFP], by janus64_simp [h14, hT14, regG],
         by janus64_simp [hx15, hTx]⟩
        (by janus64_simp) (by janus64_simp) ⟨by janus64_simp [hTfs, hfs], by janus64_simp [hTdf, hdf, hdf0], L1, b1, hext,
@@ -30,7 +32,8 @@ CLOSE = r'''  all_goals first
      · dsimp only; (try rw [hTm]); first | exact hinv | exact RtInv.inv_congr hinv rfl (by janus64_simp) rfl
      · dsimp only; (try rw [hTm]); exact hMF
      · dsimp only; (try rw [hTm]); exact hLF)
-  | (have hcond : 1024 < hdrV s p len 0 ∨ 1024 < hdrV s p len 1 ∨ 1024 < hdrV s p len 2 := by
+  | ((try simp (disch := omega) only [cmova_max] at *)
+     have hcond : 1024 < hdrV s p len 0 ∨ 1024 < hdrV s p len 1 ∨ 1024 < hdrV s p len 2 := by
        first
        | exact err_of_big hL0' hL1' hL2' (by omega)
        | exact err_of_u hL0' hL1' hL2' (by omega) (by omega)
@@ -69,6 +72,13 @@ CLOSE = r'''  all_goals first
        refine hLF.trans ((((LiveFrame.of_win (by simp only [win, stk]; janus_frame) hLsL1).trans hLFn (fun _ _ h => h)).writeLE _
          (ho.of_sub (by omega) (by omega))).writeLE _ (ho.of_sub (Nat.le_refl _) (by omega))) (fun _ _ h => hext.inRanges_old h))
 '''
+import sys
+_parts=CLOSE.split("\n  | (")
+C0B,ZB,EB=[p.rstrip() for p in _parts[1:]]
+def strip1(x): return x[:-1] if x.endswith(')') else x
+C0B,ZB,EB=strip1(C0B),strip1(C0B and ZB),strip1(EB.rstrip())
+if len(sys.argv)>1 and sys.argv[1]=='dbg':
+    CLOSE="  next => sorry\n  next =>\n    (" + ZB + ")\n  next =>\n    (" + C0B + ")\n  next =>\n    (" + C0B + ")\n  all_goals sorry\n"
 for nm,cond,doc in [("lbLo","(h96 : len.toNat ≤ 96)","`len ≤ 96`"),("lbHi","(h96 : 96 < len.toNat)","`96 < len`")]:
     th=thm.replace("theorem lb (","theorem "+nm+" (").replace("(hrecv : s.mem.readLE c.toNat 3 = 65793)","(hrecv : s.mem.readLE c.toNat 3 = 65793) "+cond)
     th=th.replace("  have hLs0 := hLsS\n","")

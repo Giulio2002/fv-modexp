@@ -115,24 +115,26 @@ theorem lbHi (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl
   janus64_run [hTm, hT4, hT14, hT5, hTx, hTfs, hTdf, hsp, hm1, hm2, hm3, hm4, hm5, hm6, hc1, hgS, htS, hfs, hdf, hx15, hT2, hT3', hT3, hI2, hI9, hI11, hIl, toInt_ite, toNat_ite,
     ite3_int_gt, ite3_nat_le, BitVec.msb_eq_decide] until [pcC0, segAddr Extracted.program fn + 0x575] calls [hnoP]
   all_goals first
-  | (have hx0 : (T.regs 2).toNat ≤ 64 := by omega
+  | ((try simp (disch := omega) only [cmova_max] at *)
+     have hx0 : (T.regs 2).toNat ≤ 64 := by omega
      have hx1 : (T.regs 9).toNat ≤ 64 := by omega
      have hx2 : (T.regs 11).toNat ≤ 64 := by omega
      have hv0 := hU0 hx0
      have hv1 := hU1 hx1
      have hv2 := hU2 hx2
      refine hk _ (by janus64_simp) (by janus64_simp [hTm]) (by janus64_simp [hT4]) (by janus64_simp [hT14])
-       (by janus64_simp [hT5]) (by janus64_simp [hTx]) (by janus64_simp [hTfs]) (by janus64_simp [hTdf])
-       (by omega) (by omega) (by omega) (by janus64_simp at *; omega) (by janus64_simp; omega) (by janus64_simp; omega)
+       (by janus64_simp [hT5]) (by janus64_simp [hTx]) (by janus64_simp [hTfs, hfs]) (by janus64_simp [hTdf, hdf])
+       (by omega) (by omega) (by omega) (by first | omega | bv_omega) (by janus64_simp; omega) (by janus64_simp; omega)
        (by janus64_simp; omega) ?_ ?_ ?_ <;>
      (janus64_simp <;> (try simp only [BitVec.toNat_add, BitVec.toNat_sub, BitVec.toNat_ofNat]) <;> (try split) <;> omega))
-  | (have hx0 : (T.regs 2).toNat ≤ 64 := by omega
+  | ((try simp (disch := omega) only [cmova_max] at *)
+     have hx0 : (T.regs 2).toNat ≤ 64 := by omega
      have hx1 : (T.regs 9).toNat ≤ 64 := by omega
      have hx2 : (T.regs 11).toNat ≤ 64 := by omega
      have hv0 := hU0 hx0
      have hv1 := hU1 hx1
      have hv2 := hU2 hx2
-     refine hZero _ (by janus64_simp at *; omega) (by omega) (by janus64_simp at *; omega)
+     refine hZero _ (by first | omega | bv_omega) (by omega) (by first | omega | bv_omega)
        ⟨by janus64_simp [hsp, hT4], by janus64_simp [hm2, regFP], by janus64_simp [h14, hT14, regG],
         by janus64_simp [hx15, hTx]⟩
        (by janus64_simp) (by janus64_simp) ⟨by janus64_simp [hTfs, hfs], by janus64_simp [hTdf, hdf, hdf0], L1, b1, hext,
@@ -140,7 +142,8 @@ theorem lbHi (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl
      · dsimp only; (try rw [hTm]); first | exact hinv | exact RtInv.inv_congr hinv rfl (by janus64_simp) rfl
      · dsimp only; (try rw [hTm]); exact hMF
      · dsimp only; (try rw [hTm]); exact hLF)
-  | (have hcond : 1024 < hdrV s p len 0 ∨ 1024 < hdrV s p len 1 ∨ 1024 < hdrV s p len 2 := by
+  | ((try simp (disch := omega) only [cmova_max] at *)
+     have hcond : 1024 < hdrV s p len 0 ∨ 1024 < hdrV s p len 1 ∨ 1024 < hdrV s p len 2 := by
        first
        | exact err_of_big hL0' hL1' hL2' (by omega)
        | exact err_of_u hL0' hL1' hL2' (by omega) (by omega)
