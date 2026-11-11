@@ -109,4 +109,26 @@ theorem callEnv_of {R : RtInv} {L : List (Nat × Nat)} {g sp K A : Nat} {M : Mem
   simp only [win, outside_cons, outside_nil, and_true] at this ⊢
   rw [esp]; omega
 
+/-- `CEnv` survives a frame (`R.rt ++ ws`, `ws` writable at the old memory, the guard word outside `ws`) when the
+regions are unchanged. -/
+theorem CEnv.frame {R : RtInv} {L : List (Nat × Nat)} {g sp K A : Nat} {M M' : Memory} {ws : List (Nat × Nat)}
+    (h : CEnv R L g sp K A M) (hf : MemFrame M M' (R.rt ++ ws)) (hreg : M'.regions = M.regions)
+    (hws : ∀ r ∈ ws, r.1 < r.2 → M.accessible r.1 (r.2 - r.1) true = true) (hg : Outside (g + 16) 8 ws) :
+    CEnv R L g sp K A M' := by
+  obtain ⟨hal, hK, hA, hacc, hg1, hg2, hg3, hrt, hga, hgrt, hLs, hd, hro⟩ := h
+  have hgr : M'.readLE (g + 16) 8 = M.readLE (g + 16) 8 :=
+    hf.readLE _ _ (by simp only [outside_append]; exact ⟨hgrt, hg⟩)
+  refine ⟨hal, hK, hA, by rw [hf.accessible]; exact hacc, hg1, by rw [hf.accessible]; exact hg2, by rw [hgr]; exact hg3,
+    hrt, hga, hgrt, hLs, FvModexp.dataLoaded_frame hd hreg hro hf hws, hro⟩
+
+theorem CEnv.mono {R : RtInv} {L : List (Nat × Nat)} {g sp K A K' A' : Nat} {M : Memory}
+    (h : CEnv R L g sp K A M) (hK : K' ≤ K) (hA : A' ≤ A) : CEnv R L g sp K' A' M := by
+  obtain ⟨hal, hK0, hA0, hacc, hg1, hg2, hg3, hrt, hga, hgrt, hLs, hd, hro⟩ := h
+  refine ⟨hal, by omega, by omega, M.accessible_sub hacc (Or.inr rfl) (by omega) (by omega), hg1, hg2, by omega,
+    hrt.of_sub (by omega) (by omega), by unfold Apart at hga ⊢; omega, hgrt, ?_, hd, hro⟩
+  intro r hr
+  have := hLs r hr
+  simp only [outside_cons, outside_nil, and_true] at this ⊢
+  omega
+
 end FvModexp.Arm64.CallW
