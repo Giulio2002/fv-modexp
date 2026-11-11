@@ -16,6 +16,7 @@ theorem h3s (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     (henv : CallEnv R L s stk 40) (hin : InputOK R L c p len cp s) (hokr : HdrOkR R b len)
     (Q : Outcome → Prop)
     (hk : ∀ S L2 b2, RelH R b L c p len cp s ret 3 L2 b2 S → S.pc = BitVec.ofNat 64 pcB3 →
+      (S.regs 0).toNat = S.mem.readLE (s.sp.toNat - 96) 8 → (S.regs 1).toNat = S.mem.readLE (s.sp.toNat - 88) 8 →
       Reaches ((LibRun.program.link impl).withExit ret) S Q)
     (S : State) (L1 : List (Nat × Nat)) (b1 : Nat) (hrel : RelH R b L c p len cp s ret 2 L1 b1 S)
     (hpc : S.pc = BitVec.ofNat 64 pcB2) (h96 : len.toNat < 96) :
@@ -103,6 +104,7 @@ theorem h3s (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
       ((LiveFrame.of_win (by simp only [win, stk]; janus_frame) hLsL1).trans (LiveFrame.drop hLFm hdst)
         (fun _ _ h => h)).trans (LiveFrame.of_empty hLF2 []) (fun _ _ h => h)
     refine hk _ L2 b2 (RelH.mk' hin0 ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ (hext.trans hext2) ?_ ?_ ?_ ?_ ?_ ?_) (by janus_simp)
+      (by janus_simp) (by janus_simp)
     all_goals try (janus_simp [hm1, hm2, hm3, hm4, hm5, hm6, hsl1, hsl2]; done)
     case h.refine_12 => janus_callpre
     case h.refine_13 => simp [SetBytesStd.nW] at hb2; omega
@@ -132,7 +134,8 @@ theorem h3s (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
           (hLFS.trans (LiveFrame.of_win (by simp only [win, stk]; janus_frame) (hext2.liveSep hLsL1 hwrt))
             (fun _ _ h => hext2.inRanges_old h)) (fun _ _ h => hext2.inRanges_old h)
         all_goals (simp only [hdrAt]; janus_simp)
-      · refine hdrDone_of (m := s'.mem) ?rd (by janus_simp [hp2, hdrAt]) (by janus_simp [hn2, hdrAt])
+      · refine hdrDone_of (m := s'.mem) ?rd (hacc := fun a n w => by simp only [Memory.accessible_writeLE, hMF2.accessible, hMFm.accessible, hMF.accessible])
+          (by janus_simp [hp2, hdrAt]) (by janus_simp [hn2, hdrAt])
           (by janus_simp [hc2, hdrAt]) ?v hnorm2 (by simpa [SetBytesStd.nW] using hnw2) hnc2 ?fr hlive2
           (by rw [hstk]; exact hout)
         case rd =>
@@ -197,6 +200,7 @@ theorem h3s (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
       ((LiveFrame.of_win (by simp only [win, stk]; janus_frame) hLsL1).trans (LiveFrame.drop hLFm hdst)
         (fun _ _ h => h)).trans (LiveFrame.of_empty hLF2 []) (fun _ _ h => h)
     refine hk _ L2 b2 (RelH.mk' hin0 ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ (hext.trans hext2) ?_ ?_ ?_ ?_ ?_ ?_) (by janus_simp)
+      (by janus_simp) (by janus_simp)
     all_goals try (janus_simp [hm1, hm2, hm3, hm4, hm5, hm6, hsl1, hsl2]; done)
     case h.refine_12 => janus_callpre
     case h.refine_13 => simp [SetBytesStd.nW] at hb2; omega
@@ -226,7 +230,8 @@ theorem h3s (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
           (hLFS.trans (LiveFrame.of_win (by simp only [win, stk]; janus_frame) (hext2.liveSep hLsL1 hwrt))
             (fun _ _ h => hext2.inRanges_old h)) (fun _ _ h => hext2.inRanges_old h)
         all_goals (simp only [hdrAt]; janus_simp)
-      · refine hdrDone_of (m := s'.mem) ?rd (by janus_simp [hp2, hdrAt]) (by janus_simp [hn2, hdrAt])
+      · refine hdrDone_of (m := s'.mem) ?rd (hacc := fun a n w => by simp only [Memory.accessible_writeLE, hMF2.accessible, hMFm.accessible, hMF.accessible])
+          (by janus_simp [hp2, hdrAt]) (by janus_simp [hn2, hdrAt])
           (by janus_simp [hc2, hdrAt]) ?v hnorm2 (by simpa [SetBytesStd.nW] using hnw2) hnc2 ?fr hlive2
           (by rw [hstk]; exact hout)
         case rd =>

@@ -30,3 +30,19 @@ def HdrOK (m : Memory) (a v : Nat) : Prop :=
     m.readLE (a + 8) 8 ≤ m.readLE (a + 16) 8
 
 end FvModexp.Arm64.Run
+
+namespace FvModexp.Arm64.Run
+
+open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
+
+/-- The memory and runtime frame of `Run`'s return: the live set grows by objects of the runtime, the budget drops by at most
+`B`, the invariant holds, only `R.rt` and the window changed, and the caller's live objects are intact. -/
+def RunFrame (R : RtInv) (b B : Nat) (L : List (Nat × Nat)) (s s' : State) : Prop :=
+  ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b - B ≤ b' ∧
+    R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem) ∧
+    MemFrame s.mem s'.mem (R.rt ++ win s stk 40) ∧ LiveFrame s.mem s'.mem L []
+
+/-- `Run` returned `(nil, err)` with a non-nil `error` (`X0, X1 = 0`: the nil `[]byte`; `X3` = the error's type word). -/
+def ErrRet (s' : State) : Prop := s'.regs 0 = 0#64 ∧ s'.regs 1 = 0#64 ∧ s'.regs 3 ≠ 0#64
+
+end FvModexp.Arm64.Run

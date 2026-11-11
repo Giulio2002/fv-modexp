@@ -203,24 +203,27 @@ def maxW : Nat := 128
 /-- The `*Int` at `a` has at most `k` words (`len(abs) ≤ k`). -/
 def IntLenLe (m : Memory) (a k : Nat) : Prop := m.readLE (a + 16) 8 ≤ k
 
-/-- Budget of one served request: a request `Serves` admits (≤ 2^17 word or byte elements, a `growslice` at most doubling
-a capacity of ≤ 2^17 words, size-class rounding included) is a block of at most 2^23 bytes, so it costs at most
-`allocCost (2 ^ 23)` (`blockSize_le_allocCost`). -/
-def opCost : Nat := allocCost (2 ^ 23)
+/-- The word count `len(abs)` of the `*Int` at `a`. -/
+def lenW (m : Memory) (a : Nat) : Nat := m.readLE (a + 16) 8
 
-/-- Budget of `z.Mod(z, y)` for operands of ≤ `maxW` words: at most 256 allocating requests (`nat.make` of `u`, `q`, `z`,
-`(*stack).nat` scratch of `divLarge`/`divRecursiveStep` per recursion block (≤ 4 blocks of 40 words, depth ≤ 2),
-`stack` from `getStack`), each ≤ `opCost`. Derivation in docs/HUMAN-REVIEW.md. -/
-def ModBudget : Nat := 256 * opCost
+/-- Budget of one request of a callee whose operands have at most `w` words: the request is at most `64 w + 64` words
+(window-4 exponentiation's `stk.reserve(23 · len m)`, the Karatsuba / recursive-division scratch of `2 len m`-word
+products, `nat.make` results), at most doubled by `growslice`: a block of at most `1024 w + 1024` bytes, which costs at
+most `allocCost (1024 w + 1024)` (`blockSize_le_allocCost`). -/
+def opCost (w : Nat) : Nat := allocCost (1024 * w + 1024)
 
-/-- Budget of `z.exp(z, y, m, false)` for operands of ≤ `maxW` words: per exponent bit (≤ 64 · `maxW` = 8192 bits) at
-most 8 allocating requests (one `sqr`, one `mul`, one reduction by `div`/`montgomery`: their `nat.make` results and
-`(*stack).nat` scratch), plus 256 setup requests (power table of 16 entries, `stk.reserve`, `m1`/`m2`/`z1`/`z2` of
-`expNNEven`, `getStack`), each ≤ `opCost`. Derivation in docs/HUMAN-REVIEW.md. -/
-def ExpBudget : Nat := (8 * (64 * maxW) + 256) * opCost
+/-- Budget of `z.Mod(z, y)` for operands of at most `w` words: at most 64 allocating requests (`nat.make` of `u`, `q`, `z`,
+the `(*stack).nat` scratch of `divLarge`/`divRecursiveStep`, `getStack`). Derivation in docs/HUMAN-REVIEW.md. -/
+def ModBudget (w : Nat) : Nat := 64 * opCost w
 
-/-- Budget of `x.Bytes()` for `x` of ≤ `maxW` words: one `make([]byte, 8 · len x)` of ≤ 1024 bytes. -/
-def BytesBudget : Nat := allocCost (8 * maxW)
+/-- Budget of `z.exp(z, y, m, false)` for operands of at most `w` words and an exponent of `yW` words: per exponent bit
+(`64 yW` bits) at most 8 allocating requests (one `sqr`, one `mul`, one reduction by `div`/`montgomery`: their `nat.make`
+results and `(*stack).nat` scratch), plus 128 setup requests (power table of 16 entries, `stk.reserve`, `m1 m2 z1 z2` of
+`expNNEven`, `lsh`, `getStack`). Derivation in docs/HUMAN-REVIEW.md. -/
+def ExpBudget (w yW : Nat) : Nat := (8 * (64 * yW) + 128) * opCost w
+
+/-- Budget of `x.Bytes()` for `x` of `w` words: one `make([]byte, 8 w)`. -/
+def BytesBudget (w : Nat) : Nat := allocCost (8 * w)
 
 /-- What every spec returns about the receiver `z` (written: its header and a new or reused array) and the runtime. -/
 def IntPost (R : RtInv) (b B : Nat) (L : List (Nat × Nat)) (stk above : Nat) (z : Nat) (v : Nat) (s s' : State) : Prop :=
@@ -232,34 +235,38 @@ def IntPost (R : RtInv) (b B : Nat) (L : List (Nat × Nat)) (stk above : Nat) (z
       (s.mem.readLE (z + 8) 8, s.mem.readLE (z + 8) 8 + 8 * s.mem.readLE (z + 24) 8)]
 
 /-- **`z.Mod(z, y)`** as Run calls it (`int.go:325`; `X0 = z`, `X1 = x = z`, `X2 = y`): returns `z` with `z = x mod y`. -/
-def ModSpec (impl : List Segment) (R : RtInv) (stk above : Nat) (B : Nat := ModBudget) : Prop :=
+def ModSpec (impl : List Segment) (R : RtInv) (stk above : Nat) : Prop :=
   ∀ (b : Nat) (L : List (Nat × Nat)) (z y : BitVec 64),
     Ensures ((Extracted.program.onlySegments namesMod).link impl) (segAddr Extracted.program (P ++ "(*Int).Mod")) [z, z, y]
-      (fun s => IntPre R b B L stk above [z.toNat, y.toNat] s ∧ 0 < IntV s.mem y.toNat ∧
+      (fun s => IntPre R b (ModBudget (max (lenW s.mem z.toNat) (lenW s.mem y.toNat))) L stk above [z.toNat, y.toNat] s ∧
+        0 < IntV s.mem y.toNat ∧
         IntLenLe s.mem z.toNat maxW ∧ IntLenLe s.mem y.toNat maxW)
-      (fun s s' => s'.regs 0 = z ∧ IntPost R b B L stk above z.toNat (IntV s.mem z.toNat % IntV s.mem y.toNat) s s' ∧
+      (fun s s' => s'.regs 0 = z ∧ IntPost R b (ModBudget (max (lenW s.mem z.toNat) (lenW s.mem y.toNat)))
+          L stk above z.toNat (IntV s.mem z.toNat % IntV s.mem y.toNat) s s' ∧
         IntV s'.mem y.toNat = IntV s.mem y.toNat)
 
 /-- **`z.exp(z, y, m, false)`** as Run calls it (`int.go:575`; `X0 = z`, `X1 = x = z`, `X2 = y`, `X3 = m`, `X4 = slow = 0`):
 returns `z` with `z = x ^ y mod m` (`m > 0`; `y ≥ 0`, so the `ModInverse` path is not taken). -/
-def ExpSpec (impl : List Segment) (R : RtInv) (stk above : Nat) (B : Nat := ExpBudget) : Prop :=
+def ExpSpec (impl : List Segment) (R : RtInv) (stk above : Nat) : Prop :=
   ∀ (b : Nat) (L : List (Nat × Nat)) (z y mm : BitVec 64),
     Ensures ((Extracted.program.onlySegments namesExp).link impl) (segAddr Extracted.program (P ++ "(*Int).exp"))
       [z, z, y, mm, 0#64]
-      (fun s => IntPre R b B L stk above [z.toNat, y.toNat, mm.toNat] s ∧ 0 < IntV s.mem mm.toNat ∧
+      (fun s => IntPre R b (ExpBudget (max (max (lenW s.mem z.toNat) (lenW s.mem y.toNat)) (lenW s.mem mm.toNat)) (lenW s.mem y.toNat))
+        L stk above [z.toNat, y.toNat, mm.toNat] s ∧ 0 < IntV s.mem mm.toNat ∧
         IntLenLe s.mem z.toNat maxW ∧ IntLenLe s.mem y.toNat maxW ∧ IntLenLe s.mem mm.toNat maxW)
       (fun s s' => s'.regs 0 = z ∧
-        IntPost R b B L stk above z.toNat (IntV s.mem z.toNat ^ IntV s.mem y.toNat % IntV s.mem mm.toNat) s s')
+        IntPost R b (ExpBudget (max (max (lenW s.mem z.toNat) (lenW s.mem y.toNat)) (lenW s.mem mm.toNat)) (lenW s.mem y.toNat))
+          L stk above z.toNat (IntV s.mem z.toNat ^ IntV s.mem y.toNat % IntV s.mem mm.toNat) s s')
 
 /-- **`x.Bytes()`** (`int.go:527`; `X0 = x`): a fresh `[]byte` `(p, n, n)` holding the minimal big-endian form of `x`
 (no leading zero byte), `x` unchanged. -/
-def BytesSpec (impl : List Segment) (R : RtInv) (stk above : Nat) (B : Nat := BytesBudget) : Prop :=
+def BytesSpec (impl : List Segment) (R : RtInv) (stk above : Nat) : Prop :=
   ∀ (b : Nat) (L : List (Nat × Nat)) (x : BitVec 64),
     Ensures ((Extracted.program.onlySegments [fnBytes]).link impl) (segAddr Extracted.program fnBytes) [x]
-      (fun s => IntPre R b B L stk above [x.toNat] s ∧ IntLenLe s.mem x.toNat maxW)
+      (fun s => IntPre R b (BytesBudget (lenW s.mem x.toNat)) L stk above [x.toNat] s ∧ IntLenLe s.mem x.toNat maxW)
       (fun s s' => ∃ p n c : Nat, (s'.regs 0).toNat = p ∧ (s'.regs 1).toNat = n ∧ (s'.regs 2).toNat = c ∧ n ≤ c ∧
         beVal s'.mem p n = IntV s.mem x.toNat ∧ (n = 0 ∨ (s'.mem.bytes p).toNat ≠ 0) ∧
-        ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b - B ≤ b' ∧
+        ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b - (BytesBudget (lenW s.mem x.toNat)) ≤ b' ∧
           R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem) ∧ (0 < n → Held R L' p n) ∧
           MemFrame s.mem s'.mem (R.rt ++ win s stk above) ∧ LiveFrame s.mem s'.mem L [])
 

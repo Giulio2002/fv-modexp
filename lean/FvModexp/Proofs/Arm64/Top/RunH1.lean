@@ -98,7 +98,8 @@ theorem h1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
       obtain rfl : i = 0 := by omega
       dsimp only
       have hstk : stk = 4800 := rfl
-      refine hdrDone_of (m := s'.mem) ?rd (by janus_simp [hp1, hdrAt]) (by janus_simp [hn1, hdrAt]) (by janus_simp [hc1, hdrAt]) ?v hnorm1
+      refine hdrDone_of (m := s'.mem) ?rd (hacc := fun a n w => by simp only [Memory.accessible_writeLE, hMF1.accessible, hMF.accessible])
+          (by janus_simp [hp1, hdrAt]) (by janus_simp [hn1, hdrAt]) (by janus_simp [hc1, hdrAt]) ?v hnorm1
         (by simpa [SetBytesStd.nW] using hnw1) hnc1 ?fr hlive1 (by rw [hstk]; exact hout)
       case rd =>
         intro a n h
@@ -165,7 +166,8 @@ theorem h1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
       obtain rfl : i = 0 := by omega
       dsimp only
       have hstk : stk = 4800 := rfl
-      refine hdrDone_of (m := s'.mem) ?rd (by janus_simp [hp1, hdrAt]) (by janus_simp [hn1, hdrAt]) (by janus_simp [hc1, hdrAt]) ?v hnorm1
+      refine hdrDone_of (m := s'.mem) ?rd (hacc := fun a n w => by simp only [Memory.accessible_writeLE, hMF1.accessible])
+          (by janus_simp [hp1, hdrAt]) (by janus_simp [hn1, hdrAt]) (by janus_simp [hc1, hdrAt]) ?v hnorm1
         (by simpa [SetBytesStd.nW] using hnw1) hnc1 ?fr hlive1 (by rw [hstk]; exact hout)
       case rd =>
         intro a n h
