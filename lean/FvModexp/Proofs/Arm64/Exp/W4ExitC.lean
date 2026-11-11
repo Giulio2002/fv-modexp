@@ -102,7 +102,7 @@ theorem exB (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
       (by simpa only [lw, List.append_assoc] using hF) hrg0 ?_ ?_
     · intro r hr hlt
       simp only [fw, List.mem_append, List.mem_cons, List.mem_nil_iff, or_false] at hr
-      rcases hr with (rfl | rfl | rfl | rfl | rfl) | (rfl | rfl)
+      rcases hr with (rfl | rfl | rfl | rfl | rfl | rfl) | (rfl | rfl)
       all_goals first
         | exact M0.accessible_sub hwacc (Or.inr rfl) (by dsimp only; omega) (by dsimp only; omega)
         | (dsimp only; rw [show zp + 8 * zc - zp = 8 * zc by omega]; exact hza)

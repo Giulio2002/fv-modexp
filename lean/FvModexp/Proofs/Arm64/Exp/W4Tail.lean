@@ -91,7 +91,7 @@ theorem exitRet (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     {ext : List (Nat × Nat)} (M0 : Memory) (r18 r29 : BitVec 64) (onep st n0 : Nat)
     (hst : Static R L g sp n mp mc k0 yp ylen Y tbl pp pcap M0) (hce0 : CallW.CEnv R L g sp 4304 1040 M0)
     (hmw4 : Apart mp (8 * n) (sp - 4304) 16) (hnm0 : NatNorm M0 mp n)
-    (hone : Inp R L sp n M0 onep) (hone1 : M0.readLE onep (8 * n) = 1) (r816 : M0.readLE (sp + 816) 8 = onep)
+    (hone : OneIn R L sp n M0 onep) (hone1 : M0.readLE onep (8 * n) = 1) (r816 : M0.readLE (sp + 816) 8 = onep)
     (hk : (k0 * M0.readLE mp (8 * n) + 1) % Exp.B = 0) (hmB : M0.readLE mp (8 * n) < Exp.B ^ n)
     (hfe : FinEnv sp g st n0 r29 ret M0) (hsth : InRanges st 24 L ∨ Outside st 24 R.rt)
     (hstw4 : Apart st 24 (sp - 4304) (4304 + 1040))
