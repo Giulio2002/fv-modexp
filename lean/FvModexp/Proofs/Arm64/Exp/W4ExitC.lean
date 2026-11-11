@@ -69,7 +69,7 @@ theorem exB (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
     (hserv : RunIface.Serves R)
     (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret) (Q : Outcome → Prop)
-    (b : Nat) (L : List (Nat × Nat)) (g sp n mp mc k0 yp ylen Y : Nat) (tbl pp pcap : Nat → Nat) (M0 : Memory)
+    (b : Nat) (L : List (Nat × Nat)) (g sp n mp mc k0 yp ylen Y : Nat) (tbl pp pcap : Nat → Nat) {ext : List (Nat × Nat)} (M0 : Memory)
     (r18 r29 : BitVec 64)
     (hst : Static R L g sp n mp mc k0 yp ylen Y tbl pp pcap M0) (hce0 : CallW.CEnv R L g sp 4304 1040 M0)
     (hmw4 : Apart mp (8 * n) (sp - 4304) 16) (hnm0 : NatNorm M0 mp n)
@@ -78,7 +78,7 @@ theorem exB (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     (h0 : S.regs 0 = BitVec.ofNat 64 zzp) (h1 : S.regs 1 = BitVec.ofNat 64 n) (h2 : S.regs 2 = BitVec.ofNat 64 zzc)
     (h3 : S.regs 3 = BitVec.ofNat 64 mp) (h4 : S.regs 4 = BitVec.ofNat 64 n) (h5 : S.regs 5 = BitVec.ofNat 64 mc)
     (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = r29) (hmem : S.mem = M)
-    (hB : Bufs R L g sp n mp yp ylen pp M0 zp zc zzp zzc) (hM : Mem R b L g sp M0 M zp zc zzp zzc)
+    (hB : Bufs R L g sp n mp yp ylen pp ext M0 zp zc zzp zzc) (hM : Mem R b L g sp M0 M zp zc zzp zzc)
     (r400 : M.readLE (sp + 400) 8 = zzp) (r160 : M.readLE (sp + 160) 8 = n) (r168 : M.readLE (sp + 168) 8 = zzc)
     (hZle : M.readLE zzp (8 * n) ≤ M0.readLE mp (8 * n))
     (KJ : ∀ (S' : State) (p l c : Nat) (M' : Memory), S'.pc = BitVec.ofNat 64 njoinL → S'.sp = BitVec.ofNat 64 sp →
@@ -91,7 +91,7 @@ theorem exB (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   obtain ⟨he, hn, hn16, hmc, hmc', hk0, hyl, hyl', hm, hy, hY, hpw, r1016, r1024, r1032, r224, r1000, r992, hok⟩ := hst
   obtain ⟨hF, hLF, hinv, hrg0⟩ := hM
   obtain ⟨hal, hsp1, hsp2, hwacc, hg1, hg2, hg3, hwrt, hgw, hgrt, hLs⟩ := he
-  obtain ⟨hBz, hBzz, hzzz, hzm, hzzm, hzy, hzzy, hzp, hal8z, hal8zz, hstz, hstzz⟩ := hB
+  obtain ⟨hBz, hBzz, hzzz, hzm, hzzm, hzy, hzzy, hzp, hal8z, hal8zz, hstz, hstzz, hext⟩ := hB
   obtain ⟨hma, hmb, hmh, hmw⟩ := hm
   obtain ⟨hzc1, hzc2, hza, hzb, hzh, hzw, hzg⟩ := hBz
   obtain ⟨hzzc1, hzzc2, hzza, hzzb, hzzh, hzzw, hzzg⟩ := hBzz

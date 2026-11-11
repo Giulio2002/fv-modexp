@@ -32,7 +32,7 @@ theorem exA (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
     (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret) (Q : Outcome → Prop)
-    (b : Nat) (L : List (Nat × Nat)) (g sp n mp mc k0 yp ylen Y : Nat) (tbl pp pcap : Nat → Nat) (M0 : Memory)
+    (b : Nat) (L : List (Nat × Nat)) (g sp n mp mc k0 yp ylen Y : Nat) (tbl pp pcap : Nat → Nat) {ext : List (Nat × Nat)} (M0 : Memory)
     (r18 r29 : BitVec 64) (onep : Nat)
     (hst : Static R L g sp n mp mc k0 yp ylen Y tbl pp pcap M0)
     (hone : Inp R L sp n M0 onep) (hone1 : M0.readLE onep (8 * n) = 1) (r816 : M0.readLE (sp + 816) 8 = onep)
@@ -43,7 +43,7 @@ theorem exA (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     (h2 : S.regs 2 = BitVec.ofNat 64 n) (h3 : S.regs 3 = BitVec.ofNat 64 n) (h9 : S.regs 9 = BitVec.ofNat 64 mp)
     (h11 : S.regs 11 = BitVec.ofNat 64 mc) (h12 : S.regs 12 = BitVec.ofNat 64 k0)
     (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = r29) (hmem : S.mem = M)
-    (hB : Bufs R L g sp n mp yp ylen pp M0 zp zc zzp zzc) (hM : Mem R b L g sp M0 M zp zc zzp zzc)
+    (hB : Bufs R L g sp n mp yp ylen pp ext M0 zp zc zzp zzc) (hM : Mem R b L g sp M0 M zp zc zzp zzc)
     (hzo : Apart zp (8 * zc) onep (8 * n)) (hzzo : Apart zzp (8 * zzc) onep (8 * n))
     (KA : ∀ (S' : State) (M' : Memory), S'.pc = BitVec.ofNat 64 cmpEntry →
       S'.regs 30 = BitVec.ofNat 64 cmp1Ret → S'.sp = BitVec.ofNat 64 sp →
@@ -59,7 +59,7 @@ theorem exA (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   obtain ⟨hF, hLF, hinv, hrg0⟩ := hM
   obtain ⟨hal, hsp1, hsp2, hwacc, hg1, hg2, hg3, hwrt, hgw, hgrt, hLs⟩ := he
   have he' : Env R L g sp M0 := ⟨hal, hsp1, hsp2, hwacc, hg1, hg2, hg3, hwrt, hgw, hgrt, hLs⟩
-  obtain ⟨hBz, hBzz, hzzz, hzm, hzzm, hzy, hzzy, hzp, hal8z, hal8zz, hstz, hstzz⟩ := hB
+  obtain ⟨hBz, hBzz, hzzz, hzm, hzzm, hzy, hzzy, hzp, hal8z, hal8zz, hstz, hstzz, hext⟩ := hB
   have hzI : Inp R L sp n M0 zp := ⟨M0.accessible_sub hBz.2.2.1 (Or.inr rfl) (Nat.le_refl _) (by omega),
     by omega, hBz.2.2.2.2.1.imp (fun h => h.sub (Nat.le_refl _) (by omega)) (fun h => h.of_sub (Nat.le_refl _) (by omega)),
     by have := hBz.2.2.2.2.2.1; unfold Apart at this ⊢; omega⟩

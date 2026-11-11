@@ -120,19 +120,23 @@ def Static (R : RtInv) (L : List (Nat × Nat)) (g sp n mp mc k0 yp ylen Y : Nat)
     R.ok (Extracted.program.contractAddr "runtime.memmove") [rp, rp + n * 8, 8 * n])
 
 /-- the two buffers at a loop state -/
-@[reducible] def Bufs (R : RtInv) (L : List (Nat × Nat)) (g sp n mp yp ylen : Nat) (pp : Nat → Nat) (M0 : Memory)
+@[reducible] def Bufs (R : RtInv) (L : List (Nat × Nat)) (g sp n mp yp ylen : Nat) (pp : Nat → Nat)
+    (ext : List (Nat × Nat)) (M0 : Memory)
     (zp zc zzp zzc : Nat) : Prop :=
   Buf R L g sp n M0 zp zc ∧ Buf R L g sp n M0 zzp zzc ∧ Apart zp (8 * zc) zzp (8 * zzc) ∧
   Apart zp (8 * zc) mp (8 * n) ∧ Apart zzp (8 * zzc) mp (8 * n) ∧
   Apart zp (8 * zc) yp (8 * ylen) ∧ Apart zzp (8 * zzc) yp (8 * ylen) ∧
   (∀ d, d < 16 → Apart zp (8 * zc) (pp d) (8 * n) ∧ Apart zzp (8 * zzc) (pp d) (8 * n)) ∧
-  zp % 8 = 0 ∧ zzp % 8 = 0 ∧ Apart zp (8 * zc) (sp - 4304) 16 ∧ Apart zzp (8 * zzc) (sp - 4304) 16
+  zp % 8 = 0 ∧ zzp % 8 = 0 ∧ Apart zp (8 * zc) (sp - 4304) 16 ∧ Apart zzp (8 * zzc) (sp - 4304) 16 ∧
+  (∀ q ∈ ext, Apart zp (8 * zc) q.1 q.2 ∧ Apart zzp (8 * zzc) q.1 q.2)
 
-theorem Bufs.swap {R : RtInv} {L : List (Nat × Nat)} {g sp n mp yp ylen : Nat} {pp : Nat → Nat} {M0 : Memory}
-    {zp zc zzp zzc : Nat} (h : Bufs R L g sp n mp yp ylen pp M0 zp zc zzp zzc) :
-    Bufs R L g sp n mp yp ylen pp M0 zzp zzc zp zc := by
-  obtain ⟨a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12⟩ := h
-  exact ⟨a2, a1, a3.symm, a5, a4, a7, a6, fun d hd => ⟨(a8 d hd).2, (a8 d hd).1⟩, a10, a9, a12, a11⟩
+theorem Bufs.swap {R : RtInv} {L : List (Nat × Nat)} {g sp n mp yp ylen : Nat} {pp : Nat → Nat}
+    {ext : List (Nat × Nat)} {M0 : Memory}
+    {zp zc zzp zzc : Nat} (h : Bufs R L g sp n mp yp ylen pp ext M0 zp zc zzp zzc) :
+    Bufs R L g sp n mp yp ylen pp ext M0 zzp zzc zp zc := by
+  obtain ⟨a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13⟩ := h
+  exact ⟨a2, a1, a3.symm, a5, a4, a7, a6, fun d hd => ⟨(a8 d hd).2, (a8 d hd).1⟩, a10, a9, a12, a11,
+    fun q hq => ⟨(a13 q hq).2, (a13 q hq).1⟩⟩
 
 /-- the memory facts at a loop state `M` -/
 @[reducible] def Mem (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (g sp : Nat) (M0 M : Memory) (zp zc zzp zzc : Nat) :

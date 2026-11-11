@@ -69,7 +69,7 @@ theorem finIter (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.progra
     (hpc : S.pc = BitVec.ofNat 64 njoin) (hsp : S.sp = BitVec.ofNat 64 sp)
     (h3 : S.regs 3 = BitVec.ofNat 64 p) (h4 : S.regs 4 = BitVec.ofNat 64 l) (h5 : S.regs 5 = BitVec.ofNat 64 c)
     (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (hmem : S.mem = M)
-    (hl : l < 2 ^ 40) (hpa : l = 0 ∨ (p + 8 * l ≤ 2 ^ 48 ∧ M.accessible p (8 * l) false = true))
+    (hl : l < 2 ^ 48) (hpa : l = 0 ∨ (p + 8 * l ≤ 2 ^ 48 ∧ M.accessible p (8 * l) false = true))
     (KT : ∀ S' : State, S'.pc = BitVec.ofNat 64 tailPc → S'.sp = BitVec.ofNat 64 sp →
       S'.regs 3 = BitVec.ofNat 64 p → S'.regs 4 = BitVec.ofNat 64 l → S'.regs 5 = BitVec.ofNat 64 c →
       S'.regs 18 = r18 → S'.regs 28 = BitVec.ofNat 64 g → S'.mem = M →
