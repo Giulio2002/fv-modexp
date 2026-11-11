@@ -20,7 +20,7 @@ if [ ! -f "$base/Extracted.lean" ]; then
     $(contract_flags Run) --max-functions 100 >"$log" 2>&1 || { echo "extract failed"; tail "$log"; exit 1; }
 fi
 rm -rf "$out"; cp -r "$base" "$out"
-pf=lean/FvModexp/Proofs/$dir/Nat/$row.lean
+pf=lean/FvModexp/Proofs/$dir/${ROWDIR:-Nat}/$row.lean
 timeout 900 memcap -m 16G $JANUS verify "$out" --proof "$pf" --proof-root lean \
   --theorem "FvModexp.$dir.$row.correctness" --theorem "FvModexp.$dir.$row.Witness.nonvacuous" >>"$log" 2>&1 &
 bg=$!; peak=0; cg=""
