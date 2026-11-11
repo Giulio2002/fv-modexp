@@ -120,7 +120,6 @@ theorem og_summary : Summary Extracted.program ogA OgPre OgPost := by
          | (try simp (disch := omega) only [Nat.mod_eq_of_lt] at *
             generalize (mx + 7) / 8 = w at *
             generalize w * w = W at *
-            omega)
-         | (trace_state; sorry))
+            omega))
 
 end FvModexp.Amd64.RG
