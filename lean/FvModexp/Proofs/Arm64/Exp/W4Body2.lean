@@ -133,7 +133,10 @@ theorem body2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
       (by simp only [outside_cons, outside_nil, and_true]; omega)
     have bm := FL.read ⟨hF0, hLF⟩ hmh hmw hsp1 hzm hzzm
     have bp := FL.read ⟨hF0, hLF⟩ hph hpw' hsp1 hzp1 hzzp1
-    simp (disch := omega) only [Memory.readLE_writeLE_of_disjoint, a3m, a4m, a3p, a4p, bm, bp, hpv] at v3 v4 v5
+    have hzw8 : Apart zp (8 * n) (sp - 4288) (4288 + 1040) := by unfold Apart; omega
+    have hzzw8 : Apart zzp (8 * n) (sp - 4288) (4288 + 1040) := by unfold Apart; omega
+    simp (disch := exact rd_slot (by assumption) hsp1 (by decide)) only [Memory.readLE_writeLE_of_disjoint, a3m, a4m,
+      a3p, a4p, bm, bp, hpv] at v3 v4 v5
     rw [v5, v4, v3]
   all_goals first | rfl | (janus_simp; done) | (janus_simp [lsl4' yi]; done)
 

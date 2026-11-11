@@ -4,4 +4,3 @@ lean/FvModexp/Proofs/Arm64/Top/RunH1.lean	top	WIP (Run header 1, sorry)
 lean/FvModexp/Proofs/Arm64/Top/RunX.lean	top	exploration scratch
 lean/scout/*.lean	expmc	perf scouting only; not imported by the library, never claimed done
 lean/FvModexp/Proofs/Arm64/Nat/NatAddBody.lean	divmc	nat.add arm64 body WIP (split per path before finishing; ~260 s for one path)
-lean/FvModexp/Proofs/Arm64/Exp/W4Loop.lean	expmc	window-4 main loop arm64 WIP (body runs through all 5 montgomery calls; exit/outer-step cases + IH application open)

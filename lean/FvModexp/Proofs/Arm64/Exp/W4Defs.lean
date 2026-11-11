@@ -101,6 +101,11 @@ theorem lsl4' (yi : Nat) :
   rw [lsl4]; apply BitVec.eq_of_toNat_eq
   simp [BitVec.toNat_shiftLeft, Nat.shiftLeft_eq]
 
+/-- a read of an object apart from the loop window is not affected by a spill-slot store (cheap `simp` discharger) -/
+theorem rd_slot {sp X l K : Nat} (h : Apart X l (sp - 4288) (4288 + 1040)) (hs : 4288 ≤ sp) (hK : K + 8 ≤ 1040) :
+    X + l ≤ sp + K ∨ sp + K + 8 ≤ X := by
+  unfold Apart at h; omega
+
 /-- the static facts of the loop (anchor memory `M0` = the memory at the first arrival at the test) -/
 def Static (R : RtInv) (L : List (Nat × Nat)) (g sp n mp mc k0 yp ylen Y : Nat) (tbl pp pcap : Nat → Nat)
     (M0 : Memory) : Prop :=
