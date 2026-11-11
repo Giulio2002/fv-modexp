@@ -62,7 +62,7 @@ reuses `z` -/
     NatLive s.mem R L zp zc ∧ Outside zp (8 * zc) (win s K A) ∧ Apart zp (8 * zc) ((s.regs 28).toNat + 16) 8 ∧
     NatNorm s.mem zp zl ∧
     s.mem.accessible yp (8 * yl) false = true ∧ yp + 8 * yl ≤ 2 ^ 48 ∧ Held R L yp (8 * yl) ∧
-    Outside yp (8 * yl) (win s K A) ∧ NatNorm s.mem yp yl ∧ (0 < yc → Apart zp (8 * zc) yp (8 * yc)) ∧
+    Outside yp (8 * yl) (win s K A) ∧ NatNorm s.mem yp yl ∧ Apart zp (8 * zc) yp (8 * yc) ∧
     cost n ≤ b ∧ R.inv b L (s.regs 28).toNat (view R.rt L s.mem)
 
 @[reducible] def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zl zc yp yl n : Nat) (s s' : State) : Prop :=
