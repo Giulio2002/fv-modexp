@@ -73,27 +73,14 @@ theorem grow (impl : List Segment) (R : RtInv)
   have hsp112 : (s.sp - 112#64).toNat = s.sp.toNat - 112 := by
     rw [BitVec.toNat_sub_of_le (by simp only [BitVec.le_def, BitVec.toNat_ofNat]; omega)]; rfl
   have hW64 : s.mem.readLE st.toNat 8 < 2 ^ 64 := Memory.readLE_lt _ _ _
-  refine ReachesRet.call (hgr L b) rfl (gcall_pre hpre (by simp only [stLen, stCap]; omega) _ ?gF ?gsp ?g28 ?g30a ?g30b
-    ?g0 ?g1 ?g2 ?g3 ?g4) ?gk
-  case gF => dsimp only; janus_frame
-  case gsp => dsimp only; rw [hsp112]; omega
-  case g28 => simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte]
-  case g30a => simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte]; decide
-  case g30b => simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte]; decide
+  refine g2 impl R hgr hmc hwb b L st n s hl4 hl48 hpre (by simp only [stLen, stCap]; omega) _ ?gpc ?gsp ?g28 ?g29
+    ?g18 ?g30 ?g0 ?g1 ?g2 ?g3 ?g4 ?gF ?slr ?sfp ?s40 ?s32 ?s56 ?s24 ?sst ?sn
+  case gF => simp only [winA]; janus_frame
   case g0 => simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, BitVec.toNat_ofNat, stW]; omega
   case g1 => simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, BitVec.toNat_ofNat, stLen]; omega
   case g2 => simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, BitVec.toNat_ofNat, stCap]; omega
   case g3 => simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, BitVec.toNat_ofNat, stLen, stCap]; omega
   case g4 => simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, BitVec.toNat_ofNat]; rfl
-  intro S1 hpc1 ⟨ptr, junk, f1, v1, m1, ex1, ep1, hs1, hMF, hLF, ⟨hobj, hapL⟩, hapS, hinv1⟩
-  subst hs1
-  have hmA : (s.mem.readLE (st.toNat + 8) 8 + rnd n.toNat) % 2 ^ 64 = s.mem.readLE (st.toNat + 8) 8 + rnd n.toNat :=
-    Nat.mod_eq_of_lt (by omega)
-  have hmB : s.mem.readLE (st.toNat + 16) 8 % 2 ^ 64 = s.mem.readLE (st.toNat + 16) 8 := Nat.mod_eq_of_lt (by omega)
-  simp only [growsliceRound, growsliceObj, Fresh, setReg_apply, Nat.reduceEqDiff, ↓reduceIte, BitVec.toNat_ofNat, hmA,
-    hmB] at hobj hapL hapS hinv1 hMF hLF
-  obtain ⟨⟨hpin, hp48, hpacc, hal8, -, -, -⟩, -, -⟩ := hobj
-  janus_run [hsp112] until [cA "runtime.memclrNoHeapPointers"]
-  all_goals done
+  all_goals janus_simp
 
 end FvModexp.Arm64.StackNat
