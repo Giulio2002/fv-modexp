@@ -59,4 +59,20 @@ theorem tail (impl : List Segment) (hap : ImplApart Extracted.program impl) (ret
   case fr => janus_frame
   all_goals janus_simp
 
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
+set_option linter.janusRenameI false in
+/-- the inline `zz.norm()` loop (nat.go:68-74), then `tail` -/
+theorem fin (impl : List Segment) (hap : ImplApart Extracted.program impl) (ret : Nat)
+    (hret : RetAddr (LibExp.program.link impl) ret)
+    (sp g st n0 p c : Nat) (r18 r29 : BitVec 64) (M : Memory) (hc : c < 2 ^ 40) (hp48 : p + 8 * c ≤ 2 ^ 48)
+    (he : FinEnv sp g st n0 r29 ret M) :
+    ∀ (l : Nat) (S : State), S.pc = BitVec.ofNat 64 njoin → S.sp = BitVec.ofNat 64 sp →
+      S.regs 3 = BitVec.ofNat 64 p → S.regs 4 = BitVec.ofNat 64 l → S.regs 5 = BitVec.ofNat 64 c →
+      S.regs 18 = r18 → S.regs 28 = BitVec.ofNat 64 g → S.mem = M → l ≤ c →
+      M.accessible p (8 * l) false = true →
+      Reaches ((LibExp.program.link impl).withExit ret) S
+        (IsReturn (FinPost sp g st n0 p (Expmc.normL M p l) c r18 r29 M)) := by
+  sorry -- WIP: the runs hang computing the pc (NOTES-expmc session 3)
+
 end FvModexp.Arm64.W4Loop

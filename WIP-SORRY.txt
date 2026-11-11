@@ -3,3 +3,4 @@ lean/FvModexp/Proofs/Arm64/RequiredGas.lean	infra	main theorem in progress (expl
 lean/FvModexp/Proofs/Arm64/Top/RunH1.lean	top	WIP (Run header 1, sorry)
 lean/FvModexp/Proofs/Arm64/Top/RunX.lean	top	exploration scratch
 lean/FvModexp/Proofs/Arm64/Nat/NatAddBody.lean	divmc	nat.add arm64 body WIP (split per path before finishing; ~260 s for one path)
+lean/FvModexp/Proofs/Arm64/Exp/W4Fin.lean	expmc	window-4 end: `fin` (norm loop) WIP sorry; `tail` done
