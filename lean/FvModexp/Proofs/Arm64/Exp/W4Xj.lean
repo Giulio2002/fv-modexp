@@ -55,7 +55,7 @@ theorem keeps_ownB {R : RtInv} {L : List (Nat × Nat)}
     {M M' : Memory} (hC : CtxB R L g sp K n mp mc Mv yp ylen Y yi zp zc st n0 l0 ret r29 ex M)
     {ws : List (Nat × Nat)} (hF : MemFrame M M' ws) (hreg : M'.regions = M.regions)
     (hin : ∀ r ∈ ws, sp + 8 ≤ r.1 ∧ r.2 ≤ sp + 1040)
-    (hsl : ∀ j, (824 ≤ j ∧ j + 8 ≤ 904 ∨ 912 ≤ j ∧ j + 8 ≤ 1040) →
+    (hsl : ∀ j, (824 ≤ j ∧ j + 8 ≤ 896 ∨ 912 ≤ j ∧ j + 8 ≤ 1040) →
       Outside (sp + j) 8 ws) :
     KeepsB R L L g sp K st l0 ex M M' := by
   obtain ⟨-, hce, hK, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -,
