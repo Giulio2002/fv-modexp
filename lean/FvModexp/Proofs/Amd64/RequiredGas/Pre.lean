@@ -61,6 +61,30 @@ theorem copy_rd {C m : Memory} {b src n i : Nat} (h : ∀ j, j < n → m.bytes (
     m.readLE (b + i) 1 = C.readLE (src + i) 1 := by
   rw [Janus.Arm64.Memory.readLE_one, Janus.Arm64.Memory.readLE_one, h i hi]
 
+/-- The amd64 re-slice mask `(-(cap - start)) >> 63` (`NEG`, `SAR $63`) applied to the start: `start` if `start < cap`, else `0`. -/
+theorem neg_asr63_and (a b : BitVec 64) (ha : a.toNat < 2 ^ 63) (hb : b.toNat < 2 ^ 63) :
+    ((0#64 - (a - b)).sshiftRight 63).toNat &&& b.toNat = if b.toNat < a.toNat then b.toNat else 0 := by
+  have e : 0#64 - (a - b) = b - a := by
+    apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
+  rw [e, BitArith.asr63_toNat, BitVec.toNat_sub]
+  by_cases h : b.toNat < a.toNat
+  · rw [if_neg (by omega), if_pos h, Nat.and_comm, Nat.and_two_pow_sub_one_eq_mod, Nat.mod_eq_of_lt b.isLt]
+  · rw [if_pos (by omega), if_neg h, Nat.zero_and]
+
+theorem neg_asr63_and_lit (k : Nat) (a : BitVec 64) (ha : a.toNat < 2 ^ 63) (hk : k < 2 ^ 63) :
+    ((0#64 - (a - BitVec.ofNat 64 k)).sshiftRight 63).toNat &&& k = if k < a.toNat then k else 0 := by
+  have := neg_asr63_and a (BitVec.ofNat 64 k) ha (by simp; omega)
+  simp only [BitVec.toNat_ofNat] at this
+  rwa [Nat.mod_eq_of_lt (by omega)] at this
+
+theorem neg_asr63_and' (a b : BitVec 64) (ha : a.toNat < 2 ^ 63) (hb : b.toNat < 2 ^ 63) :
+    b.toNat &&& ((0#64 - (a - b)).sshiftRight 63).toNat = if b.toNat < a.toNat then b.toNat else 0 := by
+  rw [Nat.and_comm]; exact neg_asr63_and a b ha hb
+
+theorem neg_asr63_and_lit' (k : Nat) (a : BitVec 64) (ha : a.toNat < 2 ^ 63) (hk : k < 2 ^ 63) :
+    k &&& ((0#64 - (a - BitVec.ofNat 64 k)).sshiftRight 63).toNat = if k < a.toNat then k else 0 := by
+  rw [Nat.and_comm]; exact neg_asr63_and_lit k a ha hk
+
 /-- `Uint64()` with `MaxUint64` when `!IsUint64()`, as the amd64 machine code computes it from the limbs (`OR` of limbs 2, 1, 3,
 `TEST`, `CMOVE`). -/
 theorem sat_bv (m : Memory) (z : Nat) :
@@ -114,6 +138,30 @@ macro "rg_byte" : tactic => `(tactic| (
       | (rcases (show i < 8 ∨ (8 ≤ i ∧ i < 16) ∨ (16 ≤ i ∧ i < 24) ∨ (24 ≤ i ∧ i < 32) by omega) with hq | hq | hq | hq <;>
            simp (disch := omega) only [Janus.Arm64.Memory.readLE_writeLE_of_disjoint, Janus.Arm64.Memory.readLE_writeLE_inside, Nat.zero_div,
              Nat.zero_mod])))
+
+set_option hygiene false in
+/-- One byte of a `getData` + `SetBytes` source inside a segment lemma (amd64): after `unfold Calldata.pad; split`, the in-range
+goal `X.readLE (a + i) 1 = (s.mem.bytes (ptr + (off + i))).toNat` (through a `memmove` copy or directly from the input, both
+read through `hf : MemFrame s.mem S.mem _`), or the zero-padding goal `X.readLE (a + i) 1 = 0` (a zeroed 32-byte buffer). -/
+macro "rg_byte64" : tactic => `(tactic| (
+  first
+    | (exfalso; omega)
+    | (refine (copy_rd (by with_reducible assumption) (by omega)).trans ?_
+       simp (disch := omega) only [Janus.Arm64.Memory.readLE_writeLE_of_disjoint]
+       first
+         | exact rd_frame' hf (by simp only [outside_cons, outside_nil, and_true]; omega) (by omega)
+         | exact rd_self (by omega))
+    | (simp (disch := omega) only [Janus.Arm64.Memory.readLE_writeLE_of_disjoint]
+       first
+         | exact rd_frame' hf (by simp only [outside_cons, outside_nil, and_true]; omega) (by omega)
+         | exact rd_self (by omega))
+    | (refine (rd_out (by with_reducible assumption) (by omega)).trans ?_
+       rcases (show i < 16 ∨ (16 ≤ i ∧ i < 32) by omega) with hq | hq <;>
+         simp (disch := omega) only [Janus.Arm64.Memory.readLE_writeLE_of_disjoint, Janus.Arm64.Memory.readLE_writeLE_inside,
+           Nat.zero_div, Nat.zero_mod])
+    | (rcases (show i < 16 ∨ (16 ≤ i ∧ i < 32) by omega) with hq | hq <;>
+         simp (disch := omega) only [Janus.Arm64.Memory.readLE_writeLE_of_disjoint, Janus.Arm64.Memory.readLE_writeLE_inside,
+           Nat.zero_div, Nat.zero_mod])))
 
 /-- The final value of the run is EthLib's `requiredGas` (when the lengths pass). -/
 theorem rgPost_of (ptr len B E M : BitVec 64) (s s' : State)
