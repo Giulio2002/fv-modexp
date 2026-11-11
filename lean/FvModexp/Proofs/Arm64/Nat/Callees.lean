@@ -27,13 +27,6 @@ abbrev CallEnvND (R : RtInv) (L : List (Nat × Nat)) (s : State) (stk above : Na
     Outside ((s.regs 28).toNat + 16) 8 R.rt ∧
     LiveSep L (win s stk above)
 
-/-- The bytes of the stack a summary may write (arm64): its frames below `SP - 8` and the spill slots above `SP + 8`,
-but NOT the words at `SP - 8` (the caller's saved `X29`, stored below the caller's `SP`) and at `SP` (the caller's
-saved `X30`), which the caller reloads after the call — as the runtime contracts' `calleeStack`. PROPOSAL to top
-(NOTES-divmc.md): CONVENTIONS' `win s stk above = [(SP - stk, SP + above)]` in a `MemFrame` loses both. -/
-@[reducible] def winA (s : State) (stk above : Nat) : List (Nat × Nat) :=
-  [(s.sp.toNat - stk, s.sp.toNat - 8), (s.sp.toNat + 8, s.sp.toNat + above)]
-
 /-- A fetch from one segment of a pairwise-apart code layout is a fetch from the layout. -/
 theorem fetchIn_of_mem {segs : List Segment} {seg : Segment} (hp : segs.Pairwise Segment.Apart)
     (hm : seg ∈ segs) {pc w : Nat} (h : Program.fetchIn [seg] pc = some w) : Program.fetchIn segs pc = some w := by

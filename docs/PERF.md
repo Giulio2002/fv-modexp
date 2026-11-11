@@ -175,3 +175,12 @@ of the Janus framework — the first row of a fresh cache spends ~6.5 min replay
 Row peak memory: the sandboxed `leanchecker` runs inside the memcap scope; the scope's `memory.peak` was ~0.83–0.89 GB
 where it was captured (`build/asm-rows.tsv`; some entries show the `janus` driver only, the measurement hook is fixed
 in `scripts/asm-row.sh`).
+
+### divmc rows (2026-11-11)
+* First `janus verify` of a divmc summary: `FvModexp.Arm64.BasicMulRow.correctness` (= `BasicMul.ens` moved to
+  `Extracted.program.link impl` by `Ensures.full`, Run extraction, warm framework cache): statement audit + kernel replay
+  passed, **391 s wall** under `memcap 16G`/`timeout 900`; the run then stops at the non-vacuity stage (no
+  `Witness.nonvacuous` yet). Within the 15 min cap; the witness (toy memclr runtime + the Run extraction's 49 rodata
+  objects loaded for `CallEnv`'s `DataLoaded`) is the next step.
+* After CONVENTIONS v2 migration: AddTo arm64 105 s / 4.4 GB, amd64 107 s / 5.4 GB; BasicMul arm64 83 s / 4.7 GB,
+  amd64 155 s / 5.5 GB.

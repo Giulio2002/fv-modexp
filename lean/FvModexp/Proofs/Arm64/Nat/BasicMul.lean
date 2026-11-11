@@ -34,7 +34,7 @@ abbrev head : Nat := segAddr Extracted.program fn + 0x88
 
 /-- The precondition. -/
 def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl yp yl : BitVec 64) (s : State) : Prop :=
-  CallEnvND R L s 4224 72 ∧ xl.toNat + yl.toNat ≤ zl.toNat ∧ zl.toNat ≤ zc.toNat ∧ zc.toNat < 2 ^ 40 ∧
+  CallEnv R L s 4224 72 ∧ xl.toNat + yl.toNat ≤ zl.toNat ∧ zl.toNat ≤ zc.toNat ∧ zc.toNat < 2 ^ 40 ∧
     NatLive s.mem R L zp.toNat (xl.toNat + yl.toNat) ∧
     Outside zp.toNat (8 * (xl.toNat + yl.toNat)) (win s 4224 72) ∧
     Apart zp.toNat (8 * (xl.toNat + yl.toNat)) ((s.regs 28).toNat + 16) 8 ∧
@@ -48,7 +48,7 @@ def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl yp yl : Bi
     R.inv b L (s.regs 28).toNat (view R.rt L s.mem)
 
 /-- The postcondition: `z[0 : len x + len y] = x · y`, nothing else written but the stack window and `R.rt`. -/
-def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp xp xl yp yl : BitVec 64) (s s' : State) : Prop :=
+@[reducible] def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp xp xl yp yl : BitVec 64) (s s' : State) : Prop :=
   natVal s'.mem zp.toNat (xl.toNat + yl.toNat) = natVal s.mem xp.toNat xl.toNat * natVal s.mem yp.toNat yl.toNat ∧
     ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b ≤ b' ∧
       R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem) ∧
@@ -193,7 +193,7 @@ theorem loop (impl : List Segment) (R : RtInv) (hMV' : ∀ b L, Summary0 (LibBas
       Inv R b L zp zl zc xp xl xc yp yl s ret i S.mem →
       Reaches ((LibBasicMul.program.link impl).withExit ret) S
         (IsReturn fun s' => ABIReturn s s' ∧ Post R b L zp xp xl yp yl s s') := by
-  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, hout, hga, hgr, hLs⟩, hxyz, hzc, hz40, hzl, hzw, hzg,
+  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, -, hout, hga, hgr, hLs, -⟩, hxyz, hzc, hz40, hzl, hzw, hzg,
     hxacc, hx48, hxh, hxw, hyacc, hy48, hyh, hyw, hap1, hinv0⟩ := hpre
   obtain ⟨hzx, hzy, -⟩ := hap1 h0
   obtain ⟨hzal, hzh, hzacc, hz48⟩ := hzl h0
@@ -257,7 +257,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   have hMV := addMulVVWWHyp impl hap
   intro ret hret s hs hpre
   have hpre' := hpre
-  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, hout, hga, hgr, hLs⟩, hxyz, hzc, hz40, hzl, hzw, hzg,
+  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, -, hout, hga, hgr, hLs, -⟩, hxyz, hzc, hz40, hzl, hzw, hzg,
     hxacc, hx48, hxh, hxw, hyacc, hy48, hyh, hyw, hap1, hinv⟩ := hpre'
   have hc1 : CodeIn ((Extracted.program.onlySegments [addMulVVWWfn]).link impl) (LibBasicMul.program.link impl) := by
     rw [LibBasicMul.eq_only]; exact codeIn_restrict_mono hap (sub_of_all (by decide))

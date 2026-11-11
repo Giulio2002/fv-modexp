@@ -271,7 +271,7 @@ def AddVWEns (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat ×
       (zp = xp ∨ Apart zp.toNat (8 * zl.toNat) xp.toNat (8 * zl.toNat)) ∧
       R.inv b L (s.regs 14).toNat (view R.rt L s.mem) ∧
       (if zp = xp then True else VWMoves R zp.toNat zl.toNat zc.toNat xp.toNat xc.toNat))
-    (fun s s' => (s'.regs 0).toNat = (natVal s.mem xp.toNat zl.toNat + y.toNat) / 2 ^ (64 * zl.toNat) ∧
+    (fun s s' => s'.fsBase = s.fsBase ∧ (s'.regs 0).toNat = (natVal s.mem xp.toNat zl.toNat + y.toNat) / 2 ^ (64 * zl.toNat) ∧
       natVal s'.mem zp.toNat zl.toNat = (natVal s.mem xp.toNat zl.toNat + y.toNat) % 2 ^ (64 * zl.toNat) ∧
       ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b ≤ b' ∧
         R.inv b' L' (s.regs 14).toNat (view R.rt L' s'.mem) ∧
