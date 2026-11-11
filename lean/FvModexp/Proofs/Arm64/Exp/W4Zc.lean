@@ -23,7 +23,7 @@ abbrev testL : Nat := 1801232
 
 /-- the frame words `zj → test` writes besides `z[0:n]` and `R.rt` (memmove's window, spills) -/
 @[reducible] def cw (sp : Nat) : List (Nat × Nat) :=
-  [(sp - 4096, sp - 8), (sp + 8, sp + 32), (sp + 144, sp + 152), (sp + 184, sp + 192), (sp + 232, sp + 248),
+  [(sp - 4096, sp - 8), (sp + 8, sp + 32), (sp + 144, sp + 152), (sp + 184, sp + 192), (sp + 232, sp + 240), (sp + 240, sp + 248),
     (sp + 296, sp + 304), (sp + 328, sp + 336), (sp + 368, sp + 376), (sp + 872, sp + 880)]
 
 /-- the index of the most significant non-zero window of the top word (`k`, nat.go:1438) -/
@@ -99,9 +99,27 @@ theorem ed (yi k : Nat) (h : yi < 2 ^ 64) :
   simp only [BitVec.toNat_ushiftRight, BitVec.toNat_ofNat, Nat.shiftRight_eq_div_pow]
   rw [Nat.mod_eq_of_lt h, Nat.mod_eq_of_lt (Nat.lt_of_le_of_lt (Nat.div_le_self _ _) h)]
 
+theorem lf_chain {M Mw m1 : Memory} {L W zs : List (Nat × Nat)} (hw : MemFrame M Mw W)
+    (hws : ∀ a k, InRanges a k L → Outside a k W) (h1 : LiveFrame Mw m1 L zs) : LiveFrame M m1 L zs :=
+  (FvModexp.Expmc.liveFrame_of_frame (ws := zs) hw (fun a k hin _ => hws a k hin)).trans h1 (fun _ _ h => h)
+
+theorem mf_chain {M Mw m1 : Memory} {W W1 W2 : List (Nat × Nat)} (hw : MemFrame M Mw W) (h1 : MemFrame Mw m1 W1)
+    (hs : ∀ a k, Outside a k W2 → Outside a k W ∧ Outside a k W1) : MemFrame M m1 W2 := hw.trans h1 hs
+
+theorem e20 (yi k : Nat) (hk : k ≤ 15) :
+    (if 64 - k * 4 < 64 then BitVec.ofNat 64 (yi * 2 ^ ((64 - k * 4) % 64)) else 0#64) =
+      BitVec.ofNat 64 (yi * 2 ^ (64 - k * 4) % 2 ^ 64) := by
+  by_cases h0 : k = 0
+  · subst h0; simp
+  · rw [if_pos (by omega), Nat.mod_eq_of_lt (by omega)]
+    apply BitVec.eq_of_toNat_eq; simp
+
+theorem e21' (k : Nat) (hk : k ≤ 15) : BitVec.ofNat 64 (k + 1) - 2#64 = BitVec.ofNat 64 k - 1#64 := by
+  apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
+
 set_option maxRecDepth 20000 in
 set_option janus.callRegions true in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 theorem zcopy (impl : List Segment) (R : RtInv)
     (hmv : MemmoveLive (LibExp.program.link impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
@@ -210,7 +228,42 @@ theorem zcopy (impl : List Segment) (R : RtInv)
     show (BitVec.ofNat 64 (64 - kTop yi * 4)).toNat.testBit 63 = false
     rw [BitVec.toNat_ofNat]; exact Nat.testBit_lt_two_pow (by omega)
   janus_run [r168, r400, r1000, r992, r1024, r224, r1016, r1032, e23 _ hk15, e64, h63b, lsl2] until [testL]
-  trace_state
-  sorry
+  have hzz64 : zzp % 18446744073709551616 = zzp := Nat.mod_eq_of_lt (by rw [← r400]; exact Util.readLE8_lt _ _)
+  have hLz : ∀ a k, InRanges a k L → Outside a k (cw sp) := by
+    intro a k hin
+    obtain ⟨r, hr, h1, h2⟩ := hin
+    have := hLs r hr
+    simp only [outside_cons, outside_nil, and_true] at this ⊢
+    omega
+  have hFw := mf_chain (W := cw sp) (W2 := R.rt ++ cw sp ++ [(zp, zp + 8 * n)]) (h1 := hF1) (by
+      repeat' first
+        | exact MemFrame.refl _ _
+        | apply MemFrame.writeLE_inRanges
+        | (simp only [InRanges, cw, List.mem_cons, List.not_mem_nil, or_false, exists_eq_or_imp, exists_eq_left]
+           omega))
+    (fun a k ho => by
+      simp only [cw, outside_append, outside_cons, outside_nil, and_true] at ho ⊢
+      exact ⟨ho.1.2, ⟨ho.1.1, by omega⟩, ho.2⟩)
+  refine KT _ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?mf ?lf ?iv ?rg ?vl ?r2
+  case mf =>
+    refine hFw.writeLE_inRanges _ ?_
+    exact ⟨(sp + 240, sp + 248), by simp [cw], by simp only; omega, by simp only; omega⟩
+  case lf =>
+    refine (lf_chain (h1 := hL1) (W := cw sp) (by
+      repeat' first
+        | exact MemFrame.refl _ _
+        | apply MemFrame.writeLE_inRanges
+        | (simp only [InRanges, cw, List.mem_cons, List.not_mem_nil, or_false, exists_eq_or_imp, exists_eq_left]
+           omega)) hLz).writeLE _ ?_
+    exact FvModexp.Expmc.outside_of_liveSep hLs (by omega) (by omega)
+  case iv => exact FvModexp.Expmc.inv_writeLE (Or.inr (hwrt.of_sub (by omega) (by omega))) hI1
+  case rg => rw [Memory.regions_writeLE]; exact hrg1
+  case vl =>
+    unfold Apart at z6
+    rw [Memory.readLE_writeLE_of_disjoint _ _ (by omega), FvModexp.Expmc.readLE_of_copied hC1]
+    simp (disch := omega) only [Memory.readLE_writeLE_of_disjoint]
+    exact eE1
+  case r2 => rw [FvModexp.Expmc.readLE_writeLE_same rfl]; omega
+  all_goals first | (janus_simp [hzz64, e20 yi _ hk15, e21' _ hk15]; done) | skip
 
 end FvModexp.Arm64.W4Pro

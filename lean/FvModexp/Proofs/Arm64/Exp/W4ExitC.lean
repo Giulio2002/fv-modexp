@@ -61,7 +61,7 @@ theorem readLE_lt64 (m : Memory) (a : Nat) : m.readLE a 8 < 2 ^ 64 := by
   have := Memory.readLE_lt m a 8; simpa using this
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 /-- the final reduction: from the entry of the first `zz.cmp(m)` to the join `njoin` -/
 theorem exB (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)

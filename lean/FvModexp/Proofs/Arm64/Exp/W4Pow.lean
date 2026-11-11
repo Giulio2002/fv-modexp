@@ -15,7 +15,7 @@ open FvModexp.Arm64.W4Loop (Env Inp Buf mcall_of)
 
 set_option maxRecDepth 20000 in
 set_option janus.callRegions true in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 /-- one table step `i → i + 1` (`2 ≤ i < 16`) -/
 theorem powStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)

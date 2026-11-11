@@ -24,7 +24,7 @@ abbrev njoinL : Nat := 1801508
 theorem njoin_eq : njoin = njoinL := by decide
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 /-- `cmp < 0`: reload `zz` and jump to the join -/
 theorem exLt (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret) (Q : Outcome → Prop) (S : State) (sp g zzp n zzc : Nat)
@@ -45,7 +45,7 @@ theorem exLt (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program.l
   all_goals first | rfl | (janus_simp; done) | skip
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 /-- `cmp ≥ 0`: load the arguments of `zz.sub(zz, m)` and call it -/
 theorem exGe (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret) (Q : Outcome → Prop) (S : State) (sp g zzp n zzc mp mc v : Nat)

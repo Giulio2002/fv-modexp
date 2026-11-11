@@ -40,7 +40,7 @@ theorem sub_3n (n : Nat) (hn16 : n ≤ 2 ^ 16) :
 
 set_option maxRecDepth 20000 in
 set_option janus.callRegions true in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 theorem p01run (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hclr : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl)

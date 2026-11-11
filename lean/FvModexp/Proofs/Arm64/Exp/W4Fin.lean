@@ -37,7 +37,7 @@ abbrev tailPc : Nat := segAddr LibExp.program fn + 0xbc8
     M.readLE (sp - 8) 8 = r29.toNat ∧ M.readLE sp 8 = ret
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 theorem tail (impl : List Segment) (hap : ImplApart Extracted.program impl) (ret : Nat)
     (hret : RetAddr (LibExp.program.link impl) ret)
@@ -60,7 +60,7 @@ theorem tail (impl : List Segment) (hap : ImplApart Extracted.program impl) (ret
   all_goals janus_simp
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 /-- one test of the inline `zz.norm()` loop (nat.go:68-74) from `njoin` with `R4 = l`: either the loop exits to `tailPc`
 (`l = 0` or limb `l-1` nonzero) or it goes back to `njoin` with `R4 = l - 1` (limb `l-1` zero). Continuation form. -/

@@ -77,7 +77,7 @@ local macro "inputv" h:term:max a1:term:max a2:term:max : tactic => `(tactic| (
   simp (disch := omega) only [Janus.Arm64.Memory.readLE_writeLE_of_disjoint]))
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem ens' (impl : List Amd64.Segment) (R : RtInv)
     (hclr : MemclrNoHeapPointersLive64 (LibMont.program.link impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
