@@ -48,6 +48,7 @@ theorem s3lt (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
     rcases (SubMod2N.cmp_lt_iff S2.mem zp l1 p2 l2 hn1 hn2).2 (by rw [hv1, hv2]; exact hlt) with h | ⟨h, -⟩ <;> omega
   refine subCall hap hsub (zp := zp) (zl := zl) (zc := zc) (xp := p2) (xl := l2) (xc := c2) (yp := zp) (yl := l1)
     (yc := zc) (sp' := (s.regs 4).toNat - 136) (g := (s.regs 14).toNat) (ra := 6216524) (M := S2.mem)
+    (bx39 := by omega)
     (ra_of hap (by decide) 0x2ac (by omega)) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)
     (by omega) hpc hrd h0 h3 h1 h7 h6 h8 h9 h10 h11 hx15 hdf rfl hsp (by rw [h14])
     (subPre_of hpre hrt rfl hsp h14 hfs (by omega) (by rw [hv1, hv2]; omega) hlc2 (by omega) hc2 hzc hW2 (Or.inr hzp2)

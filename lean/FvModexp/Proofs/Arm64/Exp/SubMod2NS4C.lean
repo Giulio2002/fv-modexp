@@ -82,6 +82,7 @@ theorem s4t (impl : List Segment) (hap : ImplApart Extracted.program impl) {R : 
   janus_run [o1, o2, o3] until [1781184]
   refine addCall hap hadd (zp := zp) (zl := l4) (zc := zc) (xp := zp) (xl := l4) (xc := zc) (yp := op) (yl := 1)
     (yc := 1) (sp' := s.sp.toNat - 144) (g := (s.regs 28).toNat) (M := s'.mem)
+    (bx39 := by have := hW4; simp only [W] at this; omega) (by39 := by omega)
     (ra_of hap (by decide) 185 (by omega)) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)
     (by omega) (by omega) ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
     (addPre_of hpre hrt4 (Nat.le_refl _) ?_ ?_ ?_ hlc4 (Nat.le_refl _) hzc (by omega) hW4 (by simp only [W]; omega)
@@ -96,7 +97,8 @@ theorem s4t (impl : List Segment) (hap : ImplApart Extracted.program impl) {R : 
     · have hfw5 := fw_call hs4 hout hzw (Or.inl rfl) (show 4464 ≤ 4464 by omega) (show 80 ≤ 88 by omega) hfw4 hF5
       obtain ⟨u1, u2, -⟩ := hfw5
       janus_run [u1, u2]
-      refine ⟨⟨?_, ?_⟩, post_of hrt5 (by omega) ?_ ?_ ?_ ?_ hn5 hlc5 hc405 hlive5 ?_⟩
+      refine ⟨⟨?_, ?_⟩, post_of hrt5 (by omega) ?_ ?_ ?_ ?_ hn5 hlc5 hc405 hlive5 ?_
+        (fun h => hreuse5 (by simp only [W] at h; split <;> omega))⟩
       · apply BitVec.eq_of_toNat_eq
         rw [BitVec.toNat_add, tN (by omega)]; simp only [BitVec.toNat_ofNat]; omega
       · rw [show s.sp.toNat - 144 - 8 = s.sp.toNat - 152 by omega, hfw0.2.1, Expmc.bv_ofNat_toNat]

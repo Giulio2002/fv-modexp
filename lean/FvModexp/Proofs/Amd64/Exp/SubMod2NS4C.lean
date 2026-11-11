@@ -21,7 +21,7 @@ theorem addCallB {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.pr
     {M : Memory} {S : State} {ret : W64} {Q : State → Prop} {ra : Nat}
     (hra : RetAddr ((Extracted.program.onlySegments NatAdd.names).link impl) ra)
     (bz : zp < 2 ^ 64) (bzc : zc < 2 ^ 64) (bx : xp < 2 ^ 64) (bxl : xl < 2 ^ 64) (by' : yp < 2 ^ 64)
-    (byl : yl < 2 ^ 64) (bsp : sp' + 8 < 2 ^ 64)
+    (byl : yl < 2 ^ 64) (bsp : sp' + 8 < 2 ^ 64) (bx39 : xl < 2 ^ 39) (by39 : yl < 2 ^ 39)
     (hpc : S.rip = BitVec.ofNat 64 6182240) (hrd : S.mem.readLE (S.regs 4).toNat 8 = ra)
     (h0 : S.regs 0 = BitVec.ofNat 64 zp) (h3 : S.regs 3 = BitVec.ofNat 64 zl) (h1 : S.regs 1 = BitVec.ofNat 64 zc)
     (h7 : S.regs 7 = BitVec.ofNat 64 xp) (h6 : S.regs 6 = BitVec.ofNat 64 xl) (h8 : S.regs 8 = BitVec.ofNat 64 xc)
@@ -55,11 +55,11 @@ theorem addCallB {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.pr
   · obtain ⟨hfs, p', n', c', q0, q1, q2, hv, hn, hlc, hln, L', b', hLE, hb, hinv, hlive, hor, hF, hLF⟩ := hq
     rw [tN bz, tN bzc, tN bx, tN bxl, tN by', tN byl, hS] at *
     simp only [win, hsp, h14] at hF hinv
-    simp only [NatAdd.mx, NatAdd.need, tN bxl, tN byl] at hln hb hr1
+    simp only [NatAdd.mx, NatAdd.need, tN bxl, tN byl] at hln hb hr1 hr2
     rw [hS] at hrg
     refine K s' p' n' c' L' b' (by rw [hr, retAddrOf_eq, hrd]) ?_ e3 e4 hfs hdf' hrg
       (by rw [← q0, Expmc.bv_ofNat_toNat]) (by rw [← q1, Expmc.bv_ofNat_toNat]) (by rw [← q2, Expmc.bv_ofNat_toNat])
-      hv hn hlc hln hLE hb hinv hlive hor hF hLF (fun h => ?_) (by rw [← q2]; exact hr2) (by rw [← q0]; exact BitVec.isLt _)
+      hv hn hlc hln hLE hb hinv hlive hor hF hLF (fun h => ?_) (by rw [← q2]; exact hr2 (by omega)) (by rw [← q0]; exact BitVec.isLt _)
     · rw [e1]; apply BitVec.eq_of_toNat_eq; simp [BitVec.toNat_add, hsp]
     · obtain ⟨a1, a2⟩ := hr1 h
       exact ⟨by rw [← q0, a1], by rw [← q2, a2]⟩
@@ -164,6 +164,8 @@ theorem s4t (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
   janus64_run [o1, o2, o3, hsp1, b136] until [6182240]
   refine addCallB hap hadd (zp := zp) (zl := l4) (zc := zc) (xp := zp) (xl := l4) (xc := zc) (yp := op) (yl := 1)
     (yc := 1) (sp' := (s.regs 4).toNat - 136) (g := (s.regs 14).toNat) (ra := 6216731)
+    (bx39 := by have := hW4; simp only [W] at this; omega)
+    (by39 := by omega)
     (ra_of hap (by decide) 0x37b (by omega)) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)
     (by omega) ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?_ ?_
     (addPre_of hpre (fr _ (by simp only [win, K, A]; janus_frame) (by janus64_simp)).1 (by omega) rfl ?_ ?_ ?_ hlc4
@@ -200,7 +202,8 @@ theorem s4t (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
       have hv' : natVal s''.mem p5 n5 = Exp.subMod2N (natVal s.mem zp zl) (natVal s.mem yp yl) n := by
         rw [hv5, hzv, hov, hv4, hv0, SubMod2N.lt_branch _ _ n _ (by omega) rfl hlt, SubMod2N.Bpow]
       janus64_run [hsp5, c8, c128, c0, u0, ubp, x0, xbp, hra]
-      refine ⟨?_, post_of hrt5 (by omega) ?_ ?_ ?_ ?_ ?_ ?_ hn5 hlc5 hc405 hlive5 ?_⟩
+      refine ⟨?_, post_of hrt5 (by omega) ?_ ?_ ?_ ?_ ?_ ?_ hn5 hlc5 hc405 hlive5 ?_
+        (fun h => hreuse5 (by simp only [W] at h; split <;> omega))⟩
       all_goals first
         | (janus64_simp; done)
         | exact hent.2.2.2.2.symm
