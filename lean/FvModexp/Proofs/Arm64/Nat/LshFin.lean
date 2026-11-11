@@ -2,6 +2,7 @@ import FvModexp.Proofs.Arm64.Nat.LshDefs
 import FvModexp.Proofs.Common.ExpmcFrame
 import FvModexp.Proofs.Common.DivmcNat
 import FvModexp.Proofs.Common.TruncMath
+import FvModexp.Proofs.Common.BitArith
 
 /-!
 # `nat.lsh` (arm64): `clear(z[0 : n-m])` (`+0x234`), the inlined `z.norm()` loop (`+0x26c`) and the return
@@ -72,6 +73,15 @@ theorem val_clr (m : Memory) (p q xl X r : Nat) (h0 : m.readLE p (8 * q) = 0)
 theorem shr6 (sh : Nat) (h : sh < 2 ^ 64) : BitVec.ofNat 64 sh >>> 6 = BitVec.ofNat 64 (sh / 64) := by
   apply BitVec.eq_of_toNat_eq
   simp only [BitVec.toNat_ushiftRight, BitVec.toNat_ofNat, Nat.shiftRight_eq_div_pow]; omega
+
+/-- the slice-pointer mask `q & ((q - c) >> 63)` of `z[q:]` with `q < c` -/
+theorem slice_mask (q c : Nat) (hq : q < c) (hc : c < 2 ^ 40) :
+    (q &&& ((0#64 - (BitVec.ofNat 64 c - BitVec.ofNat 64 q)).sshiftRight 63).toNat) = q := by
+  rw [BitArith.asr63_toNat]
+  have e : (0#64 - (BitVec.ofNat 64 c - BitVec.ofNat 64 q)).toNat = 2 ^ 64 - (c - q) := by
+    simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
+  rw [e, if_neg (by omega), show (2 : Nat) ^ 64 - 1 = 2 ^ 64 - 1 from rfl, Nat.and_two_pow_sub_one_eq_mod]
+  omega
 
 theorem lsr6 (sh : Nat) (h : sh < 2 ^ 64) :
     (BitVec.ofNat 64 sh).rotateRight 6 &&& 18446744073709551615#64 &&& 288230376151711743#64 =
