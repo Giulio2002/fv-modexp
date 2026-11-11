@@ -461,8 +461,9 @@ IcHN 43, Sb* 25-47, main 16 s.
 | Nat/StackNatTail (`+0xec`/`+0x101` → RET) | 18 s / 2.3 GB | 27 s / 2.4 GB |
 | Nat/StackNatWb (join → write barrier both flag values) | 15 s / 2.3 GB | 27 s / 2.4 GB |
 | Nat/StackNatN (no-grow entry → join) | 13 s / 2.3 GB | 13 s / 2.3 GB |
-| Nat/StackNatG3 / G2 / G (memclr call / growslice call / entry) | 12 s / 24 s / 16 s | (next session) |
-| Nat/StackNat (`full`/`ens`/`sum`/`hyp`) | 5 s / 2.2 GB | (next session) |
+| Nat/StackNatCall (amd64: own growslice/memclr call pres, no Janus amd64 `call_pre`) | — | 6 s / 2.2 GB |
+| Nat/StackNatG3 / G2 / G (memclr call / growslice call / entry) | 12 s / 24 s / 16 s | ~30 s / 14 s / 12 s, ≤ 2.6 GB (s6) |
+| Nat/StackNat (`full`/`ens`/`sum`/`hyp`) | 5 s / 2.2 GB | < 10 s / 2.3 GB (s6) |
 
 Lessons: (1) `janus_run … calls [hgr]` with the live `growslice` contract: the call-precondition closer ran > 6 min (killed);
 stopping at the callee entry and proving the pre with a pure lemma over an ABSTRACT call state (`gcall_pre`/`mcall_pre`
@@ -471,3 +472,17 @@ the executor's state literal (here `growCap8 … (S.regs 2).toNat` vs `growCap8 
 defeq (unfolds `growCap8`/`writeLE`): pass the register equations to `janus_run` so the literal is in normal form, and give
 continuation arguments as `?_` goals closed afterwards (never big terms inside the `refine`). (3) `first | rfl | …` on goals
 about state literals: put `rfl` LAST (or `with_reducible rfl`), it whnf's readLE-over-writeLE goals for minutes.
+
+### divmc session 6 (2026-11-11; dev compile, host load ~60), wall / max RSS
+| module | arm64 | amd64 |
+|---|---|---|
+| Nat/BasicSqrPro (re-proved after the StackNat amendments) | 152 s / 4.3 GB (was 138 s / 3.7 GB, load) | — |
+| Nat/BasicSqr (`pro1`, `full`, `ens`, `sum`) | 16 s / 2.6 GB | — |
+| Nat/Free (`nat.expNN.deferwrap1` = `stk.free()`, Pool.Put live contract) | 9 s / 2.6 GB | 13 s / 2.6 GB |
+| Witness/Sites (arm64 memclr/growslice/wb call-site states) | 2 s / 2.1 GB | (exists) |
+| Nat/StackNatRow, Nat/BasicSqrRow (dev compile, `decide +kernel` witness) | 3.5 s, 4.3 s | 3.8 s |
+Rows (`scripts/asm-runrow.sh`, janus-provfix, cache-divmc): StackNatRow arm64 PASS 171 s / 4.9 GB.
+Lessons: (1) amd64: after a callee returns, `retAddrOf S` rewritten to a symbolic `segAddr … + off` makes the next
+`CALL rel32` fault (`badTarget`: janus cannot bound the target) — state pushed return addresses as literals;
+(2) a `first | … | (intro r hr; simp at hr) | …` alternative that SUCCEEDS without closing the goal leaves it unsolved
+at the `refine` — end such alternatives with `; done`.
