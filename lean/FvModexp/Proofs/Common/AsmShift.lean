@@ -277,4 +277,21 @@ theorem rinv_fin (m0 M : Memory) (x z sh t w : Nat) (hI : RInv m0 M x z sh t)
     Nat.add_mul_mod_self_right, Nat.mod_eq_of_lt hr]
   simp
 
+/-! ## amd64 `SHLQ CX, lo, hi` (`SHLD`) as Janus computes it: `((hi · 2^64 + lo) · 2^s) / 2^64` -/
+
+theorem shld_hi (v s : Nat) (h1 : 1 ≤ s) (h2 : s ≤ 63) : v * 2 ^ s / 18446744073709551616 = v / 2 ^ (64 - s) := by
+  have e : (18446744073709551616 : Nat) = 2 ^ (64 - s) * 2 ^ s := by
+    rw [← Nat.pow_add, show 64 - s + s = 64 by omega]
+  rw [e, Nat.mul_div_mul_right _ _ (Nat.two_pow_pos s)]
+
+theorem shld_w (lo hi s : Nat) (hlo : lo < 2 ^ 64) (h1 : 1 ≤ s) (h2 : s ≤ 63) :
+    ((hi * 18446744073709551616 + lo) * 2 ^ s / 18446744073709551616) % 2 ^ 64 =
+      lo / 2 ^ (64 - s) + hi * 2 ^ s % 2 ^ 64 := by
+  have e1 : (hi * 18446744073709551616 + lo) * 2 ^ s = lo * 2 ^ s + 18446744073709551616 * (hi * 2 ^ s) := by
+    rw [Nat.add_mul, Nat.add_comm]; congr 1
+    generalize (18446744073709551616 : Nat) = W; generalize 2 ^ s = S; ac_rfl
+  rw [e1, Nat.add_mul_div_left _ _ (by decide), shld_hi lo s h1 h2]
+  have hlt := shift_sum_lt lo hi s hlo h1 h2
+  rw [Nat.add_mod, Nat.mod_eq_of_lt (Nat.lt_of_le_of_lt (Nat.div_le_self _ _) hlo), Nat.mod_eq_of_lt hlt]
+
 end FvModexp.Asm
