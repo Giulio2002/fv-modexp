@@ -258,24 +258,6 @@ def VWMoves (R : RtInv) (zp zl zc xp xc : Nat) : Prop :=
   ∀ j, 1 ≤ j → j ≤ zl →
     R.ok (cA "runtime.memmove") [if j < zc then zp + 8 * j else zp, if j < xc then xp + 8 * j else xp, 8 * (zl - j)]
 
-/-- amd64 `addVW`: frame `0x18` + saved `RBP`, `memmove` (`4096` + its return slot) → `stk = 0x28 + 4096 = 4136`;
-spills `RAX`, `RDI` at `RSP + 8`, `RSP + 32` (`above = 40`). -/
-def AddVWEns (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat))
-    (zp zl zc xp xl xc y : W64) : Prop :=
-  Ensures ((Extracted.program.onlySegments [addVWfn]).link impl) (segAddr Extracted.program addVWfn)
-    [zp, zl, zc, xp, xl, xc, y]
-    (fun s => CallEnvND R L s 4136 40 ∧ xl = zl ∧ zl.toNat ≤ zc.toNat ∧ zl.toNat ≤ xc.toNat ∧
-      NatLive s.mem R L zp.toNat zl.toNat ∧ Outside zp.toNat (8 * zl.toNat) (win s 4136 40) ∧
-      s.mem.accessible xp.toNat (8 * zl.toNat) false = true ∧ xp.toNat + 8 * zl.toNat ≤ 2 ^ 48 ∧
-      Held R L xp.toNat (8 * zl.toNat) ∧ Outside xp.toNat (8 * zl.toNat) (win s 4136 40) ∧
-      (zp = xp ∨ Apart zp.toNat (8 * zl.toNat) xp.toNat (8 * zl.toNat)) ∧
-      R.inv b L (s.regs 14).toNat (view R.rt L s.mem) ∧
-      (if zp = xp then True else VWMoves R zp.toNat zl.toNat zc.toNat xp.toNat xc.toNat))
-    (fun s s' => s'.fsBase = s.fsBase ∧ (s'.regs 0).toNat = (natVal s.mem xp.toNat zl.toNat + y.toNat) / 2 ^ (64 * zl.toNat) ∧
-      natVal s'.mem zp.toNat zl.toNat = (natVal s.mem xp.toNat zl.toNat + y.toNat) % 2 ^ (64 * zl.toNat) ∧
-      ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b ≤ b' ∧
-        R.inv b' L' (s.regs 14).toNat (view R.rt L' s'.mem) ∧
-        MemFrame s.mem s'.mem (R.rt ++ win s 4136 40 ++ [(zp.toNat, zp.toNat + 8 * zl.toNat)]) ∧
-        LiveFrame s.mem s'.mem L [(zp.toNat, zp.toNat + 8 * zl.toNat)])
+/- `addVW` itself: asm's `FvModexp.<Isa>.AddVW.ens` (Proofs/<Isa>/Nat/AddVW.lean), used directly by the callers. -/
 
 end FvModexp.Amd64.Callees

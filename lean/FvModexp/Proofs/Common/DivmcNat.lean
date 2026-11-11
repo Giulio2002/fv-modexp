@@ -35,6 +35,15 @@ theorem split_mod (a h n k : Nat) :
   · congr 2
     rw [Nat.mul_comm (2 ^ (64 * n)) h, Nat.add_mul_div_right _ _ hp, Nat.add_comm]
 
+/-- Two-piece addition with carry out (`nat.add`: `addVV` on the low `n` limbs, `addVW` on the high `k`): low part
+`a % B^n`, high part `(h + a / B^n) % B^k`, final carry `(h + a / B^n) / B^k` give `a + B^n h` exactly. -/
+theorem add_two_piece (a h n k : Nat) :
+    a % 2 ^ (64 * n) + 2 ^ (64 * n) * ((h + a / 2 ^ (64 * n)) % 2 ^ (64 * k)) +
+      2 ^ (64 * (n + k)) * ((h + a / 2 ^ (64 * n)) / 2 ^ (64 * k)) = a + 2 ^ (64 * n) * h := by
+  rw [two_pow_64_add, Nat.mul_assoc, Nat.add_assoc, ← Nat.mul_add, Nat.mod_add_div, Nat.mul_add]
+  have := Nat.mod_add_div a (2 ^ (64 * n))
+  omega
+
 /-- `(a + B^n h) % B^n = a % B^n` style: a value below `B^n` is its own residue. -/
 theorem mod_self_lt {a n : Nat} (h : a < 2 ^ (64 * n)) : a % 2 ^ (64 * n) = a := Nat.mod_eq_of_lt h
 

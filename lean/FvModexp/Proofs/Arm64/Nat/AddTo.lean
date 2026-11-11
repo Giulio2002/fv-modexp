@@ -1,5 +1,6 @@
 import FvModexp.Proofs.Arm64.Nat.LibAddTo
 import FvModexp.Proofs.Arm64.Nat.AsmCallees
+import FvModexp.Proofs.Arm64.Nat.AddVW
 import FvModexp.Proofs.Common.DivmcNat
 import FvModexp.Proofs.Common.DivmcBits
 
@@ -33,7 +34,7 @@ def names : List String := LibAddTo.names
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
-    (hVW : ∀ b L zp zl zc xp xl xc y, AddVWEns impl R b L zp zl zc xp xl xc y)
+    (hmv : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc : BitVec 64) :
     Ensures ((Extracted.program.onlySegments names).link impl) (segAddr Extracted.program fn)
       [zp, zl, zc, xp, xl, xc]
@@ -59,8 +60,9 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   have hc2 : CodeIn ((Extracted.program.onlySegments [addVWfn]).link impl) (LibAddTo.program.link impl) := by
     rw [LibAddTo.eq_only]; exact codeIn_restrict_mono hap (sub_of_all (by decide))
   have hVV' := AddVVHyp.live (Janus.Contracts.EqHashModel.Summary.of_codeIn hc1 hVV) R b L
+  have hVW := fun b L zp zl zc xp xl xc y => AddVW.ens impl hap R hmv b L zp zl zc xp xl xc y
   have hVW' := fun b L => Ensures.toSummaryRegs7 (hVW b L) (noExit_restrict hap [addVWfn]) hc2
-  clear hc1 hc2 hVV hVW
+  clear hc1 hc2 hVV hVW hmv
   janus_intro hs
   simp only [Outside, and_true] at hzw hxw
   have hLs' : ∀ r ∈ L, r.1 + (r.2 - r.1) ≤ s.sp.toNat - 4240 ∨ s.sp.toNat + 48 ≤ r.1 := by
