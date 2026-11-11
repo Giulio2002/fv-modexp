@@ -131,6 +131,9 @@ Lesson (before → after): the first setBytes exploration with `janus_data hd [h
 | Top/RunD2P (exp operand, stack buffer -> J2) | 79 s / 5.8 GB | |
 | Top/RunD2L (exp operand, makeslice buffer, >0 input bytes -> J2) | 211 s / 7.8 GB | |
 | Top/RunD2Z (exp operand, makeslice buffer, 0 input bytes) | skip branch alone 143 s / 6.3 GB; both branches in one theorem > 900 s (killed) | to split at the BEQ |
+| Top/RunD2ZA (exp operand, 0 input bytes: D1 -> Z2 = makeslice return, builds `JoinZ2`) | 155 s / 4.1 GB | first version 397 s / 7.1 GB: 193 `omega` calls of 4-9 s each (context with ~8 disjunctive hypotheses). Fixes: BitVec sub/add facts via small lemmas (`bv_sub_of_le`, `bv_add_of_lt`, RunD2Lem), `outA_of` for window facts, every non-slot conjunct of `JoinZ2` proved as a `have` BEFORE clearing the disjunctions (`clear hoffc hmN hpw hcw hpo hga hut …`), then the slot conjuncts by `janus_simp`; `padByte` past-the-end via a precomputed `len ≤ 96 + hdr0` instead of `omega` in the 120-hyp context (66 s -> 0) |
+| Top/RunD2ZE (Z2 -> J2, memmove skipped) | 9 s / 2.1 GB | |
+| Top/RunD2ZN (Z2 -> J2, memmove of 0 bytes) | 96 s / 3.8 GB | |
 
 **Row-1 budget warning (2026-11-11):** the serial dev-compile time of the Run arm64 modules written so far is ~28 min
 (H 340 s, L 80 s, D1 395 s, D2 ~700 s, plus the error-path witness 150 s); the modulus operand and the compute part
