@@ -17,6 +17,10 @@ open FvModexp.Arm64.EvenHyp
 open FvModexp.Arm64.ExpHyp (LshPost fnLsh)
 open FvModexp.Arm64.SubMod2N (tN)
 
+theorem sqr_addr : segAddr Extracted.program fnSqr = 1815584 := by decide
+theorem mul_addr : segAddr Extracted.program fnMul = 1814128 := by decide
+theorem lsh_addr : segAddr Extracted.program fnLsh = 1784560 := by decide
+
 set_option maxRecDepth 20000 in
 theorem sqrCall {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) {stk above : Nat} {cost : Nat → Nat → Nat}

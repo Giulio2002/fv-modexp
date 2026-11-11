@@ -87,6 +87,24 @@ theorem zs_store {s : State} {M : Memory} {p l c a : Nat} (v : Nat) (hz : ZS s M
   exact ⟨(Memory.readLE_writeLE_of_disjoint _ _ (by omega)).trans z1,
     (Memory.readLE_writeLE_of_disjoint _ _ (by omega)).trans z2, (Memory.readLE_writeLE_of_disjoint _ _ (by omega)).trans z3⟩
 
+/-- a product of a `≤ x`-word and a `≤ y`-word value has at most `x + y` words -/
+theorem len_le_mul {m : Memory} {p l a c x y : Nat} (hn : NatNorm m p l) (hv : natVal m p l = a * c)
+    (ha : a < 2 ^ (64 * x)) (hc : c < 2 ^ (64 * y)) : l ≤ x + y := by
+  refine len_le hn ?_
+  rw [hv, show 64 * (x + y) = 64 * x + 64 * y by omega, Nat.pow_add]
+  exact Nat.mul_lt_mul_of_lt_of_lt ha hc
+
+/-- `z` has a word: its value is odd -/
+theorem len_pos {X Zv j : Nat} {m : Memory} {p l : Nat} (hc : X * Zv % 2 ^ (2 ^ j * 32) = 1 % 2 ^ (2 ^ j * 32))
+    (hv : natVal m p l = Zv) : 0 < l := by
+  have ho := Exp.odd_of_inv (Nat.le_trans (by decide) (Nat.mul_le_mul_right 32 (Nat.one_le_two_pow (n := j)))) hc
+  rcases Nat.eq_zero_or_pos l with h0 | h0
+  · subst h0
+    have := natVal_lt m p 0
+    simp only [Nat.mul_zero, Nat.pow_zero] at this
+    omega
+  · exact h0
+
 section
 variable {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
