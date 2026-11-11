@@ -185,13 +185,13 @@ theorem one_facts {R : RtInv} {L L1 L2 : List (Nat × Nat)} {b1 b2 g sp n st one
       rw [e2] at this; unfold Apart at this ⊢; omega
 
 /-- `p01Ret`'s conclusion with the operand values given explicitly -/
-@[reducible] def RetPost (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (g sp n mp mc t bp yp ylen Y yi zp zc st n0 onep : Nat)
+@[reducible] def RetPost (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (g sp n mp mc t bp yp ylen Y yi zp zc zzp zzc st n0 onep : Nat)
     (r18 r29 : BitVec 64) (Mv xv rv : Nat) (M : Memory) (s' : State) : Prop :=
   ∃ (Mj M' : Memory) (zp' zc' : Nat) (L' : List (Nat × Nat)) (b' : Nat),
     MemFrame M Mj (R.rt ++ tw sp bp n) ∧ LiveFrame M Mj L [(bp, bp + 8 * (17 * n))] ∧
     R.inv b L g (view R.rt L Mj) ∧ Mj.regions = M.regions ∧
     ZPost R L L' b b' g sp n Mj M' zp zc zp' zc' ∧
-    ZjPost R b' L' g sp n mp mc ((2 ^ 64 - t) % 2 ^ 64) yp ylen bp zp' zc'
+    ZjPost R b' L' g sp n mp mc ((2 ^ 64 - t) % 2 ^ 64) yp ylen bp zp' zc' zzp zzc
       (Exp.montPow n Mv ((2 ^ 64 - t) % 2 ^ 64) xv rv)
       (zjVal n Mv ((2 ^ 64 - t) % 2 ^ 64) (Exp.montPow n Mv ((2 ^ 64 - t) % 2 ^ 64) xv rv) Y ylen yi)
       st n0 onep r18 r29 M' s'
@@ -271,7 +271,7 @@ theorem afterOne (impl : List Segment) (hap : ImplApart Extracted.program impl) 
     Reaches ((LibExp.program.link impl).withExit ret) S
       (IsReturn (fun s' => ∃ (M2 : Memory) (L2 : List (Nat × Nat)) (b2 : Nat),
         OneChain R b L L2 b2 sp n st M M2 ∧
-        RetPost R b2 L2 g sp n mp mc t (stW M2 st + 8 * stLen M st) yp ylen Y yi zp zc st n0 onep r18 r29
+        RetPost R b2 L2 g sp n mp mc t (stW M2 st + 8 * stLen M st) yp ylen Y yi zp zc zzp zzc st n0 onep r18 r29
           (M.readLE mp (8 * n)) (M.readLE xp (8 * n)) (M.readLE rrp (8 * n)) M2 s')) := by
   have hO0 := hO
   obtain ⟨heO, hxO, hbO, hFO, hLO, hinvO, hrgO, r816O, hone1O, honeC⟩ := hO0

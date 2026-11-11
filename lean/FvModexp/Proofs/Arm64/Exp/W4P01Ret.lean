@@ -120,7 +120,7 @@ theorem p01Ret (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
         MemFrame M Mj (R.rt ++ tw sp bp n) ∧ LiveFrame M Mj L [(bp, bp + 8 * (17 * n))] ∧
         R.inv b L g (view R.rt L Mj) ∧ Mj.regions = M.regions ∧
         ZPost R L L' b b' g sp n Mj M' zp zc zp' zc' ∧
-        ZjPost R b' L' g sp n mp mc ((2 ^ 64 - t) % 2 ^ 64) yp ylen bp zp' zc'
+        ZjPost R b' L' g sp n mp mc ((2 ^ 64 - t) % 2 ^ 64) yp ylen bp zp' zc' zzp zzc
           (Exp.montPow n (M.readLE mp (8 * n)) ((2 ^ 64 - t) % 2 ^ 64) (M.readLE xp (8 * n)) (M.readLE rrp (8 * n)))
           (zjVal n (M.readLE mp (8 * n)) ((2 ^ 64 - t) % 2 ^ 64)
             (Exp.montPow n (M.readLE mp (8 * n)) ((2 ^ 64 - t) % 2 ^ 64) (M.readLE xp (8 * n)) (M.readLE rrp (8 * n)))

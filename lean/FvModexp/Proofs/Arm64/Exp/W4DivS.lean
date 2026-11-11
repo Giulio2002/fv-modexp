@@ -21,7 +21,7 @@ open FvModexp.Arm64.W4Loop (Env Inp Buf FinEnv)
     (L2 : List (Nat × Nat)) (b2 : Nat),
     M'.readLE rp (8 * rl) = 2 ^ (128 * n) % Mv ∧ RRPost R b' L' g sp n rp rl rc zzp zzc M' M1 rrp rrc ∧
     OneChain R b' L' L2 b2 sp n st M1 M2 ∧
-    RetPost R b2 L2 g sp n mp mc t (stW M2 st + 8 * lenM) yp ylen Y yi zp zc st n0 onep r18 r29 Mv Xv
+    RetPost R b2 L2 g sp n mp mc t (stW M2 st + 8 * lenM) yp ylen Y yi zp zc zzp zzc st n0 onep r18 r29 Mv Xv
       (2 ^ (128 * n) % Mv) M2 s'
 
 /-- a range inside the stack above `l0` is apart from everything apart from that part -/
