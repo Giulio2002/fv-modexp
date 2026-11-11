@@ -44,6 +44,40 @@ theorem t_live {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl 
   · omega
   · have := hap.apart_of_inRanges h1; omega
 
+/-- the live set after `stk.nat` keeps clear of the window -/
+theorem Env.lsep1 {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl : Nat} {s : State}
+    {t : Nat} {L1 : List (Nat × Nat)} {b1 w1 c1 : Nat} (hE : Env R b L st zp zl zc xp xl s t L1 b1 w1 c1) :
+    ∀ r ∈ L1, r.1 + (r.2 - r.1) ≤ s.sp.toNat - 4432 ∨ s.sp.toNat + 64 ≤ r.1 := by
+  obtain ⟨ns, hL1, hns, -⟩ := hE.ext
+  have hout := hE.pre.ce.2.2.2.1
+  intro r hr
+  rw [hL1] at hr
+  rcases List.mem_append.1 hr with hr | hr
+  · exact hE.lay.lsep r hr
+  · obtain ⟨⟨q, hq, h1, h2⟩, -⟩ := hns r hr
+    have := MemFrame.outside_mem hout hq
+    omega
+
+/-- the stack-guard word is outside everything the function writes -/
+theorem Env.gOut {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl : Nat} {s : State}
+    {t : Nat} {L1 : List (Nat × Nat)} {b1 w1 c1 : Nat} (hE : Env R b L st zp zl zc xp xl s t L1 b1 w1 c1) :
+    Outside ((s.regs 28).toNat + 16) 8 (R.rt ++ winA s 4432 64 ++ [(zp, zp + 8 * zl), (t, t + 16 * xl)] ++
+      stkWs s.mem st) := by
+  have hpre := hE.pre
+  obtain ⟨-, -, -, -, hga, hgr, -, -⟩ := hpre.ce
+  have hl := hE.lay
+  have hzl := hl.zl2
+  have hlc := hpre.stok.2.2.2.2.2.1
+  have htg : Apart t (16 * xl) ((s.regs 28).toNat + 16) 8 := by
+    rcases hE.scr.loc with ⟨h0, h1, h2⟩ | ⟨hin, -⟩
+    · have ha := (hpre.starr h0).2; unfold Apart at ha ⊢; omega
+    · have := (hin.apart hgr).symm; unfold Apart at this ⊢; omega
+  have hzg := hpre.zg; have hstg := hpre.stg; have hfr := hpre.stgf
+  simp only [freeP, freeN] at hfr
+  unfold Apart at htg hzg hstg hga hfr
+  simp only [winA, stkWs, outside_append, outside_cons, outside_nil, and_true]
+  refine ⟨⟨⟨hgr, ?_, ?_⟩, ?_, ?_⟩, ?_, ?_⟩ <;> omega
+
 set_option maxHeartbeats 1000000 in
 theorem post_fin {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl xc : Nat} {s : State}
     {t : Nat} {L1 : List (Nat × Nat)} {b1 w1 c1 : Nat}
