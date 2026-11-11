@@ -233,3 +233,5 @@ hypotheses: 500+ s → 19 s.
 list (the fall-through branch is not pruned otherwise); `MOVQ FS:-8, R14` after ABI0 calls needs `hfs : S.fsBase = s.fsBase`
 and `(2^64 - 8 + fsBase) % 2^64 = fsBase - 8` as run lemmas; register reads of a symbolic state inside `win {…}` need
 `simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]`.
+
+### divmc nat.sub (2026-11-11), both ISAs: 12 modules each (copied from nat.add's split), each ≤ 44 s, ≤ 3.1 GB.
