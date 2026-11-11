@@ -41,6 +41,64 @@ theorem j1_stack {impl : List Segment} {R : RtInv} {b : Nat} {L : List (Nat × N
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
+/-- after `x = x.trunc(x, n)` returns (at `+0xbc`): reload `y`, `n`, `z`, move the result to `X3..X5`, `J1` -/
+theorem s1t (impl : List Segment) {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {op zp zl zc yp yl yc n : Nat}
+    {s : State} (k1 : J1 impl R b L op zp zl zc yp yl yc n s) (hpre : Pre R b L op zp zl zc yp yl yc n s)
+    {stkT aboveT : Nat} (hkT : stkT ≤ 4464) (haT : aboveT ≤ 88) (M0 : Memory) (hrt0 : Rt R b L s zp zc n 0 M0 L b)
+    (hfw0 : Fw s M0 zp zl zc yp n) (r64 : M0.readLE (s.sp.toNat + 64) 8 = yl)
+    (r72 : M0.readLE (s.sp.toNat + 72) 8 = yc) (hv0 : natVal M0 zp zl = natVal s.mem zp zl)
+    (S0 : State) (hS0 : S0.mem = M0) (hsp0 : S0.sp = BitVec.ofNat 64 (s.sp.toNat - 144)) (h280 : S0.regs 28 = s.regs 28)
+    (s' : State) (hpc' : s'.pc = BitVec.ofNat 64 (1805584 + 4 * 47)) (hsp' : s'.sp = S0.sp)
+    (h28' : s'.regs 28 = S0.regs 28) (h18' : s'.regs 18 = s.regs 18) (hreg' : s'.mem.regions = S0.mem.regions)
+    (hpost : TruncPost R b L stkT aboveT zp zc zp zl n S0 s') :
+    Goal impl R b L zp zl zc yp yl n s s' := by
+  obtain ⟨⟨⟨-, -, -⟩, ⟨hal, hb', ha, hw⟩, -, hout, -, -, -, -⟩, -, -, -, -, -, -, -, hzl, -, hzc, -, -, -, -, -,
+    hzw, -⟩ := id hpre
+  obtain ⟨p', l', c', e0, e1, e2, L', b', ⟨hv, hnorm, hlc, -, hlive, hreuse, -⟩, ⟨hLE, hbud, hinv⟩, hF, hLF⟩ := hpost
+  obtain ⟨rfl, rfl⟩ := hreuse (by unfold truncNeed; omega)
+  have hspT : S0.sp.toNat = s.sp.toNat - 144 := by rw [hsp0]; exact tN (by omega)
+  simp only [winA, hspT] at hF
+  simp only [win, K, A, outside_cons, outside_nil, and_true] at hzw hout hb' ha hw
+  have hacc' : s'.mem.accessible (s.sp.toNat - 4608) (4608 + 88) true = true := by
+    rw [hF.accessible, hS0, hrt0.2.1.accessible]; exact hw
+  have rd : ∀ a, s.sp.toNat - 152 ≤ a → a + 8 ≤ s.sp.toNat + 88 → (a + 8 ≤ s.sp.toNat - 136 ∨ s.sp.toNat - 56 ≤ a) →
+      s'.mem.readLE a 8 = M0.readLE a 8 := by
+    intro a h1 h2 h3
+    rw [← hS0]
+    refine hF.readLE _ _ ?_
+    simp only [outside_append, outside_cons, outside_nil, and_true]
+    exact ⟨⟨hout.of_sub (by omega) (by omega), by omega, by omega⟩, by omega⟩
+  obtain ⟨f1, f2, f3, f4, f5, f6, f7⟩ := hfw0
+  have r8 := (rd (s.sp.toNat + 8) (by omega) (by omega) (by omega)).trans f3
+  have r16 := (rd (s.sp.toNat + 16) (by omega) (by omega) (by omega)).trans f4
+  have r24 := (rd (s.sp.toNat + 24) (by omega) (by omega) (by omega)).trans f5
+  have r56 := (rd (s.sp.toNat + 56) (by omega) (by omega) (by omega)).trans f6
+  have r64' := (rd (s.sp.toNat + 64) (by omega) (by omega) (by omega)).trans r64
+  have r72' := (rd (s.sp.toNat + 72) (by omega) (by omega) (by omega)).trans r72
+  have r80 := (rd (s.sp.toNat + 80) (by omega) (by omega) (by omega)).trans f7
+  have rl := (rd (s.sp.toNat - 144) (by omega) (by omega) (by omega)).trans f1
+  have rf := (rd (s.sp.toNat - 152) (by omega) (by omega) (by omega)).trans f2
+  have hsp'' : s'.sp = BitVec.ofNat 64 (s.sp.toNat - 144) := hsp'.trans hsp0
+  unfold Goal
+  janus_run [r8, r16, r24, r56, r64', r72', r80] until [1805836]
+  refine k1 _ l' L' b' hpre ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ hlc
+  all_goals try janus_simp
+  · rw [show BitVec.toNat s.sp - 144 + 152 = BitVec.toNat s.sp + 8 by omega, f3]
+  · rw [show BitVec.toNat s.sp - 144 + 160 = BitVec.toNat s.sp + 16 by omega, f4]
+  · rw [show BitVec.toNat s.sp - 144 + 168 = BitVec.toNat s.sp + 24 by omega, f5]
+  · rw [show BitVec.toNat s.sp - 144 + 200 = BitVec.toNat s.sp + 56 by omega, f6]
+  · rw [show BitVec.toNat s.sp - 144 + 208 = BitVec.toNat s.sp + 64 by omega, r64]
+  · rw [show BitVec.toNat s.sp - 144 + 216 = BitVec.toNat s.sp + 72 by omega, r72]
+  · rw [show BitVec.toNat s.sp - 144 + 224 = BitVec.toNat s.sp + 80 by omega, f7]
+  · exact ⟨rl, rf, r8, r16, r24, r56, r80⟩
+  · rw [hS0] at hF hreg' hLF
+    rw [h280] at hinv
+    exact rt_call hrt0 (by omega) hkT (by omega) (Or.inl rfl) hreg' hF hLF hLE hbud (truncNeed_le_w _ _) hinv hlive
+  · rw [hv, hS0, hv0]
+  · exact hnorm
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 0 in
 theorem s1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv) {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
     {stkT aboveT : Nat} (hkT : stkT ≤ 4464) (haT : aboveT ≤ 88) (htr : TruncHyp impl R ns stkT aboveT)
@@ -100,6 +158,28 @@ theorem s1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
     · refine Nat.lt_of_lt_of_le (BitLenA64.natVal_lt_bl _ _ _ (by omega)) (Nat.pow_le_pow_right (by omega) ?_)
       omega
   · janus_run [hc] until [1786000]
-    sorry
+    have hzw' : Outside zp (8 * zl) (winA s K A) := by simp only [winA, K, A, outside_cons, outside_nil, and_true]; omega
+    refine truncCall hap hns htr (zp := zp) (zl := zl) (zc := zc) (x := zp) (xl := zl) (xc := zc) (n := n)
+      (ra_of hap hnf 47 (by omega)) ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ (by omega) (by omega) (by omega) (by omega) (by omega)
+      (by omega)
+      (truncPre_of hpre (rt_stack hpre 0 ?_ ?_) (by omega) rfl ?_ ?_ hkT haT (Or.inl ⟨rfl, rfl⟩) hzl (by omega) ?_
+        (by omega) ((hzlive (by omega)).2.1.sub (Nat.le_refl _) (by omega)) (by omega) (by omega) (Or.inl rfl))
+      fun s' hpc' hsp' h28' h29' h18' hreg' hpost => ?qK
+    case qK =>
+      refine s1t impl k1 hpre hkT haT _ (rt_stack hpre 0 ?_ ?_) ?_ ?_ ?_ ?_ _ rfl ?_ ?_ s' hpc' hsp' h28' ?_ hreg' hpost
+      · simp only [winA, K, A]; janus_frame
+      · janus_simp
+      · simp only [Fw]
+        refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;> janus_simp
+      · janus_simp
+      · janus_simp
+      · exact natVal_frame (by simp only [winA, K, A]; janus_frame) hzw'
+      · janus_simp; exact Expmc.sp_sub _ _ (by omega) (by omega)
+      · janus_simp
+      · rw [h18']; janus_simp
+    all_goals try janus_simp
+    · simp only [winA, K, A]; janus_frame
+    · exact Expmc.sp_sub _ _ (by omega) (by omega)
+    · exact hza
 
 end FvModexp.Arm64.SubMod2N
