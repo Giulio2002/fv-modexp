@@ -168,19 +168,28 @@ def Serves (R : RtInv) : Prop :=
   (∀ args, R.ok (cA "runtime.gcWriteBarrier4") args) ∧ (∀ args, R.ok (cA "sync.(*Pool).Get") args) ∧
   (∀ args, R.ok (cA "sync.(*Pool).Put") args)
 
+/-- The address of the first threshold global (`divRecursiveThreshold`); the other three follow at `+8, +16, +24`. -/
+@[reducible] def gA : Nat := Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.divRecursiveThreshold»
+
 /-- The writable globals the big callees read, at their initial values (`natmul.go:12,68,69`, `natdiv.go:733`), outside
-the runtime-owned ranges. (`natOne`, `intOne`, `stackPool` are added when a proof needs them.) -/
-def Globals (R : RtInv) (m : Memory) : Prop :=
+the runtime-owned ranges. The four words are contiguous, `divRecursiveThreshold` first (`gA`, 32 bytes, both ISAs):
+readable, outside the runtime-owned ranges and outside the stack ranges `w` (`IntPre` passes the callee's window), so a
+load does not fault and the values survive stack stores. (`natOne`, `intOne`, `stackPool` are added when a proof needs
+them.) -/
+def Globals (R : RtInv) (m : Memory) (w : List (Nat × Nat) := []) : Prop :=
   m.readLE (Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.karatsubaThreshold») 8 = 40 ∧
   m.readLE (Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.basicSqrThreshold») 8 = 12 ∧
   m.readLE (Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.karatsubaSqrThreshold») 8 = 80 ∧
   m.readLE (Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.divRecursiveThreshold») 8 = 40 ∧
-  Outside (Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.karatsubaThreshold») 32 R.rt
+  Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.karatsubaThreshold» = gA + 8 ∧
+  Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.basicSqrThreshold» = gA + 16 ∧
+  Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.karatsubaSqrThreshold» = gA + 24 ∧
+  m.accessible gA 32 false = true ∧ Outside gA 32 R.rt ∧ Outside gA 32 w
 
 /-- The callee frame shared by the three specs: the `*Int` objects `xs` (headers on the caller's frame or the heap) are
 outside the callee's window and apart from the `stackguard0` word, `Globals`, `Serves`, the invariant, the budget `B`. -/
 def IntPre (R : RtInv) (b B : Nat) (L : List (Nat × Nat)) (stk above : Nat) (xs : List Nat) (s : State) : Prop :=
-  CallEnv R L s stk above ∧ Serves R ∧ Globals R s.mem ∧ B ≤ b ∧
+  CallEnv R L s stk above ∧ Serves R ∧ Globals R s.mem (win s stk above) ∧ B ≤ b ∧
     R.inv b L (s.regs 14).toNat (view R.rt L s.mem) ∧
     (∀ a ∈ xs, IntOK s.mem R L a ∧ Outside a 32 (win s stk above) ∧
       Outside (s.mem.readLE (a + 8) 8) (8 * s.mem.readLE (a + 24) 8) (win s stk above) ∧
