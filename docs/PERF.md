@@ -644,3 +644,12 @@ amd64 rows after the DF change (s10, janus-provfix): AddVWRow PASS 88 s / 3.0 GB
 PASS 63 s / 2.0 GB, MulAddWWRow PASS 270 s / 3.6 GB, DivWRow PASS 203 s / 5.6 GB.
 arm64 DivBasicRow: FAIL — timeout 900 s while compiling its 25 own modules (first build in cache-asm, host load ~45);
 needs trimming (DivBasicRec 141 s, DivBasicNat 90-156 s, DivBasicStep 56 s are the big ones).
+
+### asm s11: divBasic arm64 row trim (dev `mkp.py`, host load 30-45)
+Module DAG restructured for Janus' parallel own-module compile (≤ 4 at once): the segment relations (`AfterNat`, `Hd`,
+`AtMul`, `Bd`, `AddK`, pc abbrevs, `qhlOf`, `skipQ`, `view_win`) moved to `DivBasicRel` (imports Pro + MemF only), so
+Nat / Rec / Qh / Mul / Sub* / Add* / Tail* compile in parallel; `DivBasicTail` (182 s) split into `TailS` (skip, 53 s)
+and `TailN` (store, 124 s). Times this session: Nat 71 s, Rec 112-127 s / 5.0 GB, AddB 106 s, Step 51-75 s, rest < 50 s.
+| row | ISA | verdict | wall | peak |
+|---|---|---|---|---|
+| DivBasicRow | arm64 | PASS | 587 s (was FAIL > 900 s) | 5.0 GB |
