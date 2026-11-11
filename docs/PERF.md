@@ -227,3 +227,9 @@ passed to `janus_run` as hypotheses): every `omega` call (the dischargers', and 
 and introduces a quotient variable with 2^64 coefficients for each. Fix: pass them only as proof terms in the
 `janus_run [...]` lemma list (`janus_run [sub_mod64 a b (by omega) h, mod64_of_lt x (by omega)]`), never as context
 hypotheses: 500+ s → 19 s.
+
+### divmc nat.add amd64 (2026-11-11): same 13-module split, each 3–53 s (`NatAddSetE` 44 s, `NatAddAlloc` 34 s,
+`NatAddVW` 28 s), ≤ 3.1 GB. amd64 lessons: signed `JGE`/`JL` on lengths need `toInt_small (x + 1#64) …` in the run
+list (the fall-through branch is not pruned otherwise); `MOVQ FS:-8, R14` after ABI0 calls needs `hfs : S.fsBase = s.fsBase`
+and `(2^64 - 8 + fsBase) % 2^64 = fsBase - 8` as run lemmas; register reads of a symbolic state inside `win {…}` need
+`simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]`.
