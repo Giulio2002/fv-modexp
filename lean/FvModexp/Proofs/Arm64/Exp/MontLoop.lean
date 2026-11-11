@@ -39,7 +39,7 @@ abbrev LoopPost (R : RtInv) (L : List (Nat × Nat)) (b : Nat) (s : State) (sp zp
   s'.regs 0 = BitVec.ofNat 64 zp ∧ s'.regs 1 = BitVec.ofNat 64 n ∧ s'.regs 2 = BitVec.ofNat 64 cap ∧
   s'.mem.readLE zp (8 * n) = montgomery n X Y Mv k ∧
   R.inv b L (s.regs 28).toNat (view R.rt L s'.mem) ∧
-  MemFrame M0 s'.mem (R.rt ++ [(sp - 4096, sp + 312), (zp, zp + 16 * n)]) ∧
+  MemFrame M0 s'.mem (R.rt ++ [(sp - 4096, sp + 184), (sp + 200, sp + 312), (zp, zp + 16 * n)]) ∧
   LiveFrame M0 s'.mem L [(zp, zp + 16 * n)]
 
 set_option maxRecDepth 20000 in
@@ -137,8 +137,8 @@ theorem loop (impl : List Segment) (R : RtInv)
         rw [FvModexp.Expmc.B_pow]
       · refine hF.trans ef (fun a k hk => ?_)
         simp only [loopWs, outside_append, outside_cons, outside_nil, and_true] at hk ⊢
-        obtain ⟨hrt, hw, hz⟩ := hk
-        exact ⟨⟨by omega, by omega, by omega, by omega⟩, hrt, by omega, by omega⟩
+        obtain ⟨hrt, hw, hw2, hz⟩ := hk
+        exact ⟨⟨by omega, by omega, by omega, by omega⟩, hrt, by omega, by omega, by omega⟩
       · refine (FvModexp.Expmc.liveFrame_of_frame hF ?_).trans
           (FvModexp.Expmc.liveFrame_widen el ?_) (fun _ _ h => h)
         · intro a k hin hout

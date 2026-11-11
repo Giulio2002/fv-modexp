@@ -305,3 +305,11 @@ and `(2^64 - 8 + fsBase) % 2^64 = fsBase - 8` as run lemmas; register reads of a
 `simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]`.
 
 ### divmc nat.sub (2026-11-11), both ISAs: 12 modules each (copied from nat.add's split), each ≤ 44 s, ≤ 3.1 GB.
+
+### Shared witness stubs, arm64 (agent top s2, dev compile, LEAN_NUM_THREADS=4)
+| module | wall | note |
+|---|---|---|
+| Witness/StubsMem (looping memmove/memclr, transport) | 10 s | |
+| Witness/StubsGrow (nextslicecap loop, 67-class chain, copy loops) | 33 s | before: chain leaves closed by `simp_all` over 67 nested `if`s: >3 min (killed); after: generated per-leaf `cs_leaf k` (`fal_drop` + `decide` on the class prefix) |
+| Witness/StubsGrowFin (alloc + live return + transport) | 22 s | `janus_run` before the toy-allocator facts enter the context (else heartbeat timeout in the run's `omega`s) |
+| Witness/Stubs (Run extraction: impl, hap, 9 contracts, Serves) | 18 s | |

@@ -55,7 +55,7 @@ theorem exit (impl : List Segment) (R : RtInv)
       s'.mem.readLE zp (8 * n) = (if c ≠ 0 then (M.readLE (zp + 8 * n) (8 * n) + 2 ^ (64 * n) - M.readLE mp (8 * n)) % 2 ^ (64 * n)
         else M.readLE (zp + 8 * n) (8 * n)) ∧
       R.inv b L (s.regs 28).toNat (view R.rt L s'.mem) ∧
-      MemFrame M s'.mem (R.rt ++ [(sp - 4096, sp + 312), (zp, zp + 8 * n)]) ∧
+      MemFrame M s'.mem (R.rt ++ [(sp - 4096, sp + 184), (sp + 200, sp + 312), (zp, zp + 8 * n)]) ∧
       LiveFrame M s'.mem L [(zp, zp + 8 * n)]) := by
 
   have hLs' : ∀ r ∈ L, (r.1 + (r.2 - r.1) ≤ sp - 4096 ∨ sp - 8 ≤ r.1) ∧
@@ -77,9 +77,10 @@ theorem exit (impl : List Segment) (R : RtInv)
   · -- copy(z[:n], z[n:])
     refine ⟨hspq, ?_, (by janus_assumption : R.inv _ _ _ _), ?_, (by janus_assumption : LiveFrame _ _ _ _)⟩
     · rw [FvModexp.Expmc.readLE_of_copied (by janus_assumption : Mem.Copied _ _ _ _ _), Nat.mul_comm n 8]
-    · exact FvModexp.Expmc.frame_widen2 (by janus_assumption : MemFrame M _ _) (by omega) (by omega) (by omega) (by omega)
+    · exact FvModexp.Expmc.frame_widen2h (by janus_assumption : MemFrame M _ _) (by omega) (by omega) (by omega) (by omega)
   · -- subVV(z[:n], z[n:], m)
     exact ⟨hspq, (by janus_assumption : _ = _),
-      FvModexp.Expmc.close_frame (by janus_frame) (by rw [show sp + 312 - (sp - 4096) = 4096 + 312 by omega]; exact hwin) hzh8 hLs hinv⟩
+      FvModexp.Expmc.close_frame2 (by janus_frame) (by omega) (by omega) (by omega)
+        (by rw [show sp + 312 - (sp - 4096) = 4096 + 312 by omega]; exact hwin) hzh8 hLs hinv⟩
 
 end FvModexp.Arm64.MontExit
