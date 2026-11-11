@@ -34,3 +34,27 @@ theorem out_csw {rt : List (Nat × Nat)} {sp a n d k : Nat} (hsp : 4800 ≤ sp) 
   exact ⟨⟨h.1, by omega, by omega⟩, by omega⟩
 
 end FvModexp.Arm64.Run
+
+namespace FvModexp.Arm64.Run
+
+open Janus Janus.Arm64
+
+/-! Small arithmetic helpers, proved once in a small context (an `omega` inside a segment proof costs seconds). -/
+
+theorem bv_sub_of_le (a b : Nat) (h : b ≤ a) (ha : a < 2 ^ 64) :
+    BitVec.ofNat 64 a - BitVec.ofNat 64 b = BitVec.ofNat 64 (a - b) := by
+  apply BitVec.eq_of_toNat_eq; rw [BitVec.toNat_sub]; simp only [BitVec.toNat_ofNat]
+  rw [Nat.mod_eq_of_lt (a := b) (by omega), Nat.mod_eq_of_lt (a := a) ha, Nat.mod_eq_of_lt (a := a - b) (by omega)]
+  omega
+
+theorem bv_add_of_lt (a b : Nat) (h : a + b < 2 ^ 64) :
+    BitVec.ofNat 64 a + BitVec.ofNat 64 b = BitVec.ofNat 64 (b + a) := by
+  apply BitVec.eq_of_toNat_eq; rw [BitVec.toNat_add]; simp only [BitVec.toNat_ofNat]
+  rw [Nat.mod_eq_of_lt (a := a) (by omega), Nat.mod_eq_of_lt (a := b) (by omega), Nat.mod_eq_of_lt (a := b + a) (by omega)]
+  omega
+
+theorem outA_of {s : State} {a n : Nat} (h : a + n ≤ s.sp.toNat - 4800 ∨ s.sp.toNat + 40 ≤ a) :
+    Outside a n (winA s stk 40) := by
+  simp only [winA, stk, Janus.outside_cons, Janus.outside_nil, and_true]; omega
+
+end FvModexp.Arm64.Run
