@@ -1,6 +1,8 @@
 import FvModexp.Proofs.Arm64.Top.RunOkLib
 import FvModexp.Proofs.Arm64.Top.RunErr
 import FvModexp.Proofs.Arm64.Witness.StubsMvz
+import FvModexp.Proofs.Arm64.Witness.StubsMkz
+import FvModexp.Proofs.Arm64.Int.IntBytes
 
 /-!
 # Row 1, arm64, success path: `Run` on call data that passes EIP-7823 returns `(compute data (parseLengths data), nil)`
@@ -27,12 +29,12 @@ namespace FvModexp.Arm64.Run
 /-- **Row 1, arm64, EIP-7823 success** (WIP: callee specs as premises). -/
 theorem correctness_ok (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
+    (hmkz : MakesliceZeroLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
     (hmz : MemmoveZeroLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
     (hno : NewobjectLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.newobject") 4096 R)
     (stkM aboveM : Nat) (hM : RunIface.ModSpec impl R stkM aboveM) (hE : RunIface.ExpSpec impl R stkM aboveM)
-    (hBy : RunIface.BytesSpec impl R stkM aboveM)
-    (W : Nat) (hW : 624 + stkM ≤ W) (hW1 : 4800 ≤ W) (hab : aboveM ≤ 160)
+    (W : Nat) (hW : 624 + stkM ≤ W) (hW1 : 4800 ≤ W) (hab : aboveM ≤ 160) (hk1 : 4160 ≤ stkM) (ha1 : 16 ≤ aboveM)
     (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64) :
     Ensures (Extracted.program.link impl) (segAddr Extracted.program RunArm64.fn) [c, p, len, cp]
       (fun s => RunArm64.EnvW R L s W ∧ RunArm64.Input R L c p len cp s ∧ OsakaReceiver s.mem c.toNat ∧
@@ -42,7 +44,8 @@ theorem correctness_ok (impl : List Segment) (hap : ImplApart Extracted.program 
         LengthsPass (bytesAt s.mem p.toNat len.toNat))
       (fun s s' => RunArm64.OkRet (bytesAt s.mem p.toNat len.toNat) s' ∧
         RunArm64.FrameW R b (RunArm64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat))) L W s s') :=
-  ensOkLib impl hap R hmk hmv hmz hno stkM aboveM hM hE hBy W hW hW1 hab b L c p len cp
+  ensOkLib impl hap R hmk hmv hmz hno stkM aboveM hM hE
+    (IntBytes.bytesSpec_at impl hap R hmk hmkz stkM aboveM hk1 ha1) W hW hW1 hab b L c p len cp
 
 end FvModexp.Arm64.Run
 
@@ -172,6 +175,19 @@ theorem pre : RunArm64.EnvW R [] s1 WW ∧ RunArm64.Input R [] c1 p1 99 99 s1 �
 
 theorem model_mvz : MemmoveZeroLive (Extracted.program.ofImpl implAt) mvA 4096 R := WStubs.mvz R
 
+theorem model_mkz : MakesliceZeroLive (Extracted.program.ofImpl implAt) mkA 4096 R := WStubs.mkz [] Witness.tys0 Witness.ok
+
+/-- `makeslice(uint8, 0, 0)` call site (the `MakesliceZeroLive` precondition is satisfiable). -/
+def sMkz : State := Witness.callS mkA IntBytes.uint8T 0 0
+
+theorem site_mkz : (MakeslicePre 4096 sMkz ∧ StackRoom sMkz 4096 3 ∧
+    LiveAt R mkA [(sMkz.regs 0).toNat, (sMkz.regs 1).toNat, (sMkz.regs 2).toNat] [] 0x1000 0
+      (sMkz.regs 28).toNat sMkz.mem (calleeStack sMkz 4096 3)) ∧
+    typSize sMkz.mem (sMkz.regs 0).toNat * (sMkz.regs 2).toNat = 0 :=
+  ⟨⟨⟨Witness.cs_callOK _ _ _ _ 3 (by omega), ⟨by decide +kernel, by decide +kernel⟩, by decide +kernel, by decide +kernel,
+    by decide +kernel⟩, Witness.cs_room _ _ _ _ 3 (by omega), trivial, Witness.inv_cs _ _ _ _, by decide +kernel,
+    fun r hr => by simp at hr, Witness.cs_winR _ _ _ _ 3 (by omega)⟩, by decide +kernel⟩
+
 /-- `memmove(dst, src, 0)` call site (the `MemmoveZeroLive` precondition is satisfiable). -/
 def sMz : State := Witness.callS mvA (sp0 - 4800) pI 0
 
@@ -184,14 +200,15 @@ theorem site_mz : (sMz.regs 2).toNat = 0 ∧ Mem.EqPre 4096 3 sMz ∧
 
 /-- The returning run at the witness, from `correctness_ok` (given the callee specs). -/
 theorem returnsF (stkM aboveM : Nat) (hM : RunIface.ModSpec implAt R stkM aboveM)
-    (hE : RunIface.ExpSpec implAt R stkM aboveM) (hBy : RunIface.BytesSpec implAt R stkM aboveM)
-    (hW : 624 + stkM ≤ WW) (hab : aboveM ≤ 160) :
+    (hE : RunIface.ExpSpec implAt R stkM aboveM)
+    (hW : 624 + stkM ≤ WW) (hab : aboveM ≤ 160) (hk1 : 4160 ≤ stkM) (ha1 : 16 ≤ aboveM) :
     Returns ((Extracted.program.link implAt).withExit ret) s1 fun s' =>
       ABIReturn s1 s' ∧ (RunArm64.OkRet (bytesAt s1.mem p1.toNat (99 : BitVec 64).toNat) s' ∧
         RunArm64.FrameW R bW (RunArm64.okBudget (parseLengths (bytesAt s1.mem p1.toNat (99 : BitVec 64).toNat)))
           [] WW s1 s') :=
-  FvModexp.Arm64.Run.correctness_ok implAt hap R (by rw [addr_mk]; exact model_mk) (by rw [addr_mv]; exact model_mv)
-    (by rw [addr_mv]; exact model_mvz) (by rw [addr_no]; exact model_no) stkM aboveM hM hE hBy WW hW (by decide) hab
+  FvModexp.Arm64.Run.correctness_ok implAt hap R (by rw [addr_mk]; exact model_mk) (by rw [addr_mk]; exact model_mkz)
+    (by rw [addr_mv]; exact model_mv)
+    (by rw [addr_mv]; exact model_mvz) (by rw [addr_no]; exact model_no) stkM aboveM hM hE WW hW (by decide) hab hk1 ha1
     bW [] c1 p1 99 99 ret hret s1 setup pre
 
 /-- The output at the witness is `[3 ^ 5 mod 7] = [5]` (EthLib `compute` on the witness call data). -/
@@ -203,16 +220,17 @@ theorem compute1 : compute (bytesAt s1.mem p1.toNat (99 : BitVec 64).toNat)
 with every conjunct of its precondition, and the call returns: the toy runtime, an empty live set, budget `bW`, window
 `WW`, and the call `Run(c, p, 99, 99)` computing `3 ^ 5 mod 7`. -/
 theorem nonvacuous_of (stkM aboveM : Nat) (hM : RunIface.ModSpec implAt R stkM aboveM)
-    (hE : RunIface.ExpSpec implAt R stkM aboveM) (hBy : RunIface.BytesSpec implAt R stkM aboveM)
-    (hW : 624 + stkM ≤ WW) (hab : aboveM ≤ 160) :
+    (hE : RunIface.ExpSpec implAt R stkM aboveM)
+    (hW : 624 + stkM ≤ WW) (hab : aboveM ≤ 160) (hk1 : 4160 ≤ stkM) (ha1 : 16 ≤ aboveM) :
     ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64)
       (ret : Nat) (s : State) (W : Nat),
     ImplApart Extracted.program impl ∧
     MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R ∧
+    MakesliceZeroLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R ∧
     MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R ∧
     MemmoveZeroLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R ∧
     NewobjectLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.newobject") 4096 R ∧
-    624 + stkM ≤ W ∧ 4800 ≤ W ∧ aboveM ≤ 160 ∧
+    624 + stkM ≤ W ∧ 4800 ≤ W ∧ aboveM ≤ 160 ∧ 4160 ≤ stkM ∧ 16 ≤ aboveM ∧
     RetAddr (Extracted.program.link impl) ret ∧
     CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program RunArm64.fn) [c, p, len, cp] s ∧
     RunArm64.EnvW R L s W ∧ RunArm64.Input R L c p len cp s ∧ OsakaReceiver s.mem c.toNat ∧
@@ -226,13 +244,21 @@ theorem nonvacuous_of (stkM aboveM : Nat) (hM : RunIface.ModSpec implAt R stkM a
       ((s_c.regs 2).toNat = 0 ∧ Mem.EqPre 4096 3 s_c ∧
         LiveMemAt R (Extracted.program.contractAddr "runtime.memmove") [(s_c.regs 0).toNat, (s_c.regs 1).toNat,
           (s_c.regs 2).toNat] L b s_c (calleeStack s_c 4096 3))) ∧
+    (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
+      s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.makeslice") ∧
+      ((MakeslicePre 4096 s_c ∧ StackRoom s_c 4096 3 ∧
+        LiveAt R (Extracted.program.contractAddr "runtime.makeslice") [(s_c.regs 0).toNat, (s_c.regs 1).toNat,
+          (s_c.regs 2).toNat] L b 0 (s_c.regs 28).toNat s_c.mem (calleeStack s_c 4096 3)) ∧
+        typSize s_c.mem (s_c.regs 0).toNat * (s_c.regs 2).toNat = 0)) ∧
     Returns ((Extracted.program.link impl).withExit ret) s fun s' =>
       ABIReturn s s' ∧ (RunArm64.OkRet (bytesAt s.mem p.toNat len.toNat) s' ∧
         RunArm64.FrameW R b (RunArm64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat))) L W s s') :=
-  ⟨implAt, R, bW, [], c1, p1, 99, 99, ret, s1, WW, hap, by rw [addr_mk]; exact model_mk, by rw [addr_mv]; exact model_mv,
-    by rw [addr_mv]; exact model_mvz, by rw [addr_no]; exact model_no, hW, by decide, hab, hret, setup,
+  ⟨implAt, R, bW, [], c1, p1, 99, 99, ret, s1, WW, hap, by rw [addr_mk]; exact model_mk,
+    by rw [addr_mk]; exact model_mkz, by rw [addr_mv]; exact model_mv,
+    by rw [addr_mv]; exact model_mvz, by rw [addr_no]; exact model_no, hW, by decide, hab, hk1, ha1, hret, setup,
     pre.1, pre.2.1, pre.2.2.1, pre.2.2.2.1, pre.2.2.2.2.1, pre.2.2.2.2.2.1, pre.2.2.2.2.2.2.1, pre.2.2.2.2.2.2.2,
     compute1, ⟨[], 0x1000, sMz, by rw [addr_mv]; rfl, by rw [addr_mv]; exact site_mz⟩,
-    returnsF stkM aboveM hM hE hBy hW hab⟩
+    ⟨[], 0x1000, sMkz, by rw [addr_mk]; rfl, by rw [addr_mk]; exact site_mkz⟩,
+    returnsF stkM aboveM hM hE hW hab hk1 ha1⟩
 
 end FvModexp.Arm64.Run.WitnessOk
