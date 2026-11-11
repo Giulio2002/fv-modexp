@@ -22,7 +22,7 @@ theorem alloc (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     (hz : zc.toNat < xl.toNat) (hpre : PreS 4304 R b L zp zc xp xl xc yp yl yc s) :
     ReachesRet (LibNatSub.program.link impl) (s.regs 30) s fun s' =>
       (s'.sp = s.sp ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧ s'.regs 18 = s.regs 18) ∧
-        PostS 4304 R b L zp zc xp xl yp yl s s' := by
+        PostR 4304 R b L zp zc xp xl yp yl s s' := by
   have hpre' := hpre
   obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, hd, hout, hga, hgr, hLs, hro⟩, hty, -, hge, hxc, -, hxc40, -, hx40, hy40,
     hz40, -, -, -, hxacc, hx48, hxh, -, -, hxw, hyacc, hy48, hyh, hyw, hinv, hok, -⟩ := hpre'
@@ -49,7 +49,7 @@ theorem alloc (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     janus_run until [hMid] calls [hmk.pos]
     rename_i ptr _ _ _ m _ _ hLF hMF hAp hIn hle hacc h8 _ _ hrb _ hinv' _ _
     refine vv impl hap R hmv b L zp zc xp 1#64 xc yp yl yc s ptr.toNat 1 _ _ m
-      (mid_of_alloc hpre hyx hl4 hl48 ?hF ?_ ?_ ?_ ?_ ?_ ?_ hLF hMF hAp hIn (by omega)
+      (mid_of_alloc hpre hyx hl4 hl48 hz ?hF ?_ ?_ ?_ ?_ ?_ ?_ hLF hMF hAp hIn (by omega)
         (by rw [hMF.accessible]; simpa only [Memory.accessible_writeLE] using hacc) h8 hinv'
         (by decide) (by decide) (by decide) (by decide))
       hyx hy0 hxc (by omega)
@@ -69,7 +69,7 @@ theorem alloc (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     janus_run until [hMid] calls [hmk.pos]
     rename_i ptr _ _ _ m _ _ hLF hMF hAp hIn hle hacc h8 _ _ hrb _ hinv' _ _
     refine vv impl hap R hmv b L zp zc xp xl xc yp yl yc s ptr.toNat (xl.toNat + 4) _ _ m
-      (mid_of_alloc hpre hyx hl4 hl48 ?hF ?_ ?_ ?_ ?_ ?_ ?_ hLF hMF hAp hIn hle
+      (mid_of_alloc hpre hyx hl4 hl48 hz ?hF ?_ ?_ ?_ ?_ ?_ ?_ hLF hMF hAp hIn hle
         (by rw [hMF.accessible]; simpa only [Memory.accessible_writeLE] using hacc) (h8 (Or.inr (by omega))) hinv'
         (by omega) (by omega) hrb (by omega))
       hyx hy0 hxc (by omega)

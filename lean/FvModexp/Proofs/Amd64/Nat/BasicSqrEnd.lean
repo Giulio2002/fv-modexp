@@ -230,8 +230,21 @@ theorem fin4 (impl : List Amd64.Segment) (R : RtInv)
     rw [show (s.regs 4).toNat - 40 + 8 = (s.regs 4).toNat - 32 by omega]; exact e7
   have f16 : E.mem.readLE ((s.regs 4).toNat - 40 + 16) 8 = stLen s.mem st.toNat := by
     rw [show (s.regs 4).toNat - 40 + 16 = (s.regs 4).toNat - 24 by omega]; exact e8
+  have hra := hE.ra
+  have hinvE' := hinvE
   clear hpre
   janus64_run [r2, r0, e1, e2, f8, f16, e18, mod64_of_lt ((s.regs 4).toNat - 40) (by omega)] calls [hD]
-  all_goals sorry
+  janus_grab 200 as hFF
+  have hlen : s'.mem.readLE (st.toNat + 8) 8 = stLen s.mem st.toNat := by assumption
+  have hFF' : MemFrame E.mem s'.mem (wsF (s.regs 4).toNat st.toNat) :=
+    MemFrame.trans (MemFrame.of_writeLE (rs := [((s.regs 4).toNat - 200, (s.regs 4).toNat - 192)]) E.mem 6232167
+      (List.mem_singleton.2 rfl) (Nat.le_refl _) (by omega)) hFF fun a n h => by
+        simp only [wsF, outside_cons, outside_nil, and_true] at h ⊢; omega
+  janus_grab hFF xmm 15 as hx'
+  have hxx : s'.xmm 15 = s.xmm 15 := by rw [hx']; show E.xmm 15 = s.xmm 15; rw [hx15, hE.x15]
+  have hfs2 : s'.fsBase = E.fsBase := by assumption
+  refine ⟨⟨?_, ?_, ?_, hxx⟩, post_fin hE hI hFE hz hinvE hFF' hlen _ rfl (hfs2.trans hfs)⟩
+  all_goals try janus64_simp
+  all_goals first | exact hfs | skip
 
 end FvModexp.Amd64.BasicSqr

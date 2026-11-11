@@ -27,7 +27,7 @@ theorem zeroPath (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × N
     (hpre : PreS 4304 R b L zp zc xp xl xc yp yl yc s) :
     ReachesRet (LibNatAdd.program.link impl) (s.regs 30) s fun s' =>
       (s'.sp = s.sp ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧ s'.regs 18 = s.regs 18) ∧
-        PostS 4304 R b L zp zc xp xl yp yl s s' := by
+        PostR 4304 R b L zp zc xp xl yp yl s s' := by
   have hpre' := hpre
   obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, -, hout, hga, hgr, hLs, -⟩, -, -, -, -, -, hx40, hy40,
     hz40, hzl, -, -, -, -, -, -, -, -, -, -, -, -, hinv, -, -⟩ := hpre'
@@ -35,7 +35,7 @@ theorem zeroPath (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × N
   have hyz : yl = 0#64 := BitVec.eq_of_toNat_eq (by simp; omega)
   subst hxz hyz
   janus_run
-  refine ⟨zp.toNat, 0, zc.toNat, ?_, ?_, ?_, by simp, Or.inl rfl, by omega, by omega, L, b, LiveExt.refl R L,
+  refine ⟨⟨zp.toNat, 0, zc.toNat, ?_, ?_, ?_, by simp, Or.inl rfl, by omega, by omega, L, b, LiveExt.refl R L,
     Nat.sub_le _ _, inv_frame_winA ?hF hout hb' (by omega) hinv, fun hc => ?nl, Or.inl ⟨rfl, rfl⟩,
     MemFrame.mono ?hF fun a n h => by simp only [outside_append] at h; exact h.1.2,
     liveFrame_of_frame (rs := winA s 4304 80) (MemFrame.mono ?hF fun a n h => by
@@ -44,12 +44,13 @@ theorem zeroPath (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × N
         have := hLs r hr; simp only [win, outside_cons, outside_nil, and_true] at this; omega)
       (fun r hr => by
         simp only [winA, List.mem_cons, List.not_mem_nil, or_false] at hr
-        rcases hr with rfl | rfl <;> simp only <;> omega)⟩
+        rcases hr with rfl | rfl <;> simp only <;> omega)⟩, fun _ => ⟨?_, ?_⟩, fun _ => ?_⟩
   case hF => simp only [winA]; janus_frame
   case nl =>
     obtain ⟨hzal, hzh, hzacc, hz48⟩ := hzl hc
     exact ⟨hzal, hzh, by janus_simp; exact hzacc, hz48⟩
   all_goals janus_simp
+  all_goals first | exact hz40 | skip
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
@@ -62,7 +63,7 @@ theorem body (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
         s.regs 2 = zc ∧ s.regs 3 = xp ∧ s.regs 4 = xl ∧ s.regs 5 = xc ∧ s.regs 6 = yp ∧ s.regs 7 = yl ∧
         s.regs 8 = yc ∧ yl.toNat ≤ xl.toNat ∧ PreS 4304 R b L zp zc xp xl xc yp yl yc s)
       (fun s s' => (s'.sp = s.sp ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧ s'.regs 18 = s.regs 18) ∧
-        PostS 4304 R b L zp zc xp xl yp yl s s') := by
+        PostR 4304 R b L zp zc xp xl yp yl s s') := by
   intro s hpc ⟨hl4, hl48, h0, h1, h2, h3, h4, h5, h6, h7, h8, hyx, hpre⟩
   have hc3 : CodeIn (Extracted.program.ofImpl impl) (LibNatAdd.program.link impl) := by
     rw [LibNatAdd.eq_only]; exact codeIn_ofImpl_restrict_of_apart hap LibNatAdd.names

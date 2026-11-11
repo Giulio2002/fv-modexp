@@ -66,4 +66,12 @@ def PreS (stk : Nat) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl 
 
 @[reducible] def Post := PostS 4304
 
+/-- `PostS` with the facts a caller making a second call needs (infra s5 request): `z` reused when its capacity
+suffices, the result capacity bounded. -/
+@[reducible] def PostR (stk : Nat) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl yp yl : BitVec 64)
+    (s s' : State) : Prop :=
+  PostS stk R b L zp zc xp xl yp yl s s' ∧
+    (xl.toNat ≤ zc.toNat → (s'.regs 0).toNat = zp.toNat ∧ (s'.regs 2).toNat = zc.toNat) ∧
+    (xl.toNat < 2 ^ 39 → (s'.regs 2).toNat < 2 ^ 40)
+
 end FvModexp.Arm64.NatSub

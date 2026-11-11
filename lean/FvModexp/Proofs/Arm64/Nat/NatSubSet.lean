@@ -38,6 +38,8 @@ structure SetMid (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl : Bi
   grd : M.readLE ((s.regs 28).toNat + 16) 8 = s.mem.readLE ((s.regs 28).toNat + 16) 8
   cap : xl.toNat ≤ c
   c41 : c < 2 ^ 41
+  c40 : xl.toNat < 2 ^ 39 → c < 2 ^ 40
+  ru : xl.toNat ≤ zc.toNat → p = zp.toNat ∧ c = zc.toNat
   p8 : p % 8 = 0
   p48 : p + 8 * c ≤ 2 ^ 48
   pacc : M.accessible p (8 * c) true = true
@@ -70,8 +72,9 @@ theorem SetMid.post {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl y
     (hnz : M'.readLE (p + 8 * (xl.toNat - 1)) 8 = M.readLE (xp.toNat + 8 * (xl.toNat - 1)) 8)
     (s' : State) (hm : s'.mem = M') (h0 : (s'.regs 0).toNat = p) (h1 : (s'.regs 1).toNat = xl.toNat)
     (h2 : (s'.regs 2).toNat = c) :
-    PostS 4304 R b L zp zc xp xl yp yl s s' := by
+    PostR 4304 R b L zp zc xp xl yp yl s s' := by
   subst hm
+  refine ⟨?_, fun hle => ⟨h0.trans (h.ru hle).1, h2.trans (h.ru hle).2⟩, fun hx => by rw [h2]; exact h.c40 hx⟩
   have hpw := h.pw; have hsp0 := h.sp0; have hcap := h.cap
   unfold Apart at hpw
   refine ⟨p, xl.toNat, c, h0, h1, h2, ?_, Or.inr ?_, hcap, Nat.le_refl _, L', b', h.ext, h.bud,
@@ -120,7 +123,7 @@ theorem setmid_of_reuse {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp 
     gok := hg3, g48 := hg1, al := hal, sp0 := hb', sp1 := ha, wrt := hout, gw := by unfold Apart; omega, grt := hgr,
     lr4 := hl4, lr48 := hl48, xl40 := hx40, x0 := hx0, lr := r1, fp := r2,
     sacc := by rw [hF.accessible]; exact hw, gacc := by rw [hF.accessible]; exact hg2,
-    grd := hF.readLE _ _ (hFo _ _ (by omega)), cap := hz, c41 := by omega, p8 := hzal, p48 := hz48,
+    grd := hF.readLE _ _ (hFo _ _ (by omega)), cap := hz, c41 := by omega, c40 := fun _ => hz40, ru := fun _ => ⟨rfl, rfl⟩, p8 := hzal, p48 := hz48,
     pacc := by rw [hF.accessible]; exact hzacc, pw := by unfold Apart; omega, pheld := hzh,
     px := hzx.imp (fun e => by rw [e]) id,
     xacc := by rw [hF.accessible]; exact hxacc, x48 := hx48, xw := by unfold Apart; omega,
@@ -145,7 +148,7 @@ returned `[ptr, ptr + round)`. -/
 theorem setmid_of_alloc {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl xc yp yl yc : BitVec 64}
     {s : State} {M0 m : Memory} {ptr round c : Nat} (hpre : PreS 4304 R b L zp zc xp xl xc yp yl yc s)
     (hy0 : yl.toNat = 0) (hx0 : 0 < xl.toNat)
-    (hl4 : (s.regs 30).toNat % 4 = 0) (hl48 : (s.regs 30).toNat < 2 ^ 48)
+    (hl4 : (s.regs 30).toNat % 4 = 0) (hl48 : (s.regs 30).toNat < 2 ^ 48) (hzlt : zc.toNat < xl.toNat)
     (hF : MemFrame s.mem M0 (winA s 4304 80))
     (r1 : M0.readLE (s.sp.toNat - 160) 8 = (s.regs 30).toNat) (r2 : M0.readLE (s.sp.toNat - 168) 8 = (s.regs 29).toNat)
     (hLF : LiveFrame M0 m L [])
@@ -194,7 +197,7 @@ theorem setmid_of_alloc {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp 
     sacc := by rw [hMF.accessible, hF.accessible]; exact hw,
     gacc := by rw [hMF.accessible, hF.accessible]; exact hg2,
     grd := by rw [hMF.readLE _ _ hgM]; exact hF.readLE _ _ (hFo _ _ (by omega)),
-    cap := hc1, c41 := by omega, p8 := h8, p48 := by omega,
+    cap := hc1, c41 := by omega, c40 := fun _ => by omega, ru := fun h => absurd h (by omega), p8 := h8, p48 := by omega,
     pacc := Memory.accessible_mono _ hacc (Nat.le_refl _) (by omega),
     pw := by unfold Apart; omega,
     pheld := Or.inl ⟨(ptr, ptr + round), by simp, Nat.le_refl _, by simp only; omega⟩,
@@ -237,7 +240,7 @@ theorem setTail (impl : List Segment) (R : RtInv)
     (h18 : S.regs 18 = s.regs 18) (hm : S.mem = M) :
     ReachesRet (LibNatSub.program.link impl) (s.regs 30) S fun s' =>
       (s'.sp = s.sp ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧ s'.regs 18 = s.regs 18) ∧
-        PostS 4304 R b L zp zc xp xl yp yl s s' := by
+        PostR 4304 R b L zp zc xp xl yp yl s s' := by
   have hsp0 := h.sp0; have hsp1 := h.sp1; have hcap := h.cap; have hc41 := h.c41; have hp48 := h.p48
   have hxl := h.xl40; have hx0 := h.x0; have hx48 := h.x48
   have r1 := h.lr; have r2 := h.fp; have hsacc := h.sacc; have hal := h.al; have hinv := h.inv

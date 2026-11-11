@@ -59,6 +59,8 @@ structure Mid (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl xc yp y
   -- the result array
   cap : xl.toNat + 1 ≤ c
   c41 : c < 2 ^ 41
+  c40 : xl.toNat < 2 ^ 39 → c < 2 ^ 40
+  ru : xl.toNat + 1 ≤ zc.toNat → p = zp.toNat ∧ c = zc.toNat
   p8 : p % 8 = 0
   p48 : p + 8 * c ≤ 2 ^ 48
   pacc : M.accessible p (8 * c) true = true
@@ -296,10 +298,11 @@ theorem Mid.post {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl xc y
     (hm : s'.mem = M) (h0 : (s'.regs 0).toNat = p) (h1 : (s'.regs 3).toNat = n') (h2 : (s'.regs 1).toNat = c)
     (hfs : s'.fsBase = s.fsBase) (hn : n' ≤ xl.toNat + 1)
     (hv : natVal M p n' = natVal s.mem xp.toNat xl.toNat + natVal s.mem yp.toNat yl.toNat) (hnorm : NatNorm M p n') :
-    PostS 4288 R b L zp zc xp xl yp yl s s' := by
+    PostR 4288 R b L zp zc xp xl yp yl s s' := by
   subst hm
   have hneed : need xl yl = xl.toNat + 1 := by
     unfold need mx; rw [if_neg (by omega)]; omega
+  refine ⟨?_, fun hle => ⟨h0.trans (h.ru (by omega)).1, h2.trans (h.ru (by omega)).2⟩, fun hx => by rw [h2]; exact h.c40 (by unfold mx at hx; omega)⟩
   refine ⟨hfs, p, n', c, h0, h1, h2, hv, hnorm, by have := h.cap; omega, by unfold mx; omega, L', b', h.ext, ?_, h.inv,
     fun _ => ⟨h.p8, h.pheld, h.pacc, h.p48⟩, h.ror, h.mf, h.lf⟩
   rw [hneed]; exact h.bud
@@ -351,7 +354,7 @@ theorem mid_of_reuse {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl 
     grd := hF.readLE _ _ (hFo _ _ (by omega)),
     tacc := by rw [hF.accessible]; exact htg.readable,
     tls := by rw [hF.readLE _ _ (hFo _ _ (by omega))]; exact htg.g,
-    cap := hz, c41 := by omega, p8 := hzal, p48 := hz48,
+    cap := hz, c41 := by omega, c40 := fun _ => hz40, ru := fun _ => ⟨rfl, rfl⟩, p8 := hzal, p48 := hz48,
     pacc := by rw [hF.accessible]; exact hzacc, pw := by unfold Apart; omega, pg := hzg, pf := hzf, pheld := hzh,
     px := hzx.imp (fun e => by rw [e]) id, py := hzy.imp (fun e => by rw [e]) id,
     xacc := by rw [hF.accessible]; exact hxacc, x48 := hx48, xheld := hxh, xw := by unfold Apart; omega,
@@ -378,6 +381,7 @@ theorem mid_of_alloc {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl 
     {M0 m : Janus.Arm64.Memory} {ptr round : Nat} {cs : List (Nat × Nat)}
     (hpre : PreS 4288 R b L zp zc xp xl xc yp yl yc s) (hyx : yl.toNat ≤ xl.toNat)
     (hra : s.mem.readLE (s.regs 4).toNat 8 < 2 ^ 47) (hx15 : s.xmm 15 = 0#128) (hdf : s.df = false)
+    (hzlt : zc.toNat < xl.toNat + 1)
     (hF : MemFrame s.mem M0 (win s 4288 80))
     (r1 : M0.readLE (s.regs 4).toNat 8 = s.mem.readLE (s.regs 4).toNat 8) (r2 : M0.readLE ((s.regs 4).toNat - 8) 8 = (s.regs 5).toNat)
     (r3 : M0.readLE ((s.regs 4).toNat + 32) 8 = xp.toNat) (r4 : M0.readLE ((s.regs 4).toNat + 40) 8 = xl.toNat)
@@ -423,7 +427,7 @@ theorem mid_of_alloc {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl 
     grd := by rw [hMF.readLE _ _ (hcw _ _ (by omega) hgr)]; exact hF.readLE _ _ (hFo _ _ (by omega)),
     tacc := by rw [hMF.accessible, hF.accessible]; exact htg.readable,
     tls := by rw [hMF.readLE _ _ (hcw _ _ (by omega) htr), hF.readLE _ _ (hFo _ _ (by omega))]; exact htg.g,
-    cap := by omega, c41 := by omega, p8 := h8, p48 := by omega,
+    cap := by omega, c41 := by omega, c40 := fun _ => by omega, ru := fun h => absurd h (by omega), p8 := h8, p48 := by omega,
     pacc := Janus.Arm64.Memory.accessible_mono _ hacc (Nat.le_refl _) (by omega),
     pw := by unfold Apart; omega, pg := by unfold Apart; omega, pf := by unfold Apart; omega, pheld := Or.inl hpa,
     px := Or.inr ((held_apart_fresh hxh hAp hIn).mono hsz (Nat.le_refl _)),
