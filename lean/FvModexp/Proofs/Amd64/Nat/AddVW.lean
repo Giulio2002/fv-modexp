@@ -38,7 +38,7 @@ abbrev entry : Nat := segAddr Extracted.program addVWfn
 
 /-- the postcondition -/
 @[reducible] def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zl xp y : BitVec 64) (s s' : State) : Prop :=
-  s'.fsBase = s.fsBase ∧
+  s'.fsBase = s.fsBase ∧ s'.df = s.df ∧
     (s'.regs 0).toNat = (natVal s.mem xp.toNat zl.toNat + y.toNat) / 2 ^ (64 * zl.toNat) ∧
     natVal s'.mem zp.toNat zl.toNat = (natVal s.mem xp.toNat zl.toNat + y.toNat) % 2 ^ (64 * zl.toNat) ∧
     ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b ≤ b' ∧
@@ -60,6 +60,7 @@ structure Rel (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (ret zp k : Nat) (s 
   mf : MemFrame s.mem S.mem (R.rt ++ win s 4136 40 ++ [(zp, zp + 8 * k)])
   lf : LiveFrame s.mem S.mem L [(zp, zp + 8 * k)]
   inv : R.inv b L (s.regs 14).toNat (view R.rt L S.mem)
+  df0 : s.df = false
 
 theorem liveFrame_mono {m m' : Memory} {L ws ws' : List (Nat × Nat)} (h : LiveFrame m m' L ws)
     (hs : ∀ a n, Outside a n ws' → Outside a n ws) : LiveFrame m m' L ws' :=
@@ -91,7 +92,7 @@ theorem ret0 (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat ×
     Reaches ((LibAddVW.program.link impl).withExit ret) S
       (IsReturn fun s' => ABIReturn s s' ∧ Post R b L zp zl xp y s s') := by
   obtain ⟨⟨hg, ⟨hb', ha, hw⟩, hal, hout, hga, hgr, hLs, htls⟩, -⟩ := hpre
-  obtain ⟨hsp, h5, h14, h15, hx15, hdf, hfs, h_rd_lr, h_rd_fp, hmf, hlf, hinv⟩ := hrel
+  obtain ⟨hsp, h5, h14, h15, hx15, hdf, hfs, h_rd_lr, h_rd_fp, hmf, hlf, hinv, hdfR⟩ := hrel
   try simp only [regSP] at hb' ha hw
   have hspn : (S.regs 4).toNat = (s.regs 4).toNat - 32 := by rw [hsp, BitVec.toNat_sub]; simp; omega
   have hacc : S.mem.accessible ((s.regs 4).toNat - 4136) (4136 + 40) true = true := by rw [hmf.accessible]; exact hw
@@ -101,7 +102,7 @@ theorem ret0 (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat ×
   rcases hpc with hpc | hpc
   all_goals
     janus64_run
-    refine ⟨hfs, ?_, ?_, L, b, LiveExt.refl R L, Nat.le_refl _, hinv,
+    refine ⟨hfs, hdfR.symm, ?_, ?_, L, b, LiveExt.refl R L, Nat.le_refl _, hinv,
       ⟨fun a n h => hmf.readLE a n (out_z hk _ _ h), hmf.accessible⟩,
       liveFrame_mono hlf (fun a n h => by simp only [outside_cons, outside_nil, and_true] at h ⊢; omega)⟩
     · rw [Nat.div_eq_of_lt (by omega)]; rfl
@@ -132,7 +133,7 @@ theorem after (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (ret : Nat) (s : Sta
   obtain ⟨⟨hg, ⟨hb', ha, hw⟩, hal, hout, hga, hgr, hLs, htls⟩, hzc, hxc, hzc63, hxc63, hzl, hzw, hzg,
     hxacc, hx48, hxh, hxw, hzx, hinv0, hmv'⟩ := hpre
   simp only [regSP] at hb' ha hw
-  obtain ⟨hsp, h5, h14, h15, hx15, hdf, hfs, h_rd_lr, h_rd_fp, hmf, hlf, hinv⟩ := hrel
+  obtain ⟨hsp, h5, h14, h15, hx15, hdf, hfs, h_rd_lr, h_rd_fp, hmf, hlf, hinv, hdfR⟩ := hrel
   have hzx' : Apart zp.toNat (8 * zl.toNat) xp.toNat (8 * zl.toNat) := hzx.resolve_left hne
   obtain ⟨hzal, hzh, hzacc, hz48⟩ := hzl (by omega)
   simp only [Outside, and_true] at hzw hxw
@@ -216,11 +217,11 @@ theorem rel_store (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (ret : Nat) (s :
   obtain ⟨⟨hg, ⟨hb', ha, hw⟩, hal, hout, hga, hgr, hLs, htls⟩, hzc, hxc, hzc63, hxc63, hzl, hzw, hzg,
     hxacc, hx48, hxh, hxw, hzx, hinv0, hmv'⟩ := hpre
   try simp only [regSP] at hb' ha hw
-  obtain ⟨hsp0, h50, h140, h150, hx15, hdf0, hfs0, h_rd_lr, h_rd_fp, hmf, hlf, hinv⟩ := hrel
+  obtain ⟨hsp0, h50, h140, h150, hx15, hdf0, hfs0, h_rd_lr, h_rd_fp, hmf, hlf, hinv, hdfR⟩ := hrel
   obtain ⟨hzal, hzh, hzacc, hz48⟩ := hzl (by omega)
   simp only [Outside, and_true] at hzw
   refine ⟨hsp.trans hsp0, h5.trans h50, h14.trans h140, h15.trans h150, hx15, hdf, hfs.trans hfs0,
-    ?_, ?_, ?_, ?_, ?_⟩
+    ?_, ?_, ?_, ?_, ?_, hdfR⟩
   · rw [hm, Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega)]; exact h_rd_lr
   · rw [hm, Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega)]; exact h_rd_fp
   · rw [hm]
@@ -243,7 +244,7 @@ theorem rel_x (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (ret : Nat) (s : Sta
   obtain ⟨⟨hg, ⟨hb', ha, hw⟩, hal, hout, hga, hgr, hLs, htls⟩, hzc, hxc, hzc63, hxc63, hzl, hzw, hzg,
     hxacc, hx48, hxh, hxw, hzx, hinv0, hmv'⟩ := hpre
   try simp only [regSP] at hb' ha hw
-  obtain ⟨hsp0, h50, h140, h150, hx15, hdf0, hfs0, h_rd_lr, h_rd_fp, hmf, hlf, hinv⟩ := hrel
+  obtain ⟨hsp0, h50, h140, h150, hx15, hdf0, hfs0, h_rd_lr, h_rd_fp, hmf, hlf, hinv, hdfR⟩ := hrel
   have hmf' : MemFrame s.mem S.mem (R.rt ++ (win s 4136 40 ++ [(zp.toNat, zp.toNat + 8 * k)])) := by
     rw [← List.append_assoc]; exact hmf
   have hlf' : LiveFrame s.mem S.mem L (win s 4136 40 ++ [(zp.toNat, zp.toNat + 8 * k)]) :=
@@ -279,7 +280,7 @@ theorem cont (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat ×
     hc.1 hc.2.1 hc.2.2
   subst hm
   exact ret0 impl R b L ret hret s zp zl zc xp xc y hpre S' zl.toNat (Nat.le_refl _)
-    ⟨hsp, h5, h14, h15, hrel.x15z, hdf, hfs, e1, e2, e3, e4, hINV⟩ hpc e5
+    ⟨hsp, h5, h14, h15, hrel.x15z, hdf, hfs, e1, e2, e3, e4, hINV, hrel.df0⟩ hpc e5
 
 set_option maxRecDepth 20000 in
 /-- `copy(z[1:], x[1:])` after limb 0 (`CMP RAX, RBX` at `+0x83`, count in `RCX`) -/
@@ -306,7 +307,7 @@ theorem copyA (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat �
   simp only [regSP, Janus.Amd64.GoABI.regG, Janus.Amd64.GoABI.stackguard0Offset,
     Janus.Amd64.GoABI.stackguard0] at hgl hg3 hg1 hg2 hb' ha hw hout hal hga hgr
   have hrel' := hrel
-  obtain ⟨hsp, h5, h14, h15, hx15, hdf, hfs, h_rd_lr, h_rd_fp, hmf, hlf, hinv⟩ := hrel'
+  obtain ⟨hsp, h5, h14, h15, hx15, hdf, hfs, h_rd_lr, h_rd_fp, hmf, hlf, hinv, hdfR⟩ := hrel'
   simp only [hne, if_false] at hmv'
   have hok := hmv' j hj1 hj
   rw [← hD, ← hS, show 8 * (zl.toNat - j) = N.toNat * 8 by rw [hN]; omega] at hok
@@ -351,7 +352,7 @@ theorem copyA (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat �
     subst hjl
     exact ret0 impl R b L ret hret s zp zl zc xp xc y hpre _ zl.toNat (Nat.le_refl _)
       ⟨hrel.sp, hrel.fp, hrel.g, hrel.x15, hrel.x15z, (by first | exact hrel.df | rfl), hrel.fs, hrel.lr, hrel.sfp, hrel.mf, hrel.lf,
-        hrel.inv⟩
+        hrel.inv, hrel.df0⟩
       (Or.inl rfl) hval
   · rename_i _ _ _ _ m _ _ hMF hLF hINV hCP
     have hc := call_norm hMF hLF hCP (by omega) (out_all fun r hr => by
@@ -387,7 +388,7 @@ theorem copyB (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat �
   simp only [regSP, Janus.Amd64.GoABI.regG, Janus.Amd64.GoABI.stackguard0Offset,
     Janus.Amd64.GoABI.stackguard0] at hgl hg3 hg1 hg2 hb' ha hw hout hal hga hgr
   have hrel' := hrel
-  obtain ⟨hsp, h5, h14, h15, hx15, hdf, hfs, h_rd_lr, h_rd_fp, hmf, hlf, hinv⟩ := hrel'
+  obtain ⟨hsp, h5, h14, h15, hx15, hdf, hfs, h_rd_lr, h_rd_fp, hmf, hlf, hinv, hdfR⟩ := hrel'
   simp only [hne, if_false] at hmv'
   have hok := hmv' j hj1 hj
   rw [← hD, ← hS, show 8 * (zl.toNat - j) = N.toNat * 8 by rw [hN]; omega] at hok
@@ -432,7 +433,7 @@ theorem copyB (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat �
     subst hjl
     exact ret0 impl R b L ret hret s zp zl zc xp xc y hpre _ zl.toNat (Nat.le_refl _)
       ⟨hrel.sp, hrel.fp, hrel.g, hrel.x15, hrel.x15z, (by first | exact hrel.df | rfl), hrel.fs, hrel.lr, hrel.sfp, hrel.mf, hrel.lf,
-        hrel.inv⟩
+        hrel.inv, hrel.df0⟩
       (Or.inr rfl) hval
   · rename_i _ _ _ _ m _ _ hMF hLF hINV hCP
     have hc := call_norm hMF hLF hCP (by omega) (out_all fun r hr => by
@@ -518,7 +519,7 @@ theorem fin1 (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat ×
     hxacc, hx48, hxh, hxw, hzx, hinv0, hmv'⟩ := hpre'
   try simp only [regSP] at hb' ha hw
   obtain ⟨hpc, h0, h1, h2, h3, h4, h5, h6⟩ := hh
-  obtain ⟨hsp, h5', h14, h15, hx15, hdf, hfs, h_rd_lr, h_rd_fp, hmf, hlf, hinv⟩ := hrel
+  obtain ⟨hsp, h5', h14, h15, hx15, hdf, hfs, h_rd_lr, h_rd_fp, hmf, hlf, hinv, hdfR⟩ := hrel
   have hspn : (S.regs 4).toNat = (s.regs 4).toNat - 32 := by rw [hsp, BitVec.toNat_sub]; simp; omega
   have hacc : S.mem.accessible ((s.regs 4).toNat - 4136) (4136 + 40) true = true := by rw [hmf.accessible]; exact hw
   have hz63 : zl.toNat < 2 ^ 63 := by omega
@@ -526,7 +527,7 @@ theorem fin1 (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat ×
   have hP : 0 < 2 ^ (64 * zl.toNat) := Nat.two_pow_pos _
   clear hmv' hinv0
   janus64_run
-  refine ⟨hfs, ?_, ?_, L, b, LiveExt.refl R L, Nat.le_refl _, hinv, hmf, hlf⟩
+  refine ⟨hfs, hdfR.symm, ?_, ?_, L, b, LiveExt.refl R L, Nat.le_refl _, hinv, hmf, hlf⟩
   · rw [← hval, Nat.add_div_right _ hP, Nat.div_eq_of_lt hlt]; rfl
   · rw [← hval, Nat.add_mod_right, Nat.mod_eq_of_lt hlt]
 
@@ -550,7 +551,7 @@ theorem body (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat ×
   try simp only [regSP] at hb' ha hw
   obtain ⟨hpc, h0, h1, h2, h3, h4, h5, h6⟩ := hh
   have hrel' := hrel
-  obtain ⟨hsp, h5', h14, h15, hx15, hdf, hfs, h_rd_lr, h_rd_fp, hmf, hlf, hinv⟩ := hrel'
+  obtain ⟨hsp, h5', h14, h15, hx15, hdf, hfs, h_rd_lr, h_rd_fp, hmf, hlf, hinv, hdfR⟩ := hrel'
   have hspn : (S.regs 4).toNat = (s.regs 4).toNat - 32 := by rw [hsp, BitVec.toNat_sub]; simp; omega
   have hacc : S.mem.accessible ((s.regs 4).toNat - 4136) (4136 + 40) true = true := by rw [hmf.accessible]; exact hw
   have hz63 : zl.toNat < 2 ^ 63 := by omega
@@ -614,7 +615,7 @@ set_option maxRecDepth 20000 in
 /-- the prologue's stores (saved `RBP`, the spills of `RAX`, `RDI`) and `z[0] = v`: `Rel` with one limb written -/
 theorem entry_rel (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (ret : Nat) (s : State) (zp zl zc xp xc : BitVec 64)
     (hpre : Pre R b L zp zl zc xp xc s) (hz : 0 < zl.toNat) (hlr : s.mem.readLE (s.regs 4).toNat 8 = ret)
-    (hx15 : s.xmm 15 = 0#128) (v : Nat) {S' : State}
+    (hx15 : s.xmm 15 = 0#128) (hdf0 : s.df = false) (v : Nat) {S' : State}
     (hsp : S'.regs 4 = s.regs 4 - 32#64) (h5 : S'.regs 5 = s.regs 4 - 8#64) (h14 : S'.regs 14 = s.regs 14)
     (h15 : S'.xmm 15 = s.xmm 15) (hdf : S'.df = false) (hfs : S'.fsBase = s.fsBase)
     (hm : S'.mem = (((s.mem.writeLE ((s.regs 4).toNat - 8) 8 (s.regs 5).toNat).writeLE
@@ -634,7 +635,7 @@ theorem entry_rel (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (ret : Nat) (s :
     rw [hm]; simp only [win, List.cons_append, List.nil_append]; janus_frame
   have hrt : ∀ a n, (s.regs 4).toNat - 4136 ≤ a → a + n ≤ (s.regs 4).toNat + 40 → Outside a n R.rt :=
     fun a n h1 h2 => Outside.of_sub hout h1 (by omega)
-  refine ⟨⟨hsp, h5, h14, h15, hx15, hdf, hfs, ?_, ?_, ?_, liveFrame_of_frame (rs := win s 4136 40) hmf hLs' hwin, ?_⟩, ?_⟩
+  refine ⟨⟨hsp, h5, h14, h15, hx15, hdf, hfs, ?_, ?_, ?_, liveFrame_of_frame (rs := win s 4136 40) hmf hLs' hwin, ?_, hdf0⟩, ?_⟩
   · rw [hm, Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega),
       Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega),
       Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega),
@@ -654,13 +655,13 @@ theorem entry_rel (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (ret : Nat) (s :
 /-- `entry_rel` in continuation form (for a goal about the executor's state literal) -/
 theorem entry_k (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (ret : Nat) (s : State) (zp zl zc xp xc : BitVec 64)
     (hpre : Pre R b L zp zl zc xp xc s) (hz : 0 < zl.toNat) (hlr : s.mem.readLE (s.regs 4).toNat 8 = ret)
-    (hx15 : s.xmm 15 = 0#128) (v : Nat) (p : Amd64.Program) (Q : Amd64.Outcome → Prop) (S' : State)
+    (hx15 : s.xmm 15 = 0#128) (hdf0 : s.df = false) (v : Nat) (p : Amd64.Program) (Q : Amd64.Outcome → Prop) (S' : State)
     (hsp : S'.regs 4 = s.regs 4 - 32#64) (h5 : S'.regs 5 = s.regs 4 - 8#64) (h14 : S'.regs 14 = s.regs 14)
     (h15 : S'.xmm 15 = s.xmm 15) (hdf : S'.df = false) (hfs : S'.fsBase = s.fsBase)
     (hm : S'.mem = (((s.mem.writeLE ((s.regs 4).toNat - 8) 8 (s.regs 5).toNat).writeLE
       ((s.regs 4).toNat + 8) 8 zp.toNat).writeLE ((s.regs 4).toNat + 32) 8 xp.toNat).writeLE zp.toNat 8 v)
     (K : Rel R b L ret zp.toNat 1 s S' → S'.mem.readLE zp.toNat 8 = v % 2 ^ 64 → Reaches p S' Q) : Reaches p S' Q :=
-  let h := entry_rel R b L ret s zp zl zc xp xc hpre hz hlr hx15 v hsp h5 h14 h15 hdf hfs hm
+  let h := entry_rel R b L ret s zp zl zc xp xc hpre hz hlr hx15 hdf0 v hsp h5 h14 h15 hdf hfs hm
   K h.1 h.2
 
 /-- `z = x` with the low `j` limbs of `z` holding `x[0:j] + y`: the rest of `z` is still `x`, so `z = x + y` -/
@@ -705,7 +706,7 @@ theorem ens_lib (impl : List Amd64.Segment) (R : RtInv)
     fun a n h1 h2 => Outside.of_sub hout h1 (by omega)
   by_cases hz0 : xl.toNat = 0
   · janus64_run
-    refine ⟨rfl, by simp [hz0]; rfl, by simp [hz0, Nat.mod_one], L, b, LiveExt.refl R L, Nat.le_refl _, ?_, ?_, ?_⟩
+    refine ⟨rfl, h_df.symm, by simp [hz0]; rfl, by simp [hz0, Nat.mod_one], L, b, LiveExt.refl R L, Nat.le_refl _, ?_, ?_, ?_⟩
     · exact inv_store_out (inv_store_out (inv_store_out hinv
         (hrt _ _ (by omega) (by omega))) (hrt _ _ (by omega) (by omega))) (hrt _ _ (by omega) (by omega))
     · simp only [win, List.append_assoc, List.cons_append, List.nil_append]; janus_frame
@@ -720,7 +721,7 @@ theorem ens_lib (impl : List Amd64.Segment) (R : RtInv)
   have m8x := FvModexp.Asm.mask8_64 xc hxc63 (by omega)
   janus64_run until [entry + 0xad, entry + 0x83, entry + 0x91]
   all_goals
-    refine entry_k R b L ret s zp xl zc xp xc hpre (by omega) h_ret h_x15 (s.mem.readLE xp.toNat 8 + y.toNat)
+    refine entry_k R b L ret s zp xl zc xp xc hpre (by omega) h_ret h_x15 h_df (s.mem.readLE xp.toNat 8 + y.toNat)
       _ _ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ (fun hr1 hv1 => ?_)
   all_goals first | rfl | (janus64_simp; done) | skip
   · rename_i _ _ hnc

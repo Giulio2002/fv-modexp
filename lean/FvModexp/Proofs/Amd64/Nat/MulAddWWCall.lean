@@ -26,7 +26,7 @@ theorem tail (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat ×
     (hsp : S.regs 4 = s.regs 4 - 104#64) (h5 : S.regs 5 = s.regs 4 - 8#64)
     (hfs : S.fsBase = s.fsBase) (hdf : S.df = false) (hm : S.mem = M) :
     ReachesRet (LibMulAddWW.program.link impl) (retAddrOf s) S fun s' =>
-      RegsOK s s' ∧ Post R b L zp zc xp xl y r s s' := by
+      RegsOK s s' ∧ PostI R b L zp zc xp xl y r s s' := by
   have hsp0 := h.sp0; have hsp1 := h.sp1; have hcap := h.cap; have hc41 := h.c41; have hp48 := h.p48
   have hxl := h.xl40; have hpw := h.pw
   unfold Apart at hpw
@@ -52,7 +52,7 @@ theorem tail (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat ×
       hst.post hx0 hy0 s' n' hm' h0' h1' h2' hfs' hn' hv' hnm') hcap (by omega) (by omega)
     (by simpa only [Janus.Arm64.Memory.accessible_writeLE] using hpw8)
     hst.lr hst.fp (by rw [Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega)]; exact hcs)
-    hal hsp0 hsp1 hst.sacc h.ra47 (xl.toNat + 1) _ (Nat.le_refl _) rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_
+    hal hsp0 hsp1 hst.sacc h.ra47 (xl.toNat + 1) _ (Nat.le_refl _) rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
     (by show M.writeLE _ 8 cw = _; rw [Nat.mul_comm xl.toNat 8]) hval
   all_goals try janus64_simp
   all_goals first | exact hfs | exact h.x15.symm

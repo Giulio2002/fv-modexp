@@ -376,9 +376,10 @@ open FvModexp.Amd64.EvenHyp
 
 /-! ## `nat.sub` / `nat.add` with the reuse conjunct (NOTES-divmc [infra s5] request) and `DF` kept
 
-divmc's `NatSub.ens` / `NatAdd.ens` posts with conjuncts that every path of theirs has: `z` is reused when `cap z ≥ need`,
-the result capacity is below `2^40`, and `DF` is unchanged (needed for the next callee's `CallSetup`). Premises of `ens`
-until divmc's posts carry them. -/
+Exactly the posts of divmc's `NatSub.ensR` / `NatAdd.ensR` (`z` reused when `cap z ≥ need`; result capacity below
+`2^40` when the operands are below `2^39` words) plus `s'.df = s.df` (needed for the next callee's `CallSetup`), which
+divmc's posts do not carry yet (blocked on asm's `AddVW`/`SubVW` DF conjunct, NOTES-divmc [divmc s7]). Premises of `ens`
+until then; the rest is `ensR`. -/
 
 def SubHypR (impl : List Amd64.Segment) (R : RtInv) : Prop :=
   ∀ (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc yp yl yc : BitVec 64),
@@ -387,7 +388,7 @@ def SubHypR (impl : List Amd64.Segment) (R : RtInv) : Prop :=
       (NatSub.Pre R b L zp zc xp xl xc yp yl yc)
       (fun s s' => NatSub.Post R b L zp zc xp xl yp yl s s' ∧
         (xl.toNat ≤ zc.toNat → (s'.regs 0).toNat = zp.toNat ∧ (s'.regs 1).toNat = zc.toNat) ∧
-        (s'.regs 1).toNat < 2 ^ 40 ∧ s'.df = s.df)
+        (xl.toNat < 2 ^ 39 → (s'.regs 1).toNat < 2 ^ 40) ∧ s'.df = s.df)
 
 def AddHypR (impl : List Amd64.Segment) (R : RtInv) : Prop :=
   ∀ (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc yp yl yc : BitVec 64),
@@ -396,7 +397,7 @@ def AddHypR (impl : List Amd64.Segment) (R : RtInv) : Prop :=
       (NatAdd.Pre R b L zp zc xp xl xc yp yl yc)
       (fun s s' => NatAdd.Post R b L zp zc xp xl yp yl s s' ∧
         (NatAdd.need xl yl ≤ zc.toNat → (s'.regs 0).toNat = zp.toNat ∧ (s'.regs 1).toNat = zc.toNat) ∧
-        (s'.regs 1).toNat < 2 ^ 40 ∧ s'.df = s.df)
+        (NatAdd.mx xl yl < 2 ^ 39 → (s'.regs 1).toNat < 2 ^ 40) ∧ s'.df = s.df)
 
 /-- **J3** (`+0x2ac`, after `z = z.sub(y', x')` with `x' < y'`): `z = (zp, l3, zc)` (`RAX, RBX, RCX`) holds `y' - x'` -/
 def J3 (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (op zp zl zc yp yl yc n : Nat)
@@ -417,12 +418,13 @@ theorem post_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zl zc yp yl n 
     {p' l' c' : Nat} (e0 : (s'.regs 0).toNat = p') (e1 : (s'.regs 3).toNat = l') (e2 : (s'.regs 1).toNat = c')
     (hv : natVal s'.mem p' l' = Exp.subMod2N (natVal s.mem zp zl) (natVal s.mem yp yl) n) (hnorm : NatNorm s'.mem p' l')
     (hlc : l' ≤ c') (hc40 : c' < 2 ^ 40) (hlive : NatLive s'.mem R L2 p' c')
-    (hor : (p' = zp ∧ c' = zc) ∨ (InRanges p' (8 * c') R.rt ∧ ApartAll p' (8 * c') L)) :
+    (hor : (p' = zp ∧ c' = zc) ∨ (InRanges p' (8 * c') R.rt ∧ ApartAll p' (8 * c') L))
+    (hre : W n + 1 ≤ zc → p' = zp ∧ c' = zc) :
     Post R b L zp zl zc yp yl n s s' := by
   obtain ⟨-, hF, hLF, hLE, hb, hinv, -⟩ := hrt
   have : k * wCost n ≤ 5 * wCost n := Nat.mul_le_mul_right _ hk
   exact ⟨hfs, hdf, p', l', c', e0, e1, e2, hv, hnorm, hlc, hc40, L2, b2, hLE, by simp only [cost]; omega, hinv, hlive,
-    hor, hF, hLF⟩
+    hor, hF, hLF, hre⟩
 
 theorem fresh_of {R : RtInv} {L L1 : List (Nat × Nat)} (hLE : LiveExt R L L1) {p c : Nat}
     (h : ApartAll p c L1) : ApartAll p c L := fun r hr => h r (hLE.mem_old hr)

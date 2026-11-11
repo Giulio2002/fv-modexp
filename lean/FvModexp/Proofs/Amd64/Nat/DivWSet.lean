@@ -34,7 +34,7 @@ theorem Mid.setPost {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl :
     (hnz : M'.readLE (p + 8 * (xl.toNat - 1)) 8 = M.readLE (xp.toNat + 8 * (xl.toNat - 1)) 8)
     (s' : State) (hm : s'.mem = M') (h0 : (s'.regs 0).toNat = p) (h1 : (s'.regs 3).toNat = xl.toNat)
     (h2 : (s'.regs 1).toNat = c) (h3 : (s'.regs 7).toNat = 0) (hfs : s'.fsBase = s.fsBase) :
-    Post R b L zp zc xp xl 1#64 s s' := by
+    PostI R b L zp zc xp xl 1#64 s s' := by
   subst hm
   have hpw := h.pw; have hsp0 := h.sp0; have hcap := h.cap
   unfold Apart at hpw
@@ -72,7 +72,7 @@ theorem setTail (impl : List Amd64.Segment) (R : RtInv)
     (hsp : S.regs 4 = s.regs 4 - 128#64) (h14 : S.regs 14 = s.regs 14) (h5 : S.regs 5 = s.regs 4 - 8#64)
     (hx15 : S.xmm 15 = s.xmm 15) (hfs : S.fsBase = s.fsBase) (hdf : S.df = false) (hm : S.mem = M) :
     ReachesRet (LibDivW.program.link impl) (retAddrOf s) S fun s' =>
-      RegsOK s s' ∧ Post R b L zp zc xp xl 1#64 s s' := by
+      RegsOK s s' ∧ PostI R b L zp zc xp xl 1#64 s s' := by
   have hsp0 := h.sp0; have hsp1 := h.sp1; have hcap := h.cap; have hc41 := h.c41; have hp48 := h.p48
   have hxl := h.xl40; have hx0 := h.x0; have hx48 := h.x48
   have r1 := h.lr; have r2 := h.fp; have hsacc := h.sacc; have hal := h.al; have hinv := h.inv
@@ -95,7 +95,7 @@ theorem setTail (impl : List Amd64.Segment) (R : RtInv)
   · -- `p = xp`: no copy
     rename_i hpx
     have hpx' : xp.toNat = p := by omega
-    refine ⟨⟨?_, ?_, ?_, ?_⟩, h.setPost hxv hxn (MemFrame.refl _ _) ⟨fun _ _ _ _ => rfl⟩ h.inv (by rw [hpx'])
+    refine ⟨⟨?_, ?_, ?_, ?_, ?_⟩, h.setPost hxv hxn (MemFrame.refl _ _) ⟨fun _ _ _ _ => rfl⟩ h.inv (by rw [hpx'])
       (by rw [hpx']) _ rfl ?_ ?_ ?_ ?_ ?_⟩
     all_goals try janus64_simp
     all_goals first | exact hx15'.symm | omega
@@ -115,7 +115,7 @@ theorem setTail (impl : List Amd64.Segment) (R : RtInv)
           ((s.regs 4).toNat - 32) 8 xl.toNat).writeLE ((s.regs 4).toNat - 136) 8 6219429).readLE a n = M.readLE a n :=
       fun a n h' => hW.readLE a n (by simp only [outside_cons, outside_nil, and_true]; omega)
     rw [show xl.toNat * 8 = 8 * xl.toNat by omega] at hF2 hLF2 hcp'
-    refine ⟨⟨?_, ?_, ?_, ?_⟩, h.setPost hxv hxn (hW.trans hF2 fun a n ho => ?fr) ⟨fun a n hin ho => ?lf⟩ hinv2 ?cp
+    refine ⟨⟨?_, ?_, ?_, ?_, ?_⟩, h.setPost hxv hxn (hW.trans hF2 fun a n ho => ?fr) ⟨fun a n hin ho => ?lf⟩ hinv2 ?cp
       ?nz _ rfl ?_ ?_ ?_ ?_ ?_⟩
     case fr =>
       simp only [outside_append, outside_cons, outside_nil, and_true] at ho ⊢

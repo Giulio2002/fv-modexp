@@ -51,7 +51,7 @@ theorem vww (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
     (hsp : S.regs 4 = s.regs 4 - 104#64) (h14 : S.regs 14 = s.regs 14) (h5 : S.regs 5 = s.regs 4 - 8#64)
     (hfs : S.fsBase = s.fsBase) (hdf : S.df = false) (hm : S.mem = M) :
     ReachesRet (LibMulAddWW.program.link impl) (retAddrOf s) S fun s' =>
-      RegsOK s s' ∧ Post R b L zp zc xp xl y r s s' := by
+      RegsOK s s' ∧ PostI R b L zp zc xp xl y r s s' := by
   have hV := vww_live impl hap R b' L'
   have hsp0 := h.sp0; have hsp1 := h.sp1; have hcap := h.cap; have hc41 := h.c41; have hp48 := h.p48
   have hxl := h.xl40

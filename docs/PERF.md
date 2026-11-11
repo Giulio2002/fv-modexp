@@ -469,6 +469,16 @@ Lesson: after a call, NEVER close the callee-post bookkeeping (slot reads throug
 context: state it as a pure lemma over the printed post forms (print them with `run_tac withMainContext …
 logInfo (← inferType h)`), e.g. `zcPost` (8 s vs > 240 s).
 
+### expmc session 9 (2026-11-11), arm64 dev compile (load ~30), wall / max RSS
+| module | time | note |
+|---|---|---|
+| Exp/W4P01Ret (`p01Ret`: p01 → RET composition) | 28 s / 2.7 GB | |
+| Exp/W4One (one/powers zeroing, both one paths, `zeroLoop`) | 24 s / 2.5 GB | `oneMem_facts`/`large_facts` pure |
+| Exp/W4Snc (`snCall`: stk.nat(17n) by hand) | 7 s / 2.4 GB | |
+| Exp/W4OneRet (`afterOne`: snE → RET transfers) | 110 s / 5.2 GB | TRIM: ~40 `by omega` in a ~150-hyp context in one `refine` |
+| Exp/W4OneRet2 (`oneRet`) | 1 s | |
+| Exp/W4RR (`rrA`, `rrB`, `rrBpost`) | 15 s / 2.5 GB | |
+
 ### divmc `(*stack).nat` (2026-11-11, session 5; dev compile, host load high), wall / max RSS
 | module | arm64 | amd64 |
 |---|---|---|
@@ -567,3 +577,70 @@ pre-call memory + the callee's post) took > 115 s / 8 GB; a separate lemma from 
 facts it needs (`body3`) is cheap. (2) amd64 return-address literals: compute `fn + off` of the instruction after
 the CALL (objdump) and state it literally (`MemFrame.of_writeLE … 6232136`). (3) `janus_grab N as h` picks a MemFrame by a
 numeral in its ranges; `janus_grab hFF xmm 15 as h` the callee's `xmm 15` equation.
+
+## nat.subMod2N amd64 (agent infra, sessions 6-7), 2026-11-11
+Dev compile (plain `lean`, LEAN_NUM_THREADS=4, memcap 8G, J=2, host load 40-65), `Proofs/Amd64/Exp/SubMod2N*.lean`:
+| module | wall | peak RSS | content |
+|---|---|---|---|
+| SubMod2NDefs / Seg / Call / Seg2 | 5 / 9 / 28 / 2 s | ≤ 3.1 GB | statement, joins J1-J5, call helpers |
+| SubMod2NS1J | 35 s | 2.9 GB | `j1_stack`, `s1t` (after trunc(x)) |
+| SubMod2NS1Z / S1N / S1T | 47 / 113 / 165 s | 2.7 GB | entry → J1: len x = 0 / bitLen ≤ n / trunc (was ONE module S1: 230 s) |
+| SubMod2NS2J | 76 s | 2.9 GB | `j2_skip`, `s2t` |
+| SubMod2NS2Z / S2N / S2T | 29 / 90 / 156 s | 3.8 GB | J1 → J2 per path (was ONE module S2: 229 s) |
+| SubMod2NS3L / S3G | 9 / 22 s | 3.0 GB | small-context `nat.sub` call lemmas (abstract state at the callee entry) |
+| SubMod2NS3 | 65 s | 3.7 GB | J2 → cmp → both runs to `nat.sub` |
+| SubMod2NS4A / S4B | 30 / 26 s | 2.9 GB | append / complement loops |
+| SubMod2NS4C | 53 s | 3.3 GB | trunc(z) + natOne + add + RET |
+| SubMod2N | 3 s | 2.4 GB | composition + ens/sum |
+Lesson: the first S3 (calls inline after the literal-state runs, `fr _ (by janus_frame)` facts) was killed by the 8 GB
+memcap twice; moving each `nat.sub` call into a lemma over an ABSTRACT state at the callee entry (S3L/S3G, 9-22 s) and
+leaving only register/frame equations for the literal state brought S3 to 65 s / 3.7 GB. A `janus64_run` to a callee
+entry after a two-way branch also yields the infeasible branch's goal: close it first (`all_goals first | exact absurd
+hbr (by decide) | skip`) before `refine`. In `first` cascades never put a `sorry` fallback inside a nested alternative
+(`… <;> first | … | sorry`): it pre-empts later alternatives.
+## agent top s9 (2026-11-11 night)
+* RunC2EX split into `c2eXB` (from the post-exp state at `fn+0x87c`: Bytes call → V) and `c2eX` (exp call, then
+  `exact c2eXB`; the call state is `expCallS T s rg pcc` so the tail unifies with janus's literal call state).
+  Before 192 s / 7.66 GB → after 182 s / 7.58 GB (108 s when the host was idle): the split did NOT remove the peak.
+  Measured: head with `debug.skipKernelTC` → 3.97 GB (94 s); head without its janus_run (sorry) → 2.57 GB. So ≈ 3.6 GB
+  is the KERNEL check of the head's single exp-call `janus_run` (6 instructions + the `expW` summary). Suspect: the
+  callee pre `RetAddr ((Extracted.program.onlySegments namesExp).link impl) …` (kernel filters all segments by name,
+  String comparisons over the 20-name `namesExp`). Next fix: an `expWAt` variant whose pre takes
+  `(t.regs 30).toNat = fn+0x87c` with the RetAddr fact proved once in its own small module (same for RunC2M/namesMod).
+* MakesliceZero premises (both ISAs) now byte-match Janus PR #2 (extra conjunct `Outside et 16 calleeStack`):
+  arm64 IntBytes 49 s / 2.3 GB, amd64 IntBytes 154 s / 2.3 GB (janus discharged the new conjunct, no proof change);
+  amd64 `WStubs.mkz` (Witness/StubsMkz.lean) 1 s.
+
+### expmc session 10 (arm64, dev compile, host load 35-56)
+| module | wall | peak RSS |
+|---|---|---|
+| W4OneRet (rebuild after main merge) | 130 s | 5.2 GB |
+| W4RR | 24 s | 2.5 GB |
+| W4RRRet (rrRet) | 25 s | 3.0 GB |
+| W4K0 (Newton loop) | < 10 s | 2.2 GB |
+| W4Ctx (Ctx/Keeps/keeps_of) | 12 s | 2.4 GB |
+| W4RRC (rrRetC) | 5 s | 2.3 GB |
+| W4SnK (snCallK, keeps_sn) | 87 s | 4.7 GB |
+* FIX (top s9): callee `RetAddr (onlySegments names …)` proved ONCE per return site from the layout (Top/RunC2RA:
+  `raRun` — Run is segment 0, the callee program does not keep Run, segments pairwise apart; 6 s / 2.4 GB; a `decide` of
+  the same fact costs 7.1 GB, all in `names.contains` over the 84 segments) and handed to `janus_run` as a context
+  hypothesis (`have hRA := raExp impl hap`). RunC2EX 182 s / 7.58 GB → 85 s / 3.00 GB; RunC2M 225 s / 6.51 GB →
+  103 s / 2.90 GB. Applies to every `calls [hP := …]` with an `onlySegments` callee (setBytes sites in H*/D* next).
+
+### asm s10: divBasic arm64 completion + amd64 DF convention (dev compile `mk.py`, host load 40-50), wall / max RSS
+| module | wall | RSS |
+|---|---|---|
+| DivBasicRec (pro3, now exports q/u untouched) | 141 s | 5.1 GB |
+| DivBasicEnd (`post_fin`, pure) | 6.7 s | 2.3 GB |
+| DivBasicExit (`fin`: TBNZ → closure → RET) | 8.5 s | 2.5 GB |
+| DivBasicLoop (`loop` induction, `fromHead`) | 2.6 s | 2.2 GB |
+| DivBasic (`full`/`ens`/`sum`) | 6.2 s | 2.4 GB |
+| DivBasicRow (witness: one lemma per Pre conjunct; one `first` cascade over all 42 goals ran > 9 min) | 7 s | 2.3 GB |
+| Amd64 AddVW / SubVW (DF) | 30 s / 28 s | 2.7 GB |
+| Amd64 DivWVW (DF) | 25 s | 2.7 GB |
+Rows re-verified after the heartbeat change (janus-provfix, memcap 16G / timeout 900): arm64 MulAddWWRow PASS 212 s /
+5.3 GB, arm64 DivWRow PASS 115 s / 1.2 GB (amd64 rows re-run after the DF change: see build/asm-rows.tsv).
+amd64 rows after the DF change (s10, janus-provfix): AddVWRow PASS 88 s / 3.0 GB, SubVWRow PASS 74 s / 3.0 GB, DivWVWRow
+PASS 63 s / 2.0 GB, MulAddWWRow PASS 270 s / 3.6 GB, DivWRow PASS 203 s / 5.6 GB.
+arm64 DivBasicRow: FAIL — timeout 900 s while compiling its 25 own modules (first build in cache-asm, host load ~45);
+needs trimming (DivBasicRec 141 s, DivBasicNat 90-156 s, DivBasicStep 56 s are the big ones).

@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Arm64.Top.RunC2Sum
+import FvModexp.Proofs.Arm64.Top.RunC2RA
 import FvModexp.Proofs.Arm64.Top.RunC2Lem3
 
 /-! # `Run` (arm64): from the `exp` call block (`fn + 0x864`) to `V`: `v = base.exp(base, exp, mod, false).Bytes()`
@@ -10,9 +10,12 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
 
 namespace FvModexp.Arm64.Run
 
+/-- The state at the `exp` call (`fn + 0x878`), as `janus_run` builds it from the block's entry state `T`. -/
+abbrev expCallS (T s : State) (rg : Nat → W64) (pcc : W64) : State := { T with regs := rg, sp := s.sp - 624#64, pc := pcc }
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem c2eX (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv) (stkM aboveM : Nat)
+theorem c2eXB (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv) (stkM aboveM : Nat)
     (hE : RunIface.ExpSpec impl R stkM aboveM) (hBy : RunIface.BytesSpec impl R stkM aboveM) (hsv : RunIface.Serves R)
     (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64) (ret : Nat)
     (hret : RetAddr (LibRun.program.link impl) ret) (s : State) (Q : Outcome → Prop)
@@ -22,8 +25,19 @@ theorem c2eX (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     (L1 : List (Nat × Nat)) (b1 : Nat) (T : State) (hrel : RelD R b L c p len cp s ret 3 L1 b1 T)
     (hpc : T.pc = BitVec.ofNat 64 (segAddr Extracted.program fn + 0x864)) (hv2 : 0 < opV s p len 2)
     (hk : ∀ V Lk bk, RelV R b L p len s ret W Lk bk V → V.pc = BitVec.ofNat 64 pcCV →
-      Reaches ((LibRun.program.link impl).withExit ret) V Q) :
-    Reaches ((LibRun.program.link impl).withExit ret) T Q := by
+      Reaches ((LibRun.program.link impl).withExit ret) V Q)
+    (rg : Nat → W64) (pcc : W64) (s' : State) (e3 : rg 28 = s.regs 28)
+    (hpc' : s'.pc = BitVec.ofNat 64 (segAddr Extracted.program fn + 0x87c))
+    (hsp1 : s'.sp = (expCallS T s rg pcc).sp) (h281 : s'.regs 28 = (expCallS T s rg pcc).regs 28)
+    (h291 : s'.regs 29 = (expCallS T s rg pcc).regs 29) (h181 : s'.regs 18 = (expCallS T s rg pcc).regs 18) (e29 : rg 29 = T.regs 29) (e18 : rg 18 = T.regs 18)
+    (hr01 : s'.regs 0 = s.sp - 136#64)
+    (hpost : RunIface.IntPost R b1 (RunIface.ExpBudget (max (max (RunIface.lenW T.mem (s.sp.toNat - 136))
+        (RunIface.lenW T.mem (s.sp.toNat - 168))) (RunIface.lenW T.mem (s.sp.toNat - 200)))
+        (RunIface.lenW T.mem (s.sp.toNat - 168))) L1 stkM aboveM (s.sp.toNat - 136)
+        (RunIface.IntV T.mem (s.sp.toNat - 136) ^ RunIface.IntV T.mem (s.sp.toNat - 168) %
+          RunIface.IntV T.mem (s.sp.toNat - 200)) (expCallS T s rg pcc) s')
+    (hrg1 : s'.mem.regions = (expCallS T s rg pcc).mem.regions) :
+    Reaches ((LibRun.program.link impl).withExit ret) s' Q := by
   have henvW0 := henvW
   obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, hd, hout, hga, hgr, hLs, hro⟩ := henvW
   obtain ⟨hsp, h28, h29, h18, hm1, hm2, hm3, hm4, hm5, hm6, hs1, hs2, hs3, hs4, hs5, hs6, hl0, hl1, hl2, hnz, -, -,
@@ -80,12 +94,10 @@ theorem c2eX (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
         [s.sp.toNat - 136, s.sp.toNat - 168, s.sp.toNat - 200] t :=
     fun t h1 h2 h3 => intPre_ops _ (by rw [h1]; exact hspn) h2 h3 henvW0 hW hW1 hab hglob hgL hsv hBm hdS hext hinv hMF
       hop hopA hxs hpw
-  have hExp := expW impl hap R stkM aboveM hE b1 L1 T.sp (s.regs 28) T.mem (s.sp.toNat - 136) (s.sp.toNat - 168)
-    (s.sp.toNat - 200) hIP hy0 hzl hyl hml
-  janus_run until [segAddr Extracted.program fn + 0x87c] calls [hP := hExp]
-  obtain ⟨⟨⟨hsp1, h281, h291, h181⟩, hr01, hpost⟩, hrg1⟩ := hP
-  dsimp only at hsp1 h281 h291 h181 hrg1
-  have h281' : s'.regs 28 = s.regs 28 := by rw [h281]; janus_simp [h28]
+  have h281' : s'.regs 28 = s.regs 28 := h281.trans e3
+  replace h291 : s'.regs 29 = T.regs 29 := h291.trans e29
+  replace h181 : s'.regs 18 = T.regs 18 := h181.trans e18
+  replace hsp1 : s'.sp = T.sp := hsp1.trans hsp.symm
   have hgz : Apart RunIface.gA 32 (s.sp.toNat - 136) 32 := by
     have := hglob.2.2.2.2.2.2.2.2.2
     simp only [win, Janus.outside_cons, Janus.outside_nil, and_true] at this; unfold Apart; omega
@@ -107,9 +119,9 @@ theorem c2eX (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
         (RunIface.lenW T.mem (s.sp.toNat - 168)) + RunIface.BytesBudget (RunIface.lenW s'.mem (s.sp.toNat - 136)) ≤ b1 :=
     budget_c2e0 l0 l1 l2 l1' hlb hbud hbB'
   obtain ⟨L2, b2, hext2, hb2, hv1, hinv2, hok2, hMF2, hLF2, hIPb⟩ :=
-    afterInt hIP hpost hsp.symm rfl (by janus_simp [h28]) hrg1 hgz hga hBB
+    afterInt hIP hpost hsp.symm rfl e3 hrg1 hgz hga hBB
   have hBy' := bytesW impl hap R stkM aboveM hBy b2 L2 (s.sp - 624#64) (s.regs 28) s'.mem (s.sp.toNat - 136)
-    (fun t h1 h2 h3 => hIPb t h1 h2 (h3.trans (by janus_simp [h28]))) hlb
+    (fun t h1 h2 h3 => hIPb t h1 h2 (h3.trans e3.symm)) hlb
   have hz136 : (s.sp - 136#64).toNat = s.sp.toNat - 136 := by rw [BitVec.toNat_sub]; simp; omega
   have hsp624 : (s.sp - 624#64).toNat = s.sp.toNat - 624 := by rw [← hsp]; exact hspn
   have harrR : 0 < T.mem.readLE (s.sp.toNat - 136 + 24) 8 → InRanges (T.mem.readLE (s.sp.toNat - 136 + 8) 8)
@@ -202,5 +214,85 @@ theorem c2eX (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
   case bud =>
     unfold callB
     exact budget_c2e l0 l1 l2 l1' hlb hbud hb2 hb3
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 64000000 in
+theorem c2eX (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv) (stkM aboveM : Nat)
+    (hE : RunIface.ExpSpec impl R stkM aboveM) (hBy : RunIface.BytesSpec impl R stkM aboveM) (hsv : RunIface.Serves R)
+    (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64) (ret : Nat)
+    (hret : RetAddr (LibRun.program.link impl) ret) (s : State) (Q : Outcome → Prop)
+    (W : Nat) (henvW : CallEnv R L s W 40) (hW : 624 + stkM ≤ W) (hW1 : 4800 ≤ W) (hab : aboveM ≤ 160)
+    (hglob : RunIface.Globals R s.mem (win s W 40)) (hgL : ApartAll ((s.regs 28).toNat + 16) 8 L)
+    (hbB : okB s p len ≤ b)
+    (L1 : List (Nat × Nat)) (b1 : Nat) (T : State) (hrel : RelD R b L c p len cp s ret 3 L1 b1 T)
+    (hpc : T.pc = BitVec.ofNat 64 (segAddr Extracted.program fn + 0x864)) (hv2 : 0 < opV s p len 2)
+    (hk : ∀ V Lk bk, RelV R b L p len s ret W Lk bk V → V.pc = BitVec.ofNat 64 pcCV →
+      Reaches ((LibRun.program.link impl).withExit ret) V Q) :
+    Reaches ((LibRun.program.link impl).withExit ret) T Q := by
+  have henvW0 := henvW
+  have hrel0 := hrel
+  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, hd, hout, hga, hgr, hLs, hro⟩ := henvW
+  obtain ⟨hsp, h28, h29, h18, hm1, hm2, hm3, hm4, hm5, hm6, hs1, hs2, hs3, hs4, hs5, hs6, hl0, hl1, hl2, hnz, -, -,
+    hdS, -, -, hext, hbud, hinv, hLsS, hMF, hLF, hop, hopA⟩ := hrel
+  simp only [stk] at hLsS hMF
+  have hspn : T.sp.toNat = s.sp.toNat - 624 := by rw [hsp, BitVec.toNat_sub]; simp; omega
+  obtain ⟨-, hval0, -, h1280, -, hlive0⟩ := hop 0 (by omega)
+  simp only [opAt, show s.sp.toNat - 136 - 32 * 0 = s.sp.toNat - 136 by omega] at hval0 h1280 hlive0
+  obtain ⟨-, hval1, -, h1281, -, -⟩ := hop 1 (by omega)
+  simp only [opAt, show s.sp.toNat - 136 - 32 * 1 = s.sp.toNat - 168 by omega] at hval1 h1281
+  obtain ⟨-, hval2, -, h1282, -, -⟩ := hop 2 (by omega)
+  simp only [opAt, show s.sp.toNat - 136 - 32 * 2 = s.sp.toNat - 200 by omega] at hval2 h1282
+  -- the exp call: IntPre outside the run
+  have hxs : ∀ a ∈ [s.sp.toNat - 136, s.sp.toNat - 168, s.sp.toNat - 200], ∃ j, j < 3 ∧ a = opAt s j := by
+    intro a ha
+    simp only [List.mem_cons, List.not_mem_nil, or_false] at ha
+    rcases ha with rfl | rfl | rfl
+    · exact ⟨0, by omega, by simp only [opAt]; omega⟩
+    · exact ⟨1, by omega, by simp only [opAt]; omega⟩
+    · exact ⟨2, by omega, by simp only [opAt]; omega⟩
+  have hpw : [s.sp.toNat - 136, s.sp.toNat - 168, s.sp.toNat - 200].Pairwise
+      fun a a' => ∃ i j, i < j ∧ j < 3 ∧ a = opAt s i ∧ a' = opAt s j := by
+    refine List.Pairwise.cons (fun a' ha' => ?_) (List.Pairwise.cons (fun a' ha' => ?_) (List.pairwise_singleton _ _))
+    · simp only [List.mem_cons, List.not_mem_nil, or_false] at ha'
+      rcases ha' with rfl | rfl
+      · exact ⟨0, 1, by omega, by omega, by simp only [opAt]; omega, by simp only [opAt]; omega⟩
+      · exact ⟨0, 2, by omega, by omega, by simp only [opAt]; omega, by simp only [opAt]; omega⟩
+    · simp only [List.mem_singleton] at ha'; subst ha'
+      exact ⟨1, 2, by omega, by omega, by simp only [opAt]; omega, by simp only [opAt]; omega⟩
+  have l0 : RunIface.lenW T.mem (s.sp.toNat - 136) ≤ wMax s p len :=
+    Nat.le_trans (lenW_op (hop 0 (by omega)) (by omega)) (Nat.le_trans (Nat.le_max_left _ _) (Nat.le_max_left _ _))
+  have l1 : RunIface.lenW T.mem (s.sp.toNat - 168) ≤ wMax s p len :=
+    Nat.le_trans (lenW_op (hop 1 (by omega)) (by omega)) (Nat.le_trans (Nat.le_max_right _ _) (Nat.le_max_left _ _))
+  have l1' : RunIface.lenW T.mem (s.sp.toNat - 168) ≤ opW s p len 1 := lenW_op (hop 1 (by omega)) (by omega)
+  have l2 : RunIface.lenW T.mem (s.sp.toNat - 200) ≤ wMax s p len :=
+    Nat.le_trans (lenW_op (hop 2 (by omega)) (by omega)) (Nat.le_max_right _ _)
+  have hbB' := hbB
+  simp only [okB, callB] at hbB'
+  have hBm : RunIface.ExpBudget (max (max (RunIface.lenW T.mem (s.sp.toNat - 136)) (RunIface.lenW T.mem (s.sp.toNat - 168)))
+      (RunIface.lenW T.mem (s.sp.toNat - 200))) (RunIface.lenW T.mem (s.sp.toNat - 168)) ≤ b1 := by
+    have := budget_c2e0 (lb := 0) l0 l1 l2 l1' (Nat.zero_le _) hbud hbB'
+    omega
+  have hy0 : 0 < RunIface.IntV T.mem (s.sp.toNat - 200) := by rw [intV_eq]; rw [hval2]; exact hv2
+  have hzl : RunIface.IntLenLe T.mem (s.sp.toNat - 136) RunIface.maxW := by
+    unfold RunIface.IntLenLe RunIface.maxW; exact h1280
+  have hyl : RunIface.IntLenLe T.mem (s.sp.toNat - 168) RunIface.maxW := by
+    unfold RunIface.IntLenLe RunIface.maxW; exact h1281
+  have hml : RunIface.IntLenLe T.mem (s.sp.toNat - 200) RunIface.maxW := by
+    unfold RunIface.IntLenLe RunIface.maxW; exact h1282
+  have hIP : ∀ t : State, t.sp = T.sp → t.mem = T.mem → t.regs 28 = s.regs 28 →
+      RunIface.IntPre R b1 (RunIface.ExpBudget (max (max (RunIface.lenW T.mem (s.sp.toNat - 136))
+        (RunIface.lenW T.mem (s.sp.toNat - 168))) (RunIface.lenW T.mem (s.sp.toNat - 200)))
+        (RunIface.lenW T.mem (s.sp.toNat - 168))) L1 stkM aboveM
+        [s.sp.toNat - 136, s.sp.toNat - 168, s.sp.toNat - 200] t :=
+    fun t h1 h2 h3 => intPre_ops _ (by rw [h1]; exact hspn) h2 h3 henvW0 hW hW1 hab hglob hgL hsv hBm hdS hext hinv hMF
+      hop hopA hxs hpw
+  have hExp := expW impl hap R stkM aboveM hE b1 L1 T.sp (s.regs 28) T.mem (s.sp.toNat - 136) (s.sp.toNat - 168)
+    (s.sp.toNat - 200) hIP hy0 hzl hyl hml
+  have hRA := raExp impl hap
+  janus_run until [segAddr Extracted.program fn + 0x87c] calls [hP := hExp]
+  obtain ⟨⟨⟨hsp1, h281, h291, h181⟩, hr01, hpost⟩, hrg1⟩ := hP
+  exact c2eXB impl hap R stkM aboveM hE hBy hsv b L c p len cp ret hret s Q W henvW0 hW hW1 hab hglob hgL hbB L1 b1 T
+    hrel0 hpc hv2 hk _ _ _ (by janus_simp [h28]) (by janus_simp) hsp1 h281 h291 h181
+    (by janus_simp [h29]) (by janus_simp [h18]) (by rw [hr01]; try janus_simp [hsp]) hpost hrg1
 
 end FvModexp.Arm64.Run

@@ -24,7 +24,7 @@ theorem setPath (impl : List Amd64.Segment) (R : RtInv)
     (hsp : S.regs 4 = s.regs 4 - 104#64) (h14 : S.regs 14 = s.regs 14) (h5 : S.regs 5 = s.regs 4 - 8#64)
     (hx15 : S.xmm 15 = s.xmm 15) (hfs : S.fsBase = s.fsBase) (hdf : S.df = false) (hm : S.mem = M) :
     ReachesRet (LibMulAddWW.program.link impl) (retAddrOf s) S fun s' =>
-      RegsOK s s' ∧ Post R b L zp zc xp xl y r s s' := by
+      RegsOK s s' ∧ PostI R b L zp zc xp xl y r s s' := by
   by_cases hr : r.toNat = 0
   · exact setZero impl R b L zp zc xp xl y r s M h hr S hpc h0 h1 h10 hsp h14 h5 hx15 hfs hdf hm
   by_cases hzc : zc.toNat = 0
@@ -38,7 +38,7 @@ theorem toSet (impl : List Amd64.Segment) (R : RtInv)
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc y r : BitVec 64) (s : State)
     (he : Entry s zp zl zc xp xl xc y r) (hxy0 : xl.toNat = 0 ∨ y.toNat = 0) (hpre : Pre R b L zp zc xp xl y r s) :
     ReachesRet (LibMulAddWW.program.link impl) (retAddrOf s) s fun s' =>
-      RegsOK s s' ∧ Post R b L zp zc xp xl y r s s' := by
+      RegsOK s s' ∧ PostI R b L zp zc xp xl y r s s' := by
   obtain ⟨hpc, hra, hx15, hdf, h0, h3, h1, h7, h6, h8, h9, h10⟩ := he
   obtain ⟨hg1, hg2, hg3, hb', ha, hw, hal, htg⟩ := pre_env hpre
   have hpre' := hpre
@@ -82,7 +82,7 @@ theorem full (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
       (fun s => s.mem.readLE (s.regs 4).toNat 8 < 2 ^ 47 ∧ s.xmm 15 = 0#128 ∧ s.df = false ∧
         s.regs 0 = zp ∧ s.regs 3 = zl ∧ s.regs 1 = zc ∧ s.regs 7 = xp ∧ s.regs 6 = xl ∧ s.regs 8 = xc ∧
         s.regs 9 = y ∧ s.regs 10 = r ∧ Pre R b L zp zc xp xl y r s)
-      (fun s s' => RegsOK s s' ∧ Post R b L zp zc xp xl y r s s') := by
+      (fun s s' => RegsOK s s' ∧ PostI R b L zp zc xp xl y r s s') := by
   intro s hpc ⟨hra, hx15, hdf, h0, h3, h1, h7, h6, h8, h9, h10, hpre⟩
   have he : Entry s zp zl zc xp xl xc y r := ⟨hpc, hra, hx15, hdf, h0, h3, h1, h7, h6, h8, h9, h10⟩
   have hc3 : CodeIn64 (Extracted.program.ofImpl impl) (LibMulAddWW.program.link impl) := by
@@ -109,7 +109,7 @@ theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
   janus64_intro hs
   refine Summary.returns (full impl hap R hmk b L zp zl zc xp xl xc y r) hret (by rw [h_rip]; rfl)
     (by rw [retAddrOf, h_ret]) ⟨by rw [h_ret]; exact hret.user, h_x15, h_df, h_a0, h_a1, h_a2, h_a3, h_a4, h_a5, h_a6,
-      h_a7, hpre⟩ fun s' ⟨⟨a, b, c, d⟩, hq⟩ => ⟨⟨a, b, c, d⟩, hq⟩
+      h_a7, hpre⟩ fun s' ⟨⟨a, b, c, d, e⟩, hfs, hq⟩ => ⟨⟨a, b, c, d⟩, hfs, e.trans h_df.symm, hq⟩
 
 set_option linter.defProp false in
 /-- `ens` as a callee summary in a caller whose program keeps the functions `ms ⊇ names` (CONVENTIONS §4). -/

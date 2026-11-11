@@ -29,18 +29,18 @@ theorem tail (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat ×
     (S : State) (hpc : S.rip = BitVec.ofNat 64 hAfter)
     (h0 : (S.regs 0).toNat = natVal s.mem xp.toNat xl.toNat % y.toNat)
     (hsp : S.regs 4 = s.regs 4 - 128#64) (h14 : S.regs 14 = s.regs 14) (h5 : S.regs 5 = s.regs 4 - 8#64)
-    (hx15 : S.xmm 15 = s.xmm 15) (hfs : S.fsBase = s.fsBase) (hm : S.mem = M) :
+    (hx15 : S.xmm 15 = s.xmm 15) (hfs : S.fsBase = s.fsBase) (hdf : S.df = false) (hm : S.mem = M) :
     ReachesRet (LibDivW.program.link impl) (retAddrOf s) S fun s' =>
-      RegsOK s s' ∧ Post R b L zp zc xp xl y s s' := by
+      RegsOK s s' ∧ PostI R b L zp zc xp xl y s s' := by
   have hsp0 := h.sp0; have hsp1 := h.sp1; have hcap := h.cap; have hc41 := h.c41; have hp48 := h.p48
   have hxl := h.xl40; have hsacc := h.sacc; have hal := h.al; have hpacc := h.pacc
   janus64_run [hm, hps, hms, BitVec.msb_eq_decide] until [hNorm]
   refine norm impl s M p c xl.toNat _ (S.regs 0) _ (fun s' n' hm' h0' h1' h2' h3' hfs' hn' hv' hnm' =>
       h.post s' n' hm' h0' h1' h2' (by rw [h3']; exact h0) hfs' hn' hv' hnm') hcap (by omega) (by omega)
     (Janus.Arm64.Memory.accessible_weaken _ (Janus.Arm64.Memory.accessible_mono _ hpacc (Nat.le_refl _) (by omega)))
-    h.lr h.fp hcs hal hsp0 hsp1 hsacc h.ra47 xl.toNat _ (Nat.le_refl _) ?_ ?_ ?_ ?_ ?_ h14 ?_ ?_ ?_ rfl hv
+    h.lr h.fp hcs hal hsp0 hsp1 hsacc h.ra47 xl.toNat _ (Nat.le_refl _) ?_ ?_ ?_ ?_ ?_ h14 ?_ ?_ ?_ ?_ rfl hv
   all_goals try janus64_simp
-  all_goals first | exact hfs | exact hx15
+  all_goals first | exact hfs | exact hx15 | exact hdf
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
@@ -55,7 +55,7 @@ theorem call (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
     (hsp : S.regs 4 = s.regs 4 - 128#64) (h14 : S.regs 14 = s.regs 14) (h5 : S.regs 5 = s.regs 4 - 8#64)
     (hx15 : S.xmm 15 = s.xmm 15) (hfs : S.fsBase = s.fsBase) (hdf : S.df = false) (hm : S.mem = M) :
     ReachesRet (LibDivW.program.link impl) (retAddrOf s) S fun s' =>
-      RegsOK s s' ∧ Post R b L zp zc xp xl y s s' := by
+      RegsOK s s' ∧ PostI R b L zp zc xp xl y s s' := by
   have hV := dvw impl hap R b' L'
   have hsp0 := h.sp0; have hsp1 := h.sp1; have hcap := h.cap; have hc41 := h.c41; have hp48 := h.p48
   have hxl := h.xl40; have hx0 := h.x0
@@ -79,7 +79,7 @@ theorem call (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
   have hx15s := h.x15
   janus64_run [hm, hfs, hx15, mod64_of_lt (a := c) (by omega), mod64_of_lt (a := p) (by omega), BitVec.msb_eq_decide]
     until [hAfter] calls [hV]
-  rename_i hfs2 L2 b2 hext hbb hr0 hv hinv2 hF hLF
+  rename_i hfs2 hdf2 L2 b2 hext hbb hr0 hv hinv2 hF hLF
   have e136 : (s.regs 4 - 136#64).toNat = (s.regs 4).toNat - 136 := by
     simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
   have hW : MemFrame M ((((M.writeLE ((s.regs 4).toNat - 56) 8 c).writeLE ((s.regs 4).toNat - 64) 8 xl.toNat).writeLE
@@ -121,11 +121,11 @@ theorem call (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
       natVal s.mem xp.toNat xl.toNat := by
     unfold DivWVW.Dvd; rw [hx1]; simp
   rw [hdv] at hr0 hv
-  refine tail impl R b L zp zc xp xl y s p c L2 b2 s'.mem hM2 ?_ ?_ ?_ hv _ ?_ hr0 ?_ ?_ ?_ ?_ ?_ rfl
+  refine tail impl R b L zp zc xp xl y s p c L2 b2 s'.mem hM2 ?_ ?_ ?_ hv _ ?_ hr0 ?_ ?_ ?_ ?_ ?_ ?_ rfl
   · rw [rd _ (by omega) (by omega)]; janus64_simp
   · rw [rd _ (by omega) (by omega)]; janus64_simp
   · rw [rd _ (by omega) (by omega)]; janus64_simp
   all_goals try janus64_simp
-  all_goals first | exact hfs | exact hx15 | (rw [hfs2]) | (rw [hfs2]; exact hfs)
+  all_goals first | exact hfs | exact hx15 | (rw [hfs2]) | (rw [hfs2]; exact hfs) | (rw [hdf2]; exact hdf) | exact hdf
 
 end FvModexp.Amd64.DivW

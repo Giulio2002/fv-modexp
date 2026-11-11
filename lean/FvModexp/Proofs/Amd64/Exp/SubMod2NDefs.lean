@@ -57,6 +57,11 @@ abbrev A : Nat := 88
     Outside yp (8 * yl) (win s K A) ∧ NatNorm s.mem yp yl ∧ Apart zp (8 * zc) yp (8 * yc) ∧
     cost n ≤ b ∧ R.inv b L (s.regs 14).toNat (view R.rt L s.mem) ∧ Ent s zp zc n
 
+/-- the amd64 entry facts of `Pre` -/
+theorem ent_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {op zp zl zc yp yl yc n : Nat} {s : State}
+    (hpre : Pre R b L op zp zl zc yp yl yc n s) : Ent s zp zc n :=
+  hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2
+
 @[reducible] def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zl zc yp yl n : Nat) (s s' : State) : Prop :=
   s'.fsBase = s.fsBase ∧ s'.df = s.df ∧
   ∃ p' l' c' : Nat, (s'.regs 0).toNat = p' ∧ (s'.regs 3).toNat = l' ∧ (s'.regs 1).toNat = c' ∧
@@ -66,6 +71,6 @@ abbrev A : Nat := 88
       R.inv b' L' (s.regs 14).toNat (view R.rt L' s'.mem) ∧ NatLive s'.mem R L' p' c' ∧
       ((p' = zp ∧ c' = zc) ∨ (InRanges p' (8 * c') R.rt ∧ ApartAll p' (8 * c') L)) ∧
       MemFrame s.mem s'.mem (R.rt ++ win s K A ++ [(zp, zp + 8 * zc)]) ∧
-      LiveFrame s.mem s'.mem L [(zp, zp + 8 * zc)]
+      LiveFrame s.mem s'.mem L [(zp, zp + 8 * zc)] ∧ (W n + 1 ≤ zc → p' = zp ∧ c' = zc)
 
 end FvModexp.Amd64.SubMod2N

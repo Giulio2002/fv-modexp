@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Arm64.Top.RunC2Sum
+import FvModexp.Proofs.Arm64.Top.RunC2RA
 import FvModexp.Proofs.Arm64.Top.RunC2Lem3
 
 /-! # `Run` (arm64): `C2` to `V` when `base = 1` (`base.BitLen() == 1`): `v = base.Mod(base, mod).Bytes()` -/
@@ -80,6 +80,7 @@ theorem c2m (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
       hop hopA hxs hpw
   have hMod := modW impl hap R stkM aboveM hM b1 L1 T.sp (s.regs 28) T.mem (s.sp.toNat - 136) (s.sp.toNat - 200) hIP
     hy0 hzl hyl
+  have hRA := raMod impl hap
   janus_run [hn1, hx1, h7, clz_one, hb0'] until [segAddr Extracted.program fn + 0x85c, segAddr Extracted.program fn + 0x864] calls [hP := hMod]
   obtain ⟨⟨⟨hsp1, h281, h291, h181⟩, hr01, hpost, hyv⟩, hrg1⟩ := hP
   dsimp only at hsp1 h281 h291 h181 hrg1

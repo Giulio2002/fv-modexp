@@ -140,7 +140,7 @@ theorem s3c (impl : List Segment) (hap : ImplApart Extracted.program impl) {R : 
     have hll := (SubMod2N.cmp_lt_iff S.mem zp l1 p2 l2 hn1 hn2).2 hlt
     janus_run [hR, x152, x160, x168, x120, x88, x96, x128, x104, x112] until [1781872]
     refine subCall hap hsub (zp := zp) (zl := zl) (zc := zc) (xp := p2) (xl := l2) (xc := c2) (yp := zp) (yl := l1)
-      (yc := zc) (sp' := s.sp.toNat - 144) (g := (s.regs 28).toNat) (M := S'.mem)
+      (yc := zc) (sp' := s.sp.toNat - 144) (g := (s.regs 28).toNat) (M := S'.mem) (bx39 := by omega)
       (ra_of hap (by decide) 135 (by omega)) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)
       (by omega) (by omega) ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?_ ?_
       (subPre_of hpre hrt' ?_ ?_ ?_ (by omega) (by rw [hv1', hv2']; omega) hlc2 (by omega) hc2 hzc hW2 (Or.inr hzp2)
@@ -163,7 +163,7 @@ theorem s3c (impl : List Segment) (hap : ImplApart Extracted.program impl) {R : 
     have hll := mt (SubMod2N.cmp_lt_iff S.mem zp l1 p2 l2 hn1 hn2).1 hlt
     janus_run [hR, h63, x152, x160, x168, x120, x88, x96, x128, x104, x112] until [1781872]
     refine subCall hap hsub (zp := zp) (zl := zl) (zc := zc) (xp := zp) (xl := l1) (xc := zc) (yp := p2) (yl := l2)
-      (yc := c2) (sp' := s.sp.toNat - 144) (g := (s.regs 28).toNat) (M := S'.mem)
+      (yc := c2) (sp' := s.sp.toNat - 144) (g := (s.regs 28).toNat) (M := S'.mem) (bx39 := by omega)
       (ra_of hap (by decide) 147 (by omega)) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)
       (by omega) (by omega) ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
       (subPre_of hpre hrt' ?_ ?_ ?_ (by omega) (by rw [hv1', hv2']; omega) (by omega) hlc2 hzc hc2 hW1 (Or.inl rfl)
@@ -179,7 +179,8 @@ theorem s3c (impl : List Segment) (hap : ImplApart Extracted.program impl) {R : 
         (makeCost_le_w (by simp only [W]; omega)) hinv3 hlive3
       obtain ⟨u1, u2, -⟩ := hfw3
       janus_run [u1, u2]
-      refine ⟨⟨?_, ?_⟩, post_of hrt3 (by omega) ?_ ?_ ?_ ?_ hnorm hlc hc40 hlive3 (Or.inl ⟨rfl, rfl⟩)⟩
+      refine ⟨⟨?_, ?_⟩, post_of hrt3 (by omega) ?_ ?_ ?_ ?_ hnorm hlc hc40 hlive3 (Or.inl ⟨rfl, rfl⟩)
+        (fun _ => ⟨rfl, rfl⟩)⟩
       · apply BitVec.eq_of_toNat_eq
         rw [BitVec.toNat_add, tN (by omega)]; simp only [BitVec.toNat_ofNat]; omega
       · rw [show s.sp.toNat - 144 - 8 = s.sp.toNat - 152 by omega, hfw.2.1, Expmc.bv_ofNat_toNat]

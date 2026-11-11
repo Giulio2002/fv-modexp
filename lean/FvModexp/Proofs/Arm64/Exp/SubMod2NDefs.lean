@@ -74,6 +74,6 @@ reuses `z` -/
       R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem) ∧ NatLive s'.mem R L' p' c' ∧
       ((p' = zp ∧ c' = zc) ∨ (InRanges p' (8 * c') R.rt ∧ ApartAll p' (8 * c') L)) ∧
       MemFrame s.mem s'.mem (R.rt ++ winA s K A ++ [(zp, zp + 8 * zc)]) ∧
-      LiveFrame s.mem s'.mem L [(zp, zp + 8 * zc)]
+      LiveFrame s.mem s'.mem L [(zp, zp + 8 * zc)] ∧ (W n + 1 ≤ zc → p' = zp ∧ c' = zc)
 
 end FvModexp.Arm64.SubMod2N

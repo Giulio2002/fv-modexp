@@ -34,10 +34,10 @@ theorem mkz (tys : Tys) (hty : TysOK tys) (ok : Nat → List Nat → Prop) :
     MakesliceZeroLive P mkA 4096 (toyR tys ok) := by
   intro L b
   refine Summary.mono (mk tys hty ok L b) (fun s h => ?_) (fun s s' h hp => ?_)
-  · obtain ⟨⟨hP, hR, hok, hinv, _, hs1, hs2⟩, hz⟩ := h
+  · obtain ⟨⟨hP, hR, hok, hinv, _, hs1, hs2⟩, hz, -⟩ := h
     have hr : makesliceRound s = 0 := by simp only [makesliceRound, hz, blockSize_zero']
     exact ⟨hP, hR, hok, hinv, by rw [hr]; exact Nat.zero_le _, hs1, hs2⟩
-  · obtain ⟨_, hz⟩ := h
+  · obtain ⟨_, hz, -⟩ := h
     have hr : makesliceRound s = 0 := by simp only [makesliceRound, hz, blockSize_zero']
     obtain ⟨ptr, junk, f, v, m, ex, ep, hs', hMF, hLF, _, _, hinv⟩ := hp
     rw [hr, Nat.sub_zero, Nat.add_zero] at hinv
