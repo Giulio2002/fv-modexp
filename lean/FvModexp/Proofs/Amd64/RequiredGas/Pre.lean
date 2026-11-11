@@ -120,7 +120,7 @@ macro "rg_byte" : tactic => `(tactic| (
   split
   · first
       | (exfalso; omega)
-      | (refine (copy_rd (by assumption) (by omega)).trans ?_
+      | (refine (copy_rd (by with_reducible assumption) (by omega)).trans ?_
          simp (disch := omega) only [Janus.Arm64.Memory.readLE_writeLE_of_disjoint]
          first
            | exact rd_frame' hf (by simp only [outside_cons, outside_nil, and_true]; omega) (by omega)
@@ -131,7 +131,7 @@ macro "rg_byte" : tactic => `(tactic| (
            | exact rd_self (by omega))
   · first
       | (exfalso; omega)
-      | (refine (rd_out (by assumption) (by omega)).trans ?_
+      | (refine (rd_out (by with_reducible assumption) (by omega)).trans ?_
          rcases (show i < 8 ∨ (8 ≤ i ∧ i < 16) ∨ (16 ≤ i ∧ i < 24) ∨ (24 ≤ i ∧ i < 32) by omega) with hq | hq | hq | hq <;>
            simp (disch := omega) only [Janus.Arm64.Memory.readLE_writeLE_of_disjoint, Janus.Arm64.Memory.readLE_writeLE_inside, Nat.zero_div,
              Nat.zero_mod])

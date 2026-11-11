@@ -55,7 +55,7 @@ theorem run (c ptr len cap : BitVec 64) :
     · dsimp only; simp only [setRegF_apply, callRegs64_apply, Nat.reduceEqDiff, ite_true, ite_false, or_false, false_or, or_true, or_self, getD_cons_zero]
     · janus64_simp; split <;> omega
     · dsimp only
-      refine Eq.trans (by assumption) ?_
+      refine Eq.trans (by with_reducible assumption) ?_
       refine fromBE_eq_of (by omega) (fun i hi => ?_)
       set_option maxHeartbeats 2000000 in
       unfold Calldata.pad
