@@ -565,3 +565,7 @@ by a `@[reducible] def` (`stS`, `stA`) and prove all memory facts in a pure `fin
 | Amd64 DivWVW (DF) | 25 s | 2.7 GB |
 Rows re-verified after the heartbeat change (janus-provfix, memcap 16G / timeout 900): arm64 MulAddWWRow PASS 212 s /
 5.3 GB, arm64 DivWRow PASS 115 s / 1.2 GB (amd64 rows re-run after the DF change: see build/asm-rows.tsv).
+amd64 rows after the DF change (s10, janus-provfix): AddVWRow PASS 88 s / 3.0 GB, SubVWRow PASS 74 s / 3.0 GB, DivWVWRow
+PASS 63 s / 2.0 GB, MulAddWWRow PASS 270 s / 3.6 GB, DivWRow PASS 203 s / 5.6 GB.
+arm64 DivBasicRow: FAIL — timeout 900 s while compiling its 25 own modules (first build in cache-asm, host load ~45);
+needs trimming (DivBasicRec 141 s, DivBasicNat 90-156 s, DivBasicStep 56 s are the big ones).
