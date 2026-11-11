@@ -193,9 +193,9 @@ theorem d3zA (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
   have hnbm : (len.toNat - 96 - min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96)) % 18446744073709551616 = (len.toNat - 96 - min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96)) :=
     Nat.mod_eq_of_lt (Nat.lt_of_le_of_lt ((Nat.sub_le _ _).trans (Nat.sub_le _ _)) len.isLt)
   clear hoffc hmN hpw hcw hpo hga hut hLS1 hink hapk hzk
-  have ho0 : OpDone mk s p len L1 0 := OpDone.transport (hop 0 (by omega)) (by janus_simp [opAt]) (by janus_simp [opAt])
+  have ho0 : OpDone R mk s p len L L1 0 := OpDone.transport (hop 0 (by omega)) (by janus_simp [opAt]) (by janus_simp [opAt])
     (by janus_simp [opAt]) (by janus_simp [opAt]) hLFS (fun _ _ h => h)
-  have ho1 : OpDone mk s p len L1 1 := OpDone.transport (hop 1 (by omega)) (by janus_simp [opAt]) (by janus_simp [opAt])
+  have ho1 : OpDone R mk s p len L L1 1 := OpDone.transport (hop 1 (by omega)) (by janus_simp [opAt]) (by janus_simp [opAt])
     (by janus_simp [opAt]) (by janus_simp [opAt]) hLFS (fun _ _ h => h)
   refine hkZ _ (L1 ++ [(ptr.toNat, ptr.toNat + blockSize (hdrV s p len 2) true)]) (b1 - blockSize (hdrV s p len 2) true)
     ptr.toNat (p.toNat + off + mN) ⟨by janus_simp [hsp], by janus_simp [h28], by janus_simp [h29], by janus_simp [h18],

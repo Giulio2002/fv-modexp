@@ -48,10 +48,10 @@ def JoinZ3 (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64
   U.mem.readLE c.toNat 3 = s.mem.readLE c.toNat 3 ∧
   LiveExt R L Lk ∧ b - (3 * makeCost 4 + 2 * dCost + allocCost 1024) ≤ bk ∧
   R.inv bk Lk (s.regs 28).toNat (view R.rt Lk U.mem) ∧ LiveSep Lk (win s stk 40) ∧
-  MemFrame s.mem U.mem (R.rt ++ winA s stk 40) ∧ LiveFrame s.mem U.mem L [] ∧ OpDone U.mem s p len Lk 0 ∧
-  OpDone U.mem s p len Lk 1 ∧ OpsApart U.mem s 2 ∧
+  MemFrame s.mem U.mem (R.rt ++ winA s stk 40) ∧ LiveFrame s.mem U.mem L [] ∧ OpDone R U.mem s p len L Lk 0 ∧
+  OpDone R U.mem s p len L Lk 1 ∧ OpsApart U.mem s 2 ∧
   ∃ L0 : List (Nat × Nat), Lk = L0 ++ [(B, B + blockSize (hdrV s p len 2) true)] ∧ LiveExt R L L0 ∧
-    LiveSep L0 [(B, B + blockSize (hdrV s p len 2) true)] ∧ OpDone U.mem s p len L0 0 ∧ OpDone U.mem s p len L0 1
+    LiveSep L0 [(B, B + blockSize (hdrV s p len 2) true)] ∧ OpDone R U.mem s p len L L0 0 ∧ OpDone R U.mem s p len L L0 1
 
 end FvModexp.Arm64.Run
 

@@ -44,7 +44,7 @@ def JoinZ2 (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64
   U.mem.readLE c.toNat 3 = s.mem.readLE c.toNat 3 ∧
   LiveExt R L Lk ∧ b - (3 * makeCost 4 + dCost + allocCost 1024) ≤ bk ∧
   R.inv bk Lk (s.regs 28).toNat (view R.rt Lk U.mem) ∧ LiveSep Lk (win s stk 40) ∧
-  MemFrame s.mem U.mem (R.rt ++ winA s stk 40) ∧ LiveFrame s.mem U.mem L [] ∧ OpDone U.mem s p len Lk 0
+  MemFrame s.mem U.mem (R.rt ++ winA s stk 40) ∧ LiveFrame s.mem U.mem L [] ∧ OpDone R U.mem s p len L Lk 0
 
 end FvModexp.Arm64.Run
 

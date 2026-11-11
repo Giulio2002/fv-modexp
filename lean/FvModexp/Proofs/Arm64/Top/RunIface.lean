@@ -237,6 +237,10 @@ def ExpBudget (w yW : Nat) : Nat := (8 * (64 * yW) + 128) * opCost w
 /-- Budget of `x.Bytes()` for `x` of `w` words: one `make([]byte, 8 w)`. -/
 def BytesBudget (w : Nat) : Nat := allocCost (8 * w)
 
+/-- The old array of the `*Int` at `z` as a written range: none when its capacity is `0` (its pointer is arbitrary). -/
+@[reducible] def arrW (m : Memory) (z : Nat) : List (Nat × Nat) :=
+  if 0 < m.readLE (z + 24) 8 then [(m.readLE (z + 8) 8, m.readLE (z + 8) 8 + 8 * m.readLE (z + 24) 8)] else []
+
 /-- What every spec returns about the receiver `z` (written: its header and a new or reused array) and the runtime:
 the array of the result is the old one (same pointer and capacity) or a fresh runtime object apart from `L`. The
 window is `winA`: the caller's saved frame pointer / link register slots `[SP-8, SP+8)` are not written (arm64 ABI). -/
@@ -247,10 +251,8 @@ def IntPost (R : RtInv) (b B : Nat) (L : List (Nat × Nat)) (stk above : Nat) (z
       (s'.mem.readLE (z + 8) 8 = s.mem.readLE (z + 8) 8 ∧ s'.mem.readLE (z + 24) 8 = s.mem.readLE (z + 24) 8) ∨
       (InRanges (s'.mem.readLE (z + 8) 8) (8 * s'.mem.readLE (z + 24) 8) R.rt ∧
         ApartAll (s'.mem.readLE (z + 8) 8) (8 * s'.mem.readLE (z + 24) 8) L)) ∧
-    MemFrame s.mem s'.mem (R.rt ++ winA s stk above ++ [(z, z + 32),
-      (s.mem.readLE (z + 8) 8, s.mem.readLE (z + 8) 8 + 8 * s.mem.readLE (z + 24) 8)]) ∧
-    LiveFrame s.mem s'.mem L [(z, z + 32),
-      (s.mem.readLE (z + 8) 8, s.mem.readLE (z + 8) 8 + 8 * s.mem.readLE (z + 24) 8)]
+    MemFrame s.mem s'.mem (R.rt ++ winA s stk above ++ (z, z + 32) :: arrW s.mem z) ∧
+    LiveFrame s.mem s'.mem L ((z, z + 32) :: arrW s.mem z)
 
 /-- **`z.Mod(z, y)`** as Run calls it (`int.go:325`; `X0 = z`, `X1 = x = z`, `X2 = y`): returns `z` with `z = x mod y`. -/
 def ModSpec (impl : List Segment) (R : RtInv) (stk above : Nat) : Prop :=

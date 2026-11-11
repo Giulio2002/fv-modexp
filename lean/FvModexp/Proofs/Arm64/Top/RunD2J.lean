@@ -40,7 +40,7 @@ def JoinD2 (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64
   U.mem.readLE c.toNat 3 = s.mem.readLE c.toNat 3 ∧
   LiveExt R L Lk ∧ b - (3 * makeCost 4 + dCost + allocCost 1024) ≤ bk ∧
   R.inv bk Lk (s.regs 28).toNat (view R.rt Lk U.mem) ∧ LiveSep Lk (win s stk 40) ∧
-  MemFrame s.mem U.mem (R.rt ++ winA s stk 40) ∧ LiveFrame s.mem U.mem L [] ∧ OpDone U.mem s p len Lk 0
+  MemFrame s.mem U.mem (R.rt ++ winA s stk 40) ∧ LiveFrame s.mem U.mem L [] ∧ OpDone R U.mem s p len L Lk 0
 
 end FvModexp.Arm64.Run
 
@@ -144,7 +144,7 @@ theorem d2join (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     · exact OpDone.transport hop0 (by janus_simp [opAt]) (by janus_simp [opAt]) (by janus_simp [opAt])
         (by janus_simp [opAt]) (hLFS.trans (LiveFrame.of_win (by simp only [win, stk]; janus_frame)
           (hext2.liveSep hLsL1 hwrt)) (fun _ _ h => hext2.inRanges_old h)) (fun _ _ h => hext2.inRanges_old h)
-    refine opDone_of (m := s'.mem) ?rd (hacc := fun a n w => by
+    refine opDone_of (m := s'.mem) (hLc := hext) ?rd (hacc := fun a n w => by
         simp only [Memory.accessible_writeLE, hMF2.accessible, hMF.accessible])
       (by janus_simp [opAt]) (by janus_simp [hp2, opAt]) (by janus_simp [hn2, opAt]) (by janus_simp [hc2, opAt]) ?v hnorm2
       (by simp only [SetBytes.nW, BitVec.toNat_ofNat] at hnw2; omega) hnc2 ?fr hlive2 (by rw [hstk]; exact hout)
@@ -155,9 +155,9 @@ theorem d2join (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
         Memory.readLE_writeLE_of_disjoint _ _ (by omega), Memory.readLE_writeLE_of_disjoint _ _ (by omega)]
     case fr =>
       intro hc
-      rcases hor2 with ⟨-, h⟩ | ⟨h, -⟩
+      rcases hor2 with ⟨-, h⟩ | ⟨h, h'⟩
       · simp at h; omega
-      · exact h
+      · exact ⟨h, h'⟩
     case v =>
       rw [hv2]
       simp only [opV, opStart, opLen, if_neg (show (1 : Nat) ≠ 0 by decide), if_pos]
