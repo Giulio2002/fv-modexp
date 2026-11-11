@@ -31,7 +31,7 @@ theorem subCall {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.pro
     {M : Memory} {S : State} {ret : W64} {Q : State → Prop} {ra : Nat}
     (hra : RetAddr ((Extracted.program.onlySegments NatSub.names).link impl) ra)
     (bz : zp < 2 ^ 64) (bzc : zc < 2 ^ 64) (bx : xp < 2 ^ 64) (bxl : xl < 2 ^ 64) (by' : yp < 2 ^ 64)
-    (byl : yl < 2 ^ 64) (bsp : sp' + 8 < 2 ^ 64)
+    (byl : yl < 2 ^ 64) (bsp : sp' + 8 < 2 ^ 64) (bx39 : xl < 2 ^ 39)
     (hpc : S.rip = BitVec.ofNat 64 6183136) (hrd : S.mem.readLE (S.regs 4).toNat 8 = ra)
     (h0 : S.regs 0 = BitVec.ofNat 64 zp) (h3 : S.regs 3 = BitVec.ofNat 64 zl) (h1 : S.regs 1 = BitVec.ofNat 64 zc)
     (h7 : S.regs 7 = BitVec.ofNat 64 xp) (h6 : S.regs 6 = BitVec.ofNat 64 xl) (h8 : S.regs 8 = BitVec.ofNat 64 xc)
@@ -67,7 +67,7 @@ theorem subCall {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.pro
     refine K s' p' n' c' L' b' (by rw [hr, retAddrOf_eq, hrd]) ?_ e3 e4 hfs hdf' hrg
       (by rw [← q0, Expmc.bv_ofNat_toNat]) (by rw [← q1, Expmc.bv_ofNat_toNat]) (by rw [← q2, Expmc.bv_ofNat_toNat])
       hv hn hlc hln hLE hb hinv hlive hor (by simpa only [show 4288 + 80 = 4368 from rfl] using hF) hLF
-      (fun h => ?_) (by rw [← q2]; exact hr2)
+      (fun h => ?_) (by rw [← q2]; exact hr2 bx39)
     · rw [e1]; apply BitVec.eq_of_toNat_eq; simp [BitVec.toNat_add, hsp]
     · obtain ⟨a1, a2⟩ := hr1 h
       exact ⟨by rw [← q0, a1], by rw [← q2, a2]⟩
@@ -79,7 +79,7 @@ theorem addCall {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.pro
     {M : Memory} {S : State} {ret : W64} {Q : State → Prop} {ra : Nat}
     (hra : RetAddr ((Extracted.program.onlySegments NatAdd.names).link impl) ra)
     (bz : zp < 2 ^ 64) (bzc : zc < 2 ^ 64) (bx : xp < 2 ^ 64) (bxl : xl < 2 ^ 64) (by' : yp < 2 ^ 64)
-    (byl : yl < 2 ^ 64) (bsp : sp' + 8 < 2 ^ 64)
+    (byl : yl < 2 ^ 64) (bsp : sp' + 8 < 2 ^ 64) (bx39 : xl < 2 ^ 39) (by39 : yl < 2 ^ 39)
     (hpc : S.rip = BitVec.ofNat 64 6182240) (hrd : S.mem.readLE (S.regs 4).toNat 8 = ra)
     (h0 : S.regs 0 = BitVec.ofNat 64 zp) (h3 : S.regs 3 = BitVec.ofNat 64 zl) (h1 : S.regs 1 = BitVec.ofNat 64 zc)
     (h7 : S.regs 7 = BitVec.ofNat 64 xp) (h6 : S.regs 6 = BitVec.ofNat 64 xl) (h8 : S.regs 8 = BitVec.ofNat 64 xc)
@@ -113,11 +113,11 @@ theorem addCall {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.pro
   · obtain ⟨hfs, p', n', c', q0, q1, q2, hv, hn, hlc, hln, L', b', hLE, hb, hinv, hlive, hor, hF, hLF⟩ := hq
     rw [tN bz, tN bzc, tN bx, tN bxl, tN by', tN byl, hS] at *
     simp only [win, hsp, h14] at hF hinv
-    simp only [NatAdd.mx, NatAdd.need, tN bxl, tN byl] at hln hb hr1
+    simp only [NatAdd.mx, NatAdd.need, tN bxl, tN byl] at hln hb hr1 hr2
     rw [hS] at hrg
     refine K s' p' n' c' L' b' (by rw [hr, retAddrOf_eq, hrd]) ?_ e3 e4 hfs hdf' hrg
       (by rw [← q0, Expmc.bv_ofNat_toNat]) (by rw [← q1, Expmc.bv_ofNat_toNat]) (by rw [← q2, Expmc.bv_ofNat_toNat])
-      hv hn hlc hln hLE hb hinv hlive hor hF hLF (fun h => ?_) (by rw [← q2]; exact hr2)
+      hv hn hlc hln hLE hb hinv hlive hor hF hLF (fun h => ?_) (by rw [← q2]; exact hr2 (by omega))
     · rw [e1]; apply BitVec.eq_of_toNat_eq; simp [BitVec.toNat_add, hsp]
     · obtain ⟨a1, a2⟩ := hr1 h
       exact ⟨by rw [← q0, a1], by rw [← q2, a2]⟩

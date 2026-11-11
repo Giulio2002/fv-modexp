@@ -48,6 +48,7 @@ theorem s3ge (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
     exact Nat.le_of_not_lt fun h => this (Or.inl h)
   refine subCall hap hsub (zp := zp) (zl := zl) (zc := zc) (xp := zp) (xl := l1) (xc := zc) (yp := p2) (yl := l2)
     (yc := c2) (sp' := (s.regs 4).toNat - 136) (g := (s.regs 14).toNat) (ra := 6216593) (M := S2.mem)
+    (bx39 := by omega)
     (ra_of hap (by decide) 0x2f1 (by omega)) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)
     (by omega) hpc hrd h0 h3 h1 h7 h6 h8 h9 h10 h11 hx15 hdf rfl hsp (by rw [h14])
     (subPre_of hpre hrt rfl hsp h14 hfs (by omega) (by rw [hv1, hv2]; omega) (by omega) hlc2 hzc hc2 hW1 (Or.inl rfl)
@@ -70,7 +71,8 @@ theorem s3ge (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
   have hstk : s''.mem.accessible ((s.regs 4).toNat - 4576) (4576 + 88) true = true := by
     rw [hrt3.2.1.accessible]; exact hw
   janus64_run [hsp'', c8, c128, c0, u0, ubp, hra]
-  refine ⟨?_, post_of hrt3 (by omega) ?_ ?_ ?_ ?_ ?_ hvv hnorm hlc hc40 hlive3 (Or.inl ⟨rfl, rfl⟩)⟩
+  refine ⟨?_, post_of hrt3 (by omega) ?_ ?_ ?_ ?_ ?_ hvv hnorm hlc hc40 hlive3 (Or.inl ⟨rfl, rfl⟩)
+    (fun _ => ⟨rfl, rfl⟩)⟩
   all_goals first
     | (janus64_simp; done)
     | exact hfs3

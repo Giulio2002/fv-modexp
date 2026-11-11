@@ -71,6 +71,6 @@ theorem ent_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {op zp zl zc yp yl 
       R.inv b' L' (s.regs 14).toNat (view R.rt L' s'.mem) ∧ NatLive s'.mem R L' p' c' ∧
       ((p' = zp ∧ c' = zc) ∨ (InRanges p' (8 * c') R.rt ∧ ApartAll p' (8 * c') L)) ∧
       MemFrame s.mem s'.mem (R.rt ++ win s K A ++ [(zp, zp + 8 * zc)]) ∧
-      LiveFrame s.mem s'.mem L [(zp, zp + 8 * zc)]
+      LiveFrame s.mem s'.mem L [(zp, zp + 8 * zc)] ∧ (W n + 1 ≤ zc → p' = zp ∧ c' = zc)
 
 end FvModexp.Amd64.SubMod2N
