@@ -60,7 +60,7 @@ theorem setup : CallSetup ((Extracted.program.link impl).withExit RET) (segAddr 
 theorem bump : mem0.readLE BUMP 8 = HEAP := by decide +kernel
 
 theorem pre : (2 : BitVec 64) = 2 ∧ DivWVW.Pre R 0x1000 [] (BitVec.ofNat 64 OA) 2 0 (BitVec.ofNat 64 OB) 7 s0 := by
-  refine ⟨rfl, ⟨?_, ?_, by decide, dataLoaded _ _, ?_, ?_, ?_, fun r hr => by simp at hr, roOut, ⟨?_, ?_, ?_⟩⟩,
+  refine ⟨rfl, ⟨?_, ?_, by decide, ?_, ?_, ?_, fun r hr => by simp at hr, ?_, ?_, ?_⟩,
     by decide, by decide, fun _ => ⟨by decide, Or.inr ?_, ?_, by decide⟩, ?_, ?_, by decide, Or.inr ?_, ?_, Or.inr ?_,
     ?_⟩
   all_goals first

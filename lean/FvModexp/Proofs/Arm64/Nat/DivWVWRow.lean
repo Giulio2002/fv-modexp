@@ -57,7 +57,7 @@ theorem pre : (2 : BitVec 64) = 2 ∧ DivWVW.Pre R 0x1000 [] (BitVec.ofNat 64 OA
       by decide +kernel⟩,
     ⟨by decide +kernel, by decide +kernel, by decide +kernel,
       by rw [show s0.mem = wmem (toyBytes g) stdRegs from rfl, acc_eq]; decide +kernel⟩,
-    dataLoaded _ _, ?_, ?_, ?_, fun r hr => by simp at hr, roOut⟩, by decide, by decide,
+    ?_, ?_, ?_, fun r hr => by simp at hr⟩, by decide, by decide,
     fun _ => ⟨by decide, Or.inr ?_, by rw [show s0.mem = wmem (toyBytes g) stdRegs from rfl, acc_eq]; decide +kernel,
       by decide⟩, ?_,
     by rw [show s0.mem = wmem (toyBytes g) stdRegs from rfl, acc_eq]; decide +kernel, by decide, Or.inr ?_, ?_,
