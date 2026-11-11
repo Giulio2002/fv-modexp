@@ -26,7 +26,7 @@ theorem loop (impl : List Segment) (R : RtInv)
     (hE : Env R b L st.toNat zp.toNat zl.toNat zc.toNat xp.toNat xl.toNat s t L1 b1 w1 c1) (Q : State → Prop)
     (hfin : ∀ S : State, S.pc = BitVec.ofNat 64 head → S.sp = s.sp - 208#64 → S.regs 28 = s.regs 28 →
       S.regs 29 = s.sp - 216#64 → S.regs 18 = s.regs 18 → S.regs 0 = BitVec.ofNat 64 t →
-      S.regs 2 = BitVec.ofNat 64 (2 * xl.toNat) → S.regs 6 = xl →
+      S.regs 2 = BitVec.ofNat 64 (2 * xl.toNat) → S.regs 3 = xl → S.regs 6 = xl →
       Inv R L st.toNat zp.toNat zl.toNat zc.toNat xp.toNat xl.toNat xc.toNat s t L1 b1 w1 c1 xl.toNat S.mem →
       ReachesRet (LibBasicSqr.program.link impl) (s.regs 30) S Q) :
     ∀ k (S : State) (i : Nat), i + k = xl.toNat → 1 ≤ i → S.pc = BitVec.ofNat 64 head →
@@ -40,7 +40,7 @@ theorem loop (impl : List Segment) (R : RtInv)
   | zero =>
     intro S i hi h1 hpc hsp h28 h29 h18 r0 r2 r3 r4 r5 r6 r8 hI
     obtain rfl : i = xl.toNat := by omega
-    exact hfin S hpc hsp h28 h29 h18 r0 r2 (by rw [r6]; simp) hI
+    exact hfin S hpc hsp h28 h29 h18 r0 r2 r3 (by rw [r6]; simp) hI
   | succ k ih =>
     intro S i hi h1 hpc hsp h28 h29 h18 r0 r2 r3 r4 r5 r6 r8 hI
     have hI' := hI

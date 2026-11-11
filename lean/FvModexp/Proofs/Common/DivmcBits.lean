@@ -51,3 +51,23 @@ theorem neg_sshr63_and (d y : BitVec 64) (h : 0 < d.toNat) (hd : d.toNat ≤ 2 ^
   exact and_ones64 _ y.isLt
 
 end FvModexp
+
+namespace FvModexp
+
+/-- bit 63 of a value `≥ 2^63` -/
+theorem getLsbD63_true (x : BitVec 64) (h : 2 ^ 63 ≤ x.toNat) : x.getLsbD 63 = true := by
+  rw [BitVec.getLsbD, Nat.testBit_eq_decide_div_mod_eq]
+  have := x.isLt
+  have e : x.toNat / 2 ^ 63 = 1 := by omega
+  simp [e]
+
+/-- `NEG; ASR $63; AND $8` of a positive length (`z[1:]`'s pointer offset): janus's unfolded `ASR` form -/
+theorem and8_or (r : Nat) : ((18446744073709551614 ||| r % 2) &&& 8) = 8 := by
+  have : r % 2 < 2 := Nat.mod_lt _ (by decide)
+  rcases (show r % 2 = 0 ∨ r % 2 = 1 by omega) with h | h <;> rw [h] <;> decide
+
+theorem and8_or' (r : Nat) : ((18446744073709551615 &&& 18446744073709551614 ||| r % 2) &&& 8) = 8 := by
+  have : r % 2 < 2 := Nat.mod_lt _ (by decide)
+  rcases (show r % 2 = 0 ∨ r % 2 = 1 by omega) with h | h <;> rw [h] <;> decide
+
+end FvModexp
