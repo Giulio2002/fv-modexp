@@ -390,3 +390,8 @@ critical path: next trims are Fin1 (89 s, one run) and SbD (116 s).
 | Top/RunC1, RunCP1, RunCP2 | — | new (budget facts as pure lemmas `bs_le`, `bud_pad`) | 24-30 s, 20 s, 24 s, ≤ 2.4 GB |
 Lesson: an `omega` that FAILS in a large context reports "maximum recursion depth" instead of a counterexample — look for a
 missing hypothesis (here `B ≤ b`) before suspecting anything else.
+### asm s6: nat.divW rows (janus-provfix, memcap 16G / timeout 900, cold-ish cache-asm)
+| row | verdict | wall | peak |
+|---|---|---|---|
+| arm64 DivWRow | PASS | 357 s | 5.2 GB |
+| amd64 DivWRow | PASS | 500 s | 4.8 GB |
