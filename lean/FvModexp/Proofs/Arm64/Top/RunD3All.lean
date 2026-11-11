@@ -1,17 +1,17 @@
-import FvModexp.Proofs.Arm64.Top.RunD3L
 import FvModexp.Proofs.Arm64.Top.RunD3P
 import FvModexp.Proofs.Arm64.Top.RunD3ZA
 import FvModexp.Proofs.Arm64.Top.RunD3ZE
 import FvModexp.Proofs.Arm64.Top.RunD3ZN
+import FvModexp.Proofs.Arm64.Top.RunD3LB
 
-/-! # `Run` (arm64): `D1` to `D2`, all paths of the exponent operand (direct slice, stack buffer, `makeslice` buffer
+/-! # `Run` (arm64): `D2` to `D3`, all paths of the modulus operand (direct slice, stack buffer, `makeslice` buffer
 with or without input bytes to copy) -/
 
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
 
 namespace FvModexp.Arm64.Run
 
-theorem d2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+theorem d3 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
     (hokS : ∀ n, n ≤ 128 → R.ok (cA "runtime.makeslice") [SetBytes.wordT, n, makeCap n])
@@ -29,16 +29,17 @@ theorem d2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
       Reaches ((LibRun.program.link impl).withExit ret) S2 Q) :
     Reaches ((LibRun.program.link impl).withExit ret) S Q := by
   by_cases hdir : min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96) + hdrV s p len 2 ≤ len.toNat - 96
-  · exact d2x impl hap R hmk hmv hokS b L c p len cp ret hret s henv hin Q hbudD S L1 b1 hrel hpc hdir hk
+  · exact d3x impl hap R hmk hmv hokS b L c p len cp ret hret s henv hin Q hbudD S L1 b1 hrel hpc hdir hk
   by_cases hsm : hdrV s p len 2 ≤ 32
-  · exact d2p impl hap R hmk hmv hokS b L c p len cp ret hret s henv hin Q hbudD S L1 b1 hrel hpc (by omega) hsm hokM hk
+  · exact d3p impl hap R hmk hmv hokS b L c p len cp ret hret s henv hin Q hbudD S L1 b1 hrel hpc (by omega) hsm hokM hk
+  refine d3zA impl hap R hmk hokS b L c p len cp ret hret s henv hin Q hbudD S L1 b1 hrel hpc (by omega) (by omega)
+    hokB fun U Lk bk B src hj hUpc => ?_
   by_cases hn0 : 0 < len.toNat - 96 - min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96)
-  · exact d2l impl hap R hmk hmv hokS b L c p len cp ret hret s henv hin Q hbudD S L1 b1 hrel hpc (by omega) (by omega)
-      hn0 hokB hokM hk
-  · refine d3zA impl hap R hmk hokS b L c p len cp ret hret s henv hin Q hbudD S L1 b1 hrel hpc (by omega) (by omega)
-      (by omega) hokB fun U Lk bk B src hj hUpc => ?_
-    by_cases heq : B = src
-    · exact d3zE impl hap R hmk hokS b L c p len cp ret hret s henv hin Q hbudD hk U Lk bk B src hj hUpc heq
-    · exact d3zN impl hap R hmk hmv hokS b L c p len cp ret hret s henv hin Q hbudD hokM hk U Lk bk B src hj hUpc heq
+  · exact d3lB impl hap R hmk hmv hokS b L c p len cp ret hret s henv hin Q hbudD hokM hk U Lk bk B src _ hj hUpc hn0
+  have hz : len.toNat - 96 - min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96) = 0 := by omega
+  rw [hz] at hj
+  by_cases heq : B = src
+  · exact d3zE impl hap R hmk hokS b L c p len cp ret hret s henv hin Q hbudD hk U Lk bk B src hj hUpc heq
+  · exact d3zN impl hap R hmk hmv hokS b L c p len cp ret hret s henv hin Q hbudD hokM hk U Lk bk B src hj hUpc heq
 
 end FvModexp.Arm64.Run

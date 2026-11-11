@@ -38,7 +38,7 @@ theorem d3p (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
       min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96) := by split <;> omega
   have hS1 : (if len.toNat - 96 < hdrV s p len 1 + hdrV s p len 0 then BitVec.ofNat 64 (len.toNat - 96)
       else BitVec.ofNat 64 (hdrV s p len 1 + hdrV s p len 0)) = BitVec.ofNat 64 (min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96)) := by
-    split <;> (congr 1; omega)
+    rw [← hS1n, apply_ite (BitVec.ofNat 64)]
   have hadd : BitVec.ofNat 64 (hdrV s p len 2) + BitVec.ofNat 64 (min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96)) =
       BitVec.ofNat 64 (min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96) + hdrV s p len 2) := bv_add_of_lt _ _ (by omega)
   have hmod : (hdrV s p len 2 + min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96)) % 18446744073709551616 = min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96) + hdrV s p len 2 := by

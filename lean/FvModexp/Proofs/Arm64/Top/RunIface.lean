@@ -191,18 +191,21 @@ def Globals (R : RtInv) (m : Memory) (w : List (Nat × Nat) := []) : Prop :=
   m.accessible gA 32 false = true ∧ Outside gA 32 R.rt ∧ Outside gA 32 w
 
 /-- The callee frame shared by the three specs: the `*Int` objects `xs` (headers on the caller's frame or the heap) are
-outside the callee's window and apart from the `stackguard0` word, `Globals`, `Serves`, the invariant, the budget `B`. -/
+outside the callee's window and apart from the `stackguard0` word, `Globals`, `Serves`, the invariant, the budget `B`.
+Facts about an `abs` array are stated only when its capacity is positive (an empty array is never accessed; its
+pointer is whatever `make(0)` / a nil `nat` left there). -/
 def IntPre (R : RtInv) (b B : Nat) (L : List (Nat × Nat)) (stk above : Nat) (xs : List Nat) (s : State) : Prop :=
   CallEnv R L s stk above ∧ Serves R ∧ Globals R s.mem (win s stk above) ∧ B ≤ b ∧
     R.inv b L (s.regs 28).toNat (view R.rt L s.mem) ∧
     (∀ a ∈ xs, IntOK s.mem R L a ∧ Outside a 32 (win s stk above) ∧
-      Outside (s.mem.readLE (a + 8) 8) (8 * s.mem.readLE (a + 24) 8) (win s stk above) ∧
+      (0 < s.mem.readLE (a + 24) 8 → Outside (s.mem.readLE (a + 8) 8) (8 * s.mem.readLE (a + 24) 8) (win s stk above)) ∧
       Apart a 32 ((s.regs 28).toNat + 16) 8 ∧
-      Apart (s.mem.readLE (a + 8) 8) (8 * s.mem.readLE (a + 24) 8) ((s.regs 28).toNat + 16) 8) ∧
+      (0 < s.mem.readLE (a + 24) 8 → Apart (s.mem.readLE (a + 8) 8) (8 * s.mem.readLE (a + 24) 8) ((s.regs 28).toNat + 16) 8)) ∧
     (xs.Pairwise fun a a' => Apart a 32 a' 32 ∧
-      Apart a 32 (s.mem.readLE (a' + 8) 8) (8 * s.mem.readLE (a' + 24) 8) ∧
-      Apart a' 32 (s.mem.readLE (a + 8) 8) (8 * s.mem.readLE (a + 24) 8) ∧
-      Apart (s.mem.readLE (a + 8) 8) (8 * s.mem.readLE (a + 24) 8) (s.mem.readLE (a' + 8) 8) (8 * s.mem.readLE (a' + 24) 8))
+      (0 < s.mem.readLE (a' + 24) 8 → Apart a 32 (s.mem.readLE (a' + 8) 8) (8 * s.mem.readLE (a' + 24) 8)) ∧
+      (0 < s.mem.readLE (a + 24) 8 → Apart a' 32 (s.mem.readLE (a + 8) 8) (8 * s.mem.readLE (a + 24) 8)) ∧
+      (0 < s.mem.readLE (a + 24) 8 → 0 < s.mem.readLE (a' + 24) 8 →
+        Apart (s.mem.readLE (a + 8) 8) (8 * s.mem.readLE (a + 24) 8) (s.mem.readLE (a' + 8) 8) (8 * s.mem.readLE (a' + 24) 8)))
 
 /-- Operand size bound of the three specs, in words: EIP-7823 caps every Run operand at 1024 bytes = 128 words (Run's
 length check establishes it before any call). Without it the specs are unprovable under the bounded `Serves R` and a
@@ -235,7 +238,8 @@ def ExpBudget (w yW : Nat) : Nat := (8 * (64 * yW) + 128) * opCost w
 def BytesBudget (w : Nat) : Nat := allocCost (8 * w)
 
 /-- What every spec returns about the receiver `z` (written: its header and a new or reused array) and the runtime:
-the array of the result is the old one (same pointer and capacity) or a fresh runtime object apart from `L`. -/
+the array of the result is the old one (same pointer and capacity) or a fresh runtime object apart from `L`. The
+window is `winA`: the caller's saved frame pointer / link register slots `[SP-8, SP+8)` are not written (arm64 ABI). -/
 def IntPost (R : RtInv) (b B : Nat) (L : List (Nat × Nat)) (stk above : Nat) (z : Nat) (v : Nat) (s s' : State) : Prop :=
   IntV s'.mem z = v ∧ ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b - B ≤ b' ∧
     R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem) ∧ IntOK s'.mem R L' z ∧
@@ -243,7 +247,7 @@ def IntPost (R : RtInv) (b B : Nat) (L : List (Nat × Nat)) (stk above : Nat) (z
       (s'.mem.readLE (z + 8) 8 = s.mem.readLE (z + 8) 8 ∧ s'.mem.readLE (z + 24) 8 = s.mem.readLE (z + 24) 8) ∨
       (InRanges (s'.mem.readLE (z + 8) 8) (8 * s'.mem.readLE (z + 24) 8) R.rt ∧
         ApartAll (s'.mem.readLE (z + 8) 8) (8 * s'.mem.readLE (z + 24) 8) L)) ∧
-    MemFrame s.mem s'.mem (R.rt ++ win s stk above ++ [(z, z + 32),
+    MemFrame s.mem s'.mem (R.rt ++ winA s stk above ++ [(z, z + 32),
       (s.mem.readLE (z + 8) 8, s.mem.readLE (z + 8) 8 + 8 * s.mem.readLE (z + 24) 8)]) ∧
     LiveFrame s.mem s'.mem L [(z, z + 32),
       (s.mem.readLE (z + 8) 8, s.mem.readLE (z + 8) 8 + 8 * s.mem.readLE (z + 24) 8)]
@@ -283,6 +287,6 @@ def BytesSpec (impl : List Segment) (R : RtInv) (stk above : Nat) : Prop :=
         ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b - (BytesBudget (lenW s.mem x.toNat)) ≤ b' ∧
           R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem) ∧ (0 < n → InRanges p n L' ∧ InRanges p n R.rt ∧ ApartAll p n L ∧
             s'.mem.accessible p n true = true ∧ p + n ≤ 2 ^ 48) ∧
-          MemFrame s.mem s'.mem (R.rt ++ win s stk above) ∧ LiveFrame s.mem s'.mem L [])
+          MemFrame s.mem s'.mem (R.rt ++ winA s stk above) ∧ LiveFrame s.mem s'.mem L [])
 
 end FvModexp.Arm64.RunIface

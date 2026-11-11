@@ -21,7 +21,7 @@ theorem d3zN (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
       (S2.regs 0).toNat = S2.mem.readLE (s.sp.toNat - 192) 8 → (S2.regs 1).toNat = S2.mem.readLE (s.sp.toNat - 184) 8 →
       S2.pc = BitVec.ofNat 64 pcD3 →
       Reaches ((LibRun.program.link impl).withExit ret) S2 Q)
-    (U : State) (Lk : List (Nat × Nat)) (bk B src : Nat) (hj : JoinZ3 R b L c p len cp s ret Lk bk B src U)
+    (U : State) (Lk : List (Nat × Nat)) (bk B src : Nat) (hj : JoinZ3 R b L c p len cp s ret Lk bk B src 0 U)
     (hpc : U.pc = BitVec.ofNat 64 pcZ3) (hne : B ≠ src) :
     Reaches ((LibRun.program.link impl).withExit ret) U Q := by
   have henv0 := henv
@@ -29,8 +29,8 @@ theorem d3zN (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
   obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, hd, hout, hga, hgr, hLs, hro⟩ := henv
   obtain ⟨hcacc, hc48, hcheld, hcw, hp, hlcp, hcp48, hpacc, hheld, hpw⟩ := hin
   obtain ⟨hsp, h28, h29, h18, hm1, hm2, hm3, hm4, hm5, hm6, hs1, hs2, hs3, hs4, hs5, hs6, hs7, hs8, hs9, hz1, hz2, hz3,
-    hl0, hl1, hl2, hnz, hlg, hr0, hy1, hy2, hsrc1, hsrc2, hB48, hBacc, hBH, hBW, hBrt, hBsep, hBv, hdS, hinS, hcS,
-    hext, hbud, hinv, hLsS, hMF, hLF, hop0, hop1, hopA⟩ := hj
+    hl0, hl1, hl2, hnz, hlg, hr0, hy1, hy2, hsrc1, hsrc2, hB48, hBacc, hBH, hBW, hBrt, hBsep, hBv, hpst, -, hdS, hinS, hcS,
+    hext, hbud, hinv, hLsS, hMF, hLF, hop0, hop1, hopA, -⟩ := hj
   have hap1 := hap.1
   have hLs0 := hLsS
   simp only [stk] at hg3 hb' ha hw hout hga hLs hpw hcw hLsS hMF
@@ -121,6 +121,6 @@ theorem d3zN (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     intro j hj
     dsimp only
     rw [← Memory.readLE_one, hLFS.readLE _ _ (hIn.sub (by omega) (by omega)) trivial, Memory.readLE_one]
-    exact hBv j hj
+    rw [hBv j hj, padByte_past (Nat.le_trans hpst (Nat.add_le_add_left (Nat.zero_le j) _))]
 
 end FvModexp.Arm64.Run
