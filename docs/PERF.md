@@ -196,6 +196,19 @@ under `memcap`), wall / max RSS of the `lean` process (≈1.9 GB of it is the Ja
 | Common/AsmShift (lsh + rsh + SHLD/SHRD) | 1.9 s | 2.04 GB | | Amd64/DivWWSum | 7.6 s | 2.21 GB |
 | Arm64/Nat/DivWVW (session 3) | 20.6 s | 2.62 GB | | Amd64/Nat/DivWVW | 18.7 s | 2.67 GB |
 | Common/AsmDivVW | 1.3 s | 2.0 GB | | Arm64/Amd64 Nat/LibDivWVW | ≤ 1.5 s | 2.1 GB |
+| Arm64/Nat/MulAddWWDefs (session 4) | 9.6 s | 2.43 GB | | Amd64/Nat/MulAddWWDefs | 5.9 s | 2.43 GB |
+| Arm64/Nat/MulAddWWNorm | 9.8 s | 2.42 GB | | Amd64/Nat/MulAddWWNorm | 24.7 s | 2.45 GB |
+| Arm64/Nat/MulAddWWCall (tail) | 27.3 s | 2.41 GB | | Amd64/Nat/MulAddWWCall | 30.0 s | 2.44 GB |
+| Arm64/Nat/MulAddWWVww (call) | 29.4 s | 2.61 GB | | Amd64/Nat/MulAddWWVww | 23.0 s | 2.66 GB |
+| Arm64/Nat/MulAddWWMid | 6.0 s | 2.18 GB | | Amd64/Nat/MulAddWWMid | 4.6 s | 2.26 GB |
+| Arm64/Nat/MulAddWWReuse | 9.8 s | 2.41 GB | | Amd64/Nat/MulAddWWReuse | 9.8 s | 2.43 GB |
+| Arm64/Nat/MulAddWWAlloc | 33.4 s | 2.53 GB | | Amd64/Nat/MulAddWWAlloc | 39.0 s | 2.62 GB |
+| Arm64/Nat/MulAddWWSet (3 setWord paths) | 26.9 s | 2.55 GB | | Amd64/Nat/MulAddWWSet | 41.3 s | 2.58 GB |
+| Arm64/Nat/MulAddWW (`full`/`ens`) | 11.6 s | 2.45 GB | | Amd64/Nat/MulAddWW | 13.2 s | 2.46 GB |
+
+nat.mulAddWW (session 4): split from the start into one module per segment (nat.add's pattern: `Mid` at the
+`z.make(m + 1)` join, `vww` → `tail` → `norm`, entry → join on the reuse / `makeslice` path, the three `setWord` paths);
+no module needed perf work (all ≤ 41 s, ≤ 2.7 GB).
 
 addVW/subVW (2026-11-11): the first version ran the whole function (limb 0 + `copy` + `memmove`) in one declaration and
 blew the 200000-heartbeat budget proving the `memmove` precondition; the loop version blew it in the loop body

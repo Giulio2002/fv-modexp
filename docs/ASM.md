@@ -54,7 +54,8 @@ Machine-code SUMMARY theorems for the leaf routines `(*bigModExp).Run` reaches (
 | `subVW` | amd64 | `FvModexp.Amd64.SubVW.{ens,sum}` | — | proved |
 | `divWVW` (Go; callees `reciprocalWord`, `Div64`, `divWW`) | arm64 | `FvModexp.Arm64.DivWVW.{ens,sum}` (CONVENTIONS §3/§4 shape) | — (statement over the Run extraction) | proved |
 | `divWVW` (Go; `reciprocalWord`, `bits.Div` inlined, callee `divWW`) | amd64 | `FvModexp.Amd64.DivWVW.{ens,sum}` | — | proved |
-| `nat.mulAddWW`, `nat.bytes`/`Int.Bytes` | both | — | — | todo |
+| `nat.mulAddWW` (Go; `setWord`/`make`/`norm` inlined, `makeslice` ×2, callee `mulAddVWW.abi0`) | arm64 | `FvModexp.Arm64.MulAddWW.{ens,sum}` (CONVENTIONS §3/§4 shape) | — | proved |
+| `nat.mulAddWW` | amd64 | `FvModexp.Amd64.MulAddWW.{ens,sum}` | — | proved |
 
 ## Preconditions and the real call sites (go-bigmodexpfix f9e208c548ab, `src/math/big`)
 
@@ -148,6 +149,27 @@ Proof split (one `janus_run` per declaration): `fin`, `body` (head → return fr
 (inlined `DIVQ`), `rel_init`; `ens_lib`, `ens`, `sum`. Callees moved into the restricted program by `codeIn_lib`
 (arm64, multi-segment `RecipA64`) / `codeIn_single`.
 
+### nat.mulAddWW (natmul.go:136; session 4)
+`z.mulAddWW(x, y, r)` with `setWord`, `make`, `norm` inlined. Called by `nat.mul` (natmul.go:26) BEFORE its alias check,
+so `z` may be `x`: the pre allows `zp = xp` or `z`'s array apart from `x`. Arguments `[zp, zl, zc, xp, xl, xc, y, r]`
+(arm64 `X0..X7`, amd64 `AX, BX, CX, DI, SI, R8, R9, R10`), results `(p', n', c')` (`X0..X2` / `AX, BX, CX`).
+* `Pre` (arm64): `CallEnv R L s 4208 72` (frame 112 + the 4096 of the `makeslice` contract; spills up to `SP + 72`) ∧
+  `Outside wordT 16 R.rt` ∧ `xl, zc < 2^40` ∧ `NatLive z` ∧ `Outside z (win s 4208 72)` ∧ `(0 < zc → Apart z (g+16) 8 ∧
+  (zp = xp ∨ Apart z x))` ∧ x readable / `≤ 2^48` / `Held` / outside the window ∧ `R.inv b L g view` ∧
+  `(zc < need → R.ok makeslice [wordT, need, makeCap need] ∧ makeCost need ≤ b)` with
+  `need = if xl = 0 ∨ y = 0 then (if r = 0 then 0 else 1) else xl + 1`. amd64: the same with `win s 4208 72` (the CALL's
+  return slot at `RSP - 112` is in the window), `g = R14`, `CallEnv` incl. `TlsOK`, and `z` also apart from `[fs-8, fs)`.
+* `Post` (amd64 first `s'.fsBase = s.fsBase ∧`): `natVal s'.mem p' n' = natVal s.mem xp xl · y + r` (PRE memory), `NatNorm`,
+  `n' ≤ c'`, `n' ≤ xl + 1`, `∃ L' b'`, `LiveExt R L L'`, `b - makeCost need ≤ b'`, `R.inv b' L'`, `NatLive s'.mem R L' p' c'`,
+  `(p' = zp ∧ c' = zc) ∨ (InRanges p' (8c') R.rt ∧ ApartAll p' (8c') L)`, `MemFrame (R.rt ++ winA s 4208 72 ++ [z])`
+  (amd64 `win`), `LiveFrame L [z]`. Only premise: the live `makeslice` contract.
+* Proof split (one module per segment, nat.add's pattern): `MulAddWWDefs` (statement, `mulAddVWW.abi0` moved in by
+  `codeIn_vww` + `Summary0.live` → `vww_live` with a reducible `VQ`, `Mid` at the `z.make(m + 1)` join, `Mid.frame0`,
+  `Mid.post`), `Norm` (the `norm` loop), `Call` (`tail`: after the call → `z[m] = c` → norm), `Vww` (join → the call; the
+  ABI0 post's memory is re-read in `tail`), `Mid` (`mid_of_reuse`, `mid_of_alloc`), `Reuse`, `Alloc` (entry → join),
+  `Set` (`SetRel` at the `setWord` block; `setZero`, `setReuse`, `setAlloc` = `make(nat, 1)`), `MulAddWW` (`toSet`,
+  `full`, `ens`, `sum`).
+
 ## Next
-`nat.mulAddWW`; standalone rows for
-addVW/subVW need a Witness runtime serving `memmove` (Janus stub runtimes).
+Standalone rows for addVW/subVW/divWVW/mulAddWW: arm64 with top's shared witness stubs (`Arm64/Witness/Stubs.lean`);
+amd64 stubs pending (needs listed in NOTES-top.md).
