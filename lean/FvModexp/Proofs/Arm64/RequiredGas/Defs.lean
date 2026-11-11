@@ -27,7 +27,7 @@ abbrev SbPre (len : Nat) (s : State) : Prop :=
 abbrev SbPost (len : Nat) (s s' : State) : Prop :=
   ∃ (junk : Nat → W64) (f : Flags) (v : Nat → BitVec 128) (m : Memory) (ex : Option (Nat × Nat)) (ep : Nat → Bool),
     s' = retStateX s junk [s.regs 0] f v m ex ep ∧
-    MemFrame s.mem m [((s.regs 0).toNat, (s.regs 0).toNat + 32), (s.sp.toNat - 88, s.sp.toNat), (s.sp.toNat + 8, s.sp.toNat + 72)] ∧
+    MemFrame s.mem m [((s.regs 0).toNat, (s.regs 0).toNat + 32), (s.sp.toNat - 88, s.sp.toNat - 8), (s.sp.toNat + 8, s.sp.toNat + 72)] ∧
     val256 m (s.regs 0).toNat = FvModexp.Aux.fromBE (fun i => s.mem.readLE ((s.regs 1).toNat + i) 1) len ∧
     Extracted.program.DataLoaded m
 

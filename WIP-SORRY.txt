@@ -1,2 +1,3 @@
 # files allowed to contain `sorry` while in progress: path<TAB>owner<TAB>note. MUST be empty at release (RELEASE=1 scripts/no-sorry.sh enforces it).
 lean/FvModexp/Proofs/Arm64/RequiredGas.lean	infra	main theorem in progress (exploration run)
+lean/FvModexp/Proofs/Arm64/RequiredGas/Fin.lean	infra	RequiredGas tail: expHead byte closers in progress

@@ -25,7 +25,8 @@ theorem explore (c ptr len cap : BitVec 64) :
   simp only [Disjoint] at hd1 hd2 hdg
   by_cases c32 : len.toNat < 32 <;> by_cases c64 : len.toNat < 64 <;> by_cases c96 : len.toNat < 96
   all_goals try (exfalso; omega)
-  all_goals janus_run [c32, c64, c96, BitArith.and_asr63, BitArith.and_asr63_lit, Nat.lt_add_right_iff_pos, Nat.mod_eq_of_lt] calls [sb, mv, og_summary]
+  all_goals janus_run [c32, c64, c96, BitArith.and_asr63, BitArith.and_asr63_lit, Nat.lt_add_right_iff_pos, Nat.mod_eq_of_lt] until [Extracted.entry + 0xc0] calls [sb, mv, og_summary]
+  all_goals trace_state
   all_goals sorry
 
 end FvModexp.Arm64.RequiredGas
