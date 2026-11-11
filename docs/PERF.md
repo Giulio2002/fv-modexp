@@ -518,3 +518,24 @@ the one big `c2eX` term; clearing hypotheses before the second janus_run did not
 Bytes call (two declarations, kernel-checked separately) — TODO.
 IntBytes: arm64 ens 27 s, amd64 ens ~130 s (under load), loops/skip ≤ 15 s, < 3 GB.
 Row RunErr (arm64, janus-provfix, cache-top after all Top modules changed): PASS, 696 s wall, peak 6.39 GB.
+
+## nat.subMod2N amd64 (agent infra, sessions 6-7), 2026-11-11
+Dev compile (plain `lean`, LEAN_NUM_THREADS=4, memcap 8G, J=2, host load 40-65), `Proofs/Amd64/Exp/SubMod2N*.lean`:
+| module | wall | peak RSS | content |
+|---|---|---|---|
+| SubMod2NDefs / Seg / Call / Seg2 | 5 / 9 / 28 / 2 s | ≤ 3.1 GB | statement, joins J1-J5, call helpers |
+| SubMod2NS1J | 35 s | 2.9 GB | `j1_stack`, `s1t` (after trunc(x)) |
+| SubMod2NS1Z / S1N / S1T | 47 / 113 / 165 s | 2.7 GB | entry → J1: len x = 0 / bitLen ≤ n / trunc (was ONE module S1: 230 s) |
+| SubMod2NS2J | 76 s | 2.9 GB | `j2_skip`, `s2t` |
+| SubMod2NS2Z / S2N / S2T | 29 / 90 / 156 s | 3.8 GB | J1 → J2 per path (was ONE module S2: 229 s) |
+| SubMod2NS3L / S3G | 9 / 22 s | 3.0 GB | small-context `nat.sub` call lemmas (abstract state at the callee entry) |
+| SubMod2NS3 | 65 s | 3.7 GB | J2 → cmp → both runs to `nat.sub` |
+| SubMod2NS4A / S4B | 30 / 26 s | 2.9 GB | append / complement loops |
+| SubMod2NS4C | 53 s | 3.3 GB | trunc(z) + natOne + add + RET |
+| SubMod2N | 3 s | 2.4 GB | composition + ens/sum |
+Lesson: the first S3 (calls inline after the literal-state runs, `fr _ (by janus_frame)` facts) was killed by the 8 GB
+memcap twice; moving each `nat.sub` call into a lemma over an ABSTRACT state at the callee entry (S3L/S3G, 9-22 s) and
+leaving only register/frame equations for the literal state brought S3 to 65 s / 3.7 GB. A `janus64_run` to a callee
+entry after a two-way branch also yields the infeasible branch's goal: close it first (`all_goals first | exact absurd
+hbr (by decide) | skip`) before `refine`. In `first` cascades never put a `sorry` fallback inside a nested alternative
+(`… <;> first | … | sorry`): it pre-empts later alternatives.
