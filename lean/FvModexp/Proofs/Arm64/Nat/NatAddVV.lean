@@ -65,7 +65,7 @@ theorem vv (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
     (h18 : S.regs 18 = s.regs 18) (hm : S.mem = M) :
     ReachesRet (LibNatAdd.program.link impl) (s.regs 30) S fun s' =>
       (s'.sp = s.sp ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧ s'.regs 18 = s.regs 18) ∧
-        PostS 4304 R b L zp zc xp xl yp yl s s' := by
+        PostR 4304 R b L zp zc xp xl yp yl s s' := by
   have hc1 : CodeIn ((Extracted.program.onlySegments [addVVfn]).link impl) (LibNatAdd.program.link impl) := by
     rw [LibNatAdd.eq_only]; exact codeIn_restrict_mono hap (sub_of_all (by decide))
   have hVV' : Summary (LibNatAdd.program.link impl) (segAddr Extracted.program addVVfn) (VVLPre R b' L')

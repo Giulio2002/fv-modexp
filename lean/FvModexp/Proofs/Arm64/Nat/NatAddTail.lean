@@ -30,7 +30,7 @@ theorem tail (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat))
     (h18 : S.regs 18 = s.regs 18) (hm : S.mem = M) :
     ReachesRet (LibNatAdd.program.link impl) (s.regs 30) S fun s' =>
       (s'.sp = s.sp ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧ s'.regs 18 = s.regs 18) ∧
-        PostS 4304 R b L zp zc xp xl yp yl s s' := by
+        PostR 4304 R b L zp zc xp xl yp yl s s' := by
   have hsp0 := h.sp0; have hsp1 := h.sp1; have hcap := h.cap; have hc41 := h.c41; have hp48 := h.p48
   have hxl := h.xl40
   have r1 := h.sxl; have r2 := h.sm1; have hsacc := h.sacc; have hal := h.al; have hpacc := h.pacc

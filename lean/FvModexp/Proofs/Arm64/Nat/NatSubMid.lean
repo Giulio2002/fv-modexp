@@ -52,6 +52,8 @@ structure Mid (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl xc yp y
   -- the result array
   cap : xl.toNat ≤ c
   c41 : c < 2 ^ 41
+  c40 : xl.toNat < 2 ^ 39 → c < 2 ^ 40
+  ru : xl.toNat ≤ zc.toNat → p = zp.toNat ∧ c = zc.toNat
   p8 : p % 8 = 0
   p48 : p + 8 * c ≤ 2 ^ 48
   pacc : M.accessible p (8 * c) true = true
@@ -273,8 +275,9 @@ theorem Mid.post {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl xc y
     (hm : s'.mem = M) (h0 : (s'.regs 0).toNat = p) (h1 : (s'.regs 1).toNat = n') (h2 : (s'.regs 2).toNat = c)
     (hn : n' ≤ xl.toNat)
     (hv : natVal M p n' = natVal s.mem xp.toNat xl.toNat - natVal s.mem yp.toNat yl.toNat) (hnorm : NatNorm M p n') :
-    PostS 4304 R b L zp zc xp xl yp yl s s' := by
+    PostR 4304 R b L zp zc xp xl yp yl s s' := by
   subst hm
+  refine ⟨?_, fun hle => ⟨h0.trans (h.ru hle).1, h2.trans (h.ru hle).2⟩, fun hx => by rw [h2]; exact h.c40 hx⟩
   exact ⟨p, n', c, h0, h1, h2, hv, hnorm, by have := h.cap; omega, hn, L', b', h.ext, h.bud, h.inv,
     fun _ => ⟨h.p8, h.pheld, h.pacc, h.p48⟩, h.ror, h.mf, h.lf⟩
 
@@ -300,7 +303,7 @@ theorem mid_of_reuse {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl 
     gok := hg3, g48 := hg1, al := hal, sp0 := hb', sp1 := ha, wrt := hout, gw := by unfold Apart; omega, grt := hgr,
     lr4 := hl4, lr48 := hl48, xl40 := hx40, yl40 := hy40, lr := r1, fp := r2, sxp := r3, sxl := r4, sxc := r5,
     syl := r6, sacc := by rw [hF.accessible]; exact hw, gacc := by rw [hF.accessible]; exact hg2,
-    grd := hF.readLE _ _ (hFo _ _ (by omega)), cap := hz, c41 := by omega, p8 := hzal, p48 := hz48,
+    grd := hF.readLE _ _ (hFo _ _ (by omega)), cap := hz, c41 := by omega, c40 := fun _ => hz40, ru := fun _ => ⟨rfl, rfl⟩, p8 := hzal, p48 := hz48,
     pacc := by rw [hF.accessible]; exact hzacc, pw := by unfold Apart; omega, pg := hzg, pheld := hzh,
     px := hzx.imp (fun e => by rw [e]) id, py := hzy.imp (fun e => by rw [e]) id,
     xacc := by rw [hF.accessible]; exact hxacc, x48 := hx48, xheld := hxh, xw := by unfold Apart; omega,
@@ -327,7 +330,7 @@ theorem held_apart_fresh {R : RtInv} {L : List (Nat × Nat)} {a n ptr k : Nat} (
 fresh block `[ptr, ptr + round)`; `M0` = the entry memory changed only in the window, `m` the memory after the call. -/
 theorem mid_of_alloc {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl xc yp yl yc : BitVec 64} {s : State}
     {M0 m : Memory} {ptr round c : Nat} (hpre : PreS 4304 R b L zp zc xp xl xc yp yl yc s) (hyx : yl.toNat ≤ xl.toNat)
-    (hl4 : (s.regs 30).toNat % 4 = 0) (hl48 : (s.regs 30).toNat < 2 ^ 48)
+    (hl4 : (s.regs 30).toNat % 4 = 0) (hl48 : (s.regs 30).toNat < 2 ^ 48) (hzlt : zc.toNat < xl.toNat)
     (hF : MemFrame s.mem M0 (winA s 4304 80))
     (r1 : M0.readLE (s.sp.toNat - 160) 8 = (s.regs 30).toNat) (r2 : M0.readLE (s.sp.toNat - 168) 8 = (s.regs 29).toNat)
     (r3 : M0.readLE (s.sp.toNat + 32) 8 = xp.toNat) (r4 : M0.readLE (s.sp.toNat + 40) 8 = xl.toNat)
@@ -378,7 +381,7 @@ theorem mid_of_alloc {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl 
     sacc := by rw [hMF.accessible, hF.accessible]; exact hw,
     gacc := by rw [hMF.accessible, hF.accessible]; exact hg2,
     grd := by rw [hMF.readLE _ _ hgM]; exact hF.readLE _ _ (hFo _ _ (by omega)),
-    cap := by omega, c41 := by omega, p8 := h8, p48 := by omega,
+    cap := by omega, c41 := by omega, c40 := fun _ => by omega, ru := fun h => absurd h (by omega), p8 := h8, p48 := by omega,
     pacc := Memory.accessible_mono _ hacc (Nat.le_refl _) (by omega),
     pw := by unfold Apart; omega, pg := by unfold Apart; omega, pheld := Or.inl hpa,
     px := Or.inr ((held_apart_fresh hxh hAp hIn).mono hsz (Nat.le_refl _)),

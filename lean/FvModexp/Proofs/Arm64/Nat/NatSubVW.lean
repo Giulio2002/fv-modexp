@@ -39,7 +39,7 @@ theorem afterVV (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (h18 : S.regs 18 = s.regs 18) (hm : S.mem = M) :
     ReachesRet (LibNatSub.program.link impl) (s.regs 30) S fun s' =>
       (s'.sp = s.sp ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧ s'.regs 18 = s.regs 18) ∧
-        PostS 4304 R b L zp zc xp xl yp yl s s' := by
+        PostR 4304 R b L zp zc xp xl yp yl s s' := by
   have hc2 : CodeIn ((Extracted.program.onlySegments [SubVW.fn]).link impl) (LibNatSub.program.link impl) := by
     rw [LibNatSub.eq_only]; exact codeIn_restrict_mono hap (sub_of_all (by decide))
   have hVW' := fun b L => Ensures.toSummaryRegs7 (fun zp zl zc xp xl xc y => SubVW.ens impl hap R hmv b L zp zl zc xp xl xc y) (noExit_restrict hap [SubVW.fn]) hc2
