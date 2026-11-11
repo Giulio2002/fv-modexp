@@ -62,17 +62,69 @@ theorem tail (impl : List Segment) (hap : ImplApart Extracted.program impl) (ret
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 set_option linter.janusRenameI false in
-/-- the inline `zz.norm()` loop (nat.go:68-74), then `tail` -/
+/-- one test of the inline `zz.norm()` loop (nat.go:68-74) from `njoin` with `R4 = l`: either the loop exits to `tailPc`
+(`l = 0` or limb `l-1` nonzero) or it goes back to `njoin` with `R4 = l - 1` (limb `l-1` zero). Continuation form. -/
+theorem finIter (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret) (Q : Outcome → Prop)
+    (S : State) (sp g p l c : Nat) (r18 : BitVec 64) (M : Memory)
+    (hpc : S.pc = BitVec.ofNat 64 njoin) (hsp : S.sp = BitVec.ofNat 64 sp)
+    (h3 : S.regs 3 = BitVec.ofNat 64 p) (h4 : S.regs 4 = BitVec.ofNat 64 l) (h5 : S.regs 5 = BitVec.ofNat 64 c)
+    (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (hmem : S.mem = M)
+    (hl : l < 2 ^ 40) (hp48 : p + 8 * l ≤ 2 ^ 48) (hacc : M.accessible p (8 * l) false = true)
+    (KT : ∀ S' : State, S'.pc = BitVec.ofNat 64 tailPc → S'.sp = BitVec.ofNat 64 sp →
+      S'.regs 3 = BitVec.ofNat 64 p → S'.regs 4 = BitVec.ofNat 64 l → S'.regs 5 = BitVec.ofNat 64 c →
+      S'.regs 18 = r18 → S'.regs 28 = BitVec.ofNat 64 g → S'.mem = M →
+      (l = 0 ∨ M.readLE (p + 8 * (l - 1)) 8 ≠ 0) →
+      Reaches ((LibExp.program.link impl).withExit ret) S' Q)
+    (KL : ∀ S' : State, 0 < l → M.readLE (p + 8 * (l - 1)) 8 = 0 →
+      S'.pc = BitVec.ofNat 64 njoin → S'.sp = BitVec.ofNat 64 sp →
+      S'.regs 3 = BitVec.ofNat 64 p → S'.regs 4 = BitVec.ofNat 64 (l - 1) → S'.regs 5 = BitVec.ofNat 64 c →
+      S'.regs 18 = r18 → S'.regs 28 = BitVec.ofNat 64 g → S'.mem = M →
+      Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
+    Reaches ((LibExp.program.link impl).withExit ret) S Q := by
+  janus_run until [njoin, tailPc]
+  · have hl0 : l = 0 := by omega
+    refine KT _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl (Or.inl hl0)
+    all_goals first | rfl | (janus_simp; done) | skip
+  · have hl0 : 0 < l := by omega
+    refine KL _ hl0 hbr ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl
+    all_goals first | rfl | (janus_simp; done) | skip
+    janus_simp; apply BitVec.eq_of_toNat_eq; simp; omega
+  · refine KT _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl (Or.inr hbr)
+    all_goals first | rfl | (janus_simp; done) | skip
+
+/-- the inline `zz.norm()` loop (nat.go:68-74) from the join point, then `tail` -/
 theorem fin (impl : List Segment) (hap : ImplApart Extracted.program impl) (ret : Nat)
     (hret : RetAddr (LibExp.program.link impl) ret)
-    (sp g st n0 p c : Nat) (r18 r29 : BitVec 64) (M : Memory) (hc : c < 2 ^ 40) (hp48 : p + 8 * c ≤ 2 ^ 48)
+    (sp g st n0 p c : Nat) (r18 r29 : BitVec 64) (M : Memory) (hc : c < 2 ^ 40)
     (he : FinEnv sp g st n0 r29 ret M) :
     ∀ (l : Nat) (S : State), S.pc = BitVec.ofNat 64 njoin → S.sp = BitVec.ofNat 64 sp →
       S.regs 3 = BitVec.ofNat 64 p → S.regs 4 = BitVec.ofNat 64 l → S.regs 5 = BitVec.ofNat 64 c →
-      S.regs 18 = r18 → S.regs 28 = BitVec.ofNat 64 g → S.mem = M → l ≤ c →
+      S.regs 18 = r18 → S.regs 28 = BitVec.ofNat 64 g → S.mem = M → l ≤ c → p + 8 * l ≤ 2 ^ 48 →
       M.accessible p (8 * l) false = true →
       Reaches ((LibExp.program.link impl).withExit ret) S
         (IsReturn (FinPost sp g st n0 p (Expmc.normL M p l) c r18 r29 M)) := by
-  sorry -- WIP: the runs hang computing the pc (NOTES-expmc session 3)
+  intro l
+  induction l with
+  | zero =>
+    intro S hpc hsp h3 h4 h5 h18 h28 hmem hlc hp hacc
+    refine finIter impl ret hret _ S sp g p 0 c r18 M hpc hsp h3 h4 h5 h18 h28 hmem (by omega) hp hacc ?_ ?_
+    · intro S' a1 a2 a3 a4 a5 a6 a7 a8 _
+      exact tail impl hap ret hret S' sp g st n0 p 0 c r18 r29 M a1 a2 a3 a4 a5 a6 a7 a8 (by omega) hc he
+    · intro _ h; omega
+  | succ l ih =>
+    intro S hpc hsp h3 h4 h5 h18 h28 hmem hlc hp hacc
+    refine finIter impl ret hret _ S sp g p (l + 1) c r18 M hpc hsp h3 h4 h5 h18 h28 hmem (by omega) hp hacc ?_ ?_
+    · intro S' a1 a2 a3 a4 a5 a6 a7 a8 hnz
+      have hN : Expmc.normL M p (l + 1) = l + 1 := by
+        simp only [Expmc.normL]; rw [if_neg]; simpa using hnz
+      rw [hN]
+      exact tail impl hap ret hret S' sp g st n0 p (l + 1) c r18 r29 M a1 a2 a3 a4 a5 a6 a7 a8 hlc hc he
+    · intro S' _ hz a1 a2 a3 a4 a5 a6 a7 a8
+      have hN : Expmc.normL M p (l + 1) = Expmc.normL M p l := by
+        simp only [Expmc.normL]; rw [if_pos (by simpa using hz)]
+      rw [hN]
+      exact ih S' a1 a2 a3 a4 a5 a6 a7 a8 (by omega) (by omega)
+        (M.accessible_sub hacc (Or.inl rfl) (Nat.le_refl _) (by omega))
+
 
 end FvModexp.Arm64.W4Loop

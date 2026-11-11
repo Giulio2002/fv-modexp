@@ -34,7 +34,7 @@ abbrev step (n Mv k : Nat) (tbl : Nat → Nat) (z d : Nat) : Nat :=
 
 /-- the frame ranges the loop writes (callee windows + spills), without the two buffers -/
 @[reducible] def fw (sp : Nat) : List (Nat × Nat) :=
-  [(sp - 4288, sp + 224), (sp + 232, sp + 432), (sp + 864, sp + 872), (sp + 904, sp + 912)]
+  [(sp - 4288, sp - 8), (sp + 8, sp + 224), (sp + 232, sp + 432), (sp + 864, sp + 872), (sp + 904, sp + 912)]
 
 /-- everything the loop may change since the anchor `M0` -/
 @[reducible] def lw (R : RtInv) (sp zp zc zzp zzc : Nat) : List (Nat × Nat) :=
@@ -144,18 +144,19 @@ theorem Bufs.swap {R : RtInv} {L : List (Nat × Nat)} {g sp n mp yp ylen : Nat} 
 
 theorem FL.write {R : RtInv} {L : List (Nat × Nat)} {sp zp zc zzp zzc : Nat} {M0 M : Memory}
     (h : FL R L sp zp zc zzp zzc M0 M) (hLs : LiveSep L [(sp - 4288, sp + 1040)]) {a k : Nat} (v : Nat)
-    (hw : (sp - 4288 ≤ a ∧ a + k ≤ sp + 224) ∨ (sp + 232 ≤ a ∧ a + k ≤ sp + 432) ∨
+    (hw : (sp - 4288 ≤ a ∧ a + k ≤ sp - 8) ∨ (sp + 8 ≤ a ∧ a + k ≤ sp + 224) ∨ (sp + 232 ≤ a ∧ a + k ≤ sp + 432) ∨
       (sp + 864 ≤ a ∧ a + k ≤ sp + 872) ∨ (sp + 904 ≤ a ∧ a + k ≤ sp + 912)) :
     FL R L sp zp zc zzp zzc M0 (M.writeLE a k v) := by
   refine ⟨h.1.writeLE_inRanges v ?_, h.2.writeLE v (FvModexp.Expmc.outside_of_liveSep hLs (by omega) (by omega))⟩
-  rcases hw with ⟨h1, h2⟩ | ⟨h1, h2⟩ | ⟨h1, h2⟩ | ⟨h1, h2⟩
-  · exact ⟨(sp - 4288, sp + 224), by simp [lw, fw], h1, h2⟩
+  rcases hw with ⟨h1, h2⟩ | ⟨h1, h2⟩ | ⟨h1, h2⟩ | ⟨h1, h2⟩ | ⟨h1, h2⟩
+  · exact ⟨(sp - 4288, sp - 8), by simp [lw, fw], h1, h2⟩
+  · exact ⟨(sp + 8, sp + 224), by simp [lw, fw], h1, h2⟩
   · exact ⟨(sp + 232, sp + 432), by simp [lw, fw], h1, h2⟩
   · exact ⟨(sp + 864, sp + 872), by simp [lw, fw], h1, h2⟩
   · exact ⟨(sp + 904, sp + 912), by simp [lw, fw], h1, h2⟩
 
 theorem FL.call {R : RtInv} {L : List (Nat × Nat)} {sp zp zc zzp zzc : Nat} {M0 M M' : Memory} {rp rc : Nat}
-    (h : FL R L sp zp zc zzp zzc M0 M) (hc : MemFrame M M' (R.rt ++ [(sp - 4288, sp + 120)] ++ [(rp, rp + 8 * rc)]))
+    (h : FL R L sp zp zc zzp zzc M0 M) (hc : MemFrame M M' (R.rt ++ [(sp - 4288, sp - 8), (sp + 8, sp + 120)] ++ [(rp, rp + 8 * rc)]))
     (hl : LiveFrame M M' L [(rp, rp + 8 * rc)]) (hr : (rp = zp ∧ rc = zc) ∨ (rp = zzp ∧ rc = zzc)) :
     FL R L sp zp zc zzp zzc M0 M' := by
   refine ⟨h.1.trans hc (fun a n ho => ⟨ho, ?_⟩),
