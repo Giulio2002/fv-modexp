@@ -480,6 +480,11 @@ theorem byte_copy' (m : Memory) (a : Nat) {a' : Nat} :
   simp only [Janus.Arm64.Memory.readLE_one, Nat.sub_self, Nat.pow_zero, Nat.div_one, BitVec.toNat_ofNat]
   omega
 
+/-- `CK` of a state literal built by `setRegF` over a state with the kept facts in context -/
+macro "ck2_tac" : tactic =>
+  `(tactic| (refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
+    (try simp only [setRegF, Nat.reduceEqDiff, ↓reduceIte]) <;> first | with_reducible rfl | assumption))
+
 theorem g_fwd (s : State) (v10 v12 : W64) {Q : State → Prop} (d src n : Nat)
     (hsrc : n = 0 ∨ s.mem.accessible src n false = true) (hdst : s.mem.accessible d n true = true)
     (hsrc48' : 0 < n → src + n ≤ 2 ^ 48) (hle : d ≤ src)
@@ -739,5 +744,101 @@ theorem g_done (tys : Tys) (hty : TysOK tys) (ok : Nat → List Nat → Prop) (L
     exact hcap
   · show T.mem.writeLE 4194304 8 (v10.toNat * 16 + v12.toNat) = T.mem.writeLE 4194304 8 (p' + 16 * K)
     rw [hv10, hv12, hpn]; congr 1; omega
+
+/-- `ALLOC` to the return: load the bump pointer, the copy (forward or backward), `g_done`. -/
+theorem g_alloc (tys : Tys) (hty : TysOK tys) (ok : Nat → List Nat → Prop) (L : List (Nat × Nat)) (b : Nat)
+    (s U : State) (pre : GPre (toyR tys ok) L b s) (hpc : U.rip = BitVec.ofNat 64 gALLOC) (hP : Pre0 s U)
+    (h10 : (U.regs 10).toNat = roundupsize (8 * nextslicecap (s.regs 3).toNat (s.regs 1).toNat) true) :
+    ReachesRet P (retAddrOf s) U (GPost (toyR tys ok) L b s) := by
+  have pre0 := pre
+  obtain ⟨⟨⟨hcall, htyok, hsz, hpb, h71, h1n3, h13, hn40⟩, hold⟩, hroom, hok, hinv, hcost, hLs, hWs⟩ := pre0
+  obtain ⟨h4, h5, h14, hx, hfs, hdf, hmx, h87, hfw, hm, h0, h3, h1, h7⟩ := hP
+  have hacB := LiveSat.bump_acc hinv
+  have hKr : 8 * growCap8 (s.regs 3).toNat (s.regs 1).toNat = (U.regs 10).toNat := by rw [h10, round_eq]
+  have hinvT : toyInv tys b L (s.regs 14).toNat (view (toyRt tys) L s.mem) := hinv
+  have hcostK : (U.regs 10).toNat ≤ b := by
+    have : growsliceRound64 s = (U.regs 10).toNat := by simp only [growsliceRound64]; exact hKr
+    rw [← this]; exact hcost
+  have hc1 := le_growCap8 (s.regs 3).toNat (s.regs 1).toNat
+  have hdst : s.mem.accessible (s.mem.readLE 4194304 8) (8 * ((s.regs 3).toNat - (s.regs 7).toNat)) true = true :=
+    LiveStub.toy_heap_acc hinvT (by omega)
+  have hpb' : s.mem.readLE 4194304 8 + (U.regs 10).toNat ≤ 2 ^ 48 := LiveStub.toy_heap_bound hinvT hcostK
+  have hsrc : 8 * ((s.regs 3).toNat - (s.regs 7).toNat) = 0 ∨
+      s.mem.accessible (s.regs 0).toNat (8 * ((s.regs 3).toNat - (s.regs 7).toNat)) false = true := by
+    rcases Nat.eq_zero_or_pos ((s.regs 3).toNat - (s.regs 7).toNat) with h | h
+    · left; omega
+    · right; exact (hold h).2
+  have hsrc48 : 0 < 8 * ((s.regs 3).toNat - (s.regs 7).toNat) →
+      (s.regs 0).toNat + 8 * ((s.regs 3).toNat - (s.regs 7).toNat) ≤ 2 ^ 48 := fun h => (hold (by omega)).1
+  have eob : ((s.regs 3 - s.regs 7) <<< 3).toNat = 8 * ((s.regs 3).toNat - (s.regs 7).toNat) := by
+    rw [BitVec.toNat_shiftLeft, BitVec.toNat_sub, Nat.shiftLeft_eq]; omega
+  have hpn : (BitVec.ofNat 64 (s.mem.readLE 4194304 8)).toNat = s.mem.readLE 4194304 8 := by
+    rw [BitVec.toNat_ofNat]; omega
+  have hk : ∀ T, T.rip = BitVec.ofNat 64 gDONE → CK s (U.regs 10) (BitVec.ofNat 64 (s.mem.readLE 4194304 8)) T →
+      MemFrame s.mem T.mem [(s.mem.readLE 4194304 8, s.mem.readLE 4194304 8 + 8 * ((s.regs 3).toNat - (s.regs 7).toNat))] →
+      Mem.Copied s.mem T.mem (s.mem.readLE 4194304 8) (s.regs 0).toNat (8 * ((s.regs 3).toNat - (s.regs 7).toNat)) →
+      ReachesRet P (retAddrOf s) T (GPost (toyR tys ok) L b s) := fun T hpcT hCK hMF hCp =>
+    g_done tys hty ok L b s T (U.regs 10) _ (U.regs 10).toNat _ _ pre hpcT hCK rfl hKr rfl rfl rfl hMF hCp
+  janus64_run until [gFWD, gBWDL]
+  · refine g_bwd s (U.regs 10) _ (s.mem.readLE 4194304 8) (s.regs 0).toNat _ hsrc hsrc48 hdst (by omega) hk _ _
+      (Nat.le_refl _) ?pc ?_ ?_ ?_ ?ck ?fr (fun j _ hj => absurd hj (by omega))
+    case pc => rfl
+    case ck =>
+      refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+      · exact h4
+      · exact h5
+      · exact h14
+      · first | exact hx | rfl
+      · first | exact hfs | rfl
+      · first | exact hdf | rfl
+      · first | exact hmx | rfl
+      · first | exact h87 | rfl
+      · first | exact hfw | rfl
+      · exact h3
+      · rfl
+      · rfl
+      · rfl
+    case fr => first | exact MemFrame.refl _ _ | (rw [hm]; exact MemFrame.refl _ _)
+    · simp only [setRegF, Nat.reduceEqDiff, ↓reduceIte]; rw [BitVec.toNat_add, hpn, eob]; omega
+    · simp only [setRegF, Nat.reduceEqDiff, ↓reduceIte]
+      rw [BitVec.toNat_add, eob]
+      rcases Nat.eq_zero_or_pos ((s.regs 3).toNat - (s.regs 7).toNat) with h | h
+      · rw [h]; simp only [Nat.mul_zero, Nat.add_zero]; exact Nat.mod_eq_of_lt (BitVec.isLt _)
+      · have := hsrc48 (by omega); omega
+    · simp only [setRegF, Nat.reduceEqDiff, ↓reduceIte]; exact eob
+  · refine g_fwd s (U.regs 10) _ (s.mem.readLE 4194304 8) (s.regs 0).toNat _ hsrc hdst hsrc48 (by omega) hk (8 * ((s.regs 3).toNat - (s.regs 7).toNat)) _ 0
+      (by simp) ?pc ?_ ?_ ?_ ?ck ?fr (fun j hj => absurd hj (Nat.not_lt_zero _))
+    case pc => rfl
+    case ck =>
+      refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+      · exact h4
+      · exact h5
+      · exact h14
+      · first | exact hx | rfl
+      · first | exact hfs | rfl
+      · first | exact hdf | rfl
+      · first | exact hmx | rfl
+      · first | exact h87 | rfl
+      · first | exact hfw | rfl
+      · exact h3
+      · rfl
+      · rfl
+      · rfl
+    case fr => first | exact MemFrame.refl _ _ | (rw [hm]; exact MemFrame.refl _ _)
+    · simp only [setRegF, Nat.reduceEqDiff, ↓reduceIte]; rw [hpn]; rfl
+    · simp only [setRegF, Nat.reduceEqDiff, ↓reduceIte]; rfl
+    · simp only [setRegF, Nat.reduceEqDiff, ↓reduceIte]; exact eob
+
+/-- **`GrowsliceLiveContract64` for the general stub at `grA`** (Go's growth rule, any request), any toy runtime. -/
+theorem gr (tys : Tys) (hty : TysOK tys) (ok : Nat → List Nat → Prop) :
+    GrowsliceLiveContract64 P grA 4096 (toyR tys ok) := by
+  intro L b s hpc pre
+  change ReachesRet P (retAddrOf s) s (GPost (toyR tys ok) L b s)
+  have pre0 : GPre (toyR tys ok) L b s := pre
+  obtain ⟨⟨⟨hcall, -, -, -, h71, h1n3, h13, hn40⟩, -⟩, -⟩ := pre
+  have hle := le_nextslicecap (s.regs 3).toNat (s.regs 1).toNat
+  have hle2 := nsc_le (s.regs 3).toNat (s.regs 1).toNat h13
+  exact nsc_entry s hpc h13 hn40 fun T hT hpcT h8 =>
+    chain s T _ hpcT hT h8 (by omega) (by omega) fun U hU hpcU h10 => g_alloc tys hty ok L b s U pre0 hpcU hU h10
 
 end FvModexp.Amd64.WStubs
