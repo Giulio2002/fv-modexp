@@ -508,3 +508,19 @@ Lessons: (1) amd64: after a callee returns, `retAddrOf S` rewritten to a symboli
 `CALL rel32` fault (`badTarget`: janus cannot bound the target) — state pushed return addresses as literals;
 (2) a `first | … | (intro r hr; simp at hr) | …` alternative that SUCCEEDS without closing the goal leaves it unsolved
 at the `refine` — end such alternatives with `; done`.
+### divmc session 7 (2026-11-11; dev compile, host load high), basicSqr amd64 + NatSub/NatAdd ensR
+| module (amd64) | wall / max RSS |
+|---|---|
+| Nat/BasicSqrSmall (entry → basicMul → RET) | ~50 s / 2.4 GB |
+| Nat/BasicSqrStep (pure) | < 60 s / < 3 GB |
+| Nat/BasicSqrBody (body2 + body3) | 93 s / 7.6 GB (before body3 split: 135 s+ / 8.2 GB with the post-call run inline) — to trim |
+| Nat/BasicSqrLoop | 45 s / 2.8 GB |
+| Nat/BasicSqrEnd (post_fin, fin4) | 29 s / 2.8 GB |
+| Nat/BasicSqrVV (fin3) | 54 s / 3.3 GB |
+| Nat/BasicSqrFin (tval, fin2, fin1) | 52 s / 3.1 GB |
+NatSub/NatAdd `ensR` (both ISAs): all modules rebuilt, max NatSubSetE/NatAddSetE/NatSubAlloc ~127 s under load (amd64).
+Lessons: (1) the post-ABI0-call part of a loop body run inline after the call (large context: frame facts of the
+pre-call memory + the callee's post) took > 115 s / 8 GB; a separate lemma from the return state with only the read
+facts it needs (`body3`) is cheap. (2) amd64 return-address literals: compute `fn + off` of the instruction after
+the CALL (objdump) and state it literally (`MemFrame.of_writeLE … 6232136`). (3) `janus_grab N as h` picks a MemFrame by a
+numeral in its ranges; `janus_grab hFF xmm 15 as h` the callee's `xmm 15` equation.
