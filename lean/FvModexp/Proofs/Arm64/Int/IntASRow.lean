@@ -5,7 +5,7 @@ import FvModexp.Proofs.Arm64.Witness.Sites
 /-!
 # Row: `(*Int).Add` / `(*Int).Sub` (arm64) on the Run extraction
 
-`correctness` = `IntAS.ens` moved to `Extracted.program.link impl` (`Ensures.full`), `correctnessSub` the same for `Sub` (separate theorems: literal symbol names, audit round 8 I1);
+`correctness` = `IntAS.ens` moved to `Extracted.program.link impl` (`Ensures.full`), `Sub`: row `IntSubRow` (literal symbol names, audit round 8 I1);
 runtime premises: the live `makeslice`, `memmove` and `gcWriteBarrier2` contracts. `Witness.nonvacuous`: the shared
 witness runtime (`WStubs.impl`), the toy allocator invariant, the Run extraction's read-only data loaded, the
 `runtime.writeBarrier` flag word readable (0: barrier off), and the call `z.Add(x, y)` with `x = 5`, `y = 9` (one limb
@@ -30,18 +30,6 @@ theorem correctness (impl : List Segment) (hap : ImplApart Extracted.program imp
     Ensures (Extracted.program.link impl) (segAddr Extracted.program "github.com/ethereum/go-bigmodexpfix/src/math/big.(*Int).Add") [z, x, y]
       (IntAS.Pre R b L z.toNat x.toNat y.toNat) (IntAS.Post false R b L z.toNat x.toNat y.toNat) :=
   Ensures.full hap (IntAS.ens impl hap R hmk hmv hwb false b L z x y)
-
-/-- **`(*Int).Sub`** (arm64): as `correctness`, with `x - y`. -/
-theorem correctnessSub (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
-    (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice")
-      4096 R)
-    (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
-    (hwb : WbLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2")
-      4096 R 2)
-    (b : Nat) (L : List (Nat × Nat)) (z x y : BitVec 64) :
-    Ensures (Extracted.program.link impl) (segAddr Extracted.program "github.com/ethereum/go-bigmodexpfix/src/math/big.(*Int).Sub") [z, x, y]
-      (IntAS.Pre R b L z.toNat x.toNat y.toNat) (IntAS.Post true R b L z.toNat x.toNat y.toNat) :=
-  Ensures.full hap (IntAS.ens impl hap R hmk hmv hwb true b L z x y)
 
 end FvModexp.Arm64.IntASRow
 
@@ -155,43 +143,5 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
       (by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] (by intro t ht; simp at ht) _) 0x1000 []
       (BitVec.ofNat 64 OA) (BitVec.ofNat 64 (OA + 0x40)) (BitVec.ofNat 64 (OA + 0x80)) RET hret (s0 false) setup (pre false)⟩
 
-
-/-- Every hypothesis of `correctnessSub` and every conjunct of its precondition hold together: the shared witness runtime
-(toy `makeslice`, looping `memmove`, toy write barrier), budget `0x1000`, empty live set, the call `z.Sub(x, y)` with
-`x = 5`, `y = 9`, `z`'s array of capacity 2; one call-site state per runtime contract. -/
-theorem nonvacuousSub : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat))
-    (z x y : BitVec 64) (ret : Nat) (s : State),
-    ImplApart Extracted.program impl ∧
-    MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R ∧
-    MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R ∧
-    WbLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 4096 R 2 ∧
-    RetAddr (Extracted.program.link impl) ret ∧
-    CallSetup ((Extracted.program.link impl).withExit ret)
-      (segAddr Extracted.program "github.com/ethereum/go-bigmodexpfix/src/math/big.(*Int).Sub") [z, x, y] s ∧
-    IntAS.Pre R b L z.toNat x.toNat y.toNat s ∧
-    (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
-      s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.makeslice") ∧
-      mkSite R (Extracted.program.contractAddr "runtime.makeslice") L b s_c) ∧
-    (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
-      s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.memmove") ∧
-      mvSite R (Extracted.program.contractAddr "runtime.memmove") L b s_c) ∧
-    (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
-      s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.gcWriteBarrier2") ∧
-      wbSite R (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 2 L b s_c) ∧
-    Returns ((Extracted.program.link impl).withExit ret) s fun s' =>
-      ABIReturn s s' ∧ IntAS.Post true R b L z.toNat x.toNat y.toNat s s' :=
-  ⟨WStubs.impl, R, 0x1000, [], BitVec.ofNat 64 OA, BitVec.ofNat 64 (OA + 0x40), BitVec.ofNat 64 (OA + 0x80),
-    RET, s0 true, WStubs.hap,
-    by rw [WStubs.addr_mk]; exact WStubs.mk [] (by intro t ht; simp at ht) _,
-    by rw [WStubs.addr_mv]; exact WStubs.mv R,
-    by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] (by intro t ht; simp at ht) _, hret, setupSub, pre true,
-    ⟨[], 0x1000, callS WStubs.mkA Extracted.dataAddr.«type:big.Word#51b931e8» 1 1, by rw [WStubs.addr_mk]; rfl,
-      by rw [WStubs.addr_mk]; exact site_mk _⟩,
-    ⟨[], 0x1000, callS WStubs.mvA OA OB 8, by rw [WStubs.addr_mv]; rfl, by rw [WStubs.addr_mv]; exact site_mv _⟩,
-    ⟨[], 0x1000, callS WStubs.wb2A 0 0 0, by rw [WStubs.addr_wb2]; rfl, by rw [WStubs.addr_wb2]; exact site_wb _ _⟩,
-    correctnessSub WStubs.impl WStubs.hap R (by rw [WStubs.addr_mk]; exact WStubs.mk [] (by intro t ht; simp at ht) _)
-      (by rw [WStubs.addr_mv]; exact WStubs.mv R)
-      (by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] (by intro t ht; simp at ht) _) 0x1000 []
-      (BitVec.ofNat 64 OA) (BitVec.ofNat 64 (OA + 0x40)) (BitVec.ofNat 64 (OA + 0x80)) RET hret (s0 true) setupSub (pre true)⟩
 
 end FvModexp.Arm64.IntASRow.Witness
