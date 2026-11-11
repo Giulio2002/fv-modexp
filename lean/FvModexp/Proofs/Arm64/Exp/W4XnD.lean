@@ -126,7 +126,8 @@ theorem keeps_divB {R : RtInv} {L L' : List (Nat × Nat)}
     {g sp K n mp mc Mv yp ylen Y yi zp zc st n0 l0 ret b b' costD stkD qp qc z2p z2c up ul r rl rc : Nat}
     {r29 : BitVec 64} {ex : List (Nat × Nat)} {M M' : Memory}
     (hC : CtxB R L g sp K n mp mc Mv yp ylen Y yi zp zc st n0 l0 ret r29 ex M) (hKD : stkD ≤ K)
-    (hqin : stW M st + 8 * l0 ≤ qp ∧ qp + 8 * qc ≤ stW M st + 8 * stLen M st)
+    (hqx : (qp, 8 * qc) ∈ ex) (hqa : M.accessible qp (8 * qc) true = true) (hqW : AW sp K qp (8 * qc))
+    (hqG : Apart qp (8 * qc) (g + 16) 8)
     (hzin : stW M st + 8 * l0 ≤ z2p ∧ z2p + 8 * z2c ≤ stW M st + 8 * stLen M st)
     (hlpos : 0 < stLen M st)
     (hD : DvPostG R b costD L L' b' g sp stkD st qp qc z2p z2c up ul mp n M M' r rl rc) :
@@ -142,25 +143,27 @@ theorem keeps_divB {R : RtInv} {L L' : List (Nat × Nat)}
   obtain ⟨la8, lah, laacc, la48⟩ := hlive hcap
   have hstg := hfe.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
   clear hfe hLs hd hro'
-  simp only [AW, Apart, stUp] at hstw huw hug hsu hga hstg
+  simp only [AW, Apart, stUp] at hstw huw hug hsu hga hstg hqW hqG
   refine keeps_ofB hce hK hxD (by simpa only [List.append_assoc] using hF) hL hrg ?_ ?_ ?_ ?_ ?_ ?_ hsok'
     (by omega) hst' ?_
-  · clear hstw huw hug hsu hga hstg
+  · clear hstw huw hug hsu hga hstg hqW hqG
     intro r' hr' hlt
     simp only [stkWs, List.cons_append, List.nil_append, List.mem_cons, List.not_mem_nil, or_false] at hr'
     rcases hr' with rfl | rfl | rfl | rfl | rfl | rfl
     · exact M.accessible_sub hacc (Or.inr rfl) (by simp only; omega) (by simp only; omega)
     · exact M.accessible_sub hacc (Or.inr rfl) (by simp only; omega) (by simp only; omega)
-    · simp only at hlt ⊢; exact M.accessible_sub laacc (Or.inr rfl) (by omega) (by omega)
+    · simp only at hlt ⊢; exact M.accessible_sub hqa (Or.inr rfl) (by omega) (by omega)
     · simp only at hlt ⊢; exact M.accessible_sub laacc (Or.inr rfl) (by omega) (by omega)
     · simpa using hstacc
     · simp only at hlt ⊢; exact M.accessible_sub laacc (Or.inr rfl) (by omega) (by omega)
   · clear hstw huw hsu
     simp only [stkWs, List.cons_append, List.nil_append, outside_cons, outside_nil, and_true]; omega
-  · clear hstw huw hug hsu hga hstg
+  · clear hstw huw hug hsu hga hstg hqW hqG
     intro a k' ho
-    obtain ⟨-, o2, o3, o4, -⟩ := ho
-    simp only [AW, Apart, stUp] at o2 o3 o4
+    obtain ⟨-, o2, o3, o4, o5⟩ := ho
+    have o6 := o5 _ hqx
+    clear o5
+    simp only [AW, Apart, stUp] at o2 o3 o4 o6
     simp only [stkWs, List.cons_append, List.nil_append, outside_cons, outside_nil, and_true]
     omega
   · clear hug hsu hga hstg
@@ -173,6 +176,6 @@ theorem keeps_divB {R : RtInv} {L L' : List (Nat × Nat)}
   · clear hstw huw hug hsu hga hstg
     intro _
     have := hsok'.2.2.2.2.2.1
-    simp only [stLen, stCap, stW] at hlen' this hlpos ⊢; omega
+    simp only [stLen, stCap] at hlen' this hlpos ⊢; omega
 
 end FvModexp.Arm64.W4Pro

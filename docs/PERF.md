@@ -717,3 +717,17 @@ the run walked the main path and unrolled the norm loop).
 | Nat/NatAdd*, Nat/NatSub* (DF threading) | each ≤ 82 s / 2.5 GB | |
 Row `FvModexp.Amd64.BasicSqrRow` (cache-divmc, first attempt, load 66): FAIL 902 s (timeout while compiling the ~25
 new amd64 modules; StackNat's were cached); attempt 2 on the warm cache: **PASS 389 s / 5.8 GB**.
+### expmc session 12 (arm64, dev compile, host load ~35-40), wall / max RSS
+| module | wall | RSS |
+|---|---|---|
+| W4XnR (run pieces: xnSplit, xnA1-3, xnJ) | 20 s | 2.4 GB |
+| W4XnB1 (xnB: path B memmove + memclr, xnBpost) | 44 s | 2.6 GB |
+| W4XnK (keeps_snB, CtxB.raise) | 19 s | 2.6 GB |
+| W4XnD (divCallG, keeps_divB) | 10 s | 2.4 GB |
+| W4XnJ (keeps_xb, xnBK, xnJStep) | 18 s | 2.7 GB |
+| W4XnA (CtxB.addEx/dropEx, rem_xin, xnA2K) | 12 s | 2.5 GB |
+| W4XnS (xnAStep, xnStep) | 21-26 s | 2.7 GB |
+* Two `calls` in one run (memmove then memclr) failed: the second call's precondition needs the guard word on the
+  memory after the first call (`m1.readLE (g+16) 8 + 4096 < sp`), which the closer cannot derive. Fix: stop at the
+  first call's return (`until [mvRet]`), derive the fact from the first post's `MemFrame`, continue with a second
+  `janus_run … calls [hclr L b]` in the same proof (xnB, 44 s).
