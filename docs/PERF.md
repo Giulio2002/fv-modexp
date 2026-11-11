@@ -716,4 +716,4 @@ the run walked the main path and unrolled the norm loop).
 | Nat/BasicMul, Nat/AddTo (re-measured, load ~60) | 223 s / 5.5 GB, 272 s / 5.5 GB | within the 5 min cap only at load ≤ 60: TRIM next (split the by_cases paths into modules) |
 | Nat/NatAdd*, Nat/NatSub* (DF threading) | each ≤ 82 s / 2.5 GB | |
 Row `FvModexp.Amd64.BasicSqrRow` (cache-divmc, first attempt, load 66): FAIL 902 s (timeout while compiling the ~25
-new amd64 modules; StackNat's were cached) — re-run bottom-up on the warm cache (see asm-rows.tsv).
+new amd64 modules; StackNat's were cached); attempt 2 on the warm cache: **PASS 389 s / 5.8 GB**.
