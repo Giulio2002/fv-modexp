@@ -777,3 +777,15 @@ W4 chain rebuild after the r29/f29 split (sequential, light load): all ≤ 46 s 
 New entry modules: W4EnDefs 2 s, W4EnA 38 s / 2.4 GB, W4EnG 46 s / 2.3 GB, W4EnG2 15 s / 2.3 GB, W4EnJ 10 s / 2.2 GB,
 W4EnPre 2 s, W4EnCtx 18 s / 2.9 GB, W4EnX 4 s / 2.3 GB. W4EnJ: `refine K _ _ … rfl …` after a gcWriteBarrier2 call hung
 (> 10 min); `apply K` + bullets fixed it (649 s → 10 s).
+### asm s13: nat.lsh / nat.rsh amd64 (dev `mkp.py` J=2, host load ~40, peak RSS per module)
+| module | time / RSS | note |
+|---|---|---|
+| Amd64/Nat/LshDefs, LshMid, LshZero, Lsh | 2.1 s, 7.9 s, 8.5 s, 6.2 s / ≤ 2.4 GB | |
+| Amd64/Nat/LshFin (clear + norm + post) | 33 s / 2.5 GB | |
+| Amd64/Nat/LshCopy (s%64 = 0) | 22 s / 2.5 GB | copyM stops at the memmove return, copyT continues |
+| Amd64/Nat/LshShiftC / LshShift | 22 s (was 196 s / 5.9 GB) / 14.5 s | fix: post-call run moved into its own lemma `shiftT` with a small context (the 106 s run + 3×14 s `readLE_writeLE` omega discharges were all big-context omega) |
+| Amd64/Nat/LshMain (reuse) / LshMainA (alloc, copy) / LshMainB (alloc, shift) | 29 s / 66 s / 70 s | alloc split per path (one makeslice run per module; was 110 s in one) |
+| Amd64/Nat/RshDefs, RshMid, RshFin, RshCallee, RshZero, Rsh | 1.8, 7.5, 16, 4.8, 18, 5.2 s / ≤ 2.4 GB | |
+| Amd64/Nat/RshCopy, RshShiftC, RshShift, RshMain | 22.5 s, 28.5 s / 3.0 GB, 18 s, 32 s | |
+| Amd64/Nat/RshMainA (alloc n ≠ 1) / RshMainB (alloc n = 1) | 131 s / 110 s; 2.7 GB | two makeslice runs each (copy/shift): perf candidates (split per path like Lsh) |
+| Amd64/Nat/RshSet / RshSetA | 28 s / 83 s | |

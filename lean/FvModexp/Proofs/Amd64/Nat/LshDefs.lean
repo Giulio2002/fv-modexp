@@ -110,6 +110,19 @@ theorem neg_shr_mask (q c : Nat) (hq : q < c) (hc : c < 2 ^ 40) :
   neg_sshr63_and _ _ (by simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega)
     (by simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega)
 
+theorem shr6 (sh : Nat) (h : sh < 2 ^ 64) : BitVec.ofNat 64 sh >>> 6 = BitVec.ofNat 64 (sh / 64) := by
+  apply BitVec.eq_of_toNat_eq
+  simp only [BitVec.toNat_ushiftRight, BitVec.toNat_ofNat, Nat.shiftRight_eq_div_pow]; omega
+
+theorem add_c (v k : Nat) (h : v + k < 2 ^ 64) :
+    BitVec.ofNat 64 v + BitVec.ofNat 64 k = BitVec.ofNat 64 (v + k) := by
+  apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega
+
+/-- the entry facts shared by both paths -/
+theorem ofNat_ne0 (v : Nat) (h0 : 0 < v) (h : v < 2 ^ 64) : (BitVec.ofNat 64 v = 0#64) = False := by
+  simp only [eq_iff_iff, iff_false]; intro e
+  have := congrArg BitVec.toNat e; simp only [BitVec.toNat_ofNat] at this; omega
+
 abbrev hJoin : Nat := segAddr Extracted.program fn + 0x1d1
 abbrev callLsh : Nat := segAddr Extracted.program fn + 0x28d
 abbrev hClr : Nat := segAddr Extracted.program fn + 0x2d2
