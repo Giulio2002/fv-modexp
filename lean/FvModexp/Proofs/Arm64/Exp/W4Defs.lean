@@ -125,19 +125,20 @@ def Static (R : RtInv) (L : List (Nat × Nat)) (g sp n mp mc k0 yp ylen Y : Nat)
   Buf R L g sp n M0 zp zc ∧ Buf R L g sp n M0 zzp zzc ∧ Apart zp (8 * zc) zzp (8 * zzc) ∧
   Apart zp (8 * zc) mp (8 * n) ∧ Apart zzp (8 * zzc) mp (8 * n) ∧
   Apart zp (8 * zc) yp (8 * ylen) ∧ Apart zzp (8 * zzc) yp (8 * ylen) ∧
-  (∀ d, d < 16 → Apart zp (8 * zc) (pp d) (8 * n) ∧ Apart zzp (8 * zzc) (pp d) (8 * n))
+  (∀ d, d < 16 → Apart zp (8 * zc) (pp d) (8 * n) ∧ Apart zzp (8 * zzc) (pp d) (8 * n)) ∧
+  zp % 8 = 0 ∧ zzp % 8 = 0 ∧ Apart zp (8 * zc) (sp - 4304) 16 ∧ Apart zzp (8 * zzc) (sp - 4304) 16
 
 theorem Bufs.swap {R : RtInv} {L : List (Nat × Nat)} {g sp n mp yp ylen : Nat} {pp : Nat → Nat} {M0 : Memory}
     {zp zc zzp zzc : Nat} (h : Bufs R L g sp n mp yp ylen pp M0 zp zc zzp zzc) :
-    Bufs R L g sp n mp yp ylen pp M0 zzp zzc zp zc :=
-  ⟨h.2.1, h.1, h.2.2.1.symm, h.2.2.2.2.1, h.2.2.2.1, h.2.2.2.2.2.2.1, h.2.2.2.2.2.1,
-    fun d hd => ⟨(h.2.2.2.2.2.2.2 d hd).2, (h.2.2.2.2.2.2.2 d hd).1⟩⟩
+    Bufs R L g sp n mp yp ylen pp M0 zzp zzc zp zc := by
+  obtain ⟨a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12⟩ := h
+  exact ⟨a2, a1, a3.symm, a5, a4, a7, a6, fun d hd => ⟨(a8 d hd).2, (a8 d hd).1⟩, a10, a9, a12, a11⟩
 
 /-- the memory facts at a loop state `M` -/
 @[reducible] def Mem (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (g sp : Nat) (M0 M : Memory) (zp zc zzp zzc : Nat) :
     Prop :=
   MemFrame M0 M (lw R sp zp zc zzp zzc) ∧ LiveFrame M0 M L [(zp, zp + 8 * zc), (zzp, zzp + 8 * zzc)] ∧
-  R.inv b L g (view R.rt L M)
+  R.inv b L g (view R.rt L M) ∧ M.regions = M0.regions
 /-- the frame facts of a loop state since the anchor `M0` -/
 @[reducible] def FL (R : RtInv) (L : List (Nat × Nat)) (sp zp zc zzp zzc : Nat) (M0 M : Memory) : Prop :=
   MemFrame M0 M (lw R sp zp zc zzp zzc) ∧ LiveFrame M0 M L [(zp, zp + 8 * zc), (zzp, zzp + 8 * zzc)]

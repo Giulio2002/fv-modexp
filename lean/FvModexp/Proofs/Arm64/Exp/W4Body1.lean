@@ -12,6 +12,7 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvMod
 namespace FvModexp.Arm64.W4Loop
 
 set_option maxRecDepth 20000 in
+set_option janus.callRegions true in
 set_option maxHeartbeats 0 in
 set_option linter.janusRenameI false in
 theorem body1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
@@ -43,10 +44,10 @@ theorem body1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
   obtain ⟨he, hn, hn16, hmc, hmc', hk0, hyl, hyl', hm, hy, hY, hpw, r1016, r1024, r1032, r224, r1000, r992, hok⟩ := hst
   have h63 : (BitVec.ofNat 64 c).getLsbD 63 = false := by
     simp only [BitVec.getLsbD_ofNat]; simp [Nat.testBit, Nat.shiftRight_eq_div_pow]; omega
-  obtain ⟨hF, hLF, hinv⟩ := hM
+  obtain ⟨hF, hLF, hinv, hrg0⟩ := hM
   obtain ⟨hal, hsp1, hsp2, hwacc, hg1, hg2, hg3, hwrt, hgw, hgrt, hLs⟩ := he
   have he' : Env R L g sp M0 := ⟨hal, hsp1, hsp2, hwacc, hg1, hg2, hg3, hwrt, hgw, hgrt, hLs⟩
-  obtain ⟨hBz, hBzz, hzzz, hzm, hzzm, hzy, hzzy, hzp⟩ := hB
+  obtain ⟨hBz, hBzz, hzzz, hzm, hzzm, hzy, hzzy, hzp, hal8z, hal8zz, hstz, hstzz⟩ := hB
   have hzI : Inp R L sp n M0 zp := ⟨M0.accessible_sub hBz.2.2.1 (Or.inr rfl) (Nat.le_refl _) (by omega),
     by omega, hBz.2.2.2.2.1.imp (fun h => h.sub (Nat.le_refl _) (by omega)) (fun h => h.of_sub (Nat.le_refl _) (by omega)),
     by have := hBz.2.2.2.2.2.1; unfold Apart at this ⊢; omega⟩
@@ -87,7 +88,9 @@ theorem body1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     have fc3 : FL R L sp zp zc zzp zzc M0 s'.mem := by
       refine FL.call ?_ F2 L2 (Or.inl ⟨rfl, rfl⟩)
       repeat (first | exact fc1 | refine FL.write ?_ hLs _ (by omega) | refine FL.call ?_ F1 L1 (Or.inr ⟨rfl, rfl⟩))
-    exact ⟨fc3.1, fc3.2, i2⟩
+    refine ⟨fc3.1, fc3.2, i2, ?_⟩
+    simp only [Memory.regions_writeLE, hP2_regions, hP1_regions]
+    first | exact hrg0 | (subst hmem; exact hrg0)
   case val =>
     have fc1 : FL R L sp zp zc zzp zzc M0 (((((M.writeLE (sp + 288) 8 zc).writeLE (sp + 280) 8 n).writeLE
         (sp + 864) 8 zp).writeLE (sp + 232) 8 c).writeLE (sp + 184) 8 yi) := by

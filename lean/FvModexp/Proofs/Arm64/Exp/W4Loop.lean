@@ -60,7 +60,7 @@ theorem loop (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
       refine hexit _ zp zc zzp zzc M ?_ rfl h0 h1 h13 h14 h15 h2 h3 h9 h11 h12 h18 h28 h29 rfl hB hM ?_
       · first | rfl | decide
       · rw [outer_done] at hV; exact hV
-    · obtain ⟨hF, hLF, hinv⟩ := hM
+    · obtain ⟨hF, hLF, hinv, hrg0⟩ := hM
       obtain ⟨hya, hyb, hyh, hyw⟩ := hy
       obtain ⟨hal, hsp1, hsp2, hwacc, hg1, hg2, hg3, hwrt, hgw, hgrt, hLs⟩ := he
       janus_run [h63, r1016, r1024, r1032, r224, r1000, r992, r240] until [test]
@@ -72,7 +72,8 @@ theorem loop (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
       have fw' : FL R L sp zp zc zzp zzc M0 (M.writeLE (sp + 240) 8 i) := FL.write ⟨hF, hLF⟩ hLs i (by omega)
       refine ih (17 * i + 16) (by omega) _ i 16 (M.readLE (yp + 8 * i) 8) zp zc zzp zzc (M.writeLE (sp + 240) 8 i)
         rfl (by omega) (by omega) hlt ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl hB
-        ⟨fw'.1, fw'.2, FvModexp.Expmc.inv_writeLE (Or.inr (hwrt.of_sub (by omega) (by omega))) hinv⟩ ?r240 ?val
+        ⟨fw'.1, fw'.2, FvModexp.Expmc.inv_writeLE (Or.inr (hwrt.of_sub (by omega) (by omega))) hinv,
+          by rw [Memory.regions_writeLE]; exact hrg0⟩ ?r240 ?val
       case r240 =>
         rw [FvModexp.Expmc.readLE_writeLE_same rfl]; omega
       case val =>

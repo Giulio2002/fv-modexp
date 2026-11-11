@@ -45,7 +45,7 @@ theorem tail (impl : List Segment) (hap : ImplApart Extracted.program impl) (ret
     (hpc : S.pc = BitVec.ofNat 64 tailPc) (hsp : S.sp = BitVec.ofNat 64 sp)
     (h3 : S.regs 3 = BitVec.ofNat 64 p) (h4 : S.regs 4 = BitVec.ofNat 64 l) (h5 : S.regs 5 = BitVec.ofNat 64 c)
     (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (hmem : S.mem = M)
-    (hlc : l ≤ c) (hc : c < 2 ^ 40) (he : FinEnv sp g st n0 r29 ret M) :
+    (hlc : l ≤ c) (hc : c < 2 ^ 64) (he : FinEnv sp g st n0 r29 ret M) :
     Reaches ((LibExp.program.link impl).withExit ret) S (IsReturn (FinPost sp g st n0 p l c r18 r29 M)) := by
   obtain ⟨hal, hsp1, hsp2, hacc, hg1, hg2, hg3, hgw, r912, r840, r848, r856, hst1, hst2, hn0, hstw, hstg, rfp, rlr⟩ := he
   have hD := DeferW.sum impl hap DeferW.fnW4 (by simp [DeferW.fnW4])
@@ -69,7 +69,7 @@ theorem finIter (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.progra
     (hpc : S.pc = BitVec.ofNat 64 njoin) (hsp : S.sp = BitVec.ofNat 64 sp)
     (h3 : S.regs 3 = BitVec.ofNat 64 p) (h4 : S.regs 4 = BitVec.ofNat 64 l) (h5 : S.regs 5 = BitVec.ofNat 64 c)
     (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (hmem : S.mem = M)
-    (hl : l < 2 ^ 40) (hp48 : p + 8 * l ≤ 2 ^ 48) (hacc : M.accessible p (8 * l) false = true)
+    (hl : l < 2 ^ 40) (hpa : l = 0 ∨ (p + 8 * l ≤ 2 ^ 48 ∧ M.accessible p (8 * l) false = true))
     (KT : ∀ S' : State, S'.pc = BitVec.ofNat 64 tailPc → S'.sp = BitVec.ofNat 64 sp →
       S'.regs 3 = BitVec.ofNat 64 p → S'.regs 4 = BitVec.ofNat 64 l → S'.regs 5 = BitVec.ofNat 64 c →
       S'.regs 18 = r18 → S'.regs 28 = BitVec.ofNat 64 g → S'.mem = M →
@@ -81,6 +81,11 @@ theorem finIter (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.progra
       S'.regs 18 = r18 → S'.regs 28 = BitVec.ofNat 64 g → S'.mem = M →
       Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
     Reaches ((LibExp.program.link impl).withExit ret) S Q := by
+  rcases hpa with hl0 | ⟨hp48, hacc⟩
+  · subst hl0
+    janus_run until [njoin, tailPc]
+    refine KT _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl (Or.inl rfl)
+    all_goals first | rfl | (janus_simp; done) | skip
   janus_run until [njoin, tailPc]
   · have hl0 : l = 0 := by omega
     refine KT _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl (Or.inl hl0)
@@ -95,25 +100,26 @@ theorem finIter (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.progra
 /-- the inline `zz.norm()` loop (nat.go:68-74) from the join point, then `tail` -/
 theorem fin (impl : List Segment) (hap : ImplApart Extracted.program impl) (ret : Nat)
     (hret : RetAddr (LibExp.program.link impl) ret)
-    (sp g st n0 p c : Nat) (r18 r29 : BitVec 64) (M : Memory) (hc : c < 2 ^ 40)
+    (sp g st n0 p c : Nat) (r18 r29 : BitVec 64) (M : Memory) (hc : c < 2 ^ 64)
     (he : FinEnv sp g st n0 r29 ret M) :
     ∀ (l : Nat) (S : State), S.pc = BitVec.ofNat 64 njoin → S.sp = BitVec.ofNat 64 sp →
       S.regs 3 = BitVec.ofNat 64 p → S.regs 4 = BitVec.ofNat 64 l → S.regs 5 = BitVec.ofNat 64 c →
-      S.regs 18 = r18 → S.regs 28 = BitVec.ofNat 64 g → S.mem = M → l ≤ c → p + 8 * l ≤ 2 ^ 48 →
-      M.accessible p (8 * l) false = true →
+      S.regs 18 = r18 → S.regs 28 = BitVec.ofNat 64 g → S.mem = M → l ≤ c →
+      (l = 0 ∨ (p + 8 * l ≤ 2 ^ 48 ∧ M.accessible p (8 * l) false = true)) →
       Reaches ((LibExp.program.link impl).withExit ret) S
         (IsReturn (FinPost sp g st n0 p (Expmc.normL M p l) c r18 r29 M)) := by
   intro l
   induction l with
   | zero =>
-    intro S hpc hsp h3 h4 h5 h18 h28 hmem hlc hp hacc
-    refine finIter impl ret hret _ S sp g p 0 c r18 M hpc hsp h3 h4 h5 h18 h28 hmem (by omega) hp hacc ?_ ?_
+    intro S hpc hsp h3 h4 h5 h18 h28 hmem hlc hp
+    refine finIter impl ret hret _ S sp g p 0 c r18 M hpc hsp h3 h4 h5 h18 h28 hmem (by omega) (Or.inl rfl) ?_ ?_
     · intro S' a1 a2 a3 a4 a5 a6 a7 a8 _
       exact tail impl hap ret hret S' sp g st n0 p 0 c r18 r29 M a1 a2 a3 a4 a5 a6 a7 a8 (by omega) hc he
     · intro _ h; omega
   | succ l ih =>
-    intro S hpc hsp h3 h4 h5 h18 h28 hmem hlc hp hacc
-    refine finIter impl ret hret _ S sp g p (l + 1) c r18 M hpc hsp h3 h4 h5 h18 h28 hmem (by omega) hp hacc ?_ ?_
+    intro S hpc hsp h3 h4 h5 h18 h28 hmem hlc hp
+    obtain ⟨hp, hacc⟩ := hp.resolve_left (by omega)
+    refine finIter impl ret hret _ S sp g p (l + 1) c r18 M hpc hsp h3 h4 h5 h18 h28 hmem (by omega) (Or.inr ⟨hp, hacc⟩) ?_ ?_
     · intro S' a1 a2 a3 a4 a5 a6 a7 a8 hnz
       have hN : Expmc.normL M p (l + 1) = l + 1 := by
         simp only [Expmc.normL]; rw [if_neg]; simpa using hnz
@@ -123,8 +129,8 @@ theorem fin (impl : List Segment) (hap : ImplApart Extracted.program impl) (ret 
       have hN : Expmc.normL M p (l + 1) = Expmc.normL M p l := by
         simp only [Expmc.normL]; rw [if_pos (by simpa using hz)]
       rw [hN]
-      exact ih S' a1 a2 a3 a4 a5 a6 a7 a8 (by omega) (by omega)
-        (M.accessible_sub hacc (Or.inl rfl) (Nat.le_refl _) (by omega))
+      exact ih S' a1 a2 a3 a4 a5 a6 a7 a8 (by omega)
+        (Or.inr ⟨by omega, M.accessible_sub hacc (Or.inl rfl) (Nat.le_refl _) (by omega)⟩)
 
 
 end FvModexp.Arm64.W4Loop

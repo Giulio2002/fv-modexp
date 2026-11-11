@@ -12,6 +12,7 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvMod
 namespace FvModexp.Arm64.W4Loop
 
 set_option maxRecDepth 20000 in
+set_option janus.callRegions true in
 set_option maxHeartbeats 0 in
 set_option linter.janusRenameI false in
 theorem body2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
@@ -45,10 +46,10 @@ theorem body2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
   obtain ⟨he, hn, hn16, hmc, hmc', hk0, hyl, hyl', hm, hy, hY, hpw, r1016, r1024, r1032, r224, r1000, r992, hok⟩ := hst
   have hd : yi / 2 ^ 60 < 16 := by omega
   obtain ⟨hpi, hpv, hpc', rp0, rp1, rp2⟩ := hpw _ hd
-  obtain ⟨hF, hLF, hinv⟩ := hM
+  obtain ⟨hF, hLF, hinv, hrg0⟩ := hM
   obtain ⟨hal, hsp1, hsp2, hwacc, hg1, hg2, hg3, hwrt, hgw, hgrt, hLs⟩ := he
   have he' : Env R L g sp M0 := ⟨hal, hsp1, hsp2, hwacc, hg1, hg2, hg3, hwrt, hgw, hgrt, hLs⟩
-  obtain ⟨hBz, hBzz, hzzz, hzm, hzzm, hzy, hzzy, hzp⟩ := hB
+  obtain ⟨hBz, hBzz, hzzz, hzm, hzzm, hzy, hzzy, hzp, hal8z, hal8zz, hstz, hstzz⟩ := hB
   obtain ⟨hzp1, hzzp1⟩ := hzp _ hd
   have hBzz' := hBzz
   have hm' := hm
@@ -106,7 +107,9 @@ theorem body2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
   refine K _ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?mem ?s240 ?val
   case mem =>
     have fc : FL R L sp zp zc zzp zzc M0 _ := FL.call ?_ F5 L5 (Or.inr ⟨rfl, rfl⟩)
-    · exact ⟨fc.swap.1, fc.swap.2, i5⟩
+    · refine ⟨fc.swap.1, fc.swap.2, i5, ?_⟩
+      simp only [Memory.regions_writeLE, hP5_regions, hP4_regions, hP3_regions]
+      first | exact hrg0 | (subst hmem; exact hrg0)
     repeat (first | exact ⟨hF0, hLF⟩ | refine FL.write ?_ hLs _ (by omega) |
       refine FL.call ?_ F4 L4 (Or.inl ⟨rfl, rfl⟩) | refine FL.call ?_ F3 L3 (Or.inr ⟨rfl, rfl⟩))
   case s240 =>
