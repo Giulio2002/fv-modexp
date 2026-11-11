@@ -419,4 +419,39 @@ theorem g_copy (s T : State) (v9 v10 v11 : W64) {Q : State → Prop} (d src n : 
       (by first | exact MemFrame.refl _ _ | (rw [hm]; exact MemFrame.refl _ _))
       (fun j hj => absurd hj (Nat.not_lt_zero _)) <;> simp [setReg] <;> omega
 
+theorem fal_mod8 (n : Nat) (hn : n % 8 = 0) : ∀ l : List Nat, (∀ x ∈ l, x % 8 = 0) →
+    classSize.firstAtLeast l n % 8 = 0
+  | [], _ => hn
+  | c :: cs, h => by
+    simp only [classSize.firstAtLeast]
+    split
+    · exact h c (by simp)
+    · exact fal_mod8 n hn cs fun x hx => h x (by simp [hx])
+
+theorem rs_mod8 (x : Nat) (hx : x % 8 = 0) : roundupsize x true % 8 = 0 := by
+  by_cases h : x ≤ 32760
+  · rw [rs_small h]; unfold classSize; split
+    · rfl
+    · exact fal_mod8 x hx _ (by decide)
+  · rw [rs_large (by omega)]; omega
+
+theorem nsc_go_le (n : Nat) : ∀ c, c < n → nextslicecap.go n c ≤ n + n / 4 + 192 := by
+  intro c
+  induction c using nextslicecap.go.induct n with
+  | case1 c c' h => intro hc; rw [nextslicecap.go]; simp only [c'] at h; simp [h]; omega
+  | case2 c c' h ih => intro hc; rw [nextslicecap.go]; simp only [c'] at h ih; simp [h]; exact ih (by omega)
+
+theorem nsc_le (n c0 : Nat) (h : c0 < n) : nextslicecap n c0 ≤ 2 * n + 768 := by
+  unfold nextslicecap; split
+  · omega
+  · split
+    · omega
+    · have := nsc_go_le n c0 h; omega
+
+/-- The round of the call: `8 · growCap8 = K`. -/
+theorem round_eq (n c0 : Nat) : 8 * growCap8 n c0 = roundupsize (8 * nextslicecap n c0) true := by
+  unfold growCap8
+  rw [Nat.mul_comm (nextslicecap n c0) 8]
+  exact Nat.mul_div_cancel' (Nat.dvd_of_mod_eq_zero (rs_mod8 _ (by omega)))
+
 end FvModexp.Arm64.Stubs
