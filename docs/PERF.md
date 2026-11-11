@@ -481,7 +481,7 @@ about state literals: put `rfl` LAST (or `with_reducible rfl`), it whnf's readLE
 | Nat/Free (`nat.expNN.deferwrap1` = `stk.free()`, Pool.Put live contract) | 9 s / 2.6 GB | 13 s / 2.6 GB |
 | Witness/Sites (arm64 memclr/growslice/wb call-site states) | 2 s / 2.1 GB | (exists) |
 | Nat/StackNatRow, Nat/BasicSqrRow (dev compile, `decide +kernel` witness) | 3.5 s, 4.3 s | 3.8 s |
-Rows (`scripts/asm-runrow.sh`, janus-provfix, cache-divmc): StackNatRow arm64 PASS 171 s / 4.9 GB.
+Rows (`scripts/asm-runrow.sh`, janus-provfix, cache-divmc): StackNatRow arm64 PASS 171 s / 4.9 GB, amd64 PASS 279 s / 4.5 GB; BasicSqrRow arm64 PASS 703 s / 4.1 GB (first compile of its modules).
 Lessons: (1) amd64: after a callee returns, `retAddrOf S` rewritten to a symbolic `segAddr … + off` makes the next
 `CALL rel32` fault (`badTarget`: janus cannot bound the target) — state pushed return addresses as literals;
 (2) a `first | … | (intro r hr; simp at hr) | …` alternative that SUCCEEDS without closing the goal leaves it unsolved
