@@ -653,3 +653,6 @@ and `TailN` (store, 124 s). Times this session: Nat 71 s, Rec 112-127 s / 5.0 GB
 | row | ISA | verdict | wall | peak |
 |---|---|---|---|---|
 | DivBasicRow | arm64 | PASS | 587 s (was FAIL > 900 s) | 5.0 GB |
+nat.trunc arm64 modules (dev, load ~35): TruncDefs 2 s, Mid 9 s, Norm 8 s, SetC 18 s, Mask 11 s, Copy 28 s, Main 59 s, Zero 16 s,
+Set 60 s, Trunc 7 s (all ≤ 2.6 GB). TruncSet was 400 s+ until `wOf n % 2^64 = wOf n` was given to janus_run (undecided branch →
+the run walked the main path and unrolled the norm loop).
