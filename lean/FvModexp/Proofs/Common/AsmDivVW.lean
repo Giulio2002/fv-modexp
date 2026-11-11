@@ -1,4 +1,6 @@
 import Janus
+import FvModexp.Proofs.Common.AsmDivMath
+import FvModexp.Proofs.Common.AsmDivNat
 
 /-!
 # Word-by-word long division (`divWVW`, go-bigmodexpfix `src/math/big/natdiv.go:579`): the loop arithmetic
@@ -70,5 +72,24 @@ theorem inv_step (Hk Q r x y : Nat) (hy : 0 < y) (hr : r = Hk % y) (hQ : Q = Hk 
   obtain ⟨h1, h2⟩ := dstep Hk x y hy
   subst hr hQ
   rw [h1, h2]; exact ⟨by ac_rfl, rfl⟩
+
+/-- the inlined/called `reciprocalWord`: `((2^64-1-U)·2^64 + 2^64-1) / U = (2^128-1)/U - 2^64` for normalised `U` -/
+theorem recip_val (U : Nat) (h1 : 2 ^ 63 ≤ U) (h2 : U < 2 ^ 64) :
+    ((18446744073709551615 - U) * 18446744073709551616 + 18446744073709551615) / U = (2 ^ 128 - 1) / U - 2 ^ 64 := by
+  have e : (18446744073709551615 - U) * 18446744073709551616 + 18446744073709551615 = (2 ^ 128 - 1) - U * 2 ^ 64 := by
+    rw [Nat.sub_mul]; omega
+  rw [e, Nat.sub_mul_div]
+
+theorem recip_lt (U : Nat) (h1 : 2 ^ 63 ≤ U) : (2 ^ 128 - 1) / U - 2 ^ 64 < 2 ^ 64 := by
+  have : (2 ^ 128 - 1) / U < 2 ^ 65 := by
+    rw [Nat.div_lt_iff_lt_mul (by omega)]
+    have := Nat.mul_le_mul_left (2 ^ 65) h1
+    omega
+  omega
+
+theorem recipWord_lt (y : Nat) (hy : y ≠ 0) (h : y < 2 ^ 64) : FvModexp.AsmDiv.recipWord y < 2 ^ 64 := by
+  have hn := FvModexp.AsmDiv.clz_norm64 y hy h
+  unfold FvModexp.AsmDiv.recipWord
+  exact recip_lt _ hn.2.1
 
 end FvModexp.AsmDivVW

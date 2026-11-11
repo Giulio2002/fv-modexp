@@ -215,10 +215,8 @@ theorem fin (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) 
   · simpa using hmf
   · simpa using hlf
 
-theorem recipWord_lt (y : Nat) (hy : y ≠ 0) (h : y < 2 ^ 64) : FvModexp.AsmDiv.recipWord y < 2 ^ 64 := by
-  have hn := FvModexp.AsmDiv.clz_norm64 y hy h
-  unfold FvModexp.AsmDiv.recipWord
-  exact FvModexp.Arm64.RecipWordSum.recip_lt _ hn.2.1
+theorem recipWord_lt (y : Nat) (hy : y ≠ 0) (h : y < 2 ^ 64) : FvModexp.AsmDiv.recipWord y < 2 ^ 64 :=
+  FvModexp.AsmDivVW.recipWord_lt y hy h
 
 theorem b63 (j : Nat) (h : j < 2 ^ 63) : (BitVec.ofNat 64 j).getLsbD 63 = false := by
   simp only [BitVec.getLsbD_ofNat, Nat.testBit_lt_two_pow h, Bool.and_false]
