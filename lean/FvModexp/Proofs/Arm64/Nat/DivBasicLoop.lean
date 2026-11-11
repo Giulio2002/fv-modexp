@@ -33,20 +33,21 @@ theorem inv0_vals {qp ql up ul vp vl : Nat} {s : State} {ujn : Nat} {M : Memory}
   obtain ⟨-, -, -, -, -, huv, -, -, -, hqv⟩ := hI
   simp only [List.drop_zero, Nat.sub_zero, Asm.val_limbs] at huv hqv
   refine ⟨?_, huv⟩
-  rw [← hqv]
+  show Asm.lv M qp (qn ql ul vl) = Asm.lv s.mem up ul / Asm.lv s.mem vp vl
+  rw [← hqv, ← Asm.val_limbs]
   have e : (Asm.limbs M qp ql).take (ul - vl + 1) = Asm.limbs M qp (qn ql ul vl) := by
     unfold qn; rw [if_pos hvu]
     by_cases h : ul - vl + 1 ≤ ql
     · rw [Nat.min_eq_left h]; exact Asm.limbs_take _ _ _ _ h
     · rw [Nat.min_eq_right (by omega), List.take_of_length_le (by simp; omega)]
-  rw [e, Asm.val_limbs]; rfl
+  rw [e]
 
 /-- `len u < len v`: `U < V` -/
 theorem short_lt {m : Memory} {up ul vp vl : Nat} (h : ul < vl) (hv : 2 ^ 63 ≤ m.readLE (vp + 8 * (vl - 1)) 8) :
     natVal m up ul < natVal m vp vl := by
   have h1 : natVal m up ul < 2 ^ (64 * ul) := by
     have := Memory.readLE_lt m up (8 * ul)
-    rw [show 8 * (8 * ul) = 64 * ul by omega] at this; exact this
+    rw [show (256 : Nat) = 2 ^ 8 from rfl, ← Nat.pow_mul, show 8 * (8 * ul) = 64 * ul by omega] at this; exact this
   have h2 := Mdl.val_ge_top (Asm.limbs m vp vl)
   rw [Asm.length_limbs, Asm.limbs_getD _ _ _ _ (by omega), Asm.val_limbs] at h2
   have h3 : 2 ^ (64 * ul) ≤ 2 ^ (64 * (vl - 1)) := Nat.pow_le_pow_right (by omega) (by omega)
@@ -108,8 +109,9 @@ theorem fromHead (impl : List Segment) (hap : ImplApart Extracted.program impl) 
         exact (Nat.div_eq_of_lt hlt1).symm
     exact loop impl hap R b L qp ql st up ul uc vp vl vc s t L1 b1 w1 c1 hE hvu hl4 hl48 _ (Nat.le_refl _) S 0
       (hH.cast (by omega)) hI0
-  · have hlt := short_lt (m := s.mem) (up := up) (vp := vp) (by omega) hvt
-    exact fin impl R b L qp ql st up ul uc vp vl vc s t L1 b1 w1 c1 S _ 0 hH (bit63 _ (by omega) (by omega))
+  · have hlt := short_lt (m := s.mem) (up := up) (ul := ul) (vp := vp) (vl := vl) (by omega) hvt
+    exact fin impl R b L qp ql st up ul uc vp vl vc s t L1 b1 w1 c1 S _ 0 hH (bit63 _ (by have := hpre.stlen; simp only [Nat.reducePow]; omega)
+      (by simp only [Nat.reducePow]; omega))
       (fun h => absurd h hvu) (by rw [hu, Nat.mod_eq_of_lt hlt]) hl4 hl48
 
 end FvModexp.Arm64.DivBasic

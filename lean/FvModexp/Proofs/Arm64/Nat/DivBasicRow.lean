@@ -83,12 +83,13 @@ theorem inv1 (gp : Nat) : R.inv 0x1000 [] gp (view R.rt [] mem0) := by
     unfold toyBytes
     rw [if_neg (by simp only [BUMP, HEAP] at *; omega), if_neg (by omega)]
 
+set_option maxHeartbeats 8000000 in
 theorem pre : DivBasic.Pre R 0x1000 [] OA 1 ST OB 2 2 VP 2 s0 := by
   unfold DivBasic.Pre
   refine ⟨⟨⟨by decide +kernel, by rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel, by decide +kernel⟩,
     ⟨by decide +kernel, by decide +kernel, by decide +kernel, by rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel⟩,
     dataLoaded _ _, ?_, ?_, ?_, fun r hr => by simp at hr, roOut⟩, WStubs.serves [], ?_, ?_, by decide, ?_, ?_, ?_,
-    ?_, ?_, by decide, by decide, by decide, ?_, ?_, ?_, ?_, ?_, by decide, ?_, ?_, ?_, ?_, ?_, ?_, ?_,
+    ?_, ?_, by decide, by decide, by decide, ?_, ?_, ?_, ?_, ?_, by decide, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_,
     fun _ => Or.inl (by decide), ?_, ?_, ?_, fun _ => ⟨?_, ?_⟩, ?_, ?_, ?_, ?_, ?_, ⟨?_, ?_, ?_⟩, ?_, ?_, ?_, inv1 _⟩
   all_goals first
     | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
