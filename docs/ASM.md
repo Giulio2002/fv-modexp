@@ -232,3 +232,14 @@ with DF; internal lemmas prove `RegsOK ∧ PostI`, `RegsOK` carries `s'.df = fal
   `0 < s ∨ cap z = 0`) + `len x ≤ cap x < 2^40`; post `Rsh.RshPost` (`X / 2^s`, need `len x - s/64`). Premises: live
   makeslice, memmove; rshVU.abi0 from `Callees.rshVUHyp`.
 Shapes: NOTES-conventions "[asm s11]", "[asm s12]".
+
+## asm s13 (2026-11-12): nat.lsh / nat.rsh amd64 PROVED
+* `FvModexp.Amd64.Lsh.ens : Lsh.Hyp2 impl R Lsh.names 4248 64` (Proofs/Amd64/Nat/Lsh*.lean) — amd64 twin of infra's
+  `EvenHyp.LshPreA` (defined in LshDefs as `Lsh.LshPreA`, `g = R14`) with `0 < s ∧ 0 < len x`; post `Lsh.LshPost` =
+  `s'.fsBase = s.fsBase ∧ s'.df = s.df ∧` expmc's LshPost body (results AX/BX/CX = regs 0/3/1, window `win` 4248/64).
+  `Lsh.ensZ : Lsh.HypZ …` (z.lsh(z, s), s may be 0; post `Lsh.PostZ` with amd64 `Lsh.NatOF`).
+  Premises: live makeslice/memmove/memclrNoHeapPointers (amd64 `…Live64`); lshVU via Callees2.
+* `FvModexp.Amd64.Rsh.ens : Rsh.Hyp impl R Rsh.names 4248 64` (Proofs/Amd64/Nat/Rsh*.lean) — amd64 twin of the arm64
+  `Rsh.Hyp` (pre `Rsh.RshPre … ∧ xl ≤ xc ∧ xc < 2^40`, post `Rsh.RshPost` = fsBase ∧ DF ∧ NatRes need `len x - s/64`).
+  Premises: live makeslice/memmove; rshVU via the new `Amd64/Nat/RshCallee.lean` (`Callees.rshVUHyp`, `RshLPre/RshLQ`,
+  `RshVUHyp.live`, Run segment 47).
