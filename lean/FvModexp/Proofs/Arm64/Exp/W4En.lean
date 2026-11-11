@@ -11,7 +11,7 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvMod
 
 namespace FvModexp.Arm64.W4En
 
-open FvModexp.Arm64.W4Pro (XnPost xjBud xnBudA xnBudAC)
+open FvModexp.Arm64.W4Pro (XnPost xjBud xnBudA xnBudAC reaches_mono isReturn_mono)
 
 theorem ESl.keep {M1 M3 : Memory} {sp st : Nat} {r29 : BitVec 64} {ret zp zc xp xl xc yp ylen mp n mc len0 : Nat}
     (h : ESl M1 sp st r29 ret zp zc xp xl xc yp ylen mp n mc len0)
@@ -24,6 +24,19 @@ theorem ESl.keep {M1 M3 : Memory} {sp st : Nat} {r29 : BitVec 64} {ret zp zc xp 
     by rw [hk _ (by omega)]; exact a10, by rw [hk _ (by omega)]; exact a11, by rw [hk _ (by omega)]; exact a12,
     by rw [hk _ (by omega)]; exact a13, by rw [hk _ (by omega)]; exact a14, by rw [hk _ (by omega)]; exact a15,
     by rw [hk _ (by omega)]; exact a16, by rw [hk _ (by omega)]; exact a17⟩
+
+/-- what window-4 guarantees from its entry (memory `s.mem`) on: the memory `M` at `xnE` (after the inline
+`stk.reserve(23n)`) with its frame from `s.mem`, and `XnPost` anchored at `M` -/
+@[reducible] def EnPost (R : RtInv) (b : Nat) (L : List (Nat × Nat))
+    (K g sp st zp zc xp xl yp ylen mp n mc costD : Nat) (s s' : State) : Prop :=
+  ∃ Xv', Xv' % s.mem.readLE mp (8 * n) = s.mem.readLE xp (8 * xl) % s.mem.readLE mp (8 * n) ∧ Xv' < Exp.B ^ n ∧
+  ∃ (M : Memory) (L1 : List (Nat × Nat)) (b1 : Nat),
+    MemFrame s.mem M (R.rt ++ [(sp - K, sp + 920), (sp + 936, sp + 1040), (st, st + 24)]) ∧
+    LiveFrame s.mem M L [(st, st + 24)] ∧ LiveExt R L L1 ∧ b - stackNatCost (stLen s.mem st) (23 * n) ≤ b1 ∧
+    ArrKF R L st s.mem M ∧ stLen M st = stLen s.mem st + StackNat.rnd (23 * n) ∧
+    XnPost R L1 K (b1 - W4Pro.xnPre n costD (stLen s.mem st + StackNat.rnd (23 * n)) (xl - n + 1)) M g sp n mp mc
+      (s.mem.readLE mp (8 * n)) Xv' yp ylen (s.mem.readLE yp (8 * ylen)) (s.mem.readLE (yp + 8 * (ylen - 1)) 8) zp zc
+      st (stLen s.mem st) (stLen s.mem st + StackNat.rnd (23 * n)) (s.regs 18) (s.regs 29) s'
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
@@ -57,6 +70,8 @@ theorem enStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
       xnBudA n costD (stLen s.mem st + StackNat.rnd (23 * n)) (xl - n + 1) ≤ b)
     (hbAC : stackNatCost (stLen s.mem st) (23 * n) +
       xnBudAC n costD (stLen s.mem st + StackNat.rnd (23 * n)) (xl - n + 1) ≤ b)
+    (hbP : stackNatCost (stLen s.mem st) (23 * n) +
+      W4Pro.xnPre n costD (stLen s.mem st + StackNat.rnd (23 * n)) (xl - n + 1) ≤ b)
     (hpc : s.pc = BitVec.ofNat 64 fnE)
     (h0 : s.regs 0 = BitVec.ofNat 64 zp) (h2 : s.regs 2 = BitVec.ofNat 64 zc)
     (h3 : s.regs 3 = BitVec.ofNat 64 st) (h4 : s.regs 4 = BitVec.ofNat 64 xp) (h5 : s.regs 5 = BitVec.ofNat 64 xl)
@@ -64,10 +79,7 @@ theorem enStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     (h10 : s.regs 10 = BitVec.ofNat 64 mp) (h11 : s.regs 11 = BitVec.ofNat 64 n)
     (h12 : s.regs 12 = BitVec.ofNat 64 mc) (h30 : s.regs 30 = BitVec.ofNat 64 ret) :
     Reaches ((LibExp.program.link impl).withExit ret) s
-      (IsReturn (fun s' => ∃ Xv', Xv' % s.mem.readLE mp (8 * n) = s.mem.readLE xp (8 * xl) % s.mem.readLE mp (8 * n) ∧
-        XnPost R g sp n mp mc (s.mem.readLE mp (8 * n)) Xv' yp ylen (s.mem.readLE yp (8 * ylen))
-          (s.mem.readLE (yp + 8 * (ylen - 1)) 8) zp zc st (stLen s.mem st) (stLen s.mem st + StackNat.rnd (23 * n))
-          (s.regs 18) (s.regs 29) s')) := by
+      (IsReturn (EnPost R b L K g sp st zp zc xp xl yp ylen mp n mc costD s)) := by
   have hP' := hP
   obtain ⟨he, hK20, hgl, hro, hty, hn, hn128, hmc0, hmc', hmO, hma, hm48, hmN, hyO, hya, hy48, hyN, hyl, hyl',
     hxO, hxa, hx48, hxN, hxl, hxl', hxp, hxc, hzp, hzc, hz, hgO, hsok, hstw, hstg, harr, hwbf, hwbA, hstf, hl16,
@@ -93,7 +105,9 @@ theorem enStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     (by omega) (BitVec.isLt _) (by omega) (by omega) s hpc hs1 h0 e1 h2 h3 h4 h5 h6 h7 h8 e9 h10 h11 h12 hs28 rfl h30
     rfl ?KJ ?KG
   case KJ =>
-    intro hk S1 M1 c1 c2 c3 c4 c5 c6 c7 c8 c9 c10 c11 c12 c13 c14 c15 c16 c17 hF1 hrg1 hsl1
+    intro hk S1 M1 c1 c2 c3 c4 c5 c6 c7 c8 c9 c10 c11 c12 c13 c14 c15 c16 c17 hF1p hrg1 hsl1
+    have hF1 : MemFrame s.mem M1 [(sp - 8, sp + 1040)] := hF1p.mono fun a k ho => by
+      simp only [outside_cons, outside_nil, and_true] at ho ⊢; omega
     have hinvM1 : R.inv b L g (view R.rt L M1) := RtInv.inv_frame hF1 (fun r hr => by
       simp only [List.mem_singleton] at hr; subst hr; simp only
       exact hout.of_sub (by omega) (by omega)) hinv
@@ -109,25 +123,34 @@ theorem enStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
       exact ⟨by omega, ho.1, ho.2.2, by omega⟩
     have hLF : LiveFrame s.mem M3 L [(st, st + 24)] :=
       (LiveFrame.of_win hF1 (LiveSep.sub_win hLs (by omega) (by omega))).trans hLF3 fun _ _ h => h
+    have hFp : MemFrame s.mem M3 (R.rt ++ [(sp - K, sp + 920), (sp + 936, sp + 1040), (st, st + 24)]) := by
+      refine MemFrame.trans hF1p hF3 fun a k ho => ?_
+      simp only [outside_append, outside_cons, outside_nil, and_true] at ho ⊢
+      exact ⟨⟨by omega, by omega⟩, ho.1, ho.2.2.2, by omega⟩
     have hsl3 : ESl M3 sp st (s.regs 29) ret zp zc xp xl xc yp ylen mp n mc (stLen s.mem st) := by
       refine ESl.keep hsl1 (fun a ha => hF3.readLE a 8 ?_) (by omega)
       simp only [outside_append, outside_cons, outside_nil, and_true]
       exact ⟨hout.of_sub (by omega) (by omega), by omega, by omega⟩
     have hcap3 : stLen M3 st ≤ stCap M3 st := by simp only [stLen, stCap] at q2 q3 hk ⊢; omega
     have hc3 : stCap M3 st < 2 ^ 40 := by simp only [stCap] at q3 ⊢; rw [q3]; exact k7
-    refine atXnE impl hap R hclr hmv hmk hSN nsD stkD costD hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL ret hret b L K g sp
+    refine reaches_mono (atXnE impl hap R hclr hmv hmk hSN nsD stkD costD hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL ret
+      hret b L K g sp
       st zp zc xp xl xc yp ylen mp n mc s (s.regs 18) (s.regs 29) (BitVec.ofNat 64 (sp - 8)) hP hKD hKL hMo hM1 hslen
-      hbC hbB hbA hbAC M3 L b hF hLF (hrg3.trans hrg1) (LiveExt.refl R L) (Or.inl ⟨q1, q3⟩) q2 hcap3 hc3 ?_ hsl3
+      hbC hbB hbA hbAC hbP M3 L b hF hLF (hrg3.trans hrg1) (LiveExt.refl R L) (Or.inl ⟨q1, q3⟩) q2 hcap3 hc3 ?_ hsl3
       (by omega) hinv3 S3 d1 d2 d3
       (d4.trans c4) (d5.trans c5) (d6.trans c6) (d7.trans c7) (d8.trans c8) (d9.trans c9) (d10.trans c14) d11
-      (d12.trans c16) d13
+      (d12.trans c16) d13)
+      (isReturn_mono fun s' ⟨Xv', h1, h1', h2⟩ => ⟨Xv', h1, h1', M3, L, b, hFp, hLF, LiveExt.refl R L, Nat.sub_le _ _,
+        Or.inl ⟨q1, q3⟩, q2, h2⟩)
     intro hc
     simp only [stW, stCap] at q1 q3 hc ⊢
     rw [q3] at hc; rw [q1, q3]
     obtain ⟨a1, a2, a3, a4⟩ := k5 hc
     exact ⟨a1, a2, by rw [hF.accessible]; exact a3, a4⟩
   case KG =>
-    intro hk S1 M1 c1 c2 c3 c4 c5 c6 c7 c8 c9 c10 c11 c12 hF1 hrg1 hsl1 q328 q192 q216 q320
+    intro hk S1 M1 c1 c2 c3 c4 c5 c6 c7 c8 c9 c10 c11 c12 hF1p hrg1 hsl1 q328 q192 q216 q320
+    have hF1 : MemFrame s.mem M1 [(sp - 8, sp + 1040)] := hF1p.mono fun a k ho => by
+      simp only [outside_cons, outside_nil, and_true] at ho ⊢; omega
     have hsl1' := hsl1
     obtain ⟨-, -, -, -, -, -, -, -, a9, a10, a11, a12, -, a14, a15, a16, -⟩ := hsl1'
     have hcostG : 8 * growCap8 (stLen s.mem st + StackNat.rnd (23 * n)) (stCap s.mem st) ≤
@@ -151,6 +174,10 @@ theorem enStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
       simp only [outside_append, outside_cons, outside_nil, and_true] at ho ⊢
       exact ⟨by omega, ho.1, by omega, by omega⟩
     have hinvM2 := hinv2
+    have hF12p : MemFrame s.mem M2 (R.rt ++ [(sp - K, sp + 920), (sp + 936, sp + 1040)]) := by
+      refine MemFrame.trans hF1p hF2 fun a k ho => ?_
+      simp only [outside_append, outside_cons, outside_nil, and_true] at ho ⊢
+      exact ⟨⟨by omega, by omega⟩, ho.1, by omega, by omega⟩
     refine enJn impl R hwb ret hret _ (b - 8 * growCap8 (stLen s.mem st + StackNat.rnd (23 * n)) (stCap s.mem st))
       (L ++ [(p, p + 8 * growCap8 (stLen s.mem st + StackNat.rnd (23 * n)) (stCap s.mem st))]) g sp st p
       (stLen s.mem st) (growCap8 (stLen s.mem st + StackNat.rnd (23 * n)) (stCap s.mem st)) n M2 hal (by omega)
@@ -178,12 +205,18 @@ theorem enStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
         exact ⟨hout.of_sub (by omega) (by omega), by omega, by omega⟩
     have hcap3 : stLen M3 st ≤ stCap M3 st := by simp only [stLen, stCap] at q2 q3 hgcl ⊢; omega
     have hc3 : stCap M3 st < 2 ^ 40 := by simp only [stCap] at q3 ⊢; rw [q3]; exact hgcb
-    refine atXnE impl hap R hclr hmv hmk hSN nsD stkD costD hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL ret hret b L K g sp
+    have hkfG : ArrKF R L st s.mem M3 := Or.inr (by simp only [stW, stCap] at q1 q3 ⊢; rw [q1, q3]; exact ⟨hpin, hapL⟩)
+    have hFp : MemFrame s.mem M3 (R.rt ++ [(sp - K, sp + 920), (sp + 936, sp + 1040), (st, st + 24)]) := by
+      refine MemFrame.trans hF12p hF3 fun a k ho => ?_
+      simp only [outside_append, outside_cons, outside_nil, and_true] at ho ⊢
+      exact ⟨⟨ho.1, by omega, by omega⟩, ho.1, ho.2.2.2, by omega⟩
+    refine reaches_mono (atXnE impl hap R hclr hmv hmk hSN nsD stkD costD hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL ret
+      hret b L K g sp
       st zp zc xp xl xc yp ylen mp n mc s (s.regs 18) (s.regs 29) (BitVec.ofNat 64 (sp - 8)) hP hKD hKL hMo hM1 hslen
-      hbC hbB hbA hbAC M3 _ _ hF hLF (hrg3.trans (hrg2.trans hrg1)) hx (Or.inr ?_) q2 hcap3 hc3 ?_ hsl3
+      hbC hbB hbA hbAC hbP M3 _ _ hF hLF (hrg3.trans (hrg2.trans hrg1)) hx hkfG q2 hcap3 hc3 ?_ hsl3
       (by omega) hinv3 S3 e1 e2 e3 (e4.trans d4) (e5.trans d5) (e6.trans d6) (e7.trans d7) (e8.trans d8) (e9.trans d9)
-      ((e10.trans d14).trans c9) e11 ((e12.trans d16).trans c11) e13
-    · simp only [stW, stCap] at q1 q3 ⊢; rw [q1, q3]; exact ⟨hpin, hapL⟩
+      ((e10.trans d14).trans c9) e11 ((e12.trans d16).trans c11) e13)
+      (isReturn_mono fun s' ⟨Xv', h1, h1', h2⟩ => ⟨Xv', h1, h1', M3, _, _, hFp, hLF, hx, Nat.sub_le_sub_left hcostG _, hkfG, q2, h2⟩)
     · intro hc
       simp only [stW, stCap] at q1 q3 hc ⊢
       rw [q1, q3]

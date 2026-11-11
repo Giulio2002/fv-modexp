@@ -39,6 +39,8 @@ theorem atXnE (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
       xnBudA n costD (stLen s.mem st + StackNat.rnd (23 * n)) (xl - n + 1) ≤ b)
     (hbAC : stackNatCost (stLen s.mem st) (23 * n) +
       xnBudAC n costD (stLen s.mem st + StackNat.rnd (23 * n)) (xl - n + 1) ≤ b)
+    (hbP : stackNatCost (stLen s.mem st) (23 * n) +
+      W4Pro.xnPre n costD (stLen s.mem st + StackNat.rnd (23 * n)) (xl - n + 1) ≤ b)
     (M : Memory) (L1 : List (Nat × Nat)) (b1 : Nat)
     (hF : MemFrame s.mem M (R.rt ++ [(sp - K, sp + 1040), (st, st + 24)]))
     (hLF : LiveFrame s.mem M L [(st, st + 24)]) (hrg : M.regions = s.mem.regions) (hx : LiveExt R L L1)
@@ -53,7 +55,8 @@ theorem atXnE (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = f29) (hmem : S.mem = M) :
     Reaches ((LibExp.program.link impl).withExit ret) S
       (IsReturn (fun s' => ∃ Xv', Xv' % s.mem.readLE mp (8 * n) = s.mem.readLE xp (8 * xl) % s.mem.readLE mp (8 * n) ∧
-        XnPost R g sp n mp mc (s.mem.readLE mp (8 * n)) Xv' yp ylen (s.mem.readLE yp (8 * ylen))
+        Xv' < Exp.B ^ n ∧
+        XnPost R L1 K (b1 - W4Pro.xnPre n costD (stLen s.mem st + StackNat.rnd (23 * n)) (xl - n + 1)) M g sp n mp mc (s.mem.readLE mp (8 * n)) Xv' yp ylen (s.mem.readLE yp (8 * ylen))
           (s.mem.readLE (yp + 8 * (ylen - 1)) 8) zp zc st (stLen s.mem st) (stLen s.mem st + StackNat.rnd (23 * n))
           r18 r29 s')) := by
   have hC := ctxB_of hP hF hLF hrg hx hkf hlen hcap hc40 hnl hsl
@@ -70,7 +73,9 @@ theorem atXnE (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     (s.mem.readLE (yp + 8 * (ylen - 1)) 8) zp zc st (stLen s.mem st) (stLen s.mem st + StackNat.rnd (23 * n)) xp xl xc
     M r18 r29 f29 hKD hKL hC hlen ?_ (by rw [hF.accessible]; exact hxa) hx48 ?_ hxl hxl' hxc
     (hrd (Nat.le_refl _) (Nat.le_refl _)) (FvModexp.Expmc.readLE_lt_B _ _ _) hMo hM1 hslen (by omega) (by omega)
-    (by omega) (by omega) hinv1 q10 q11 q12 S hpc hsp h3 h4 h5 h6 h8 h10 h11 h18 h28 h29 hmem
+    (by omega) (by omega) hinv1 q10 q11 q12 L1 _ M (W4Pro.Anc.refl R L1 sp K st M)
+    (W4Pro.bP (W4Pro.xnPre_ge1 _ _ _ _) hbP hb1) (W4Pro.bP (W4Pro.xnPre_ge2 _ _ _ _) hbP hb1)
+    (W4Pro.bP (W4Pro.xnPre_ge3 _ _ _ _) hbP hb1) (W4Pro.bP (W4Pro.xnPre_ge4 _ _ _ _) hbP hb1) (Nat.le_of_eq hlen) S hpc hsp h3 h4 h5 h6 h8 h10 h11 h18 h28 h29 hmem
   · have := obj_of_OE hxO hx hkf hl0 hcap; rwa [hlen] at this
   · rcases hxN with h | h
     · exact Or.inl h

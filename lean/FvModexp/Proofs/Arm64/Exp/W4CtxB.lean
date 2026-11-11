@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Arm64.Exp.W4Sn1
+import FvModexp.Proofs.Arm64.Exp.W4Anc
 
 /-!
 # window-4 prologue (arm64): the context without `x` (`CtxB`, before `x` is spilled) and its transfer (`KeepsB`)
@@ -195,5 +196,13 @@ theorem Keeps.toB {R : RtInv} {L L' : List (Nat × Nat)} {g sp K st l0 : Nat} {e
     (h : Keeps R L L' g sp K st l0 ex M M') : KeepsB R L L' g sp K st l0 ex M M' := by
   obtain ⟨a1, a2, a3, a4, a5, a6⟩ := h
   exact ⟨a1, a2, a3, a4, fun j hj => a5 j (by omega), a6⟩
+
+/-- `Anc` through a `KeepsB` step -/
+theorem Anc.keepB {R : RtInv} {L0 L L' : List (Nat × Nat)} {g sp K st l0 : Nat} {ex : List (Nat × Nat)}
+    {M0 M M' : Memory} (hA : Anc R L0 sp K st M0 L M) (hk : KeepsB R L L' g sp K st l0 ex M M')
+    (hl0 : stLen M0 st ≤ l0) (hl0' : l0 ≤ stCap M st) (hex : ∀ e ∈ ex, ALoc R L0 st M0 e)
+    (hLs : LiveSep L [(sp - K, sp + 1040)]) (hK : K ≤ sp) : Anc R L0 sp K st M0 L' M' :=
+  Anc.step hA hk.1 hk.2.1 hk.2.2.2.1 (hk.2.2.2.2.1 920 (by omega)) (hk.2.2.2.2.1 928 (by omega))
+    hk.2.2.2.2.2.2.2.2.2.1 hk.2.2.2.2.2.2.2.2.2.2.1 hl0 hl0' hex hLs hK
 
 end FvModexp.Arm64.W4Pro

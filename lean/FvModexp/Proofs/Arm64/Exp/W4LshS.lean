@@ -53,11 +53,15 @@ theorem lshStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (hbud : makeCost (1 + 128 * n / 64 + 1) + (stackNatCost (stLen M st) (2 * n) + (costD + (blockSize (8 * n) true +
       stackNatCost (stLen M st + StackNat.rnd (2 * n)) (17 * n) + blockSize (8 * (2 * n + 4)) true))) ≤ b)
     (hinv : R.inv b L g (view R.rt L M))
+    (L0 : List (Nat × Nat)) (bA : Nat) (M0 : Memory) (hAn : Anc R L0 sp K st M0 L M)
+    (hbA : bA + (makeCost (1 + 128 * n / 64 + 1) + (stackNatCost (stLen M st) (2 * n) + costD)) ≤ b)
+    (hl0A : stLen M0 st ≤ l0) (hexA : ALoc R L0 st M0 (rrp, 8 * (2 * n)))
     (S : State) (hpc : S.pc = BitVec.ofNat 64 sn1Ret) (hsp : S.sp = BitVec.ofNat 64 sp)
     (h0 : S.regs 0 = BitVec.ofNat 64 rrp) (h2 : S.regs 2 = BitVec.ofNat 64 (2 * n))
     (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = f29) (hmem : S.mem = M) :
     Reaches ((LibExp.program.link impl).withExit ret) S
-      (IsReturn (fun s' => ∃ zzp zzc : Nat, DivRetPost R g sp n mp mc Mv Xv t yp ylen Y yi zp zc st n0 zzp zzc
+      (IsReturn (fun s' => ∃ zzp zzc : Nat, (2 * n + 1 ≤ zzc ∧ InRanges zzp (8 * zzc) R.rt ∧ ApartAll zzp (8 * zzc) L0) ∧
+        DivRetPost R L0 K bA M0 g sp n mp mc Mv Xv t yp ylen Y yi zp zc st n0 zzp zzc
         (stLen M st + StackNat.rnd (2 * n)) r18 r29 s')) := by
   have hC0 := hC
   obtain ⟨-, hce, hK, -, hn, hn128, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -,
@@ -82,6 +86,11 @@ theorem lshStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (Apart.mono hrW (by omega) (Nat.le_refl _)) (Apart.mono hrG (by omega) (Nat.le_refl _))
     (Apart.mono hrS (by omega) (Nat.le_refl _)) (M.accessible_sub hracc (Or.inr rfl) (Nat.le_refl _) (by omega))
   have hC1 := Ctx.keep hC hk1
+  have hl0c : l0 ≤ stCap M st := by
+    obtain ⟨-, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, hs, -, h1, -⟩ := hC
+    exact Nat.le_trans h1 hs.2.2.2.2.2.1
+  have hAn1 := Anc.keep hAn hk1 hl0A hl0c (fun e he => by
+    simp only [List.mem_singleton] at he; subst he; exact hexA) hce.2.2.2.2.2.2.2.2.2.2.1 hK0
   have hinv1 : R.inv b L g (view R.rt L M1) := by
     refine FvModexp.Expmc.inv_frame hmf (fun r hr => ?_) hinv
     simp only [List.mem_cons, List.not_mem_nil, or_false] at hr
@@ -100,6 +109,8 @@ theorem lshStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (fun S2 M2 L2 b2 p l c f1 f2 f3 f4 f5 f6 f7 f8 f9 hD => ?_)
   obtain ⟨hk2, e0', e1', e2'⟩ := keeps_lsh hC1 hKL hD
   have hC2 := Ctx.keep hC1 hk2
+  have hAn2 := Anc.keep hAn1 hk2 hl0A (by rw [k2]; exact hl0c) (fun e he => by
+    simp only [List.mem_singleton] at he; subst he; exact hexA) hC1.2.1.2.2.2.2.2.2.2.2.2.2.1 hK0
   obtain ⟨hl, hZ, hzzK, hzl, hzv, hzzr, hc40⟩ := zz_of_lsh hC1 hrH q1 e0' e2' hD
   have hD0 := hD
   obtain ⟨-, -, hx2, hb2, hinv2, hF2, -, -⟩ := hD0
@@ -119,7 +130,9 @@ theorem lshStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (by rw [sl 224 (by omega) (by omega), rs1 224 (by omega) (by omega)]; exact r224)
     (by rw [sl 128 (by omega) (by omega), rs1 128 (by omega) (by omega)]; exact r128)
     hkk hmB hMo hM1 (by rw [hlenE]; exact hslen) (by rw [hlenE]; omega) hinv2
+    L0 bA M0 hAn2 (by rw [hlenE]; exact ble2 hbA hb2) hl0A hexA
     S2 f1 f2 f3 (by rw [f4, hl]) f5 f6 f7 f8 f9)
-    (isReturn_mono fun s' h => ⟨p, c, by rw [hlenE] at h; exact h⟩)
+    (isReturn_mono fun s' h => ⟨p, c, ⟨hzl, (hD.1.2.2.2.2.2.2 (Nat.succ_pos _) (Nat.lt_of_lt_of_le (Nat.succ_pos _) hzl)).1,
+      apartAll_ext hAn.1 (hD.1.2.2.2.2.2.2 (Nat.succ_pos _) (Nat.lt_of_lt_of_le (Nat.succ_pos _) hzl)).2⟩, by rw [hlenE] at h; exact h⟩)
 
 end FvModexp.Arm64.W4Pro
