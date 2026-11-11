@@ -1,0 +1,1 @@
+set_option synthInstance.maxHeartbeats 0

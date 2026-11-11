@@ -17,7 +17,9 @@
 4. Hidden modules (N13 LA2): lean/lakefile.toml may declare only the known package (one `lean_lib` FvModexp with no srcDir/roots/globs/..., one `require`
    janus from the pinned git); symlinks under lean/ are rejected (Lake follows them); the compile-time-command token lint (1) also runs over EVERY other
    .lean file in the repo (except .git, .lake, build/ and the regression fixtures scripts/lint-tests/).
-Usage: scripts/lint_source.py [--imports-json OUT] [--update-whitelist] ; exit 1 on any finding.
+5. Heartbeats (BRIEF HEARTBEAT RULE): every `maxHeartbeats` option (incl. `synthInstance.maxHeartbeats`) needs a literal value in
+   1..64000000; `0` (unlimited) is forbidden.  Regression fixtures: scripts/lint-tests/heartbeats (`--selftest`, run by no-sorry.sh).
+Usage: scripts/lint_source.py [--imports-json OUT] [--update-whitelist] [--selftest] ; exit 1 on any finding.
 """
 import hashlib, json, os, re, subprocess, sys
 try:
@@ -185,8 +187,42 @@ def parse_imports(files):
     return res
 
 
+HB_MAX = 64000000
+HB_RX = re.compile(r'(?<![\w.\'])((?:[\w]+\.)*maxHeartbeats)\b\s*(\S*)')
+
+
+def heartbeat_hits(src):
+    """(line, why) for every `maxHeartbeats` option in comment/string-stripped source whose value is not a literal in 1..64000000
+    (BRIEF HEARTBEAT RULE: `maxHeartbeats 0` = no limit is forbidden; raises up to 64,000,000 are allowed)"""
+    res = []
+    for m in HB_RX.finditer(src):
+        name, val = m.group(1), m.group(2)
+        line = src.count('\n', 0, m.start()) + 1
+        v = val.replace('_', '')
+        if not v.isdigit():
+            res.append((line, '`%s` without a literal value (`%s`)' % (name, val)))
+        elif int(v) == 0:
+            res.append((line, '`%s 0` (unlimited heartbeats are forbidden)' % name))
+        elif int(v) > HB_MAX:
+            res.append((line, '`%s %s` exceeds %d' % (name, val, HB_MAX)))
+    return res
+
+
+def selftest():
+    """regression fixtures scripts/lint-tests/heartbeats/{bad,good}*.lean: every bad file must be flagged, no good file may be"""
+    d = 'scripts/lint-tests/heartbeats'; fail = 0
+    for f in sorted(os.listdir(d)):
+        hits = heartbeat_hits(strip(open(os.path.join(d, f)).read()))
+        if f.startswith('bad') and not hits: print('SELFTEST FAIL: %s not flagged' % f); fail = 1
+        if f.startswith('good') and hits: print('SELFTEST FAIL: %s flagged: %s' % (f, hits)); fail = 1
+    print('lint_source selftest: %s' % ('FAILED' if fail else 'OK'))
+    return fail
+
+
 def main():
     fail = 0
+    if len(sys.argv) > 1 and sys.argv[1] == '--selftest':
+        return selftest()
     files = lean_files()
     wl = load_whitelist(); release = bool(os.environ.get('RELEASE')); metafiles = {}
     if len(sys.argv) > 1 and sys.argv[1] == '--update-whitelist':
@@ -209,6 +245,8 @@ def main():
         for kind, name, off in attributes(s):
             if name in ATTR_HARD:
                 print('FAIL: %s:%d: %s attribute `%s`' % (f, s.count('\n', 0, off) + 1, kind, name)); fail = 1
+        for line, why in heartbeat_hits(s):
+            print('FAIL: %s:%d: %s' % (f, line, why)); fail = 1
         mh = meta_hits(s)
         if mh: metafiles[f] = mh
         if mh and f not in wl:
