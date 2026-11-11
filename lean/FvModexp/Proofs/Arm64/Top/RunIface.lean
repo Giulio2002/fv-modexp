@@ -234,10 +234,15 @@ def ExpBudget (w yW : Nat) : Nat := (8 * (64 * yW) + 128) * opCost w
 /-- Budget of `x.Bytes()` for `x` of `w` words: one `make([]byte, 8 w)`. -/
 def BytesBudget (w : Nat) : Nat := allocCost (8 * w)
 
-/-- What every spec returns about the receiver `z` (written: its header and a new or reused array) and the runtime. -/
+/-- What every spec returns about the receiver `z` (written: its header and a new or reused array) and the runtime:
+the array of the result is the old one (same pointer and capacity) or a fresh runtime object apart from `L`. -/
 def IntPost (R : RtInv) (b B : Nat) (L : List (Nat × Nat)) (stk above : Nat) (z : Nat) (v : Nat) (s s' : State) : Prop :=
   IntV s'.mem z = v ∧ ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b - B ≤ b' ∧
     R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem) ∧ IntOK s'.mem R L' z ∧
+    (0 < s'.mem.readLE (z + 24) 8 →
+      (s'.mem.readLE (z + 8) 8 = s.mem.readLE (z + 8) 8 ∧ s'.mem.readLE (z + 24) 8 = s.mem.readLE (z + 24) 8) ∨
+      (InRanges (s'.mem.readLE (z + 8) 8) (8 * s'.mem.readLE (z + 24) 8) R.rt ∧
+        ApartAll (s'.mem.readLE (z + 8) 8) (8 * s'.mem.readLE (z + 24) 8) L)) ∧
     MemFrame s.mem s'.mem (R.rt ++ win s stk above ++ [(z, z + 32),
       (s.mem.readLE (z + 8) 8, s.mem.readLE (z + 8) 8 + 8 * s.mem.readLE (z + 24) 8)]) ∧
     LiveFrame s.mem s'.mem L [(z, z + 32),
@@ -276,7 +281,8 @@ def BytesSpec (impl : List Segment) (R : RtInv) (stk above : Nat) : Prop :=
       (fun s s' => ∃ p n c : Nat, (s'.regs 0).toNat = p ∧ (s'.regs 1).toNat = n ∧ (s'.regs 2).toNat = c ∧ n ≤ c ∧
         beVal s'.mem p n = IntV s.mem x.toNat ∧ (n = 0 ∨ (s'.mem.bytes p).toNat ≠ 0) ∧
         ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b - (BytesBudget (lenW s.mem x.toNat)) ≤ b' ∧
-          R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem) ∧ (0 < n → Held R L' p n) ∧
+          R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem) ∧ (0 < n → InRanges p n L' ∧ InRanges p n R.rt ∧ ApartAll p n L ∧
+            s'.mem.accessible p n true = true ∧ p + n ≤ 2 ^ 48) ∧
           MemFrame s.mem s'.mem (R.rt ++ win s stk above) ∧ LiveFrame s.mem s'.mem L [])
 
 end FvModexp.Arm64.RunIface

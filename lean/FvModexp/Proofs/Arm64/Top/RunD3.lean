@@ -38,7 +38,7 @@ theorem d3x (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
       min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96) := by split <;> omega
   have hS1 : (if len.toNat - 96 < hdrV s p len 1 + hdrV s p len 0 then BitVec.ofNat 64 (len.toNat - 96)
       else BitVec.ofNat 64 (hdrV s p len 1 + hdrV s p len 0)) = BitVec.ofNat 64 (min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96)) := by
-    split <;> (congr 1; omega)
+    rw [← hS1n, apply_ite (BitVec.ofNat 64)]
   have hadd : BitVec.ofNat 64 (hdrV s p len 2) + BitVec.ofNat 64 (min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96)) =
       BitVec.ofNat 64 (min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96) + hdrV s p len 2) := bv_add_of_lt _ _ (by omega)
   have hmod : (hdrV s p len 2 + min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96)) % 18446744073709551616 = min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96) + hdrV s p len 2 := by
@@ -75,7 +75,7 @@ theorem d3x (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     have hoffc : (96 < len.toNat ∧ off = 96) ∨ (len.toNat ≤ 96 ∧ off = 0) := by
       subst hoffd; simp only [inOff]; split <;> omega
     rw [hoffd] at hs5 hs6
-    have hcap : min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96) ≤ cp.toNat - off := by omega
+    have hcap : min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96) ≤ cp.toNat - off := by clear hpw hcw hga hS1n hmod hk1a hk2a; omega
     obtain ⟨mN, hmNd⟩ : ∃ mN, (if min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96) < cp.toNat - off then
         min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96) else 0) = mN := ⟨_, rfl⟩
     have hmN : mN ≤ min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96) ∧ (hdrV s p len 2 = 0 ∨ mN = min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96)) := by
@@ -103,10 +103,10 @@ theorem d3x (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
         Nat.mod_eq_of_lt (a := p.toNat + off + mN) (by omega)]; omega
     janus_run [hm1, hm2, hm3, hm4, hm5, hm6, hs1, hs2, hs3, hs4, hs5, hs6, hk1a, hk1b, hk2a, hS1, hS1n, hadd, hmod, hc, hIe, hmask, hsub, hcsub, hsrc,
       toInt_ite, toNat_ite, toInt_small] until [segAddr Extracted.program fn + 0x750]
-    have hsrcL : p.toNat + off + mN + hdrV s p len 2 ≤ p.toNat + len.toNat := by omega
+    have hsrcL : p.toNat + off + mN + hdrV s p len 2 ≤ p.toNat + len.toNat := by clear hpw hcw hga hS1n hmod hk1a hk2a; omega
     have hH : InRanges (p.toNat + off + mN) (hdrV s p len 2) L1 ∨ Outside (p.toNat + off + mN) (hdrV s p len 2) R.rt :=
       hext.held (hheld.sub (by omega) hsrcL)
-    have hB48 : p.toNat + off + mN + hdrV s p len 2 ≤ 2 ^ 48 := by omega
+    have hB48 : p.toNat + off + mN + hdrV s p len 2 ≤ 2 ^ 48 := by clear hpw hcw hga hS1n hmod hk1a hk2a; omega
     have hAcc : s.mem.accessible (p.toNat + off + mN) (hdrV s p len 2) false = true :=
       Memory.accessible_mono _ hpacc (by omega) hsrcL
     have hW : p.toNat + off + mN + hdrV s p len 2 ≤ BitVec.toNat s.sp - 624 - 4160 ∨
@@ -132,6 +132,7 @@ theorem d3x (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
       (hext2.liveSep hLsL1 hwrt) ?_ ?_ ?_) (by janus_simp [hp2]) (by janus_simp [hn2]) (by janus_simp)
     · janus_callpre
     · have hD : allocCost (8 * 132) ≤ dCost := Nat.le_add_left _ _
+      clear hoffc hmN hcap hdir hdir0 hpw hcw hga hW hsrcL hB48 hS1n hmod hk1a hk2a hS1 hadd hmask hsub hcsub hsrc hH hAcc
       omega
     · dsimp only
       rw [view_writeLE_out (hout.of_sub (by omega) (by omega)), view_writeLE_out (hout.of_sub (by omega) (by omega)),
@@ -145,12 +146,15 @@ theorem d3x (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     · intro j hj
       dsimp only
       rcases (show j = 0 ∨ j = 1 ∨ j = 2 by omega) with rfl | rfl | rfl
-      · exact OpDone.transport (hop 0 (by omega)) (by janus_simp [opAt]) (by janus_simp [opAt]) (by janus_simp [opAt])
+      · clear hoffc hmN hcap hdir hdir0 hpw hcw hga hW hsrcL hB48 hS1n hmod hk1a hk2a hS1 hadd hmask hsub hcsub hsrc hH hAcc
+        exact OpDone.transport (hop 0 (by omega)) (by janus_simp [opAt]) (by janus_simp [opAt]) (by janus_simp [opAt])
           (by janus_simp [opAt]) (hLFS.trans (LiveFrame.of_win (by simp only [win, stk]; janus_frame)
             (hext2.liveSep hLsL1 hwrt)) (fun _ _ h => hext2.inRanges_old h)) (fun _ _ h => hext2.inRanges_old h)
-      · exact OpDone.transport (hop 1 (by omega)) (by janus_simp [opAt]) (by janus_simp [opAt]) (by janus_simp [opAt])
+      · clear hoffc hmN hcap hdir hdir0 hpw hcw hga hW hsrcL hB48 hS1n hmod hk1a hk2a hS1 hadd hmask hsub hcsub hsrc hH hAcc
+        exact OpDone.transport (hop 1 (by omega)) (by janus_simp [opAt]) (by janus_simp [opAt]) (by janus_simp [opAt])
           (by janus_simp [opAt]) (hLFS.trans (LiveFrame.of_win (by simp only [win, stk]; janus_frame)
             (hext2.liveSep hLsL1 hwrt)) (fun _ _ h => hext2.inRanges_old h)) (fun _ _ h => hext2.inRanges_old h)
+      clear hcap hdir0 hga hW hS1n hmod hk1a hk2a hS1 hadd hmask hsub hcsub hsrc hH hAcc
       refine opDone_of (m := s'.mem) ?rd (hacc := fun a n w => by
           simp only [Memory.accessible_writeLE, hMF2.accessible, hMF.accessible])
         (by janus_simp [opAt]) (by janus_simp [hp2, opAt]) (by janus_simp [hn2, opAt]) (by janus_simp [hc2, opAt]) ?v hnorm2
