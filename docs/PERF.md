@@ -644,3 +644,18 @@ amd64 rows after the DF change (s10, janus-provfix): AddVWRow PASS 88 s / 3.0 GB
 PASS 63 s / 2.0 GB, MulAddWWRow PASS 270 s / 3.6 GB, DivWRow PASS 203 s / 5.6 GB.
 arm64 DivBasicRow: FAIL — timeout 900 s while compiling its 25 own modules (first build in cache-asm, host load ~45);
 needs trimming (DivBasicRec 141 s, DivBasicNat 90-156 s, DivBasicStep 56 s are the big ones).
+
+### divmc session 8 (2026-11-11; dev compile, host load high), basicSqr amd64 Clr/Env + DF threading
+| module (amd64) | wall / max RSS |
+|---|---|
+| Nat/BasicSqrEnv (env_of, pure) | ~1 s / 2.1 GB |
+| Nat/BasicSqrClr (memclr call → loop entry; `inv1` pure) | 25–49 s / 2.7 GB |
+| Nat/BasicMul (after `s'.df = s.df`) | 250 s / 5.5 GB (load ~40; was 155 s) — watch |
+| Nat/AddTo (re-threaded for asm DF) | 253 s / 5.5 GB under load — near the 5 min target, profile next |
+| StackNat* (df threading) | all ≤ 35 s / 2.6 GB |
+Rows (janus-provfix, cache-divmc, warm): StackNatRow arm64 PASS 64 s / 5.2 GB, amd64 PASS 149 s / 5.2 GB; BasicSqrRow arm64
+PASS 86 s / 4.1 GB (modules cached; fresh-cache check still TODO).
+Lessons: (1) janus amd64 state literals omit `df` (= the structure default `false`), so after a run `{…}.df` is `false` by
+defeq: close DF goals with `hE.df0.symm`/`rfl`, and a callee's `s'.df = {…}.df` hypothesis is `s'.df = false`.
+(2) a failing callee precondition in janus64_run costs ~15 min when the context is large: derive `LiveSep`/TLS facts in
+the callee's window form BEFORE the run (`hLs'`, `hfw`, `htP'` in BasicSqrPro).
