@@ -777,3 +777,9 @@ W4 chain rebuild after the r29/f29 split (sequential, light load): all ≤ 46 s 
 New entry modules: W4EnDefs 2 s, W4EnA 38 s / 2.4 GB, W4EnG 46 s / 2.3 GB, W4EnG2 15 s / 2.3 GB, W4EnJ 10 s / 2.2 GB,
 W4EnPre 2 s, W4EnCtx 18 s / 2.9 GB, W4EnX 4 s / 2.3 GB. W4EnJ: `refine K _ _ … rfl …` after a gcWriteBarrier2 call hung
 (> 10 min); `apply K` + bullets fixed it (649 s → 10 s).
+### expmc session 14 (arm64, dev compile, host load 30-50, wall / max RSS)
+Function-level frame plumbing: W4Anc 2.6 s / 2.2 GB, W4FunV 1.3 s, W4FunO 3.3 s / 2.3 GB, W4Fun (post_of + helpers)
+6.3 s / 2.4 GB, chain modules after adding the anchor: DivS 4.2 s, Sn2 8.8 s, LshS 18.5 s, Sn1 6.0 s, CtxB 7.8 s,
+EnCtx 14 s, En 23 s / 2.7 GB (others unchanged ±20%). LESSON: a single `by omega` in a chain lemma's context (dozens
+of unfolded Apart/stack disjunctions) made W4DivS run > 5 min (4.5 s before): every arithmetic side goal of the new
+anchor plumbing goes through tiny lemmas (`ble1/ble2/ble3/le_cap_of/cap8/le_drop/bP`, W4Anc) — no omega in big contexts.
