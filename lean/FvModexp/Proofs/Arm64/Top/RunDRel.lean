@@ -30,7 +30,7 @@ def uint8T : Nat := Extracted.dataAddr.«type:uint8#6a8c7679»
 
 /-- Operand `j` is read: `neg = 0`, the value, normal form, at most 128 limbs, `len ≤ cap`, the array a live object of
 `Lk`, aligned, accessible, below `2^48`. -/
-def OpDone (m : Memory) (s : State) (p len : BitVec 64) (Lk : List (Nat × Nat)) (j : Nat) : Prop :=
+def OpDone (R : RtInv) (m : Memory) (s : State) (p len : BitVec 64) (L Lk : List (Nat × Nat)) (j : Nat) : Prop :=
   m.readLE (opAt s j) 1 = 0 ∧ natAt m (opAt s j + 8) = opV s p len j ∧
     NatNorm m (m.readLE (opAt s j + 8) 8) (m.readLE (opAt s j + 16) 8) ∧ m.readLE (opAt s j + 16) 8 ≤ 128 ∧
     m.readLE (opAt s j + 16) 8 ≤ m.readLE (opAt s j + 24) 8 ∧
@@ -38,7 +38,9 @@ def OpDone (m : Memory) (s : State) (p len : BitVec 64) (Lk : List (Nat × Nat))
       InRanges (m.readLE (opAt s j + 8) 8) (8 * m.readLE (opAt s j + 24) 8) Lk ∧
       m.readLE (opAt s j + 8) 8 % 8 = 0 ∧
       s.mem.accessible (m.readLE (opAt s j + 8) 8) (8 * m.readLE (opAt s j + 24) 8) true = true ∧
-      m.readLE (opAt s j + 8) 8 + 8 * m.readLE (opAt s j + 24) 8 ≤ 2 ^ 48)
+      m.readLE (opAt s j + 8) 8 + 8 * m.readLE (opAt s j + 24) 8 ≤ 2 ^ 48 ∧
+      InRanges (m.readLE (opAt s j + 8) 8) (8 * m.readLE (opAt s j + 24) 8) R.rt ∧
+      ApartAll (m.readLE (opAt s j + 8) 8) (8 * m.readLE (opAt s j + 24) 8) L)
 
 /-- The budget one operand may use: the `RightPadBytes` buffer (at most 1024 bytes) and the `nat.make` of `setBytes`
 (at most 128 words). -/
@@ -98,8 +100,8 @@ theorem OpsApart.step' {m M : Memory} {s : State} {k : Nat} {L1 : List (Nat × N
   h.step hr hold (by rw [h8, h24]; exact hnew)
 
 /-- The old operands' arrays are live objects of the live set they were read in. -/
-theorem opDone_inRanges {m : Memory} {s : State} {p len : BitVec 64} {L1 : List (Nat × Nat)} {i : Nat}
-    (h : OpDone m s p len L1 i) (hc : 0 < m.readLE (opAt s i + 24) 8) :
+theorem opDone_inRanges {R : RtInv} {m : Memory} {s : State} {p len : BitVec 64} {L L1 : List (Nat × Nat)} {i : Nat}
+    (h : OpDone R m s p len L L1 i) (hc : 0 < m.readLE (opAt s i + 24) 8) :
     InRanges (m.readLE (opAt s i + 8) 8) (8 * m.readLE (opAt s i + 24) 8) L1 :=
   (h.2.2.2.2.2 hc).1
 
@@ -126,7 +128,7 @@ def RelD (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64) 
   LiveExt R L Lk ∧ b - (3 * makeCost 4 + k * dCost) ≤ bk ∧ R.inv bk Lk (s.regs 28).toNat (view R.rt Lk S.mem) ∧
   LiveSep Lk (win s stk 40) ∧
   MemFrame s.mem S.mem (R.rt ++ winA s stk 40) ∧ LiveFrame s.mem S.mem L [] ∧
-  (∀ j, j < k → OpDone S.mem s p len Lk j) ∧
+  (∀ j, j < k → OpDone R S.mem s p len L Lk j) ∧
   OpsApart S.mem s k
 
 end FvModexp.Arm64.Run
@@ -156,7 +158,7 @@ theorem RelD.mk' {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c p len cp : Bit
     (h15 : LiveExt R L Lk) (h16 : b - (3 * makeCost 4 + k * dCost) ≤ bk)
     (h17 : R.inv bk Lk (s.regs 28).toNat (view R.rt Lk S.mem)) (h18 : LiveSep Lk (win s stk 40))
     (h19 : MemFrame s.mem S.mem (R.rt ++ winA s stk 40)) (h20 : LiveFrame s.mem S.mem L [])
-    (h21 : ∀ j, j < k → OpDone S.mem s p len Lk j) (h22 : OpsApart S.mem s k) :
+    (h21 : ∀ j, j < k → OpDone R S.mem s p len L Lk j) (h22 : OpsApart S.mem s k) :
     RelD R b L c p len cp s ret k Lk bk S := by
   obtain ⟨-, -, hch, hcw, -, -, -, -, hh, hpw⟩ := hin
   have hLw := LiveFrame.of_nil' h20 (winA s stk 40)
@@ -176,16 +178,17 @@ namespace FvModexp.Arm64.Run
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
 
 /-- An operand read by `setBytes` and stored into its `big.Int` (memory `M`, equal to the callee's `m` outside the window). -/
-theorem opDone_of {R : RtInv} {L1 : List (Nat × Nat)} {m M : Memory} {s : State} {p len : BitVec 64} {j p1 n1 c1 : Nat}
+theorem opDone_of {R : RtInv} {L L1 Lc : List (Nat × Nat)} {m M : Memory} {s : State} {p len : BitVec 64} {j p1 n1 c1 : Nat}
     (hrd : ∀ a n, Outside a n (win s stk 40) → M.readLE a n = m.readLE a n)
     (hacc : ∀ a n w, m.accessible a n w = s.mem.accessible a n w)
     (hs : M.readLE (opAt s j) 1 = 0) (hs0 : M.readLE (opAt s j + 8) 8 = p1) (hs1 : M.readLE (opAt s j + 16) 8 = n1)
     (hs2 : M.readLE (opAt s j + 24) 8 = c1)
     (hv : natVal m p1 n1 = opV s p len j) (hn : NatNorm m p1 n1) (hn4 : n1 ≤ 128) (hnc : n1 ≤ c1)
-    (hfresh : 0 < c1 → InRanges p1 (8 * c1) R.rt) (hlive : NatLive m R L1 p1 c1)
-    (hout : Outside (s.sp.toNat - stk) (stk + 40) R.rt) : OpDone M s p len L1 j := by
+    (hfresh : 0 < c1 → InRanges p1 (8 * c1) R.rt ∧ ApartAll p1 (8 * c1) Lc) (hLc : LiveExt R L Lc)
+    (hlive : NatLive m R L1 p1 c1)
+    (hout : Outside (s.sp.toNat - stk) (stk + 40) R.rt) : OpDone R M s p len L L1 j := by
   have hw : 0 < c1 → Outside p1 (8 * c1) (win s stk 40) := fun hc => by
-    have := InRanges.apart (hfresh hc) hout
+    have := InRanges.apart (hfresh hc).1 hout
     simp only [win, Janus.outside_cons, Janus.outside_nil, and_true]; unfold Apart at this; omega
   have hval : natVal M p1 n1 = natVal m p1 n1 := by
     by_cases h0 : n1 = 0
@@ -205,16 +208,17 @@ theorem opDone_of {R : RtInv} {L1 : List (Nat × Nat)} {m M : Memory} {s : State
   · rw [hs0, hs2]
     intro hc
     obtain ⟨h1, h2, h3, h4⟩ := hlive hc
-    exact ⟨h2.inRanges_of_rt (hfresh hc) (by omega), h1, by rw [← hacc]; exact h3, h4⟩
+    exact ⟨h2.inRanges_of_rt (hfresh hc).1 (by omega), h1, by rw [← hacc]; exact h3, h4, (hfresh hc).1,
+      fun r hr => (hfresh hc).2 r (hLc.mem_old hr)⟩
 
 /-- An operand already read stays read: its four slots unchanged, its array unchanged (a live object), the live set grows. -/
-theorem OpDone.transport {m m' : Memory} {s : State} {p len : BitVec 64} {L1 L2 : List (Nat × Nat)} {j : Nat}
-    (h : OpDone m s p len L1 j)
+theorem OpDone.transport {R : RtInv} {m m' : Memory} {s : State} {p len : BitVec 64} {L L1 L2 : List (Nat × Nat)} {j : Nat}
+    (h : OpDone R m s p len L L1 j)
     (h0 : m'.readLE (opAt s j) 1 = m.readLE (opAt s j) 1)
     (h1 : m'.readLE (opAt s j + 8) 8 = m.readLE (opAt s j + 8) 8)
     (h2 : m'.readLE (opAt s j + 16) 8 = m.readLE (opAt s j + 16) 8)
     (h3 : m'.readLE (opAt s j + 24) 8 = m.readLE (opAt s j + 24) 8)
-    (hLF : LiveFrame m m' L1 []) (hsub : ∀ a n, InRanges a n L1 → InRanges a n L2) : OpDone m' s p len L2 j := by
+    (hLF : LiveFrame m m' L1 []) (hsub : ∀ a n, InRanges a n L1 → InRanges a n L2) : OpDone R m' s p len L L2 j := by
   obtain ⟨hneg, hv, hn, h4, hcl, hin⟩ := h
   simp only [natAt] at hv
   refine ⟨by rw [h0]; exact hneg, ?_, ?_, by rw [h2]; exact h4, by rw [h2, h3]; exact hcl, ?_⟩
@@ -229,8 +233,8 @@ theorem OpDone.transport {m m' : Memory} {s : State} {p len : BitVec 64} {L1 L2 
       · exact Or.inl hz
       · right; rw [hLF.readLE _ _ (((hin (by omega)).1).sub (by omega) (by omega)) trivial]; exact hn
   · rw [h1, h3]; intro hc
-    obtain ⟨a1, a2, a3, a4⟩ := hin hc
-    exact ⟨hsub _ _ a1, a2, a3, a4⟩
+    obtain ⟨a1, a2, a3, a4, a5, a6⟩ := hin hc
+    exact ⟨hsub _ _ a1, a2, a3, a4, a5, a6⟩
 
 end FvModexp.Arm64.Run
 

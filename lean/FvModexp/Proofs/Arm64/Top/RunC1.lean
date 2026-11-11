@@ -118,7 +118,7 @@ theorem c1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
     have hmp : mp < 2 ^ 64 := by rw [← hmpd]; exact Memory.readLE_lt _ _ 8
     have hr0 : S.regs 0 = BitVec.ofNat 64 mp := by
       apply BitVec.eq_of_toNat_eq; rw [hx0, BitVec.toNat_ofNat, Nat.mod_eq_of_lt hmp]
-    obtain ⟨-, -, hpacc, hp48⟩ := hlive (by omega)
+    obtain ⟨-, -, hpacc, hp48, -, -⟩ := hlive (by omega)
     have hA : S.mem.accessible mp (8 * ml) false = true := by
       rw [hMF.accessible]; exact Memory.accessible_read_of_write _ (Memory.accessible_mono _ hpacc (Nat.le_refl _) (by omega))
     have ht : S.mem.readLE (mp + 8 * (ml - 1)) 8 ≠ 0 := hnorm.resolve_left hml
