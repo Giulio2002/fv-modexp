@@ -1,11 +1,12 @@
 import FvModexp.Proofs.Arm64.Nat.BasicSqrClr
+import FvModexp.Proofs.Arm64.Nat.BasicSqrSmall
 
 /-!
 # `basicSqr` (arm64): the large path's prologue — `defer stk.restore(stk.save())`, `t := stk.nat(2n)` (natmul.go:119-120)
 -/
 
 open Janus Janus.Arm64 Janus.GoABI Janus.GoABI0 Janus.Tactic Janus.Spec Janus.Contracts
-open FvModexp.Arm64.Callees
+open FvModexp.Arm64.Callees Janus.Contracts.EqHashModel
 
 namespace FvModexp.Arm64.BasicSqr
 
@@ -85,8 +86,30 @@ theorem pro2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     rw [hrd st.toNat 8 (by omega), hrd (st.toNat + 8) 8 (by omega), hrd (st.toNat + 16) 8 (by omega), hPacc]
     refine ⟨a1, a2, a3, a4, ?_, a6, a7⟩
     intro h0; obtain ⟨b1, b2, b3, b4⟩ := a5 h0; exact ⟨b1, b2, by rw [hPacc]; exact b3, b4⟩
-  janus_run [p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13] until [callClr] calls [hSN' b L]
-  trace_state
-  all_goals sorry
+  obtain ⟨sv1, sv2, sv3, sv4, sv5, sv6, sv7, sv8, sv9⟩ := hpre.sv
+  have hLs' : ∀ r ∈ L, r.1 + (r.2 - r.1) ≤ s.sp.toNat - 208 - stkSN ∨ s.sp.toNat - 208 + abSN ≤ r.1 := by
+    intro r hr; have := hLs r hr; simp only [outside_cons, outside_nil, and_true] at this; omega
+  obtain ⟨q1, q2, q3, q4, q5, q6, q7⟩ := hstO
+  have q2' : InRanges st.toNat 24 L ∨ Outside st.toNat 24 R.rt := q2
+  simp only [NatLive, stW, stCap, stLen] at q5 q6 q7
+  have hn2 : 2 * xl.toNat % 18446744073709551616 = 2 * xl.toNat := Nat.mod_eq_of_lt (by omega)
+  have hlen := hpre.stlen
+  have hcost := hpre.cost
+  have hstarr := hpre.starr
+  simp only [stW, stCap, stLen] at hlen hcost hstarr
+  by_cases hc0 : 0 < s.mem.readLE (st.toNat + 16) 8
+  · have hnl := hpre.stok.2.2.2.2.1
+    simp only [NatLive, stW, stCap] at hnl
+    obtain ⟨a1, a2, a3, a4⟩ := hnl hc0
+    obtain ⟨a5, a6⟩ := hstarr hc0
+    simp only [win, outside_cons, outside_nil, and_true] at a5
+    unfold Apart at a6
+    have a2' : InRanges (s.mem.readLE st.toNat 8) (8 * s.mem.readLE (st.toNat + 16) 8) L ∨
+      Outside (s.mem.readLE st.toNat 8) (8 * s.mem.readLE (st.toNat + 16) 8) R.rt := a2
+    janus_run [p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, hn2] until [callNat + 4] calls [hSN' b L]
+    trace_state
+    all_goals sorry
+  · janus_run [p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, hn2] until [callNat + 4] calls [hSN' b L]
+    all_goals sorry
 
 end FvModexp.Arm64.BasicSqr
