@@ -137,7 +137,7 @@ theorem Bufs.swap {R : RtInv} {L : List (Nat × Nat)} {g sp n mp yp ylen : Nat} 
 @[reducible] def Mem (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (g sp : Nat) (M0 M : Memory) (zp zc zzp zzc : Nat) :
     Prop :=
   MemFrame M0 M (lw R sp zp zc zzp zzc) ∧ LiveFrame M0 M L [(zp, zp + 8 * zc), (zzp, zzp + 8 * zzc)] ∧
-  R.inv b L g (view R.rt L M)
+  R.inv b L g (view R.rt L M) ∧ M.regions = M0.regions
 /-- the frame facts of a loop state since the anchor `M0` -/
 @[reducible] def FL (R : RtInv) (L : List (Nat × Nat)) (sp zp zc zzp zzc : Nat) (M0 M : Memory) : Prop :=
   MemFrame M0 M (lw R sp zp zc zzp zzc) ∧ LiveFrame M0 M L [(zp, zp + 8 * zc), (zzp, zzp + 8 * zzc)]

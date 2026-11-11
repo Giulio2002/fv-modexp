@@ -23,6 +23,7 @@ theorem cmpEntry_eq : segAddr LibExp.program ExpHyp.fnCmp = cmpEntry := by decid
 theorem fnBase : segAddr LibExp.program fn = 1798512 := by decide
 
 set_option maxRecDepth 20000 in
+set_option janus.callRegions true in
 set_option maxHeartbeats 0 in
 set_option linter.janusRenameI false in
 /-- loop exit → entry of the first `zz.cmp(m)` (after `zz = zz.montgomery(z, one, …)`) -/
@@ -55,7 +56,7 @@ theorem exA (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
       Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
     Reaches ((LibExp.program.link impl).withExit ret) S Q := by
   obtain ⟨he, hn, hn16, hmc, hmc', hk0, hyl, hyl', hm, hy, hY, hpw, r1016, r1024, r1032, r224, r1000, r992, hok⟩ := hst
-  obtain ⟨hF, hLF, hinv⟩ := hM
+  obtain ⟨hF, hLF, hinv, hrg0⟩ := hM
   obtain ⟨hal, hsp1, hsp2, hwacc, hg1, hg2, hg3, hwrt, hgw, hgrt, hLs⟩ := he
   have he' : Env R L g sp M0 := ⟨hal, hsp1, hsp2, hwacc, hg1, hg2, hg3, hwrt, hgw, hgrt, hLs⟩
   obtain ⟨hBz, hBzz, hzzz, hzm, hzzm, hzy, hzzy, hzp⟩ := hB
@@ -112,8 +113,10 @@ theorem exA (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
         (sp + 168) 8 zzc) := by
       repeat (first | exact fc1 | refine FL.write ?_ hLs _ (by omega))
     have w := hwrt
-    refine ⟨fc2.1, fc2.2, ?_⟩
-    repeat (first | exact i1 | refine FvModexp.Expmc.inv_writeLE (Or.inr (w.of_sub (by omega) (by omega))) ?_)
+    refine ⟨fc2.1, fc2.2, ?_, ?_⟩
+    · repeat (first | exact i1 | refine FvModexp.Expmc.inv_writeLE (Or.inr (w.of_sub (by omega) (by omega))) ?_)
+    · simp only [Memory.regions_writeLE, hP1_regions]
+      first | exact hrg0 | (subst hmem; exact hrg0)
   case val =>
     dsimp only
     have u1 := hzzw
