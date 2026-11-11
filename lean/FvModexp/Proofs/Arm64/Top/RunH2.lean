@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Arm64.Top.RunRel
+import FvModexp.Proofs.Arm64.Top.RunH2S
 
 /-! # `Run` (arm64): `B1` to `B2` (header 1 = `expLen`: `getData(input, 32, 32)`, std `setBytes`) -/
 
@@ -20,6 +20,9 @@ theorem h2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
     (S : State) (L1 : List (Nat × Nat)) (b1 : Nat) (hrel : RelH R b L c p len cp s ret 1 L1 b1 S)
     (hpc : S.pc = BitVec.ofNat 64 pcB1) :
     Reaches ((LibRun.program.link impl).withExit ret) S Q := by
+  by_cases h64' : len.toNat < 64
+  · exact h2s impl hap R hmk hmv b L c p len cp ret hret s henv hin hokr Q hk S L1 b1 hrel hpc h64'
+  have h64 : 64 ≤ len.toNat := by omega
   obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, hd, hout, hga, hgr, hLs, hro⟩ := henv
   have hin0 := hin
   obtain ⟨hcacc, hc48, hcheld, hcw, hp, hlcp, hcp48, hpacc, hheld, hpw⟩ := hin
@@ -48,7 +51,6 @@ theorem h2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
   rw [h_t] at hwT hok
   have hLS1 : ∀ r ∈ L1, r.fst + (r.snd - r.fst) ≤ BitVec.toNat s.sp - 624 - 4160 ∨ BitVec.toNat s.sp - 624 + 48 ≤ r.fst := by
     intro r hr; have := hLsS r hr; simp only [Outside, and_true] at this; omega
-  by_cases h64 : 64 ≤ len.toNat
   · have hH1 : InRanges (p.toNat + 32) 32 L ∨ Outside (p.toNat + 32) 32 R.rt := hheld.sub (by omega) (by omega)
     have hH1' : InRanges (p.toNat + 32) 32 L1 ∨ Outside (p.toNat + 32) 32 R.rt := hext.held hH1
     have hW1 : p.toNat + 32 + 32 ≤ BitVec.toNat s.sp - 624 - 4160 ∨ BitVec.toNat s.sp - 624 + 48 ≤ p.toNat + 32 := by omega
@@ -120,6 +122,5 @@ theorem h2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
           rw [Memory.readLE_writeLE_of_disjoint _ _ (by omega), Memory.readLE_writeLE_of_disjoint _ _ (by omega),
             Memory.readLE_writeLE_of_disjoint _ _ (by omega), Memory.readLE_writeLE_of_disjoint _ _ (by omega)]
           exact hinS _ _ (by omega) (by omega)
-  · sorry
 
 end FvModexp.Arm64.Run
