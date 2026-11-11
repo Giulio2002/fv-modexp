@@ -441,3 +441,22 @@ IcHN 43, Sb* 25-47, main 16 s.
 | Exp/W4P01Defs (p01post) | 42 s / 3.0 GB | |
 | Exp/W4P01 (p01run) | 49 s / 3.1 GB | |
 | Exp/W4PowAll (p01pow) | 24 s / 3.1 GB | |
+
+### divmc `(*stack).nat` (2026-11-11, session 5; dev compile, host load high), wall / max RSS
+| module | arm64 | amd64 |
+|---|---|---|
+| Nat/StackNatDefs, StackNatCall (growslice/memclr call pres, pure) | 2 s, 5 s / 2.1 GB | 2 s / 2.0 GB, — |
+| Nat/StackNatJ (join relation, `post_fin`, pure) | 11 s / 2.0 GB | 12 s / 2.0 GB |
+| Nat/StackNatTail (`+0xec`/`+0x101` → RET) | 18 s / 2.3 GB | 27 s / 2.4 GB |
+| Nat/StackNatWb (join → write barrier both flag values) | 15 s / 2.3 GB | 27 s / 2.4 GB |
+| Nat/StackNatN (no-grow entry → join) | 13 s / 2.3 GB | 13 s / 2.3 GB |
+| Nat/StackNatG3 / G2 / G (memclr call / growslice call / entry) | 12 s / 24 s / 16 s | (next session) |
+| Nat/StackNat (`full`/`ens`/`sum`/`hyp`) | 5 s / 2.2 GB | (next session) |
+
+Lessons: (1) `janus_run … calls [hgr]` with the live `growslice` contract: the call-precondition closer ran > 6 min (killed);
+stopping at the callee entry and proving the pre with a pure lemma over an ABSTRACT call state (`gcall_pre`/`mcall_pre`
+via Janus `call_pre`) + `ReachesRet.call` = 5 s. (2) A continuation lemma whose argument shape does not SYNTACTICALLY match
+the executor's state literal (here `growCap8 … (S.regs 2).toNat` vs `growCap8 … cap`) makes `exact`/`refine` hang in
+defeq (unfolds `growCap8`/`writeLE`): pass the register equations to `janus_run` so the literal is in normal form, and give
+continuation arguments as `?_` goals closed afterwards (never big terms inside the `refine`). (3) `first | rfl | …` on goals
+about state literals: put `rfl` LAST (or `with_reducible rfl`), it whnf's readLE-over-writeLE goals for minutes.
