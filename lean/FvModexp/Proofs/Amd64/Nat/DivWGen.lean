@@ -19,7 +19,7 @@ theorem genReuse (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.pr
     (he : Entry s zp zl zc xp xl xc y) (hx0 : 0 < xl.toNat) (hy0 : y.toNat ≠ 0) (hy1 : y.toNat ≠ 1)
     (hz : xl.toNat ≤ zc.toNat) (hpre : Pre R b L zp zc xp xl y s) :
     ReachesRet (LibDivW.program.link impl) (retAddrOf s) s fun s' =>
-      RegsOK s s' ∧ Post R b L zp zc xp xl y s s' := by
+      RegsOK s s' ∧ PostI R b L zp zc xp xl y s s' := by
   obtain ⟨hpc, hra, hx15, hdf, h0, h3, h1, h7, h6, h8, h9⟩ := he
   obtain ⟨hg1, hg2, hg3, hb', ha, hw, hal, htg⟩ := pre_env hpre
   have hpre' := hpre
@@ -44,7 +44,7 @@ theorem genAlloc (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.pr
     (he : Entry s zp zl zc xp xl xc y) (hx0 : 0 < xl.toNat) (hy0 : y.toNat ≠ 0) (hy1 : y.toNat ≠ 1)
     (hz : zc.toNat < xl.toNat) (hpre : Pre R b L zp zc xp xl y s) :
     ReachesRet (LibDivW.program.link impl) (retAddrOf s) s fun s' =>
-      RegsOK s s' ∧ Post R b L zp zc xp xl y s s' := by
+      RegsOK s s' ∧ PostI R b L zp zc xp xl y s s' := by
   obtain ⟨hpc, hra, hx15, hdf, h0, h3, h1, h7, h6, h8, h9⟩ := he
   obtain ⟨hg1, hg2, hg3, hb', ha, hw, hal, htg⟩ := pre_env hpre
   have hpre' := hpre

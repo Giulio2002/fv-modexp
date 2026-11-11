@@ -17,7 +17,7 @@ theorem post_zero {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl y :
     (hLF : LiveFrame s.mem s'.mem L [(zp.toNat, zp.toNat + 8 * zc.toNat)])
     (hinv : R.inv b L (s.regs 14).toNat (view R.rt L s'.mem)) (hfs : s'.fsBase = s.fsBase)
     (h0 : s'.regs 0 = zp) (h1 : s'.regs 3 = 0#64) (h2 : s'.regs 1 = zc) (h3 : s'.regs 7 = 0#64) :
-    Post R b L zp zc xp xl y s s' := by
+    PostI R b L zp zc xp xl y s s' := by
   obtain ⟨-, -, -, -, -, hzl, -⟩ := hpre
   refine ⟨hfs, zp.toNat, 0, zc.toNat, by rw [h0], by rw [h1]; rfl, by rw [h2], ?_, ?_, Or.inl rfl, Nat.zero_le _,
     by omega, L, b, LiveExt.refl R L, Nat.sub_le _ _, hinv, fun hc => ?_, Or.inl ⟨rfl, rfl⟩, hF, hLF⟩
@@ -30,7 +30,7 @@ theorem post_zero_win {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl
     (hpre : Pre R b L zp zc xp xl y s) (hx : xl.toNat = 0) (s' : State)
     (hW : MemFrame s.mem s'.mem (win s 4232 64)) (hfs : s'.fsBase = s.fsBase)
     (h0 : s'.regs 0 = zp) (h1 : s'.regs 3 = 0#64) (h2 : s'.regs 1 = zc) (h3 : s'.regs 7 = 0#64) :
-    Post R b L zp zc xp xl y s s' := by
+    PostI R b L zp zc xp xl y s s' := by
   obtain ⟨hg1, hg2, hg3, hb', ha, hw, hal, htg⟩ := pre_env hpre
   have hpre' := hpre
   obtain ⟨⟨-, -, -, -, hout, -, -, hLs, -, -⟩, -, -, -, -, -, -, -, -, -, -, -, -, hinv, -, -⟩ := hpre'
@@ -50,13 +50,13 @@ theorem zeroPath (impl : List Amd64.Segment) (b : Nat) (R : RtInv) (L : List (Na
     (he : Entry s zp zl zc xp 0#64 xc y) (hy0 : y.toNat ≠ 0) (hy1 : y.toNat ≠ 1)
     (hpre : Pre R b L zp zc xp 0#64 y s) :
     ReachesRet (LibDivW.program.link impl) (retAddrOf s) s fun s' =>
-      RegsOK s s' ∧ Post R b L zp zc xp 0#64 y s s' := by
+      RegsOK s s' ∧ PostI R b L zp zc xp 0#64 y s s' := by
   obtain ⟨hpc, hra, hx15, hdf, h0, h3, h1, h7, h6, h8, h9⟩ := he
   obtain ⟨hg1, hg2, hg3, hb', ha, hw, hal, htg⟩ := pre_env hpre
   have hy0' : (y = 0#64) = False := by simp only [eq_iff_iff, iff_false]; intro e; apply hy0; rw [e]; rfl
   have hy1' : (y = 1#64) = False := by simp only [eq_iff_iff, iff_false]; intro e; apply hy1; rw [e]; rfl
   janus64_run [hy0', hy1', BitVec.msb_eq_decide]
-  refine ⟨⟨?_, ?_, ?_, ?_⟩, post_zero_win hpre rfl _ ?hW ?_ ?_ ?_ ?_ ?_⟩
+  refine ⟨⟨?_, ?_, ?_, ?_, ?_⟩, post_zero_win hpre rfl _ ?hW ?_ ?_ ?_ ?_ ?_⟩
   case hW => simp only [win]; janus_frame
   all_goals try janus64_simp
   all_goals first | omega | skip
@@ -68,7 +68,7 @@ theorem setZero (impl : List Amd64.Segment) (R : RtInv)
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xc : BitVec 64) (s : State)
     (he : Entry s zp zl zc xp 0#64 xc 1#64) (hpre : Pre R b L zp zc xp 0#64 1#64 s) :
     ReachesRet (LibDivW.program.link impl) (retAddrOf s) s fun s' =>
-      RegsOK s s' ∧ Post R b L zp zc xp 0#64 1#64 s s' := by
+      RegsOK s s' ∧ PostI R b L zp zc xp 0#64 1#64 s s' := by
   obtain ⟨hpc, hra, hx15, hdf, h0, h3, h1, h7, h6, h8, h9⟩ := he
   obtain ⟨hg1, hg2, hg3, hb', ha, hw, hal, htg⟩ := pre_env hpre
   have hpre' := hpre
@@ -81,7 +81,7 @@ theorem setZero (impl : List Amd64.Segment) (R : RtInv)
   by_cases hzx : zp = xp
   · subst hzx
     janus64_run [BitVec.msb_eq_decide]
-    refine ⟨⟨?_, ?_, ?_, ?_⟩, post_zero_win hpre rfl _ ?hW ?_ ?_ ?_ ?_ ?_⟩
+    refine ⟨⟨?_, ?_, ?_, ?_, ?_⟩, post_zero_win hpre rfl _ ?hW ?_ ?_ ?_ ?_ ?_⟩
     case hW => simp only [win]; janus_frame
     all_goals try janus64_simp
     all_goals first | omega | skip
@@ -95,7 +95,7 @@ theorem setZero (impl : List Amd64.Segment) (R : RtInv)
     have := zp.isLt; have := xp.isLt; omega
   rename_i m _ _ hF2 hLF2 hinv2 _
   have hW := fun (M1 : Janus.Arm64.Memory) (h : MemFrame s.mem M1 (win s 4232 64)) => h
-  refine ⟨⟨?_, ?_, ?_, ?_⟩, post_zero hpre rfl _ ((hW _ ?hW).trans hF2 ?hc) ⟨fun a n hin hz => ?hl⟩ hinv2 ?_ ?_ ?_
+  refine ⟨⟨?_, ?_, ?_, ?_, ?_⟩, post_zero hpre rfl _ ((hW _ ?hW).trans hF2 ?hc) ⟨fun a n hin hz => ?hl⟩ hinv2 ?_ ?_ ?_
     ?_ ?_⟩
   case hW => simp only [win]; janus_frame
   case hc =>
