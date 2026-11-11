@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Arm64.Top.RunErrLib
+import FvModexp.Proofs.Arm64.Witness.Stubs
 
 /-!
 # Row 1, arm64, error path: `Run` on call data that fails EIP-7823 returns `(nil, err)`
@@ -44,17 +45,13 @@ def mvA : Nat := janus_eval% (Extracted.program.contractAddr "runtime.memmove")
 def mkA : Nat := janus_eval% (Extracted.program.contractAddr "runtime.makeslice")
 def noA : Nat := janus_eval% (Extracted.program.contractAddr "runtime.newobject")
 
-def implAt : List Segment :=
-  [{ name := "witness.memmove", base := mvA, words := memmoveCode },
-   { name := "witness.makeslice", base := mkA, words := makesliceCodeD },
-   { name := "witness.newobject", base := noA, words := newobjectCodeD }]
+/-- The shared witness runtime (`WStubs`): a stub at every contract address of the Run extraction. -/
+def implAt : List Segment := WStubs.impl
 
-set_option maxRecDepth 100000 in
-theorem hap : ImplApart Extracted.program implAt := by decide +kernel
+theorem hap : ImplApart Extracted.program implAt := WStubs.hap
 
-/-- The requests the witness runtime serves: the three header `nat.make(4)` and the `errors.New` object. -/
-def ok : Nat → List Nat → Prop := fun a args =>
-  (a = mkA ∧ args = [RunArm64.wordT, 4, 8]) ∨ (a = noA ∧ args = [RunArm64.errT])
+/-- Every request is served (the stubs never consult `ok`). -/
+def ok : Nat → List Nat → Prop := fun _ _ => True
 
 def R : RtInv := toyR [] ok
 
@@ -62,31 +59,11 @@ theorem addr_mv : Extracted.program.contractAddr "runtime.memmove" = mvA := by d
 theorem addr_mk : Extracted.program.contractAddr "runtime.makeslice" = mkA := by decide
 theorem addr_no : Extracted.program.contractAddr "runtime.newobject" = noA := by decide
 
-/-- No `memmove` request is served (the witness input has the 96 header bytes), so the contract holds vacuously. -/
-theorem model_mv : MemmoveLive (Extracted.program.ofImpl implAt) mvA 4096 R := by
-  intro L b s hpc pre
-  exfalso
-  rcases pre.2.1.1 with ⟨h, _⟩ | ⟨h, _⟩ <;> exact absurd h (by decide)
+theorem tys0 : TysOK [] := by intro t ht; simp at ht
 
-set_option maxRecDepth 20000 in
-theorem model_mk : MakesliceLiveContract (Extracted.program.ofImpl implAt) mkA 4096 R := by
-  intro L b s hpc pre
-  have hacB' := bump_acc pre.2.2.2.1
-  have ⟨⟨h30a, h30b, hq1, hq2, hq3, hq4, hq5⟩, hq6, hq7⟩ := pre.1
-  obtain ⟨hT1, hT2⟩ := hq6
-  change ReachesRet _ _ s _
-  janus_run
-  exact finish_makesliceD (tys := []) (by intro t ht; simp at ht) pre
-
-set_option maxRecDepth 20000 in
-theorem model_no : NewobjectLiveContract (Extracted.program.ofImpl implAt) noA 4096 R := by
-  intro L b s hpc pre
-  have hacB' := bump_acc pre.2.2.2.1
-  have ⟨⟨h30a, h30b, hq1, hq2, hq3, hq4, hq5⟩, hq6, hq7⟩ := pre.1
-  obtain ⟨hT1, hT2⟩ := hq6
-  change ReachesRet _ _ s _
-  janus_run
-  exact finish_newobjectD (tys := []) (by intro t ht; simp at ht) pre
+theorem model_mv : MemmoveLive (Extracted.program.ofImpl implAt) mvA 4096 R := WStubs.mv R
+theorem model_mk : MakesliceLiveContract (Extracted.program.ofImpl implAt) mkA 4096 R := WStubs.mk [] tys0 ok
+theorem model_no : NewobjectLiveContract (Extracted.program.ofImpl implAt) noA 4096 R := WStubs.no [] tys0 ok
 
 def ret : Nat := 0x1000
 def sp0 : Nat := 0x800000
@@ -472,8 +449,81 @@ theorem pre : RunArm64.Env R [] s0 ∧ RunArm64.Input R [] c0 p0 96 96 s0 ∧ Os
   · simp only [RunArm64.window, outside_cons, outside_nil, and_true]; decide +kernel
   · rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel
   · simp only [RunArm64.window, outside_cons, outside_nil, and_true]; decide +kernel
-  · rw [addr_mk]; exact Or.inl ⟨rfl, rfl⟩
-  · rw [addr_no]; exact Or.inr ⟨rfl, rfl⟩
+  · trivial
+  · trivial
+
+
+/-! ## Call-site states of the three contracts (Janus audit: each contract precondition is satisfiable) -/
+
+def callS (addr x y z : Nat) : State :=
+  { s0 with pc := BitVec.ofNat 64 addr,
+            regs := fun i => if i = 0 then BitVec.ofNat 64 x else if i = 1 then BitVec.ofNat 64 y
+              else if i = 2 then BitVec.ofNat 64 z else s0.regs i }
+
+theorem cs_callOK (a x y z n : Nat) (hn : n ≤ 3) : CallOK (callS a x y z) 4096 n := by
+  have hw : mem0.accessible ((BitVec.ofNat 64 sp0).toNat - 4096) (4096 + 8 + 8 * 3) true = true := by decide +kernel
+  have hs : (BitVec.ofNat 64 sp0 : BitVec 64).toNat = sp0 := by decide
+  exact ⟨(show (BitVec.ofNat 64 ret : BitVec 64).toNat % 4 = 0 by decide),
+    (show (BitVec.ofNat 64 ret : BitVec 64).toNat < 2 ^ 48 by decide),
+    (show (BitVec.ofNat 64 sp0 : BitVec 64).toNat % 16 = 0 by decide),
+    (show 4096 ≤ (BitVec.ofNat 64 sp0 : BitVec 64).toNat by decide), by decide,
+    (show (BitVec.ofNat 64 sp0 : BitVec 64).toNat + 8 + 8 * n ≤ 2 ^ 48 by rw [hs]; unfold sp0; omega),
+    (show mem0.accessible ((BitVec.ofNat 64 sp0 : BitVec 64).toNat - 4096) (4096 + 8 + 8 * n) true = true from
+      Memory.accessible_mono _ hw (Nat.le_refl _) (by omega))⟩
+
+theorem cs_room (a x y z n : Nat) (hn : n ≤ 3) : StackRoom (callS a x y z) 4096 n := by
+  refine ⟨⟨(show (BitVec.ofNat 64 g0 : BitVec 64).toNat + 24 ≤ 2 ^ 48 by decide),
+    (show mem0.accessible ((BitVec.ofNat 64 g0 : BitVec 64).toNat + 16) 8 false = true by decide +kernel),
+    (show mem0.readLE ((BitVec.ofNat 64 g0 : BitVec 64).toNat + 16) 8 + 4096 < (BitVec.ofNat 64 sp0 : BitVec 64).toNat
+      by decide +kernel)⟩, ?_⟩
+  show Outside ((BitVec.ofNat 64 g0 : BitVec 64).toNat + 16) 8
+    [((BitVec.ofNat 64 sp0 : BitVec 64).toNat - 4096, (BitVec.ofNat 64 sp0 : BitVec 64).toNat - 8),
+     ((BitVec.ofNat 64 sp0 : BitVec 64).toNat + 8, (BitVec.ofNat 64 sp0 : BitVec 64).toNat + 8 + 8 * n)]
+  have hs : (BitVec.ofNat 64 sp0 : BitVec 64).toNat = sp0 := by decide
+  have hg : (BitVec.ofNat 64 g0 : BitVec 64).toNat = g0 := by decide
+  rw [hs, hg]; simp only [outside_cons, outside_nil, and_true]; unfold g0 sp0; omega
+
+theorem cs_winR (a x y z n : Nat) (hn : n ≤ 3) : LiveSep (calleeStack (callS a x y z) 4096 n) R.rt := by
+  intro x' hx
+  simp only [calleeStack, List.mem_cons, List.not_mem_nil, or_false] at hx
+  rw [rt_eq]
+  rcases hx with rfl | rfl <;>
+    simp only [outside_cons, outside_nil, and_true] <;>
+    show (_ ≤ HEAP ∨ HEND ≤ _) ∧ (_ ≤ BUMP ∨ BUMP + 8 ≤ _) ∧ (_ ≤ WBUF ∨ WBUF + 64 ≤ _) <;>
+    simp only [callS, s0, sp0, HEAP, HEND, HSIZE, BUMP, WBUF, BitVec.toNat_ofNat] <;> omega
+
+theorem inv_cs (a x y z : Nat) : R.inv 0x1000 [] ((callS a x y z).regs 28).toNat (view R.rt [] (callS a x y z).mem) :=
+  inv0
+
+def sMk : State := callS mkA RunArm64.wordT 4 8
+def sNo : State := callS noA RunArm64.errT 0 0
+def sMv : State := callS mvA (sp0 - 4800) pI 8
+
+theorem site_mk : MakeslicePre 4096 sMk ∧ StackRoom sMk 4096 3 ∧
+    LiveAt R mkA [(sMk.regs 0).toNat, (sMk.regs 1).toNat, (sMk.regs 2).toNat] [] 0x1000 (makesliceRound sMk)
+      (sMk.regs 28).toNat sMk.mem (calleeStack sMk 4096 3) :=
+  ⟨⟨cs_callOK _ _ _ _ 3 (by omega), ⟨by decide +kernel, by decide +kernel⟩, by decide +kernel, by decide +kernel,
+    by decide +kernel⟩, cs_room _ _ _ _ 3 (by omega), trivial, inv_cs _ _ _ _, by decide +kernel,
+    fun r hr => by simp at hr, cs_winR _ _ _ _ 3 (by omega)⟩
+
+theorem site_no : NewobjectPre 4096 sNo ∧ StackRoom sNo 4096 1 ∧
+    LiveAt R noA [(sNo.regs 0).toNat] [] 0x1000 (newobjectRound sNo) (sNo.regs 28).toNat sNo.mem
+      (calleeStack sNo 4096 1) :=
+  ⟨⟨cs_callOK _ _ _ _ 1 (by omega), ⟨by decide +kernel, by decide +kernel⟩, by decide +kernel⟩,
+    cs_room _ _ _ _ 1 (by omega), trivial, inv_cs _ _ _ _, by decide +kernel, fun r hr => by simp at hr,
+    cs_winR _ _ _ _ 1 (by omega)⟩
+
+theorem site_mv : Mem.EqPre 4096 3 sMv ∧
+    LiveMemAt R mvA [(sMv.regs 0).toNat, (sMv.regs 1).toNat, (sMv.regs 2).toNat] [] 0x1000 sMv (calleeStack sMv 4096 3) ∧
+    Mem.Input sMv 4096 3 (sMv.regs 1).toNat (sMv.regs 2).toNat ∧
+    LiveDest R [] sMv 4096 3 (sMv.regs 0).toNat (sMv.regs 2).toNat :=
+  ⟨⟨(guardOK_iff _ _).1 (cs_room mvA _ _ _ 3 (by omega)).1, cs_callOK _ _ _ _ 3 (by omega),
+      (cs_room mvA _ _ _ 3 (by omega)).2⟩,
+    ⟨trivial, inv_cs _ _ _ _, fun r hr => by simp at hr, cs_winR _ _ _ _ 3 (by omega)⟩,
+    ⟨by decide +kernel, by decide +kernel, by
+      simp only [calleeStack, outside_cons, outside_nil, and_true]; decide +kernel⟩,
+    ⟨by decide +kernel, by decide +kernel, by simp only [calleeStack, outside_cons, outside_nil, and_true]; decide +kernel,
+      Or.inr (by rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)⟩⟩
 
 /-- All hypotheses of `correctness` hold together, with every conjunct of its precondition: the toy runtime, an empty live
 set, budget `0x1000`, and the call `Run(c, p, 96, 96)` on 96 header bytes whose base length is 1025. -/
@@ -487,8 +537,28 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
     CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program RunArm64.fn) [c, p, len, cp] s ∧
     RunArm64.Env R L s ∧ RunArm64.Input R L c p len cp s ∧ OsakaReceiver s.mem c.toNat ∧
     R.inv b L (s.regs 28).toNat (view R.rt L s.mem) ∧ RunArm64.ErrReqs R b len ∧
-    LengthsFail (bytesAt s.mem p.toNat len.toNat) :=
+    LengthsFail (bytesAt s.mem p.toNat len.toNat) ∧
+    (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
+      s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.makeslice") ∧
+      (MakeslicePre 4096 s_c ∧ StackRoom s_c 4096 3 ∧
+        LiveAt R (Extracted.program.contractAddr "runtime.makeslice") [(s_c.regs 0).toNat, (s_c.regs 1).toNat,
+          (s_c.regs 2).toNat] L b (makesliceRound s_c) (s_c.regs 28).toNat s_c.mem (calleeStack s_c 4096 3))) ∧
+    (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
+      s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.memmove") ∧
+      (Mem.EqPre 4096 3 s_c ∧
+        LiveMemAt R (Extracted.program.contractAddr "runtime.memmove") [(s_c.regs 0).toNat, (s_c.regs 1).toNat,
+          (s_c.regs 2).toNat] L b s_c (calleeStack s_c 4096 3) ∧
+        Mem.Input s_c 4096 3 (s_c.regs 1).toNat (s_c.regs 2).toNat ∧
+        LiveDest R L s_c 4096 3 (s_c.regs 0).toNat (s_c.regs 2).toNat)) ∧
+    (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
+      s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.newobject") ∧
+      (NewobjectPre 4096 s_c ∧ StackRoom s_c 4096 1 ∧
+        LiveAt R (Extracted.program.contractAddr "runtime.newobject") [(s_c.regs 0).toNat] L b (newobjectRound s_c)
+          (s_c.regs 28).toNat s_c.mem (calleeStack s_c 4096 1))) :=
   ⟨implAt, R, 0x1000, [], c0, p0, 96, 96, ret, s0, hap, by rw [addr_mk]; exact model_mk, by rw [addr_mv]; exact model_mv,
-    by rw [addr_no]; exact model_no, hret, setup, pre⟩
+    by rw [addr_no]; exact model_no, hret, setup, pre.1, pre.2.1, pre.2.2.1, pre.2.2.2.1, pre.2.2.2.2.1, pre.2.2.2.2.2,
+    ⟨[], 0x1000, sMk, by rw [addr_mk]; rfl, by rw [addr_mk]; exact site_mk⟩,
+    ⟨[], 0x1000, sMv, by rw [addr_mv]; rfl, by rw [addr_mv]; exact site_mv⟩,
+    ⟨[], 0x1000, sNo, by rw [addr_no]; rfl, by rw [addr_no]; exact site_no⟩⟩
 
 end FvModexp.Arm64.Run.Witness
