@@ -23,7 +23,7 @@ theorem loop (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
     (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret) (Q : Outcome → Prop)
-    (b : Nat) (L : List (Nat × Nat)) (g sp n mp mc k0 yp ylen Y : Nat) (tbl pp pcap : Nat → Nat) (M0 : Memory)
+    (b : Nat) (L : List (Nat × Nat)) (g sp n mp mc k0 yp ylen Y : Nat) (tbl pp pcap : Nat → Nat) {ext : List (Nat × Nat)} (M0 : Memory)
     (r18 r29 : BitVec 64) (V : Nat)
     (hst : Static R L g sp n mp mc k0 yp ylen Y tbl pp pcap M0)
     (hexit : ∀ (S : State) (zp zc zzp zzc : Nat) (M : Memory), S.pc = BitVec.ofNat 64 exit →
@@ -32,7 +32,7 @@ theorem loop (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
       S.regs 2 = BitVec.ofNat 64 n → S.regs 3 = BitVec.ofNat 64 n → S.regs 9 = BitVec.ofNat 64 mp →
       S.regs 11 = BitVec.ofNat 64 mc → S.regs 12 = BitVec.ofNat 64 k0 →
       S.regs 18 = r18 → S.regs 28 = BitVec.ofNat 64 g → S.regs 29 = r29 → S.mem = M →
-      Bufs R L g sp n mp yp ylen pp M0 zp zc zzp zzc → Mem R b L g sp M0 M zp zc zzp zzc →
+      Bufs R L g sp n mp yp ylen pp ext M0 zp zc zzp zzc → Mem R b L g sp M0 M zp zc zzp zzc →
       M.readLE zp (8 * n) = V → Reaches ((LibExp.program.link impl).withExit ret) S Q) :
     ∀ (f : Nat) (S : State) (i c yi zp zc zzp zzc : Nat) (M : Memory), f = 17 * i + c → c ≤ 16 → i < ylen →
       yi < 2 ^ 64 → S.pc = BitVec.ofNat 64 test → S.sp = BitVec.ofNat 64 sp →
@@ -42,7 +42,7 @@ theorem loop (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
       S.regs 12 = BitVec.ofNat 64 k0 → S.regs 16 = BitVec.ofNat 64 ylen → S.regs 17 = BitVec.ofNat 64 i →
       S.regs 19 = BitVec.ofNat 64 yp → S.regs 20 = BitVec.ofNat 64 yi → S.regs 21 = BitVec.ofNat 64 c - 1#64 →
       S.regs 18 = r18 → S.regs 28 = BitVec.ofNat 64 g → S.regs 29 = r29 → S.mem = M →
-      Bufs R L g sp n mp yp ylen pp M0 zp zc zzp zzc → Mem R b L g sp M0 M zp zc zzp zzc →
+      Bufs R L g sp n mp yp ylen pp ext M0 zp zc zzp zzc → Mem R b L g sp M0 M zp zc zzp zzc →
       M.readLE (sp + 240) 8 = i →
       Exp.outerLoop 4 (step n (M0.readLE mp (8 * n)) k0 tbl) Y 16 i yi c (M.readLE zp (8 * n)) = V →
       Reaches ((LibExp.program.link impl).withExit ret) S Q := by

@@ -418,3 +418,13 @@ IcHN 43, Sb* 25-47, main 16 s.
 | Nat/BasicSqr (`pro1`: entry → stk.nat call; `full`, `ens`, `sum`) | 33 s / 2.6 GB | |
 | arm64 DivWVWRow (re-verified, pre `CallEnvND`) | PASS | 91 s | 4.9 GB |
 | amd64 DivWVWRow (re-verified, pre `CallEnvND`) | PASS | 26 s | 1.3 GB |
+### expmc session 5 (2026-11-11), arm64 dev compile (machine shared with other agents), wall / max RSS
+| module | time | note |
+|---|---|---|
+| Exp/W4Body1, W4Body2 (Mem + regions, Bufs + ext) | 114 s / 3.3 GB, 132 s / 4.5 GB (in parallel; ~45-85 s alone before) | re-proved; regions via `janus.callRegions` |
+| Exp/W4Loop, W4Fin, W4Exit | 14 s, 40 s, 28 s | |
+| Exp/CmpW, CallW | 3 s, 3 s | |
+| Exp/W4ExitB (exLt, exGe) | 11 s / 2.3 GB | |
+| Exp/W4ExitS (exCmp2, exSubT, exSub) | before: > 8 min (janus_run inline after the by-hand nat.sub call, plus `rfl` on state-literal memory goals) → 58-65 s / 4.0 GB | run moved into `exSubT` (small context); `first \| (janus_simp; done) \| skip`, no `rfl` |
+| Exp/W4ExitC (exB) | 32-36 s / 3.6 GB | |
+| Exp/W4Tail (exitRet) | 9 s / 2.3 GB | |
