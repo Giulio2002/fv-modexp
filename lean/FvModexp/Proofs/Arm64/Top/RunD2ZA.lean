@@ -29,7 +29,7 @@ theorem d2zA (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
   have hin0 := hin
   obtain ⟨hcacc, hc48, hcheld, hcw, hp, hlcp, hcp48, hpacc, hheld, hpw⟩ := hin
   obtain ⟨hsp, h28, h29, h18, hm1, hm2, hm3, hm4, hm5, hm6, hs1, hs2, hs3, hs4, hs5, hs6, hl0, hl1, hl2, hnz, hk1, -,
-    hdS, hinS, hcS, hext, hbud, hinv, hLsS, hMF, hLF, hop⟩ := hrel
+    hdS, hinS, hcS, hext, hbud, hinv, hLsS, hMF, hLF, hop, hopA⟩ := hrel
   obtain ⟨hk1a, hk1b⟩ := hk1 (Nat.le_refl _)
   have hap1 := hap.1
   have hLs0 := hLsS

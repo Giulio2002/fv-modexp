@@ -115,7 +115,17 @@ theorem d2join (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     (by janus_simp [h18]) (by janus_simp [hm1]) (by janus_simp [hm2]) (by janus_simp [hm3]) (by janus_simp [hm4])
     (by janus_simp [hm5]) (by janus_simp [hm6]) (by janus_simp [hs1]) (by janus_simp [hs2]) (by janus_simp [hs3])
     (by janus_simp [hs4]) (by janus_simp [hs5]) (by janus_simp [hs6]) hl0 hl1 hl2 hnz (fun _ => ⟨by janus_simp [hs7], by janus_simp [hs8]⟩) ?_ ?_ (hext.trans hext2) ?_ ?_
-    (hext2.liveSep hLsL1 hwrt) ?_ ?_ ?_) (by janus_simp)
+    (hext2.liveSep hLsL1 hwrt) ?_ ?_ ?_ ?opsA) (by janus_simp)
+  case opsA =>
+    refine OpsApart.step' (p2 := p2) (c2 := c2) (opsApart_one _ _) (fun i hi => ?_) (fun i hi hc => by
+        obtain rfl : i = 0 := by omega
+        exact opDone_inRanges hop0 hc)
+      (by janus_simp [hp2, opAt]) (by janus_simp [hc2, opAt]) (fun hc => ?_)
+    · obtain rfl : i = 0 := by omega
+      exact ⟨by janus_simp [opAt], by janus_simp [opAt]⟩
+    · rcases hor2 with ⟨-, h⟩ | ⟨-, h⟩
+      · simp at h; omega
+      · exact h
   · intro _; janus_simp [hs1] <;> omega
   · janus_callpre
   · simp only [dCost, allocCost] at hbudD hbud hMC0 ⊢; omega

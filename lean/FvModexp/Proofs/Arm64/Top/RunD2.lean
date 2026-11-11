@@ -29,7 +29,7 @@ theorem d2x (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   have hin0 := hin
   obtain ⟨hcacc, hc48, hcheld, hcw, hp, hlcp, hcp48, hpacc, hheld, hpw⟩ := hin
   obtain ⟨hsp, h28, h29, h18, hm1, hm2, hm3, hm4, hm5, hm6, hs1, hs2, hs3, hs4, hs5, hs6, hl0, hl1, hl2, hnz, hk1, -,
-    hdS, hinS, hcS, hext, hbud, hinv, hLsS, hMF, hLF, hop⟩ := hrel
+    hdS, hinS, hcS, hext, hbud, hinv, hLsS, hMF, hLF, hop, hopA⟩ := hrel
   obtain ⟨hk1a, hk1b⟩ := hk1 (Nat.le_refl _)
   have hap1 := hap.1
   have hLs0 := hLsS
@@ -117,7 +117,15 @@ theorem d2x (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
       (by janus_simp [hm5]) (by janus_simp [hm6]) (by janus_simp [hs1]) (by janus_simp [hs2]) (by janus_simp [hs3])
       (by janus_simp [hs4]) (by janus_simp [hs5, hoffd]) (by janus_simp [hs6, hoffd]) hl0 hl1 hl2 hnz
       (fun _ => ⟨by janus_simp [hk1a], by janus_simp [hk1b]⟩) (fun _ => by janus_simp) ?_ (hext.trans hext2) ?_ ?_
-      (hext2.liveSep hLsL1 hwrt) ?_ ?_ ?_) (by janus_simp)
+      (hext2.liveSep hLsL1 hwrt) ?_ ?_ ?_ ?opsA) (by janus_simp)
+    case opsA =>
+      refine OpsApart.step' (p2 := p2) (c2 := c2) hopA (fun i hi => ?_) (fun i hi hc => opDone_inRanges (hop i (by omega)) hc)
+        (by janus_simp [hp2, opAt]) (by janus_simp [hc2, opAt]) (fun hc => ?_)
+      · obtain rfl : i = 0 := by omega
+        exact ⟨by janus_simp [opAt], by janus_simp [opAt]⟩
+      · rcases hor2 with ⟨-, h⟩ | ⟨-, h⟩
+        · simp at h; omega
+        · exact h
     · janus_callpre
     · simp only [dCost, allocCost] at hbudD hbud hMC0 ⊢; omega
     · dsimp only

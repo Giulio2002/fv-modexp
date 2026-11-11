@@ -28,7 +28,7 @@ theorem d3zE (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
   obtain ⟨hcacc, hc48, hcheld, hcw, hp, hlcp, hcp48, hpacc, hheld, hpw⟩ := hin
   obtain ⟨hsp, h28, h29, h18, hm1, hm2, hm3, hm4, hm5, hm6, hs1, hs2, hs3, hs4, hs5, hs6, hs7, hs8, hs9, hz1, hz2, hz3,
     hl0, hl1, hl2, hnz, hlg, hr0, hy1, hy2, hsrc1, hsrc2, hB48, hBacc, hBH, hBW, hBrt, hBsep, hBv, hdS, hinS, hcS,
-    hext, hbud, hinv, hLsS, hMF, hLF, hop0, hop1⟩ := hj
+    hext, hbud, hinv, hLsS, hMF, hLF, hop0, hop1, hopA⟩ := hj
   subst heq
   simp only [stk] at hg3 hb' ha hw hout
   have hr0' : U.regs 0 = BitVec.ofNat 64 B := by
@@ -44,6 +44,6 @@ theorem d3zE (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
      by janus_simp [hz1], by janus_simp [hz2], by janus_simp [hz3], hl0, hl1, hl2, hnz,
      by janus_simp [hr0], by janus_simp [hs3], hB48,
      Memory.accessible_read_of_write _ hBacc, hBH, (by rcases hBW with h | h; exact Or.inl h; exact Or.inr (Or.inr h)),
-     hBv, hdS, hinS, hcS, hext, hbud, hinv, hLsS, hMF, hLF, hop0, hop1⟩
+     hBv, hdS, hinS, hcS, hext, hbud, hinv, hLsS, hMF, hLF, hop0, hop1, hopA⟩
 
 end FvModexp.Arm64.Run

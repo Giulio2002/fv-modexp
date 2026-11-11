@@ -44,6 +44,66 @@ def OpDone (m : Memory) (s : State) (p len : BitVec 64) (Lk : List (Nat × Nat))
 (at most 128 words). -/
 def dCost : Nat := allocCost 1024 + allocCost (8 * 132)
 
+
+
+/-- The arrays of the operands read so far (`j < k`) are pairwise apart: each is a fresh `nat.make` of its `setBytes`
+(needed by the callees' `IntPre`, which states the operands' arrays pairwise `Apart`). -/
+def OpsApart (m : Memory) (s : State) (k : Nat) : Prop :=
+  ∀ i j, i < j → j < k → 0 < m.readLE (opAt s i + 24) 8 → 0 < m.readLE (opAt s j + 24) 8 →
+    Apart (m.readLE (opAt s i + 8) 8) (8 * m.readLE (opAt s i + 24) 8)
+      (m.readLE (opAt s j + 8) 8) (8 * m.readLE (opAt s j + 24) 8)
+
+theorem opsApart_one (m : Memory) (s : State) : OpsApart m s 1 := fun _ _ h1 h2 => absurd h2 (by omega)
+
+/-- The operands' slots unchanged: still pairwise apart. -/
+theorem OpsApart.transport {m M : Memory} {s : State} {k : Nat} (h : OpsApart m s k)
+    (hr : ∀ i, i < k → M.readLE (opAt s i + 8) 8 = m.readLE (opAt s i + 8) 8 ∧
+      M.readLE (opAt s i + 24) 8 = m.readLE (opAt s i + 24) 8) : OpsApart M s k := by
+  intro i j hij hjk hci hcj
+  have ⟨hi8, hi24⟩ := hr i (by omega)
+  have ⟨hj8, hj24⟩ := hr j hjk
+  rw [hi24] at hci; rw [hj24] at hcj; rw [hi8, hi24, hj8, hj24]
+  exact h i j hij hjk hci hcj
+
+/-- One more operand: the old slots are unchanged, the old arrays are live objects of `L1`, the new array is apart from
+all of `L1` (a fresh object). -/
+theorem OpsApart.step {m M : Memory} {s : State} {k : Nat} {L1 : List (Nat × Nat)} (h : OpsApart m s k)
+    (hr : ∀ i, i < k → M.readLE (opAt s i + 8) 8 = m.readLE (opAt s i + 8) 8 ∧
+      M.readLE (opAt s i + 24) 8 = m.readLE (opAt s i + 24) 8)
+    (hold : ∀ i, i < k → 0 < m.readLE (opAt s i + 24) 8 →
+      InRanges (m.readLE (opAt s i + 8) 8) (8 * m.readLE (opAt s i + 24) 8) L1)
+    (hnew : 0 < M.readLE (opAt s k + 24) 8 →
+      ApartAll (M.readLE (opAt s k + 8) 8) (8 * M.readLE (opAt s k + 24) 8) L1) :
+    OpsApart M s (k + 1) := by
+  intro i j hij hjk hci hcj
+  have ⟨hi8, hi24⟩ := hr i (by omega)
+  rw [hi24] at hci
+  rw [hi8, hi24]
+  rcases Nat.lt_or_ge j k with hj | hj
+  · have ⟨hj8, hj24⟩ := hr j hj
+    rw [hj24] at hcj
+    rw [hj8, hj24]
+    exact h i j hij hj hci hcj
+  · obtain rfl : j = k := by omega
+    exact ((hnew hcj).apart_of_inRanges (hold i (by omega) hci)).symm
+
+/-- `OpsApart.step` with the new operand's slots given by value (`p2`, `c2` of its `setBytes` post). -/
+theorem OpsApart.step' {m M : Memory} {s : State} {k : Nat} {L1 : List (Nat × Nat)} {p2 c2 : Nat} (h : OpsApart m s k)
+    (hr : ∀ i, i < k → M.readLE (opAt s i + 8) 8 = m.readLE (opAt s i + 8) 8 ∧
+      M.readLE (opAt s i + 24) 8 = m.readLE (opAt s i + 24) 8)
+    (hold : ∀ i, i < k → 0 < m.readLE (opAt s i + 24) 8 →
+      InRanges (m.readLE (opAt s i + 8) 8) (8 * m.readLE (opAt s i + 24) 8) L1)
+    (h8 : M.readLE (opAt s k + 8) 8 = p2) (h24 : M.readLE (opAt s k + 24) 8 = c2)
+    (hnew : 0 < c2 → ApartAll p2 (8 * c2) L1) : OpsApart M s (k + 1) :=
+  h.step hr hold (by rw [h8, h24]; exact hnew)
+
+/-- The old operands' arrays are live objects of the live set they were read in. -/
+theorem opDone_inRanges {m : Memory} {s : State} {p len : BitVec 64} {L1 : List (Nat × Nat)} {i : Nat}
+    (h : OpDone m s p len L1 i) (hc : 0 < m.readLE (opAt s i + 24) 8) :
+    InRanges (m.readLE (opAt s i + 8) 8) (8 * m.readLE (opAt s i + 24) 8) L1 :=
+  (h.2.2.2.2.2 hc).1
+
+
 /-- The input slice after the 96 header bytes: `input[96:]` (`(p + 96, len - 96, cp - 96)`), or empty at `p`. -/
 @[reducible] def inOff (len : BitVec 64) : Nat := if 96 < len.toNat then 96 else 0
 
@@ -66,7 +126,8 @@ def RelD (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64) 
   LiveExt R L Lk ∧ b - (3 * makeCost 4 + k * dCost) ≤ bk ∧ R.inv bk Lk (s.regs 28).toNat (view R.rt Lk S.mem) ∧
   LiveSep Lk (win s stk 40) ∧
   MemFrame s.mem S.mem (R.rt ++ winA s stk 40) ∧ LiveFrame s.mem S.mem L [] ∧
-  (∀ j, j < k → OpDone S.mem s p len Lk j)
+  (∀ j, j < k → OpDone S.mem s p len Lk j) ∧
+  OpsApart S.mem s k
 
 end FvModexp.Arm64.Run
 
@@ -95,12 +156,12 @@ theorem RelD.mk' {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c p len cp : Bit
     (h15 : LiveExt R L Lk) (h16 : b - (3 * makeCost 4 + k * dCost) ≤ bk)
     (h17 : R.inv bk Lk (s.regs 28).toNat (view R.rt Lk S.mem)) (h18 : LiveSep Lk (win s stk 40))
     (h19 : MemFrame s.mem S.mem (R.rt ++ winA s stk 40)) (h20 : LiveFrame s.mem S.mem L [])
-    (h21 : ∀ j, j < k → OpDone S.mem s p len Lk j) :
+    (h21 : ∀ j, j < k → OpDone S.mem s p len Lk j) (h22 : OpsApart S.mem s k) :
     RelD R b L c p len cp s ret k Lk bk S := by
   obtain ⟨-, -, hch, hcw, -, -, -, -, hh, hpw⟩ := hin
   have hLw := LiveFrame.of_nil' h20 (winA s stk 40)
   refine ⟨h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, s1, s2, s3, s4, s5, s6, l0, l1, l2, lnz, k1, k2, h12,
-    fun a n ha hb => ?_, ?_, h15, h16, h17, h18, h19, h20, h21⟩
+    fun a n ha hb => ?_, ?_, h15, h16, h17, h18, h19, h20, h21, h22⟩
   · refine (hh.sub ha hb).readLE h19 hLw ?_
     simp only [win, winA, Janus.outside_cons, Janus.outside_nil, and_true] at hpw ⊢
     omega

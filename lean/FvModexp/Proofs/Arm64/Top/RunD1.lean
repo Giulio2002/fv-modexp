@@ -95,7 +95,9 @@ theorem d1x (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
       (by janus_simp [h18, hT18]) (by janus_simp [hm1]) (by janus_simp [hm2]) (by janus_simp [hm3]) (by janus_simp [hm4])
       (by janus_simp [hm5]) (by janus_simp [hm6]) (by janus_simp [hr8]) (by janus_simp [hr11]) (by janus_simp [hr12])
       (by janus_simp [hr7]) (by janus_simp [hr3]) (by janus_simp [hr1]) hl0 hl1 hl2 hnz ?_ (fun h => absurd h (by decide)) ?_ (hext.trans hext2) ?_ ?_
-      (hext2.liveSep hLsL1 hwrt) ?_ ?_ ?_) (by janus_simp)
+      (hext2.liveSep hLsL1 hwrt) ?_ ?_ ?_ ?opsA) (by janus_simp)
+    case opsA =>
+      exact opsApart_one _ _
     · intro _
       have hmin : min (hdrV s p len 0) (len.toNat - 96) = hdrV s p len 0 := by omega
       rw [hmin]; constructor <;> (janus_simp; try omega)

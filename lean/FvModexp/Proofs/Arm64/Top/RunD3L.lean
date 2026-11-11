@@ -34,7 +34,7 @@ theorem d3l (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   have hin0 := hin
   obtain ⟨hcacc, hc48, hcheld, hcw, hp, hlcp, hcp48, hpacc, hheld, hpw⟩ := hin
   obtain ⟨hsp, h28, h29, h18, hm1, hm2, hm3, hm4, hm5, hm6, hs1, hs2, hs3, hs4, hs5, hs6, hl0, hl1, hl2, hnz, hk1, hk2,
-    hdS, hinS, hcS, hext, hbud, hinv, hLsS, hMF, hLF, hop⟩ := hrel
+    hdS, hinS, hcS, hext, hbud, hinv, hLsS, hMF, hLF, hop, hopA⟩ := hrel
   obtain ⟨hk1a, hk1b⟩ := hk1 (by omega)
   have hk2a := hk2 (by omega)
   have hS1n : (if len.toNat - 96 < hdrV s p len 1 + hdrV s p len 0 then len.toNat - 96 else hdrV s p len 1 + hdrV s p len 0) =
@@ -218,7 +218,8 @@ theorem d3l (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
      OpDone.transport (hop 0 (by omega)) (by janus_simp [opAt]) (by janus_simp [opAt]) (by janus_simp [opAt])
        (by janus_simp [opAt]) hLFS (fun _ _ h => hext'.inRanges_old h),
      OpDone.transport (hop 1 (by omega)) (by janus_simp [opAt]) (by janus_simp [opAt]) (by janus_simp [opAt])
-       (by janus_simp [opAt]) hLFS (fun _ _ h => hext'.inRanges_old h)⟩
+       (by janus_simp [opAt]) hLFS (fun _ _ h => hext'.inRanges_old h), OpsApart.transport hopA (fun i hi => by
+       rcases (show i = 0 ∨ i = 1 by omega) with rfl | rfl <;> exact ⟨by janus_simp [opAt], by janus_simp [opAt]⟩)⟩
   case held => exact Or.inl ⟨_, List.mem_append_right _ (List.mem_singleton_self _), by dsimp only; omega, by dsimp only; omega⟩
   case ls =>
     intro r hr

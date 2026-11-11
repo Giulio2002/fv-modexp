@@ -30,7 +30,7 @@ theorem d3zN (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
   obtain ⟨hcacc, hc48, hcheld, hcw, hp, hlcp, hcp48, hpacc, hheld, hpw⟩ := hin
   obtain ⟨hsp, h28, h29, h18, hm1, hm2, hm3, hm4, hm5, hm6, hs1, hs2, hs3, hs4, hs5, hs6, hs7, hs8, hs9, hz1, hz2, hz3,
     hl0, hl1, hl2, hnz, hlg, hr0, hy1, hy2, hsrc1, hsrc2, hB48, hBacc, hBH, hBW, hBrt, hBsep, hBv, hdS, hinS, hcS,
-    hext, hbud, hinv, hLsS, hMF, hLF, hop0, hop1⟩ := hj
+    hext, hbud, hinv, hLsS, hMF, hLF, hop0, hop1, hopA⟩ := hj
   have hap1 := hap.1
   have hLs0 := hLsS
   simp only [stk] at hg3 hb' ha hw hout hga hLs hpw hcw hLsS hMF
@@ -115,7 +115,8 @@ theorem d3zN (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
      OpDone.transport hop0 (by janus_simp [opAt]) (by janus_simp [opAt]) (by janus_simp [opAt])
        (by janus_simp [opAt]) hLFS (fun _ _ h => h),
      OpDone.transport hop1 (by janus_simp [opAt]) (by janus_simp [opAt]) (by janus_simp [opAt])
-       (by janus_simp [opAt]) hLFS (fun _ _ h => h)⟩
+       (by janus_simp [opAt]) hLFS (fun _ _ h => h), OpsApart.transport hopA (fun i hi => by
+       rcases (show i = 0 ∨ i = 1 by omega) with rfl | rfl <;> exact ⟨by janus_simp [opAt], by janus_simp [opAt]⟩)⟩
   case bytes =>
     intro j hj
     dsimp only

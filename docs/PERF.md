@@ -379,3 +379,14 @@ critical path: next trims are Fin1 (89 s, one run) and SbD (116 s).
 | Exp/W4Fin (`fin`, norm loop) | hang > 7 min (janus_run under `induction` with `∀ l` goal) | one loop test as `finIter` (continuation form, one run `until [njoin, tailPc]`), induction run-free | 38 s / 2.6 GB |
 | Exp/W4Exit (`exA`) | hang > 15 min (BL target vs `until` pc via `segAddr LibExp.program …`) | `fnBase` literal run lemma, literal pcs | 13 s / 3.1 GB |
 | Exp/Mont, MontLoop, MontExit (frame now excludes caller FP/LR) | — | re-proved | 140 s / 4.6 GB, 103 s / 3.4 GB, 34 s / 2.4 GB |
+
+### Run arm64 compute part / modulus operand (agent top s4, 2026-11-11, host load ~80)
+| module | before | change | after |
+|---|---|---|---|
+| Top/RunD3 (`d3x`) | 592 s / 7.6 GB | profile: `hS1` by `split <;> (congr 1; omega)` = 165 s of failing defeq unfolding of `Nat.sub`/`min` → `rw [← hS1n, apply_ite (BitVec.ofNat 64)]`; the OpDone transports + budget `omega` (302 s) ran with ~10 disjunctive/`min`/`% 2^64` hyps in context → `clear` them per bullet | 100 s / 4.6 GB |
+| Top/RunD3J | budget `omega` hit maxRecDepth (failing omega in a big context) | pure lemma `bud_d3join` | 87 s / 4.1 GB |
+| Top/RunD3P | — | (first build) | 197 s / 9.1 GB — OVER the 8 GB target: TODO trim (ZA recipe) |
+| Top/RunD3L | — | (first build) | killed by memcap 8G at 337 s — TODO trim (same as D2L 211 s / 7.8 GB) |
+| Top/RunC1, RunCP1, RunCP2 | — | new (budget facts as pure lemmas `bs_le`, `bud_pad`) | 24-30 s, 20 s, 24 s, ≤ 2.4 GB |
+Lesson: an `omega` that FAILS in a large context reports "maximum recursion depth" instead of a counterexample — look for a
+missing hypothesis (here `B ≤ b`) before suspecting anything else.

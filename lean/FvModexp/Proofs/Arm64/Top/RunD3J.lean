@@ -41,7 +41,17 @@ def JoinD3 (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64
   LiveExt R L Lk ∧ b - (3 * makeCost 4 + 2 * dCost + allocCost 1024) ≤ bk ∧
   R.inv bk Lk (s.regs 28).toNat (view R.rt Lk U.mem) ∧ LiveSep Lk (win s stk 40) ∧
   MemFrame s.mem U.mem (R.rt ++ winA s stk 40) ∧ LiveFrame s.mem U.mem L [] ∧ OpDone U.mem s p len Lk 0 ∧
-  OpDone U.mem s p len Lk 1
+  OpDone U.mem s p len Lk 1 ∧ OpsApart U.mem s 2
+
+end FvModexp.Arm64.Run
+
+namespace FvModexp.Arm64.Run
+
+/-- The budget after the modulus operand's `setBytes` (the join path spent the `RightPadBytes` buffer already). -/
+theorem bud_d3join {b bk b2 mc : Nat} (hbudD : 3 * makeCost 4 + 3 * dCost ≤ b)
+    (hbud : b - (3 * makeCost 4 + 2 * dCost + allocCost 1024) ≤ bk) (hMC0 : mc ≤ allocCost (8 * 132))
+    (hb2 : bk - mc ≤ b2) : b - (3 * makeCost 4 + 3 * dCost) ≤ b2 := by
+  simp only [dCost] at hbudD hbud ⊢; omega
 
 end FvModexp.Arm64.Run
 
@@ -70,7 +80,7 @@ theorem d3join (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
   obtain ⟨hcacc, hc48, hcheld, hcw, hp, hlcp, hcp48, hpacc, hheld, hpw⟩ := hin
   obtain ⟨hsp, h28, h29, h18, hm1, hm2, hm3, hm4, hm5, hm6, hs1, hs2, hs3, hs4, hs5, hs6, hs7, hs8, hs9, hz1, hz2, hz3,
     hl0, hl1, hl2, hnz, hr0, hr2, hB48, hBacc, hBH, hBW, hBv, hdS, hinS, hcS, hext, hbud, hinv, hLsS,
-    hMF, hLF, hop0, hop1⟩ := hj
+    hMF, hLF, hop0, hop1, hopA⟩ := hj
   subst hr0
   have hap1 := hap.1
   have hLs0 := hLsS
@@ -116,11 +126,20 @@ theorem d3join (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     (by janus_simp [h18]) (by janus_simp [hm1]) (by janus_simp [hm2]) (by janus_simp [hm3]) (by janus_simp [hm4])
     (by janus_simp [hm5]) (by janus_simp [hm6]) (by janus_simp [hs1]) (by janus_simp [hs2]) (by janus_simp [hs3])
     (by janus_simp [hs4]) (by janus_simp [hs5]) (by janus_simp [hs6]) hl0 hl1 hl2 hnz (fun _ => ⟨by janus_simp [hs7], by janus_simp [hs8]⟩) ?_ ?_ (hext.trans hext2) ?_ ?_
-    (hext2.liveSep hLsL1 hwrt) ?_ ?_ ?_) (by janus_simp [hp2]) (by janus_simp [hn2]) (by janus_simp)
+    (hext2.liveSep hLsL1 hwrt) ?_ ?_ ?_ ?opsA) (by janus_simp [hp2]) (by janus_simp [hn2]) (by janus_simp)
+  case opsA =>
+    refine OpsApart.step' (p2 := p2) (c2 := c2) hopA (fun i hi => ?_) (fun i hi hc => by
+        rcases (show i = 0 ∨ i = 1 by omega) with rfl | rfl
+        · exact opDone_inRanges hop0 hc
+        · exact opDone_inRanges hop1 hc)
+      (by janus_simp [hp2, opAt]) (by janus_simp [hc2, opAt]) (fun hc => ?_)
+    · rcases (show i = 0 ∨ i = 1 by omega) with rfl | rfl <;> exact ⟨by janus_simp [opAt], by janus_simp [opAt]⟩
+    · rcases hor2 with ⟨-, h⟩ | ⟨-, h⟩
+      · simp at h; omega
+      · exact h
   · intro _; janus_simp [hs9]
   · janus_callpre
-  · have hD : allocCost (8 * 132) ≤ dCost := Nat.le_add_left _ _
-    omega
+  · exact bud_d3join hbudD hbud hMC0 hb2
   · dsimp only
     rw [view_writeLE_out (hout.of_sub (by omega) (by omega)), view_writeLE_out (hout.of_sub (by omega) (by omega)),
       view_writeLE_out (hout.of_sub (by omega) (by omega)), view_writeLE_out (hout.of_sub (by omega) (by omega))]
@@ -159,6 +178,6 @@ theorem d3join (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
       rw [BitVec.toNat_ofNat, Nat.mod_eq_of_lt (by omega)]
       apply beVal_padded
       intro j hj
-      rw [← hBv j hj, ← Memory.readLE_one, ← Memory.readLE_one, Memory.readLE_writeLE_of_disjoint _ _ (by omega)]
+      rw [← hBv j hj, ← Memory.readLE_one]
 
 end FvModexp.Arm64.Run
