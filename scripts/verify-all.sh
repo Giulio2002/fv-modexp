@@ -105,6 +105,15 @@ run_job() {   # run_job isa fn sym
   fi
   if [ "$r" = FAIL ] && grep -qE 'Terminated|timed out|Killed|out of memory' "build/log-$isa-$fn"; then r="FAIL(cap)"; fi
   rss=0; [ -s "$tf" ] && rss=$(( $(tail -1 "$tf" | tr -dc 0-9) / 1024 ))
+  # Janus runs its Lean jobs in systemd scopes of their own (outside the memcap cgroup): the per-job peak it measured
+  # (memoryGuard.peakBytes of the reports) is the authoritative number; take the larger of the two.
+  local jp; jp=$(python3 -c 'import json,glob,sys
+b=0
+for f in glob.glob(sys.argv[1]+"/verified.json")+glob.glob(sys.argv[1]+"/verified/*.json"):
+    try: b=max(b,int(json.load(open(f)).get("memoryGuard",{}).get("peakBytes",0)))
+    except Exception: pass
+print(b//1048576)' "$out" 2>/dev/null || echo 0)
+  [ "${jp:-0}" -gt "$rss" ] && rss=$jp
   echo "$r $(( $(date +%s) - t0 )) $rss ${#wt[@]}" >"build/res/$isa-$fn"
 }
 admit() { local l m; l=$(cut -d' ' -f1 /proc/loadavg | cut -d. -f1); m=$(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo); [ "$l" -lt "${MAX_LOAD:-40}" ] && [ "$m" -ge 20 ]; }
