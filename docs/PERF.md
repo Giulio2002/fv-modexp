@@ -120,6 +120,17 @@ Lesson (before → after): the first setBytes exploration with `janus_data hd [h
 | Top/RunD1P (base operand, stack buffer + memmove) | 128 s / 6.1 GB | |
 | Top/RunD1J (join J1 -> D1: patched setBytes of the buffer) | 64 s / 4.6 GB | the padded paths meet at J1 so the `setBytes` + relation proof is written once |
 | Top/RunD1L (base operand, makeslice buffer + memmove -> J1) | 132 s / 7.7 GB | before: 216 s / 9.2 GB. Frame composition by `MemFrame.trans` with range-inclusion lemmas proved once (`out_wA`, `out_cs`, `out_csd`) instead of per-address `omega` in the big context (each such `omega` cost 8-13 s: its cost grows with every disjunction hypothesis in scope); the input-slice offset kept as a variable `off` with one disjunction instead of `split <;> omega` |
+| Top/RunD2 (D1 -> D2 exponent operand, direct slice) | 126 s / 5.0 GB | |
+| Top/RunD2J (join J2 -> D2) | 142 s / 4.8 GB | |
+| Top/RunD2P (exp operand, stack buffer -> J2) | 79 s / 5.8 GB | |
+| Top/RunD2L (exp operand, makeslice buffer, >0 input bytes -> J2) | 211 s / 7.8 GB | |
+| Top/RunD2Z (exp operand, makeslice buffer, 0 input bytes) | skip branch alone 143 s / 6.3 GB; both branches in one theorem > 900 s (killed) | to split at the BEQ |
+
+**Row-1 budget warning (2026-11-11):** the serial dev-compile time of the Run arm64 modules written so far is ~28 min
+(H 340 s, L 80 s, D1 395 s, D2 ~700 s, plus the error-path witness 150 s); the modulus operand and the compute part
+will add ~15 min. Even with 2 parallel jobs the row would exceed the 15-min `janus verify` cap. Reported to the
+coordinator; the planned fixes are per-module slimming (no `janus_data` in segment contexts, `clear` before `omega`,
+frame lemmas instead of in-context arithmetic) and sharing one generic operand theorem between the three operands.
 # Performance record (proof elaboration and `janus verify` rows)
 
 Project sanity goal: every `janus verify` row <= 15 min wall and <= 16 GB (hard, `scripts/verify-all.sh` has no override); every proof module's
