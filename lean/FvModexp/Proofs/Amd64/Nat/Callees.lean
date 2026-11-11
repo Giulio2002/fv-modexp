@@ -172,6 +172,46 @@ theorem AddVVHyp.live {P : Amd64.Program} (h : Summary0 P (segAddr Extracted.pro
   · simp only [Outside, and_true]; unfold Apart at ha1 ha2; omega
   · simp only [Outside, and_true]; unfold Apart at ha3 ha4; omega
 
+/-! ## `subVV.abi0` (asm; `FvModexp.Amd64.SubVVSum.subVV_summary`) -/
+
+def subVVfn : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.subVV.abi0"
+
+abbrev SubVVQ (s : State) (m : Memory) : Prop :=
+  natVal m (s.mem.readLE ((s.regs 4).toNat + 8) 8) (s.mem.readLE ((s.regs 4).toNat + 16) 8) +
+      natVal s.mem (s.mem.readLE ((s.regs 4).toNat + 56) 8) (s.mem.readLE ((s.regs 4).toNat + 16) 8) =
+    natVal s.mem (s.mem.readLE ((s.regs 4).toNat + 32) 8) (s.mem.readLE ((s.regs 4).toNat + 16) 8) +
+      2 ^ (64 * s.mem.readLE ((s.regs 4).toNat + 16) 8) * m.readLE ((s.regs 4).toNat + 80) 8 ∧
+  m.readLE ((s.regs 4).toNat + 80) 8 =
+    (if natVal s.mem (s.mem.readLE ((s.regs 4).toNat + 32) 8) (s.mem.readLE ((s.regs 4).toNat + 16) 8) <
+        natVal s.mem (s.mem.readLE ((s.regs 4).toNat + 56) 8) (s.mem.readLE ((s.regs 4).toNat + 16) 8) then 1 else 0) ∧
+  MemFrame s.mem m [(s.mem.readLE ((s.regs 4).toNat + 8) 8,
+      s.mem.readLE ((s.regs 4).toNat + 8) 8 + 8 * s.mem.readLE ((s.regs 4).toNat + 16) 8),
+      ((s.regs 4).toNat + 80, (s.regs 4).toNat + 88)]
+
+def SubVVHyp (impl : List Amd64.Segment) : Prop :=
+  Summary0 ((Extracted.program.onlySegments [subVVfn]).link impl) (segAddr Extracted.program subVVfn) VVPre SubVVQ
+
+abbrev SubVVLQ (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (s : State) (m : Memory) : Prop :=
+  SubVVQ s m ∧ R.inv b L (s.regs 14).toNat (view R.rt L m) ∧
+    m.readLE ((s.regs 14).toNat + 16) 8 = s.mem.readLE ((s.regs 14).toNat + 16) 8 ∧
+    m.readLE (s.fsBase.toNat - 8) 8 = s.mem.readLE (s.fsBase.toNat - 8) 8
+
+theorem SubVVHyp.live {P : Amd64.Program} (h : Summary0 P (segAddr Extracted.program subVVfn) VVPre SubVVQ) (R : RtInv)
+    (b : Nat) (L : List (Nat × Nat)) :
+    Summary0 P (segAddr Extracted.program subVVfn) (VVLPre R b L) (SubVVLQ R b L) := by
+  refine Summary0.mono (Summary0.live h (fun s => [(s.mem.readLE ((s.regs 4).toNat + 8) 8,
+      s.mem.readLE ((s.regs 4).toNat + 8) 8 + 8 * s.mem.readLE ((s.regs 4).toNat + 16) 8),
+      ((s.regs 4).toNat + 80, (s.regs 4).toNat + 88)]) (fun s m _ hq => hq.2.2) R b L) ?_ (fun _ _ _ hq => hq)
+  intro s ⟨hp, hi, hh, ho, ha1, ha2, ha3, ha4⟩
+  refine ⟨hp, hi, ?_, ?_, ?_⟩
+  · intro r hr
+    simp only [List.mem_cons, List.mem_nil_iff, or_false] at hr
+    rcases hr with rfl | rfl
+    · simp only [Nat.add_sub_cancel_left]; exact hh.symm
+    · left; simpa using ho
+  · simp only [Outside, and_true]; unfold Apart at ha1 ha2; omega
+  · simp only [Outside, and_true]; unfold Apart at ha3 ha4; omega
+
 /-! ## `addMulVVWW.abi0` (asm; `FvModexp.Amd64.AddMulVVWWSum`, asm work in progress 2026-11-11) -/
 
 def addMulVVWWfn : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.addMulVVWW.abi0"
