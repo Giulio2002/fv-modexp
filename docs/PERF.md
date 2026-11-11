@@ -469,6 +469,16 @@ Lesson: after a call, NEVER close the callee-post bookkeeping (slot reads throug
 context: state it as a pure lemma over the printed post forms (print them with `run_tac withMainContext …
 logInfo (← inferType h)`), e.g. `zcPost` (8 s vs > 240 s).
 
+### expmc session 9 (2026-11-11), arm64 dev compile (load ~30), wall / max RSS
+| module | time | note |
+|---|---|---|
+| Exp/W4P01Ret (`p01Ret`: p01 → RET composition) | 28 s / 2.7 GB | |
+| Exp/W4One (one/powers zeroing, both one paths, `zeroLoop`) | 24 s / 2.5 GB | `oneMem_facts`/`large_facts` pure |
+| Exp/W4Snc (`snCall`: stk.nat(17n) by hand) | 7 s / 2.4 GB | |
+| Exp/W4OneRet (`afterOne`: snE → RET transfers) | 110 s / 5.2 GB | TRIM: ~40 `by omega` in a ~150-hyp context in one `refine` |
+| Exp/W4OneRet2 (`oneRet`) | 1 s | |
+| Exp/W4RR (`rrA`, `rrB`, `rrBpost`) | 15 s / 2.5 GB | |
+
 ### divmc `(*stack).nat` (2026-11-11, session 5; dev compile, host load high), wall / max RSS
 | module | arm64 | amd64 |
 |---|---|---|
