@@ -649,3 +649,11 @@ needs trimming (DivBasicRec 141 s, DivBasicNat 90-156 s, DivBasicStep 56 s are t
   Still over target: RunD1L 258 s / 7.67 GB, RunD2L 292 s / 7.07 GB, RunD3ZA 279 s / 6.38 GB, RunD1P 254 s / 6.15 GB —
   these carry makeslice/memmove contract calls, not RetAddr; next: per-declaration skipKernelTC profile and split.
   RunErr 137 s / 5.67 GB, RunOkRow 7 s.
+
+## agent top s10 (amd64, host load ~45-55)
+| module | time | peak |
+|---|---|---|
+| Amd64/Nat/SetBytes{,Std} (with df threading) | 98 / 95 s | 2.4 GB |
+| Amd64/Int/IntBytes (with df threading) | 96 s | 2.3 GB |
+| Amd64/Top/LibRun (generated) | 56 s | 3.1 GB |
+| Amd64/Top/RunH1 (entry -> B1) | 141 s | 2.7 GB |
