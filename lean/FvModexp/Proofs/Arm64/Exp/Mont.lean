@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Arm64.Exp.MontLoop
+import FvModexp.Proofs.Arm64.Exp.MontAsm
 
 /-!
 # `nat.montgomery` (arm64), nat.go:188-218: the roomy summary
@@ -188,28 +189,20 @@ open Janus.Contracts.EqHashModel
 
 /-- `ens'` in the project's statement shape (docs/CONVENTIONS.md §3, agent top): the program is the restricted Run
 program of `names`, the runtime contracts are about `Extracted.program.ofImpl impl`, the only premise on `impl` is
-`ImplApart`. The callee summaries of the asm kernels are premises (hypothesis-first, §4). -/
+`ImplApart`. The asm kernels `addMulVVWW`/`subVV` are agent asm's verified summaries (`MontAsm`): no premise. -/
 theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hclr : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
-    (hamv : Summary0 ((Extracted.program.onlySegments LibMont.names).link impl) (segAddr Extracted.program amvFn)
-      AmvPre AmvQ)
-    (hsub : Summary0 ((Extracted.program.onlySegments LibMont.names).link impl) (segAddr Extracted.program subFn)
-      SubPre SubQ)
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc yp yl yc mp ml mc k n : BitVec 64) :
     Ensures ((Extracted.program.onlySegments LibMont.names).link impl) (segAddr Extracted.program fn)
       [zp, zl, zc, xp, xl, xc, yp, yl, yc, mp, ml, mc, k, n]
       (Pre R b L zp zc xp xl yp yl mp ml mc k n) (Post R b L zp zc xp yp mp k n) := by
   have hc := codeIn_ofImpl_restrict_of_apart hap LibMont.names
-  have e1 : segAddr Extracted.program amvFn = segAddr LibMont.program amvFn := by decide
-  have e2 : segAddr Extracted.program subFn = segAddr LibMont.program subFn := by decide
   have e3 : segAddr Extracted.program fn = segAddr LibMont.program fn := by decide
-  rw [← LibMont.eq_only] at hc hamv hsub ⊢
-  rw [e1] at hamv
-  rw [e2] at hsub
+  rw [← LibMont.eq_only] at hc ⊢
   rw [e3]
-  exact ens' impl R (MemclrNoHeapPointersLive.of_codeIn hc hclr) (MemmoveLive.of_codeIn hc hmv) hamv hsub b L
-    zp zl zc xp xl xc yp yl yc mp ml mc k n
+  exact ens' impl R (MemclrNoHeapPointersLive.of_codeIn hc hclr) (MemmoveLive.of_codeIn hc hmv)
+    (MontAsm.amv_sum impl) (MontAsm.sub_sum impl) b L zp zl zc xp xl xc yp yl yc mp ml mc k n
 
 end FvModexp.Arm64.Mont
