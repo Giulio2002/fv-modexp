@@ -64,6 +64,17 @@ theorem copy_rd {C m : Memory} {b src n i : Nat} (h : ∀ j, j < n → m.bytes (
     m.readLE (b + i) 1 = C.readLE (src + i) 1 := by
   rw [Memory.readLE_one, Memory.readLE_one, h i hi]
 
+/-- `Uint64()` with `MaxUint64` when `!IsUint64()`, as the machine code computes it from the limbs. -/
+theorem sat_bv (m : Memory) (z : Nat) :
+    (if m.readLE (z + 24) 8 ||| (m.readLE (z + 16) 8 ||| m.readLE (z + 8) 8) = 0 then BitVec.ofNat 64 (m.readLE z 8)
+      else 18446744073709551615#64).toNat = RgSpec.sat (val256 m z) := by
+  have h0 := Util.readLE8_lt m z; have h1 := Util.readLE8_lt m (z + 8); have h2 := Util.readLE8_lt m (z + 16)
+  have := Calldata.sat_limbs (m.readLE z 8) (m.readLE (z + 8) 8) (m.readLE (z + 16) 8) (m.readLE (z + 24) 8) h0 h1 h2
+  rw [val256_limbs, RgSpec.sat, ← this]
+  split
+  · rw [BitVec.toNat_ofNat, Nat.mod_eq_of_lt h0]
+  · rfl
+
 /-- The final value of the run is EthLib's `requiredGas` (when the lengths pass). -/
 theorem rgPost_of (ptr len B E M : BitVec 64) (s s' : State)
     (hB : B.toNat = RgSpec.sat (Calldata.word s.mem ptr.toNat len.toNat 0))
