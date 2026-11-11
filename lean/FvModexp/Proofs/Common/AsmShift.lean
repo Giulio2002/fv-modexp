@@ -128,6 +128,10 @@ theorem lv_w4 (m : Memory) (p t a b c d : Nat) :
     rw [lv_wr (by omega), lv_wr (by omega), lv_wr (by omega), lv_wr (by omega)]
   rw [this]
 
+theorem nest4 (W a b c d Z : Nat) :
+    a + W * (b + W * (c + W * (d + W * Z))) = a + W * b + W * W * c + W * W * W * d + W * W * W * W * Z := by
+  simp only [Nat.mul_add, Nat.mul_assoc, Nat.add_assoc]
+
 /-- four limbs of `lshVU` -/
 theorem lsh_step4 (X C Z0 Xl v0 v1 v2 v3 v4 j n s : Nat) (h1 : 1 ≤ s) (h2 : s ≤ 63)
     (b0 : v0 < 2 ^ 64) (b1 : v1 < 2 ^ 64) (b2 : v2 < 2 ^ 64) (b3 : v3 < 2 ^ 64)
@@ -168,28 +172,25 @@ theorem linv_step4 (m0 M : Memory) (x z n sh j t C w0 w1 w2 w3 : Nat) (h1 : 1 �
   rw [show 4 + t = t + 4 by omega] at hw
   rw [hw, show z + 8 * (j + 1) + 32 = z + 8 * (j + 1 + 4) by omega]
   rw [hw0, hw1, hw2, hw3]
-  refine key.trans ?_
+  rw [nest4] at key
   have p1 : (2 : Nat) ^ 128 = 2 ^ 64 * 2 ^ 64 := by rw [← Nat.pow_add]
   have p2 : (2 : Nat) ^ 192 = 2 ^ 64 * 2 ^ 64 * 2 ^ 64 := by rw [← Nat.pow_add, ← Nat.pow_add]
   have p3 : (2 : Nat) ^ 256 = 2 ^ 64 * 2 ^ 64 * 2 ^ 64 * 2 ^ 64 := by rw [← Nat.pow_add, ← Nat.pow_add, ← Nat.pow_add]
   rw [p1, p2, p3]
-  simp only [Nat.mul_add, Nat.add_mul, Nat.mul_assoc]
-  omega
+  exact key
 
 /-- the invariant right after the first (top) word of a backward shift -/
 theorem linv_init (m0 M : Memory) (x z m sh : Nat) (h1 : 1 ≤ sh) (h2 : sh ≤ 63) :
     LInv m0 M x z (m + 1) sh m 0 (m0.readLE (x + 8 * m) 8 / 2 ^ (64 - sh)) := by
   unfold LInv
   have e := shl_split (m0.readLE (x + 8 * m) 8) sh (limb_lt _ _) h1 h2
-  rw [lv_succ m0 x m, pow_succ64 m]
-  simp only [lv_zero, Nat.mul_zero, Nat.add_zero]
-  rw [Nat.add_mul, Nat.mul_assoc]
-  generalize 2 ^ (64 * m) = P at *
-  generalize 2 ^ 64 = W at *
-  generalize m0.readLE (x + 8 * m) 8 / 2 ^ (64 - sh) = hi at *
-  generalize m0.readLE (x + 8 * m) 8 * 2 ^ sh % W = lo at *
-  generalize m0.readLE (x + 8 * m) 8 * 2 ^ sh = vs at *
-  generalize lv m0 x m * 2 ^ sh = Xl at *
-  grind
+  generalize m0.readLE (x + 8 * m) 8 * 2 ^ sh % 2 ^ 64 = lo at e ⊢
+  rw [lv_succ m0 x m, pow_succ64 m, lv_zero, Nat.mul_zero, Nat.add_zero, Nat.add_mul, Nat.mul_assoc, e]
+  generalize 2 ^ (64 * m) = P
+  generalize 2 ^ 64 = W
+  generalize m0.readLE (x + 8 * m) 8 / 2 ^ (64 - sh) = hi
+  generalize lv m0 x m * 2 ^ sh = Xl
+  simp only [Nat.mul_add, Nat.add_mul]
+  ac_rfl
 
 end FvModexp.Asm
