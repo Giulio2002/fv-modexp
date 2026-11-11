@@ -21,7 +21,7 @@ theorem g2 (impl : List Amd64.Segment) (R : RtInv)
     (hmc : MemclrNoHeapPointersLive64 (LibStackNat.program.link impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
     (hwb : WbLiveContract64 (LibStackNat.program.link impl) (cA "runtime.gcWriteBarrier2") 4096 R 2)
     (b : Nat) (L : List (Nat × Nat)) (st n : BitVec 64) (s : State)
-    (hra : s.mem.readLE (s.regs 4).toNat 8 < 2 ^ 47) (hx15s : s.xmm 15 = 0#128)
+    (hra : s.mem.readLE (s.regs 4).toNat 8 < 2 ^ 47) (hx15s : s.xmm 15 = 0#128) (hdf0 : s.df = false)
     (hpre : Pre R b L 4192 24 st.toNat n.toNat s)
     (hk : stCap s.mem st.toNat < stLen s.mem st.toNat + rnd n.toNat)
     (S : State) (hpc : S.rip = BitVec.ofNat 64 (cA "runtime.growslice")) (hsp : S.regs 4 = s.regs 4 - 96#64)
@@ -136,7 +136,7 @@ theorem g2 (impl : List Amd64.Segment) (R : RtInv)
       Nat.mod_eq_of_lt (by omega)]
   have qret : M2.readLE ((s.regs 4).toNat - 96) 8 = pMR := by
     rw [← hM2, Janus.Arm64.Memory.readLE_writeLE_self]; rfl
-  refine g3 impl R hmc hwb b L st n s hra hx15s hpre hk ptr.toNat hpin hp48 (hal8 (Or.inr (by omega))) hapL _ rfl
+  refine g3 impl R hmc hwb b L st n s hra hx15s hdf0 hpre hk ptr.toNat hpin hp48 (hal8 (Or.inr (by omega))) hapL _ rfl
     ?_ ?_ ?_ ?_ hfs ?_ qret ?_ ?_ hF2 hLF2 hpacc2 hinv2 ?_ ?_ ?_ q28 ?_ q10 ?_ ?_
   · simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]
   · simp only [setRegF_apply, callRegs64_apply, Nat.reduceEqDiff, ↓reduceIte]; exact h14

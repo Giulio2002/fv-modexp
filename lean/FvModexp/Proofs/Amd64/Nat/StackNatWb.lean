@@ -68,13 +68,13 @@ theorem joinW (impl : List Amd64.Segment) (R : RtInv)
   janus64_run [hm, hsp88, hacc16, hacc8, hwbM, e6] until [cA "runtime.gcWriteBarrier2", pS]
   · -- the barrier is off
     refine tail impl R b L st n s L1 b1 w1 c1 M _ h ?_ ?_ (hinvW _ _ [] _ (MemFrame.refl _ _) (by simp)) ?_ ?_ _
-      ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl
+      ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl
     · janus_frame
     · exact lf_of_mf (by janus_frame)
     · rw [Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega), Janus.Arm64.Memory.readLE_writeLE_self,
         Nat.mod_eq_of_lt (by omega)]
     · rw [Janus.Arm64.Memory.readLE_writeLE_self, Nat.mod_eq_of_lt (by omega)]
-    all_goals first | exact hfs | janus64_simp
+    all_goals first | exact hfs | exact hdf | janus64_simp
   · -- the barrier is on
     have hwb2 := hsv.2.2.2.2.2.1 [2]
     have hLW : LiveSep L1 [((s.regs 4).toNat - 96 - 4096, (s.regs 4).toNat - 96 + 8)] := fun r hr => by
@@ -158,7 +158,7 @@ theorem joinW (impl : List Amd64.Segment) (R : RtInv)
       rw [Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega), Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega), hkeep _ _ (by omega) (by omega), Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega), Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega), Janus.Arm64.Memory.readLE_writeLE_self, Nat.mod_eq_of_lt (by omega)]
     have hc2 : (((m'.writeLE buf.toNat 8 w1).writeLE (buf.toNat + 8) 8 (M.readLE st.toNat 8))).readLE (st.toNat + 16) 8 = c1 := by
       rw [Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega), Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega), hkeep _ _ (by omega) (by omega), Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega), Janus.Arm64.Memory.readLE_writeLE_self, Nat.mod_eq_of_lt (by omega)]
-    refine tail impl R b L st n s L1 b1 w1 c1 M _ h hF2 hLF2 hinv2 hl2 hc2 _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl
-    all_goals first | exact hfs | janus64_simp
+    refine tail impl R b L st n s L1 b1 w1 c1 M _ h hF2 hLF2 hinv2 hl2 hc2 _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl
+    all_goals first | exact hfs | exact hdf | janus64_simp
 
 end FvModexp.Amd64.StackNat

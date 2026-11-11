@@ -39,6 +39,7 @@ structure J (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (st n : Nat) (s : Stat
   grow : stCap s.mem st < stLen s.mem st + rnd n → InRanges w1 (8 * c1) R.rt ∧ ApartAll w1 (8 * c1) L
   lsep : LiveSep L1 (win s 4192 24)
   wwin : 0 < c1 → Outside w1 (8 * c1) (win s 4192 24)
+  df0 : s.df = false
 
 /-- the header is apart from the result's first word -/
 theorem J.hdr {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st n : Nat} {s : State} {L1 : List (Nat × Nat)}

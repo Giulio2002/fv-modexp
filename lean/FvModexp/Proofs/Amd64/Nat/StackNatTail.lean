@@ -34,7 +34,7 @@ theorem tail (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat ×
     (h3 : S.regs 3 = n) (h1 : S.regs 1 = BitVec.ofNat 64 c1)
     (h6 : S.regs 6 = BitVec.ofNat 64 (stLen s.mem st.toNat + rnd n.toNat)) (h8 : S.regs 8 = BitVec.ofNat 64 w1)
     (h2 : S.regs 2 = BitVec.ofNat 64 (stLen s.mem st.toNat)) (h14 : S.regs 14 = s.regs 14)
-    (h5 : S.regs 5 = s.regs 4 - 8#64) (hx15 : S.xmm 15 = s.xmm 15) (hfs : S.fsBase = s.fsBase) (hm : S.mem = M2) :
+    (h5 : S.regs 5 = s.regs 4 - 8#64) (hx15 : S.xmm 15 = s.xmm 15) (hfs : S.fsBase = s.fsBase) (hdf : S.df = false) (hm : S.mem = M2) :
     ReachesRet (LibStackNat.program.link impl) (retAddrOf s) S fun s' =>
       RegsOK s s' ∧ Post R b L 4192 24 st.toNat n.toNat s s' := by
   have hpre := h.pre
@@ -67,9 +67,9 @@ theorem tail (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat ×
   have hnr2 : rnd n.toNat ≤ n.toNat + 3 := by simp only [rnd]; omega
   by_cases hn0 : n.toNat = 0
   · janus64_run [hm, hsp88, hra, hbp, hacc8a, hacc8b, BitVec.msb_eq_decide]
-    refine ⟨⟨?_, ?_, ?_, ?_⟩, ?_, fun h0 => absurd h0 (by omega), ?_, ?_,
+    refine ⟨⟨?_, ?_, ?_, ?_⟩, ?_, ?_, fun h0 => absurd h0 (by omega), ?_, ?_,
       post_fin h hf hl hinv 0 (by omega) (fun h => absurd h (by omega)) ?_ ?_ ?_ ?_⟩
-    all_goals try simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte, h14, hx15, hfs, h3, BitVec.ofNat_toNat,
+    all_goals try simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte, h14, hx15, hfs, hdf, h.df0, h3, BitVec.ofNat_toNat,
       BitVec.setWidth_eq]
     all_goals first
       | with_reducible rfl
@@ -96,8 +96,8 @@ theorem tail (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat ×
       rw [Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega),
         Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega),
         Janus.Arm64.Memory.readLE_writeLE_self, Nat.mod_eq_of_lt (by omega)]
-    refine ⟨⟨?_, ?_, ?_, ?_⟩, ?_, fun _ => ?_, ?_, ?_, post_fin h hf hl hinv 1 (by omega) (fun _ => by omega) ?_ hrd ?_ ?_⟩
-    all_goals try simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte, h14, hx15, hfs, h3, BitVec.ofNat_toNat,
+    refine ⟨⟨?_, ?_, ?_, ?_⟩, ?_, ?_, fun _ => ?_, ?_, ?_, post_fin h hf hl hinv 1 (by omega) (fun _ => by omega) ?_ hrd ?_ ?_⟩
+    all_goals try simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte, h14, hx15, hfs, hdf, h.df0, h3, BitVec.ofNat_toNat,
       BitVec.setWidth_eq, stW]
     all_goals first
       | with_reducible rfl

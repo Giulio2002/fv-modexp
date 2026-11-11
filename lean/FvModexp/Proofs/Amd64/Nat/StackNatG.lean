@@ -59,7 +59,7 @@ theorem grow (impl : List Amd64.Segment) (R : RtInv)
   janus64_run [hr, hacc24, hti, e9, e10, e10', hti9, hlt, BitVec.msb_eq_decide] until [cA "runtime.growslice"]
   have hsp96 : (s.regs 4 - 96#64).toNat = (s.regs 4).toNat - 96 := by
     rw [BitVec.toNat_sub_of_le (by simp only [BitVec.le_def, BitVec.toNat_ofNat]; omega)]; rfl
-  refine g2 impl R hgr hmc hwb b L st n s hra hx15 hpre hk _ ?gpc ?gsp ?g14 ?g5 ?gx ?gfs ?gdf ?sret ?g0 ?g3 ?g1 ?g7
+  refine g2 impl R hgr hmc hwb b L st n s hra hx15 hdf hpre hk _ ?gpc ?gsp ?g14 ?g5 ?gx ?gfs ?gdf ?sret ?g0 ?g3 ?g1 ?g7
     ?g6 ?gF ?sra ?sbp ?s30 ?s20 ?s18 ?sst ?sn
   case gF => simp only [win]; janus_frame
   case gpc => rfl
