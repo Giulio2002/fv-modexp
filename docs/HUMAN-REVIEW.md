@@ -46,3 +46,34 @@ A final statement may not use an instance or class of a dependency, so these pla
 ## 4. Non-vacuity
 
 Every main theorem has a kernel-checked `Witness.nonvacuous` (concrete returning run satisfying the precondition) which `janus verify` requires.
+
+## Row 1 runtime assumptions: `RunIface.Serves R` and non-vacuity (agent top, DRAFT 2026-11-11)
+
+`Serves R` (lean/FvModexp/Proofs/Arm64/Top/RunIface.lean) says the runtime serves every request of the Run extraction's
+contracts up to: `makeslice` cap ≤ 2^17 elements, `memmove`/`memclrNoHeapPointers` ≤ 2^20 bytes, `growslice` new length
+≤ 2^17; `newobject`, write barriers, `sync.Pool` Get/Put unconstrained (no size argument). An unbounded version is not
+satisfiable by any Janus stub runtime (the stubs serve fixed / ≤ N sizes) and is not what a real runtime does (huge
+requests throw `out of memory`), so it was rejected.
+
+**Request sizes Run can make** (EIP-7823: each operand ≤ 1024 bytes = 128 words; `m` = len(modulus) ≤ 128 words). From the
+go-bigmodexpfix code (to be confirmed by the `R.ok` needs of divmc's/expmc's summaries; this table is the review target):
+
+| request | site | worst case |
+|---|---|---|
+| `make([]byte, n)` | `getData` (Run), `LeftPadBytes` (Run), `(*Int).Bytes` | 1024 B (Bytes: `8·len(abs)` ≤ 1032 B) |
+| `nat.make(n)` = `makeslice(Word, n, n+4)` | setBytes (≤ 128), mul/sqr `z.make(len x + len y)` (≤ 256), div `u.make(len+1)`, `q.make(m-n+1)`, Montgomery `zz.make(2m)`, power table 16 × m | ≤ 260 words |
+| `(*stack).nat(n)` → `growslice` of the pooled `[]Word` | karatsuba/karatsubaSqr scratch (≈ 3·n·log n words for n ≤ 256), divRecursive scratch | ≤ ~ 10 000 words (estimate) |
+| `memmove` | getData/LeftPad copies (≤ 1024 B), `nat.set` / `copy` of nats (≤ 260 words ≈ 2 KiB) | ≤ 2 KiB (stack scratch copies ≤ ~80 KiB) |
+| `memclrNoHeapPointers` | `clear(z)` of scratch nats | ≤ ~80 KiB |
+
+The bounds 2^17 elements (1 MiB of words) and 2^20 bytes leave ≥ 10× margin over these estimates.
+
+**Non-vacuity plan (coordinator requirement, open):**
+1. `correctness` (full row-1 statement) — `Witness.nonvacuous` runs the EIP-7823 error path (no `Serves` needed there).
+2. `correctness_ok` (same statement restricted to `LengthsPass data`, `Serves R` in its precondition) — `Witness.correctness_ok`
+   runs a small success input (base 3, exp 5, mod 7 → `0x05`) to the return. Its runtime must satisfy the bounded `Serves R`:
+   this needs witness stubs that serve EVERY size up to the bound (a looping `memmove`/`memclr`, a general `growslice`,
+   bump `makeslice` for any cap ≤ 2^17, `Pool.Get` returning nil, `Pool.Put` dropping), proved against the live contracts —
+   Janus' stub library only has fixed-size / ≤N-size copies. Work item for top (or infra), tracked in NOTES-top.md.
+3. Satisfiability of `Serves R` for the worst case (requirement (a)) follows from 2's stubs: they serve every request up to the
+   bounds, sized with a heap ≥ the Run budget.
