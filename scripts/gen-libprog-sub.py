@@ -11,15 +11,23 @@ t = open(src).read()
 segs = {}
 for m in re.finditer(r'def seg(\d+) : (?:Amd64\.)?Segment :=\n  \{ name := "([^"]+)"', t):
     segs[m.group(2)] = int(m.group(1))
-pick = []
+import os
+keep = os.environ.get("KEEPALL") == "1"   # KEEPALL=1: `names` = the FN list verbatim (non-segment names kept, e.g. top's namesExp)
+pick = []; allnames = []
 for f in fns:
-    full = f if f in segs else "github.com/ethereum/go-bigmodexpfix/src/math/big." + f
-    if full not in segs: sys.exit("no segment " + f)
-    pick.append(full)
+    full = f if (f in segs or keep) else "github.com/ethereum/go-bigmodexpfix/src/math/big." + f
+    allnames.append(full)
+    if full not in segs:
+        if keep: continue
+        sys.exit("no segment " + f)
+    if full not in pick: pick.append(full)
 pick.sort(key=lambda f: segs[f])
+if not keep: allnames = pick
 pickset = {segs[f] for f in pick}
 ds = re.search(r"def segments : (?:Amd64\.)?List (?:Amd64\.)?Segment := \[(.*?)\]", t, re.S)
+CH = 6
 order = [int(x) for x in re.findall(r"seg(\d+)", ds.group(1))]
+chunks = [order[i:i+CH] for i in range(0, len(order), CH)]
 IsaN = "Amd64" if isa == "amd64" else "Arm64"
 ty = "Amd64.Program" if isa == "amd64" else "Program"
 o = ["import Extracted", "import FvModexp.Proofs.Common.LibEq", "",
@@ -27,11 +35,18 @@ o = ["import Extracted", "import FvModexp.Proofs.Common.LibEq", "",
      f"The restricted program of: {', '.join(pick)}. -/", "",
      f"namespace FvModexp.{IsaN}.{name}", "open Janus", "",
      "/-- the function names (extraction order) -/",
-     "def names : List String := [" + ", ".join(f'"{f}"' for f in pick) + "]", "",
+     "def names : List String := [" + ", ".join(f'"{f}"' for f in allnames) + "]", "",
      f"def program : {ty} := {{ Extracted.program with segments := [" + ", ".join(f"Extracted.seg{segs[f]}" for f in pick) + "] }", "",
+     "/-- the mask of `names.contains seg.name` over the Run segments, in chunks (one kernel decision each) -/"] + [
+     f"theorem mask{j} : [" + ", ".join(f"Extracted.seg{i}" for i in ch) + "].map (fun seg => names.contains seg.name) = [" + ", ".join("true" if i in pickset else "false" for i in ch) + "] := by decide +kernel" for j, ch in enumerate(chunks)] + ["",
      "theorem eq_only : program = Extracted.program.onlySegments names := by",
      "  have h : Extracted.program.segments.filter (fun seg => names.contains seg.name) = [" + ", ".join(f"Extracted.seg{segs[f]}" for f in pick) + "] := by",
-     "    rw [FvModexp.filter_mask _ _ [" + ", ".join("true" if i in pickset else "false" for i in order) + "] (by decide +kernel)]; rfl",
+     "    have hm : Extracted.program.segments.map (fun seg => names.contains seg.name) = " + " ++ ".join("[" + ", ".join("true" if i in pickset else "false" for i in ch) + "]" for ch in chunks) + " := by",
+     "      show (" + " ++ ".join("[" + ", ".join(f"Extracted.seg{i}" for i in ch) + "]" for ch in chunks) + ").map _ = _",
+     "      simp only [List.map_append, " + ", ".join(f"mask{j}" for j in range(len(chunks))) + "]",
+     "    rw [FvModexp.filter_mask _ _ _ hm]",
+     "    show FvModexp.maskFilter (" + " ++ ".join("[" + ", ".join(f"Extracted.seg{i}" for i in ch) + "]" for ch in chunks) + ") _ = _",
+     "    simp only [List.cons_append, List.nil_append, FvModexp.maskFilter]",
      "  unfold program; simp only [" + ("Amd64.Program.onlySegments" if isa == "amd64" else "Program.onlySegments") + "]; rw [h]", "",
      f"end FvModexp.{IsaN}.{name}", ""]
 open(out, "w").write("\n".join(o))
