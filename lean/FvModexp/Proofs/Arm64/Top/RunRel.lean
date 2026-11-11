@@ -20,10 +20,14 @@ namespace FvModexp.Arm64.Run
 /-- Header `i` of the call data `(p, len)`: EthLib's `readNat data (32 i) 32`, as `padBE`. -/
 @[reducible] def hdrV (s : State) (p len : BitVec 64) (i : Nat) : Nat := padBE s.mem p.toNat len.toNat (32 * i) 32
 
-/-- Header `i` is read into the frame: value, normal form, and its array is a live object of `Lk`. -/
+/-- Header `i` is read into the frame: value, normal form, and its array is a live object of `Lk`, aligned and accessible
+(accessibility never changes: every frame keeps it, so it is stated on the entry memory). -/
 def HdrDone (m : Memory) (s : State) (p len : BitVec 64) (Lk : List (Nat × Nat)) (i : Nat) : Prop :=
   HdrOK m (hdrAt s i) (hdrV s p len i) ∧
-    (0 < m.readLE (hdrAt s i + 16) 8 → InRanges (m.readLE (hdrAt s i) 8) (8 * m.readLE (hdrAt s i + 16) 8) Lk)
+    (0 < m.readLE (hdrAt s i + 16) 8 → InRanges (m.readLE (hdrAt s i) 8) (8 * m.readLE (hdrAt s i + 16) 8) Lk) ∧
+    (0 < m.readLE (hdrAt s i + 16) 8 → m.readLE (hdrAt s i) 8 % 8 = 0 ∧
+      s.mem.accessible (m.readLE (hdrAt s i) 8) (8 * m.readLE (hdrAt s i + 16) 8) true = true ∧
+      m.readLE (hdrAt s i) 8 + 8 * m.readLE (hdrAt s i + 16) 8 ≤ 2 ^ 48)
 
 def RelH (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64) (s : State) (ret k : Nat)
     (Lk : List (Nat × Nat)) (bk : Nat) (S : State) : Prop :=
@@ -115,6 +119,7 @@ theorem beVal_of_reads {m m' : Memory} {a n : Nat} (h : ∀ i, i < n → m'.read
 stores (memory `M`, equal to `m` outside Run's window). -/
 theorem hdrDone_of {R : RtInv} {L1 : List (Nat × Nat)} {m M : Memory} {s : State} {p len : BitVec 64} {i p1 n1 c1 : Nat}
     (hrd : ∀ a n, Outside a n (win s stk 40) → M.readLE a n = m.readLE a n)
+    (hacc : ∀ a n w, m.accessible a n w = s.mem.accessible a n w)
     (hs0 : M.readLE (hdrAt s i) 8 = p1) (hs1 : M.readLE (hdrAt s i + 8) 8 = n1)
     (hs2 : M.readLE (hdrAt s i + 16) 8 = c1)
     (hv : natVal m p1 n1 = hdrV s p len i) (hn : NatNorm m p1 n1) (hn4 : n1 ≤ 4) (hnc : n1 ≤ c1)
@@ -127,7 +132,7 @@ theorem hdrDone_of {R : RtInv} {L1 : List (Nat × Nat)} {m M : Memory} {s : Stat
     by_cases h0 : n1 = 0
     · subst h0; rfl
     · exact hrd _ _ ((hw (by omega)).of_sub (Nat.le_refl _) (by omega))
-  refine ⟨⟨?_, ?_, ?_, ?_⟩, ?_⟩
+  refine ⟨⟨?_, ?_, ?_, ?_⟩, ?_, ?_⟩
   · simp only [natAt, hdrAt] at *; rw [show s.sp.toNat - 32 - 32 * i + 8 = s.sp.toNat - 32 - 32 * i + 8 from rfl]
     rw [hs0, hs1, hval, hv]
   · simp only [hdrAt] at *; rw [hs0, hs1]
@@ -142,6 +147,10 @@ theorem hdrDone_of {R : RtInv} {L1 : List (Nat × Nat)} {m M : Memory} {s : Stat
   · simp only [hdrAt] at *; rw [hs0, hs2]
     intro hc
     exact ((hlive hc).2.1).inRanges_of_rt (hfresh hc) (by omega)
+  · simp only [hdrAt] at *; rw [hs0, hs2]
+    intro hc
+    obtain ⟨h1, -, h3, h4⟩ := hlive hc
+    exact ⟨h1, by rw [← hacc]; exact h3, h4⟩
 
 end FvModexp.Arm64.Run
 
@@ -155,9 +164,9 @@ theorem HdrDone.transport {m m' : Memory} {s : State} {p len : BitVec 64} {L1 L2
     (h0 : m'.readLE (hdrAt s i) 8 = m.readLE (hdrAt s i) 8) (h1 : m'.readLE (hdrAt s i + 8) 8 = m.readLE (hdrAt s i + 8) 8)
     (h2 : m'.readLE (hdrAt s i + 16) 8 = m.readLE (hdrAt s i + 16) 8)
     (hLF : LiveFrame m m' L1 []) (hsub : ∀ a n, InRanges a n L1 → InRanges a n L2) : HdrDone m' s p len L2 i := by
-  obtain ⟨⟨hv, hn, h4, hcl⟩, hin⟩ := h
+  obtain ⟨⟨hv, hn, h4, hcl⟩, hin, hac⟩ := h
   simp only [natAt] at hv
-  refine ⟨⟨?_, ?_, ?_, ?_⟩, ?_⟩
+  refine ⟨⟨?_, ?_, ?_, ?_⟩, ?_, ?_⟩
   · simp only [natAt]; rw [h0, h1]
     by_cases hz : m.readLE (hdrAt s i + 8) 8 = 0
     · rw [hz]; rw [hz] at hv; exact hv
@@ -171,5 +180,6 @@ theorem HdrDone.transport {m m' : Memory} {s : State} {p len : BitVec 64} {L1 L2
   · rw [h1]; exact h4
   · rw [h1, h2]; exact hcl
   · rw [h0, h2]; intro hc; exact hsub _ _ (hin hc)
+  · rw [h0, h2]; exact hac
 
 end FvModexp.Arm64.Run

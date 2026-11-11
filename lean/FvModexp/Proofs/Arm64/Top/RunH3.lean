@@ -105,7 +105,8 @@ theorem h3 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
             (LiveFrame.of_win (by simp only [win, stk]; janus_frame) (hext2.liveSep hLsL1 hwrt))
             (fun _ _ h => hext2.inRanges_old h)) (fun _ _ h => hext2.inRanges_old h)
         all_goals (simp only [hdrAt]; janus_simp)
-      · refine hdrDone_of (m := s'.mem) ?rd (by janus_simp [hp2, hdrAt]) (by janus_simp [hn2, hdrAt])
+      · refine hdrDone_of (m := s'.mem) ?rd (hacc := fun a n w => by simp only [Memory.accessible_writeLE, hMF2.accessible, hMF.accessible])
+          (by janus_simp [hp2, hdrAt]) (by janus_simp [hn2, hdrAt])
           (by janus_simp [hc2, hdrAt]) ?v hnorm2 (by simpa [SetBytesStd.nW] using hnw2) hnc2 ?fr hlive2
           (by rw [hstk]; exact hout)
         case rd =>
