@@ -304,20 +304,29 @@ ALLOC:
   mov rdi, r12
   mov rsi, rax
   mov rcx, rdx
-  test rcx, rcx
-  jz DONE
   cmp rdi, rsi
   ja BWD
-FWDREP:
-  rep movsb
-  jmp DONE
+FWD:
+  test rcx, rcx
+  jz DONE
+  movzx r8d, byte ptr [rsi]
+  mov byte ptr [rdi], r8b
+  add rsi, 1
+  add rdi, 1
+  sub rcx, 1
+  jmp FWD
 BWD:
-  lea rdi, [rdi+rcx-1]
-  lea rsi, [rsi+rcx-1]
-  std
-BWDREP:
-  rep movsb
-  cld
+  add rsi, rcx
+  add rdi, rcx
+BWDL:
+  test rcx, rcx
+  jz DONE
+  sub rsi, 1
+  sub rdi, 1
+  movzx r8d, byte ptr [rsi]
+  mov byte ptr [rdi], r8b
+  sub rcx, 1
+  jmp BWDL
 DONE:
   mov rdx, r10
   shl rdx, 4

@@ -19,9 +19,9 @@ abbrev gLOOP : Nat := 0x485435
 abbrev gHAVE : Nat := 0x48544d
 abbrev gLARGE : Nat := 0x485850
 abbrev gALLOC : Nat := 0x48585f
-abbrev gFWD : Nat := 0x485885
-abbrev gBWD : Nat := 0x485894
-abbrev gDONE : Nat := 0x485897
+abbrev gFWD : Nat := 0x485880
+abbrev gBWDL : Nat := 0x4858a0
+abbrev gDONE : Nat := 0x4858ba
 
 /-- What the stub keeps until `ALLOC`. -/
 def Pre0 (s T : State) : Prop :=
@@ -458,5 +458,116 @@ theorem chain (s T : State) {Q : State → Prop} (c : Nat) (hpc : T.rip = BitVec
     simp only [setRegF, if_true, ite_true]
     rw [large_val _ (by rw [e9]; omega), e9, rs_large (by omega)]
   · exact chunk0 s _ c rfl (by pre0_tac) (by simpa [setRegF] using e9) (by omega) (by omega) hk
+
+/-! ## The copy loops (`FWD` / `BWDL`) -/
+
+open Janus.Contracts.MemSat (toNat_add_one toNat_sub_one byte_copy)
+
+/-- What the copy keeps: the ABI fields, `RBX` (`newLen`), `R10` (`K`), `R11` (`BUMP`), `R12` (`p`). -/
+def CK (s : State) (v10 v12 : W64) (T : State) : Prop :=
+  T.regs 4 = s.regs 4 ∧ T.regs 5 = s.regs 5 ∧ T.regs 14 = s.regs 14 ∧ T.xmm 15 = s.xmm 15 ∧ T.fsBase = s.fsBase ∧
+    T.df = s.df ∧ T.mxcsr = s.mxcsr ∧ T.x87 = s.x87 ∧ T.fpucw = s.fpucw ∧ T.regs 3 = s.regs 3 ∧
+    T.regs 10 = v10 ∧ T.regs 11 = 4194304#64 ∧ T.regs 12 = v12
+
+macro "ck_tac" : tactic =>
+  `(tactic| (refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
+    first | rfl | assumption | simp [setRegF, *]))
+
+theorem byte_copy' (m : Memory) (a : Nat) {a' : Nat} :
+    BitVec.ofNat 8 (m.readLE a 1 / 256 ^ (a' - a')) = m.bytes a := by
+  have := (m.bytes a).isLt
+  apply BitVec.eq_of_toNat_eq
+  simp only [Janus.Arm64.Memory.readLE_one, Nat.sub_self, Nat.pow_zero, Nat.div_one, BitVec.toNat_ofNat]
+  omega
+
+theorem g_fwd (s : State) (v10 v12 : W64) {Q : State → Prop} (d src n : Nat)
+    (hsrc : n = 0 ∨ s.mem.accessible src n false = true) (hdst : s.mem.accessible d n true = true)
+    (hsrc48' : 0 < n → src + n ≤ 2 ^ 48) (hle : d ≤ src)
+    (hk : ∀ T, T.rip = BitVec.ofNat 64 gDONE → CK s v10 v12 T → MemFrame s.mem T.mem [(d, d + n)] →
+      Mem.Copied s.mem T.mem d src n → ReachesRet P (retAddrOf s) T Q) :
+    ∀ k (T : State) (i : Nat), i + k = n → T.rip = BitVec.ofNat 64 gFWD →
+      (T.regs 7).toNat = d + i → (T.regs 6).toNat = src + i → (T.regs 1).toNat = k → CK s v10 v12 T →
+      MemFrame s.mem T.mem [(d, d + i)] → Mem.Copied s.mem T.mem d src i →
+      ReachesRet P (retAddrOf s) T Q := by
+  have hbd := Janus.Arm64.Memory.accessible_bound _ hdst
+  intro k
+  induction k with
+  | zero =>
+    intro T i hi hpc h7 h6 h1 hK hf hc
+    have h1' : T.regs 1 = 0#64 := BitVec.eq_of_toNat_eq (by simpa using h1)
+    janus64_run until [gDONE]
+    exact hk _ rfl (by obtain ⟨_, _, _, _, _, _, _, _, _, _, _, _, _⟩ := hK; ck_tac) (by rw [← hi, Nat.add_zero]; exact hf)
+      (by rw [← hi, Nat.add_zero]; exact hc)
+  | succ k ih =>
+    intro T i hi hpc h7 h6 h1 hK hf hc
+    have h1' : T.regs 1 ≠ 0#64 := fun h => by simp [h] at h1
+    have hsrcA : s.mem.accessible src n false = true := hsrc.resolve_left (by omega)
+    have hsrc48 := hsrc48' (by omega)
+    have hr : T.mem.accessible (T.regs 6).toNat 1 false = true := by
+      rw [hf.accessible, h6]; exact Janus.Arm64.Memory.accessible_mono _ hsrcA (by omega) (by omega)
+    have hw : T.mem.accessible (T.regs 7).toNat 1 true = true := by
+      rw [hf.accessible, h7]; exact Janus.Arm64.Memory.accessible_mono _ hdst (by omega) (by omega)
+    janus64_run until [gFWD]
+    have e0 : (T.regs 7 + 1#64).toNat = d + (i + 1) := by rw [toNat_add_one (by omega), h7]; omega
+    have e1 : (T.regs 6 + 1#64).toNat = src + (i + 1) := by rw [toNat_add_one (by omega), h6]; omega
+    refine ih _ (i + 1) (by omega) rfl (by simpa [setRegF] using e0) (by simpa [setRegF] using e1)
+      (by simpa [setRegF] using toNat_sub_one h1)
+      (by obtain ⟨_, _, _, _, _, _, _, _, _, _, _, _, _⟩ := hK; ck_tac) ?_ ?_
+    · rw [h7]
+      refine (hf.mono fun a n h => ?_).writeLE _ (List.mem_singleton_self _) (by simp <;> omega) (by simp <;> omega)
+      simp only [outside_cons, outside_nil, and_true] at h ⊢; omega
+    · intro j hj
+      rw [h7, h6]
+      by_cases hji : j = i
+      · subst hji
+        rw [Janus.Arm64.Memory.bytes_writeLE_inside _ (by omega) (by omega)]
+        first | exact byte_copy' _ _ | exact byte_copy _ _
+      · rw [Janus.Arm64.Memory.bytes_writeLE_outside _ (by omega)]; exact hc j (by omega)
+
+theorem g_bwd (s : State) (v10 v12 : W64) {Q : State → Prop} (d src n : Nat)
+    (hsrc' : n = 0 ∨ s.mem.accessible src n false = true) (hsrc48' : 0 < n → src + n ≤ 2 ^ 48)
+    (hdst : s.mem.accessible d n true = true) (hlt : src < d)
+    (hk : ∀ T, T.rip = BitVec.ofNat 64 gDONE → CK s v10 v12 T → MemFrame s.mem T.mem [(d, d + n)] →
+      Mem.Copied s.mem T.mem d src n → ReachesRet P (retAddrOf s) T Q) :
+    ∀ k (T : State), k ≤ n → T.rip = BitVec.ofNat 64 gBWDL →
+      (T.regs 7).toNat = d + k → (T.regs 6).toNat = src + k → (T.regs 1).toNat = k → CK s v10 v12 T →
+      MemFrame s.mem T.mem [(d + k, d + n)] →
+      (∀ j, k ≤ j → j < n → T.mem.bytes (d + j) = s.mem.bytes (src + j)) →
+      ReachesRet P (retAddrOf s) T Q := by
+  have hbd := Janus.Arm64.Memory.accessible_bound _ hdst
+  intro k
+  induction k with
+  | zero =>
+    intro T hk0 hpc h7 h6 h1 hK hf hc
+    have h1' : T.regs 1 = 0#64 := BitVec.eq_of_toNat_eq (by simpa using h1)
+    janus64_run until [gDONE]
+    exact hk _ rfl (by obtain ⟨_, _, _, _, _, _, _, _, _, _, _, _, _⟩ := hK; ck_tac) (by simpa using hf)
+      (fun j hj => hc j (Nat.zero_le _) hj)
+  | succ k ih =>
+    intro T hk0 hpc h7 h6 h1 hK hf hc
+    have h1' : T.regs 1 ≠ 0#64 := fun h => by simp [h] at h1
+    have hsrc : s.mem.accessible src n false = true := hsrc'.resolve_left (by omega)
+    have hsrc48 := hsrc48' (by omega)
+    have hbs := Janus.Arm64.Memory.accessible_bound _ hsrc
+    have e2 := toNat_sub_one h1
+    have ea : (T.regs 6 - 1#64).toNat = src + k := toNat_sub_one (by omega)
+    have eb : (T.regs 7 - 1#64).toNat = d + k := toNat_sub_one (by omega)
+    have hr : T.mem.accessible (T.regs 6 - 1#64).toNat 1 false = true := by
+      rw [hf.accessible, ea]; exact Janus.Arm64.Memory.accessible_mono _ hsrc (by omega) (by omega)
+    have hw : T.mem.accessible (T.regs 7 - 1#64).toNat 1 true = true := by
+      rw [hf.accessible, eb]; exact Janus.Arm64.Memory.accessible_mono _ hdst (by omega) (by omega)
+    janus64_run until [gBWDL]
+    refine ih _ (by omega) rfl (by simpa [setRegF] using eb) (by simpa [setRegF] using ea)
+      (by simpa [setRegF] using e2)
+      (by obtain ⟨_, _, _, _, _, _, _, _, _, _, _, _, _⟩ := hK; ck_tac) ?_ ?_
+    · refine (hf.mono fun a n h => ?_).writeLE _ (List.mem_singleton_self _) (by simp <;> omega) (by simp <;> omega)
+      simp only [outside_cons, outside_nil, and_true] at h ⊢; omega
+    · intro j hj1 hj2
+      by_cases hji : j = k
+      · subst hji
+        rw [Janus.Arm64.Memory.bytes_writeLE_inside _ (by omega) (by omega)]
+        rw [show (T.regs 6).toNat - 1 = src + j by omega, show d + j = (T.regs 7).toNat - 1 by omega]
+        exact byte_copy' _ _
+      · rw [Janus.Arm64.Memory.bytes_writeLE_outside _ (by omega)]; exact hc j (by omega) hj2
 
 end FvModexp.Amd64.WStubs
