@@ -28,18 +28,18 @@ theorem norm (impl : List Amd64.Segment) (s : State) (M : Janus.Arm64.Memory) (p
     (hra : s.mem.readLE (s.regs 4).toNat 8 < 2 ^ 47) :
     ∀ (i : Nat) (S : State), i ≤ n0 → S.rip = BitVec.ofNat 64 hNorm → S.regs 1 = BitVec.ofNat 64 i →
       S.regs 6 = BitVec.ofNat 64 p → S.regs 4 = s.regs 4 - 104#64 → S.regs 14 = s.regs 14 →
-      S.regs 5 = s.regs 4 - 8#64 → S.xmm 15 = s.xmm 15 → S.fsBase = s.fsBase → S.mem = M → natVal M p i = V →
+      S.regs 5 = s.regs 4 - 8#64 → S.xmm 15 = s.xmm 15 → S.fsBase = s.fsBase → S.df = false → S.mem = M → natVal M p i = V →
       ReachesRet (LibMulAddWW.program.link impl) (retAddrOf s) S fun s' => RegsOK s s' ∧ Q s' := by
   intro i
   induction i with
   | zero =>
-    intro S hi hpc h1 h6 hsp h14 h5 hx15 hfs hm hv
+    intro S hi hpc h1 h6 hsp h14 h5 hx15 hfs hdf hm hv
     janus64_run [hm, hr1, hr2, hr3, BitVec.msb_eq_decide]
-    refine ⟨⟨?_, ?_, ?_, ?_⟩, hfin _ 0 rfl ?_ ?_ ?_ ?_ (Nat.zero_le _) (by simpa using hv) (Or.inl rfl)⟩
+    refine ⟨⟨?_, ?_, ?_, ?_, ?_⟩, hfin _ 0 rfl ?_ ?_ ?_ ?_ (Nat.zero_le _) (by simpa using hv) (Or.inl rfl)⟩
     all_goals try janus64_simp
-    all_goals first | exact hfs | exact hx15 | omega
+    all_goals first | exact hfs | exact hx15 | exact hdf | omega
   | succ i ih =>
-    intro S hi hpc h1 h6 hsp h14 h5 hx15 hfs hm hv
+    intro S hi hpc h1 h6 hsp h14 h5 hx15 hfs hdf hm hv
     have key : BitVec.ofNat 64 (i + 1) - 1#64 = BitVec.ofNat 64 i := by
       apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
     janus64_run [hm, hr1, hr2, hr3, key, BitVec.msb_eq_decide] until [hNorm]
@@ -47,12 +47,12 @@ theorem norm (impl : List Amd64.Segment) (s : State) (M : Janus.Arm64.Memory) (p
       have hz := hbr
       rw [show p + (i + 1) * 8 - 8 = p + 8 * i by omega] at hz
       exact ih _ (by omega) rfl (by janus64_simp) (by janus64_simp) (by janus64_simp) (by janus64_simp)
-        (by janus64_simp) (by janus64_simp) (by janus64_simp; exact hfs) rfl ((natVal_drop_zero hz).symm.trans hv)
+        (by janus64_simp) (by janus64_simp) (by janus64_simp; exact hfs) (by first | rfl | exact hdf | (janus64_simp; done) | (janus64_simp; exact hdf)) rfl ((natVal_drop_zero hz).symm.trans hv)
     case hq =>
       rename_i hz _
       rw [show p + (i + 1) * 8 - 8 = p + 8 * (i + 1 - 1) by omega] at hz
-      refine ⟨⟨?_, ?_, ?_, ?_⟩, hfin _ (i + 1) rfl ?_ ?_ ?_ ?_ hi hv (Or.inr hz)⟩
+      refine ⟨⟨?_, ?_, ?_, ?_, ?_⟩, hfin _ (i + 1) rfl ?_ ?_ ?_ ?_ hi hv (Or.inr hz)⟩
       all_goals try janus64_simp
-      all_goals first | exact hfs | exact hx15 | omega
+      all_goals first | exact hfs | exact hx15 | exact hdf | omega
 
 end FvModexp.Amd64.MulAddWW

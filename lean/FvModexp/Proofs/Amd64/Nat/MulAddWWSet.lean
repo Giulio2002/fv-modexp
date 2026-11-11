@@ -56,14 +56,14 @@ theorem setZero (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat
     (hsp : S.regs 4 = s.regs 4 - 104#64) (h14 : S.regs 14 = s.regs 14) (h5 : S.regs 5 = s.regs 4 - 8#64)
     (hx15 : S.xmm 15 = s.xmm 15) (hfs : S.fsBase = s.fsBase) (hdf : S.df = false) (hm : S.mem = M) :
     ReachesRet (LibMulAddWW.program.link impl) (retAddrOf s) S fun s' =>
-      RegsOK s s' ∧ Post R b L zp zc xp xl y r s s' := by
+      RegsOK s s' ∧ PostI R b L zp zc xp xl y r s s' := by
   obtain ⟨hg1, hg2, hg3, hb', ha, hw, hal, htg⟩ := pre_env h.pre
   obtain ⟨⟨⟨-, -, -, -, hout, hga, hgr, hLs, -, -⟩, -, hx40, hz40, hzl, -, -, -, -, -, -, hinv, -⟩, hxy, hra,
     -, -, hF, r1, r2, r3, -⟩ := h
   have hr0 : r = 0#64 := BitVec.eq_of_toNat_eq (by simpa using hr)
   subst hr0
   janus64_run [hm, r1, r2, BitVec.msb_eq_decide]
-  refine ⟨⟨?_, ?_, ?_, ?_⟩, ?_, zp.toNat, 0, zc.toNat, ?_, ?_, ?_, by simp [hxy], Or.inl rfl, by omega, by omega, L, b,
+  refine ⟨⟨?_, ?_, ?_, ?_, ?_⟩, ?_, zp.toNat, 0, zc.toNat, ?_, ?_, ?_, by simp [hxy], Or.inl rfl, by omega, by omega, L, b,
     LiveExt.refl R L, Nat.sub_le _ _, inv_win hF hout hb' hinv, fun hc => ?nl, Or.inl ⟨rfl, rfl⟩,
     MemFrame.mono hF fun a n h => by simp only [outside_append] at h; exact h.1.2, setLF hF hLs⟩
   case nl =>
@@ -81,7 +81,7 @@ theorem setReuse (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Na
     (hsp : S.regs 4 = s.regs 4 - 104#64) (h14 : S.regs 14 = s.regs 14) (h5 : S.regs 5 = s.regs 4 - 8#64)
     (hx15 : S.xmm 15 = s.xmm 15) (hfs : S.fsBase = s.fsBase) (hdf : S.df = false) (hm : S.mem = M) :
     ReachesRet (LibMulAddWW.program.link impl) (retAddrOf s) S fun s' =>
-      RegsOK s s' ∧ Post R b L zp zc xp xl y r s s' := by
+      RegsOK s s' ∧ PostI R b L zp zc xp xl y r s s' := by
   obtain ⟨hg1, hg2, hg3, hb', ha, hw, hal, htg⟩ := pre_env h.pre
   obtain ⟨⟨⟨-, -, -, -, hout, hga, hgr, hLs, -, -⟩, -, hx40, hz40, hzl, hzw', -, -, -, -, -, hinv, -⟩, hxy, hra,
     -, -, hF, r1, r2, r3, -⟩ := h
@@ -98,7 +98,7 @@ theorem setReuse (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Na
   have hmf : MemFrame s.mem M (R.rt ++ win s 4208 72 ++ [(zp.toNat, zp.toNat + 8 * zc.toNat)]) :=
     MemFrame.mono hF fun a n h => by simp only [outside_append] at h; exact h.1.2
   have hlf : LiveFrame s.mem M L [(zp.toNat, zp.toNat + 8 * zc.toNat)] := setLF hF hLs
-  refine ⟨⟨?_, ?_, ?_, ?_⟩, ?_, zp.toNat, 1, zc.toNat, ?_, ?_, ?_, ?val, Or.inr ?nn, by omega, by omega, L, b,
+  refine ⟨⟨?_, ?_, ?_, ?_, ?_⟩, ?_, zp.toNat, 1, zc.toNat, ?_, ?_, ?_, ?val, Or.inr ?nn, by omega, by omega, L, b,
     LiveExt.refl R L, Nat.sub_le _ _, ?inv, fun _ => ⟨hzal, hzh, ?acc, hz48⟩, Or.inl ⟨rfl, rfl⟩, ?mf, ?lf⟩
   case inv =>
     exact inv_store_held (inv_win hF hout hb' hinv) (hzh.sub (Nat.le_refl _) (by omega))
@@ -122,7 +122,7 @@ theorem setAlloc (impl : List Amd64.Segment) (R : RtInv)
     (hsp : S.regs 4 = s.regs 4 - 104#64) (h14 : S.regs 14 = s.regs 14) (h5 : S.regs 5 = s.regs 4 - 8#64)
     (hx15 : S.xmm 15 = s.xmm 15) (hfs : S.fsBase = s.fsBase) (hdf : S.df = false) (hm : S.mem = M) :
     ReachesRet (LibMulAddWW.program.link impl) (retAddrOf s) S fun s' =>
-      RegsOK s s' ∧ Post R b L zp zc xp xl y r s s' := by
+      RegsOK s s' ∧ PostI R b L zp zc xp xl y r s s' := by
   have hneed := h.need hxy0
   rw [if_neg hr] at hneed
   obtain ⟨hg1, hg2, hg3, hb', ha, hw, hal, htg⟩ := pre_env h.pre
@@ -174,7 +174,7 @@ theorem setAlloc (impl : List Amd64.Segment) (R : RtInv)
     have := hLs q hq; simp only [outside_cons, outside_nil, and_true] at this
     simp only [win, outside_cons, outside_nil, and_true]; omega
   obtain ⟨q, hq, hq1, hq2⟩ := hInR
-  refine ⟨⟨?_, ?_, ?_, ?_⟩, ?_, P.toNat, 1, 1, ?_, ?_, ?_, ?val, Or.inr ?nn, by omega, by omega,
+  refine ⟨⟨?_, ?_, ?_, ?_, ?_⟩, ?_, P.toNat, 1, 1, ?_, ?_, ?_, ?val, Or.inr ?nn, by omega, by omega,
     L ++ [(P.toNat, P.toNat + 8)], b - 8,
     hext, ?bud, inv_store_held hinv' (Or.inl hPin), fun _ => ⟨h8, Or.inl ?held, ?acc1, by omega⟩,
     Or.inr ⟨⟨q, hq, hq1, by omega⟩, fun r hr => (hApL r hr).mono (by omega) (Nat.le_refl _)⟩,

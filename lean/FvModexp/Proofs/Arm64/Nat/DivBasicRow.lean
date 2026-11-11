@@ -83,27 +83,520 @@ theorem inv1 (gp : Nat) : R.inv 0x1000 [] gp (view R.rt [] mem0) := by
     unfold toyBytes
     rw [if_neg (by simp only [BUMP, HEAP] at *; omega), if_neg (by omega)]
 
-set_option maxHeartbeats 8000000 in
-theorem pre : DivBasic.Pre R 0x1000 [] OA 1 ST OB 2 2 VP 2 s0 := by
-  unfold DivBasic.Pre
-  refine ⟨⟨⟨by decide +kernel, by rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel, by decide +kernel⟩,
-    ⟨by decide +kernel, by decide +kernel, by decide +kernel, by rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel⟩,
-    dataLoaded _ _, ?_, ?_, ?_, fun r hr => by simp at hr, roOut⟩, WStubs.serves [], ?_, ?_, by decide, ?_, ?_, ?_,
-    ?_, ?_, by decide, by decide, by decide, ?_, ?_, ?_, ?_, ?_, by decide, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_,
-    fun _ => Or.inl (by decide), ?_, ?_, ?_, fun _ => ⟨?_, ?_⟩, ?_, ?_, ?_, ?_, ?_, ⟨?_, ?_, ?_⟩, ?_, ?_, ?_, inv1 _⟩
-  all_goals first
+theorem c2 : s0.mem.accessible StackNat.wbA 4 false = true := by first
     | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
     | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
-    | (simp only [Apart]; decide +kernel)
     | (simp only [DivBasic.freeP, DivBasic.freeN, stW, stLen, stCap, Apart, win, outside_cons, outside_nil,
         and_true, show s0.mem = mem0 from rfl]; decide +kernel)
+    | (simp only [Apart]; decide +kernel)
     | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
     | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
         show s0.mem = mem0 from rfl, acc0]; decide +kernel)
     | (simp only [Held, InRanges, outside_cons, outside_nil, and_true, rt_eq]; decide +kernel)
     | (simp only [ExpHyp.stackNatCost, stLen, show s0.mem = mem0 from rfl]; decide +kernel)
-    | (show _ ≤ (s0.mem).readLE _ 8; rw [show s0.mem = mem0 from rfl]; decide +kernel)
     | decide +kernel
+
+theorem c3 : Apart ST 24 StackNat.wbA 4 := by first
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [DivBasic.freeP, DivBasic.freeN, stW, stLen, stCap, Apart, win, outside_cons, outside_nil,
+        and_true, show s0.mem = mem0 from rfl]; decide +kernel)
+    | (simp only [Apart]; decide +kernel)
+    | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
+        show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [Held, InRanges, outside_cons, outside_nil, and_true, rt_eq]; decide +kernel)
+    | (simp only [ExpHyp.stackNatCost, stLen, show s0.mem = mem0 from rfl]; decide +kernel)
+    | decide +kernel
+
+theorem c4 : 2 ≤ 2 := by first
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [DivBasic.freeP, DivBasic.freeN, stW, stLen, stCap, Apart, win, outside_cons, outside_nil,
+        and_true, show s0.mem = mem0 from rfl]; decide +kernel)
+    | (simp only [Apart]; decide +kernel)
+    | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
+        show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [Held, InRanges, outside_cons, outside_nil, and_true, rt_eq]; decide +kernel)
+    | (simp only [ExpHyp.stackNatCost, stLen, show s0.mem = mem0 from rfl]; decide +kernel)
+    | decide +kernel
+
+theorem c5 : 2 ^ 63 ≤ s0.mem.readLE (VP + 8 * (2 - 1)) 8 := by first
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [DivBasic.freeP, DivBasic.freeN, stW, stLen, stCap, Apart, win, outside_cons, outside_nil,
+        and_true, show s0.mem = mem0 from rfl]; decide +kernel)
+    | (simp only [Apart]; decide +kernel)
+    | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
+        show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [Held, InRanges, outside_cons, outside_nil, and_true, rt_eq]; decide +kernel)
+    | (simp only [ExpHyp.stackNatCost, stLen, show s0.mem = mem0 from rfl]; decide +kernel)
+    | decide +kernel
+
+theorem c6 : s0.mem.accessible VP (8 * 2) false = true := by first
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [DivBasic.freeP, DivBasic.freeN, stW, stLen, stCap, Apart, win, outside_cons, outside_nil,
+        and_true, show s0.mem = mem0 from rfl]; decide +kernel)
+    | (simp only [Apart]; decide +kernel)
+    | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
+        show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [Held, InRanges, outside_cons, outside_nil, and_true, rt_eq]; decide +kernel)
+    | (simp only [ExpHyp.stackNatCost, stLen, show s0.mem = mem0 from rfl]; decide +kernel)
+    | decide +kernel
+
+theorem c7 : VP + 8 * 2 ≤ 2 ^ 48 := by first
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [DivBasic.freeP, DivBasic.freeN, stW, stLen, stCap, Apart, win, outside_cons, outside_nil,
+        and_true, show s0.mem = mem0 from rfl]; decide +kernel)
+    | (simp only [Apart]; decide +kernel)
+    | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
+        show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [Held, InRanges, outside_cons, outside_nil, and_true, rt_eq]; decide +kernel)
+    | (simp only [ExpHyp.stackNatCost, stLen, show s0.mem = mem0 from rfl]; decide +kernel)
+    | decide +kernel
+
+theorem c8 : Held R ([] : List (Nat × Nat)) VP (8 * 2) := by first
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [DivBasic.freeP, DivBasic.freeN, stW, stLen, stCap, Apart, win, outside_cons, outside_nil,
+        and_true, show s0.mem = mem0 from rfl]; decide +kernel)
+    | (simp only [Apart]; decide +kernel)
+    | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
+        show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [Held, InRanges, outside_cons, outside_nil, and_true, rt_eq]; decide +kernel)
+    | (simp only [ExpHyp.stackNatCost, stLen, show s0.mem = mem0 from rfl]; decide +kernel)
+    | decide +kernel
+
+theorem c9 : Outside VP (8 * 2) (win s0 4464 88) := by first
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [DivBasic.freeP, DivBasic.freeN, stW, stLen, stCap, Apart, win, outside_cons, outside_nil,
+        and_true, show s0.mem = mem0 from rfl]; decide +kernel)
+    | (simp only [Apart]; decide +kernel)
+    | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
+        show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [Held, InRanges, outside_cons, outside_nil, and_true, rt_eq]; decide +kernel)
+    | (simp only [ExpHyp.stackNatCost, stLen, show s0.mem = mem0 from rfl]; decide +kernel)
+    | decide +kernel
+
+theorem c10 : 2 < 2 ^ 40 := by first
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [DivBasic.freeP, DivBasic.freeN, stW, stLen, stCap, Apart, win, outside_cons, outside_nil,
+        and_true, show s0.mem = mem0 from rfl]; decide +kernel)
+    | (simp only [Apart]; decide +kernel)
+    | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
+        show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [Held, InRanges, outside_cons, outside_nil, and_true, rt_eq]; decide +kernel)
+    | (simp only [ExpHyp.stackNatCost, stLen, show s0.mem = mem0 from rfl]; decide +kernel)
+    | decide +kernel
+
+theorem c11 : 2 ≤ 2 := by first
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [DivBasic.freeP, DivBasic.freeN, stW, stLen, stCap, Apart, win, outside_cons, outside_nil,
+        and_true, show s0.mem = mem0 from rfl]; decide +kernel)
+    | (simp only [Apart]; decide +kernel)
+    | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
+        show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [Held, InRanges, outside_cons, outside_nil, and_true, rt_eq]; decide +kernel)
+    | (simp only [ExpHyp.stackNatCost, stLen, show s0.mem = mem0 from rfl]; decide +kernel)
+    | decide +kernel
+
+theorem c12 : 2 < 2 ^ 40 := by first
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [DivBasic.freeP, DivBasic.freeN, stW, stLen, stCap, Apart, win, outside_cons, outside_nil,
+        and_true, show s0.mem = mem0 from rfl]; decide +kernel)
+    | (simp only [Apart]; decide +kernel)
+    | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
+        show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [Held, InRanges, outside_cons, outside_nil, and_true, rt_eq]; decide +kernel)
+    | (simp only [ExpHyp.stackNatCost, stLen, show s0.mem = mem0 from rfl]; decide +kernel)
+    | decide +kernel
+
+theorem c13 : s0.mem.accessible OB (8 * 2) true = true := by first
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [DivBasic.freeP, DivBasic.freeN, stW, stLen, stCap, Apart, win, outside_cons, outside_nil,
+        and_true, show s0.mem = mem0 from rfl]; decide +kernel)
+    | (simp only [Apart]; decide +kernel)
+    | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
+        show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [Held, InRanges, outside_cons, outside_nil, and_true, rt_eq]; decide +kernel)
+    | (simp only [ExpHyp.stackNatCost, stLen, show s0.mem = mem0 from rfl]; decide +kernel)
+    | decide +kernel
+
+theorem c14 : OB + 8 * 2 ≤ 2 ^ 48 := by first
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [DivBasic.freeP, DivBasic.freeN, stW, stLen, stCap, Apart, win, outside_cons, outside_nil,
+        and_true, show s0.mem = mem0 from rfl]; decide +kernel)
+    | (simp only [Apart]; decide +kernel)
+    | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
+        show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [Held, InRanges, outside_cons, outside_nil, and_true, rt_eq]; decide +kernel)
+    | (simp only [ExpHyp.stackNatCost, stLen, show s0.mem = mem0 from rfl]; decide +kernel)
+    | decide +kernel
+
+theorem c15 : Held R ([] : List (Nat × Nat)) OB (8 * 2) := by first
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [DivBasic.freeP, DivBasic.freeN, stW, stLen, stCap, Apart, win, outside_cons, outside_nil,
+        and_true, show s0.mem = mem0 from rfl]; decide +kernel)
+    | (simp only [Apart]; decide +kernel)
+    | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
+        show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [Held, InRanges, outside_cons, outside_nil, and_true, rt_eq]; decide +kernel)
+    | (simp only [ExpHyp.stackNatCost, stLen, show s0.mem = mem0 from rfl]; decide +kernel)
+    | decide +kernel
+
+theorem c16 : Outside OB (8 * 2) (win s0 4464 88) := by first
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [DivBasic.freeP, DivBasic.freeN, stW, stLen, stCap, Apart, win, outside_cons, outside_nil,
+        and_true, show s0.mem = mem0 from rfl]; decide +kernel)
+    | (simp only [Apart]; decide +kernel)
+    | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
+        show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [Held, InRanges, outside_cons, outside_nil, and_true, rt_eq]; decide +kernel)
+    | (simp only [ExpHyp.stackNatCost, stLen, show s0.mem = mem0 from rfl]; decide +kernel)
+    | decide +kernel
+
+theorem c17 : Apart OB (8 * 2) ((s0.regs 28).toNat + 16) 8 := by first
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [DivBasic.freeP, DivBasic.freeN, stW, stLen, stCap, Apart, win, outside_cons, outside_nil,
+        and_true, show s0.mem = mem0 from rfl]; decide +kernel)
+    | (simp only [Apart]; decide +kernel)
+    | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
+        show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [Held, InRanges, outside_cons, outside_nil, and_true, rt_eq]; decide +kernel)
+    | (simp only [ExpHyp.stackNatCost, stLen, show s0.mem = mem0 from rfl]; decide +kernel)
+    | decide +kernel
+
+theorem c18 : 1 < 2 ^ 40 := by first
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [DivBasic.freeP, DivBasic.freeN, stW, stLen, stCap, Apart, win, outside_cons, outside_nil,
+        and_true, show s0.mem = mem0 from rfl]; decide +kernel)
+    | (simp only [Apart]; decide +kernel)
+    | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
+        show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [Held, InRanges, outside_cons, outside_nil, and_true, rt_eq]; decide +kernel)
+    | (simp only [ExpHyp.stackNatCost, stLen, show s0.mem = mem0 from rfl]; decide +kernel)
+    | decide +kernel
+
+theorem c19 : s0.mem.accessible OA (8 * 1) true = true := by first
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [DivBasic.freeP, DivBasic.freeN, stW, stLen, stCap, Apart, win, outside_cons, outside_nil,
+        and_true, show s0.mem = mem0 from rfl]; decide +kernel)
+    | (simp only [Apart]; decide +kernel)
+    | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
+        show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [Held, InRanges, outside_cons, outside_nil, and_true, rt_eq]; decide +kernel)
+    | (simp only [ExpHyp.stackNatCost, stLen, show s0.mem = mem0 from rfl]; decide +kernel)
+    | decide +kernel
+
+theorem c20 : OA + 8 * 1 ≤ 2 ^ 48 := by first
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [DivBasic.freeP, DivBasic.freeN, stW, stLen, stCap, Apart, win, outside_cons, outside_nil,
+        and_true, show s0.mem = mem0 from rfl]; decide +kernel)
+    | (simp only [Apart]; decide +kernel)
+    | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
+        show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [Held, InRanges, outside_cons, outside_nil, and_true, rt_eq]; decide +kernel)
+    | (simp only [ExpHyp.stackNatCost, stLen, show s0.mem = mem0 from rfl]; decide +kernel)
+    | decide +kernel
+
+theorem c21 : Held R ([] : List (Nat × Nat)) OA (8 * 1) := by first
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [DivBasic.freeP, DivBasic.freeN, stW, stLen, stCap, Apart, win, outside_cons, outside_nil,
+        and_true, show s0.mem = mem0 from rfl]; decide +kernel)
+    | (simp only [Apart]; decide +kernel)
+    | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
+        show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [Held, InRanges, outside_cons, outside_nil, and_true, rt_eq]; decide +kernel)
+    | (simp only [ExpHyp.stackNatCost, stLen, show s0.mem = mem0 from rfl]; decide +kernel)
+    | decide +kernel
+
+theorem c22 : Outside OA (8 * 1) (win s0 4464 88) := by first
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [DivBasic.freeP, DivBasic.freeN, stW, stLen, stCap, Apart, win, outside_cons, outside_nil,
+        and_true, show s0.mem = mem0 from rfl]; decide +kernel)
+    | (simp only [Apart]; decide +kernel)
+    | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
+        show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [Held, InRanges, outside_cons, outside_nil, and_true, rt_eq]; decide +kernel)
+    | (simp only [ExpHyp.stackNatCost, stLen, show s0.mem = mem0 from rfl]; decide +kernel)
+    | decide +kernel
+
+theorem c23 : Apart OA (8 * 1) ((s0.regs 28).toNat + 16) 8 := by first
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [DivBasic.freeP, DivBasic.freeN, stW, stLen, stCap, Apart, win, outside_cons, outside_nil,
+        and_true, show s0.mem = mem0 from rfl]; decide +kernel)
+    | (simp only [Apart]; decide +kernel)
+    | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
+        show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [Held, InRanges, outside_cons, outside_nil, and_true, rt_eq]; decide +kernel)
+    | (simp only [ExpHyp.stackNatCost, stLen, show s0.mem = mem0 from rfl]; decide +kernel)
+    | decide +kernel
+
+theorem c24 : Apart OA (8 * 1) OB (8 * 2) := by first
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [DivBasic.freeP, DivBasic.freeN, stW, stLen, stCap, Apart, win, outside_cons, outside_nil,
+        and_true, show s0.mem = mem0 from rfl]; decide +kernel)
+    | (simp only [Apart]; decide +kernel)
+    | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
+        show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [Held, InRanges, outside_cons, outside_nil, and_true, rt_eq]; decide +kernel)
+    | (simp only [ExpHyp.stackNatCost, stLen, show s0.mem = mem0 from rfl]; decide +kernel)
+    | decide +kernel
+
+theorem c25 : Apart OA (8 * 1) VP (8 * 2) := by first
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [DivBasic.freeP, DivBasic.freeN, stW, stLen, stCap, Apart, win, outside_cons, outside_nil,
+        and_true, show s0.mem = mem0 from rfl]; decide +kernel)
+    | (simp only [Apart]; decide +kernel)
+    | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
+        show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [Held, InRanges, outside_cons, outside_nil, and_true, rt_eq]; decide +kernel)
+    | (simp only [ExpHyp.stackNatCost, stLen, show s0.mem = mem0 from rfl]; decide +kernel)
+    | decide +kernel
+
+theorem c26 : Apart OB (8 * 2) VP (8 * 2) := by first
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [DivBasic.freeP, DivBasic.freeN, stW, stLen, stCap, Apart, win, outside_cons, outside_nil,
+        and_true, show s0.mem = mem0 from rfl]; decide +kernel)
+    | (simp only [Apart]; decide +kernel)
+    | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
+        show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [Held, InRanges, outside_cons, outside_nil, and_true, rt_eq]; decide +kernel)
+    | (simp only [ExpHyp.stackNatCost, stLen, show s0.mem = mem0 from rfl]; decide +kernel)
+    | decide +kernel
+
+theorem c27 : 2 ≤ 2 → (2 - 2 < 1 ∨ (2 - 2 = 1 ∧ natVal s0.mem OB 2 < natVal s0.mem VP 2 * 2 ^ (64 * 1))) := by first
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [DivBasic.freeP, DivBasic.freeN, stW, stLen, stCap, Apart, win, outside_cons, outside_nil,
+        and_true, show s0.mem = mem0 from rfl]; decide +kernel)
+    | (simp only [Apart]; decide +kernel)
+    | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
+        show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [Held, InRanges, outside_cons, outside_nil, and_true, rt_eq]; decide +kernel)
+    | (simp only [ExpHyp.stackNatCost, stLen, show s0.mem = mem0 from rfl]; decide +kernel)
+    | decide +kernel
+
+theorem c28 : StkOK s0.mem R ([] : List (Nat × Nat)) ST := by first
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [DivBasic.freeP, DivBasic.freeN, stW, stLen, stCap, Apart, win, outside_cons, outside_nil,
+        and_true, show s0.mem = mem0 from rfl]; decide +kernel)
+    | (simp only [Apart]; decide +kernel)
+    | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
+        show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [Held, InRanges, outside_cons, outside_nil, and_true, rt_eq]; decide +kernel)
+    | (simp only [ExpHyp.stackNatCost, stLen, show s0.mem = mem0 from rfl]; decide +kernel)
+    | decide +kernel
+
+theorem c29 : Outside ST 24 (win s0 4464 88) := by first
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [DivBasic.freeP, DivBasic.freeN, stW, stLen, stCap, Apart, win, outside_cons, outside_nil,
+        and_true, show s0.mem = mem0 from rfl]; decide +kernel)
+    | (simp only [Apart]; decide +kernel)
+    | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
+        show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [Held, InRanges, outside_cons, outside_nil, and_true, rt_eq]; decide +kernel)
+    | (simp only [ExpHyp.stackNatCost, stLen, show s0.mem = mem0 from rfl]; decide +kernel)
+    | decide +kernel
+
+theorem c30 : Apart ST 24 ((s0.regs 28).toNat + 16) 8 := by first
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [DivBasic.freeP, DivBasic.freeN, stW, stLen, stCap, Apart, win, outside_cons, outside_nil,
+        and_true, show s0.mem = mem0 from rfl]; decide +kernel)
+    | (simp only [Apart]; decide +kernel)
+    | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
+        show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [Held, InRanges, outside_cons, outside_nil, and_true, rt_eq]; decide +kernel)
+    | (simp only [ExpHyp.stackNatCost, stLen, show s0.mem = mem0 from rfl]; decide +kernel)
+    | decide +kernel
+
+theorem c31 : 0 < stCap s0.mem ST → Outside (stW s0.mem ST) (8 * stCap s0.mem ST) (win s0 4464 88) ∧ Apart (stW s0.mem ST) (8 * stCap s0.mem ST) ((s0.regs 28).toNat + 16) 8 := by first
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [DivBasic.freeP, DivBasic.freeN, stW, stLen, stCap, Apart, win, outside_cons, outside_nil,
+        and_true, show s0.mem = mem0 from rfl]; decide +kernel)
+    | (simp only [Apart]; decide +kernel)
+    | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
+        show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [Held, InRanges, outside_cons, outside_nil, and_true, rt_eq]; decide +kernel)
+    | (simp only [ExpHyp.stackNatCost, stLen, show s0.mem = mem0 from rfl]; decide +kernel)
+    | decide +kernel
+
+theorem c32 : Apart (DivBasic.freeP s0.mem ST) (DivBasic.freeN s0.mem ST) ((s0.regs 28).toNat + 16) 8 := by first
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [DivBasic.freeP, DivBasic.freeN, stW, stLen, stCap, Apart, win, outside_cons, outside_nil,
+        and_true, show s0.mem = mem0 from rfl]; decide +kernel)
+    | (simp only [Apart]; decide +kernel)
+    | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
+        show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [Held, InRanges, outside_cons, outside_nil, and_true, rt_eq]; decide +kernel)
+    | (simp only [ExpHyp.stackNatCost, stLen, show s0.mem = mem0 from rfl]; decide +kernel)
+    | decide +kernel
+
+theorem c33 : stLen s0.mem ST + 2 + 4 ≤ 2 ^ 16 := by first
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [DivBasic.freeP, DivBasic.freeN, stW, stLen, stCap, Apart, win, outside_cons, outside_nil,
+        and_true, show s0.mem = mem0 from rfl]; decide +kernel)
+    | (simp only [Apart]; decide +kernel)
+    | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
+        show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [Held, InRanges, outside_cons, outside_nil, and_true, rt_eq]; decide +kernel)
+    | (simp only [ExpHyp.stackNatCost, stLen, show s0.mem = mem0 from rfl]; decide +kernel)
+    | decide +kernel
+
+theorem c34 : Apart ST 24 OA (8 * 1) := by first
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [DivBasic.freeP, DivBasic.freeN, stW, stLen, stCap, Apart, win, outside_cons, outside_nil,
+        and_true, show s0.mem = mem0 from rfl]; decide +kernel)
+    | (simp only [Apart]; decide +kernel)
+    | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
+        show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [Held, InRanges, outside_cons, outside_nil, and_true, rt_eq]; decide +kernel)
+    | (simp only [ExpHyp.stackNatCost, stLen, show s0.mem = mem0 from rfl]; decide +kernel)
+    | decide +kernel
+
+theorem c35 : Apart ST 24 OB (8 * 2) := by first
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [DivBasic.freeP, DivBasic.freeN, stW, stLen, stCap, Apart, win, outside_cons, outside_nil,
+        and_true, show s0.mem = mem0 from rfl]; decide +kernel)
+    | (simp only [Apart]; decide +kernel)
+    | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
+        show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [Held, InRanges, outside_cons, outside_nil, and_true, rt_eq]; decide +kernel)
+    | (simp only [ExpHyp.stackNatCost, stLen, show s0.mem = mem0 from rfl]; decide +kernel)
+    | decide +kernel
+
+theorem c36 : Apart ST 24 VP (8 * 2) := by first
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [DivBasic.freeP, DivBasic.freeN, stW, stLen, stCap, Apart, win, outside_cons, outside_nil,
+        and_true, show s0.mem = mem0 from rfl]; decide +kernel)
+    | (simp only [Apart]; decide +kernel)
+    | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
+        show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [Held, InRanges, outside_cons, outside_nil, and_true, rt_eq]; decide +kernel)
+    | (simp only [ExpHyp.stackNatCost, stLen, show s0.mem = mem0 from rfl]; decide +kernel)
+    | decide +kernel
+
+theorem c37 : Apart OA (8 * 1) (DivBasic.freeP s0.mem ST) (DivBasic.freeN s0.mem ST) ∧ Apart OB (8 * 2) (DivBasic.freeP s0.mem ST) (DivBasic.freeN s0.mem ST) ∧ Apart VP (8 * 2) (DivBasic.freeP s0.mem ST) (DivBasic.freeN s0.mem ST) := by first
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [DivBasic.freeP, DivBasic.freeN, stW, stLen, stCap, Apart, win, outside_cons, outside_nil,
+        and_true, show s0.mem = mem0 from rfl]; decide +kernel)
+    | (simp only [Apart]; decide +kernel)
+    | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
+        show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [Held, InRanges, outside_cons, outside_nil, and_true, rt_eq]; decide +kernel)
+    | (simp only [ExpHyp.stackNatCost, stLen, show s0.mem = mem0 from rfl]; decide +kernel)
+    | decide +kernel
+
+theorem c38 : Apart ST 24 (DivBasic.freeP s0.mem ST) (DivBasic.freeN s0.mem ST) := by first
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [DivBasic.freeP, DivBasic.freeN, stW, stLen, stCap, Apart, win, outside_cons, outside_nil,
+        and_true, show s0.mem = mem0 from rfl]; decide +kernel)
+    | (simp only [Apart]; decide +kernel)
+    | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
+        show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [Held, InRanges, outside_cons, outside_nil, and_true, rt_eq]; decide +kernel)
+    | (simp only [ExpHyp.stackNatCost, stLen, show s0.mem = mem0 from rfl]; decide +kernel)
+    | decide +kernel
+
+theorem c39 : Outside (DivBasic.freeP s0.mem ST) (DivBasic.freeN s0.mem ST) (win s0 4464 88) := by first
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [DivBasic.freeP, DivBasic.freeN, stW, stLen, stCap, Apart, win, outside_cons, outside_nil,
+        and_true, show s0.mem = mem0 from rfl]; decide +kernel)
+    | (simp only [Apart]; decide +kernel)
+    | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
+        show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [Held, InRanges, outside_cons, outside_nil, and_true, rt_eq]; decide +kernel)
+    | (simp only [ExpHyp.stackNatCost, stLen, show s0.mem = mem0 from rfl]; decide +kernel)
+    | decide +kernel
+
+theorem c40 : ExpHyp.stackNatCost (stLen s0.mem ST) (2 + 1) ≤ 0x1000 := by first
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [win, outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [DivBasic.freeP, DivBasic.freeN, stW, stLen, stCap, Apart, win, outside_cons, outside_nil,
+        and_true, show s0.mem = mem0 from rfl]; decide +kernel)
+    | (simp only [Apart]; decide +kernel)
+    | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
+        show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (simp only [Held, InRanges, outside_cons, outside_nil, and_true, rt_eq]; decide +kernel)
+    | (simp only [ExpHyp.stackNatCost, stLen, show s0.mem = mem0 from rfl]; decide +kernel)
+    | decide +kernel
+
+theorem pre : DivBasic.Pre R 0x1000 [] OA 1 ST OB 2 2 VP 2 s0 := by
+  unfold DivBasic.Pre
+  exact ⟨⟨⟨by decide +kernel, by rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel, by decide +kernel⟩,
+    ⟨by decide +kernel, by decide +kernel, by decide +kernel, by rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel⟩,
+    dataLoaded _ _, by rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel,
+    by simp only [Apart]; decide +kernel, by rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel,
+    fun r hr => by simp at hr, roOut⟩, WStubs.serves [], c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20, c21, c22, c23, c24, c25, c26, c27, c28, c29, c30, c31, c32, c33, c34, c35, c36, c37, c38, c39, c40, inv1 _⟩
 
 /-- Every hypothesis of `correctness` and every conjunct of its precondition hold together: the shared witness runtime,
 budget `0x1000`, empty live set, `divBasic(q, stk, u, v)` with `u = [5, 2^63 + 1]`, `v = [0, 2^63]`, `len q = 1`; one

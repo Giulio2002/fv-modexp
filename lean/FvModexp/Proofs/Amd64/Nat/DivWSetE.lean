@@ -18,7 +18,7 @@ theorem setPath (impl : List Amd64.Segment) (R : RtInv)
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc : BitVec 64) (s : State)
     (he : Entry s zp zl zc xp xl xc 1#64) (hx0 : 0 < xl.toNat) (hpre : Pre R b L zp zc xp xl 1#64 s) :
     ReachesRet (LibDivW.program.link impl) (retAddrOf s) s fun s' =>
-      RegsOK s s' ∧ Post R b L zp zc xp xl 1#64 s s' := by
+      RegsOK s s' ∧ PostI R b L zp zc xp xl 1#64 s s' := by
   obtain ⟨hpc, hra, hx15, hdf, h0, h3, h1, h7, h6, h8, h9⟩ := he
   obtain ⟨hg1, hg2, hg3, hb', ha, hw, hal, htg⟩ := pre_env hpre
   have hpre' := hpre

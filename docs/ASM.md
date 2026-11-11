@@ -209,3 +209,15 @@ PASS both ISAs (PERF.md).
 
 ## Next
 Remaining asm items: none on the coordinator's list (all rows of the asm routines verified on both ISAs).
+
+## `nat.divBasic` arm64 (sessions 8-10) — PROVED
+`FvModexp.Arm64.DivBasic.{ens,sum}` (Proofs/Arm64/Nat/DivBasic*.lean, 25 modules). Statement: `Pre` (plain conjunction,
+accessors `Pre.<field>`; args q X0-2, stk X3, u X4-6, v X7-9; CallEnv 4464/88) / `Post` (q[0:qn] = U/V when vl ≤ ul,
+u = U mod V in place, StackBack, frame `R.rt ++ winA ++ q[0:qn] ++ u ++ stkWs`). Premises of `ens`: live growslice,
+memclrNoHeapPointers, gcWriteBarrier2 (the `(*stack).nat` call is discharged by divmc's `StackNat.hyp`, stk 4208 / above 24).
+Row `FvModexp.Arm64.DivBasicRow` (witness u = [5, 2^63+1], v = [0, 2^63], q one word, stack {w, 0, 4}).
+
+## AMD64 DF convention (s10)
+Posts now state `s'.df = s.df`: AddVW, SubVW (Rel field `df0`), DivWVW (Rel `df0`), MulAddWW and DivW (`Post` = statement
+with DF; internal lemmas prove `RegsOK ∧ PostI`, `RegsOK` carries `s'.df = false`). ABI0 asm summaries (`Summary0` →
+`Ret0` = `retState0 s …`) keep `s.df` structurally; `DivWWSum.Post` already had it.

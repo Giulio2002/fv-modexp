@@ -21,7 +21,7 @@ theorem alloc (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progr
     (he : Entry s zp zl zc xp xl xc y r) (hx0 : xl.toNat ≠ 0) (hy0 : y.toNat ≠ 0)
     (hz : zc.toNat < xl.toNat + 1) (hpre : Pre R b L zp zc xp xl y r s) :
     ReachesRet (LibMulAddWW.program.link impl) (retAddrOf s) s fun s' =>
-      RegsOK s s' ∧ Post R b L zp zc xp xl y r s s' := by
+      RegsOK s s' ∧ PostI R b L zp zc xp xl y r s s' := by
   obtain ⟨hpc, hra, hx15, hdf, h0, h3, h1, h7, h6, h8, h9, h10⟩ := he
   obtain ⟨hg1, hg2, hg3, hb', ha, hw, hal, htg⟩ := pre_env hpre
   have hpre' := hpre

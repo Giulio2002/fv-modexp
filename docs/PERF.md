@@ -626,3 +626,17 @@ hbr (by decide) | skip`) before `refine`. In `first` cascades never put a `sorry
   the same fact costs 7.1 GB, all in `names.contains` over the 84 segments) and handed to `janus_run` as a context
   hypothesis (`have hRA := raExp impl hap`). RunC2EX 182 s / 7.58 GB → 85 s / 3.00 GB; RunC2M 225 s / 6.51 GB →
   103 s / 2.90 GB. Applies to every `calls [hP := …]` with an `onlySegments` callee (setBytes sites in H*/D* next).
+
+### asm s10: divBasic arm64 completion + amd64 DF convention (dev compile `mk.py`, host load 40-50), wall / max RSS
+| module | wall | RSS |
+|---|---|---|
+| DivBasicRec (pro3, now exports q/u untouched) | 141 s | 5.1 GB |
+| DivBasicEnd (`post_fin`, pure) | 6.7 s | 2.3 GB |
+| DivBasicExit (`fin`: TBNZ → closure → RET) | 8.5 s | 2.5 GB |
+| DivBasicLoop (`loop` induction, `fromHead`) | 2.6 s | 2.2 GB |
+| DivBasic (`full`/`ens`/`sum`) | 6.2 s | 2.4 GB |
+| DivBasicRow (witness: one lemma per Pre conjunct; one `first` cascade over all 42 goals ran > 9 min) | 7 s | 2.3 GB |
+| Amd64 AddVW / SubVW (DF) | 30 s / 28 s | 2.7 GB |
+| Amd64 DivWVW (DF) | 25 s | 2.7 GB |
+Rows re-verified after the heartbeat change (janus-provfix, memcap 16G / timeout 900): arm64 MulAddWWRow PASS 212 s /
+5.3 GB, arm64 DivWRow PASS 115 s / 1.2 GB (amd64 rows re-run after the DF change: see build/asm-rows.tsv).
