@@ -135,11 +135,49 @@ theorem c2eX (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     exact ⟨(slot_TV (h1 := hMF2) (h2 := h3) ht hsp624 o1 (by omega) (by omega) harrR).trans hm1,
       (slot_TV (h1 := hMF2) (h2 := h3) ht hsp624 o2 (by omega) (by omega) harrR).trans hm2,
       (slot_TV (h1 := hMF2) (h2 := h3) ht hsp624 o3 (by omega) (by omega) harrR).trans hs3⟩
+  try clear hop
+  try clear hopA
+  try clear hxs
+  try clear hpw
+  try clear hExp
+  try clear henvW0
+  try clear hglob
+  try clear hgL
+  try clear hsv
+  try clear hLsS
+  try clear hinv
+  try clear hBm
+  try clear hy0
+  try clear hzl
+  try clear hyl
+  try clear hml
+  try clear hpost
+  try clear hgz
+  try clear hBB
+  try clear hE
+  try clear hBy
+  try clear hg1
+  try clear hg2
+  try clear hg3
+  try clear hgr
+  try clear hIP
+  try clear hval0
+  try clear hval1
+  try clear hval2
+  try clear h1280
+  try clear h1281
+  try clear h1282
+  try clear hlive0
+  try clear hbB
+  try clear hd
+  try clear hb'
+  try clear ha
+  try clear hal
   janus_run [hsp1, h281', hr01, hz136] until [pcCV] calls [hQ := hBy']
   obtain ⟨⟨hsp2, h282, h292, h182⟩, vp, vn, vc, hvp, hvn, -, -, hbe, hmin, Lb, bb, hext3, hb3, hinv3, hfr3, hMF3,
     hLF3⟩ := hQ.1
   have hrg3 := hQ.2
-  clear hQ hBy' hIPb hIP
+  clear hQ hBy' hIPb
   have hval : beVal s'.mem vp vn = resV s p len := by
     rw [hbe, hv1, hIV0, hIV1, hIV2, resV_eq _ _ _ hv2]
   have hvlt : vn ≤ hdrV s p len 2 :=
