@@ -134,4 +134,125 @@ theorem implApart_of_info {P : Amd64.Program} {I : List (Nat × Nat)} (hI : info
 theorem implApart_nil : Amd64.ImplApart Extracted.program [] :=
   implApart_of_info info_eq (by decide +kernel) (by decide +kernel) (by decide +kernel)
 
+/-! ## Call-site states of the runtime contracts (Janus U-WITNESS-CALLSITE)
+
+A row witness must exhibit, for each contract hypothesis, a state at the contract's entry satisfying its precondition
+(at the witness's `R`). `callS addr x y z`: a call with `RAX, RBX, RCX = x, y, z`, `RSP = SP0 - 0x100` (the callee's
+window `[RSP - 4096, RSP + 48)` inside the witness stack), `R14 = G0`, `X15 = 0`, `DF = 0`, in the all-zero standard
+memory (return address `0`). -/
+
+def memZ : Memory := wmem (toyBytes fun _ => 0) stdRegs
+
+theorem bumpZ : memZ.readLE BUMP 8 = HEAP := by decide +kernel
+
+def CSP : Nat := SP0 - 0x100
+
+def callS (addr x y z : Nat) : State :=
+  { regs := fun i => if i = 0 then BitVec.ofNat 64 x else if i = 3 then BitVec.ofNat 64 y
+      else if i = 1 then BitVec.ofNat 64 z else if i = 4 then BitVec.ofNat 64 CSP
+      else if i = 14 then BitVec.ofNat 64 G0 else 0,
+    rip := BitVec.ofNat 64 addr, flags := ⟨none, none, none, none, none, none⟩, xmm := fun _ => 0, mem := memZ,
+    fsBase := BitVec.ofNat 64 (T0 + 8) }
+
+@[simp] theorem cs_sp (a x y z : Nat) : (callS a x y z).regs 4 = BitVec.ofNat 64 CSP := rfl
+@[simp] theorem cs_mem (a x y z : Nat) : (callS a x y z).mem = memZ := rfl
+@[simp] theorem cs_g (a x y z : Nat) : (callS a x y z).regs 14 = BitVec.ofNat 64 G0 := rfl
+@[simp] theorem cs_r0 (a x y z : Nat) : (callS a x y z).regs 0 = BitVec.ofNat 64 x := rfl
+@[simp] theorem cs_r3 (a x y z : Nat) : (callS a x y z).regs 3 = BitVec.ofNat 64 y := rfl
+@[simp] theorem cs_r1 (a x y z : Nat) : (callS a x y z).regs 1 = BitVec.ofNat 64 z := rfl
+@[simp] theorem cs_x15 (a x y z : Nat) : (callS a x y z).xmm 15 = 0 := rfl
+@[simp] theorem cs_df (a x y z : Nat) : (callS a x y z).df = false := rfl
+
+theorem memZ_acc (a n : Nat) (w : Bool) : memZ.accessible a n w = (wmem (fun _ => 0) stdRegs).accessible a n w :=
+  acc_eq _ a n w
+
+theorem csp_eq : (BitVec.ofNat 64 CSP).toNat = CSP := by decide
+
+theorem cs_ret : memZ.readLE CSP 8 = 0 := by decide +kernel
+
+theorem cs_callOK (a x y z n : Nat) (hn : n ≤ 5) : CallOK64 (callS a x y z) 4096 n := by
+  have hw : memZ.accessible (CSP - 4096) (4096 + 8 + 8 * 5) true = true := by rw [memZ_acc]; decide +kernel
+  simp only [CallOK64, cs_sp, cs_mem, csp_eq, cs_ret]
+  refine ⟨by decide, by decide, by decide, by simp only [CSP, SP0]; omega, ?_⟩
+  exact Janus.Arm64.Memory.accessible_mono _ hw (Nat.le_refl _) (by omega)
+
+theorem cs_callOKm (a x y z n : Nat) (hn : n ≤ 5) : MemAmd64.CallOK (callS a x y z) 4096 n := by
+  obtain ⟨h1, h2, h3, h4, h5⟩ := cs_callOK a x y z n hn
+  exact ⟨h2, h3, h4, h5, rfl, rfl, h1⟩
+
+theorem cs_guard (a x y z : Nat) : GuardOK64 (callS a x y z) 4096 := by
+  simp only [GuardOK64, cs_g, cs_mem, cs_sp]
+  exact ⟨by decide, by rw [memZ_acc]; decide +kernel, by decide +kernel⟩
+
+theorem cs_sg (a x y z : Nat) : StackGuardOK (callS a x y z) 4096 := by
+  obtain ⟨h1, h2, h3⟩ := cs_guard a x y z
+  exact ⟨h1, h2, h3⟩
+
+theorem cs_room (a x y z n : Nat) (hn : n ≤ 5) : StackRoom64 (callS a x y z) 4096 n := by
+  refine ⟨cs_guard a x y z, ?_⟩
+  simp only [calleeStack64, cs_g, cs_sp, outside_cons, outside_nil, and_true, BitVec.toNat_ofNat]
+  simp only [G0, CSP, SP0]; omega
+
+theorem cs_winR (a x y z n : Nat) (hn : n ≤ 5) : LiveSep (liveWin64 (callS a x y z) 4096 n) R.rt := by
+  intro x' hx
+  simp only [liveWin64, calleeStack64, cs_sp, List.cons_append, List.nil_append, List.mem_cons, List.not_mem_nil,
+    or_false, BitVec.toNat_ofNat] at hx
+  rw [rt_eq]
+  rcases hx with rfl | rfl | rfl <;>
+    simp only [outside_cons, outside_nil, and_true, CSP, SP0, HEAP, HEND, BUMP, WBUF, HSIZE] <;> omega
+
+theorem cs_inv (a x y z : Nat) : R.inv 0x1000 [] ((callS a x y z).regs 14).toNat (view R.rt [] (callS a x y z).mem) :=
+  inv0 _ bumpZ _
+
+/-- the premise of `MemmoveLive64` at a call -/
+@[reducible] def mvSite (R : RtInv) (addr : Nat) (L : List (Nat × Nat)) (b : Nat) (s : State) : Prop :=
+  MemPre64 4096 3 s ∧
+  LiveMemAt64 R addr [(s.regs 0).toNat, (s.regs 3).toNat, (s.regs 1).toNat] L b s (liveWin64 s 4096 3) ∧
+  MemAmd64.Input s 4096 3 (s.regs 3).toNat (s.regs 1).toNat ∧
+  LiveDest64 R L s 4096 3 (s.regs 0).toNat (s.regs 1).toNat
+
+/-- a `memmove(OA, OB, 8)` call satisfies it -/
+theorem site_mv (addr : Nat) : mvSite R addr [] 0x1000 (callS addr OA OB 8) := by
+  refine ⟨⟨cs_sg _ _ _ _, cs_callOKm _ _ _ _ 3 (by omega), ?_⟩, ⟨trivial, cs_inv _ _ _ _, fun r hr => by simp at hr, cs_winR _ _ _ _ 3 (by omega)⟩,
+    ⟨?_, ?_, ?_⟩, ⟨?_, ?_, ?_, Or.inr ?_, ?_⟩⟩
+  all_goals try simp only [MemAmd64.calleeStack, MapAmd64.calleeStack, calleeStack64, cs_g, cs_mem, cs_r0, cs_r1, cs_r3,
+    cs_sp, BitVec.toNat_ofNat]
+  all_goals first
+    | (simp only [outside_cons, outside_nil, and_true]; decide)
+    | (rw [memZ_acc]; decide +kernel)
+    | decide
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide)
+
+/-- the premise of `MemclrNoHeapPointersLive64` at a call -/
+@[reducible] def clSite (R : RtInv) (addr : Nat) (L : List (Nat × Nat)) (b : Nat) (s : State) : Prop :=
+  MemPre64 4096 2 s ∧
+  LiveMemAt64 R addr [(s.regs 0).toNat, (s.regs 3).toNat] L b s (liveWin64 s 4096 2) ∧
+  LiveDest64 R L s 4096 2 (s.regs 0).toNat (s.regs 3).toNat
+
+/-- a `memclrNoHeapPointers(OA, 8)` call satisfies it -/
+theorem site_cl (addr : Nat) : clSite R addr [] 0x1000 (callS addr OA 8 0) := by
+  refine ⟨⟨cs_sg _ _ _ _, cs_callOKm _ _ _ _ 2 (by omega), ?_⟩, ⟨trivial, cs_inv _ _ _ _, fun r hr => by simp at hr, cs_winR _ _ _ _ 2 (by omega)⟩,
+    ⟨?_, ?_, ?_, Or.inr ?_, ?_⟩⟩
+  all_goals try simp only [MemAmd64.calleeStack, MapAmd64.calleeStack, calleeStack64, cs_g, cs_mem, cs_r0, cs_r1, cs_r3,
+    cs_sp, BitVec.toNat_ofNat]
+  all_goals first
+    | (simp only [outside_cons, outside_nil, and_true]; decide)
+    | (rw [memZ_acc]; decide +kernel)
+    | decide
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide)
+
+/-- the premise of `MakesliceLiveContract64` at a call -/
+@[reducible] def mkSite (R : RtInv) (addr : Nat) (L : List (Nat × Nat)) (b : Nat) (s : State) : Prop :=
+  MakeslicePre64 4096 s ∧ StackRoom64 s 4096 3 ∧
+    LiveAt R addr [(s.regs 0).toNat, (s.regs 3).toNat, (s.regs 1).toNat] L b (makesliceRound64 s)
+      (s.regs 14).toNat s.mem (liveWin64 s 4096 3)
+
+/-- a `makeslice(Word, 1, 1)` call satisfies it (the `Word` type descriptor is read-only data of the extraction) -/
+theorem site_mk (addr : Nat) : mkSite R addr [] 0x1000
+    (callS addr Extracted.dataAddr.«type:big.Word#51b931e8» 1 1) := by
+  refine ⟨⟨cs_callOK _ _ _ _ 3 (by omega), ?_, ?_, ?_, ?_⟩, cs_room _ _ _ _ 3 (by omega),
+    trivial, cs_inv _ _ _ _, ?_, fun r hr => absurd hr (by simp), cs_winR _ _ _ _ 3 (by omega)⟩
+  all_goals try simp only [makesliceRound64, TypeOK, cs_mem, cs_r0, cs_r1, cs_r3, BitVec.toNat_ofNat]
+  all_goals first | decide +kernel | exact ⟨by decide +kernel, by rw [memZ_acc]; decide +kernel⟩
+
 end FvModexp.Amd64.AsmWit
