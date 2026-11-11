@@ -68,6 +68,25 @@ go-bigmodexpfix code (to be confirmed by the `R.ok` needs of divmc's/expmc's sum
 
 The bounds 2^17 elements (1 MiB of words) and 2^20 bytes leave ≥ 10× margin over these estimates.
 
+**Operand bound and budgets of the Int-level callee specs (coordinator decision 2026-11-11, `RunIface` both ISAs).**
+`ModSpec`, `ExpSpec`, `BytesSpec` require every operand to have at most `maxW = 128` words (`IntLenLe m a 128`, i.e.
+`len(abs) ≤ 128`): EIP-7823 caps each Run operand at 1024 bytes = 128 words, and Run's length check establishes it before
+any of these calls (`Run`'s own statement is unaffected). Without the bound the specs are unprovable under the bounded
+`Serves R` and a fixed budget (window-4 exponentiation alone reserves `23 · len m` stack words). The budget `B` of each
+spec defaults to a closed bound for 128-word operands (a callee proof may consume less, never more):
+
+| constant | value | derivation |
+|---|---|---|
+| `opCost` | `allocCost (2^23)` = 2^24 + 24 | any request `Serves` admits (≤ 2^17 word/byte elements; `growslice` at most doubling a ≤ 2^17-word capacity, size-class rounding included) is a block of ≤ 2^23 bytes; `blockSize_le_allocCost` |
+| `ModBudget` | `256 · opCost` | `z.Mod(z, y)`: `nat.make` of `u` (len x + 1 ≤ 129), `q` (≤ 129), `z`; `getStack`; `(*stack).nat` scratch of `divLarge` / `divRecursiveStep` (n = 128 ≥ divRecursiveThreshold 40: ≤ 4 blocks, depth ≤ 2, ≤ 8 scratch nats per block) — well under 256 requests |
+| `ExpBudget` | `(8 · 8192 + 256) · opCost` | `z.exp(z, y, m, false)`: ≤ 64 · 128 = 8192 exponent bits; per bit at most one `sqr`, one `mul`, one reduction (`div` or `montgomery`), each with ≤ 2 allocating requests (its `nat.make` result when the capacity is short, `(*stack).nat` scratch) and the windowed loops (window 2/4) do fewer: ≤ 8 per bit; setup ≤ 256 (power table 16 entries, `stk.reserve((16+7)·len m)` / `(1<<w)·w + 4w`, `m1 m2 z1 z2` of `expNNEven`, `lsh`, `getStack`). The per-bit allowance lets a loop invariant charge each iteration a constant without tracking capacities |
+| `BytesBudget` | `allocCost (8 · 128)` | `x.Bytes()`: one `make([]byte, 8 · len x)` ≤ 1024 bytes |
+
+These are deliberate over-approximations (≈ 2^40 for `ExpBudget`): `B` only has to be an upper bound, and the
+`correctness_ok` witness heap is sized ≥ the Run budget (header costs + `ModBudget` or `ExpBudget` + `BytesBudget` + the
+Run-level `make`s). If a callee proof finds a request count above an allowance it reports it here and the constant is
+raised (never the proof weakened). Request sizes stay as in the table above (128-word operands).
+
 **Non-vacuity plan (coordinator requirement, open):**
 1. `correctness` (full row-1 statement) — `Witness.nonvacuous` runs the EIP-7823 error path (no `Serves` needed there).
 2. `correctness_ok` (same statement restricted to `LengthsPass data`, `Serves R` in its precondition) — `Witness.correctness_ok`

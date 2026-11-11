@@ -24,8 +24,9 @@ def stk : Nat := 4800
 /-- The value of the `nat` stored at `a` (`(ptr, len, cap)`). -/
 @[reducible] def natAt (m : Memory) (a : Nat) : Nat := natVal m (m.readLE a 8) (m.readLE (a + 8) 8)
 
-/-- A header `nat` at `a` (the `abs` field of a stack `big.Int`): value `v`, normalised, at most four limbs. -/
+/-- A header `nat` at `a` (the `abs` field of a stack `big.Int`): value `v`, normalised, at most four limbs, `len ≤ cap`. -/
 def HdrOK (m : Memory) (a v : Nat) : Prop :=
-  natAt m a = v ∧ NatNorm m (m.readLE a 8) (m.readLE (a + 8) 8) ∧ m.readLE (a + 8) 8 ≤ 4
+  natAt m a = v ∧ NatNorm m (m.readLE a 8) (m.readLE (a + 8) 8) ∧ m.readLE (a + 8) 8 ≤ 4 ∧
+    m.readLE (a + 8) 8 ≤ m.readLE (a + 16) 8
 
 end FvModexp.Arm64.Run

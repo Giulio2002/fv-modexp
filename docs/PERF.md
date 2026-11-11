@@ -106,6 +106,13 @@ Lesson (before → after): the first setBytes exploration with `janus_data hd [h
 | Nat/SetBytes (`ens`, 4 paths, makeslice) | 41.3 s, 2.4 GB | 42.0 s, 2.5 GB |
 | Nat/SetBytesStd* (std copy) | same ±10 % (40.3 s max) | same (44.6 s max) |
 (The ~2 GB floor is loading the Run `Extracted` olean.)
+
+### Run arm64 body segments (agent top, 2026-11-11; dev compile `build/dbuild.sh arm64`, LEAN_NUM_THREADS=4)
+| module | wall / max RSS | note |
+|---|---|---|
+| Top/RunH1 (entry -> B1, both `getData` paths) | 72 s / 3.0 GB | |
+| Top/RunH2S (B1 -> B2, `len < 64`: two paths, memmove + padded buffer) | 99 s / 4.3 GB | |
+| Top/RunH2 (B1 -> B2, `len >= 64` + RunH2S) | 41 s / 3.1 GB | before: **>15 min (killed)** with `janus_simp [hinS]` (a conditional `∀ a n, p <= a -> ... -> readLE a n = ...` as a simp lemma) closing the per-byte goals; after: explicit `readLE_writeLE_of_disjoint` x4 + `exact hinS _ _ (by omega) (by omega)` |
 # Performance record (proof elaboration and `janus verify` rows)
 
 Project sanity goal: every `janus verify` row <= 15 min wall and <= 16 GB (hard, `scripts/verify-all.sh` has no override); every proof module's

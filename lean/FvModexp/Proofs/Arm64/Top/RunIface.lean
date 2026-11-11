@@ -182,16 +182,45 @@ def Globals (R : RtInv) (m : Memory) : Prop :=
   Outside (Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.karatsubaThreshold») 32 R.rt
 
 /-- The callee frame shared by the three specs: the `*Int` objects `xs` (headers on the caller's frame or the heap) are
-outside the callee's window, `Globals`, `Serves`, the invariant, the budget `B`. -/
+outside the callee's window and apart from the `stackguard0` word, `Globals`, `Serves`, the invariant, the budget `B`. -/
 def IntPre (R : RtInv) (b B : Nat) (L : List (Nat × Nat)) (stk above : Nat) (xs : List Nat) (s : State) : Prop :=
   CallEnv R L s stk above ∧ Serves R ∧ Globals R s.mem ∧ B ≤ b ∧
     R.inv b L (s.regs 28).toNat (view R.rt L s.mem) ∧
     (∀ a ∈ xs, IntOK s.mem R L a ∧ Outside a 32 (win s stk above) ∧
-      Outside (s.mem.readLE (a + 8) 8) (8 * s.mem.readLE (a + 24) 8) (win s stk above)) ∧
+      Outside (s.mem.readLE (a + 8) 8) (8 * s.mem.readLE (a + 24) 8) (win s stk above) ∧
+      Apart a 32 ((s.regs 28).toNat + 16) 8 ∧
+      Apart (s.mem.readLE (a + 8) 8) (8 * s.mem.readLE (a + 24) 8) ((s.regs 28).toNat + 16) 8) ∧
     (xs.Pairwise fun a a' => Apart a 32 a' 32 ∧
       Apart a 32 (s.mem.readLE (a' + 8) 8) (8 * s.mem.readLE (a' + 24) 8) ∧
       Apart a' 32 (s.mem.readLE (a + 8) 8) (8 * s.mem.readLE (a + 24) 8) ∧
       Apart (s.mem.readLE (a + 8) 8) (8 * s.mem.readLE (a + 24) 8) (s.mem.readLE (a' + 8) 8) (8 * s.mem.readLE (a' + 24) 8))
+
+/-- Operand size bound of the three specs, in words: EIP-7823 caps every Run operand at 1024 bytes = 128 words (Run's
+length check establishes it before any call). Without it the specs are unprovable under the bounded `Serves R` and a
+fixed budget (e.g. window-4 exponentiation reserves `23 · len m` stack words). -/
+def maxW : Nat := 128
+
+/-- The `*Int` at `a` has at most `k` words (`len(abs) ≤ k`). -/
+def IntLenLe (m : Memory) (a k : Nat) : Prop := m.readLE (a + 16) 8 ≤ k
+
+/-- Budget of one served request: a request `Serves` admits (≤ 2^17 word or byte elements, a `growslice` at most doubling
+a capacity of ≤ 2^17 words, size-class rounding included) is a block of at most 2^23 bytes, so it costs at most
+`allocCost (2 ^ 23)` (`blockSize_le_allocCost`). -/
+def opCost : Nat := allocCost (2 ^ 23)
+
+/-- Budget of `z.Mod(z, y)` for operands of ≤ `maxW` words: at most 256 allocating requests (`nat.make` of `u`, `q`, `z`,
+`(*stack).nat` scratch of `divLarge`/`divRecursiveStep` per recursion block (≤ 4 blocks of 40 words, depth ≤ 2),
+`stack` from `getStack`), each ≤ `opCost`. Derivation in docs/HUMAN-REVIEW.md. -/
+def ModBudget : Nat := 256 * opCost
+
+/-- Budget of `z.exp(z, y, m, false)` for operands of ≤ `maxW` words: per exponent bit (≤ 64 · `maxW` = 8192 bits) at
+most 8 allocating requests (one `sqr`, one `mul`, one reduction by `div`/`montgomery`: their `nat.make` results and
+`(*stack).nat` scratch), plus 256 setup requests (power table of 16 entries, `stk.reserve`, `m1`/`m2`/`z1`/`z2` of
+`expNNEven`, `getStack`), each ≤ `opCost`. Derivation in docs/HUMAN-REVIEW.md. -/
+def ExpBudget : Nat := (8 * (64 * maxW) + 256) * opCost
+
+/-- Budget of `x.Bytes()` for `x` of ≤ `maxW` words: one `make([]byte, 8 · len x)` of ≤ 1024 bytes. -/
+def BytesBudget : Nat := allocCost (8 * maxW)
 
 /-- What every spec returns about the receiver `z` (written: its header and a new or reused array) and the runtime. -/
 def IntPost (R : RtInv) (b B : Nat) (L : List (Nat × Nat)) (stk above : Nat) (z : Nat) (v : Nat) (s s' : State) : Prop :=
@@ -203,29 +232,31 @@ def IntPost (R : RtInv) (b B : Nat) (L : List (Nat × Nat)) (stk above : Nat) (z
       (s.mem.readLE (z + 8) 8, s.mem.readLE (z + 8) 8 + 8 * s.mem.readLE (z + 24) 8)]
 
 /-- **`z.Mod(z, y)`** as Run calls it (`int.go:325`; `X0 = z`, `X1 = x = z`, `X2 = y`): returns `z` with `z = x mod y`. -/
-def ModSpec (impl : List Segment) (R : RtInv) (stk above B : Nat) : Prop :=
+def ModSpec (impl : List Segment) (R : RtInv) (stk above : Nat) (B : Nat := ModBudget) : Prop :=
   ∀ (b : Nat) (L : List (Nat × Nat)) (z y : BitVec 64),
     Ensures ((Extracted.program.onlySegments namesMod).link impl) (segAddr Extracted.program (P ++ "(*Int).Mod")) [z, z, y]
-      (fun s => IntPre R b B L stk above [z.toNat, y.toNat] s ∧ 0 < IntV s.mem y.toNat)
+      (fun s => IntPre R b B L stk above [z.toNat, y.toNat] s ∧ 0 < IntV s.mem y.toNat ∧
+        IntLenLe s.mem z.toNat maxW ∧ IntLenLe s.mem y.toNat maxW)
       (fun s s' => s'.regs 0 = z ∧ IntPost R b B L stk above z.toNat (IntV s.mem z.toNat % IntV s.mem y.toNat) s s' ∧
         IntV s'.mem y.toNat = IntV s.mem y.toNat)
 
 /-- **`z.exp(z, y, m, false)`** as Run calls it (`int.go:575`; `X0 = z`, `X1 = x = z`, `X2 = y`, `X3 = m`, `X4 = slow = 0`):
 returns `z` with `z = x ^ y mod m` (`m > 0`; `y ≥ 0`, so the `ModInverse` path is not taken). -/
-def ExpSpec (impl : List Segment) (R : RtInv) (stk above B : Nat) : Prop :=
+def ExpSpec (impl : List Segment) (R : RtInv) (stk above : Nat) (B : Nat := ExpBudget) : Prop :=
   ∀ (b : Nat) (L : List (Nat × Nat)) (z y mm : BitVec 64),
     Ensures ((Extracted.program.onlySegments namesExp).link impl) (segAddr Extracted.program (P ++ "(*Int).exp"))
       [z, z, y, mm, 0#64]
-      (fun s => IntPre R b B L stk above [z.toNat, y.toNat, mm.toNat] s ∧ 0 < IntV s.mem mm.toNat)
+      (fun s => IntPre R b B L stk above [z.toNat, y.toNat, mm.toNat] s ∧ 0 < IntV s.mem mm.toNat ∧
+        IntLenLe s.mem z.toNat maxW ∧ IntLenLe s.mem y.toNat maxW ∧ IntLenLe s.mem mm.toNat maxW)
       (fun s s' => s'.regs 0 = z ∧
         IntPost R b B L stk above z.toNat (IntV s.mem z.toNat ^ IntV s.mem y.toNat % IntV s.mem mm.toNat) s s')
 
 /-- **`x.Bytes()`** (`int.go:527`; `X0 = x`): a fresh `[]byte` `(p, n, n)` holding the minimal big-endian form of `x`
 (no leading zero byte), `x` unchanged. -/
-def BytesSpec (impl : List Segment) (R : RtInv) (stk above B : Nat) : Prop :=
+def BytesSpec (impl : List Segment) (R : RtInv) (stk above : Nat) (B : Nat := BytesBudget) : Prop :=
   ∀ (b : Nat) (L : List (Nat × Nat)) (x : BitVec 64),
     Ensures ((Extracted.program.onlySegments [fnBytes]).link impl) (segAddr Extracted.program fnBytes) [x]
-      (fun s => IntPre R b B L stk above [x.toNat] s)
+      (fun s => IntPre R b B L stk above [x.toNat] s ∧ IntLenLe s.mem x.toNat maxW)
       (fun s s' => ∃ p n c : Nat, (s'.regs 0).toNat = p ∧ (s'.regs 1).toNat = n ∧ (s'.regs 2).toNat = c ∧ n ≤ c ∧
         beVal s'.mem p n = IntV s.mem x.toNat ∧ (n = 0 ∨ (s'.mem.bytes p).toNat ≠ 0) ∧
         ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b - B ≤ b' ∧

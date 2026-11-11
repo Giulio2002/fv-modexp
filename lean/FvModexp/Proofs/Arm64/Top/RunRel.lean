@@ -127,7 +127,7 @@ theorem hdrDone_of {R : RtInv} {L1 : List (Nat × Nat)} {m M : Memory} {s : Stat
     by_cases h0 : n1 = 0
     · subst h0; rfl
     · exact hrd _ _ ((hw (by omega)).of_sub (Nat.le_refl _) (by omega))
-  refine ⟨⟨?_, ?_, ?_⟩, ?_⟩
+  refine ⟨⟨?_, ?_, ?_, ?_⟩, ?_⟩
   · simp only [natAt, hdrAt] at *; rw [show s.sp.toNat - 32 - 32 * i + 8 = s.sp.toNat - 32 - 32 * i + 8 from rfl]
     rw [hs0, hs1, hval, hv]
   · simp only [hdrAt] at *; rw [hs0, hs1]
@@ -138,8 +138,38 @@ theorem hdrDone_of {R : RtInv} {L1 : List (Nat × Nat)} {m M : Memory} {s : Stat
       · right
         rw [hrd _ _ ((hw (by omega)).of_sub (by omega) (by omega))]; exact h
   · simp only [hdrAt] at *; rw [hs1]; exact hn4
+  · simp only [hdrAt] at *; rw [hs1, hs2]; exact hnc
   · simp only [hdrAt] at *; rw [hs0, hs2]
     intro hc
     exact ((hlive hc).2.1).inRanges_of_rt (hfresh hc) (by omega)
+
+end FvModexp.Arm64.Run
+
+namespace FvModexp.Arm64.Run
+
+open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
+
+/-- A header already read stays read: its three slots unchanged, its array unchanged (a live object), the live set grows. -/
+theorem HdrDone.transport {m m' : Memory} {s : State} {p len : BitVec 64} {L1 L2 : List (Nat × Nat)} {i : Nat}
+    (h : HdrDone m s p len L1 i)
+    (h0 : m'.readLE (hdrAt s i) 8 = m.readLE (hdrAt s i) 8) (h1 : m'.readLE (hdrAt s i + 8) 8 = m.readLE (hdrAt s i + 8) 8)
+    (h2 : m'.readLE (hdrAt s i + 16) 8 = m.readLE (hdrAt s i + 16) 8)
+    (hLF : LiveFrame m m' L1 []) (hsub : ∀ a n, InRanges a n L1 → InRanges a n L2) : HdrDone m' s p len L2 i := by
+  obtain ⟨⟨hv, hn, h4, hcl⟩, hin⟩ := h
+  simp only [natAt] at hv
+  refine ⟨⟨?_, ?_, ?_, ?_⟩, ?_⟩
+  · simp only [natAt]; rw [h0, h1]
+    by_cases hz : m.readLE (hdrAt s i + 8) 8 = 0
+    · rw [hz]; rw [hz] at hv; exact hv
+    · rw [natVal, hLF.readLE _ _ ((hin (by omega)).sub (Nat.le_refl _) (by omega)) trivial]; exact hv
+  · rw [h0, h1]
+    rcases hn with hn | hn
+    · exact Or.inl hn
+    · by_cases hz : m.readLE (hdrAt s i + 8) 8 = 0
+      · exact Or.inl hz
+      · right; rw [hLF.readLE _ _ ((hin (by omega)).sub (by omega) (by omega)) trivial]; exact hn
+  · rw [h1]; exact h4
+  · rw [h1, h2]; exact hcl
+  · rw [h0, h2]; intro hc; exact hsub _ _ (hin hc)
 
 end FvModexp.Arm64.Run

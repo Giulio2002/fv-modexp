@@ -59,8 +59,77 @@ theorem h1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
       simp only [List.mem_append, List.mem_cons, List.not_mem_nil, or_false] at hr
       rcases hr with (rfl | rfl) | rfl <;> refine ⟨?_, ?_, ?_⟩ <;> dsimp only <;> omega
     clear hd
-    janus_run [natLive_zero, toInt_ite, toNat_ite, toInt_small, hc] until [pcB1] calls [hS]
-    all_goals sorry
+    janus_run [natLive_zero, toInt_ite, toNat_ite, toInt_small, hc] until [pcB1] calls [hP := hS]
+    obtain ⟨⟨-, p1, n1, c1, hp1, hn1, hc1, hv1, hnorm1, hnc1, hnw1, L1, b1, hext1, hb1, hinv1, hlive1, hor1, hMF1, hLF1⟩, hd1⟩ := hP
+    have hspn : (s.sp - 624#64).toNat = s.sp.toNat - 624 := by rw [BitVec.toNat_sub]; simp; omega
+    simp only [winA, hspn] at hMF1
+    refine hk _ L1 b1 (RelH.mk' hin0 ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ hext1 ?_ ?_ ?_ ?_ ?_ ?_) (by janus_simp)
+    all_goals try (janus_simp; done)
+    case refine_11 => intro _; refine ⟨?_, ?_⟩ <;> (janus_simp; try omega)
+    case refine_12 => janus_callpre
+    case refine_13 => simpa [SetBytesStd.nW] using hb1
+    case refine_14 =>
+      dsimp only
+      rw [view_writeLE_out (hout.of_sub (by omega) (by omega)), view_writeLE_out (hout.of_sub (by omega) (by omega)),
+        view_writeLE_out (hout.of_sub (by omega) (by omega)), view_writeLE_out (hout.of_sub (by omega) (by omega))]
+      exact hinv1
+    case refine_15 => exact hext1.liveSep hLs0 (fun r hr => by
+      simp only [win, stk, List.mem_cons, List.not_mem_nil, or_false] at hr; subst hr
+      exact hout.of_sub (Nat.le_refl _) (by omega))
+    case refine_16 =>
+      have hMF' := hMF; simp only [← List.append_assoc, List.cons_append, List.nil_append] at hMF'
+      dsimp only; simp only [winA, stk]
+      janus_frame
+    case refine_17 =>
+      dsimp only
+      have hdst : LiveSep L [(BitVec.toNat s.sp - 296, BitVec.toNat s.sp - 296 + len.toNat)] := by
+        intro r hr; have := hLs r hr
+        simp only [Outside, and_true] at this ⊢; omega
+      refine ((((LiveFrame.of_win (by simp only [win, stk]; janus_frame) hLs0).trans (LiveFrame.drop hLF hdst)
+        (fun _ _ h => h)).trans (LiveFrame.of_win (by simp only [win, stk]; janus_frame) hLs0) (fun _ _ h => h)).trans
+        (LiveFrame.of_empty hLF1 []) (fun _ _ h => h)).trans
+        (LiveFrame.of_win (by simp only [win, stk]; janus_frame) (hext1.liveSep hLs0 ?_))
+        (fun _ _ h => hext1.inRanges_old h)
+      intro r hr
+      simp only [win, stk, List.mem_cons, List.not_mem_nil, or_false] at hr; subst hr
+      exact hout.of_sub (Nat.le_refl _) (by omega)
+    case refine_18 =>
+      intro i hi
+      obtain rfl : i = 0 := by omega
+      dsimp only
+      have hstk : stk = 4800 := rfl
+      refine hdrDone_of (m := s'.mem) ?rd (by janus_simp [hp1, hdrAt]) (by janus_simp [hn1, hdrAt]) (by janus_simp [hc1, hdrAt]) ?v hnorm1
+        (by simpa [SetBytesStd.nW] using hnw1) hnc1 ?fr hlive1 (by rw [hstk]; exact hout)
+      case rd =>
+        intro a n h
+        simp only [win, hstk, Janus.outside_cons, Janus.outside_nil, and_true] at h
+        rw [Memory.readLE_writeLE_of_disjoint _ _ (by omega), Memory.readLE_writeLE_of_disjoint _ _ (by omega),
+          Memory.readLE_writeLE_of_disjoint _ _ (by omega), Memory.readLE_writeLE_of_disjoint _ _ (by omega)]
+      case fr =>
+        intro hc
+        rcases hor1 with ⟨-, h⟩ | ⟨h, -⟩
+        · simp at h; omega
+        · exact h
+      case v =>
+        rw [hv1, hdrV, Nat.mul_zero]
+        apply beVal_padded
+        intro j hj
+        simp only [BitVec.toNat_ofNat] at hj
+        rw [← Memory.readLE_one]
+        unfold padByte
+        split
+        · rename_i hjl
+          have hcj := hcp j (by omega)
+          janus_simp
+          rw [Memory.readLE_one, hcj, ← Memory.readLE_one, ← Memory.readLE_one]
+          janus_simp
+        · rename_i hjl
+          janus_simp
+          simp only [Nat.zero_add] at hjl
+          have hj32 : j < 32 := by omega
+          rcases (by omega : j < 8 ∨ (8 ≤ j ∧ j < 16) ∨ (16 ≤ j ∧ j < 24) ∨ 24 ≤ j) with h | h | h | h <;>
+          simp (disch := omega) only [Memory.readLE_writeLE_of_disjoint, Memory.readLE_writeLE_inside, Nat.zero_div,
+            Nat.zero_mod]
   · have hH0 : InRanges p.toNat 32 L ∨ Outside p.toNat 32 R.rt := hheld.sub (Nat.le_refl _) (by omega)
     have hW0 : p.toNat + 32 ≤ BitVec.toNat s.sp - 624 - 4160 ∨ BitVec.toNat s.sp - 624 + 48 ≤ p.toNat := by omega
     have hc : (len.toNat < 32) = False := by simp; omega

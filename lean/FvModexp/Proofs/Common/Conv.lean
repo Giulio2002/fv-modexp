@@ -303,3 +303,16 @@ theorem Held.inRanges_of_rt {R : RtInv} {L : List (Nat × Nat)} {p n : Nat} (hh 
     omega
 
 end FvModexp
+
+namespace FvModexp
+
+open Janus Janus.Arm64 Janus.Contracts
+
+/-- A live frame whose written ranges are apart from every live object holds with no written ranges. -/
+theorem LiveFrame.drop {m m' : Memory} {L ws : List (Nat × Nat)} (h : LiveFrame m m' L ws)
+    (hws : LiveSep L ws) : LiveFrame m m' L [] :=
+  ⟨fun a n hin _ => h.readLE a n hin (by
+    obtain ⟨r, hr, h1, h2⟩ := hin
+    exact (hws r hr).of_sub h1 (by omega))⟩
+
+end FvModexp
