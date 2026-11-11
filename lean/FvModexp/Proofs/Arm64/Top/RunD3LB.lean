@@ -46,7 +46,7 @@ theorem d3lB (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
   have hIe := toInt_small (BitVec.ofNat 64 (hdrV s p len 2)) (by simp; omega)
   have hmv' : MemmoveLive (LibRun.program.link impl) (cA "runtime.memmove") 4096 R :=
     MemmoveLive.of_codeIn (by rw [LibRun.eq_only]; exact codeIn_ofImpl_restrict_of_apart hap LibRun.names) hmv
-  have hbs := le_blockSize (hdrV s p len 2) true
+  have hbs := Janus.Contracts.AllocSat.le_blockSize (hdrV s p len 2) true
   have hmvok : R.ok (cA "runtime.memmove") [B, src, nb] := hokM _ _ _ (by omega)
   have hsA : s.mem.accessible src nb false = true := Memory.accessible_mono _ hpacc (by omega) (by omega)
   have hBA : s.mem.accessible B nb true = true := Memory.accessible_mono _ hBacc (Nat.le_refl _) (by omega)

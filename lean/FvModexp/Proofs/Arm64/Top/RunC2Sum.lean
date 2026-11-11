@@ -20,7 +20,8 @@ theorem modW (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     (hIP : ∀ t : State, t.sp = sp0 → t.mem = M → t.regs 28 = g →
       IntPre R b1 (ModBudget (max (lenW M zA) (lenW M yA))) L1 stkM aboveM [zA, yA] t)
     (hy0 : 0 < IntV M yA) (hzl : IntLenLe M zA maxW) (hyl : IntLenLe M yA maxW) (z y : BitVec 64) :
-    Summary (LibRun.program.link impl) (segAddr Extracted.program (P ++ "(*Int).Mod"))
+    Summary (LibRun.program.link impl)
+      (segAddr Extracted.program "github.com/ethereum/go-bigmodexpfix/src/math/big.(*Int).Mod")
       (fun t => RetAddr ((Extracted.program.onlySegments namesMod).link impl) (t.regs 30).toNat ∧
         ArgsFrom t 0 [z, z, y] ∧ t.sp = sp0 ∧ t.mem = M ∧ t.regs 28 = g ∧ z.toNat = zA ∧ y.toNat = yA)
       (fun t t' => ((t'.sp = t.sp ∧ t'.regs 28 = t.regs 28 ∧ t'.regs 29 = t.regs 29 ∧ t'.regs 18 = t.regs 18) ∧
@@ -45,7 +46,8 @@ theorem expW (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
       IntPre R b1 (ExpBudget (max (max (lenW M zA) (lenW M yA)) (lenW M mA)) (lenW M yA)) L1 stkM aboveM [zA, yA, mA] t)
     (hm0 : 0 < IntV M mA) (hzl : IntLenLe M zA maxW) (hyl : IntLenLe M yA maxW) (hml : IntLenLe M mA maxW)
     (z y mm : BitVec 64) :
-    Summary (LibRun.program.link impl) (segAddr Extracted.program (P ++ "(*Int).exp"))
+    Summary (LibRun.program.link impl)
+      (segAddr Extracted.program "github.com/ethereum/go-bigmodexpfix/src/math/big.(*Int).exp")
       (fun t => RetAddr ((Extracted.program.onlySegments namesExp).link impl) (t.regs 30).toNat ∧
         ArgsFrom t 0 [z, z, y, mm, 0#64] ∧ t.sp = sp0 ∧ t.mem = M ∧ t.regs 28 = g ∧ z.toNat = zA ∧ y.toNat = yA ∧
         mm.toNat = mA)
