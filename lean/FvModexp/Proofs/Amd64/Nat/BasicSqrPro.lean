@@ -77,7 +77,12 @@ theorem pro2 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
   have hce := hpre.ce
   obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, hdl, hout, hga, hgr, hLs, hro, ⟨htb, htr, htg⟩, htrt, htw⟩ := hce
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw htg
-  simp only [win, outside_cons, outside_nil, and_true] at hLs
+  simp only [LiveSep, win, outside_cons, outside_nil, and_true] at hLs
+  have hLs' : ∀ r ∈ L, r.1 + (r.2 - r.1) ≤ (s.regs 4).toNat - 200 - 4192 ∨ (s.regs 4).toNat - 200 + 24 ≤ r.1 := by
+    intro r hr; have := hLs r hr; omega
+  clear hLs
+  have hfw : s.fsBase.toNat - 8 + 8 ≤ (s.regs 4).toNat - 200 - 4192 ∨
+      (s.regs 4).toNat - 200 - 4192 + 4216 ≤ s.fsBase.toNat - 8 := by unfold Apart at htw; omega
   have hsw := hpre.stw; simp only [win, outside_cons, outside_nil, and_true] at hsw
   have hrd : ∀ a n, (a + n ≤ (s.regs 4).toNat - 89 ∨ (s.regs 4).toNat + 64 ≤ a) → P.mem.readLE a n = s.mem.readLE a n :=
     fun a n h => hF.readLE _ _ (by simp only [outside_cons, outside_nil, and_true]; omega)
@@ -91,6 +96,8 @@ theorem pro2 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
     hrd _ _ (by unfold Apart at hga; omega)
   have htP : P.mem.readLE (s.fsBase.toNat - 8) 8 = (s.regs 14).toNat := by
     rw [← htg]; exact hrd _ _ (by unfold Apart at htw; omega)
+  have htP' : (P.mem.writeLE ((s.regs 4).toNat - 200) 8 6231390).readLE (s.fsBase.toNat - 8) 8 = (s.regs 14).toNat := by
+    rw [Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by unfold Apart at htw; omega)]; exact htP
   have hstok := hpre.stok
   have hstO : StkOK P.mem R L st.toNat := by
     obtain ⟨a1, a2, a3, a4, a5, a6, a7⟩ := hstok
@@ -123,7 +130,7 @@ theorem pro2 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
     unfold Apart at a6
     have a2' : InRanges (s.mem.readLE st.toNat 8) (8 * s.mem.readLE (st.toNat + 16) 8) L ∨
       Outside (s.mem.readLE st.toNat 8) (8 * s.mem.readLE (st.toNat + 16) 8) R.rt := a2
-    janus64_run [p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, hn2, hgP, htP] until [callNat + 5] calls [hSN' b L]
+    janus64_run [p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, hn2, hgP, htP', hfs] until [callNat + 5] calls [hSN' b L]
     trace_state
     sorry
   · sorry
