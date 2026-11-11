@@ -69,7 +69,7 @@ theorem rt0 {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → 
     RtM R kc L s zp zc st M L b ∧ Own R kc L L s zp zc st xp xl M zp zc := by
   have hpre' := hpre
   obtain ⟨⟨-, ⟨hal, -, -, -⟩, -, hout, -, -, hLs, -⟩, -, -, -, -, -, hzp, hzc0, ⟨hzc40, hzlive, hzw⟩, hx0, hxc, -, -,
-    -, -, -, hzx, ⟨hst, hstw, -⟩, -, hsz, -, -, hinv, -⟩ := hpre'
+    -, -, -, hzx, ⟨hst, hstw, -, -⟩, -, hsz, -, -, hinv, -⟩ := hpre'
   have hst' : Outside st 24 (winA s (K kc) A) := by
     simp only [win, winA, outside_cons, outside_nil, and_true] at hstw ⊢; simp only [K] at hstw ⊢; omega
   obtain ⟨hstk, e0, e1, e2⟩ := stkOK_frame hst hF hst' (LiveExt.refl R L)

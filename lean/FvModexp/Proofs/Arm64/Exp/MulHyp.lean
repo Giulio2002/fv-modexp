@@ -23,7 +23,7 @@ open FvModexp.Arm64.ExpHyp (RdIn WrOut NatRes NatOF RtPost StackOK' stWs LshPost
 
 /-- the `*stack` object as a scratch user needs it (as `ExpHyp.DivPre`) -/
 @[reducible] def StkIn (R : RtInv) (L : List (Nat × Nat)) (s : State) (stk above st : Nat) : Prop :=
-  StackOK' s.mem R L st ∧ Outside st 24 (win s stk above) ∧
+  StackOK' s.mem R L st ∧ Outside st 24 (win s stk above) ∧ Apart st 24 ((s.regs 28).toNat + 16) 8 ∧
     (0 < stCap s.mem st → Outside (stW s.mem st) (8 * stCap s.mem st) (win s stk above) ∧
       Apart (stW s.mem st) (8 * stCap s.mem st) ((s.regs 28).toNat + 16) 8)
 
