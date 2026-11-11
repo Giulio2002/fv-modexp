@@ -67,6 +67,22 @@ theorem bl_exact (w l : Nat) (hw : w < 2 ^ 64) (h1 : 1 ≤ l) (hl : l ≤ 2 ^ 20
   rw [BitVec.toNat_add, h64, hs]
   omega
 
+/-- the amd64 form (`BSR` of the smeared top limb `t`, `+ 1`): the computed bit length, exact (agent infra) -/
+theorem bl_exact64 (w l : Nat) (t : BitVec 64) (hw : w < 2 ^ 64) (hw0 : w ≠ 0) (ht : clzNat 64 t.toNat = clzNat 64 w)
+    (h1 : 1 ≤ l) (hl : l ≤ 2 ^ 20) :
+    ((BitVec.ofNat 64 l - 1#64) <<< 6 + BitVec.ofNat 64 (63 - clzNat 64 t.toNat + 1)).toNat =
+      64 * (l - 1) + Aux.bitLen w := by
+  have hc := Util.clz_bl 64 w hw
+  have hb : 1 ≤ Aux.bitLen w := by unfold Aux.bitLen; rw [if_neg hw0]; omega
+  rw [ht]
+  generalize clzNat 64 w = c at *
+  have hs : ((BitVec.ofNat 64 l - 1#64) <<< 6).toNat = 64 * (l - 1) := by
+    rw [BitVec.toNat_shiftLeft, BitVec.toNat_sub]; simp [Nat.shiftLeft_eq]
+    rw [show (18446744073709551615 + l) * 64 = 64 * (l - 1) + 18446744073709551616 * 64 by omega,
+      Nat.add_mul_mod_self_left, Nat.mod_eq_of_lt (by omega)]
+  rw [BitVec.toNat_add, hs, BitVec.toNat_ofNat]
+  omega
+
 /-- a nat whose top limb (of `l ≥ 1`) is `w` is below `2 ^ (64 (l-1) + bitLen w)` -/
 theorem natVal_lt_bl (m : Memory) (p l : Nat) (h1 : 1 ≤ l) :
     natVal m p l < 2 ^ (64 * (l - 1) + Aux.bitLen (m.readLE (p + 8 * (l - 1)) 8)) := by

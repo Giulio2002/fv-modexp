@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """dev-par-infra.py ISA FILE.lean...: as dev-deps-infra.py, but compiles the import closure with J (env, default 2)
 parallel jobs. Development only (agent infra)."""
-import sys, os, re, subprocess, time
+import sys, os, re, subprocess, time, tempfile
 isa, targets = sys.argv[1], [os.path.realpath(t) for t in sys.argv[2:]]
 J = int(os.environ.get('J', '2'))
 root = os.path.realpath(os.path.join(os.path.dirname(__file__), '..', 'lean'))
@@ -28,15 +28,16 @@ while (todo or running) and not failed:
         if len(running) >= J: break
         if all(d in done for d in deps[f]):
             todo.discard(f)
-            running[f] = subprocess.Popen([os.path.join(os.path.dirname(__file__), 'dev-lean-infra.sh'), isa, f],
-                                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+            tf = tempfile.TemporaryFile(mode='w+')  # never a pipe: a full pipe buffer blocks lean (deadlock)
+            running[f] = (subprocess.Popen([os.path.join(os.path.dirname(__file__), 'dev-lean-infra.sh'), isa, f],
+                                           stdout=tf, stderr=subprocess.STDOUT, text=True), tf)
     time.sleep(1)
-    for f, p in list(running.items()):
+    for f, (p, tf) in list(running.items()):
         if p.poll() is None: continue
-        o = p.stdout.read(); del running[f]
+        tf.seek(0); o = tf.read(); tf.close(); del running[f]
         print('\n'.join(l for l in o.splitlines() if l.startswith('==') or 'KB]' in l or 'error' in l)[:3000], flush=True)
         if p.returncode != 0:
             print(o[:8000], flush=True); failed = True
         else: done.add(f)
-for p in running.values(): p.wait()
+for p, _ in running.values(): p.wait()
 sys.exit(1 if failed else 0)
