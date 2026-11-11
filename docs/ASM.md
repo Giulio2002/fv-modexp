@@ -44,7 +44,7 @@ Machine-code SUMMARY theorems for the leaf routines `(*bigModExp).Run` reaches (
 | `divWW` | amd64 | — | — | todo |
 | `reciprocalWord` | arm64 | — | — | todo |
 | `reciprocalWord` | amd64 | — (inlined into its callers) | — | n/a |
-| `lshVU.abi0`, `rshVU.abi0` | both | WIP (`wip/LshVUSum.lean.wip`, `wip/AsmShift.lean.wip`: unfinished, moved out of the Lean tree) | — | todo |
+| `lshVU.abi0`, `rshVU.abi0` | both | WIP (`wip/LshVUSum.lean.wip`; its math `Common/AsmShift.lean` is in the tree, 1.7 s) | — | todo |
 | `addVW` (Go, `copy`→live `memmove`) | arm64 | `FvModexp.Arm64.AddVW.{ens,sum}` (CONVENTIONS §3/§4 shape) | — (needs a memmove stub runtime witness) | proved |
 | `addVW` | amd64 | `FvModexp.Amd64.AddVW.{ens,sum}` | — | proved |
 | `subVW` | arm64 | `FvModexp.Arm64.SubVW.{ens,sum}` | — | proved |
