@@ -128,14 +128,15 @@ theorem after_z (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) (hkc : 
     (hstkA : ¬ (p' = p ∧ c' = c) → 0 < c' → 0 < stCap M' st →
       ¬ (stW M' st = stW M st ∧ stCap M' st = stCap M st) → Apart p' (8 * c') (stW M' st) (8 * stCap M' st))
     (hl : l' ≤ c') (hc : NW n + 1 ≤ c') :
-    Mid R kc L s zp zc st xp xl xc n M' L2 b2 p' l' c' q ql qc ∧ natVal M' q ql = natVal M q ql ∧
+    Mid R kc L s zp zc st xp xl xc n M' L2 b2 p' l' c' q ql qc ∧
+      (∀ k, k ≤ qc → M'.readLE q (8 * k) = M.readLE q (8 * k)) ∧
       (∀ a, s.sp.toNat - 152 ≤ a → a + 8 ≤ s.sp.toNat + 72 → M'.readLE a 8 = M.readLE a 8) := by
   obtain ⟨hfw, hrt, hz, hzz, hap, -, hqlc, hnc, hqc⟩ := hmid
   have hsp : 240 ≤ s.sp.toNat := by have := hpre.1.2.1.2.1; simp only [K] at this; omega
   have hap' : Apart q (8 * qc) p (8 * c) := by unfold Apart at hap ⊢; omega
   obtain ⟨r1, r2, r3, r4, r5, r6⟩ := after_core hpre hkc hrt hS' hstk habove hz hreg hF hLF hLE hinv hsb hzz
     hqc hap' hlive hc40 hp hof hstkA
-  exact ⟨⟨fw2_keep r2 hsp hfw, r1, r5, r3, by unfold Apart at r6 ⊢; omega, hl, hqlc, hc, hqc⟩, r4 ql hqlc,
+  exact ⟨⟨fw2_keep r2 hsp hfw, r1, r5, r3, by unfold Apart at r6 ⊢; omega, hl, hqlc, hc, hqc⟩, r4,
     fun a h1 h2 => r2 a (Or.inr ⟨h1, h2⟩)⟩
 
 end

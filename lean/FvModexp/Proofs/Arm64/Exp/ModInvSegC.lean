@@ -111,6 +111,24 @@ theorem bud_ok0 {b S rc b1 m mc : Nat} (hb : b - S ≤ b1) (hbud : S + rc ≤ b)
 theorem bud_step0 {b S b1 mc m b' : Nat} (hb : b - S ≤ b1) (h' : b1 - mc ≤ b') (hm : mc ≤ m) :
     b - S - m ≤ b' := by omega
 
+/-- `NatNorm` from equal prefixes -/
+theorem norm_keep {M M' : Memory} {o oc l : Nat} (h : ∀ k, k ≤ oc → M'.readLE o (8 * k) = M.readLE o (8 * k))
+    (hl : l ≤ oc) (hn : NatNorm M o l) : NatNorm M' o l := by
+  rcases hn with hn | hn
+  · exact Or.inl hn
+  rcases Nat.eq_zero_or_pos l with h0 | hl0
+  · exact Or.inl h0
+  refine Or.inr ?_
+  have e := natVal_succ M o (l - 1)
+  have e' := natVal_succ M' o (l - 1)
+  rw [Nat.sub_add_cancel hl0] at e e'
+  have a1 : natVal M' o l = natVal M o l := h l hl
+  have a2 : natVal M' o (l - 1) = natVal M o (l - 1) := h (l - 1) (by omega)
+  have hp := Nat.two_pow_pos (64 * (l - 1))
+  have : 2 ^ (64 * (l - 1)) * M'.readLE (o + 8 * (l - 1)) 8 = 2 ^ (64 * (l - 1)) * M.readLE (o + 8 * (l - 1)) 8 := by
+    omega
+  rw [Nat.eq_of_mul_eq_mul_left hp this]; exact hn
+
 section
 variable {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
