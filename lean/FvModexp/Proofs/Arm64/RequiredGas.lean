@@ -15,7 +15,7 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvMod
 
 set_option maxHeartbeats 64000000 in
 set_option maxRecDepth 100000 in
-theorem correctness (c ptr len cap : BitVec 64) :
+theorem run (c ptr len cap : BitVec 64) :
     Ensures Extracted.program Extracted.entry [c, ptr, len, cap] (RgPre c ptr len cap) (fun s s' => RgPost ptr len s s') := by
   intro ret hret s hs hpre
   have hpre' := hpre
@@ -46,5 +46,70 @@ theorem correctness (c ptr len cap : BitVec 64) :
            | rfl
            | (apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_add, BitVec.toNat_ofNat]; omega))
       | (with_reducible show Memory.readLE _ _ _ = _; janus_simp; try (split <;> omega))
+
+/-- **Row 2 (arm64).** `(*bigModExp).RequiredGas` with the Osaka receiver: returns for every input, and when the lengths pass EIP-7823
+the result is EthLib's `requiredGas` at every fork from Fusaka on. -/
+theorem correctness (c ptr len cap : BitVec 64) :
+    Ensures Extracted.program Extracted.entry [c, ptr, len, cap]
+      (fun s => GuardOK s 464 ∧ StackOK s 504 40 ∧ Extracted.program.DataLoaded s.mem ∧ len.toNat ≤ cap.toNat ∧
+        cap.toNat < 2 ^ 48 ∧ Ptr s.mem ptr len.toNat false ∧ Ptr s.mem c 3 false ∧ Spec.OsakaReceiver s.mem c.toNat ∧
+        Disjoint ptr.toNat len.toNat (s.sp.toNat - 504) 544 ∧ Disjoint c.toNat 3 (s.sp.toNat - 504) 544 ∧
+        Disjoint ((s.regs 28).toNat + 16) 8 (s.sp.toNat - 504) 544)
+      (fun s s' => ∀ fork, Spec.PostFusaka fork → Spec.LengthsPass (Spec.bytesAt s.mem ptr.toNat len.toNat) →
+        Spec.u64 (s'.regs 0) = EthLib.Execution.Evm.Precompiles.Modexp.requiredGas fork (Spec.bytesAt s.mem ptr.toNat len.toNat)
+          (EthLib.Execution.Evm.Precompiles.Modexp.parseLengths (Spec.bytesAt s.mem ptr.toNat len.toNat))) :=
+  run c ptr len cap
+
+namespace Witness
+
+def ret : Nat := 0x1000
+def sp0 : Nat := 0x100000
+def g0 : Nat := 0x200000
+def cA : Nat := 0x300000
+def inA : Nat := 0x300100
+def dat : DataSegment := Extracted.data.head!
+def dbase : Nat := janus_eval% dat.base
+def dlen : Nat := janus_eval% dat.bytes.length
+
+/-- The jump table of `SetBytes` (read-only data), the Osaka receiver `{true, true, true}` at `cA`, and a 96-byte all-zero input at
+`inA` (three zero lengths): every other byte is zero. -/
+def bytes (a : Nat) : Byte :=
+  if dbase ≤ a ∧ a < dbase + dlen then BitVec.ofNat 8 (dat.bytes.getD (a - dbase) 0)
+  else if cA ≤ a ∧ a < cA + 3 then 1 else 0
+
+def s0 : State :=
+  { regs := fun i => if i = 0 then BitVec.ofNat 64 cA else if i = 1 then BitVec.ofNat 64 inA else if i = 2 then 96
+      else if i = 3 then 96 else if i = 28 then BitVec.ofNat 64 g0 else if i = 30 then BitVec.ofNat 64 ret else 0,
+    sp := BitVec.ofNat 64 sp0, pc := BitVec.ofNat 64 Extracted.entry,
+    flags := ⟨false, false, false, false⟩,
+    mem := ⟨bytes, [⟨sp0 - 504, 544, true⟩, ⟨g0, 0x100, false⟩, ⟨dbase, dlen, false⟩, ⟨cA, 0x200, false⟩]⟩ }
+
+set_option maxRecDepth 100000 in
+theorem hret : RetAddr Extracted.program ret := RetAddr.of_check (by decide)
+
+theorem setup : CallSetup (Extracted.program.withExit ret) Extracted.entry
+    [BitVec.ofNat 64 cA, BitVec.ofNat 64 inA, 96, 96] s0 :=
+  ⟨rfl, rfl, by
+    intro i h; simp at h
+    rcases (by omega : i = 0 ∨ i = 1 ∨ i = 2 ∨ i = 3) with rfl | rfl | rfl | rfl <;> rfl⟩
+
+set_option maxRecDepth 100000 in
+theorem hpre : RgPre (BitVec.ofNat 64 cA) (BitVec.ofNat 64 inA) 96 96 s0 := by
+  refine ⟨by unfold GuardOK; decide, by unfold StackOK; decide, by unfold Program.DataLoaded; decide, by decide, by decide,
+    ⟨by decide, by decide⟩, ⟨by decide, by decide⟩, ⟨by decide, by decide, by decide⟩, ?_, ?_, ?_⟩ <;> (unfold Disjoint; decide)
+
+/-- **Non-vacuity**: a concrete Osaka-receiver call with 96 zero bytes satisfies the precondition (and returns). -/
+theorem nonvacuous : ∃ (ret : Nat) (s : State) (c ptr len cap : BitVec 64), RetAddr Extracted.program ret ∧
+    CallSetup (Extracted.program.withExit ret) Extracted.entry [c, ptr, len, cap] s ∧
+    (fun s => GuardOK s 464 ∧ StackOK s 504 40 ∧ Extracted.program.DataLoaded s.mem ∧ len.toNat ≤ cap.toNat ∧
+        cap.toNat < 2 ^ 48 ∧ Ptr s.mem ptr len.toNat false ∧ Ptr s.mem c 3 false ∧ Spec.OsakaReceiver s.mem c.toNat ∧
+        Disjoint ptr.toNat len.toNat (s.sp.toNat - 504) 544 ∧ Disjoint c.toNat 3 (s.sp.toNat - 504) 544 ∧
+        Disjoint ((s.regs 28).toNat + 16) 8 (s.sp.toNat - 504) 544) s ∧
+    Returns (Extracted.program.withExit ret) s fun s' => ABIReturn s s' ∧ (fun s s' => ∀ fork, Spec.PostFusaka fork → Spec.LengthsPass (Spec.bytesAt s.mem ptr.toNat len.toNat) →
+        Spec.u64 (s'.regs 0) = EthLib.Execution.Evm.Precompiles.Modexp.requiredGas fork (Spec.bytesAt s.mem ptr.toNat len.toNat)
+          (EthLib.Execution.Evm.Precompiles.Modexp.parseLengths (Spec.bytesAt s.mem ptr.toNat len.toNat))) s s' :=
+  ⟨ret, s0, _, _, _, _, hret, setup, hpre, correctness _ _ _ _ ret hret s0 setup hpre⟩
+
+end Witness
 
 end FvModexp.Arm64.RequiredGas
