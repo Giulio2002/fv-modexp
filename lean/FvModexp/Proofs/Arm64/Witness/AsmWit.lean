@@ -82,6 +82,15 @@ theorem acc_eq (g : Nat → Byte) {rs : List Region} (a n : Nat) (w : Bool) :
     (wmem g rs).accessible a n w = (wmem (fun _ => 0) rs).accessible a n w :=
   Memory.accessible_congr rfl a n w
 
+/-- the read-only data lies outside the toy runtime's ranges -/
+theorem roOut : RoOut R := by
+  intro d hd
+  rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]
+  have : ∀ d' ∈ Extracted.program.data, (d'.base + d'.bytes.length ≤ HEAP ∨ HEND ≤ d'.base) ∧
+      (d'.base + d'.bytes.length ≤ BUMP ∨ BUMP + 8 ≤ d'.base) ∧ (d'.base + d'.bytes.length ≤ WBUF ∨ WBUF + 64 ≤ d'.base) := by
+    decide +kernel
+  exact this d hd
+
 /-- the toy runtime's invariant for a witness memory (the bump cell's value is checked per witness, by `decide`) -/
 theorem inv0 (g : Nat → Byte) (hbump : (wmem (toyBytes g) stdRegs).readLE BUMP 8 = HEAP) (gp : Nat) :
     R.inv 0x1000 [] gp (view R.rt [] (wmem (toyBytes g) stdRegs)) := by
