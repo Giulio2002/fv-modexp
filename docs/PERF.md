@@ -610,3 +610,14 @@ hbr (by decide) | skip`) before `refine`. In `first` cascades never put a `sorry
 * MakesliceZero premises (both ISAs) now byte-match Janus PR #2 (extra conjunct `Outside et 16 calleeStack`):
   arm64 IntBytes 49 s / 2.3 GB, amd64 IntBytes 154 s / 2.3 GB (janus discharged the new conjunct, no proof change);
   amd64 `WStubs.mkz` (Witness/StubsMkz.lean) 1 s.
+
+### expmc session 10 (arm64, dev compile, host load 35-56)
+| module | wall | peak RSS |
+|---|---|---|
+| W4OneRet (rebuild after main merge) | 130 s | 5.2 GB |
+| W4RR | 24 s | 2.5 GB |
+| W4RRRet (rrRet) | 25 s | 3.0 GB |
+| W4K0 (Newton loop) | < 10 s | 2.2 GB |
+| W4Ctx (Ctx/Keeps/keeps_of) | 12 s | 2.4 GB |
+| W4RRC (rrRetC) | 5 s | 2.3 GB |
+| W4SnK (snCallK, keeps_sn) | 87 s | 4.7 GB |
