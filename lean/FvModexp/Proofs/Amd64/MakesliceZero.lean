@@ -1,6 +1,6 @@
 import Janus
 
-/-! # `makeslice` with a zero-byte result (amd64) — PROPOSED Janus contract, local premise
+/-! # `makeslice` with a zero-byte result (amd64) — local premise = Janus PR #2 definition (byte-identical body)
 
 The amd64 twin of `FvModexp.Arm64.MakesliceZeroLive` (see `Proofs/Arm64/MakesliceZero.lean` and JANUS-ISSUES.md, top
 s8): for `et.size · cap = 0` the call returns (`retState64` shape of the live contracts), memory changes only in `R.rt`
@@ -26,7 +26,8 @@ def MakesliceZeroLive64 (p : Janus.Amd64.Program) (addr : Nat) (stack : Nat) (R 
     (fun s => (MakeslicePre64 stack s ∧ StackRoom64 s stack 3 ∧
       LiveAt R addr [(s.regs 0).toNat, (s.regs 3).toNat, (s.regs 1).toNat] L b 0 (s.regs 14).toNat s.mem
         (liveWin64 s stack 3)) ∧
-      typSize s.mem (s.regs 0).toNat * (s.regs 1).toNat = 0)
+      typSize s.mem (s.regs 0).toNat * (s.regs 1).toNat = 0 ∧
+      Outside (s.regs 0).toNat 16 (calleeStack64 s stack 3))
     (fun s s' => ZeroAllocRet64 R stack 3 L b s s')
 
 theorem MakesliceZeroLive64.of_codeIn {p P : Janus.Amd64.Program} (hc : CodeIn64 p P) {a st : Nat} {R : RtInv}

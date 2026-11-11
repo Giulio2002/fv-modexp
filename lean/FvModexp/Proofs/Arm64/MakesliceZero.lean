@@ -1,6 +1,6 @@
 import Janus
 
-/-! # `makeslice` with a zero-byte result (arm64) — PROPOSED Janus contract, local premise
+/-! # `makeslice` with a zero-byte result (arm64) — local premise = Janus PR #2 definition (byte-identical body)
 
 `MakesliceLiveContract` (Janus v0.2.0) appends the result range `[ptr, ptr + blockSize 0 _) = [ptr, ptr)` to the live
 set also when `et.size · cap = 0`, while its post says nothing about `ptr` in that case (`Q` only under `0 < size`).
@@ -34,7 +34,8 @@ def MakesliceZeroLive (p : Program) (addr : Nat) (stack : Nat) (R : RtInv) : Pro
     (fun s => (MakeslicePre stack s ∧ StackRoom s stack 3 ∧
       LiveAt R addr [(s.regs 0).toNat, (s.regs 1).toNat, (s.regs 2).toNat] L b 0
         (s.regs 28).toNat s.mem (calleeStack s stack 3)) ∧
-      typSize s.mem (s.regs 0).toNat * (s.regs 2).toNat = 0)
+      typSize s.mem (s.regs 0).toNat * (s.regs 2).toNat = 0 ∧
+      Outside (s.regs 0).toNat 16 (calleeStack s stack 3))
     (fun s s' => ZeroAllocRet R stack 3 L b s s')
 
 theorem MakesliceZeroLive.of_codeIn {p P : Program} (hc : CodeIn p P) {a st : Nat} {R : RtInv}
