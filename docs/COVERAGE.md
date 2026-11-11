@@ -26,5 +26,7 @@ Pure-Lean row 3 (no machine code): `FvModexp.Proofs.Compose.composition` in `lea
 | math/big `nat.setBytes` | proved (no sorry) | proved (no sorry) | `Proofs/<Isa>/Nat/SetBytesStd.lean`: `FvModexp.<Isa>.SetBytesStd.{ens,sum}` |
 | go-bigmodexpfix `addTo` (divmc) | proved (no sorry; hypotheses: asm `addVV.abi0`, planned `addVW`) | same | `Proofs/<Isa>/Nat/AddTo.lean`: `FvModexp.<Isa>.AddTo.ens` |
 | go-bigmodexpfix `basicMul` (divmc) | proved (no sorry; hypothesis: asm `addMulVVWW.abi0`) | same | `Proofs/<Isa>/Nat/BasicMul.lean`: `FvModexp.<Isa>.BasicMul.ens` |
+| go-bigmodexpfix `nat.montgomery`, roomy (`cap(z) ≥ 2n`) (expmc) | proved (no sorry; asm's verified `addMulVVWW`/`subVV`; live memclr/memmove contracts) | same | `Proofs/<Isa>/Exp/Mont.lean`: `FvModexp.<Isa>.Mont.ens` (= Nat model `Exp.montgomery`) |
+| go-bigmodexpfix `nat.{expNNEven,expNNOddMontgomeryWindowSize4/2,expNNPowerOfTwoWindowSize4/2}.deferwrap1` (`stk.restore`) (expmc) | proved (no sorry) | proved (no sorry) | `Proofs/<Isa>/Exp/Defer.lean`: `FvModexp.<Isa>.Defer.sum` |
 | `(*Int).Mod`, `(*Int).exp`, `(*Int).Bytes` | hypothesis (interface draft v1) | todo | `Proofs/Arm64/Top/RunIface.lean`: `ModSpec`, `ExpSpec`, `BytesSpec` |
 | `(*bigModExp).Run` body | todo | todo | — |
