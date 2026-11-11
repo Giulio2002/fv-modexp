@@ -139,4 +139,26 @@ theorem postS_swap {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl xc
     have := hLs q hq; simp only [win, outside_cons, outside_nil, and_true] at this
     simp only [win, outside_cons, outside_nil, and_true]; omega
 
+theorem postR_mono {stk stk' : Nat} (hk : stk ≤ stk') {R : RtInv} {b : Nat} {L : List (Nat × Nat)}
+    {zp zc xp xl yp yl : BitVec 64} {s s' : State} (hsp : stk' ≤ (s.regs 4).toNat)
+    (h : PostR stk R b L zp zc xp xl yp yl s s') : PostR stk' R b L zp zc xp xl yp yl s s' :=
+  ⟨postS_mono hk hsp h.1, h.2⟩
+
+theorem postR_swap {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl xc yp yl yc : BitVec 64}
+    {s S1 s' : State} (hpre : PreS 4440 R b L zp zc xp xl xc yp yl yc s) (hsp : S1.regs 4 = s.regs 4 - 152#64)
+    (h14 : S1.regs 14 = s.regs 14) (hfs : S1.fsBase = s.fsBase) (hdf : S1.df = s.df)
+    (hF : MemFrame s.mem S1.mem (win s 4440 80))
+    (hq : PostR 4288 R b L zp zc yp yl xp xl S1 s') :
+    PostR 4440 R b L zp zc xp xl yp yl s s' := by
+  obtain ⟨hq, hr, hc⟩ := hq
+  refine ⟨postS_swap hpre hsp h14 hfs hF hq, fun h => hr (by rw [need_comm]; exact h),
+    fun h => hc (by rw [mx_comm]; exact h)⟩
+
+theorem postR_congr {stk : Nat} {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl yp yl : BitVec 64}
+    {s s2 s3 : State} (h : PostR stk R b L zp zc xp xl yp yl s s2) (h0 : s3.regs 0 = s2.regs 0)
+    (h1 : s3.regs 3 = s2.regs 3) (h2 : s3.regs 1 = s2.regs 1) (hm : s3.mem = s2.mem) (hfs : s3.fsBase = s2.fsBase)
+    (hdf : s3.df = s2.df) :
+    PostR stk R b L zp zc xp xl yp yl s s3 := by
+  unfold PostR PostS; rw [h0, h1, h2, hm, hfs]; exact h
+
 end FvModexp.Amd64.NatAdd

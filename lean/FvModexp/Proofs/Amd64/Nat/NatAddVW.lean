@@ -30,7 +30,7 @@ theorem afterVV (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.pro
     (hsp : S.regs 4 = s.regs 4 - 144#64) (h5 : S.regs 5 = s.regs 4 - 8#64)
     (hfs : S.fsBase = s.fsBase) (hdf : S.df = false) (hm : S.mem = M) :
     ReachesRet (LibNatAdd.program.link impl) (retAddrOf s) S fun s' =>
-      RegsOK s s' ∧ PostS 4288 R b L zp zc xp xl yp yl s s' := by
+      RegsOK s s' ∧ PostR 4288 R b L zp zc xp xl yp yl s s' := by
   have hc2 : CodeIn64 ((Extracted.program.onlySegments [addVWfn]).link impl) (LibNatAdd.program.link impl) := by
     rw [LibNatAdd.eq_only]; exact A64.codeIn_restrict_mono64 hap (sub_of_all (by decide))
   have hVW' := fun b L => Ensures.toSummaryRegs7 (fun zp zl zc xp xl xc y => AddVW.ens impl hap R hmv b L zp zl zc xp xl xc y)
@@ -49,7 +49,7 @@ theorem afterVV (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.pro
       ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl
     · rw [← hxy]; exact hlo
     all_goals try janus64_simp
-    exact h.x15.symm
+    all_goals first | exact h.x15.symm | exact hdf | exact h.df0
   · have hlt : yl.toNat < xl.toNat := by omega
     have e1 : ((0#64 - (BitVec.ofNat 64 c - yl)).sshiftRight 63 &&& yl <<< 3) = yl <<< 3 :=
       neg_sshr63_and _ _ (by simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega)
@@ -145,6 +145,6 @@ theorem afterVV (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.pro
       ((rd _ (by omega) (by omega) (by omega)).trans hps) ((rd _ (by omega) (by omega) (by omega)).trans hcs)
       _ (s'.regs 0).isLt hval _ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl
     all_goals try janus64_simp
-    all_goals first | exact h.x15.symm | exact hfs2 | skip
+    all_goals first | exact h.x15.symm | exact hfs2 | exact hdf | exact h.df0 | skip
 
 end FvModexp.Amd64.NatAdd

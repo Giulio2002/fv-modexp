@@ -23,7 +23,7 @@ theorem reuse (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progr
     (he : Entry s zp zl zc xp xl xc yp yl yc) (hyx : yl.toNat ≤ xl.toNat) (hy0 : 0 < yl.toNat)
     (hz : xl.toNat ≤ zc.toNat) (hpre : PreS 4288 R b L zp zc xp xl xc yp yl yc s) :
     ReachesRet (LibNatSub.program.link impl) (retAddrOf s) s fun s' =>
-      RegsOK s s' ∧ PostS 4288 R b L zp zc xp xl yp yl s s' := by
+      RegsOK s s' ∧ PostR 4288 R b L zp zc xp xl yp yl s s' := by
   obtain ⟨hpc, hra, hx15, hdf, h0, h3, h1, h7, h6, h8, h9, h10, h11⟩ := he
   obtain ⟨hg1, hg2, hg3, hb', ha, hw, hal, htg⟩ := preS_env hpre
   have hpre' := hpre

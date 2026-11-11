@@ -16,7 +16,7 @@ theorem setPath (impl : List Amd64.Segment) (R : RtInv)
     (he : Entry s zp zl zc xp xl xc yp yl yc) (hy0 : yl.toNat = 0) (hx0 : 0 < xl.toNat)
     (hpre : PreS 4288 R b L zp zc xp xl xc yp yl yc s) :
     ReachesRet (LibNatSub.program.link impl) (retAddrOf s) s fun s' =>
-      RegsOK s s' ∧ PostS 4288 R b L zp zc xp xl yp yl s s' := by
+      RegsOK s s' ∧ PostR 4288 R b L zp zc xp xl yp yl s s' := by
   obtain ⟨hpc, hra, hx15, hdf, h0, h3, h1, h7, h6, h8, h9, h10, h11⟩ := he
   obtain ⟨hg1, hg2, hg3, hb', ha, hw, hal, htg⟩ := preS_env hpre
   have hpre' := hpre
@@ -55,7 +55,7 @@ theorem setPath (impl : List Amd64.Segment) (R : RtInv)
       janus64_run [BitVec.msb_eq_decide] until [hSet] calls [hmk.pos]
       rename_i ptr _ _ _ _ m _ _ hLF hMF hAp hIn hle hacc h8 _ _ hrb _ hinv' _ _ _
       refine setTail impl R hmv b L zp zc xp 1#64 yp 0#64 s ptr.toNat 1 _ _ m
-        (setmid_of_alloc hpre hy0 hx0 hra hx15 hdf ?hF ?_ ?_ hcs hLF hMF hAp hIn (by omega)
+        (setmid_of_alloc hpre hy0 hx0 hra hx15 hdf (by omega) ?hF ?_ ?_ hcs hLF hMF hAp hIn (by omega)
           (by rw [hMF.accessible]; simpa only [Janus.Arm64.Memory.accessible_writeLE] using hacc) h8 hinv'
           (by decide) (by decide) (by decide) (by decide))
         hy0 _ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl
@@ -69,7 +69,7 @@ theorem setPath (impl : List Amd64.Segment) (R : RtInv)
       janus64_run [BitVec.msb_eq_decide, FvModexp.mod64_of_lt (xl.toNat + 4) (by omega)] until [hSet] calls [hmk.pos]
       rename_i ptr _ _ _ _ m _ _ hLF hMF hAp hIn hle hacc h8 _ _ hrb _ hinv' _ _ _
       refine setTail impl R hmv b L zp zc xp xl yp 0#64 s ptr.toNat (xl.toNat + 4) _ _ m
-        (setmid_of_alloc hpre hy0 hx0 hra hx15 hdf ?hF ?_ ?_ hcs hLF hMF hAp hIn hle
+        (setmid_of_alloc hpre hy0 hx0 hra hx15 hdf (by omega) ?hF ?_ ?_ hcs hLF hMF hAp hIn hle
           (by rw [hMF.accessible]; simpa only [Janus.Arm64.Memory.accessible_writeLE] using hacc) (h8 (Or.inr (by omega)))
           hinv' (by omega) (by omega) hrb (by omega))
         hy0 _ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl

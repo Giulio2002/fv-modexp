@@ -42,6 +42,8 @@ structure SetMid (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl : Bi
   tls : M.readLE (s.fsBase.toNat - 8) 8 = (s.regs 14).toNat
   cap : xl.toNat ≤ c
   c41 : c < 2 ^ 41
+  c40 : xl.toNat < 2 ^ 39 → c < 2 ^ 40
+  ru : xl.toNat ≤ zc.toNat → p = zp.toNat ∧ c = zc.toNat
   p8 : p % 8 = 0
   p48 : p + 8 * c ≤ 2 ^ 48
   pacc : M.accessible p (8 * c) true = true
@@ -73,9 +75,10 @@ theorem SetMid.post {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl y
     (hcp : M'.readLE p (8 * xl.toNat) = M.readLE xp.toNat (8 * xl.toNat))
     (hnz : M'.readLE (p + 8 * (xl.toNat - 1)) 8 = M.readLE (xp.toNat + 8 * (xl.toNat - 1)) 8)
     (s' : State) (hm : s'.mem = M') (h0 : (s'.regs 0).toNat = p) (h1 : (s'.regs 3).toNat = xl.toNat)
-    (h2 : (s'.regs 1).toNat = c) (hfs : s'.fsBase = s.fsBase) :
-    PostS 4288 R b L zp zc xp xl yp yl s s' := by
+    (h2 : (s'.regs 1).toNat = c) (hfs : s'.fsBase = s.fsBase) (hdf' : s'.df = false) :
+    PostR 4288 R b L zp zc xp xl yp yl s s' := by
   subst hm
+  refine ⟨?_, fun hle => ⟨h0.trans (h.ru hle).1, h2.trans (h.ru hle).2⟩, fun hx => by rw [h2]; exact h.c40 hx⟩
   have hpw := h.pw; have hsp0 := h.sp0; have hcap := h.cap
   unfold Apart at hpw
   refine ⟨hfs, p, xl.toNat, c, h0, h1, h2, ?_, Or.inr ?_, hcap, Nat.le_refl _, L', b', h.ext,
@@ -123,7 +126,7 @@ theorem setmid_of_reuse {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp 
     grd := hF.readLE _ _ (hFo _ _ (by omega)),
     tacc := by rw [hF.accessible]; exact htg.readable,
     tls := by rw [hF.readLE _ _ (hFo _ _ (by omega))]; exact htg.g,
-    cap := hz, c41 := by omega, p8 := hzal, p48 := hz48,
+    cap := hz, c41 := by omega, c40 := fun _ => hz40, ru := fun _ => ⟨rfl, rfl⟩, p8 := hzal, p48 := hz48,
     pacc := by rw [hF.accessible]; exact hzacc, pw := by unfold Apart; omega, pg := hzg, pf := hzf, pheld := hzh,
     px := hzx.imp (fun e => by rw [e]) id,
     xacc := by rw [hF.accessible]; exact hxacc, x48 := hx48, xw := by unfold Apart; omega,
@@ -147,6 +150,7 @@ theorem setmid_of_alloc {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp 
     {s : State} {M0 m : Janus.Arm64.Memory} {ptr round c : Nat} {cs : List (Nat × Nat)}
     (hpre : PreS 4288 R b L zp zc xp xl xc yp yl yc s) (hy0 : yl.toNat = 0) (hx0 : 0 < xl.toNat)
     (hra : s.mem.readLE (s.regs 4).toNat 8 < 2 ^ 47) (hx15 : s.xmm 15 = 0#128) (hdf : s.df = false)
+    (hzlt : zc.toNat < xl.toNat)
     (hF : MemFrame s.mem M0 (win s 4288 80))
     (r1 : M0.readLE (s.regs 4).toNat 8 = s.mem.readLE (s.regs 4).toNat 8) (r2 : M0.readLE ((s.regs 4).toNat - 8) 8 = (s.regs 5).toNat)
     (hcs : ∀ r ∈ cs, (s.regs 4).toNat - 4288 ≤ r.1 ∧ r.2 ≤ (s.regs 4).toNat - 40)
@@ -188,7 +192,7 @@ theorem setmid_of_alloc {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp 
     grd := by rw [hMF.readLE _ _ (hcw _ _ (by omega) hgr)]; exact hF.readLE _ _ (hFo _ _ (by omega)),
     tacc := by rw [hMF.accessible, hF.accessible]; exact htg.readable,
     tls := by rw [hMF.readLE _ _ (hcw _ _ (by omega) htr), hF.readLE _ _ (hFo _ _ (by omega))]; exact htg.g,
-    cap := hc1, c41 := by omega, p8 := h8, p48 := by omega,
+    cap := hc1, c41 := by omega, c40 := fun _ => by omega, ru := fun h => absurd h (by omega), p8 := h8, p48 := by omega,
     pacc := Janus.Arm64.Memory.accessible_mono _ hacc (Nat.le_refl _) (by omega),
     pw := by unfold Apart; omega, pg := by unfold Apart; omega, pf := by unfold Apart; omega,
     pheld := Or.inl ⟨(ptr, ptr + round), by simp, Nat.le_refl _, by simp only; omega⟩,
@@ -238,7 +242,7 @@ theorem setTail (impl : List Amd64.Segment) (R : RtInv)
     (hsp : S.regs 4 = s.regs 4 - 144#64) (h14 : S.regs 14 = s.regs 14) (h5 : S.regs 5 = s.regs 4 - 8#64)
     (hx15 : S.xmm 15 = s.xmm 15) (hfs : S.fsBase = s.fsBase) (hdf : S.df = false) (hm : S.mem = M) :
     ReachesRet (LibNatSub.program.link impl) (retAddrOf s) S fun s' =>
-      RegsOK s s' ∧ PostS 4288 R b L zp zc xp xl yp yl s s' := by
+      RegsOK s s' ∧ PostR 4288 R b L zp zc xp xl yp yl s s' := by
   have hsp0 := h.sp0; have hsp1 := h.sp1; have hcap := h.cap; have hc41 := h.c41; have hp48 := h.p48
   have hxl := h.xl40; have hx0 := h.x0; have hx48 := h.x48
   have r1 := h.lr; have r2 := h.fp; have hsacc := h.sacc; have hal := h.al; have hinv := h.inv
@@ -260,9 +264,9 @@ theorem setTail (impl : List Amd64.Segment) (R : RtInv)
     rename_i hpx
     have hpx' : xp.toNat = p := by omega
     refine ⟨⟨?_, ?_, ?_, ?_⟩, h.post hy0 (MemFrame.refl _ _) ⟨fun _ _ _ _ => rfl⟩ h.inv (by rw [hpx']) (by rw [hpx'])
-      _ rfl ?_ ?_ ?_ ?_⟩
+      _ rfl ?_ ?_ ?_ ?_ ?_⟩
     all_goals try janus64_simp
-    all_goals first | exact hx15'.symm | omega
+    all_goals first | exact hx15'.symm | exact hdf | omega
   · rename_i _ _ _ _ _ m _ _ hF2 hLF2 hinv2 hcp
     have hcp' := Asm.readLE_of_copied hcp
     have hsub : Mem.Copied _ m (p + 8 * (xl.toNat - 1)) (xp.toNat + 8 * (xl.toNat - 1)) 8 := fun i hi => by
@@ -278,7 +282,7 @@ theorem setTail (impl : List Amd64.Segment) (R : RtInv)
       hW.readLE a n (by simp only [outside_cons, outside_nil, and_true]; omega)
     rw [show xl.toNat * 8 = 8 * xl.toNat by omega] at hF2 hLF2 hcp'
     refine ⟨⟨?_, ?_, ?_, ?_⟩, h.post hy0 (hW.trans hF2 fun a n ho => ?fr) ⟨fun a n hin ho => ?lf⟩ hinv2 ?cp ?nz _ rfl
-      ?_ ?_ ?_ ?_⟩
+      ?_ ?_ ?_ ?_ ?_⟩
     case fr =>
       simp only [outside_append, outside_cons, outside_nil, and_true] at ho ⊢
       obtain ⟨hr, h1', h2'⟩ := ho

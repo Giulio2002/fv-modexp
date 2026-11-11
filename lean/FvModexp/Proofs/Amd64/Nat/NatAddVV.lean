@@ -60,7 +60,7 @@ theorem vv (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program 
     (hsp : S.regs 4 = s.regs 4 - 144#64) (h14 : S.regs 14 = s.regs 14) (h5 : S.regs 5 = s.regs 4 - 8#64)
     (hfs : S.fsBase = s.fsBase) (hdf : S.df = false) (hm : S.mem = M) :
     ReachesRet (LibNatAdd.program.link impl) (retAddrOf s) S fun s' =>
-      RegsOK s s' ∧ PostS 4288 R b L zp zc xp xl yp yl s s' := by
+      RegsOK s s' ∧ PostR 4288 R b L zp zc xp xl yp yl s s' := by
   have hc1 : CodeIn64 ((Extracted.program.onlySegments [addVVfn]).link impl) (LibNatAdd.program.link impl) := by
     rw [LibNatAdd.eq_only]; exact A64.codeIn_restrict_mono64 hap (sub_of_all (by decide))
   have hVV' := AddVVHyp.live (Janus.Contracts.EqHashModel.Summary.of_codeIn64 hc1 (addVVHyp impl hap)) R b' L'
