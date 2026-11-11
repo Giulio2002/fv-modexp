@@ -164,7 +164,7 @@ theorem d3zA (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     intro r hr; simp only [Janus.outside_cons, Janus.outside_nil, and_true]
     have := hapk r hr; unfold Apart at this; omega
   have hbytes : ∀ j, j < hdrV s p len 2 →
-      (mk.bytes (ptr.toNat + j)).toNat = padByte s.mem p.toNat len.toNat (96 + (hdrV s p len 0 + hdrV s p len 1) + j) := by
+      (mk.bytes (ptr.toNat + j)).toNat = 0 := by
     intro j hj
     rw [hzk j hj]; rfl
   have hbudk : b - (3 * makeCost 4 + 2 * dCost + allocCost 1024) ≤ b1 - blockSize (hdrV s p len 2) true := by
@@ -187,11 +187,11 @@ theorem d3zA (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     obtain ⟨e1, e2, e3⟩ := nb_facts p.toNat hoffc hmN hndir hn
     refine ⟨e1, e2, e3, ?_⟩
     clear hoffc hmN hpw hcw hpo hga hut hLS1
-    rcases hext.held (hheld.sub (a := p.toNat + off + mN) (n := (len.toNat - 96 - min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96))) (Nat.le_add_right _ _ |>.trans (Nat.le_add_right _ _)) (Nat.le_of_eq e2)) with h | h
+    rcases hext.held (hheld.sub (a := p.toNat + off + mN) (n := (len.toNat - 96 - min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96))) (Nat.le_trans (Nat.le_add_right _ _) (Nat.le_add_right _ _)) (Nat.le_of_eq e2)) with h | h
     · have := hapk.apart_of_inRanges h; unfold Apart at this; omega
     · have := InRanges.apart hink h; unfold Apart at this; omega
   have hnbm : (len.toNat - 96 - min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96)) % 18446744073709551616 = (len.toNat - 96 - min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96)) :=
-    Nat.mod_eq_of_lt (Nat.lt_of_le_of_lt ((Nat.sub_le _ _).trans (Nat.sub_le _ _)) len.isLt)
+    Nat.mod_eq_of_lt (Nat.lt_of_le_of_lt (Nat.le_trans (Nat.sub_le _ _) (Nat.sub_le _ _)) len.isLt)
   clear hoffc hmN hpw hcw hpo hga hut hLS1 hink hapk hzk
   have ho0 : OpDone R mk s p len L L1 0 := OpDone.transport (hop 0 (by omega)) (by janus_simp [opAt]) (by janus_simp [opAt])
     (by janus_simp [opAt]) (by janus_simp [opAt]) hLFS (fun _ _ h => h)
