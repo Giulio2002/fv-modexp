@@ -105,6 +105,12 @@ theorem len_pos {X Zv j : Nat} {m : Memory} {p l : Nat} (hc : X * Zv % 2 ^ (2 ^ 
     omega
   · exact h0
 
+theorem bud_ok0 {b S rc b1 m mc : Nat} (hb : b - S ≤ b1) (hbud : S + rc ≤ b) (hp : m ≤ rc) (hm : mc ≤ m) :
+    mc ≤ b1 := by omega
+
+theorem bud_step0 {b S b1 mc m b' : Nat} (hb : b - S ≤ b1) (h' : b1 - mc ≤ b') (hm : mc ≤ m) :
+    b - S - m ≤ b' := by omega
+
 section
 variable {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
