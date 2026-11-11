@@ -64,7 +64,7 @@ theorem make (impl : List Segment) (R : RtInv)
     have hok1 : R.ok (Extracted.program.contractAddr "runtime.makeslice") [wT, NW n + 1, NW n + 5] :=
       hsv.1 _ _ _ (by simp only [NW]; omega)
     have hcost := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
-    have hty : Outside wT 16 R.rt := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2
+    have hty : Outside wT 16 R.rt := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
     have hinv0 := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
     have hmc : makeCost (NW n + 1) = allocCost (8 * (NW n + 5)) := by
       unfold makeCost makeCap; rw [if_neg (show ¬ (NW n + 1 = 1) by simp only [NW]; omega)]

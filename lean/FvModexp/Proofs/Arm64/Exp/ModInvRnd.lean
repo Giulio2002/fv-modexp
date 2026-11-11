@@ -81,4 +81,19 @@ theorem slot_out {s : State} {kc stk above a : Nat} (hstk : stk ≤ kc) (habove 
     Outside a 8 (winA S' stk above) := by
   simp only [winA, hS', outside_cons, outside_nil, and_true]; omega
 
+theorem out_sub {p n a k i j : Nat} {rs : List (Nat × Nat)} (hin : InRanges p n rs) (ho : Outside a k rs)
+    (_hij : i ≤ j) (hj : j ≤ n) : Outside a k [(p + i, p + j)] := by
+  obtain ⟨r, hr, h1, h2⟩ := hin
+  have := MemFrame.outside_mem ho hr
+  simp only [outside_cons, outside_nil, and_true]; omega
+
+/-- an owned array stays owned after a callee: its array is live in the new live set, and the stack came back -/
+theorem own_back {R : RtInv} {kc : Nat} {L L1 L2 : List (Nat × Nat)} {s : State} {zp zc st xp xl : Nat}
+    {M M' : Memory} {o oc : Nat} (h : Own R kc L L1 s zp zc st xp xl M o oc) (hlive : NatLive M' R L2 o oc)
+    (hsb : StackBack R L1 L2 st M M') : Own R kc L L2 s zp zc st xp xl M' o oc := by
+  obtain ⟨a1, a2, a3, a4, a5, a6, a7, a8⟩ := h
+  refine ⟨a1, a2, hlive, a4, a5, a6, a7, fun hc => ?_⟩
+  have hc' : 0 < oc := by omega
+  exact stkApart_back hsb a8 (a3 hc').2.1 hc
+
 end FvModexp.Arm64.ModInv

@@ -50,6 +50,12 @@ abbrev A : Nat := 72
 /-- the result value (`k0` masked for `n ≤ 64`) -/
 @[reducible] def val (X n : Nat) : Nat := Exp.modularInverseModPowerOfTwo X n
 
+/-- `natOne` (read by `subMod2N`'s final `z.add(z, natOne)`): readable, outside the window, apart from `z`'s array and
+from the stack object's header and free part -/
+@[reducible] def OneIn (R : RtInv) (L : List (Nat × Nat)) (s : State) (kc zp zc st : Nat) : Prop :=
+  ∃ op, NatOne R L s.mem op (win s (K kc) A) ∧ Apart zp (8 * zc) natOneA 24 ∧ Apart zp (8 * zc) op 8 ∧
+    StkApart s.mem st op 8 ∧ StkApart s.mem st natOneA 24
+
 @[reducible] def Pre (R : RtInv) (kc : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
     (L : List (Nat × Nat)) (zp zl zc st xp xl xc n : Nat) (s : State) : Prop :=
   CallEnv R L s (K kc) A ∧ Serves R ∧
@@ -60,7 +66,7 @@ abbrev A : Nat := 72
     StkIn R L s (K kc) A st ∧ stLen s.mem st + 8 * NW n + 72 ≤ 2 ^ 16 ∧
     StkApart s.mem st zp (8 * zc) ∧ StkApart s.mem st xp (8 * xl) ∧
     cost sqrC mulC n ≤ b ∧ R.inv b L (s.regs 28).toNat (view R.rt L s.mem) ∧
-    (s.regs 30).toNat % 4 = 0 ∧ (s.regs 30).toNat < 2 ^ 48 ∧ Outside NatAdd.wordT 16 R.rt
+    (s.regs 30).toNat % 4 = 0 ∧ (s.regs 30).toNat < 2 ^ 48 ∧ Outside NatAdd.wordT 16 R.rt ∧ OneIn R L s kc zp zc st
 
 @[reducible] def Post (R : RtInv) (kc : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
     (L : List (Nat × Nat)) (zp zc st xp xl n : Nat) (s s' : State) : Prop :=

@@ -90,7 +90,7 @@ theorem mkzz (impl : List Segment) (R : RtInv)
   have hwS : S.mem.accessible (s.sp.toNat - (240 + kc)) (240 + kc + 72) true = true := by
     rw [hrt.2.1.accessible]; exact hw
   have hcost := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
-  have hty : Outside wT 16 R.rt := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2
+  have hty : Outside wT 16 R.rt := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
   have hx1 : natVal s.mem xp xl % 2 = 1 := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
   have hnw1 : 2 ≤ NW n := by simp only [NW]; omega
   have hnw2 : NW n ≤ 2 ^ 12 := by simp only [NW]; omega
