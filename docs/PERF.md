@@ -246,6 +246,21 @@ of the Janus framework — the first row of a fresh cache spends ~6.5 min replay
 | LshVU | PASS 30 s | PASS 37 s |
 | RshVU | PASS 28 s | PASS 33 s |
 
+Rows on the Run extraction (session 4; `scripts/asm-runrow.sh`, provenance-fixed janus, memcap 16G / timeout 900, cache
+cache-asm; wall includes compiling the row's own modules and, for the first row per ISA, the Run `Extracted` + shared
+dependencies; peak = max(driver, `verified.json` memGuard)):
+
+| row | arm64 | amd64 |
+|---|---|---|
+| AddVWRow | PASS 30 s / 2.8 GiB (second run; first run spent 226 s, mostly building `Extracted`, then failed the witness audit) | needs amd64 stubs |
+| SubVWRow | PASS 95 s / 3.4 GiB | needs amd64 stubs |
+| DivWVWRow | PASS 145 s / 3.0 GiB | PASS 326 s / 3.8 GiB (first amd64 Run row of the cache) |
+| MulAddWWRow | PASS 316 s / 5.1 GiB (builds the 9 MulAddWW modules) | needs amd64 stubs |
+
+Witness modules: `Arm64/Witness/AsmWit` 6.6 s, `Amd64/Witness/AsmWit` 10.6 s, each row module ≤ 4.2 s. amd64
+`ImplApart Extracted.program []` by plain `decide +kernel` did not finish in 10 min (it checks every code byte against
+the stub list); `AsmWit.implApart_nil` (code ranges computed once, `info_eq`) takes < 10 s.
+
 Row peak memory (2026-11-11, measured properly): Janus runs the sandboxed `lake`/`lean`/`leanchecker` jobs in their own
 `janus-job-*.scope` (memguard), NOT inside the `memcap` scope of the driver — the earlier `memory.peak` numbers
 (0.8–0.9 GB, and 86 MB for a fully cached Cmp row) were the driver only. The jobs' peak is recorded by Janus in

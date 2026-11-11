@@ -48,14 +48,14 @@ Machine-code SUMMARY theorems for the leaf routines `(*bigModExp).Run` reaches (
 | `lshVU.abi0` | amd64 | `FvModexp.Amd64.LshVUSum.lshVU_summary` | `FvModexp.Amd64.LshVU` | verified |
 | `rshVU.abi0` | arm64 | `FvModexp.Arm64.RshVUSum.rshVU_summary` | `FvModexp.Arm64.RshVU` | verified |
 | `rshVU.abi0` | amd64 | `FvModexp.Amd64.RshVUSum.rshVU_summary` | `FvModexp.Amd64.RshVU` | verified |
-| `addVW` (Go, `copy`→live `memmove`) | arm64 | `FvModexp.Arm64.AddVW.{ens,sum}` (CONVENTIONS §3/§4 shape) | — (needs a memmove stub runtime witness) | proved |
-| `addVW` | amd64 | `FvModexp.Amd64.AddVW.{ens,sum}` | — | proved |
-| `subVW` | arm64 | `FvModexp.Arm64.SubVW.{ens,sum}` | — | proved |
-| `subVW` | amd64 | `FvModexp.Amd64.SubVW.{ens,sum}` | — | proved |
-| `divWVW` (Go; callees `reciprocalWord`, `Div64`, `divWW`) | arm64 | `FvModexp.Arm64.DivWVW.{ens,sum}` (CONVENTIONS §3/§4 shape) | — (statement over the Run extraction) | proved |
-| `divWVW` (Go; `reciprocalWord`, `bits.Div` inlined, callee `divWW`) | amd64 | `FvModexp.Amd64.DivWVW.{ens,sum}` | — | proved |
-| `nat.mulAddWW` (Go; `setWord`/`make`/`norm` inlined, `makeslice` ×2, callee `mulAddVWW.abi0`) | arm64 | `FvModexp.Arm64.MulAddWW.{ens,sum}` (CONVENTIONS §3/§4 shape) | — | proved |
-| `nat.mulAddWW` | amd64 | `FvModexp.Amd64.MulAddWW.{ens,sum}` | — | proved |
+| `addVW` (Go, `copy`→live `memmove`) | arm64 | `FvModexp.Arm64.AddVW.{ens,sum}` (CONVENTIONS §3/§4 shape) | `FvModexp.Arm64.AddVWRow` (Run extraction) | verified |
+| `addVW` | amd64 | `FvModexp.Amd64.AddVW.{ens,sum}` | — (needs amd64 witness stubs: memmove) | proved |
+| `subVW` | arm64 | `FvModexp.Arm64.SubVW.{ens,sum}` | `FvModexp.Arm64.SubVWRow` (Run extraction) | verified |
+| `subVW` | amd64 | `FvModexp.Amd64.SubVW.{ens,sum}` | — (needs amd64 witness stubs: memmove) | proved |
+| `divWVW` (Go; callees `reciprocalWord`, `Div64`, `divWW`) | arm64 | `FvModexp.Arm64.DivWVW.{ens,sum}` (CONVENTIONS §3/§4 shape) | `FvModexp.Arm64.DivWVWRow` (Run extraction) | verified |
+| `divWVW` (Go; `reciprocalWord`, `bits.Div` inlined, callee `divWW`) | amd64 | `FvModexp.Amd64.DivWVW.{ens,sum}` | `FvModexp.Amd64.DivWVWRow` (Run extraction) | verified |
+| `nat.mulAddWW` (Go; `setWord`/`make`/`norm` inlined, `makeslice` ×2, callee `mulAddVWW.abi0`) | arm64 | `FvModexp.Arm64.MulAddWW.{ens,sum}` (CONVENTIONS §3/§4 shape) | `FvModexp.Arm64.MulAddWWRow` (Run extraction) | verified |
+| `nat.mulAddWW` | amd64 | `FvModexp.Amd64.MulAddWW.{ens,sum}` | — (needs amd64 witness stubs: makeslice) | proved |
 
 ## Preconditions and the real call sites (go-bigmodexpfix f9e208c548ab, `src/math/big`)
 
@@ -170,6 +170,17 @@ so `z` may be `x`: the pre allows `zp = xp` or `z`'s array apart from `x`. Argum
   `Set` (`SetRel` at the `setWord` block; `setZero`, `setReuse`, `setAlloc` = `make(nat, 1)`), `MulAddWW` (`toSet`,
   `full`, `ens`, `sum`).
 
+### Rows on the Run extraction (session 4)
+Go functions whose summaries are about the Run extraction (`Extracted.seg…`) are verified as rows ON the Run extraction
+(`scripts/asm-runrow.sh ISA <Fn>Row`: `janus extract` of `(*bigModExp).Run` with the Run contract flags, then `janus
+verify` of `Proofs/<Isa>/Nat/<Fn>Row.lean` with the provenance-fixed binary). `correctness` = `ens` moved to
+`Extracted.program.link impl` (`Ensures.full`, amd64 `Ensures.full64` in `Amd64/Nat/RowLink.lean`). `Witness.nonvacuous`
+(Janus v0.2.0 demands all three): every hypothesis + precondition at one instance, a call-site state per runtime contract
+(U-WITNESS-CALLSITE: `AsmWit.mvSite`/`site_mv`, `mkSite`/`site_mk`), and the returning run (`correctness` applied).
+Shared witness pieces: `Arm64/Witness/AsmWit.lean` / `Amd64/Witness/AsmWit.lean` — `wmem f rs` with `dataLoaded` proved
+once for every `f`, `rs` (Janus `DataLoaded_of_dataSegByte`), the toy allocator invariant `inv0`, `roOut`, call-site
+states; amd64 `implApart_nil` (`ImplApart` via the code ranges; a plain `decide` checks every code byte, > 10 min).
+arm64 runtime code: top's `WStubs.impl` (looping memmove, bump makeslice). amd64 stubs: pending (NOTES-top.md).
+
 ## Next
-Standalone rows for addVW/subVW/divWVW/mulAddWW: arm64 with top's shared witness stubs (`Arm64/Witness/Stubs.lean`);
-amd64 stubs pending (needs listed in NOTES-top.md).
+amd64 rows for addVW/subVW (memmove) and mulAddWW (makeslice) once top's amd64 witness stubs land.
