@@ -739,3 +739,10 @@ new amd64 modules; StackNat's were cached); attempt 2 on the warm cache: **PASS 
 | Arm64/Exp/ModInvAlloc | — | 12–15 s / 2.3 GB | makeslice call over an abstract state, no `janus_data` in context |
 | Arm64/Exp/ModInvRt / ModInvZZ / ModInvSeg3 | — | 6 s / 24 s / 4 s | pure frame lemmas; zz make + setWord |
 | Amd64/Exp/SubMod2N chain (DF from divmc's ensR) | — | max S1T 170 s, S2T 147 s / ≤ 3.8 GB | unchanged proofs, posts shifted |
+
+## infra session 10 (2026-11-11 night): modInv arm64 JM → J2 (dev compile, load ~75)
+| module | before | after | note |
+|---|---|---|---|
+| Arm64/Exp/ModInvJ2 (dl_rt, newton64_pos, zz_j2) | OOM 8 GB (killed) | 11 s / 2.4 GB | cause: `rw [← hv]` with `hv : natVal (m.writeLE zp' 8 k) zp' 1 = k` rewrote `k` INSIDE the memory term too (self-referential motive blow-up) → rewrite `hv` instead; budget goal moved to a 1-line `budget_aux` (omega over the full context avoided) |
+| Arm64/Exp/ModInvMkZZ (stk3, mkzz) | — | 14 s / 2.4 GB | spills as a `mem3` def + pure `stk3`; wT facts from `dl_rt` (DataLoaded through RtM's frame), no `janus_data` |
+| Arm64/Exp/ModInvSeg3 (+own_mono, rtM_store) | 4 s | 4 s | |
