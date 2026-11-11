@@ -360,3 +360,60 @@ theorem truncPre_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {op zp zl zc y
     omega
 
 end FvModexp.Arm64.SubMod2N
+
+namespace FvModexp.Arm64.SubMod2N
+
+open FvModexp.Arm64.RunIface (Serves)
+open FvModexp.Arm64.EvenHyp
+
+/-! ## `nat.sub` / `nat.add` with the reuse conjunct (NOTES-divmc [infra s5] request)
+
+divmc's `NatSub.ens` / `NatAdd.ens` posts with two more conjuncts that every path of theirs has: `z` is reused when
+`cap z ≥ need`, and the result capacity is below `2^40`. Premises of `ens` until divmc's posts carry them. -/
+
+def SubHypR (impl : List Segment) (R : RtInv) : Prop :=
+  ∀ (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc yp yl yc : BitVec 64),
+    Ensures ((Extracted.program.onlySegments NatSub.names).link impl) (segAddr Extracted.program NatSub.fn)
+      [zp, zl, zc, xp, xl, xc, yp, yl, yc]
+      (NatSub.Pre R b L zp zc xp xl xc yp yl yc)
+      (fun s s' => NatSub.Post R b L zp zc xp xl yp yl s s' ∧
+        (xl.toNat ≤ zc.toNat → (s'.regs 0).toNat = zp.toNat ∧ (s'.regs 2).toNat = zc.toNat) ∧ (s'.regs 2).toNat < 2 ^ 40)
+
+def AddHypR (impl : List Segment) (R : RtInv) : Prop :=
+  ∀ (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc yp yl yc : BitVec 64),
+    Ensures ((Extracted.program.onlySegments NatAdd.names).link impl) (segAddr Extracted.program NatAdd.fn)
+      [zp, zl, zc, xp, xl, xc, yp, yl, yc]
+      (NatAdd.Pre R b L zp zc xp xl xc yp yl yc)
+      (fun s s' => NatAdd.Post R b L zp zc xp xl yp yl s s' ∧
+        (NatAdd.need xl yl ≤ zc.toNat → (s'.regs 0).toNat = zp.toNat ∧ (s'.regs 2).toNat = zc.toNat) ∧
+        (s'.regs 2).toNat < 2 ^ 40)
+
+/-- **J3** (`+0x21c`, after `z = z.sub(y', x')` with `x' < y'`): `z = (zp, l3, zc)` (`X0..X2`) holds `y' - x'` -/
+def J3 (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (op zp zl zc yp yl yc n : Nat)
+    (s : State) : Prop :=
+  ∀ (S : State) (l3 : Nat) (L3 : List (Nat × Nat)) (b3 : Nat),
+    Pre R b L op zp zl zc yp yl yc n s →
+    S.pc = BitVec.ofNat 64 (1805584 + 0x21c) → S.sp = BitVec.ofNat 64 (s.sp.toNat - 144) →
+    S.regs 28 = s.regs 28 → S.regs 18 = s.regs 18 →
+    S.regs 0 = BitVec.ofNat 64 zp → S.regs 1 = BitVec.ofNat 64 l3 → S.regs 2 = BitVec.ofNat 64 zc →
+    Fw s S.mem zp zl zc yp n → Rt R b L s zp zc n 3 S.mem L3 b3 →
+    natVal s.mem zp zl % 2 ^ n < natVal s.mem yp yl % 2 ^ n →
+    natVal S.mem zp l3 = natVal s.mem yp yl % 2 ^ n - natVal s.mem zp zl % 2 ^ n → NatNorm S.mem zp l3 → l3 ≤ W n →
+    Goal impl R b L zp zl zc yp yl n s S
+
+/-- the postcondition from the runtime facts after the last call and the result -/
+theorem post_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zl zc yp yl n k : Nat} {s s' : State}
+    {L2 : List (Nat × Nat)} {b2 : Nat} (hrt : Rt R b L s zp zc n k s'.mem L2 b2) (hk : k ≤ 5)
+    {p' l' c' : Nat} (e0 : (s'.regs 0).toNat = p') (e1 : (s'.regs 1).toNat = l') (e2 : (s'.regs 2).toNat = c')
+    (hv : natVal s'.mem p' l' = Exp.subMod2N (natVal s.mem zp zl) (natVal s.mem yp yl) n) (hnorm : NatNorm s'.mem p' l')
+    (hlc : l' ≤ c') (hc40 : c' < 2 ^ 40) (hlive : NatLive s'.mem R L2 p' c')
+    (hor : (p' = zp ∧ c' = zc) ∨ (InRanges p' (8 * c') R.rt ∧ ApartAll p' (8 * c') L)) :
+    Post R b L zp zl zc yp yl n s s' := by
+  obtain ⟨-, hF, hLF, hLE, hb, hinv, -⟩ := hrt
+  have : k * wCost n ≤ 5 * wCost n := Nat.mul_le_mul_right _ hk
+  exact ⟨p', l', c', e0, e1, e2, hv, hnorm, hlc, hc40, L2, b2, hLE, by simp only [cost]; omega, hinv, hlive, hor, hF, hLF⟩
+
+theorem fresh_of {R : RtInv} {L L1 : List (Nat × Nat)} (hLE : LiveExt R L L1) {p c : Nat}
+    (h : ApartAll p c L1) : ApartAll p c L := fun r hr => h r (hLE.mem_old hr)
+
+end FvModexp.Arm64.SubMod2N
