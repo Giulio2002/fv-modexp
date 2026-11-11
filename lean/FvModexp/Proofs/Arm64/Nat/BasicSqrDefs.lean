@@ -74,6 +74,8 @@ structure Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (st zp zl zc xp xl :
   stg : Apart st 24 ((s.regs 28).toNat + 16) 8
   starr : 0 < stCap s.mem st → Outside (stW s.mem st) (8 * stCap s.mem st) (win s 4432 64) ∧
     Apart (stW s.mem st) (8 * stCap s.mem st) ((s.regs 28).toNat + 16) 8
+  /-- the free part apart from the guard word (for `cap = 0` an empty range, which a frame must still not straddle) -/
+  stgf : Apart (freeP s.mem st) (freeN s.mem st) ((s.regs 28).toNat + 16) 8
   stlen : stLen s.mem st + 2 * xl + 3 ≤ 2 ^ 16
   stz : Apart st 24 zp (8 * zl)
   stx : Apart st 24 xp (8 * xl)
