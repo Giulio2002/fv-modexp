@@ -40,4 +40,12 @@ theorem bit_xor {nx ny : Nat} (hnx : nx ≤ 1) (hny : ny ≤ 1) :
     ((BitVec.ofNat 64 nx ^^^ BitVec.ofNat 64 ny).getLsbD 0 == true) = decide (nx ≠ ny) := by
   rcases (by omega : nx = 0 ∨ nx = 1) with rfl | rfl <;> rcases (by omega : ny = 0 ∨ ny = 1) with rfl | rfl <;> decide
 
+theorem bit_xor_f {nx ny : Nat} (hnx : nx ≤ 1) (hny : ny ≤ 1) :
+    (((BitVec.ofNat 64 nx ^^^ BitVec.ofNat 64 ny).getLsbD 0 == false) = true) ↔ nx = ny := by
+  rcases (by omega : nx = 0 ∨ nx = 1) with rfl | rfl <;> rcases (by omega : ny = 0 ∨ ny = 1) with rfl | rfl <;> decide
+
+theorem bit_xor_t {nx ny : Nat} (hnx : nx ≤ 1) (hny : ny ≤ 1) :
+    (((BitVec.ofNat 64 nx ^^^ BitVec.ofNat 64 ny).getLsbD 0 == true) = true) ↔ nx ≠ ny := by
+  rcases (by omega : nx = 0 ∨ nx = 1) with rfl | rfl <;> rcases (by omega : ny = 0 ∨ ny = 1) with rfl | rfl <;> decide
+
 end FvModexp.Arm64.IntAS
