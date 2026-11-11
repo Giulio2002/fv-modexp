@@ -182,4 +182,71 @@ theorem cl (R : RtInv) : MemclrNoHeapPointersLive64 P clA 4096 R := by
   refine liveMemRet64_frame ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ (fill_frame (ws := [])) hD4 hinv (fill_zeroed _ _ _)
   all_goals simp [retAddrOf, setRegF, hdf]
 
+/-! ## Allocation, write barriers, pool -/
+
+set_option maxRecDepth 20000 in
+theorem mk (tys : Tys) (hty : TysOK tys) (ok : Nat → List Nat → Prop) :
+    MakesliceLiveContract64 P mkA 4096 (toyR tys ok) := by
+  intro L b s hpc pre
+  have hacB' := LiveSat.bump_acc pre.2.2.2.1
+  have ⟨⟨hra, hal, h3, h4, h5⟩, hq6, hq7⟩ := pre.1
+  obtain ⟨hT1, hT2⟩ := hq6
+  have hap := bump_apart64 pre.2.2.2.2.2.2
+  janus64_run
+  exact finish_makesliceD hty _ (by simp [retAddrOf]) (by simp [setRegF]) (by simp [setRegF]) (by simp [setRegF])
+    (by simp) (by simp) (by simp) (by simp) rfl rfl (by simp [setRegF, BUMP]) (by simp [BUMP]) pre
+
+set_option maxRecDepth 20000 in
+theorem no (tys : Tys) (hty : TysOK tys) (ok : Nat → List Nat → Prop) :
+    NewobjectLiveContract64 P noA 4096 (toyR tys ok) := by
+  intro L b s hpc pre
+  have hacB' := LiveSat.bump_acc pre.2.2.2.1
+  have ⟨⟨hra, hal, h3, h4, h5⟩, hq6, hq7⟩ := pre.1
+  obtain ⟨hT1, hT2⟩ := hq6
+  have hap := bump_apart64 pre.2.2.2.2.2.2
+  janus64_run
+  exact finish_newobjectD hty _ (by simp [retAddrOf]) (by simp [setRegF]) (by simp [setRegF]) (by simp [setRegF])
+    (by simp) (by simp) (by simp) (by simp) rfl rfl (by simp [setRegF, BUMP]) (by simp [BUMP]) pre
+
+set_option maxRecDepth 20000 in
+theorem wb2 (tys : Tys) (hty : TysOK tys) (ok : Nat → List Nat → Prop) :
+    WbLiveContract64 P wb2A 4096 (toyR tys ok) 2 := by
+  intro L b s hpc pre
+  have ⟨hra, hal, h3, h4, h5⟩ := pre.1
+  janus64_run
+  exact wb_post64 hty (by decide) pre.2.2.1 pre.2.2.2.2 (by simp [retAddrOf])
+    (by intro i; simp only [setRegF]; by_cases h4 : i = 4 <;> by_cases h11 : i = 11 <;> simp [h4, h11]) (by simp) rfl rfl
+    (by simp) rfl rfl rfl
+
+set_option maxRecDepth 20000 in
+theorem wb4 (tys : Tys) (hty : TysOK tys) (ok : Nat → List Nat → Prop) :
+    WbLiveContract64 P wb4A 4096 (toyR tys ok) 4 := by
+  intro L b s hpc pre
+  have ⟨hra, hal, h3, h4, h5⟩ := pre.1
+  janus64_run
+  exact wb_post64 hty (by decide) pre.2.2.1 pre.2.2.2.2 (by simp [retAddrOf])
+    (by intro i; simp only [setRegF]; by_cases h4 : i = 4 <;> by_cases h11 : i = 11 <;> simp [h4, h11]) (by simp) rfl rfl
+    (by simp) rfl rfl rfl
+
+set_option maxRecDepth 20000 in
+theorem get (tys : Tys) (ok : Nat → List Nat → Prop) (T : Nat) (Sh : Pool.PoolShape) :
+    PoolAmd64.PoolGetLive P getA 4096 (toyR tys ok) T Sh :=
+  PoolSatAmd64.poolGetLive_of_run tys _ _ ok T Sh fun s hpc hra h48 hrs => by
+    janus64_run
+    exact ⟨by simp [setRegF], by simp [setRegF], rfl, by simp [retAddrOf], by simp [setRegF], by simp [setRegF],
+      by simp [setRegF], rfl, rfl, rfl, rfl, rfl, rfl⟩
+
+set_option maxRecDepth 20000 in
+theorem put (tys : Tys) (hty : TysOK tys) (ok : Nat → List Nat → Prop) (T : Nat) (Sh : Pool.PoolShape) :
+    PoolAmd64.PoolPutLive P putA 4096 (toyR tys ok) T Sh :=
+  PoolSatAmd64.poolPutLive_of_run tys hty _ _ ok T Sh fun s hpc hra h48 hrs => by
+    janus64_run
+    exact ⟨rfl, by simp [retAddrOf], by simp [setRegF], by simp [setRegF], by simp [setRegF], rfl, rfl, rfl, rfl, rfl,
+      rfl⟩
+
+/-- The witness runtime that serves every request: `Serves` holds trivially. -/
+theorem serves (tys : Tys) : RunIface.Serves (toyR tys fun _ _ => True) := by
+  simp only [RunIface.Serves, toyR]; exact ⟨fun _ _ _ _ => trivial, fun _ _ _ _ => trivial, fun _ _ _ => trivial,
+    fun _ _ _ _ _ _ => trivial, fun _ => trivial, fun _ => trivial, fun _ => trivial, fun _ => trivial, fun _ => trivial⟩
+
 end FvModexp.Amd64.WStubs
