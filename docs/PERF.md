@@ -428,3 +428,16 @@ IcHN 43, Sb* 25-47, main 16 s.
 | Exp/W4ExitS (exCmp2, exSubT, exSub) | before: > 8 min (janus_run inline after the by-hand nat.sub call, plus `rfl` on state-literal memory goals) → 58-65 s / 4.0 GB | run moved into `exSubT` (small context); `first \| (janus_simp; done) \| skip`, no `rfl` |
 | Exp/W4ExitC (exB) | 32-36 s / 3.6 GB | |
 | Exp/W4Tail (exitRet) | 9 s / 2.3 GB | |
+
+### expmc session 6 (2026-11-11), arm64 dev compile (load 40-55), wall / max RSS
+| module | time | note |
+|---|---|---|
+| Exp/W4Defs (fw without the n ≤ 4 `one` buffer) | 4 s / 2.1 GB | |
+| Exp/W4Body1, W4Body2, W4Loop (rebuilt) | 118 s / 3.3 GB, 135 s / 4.5 GB, 14 s | in parallel with another build |
+| Exp/W4Exit (OneIn), W4ExitB, W4ExitS, W4ExitC, W4Tail | 26 s, 12 s, 68 s / 4.0 GB, 38 s, 10 s | |
+| Exp/W4PowDefs (ents_step, ent_new) | 10 s / 2.3 GB | `ents_step` first version with `assumption` hit the 8 GB memcap → explicit `exact qN`: 8 s |
+| Exp/W4Pow (powStep) | 58 s / 3.7 GB | post bookkeeping moved into W4PowDefs lemmas |
+| Exp/W4PowLoop (powLoop) | 3 s | |
+| Exp/W4P01Defs (p01post) | 42 s / 3.0 GB | |
+| Exp/W4P01 (p01run) | 49 s / 3.1 GB | |
+| Exp/W4PowAll (p01pow) | 24 s / 3.1 GB | |
