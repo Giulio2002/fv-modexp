@@ -27,10 +27,10 @@ open FvModexp.Arm64.EvenHyp
 @[reducible] def spent (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (n j : Nat) : Nat :=
   makeCost (NW n + 1) + makeCost (2 * NW n) + (j - 1) * roundCost sqrC mulC n
 
-/-- **J2**: the loop head (see the module doc) -/
-def J2 (impl : List Segment) (R : RtInv) (kc : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
-    (L : List (Nat × Nat)) (zp zl zc st xp xl xc n : Nat) (s : State) : Prop :=
-  ∀ (S : State) (j p l c q ql qc : Nat) (L1 : List (Nat × Nat)) (b1 : Nat),
+/-- **J2** at round `j`: the loop head (see the module doc) -/
+def J2j (impl : List Segment) (R : RtInv) (kc : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
+    (L : List (Nat × Nat)) (zp zl zc st xp xl xc n : Nat) (s : State) (j : Nat) : Prop :=
+  ∀ (S : State) (p l c q ql qc : Nat) (L1 : List (Nat × Nat)) (b1 : Nat),
     Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s → 64 < n →
     S.pc = BitVec.ofNat 64 1798064 → S.sp = BitVec.ofNat 64 (s.sp.toNat - 240) →
     S.regs 28 = s.regs 28 → S.regs 18 = s.regs 18 →
@@ -46,6 +46,11 @@ def J2 (impl : List Segment) (R : RtInv) (kc : Nat) (sqrC : Nat → Nat) (mulC :
     Apart p (8 * c) q (8 * qc) →
     natVal s.mem xp xl * natVal S.mem p l % 2 ^ (2 ^ j * 32) = 1 % 2 ^ (2 ^ j * 32) →
     Goal impl R kc sqrC mulC b L zp zc st xp xl n s S
+
+/-- **J2**: the loop head at every round -/
+def J2 (impl : List Segment) (R : RtInv) (kc : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
+    (L : List (Nat × Nat)) (zp zl zc st xp xl xc n : Nat) (s : State) : Prop :=
+  ∀ j, J2j impl R kc sqrC mulC b L zp zl zc st xp xl xc n s j
 
 /-- a frame read byte by byte (an empty range in the frame never matters for a single byte) -/
 theorem frame_bytes {m m' : Memory} {rs : List (Nat × Nat)} (hF : MemFrame m m' rs) {a n : Nat}

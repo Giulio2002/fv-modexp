@@ -50,6 +50,10 @@ def fnSqr : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.nat.sqr"
     ∃ (L' : List (Nat × Nat)) (b' : Nat),
       NatOF R L L' s'.mem zp zc (2 * xl) p' l' c' (natVal s.mem x xl * natVal s.mem x xl) ∧
       RtPost R b c L L' b' s s' ∧ StackBack R L L' st s.mem s'.mem ∧
+      -- a fresh result is apart from a re-allocated stack array (both may be allocated inside the call)
+      (¬ (p' = zp ∧ c' = zc) → 0 < c' → 0 < stCap s'.mem st →
+        ¬ (stW s'.mem st = stW s.mem st ∧ stCap s'.mem st = stCap s.mem st) →
+        Apart p' (8 * c') (stW s'.mem st) (8 * stCap s'.mem st)) ∧
       MemFrame s.mem s'.mem (R.rt ++ winA s stk above ++ [(zp, zp + 8 * zc)] ++ stWs s.mem st) ∧
       LiveFrame s.mem s'.mem L ([(zp, zp + 8 * zc)] ++ stWs s.mem st)
 
@@ -80,6 +84,10 @@ def fnMul : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.nat.mul"
     ∃ (L' : List (Nat × Nat)) (b' : Nat),
       NatOF R L L' s'.mem zp zc (xl + yl) p' l' c' (natVal s.mem x xl * natVal s.mem y yl) ∧
       RtPost R b c L L' b' s s' ∧ StackBack R L L' st s.mem s'.mem ∧
+      -- a fresh result is apart from a re-allocated stack array (both may be allocated inside the call)
+      (¬ (p' = zp ∧ c' = zc) → 0 < c' → 0 < stCap s'.mem st →
+        ¬ (stW s'.mem st = stW s.mem st ∧ stCap s'.mem st = stCap s.mem st) →
+        Apart p' (8 * c') (stW s'.mem st) (8 * stCap s'.mem st)) ∧
       MemFrame s.mem s'.mem (R.rt ++ winA s stk above ++ [(zp, zp + 8 * zc)] ++ stWs s.mem st) ∧
       LiveFrame s.mem s'.mem L ([(zp, zp + 8 * zc)] ++ stWs s.mem st)
 

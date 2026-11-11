@@ -90,7 +90,7 @@ theorem mkzz (impl : List Segment) (R : RtInv)
   have hwS : S.mem.accessible (s.sp.toNat - (240 + kc)) (240 + kc + 72) true = true := by
     rw [hrt.2.1.accessible]; exact hw
   have hcost := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
-  have hty : Outside wT 16 R.rt := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2
+  have hty : Outside wT 16 R.rt := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
   have hx1 : natVal s.mem xp xl % 2 = 1 := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
   have hnw1 : 2 ≤ NW n := by simp only [NW]; omega
   have hnw2 : NW n ≤ 2 ^ 12 := by simp only [NW]; omega
@@ -154,7 +154,7 @@ theorem mkzz (impl : List Segment) (R : RtInv)
     have fr' : ∀ i, i ≠ 0 → i ≠ 14 → i < 31 → S''.regs i = S'.regs i := fr
     have hz0i := Exp.z0_inv _ _ hx1 (show natVal (m.writeLE zp' 8 (k0 s xp xl n)) zp' (NW n + 1) % Exp.B = _ by
       rw [g7, k0, Nat.min_eq_left (by omega)])
-    refine kJ S'' 1 zp' (NW n + 1) zc' q (2 * NW n) (2 * NW n + 4) _ _ hpre hn f1 f2 ?q28 ?q18 (by rw [f3])
+    refine kJ 1 S'' zp' (NW n + 1) zc' q (2 * NW n) (2 * NW n + 4) _ _ hpre hn f1 f2 ?q28 ?q18 (by rw [f3])
       (by rw [fr' 1 (by decide) (by decide) (by decide), k1']) (by rw [fr' 2 (by decide) (by decide) (by decide), k2'])
       f4 (by rw [fr' 11 (by decide) (by decide) (by decide), k11])
       (by rw [fr' 12 (by decide) (by decide) (by decide), k12])
