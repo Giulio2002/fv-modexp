@@ -1,0 +1,38 @@
+import Extracted
+import FvModexp.Proofs.Amd64.RequiredGas.Seg
+
+/-! `RequiredGas` (amd64) from `+0x324` to the return, case `finS len B` (the exponent head is skipped; combined in `Fin`). -/
+
+namespace FvModexp.Amd64.RG
+
+open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Spec Janus.Contracts
+
+set_option maxHeartbeats 64000000 in
+set_option maxRecDepth 100000 in
+/-- From `+0x324` to the return, case `finS len B`. -/
+theorem rg_fin2_S : Fin2If (fun len B _ => finS len B) := by
+  intro c ptr len cap B E M ret hret s S hpre hpc h4 h14 hx hf hdl m_ret m_fp m_c m_ptr m_len m_cap h0 h3 h1 hB hE hM kS
+  simp only [finS] at kS
+  have hpre' := hpre
+  obtain ⟨⟨hra, hra2, hra3⟩, hg, ⟨hlow, hnw, hacc⟩, hx15, hd, hlc, hc48, ⟨hp, hp'⟩, ⟨hcr, hcr'⟩, ⟨ho0, ho1, ho2⟩, hd1, hd2, hdg⟩ := hpre
+  have hgl := hg.load
+  have hgb := hg.below
+  have hnw2 := hg.noWrap
+  have hgr := hg.readable
+  simp only [regSP, regG, stackguard0Offset, stackguard0] at hgl hgb hnw2 hgr hacc hlow hnw hdg
+  simp only [Janus.Spec.Disjoint] at hd1 hd2 hdg
+  have hrc : s.mem.readLE (c.toNat + 2) 1 = 1 := by rw [Janus.Arm64.Memory.readLE_one]; exact ho2
+  by_cases c96 : len.toNat ≤ 96
+  all_goals janus64_run [h4, h14, hx, h0, h1, h3, m_ret, m_fp, m_c, m_ptr, m_len, m_cap, kS, c96, hrc,
+    Nat.lt_add_right_iff_pos, Nat.mod_eq_of_lt, BitVec.toInt_eq_toNat_cond, BitVec.toNat_sub, BitVec.msb_eq_decide]
+    calls [sb, mv, og_summary]
+  all_goals
+    apply rgPost_of ptr len B E M s _ hB hE hM
+    dsimp only
+    simp only [setRegF_apply, callRegs64_apply, Nat.reduceEqDiff, ite_true, ite_false, getD_cons_zero]
+    refine congrArg (fun h => BitVec.ofNat 64 (Geth.osakaModexpGas B.toNat E.toNat M.toNat h)) ?_
+    unfold RgSpec.expHead; rw [if_neg (by omega)]
+    unfold ogHead L4
+    janus64_simp
+
+end FvModexp.Amd64.RG

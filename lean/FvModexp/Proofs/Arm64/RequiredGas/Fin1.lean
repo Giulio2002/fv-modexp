@@ -32,22 +32,27 @@ theorem rg_fin1 (k : Fin2Stmt) : Fin1Stmt := by
   obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb, ha, hw⟩, hd, hlc, hc48, ⟨hp, hp'⟩, ⟨hcr, hcr'⟩, ⟨ho0, ho1, ho2⟩, hd1, hd2, hdg⟩ := hpre
   simp only [Disjoint] at hd1 hd2 hdg
   janus_run [hsp, h0, h4, h18, h28, h29, m_z0, m_z1] until [Extracted.entry + 0x260]
+  refine reaches_of_returns (rg_fin2' k c ptr len cap ret hret s _ hpre' ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_)
+    (fun s' h => h)
+  · with_reducible rfl
+  · dsimp only
+  · exact h18
+  · exact h28
+  · exact h29
+  · exact hf
+  · exact hdl
+  · exact m_ret
+  · exact m_fp
+  · exact m_c
+  · exact m_ptr
+  · exact m_len
+  · exact m_cap
   all_goals
-    refine reaches_of_returns (rg_fin2' k c ptr len cap ret hret s _ hpre' ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_)
-      (fun s' h => h)
-    all_goals first
-      | with_reducible rfl
-      | (show MemFrame _ _ _; janus_frame)
-      | (show Extracted.program.DataLoaded _; dl_close)
-      | (show BitVec.toNat _ = RgSpec.sat _
-         rw [show s.sp.toNat - 192 = s.sp.toNat - 216 + 24 by omega, show s.sp.toNat - 200 = s.sp.toNat - 216 + 16 by omega,
-           show s.sp.toNat - 208 = s.sp.toNat - 216 + 8 by omega] <;> skip
-         first
-           | (rw [← w0]; exact sat_bv _ _)
-           | (rw [← w1]; exact sat_bv _ _)
-           | (rw [← w2]; exact sat_bv _ _))
-      | (dsimp only; simp (disch := omega) only [setReg_apply, Nat.reduceEqDiff, ite_false, ite_true, h18, h28, h29,
-           Memory.readLE_writeLE_of_disjoint, m_ret, m_fp, m_c, m_ptr, m_len, m_cap]; done)
-      | (show State.regs _ _ = _; simp [setReg, h18, h28, h29])
+    dsimp only; simp only [setReg_apply, Nat.reduceEqDiff, ite_true, ite_false]
+    try rw [show s.sp.toNat - 192 = s.sp.toNat - 216 + 24 by omega, show s.sp.toNat - 200 = s.sp.toNat - 216 + 16 by omega,
+      show s.sp.toNat - 208 = s.sp.toNat - 216 + 8 by omega]
+  · rw [← w0]; exact sat_bv _ _
+  · rw [← w1]; exact sat_bv _ _
+  · rw [← w2]; exact sat_bv _ _
 
 end FvModexp.Arm64.RG
