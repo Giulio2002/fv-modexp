@@ -72,7 +72,9 @@ theorem pro3 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     (S2 : State) (L1 : List (Nat × Nat)) (b1 : Nat)
     (hA : AfterNat R b L st.toNat vl.toNat s P S2 stkSN abSN L1 b1) (Q : State → Prop)
     (k : ∀ S t w1 c1, Hd R b L qp.toNat ql.toNat st.toNat up.toNat ul.toNat uc.toNat vp.toNat vl.toNat vc.toNat s
-      t L1 b1 w1 c1 S (ul.toNat + 2 ^ 64 - vl.toNat) 0 → ReachesRet (LibDivBasic.program.link impl) (s.regs 30) S Q) :
+      t L1 b1 w1 c1 S (ul.toNat + 2 ^ 64 - vl.toNat) 0 →
+      (∀ a n, (qp.toNat ≤ a ∧ a + n ≤ qp.toNat + 8 * ql.toNat) ∨ (up.toNat ≤ a ∧ a + n ≤ up.toNat + 8 * ul.toNat) →
+        S.mem.readLE a n = s.mem.readLE a n) → ReachesRet (LibDivBasic.program.link impl) (s.regs 30) S Q) :
     ReachesRet (LibDivBasic.program.link impl) (s.regs 30) S2 Q := by
   obtain ⟨-, -, -, -, -, -, -, hF, hreg, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17⟩ := hP
   obtain ⟨hpc2, hsp2, h28, h29, h18, hr0, hr1, hr2, hext, hbud, hinv2, hok, hlen2, hsame, hgrow, hF2, hLF2⟩ := hA
@@ -108,6 +110,20 @@ theorem pro3 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
   have q7 := (k2 _ 8 (by omega)).trans p15
   have qmm := (k2 _ 8 (by omega)).trans p4
   have hvn1 := hvS (vp.toNat + 8 * (vl.toNat - 1)) 8 (by omega) (by omega)
+  have hquS : ∀ a n, (qp.toNat ≤ a ∧ a + n ≤ qp.toNat + 8 * ql.toNat) ∨ (up.toNat ≤ a ∧ a + n ≤ up.toNat + 8 * ul.toNat) →
+      S2.mem.readLE a n = s.mem.readLE a n := by
+    intro a n h
+    have hqw := hl.qw; have huw := hl.uw
+    have hfq := hpre.free.1; have hfu := hpre.free.2.1; have hsq := hpre.stq; have hsu := hpre.stu
+    simp only [freeP, freeN] at hfq hfu
+    unfold Apart at hfq hfu hsq hsu
+    rcases h with ⟨h1, h2⟩ | ⟨h1, h2⟩
+    · rw [Held.readLE2 (hpre.qh.sub h1 h2) hF2 hLF2
+        (by simp only [outside_cons, outside_nil, and_true]; omega)
+        (by simp only [stkWs, outside_cons, outside_nil, and_true]; omega), hPs a n (by omega)]
+    · rw [Held.readLE2 (hpre.uh.sub h1 h2) hF2 hLF2
+        (by simp only [outside_cons, outside_nil, and_true]; omega)
+        (by simp only [stkWs, outside_cons, outside_nil, and_true]; omega), hPs a n (by omega)]
   have hvtop := hpre.vtop
   have hvn1' : S2.mem.readLE (vp.toNat + 8 * (vl.toNat - 1)) 8 ≠ 0 := by rw [hvn1]; omega
   have hgS : S2.mem.readLE ((s.regs 28).toNat + 16) 8 = s.mem.readLE ((s.regs 28).toNat + 16) 8 := by
@@ -169,7 +185,13 @@ theorem pro3 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
       rw [kM a n (by omega), kw a n (by omega), kq a n (by omega) (by omega) (by omega)],
      fun a n v => by simp only [Memory.accessible_writeLE]; rw [hFw.accessible, ← hMq]; simp only [Memory.accessible_writeLE]⟩
   have hwst := hl.sw
-  refine k _ _ _ _ ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, hE, ?mem⟩
+  refine k _ _ _ _ ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, hE, ?mem⟩ ?qu
+  case qu =>
+    intro a n h
+    have hqw := hl.qw; have huw := hl.uw
+    have h' : a + n ≤ s.sp.toNat - 4464 ∨ s.sp.toNat + 88 ≤ a := by omega
+    rw [kM a n (by omega), kw a n (by omega), kq a n (by omega) (by omega) (by omega)]
+    exact hquS a n h
   case mem =>
     refine ⟨(ks _ _ (by omega)).trans p1, (ks _ _ (by omega)).trans p2, (ks _ _ (by omega)).trans p3, ?vn, ?rw, ?hl,
       ?hc, (ks _ _ (by omega)).trans p4, ?tp, (ks _ _ (by omega)).trans p6, (ks _ _ (by omega)).trans p7,

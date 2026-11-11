@@ -39,57 +39,136 @@ def names : List String := LibDivBasic.names
 /-- the model's lists: `q`, `u`, `v` as limb lists of the entry memory -/
 @[reducible] def lq (m : Memory) (qp ql : Nat) : List Nat := Asm.limbs m qp ql
 
-/-- The precondition (args `q = (qp, ql, _)`, `st`, `u = (up, ul, _)`, `v = (vp, vl, _)`). -/
-structure Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (qp ql st up ul uc vp vl : Nat) (s : State) : Prop where
-  ce : CallEnv R L s 4464 88
-  sv : Serves R
-  wbacc : s.mem.accessible StackNat.wbA 4 false = true
-  wbap : Apart st 24 StackNat.wbA 4
-  -- v: read only, normalised, at least two words
-  v2 : 2 ≤ vl
-  vtop : 2 ^ 63 ≤ s.mem.readLE (vp + 8 * (vl - 1)) 8
-  vacc : s.mem.accessible vp (8 * vl) false = true
-  v48 : vp + 8 * vl ≤ 2 ^ 48
-  vh : Held R L vp (8 * vl)
-  vw : Outside vp (8 * vl) (win s 4464 88)
-  -- u: overwritten with the remainder
-  ub : ul < 2 ^ 40
-  ulc : ul ≤ uc
-  ucb : uc < 2 ^ 40
-  uacc : s.mem.accessible up (8 * ul) true = true
-  u48 : up + 8 * ul ≤ 2 ^ 48
-  uh : Held R L up (8 * ul)
-  uw : Outside up (8 * ul) (win s 4464 88)
-  ug : Apart up (8 * ul) ((s.regs 28).toNat + 16) 8
-  -- q: the quotient digits `q[0..m]` are stored
-  qb : ql < 2 ^ 40
-  qacc : s.mem.accessible qp (8 * ql) true = true
-  q48 : qp + 8 * ql ≤ 2 ^ 48
-  qh : Held R L qp (8 * ql)
-  qw : Outside qp (8 * ql) (win s 4464 88)
-  qg : Apart qp (8 * ql) ((s.regs 28).toNat + 16) 8
-  qu : Apart qp (8 * ql) up (8 * ul)
-  qv : Apart qp (8 * ql) vp (8 * vl)
-  uv : Apart up (8 * ul) vp (8 * vl)
-  /-- the model contract's room for the quotient (`Mdl.DivBasicContract`) -/
-  room : vl ≤ ul → (ul - vl < ql ∨ (ul - vl = ql ∧ natVal s.mem up ul < natVal s.mem vp vl * 2 ^ (64 * ql)))
-  -- the stack
-  stok : StkOK s.mem R L st
-  stw : Outside st 24 (win s 4464 88)
-  stg : Apart st 24 ((s.regs 28).toNat + 16) 8
-  starr : 0 < stCap s.mem st → Outside (stW s.mem st) (8 * stCap s.mem st) (win s 4464 88) ∧
-    Apart (stW s.mem st) (8 * stCap s.mem st) ((s.regs 28).toNat + 16) 8
-  stgf : Apart (freeP s.mem st) (freeN s.mem st) ((s.regs 28).toNat + 16) 8
-  stlen : stLen s.mem st + vl + 4 ≤ 2 ^ 16
-  stq : Apart st 24 qp (8 * ql)
-  stu : Apart st 24 up (8 * ul)
-  stv : Apart st 24 vp (8 * vl)
-  free : Apart qp (8 * ql) (freeP s.mem st) (freeN s.mem st) ∧ Apart up (8 * ul) (freeP s.mem st) (freeN s.mem st) ∧
-    Apart vp (8 * vl) (freeP s.mem st) (freeN s.mem st)
-  stfree : Apart st 24 (freeP s.mem st) (freeN s.mem st)
-  stfw : Outside (freeP s.mem st) (freeN s.mem st) (win s 4464 88)
-  cost : ExpHyp.stackNatCost (stLen s.mem st) (vl + 1) ≤ b
-  inv : R.inv b L (s.regs 28).toNat (view R.rt L s.mem)
+/-- The precondition (args `q = (qp, ql, _)`, `st`, `u = (up, ul, _)`, `v = (vp, vl, _)`); a plain conjunction (Janus' audit
+accepts only plain defs in statements); conjuncts in order: ce, sv, wbacc, wbap, v2, vtop, vacc, v48, vh, vw, ub, ulc, ucb, uacc, u48, uh, uw, ug, qb, qacc, q48, qh, qw, qg, qu, qv, uv, room, stok, stw, stg, starr, stgf, stlen, stq, stu, stv, free, stfree, stfw, cost, inv (accessors `Pre.<name>`). -/
+def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (qp ql st up ul uc vp vl : Nat) (s : State) : Prop :=
+  (CallEnv R L s 4464 88) ∧
+  (Serves R) ∧
+  (s.mem.accessible StackNat.wbA 4 false = true) ∧
+  (Apart st 24 StackNat.wbA 4) ∧
+  (2 ≤ vl) ∧
+  (2 ^ 63 ≤ s.mem.readLE (vp + 8 * (vl - 1)) 8) ∧
+  (s.mem.accessible vp (8 * vl) false = true) ∧
+  (vp + 8 * vl ≤ 2 ^ 48) ∧
+  (Held R L vp (8 * vl)) ∧
+  (Outside vp (8 * vl) (win s 4464 88)) ∧
+  (ul < 2 ^ 40) ∧
+  (ul ≤ uc) ∧
+  (uc < 2 ^ 40) ∧
+  (s.mem.accessible up (8 * ul) true = true) ∧
+  (up + 8 * ul ≤ 2 ^ 48) ∧
+  (Held R L up (8 * ul)) ∧
+  (Outside up (8 * ul) (win s 4464 88)) ∧
+  (Apart up (8 * ul) ((s.regs 28).toNat + 16) 8) ∧
+  (ql < 2 ^ 40) ∧
+  (s.mem.accessible qp (8 * ql) true = true) ∧
+  (qp + 8 * ql ≤ 2 ^ 48) ∧
+  (Held R L qp (8 * ql)) ∧
+  (Outside qp (8 * ql) (win s 4464 88)) ∧
+  (Apart qp (8 * ql) ((s.regs 28).toNat + 16) 8) ∧
+  (Apart qp (8 * ql) up (8 * ul)) ∧
+  (Apart qp (8 * ql) vp (8 * vl)) ∧
+  (Apart up (8 * ul) vp (8 * vl)) ∧
+  (vl ≤ ul → (ul - vl < ql ∨ (ul - vl = ql ∧ natVal s.mem up ul < natVal s.mem vp vl * 2 ^ (64 * ql)))) ∧
+  (StkOK s.mem R L st) ∧
+  (Outside st 24 (win s 4464 88)) ∧
+  (Apart st 24 ((s.regs 28).toNat + 16) 8) ∧
+  (0 < stCap s.mem st → Outside (stW s.mem st) (8 * stCap s.mem st) (win s 4464 88) ∧ Apart (stW s.mem st) (8 * stCap s.mem st) ((s.regs 28).toNat + 16) 8) ∧
+  (Apart (freeP s.mem st) (freeN s.mem st) ((s.regs 28).toNat + 16) 8) ∧
+  (stLen s.mem st + vl + 4 ≤ 2 ^ 16) ∧
+  (Apart st 24 qp (8 * ql)) ∧
+  (Apart st 24 up (8 * ul)) ∧
+  (Apart st 24 vp (8 * vl)) ∧
+  (Apart qp (8 * ql) (freeP s.mem st) (freeN s.mem st) ∧ Apart up (8 * ul) (freeP s.mem st) (freeN s.mem st) ∧ Apart vp (8 * vl) (freeP s.mem st) (freeN s.mem st)) ∧
+  (Apart st 24 (freeP s.mem st) (freeN s.mem st)) ∧
+  (Outside (freeP s.mem st) (freeN s.mem st) (win s 4464 88)) ∧
+  (ExpHyp.stackNatCost (stLen s.mem st) (vl + 1) ≤ b) ∧
+  (R.inv b L (s.regs 28).toNat (view R.rt L s.mem))
+
+theorem Pre.ce {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : CallEnv R L s 4464 88 := h.1
+theorem Pre.sv {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : Serves R := h.2.1
+theorem Pre.wbacc {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : s.mem.accessible StackNat.wbA 4 false = true := h.2.2.1
+theorem Pre.wbap {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : Apart st 24 StackNat.wbA 4 := h.2.2.2.1
+theorem Pre.v2 {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : 2 ≤ vl := h.2.2.2.2.1
+theorem Pre.vtop {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : 2 ^ 63 ≤ s.mem.readLE (vp + 8 * (vl - 1)) 8 := h.2.2.2.2.2.1
+theorem Pre.vacc {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : s.mem.accessible vp (8 * vl) false = true := h.2.2.2.2.2.2.1
+theorem Pre.v48 {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : vp + 8 * vl ≤ 2 ^ 48 := h.2.2.2.2.2.2.2.1
+theorem Pre.vh {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : Held R L vp (8 * vl) := h.2.2.2.2.2.2.2.2.1
+theorem Pre.vw {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : Outside vp (8 * vl) (win s 4464 88) := h.2.2.2.2.2.2.2.2.2.1
+theorem Pre.ub {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : ul < 2 ^ 40 := h.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.ulc {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : ul ≤ uc := h.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.ucb {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : uc < 2 ^ 40 := h.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.uacc {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : s.mem.accessible up (8 * ul) true = true := h.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.u48 {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : up + 8 * ul ≤ 2 ^ 48 := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.uh {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : Held R L up (8 * ul) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.uw {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : Outside up (8 * ul) (win s 4464 88) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.ug {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : Apart up (8 * ul) ((s.regs 28).toNat + 16) 8 := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.qb {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : ql < 2 ^ 40 := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.qacc {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : s.mem.accessible qp (8 * ql) true = true := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.q48 {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : qp + 8 * ql ≤ 2 ^ 48 := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.qh {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : Held R L qp (8 * ql) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.qw {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : Outside qp (8 * ql) (win s 4464 88) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.qg {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : Apart qp (8 * ql) ((s.regs 28).toNat + 16) 8 := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.qu {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : Apart qp (8 * ql) up (8 * ul) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.qv {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : Apart qp (8 * ql) vp (8 * vl) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.uv {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : Apart up (8 * ul) vp (8 * vl) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.room {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : vl ≤ ul → (ul - vl < ql ∨ (ul - vl = ql ∧ natVal s.mem up ul < natVal s.mem vp vl * 2 ^ (64 * ql))) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.stok {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : StkOK s.mem R L st := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.stw {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : Outside st 24 (win s 4464 88) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.stg {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : Apart st 24 ((s.regs 28).toNat + 16) 8 := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.starr {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : 0 < stCap s.mem st → Outside (stW s.mem st) (8 * stCap s.mem st) (win s 4464 88) ∧ Apart (stW s.mem st) (8 * stCap s.mem st) ((s.regs 28).toNat + 16) 8 := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.stgf {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : Apart (freeP s.mem st) (freeN s.mem st) ((s.regs 28).toNat + 16) 8 := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.stlen {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : stLen s.mem st + vl + 4 ≤ 2 ^ 16 := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.stq {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : Apart st 24 qp (8 * ql) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.stu {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : Apart st 24 up (8 * ul) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.stv {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : Apart st 24 vp (8 * vl) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.free {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : Apart qp (8 * ql) (freeP s.mem st) (freeN s.mem st) ∧ Apart up (8 * ul) (freeP s.mem st) (freeN s.mem st) ∧ Apart vp (8 * vl) (freeP s.mem st) (freeN s.mem st) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.stfree {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : Apart st 24 (freeP s.mem st) (freeN s.mem st) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.stfw {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : Outside (freeP s.mem st) (freeN s.mem st) (win s 4464 88) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.cost {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : ExpHyp.stackNatCost (stLen s.mem st) (vl + 1) ≤ b := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.inv {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc vp vl : Nat} {s : State}
+    (h : Pre R b L qp ql st up ul uc vp vl s) : R.inv b L (s.regs 28).toNat (view R.rt L s.mem) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2
 
 /-- the number of quotient words written: `len u - len v + 1` (or `len q` when the top digit has no room), none when
 `len u < len v` -/
