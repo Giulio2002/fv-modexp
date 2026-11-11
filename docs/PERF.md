@@ -305,3 +305,14 @@ and `(2^64 - 8 + fsBase) % 2^64 = fsBase - 8` as run lemmas; register reads of a
 `simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]`.
 
 ### divmc nat.sub (2026-11-11), both ISAs: 12 modules each (copied from nat.add's split), each ≤ 44 s, ≤ 3.1 GB.
+
+### divmc basicSqr arm64 (2026-11-11, session 3; dev compile `scripts/dev-lean-divmc.sh -x arm64`, wall / max RSS)
+| module | wall / RSS | note |
+|---|---|---|
+| Nat/LibRestore + Restore (7 stk.restore closures) | 20 s + 14 s / 2.2 GB | |
+| Nat/Callees2 (lshVU/rshVU premises, toSummaryRegs2/9) | 8 s / 2.3 GB | |
+| Nat/BasicSqrSmall (n < 12 → basicMul) | 43 s / 4.2 GB | |
+| Nat/BasicSqrStep (`inv_step`, `tval`: pure memory/arith) | 31 s / 3.2 GB | before: **> 900 s (killed)**: 9 unfolded disjointness disjunctions in context + `rw [keep _ _ (by omega)]` with metavariable arguments (omega on mvars) + `congr 1`/`ac_rfl` on memory terms. After: disjunctions folded in a `Lay` structure (`have := hl.tz` right before the omega that needs it), instances stated explicitly, atoms `generalize`d before the arithmetic |
+| Nat/BasicSqrBody (`body2`: addMulVVWW call → head) | 82 s / 4.5 GB | before: 353 s / 7.0 GB: `refine hk _ ?_ …` + `all_goals (try janus_simp)` on 12 register goals over a huge state literal; after: per-goal `simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, <slot facts>]` |
+| Nat/BasicSqrLoop (`loop`: head → CALL, induction) | 44 s / 2.8 GB | before: 182 s / 7.2 GB with body2 in the same module and the callee's `R.inv` closed by simp over the stores; after: split + `RtInv.inv_frame' (by janus_frame)` |
+| Nat/BasicSqrFin (WIP: fin1, fin2 call) | 17 s / 2.6 GB | |
