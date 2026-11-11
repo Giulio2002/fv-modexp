@@ -44,24 +44,27 @@ def wordT : Nat := Extracted.dataAddr.«type:big.Word#51b931e8»
 
 /-- The precondition (requests: one `makeslice` when `z` is too small, the `memmove` of `z.set(x)` and the `addVW`
 copies, to any runtime-chosen destination). -/
-def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl yp yl : BitVec 64) (s : State) : Prop :=
-  CallEnv R L s 4464 80 ∧ Outside wordT 16 R.rt ∧ xl.toNat < 2 ^ 40 ∧ yl.toNat < 2 ^ 40 ∧ zc.toNat < 2 ^ 40 ∧
+def PreS (stk : Nat) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl xc yp yl yc : BitVec 64) (s : State) : Prop :=
+  CallEnv R L s stk 80 ∧ Outside wordT 16 R.rt ∧ xl.toNat ≤ xc.toNat ∧ yl.toNat ≤ yc.toNat ∧ xc.toNat < 2 ^ 40 ∧ yc.toNat < 2 ^ 40 ∧ xl.toNat < 2 ^ 40 ∧ yl.toNat < 2 ^ 40 ∧ zc.toNat < 2 ^ 40 ∧
     NatLive s.mem R L zp.toNat zc.toNat ∧
-    (0 < zc.toNat → Outside zp.toNat (8 * zc.toNat) (win s 4464 80) ∧
+    (0 < zc.toNat → Outside zp.toNat (8 * zc.toNat) (win s stk 80) ∧
       Apart zp.toNat (8 * zc.toNat) ((s.regs 28).toNat + 16) 8 ∧
       (zp = xp ∨ Apart zp.toNat (8 * zc.toNat) xp.toNat (8 * xl.toNat)) ∧
       (zp = yp ∨ Apart zp.toNat (8 * zc.toNat) yp.toNat (8 * yl.toNat))) ∧
     s.mem.accessible xp.toNat (8 * xl.toNat) false = true ∧ xp.toNat + 8 * xl.toNat ≤ 2 ^ 48 ∧
-    Held R L xp.toNat (8 * xl.toNat) ∧ Outside xp.toNat (8 * xl.toNat) (win s 4464 80) ∧
+    Held R L xp.toNat (8 * xl.toNat) ∧ NatNorm s.mem xp.toNat xl.toNat ∧ NatNorm s.mem yp.toNat yl.toNat ∧ Outside xp.toNat (8 * xl.toNat) (win s stk 80) ∧
     s.mem.accessible yp.toNat (8 * yl.toNat) false = true ∧ yp.toNat + 8 * yl.toNat ≤ 2 ^ 48 ∧
-    Held R L yp.toNat (8 * yl.toNat) ∧ Outside yp.toNat (8 * yl.toNat) (win s 4464 80) ∧
+    Held R L yp.toNat (8 * yl.toNat) ∧ Outside yp.toNat (8 * yl.toNat) (win s stk 80) ∧
     R.inv b L (s.regs 28).toNat (view R.rt L s.mem) ∧
     (zc.toNat < need xl yl → R.ok (cA "runtime.makeslice") [wordT, need xl yl, makeCap (need xl yl)] ∧
       makeCost (need xl yl) ≤ b) ∧
     (∀ d src k, k ≤ 8 * mx xl yl → R.ok (cA "runtime.memmove") [d, src, k])
 
+/-- The precondition of the function (`stk = 4464`: the self-call adds one frame to the body's 4304). -/
+@[reducible] def Pre := PreS 4464
+
 /-- The postcondition: a normalised nat `(p', n', c')` holding `X + Y`, `z`'s array or a fresh one. -/
-@[reducible] def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl yp yl : BitVec 64) (s s' : State) :
+@[reducible] def PostS (stk : Nat) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl yp yl : BitVec 64) (s s' : State) :
     Prop :=
   ∃ p' n' c' : Nat, (s'.regs 0).toNat = p' ∧ (s'.regs 1).toNat = n' ∧ (s'.regs 2).toNat = c' ∧
     natVal s'.mem p' n' = natVal s.mem xp.toNat xl.toNat + natVal s.mem yp.toNat yl.toNat ∧
@@ -69,7 +72,9 @@ def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl yp yl : BitVe
     ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b - makeCost (need xl yl) ≤ b' ∧
       R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem) ∧ NatLive s'.mem R L' p' c' ∧
       ((p' = zp.toNat ∧ c' = zc.toNat) ∨ (InRanges p' (8 * c') R.rt ∧ ApartAll p' (8 * c') L)) ∧
-      MemFrame s.mem s'.mem (R.rt ++ winA s 4464 80 ++ [(zp.toNat, zp.toNat + 8 * zc.toNat)]) ∧
+      MemFrame s.mem s'.mem (R.rt ++ winA s stk 80 ++ [(zp.toNat, zp.toNat + 8 * zc.toNat)]) ∧
       LiveFrame s.mem s'.mem L [(zp.toNat, zp.toNat + 8 * zc.toNat)]
+
+@[reducible] def Post := PostS 4464
 
 end FvModexp.Arm64.NatAdd
