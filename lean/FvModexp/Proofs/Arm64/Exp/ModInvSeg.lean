@@ -56,4 +56,12 @@ def J0 (impl : List Segment) (R : RtInv) (kc : Nat) (sqrC : Nat → Nat) (mulC :
     S.mem.readLE (s.sp.toNat + 8) 8 = zp → S.mem.readLE (s.sp.toNat + 40) 8 = xp →
     Goal impl R kc sqrC mulC b L zp zc st xp xl n s S
 
+theorem inv_win {R : RtInv} {b g : Nat} {L : List (Nat × Nat)} {s : State} {kc : Nat} {M : Memory}
+    (hal : K kc ≤ s.sp.toNat) (hout : Outside (s.sp.toNat - K kc) (K kc + A) R.rt) (hF : MemFrame s.mem M (winA s (K kc) A))
+    (h : R.inv b L g (view R.rt L s.mem)) : R.inv b L g (view R.rt L M) := by
+  refine Expmc.inv_frame hF (fun r hr => Or.inr ?_) h
+  simp only [winA, List.mem_cons, List.not_mem_nil, or_false] at hr
+  simp only [K, A] at hal hout
+  rcases hr with rfl | rfl <;> (dsimp only; simp only [K, A]; exact hout.of_sub (by omega) (by omega))
+
 end FvModexp.Arm64.ModInv

@@ -81,14 +81,6 @@ theorem post_keep {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Na
       · simp
       · exact hws.1
 
-theorem inv_win {R : RtInv} {b g : Nat} {L : List (Nat × Nat)} {s : State} {kc : Nat} {M : Memory}
-    (hal : K kc ≤ s.sp.toNat) (hout : Outside (s.sp.toNat - K kc) (K kc + A) R.rt) (hF : MemFrame s.mem M (winA s (K kc) A))
-    (h : R.inv b L g (view R.rt L s.mem)) : R.inv b L g (view R.rt L M) := by
-  refine Expmc.inv_frame hF (fun r hr => Or.inr ?_) h
-  simp only [winA, List.mem_cons, List.not_mem_nil, or_false] at hr
-  simp only [K, A] at hal hout
-  rcases hr with rfl | rfl <;> (dsimp only; simp only [K, A]; exact hout.of_sub (by omega) (by omega))
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem small (impl : List Segment) (R : RtInv)
