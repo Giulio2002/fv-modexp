@@ -16,7 +16,7 @@ theorem nb_facts {l a b off mN h2 : Nat} (p : Nat) (hoff : (96 < l ∧ off = 96)
       l - 96 - min (b + a) (l - 96) < h2 := by omega
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem d3zA (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
     (hokS : ∀ n, n ≤ 128 → R.ok (cA "runtime.makeslice") [SetBytes.wordT, n, makeCap n])

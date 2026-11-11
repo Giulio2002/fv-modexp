@@ -508,3 +508,13 @@ Lessons: (1) amd64: after a callee returns, `retAddrOf S` rewritten to a symboli
 `CALL rel32` fault (`badTarget`: janus cannot bound the target) — state pushed return addresses as literals;
 (2) a `first | … | (intro r hr; simp at hr) | …` alternative that SUCCEEDS without closing the goal leaves it unsolved
 at the `refine` — end such alternatives with `; done`.
+
+## agent top s8 (2026-11-11 evening) — heartbeat rule (64M) forced rebuild, dev builds under memcap 8G, J=2 + other load
+All 47 top-owned modules pass with `maxHeartbeats 64000000` (no proof needed changes). Over/near the 5 min / 8 GB target
+(times inflated by concurrent jobs): RunD1L 322 s / 7.67 GB, RunD2L 321 s / 7.09 GB, RunD1P 294 s / 6.08 GB,
+RunD2 268 s / 6.17 GB, RunD2J 251 s, RunH3S 248 s, RunH2S 242 s, RunC2M 225 s / 6.51 GB, RunC2EX 192 s / 7.66 GB.
+RunC2EX diagnosis: with `debug.skipKernelTC` the module peaks at 3.30 GB (147 s) → ~4.3 GB of the peak is the KERNEL check of
+the one big `c2eX` term; clearing hypotheses before the second janus_run did not change the peak. Fix = split `c2eX` at the
+Bytes call (two declarations, kernel-checked separately) — TODO.
+IntBytes: arm64 ens 27 s, amd64 ens ~130 s (under load), loops/skip ≤ 15 s, < 3 GB.
+Row RunErr (arm64, janus-provfix, cache-top after all Top modules changed): PASS, 696 s wall, peak 6.39 GB.
