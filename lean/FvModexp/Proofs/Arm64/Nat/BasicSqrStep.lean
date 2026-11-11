@@ -71,7 +71,7 @@ theorem Env.lay {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl
   have := hLs r hr; simp only [win, outside_cons, outside_nil, and_true] at this; exact this
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem inv_step {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl xc : Nat} {s : State}
     {t : Nat} {L1 : List (Nat × Nat)} {b1 w1 c1 : Nat}
     (hE : Env R b L st zp zl zc xp xl s t L1 b1 w1 c1) {i : Nat} (hi1 : 1 ≤ i) (hiy : i < xl) {M S1m w : Memory}

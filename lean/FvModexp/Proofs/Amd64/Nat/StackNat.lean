@@ -17,7 +17,7 @@ theorem GrowsliceLiveContract64.of_codeIn {p P : Janus.Amd64.Program} (hc : Code
   fun L b => Janus.Contracts.EqHashModel.Summary.of_codeIn64 hc (h L b)
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem full (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
     (hgr : GrowsliceLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.growslice") 4096 R)
     (hmc : MemclrNoHeapPointersLive64 (Extracted.program.ofImpl impl) (cA "runtime.memclrNoHeapPointers") 4096 R)

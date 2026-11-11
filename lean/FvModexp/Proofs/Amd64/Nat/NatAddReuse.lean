@@ -16,7 +16,7 @@ namespace FvModexp.Amd64.NatAdd
     s.regs 6 = xl ∧ s.regs 8 = xc ∧ s.regs 9 = yp ∧ s.regs 10 = yl ∧ s.regs 11 = yc
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem reuse (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
     (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc yp yl yc : BitVec 64) (s : State)

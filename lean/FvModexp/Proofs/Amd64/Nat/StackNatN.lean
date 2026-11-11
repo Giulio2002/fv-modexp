@@ -21,7 +21,7 @@ theorem toInt_sub3' (a r c : Nat) (ha : a < 2 ^ 60) (hr : r < 2 ^ 60) (hc : c < 
   split <;> omega
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem noGrow (impl : List Amd64.Segment) (R : RtInv)
     (hwb : WbLiveContract64 (LibStackNat.program.link impl) (cA "runtime.gcWriteBarrier2") 4096 R 2)
     (b : Nat) (L : List (Nat × Nat)) (st n : BitVec 64) (s : State)

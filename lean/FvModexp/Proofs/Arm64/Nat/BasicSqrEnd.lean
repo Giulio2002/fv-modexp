@@ -161,7 +161,7 @@ theorem post_fin {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp x
 abbrev callD : Nat := segAddr Extracted.program fn + 0x26c
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 /-- from the closure call `CALL (R0)` (`stk.restore`) through the epilogue to the return -/
 theorem fin4 (impl : List Segment) (R : RtInv)

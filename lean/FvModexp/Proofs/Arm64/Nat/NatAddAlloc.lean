@@ -10,7 +10,7 @@ open FvModexp.Arm64.Callees
 namespace FvModexp.Arm64.NatAdd
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem alloc (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hmk : MakesliceLiveContract (LibNatAdd.program.link impl) (cA "runtime.makeslice") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)

@@ -18,7 +18,7 @@ theorem GrowsliceLiveContract.of_codeIn {p P : Program} (hc : CodeIn p P) {a st 
   fun L b => Summary.of_codeIn hc (h L b)
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem full (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hgr : GrowsliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.growslice") 4096 R)
     (hmc : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl) (cA "runtime.memclrNoHeapPointers") 4096 R)

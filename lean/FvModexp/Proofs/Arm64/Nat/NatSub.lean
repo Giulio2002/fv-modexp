@@ -14,7 +14,7 @@ open FvModexp.Arm64.Callees Janus.Contracts.EqHashModel
 namespace FvModexp.Arm64.NatSub
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 /-- `m = 0` (so `n = 0`): `return z[:0]`. -/
 theorem zeroPath (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat))
     (zp zl zc xp xl xc yp yl yc : BitVec 64) (s : State)
@@ -50,7 +50,7 @@ theorem zeroPath (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × N
   all_goals janus_simp
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem full (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)

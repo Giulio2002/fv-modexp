@@ -65,7 +65,7 @@ theorem sliceObj_len0 {B : Nat} {m m' : Janus.Arm64.Memory} {d : Nat} {rs ws : L
   exact ⟨h0', h1, h2, h3, Nat.zero_le _, h5, h6, h7, h8, h9, h10, h11⟩
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem sum (impl : List Amd64.Segment) (R : RtInv) (B : Nat)
     (hput : PoolPutLive (LibFree.program.link impl) (cA "sync.(*Pool).Put") 4096 R stkT (SliceObj B))
     (b : Nat) (L rs : List (Nat × Nat)) :

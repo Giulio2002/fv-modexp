@@ -21,7 +21,7 @@ theorem x0_eq (w len : Nat) (n : BitVec 64) (hw : w + 8 * len < 2 ^ 64) (hl : le
   omega
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem tail (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (st n : BitVec 64) (s : State)
     (L1 : List (Nat × Nat)) (b1 w1 c1 : Nat) (M M2 : Memory) (h : J R b L st.toNat n.toNat s L1 b1 w1 c1 M)
     (hf : MemFrame M M2 (R.rt ++ [(st.toNat, st.toNat + 24), (s.sp.toNat - 4208, s.sp.toNat - 120)]))

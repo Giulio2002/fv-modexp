@@ -10,7 +10,7 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
 namespace FvModexp.Arm64.NatAdd
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem setPath (impl : List Segment) (R : RtInv)
     (hmk : MakesliceLiveContract (LibNatAdd.program.link impl) (cA "runtime.makeslice") 4096 R)
     (hmv : MemmoveLive (LibNatAdd.program.link impl) (cA "runtime.memmove") 4096 R)

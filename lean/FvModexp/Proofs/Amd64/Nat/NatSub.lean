@@ -9,7 +9,7 @@ open FvModexp.Amd64.Callees Janus.Contracts.EqHashModel
 namespace FvModexp.Amd64.NatSub
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem zeroPath (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat))
     (zp zl zc xp xl xc yp yl yc : BitVec 64) (s : State)
     (he : Entry s zp zl zc xp xl xc yp yl yc) (hyx : yl.toNat ≤ xl.toNat) (hx0 : xl.toNat = 0)
@@ -42,7 +42,7 @@ theorem zeroPath (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Na
   all_goals janus64_simp
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem full (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
     (hmk : MakesliceLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
     (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)

@@ -70,7 +70,7 @@ theorem sliceObj_len0 {B : Nat} {m m' : Memory} {d : Nat} {rs ws : List (Nat × 
 abbrev pPR : Nat := segAddr Extracted.program fn + 0x34
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem sum (impl : List Segment) (R : RtInv) (B : Nat)
     (hput : PoolPutLive (LibFree.program.link impl) (cA "sync.(*Pool).Put") 4096 R stkT (SliceObj B))
     (b : Nat) (L rs : List (Nat × Nat)) :

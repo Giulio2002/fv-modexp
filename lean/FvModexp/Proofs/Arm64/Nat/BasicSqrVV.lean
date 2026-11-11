@@ -24,7 +24,7 @@ theorem sq_val (m : Memory) (xp n : Nat) :
     _ = 2 ^ (64 * (2 * n)) := by rw [← Nat.pow_add]; congr 1; omega
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 /-- from the `CALL addVV.abi0` (state `D`; memory = the loop's final `M` with `t` doubled and the frame stores) to the
 closure call -/

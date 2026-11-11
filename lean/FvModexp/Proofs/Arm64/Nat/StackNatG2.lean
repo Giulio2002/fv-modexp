@@ -10,7 +10,7 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
 namespace FvModexp.Arm64.StackNat
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem g2 (impl : List Segment) (R : RtInv)
     (hgr : GrowsliceLiveContract (LibStackNat.program.link impl) (cA "runtime.growslice") 4096 R)
     (hmc : MemclrNoHeapPointersLive (LibStackNat.program.link impl) (cA "runtime.memclrNoHeapPointers") 4096 R)

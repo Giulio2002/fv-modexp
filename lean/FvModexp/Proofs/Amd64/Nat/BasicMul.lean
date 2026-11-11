@@ -186,7 +186,7 @@ theorem post_of_inv {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zl zc xp x
   exact ⟨hfs, hv, L, b, LiveExt.refl R L, Nat.le_refl _, hinv, hF, hLF⟩
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem loop (impl : List Amd64.Segment) (R : RtInv) (hMV' : ∀ b L, Summary0 (LibBasicMul.program.link impl)
       (segAddr Extracted.program addMulVVWWfn) (VVWWLPre R b L) (VVWWLQ R b L))
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc yp yl : BitVec 64) (ret : Nat)
@@ -258,7 +258,7 @@ theorem loop (impl : List Amd64.Segment) (R : RtInv) (hMV' : ∀ b L, Summary0 (
       all_goals (try exact hx15.symm)
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
     (hmc : MemclrNoHeapPointersLive64 (Extracted.program.ofImpl impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc yp yl yc : BitVec 64) :

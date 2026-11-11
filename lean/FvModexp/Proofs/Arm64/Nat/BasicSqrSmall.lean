@@ -18,7 +18,7 @@ namespace FvModexp.Arm64.BasicSqr
 abbrev callBM : Nat := segAddr Extracted.program fn + 0x100
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 theorem small2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hmc : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
@@ -133,7 +133,7 @@ theorem small2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
   · exact Or.inl ⟨rW, rC⟩
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem small (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hmc : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
     (b : Nat) (L : List (Nat × Nat)) (st zp zl zc xp xl xc : BitVec 64) (s : State)

@@ -15,7 +15,7 @@ namespace FvModexp.Arm64.BasicSqr
 abbrev callMV : Nat := segAddr Extracted.program fn + 0x1b8
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 /-- the rest of an iteration, from the call (state `S1`, memory = the head's `M` with the two `z` words and the
 frame stores): the call, `t[2i] = c`, back to the head. -/

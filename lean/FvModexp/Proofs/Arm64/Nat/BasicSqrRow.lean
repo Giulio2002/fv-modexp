@@ -83,6 +83,7 @@ theorem inv1 (gp : Nat) : R.inv 0x1000 [] gp (view R.rt [] mem0) := by
     rw [if_neg (by simp only [BUMP, HEAP] at *; omega), if_neg (by omega)]
 
 theorem pre : BasicSqr.Pre R 0x1000 [] ST OA 2 2 OB 1 s0 := by
+  unfold BasicSqr.Pre
   refine ⟨⟨⟨by decide +kernel, by rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel, by decide +kernel⟩,
     ⟨by decide +kernel, by decide +kernel, by decide +kernel, by rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel⟩,
     dataLoaded _ _, ?_, ?_, ?_, fun r hr => by simp at hr, roOut⟩, WStubs.serves [], ?_, ?_, ?_, by decide, rfl,

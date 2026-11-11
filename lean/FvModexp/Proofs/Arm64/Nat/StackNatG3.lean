@@ -13,7 +13,7 @@ namespace FvModexp.Arm64.StackNat
 abbrev pMR : Nat := segAddr Extracted.program fn + 0xac
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem g3 (impl : List Segment) (R : RtInv)
     (hmc : MemclrNoHeapPointersLive (LibStackNat.program.link impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
     (hwb : WbLiveContract (LibStackNat.program.link impl) (cA "runtime.gcWriteBarrier2") 4096 R 2)
