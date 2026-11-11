@@ -67,9 +67,9 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- a `stk.nat(k)` call keeps the context -/
 theorem keeps_sn {R : RtInv} {L L' : List (Nat × Nat)}
-    {g sp K n mp mc Mv xp xc Xv yp ylen Y yi zp zc st n0 l0 ret b b' k : Nat} {r29 : BitVec 64} {M M' : Memory}
-    (hC : Ctx R L g sp K n mp mc Mv xp xc Xv yp ylen Y yi zp zc st n0 l0 ret r29 M) (hk : 0 < k)
-    (hS : SnPost R b L L' b' g sp st k M M') : Keeps R L L' g sp K st l0 M M' := by
+    {g sp K n mp mc Mv xp xc Xv yp ylen Y yi zp zc st n0 l0 ret b b' k : Nat} {r29 : BitVec 64} {ex : List (Nat × Nat)} {M M' : Memory}
+    (hC : Ctx R L g sp K n mp mc Mv xp xc Xv yp ylen Y yi zp zc st n0 l0 ret r29 ex M) (hk : 0 < k)
+    (hS : SnPost R b L L' b' g sp st k M M') : Keeps R L L' g sp K st l0 ex M M' := by
   obtain ⟨he, hce, hK, hK20, hn, hn128, hmc, hmc', hm, hmO, hmV, hnm, hx, hxO, hxv, hy, hyO, hY, hyi, hyi0, hyl, hyl',
     hzc, hz, hfe, hsth, hstw, hsok, hn0, hl0, hcap, harr, hug, huw, hsu, hgl, hgO, hstwb, hro, hty,
     r1016, r1024, r1032, r952, r936, r1000, r992, r960, r904, r328, r320⟩ := hC
@@ -93,7 +93,7 @@ theorem keeps_sn {R : RtInv} {L L' : List (Nat × Nat)}
     · simp only at hlt ⊢; exact M.accessible_sub laacc (Or.inr rfl) (by omega) (by omega)
   · simp only [stkWs, List.cons_append, List.nil_append, outside_cons, outside_nil, and_true]; omega
   · intro a k' ho
-    obtain ⟨-, o2, o3, o4⟩ := ho
+    obtain ⟨-, o2, o3, o4, -⟩ := ho
     simp only [AW, Apart, stUp] at o2 o3 o4
     simp only [stkWs, List.cons_append, List.nil_append, outside_cons, outside_nil, and_true]
     omega
