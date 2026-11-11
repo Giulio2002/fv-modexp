@@ -62,8 +62,12 @@ theorem d3lB (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     simp only [eq_iff_iff, iff_false]; intro h; have := congrArg BitVec.toNat h
     simp only [BitVec.toNat_ofNat] at this; rw [Nat.mod_eq_of_lt (by omega), Nat.mod_eq_of_lt (by omega)] at this; omega
   have hgt : (0 < ((hdrV s p len 2 : Nat) : Int)) = True := by simp only [eq_iff_iff, iff_true]; omega
+  have hmin : (if ((nb : Nat) : Int) < ((hdrV s p len 2 : Nat) : Int) then BitVec.ofNat 64 nb
+      else BitVec.ofNat 64 (hdrV s p len 2)) = BitVec.ofNat 64 nb := by
+    rw [if_pos (by omega)]
   set_option janus.callRegions true in
-  janus_run [hm1, hm2, hm3, hm4, hm5, hm6, hs2, hs3, hs4, hs5, hs6, hy1, hy2, hr0', hIe, toInt_small, hn1, hn2, hn3, hn4, hgt]
+  janus_run [hm1, hm2, hm3, hm4, hm5, hm6, hs2, hs3, hs4, hs5, hs6, hy1, hy2, hr0', hIe, toInt_small, hn1, hn2, hn3, hn4, hgt,
+    hmin]
     until [segAddr Extracted.program fn + 0x728] calls [hmv']
   rename_i m2 _ _ hMFm hLFm hinvm hcp
   have hm : ∀ a n w, U.mem.accessible a n w = s.mem.accessible a n w := fun a n w => by
