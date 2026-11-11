@@ -54,3 +54,14 @@ theorem stackRound_toNat (n : BitVec 64) (h : n.toNat + 3 < 2 ^ 64) :
   exact Mdl.stackRound_eq _ h
 
 end FvModexp
+
+namespace FvModexp
+
+/-- the signed difference `len + nr - cap` of `slices.Grow`'s test (all three below `2^60`) -/
+theorem toInt_sub3 (a r c : Nat) (ha : a < 2 ^ 60) (hr : r < 2 ^ 60) (hc : c < 2 ^ 60) :
+    (BitVec.ofNat 64 a + BitVec.ofNat 64 r - BitVec.ofNat 64 c).toInt = (a : Int) + r - c := by
+  rw [BitVec.toInt_eq_toNat_cond]
+  simp only [BitVec.toNat_sub, BitVec.toNat_add, BitVec.toNat_ofNat]
+  split <;> omega
+
+end FvModexp
