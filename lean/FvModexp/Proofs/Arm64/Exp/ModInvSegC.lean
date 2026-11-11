@@ -129,6 +129,10 @@ theorem norm_keep {M M' : Memory} {o oc l : Nat} (h : ∀ k, k ≤ oc → M'.rea
     omega
   rw [Nat.eq_of_mul_eq_mul_left hp this]; exact hn
 
+/-- final round: `E = n`, `Kx = numWords` -/
+@[reducible] def eF (n _j : Nat) : Nat := n
+@[reducible] def kF (n _j : Nat) : Nat := NW n
+
 section
 variable {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
