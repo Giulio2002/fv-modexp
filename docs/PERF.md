@@ -416,3 +416,22 @@ IcHN 43, Sb* 25-47, main 16 s.
 | Nat/BasicSqrEnv (`env_of`, pure) | 2 s / 2.0 GB | |
 | Nat/BasicSqrPro (`pro3`: stk.nat result → memclr call; `pro2`: stk.nat call, by_cases cap > 0) | 138 s / 3.7 GB | a version closing the 8 register goals after the call with `simp only [...] at *` + a `first` cascade ran > 900 s (killed): `simp at *` rewrites every huge state literal in the context. After: one targeted `rw [h]; simp only [setReg_apply, …]` per goal |
 | Nat/BasicSqr (`pro1`: entry → stk.nat call; `full`, `ens`, `sum`) | 33 s / 2.6 GB | |
+
+### divmc `(*stack).nat` (2026-11-11, session 5; dev compile, host load high), wall / max RSS
+| module | arm64 | amd64 |
+|---|---|---|
+| Nat/StackNatDefs, StackNatCall (growslice/memclr call pres, pure) | 2 s, 5 s / 2.1 GB | 2 s / 2.0 GB, — |
+| Nat/StackNatJ (join relation, `post_fin`, pure) | 11 s / 2.0 GB | 12 s / 2.0 GB |
+| Nat/StackNatTail (`+0xec`/`+0x101` → RET) | 18 s / 2.3 GB | 27 s / 2.4 GB |
+| Nat/StackNatWb (join → write barrier both flag values) | 15 s / 2.3 GB | 27 s / 2.4 GB |
+| Nat/StackNatN (no-grow entry → join) | 13 s / 2.3 GB | 13 s / 2.3 GB |
+| Nat/StackNatG3 / G2 / G (memclr call / growslice call / entry) | 12 s / 24 s / 16 s | (next session) |
+| Nat/StackNat (`full`/`ens`/`sum`/`hyp`) | 5 s / 2.2 GB | (next session) |
+
+Lessons: (1) `janus_run … calls [hgr]` with the live `growslice` contract: the call-precondition closer ran > 6 min (killed);
+stopping at the callee entry and proving the pre with a pure lemma over an ABSTRACT call state (`gcall_pre`/`mcall_pre`
+via Janus `call_pre`) + `ReachesRet.call` = 5 s. (2) A continuation lemma whose argument shape does not SYNTACTICALLY match
+the executor's state literal (here `growCap8 … (S.regs 2).toNat` vs `growCap8 … cap`) makes `exact`/`refine` hang in
+defeq (unfolds `growCap8`/`writeLE`): pass the register equations to `janus_run` so the literal is in normal form, and give
+continuation arguments as `?_` goals closed afterwards (never big terms inside the `refine`). (3) `first | rfl | …` on goals
+about state literals: put `rfl` LAST (or `with_reducible rfl`), it whnf's readLE-over-writeLE goals for minutes.
