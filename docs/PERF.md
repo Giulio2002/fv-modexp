@@ -551,3 +551,15 @@ LESSONS: (1) after a janus_run through a callee, never reason about the literal 
 by a `@[reducible] def` (`stS`, `stA`) and prove all memory facts in a pure `fin*` lemma (16 s vs minutes);
 (2) `all_goals try (… omega …)` over janus goals is the slowest thing in a module: close goals in order with bullets;
 (3) never `omega` with the 24 `Mem` field equalities (`… % 2^64`, `/4*4`) in context.
+## agent top s9 (2026-11-11 night)
+* RunC2EX split into `c2eXB` (from the post-exp state at `fn+0x87c`: Bytes call → V) and `c2eX` (exp call, then
+  `exact c2eXB`; the call state is `expCallS T s rg pcc` so the tail unifies with janus's literal call state).
+  Before 192 s / 7.66 GB → after 182 s / 7.58 GB (108 s when the host was idle): the split did NOT remove the peak.
+  Measured: head with `debug.skipKernelTC` → 3.97 GB (94 s); head without its janus_run (sorry) → 2.57 GB. So ≈ 3.6 GB
+  is the KERNEL check of the head's single exp-call `janus_run` (6 instructions + the `expW` summary). Suspect: the
+  callee pre `RetAddr ((Extracted.program.onlySegments namesExp).link impl) …` (kernel filters all segments by name,
+  String comparisons over the 20-name `namesExp`). Next fix: an `expWAt` variant whose pre takes
+  `(t.regs 30).toNat = fn+0x87c` with the RetAddr fact proved once in its own small module (same for RunC2M/namesMod).
+* MakesliceZero premises (both ISAs) now byte-match Janus PR #2 (extra conjunct `Outside et 16 calleeStack`):
+  arm64 IntBytes 49 s / 2.3 GB, amd64 IntBytes 154 s / 2.3 GB (janus discharged the new conjunct, no proof change);
+  amd64 `WStubs.mkz` (Witness/StubsMkz.lean) 1 s.

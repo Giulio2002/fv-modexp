@@ -183,10 +183,12 @@ def sMkz : State := Witness.callS mkA IntBytes.uint8T 0 0
 theorem site_mkz : (MakeslicePre 4096 sMkz ∧ StackRoom sMkz 4096 3 ∧
     LiveAt R mkA [(sMkz.regs 0).toNat, (sMkz.regs 1).toNat, (sMkz.regs 2).toNat] [] 0x1000 0
       (sMkz.regs 28).toNat sMkz.mem (calleeStack sMkz 4096 3)) ∧
-    typSize sMkz.mem (sMkz.regs 0).toNat * (sMkz.regs 2).toNat = 0 :=
+    typSize sMkz.mem (sMkz.regs 0).toNat * (sMkz.regs 2).toNat = 0 ∧
+    Outside (sMkz.regs 0).toNat 16 (calleeStack sMkz 4096 3) :=
   ⟨⟨⟨Witness.cs_callOK _ _ _ _ 3 (by omega), ⟨by decide +kernel, by decide +kernel⟩, by decide +kernel, by decide +kernel,
     by decide +kernel⟩, Witness.cs_room _ _ _ _ 3 (by omega), trivial, Witness.inv_cs _ _ _ _, by decide +kernel,
-    fun r hr => by simp at hr, Witness.cs_winR _ _ _ _ 3 (by omega)⟩, by decide +kernel⟩
+    fun r hr => by simp at hr, Witness.cs_winR _ _ _ _ 3 (by omega)⟩, by decide +kernel,
+    by simp only [calleeStack, outside_cons, outside_nil, and_true]; decide +kernel⟩
 
 /-- `memmove(dst, src, 0)` call site (the `MemmoveZeroLive` precondition is satisfiable). -/
 def sMz : State := Witness.callS mvA (sp0 - 4800) pI 0
@@ -249,7 +251,8 @@ theorem nonvacuous_of (stkM aboveM : Nat) (hM : RunIface.ModSpec implAt R stkM a
       ((MakeslicePre 4096 s_c ∧ StackRoom s_c 4096 3 ∧
         LiveAt R (Extracted.program.contractAddr "runtime.makeslice") [(s_c.regs 0).toNat, (s_c.regs 1).toNat,
           (s_c.regs 2).toNat] L b 0 (s_c.regs 28).toNat s_c.mem (calleeStack s_c 4096 3)) ∧
-        typSize s_c.mem (s_c.regs 0).toNat * (s_c.regs 2).toNat = 0)) ∧
+        typSize s_c.mem (s_c.regs 0).toNat * (s_c.regs 2).toNat = 0 ∧
+        Outside (s_c.regs 0).toNat 16 (calleeStack s_c 4096 3))) ∧
     Returns ((Extracted.program.link impl).withExit ret) s fun s' =>
       ABIReturn s s' ∧ (RunArm64.OkRet (bytesAt s.mem p.toNat len.toNat) s' ∧
         RunArm64.FrameW R b (RunArm64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat))) L W s s') :=
