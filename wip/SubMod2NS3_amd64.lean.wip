@@ -1,0 +1,158 @@
+import FvModexp.Proofs.Amd64.Exp.SubMod2NS2
+
+/-!
+# `nat.subMod2N` (amd64): `J2` → `x.cmp(y)` → `z.sub(x, y)` + return, or `z.sub(y, x)` → `J3` (agent infra)
+-/
+
+open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Contracts Janus.Contracts.EqHashModel FvModexp
+
+namespace FvModexp.Amd64.SubMod2N
+
+open FvModexp.Amd64.RunIface (Serves)
+open FvModexp.Amd64.EvenHyp
+
+theorem cmp_neg {m : Memory} {p q l1 l2 : Nat} (h1 : NatNorm m p l1) (h2 : NatNorm m q l2)
+    (hlt : natVal m p l1 < natVal m q l2) :
+    CmpSum.cmpRes l1 l2 (m.readLE p (8 * l1)) (m.readLE q (8 * l2)) = 18446744073709551615#64 := by
+  have := (SubMod2N.cmp_lt_iff m p l1 q l2 h1 h2).2 hlt
+  unfold CmpSum.cmpRes natVal at *
+  rcases this with h | ⟨rfl, h⟩
+  · rw [ite_eq_left_iff.2 (fun h' => absurd h h')]
+  · simp [h]
+
+theorem cmp_nonneg {m : Memory} {p q l1 l2 : Nat} (h1 : NatNorm m p l1) (h2 : NatNorm m q l2)
+    (hge : ¬ natVal m p l1 < natVal m q l2) :
+    (CmpSum.cmpRes l1 l2 (m.readLE p (8 * l1)) (m.readLE q (8 * l2))).getLsbD 63 = false := by
+  have h := mt (SubMod2N.cmp_lt_iff m p l1 q l2 h1 h2).1 hge
+  unfold CmpSum.cmpRes natVal at *
+  by_cases a : l1 < l2
+  · exact absurd (Or.inl a) h
+  rw [if_neg a]
+  by_cases b' : l2 < l1
+  · rw [if_pos b']; decide
+  rw [if_neg b']
+  have e : l1 = l2 := by omega
+  rw [if_neg (fun c => h (Or.inr ⟨e, c⟩))]
+  split <;> decide
+
+theorem cmp_nonneg' {m : Memory} {p q l1 l2 : Nat} (h1 : NatNorm m p l1) (h2 : NatNorm m q l2)
+    (hge : ¬ natVal m p l1 < natVal m q l2) :
+    ∃ v, v ≤ 1 ∧ CmpSum.cmpRes l1 l2 (m.readLE p (8 * l1)) (m.readLE q (8 * l2)) = BitVec.ofNat 64 v := by
+  have h := mt (SubMod2N.cmp_lt_iff m p l1 q l2 h1 h2).1 hge
+  unfold CmpSum.cmpRes natVal at *
+  by_cases a : l1 < l2
+  · exact absurd (Or.inl a) h
+  rw [if_neg a]
+  by_cases b' : l2 < l1
+  · rw [if_pos b']; exact ⟨1, by omega, rfl⟩
+  rw [if_neg b']
+  have e : l1 = l2 := by omega
+  rw [if_neg (fun c => h (Or.inr ⟨e, c⟩))]
+  split
+  · exact ⟨1, by omega, rfl⟩
+  · exact ⟨0, by omega, rfl⟩
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 16000000 in
+/-- from the entry of `x'.cmp(y')` (`RSP_c = e - 136`, return address `+0x26c`) -/
+theorem s3c (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
+    (hsub : SubHypR impl R)
+    {b : Nat} {L : List (Nat × Nat)} {op zp zl zc yp yl yc n : Nat} {s : State}
+    (k3 : J3 impl R b L op zp zl zc yp yl yc n s) (hpre : Pre R b L op zp zl zc yp yl yc n s)
+    (S : State) {l1 p2 l2 c2 : Nat} {L2 : List (Nat × Nat)} {b2 : Nat}
+    (hpc : S.rip = BitVec.ofNat 64 6184128) (hsp : S.regs 4 = BitVec.ofNat 64 ((s.regs 4).toNat - 136))
+    (hab : Abi s S) (hra : S.mem.readLE ((s.regs 4).toNat - 136) 8 = 6216460)
+    (h0 : S.regs 0 = BitVec.ofNat 64 zp) (h3 : S.regs 3 = BitVec.ofNat 64 l1)
+    (h7 : S.regs 7 = BitVec.ofNat 64 p2) (h6 : S.regs 6 = BitVec.ofNat 64 l2)
+    (hfw : Fw s S.mem zp zl zc yp n) (r16 : S.mem.readLE ((s.regs 4).toNat - 16) 8 = zp)
+    (r40 : S.mem.readLE ((s.regs 4).toNat - 40) 8 = l1) (r32 : S.mem.readLE ((s.regs 4).toNat - 32) 8 = zc)
+    (r24 : S.mem.readLE ((s.regs 4).toNat - 24) 8 = p2) (r56 : S.mem.readLE ((s.regs 4).toNat - 56) 8 = l2)
+    (r48 : S.mem.readLE ((s.regs 4).toNat - 48) 8 = c2) (hrt : Rt R b L s zp zc n 2 S.mem L2 b2)
+    (hv1 : natVal S.mem zp l1 = natVal s.mem zp zl % 2 ^ n) (hn1 : NatNorm S.mem zp l1) (hW1 : l1 ≤ W n)
+    (hv2 : natVal S.mem p2 l2 = natVal s.mem yp yl % 2 ^ n) (hn2 : NatNorm S.mem p2 l2) (hW2 : l2 ≤ W n)
+    (hlc2 : l2 ≤ c2) (hc2 : c2 < 2 ^ 40)
+    (hacc2 : S.mem.accessible p2 (8 * l2) false = true) (h482 : p2 + 8 * l2 ≤ 2 ^ 48) (hh2 : Held R L2 p2 (8 * l2))
+    (hw2 : p2 + 8 * l2 ≤ (s.regs 4).toNat - 4576 ∨ (s.regs 4).toNat + 88 ≤ p2) (hzp2 : Apart zp (8 * zc) p2 (8 * l2)) :
+    Goal impl R b L zp zl zc yp yl n s S := by
+  obtain ⟨⟨-, ⟨hb', ha, hw⟩, -, -, hout, -, -, -, -, -⟩, -, -, -, -, -, hn1', -, hzl, hW, hzc, -, -,
+    -, -, hzlive, hzw, -⟩ := id hpre
+  obtain ⟨h14, hfs, hx15, hdf⟩ := hab
+  have hent := ent_of hpre
+  simp only [W] at hW hW1 hW2
+  simp only [win, K, A, regSP, outside_cons, outside_nil, and_true] at hzw hout hb' ha hw
+  have hz48 : zp + 8 * zc ≤ 2 ^ 48 := (hzlive (by omega)).2.2.2
+  have hspT : (S.regs 4).toNat = (s.regs 4).toNat - 136 := by rw [hsp]; exact tN (by omega)
+  have hzh : Held R L2 zp (8 * zc) := (hrt.2.2.2.2.2.2 (by omega)).2.1
+  have hacc : S.mem.accessible ((s.regs 4).toNat - 4576) (4576 + 88) true = true := by
+    rw [hrt.2.1.accessible]; exact hw
+  have hacc1 : S.mem.accessible zp (8 * l1) false = true :=
+    Janus.Arm64.Memory.accessible_sub _ (hrt.2.2.2.2.2.2 (by omega)).2.2.1 (Or.inr rfl) (Nat.le_refl _) (by omega)
+  refine CmpW.call (CmpW.sum impl hap) hpc (cmpPre_of hspT h0 h3 h7 h6 (by rw [hra]; decide) (by omega) (by omega)
+    (Janus.Arm64.Memory.accessible_sub _ hacc (Or.inr rfl) (by omega) (by omega))
+    (Or.inr ⟨by omega, hacc1, by unfold Apart; omega⟩)
+    (Or.inr ⟨by omega, hacc2, by unfold Apart; omega⟩)) fun S' hpc' hsp' hr0 hrs hxm hfs' hdf' hF' hrg' => ?_
+  rw [h0, h3, h7, h6, tN (show zp < 2 ^ 64 by omega), tN (show l1 < 2 ^ 64 by omega), tN (show p2 < 2 ^ 64 by omega),
+    tN (show l2 < 2 ^ 64 by omega)] at hr0
+  simp only [FvModexp.Asm.lv] at hr0
+  have hs4 : 4576 ≤ (s.regs 4).toNat := by omega
+  obtain ⟨hcfA, hcfG⟩ := cmp_frame (R := R) hs4 hspT hF'
+  have hrt' : Rt R b L s zp zc n 2 S'.mem L2 b2 := rt_stk hpre hrt hcfA hrg'
+  have hfw' : Fw s S'.mem zp zl zc yp n :=
+    fw_call (zr := ((0 : Nat), (0 : Nat))) hs4 hout (by omega) (Or.inr rfl) (by omega) (by omega) hfw hcfG
+  obtain ⟨f1, f2, f3, f4, f5, f6, f7⟩ := hfw'
+  unfold CmpSum.frame at hF'
+  rw [hspT] at hF'
+  have rdl : ∀ a, (s.regs 4).toNat - 56 ≤ a → a + 8 ≤ (s.regs 4).toNat - 8 → S'.mem.readLE a 8 = S.mem.readLE a 8 := by
+    intro a h1 h2
+    refine hF'.readLE _ _ ?_
+    simp only [outside_cons, outside_nil, and_true]; omega
+  have q16 := (rdl _ (by omega) (by omega)).trans r16
+  have q40 := (rdl _ (by omega) (by omega)).trans r40
+  have q32 := (rdl _ (by omega) (by omega)).trans r32
+  have q24 := (rdl _ (by omega) (by omega)).trans r24
+  have q56 := (rdl _ (by omega) (by omega)).trans r56
+  have q48 := (rdl _ (by omega) (by omega)).trans r48
+  have hzA : Outside zp (8 * l1) (win s K A) := by simp only [win, K, A, outside_cons, outside_nil, and_true]; omega
+  have hyA : Outside p2 (8 * l2) (win s K A) := by simp only [win, K, A, outside_cons, outside_nil, and_true]; omega
+  have hv1' := (natVal_frame hcfA hzA).trans hv1
+  have hv2' := (natVal_frame hcfA hyA).trans hv2
+  have hn1' := natNorm_frame hcfA hzA hn1
+  have hn2' := natNorm_frame hcfA hyA hn2
+  have hacc1' : S'.mem.accessible zp (8 * l1) false = true := by rw [hcfA.accessible]; exact hacc1
+  have hacc2' : S'.mem.accessible p2 (8 * l2) false = true := by rw [hcfA.accessible]; exact hacc2
+  have hacc' : S'.mem.accessible ((s.regs 4).toNat - 4576) (4576 + 88) true = true := by
+    rw [hcfA.accessible]; exact hacc
+  have hsp1 : S'.regs 4 = BitVec.ofNat 64 ((s.regs 4).toNat - 128) := by
+    rw [hsp', hsp]; apply BitVec.eq_of_toNat_eq; simp [BitVec.toNat_add]; omega
+  have h14' : S'.regs 14 = s.regs 14 := (hrs 14 (by decide) (by decide) (by decide) (by decide) (by decide)).trans h14
+  have hpc1 : S'.rip = BitVec.ofNat 64 6216460 := by rw [hpc', retAddrOf_eq, hspT, hra]
+  have hzh1 : Held R L2 zp (8 * l1) := hzh.sub (Nat.le_refl _) (by omega)
+  have a16 : (s.regs 4).toNat - 128 + 144 = (s.regs 4).toNat + 16 := by omega
+  have a24 : (s.regs 4).toNat - 128 + 152 = (s.regs 4).toNat + 24 := by omega
+  have a32 : (s.regs 4).toNat - 128 + 160 = (s.regs 4).toNat + 32 := by omega
+  have b16 : (s.regs 4).toNat - 128 + 112 = (s.regs 4).toNat - 16 := by omega
+  have b40 : (s.regs 4).toNat - 128 + 88 = (s.regs 4).toNat - 40 := by omega
+  have b32 : (s.regs 4).toNat - 128 + 96 = (s.regs 4).toNat - 32 := by omega
+  have b24 : (s.regs 4).toNat - 128 + 104 = (s.regs 4).toNat - 24 := by omega
+  have b56 : (s.regs 4).toNat - 128 + 72 = (s.regs 4).toNat - 56 := by omega
+  have b48 : (s.regs 4).toNat - 128 + 80 = (s.regs 4).toNat - 48 := by omega
+  have hx0 : S'.xmm 15 = 0 := by rw [hxm, hx15]; exact hent.2.2.2.1
+  have hdf0 : S'.df = false := by rw [hdf', hdf]
+  by_cases hlt : natVal S.mem zp l1 < natVal S.mem p2 l2
+  · have hR : S'.regs 0 = 18446744073709551615#64 := hr0.trans (cmp_neg hn1 hn2 hlt)
+    have hll := (SubMod2N.cmp_lt_iff S.mem zp l1 p2 l2 hn1 hn2).2 hlt
+    janus64_run [hR, hsp1, a16, a24, a32, b16, b40, b32, b24, b56, b48, f3, f4, f5, q16, q40, q32, q24, q56, q48]
+      until [6183136]
+    trace_state
+    sorry
+  · obtain ⟨v, hv01, hcv⟩ := cmp_nonneg' hn1 hn2 hlt
+    have hR : S'.regs 0 = BitVec.ofNat 64 v := hr0.trans hcv
+    have h63 : (BitVec.ofNat 64 v).msb = false := by
+      rw [BitVec.msb_eq_decide]; simp; omega
+    have hll := mt (SubMod2N.cmp_lt_iff S.mem zp l1 p2 l2 hn1 hn2).1 hlt
+    janus64_run [hR, h63, hsp1, a16, a24, a32, b16, b40, b32, b24, b56, b48, f3, f4, f5, q16, q40, q32, q24, q56, q48]
+      until [6183136]
+    trace_state
+    sorry
+
+end FvModexp.Amd64.SubMod2N
