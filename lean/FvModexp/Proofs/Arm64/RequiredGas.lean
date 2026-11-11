@@ -27,7 +27,7 @@ theorem correctness (c ptr len cap : BitVec 64) :
   all_goals janus_run [c32, d0, BitArith.and_asr63, BitArith.and_asr63_lit, Nat.lt_add_right_iff_pos, Nat.mod_eq_of_lt]
     until [Extracted.entry + 0xc4] calls [sb, mv]
   all_goals
-    refine reaches_of_returns (rg_blk2 c ptr len cap ret hret s _ hpre' ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_)
+    refine reaches_of_returns (rg_blk2 c ptr len cap ret hret s _ hpre' ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_)
       (fun s' h => h)
     all_goals first
       | with_reducible rfl
@@ -45,7 +45,6 @@ theorem correctness (c ptr len cap : BitVec 64) :
            | done
            | rfl
            | (apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_add, BitVec.toNat_ofNat]; omega))
-      | (with_reducible show Memory.readLE _ _ _ = _; janus_simp)
-      | (trace_state; sorry)
+      | (with_reducible show Memory.readLE _ _ _ = _; janus_simp; try (split <;> omega))
 
 end FvModexp.Arm64.RequiredGas
