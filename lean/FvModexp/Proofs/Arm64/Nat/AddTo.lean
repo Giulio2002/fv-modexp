@@ -108,7 +108,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   have hzb1 : s.mem.accessible (zp.toNat + 8 * xl.toNat) (8 * (zl.toNat - xl.toNat)) true = true :=
     Memory.accessible_mono _ hzacc (by omega) (by omega)
   have hzb2 := Memory.accessible_weaken _ hzb1
-  have hLsW : ∀ r ∈ L, r.fst + (r.snd - r.fst) ≤ s.sp.toNat - 96 - 4144 ∨ s.sp.toNat - 96 + 32 ≤ r.fst := by
+  have hLsW : ∀ r ∈ L, r.fst + (r.snd - r.fst) ≤ s.sp.toNat - 96 - 4144 ∨ s.sp.toNat - 96 + 40 ≤ r.fst := by
     intro r hr; have := hLs' r hr; omega
   -- the value pieces
   have hsplit : ∀ m : Memory, natVal m zp.toNat zl.toNat =

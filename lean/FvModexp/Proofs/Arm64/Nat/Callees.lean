@@ -272,15 +272,17 @@ def VWMoves (R : RtInv) (zp zl zc xp xc : Nat) : Prop :=
     R.ok (cA "runtime.memmove") [if j < zc then zp + 8 * j else zp, if j < xc then xp + 8 * j else xp, 8 * (zl - j)]
 
 /-- `addVW(z, x []Word, y Word) (c Word)` (arith.go:103): `z = x + y` over `len z = len x` limbs, carry out. Frame 48,
-`memmove` (4096) → `stk = 4144`; spills `X0`, `X3` (`above = 32`). -/
+`memmove` (4096) → `stk = 4144`; spills `X0`, `X3` (`X3` at caller `SP+32..SP+40`: `above = 40`; asm amendment 2026-11-11). -/
 def AddVWEns (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat))
     (zp zl zc xp xl xc y : W64) : Prop :=
   Ensures ((Extracted.program.onlySegments [addVWfn]).link impl) (segAddr Extracted.program addVWfn)
     [zp, zl, zc, xp, xl, xc, y]
-    (fun s => CallEnvND R L s 4144 32 ∧ xl = zl ∧ zl.toNat ≤ zc.toNat ∧ zl.toNat ≤ xc.toNat ∧
-      NatLive s.mem R L zp.toNat zl.toNat ∧ Outside zp.toNat (8 * zl.toNat) (win s 4144 32) ∧
+    (fun s => CallEnvND R L s 4144 40 ∧ xl = zl ∧ zl.toNat ≤ zc.toNat ∧ zl.toNat ≤ xc.toNat ∧
+      zc.toNat < 2 ^ 63 ∧ xc.toNat < 2 ^ 63 ∧
+      NatLive s.mem R L zp.toNat zl.toNat ∧ Outside zp.toNat (8 * zl.toNat) (win s 4144 40) ∧
+      (0 < zl.toNat → Apart zp.toNat (8 * zl.toNat) ((s.regs 28).toNat + 16) 8) ∧
       s.mem.accessible xp.toNat (8 * zl.toNat) false = true ∧ xp.toNat + 8 * zl.toNat ≤ 2 ^ 48 ∧
-      Held R L xp.toNat (8 * zl.toNat) ∧ Outside xp.toNat (8 * zl.toNat) (win s 4144 32) ∧
+      Held R L xp.toNat (8 * zl.toNat) ∧ Outside xp.toNat (8 * zl.toNat) (win s 4144 40) ∧
       (zp = xp ∨ Apart zp.toNat (8 * zl.toNat) xp.toNat (8 * zl.toNat)) ∧
       R.inv b L (s.regs 28).toNat (view R.rt L s.mem) ∧
       (if zp = xp then True else VWMoves R zp.toNat zl.toNat zc.toNat xp.toNat xc.toNat))
@@ -288,7 +290,7 @@ def AddVWEns (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat))
       natVal s'.mem zp.toNat zl.toNat = (natVal s.mem xp.toNat zl.toNat + y.toNat) % 2 ^ (64 * zl.toNat) ∧
       ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b ≤ b' ∧
         R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem) ∧
-        MemFrame s.mem s'.mem (R.rt ++ winA s 4144 32 ++ [(zp.toNat, zp.toNat + 8 * zl.toNat)]) ∧
+        MemFrame s.mem s'.mem (R.rt ++ winA s 4144 40 ++ [(zp.toNat, zp.toNat + 8 * zl.toNat)]) ∧
         LiveFrame s.mem s'.mem L [(zp.toNat, zp.toNat + 8 * zl.toNat)])
 
 end FvModexp.Arm64.Callees
