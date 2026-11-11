@@ -55,6 +55,7 @@ structure Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (qp ql st up ul uc v
   -- u: overwritten with the remainder
   ub : ul < 2 ^ 40
   ulc : ul ≤ uc
+  ucb : uc < 2 ^ 40
   uacc : s.mem.accessible up (8 * ul) true = true
   u48 : up + 8 * ul ≤ 2 ^ 48
   uh : Held R L up (8 * ul)
