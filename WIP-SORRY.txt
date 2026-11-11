@@ -2,5 +2,3 @@
 wip/SubMod2N_S1T_explore.lean.wip	infra	subMod2N arm64 entry segment exploration (not compiled; sorry closers)
 lean/FvModexp/Proofs/Arm64/Exp/W4Zc.lean	expmc	window-4 zj -> test (zz reuse, bitLen, first-window copy): WIP
 lean/FvModexp/Proofs/Amd64/Nat/BasicSqrEnd.lean	divmc	basicSqr amd64 WIP
-lean/FvModexp/Proofs/Amd64/Nat/BasicSqrBody.lean	divmc	basicSqr amd64 WIP
-lean/FvModexp/Proofs/Amd64/Nat/BasicSqrLoop.lean	divmc	basicSqr amd64 WIP

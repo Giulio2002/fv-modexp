@@ -54,9 +54,44 @@ theorem step (impl : List Amd64.Segment) (R : RtInv)
   rw [hzl] at hzh1
   have hxi : S.mem.readLE (xp.toNat + 8 * i) 8 = s.mem.readLE (xp.toNat + 8 * i) 8 :=
     mxs _ _ (by omega) (by omega)
+  have hmask : ((0#64 - (BitVec.ofNat 64 (2 * xl.toNat) - BitVec.ofNat 64 i)).sshiftRight 63).toNat =
+      18446744073709551615 := by
+    have hz := hpre.zcb; have hzc := hpre.zlc
+    refine sshr63_of_lt _ _ ?_ ?_ <;> simp only [BitVec.toNat_sub, BitVec.toNat_ofNat] <;> omega
   clear hpre hscr hzlv hg1 hg2
-  janus64_run [BitVec.msb_eq_decide, hxi, hfs, m3, m4, m5, m10, m11, m12, m13, m14, m15,
+  janus64_run [BitVec.msb_eq_decide, hxi, hfs, hmask, and_ones64 (8 * i) (by omega), m3, m4, m5, m10, m11, m12, m13, m14, m15,
     and_ones64 (i * 8) (by omega), mod64_of_lt (t + 8 * i) (by omega)] until [callMV]
-  all_goals sorry
+  refine body2 impl R hMV' b L st zp zl zc xp xl xc s t L1 b1 w1 c1 hE Q i h1 hiy S.mem hI hk _ ?_ ?_ ?_ ?_ ?_ ?_
+    ?F ?z0 ?z1 ?_ ?_ ?_ ?_ ?f5 ?_ ?_ ?_ ?_ ?inv
+  case F => janus_frame
+  case inv =>
+    refine RtInv.inv_frame' (ws := [(zp.toNat + 16 * i, zp.toNat + 16 * i + 16),
+      ((s.regs 4).toNat - 192, (s.regs 4).toNat - 104), ((s.regs 4).toNat - 72, (s.regs 4).toNat - 48)])
+      (by janus_frame) (fun r hr => ?_) minv
+    simp only [List.mem_cons, List.not_mem_nil, or_false] at hr
+    rcases hr with rfl | rfl | rfl
+    · simp only [Nat.add_sub_cancel_left]; exact (hzh1.sub (by omega) (by omega)).symm
+    · left; exact hout.of_sub (by omega) (by omega)
+    · left; exact hout.of_sub (by omega) (by omega)
+  all_goals (try janus64_simp)
+  all_goals (try simp only [Nat.mul_comm i 8, Nat.mul_comm i 16])
+  all_goals first | exact hfs | exact hdf | omega | skip
+
+theorem loop (impl : List Amd64.Segment) (R : RtInv)
+    (hMV' : ∀ b L, Summary0 (LibBasicSqr.program.link impl) (segAddr Extracted.program addMulVVWWfn)
+      (VVWWLPre R b L) (VVWWLQ R b L))
+    (b : Nat) (L : List (Nat × Nat)) (st zp zl zc xp xl xc : BitVec 64) (s : State)
+    (t : Nat) (L1 : List (Nat × Nat)) (b1 w1 c1 : Nat)
+    (hE : Env R b L st.toNat zp.toNat zl.toNat zc.toNat xp.toNat xl.toNat s t L1 b1 w1 c1) (Q : State → Prop)
+    (hfin : HeadK impl R L st zp zl zc xp xl xc s t L1 b1 w1 c1 Q xl.toNat) :
+    ∀ k i, i + k = xl.toNat → 1 ≤ i → HeadK impl R L st zp zl zc xp xl xc s t L1 b1 w1 c1 Q i := by
+  intro k
+  induction k with
+  | zero => intro i hi _; obtain rfl : i = xl.toNat := by omega
+            exact hfin
+  | succ k ih =>
+    intro i hi h1
+    exact step impl R hMV' b L st zp zl zc xp xl xc s t L1 b1 w1 c1 hE Q i h1 (by omega)
+      (ih (i + 1) (by omega) (by omega))
 
 end FvModexp.Amd64.BasicSqr
