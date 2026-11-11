@@ -113,6 +113,9 @@ Lesson (before → after): the first setBytes exploration with `janus_data hd [h
 | Top/RunH1 (entry -> B1, both `getData` paths) | 72 s / 3.0 GB | |
 | Top/RunH2S (B1 -> B2, `len < 64`: two paths, memmove + padded buffer) | 99 s / 4.3 GB | |
 | Top/RunH2 (B1 -> B2, `len >= 64` + RunH2S) | 41 s / 3.1 GB | before: **>15 min (killed)** with `janus_simp [hinS]` (a conditional `∀ a n, p <= a -> ... -> readLE a n = ...` as a simp lemma) closing the per-byte goals; after: explicit `readLE_writeLE_of_disjoint` x4 + `exact hinS _ _ (by omega) (by omega)` |
+| Top/RunH3S, Top/RunH3 (B2 -> B3, header 3) | 119 s / 4.8 GB, 47 s / 3.3 GB | as H2 |
+| Top/RunLa (B3 -> P1: `Uint64` + `BitLen` of the 3 headers, 8 cases) | 42 s / 2.6 GB | before: **131 s for ONE of the 8 cases** (one path, 37 instructions). Two causes, both fixed: (1) `janus_data` (49 `h_data*` facts + `h_rodata`) left in the context made every discharger `omega` call slow: 61 s -> 3.4 s for the first 16 instructions by not expanding `DataLoaded` and clearing unused hypotheses; (2) `nat.bitLen`'s bit smear doubles the term 6 times and `CSEL` copied it into conditions: generalize the loaded top limb (`generalize hx : … = x`) and name each bit length with `gen_reg` (new whitelisted tactic, `Common/GenReg.lean`) before the comparisons |
+| Top/RunL (P1 -> C0 / error return / empty return, 10 leaves) | 43 s / 2.9 GB | max/compare `CSEL` chains turned into `∨`/`∧` by `ite3_int_gt`/`ite3_nat_le` passed to `janus_run` (no `simp at *`, which also reorders hypotheses and breaks `rename_i`); a first attempt that left `first \| … \| …` closers failing on every leaf hit **32 GB** (error-message elaboration of 10 large states): dev builds now always run under `memcap -m 8G` |
 # Performance record (proof elaboration and `janus verify` rows)
 
 Project sanity goal: every `janus verify` row <= 15 min wall and <= 16 GB (hard, `scripts/verify-all.sh` has no override); every proof module's
