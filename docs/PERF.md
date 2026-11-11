@@ -395,3 +395,16 @@ missing hypothesis (here `B ≤ b`) before suspecting anything else.
 |---|---|---|---|
 | arm64 DivWRow | PASS | 357 s | 5.2 GB |
 | amd64 DivWRow | PASS | 500 s | 4.8 GB |
+
+## RequiredGas both ISAs (agent infra, session 3), 2026-11-11
+Before/after (dev compile `LEAN_NUM_THREADS=4`; wall depends on host load, CPU = user seconds):
+| date | module | before | fix | after |
+|---|---|---|---|---|
+| 2026-11-11 | Arm64/RequiredGas/Fin1 | 58 s (idle host) | positional bullet closers (`exact h…`, `dsimp only`) instead of a `first \| show … ` cascade over 16 obligations | 4.5 s |
+| 2026-11-11 | every RequiredGas `dl_close` / `copy_rd (by assumption)` / `Eq.trans (by assumption)` (both ISAs) | `assumption` = 14 s of a 27 s SetBytes case (default transparency unifies `DataLoaded (writeLE …)` with every hypothesis) | `with_reducible assumption` | arm64 SbA 38→16, SbC 29→14, SbE 22→15, SbF 31→14, SbG 29→12 s; amd64 Sb* 58-100 s → 25-47 s, Mv 22→16 s |
+| 2026-11-11 | Arm64/RequiredGas/SbD (+ all arm64 Sb cases, gen-sb-cases.py) | 186 s CPU: 65 s in `omega` proving the final byte-assembly identity inside the post-`janus_run` context (omega takes every context fact) | `simp only [Nat.mul_add, Nat.mul_assoc, Nat.reduceMul, Nat.mul_one]; ac_rfl` first, `omega` only as fallback (the identity alone is 0.13 s standalone) | 45 s CPU (25 s wall at load 94) |
+Remaining cost centers: arm64 Blk2/Blk3 Lt/Ge 29-32 s, FinA 49 s, IcHL 45 s, main 32 s — mostly `janus_run` itself (FinA: 35 of 47 s,
+Blk2Lt: 17 of 27 s). amd64: every SetBytes case spends ~5 s in KERNEL typechecking of ~25 `_proof_1_N` auxiliary declarations that
+`janus64_run` emits (~0.2 s each; amd64 SbA: 90 s of "type checking" in `--profile`); not in this repo's control (Janus amd64 step
+proofs) — reported to the coordinator. amd64 module dev times (load ~40-90): Blk2 46, Blk3 48, FinC 47, FinD 36, FinA 25, IcHZ 37,
+IcHN 43, Sb* 25-47, main 16 s.
