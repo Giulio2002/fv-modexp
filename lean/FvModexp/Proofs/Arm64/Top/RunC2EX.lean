@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Arm64.Top.RunC2Sum
+import FvModexp.Proofs.Arm64.Top.RunC2RA
 import FvModexp.Proofs.Arm64.Top.RunC2Lem3
 
 /-! # `Run` (arm64): from the `exp` call block (`fn + 0x864`) to `V`: `v = base.exp(base, exp, mod, false).Bytes()`
@@ -288,6 +288,7 @@ theorem c2eX (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
       hop hopA hxs hpw
   have hExp := expW impl hap R stkM aboveM hE b1 L1 T.sp (s.regs 28) T.mem (s.sp.toNat - 136) (s.sp.toNat - 168)
     (s.sp.toNat - 200) hIP hy0 hzl hyl hml
+  have hRA := raExp impl hap
   janus_run until [segAddr Extracted.program fn + 0x87c] calls [hP := hExp]
   obtain ⟨⟨⟨hsp1, h281, h291, h181⟩, hr01, hpost⟩, hrg1⟩ := hP
   exact c2eXB impl hap R stkM aboveM hE hBy hsv b L c p len cp ret hret s Q W henvW0 hW hW1 hab hglob hgL hbB L1 b1 T

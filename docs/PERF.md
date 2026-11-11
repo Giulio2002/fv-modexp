@@ -563,3 +563,8 @@ by a `@[reducible] def` (`stS`, `stA`) and prove all memory facts in a pure `fin
 * MakesliceZero premises (both ISAs) now byte-match Janus PR #2 (extra conjunct `Outside et 16 calleeStack`):
   arm64 IntBytes 49 s / 2.3 GB, amd64 IntBytes 154 s / 2.3 GB (janus discharged the new conjunct, no proof change);
   amd64 `WStubs.mkz` (Witness/StubsMkz.lean) 1 s.
+* FIX (top s9): callee `RetAddr (onlySegments names …)` proved ONCE per return site from the layout (Top/RunC2RA:
+  `raRun` — Run is segment 0, the callee program does not keep Run, segments pairwise apart; 6 s / 2.4 GB; a `decide` of
+  the same fact costs 7.1 GB, all in `names.contains` over the 84 segments) and handed to `janus_run` as a context
+  hypothesis (`have hRA := raExp impl hap`). RunC2EX 182 s / 7.58 GB → 85 s / 3.00 GB; RunC2M 225 s / 6.51 GB →
+  103 s / 2.90 GB. Applies to every `calls [hP := …]` with an `onlySegments` callee (setBytes sites in H*/D* next).
