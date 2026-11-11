@@ -69,7 +69,7 @@ def Post (s s' : State) : Prop :=
   s'.pc = s.regs 30 ∧ s'.sp = s.sp ∧ s'.regs 0 = BitVec.ofNat 64 (FvModexp.AsmDiv.recipWord (s.regs 0).toNat) ∧
   s'.regs 18 = s.regs 18 ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧ s'.regs 30 = s.regs 30 ∧
   (∀ i, i ∉ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 16, 29, 30] → s'.regs i = s.regs i) ∧
-  MemFrame s.mem s'.mem [(s.sp.toNat - 88, s.sp.toNat)]
+  MemFrame s.mem s'.mem [(s.sp.toNat - 88, s.sp.toNat - 40)]
 
 /-- the callee summary of `reciprocalWord` (arm64), for `d1 != 0` (every call site: natdiv.go:586, 655) -/
 theorem recip_summary : Summary program entry
@@ -116,7 +116,7 @@ theorem ensures (d1 : BitVec 64) :
     Ensures program entry [d1]
       (fun s => GuardOK s 48 ∧ StackOK s 88 0 ∧ d1.toNat ≠ 0 ∧ Apart ((s.regs 28).toNat + 16) 8 (s.sp.toNat - 88) 88)
       (fun s s' => results 1 s' = [BitVec.ofNat 64 (FvModexp.AsmDiv.recipWord d1.toNat)] ∧
-        MemFrame s.mem s'.mem [(s.sp.toNat - 88, s.sp.toNat)]) := by
+        MemFrame s.mem s'.mem [(s.sp.toNat - 88, s.sp.toNat - 40)]) := by
   refine FvModexp.AsmDiv.A64.ensures_of_summary _ _ recip_summary ?_ ?_
   · intro ret hret s hsu ⟨hg, hst, hy, hgA⟩
     have h0 : s.regs 0 = d1 := by have := hsu.args 0 (by simp); simpa using this

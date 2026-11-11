@@ -21,7 +21,7 @@ theorem correctness (d1 : BitVec 64) :
       (fun s => GuardOK s 48 ∧ StackOK s 88 0 ∧ d1.toNat ≠ 0 ∧ Apart ((s.regs 28).toNat + 16) 8 (s.sp.toNat - 88) 88)
       (fun s s' => results 1 s' =
           [BitVec.ofNat 64 ((2 ^ 128 - 1) / (d1.toNat * 2 ^ clzNat 64 d1.toNat) - 2 ^ 64)] ∧
-        MemFrame s.mem s'.mem [(s.sp.toNat - 88, s.sp.toNat)]) :=
+        MemFrame s.mem s'.mem [(s.sp.toNat - 88, s.sp.toNat - 40)]) :=
   FvModexp.Arm64.RecipWordSum.ensures d1
 
 namespace Witness
@@ -58,7 +58,7 @@ theorem nonvacuous : ∃ (ret : Nat) (s : State) (d1 : BitVec 64), RetAddr Extra
     Returns (Extracted.program.withExit ret) s
       (fun s' => ABIReturn s s' ∧
         (results 1 s' = [BitVec.ofNat 64 ((2 ^ 128 - 1) / (d1.toNat * 2 ^ clzNat 64 d1.toNat) - 2 ^ 64)] ∧
-        MemFrame s.mem s'.mem [(s.sp.toNat - 88, s.sp.toNat)])) :=
+        MemFrame s.mem s'.mem [(s.sp.toNat - 88, s.sp.toNat - 40)])) :=
   ⟨ret, s0, d1, hret, setup, hpre, correctness d1 ret hret s0 setup hpre⟩
 
 end Witness
