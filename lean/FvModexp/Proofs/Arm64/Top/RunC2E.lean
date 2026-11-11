@@ -7,6 +7,8 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
 
 namespace FvModexp.Arm64.Run
 
+theorem le_or_left' {a b c : Nat} (h : a ≤ b) : a ≤ b ||| c := Nat.le_trans h Nat.left_le_or
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 theorem c2e (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv) (stkM aboveM : Nat)
@@ -24,6 +26,7 @@ theorem c2e (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     Reaches ((LibRun.program.link impl).withExit ret) T Q := by
   have hX := c2eX impl hap R stkM aboveM hE hBy hsv b L c p len cp ret hret s Q W henvW hW hW1 hab hglob hgL hbB L1 b1
   have hrel0 := hrel
+  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, hd, hout, hga, hgr, hLs, hro⟩ := henvW
   obtain ⟨hsp, h28, h29, h18, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -,
     -, -, -, -, -, -, -, hMF, -, hop, -⟩ := hrel
   simp only [stk] at hMF
@@ -49,7 +52,24 @@ theorem c2e (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
       rw [hMF.accessible]; exact Memory.accessible_read_of_write _ (Memory.accessible_mono _ hpacc (Nat.le_refl _) (by omega))
     have ht : T.mem.readLE (mp + 8 * (ml - 1)) 8 ≠ 0 := hnorm0.resolve_left (by omega)
     janus_run [hmpd, hmld, hq] until [segAddr Extracted.program fn + 0x818]
-    trace_state
-    sorry
+    generalize hxd : BitVec.ofNat 64 (T.mem.readLE (mp + 8 * (ml - 1)) 8) = x
+    janus_run [h7] until [segAddr Extracted.program fn + 0x844]
+    gen_reg 5 as bl with hBl
+    have hx0 : 0 < x.toNat := by rw [← hxd]; exact toNat_ofNat_readLE_pos _ _ ht
+    have hbl1 : bl.toNat ≠ 1 := by
+      intro h1
+      rw [← hBl] at h1
+      obtain ⟨hm1, hx1⟩ := (blr_one x.toNat _ ml hx0 (by (repeat apply le_or_left'); exact Nat.le_refl _)
+        (fun h => by have := BitVec.eq_of_toNat_eq (y := 1#64) h; subst this; decide)
+        (by repeat (first | apply Nat.or_lt_two_pow | exact BitVec.isLt _)) hml1 (by omega)).1 h1
+      subst hm1
+      rw [← hxd, BitVec.toNat_ofNat, Nat.mod_eq_of_lt (Memory.readLE_lt _ _ 8)] at hx1
+      apply hv0
+      rw [← hval0, natVal_succ, natVal_zero, show mp + 8 * 0 = mp + 8 * (1 - 1) by rfl, hx1]
+    have hb1 : (bl = 1#64) = False := by
+      simp only [eq_iff_iff, iff_false]; intro h; apply hbl1; rw [h]; rfl
+    janus_run [hb1] until [segAddr Extracted.program fn + 0x864]
+    exact hX _ (RelD.congr hrel0 (by janus_simp) (by janus_simp) (by janus_simp) (by janus_simp) (by janus_simp))
+      (by janus_simp) hv2 hk
 
 end FvModexp.Arm64.Run
