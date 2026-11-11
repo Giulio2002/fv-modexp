@@ -10,7 +10,7 @@ namespace FvModexp.Amd64.RG
 open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Spec Janus.Contracts
 
 /-- `DataLoaded` across a chain of stores into writable ranges (from the `DataLoaded` hypothesis about the base memory). -/
-macro "dl_close" : tactic => `(tactic| (dsimp only; repeat (first | assumption | (apply Janus.Amd64.Program.DataLoaded.writeLE <;> first | assumption | janus64_disch | skip))))
+macro "dl_close" : tactic => `(tactic| (dsimp only; repeat (first | with_reducible assumption | (apply Janus.Amd64.Program.DataLoaded.writeLE <;> first | with_reducible assumption | janus64_disch | skip))))
 
 abbrev sbA : Nat := segAddr Extracted.program "github.com/holiman/uint256.(*Int).SetBytes"
 abbrev mvA : Nat := segAddr Extracted.program "runtime.memmove"

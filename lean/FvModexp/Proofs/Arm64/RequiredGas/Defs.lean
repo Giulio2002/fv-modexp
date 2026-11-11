@@ -7,7 +7,7 @@ import FvModexp.Proofs.Common.Core
 namespace FvModexp.Arm64.RG
 
 /-- `DataLoaded` across a chain of stores into writable ranges (from the `DataLoaded` hypothesis about the base memory). -/
-macro "dl_close" : tactic => `(tactic| (dsimp only; repeat (first | assumption | (apply Janus.Program.DataLoaded.writeLE <;> first | assumption | janus_disch | skip))))
+macro "dl_close" : tactic => `(tactic| (dsimp only; repeat (first | with_reducible assumption | (apply Janus.Program.DataLoaded.writeLE <;> first | with_reducible assumption | janus_disch | skip))))
 
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
 

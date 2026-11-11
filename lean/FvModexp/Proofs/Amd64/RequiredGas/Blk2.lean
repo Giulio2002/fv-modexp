@@ -47,7 +47,7 @@ theorem rg_blk2 (k : Blk3Stmt) : Blk2Stmt := by
     · janus64_simp [h0]
     · rw [← w0]; unfold val256; janus64_simp
     · dsimp only
-      refine Eq.trans (by assumption) ?_
+      refine Eq.trans (by with_reducible assumption) ?_
       refine fromBE_eq_of (by omega) (fun i hi => ?_)
       unfold Calldata.pad
       split

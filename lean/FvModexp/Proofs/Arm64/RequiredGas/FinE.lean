@@ -29,7 +29,7 @@ theorem rg_fin2_E : Fin2If (fun len cap B E => ¬ finK2 cap B) := by
       | (unfold RgSpec.expHead L4; rw [if_neg (by omega)])
       | (rw [show s.sp.toNat - 312 = s.sp.toNat - 320 + 8 by omega, show s.sp.toNat - 304 = s.sp.toNat - 320 + 16 by omega,
             show s.sp.toNat - 296 = s.sp.toNat - 320 + 24 by omega]
-         refine (L4_of (by assumption)).trans ?_
+         refine (L4_of (by with_reducible assumption)).trans ?_
          unfold RgSpec.expHead
          rw [if_pos ⟨by omega, by omega⟩]
          refine fromBE_eq_of (by split <;> omega) (fun i hi => ?_)
@@ -42,12 +42,12 @@ theorem rg_fin2_E : Fin2If (fun len cap B E => ¬ finK2 cap B) := by
               exact rd_frame hf (by simp only [outside_cons, outside_nil, and_true]; omega))
            | (by_cases hin : 96 + B.toNat + i < len.toNat
               · rw [if_pos hin]
-                refine (copy_rd (by assumption) (by omega)).trans ?_
+                refine (copy_rd (by with_reducible assumption) (by omega)).trans ?_
                 rw [show ptr.toNat + 96 + B.toNat + i = ptr.toNat + (96 + B.toNat + i) by omega]
                 simp (disch := omega) only [Memory.readLE_writeLE_of_disjoint]
                 exact rd_frame hf (by simp only [outside_cons, outside_nil, and_true]; omega)
               · rw [if_neg hin]
-                refine (rd_out (by assumption) (by omega)).trans ?_
+                refine (rd_out (by with_reducible assumption) (by omega)).trans ?_
                 rcases (show i < 8 ∨ (8 ≤ i ∧ i < 16) ∨ (16 ≤ i ∧ i < 24) ∨ (24 ≤ i ∧ i < 32) by omega) with hq | hq | hq | hq <;>
                   simp (disch := omega) only [Memory.readLE_writeLE_of_disjoint, Memory.readLE_writeLE_inside, Nat.zero_div,
                     Nat.zero_mod]))

@@ -38,7 +38,7 @@ theorem run (c ptr len cap : BitVec 64) :
       | (with_reducible show Extracted.program.DataLoaded _; dl_close)
       | (with_reducible show val256 _ _ = Calldata.word _ _ _ 0
          rw [val256_limbs]; dsimp only; simp only [Nat.reducePow]
-         refine Eq.trans (by assumption) ?_
+         refine Eq.trans (by with_reducible assumption) ?_
          refine fromBE_eq_of (by omega) (fun i hi => ?_)
          rg_byte)
       | (with_reducible show State.regs _ _ = _; dsimp only; simp only [setReg_apply, callRegs_apply]; decide)

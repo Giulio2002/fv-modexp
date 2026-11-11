@@ -28,7 +28,7 @@ theorem rg_blk2_Ge (k : Blk3Stmt) : Blk2If (fun len cap => ¬ len.toNat < cap.to
       | (with_reducible show Extracted.program.DataLoaded _; dl_close)
       | (with_reducible show val256 _ _ = Calldata.word _ _ _ 32
          rw [val256_limbs]; dsimp only; simp only [Nat.reducePow]
-         refine Eq.trans (by assumption) ?_
+         refine Eq.trans (by with_reducible assumption) ?_
          refine fromBE_eq_of (by omega) (fun i hi => ?_)
          rg_byte)
       | (with_reducible show val256 _ _ = Calldata.word _ _ _ 0; rw [← w0]; unfold val256; janus_simp)
