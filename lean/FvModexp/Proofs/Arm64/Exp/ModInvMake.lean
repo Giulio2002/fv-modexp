@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Arm64.Exp.ModInvSeg2
+import FvModexp.Proofs.Arm64.Exp.ModInvRt
 
 /-!
 # `nat.modularInverseModPowerOfTwo` (arm64): `J0` → `JM` (nat.go:1308-1316, nat.go:58-69) (agent infra)
@@ -61,43 +61,55 @@ theorem make (impl : List Segment) (R : RtInv)
       refine ⟨⟨?_, ?_⟩, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
       all_goals first | (janus_simp; done) | (janus_simp; first | exact f1 | exact f2 | exact Nat.mod_eq_of_lt hk0)
   · have hr' : zc < NW n + 1 := by omega
-    have hok1 : R.ok (Extracted.program.contractAddr "runtime.makeslice") [NatAdd.wordT, NW n + 1, NW n + 5] :=
+    have hok1 : R.ok (Extracted.program.contractAddr "runtime.makeslice") [wT, NW n + 1, NW n + 5] :=
       hsv.1 _ _ _ (by simp only [NW]; omega)
     have hcost := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
-    have hty := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2
+    have hty : Outside wT 16 R.rt := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2
+    have hinv0 := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
     have hmc : makeCost (NW n + 1) = allocCost (8 * (NW n + 5)) := by
-      unfold makeCost makeCap; rw [if_neg (by simp only [NW]; omega)]
+      unfold makeCost makeCap; rw [if_neg (show ¬ (NW n + 1 = 1) by simp only [NW]; omega)]
     have hbl := blockSize_le_allocCost (8 * (NW n + 5)) true
     have hbs : blockSize (8 * (NW n + 5)) true ≤ b := by simp only [cost] at hcost; omega
-    have hwt : Apart NatAdd.wordT 16 (s.sp.toNat - (240 + kc)) (240 + kc + 72) :=
+    have hwt : Apart wT 16 (s.sp.toNat - (240 + kc)) (240 + kc + 72) :=
       apart_of_data hd 1 (by decide) (by decide) hw
-    have hinv0 := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
-    have hinvS : R.inv b L (s.regs 28).toNat (view R.rt L S.mem) := inv_win (by simp only [K]; omega) hout' hF hinv0
-    have hts : S.mem.readLE NatAdd.wordT 8 = s.mem.readLE NatAdd.wordT 8 := by
-      refine hF.readLE _ _ ?_
-      unfold Apart at hwt; simp only [winA, K, A, outside_cons, outside_nil, and_true]; omega
-    have hts2 : S.mem.readLE (NatAdd.wordT + 8) 8 = s.mem.readLE (NatAdd.wordT + 8) 8 := by
-      refine hF.readLE _ _ ?_
-      unfold Apart at hwt; simp only [winA, K, A, outside_cons, outside_nil, and_true]; omega
-    have hgS : S.mem.readLE ((s.regs 28).toNat + 16) 8 = s.mem.readLE ((s.regs 28).toNat + 16) 8 := by
-      refine hF.readLE _ _ ?_
-      unfold Apart at hga; simp only [winA, K, A, outside_cons, outside_nil, and_true]; omega
-    have hLs' : ∀ r ∈ L, (r.1 + (r.2 - r.1) ≤ s.sp.toNat - 240 - 4096 ∨ s.sp.toNat - 240 - 8 ≤ r.1) ∧
-        (r.1 + (r.2 - r.1) ≤ s.sp.toNat - 240 + 8 ∨ s.sp.toNat - 240 + 8 + 24 ≤ r.1) := by
-      intro r hr
-      have h1 := hLs r hr
-      simp only [win, K, A, outside_cons, outside_nil, and_true] at h1
-      clear hpre hF hinvS hinv0 hcost
-      omega
-    unfold Apart at hwt hga
-    janus_data hd
-    janus_eval_nat h_t : NatAdd.wordT
-    rw [h_t] at hty hok1 hwt hts hts2
-    have hts8 : S.mem.readLE 2641088 8 = 8 := by rw [hts]; first | assumption | janus_simp
-    have hts0 : S.mem.readLE 2641096 8 = 0 := by rw [hts2]; first | assumption | janus_simp
-    janus_run [hr', hnwb, hts8, hts0, hgS] until [1797452] calls [hmk.pos]
-    rename_i ptr _ _ _ m _ _ hLF hMF hAp hIn hle hacc h8 _ _ hrb _ hinv' _ _
-    trace_state
-    sorry
+    obtain ⟨ht8, ht0, hta⟩ := wT_facts hd
+    have hwt' : Apart wT 16 (s.sp.toNat - 240 - kc) (kc + 312) := by unfold Apart at hwt ⊢; omega
+    have hwTv : wT = 2641088 := rfl
+    have hts8 : S.mem.readLE 2641088 8 = 8 := by
+      rw [← hwTv, hF.readLE _ _ (by unfold Apart at hwt; simp only [winA, K, A, outside_cons, outside_nil, and_true]; omega)]
+      exact ht8
+    have hts0 : S.mem.readLE (2641088 + 8) 8 = 0 := by
+      rw [← hwTv, hF.readLE _ _ (by unfold Apart at hwt; simp only [winA, K, A, outside_cons, outside_nil, and_true]; omega)]
+      exact ht0
+    have hk0 : k0 s xp xl n < 2 ^ 64 := by
+      unfold k0 Exp.newton; rw [← Exp.B_def]; exact Exp.newton_lt _ _ _ _ (Nat.mod_lt _ Exp.B_pos)
+    clear hcost hinv0 hmc hbl hwt hLs hzx hzlive hxh
+    janus_run [hr'] until [1797320]
+    refine zalloc impl R hmk _ _ b L (s.regs 28).toNat (s.sp.toNat - 240) kc (NW n) _ (S.regs 18) (S.regs 29)
+      (env_of hpre ?hF0) hkc (by simp only [NW]; omega) (by simp only [NW]; omega) ?t8 ?t0 ?ta hwt' hty hok1 hbs
+      (inv_win (by simp only [K]; omega) hout' ?hF0 hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1)
+      st xp xl xc n (n + 63) (NW n) (k0 s xp xl n) ?r3 ?r4 ?r5 ?r6 ?r7 ?r8 ?r9 ?r10 _ ?pc ?sp ?h1 ?h9 ?h18 ?h28 ?h29 rfl ?KZ
+    case hF0 =>
+      refine hF.trans (?_ : MemFrame S.mem _ (winA s (K kc) A)) fun a k h => ⟨h, h⟩
+      simp only [winA, K, A]; janus_frame
+    case KZ =>
+      intro S' m p r e1 e2 e3 e4 e5 e6 e7 e8 e9 e10 e11 e12 e13 e14 e15 e16 e17 hap
+      refine kM S' p (NW n + 5) (L ++ [(p, p + r)]) (b - r) hpre hn e1 (by rw [e2]; try (congr 1; omega)) ?_ (e14.trans h18) e3 e4 e5
+        e6 e7 e8 e9 e10 e11 e12 e13 (e17 ▸ (alloc_jm hkc hpre ?hF0 ?hrg ?hfw hap).1)
+        (e17 ▸ (alloc_jm hkc hpre ?hF0 ?hrg ?hfw hap).2.1) (alloc_jm hkc hpre ?hF0 ?hrg ?hfw hap).2.2.1
+        (e17 ▸ (alloc_jm hkc hpre ?hF0 ?hrg ?hfw hap).2.2.2) (by omega)
+      · rw [e15, BitVec.ofNat_toNat, BitVec.setWidth_eq]
+      · refine hF.trans (?_ : MemFrame S.mem _ (winA s (K kc) A)) fun a k h => ⟨h, h⟩
+        simp only [winA, K, A]; janus_frame
+      · janus_simp; exact hrg
+      · refine ⟨⟨?_, ?_⟩, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+        all_goals first | (janus_simp; done) | (janus_simp; first | exact f1 | exact f2 | exact Nat.mod_eq_of_lt hk0)
+    case t8 => have h := hwt'; unfold Apart at h; rw [hwTv] at h ⊢; janus_simp; exact hts8
+    case t0 => have h := hwt'; unfold Apart at h; rw [hwTv] at h ⊢; janus_simp; exact hts0
+    case ta =>
+      have h := hwt'; unfold Apart at h; rw [hwTv] at h ⊢; janus_simp
+      rw [hwTv] at hta; exact hta
+    case h1 => janus_simp; apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega
+    all_goals first | (janus_simp; done) | skip
 
 end FvModexp.Arm64.ModInv

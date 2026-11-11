@@ -27,9 +27,10 @@ open FvModexp.Arm64.ExpHyp (RdIn WrOut NatRes NatOF RtPost StackOK' stWs LshPost
     (0 < stCap s.mem st → Outside (stW s.mem st) (8 * stCap s.mem st) (win s stk above) ∧
       Apart (stW s.mem st) (8 * stCap s.mem st) ((s.regs 28).toNat + 16) 8)
 
-/-- an array `(p, c)` apart from the stack's header and free part -/
+/-- an array `(p, c)` apart from the stack's header and (non-empty) free part -/
 @[reducible] def StkApart (m : Memory) (st p c : Nat) : Prop :=
-  0 < c → Apart p c st 24 ∧ Apart p c (stW m st + 8 * stLen m st) (8 * (stCap m st - stLen m st))
+  0 < c → Apart p c st 24 ∧
+    (stLen m st < stCap m st → Apart p c (stW m st + 8 * stLen m st) (8 * (stCap m st - stLen m st)))
 
 /-! ## `z.sqr(stk, x)` (nat.go:? `nat.sqr`) — z X0..X2, st X3, x X4..X6; result `X²` normalised -/
 

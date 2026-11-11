@@ -4,4 +4,3 @@ lean/FvModexp/Proofs/Amd64/Nat/BasicSqrEnd.lean	divmc	basicSqr amd64 WIP
 lean/FvModexp/Proofs/Amd64/Nat/BasicSqrBody.lean	divmc	basicSqr amd64 WIP
 lean/FvModexp/Proofs/Amd64/Nat/BasicSqrLoop.lean	divmc	basicSqr amd64 WIP
 lean/FvModexp/Proofs/Amd64/Nat/BasicSqrPro.lean	divmc	basicSqr amd64 pro2 (stk.nat call) WIP: trace_state/sorry after the call; pro3 not written
-lean/FvModexp/Proofs/Arm64/Exp/ModInvMake.lean	infra	modInv arm64 J0 -> JM: reuse path done, alloc (makeslice) path WIP (sorry); module slow (600 s) -> split alloc path
