@@ -496,4 +496,98 @@ theorem gen (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
     · rw [Nat.sub_self, Nat.mul_zero, Janus.Arm64.Memory.readLE_zero_eq, FvModexp.AsmDivVW.H_top,
         Nat.div_eq_of_lt hxn]
 
+set_option maxRecDepth 20000 in
+/-- the entry for `len x = 1`: the inlined `bits.Div(xn, x[0], y)`, `z[0] = q`, return `r` -/
+theorem one (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (ret : Nat)
+    (hret : RetAddr (LibDivWVW.program.link impl) ret) (s : State) (zp zl zc xn xp xc y : BitVec 64)
+    (hs : s.rip = BitVec.ofNat 64 entry) (hx0 : s.regs 0 = zp) (hx3 : s.regs 3 = zl) (hx1 : s.regs 1 = zc)
+    (hx7 : s.regs 7 = xn) (hx6 : s.regs 6 = xp) (hx8 : s.regs 8 = zl) (hx9 : s.regs 9 = xc) (hx10 : s.regs 10 = y)
+    (hra : s.mem.readLE (s.regs 4).toNat 8 = ret) (hz15 : s.xmm 15 = 0#128) (hdf : s.df = false)
+    (hpre : Pre R b L zp zl xn xp y s) (hz1 : zl.toNat = 1) :
+    Reaches ((LibDivWVW.program.link impl).withExit ret) s
+      (IsReturn fun s' => ABIReturn s s' ∧ Post R b L zp zl xn xp y s s') := by
+  have hpre' := hpre
+  obtain ⟨⟨hg, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, hLs, -, -⟩, hy, hxn, hzl, hzw, hxacc, hx48, hxh,
+    hxw, hzx, hinv⟩ := hpre'
+  have hgl := hg.load
+  have hg3 := hg.below
+  have hg1 := hg.noWrap
+  have hg2 := hg.readable
+  simp only [regSP, Janus.Amd64.GoABI.regG, Janus.Amd64.GoABI.stackguard0Offset,
+    Janus.Amd64.GoABI.stackguard0] at hgl hg3 hg1 hg2 hb' ha hw hout hal hga hgr
+  obtain ⟨hzal, hzh, hzacc, hz48⟩ := hzl (by omega)
+  simp only [Outside, and_true] at hzw hxw
+  have he : (zl = 1#64) = True := by
+    simp only [eq_iff_iff, iff_true]; exact BitVec.eq_of_toNat_eq (by rw [hz1]; rfl)
+  have hx0l : s.mem.readLE xp.toNat 8 < 2 ^ 64 := by
+    have := Janus.Arm64.Memory.readLE_lt s.mem xp.toNat 8; simpa using this
+  have hq : (xn.toNat * 18446744073709551616 + s.mem.readLE xp.toNat 8) / y.toNat < 18446744073709551616 :=
+    FvModexp.AsmDivVW.digit_lt _ _ _ hxn hx0l
+  have hLs' : ∀ r ∈ L, r.1 + (r.2 - r.1) ≤ (s.regs 4).toNat - 64 ∨ (s.regs 4).toNat + 72 ≤ r.1 := by
+    intro r hr; have := hLs r hr; simp only [win, Outside, outside_cons, outside_nil, and_true] at this; exact this
+  have hwin : ∀ r ∈ win s 64 72, (s.regs 4).toNat - 64 ≤ r.1 ∧ r.2 ≤ (s.regs 4).toNat + 72 := by
+    simp only [win, List.mem_cons, List.mem_nil_iff, or_false]
+    rintro r rfl; simp only; omega
+  have hrt : ∀ a n, (s.regs 4).toNat - 64 ≤ a → a + n ≤ (s.regs 4).toNat + 72 → Outside a n R.rt :=
+    fun a n h1 h2 => Outside.of_sub hout h1 (by omega)
+  clear hLs
+  janus64_run [he]
+  have hWz : MemFrame s.mem ((((s.mem.writeLE ((s.regs 4).toNat - 8) 8 (s.regs 5).toNat).writeLE
+      ((s.regs 4).toNat + 8) 8 zp.toNat).writeLE ((s.regs 4).toNat + 40) 8 xp.toNat).writeLE zp.toNat 8
+      ((xn.toNat * 18446744073709551616 + s.mem.readLE xp.toNat 8) / y.toNat))
+      (win s 64 72 ++ [(zp.toNat, zp.toNat + 8 * zl.toNat)]) := by
+    simp only [win, List.cons_append, List.nil_append]; janus_frame
+  have hym : (xn.toNat * 18446744073709551616 + s.mem.readLE xp.toNat 8) % y.toNat < 2 ^ 64 := by
+    have := Nat.mod_lt (xn.toNat * 18446744073709551616 + s.mem.readLE xp.toNat 8) (show 0 < y.toNat by omega)
+    have := y.isLt; omega
+  refine ⟨rfl, ?_, ?_, L, b, LiveExt.refl R L, Nat.le_refl _, ?_, ?_, ?_⟩
+  · show (BitVec.ofNat 64 ((xn.toNat * 18446744073709551616 + s.mem.readLE xp.toNat 8) % y.toNat)).toNat =
+      (xn.toNat * 2 ^ (64 * zl.toNat) + s.mem.readLE xp.toNat (8 * zl.toNat)) % y.toNat
+    rw [hz1, BitVec.toNat_ofNat, Nat.mod_eq_of_lt hym]
+  · show (((((s.mem.writeLE ((s.regs 4).toNat - 8) 8 (s.regs 5).toNat).writeLE
+      ((s.regs 4).toNat + 8) 8 zp.toNat).writeLE ((s.regs 4).toNat + 40) 8 xp.toNat).writeLE zp.toNat 8
+      ((xn.toNat * 18446744073709551616 + s.mem.readLE xp.toNat 8) / y.toNat))).readLE zp.toNat (8 * zl.toNat) =
+      (xn.toNat * 2 ^ (64 * zl.toNat) + s.mem.readLE xp.toNat (8 * zl.toNat)) / y.toNat
+    rw [hz1, Janus.Arm64.Memory.readLE_writeLE_self]; exact Nat.mod_eq_of_lt hq
+  · exact inv_store_held (inv_store_out (inv_store_out (inv_store_out hinv
+      (hrt _ _ (by omega) (by omega))) (hrt _ _ (by omega) (by omega))) (hrt _ _ (by omega) (by omega)))
+      (hzh.sub (Nat.le_refl _) (by omega))
+  · exact hWz.mono fun a n h => by simp only [outside_append] at h ⊢; exact ⟨h.1.2, h.2⟩
+  · exact liveFrame_of_frame (rs := win s 64 72) hWz hLs' hwin
+
+/-- `divWVW` on the library program -/
+theorem ens_lib (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
+    (b : Nat) (L : List (Nat × Nat)) (zp zl zc xn xp xl xc y : BitVec 64) :
+    Ensures (LibDivWVW.program.link impl) entry [zp, zl, zc, xn, xp, xl, xc, y]
+      (fun s => xl = zl ∧ Pre R b L zp zl xn xp y s) (fun s s' => Post R b L zp zl xn xp y s s') := by
+  intro ret hret s hs ⟨hxz, hpre⟩
+  janus64_intro hs
+  subst hxz
+  have hpc : s.rip = BitVec.ofNat 64 entry := by rw [h_rip]; rfl
+  refine Janus.Amd64.Tactic.returns_of_reaches ?_
+  by_cases h1 : xl.toNat = 1
+  · exact one impl R b L ret hret s zp xl zc xn xp xc y hpc h_a0 h_a1 h_a2 h_a3 h_a4 h_a5 h_a6 h_a7 h_ret h_x15 h_df
+      hpre h1
+  · exact gen impl hap R b L ret hret s zp xl zc xn xp xc y hpc h_a0 h_a1 h_a2 h_a3 h_a4 h_a5 h_a6 h_a7 h_ret h_x15
+      h_df hpre h1
+
+/-- **`divWVW` (amd64)**, CONVENTIONS §3 shape (`Pre`/`Post` above; `xl = zl` is Go's `len(z) = len(x)` contract):
+`RAX = (xn·B^n + x) mod y`, `z[0:n] = (xn·B^n + x) / y` for `y ≠ 0`, `xn < y`, `z = x` or apart -/
+theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
+    (b : Nat) (L : List (Nat × Nat)) (zp zl zc xn xp xl xc y : BitVec 64) :
+    Ensures ((Extracted.program.onlySegments names).link impl) (segAddr Extracted.program fn)
+      [zp, zl, zc, xn, xp, xl, xc, y]
+      (fun s => xl = zl ∧ Pre R b L zp zl xn xp y s) (fun s s' => Post R b L zp zl xn xp y s s') := by
+  have e : Extracted.program.onlySegments names = LibDivWVW.program := LibDivWVW.eq_only.symm
+  rw [e]
+  exact ens_lib impl hap R b L zp zl zc xn xp xl xc y
+
+set_option linter.defProp false in
+/-- `ens` as a callee summary inside a caller whose program keeps the functions `ms ⊇ names` (CONVENTIONS §4) -/
+def sum (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
+    (b : Nat) (L : List (Nat × Nat)) (zp zl zc xn xp xl xc y : BitVec 64) (ms : List String)
+    (hsub : ∀ x, names.contains x = true → ms.contains x = true) :=
+  Ensures.toSummaryIn (ens impl hap R b L zp zl zc xn xp xl xc y) (A64.noExit_restrict64 hap names)
+    (by simp [numIntRegs]) (A64.codeIn_restrict_mono64 hap hsub)
+
 end FvModexp.Amd64.DivWVW
