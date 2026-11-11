@@ -4,3 +4,4 @@ lean/FvModexp/Proofs/Arm64/Top/RunX.lean	top	exploration scratch
 lean/scout/*.lean	expmc	perf scouting only; not imported by the library, never claimed done
 lean/FvModexp/Proofs/Arm64/Nat/NatAddBody.lean	divmc	nat.add arm64 body WIP (split per path before finishing; ~260 s for one path)
 lean/FvModexp/Proofs/Arm64/Top/RunD2.lean	top	WIP (exponent operand)
+lean/FvModexp/Proofs/Arm64/Top/RunD2Z.lean	top	WIP (exp operand, makeslice buffer, 0 input bytes: memmove branch)
