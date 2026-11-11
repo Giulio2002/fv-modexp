@@ -829,4 +829,16 @@ theorem g_alloc (tys : Tys) (hty : TysOK tys) (ok : Nat → List Nat → Prop) (
     · simp only [setRegF, Nat.reduceEqDiff, ↓reduceIte]; rfl
     · simp only [setRegF, Nat.reduceEqDiff, ↓reduceIte]; exact eob
 
+/-- **`GrowsliceLiveContract64` for the general stub at `grA`** (Go's growth rule, any request), any toy runtime. -/
+theorem gr (tys : Tys) (hty : TysOK tys) (ok : Nat → List Nat → Prop) :
+    GrowsliceLiveContract64 P grA 4096 (toyR tys ok) := by
+  intro L b s hpc pre
+  change ReachesRet P (retAddrOf s) s (GPost (toyR tys ok) L b s)
+  have pre0 : GPre (toyR tys ok) L b s := pre
+  obtain ⟨⟨⟨hcall, -, -, -, h71, h1n3, h13, hn40⟩, -⟩, -⟩ := pre
+  have hle := le_nextslicecap (s.regs 3).toNat (s.regs 1).toNat
+  have hle2 := nsc_le (s.regs 3).toNat (s.regs 1).toNat h13
+  exact nsc_entry s hpc h13 hn40 fun T hT hpcT h8 =>
+    chain s T _ hpcT hT h8 (by omega) (by omega) fun U hU hpcU h10 => g_alloc tys hty ok L b s U pre0 hpcU hU h10
+
 end FvModexp.Amd64.WStubs
