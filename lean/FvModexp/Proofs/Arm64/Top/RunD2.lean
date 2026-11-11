@@ -21,6 +21,7 @@ theorem d2x (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     (hbudD : 3 * makeCost 4 + 3 * dCost ≤ b)
     (S : State) (L1 : List (Nat × Nat)) (b1 : Nat) (hrel : RelD R b L c p len cp s ret 1 L1 b1 S)
     (hpc : S.pc = BitVec.ofNat 64 pcD1)
+    (hdir0 : min (hdrV s p len 0) (len.toNat - 96) + hdrV s p len 1 ≤ len.toNat - 96)
     (hk : ∀ S2 L2 b2, RelD R b L c p len cp s ret 2 L2 b2 S2 → S2.pc = BitVec.ofNat 64 pcD2 →
       Reaches ((LibRun.program.link impl).withExit ret) S2 Q) :
     Reaches ((LibRun.program.link impl).withExit ret) S Q := by
@@ -164,6 +165,6 @@ theorem d2x (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
           intro i hi
           repeat rw [Memory.readLE_writeLE_of_disjoint _ _ (by omega)]
           exact hinS _ _ (by omega) (by omega)
-  · sorry
+  · exact absurd hdir0 hdir
 
 end FvModexp.Arm64.Run
