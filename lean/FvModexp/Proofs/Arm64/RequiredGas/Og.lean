@@ -30,7 +30,7 @@ theorem og_tail (s : State) (R : Nat → W64) (F : Flags) (pc : W64) (hpc : pc =
       (fun s' => ∃ (junk : Nat → W64) (f : Flags) (v : Nat → BitVec 128) (m : Memory) (ex : Option (Nat × Nat)) (ep : Nat → Bool),
         s' = retStateX s junk [BitVec.ofNat 64 (Geth.osakaTail (R 2).toNat (s.regs 1).toNat
           (L4 (s.mem.readLE (s.sp.toNat + 8) 8) (s.mem.readLE (s.sp.toNat + 16) 8) (s.mem.readLE (s.sp.toNat + 24) 8)
-            (s.mem.readLE (s.sp.toNat + 32) 8)))] f v m ex ep ∧ MemFrame s.mem m [(s.sp.toNat - 88, s.sp.toNat)]) := by
+            (s.mem.readLE (s.sp.toNat + 32) 8)))] f v m ex ep ∧ MemFrame s.mem m [(s.sp.toNat - 88, s.sp.toNat - 8)]) := by
   obtain ⟨⟨hr1, hr2⟩, ⟨hg1, hg2, hg3⟩, ⟨hal, hb, ha, hw⟩, hdg⟩ := hpre
   simp only [Disjoint] at hdg
   subst hpc
@@ -65,7 +65,7 @@ theorem og_summary : Summary Extracted.program ogA OgPre
     (fun s s' => ∃ (junk : Nat → W64) (f : Flags) (v : Nat → BitVec 128) (m : Memory) (ex : Option (Nat × Nat)) (ep : Nat → Bool),
       s' = retStateX s junk [BitVec.ofNat 64 (Geth.osakaModexpGas (s.regs 0).toNat (s.regs 1).toNat (s.regs 2).toNat
           (L4 (s.mem.readLE (s.sp.toNat + 8) 8) (s.mem.readLE (s.sp.toNat + 16) 8) (s.mem.readLE (s.sp.toNat + 24) 8)
-            (s.mem.readLE (s.sp.toNat + 32) 8)))] f v m ex ep ∧ MemFrame s.mem m [(s.sp.toNat - 88, s.sp.toNat)]) := by
+            (s.mem.readLE (s.sp.toNat + 32) 8)))] f v m ex ep ∧ MemFrame s.mem m [(s.sp.toNat - 88, s.sp.toNat - 8)]) := by
   intro s hpc hpre
   have hpre' := hpre
   obtain ⟨⟨hr1, hr2⟩, ⟨hg1, hg2, hg3⟩, ⟨hal, hb, ha, hw⟩, hdg⟩ := hpre'

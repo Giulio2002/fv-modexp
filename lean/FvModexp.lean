@@ -43,3 +43,4 @@ import FvModexp.Proofs.Common.WordFacts
 import FvModexp.Proofs.Common.Words
 import FvModexp.Proofs.Common.Calldata
 import FvModexp.Proofs.Common.BitArith
+import FvModexp.Proofs.Common.RgSpec
