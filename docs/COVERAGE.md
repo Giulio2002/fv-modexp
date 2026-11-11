@@ -14,7 +14,7 @@ module elaboration profiles: `docs/PERF.md`.
 | Symbol | Owner | arm64 | amd64 | Notes |
 |---|---|---|---|---|
 | `github.com/ethereum/go-ethereum/core/vm.(*bigModExp).Run` | top | todo | todo | row 1: Osaka receiver; lengths fail -> (nil, error), else (compute data (parseLengths data), nil); contracts: see `scripts/contract-flags.sh` |
-| `github.com/ethereum/go-ethereum/core/vm.(*bigModExp).RequiredGas` | infra | verified (+ witness) | todo | row 2: lengths pass -> `requiredGas fork data (parseLengths data)` for `.fusaka ≤ fork` (receiver = Osaka flags) |
+| `github.com/ethereum/go-ethereum/core/vm.(*bigModExp).RequiredGas` | infra | in progress (all modules proved, no sorry; `janus verify` blocked at olean provenance, see ops NOTES-infra) | todo | row 2: lengths pass -> `requiredGas fork data (parseLengths data)` for `.fusaka ≤ fork` (receiver = Osaka flags) |
 
 Pure-Lean row 3 (no machine code): `FvModexp.Proofs.Compose.composition` in `lean/FvModexp/Proofs/Common/Compose.lean`, checked by `make build`.
 
