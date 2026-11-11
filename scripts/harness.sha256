@@ -1,0 +1,6 @@
+# The binary under verification. scripts/build-harness.sh rebuilds build/harness-* from go/ with exactly these settings; verify-all.sh FAILS on any hash mismatch.
+# source:    geth v1.17.10 (PrecompiledContractsOsaka[0x05] = &bigModExp{eip2565,eip7823,eip7883: true}), go-bigmodexpfix f9e208c548ab, holiman/uint256 v1.3.2 (go/go.mod, go/go.sum)
+# toolchain: GOTOOLCHAIN=go1.26.10 (Janus-pinned; geth's release binaries use Go 1.27.3, not covered by Janus v0.2.0 runtime pins: stated limitation)
+# flags:     CGO_ENABLED=0 GOOS=linux GOARCH={arm64,amd64} GOAMD64=v1 go build -trimpath -buildvcs=false -o build/harness-ISA ./harness   (run in go/)
+992cfced62f3693a21f5b665558bcb744612d544f8647801147fef3cf9303689  harness-amd64
+29b6d801ef11740da509d0f962f9ae81728503716ca3a1267d15cec90ee62844  harness-arm64

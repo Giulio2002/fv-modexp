@@ -1,1 +1,3 @@
 lean/scout/*.lean  (expmc perf scouting only; not imported by the library, never claimed done)
+lean/FvModexp/Proofs/Arm64/Top/RunH1.lean  WIP (Run header 1, sorry)
+lean/FvModexp/Proofs/Arm64/Top/RunX.lean   exploration scratch
