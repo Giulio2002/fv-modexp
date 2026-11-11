@@ -318,7 +318,7 @@ macro "ck_tac" : tactic =>
 
 theorem g_fwd (s : State) (v9 v10 v11 : W64) {Q : State → Prop} (d src n : Nat)
     (hsrc : n = 0 ∨ s.mem.accessible src n false = true) (hdst : s.mem.accessible d n true = true)
-    (hsrc48 : src + n ≤ 2 ^ 48) (hle : d ≤ src)
+    (hsrc48' : 0 < n → src + n ≤ 2 ^ 48) (hle : d ≤ src)
     (hk : ∀ T, T.pc = BitVec.ofNat 64 gDONE → CK s v9 v10 v11 T → MemFrame s.mem T.mem [(d, d + n)] →
       Mem.Copied s.mem T.mem d src n → ReachesRet grProg (s.regs 30) T Q) :
     ∀ k (T : State) (i : Nat), i + k = n → T.pc = BitVec.ofNat 64 gFWD →
@@ -338,6 +338,7 @@ theorem g_fwd (s : State) (v9 v10 v11 : W64) {Q : State → Prop} (d src n : Nat
     intro T i hi hpc h0 h1 h2 hK hf hc
     have h2' : T.regs 13 ≠ 0#64 := fun h => by simp [h] at h2
     have hsrcA : s.mem.accessible src n false = true := hsrc.resolve_left (by omega)
+    have hsrc48 := hsrc48' (by omega)
     have hr : T.mem.accessible (T.regs 15).toNat 1 false = true := by
       rw [hf.accessible, h1]; exact Memory.accessible_mono _ hsrcA (by omega) (by omega)
     have hw : T.mem.accessible (T.regs 14).toNat 1 true = true := by
@@ -360,7 +361,7 @@ theorem g_fwd (s : State) (v9 v10 v11 : W64) {Q : State → Prop} (d src n : Nat
       · rw [Memory.bytes_writeLE_outside _ (by omega)]; exact hc j (by omega)
 
 theorem g_bwd (s : State) (v9 v10 v11 : W64) {Q : State → Prop} (d src n : Nat)
-    (hsrc' : n = 0 ∨ s.mem.accessible src n false = true) (hsrc48 : src + n ≤ 2 ^ 48) (hdst : s.mem.accessible d n true = true) (hlt : src < d)
+    (hsrc' : n = 0 ∨ s.mem.accessible src n false = true) (hsrc48' : 0 < n → src + n ≤ 2 ^ 48) (hdst : s.mem.accessible d n true = true) (hlt : src < d)
     (hk : ∀ T, T.pc = BitVec.ofNat 64 gDONE → CK s v9 v10 v11 T → MemFrame s.mem T.mem [(d, d + n)] →
       Mem.Copied s.mem T.mem d src n → ReachesRet grProg (s.regs 30) T Q) :
     ∀ k (T : State), k ≤ n → T.pc = BitVec.ofNat 64 gBWDL →
@@ -381,6 +382,8 @@ theorem g_bwd (s : State) (v9 v10 v11 : W64) {Q : State → Prop} (d src n : Nat
     intro T hk0 hpc h0 h1 h2 hK hf hc
     have h2' : T.regs 13 ≠ 0#64 := fun h => by simp [h] at h2
     have hsrc : s.mem.accessible src n false = true := hsrc'.resolve_left (by omega)
+    have hsrc48 := hsrc48' (by omega)
+    have hbs := Memory.accessible_bound _ hsrc
     have e2 := toNat_sub_one h2
     have ea : (T.regs 15 - 1#64).toNat = src + k := toNat_sub_one (by omega)
     have eb : (T.regs 14 - 1#64).toNat = d + k := toNat_sub_one (by omega)
@@ -404,13 +407,17 @@ theorem g_bwd (s : State) (v9 v10 v11 : W64) {Q : State → Prop} (d src n : Nat
 /-- The copy of `n` bytes `src → d` from `CPY` (forward when `d ≤ src`, backward otherwise). -/
 theorem g_copy (s T : State) (v9 v10 v11 : W64) {Q : State → Prop} (d src n : Nat)
     (hsrc : n = 0 ∨ s.mem.accessible src n false = true) (hdst : s.mem.accessible d n true = true)
-    (hsrc48 : src + n ≤ 2 ^ 48) (hpc : T.pc = BitVec.ofNat 64 gCPY) (hK : CK s v9 v10 v11 T) (hm : T.mem = s.mem)
+    (hsrc48 : 0 < n → src + n ≤ 2 ^ 48) (hpc : T.pc = BitVec.ofNat 64 gCPY) (hK : CK s v9 v10 v11 T) (hm : T.mem = s.mem)
     (h14 : (T.regs 14).toNat = d) (h15 : (T.regs 15).toNat = src) (h13 : (T.regs 13).toNat = n)
     (hk : ∀ T, T.pc = BitVec.ofNat 64 gDONE → CK s v9 v10 v11 T → MemFrame s.mem T.mem [(d, d + n)] →
       Mem.Copied s.mem T.mem d src n → ReachesRet grProg (s.regs 30) T Q) :
     ReachesRet grProg (s.regs 30) T Q := by
   have hbd := Memory.accessible_bound _ hdst
   obtain ⟨⟨hsp, h18, h28, h29, h30, hdz, htp, hfc, hfs⟩, hK1, hK9, hK10, hK11⟩ := hK
+  have hb48 : n = 0 ∨ src + n ≤ 2 ^ 48 := by
+    rcases Nat.eq_zero_or_pos n with h | h
+    · exact Or.inl h
+    · exact Or.inr (hsrc48 h)
   janus_run until [gFWD, gBWDL]
   · refine g_bwd s v9 v10 v11 d src n hsrc hsrc48 hdst (by omega) hk n _ (Nat.le_refl _) rfl
       ?_ ?_ ?_ (by ck_tac) (by first | exact MemFrame.refl _ _ | (rw [hm]; exact MemFrame.refl _ _))
