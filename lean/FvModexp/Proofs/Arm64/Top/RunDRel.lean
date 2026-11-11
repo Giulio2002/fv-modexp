@@ -12,6 +12,9 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
 
 namespace FvModexp.Arm64.Run
 
+/-- `type:uint8` (the element type of `RightPadBytes`' `make([]byte, n)`). -/
+def uint8T : Nat := Extracted.dataAddr.«type:uint8#6a8c7679»
+
 /-- The `big.Int` of operand `j` (0 base, 1 exp, 2 mod): its `neg` byte; `abs` is at `+ 8`. -/
 @[reducible] def opAt (s : State) (j : Nat) : Nat := s.sp.toNat - 136 - 32 * j
 
