@@ -62,7 +62,7 @@ theorem j2_skip {impl : List Segment} {R : RtInv} {b : Nat} {L : List (Nat × Na
   · simp only [win, K, A, outside_cons, outside_nil, and_true] at hyw; omega
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 /-- after `y = nat(nil).trunc(y, n)` returns (at `+0x1b0`): reload `x'`, move the result to `X6..X8`, `J2` -/
 theorem s2t (impl : List Segment) {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {op zp zl zc yp yl yc n : Nat}
     {s : State} (k2 : J2 impl R b L op zp zl zc yp yl yc n s) (hpre : Pre R b L op zp zl zc yp yl yc n s)
@@ -153,7 +153,7 @@ theorem s2t (impl : List Segment) {R : RtInv} {b : Nat} {L : List (Nat × Nat)} 
   · have := apart_fresh hzh hAp hIn; unfold Apart at this ⊢; omega
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem s2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv) {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
     {stkT aboveT : Nat} (hkT : stkT ≤ 4464) (haT : aboveT ≤ 88) (htr : TruncHyp impl R ns stkT aboveT)

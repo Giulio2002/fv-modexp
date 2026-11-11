@@ -31,7 +31,7 @@ while IFS= read -r f; do
 done < <(find lean -name '*.lean' -not -path '*/.lake/*' | sort)
 # second-layer lints (do not rely on literal tokens): (1) source-level: compile-time commands (#eval, run_cmd, run_tac, run_elab, run_meta, #exit,
 # initialize, @[init], unsafe), lakefile code-execution settings, and imports parsed by Lean's own header parser (no prelude / import all / foreign roots);
-python3 scripts/lint_source.py || fail=1
+python3 scripts/lint_source.py --selftest && python3 scripts/lint_source.py || fail=1
 # (2) Lean-level (RELEASE): every constant defined in an FvModexp module is checked after elaboration for IO types / IO primitives / initializers
 # (scripts/check-lean-lint; needs build/harness-*, a janus binary and the janus lake package, as scripts/check-spec-closure).
 if [ -n "${RELEASE:-}" ]; then python3 scripts/check-lean-lint && python3 scripts/check-spec-closure || fail=1; fi

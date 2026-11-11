@@ -53,7 +53,7 @@ theorem cmp_nonneg' {m : Memory} {p q l1 l2 : Nat} (h1 : NatNorm m p l1) (h2 : N
   · exact ⟨0, by omega, rfl⟩
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 /-- from the entry of `x'.cmp(y')` (`+0x1ec`) -/
 theorem s3c (impl : List Segment) (hap : ImplApart Extracted.program impl) {R : RtInv} (hsub : SubHypR impl R)
     {b : Nat} {L : List (Nat × Nat)} {op zp zl zc yp yl yc n : Nat} {s : State}
@@ -195,7 +195,7 @@ end FvModexp.Arm64.SubMod2N
 namespace FvModexp.Arm64.SubMod2N
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem s3 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv) (hsub : SubHypR impl R)
     (b : Nat) (L : List (Nat × Nat)) (op zp zl zc yp yl yc n : Nat) (s : State)
     (k3 : J3 impl R b L op zp zl zc yp yl yc n s) : J2 impl R b L op zp zl zc yp yl yc n s := by

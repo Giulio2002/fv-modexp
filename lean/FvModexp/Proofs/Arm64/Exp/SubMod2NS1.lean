@@ -40,7 +40,7 @@ theorem j1_stack {impl : List Segment} {R : RtInv} {b : Nat} {L : List (Nat × N
   · exact natNorm_frame hF hzw hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 /-- after `x = x.trunc(x, n)` returns (at `+0xbc`): reload `y`, `n`, `z`, move the result to `X3..X5`, `J1` -/
 theorem s1t (impl : List Segment) {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {op zp zl zc yp yl yc n : Nat}
     {s : State} (k1 : J1 impl R b L op zp zl zc yp yl yc n s) (hpre : Pre R b L op zp zl zc yp yl yc n s)
@@ -98,7 +98,7 @@ theorem s1t (impl : List Segment) {R : RtInv} {b : Nat} {L : List (Nat × Nat)} 
   · exact hnorm
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem s1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv) {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
     {stkT aboveT : Nat} (hkT : stkT ≤ 4464) (haT : aboveT ≤ 88) (htr : TruncHyp impl R ns stkT aboveT)

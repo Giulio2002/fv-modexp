@@ -40,7 +40,7 @@ theorem one_at {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {op zp zl zc yp yl 
   exact o4
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 /-- after `z = z.trunc(z, n)` returns (`+0x2c0`): load `natOne`, `z.add(z, natOne)`, return -/
 theorem s4t (impl : List Segment) (hap : ImplApart Extracted.program impl) {R : RtInv} (hadd : AddHypR impl R)
     {b : Nat} {L : List (Nat × Nat)} {op zp zl zc yp yl yc n : Nat} {s : State}
@@ -114,7 +114,7 @@ theorem s4t (impl : List Segment) (hap : ImplApart Extracted.program impl) {R : 
   all_goals try janus_simp
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem s4c (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv) {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
     {stkT aboveT : Nat} (hkT : stkT ≤ 4464) (haT : aboveT ≤ 88) (htr : TruncHyp impl R ns stkT aboveT)

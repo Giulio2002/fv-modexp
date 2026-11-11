@@ -23,7 +23,7 @@ theorem fw_zstore {s : State} {M : Memory} {zp zl zc yp n : Nat} (h : Fw s M zp 
     (r _ (by omega) (by omega)).trans f7⟩
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 /-- one test of the append loop (at `+0x260`) -/
 theorem appIter (impl : List Segment) {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {op zp zl zc yp yl yc n : Nat}
     {s : State} (k4 : J4 impl R b L op zp zl zc yp yl yc n s) (hpre : Pre R b L op zp zl zc yp yl yc n s)
@@ -89,7 +89,7 @@ theorem app (impl : List Segment) {R : RtInv} {b : Nat} {L : List (Nat × Nat)} 
       fun S' hl1 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 => ih S' (l + 1) L3 b3 (by omega) a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 hlt a11 hl1
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem s4a (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (op zp zl zc yp yl yc n : Nat)
     (s : State) (k4 : J4 impl R b L op zp zl zc yp yl yc n s) : J3 impl R b L op zp zl zc yp yl yc n s := by
   intro S l3 L3 b3 hpre hpc hsp h28 h18 h0 h1 h2 hfw hrt hlt hv hn hl3

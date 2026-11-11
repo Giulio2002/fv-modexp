@@ -10,7 +10,7 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvMod
 namespace FvModexp.Arm64.SubMod2N
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 /-- one test of the complement loop (at `+0x2a4`); `M0` is the memory at `J4` -/
 theorem complIter (impl : List Segment) {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {op zp zl zc yp yl yc n : Nat}
     {s : State} (k5 : J5 impl R b L op zp zl zc yp yl yc n s) (hpre : Pre R b L op zp zl zc yp yl yc n s)
@@ -89,7 +89,7 @@ theorem compl (impl : List Segment) {R : RtInv} {b : Nat} {L : List (Nat × Nat)
         ih S' (i + 1) L3 b3 (by omega) a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 hlt hD hi1 a12 a13
 
 set_option maxRecDepth 20000 in
-set_option maxHeartbeats 0 in
+set_option maxHeartbeats 64000000 in
 theorem s4b (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (op zp zl zc yp yl yc n : Nat)
     (s : State) (k5 : J5 impl R b L op zp zl zc yp yl yc n s) : J4 impl R b L op zp zl zc yp yl yc n s := by
   intro S L3 b3 hpre hpc hsp h28 h18 h0 h1 h2 h9 hfw hrt hlt hv
