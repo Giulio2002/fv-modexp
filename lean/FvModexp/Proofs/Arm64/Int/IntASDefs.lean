@@ -163,6 +163,10 @@ theorem wbIn {impl : List Segment} (hap : ImplApart Extracted.program impl) {R :
 theorem tN {v : Nat} (h : v < 2 ^ 64) : (BitVec.ofNat 64 v).toNat = v := by
   rw [BitVec.toNat_ofNat]; exact Nat.mod_eq_of_lt h
 
+/-- a fact hidden from `janus_run` (which destructures every conjunction in the context: slow) -/
+structure Box (P : Prop) : Prop where
+  h : P
+
 theorem ofNat_toNat64 (v : BitVec 64) : BitVec.ofNat 64 v.toNat = v := by simp
 
 theorem asCost_add (xl yl : Nat) : makeCost (asNeed xl yl) ≤ asCost xl yl := by
