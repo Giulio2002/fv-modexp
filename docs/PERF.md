@@ -551,3 +551,17 @@ LESSONS: (1) after a janus_run through a callee, never reason about the literal 
 by a `@[reducible] def` (`stS`, `stA`) and prove all memory facts in a pure `fin*` lemma (16 s vs minutes);
 (2) `all_goals try (… omega …)` over janus goals is the slowest thing in a module: close goals in order with bullets;
 (3) never `omega` with the 24 `Mem` field equalities (`… % 2^64`, `/4*4`) in context.
+
+### asm s10: divBasic arm64 completion + amd64 DF convention (dev compile `mk.py`, host load 40-50), wall / max RSS
+| module | wall | RSS |
+|---|---|---|
+| DivBasicRec (pro3, now exports q/u untouched) | 141 s | 5.1 GB |
+| DivBasicEnd (`post_fin`, pure) | 6.7 s | 2.3 GB |
+| DivBasicExit (`fin`: TBNZ → closure → RET) | 8.5 s | 2.5 GB |
+| DivBasicLoop (`loop` induction, `fromHead`) | 2.6 s | 2.2 GB |
+| DivBasic (`full`/`ens`/`sum`) | 6.2 s | 2.4 GB |
+| DivBasicRow (witness: one lemma per Pre conjunct; one `first` cascade over all 42 goals ran > 9 min) | 7 s | 2.3 GB |
+| Amd64 AddVW / SubVW (DF) | 30 s / 28 s | 2.7 GB |
+| Amd64 DivWVW (DF) | 25 s | 2.7 GB |
+Rows re-verified after the heartbeat change (janus-provfix, memcap 16G / timeout 900): arm64 MulAddWWRow PASS 212 s /
+5.3 GB, arm64 DivWRow PASS 115 s / 1.2 GB (amd64 rows re-run after the DF change: see build/asm-rows.tsv).
