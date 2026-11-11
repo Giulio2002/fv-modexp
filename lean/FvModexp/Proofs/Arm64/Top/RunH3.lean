@@ -16,6 +16,7 @@ theorem h3 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
     (henv : CallEnv R L s stk 40) (hin : InputOK R L c p len cp s) (hokr : HdrOkR R b len)
     (Q : Outcome → Prop)
     (hk : ∀ S L2 b2, RelH R b L c p len cp s ret 3 L2 b2 S → S.pc = BitVec.ofNat 64 pcB3 →
+      (S.regs 0).toNat = S.mem.readLE (s.sp.toNat - 96) 8 → (S.regs 1).toNat = S.mem.readLE (s.sp.toNat - 88) 8 →
       Reaches ((LibRun.program.link impl).withExit ret) S Q)
     (S : State) (L1 : List (Nat × Nat)) (b1 : Nat) (hrel : RelH R b L c p len cp s ret 2 L1 b1 S)
     (hpc : S.pc = BitVec.ofNat 64 pcB2) :
@@ -68,6 +69,7 @@ theorem h3 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
       simp only [win, List.mem_cons, List.not_mem_nil, or_false] at hr; subst hr
       exact hout.of_sub (Nat.le_refl _) (by omega)
     refine hk _ L2 b2 (RelH.mk' hin0 ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ (hext.trans hext2) ?_ ?_ ?_ ?_ ?_ ?_) (by janus_simp)
+      (by janus_simp) (by janus_simp)
     all_goals try (janus_simp [hm1, hm2, hm3, hm4, hm5, hm6, hsl1, hsl2]; done)
     case refine_12 => janus_callpre
     case refine_13 => simp [SetBytesStd.nW] at hb2; omega
