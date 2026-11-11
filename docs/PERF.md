@@ -453,6 +453,22 @@ IcHN 43, Sb* 25-47, main 16 s.
 | Exp/W4P01 (p01run) | 49 s / 3.1 GB | |
 | Exp/W4PowAll (p01pow) | 24 s / 3.1 GB | |
 
+### expmc session 8 (2026-11-11), arm64 dev compile (load 45-55), wall / max RSS
+| module | time | note |
+|---|---|---|
+| Exp/W4Zc (old single lemma zj → test) | 455 s / 2.5 GB | over the 5-min target → split below |
+| Exp/W4ZcDefs (helpers, cw, kTop) | 2 s | |
+| Exp/W4ZcC (memmove return → test, reads as explicit hyps) | 11 s / 2.2 GB | |
+| Exp/W4ZcP (post-memmove bookkeeping, pure `zcPost`) | 8 s / 2.2 GB | same work inline in the run's context: > 240 s (killed) |
+| Exp/W4ZcB (spills + memmove call) | 12–14 s / 2.2 GB | |
+| Exp/W4ZcD (CLZ → bitLen/k/d, table header, copy test) | 108–117 s / 2.2 GB | the slowest piece (lemma-heavy run to +0x850) |
+| Exp/W4Zc (zj → CLZ, smear, gen_reg) | 10 s / 2.2 GB | |
+| Exp/W4Mid (`zjRet`: zj → RET composition) | 21 s / 2.6 GB | |
+| Exp/W4Mid2 (`j4Ret`: j4 → RET composition) | 6 s / 2.3 GB | |
+Lesson: after a call, NEVER close the callee-post bookkeeping (slot reads through the frame, frame chains) in the run's
+context: state it as a pure lemma over the printed post forms (print them with `run_tac withMainContext …
+logInfo (← inferType h)`), e.g. `zcPost` (8 s vs > 240 s).
+
 ### divmc `(*stack).nat` (2026-11-11, session 5; dev compile, host load high), wall / max RSS
 | module | arm64 | amd64 |
 |---|---|---|
