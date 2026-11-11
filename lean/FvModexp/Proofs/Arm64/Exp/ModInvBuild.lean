@@ -37,7 +37,7 @@ theorem sqrPre_at (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M : 
   have hsl := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
   obtain ⟨-, hrt, hz, hzz, hap, hlc, hqlc, hnc, hqc⟩ := hmid
   have hlen := stLen_M hrt
-  refine ⟨cenv_at hpre hrt hsp h28 hm hstk habove, hpre.2.1, by rw [hm]; exact globals_at hpre hrt, hqlc,
+  refine ⟨cenv_at hpre hrt hsp h28 hm hstk habove, hpre.2.1, by rw [hm]; exact globals_at hpre hrt hsp' hstk habove, hqlc,
     wrOut_own hzz hK hsp' h28 hm hstk habove, rdIn_own hz (by omega) hlc hK hsp' hm hstk habove,
     by simp only [NW] at hl; omega, Or.inr fun _ _ => by unfold Apart at hap ⊢; omega,
     stkIn_at hpre hrt hsp' h28 hm hstk habove, by rw [hm, hlen]; simp only [NW] at hl hsl ⊢; omega,
@@ -60,7 +60,7 @@ theorem mulPre_at (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M : 
   have hsx := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
   obtain ⟨-, hrt, -, hzz, -, -, hqlc, -, hqc⟩ := hmid
   have hlen := stLen_M hrt
-  refine ⟨cenv_at hpre hrt hsp h28 hm hstk habove, hpre.2.1, by rw [hm]; exact globals_at hpre hrt, hqlc,
+  refine ⟨cenv_at hpre hrt hsp h28 hm hstk habove, hpre.2.1, by rw [hm]; exact globals_at hpre hrt hsp' hstk habove, hqlc,
     wrOut_own hzz hK hsp' h28 hm hstk habove, rdIn_own hzz hqc hqlc hK hsp' hm hstk habove,
     rdIn_x hpre hrt hk hsp' hm hstk habove, by simp only [NW] at hqk; omega, by omega, Or.inl rfl,
     Or.inr fun _ _ => ?_, stkIn_at hpre hrt hsp' h28 hm hstk habove,

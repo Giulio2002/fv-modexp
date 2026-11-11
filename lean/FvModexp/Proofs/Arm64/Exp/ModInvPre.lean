@@ -37,8 +37,11 @@ theorem cenv_at (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M : Me
     (by rw [h28, BitVec.ofNat_toNat, BitVec.setWidth_eq]) hm hstk (by omega)
 
 set_option maxRecDepth 20000 in
+/-- `Globals` (window form) at a callee state `S'` (`SP' = SP - 240`, window `stk ≤ kc`, `above ≤ 88`) -/
 theorem globals_at (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory} {L1 : List (Nat × Nat)}
-    {b1 : Nat} (hrt : RtM R kc L s zp zc st M L1 b1) : RunIface.Globals R M := by
+    {b1 : Nat} (hrt : RtM R kc L s zp zc st M L1 b1) {S' : State} (hsp : S'.sp.toNat = s.sp.toNat - 240)
+    {stk above : Nat} (hstk : stk ≤ kc) (habove : above ≤ 88) : RunIface.Globals R M (win S' stk above) := by
+  have hK : 240 + kc ≤ s.sp.toNat := by have := hpre.1.2.1.2.1; simp only [K] at this; omega
   obtain ⟨-, -, ⟨g1, g2, g3, g4, g5, g6, g7, g8, g9, g10, g11, g12, g13⟩, -⟩ := hpre
   obtain ⟨-, hF, -⟩ := hrt
   have hrd : ∀ j, j + 8 ≤ 32 → M.readLE (RunIface.gA + j) 8 = s.mem.readLE (RunIface.gA + j) 8 := fun j hj =>
@@ -46,12 +49,15 @@ theorem globals_at (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M :
       simp only [outside_append] at g10 ⊢
       exact ⟨⟨⟨g9.of_sub (by omega) (by omega), g10.1.1.of_sub (by omega) (by omega)⟩,
         g10.1.2.of_sub (by omega) (by omega)⟩, g10.2.of_sub (by omega) (by omega)⟩)
-  refine ⟨?_, ?_, ?_, ?_, g5, g6, g7, by rw [hF.accessible]; exact g8, g9, by simp only [outside_nil],
-    by rw [hF.accessible]; exact g11, g12, by simp only [outside_nil]⟩
+  simp only [outside_append, winA, K, A, outside_cons, outside_nil, and_true] at g10 g13
+  refine ⟨?_, ?_, ?_, ?_, g5, g6, g7, by rw [hF.accessible]; exact g8, g9, ?_,
+    by rw [hF.accessible]; exact g11, g12, ?_⟩
   · rw [g5, hrd 8 (by omega), ← g5]; exact g1
   · rw [g6, hrd 16 (by omega), ← g6]; exact g2
   · rw [g7, hrd 24 (by omega), ← g7]; exact g3
   · have := hrd 0 (by omega); simp only [Nat.add_zero] at this; rw [this]; exact g4
+  · simp only [win, hsp, outside_cons, outside_nil, and_true]; omega
+  · simp only [win, hsp, outside_cons, outside_nil, and_true]; omega
 
 /-- an owned array (cap `> 0`) as a callee operand -/
 theorem rdIn_own {L1 : List (Nat × Nat)} {M : Memory} {p c l : Nat}
