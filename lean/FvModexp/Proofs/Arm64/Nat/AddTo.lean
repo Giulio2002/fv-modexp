@@ -1,5 +1,5 @@
 import FvModexp.Proofs.Arm64.Nat.LibAddTo
-import FvModexp.Proofs.Arm64.Nat.Callees
+import FvModexp.Proofs.Arm64.Nat.AsmCallees
 import FvModexp.Proofs.Common.DivmcNat
 import FvModexp.Proofs.Common.DivmcBits
 
@@ -33,7 +33,6 @@ def names : List String := LibAddTo.names
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
-    (hVV : AddVVHyp impl)
     (hVW : ∀ b L zp zl zc xp xl xc y, AddVWEns impl R b L zp zl zc xp xl xc y)
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc : BitVec 64) :
     Ensures ((Extracted.program.onlySegments names).link impl) (segAddr Extracted.program fn)
@@ -52,6 +51,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
           MemFrame s.mem s'.mem (R.rt ++ winA s 4240 48 ++ [(zp.toNat, zp.toNat + 8 * zl.toNat)]) ∧
           LiveFrame s.mem s'.mem L [(zp.toNat, zp.toNat + 8 * zl.toNat)]) := by
   rw [show names = LibAddTo.names from rfl, ← LibAddTo.eq_only]
+  have hVV := addVVHyp impl hap
   intro ret hret s hs ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, hout, hga, hgr, hLs⟩, hxz, hzc, hz40, hzl, hzw, hzc63,
     hxacc, hx48, hxh, hxw, hzx, hzg, hinv⟩
   have hc1 : CodeIn ((Extracted.program.onlySegments [addVVfn]).link impl) (LibAddTo.program.link impl) := by

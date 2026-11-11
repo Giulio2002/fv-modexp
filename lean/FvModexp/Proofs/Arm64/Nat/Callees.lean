@@ -34,6 +34,43 @@ saved `X30`), which the caller reloads after the call — as the runtime contrac
 @[reducible] def winA (s : State) (stk above : Nat) : List (Nat × Nat) :=
   [(s.sp.toNat - stk, s.sp.toNat - 8), (s.sp.toNat + 8, s.sp.toNat + above)]
 
+/-- A fetch from one segment of a pairwise-apart code layout is a fetch from the layout. -/
+theorem fetchIn_of_mem {segs : List Segment} {seg : Segment} (hp : segs.Pairwise Segment.Apart)
+    (hm : seg ∈ segs) {pc w : Nat} (h : Program.fetchIn [seg] pc = some w) : Program.fetchIn segs pc = some w := by
+  obtain ⟨s1, hs1, i, hi, hpc⟩ := Program.fetchIn_index h
+  have e : s1 = seg := by simpa using hs1
+  rw [e] at hi hpc; subst hpc
+  induction segs with
+  | nil => simp at hm
+  | cons x rest ih =>
+    rcases List.mem_cons.1 hm with rfl | hm'
+    · rw [Program.fetchIn_cons]; rw [Program.fetchIn_cons] at h
+      rw [if_pos (by omega)] at h ⊢
+      cases hw : seg.words[(seg.base + 4 * i - seg.base) / 4]? with
+      | none => rw [hw] at h; simp [Program.fetchIn] at h
+      | some v => rw [hw] at h; exact h
+    · have hap := (List.pairwise_cons.1 hp).1 seg hm'
+      unfold Segment.Apart at hap
+      rw [Program.fetchIn_cons_miss (by omega)]
+      exact ih (List.pairwise_cons.1 hp).2 hm'
+
+/-- **A one-segment library program (agent asm's `Lib.*`) is code of a restricted program containing that segment.** -/
+theorem codeIn_single {P lp : Program} {impl : List Segment} (hap : ImplApart P impl) {ns : List String}
+    {seg : Segment} (hl : lp.segments = [seg]) (hm : seg ∈ P.segments) (hn : ns.contains seg.name = true) :
+    CodeIn lp ((P.onlySegments ns).link impl) := by
+  intro pc w hf
+  have hf' : Program.fetchIn [seg] pc = some w := by rw [← hl]; exact hf
+  obtain ⟨s1, hs1, i, hi, hpc⟩ := Program.fetchIn_index hf'
+  have e : s1 = seg := by simpa using hs1
+  rw [e] at hi hpc
+  have hmem : seg ∈ (P.segments.filter fun s => ns.contains s.name) ++ impl :=
+    List.mem_append_left _ (List.mem_filter.2 ⟨hm, hn⟩)
+  have hpw : ((P.segments.filter fun s => ns.contains s.name) ++ impl).Pairwise Segment.Apart :=
+    hap.1.sublist ((List.filter_sublist).append_right impl)
+  obtain ⟨h1, h2⟩ := hap.2 seg (List.mem_append_left _ hm) i hi
+  subst hpc
+  exact ⟨fetchIn_of_mem hpw hmem hf', h1, h2⟩
+
 /-! ## Internal calls with the argument words read from the registers -/
 
 /-- The name inclusion of `codeIn_restrict_mono`, from a decidable check. -/

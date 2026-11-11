@@ -33,6 +33,42 @@ theorem sub_of_all {ns ms : List String} (h : ns.all ms.contains = true) :
   simp only [List.all_eq_true] at h
   exact h x (by simpa using hx)
 
+/-- A fetch from one segment of a pairwise-apart code layout is a fetch from the layout (amd64). -/
+theorem fetchIn_of_mem {segs : List Amd64.Segment} {seg : Amd64.Segment}
+    (hp : segs.Pairwise Amd64.Segment.Apart) (hm : seg ∈ segs) {pc : Nat} {w : List Nat}
+    (h : Amd64.Program.fetchIn [seg] pc = some w) : Amd64.Program.fetchIn segs pc = some w := by
+  have hin : seg.base ≤ pc ∧ pc < seg.base + seg.bytes.length := by
+    simp only [Amd64.Program.fetchIn] at h; split at h
+    · assumption
+    · simp at h
+  induction segs with
+  | nil => simp at hm
+  | cons x rest ih =>
+    rcases List.mem_cons.1 hm with rfl | hm'
+    · simp only [Amd64.Program.fetchIn] at h ⊢; rw [if_pos hin] at h ⊢; exact h
+    · have hap := (List.pairwise_cons.1 hp).1 seg hm'
+      unfold Amd64.Segment.Apart at hap
+      simp only [Amd64.Program.fetchIn]; rw [if_neg (by omega)]
+      exact ih (List.pairwise_cons.1 hp).2 hm'
+
+/-- A one-segment library program (agent asm's `Lib.*Amd64`) is code of a restricted program containing that segment. -/
+theorem codeIn_single {P lp : Amd64.Program} {impl : List Amd64.Segment} (hap : Amd64.ImplApart P impl)
+    {ns : List String} {seg : Amd64.Segment} (hl : lp.segments = [seg]) (hm : seg ∈ P.segments)
+    (hn : ns.contains seg.name = true) : CodeIn64 lp ((P.onlySegments ns).link impl) := by
+  intro pc w hf
+  have hf' : Amd64.Program.fetchIn [seg] pc = some w := by rw [← hl]; exact hf
+  have hin : seg.base ≤ pc ∧ pc < seg.base + seg.bytes.length := by
+    simp only [Amd64.Program.fetchIn] at hf'; split at hf'
+    · assumption
+    · simp at hf'
+  have hmem : seg ∈ (P.segments.filter fun s => ns.contains s.name) ++ impl :=
+    List.mem_append_left _ (List.mem_filter.2 ⟨hm, hn⟩)
+  have hpw : ((P.segments.filter fun s => ns.contains s.name) ++ impl).Pairwise Amd64.Segment.Apart :=
+    hap.1.sublist ((List.filter_sublist).append_right impl)
+  obtain ⟨h1, h2⟩ := hap.2 seg (List.mem_append_left _ hm) (pc - seg.base) (by omega)
+  rw [show seg.base + (pc - seg.base) = pc by omega] at h1 h2
+  exact ⟨fetchIn_of_mem hpw hmem hf', h1, h2⟩
+
 theorem Ensures.toSummaryRegs7 {p0 P : Amd64.Program} {entry : Nat}
     {pre : W64 → W64 → W64 → W64 → W64 → W64 → W64 → State → Prop}
     {post : W64 → W64 → W64 → W64 → W64 → W64 → W64 → State → State → Prop}
