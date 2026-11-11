@@ -664,3 +664,17 @@ Lessons: (1) janus amd64 state literals omit `df` (= the structure default `fals
 defeq: close DF goals with `hE.df0.symm`/`rfl`, and a callee's `s'.df = {…}.df` hypothesis is `s'.df = false`.
 (2) a failing callee precondition in janus64_run costs ~15 min when the context is large: derive `LiveSep`/TLS facts in
 the callee's window form BEFORE the run (`hLs'`, `hfw`, `htP'` in BasicSqrPro).
+
+### divmc session 9 (2026-11-11 night; dev compile, host load 44–66), wall / max RSS
+| module | amd64 | note |
+|---|---|---|
+| Nat/BasicSqrPro3 (`pro3`: stk.nat result → spills → `clr`) | 57 s / 4.4 GB | new module (split out of BasicSqrPro) |
+| Nat/BasicSqrPro (`pro2`: stk.nat call, both `cap > 0` branches) | 130 s / 3.8 GB | the two branches re-run the call (by_cases); merge them if it grows |
+| Nat/BasicSqr (`pro1`, `full`, `ens`, `sum`) | 26 s / 2.6 GB | |
+| Nat/BasicSqrRow (dev compile) | 7 s / 2.2 GB | |
+| Nat/BasicSqrBody (re-measured) | 24 s / 3.0 GB | was 81–115 s / 7.6 GB (s7, before the Defs/Step rework); profile: `janus64_run … calls [hMV']` 6.5 s, one `omega` in `rdw` 3.1 s — no trim needed |
+| Nat/BasicSqrSmall (df closer fixed) | 74 s / 3.5 GB | |
+| Nat/BasicMul, Nat/AddTo (re-measured, load ~60) | 223 s / 5.5 GB, 272 s / 5.5 GB | within the 5 min cap only at load ≤ 60: TRIM next (split the by_cases paths into modules) |
+| Nat/NatAdd*, Nat/NatSub* (DF threading) | each ≤ 82 s / 2.5 GB | |
+Row `FvModexp.Amd64.BasicSqrRow` (cache-divmc, first attempt, load 66): FAIL 902 s (timeout while compiling the ~25
+new amd64 modules; StackNat's were cached) — re-run bottom-up on the warm cache (see asm-rows.tsv).
