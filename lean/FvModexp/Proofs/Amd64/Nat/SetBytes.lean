@@ -18,7 +18,7 @@ theorem ens (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc bp bl bc : BitVec 64) :
     Ensures ((Extracted.program.onlySegments [fn]).link impl) (segAddr Extracted.program fn) [zp, zl, zc, bp, bl, bc]
       (Pre R b L zp zc bp bl) (Post R b L zp zc bp bl) := by
-  intro ret hret s hs ⟨⟨hg, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, hLs⟩, hty, hlive, hbl, hbp, hbacc,
+  intro ret hret s hs ⟨⟨hg, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, hLs, hro⟩, hty, hlive, hbl, hbp, hbacc,
     hheld, hbwin, hzb, hzw, hinv, hok⟩
   have hmk' := MakesliceLiveContract64.of_codeIn (codeIn_ofImpl_restrict_of_apart64 hap [fn]) hmk
   have hLs0 := hLs
@@ -53,7 +53,7 @@ theorem ens (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
     have hz' : ¬ ((zc.toNat : Int) < (((bl.toNat + 7) / 8 : Nat) : Int)) := by omega
     janus64_run [asr_small_bv, asr63_small, sshiftRight_small, toInt_small, asr_small_toNat, BitVec.toNat_ushiftRight,
       Nat.shiftRight_eq_div_pow, toInt_ushiftRight, BitVec.msb_eq_decide, hsa, hsb, hsc, BitVec.add_zero]
-    refine post_empty ?_ (by janus64_simp) (by janus64_simp [BitVec.toNat_ushiftRight, Nat.shiftRight_eq_div_pow]; omega)
+    refine post_empty (by janus64_simp) ?_ (by janus64_simp) (by janus64_simp [BitVec.toNat_ushiftRight, Nat.shiftRight_eq_div_pow]; omega)
       (by janus64_simp) h0 hlive hLs0 hout hinv
     simp only [win]; janus_frame
   · by_cases hz : zc.toNat < nW bl
@@ -72,7 +72,7 @@ theorem ens (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
           (bl.toNat / 8) _ m ptr 1#64 1#64 bl 0#64 (by omega) (by simp) rfl (by simp [nW]; omega) (by simp)
           (mid_of_alloc hLs0 hout hb' hheld hbwin ?_ ?_ ?_ ?_ hLF hMF hAp hIn (by omega) hacc h8
             hinv' (by omega) (by simp only [makeCost, makeCap, allocCost, nW]; rw [h1]; decide) (by simp only [nW]; omega))
-          (by simp) ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl
+          (by simp) ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl
         · janus64_simp
         · janus64_simp
         · intro a k h1 h2
@@ -96,7 +96,7 @@ theorem ens (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
             (h8 (Or.inr (by omega))) hinv' (by omega)
             (by unfold makeCost makeCap nW; rw [if_neg h1]; exact Nat.le_trans (blockSize_le_allocCost _ true) (Nat.le_refl _))
             (by simp only [nW]; omega))
-          (by simp) ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl
+          (by simp) ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl
         · janus64_simp
         · janus64_simp
         · intro a k h1 h2
@@ -112,7 +112,7 @@ theorem ens (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
         (bl.toNat / 8) _ _ zp ((bl + 7#64) >>> 3) zc bl 0#64 (by omega) (by simp) rfl
         (by rw [BitVec.toNat_ushiftRight, Nat.shiftRight_eq_div_pow]; janus64_simp) rfl
         (mid_of_reuse hlive hzb hzw hLs0 hout hb' hinv (by omega) hz0 ?_ ?_ ?_ ?_)
-        (by simp) ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl
+        (by simp) ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl
       · janus64_simp
       · janus64_simp
       · intro a k h1 h2

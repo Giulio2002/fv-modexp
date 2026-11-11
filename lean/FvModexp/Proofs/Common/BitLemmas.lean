@@ -75,4 +75,35 @@ theorem asr_small_bv (x : BitVec 64) (h : x.toNat < 2 ^ 63) (k : Nat) (M Mk : Bi
   have h1 : (18446744073709551615#64).toNat = 2 ^ 64 - 1 := rfl
   rw [h1, Nat.and_two_pow_sub_one_eq_mod _ 64, Nat.mod_eq_of_lt (x.rotateRight k).isLt, Nat.and_two_pow_sub_one_eq_mod, rotr_mod x k ⟨hk.1, by omega⟩]
 
+/-- The signed value of a `CSEL` result is the `CSEL` of the signed values. -/
+theorem toInt_ite (c : Prop) [Decidable c] (a b : BitVec 64) :
+    (if c then a else b).toInt = if c then a.toInt else b.toInt := by split <;> rfl
+
+/-- The unsigned value of a `CSEL` result. -/
+theorem toNat_ite (c : Prop) [Decidable c] (a b : BitVec 64) :
+    (if c then a else b).toNat = if c then a.toNat else b.toNat := by split <;> rfl
+
+/-- Go's slice-pointer mask `start & ((start - cap) >> 63)` (no advance past the end): `start` when `start < cap`. -/
+theorem sliceMask_lt (n : Nat) (a b : BitVec 64) (hab : a.toNat < b.toNat) (hb : b.toNat < 2 ^ 63) (hn : n < 2 ^ 64) :
+    (n &&& ((a - b).sshiftRight 63).toNat) = n := by
+  have h1 : (a - b).msb = true := by
+    rw [BitVec.msb_eq_decide, BitVec.toNat_sub]; simp; omega
+  have h2 : (a - b).sshiftRight 63 = BitVec.allOnes 64 := by
+    apply BitVec.eq_of_getLsbD_eq; intro i hi
+    simp [BitVec.getLsbD_sshiftRight, h1]
+    have hr : (18446744073709551615#64).getLsbD i = true := by
+      rw [show (18446744073709551615#64) = BitVec.allOnes 64 from rfl, BitVec.getLsbD_allOnes]; simp [hi]
+    rw [hr]
+    by_cases h0 : i = 0
+    · subst h0
+      have : (a - b).getLsbD 63 = true := by rw [← BitVec.msb_eq_getLsbD_last] at *; exact h1
+      simp [this]
+    · simp; omega
+  rw [h2, BitVec.toNat_allOnes]
+  have : n &&& (2 ^ 64 - 1) = n % 2 ^ 64 := Nat.and_two_pow_sub_one_eq_mod n 64
+  rw [this, Nat.mod_eq_of_lt hn]
+
+theorem sliceMask_eq (n : Nat) (a : BitVec 64) : (n &&& ((a - a).sshiftRight 63).toNat) = 0 := by
+  simp
+
 end FvModexp

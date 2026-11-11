@@ -20,7 +20,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc bp bl bc : BitVec 64) :
     Ensures ((Extracted.program.onlySegments [fn]).link impl) (segAddr Extracted.program fn) [zp, zl, zc, bp, bl, bc]
       (Pre R b L zp zc bp bl) (Post R b L zp zc bp bl) := by
-  intro ret hret s hs ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, hd, hout, hga, hgr, hLs⟩, hty, hlive, hbl, hbp, hbacc,
+  intro ret hret s hs ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, hd, hout, hga, hgr, hLs, hro⟩, hty, hlive, hbl, hbp, hbacc,
     hheld, hbwin, hzb, hzw, hinv, hok⟩
   have hmk' := MakesliceLiveContract.of_codeIn (codeIn_ofImpl_restrict_of_apart hap [fn]) hmk
   have hLs0 := hLs
@@ -43,8 +43,8 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     have hz' : ¬ ((zc.toNat : Int) < (((bl.toNat + 7) / 8 : Nat) : Int)) := by omega
     janus_run [asr_small_bv, asr63_small, sshiftRight_small, toInt_small, asr_small_toNat, BitVec.toNat_ushiftRight,
       Nat.shiftRight_eq_div_pow, toInt_ushiftRight]
-    refine post_empty ?_ (by janus_simp) (by janus_simp [BitVec.toNat_ushiftRight, Nat.shiftRight_eq_div_pow]; omega) (by janus_simp) h0 hlive hLs0 hout hinv
-    simp only [win]; janus_frame
+    refine post_empty ?_ (by janus_simp) (by janus_simp [BitVec.toNat_ushiftRight, Nat.shiftRight_eq_div_pow]; omega) (by janus_simp) h0 hlive hLs0 hout hb' hinv
+    simp only [winA]; janus_frame
   · by_cases hz : zc.toNat < nW bl
     · obtain ⟨hok1, hcost⟩ := hok hz
       have hbs := blockSize_le_allocCost (8 * makeCap (nW bl)) true
@@ -65,7 +65,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
           (by janus_simp) (by janus_simp) (by janus_simp) (by janus_simp) (by janus_simp) rfl
         · intro a k h1 h2
           janus_simp
-        · simp only [win]; janus_frame
+        · simp only [winA]; janus_frame
       · rw [show makeCap (nW bl) = nW bl + 4 by unfold makeCap; simp [h1]] at hok1 hbs
         have hbn : blockSize (8 * ((bl.toNat + 7) / 8 + 4)) true ≤ b := by
           unfold makeCost makeCap at hcost; rw [if_neg h1] at hcost; exact Nat.le_trans hbs hcost
@@ -87,7 +87,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
           (by janus_simp) (by janus_simp) (by janus_simp) (by janus_simp) (by janus_simp) rfl
         · intro a k h1 h2
           janus_simp
-        · simp only [win]; janus_frame
+        · simp only [winA]; janus_frame
 
     · -- reuse `z`
       clear hok
@@ -103,7 +103,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
         (by janus_simp) (by janus_simp) (by janus_simp) (by janus_simp) (by janus_simp) rfl
       · intro a k h1 h2
         janus_simp
-      · simp only [win]; janus_frame
+      · simp only [winA]; janus_frame
 
 set_option linter.defProp false in
 /-- `ens` as a callee summary inside a caller whose program keeps the functions `ms ⊇ [fn]`

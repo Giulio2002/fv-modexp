@@ -38,14 +38,15 @@ def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc bp bl : BitVec 64) 
     bp.toNat + bl.toNat ≤ 2 ^ 48 ∧ s.mem.accessible bp.toNat bl.toNat false = true ∧
     Held R L bp.toNat bl.toNat ∧ Outside bp.toNat bl.toNat (win s 4160 48) ∧
     (0 < zc.toNat → Apart zp.toNat (8 * zc.toNat) bp.toNat bl.toNat) ∧
-    (0 < zc.toNat → Outside zp.toNat (8 * zc.toNat) (win s 4160 48)) ∧
+    (0 < zc.toNat → Outside zp.toNat (8 * zc.toNat) (win s 4160 48) ∧
+      Apart zp.toNat (8 * zc.toNat) ((s.regs 14).toNat + 16) 8 ∧ Apart zp.toNat (8 * zc.toNat) (s.fsBase.toNat - 8) 8) ∧
     R.inv b L (s.regs 14).toNat (view R.rt L s.mem) ∧
     (zc.toNat < nW bl → R.ok (cA "runtime.makeslice") [wordT, nW bl, makeCap (nW bl)] ∧ makeCost (nW bl) ≤ b)
 
 /-- The postcondition: `z.setBytes(buf)` returns a normalised nat `(p', n', c')` holding the big-endian value of
 `buf`, either `z`'s array or a fresh one, with the runtime invariant for the live set with it. -/
-def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc bp bl : BitVec 64) (s s' : State) : Prop :=
-  ∃ p' n' c' : Nat, (s'.regs 0).toNat = p' ∧ (s'.regs 3).toNat = n' ∧ (s'.regs 1).toNat = c' ∧
+@[reducible] def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc bp bl : BitVec 64) (s s' : State) : Prop :=
+  s'.fsBase = s.fsBase ∧ ∃ p' n' c' : Nat, (s'.regs 0).toNat = p' ∧ (s'.regs 3).toNat = n' ∧ (s'.regs 1).toNat = c' ∧
     natVal s'.mem p' n' = beVal s.mem bp.toNat bl.toNat ∧ NatNorm s'.mem p' n' ∧ n' ≤ c' ∧ n' ≤ nW bl ∧
     ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b - makeCost (nW bl) ≤ b' ∧
       R.inv b' L' (s.regs 14).toNat (view R.rt L' s'.mem) ∧ NatLive s'.mem R L' p' c' ∧

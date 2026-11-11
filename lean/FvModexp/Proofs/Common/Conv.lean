@@ -169,6 +169,10 @@ Nothing is required for `c = 0` (the pointer of an empty slice is arbitrary). -/
 def NatLive (m : Memory) (R : RtInv) (L : List (Nat × Nat)) (p c : Nat) : Prop :=
   0 < c → p % 8 = 0 ∧ Held R L p (8 * c) ∧ m.accessible p (8 * c) true = true ∧ p + 8 * c ≤ 2 ^ 48
 
+/-- An empty (`cap = 0`) nat has no array to speak of. -/
+@[simp] theorem natLive_zero (m : Memory) (R : RtInv) (L : List (Nat × Nat)) (p : Nat) : NatLive m R L p 0 = True := by
+  simp [NatLive]
+
 /-- A nat is normalised: no leading zero limb. -/
 def NatNorm (m : Memory) (p n : Nat) : Prop := n = 0 ∨ m.readLE (p + 8 * (n - 1)) 8 ≠ 0
 
