@@ -28,12 +28,12 @@ def RgPost (ptr len : BitVec 64) (s s' : State) : Prop :=
     Spec.u64 (s'.regs 0) = requiredGas fork (Spec.bytesAt s.mem ptr.toNat len.toNat)
       (parseLengths (Spec.bytesAt s.mem ptr.toNat len.toNat))
 
-theorem returns_mono {p : Program} {s : State} {Q Q' : State → Prop} (h : Returns p s Q) (hQ : ∀ s', Q s' → Q' s') :
+theorem returns_mono {p : Janus.Amd64.Program} {s : State} {Q Q' : State → Prop} (h : Returns p s Q) (hQ : ∀ s', Q s' → Q' s') :
     Returns p s Q' := by
   obtain ⟨f, s', h1, h2⟩ := h
   exact ⟨f, s', h1, hQ _ h2⟩
 
-theorem reaches_of_returns {p : Program} {s : State} {Q Q' : State → Prop} (h : Returns p s Q) (hQ : ∀ s', Q s' → Q' s') :
+theorem reaches_of_returns {p : Janus.Amd64.Program} {s : State} {Q Q' : State → Prop} (h : Returns p s Q) (hQ : ∀ s', Q s' → Q' s') :
     Reaches p s (IsReturn Q') := by
   obtain ⟨f, s', h1, h2⟩ := h
   exact ⟨f, _, h1, hQ _ h2⟩
@@ -61,16 +61,21 @@ theorem copy_rd {C m : Memory} {b src n i : Nat} (h : ∀ j, j < n → m.bytes (
     m.readLE (b + i) 1 = C.readLE (src + i) 1 := by
   rw [Janus.Arm64.Memory.readLE_one, Janus.Arm64.Memory.readLE_one, h i hi]
 
-/-- `Uint64()` with `MaxUint64` when `!IsUint64()`, as the machine code computes it from the limbs. -/
+/-- `Uint64()` with `MaxUint64` when `!IsUint64()`, as the amd64 machine code computes it from the limbs (`OR` of limbs 2, 1, 3,
+`TEST`, `CMOVE`). -/
 theorem sat_bv (m : Memory) (z : Nat) :
-    (if m.readLE (z + 24) 8 ||| (m.readLE (z + 16) 8 ||| m.readLE (z + 8) 8) = 0 then BitVec.ofNat 64 (m.readLE z 8)
+    (if (BitVec.ofNat 64 (m.readLE (z + 16) 8) ||| BitVec.ofNat 64 (m.readLE (z + 8) 8) |||
+          BitVec.ofNat 64 (m.readLE (z + 24) 8)).toNat = 0 then BitVec.ofNat 64 (m.readLE z 8)
       else 18446744073709551615#64).toNat = RgSpec.sat (val256 m z) := by
   have h0 := Util.readLE8_lt m z; have h1 := Util.readLE8_lt m (z + 8); have h2 := Util.readLE8_lt m (z + 16)
+  have h3 := Util.readLE8_lt m (z + 24)
   have := Calldata.sat_limbs (m.readLE z 8) (m.readLE (z + 8) 8) (m.readLE (z + 16) 8) (m.readLE (z + 24) 8) h0 h1 h2
   rw [val256_limbs, RgSpec.sat, ← this]
-  split
-  · rw [BitVec.toNat_ofNat, Nat.mod_eq_of_lt h0]
-  · rfl
+  simp only [BitVec.toNat_or, BitVec.toNat_ofNat, Nat.mod_eq_of_lt h0, Nat.mod_eq_of_lt h1, Nat.mod_eq_of_lt h2,
+    Nat.mod_eq_of_lt h3, Nat.or_eq_zero_iff]
+  by_cases h : m.readLE (z + 24) 8 = 0 ∧ m.readLE (z + 16) 8 = 0 ∧ m.readLE (z + 8) 8 = 0
+  · rw [if_pos ⟨⟨h.2.1, h.2.2⟩, h.1⟩, if_pos h, BitVec.toNat_ofNat, Nat.mod_eq_of_lt h0]
+  · rw [if_neg (fun h' => h ⟨h'.2, h'.1.1, h'.1.2⟩), if_neg h]; rfl
 
 theorem rd_frame' {m0 m : Memory} {rs : List (Nat × Nat)} (hf : MemFrame m0 m rs) {a b : Nat} (ho : Outside a 1 rs)
     (h : a = b) : m.readLE a 1 = (m0.bytes b).toNat := by
