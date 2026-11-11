@@ -252,10 +252,10 @@ dependencies; peak = max(driver, `verified.json` memGuard)):
 
 | row | arm64 | amd64 |
 |---|---|---|
-| AddVWRow | PASS 30 s / 2.8 GiB (second run; first run spent 226 s, mostly building `Extracted`, then failed the witness audit) | needs amd64 stubs |
-| SubVWRow | PASS 95 s / 3.4 GiB | needs amd64 stubs |
+| AddVWRow | PASS 30 s / 2.8 GiB (second run; first run spent 226 s, mostly building `Extracted`, then failed the witness audit) | PASS 44 s / 2.8 GiB (s5, builds the amd64 WStubs) |
+| SubVWRow | PASS 95 s / 3.4 GiB | PASS 23 s (s5, warm; first run with the pre-growslice impl 149 s / 3.4 GiB) |
 | DivWVWRow | PASS 145 s / 3.0 GiB | PASS 326 s / 3.8 GiB (first amd64 Run row of the cache) |
-| MulAddWWRow | PASS 316 s / 5.1 GiB (builds the 9 MulAddWW modules) | needs amd64 stubs |
+| MulAddWWRow | PASS 316 s / 5.1 GiB (builds the 9 MulAddWW modules) | PASS 24 s (s5, warm); first run (builds the 9 amd64 MulAddWW modules, pre-growslice impl) 471 s / 5.2 GiB |
 
 Witness modules: `Arm64/Witness/AsmWit` 6.6 s, `Amd64/Witness/AsmWit` 10.6 s, each row module ≤ 4.2 s. amd64
 `ImplApart Extracted.program []` by plain `decide +kernel` did not finish in 10 min (it checks every code byte against
@@ -333,6 +333,15 @@ and `(2^64 - 8 + fsBase) % 2^64 = fsBase - 8` as run lemmas; register reads of a
 `simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]`.
 
 ### divmc nat.sub (2026-11-11), both ISAs: 12 modules each (copied from nat.add's split), each ≤ 44 s, ≤ 3.1 GB.
+
+### Shared witness stubs, amd64 (agent asm s5, dev compile, LEAN_NUM_THREADS=4)
+| module | wall / max RSS | note |
+|---|---|---|
+| Amd64/Witness/StubsMem (`liveMemRet64_frame`) | 1.6 s / 1.8 GB | |
+| Amd64/Witness/Stubs (impl incl. growslice code, hap, mv/cl/mk/no/wb2/wb4/get/put, Serves) | 8 s / 2.2 GB | `hap` from code ranges |
+| Amd64/Witness/StubsGrow (`gr`) | 81 s / 2.7 GB | chain split into 9 chunk lemmas (≤ 8 leaves each, default heartbeats); the state-literal closers after `janus64_run` field by field (`exact hX`/`rfl`): `ck_tac`'s `simp [setRegF, *]`/`assumption` over the big context hit the 200k-heartbeat whnf limit |
+| Amd64/Witness/AsmWit (+ call-site states) | ~11 s | |
+| Amd64/Witness/Sites | < 10 s | |
 
 ### Shared witness stubs, arm64 (agent top s2, dev compile, LEAN_NUM_THREADS=4)
 | module | wall | note |
