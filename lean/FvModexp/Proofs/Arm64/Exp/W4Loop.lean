@@ -200,6 +200,7 @@ theorem loop (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
       calls [hP3 := hA]
     janus_run [r1016, r1024, r1032, r224, r1000, r992, r240] until [segAddr LibExp.program fn + 0xa04]
       calls [hP4 := hBs]
+    have hd' : yi / 1152921504606846976 < 16 := hd
     have q0 : M0.readLE (sp + 432 + (8 * (yi / 1152921504606846976) + 2 * (8 * (yi / 1152921504606846976)))) 8 =
         pp (yi / 2 ^ 60) := by rw [← rp0]; congr 1; omega
     have q1 : M0.readLE (sp + 432 + (8 * (yi / 1152921504606846976) + 2 * (8 * (yi / 1152921504606846976))) + 8) 8 =

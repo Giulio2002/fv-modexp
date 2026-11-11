@@ -195,9 +195,16 @@ in `scripts/asm-row.sh`).
 | Exp/Mont (entry + memclr + loop + exit, `ens'`, `ens`) | 84 s / 4.6 GB | 64–73 s / 3.5 GB |
 | Exp/MontAsm (asm summaries → montgomery shapes) | 1.6 s | 3.7 s |
 | Exp/Defer (5 `stk.restore` closures) | 6.3 s / 2.2 GB | 4.9 s / 2.2 GB |
+| Exp/LibExp (66 segments, names = RunIface.namesExp; chunked kernel masks) | 46 s / 2.9 GB | 44 s / 3.0 GB |
+| Exp/MontW (montgomery as LibExp callee) | 8 s / 2.8 GB | — |
 
 Lessons (cost of mistakes measured on the way): (1) unfolding ~11 `Apart` facts into the context at once made one `omega` in
 amd64 `Mont` exceed 600 s (killed) — unfold only the facts a proof needs, locally (`have h := hzx; unfold Apart at h`): 22 s;
 (2) a hypothesis `C : m.readLE a 8 = v` whose address syntactically matches a later load is used by the executor as a rewrite
 rule, which changed the shape of stored values (amd64 loop) — `clear` such facts before the next `janus_run`;
 (3) `rfl` for a register goal with a metavariable memory assigns `{…}.mem`: close those goals with `dsimp only` first.
+
+expmc before/after (2026-11-11): `eq_only` of a 44/79-name restricted program: `congr 1` → whnf heartbeat timeout (200k);
+one `decide +kernel` over all 84 segments → 25 s / 7.0 GB (kernel string compares); chunked masks (one theorem per 6
+segments) + `filter_mask` → 45 s / 2.9 GB. Row calibration: `MontRow.correctness` (arm64, Run extraction) audit + kernel
+replay pass, 588 s wall cold (incl. the one-time dependency build), 2.4 GB peak; stops at non-vacuity (no witness yet).
