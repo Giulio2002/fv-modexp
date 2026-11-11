@@ -48,4 +48,10 @@ theorem readLE_of_zeroed {m : Memory} {a n : Nat} (h : Mem.Zeroed m a n) :
     rw [show a + (b - a) = b by omega] at this
     rw [this]; rfl
 
+/-- A store into a held range does not change the runtime's view (a rewrite rule for `janus_run`'s lemma list:
+`view_writeLE_held h` for a store into a caller's object before a call). -/
+theorem view_writeLE_held {R : RtInv} {L : List (Nat × Nat)} {a n : Nat} (h : Held R L a n) (m : Memory) (v : Nat) :
+    view R.rt L (m.writeLE a n v) = view R.rt L m :=
+  h.elim (fun h => Janus.Contracts.view_writeLE_live h) (fun h => Janus.Contracts.view_writeLE_out h)
+
 end FvModexp
