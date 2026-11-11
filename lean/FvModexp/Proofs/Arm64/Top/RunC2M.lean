@@ -9,6 +9,7 @@ namespace FvModexp.Arm64.Run
 
 theorem clz_one : clzNat 64 1 = 63 := by decide
 
+set_option profiler true in
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 0 in
 theorem c2m (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv) (stkM aboveM : Nat)
@@ -126,7 +127,9 @@ theorem c2m (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     rw [show s.sp.toNat - 136 + 24 = s.sp.toNat - 112 by omega, show s.sp.toNat - 136 + 8 = s.sp.toNat - 128 by omega]
     exact (hlive0 hcap0).2.2.2.2.2
   have hIV0 : RunIface.IntV T.mem (s.sp.toNat - 136) = 1 := by
-    rw [intV_eq, show s.sp.toNat - 136 + 8 = s.sp.toNat - 128 by omega]; exact hval0
+    unfold RunIface.IntV
+    rw [show s.sp.toNat - 136 + 8 = s.sp.toNat - 128 by omega, show s.sp.toNat - 136 + 16 = s.sp.toNat - 120 by omega]
+    exact hval0
   have hIV2 : RunIface.IntV T.mem (s.sp.toNat - 200) = opV s p len 2 := by rw [intV_eq]; exact hval2
   have l0 : RunIface.lenW T.mem (s.sp.toNat - 136) ≤ wMax s p len :=
     Nat.le_trans (lenW_op (hop 0 (by omega)) (by omega)) (Nat.le_trans (Nat.le_max_left _ _) (Nat.le_max_left _ _))
@@ -134,35 +137,39 @@ theorem c2m (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     Nat.le_trans (lenW_op (hop 2 (by omega)) (by omega)) (Nat.le_max_right _ _)
   have hspW : W ≤ s.sp.toNat := by omega
   have hTw : T.mem.accessible (s.sp.toNat - W) (W + 40) true = true := by rw [hMF.accessible]; exact hw
-  obtain ⟨S1, hS1⟩ : ∃ S1, S1 = s' := ⟨_, rfl⟩
-  subst hS1
+  have hz1 : s.sp.toNat - W ≤ s.sp.toNat - 136 := by omega
+  have hz2 : s.sp.toNat - 136 + 32 ≤ s.sp.toNat + 40 := by omega
+  have hwsW : ∀ r ∈ win s W 40, s.sp.toNat - W ≤ r.1 ∧ r.1 ≤ r.2 ∧ r.2 ≤ s.sp.toNat - W + (W + 40) := by
+    intro r hr; simp only [win, List.mem_singleton] at hr; subst hr; dsimp only; omega
+  have hsl : ∀ (M2 : Memory) (t : State), t.sp = s.sp - 624#64 → MemFrame s'.mem M2 (R.rt ++ winA t stkM aboveM) →
+      M2.readLE (s.sp.toNat - 624) 8 = ret ∧ M2.readLE (s.sp.toNat - 632) 8 = (s.regs 29).toNat ∧
+      M2.readLE (s.sp.toNat - 464) 8 = hdrV s p len 2 := by
+    intro M2 t ht h3
+    have o1 : Outside (s.sp.toNat - 624) 8 R.rt := hout.of_sub (by omega) (by omega)
+    have o2 : Outside (s.sp.toNat - 632) 8 R.rt := hout.of_sub (by omega) (by omega)
+    have o3 : Outside (s.sp.toNat - 464) 8 R.rt := hout.of_sub (by omega) (by omega)
+    exact ⟨(slot_TV (h1 := hMF2) (h2 := h3) ht hsp624 o1 (by omega) (by omega) harrR).trans hm1,
+      (slot_TV (h1 := hMF2) (h2 := h3) ht hsp624 o2 (by omega) (by omega) harrR).trans hm2,
+      (slot_TV (h1 := hMF2) (h2 := h3) ht hsp624 o3 (by omega) (by omega) harrR).trans hs3⟩
   janus_run [hsp1, h281', hr01, hz136] until [pcCV] calls [hQ := hBy']
   obtain ⟨⟨hsp2, h282, h292, h182⟩, vp, vn, vc, hvp, hvn, -, -, hbe, hmin, Lb, bb, hext3, hb3, hinv3, hfr3, hMF3,
     hLF3⟩ := hQ.1
   have hrg3 := hQ.2
+  clear hQ hBy' hIPb hIP
   have hval : beVal s'.mem vp vn = resV s p len := by
     rw [hbe, hv1, hIV0, hIV2, resV_eq _ _ _ hv2, hv0, Nat.one_pow]
   have hvlt : vn ≤ hdrV s p len 2 :=
     beLen_le _ _ _ _ hmin (by rw [hbe, hv1, hIV0, hIV2]; exact lt_modLen s p len (Nat.mod_lt _ hv2))
-  have hMFTV := frame_TV (sp := s.sp.toNat) hW hab hspW hsp624 hsp624 (by omega) (by omega) harrR hMF2 hMF3
+  have hMFTV := frame_TV (sp := s.sp.toNat) hW hab hspW hsp624 hsp624 hz1 hz2 harrR hMF2 hMF3
   have hMFall : MemFrame s.mem s'.mem (R.rt ++ win s W 40) :=
     (memFrame_win hW1 hMF).trans hMFTV fun _ _ h => ⟨h, h⟩
   have hLFall : LiveFrame s.mem s'.mem L [] :=
-    hLF.trans (liveFrame_TV hext hext2 hLs (by omega) (by omega) harrL hLF2 hLF3) fun _ _ h => h
+    hLF.trans (liveFrame_TV hext hext2 hLs hz1 hz2 harrL hLF2 hLF3) fun _ _ h => h
   have hextB := (hext.trans hext2).trans hext3
-  have hsl : ∀ a, Outside a 8 R.rt → (s.sp.toNat - 624 - 8 ≤ a ∧ a + 8 ≤ s.sp.toNat - 624 + 8 ∧ 8 ≤ s.sp.toNat - 624) ∨
-      s.sp.toNat - 624 + aboveM ≤ a → a + 8 ≤ s.sp.toNat - 136 ∨ s.sp.toNat - 136 + 32 ≤ a →
-      s'.mem.readLE a 8 = T.mem.readLE a 8 := fun a hr hw' hz =>
-    slot_TV rfl hsp624 hr hw' hz harrR hMF2 hMF3
+  obtain ⟨e1, e2, e3⟩ := hsl _ _ rfl hMF3
   refine hk _ Lb bb ⟨rfl, by janus_simp [h282, h281'], by janus_simp [h292, h291, h29], by janus_simp [h182, h181, h18],
-    ?s1, ?s2, ?s3, hl2, ?dl, ?vn, ?vv, ?fr, hextB, ?bud, hinv3, liveSep_W hextB hLs hout hspW, hMFall, hLFall⟩
-    (by janus_simp)
-  case s1 => exact (hsl _ (hout.of_sub (by omega) (by omega)) (by omega) (by omega)).trans hm1
-  case s2 => exact (hsl _ (hout.of_sub (by omega) (by omega)) (by omega) (by omega)).trans hm2
-  case s3 => exact (hsl _ (hout.of_sub (by omega) (by omega)) (by omega) (by omega)).trans hs3
-  case dl =>
-    exact dataLoaded_win hdS (hrg3.trans hrg1) hro hMFTV hTw fun r hr => by
-      simp only [List.mem_singleton] at hr; subst hr; dsimp only; omega
+    e1, e2, e3, hl2, dataLoaded_win hdS (hrg3.trans hrg1) hro hMFTV hTw hwsW, ?vn, ?vv, ?fr, hextB, ?bud, hinv3,
+    liveSep_W hextB hLs hout hspW, hMFall, hLFall⟩ (by janus_simp)
   case vn => show (s'.regs 1).toNat ≤ _; rw [hvn]; exact hvlt
   case vv => show beVal s'.mem (s'.regs 0).toNat (s'.regs 1).toNat = _; rw [hvp, hvn]; exact hval
   case fr =>

@@ -1,5 +1,6 @@
 import FvModexp.Proofs.Arm64.Top.RunD2Lem
 import FvModexp.Proofs.Arm64.Top.RunD2J
+import FvModexp.Proofs.Arm64.Top.RunArith
 
 /-! # `Run` (arm64): `D1` to `J2`, exponent operand longer than the input rest, more than 32 bytes: `makeslice` buffer,
 `memmove` (at least one input byte to copy) -/
@@ -68,7 +69,7 @@ theorem d2l (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   have hoffc : (96 < len.toNat ∧ off = 96) ∨ (len.toNat ≤ 96 ∧ off = 0) := by
     subst hoffd; simp only [inOff]; split <;> omega
   rw [hoffd] at hs5 hs6
-  have hcap : min (hdrV s p len 0) (len.toNat - 96) ≤ cp.toNat - off := by omega
+  have hcap : min (hdrV s p len 0) (len.toNat - 96) ≤ cp.toNat - off := cap_le _ _ _ _ (Nat.min_le_right _ _) hlcp hoffc
   obtain ⟨mN, hmNd⟩ : ∃ mN, (if min (hdrV s p len 0) (len.toNat - 96) < cp.toNat - off then
       min (hdrV s p len 0) (len.toNat - 96) else 0) = mN := ⟨_, rfl⟩
   have hmN : mN ≤ min (hdrV s p len 0) (len.toNat - 96) ∧
@@ -80,17 +81,12 @@ theorem d2l (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     apply BitVec.eq_of_toNat_eq
     rw [sliceMask_le _ _ hcap (by omega), hmNd, BitVec.toNat_ofNat, Nat.mod_eq_of_lt (by omega)]
   have hsub : BitVec.ofNat 64 (len.toNat - 96) - BitVec.ofNat 64 (min (hdrV s p len 0) (len.toNat - 96)) =
-      BitVec.ofNat 64 (len.toNat - 96 - min (hdrV s p len 0) (len.toNat - 96)) := by
-    apply BitVec.eq_of_toNat_eq; rw [BitVec.toNat_sub]; simp only [BitVec.toNat_ofNat]
-    rw [Nat.mod_eq_of_lt (a := min (hdrV s p len 0) (len.toNat - 96)) (by omega),
-      Nat.mod_eq_of_lt (a := len.toNat - 96) (by omega),
-      Nat.mod_eq_of_lt (a := len.toNat - 96 - min (hdrV s p len 0) (len.toNat - 96)) (by omega)]; omega
+      BitVec.ofNat 64 (len.toNat - 96 - min (hdrV s p len 0) (len.toNat - 96)) :=
+    bv_sub_of_le _ _ (Nat.min_le_right _ _) (Nat.lt_of_le_of_lt (Nat.sub_le _ _) len.isLt)
   have hcsub : BitVec.ofNat 64 (cp.toNat - off) - BitVec.ofNat 64 (min (hdrV s p len 0) (len.toNat - 96)) =
-      BitVec.ofNat 64 (cp.toNat - off - min (hdrV s p len 0) (len.toNat - 96)) := by
-    apply BitVec.eq_of_toNat_eq; rw [BitVec.toNat_sub]; simp only [BitVec.toNat_ofNat]
-    rw [Nat.mod_eq_of_lt (a := min (hdrV s p len 0) (len.toNat - 96)) (by omega),
-      Nat.mod_eq_of_lt (a := cp.toNat - off) (by omega),
-      Nat.mod_eq_of_lt (a := cp.toNat - off - min (hdrV s p len 0) (len.toNat - 96)) (by omega)]; omega
+      BitVec.ofNat 64 (cp.toNat - off - min (hdrV s p len 0) (len.toNat - 96)) :=
+    bv_sub_of_le _ _ hcap (Nat.lt_of_le_of_lt (Nat.sub_le _ _) cp.isLt)
+  obtain ⟨hr1, hr2, hr3⟩ := rng_le p.toNat len.toNat off mN _ hmN.1 (Nat.min_le_right _ _) hoffc hmN.2
   have hsrc : BitVec.ofNat 64 mN + BitVec.ofNat 64 (p.toNat + off) = BitVec.ofNat 64 (p.toNat + off + mN) := by
     apply BitVec.eq_of_toNat_eq; rw [BitVec.toNat_add]; simp only [BitVec.toNat_ofNat]
     rw [Nat.mod_eq_of_lt (a := mN) (by omega), Nat.mod_eq_of_lt (a := p.toNat + off) (by omega),
@@ -126,12 +122,12 @@ theorem d2l (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     simp only [calleeStack, List.mem_cons, List.not_mem_nil, or_false] at hr
     rcases hr with rfl | rfl <;> refine ⟨?_, ?_, ?_⟩ <;> dsimp only <;> omega
   clear hdS hinv
-  have hmE : mN = min (hdrV s p len 0) (len.toNat - 96) := by omega
-  have hoff : off = 96 := by omega
+  have hmE : mN = min (hdrV s p len 0) (len.toNat - 96) := hmN.2.resolve_left (Nat.pos_iff_ne_zero.mp hn0)
+  have hoff : off = 96 := off_of _ _ _ hoffc hn0
   have hmvok : R.ok (cA "runtime.memmove") [ptr.toNat, p.toNat + off + mN,
       len.toNat - 96 - min (hdrV s p len 0) (len.toNat - 96)] := hokM _ _ _ (by omega)
   have hsA : s.mem.accessible (p.toNat + off + mN) (len.toNat - 96 - min (hdrV s p len 0) (len.toNat - 96)) false
-      = true := Memory.accessible_mono _ hpacc (by omega) (by omega)
+      = true := Memory.accessible_mono _ hpacc hr1 hr2
   have hpo : ptr.toNat + blockSize (hdrV s p len 1) true ≤ s.sp.toNat - 4800 ∨ s.sp.toNat + 40 ≤ ptr.toNat := by
     have := InRanges.apart hink hout; unfold Apart at this; omega
   have hpI : p.toNat + off + mN + (len.toNat - 96 - min (hdrV s p len 0) (len.toNat - 96)) ≤ ptr.toNat ∨
