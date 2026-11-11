@@ -1,4 +1,14 @@
-# Performance log
+# Performance record (proof elaboration and `janus verify` rows)
+
+Project sanity goal: every `janus verify` row <= 15 min wall and <= 16 GB (hard, `scripts/verify-all.sh` has no override); every proof module's
+`lake build` / elaboration <= 5 min and <= 8 GB (target; anything above is profiled and fixed, never given more heartbeats/timeouts/memory);
+median row <= 3 min; full run (both ISAs, 6 rows in parallel) <= 2 h.
+
+Procedure for a slow module: `set_option trace.profiler true`, `janus.omega.log` (Janus PROOFS.md section Performance), then split segments,
+use summaries, normalise to `Nat`, keep `omega` contexts small, use reducible closers. Record BEFORE and AFTER here.
+
+| date | module / row | before (s, GB) | change | after (s, GB) |
+|---|---|---|---|---|
 
 ## Nat-level exponentiation layer (agent mathexp), 2026-11-10
 `LEAN_NUM_THREADS=4 memcap -m 16G lake env lean <file>` (dependencies prebuilt), wall / max RSS:
@@ -165,3 +175,12 @@ of the Janus framework — the first row of a fresh cache spends ~6.5 min replay
 Row peak memory: the sandboxed `leanchecker` runs inside the memcap scope; the scope's `memory.peak` was ~0.83–0.89 GB
 where it was captured (`build/asm-rows.tsv`; some entries show the `janus` driver only, the measurement hook is fixed
 in `scripts/asm-row.sh`).
+
+### divmc rows (2026-11-11)
+* First `janus verify` of a divmc summary: `FvModexp.Arm64.BasicMulRow.correctness` (= `BasicMul.ens` moved to
+  `Extracted.program.link impl` by `Ensures.full`, Run extraction, warm framework cache): statement audit + kernel replay
+  passed, **391 s wall** under `memcap 16G`/`timeout 900`; the run then stops at the non-vacuity stage (no
+  `Witness.nonvacuous` yet). Within the 15 min cap; the witness (toy memclr runtime + the Run extraction's 49 rodata
+  objects loaded for `CallEnv`'s `DataLoaded`) is the next step.
+* After CONVENTIONS v2 migration: AddTo arm64 105 s / 4.4 GB, amd64 107 s / 5.4 GB; BasicMul arm64 83 s / 4.7 GB,
+  amd64 155 s / 5.5 GB.
