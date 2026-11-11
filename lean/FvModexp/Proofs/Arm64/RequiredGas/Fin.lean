@@ -44,13 +44,23 @@ theorem rg_fin2 (c ptr len cap B E M : BitVec 64) (ret : Nat) (hret : RetAddr Ex
          unfold RgSpec.expHead
          rw [if_pos ⟨by omega, by omega⟩]
          refine fromBE_eq_of (by split <;> omega) (fun i hi => ?_)
+         have hi2 : i < E.toNat ∧ i < 32 := by revert hi; split <;> intro hi <;> omega
+         clear hi
          unfold Calldata.pad
          first
            | (rw [if_pos (by omega), show ptr.toNat + 96 + B.toNat + i = ptr.toNat + (96 + B.toNat + i) by omega]
-              trace_state
               simp (disch := omega) only [Memory.readLE_writeLE_of_disjoint]
-              trace_state
               exact rd_frame hf (by simp only [outside_cons, outside_nil, and_true]; omega))
-           | (trace_state; sorry))
+           | (by_cases hin : 96 + B.toNat + i < len.toNat
+              · rw [if_pos hin]
+                refine (copy_rd (by assumption) (by omega)).trans ?_
+                rw [show ptr.toNat + 96 + B.toNat + i = ptr.toNat + (96 + B.toNat + i) by omega]
+                simp (disch := omega) only [Memory.readLE_writeLE_of_disjoint]
+                exact rd_frame hf (by simp only [outside_cons, outside_nil, and_true]; omega)
+              · rw [if_neg hin]
+                refine (rd_out (by assumption) (by omega)).trans ?_
+                rcases (show i < 8 ∨ (8 ≤ i ∧ i < 16) ∨ (16 ≤ i ∧ i < 24) ∨ (24 ≤ i ∧ i < 32) by omega) with hq | hq | hq | hq <;>
+                  simp (disch := omega) only [Memory.readLE_writeLE_of_disjoint, Memory.readLE_writeLE_inside, Nat.zero_div,
+                    Nat.zero_mod]))
 
 end FvModexp.Arm64.RG

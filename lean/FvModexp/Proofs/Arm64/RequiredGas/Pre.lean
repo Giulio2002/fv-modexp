@@ -56,6 +56,14 @@ theorem rd_frame {m0 m : Memory} {rs : List (Nat × Nat)} (hf : MemFrame m0 m rs
     m.readLE a 1 = (m0.bytes a).toNat := by
   rw [hf.readLE a 1 ho, Memory.readLE_one]
 
+theorem rd_out {C m : Memory} {lo hi a : Nat} (fr : MemFrame C m [(lo, hi)]) (h : a + 1 ≤ lo ∨ hi ≤ a) :
+    m.readLE a 1 = C.readLE a 1 :=
+  fr.readLE a 1 (by simp only [outside_cons, outside_nil, and_true]; exact h)
+
+theorem copy_rd {C m : Memory} {b src n i : Nat} (h : ∀ j, j < n → m.bytes (b + j) = C.bytes (src + j)) (hi : i < n) :
+    m.readLE (b + i) 1 = C.readLE (src + i) 1 := by
+  rw [Memory.readLE_one, Memory.readLE_one, h i hi]
+
 /-- The final value of the run is EthLib's `requiredGas` (when the lengths pass). -/
 theorem rgPost_of (ptr len B E M : BitVec 64) (s s' : State)
     (hB : B.toNat = RgSpec.sat (Calldata.word s.mem ptr.toNat len.toNat 0))
