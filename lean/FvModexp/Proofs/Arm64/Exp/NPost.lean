@@ -48,7 +48,7 @@ theorem stackBack_keep {R : RtInv} {L L' ws : List (Nat × Nat)} {st : Nat} {m m
   have ew : stW m' st = stW m st := hF.readLE _ _ (ho.of_sub (Nat.le_refl _) (by omega))
   have el : stLen m' st = stLen m st := hF.readLE _ _ (ho.of_sub (by omega) (by omega))
   have ec : stCap m' st = stCap m st := hF.readLE _ _ (ho.of_sub (by omega) (by omega))
-  refine ⟨⟨h1, h2.elim (fun h => Or.inl (hx.inRanges_old h)) Or.inr, by rw [hF.accessible]; exact h3, h4, ?_,
+  refine ⟨⟨⟨h1, h2.elim (fun h => Or.inl (hx.inRanges_old h)) Or.inr, by rw [hF.accessible]; exact h3, h4, ?_,
     by rw [el, ec]; exact h6, by rw [ec]; exact h7⟩, el, Or.inl ⟨ew, ec⟩⟩, fun hn => absurd ⟨ew, ec⟩ hn⟩
   rw [ew, ec]; intro hc
   obtain ⟨a1, a2, a3, a4⟩ := h5 hc
@@ -244,8 +244,8 @@ theorem post_oneB {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {costF
     rw [hF2.accessible, hMF.accessible]; exact Memory.accessible_mono _ hacc (by omega) (by omega)
   · exact Or.inr (Or.inr ⟨by simpa using hIn.sub (Nat.le_refl _) (by omega),
       by simpa using ApartAll.sub' hAp (Nat.le_refl _) (by omega)⟩)
-  · refine ⟨⟨k1, k2.elim (fun h => Or.inl (hx.inRanges_old h)) Or.inr, by rw [hacS]; exact k3, k4, ?_,
-      by rw [el, ec]; exact k6, by rw [ec]; exact k7⟩, el, Or.inl ⟨ew, ec⟩⟩
+  · refine ⟨⟨⟨k1, k2.elim (fun h => Or.inl (hx.inRanges_old h)) Or.inr, by rw [hacS]; exact k3, k4, ?_,
+      by rw [el, ec]; exact k6, by rw [ec]; exact k7⟩, el, Or.inl ⟨ew, ec⟩⟩, fun hn => absurd ⟨ew, ec⟩ hn⟩
     rw [ew, ec]; intro hc
     obtain ⟨a1, a2, a3, a4⟩ := k5 hc
     exact ⟨a1, a2.elim (fun h => Or.inl (hx.inRanges_old h)) Or.inr, by rw [hacS]; exact a3, a4⟩
