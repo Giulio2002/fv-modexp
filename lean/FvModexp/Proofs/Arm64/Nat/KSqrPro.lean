@@ -1,4 +1,6 @@
 import FvModexp.Proofs.Arm64.Nat.KSqrPA
+import FvModexp.Proofs.Arm64.Nat.KSqrPB
+import FvModexp.Proofs.Arm64.Nat.KSqrPC
 
 /-!
 # `karatsubaSqr` (arm64): the whole prologue, entry → `KB1` (natmul.go:257-292)
