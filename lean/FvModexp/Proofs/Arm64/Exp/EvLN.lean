@@ -237,4 +237,33 @@ theorem Scr.apartLN {M M' : Memory} {L1 L2 : List (Nat × Nat)} {t k : Nat} (hs 
 
 end
 
+section
+variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc yp yl yc mp ml mc : Nat} {s : State}
+
+set_option maxRecDepth 20000 in
+/-- a live local through `stk.nat` (no destination; level up; array kept or fresh) -/
+theorem LN.stkN (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) {M M' : Memory}
+    {L1 L2 : List (Nat × Nat)} {stk above : Nat} (hstk : stk ≤ K) (habove : above ≤ 88)
+    (hF : MemFrame M M' (R.rt ++ [(sp - stk, sp - 8), (sp + 8, sp + above)] ++ stkWs M st))
+    (hLF : LiveFrame M M' L1 (stkWs M st)) (hx : LiveExt R L1 L2) (hlc : stLen M st ≤ stCap M st)
+    (hl : stLen M st ≤ stLen M' st)
+    (harr : (stW M' st = stW M st ∧ stCap M' st = stCap M st) ∨
+      (InRanges (stW M' st) (8 * stCap M' st) R.rt ∧ ApartAll (stW M' st) (8 * stCap M' st) L1))
+    {q l c v : Nat} (hq : LN R L s.mem st M L1 q l c v) : LN R L s.mem st M' L2 q l c v := by
+  have hK := hP.1.2.2.2.2.2.2.2.2.1
+  have hF0 : MemFrame M M' (R.rt ++ [(sp - stk, sp - 8), (sp + 8, sp + above)] ++ [] ++ stkWs M st) := by
+    simpa only [List.append_nil] using hF
+  have hL0 : LiveFrame M M' L1 ([] ++ stkWs M st) := by simpa only [List.nil_append] using hLF
+  refine hq.keep hx hF.accessible (fun c0 a k h1 h2 => ?_) (fun c0 => ((hq.1.2.2 c0).2).mono hx hl harr)
+  obtain ⟨w1, w2, -, -⟩ := Loc.ap hP (hq.1.2.2 c0).1
+  have hob := (hq.1.2.2 c0).2
+  have hout := hob.out hlc w2
+  unfold Apart at w1
+  simp only [stkWs, outside_cons, outside_nil, and_true] at hout
+  refine keepH (cw := [(sp - stk, sp - 8), (sp + 8, sp + above)]) hF0 hL0 (hob.1.sub h1 h2) ?_ (by simp only [outside_nil]) ?_
+  · simp only [outside_cons, outside_nil, and_true]; omega
+  · simp only [stkWs, outside_cons, outside_nil, and_true]; omega
+
+end
+
 end FvModexp.Arm64.ExpEven

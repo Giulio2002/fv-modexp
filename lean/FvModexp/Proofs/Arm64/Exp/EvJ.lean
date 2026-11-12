@@ -96,6 +96,69 @@ theorem EPre.st_cw {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp z
   unfold Apart at hstw
   simp only [outside_cons, outside_nil, and_true]; omega
 
+/-- a store range of the function's own frame -/
+@[reducible] def OwnR (sp K : Nat) (r : Nat × Nat) : Prop :=
+  r.1 ≤ r.2 ∧ (sp - K ≤ r.1 ∧ r.2 ≤ sp + 328 ∨ sp + 344 ≤ r.1 ∧ r.2 ≤ sp + 448)
+
+section
+variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc yp yl yc mp ml mc : Nat} {s : State}
+
+set_option maxRecDepth 20000 in
+/-- `WC` and every live local through the function's own stores -/
+theorem WC.own (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) {M : Memory}
+    {L1 : List (Nat × Nat)} {b1 ℓ : Nat} (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ) {M' : Memory}
+    {ws : List (Nat × Nat)} (hF : MemFrame M M' ws) (hrg : M'.regions = M.regions) (hws : ∀ r ∈ ws, OwnR sp K r) :
+    WC R L K g sp st zp zc s.mem M' L1 b1 ℓ ∧
+      ∀ q l c v, LN R L s.mem st M L1 q l c v → LN R L s.mem st M' L1 q l c v := by
+  have hK := hP.1.2.2.2.2.2.2.2.2.1
+  have hLs : LiveSep L [(sp - K, sp + 448)] := hP.1.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hout := hP.win_rt
+  have hstw := hP.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  unfold Apart at hstw
+  have hwin : ∀ a k, (a + k ≤ sp - K ∨ sp + 448 ≤ a) → Outside a k ws := by
+    intro a k ha
+    refine outside_of_forall ?_
+    intro r hr; have := hws r hr; omega
+  refine ⟨h.frame hF hrg (fun a k ho => ?_) (fun a k hin _ => ?_) (hwin _ _ (by omega)) (fun r hr => ?_), ?_⟩
+  · refine outside_of_forall fun r hr => ?_
+    have := hws r hr
+    simp only [WN, outside_append, outside_cons, outside_nil, and_true] at ho
+    omega
+  · obtain ⟨r, hr, h1, h2⟩ := hin
+    have := hLs r hr
+    simp only [outside_cons, outside_nil, and_true] at this
+    exact hwin _ _ (by omega)
+  · right
+    have := hws r hr
+    exact hout.of_sub (by omega) (by omega)
+  · intro q l c v hq
+    refine hq.keep (LiveExt.refl R L1) hF.accessible (fun c0 a k h1 h2 => hF.readLE a k (hwin a k ?_))
+      (fun c0 => (hq.1.2.2 c0).2.mono (LiveExt.refl R L1) ?_ ?_)
+    · obtain ⟨w1, -⟩ := Loc.ap hP (hq.1.2.2 c0).1; unfold Apart at w1; omega
+    · show M.readLE (st + 8) 8 ≤ M'.readLE (st + 8) 8
+      rw [hF.readLE _ _ (hwin _ _ (by omega))]; exact Nat.le_refl _
+    · left
+      exact ⟨hF.readLE _ _ (hwin _ _ (by omega)), hF.readLE _ _ (hwin _ _ (by omega))⟩
+
+end
+
+section
+variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc yp yl yc mp ml mc : Nat}
+    {s : State}
+
+/-- `n = tz M ∈ [1, 64 ml)` for an even positive `M` -/
+theorem nE_bd (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) (hM : 0 < natVal s.mem mp ml)
+    (hev : natVal s.mem mp ml % 2 = 0) : 0 < nE s mp ml ∧ nE s mp ml < 64 * ml := by
+  have hlt : natVal s.mem mp ml < 2 ^ (64 * ml) := by
+    have := Memory.readLE_lt s.mem mp (8 * ml)
+    rw [show (256 : Nat) = 2 ^ 8 from rfl, ← Nat.pow_mul, show 8 * (8 * ml) = 64 * ml by omega] at this
+    exact this
+  refine ⟨?_, tz_lt hM hlt⟩
+  show 0 < Exp.tz (natVal s.mem mp ml)
+  rw [Exp.tz_even (by omega) hev]; omega
+
+end
+
 /-- the join point `nat1R` (return of `m1 = stk.nat(n/64 + 1)`): scratch `m1 = (p, a1, a1)` -/
 structure J1 (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl yc mp ml mc ret : Nat) (s : State)
     (rk : Nat) (S : State) (L1 : List (Nat × Nat)) (b1 p : Nat) : Prop where

@@ -53,17 +53,6 @@ section
 variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc yp yl yc mp ml mc ret : Nat}
     {s : State}
 
-/-- `n = tz M ∈ [1, 64 ml)` for an even positive `M` -/
-theorem nE_bd (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) (hM : 0 < natVal s.mem mp ml)
-    (hev : natVal s.mem mp ml % 2 = 0) : 0 < nE s mp ml ∧ nE s mp ml < 64 * ml := by
-  have hlt : natVal s.mem mp ml < 2 ^ (64 * ml) := by
-    have := Memory.readLE_lt s.mem mp (8 * ml)
-    rw [show (256 : Nat) = 2 ^ 8 from rfl, ← Nat.pow_mul, show 8 * (8 * ml) = 64 * ml by omega] at this
-    exact this
-  refine ⟨?_, tz_lt hM hlt⟩
-  show 0 < Exp.tz (natVal s.mem mp ml)
-  rw [Exp.tz_even (by omega) hev]; omega
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in
 /-- **`J1` → `J2`** (see the module doc) -/
