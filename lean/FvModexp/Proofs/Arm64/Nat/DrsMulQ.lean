@@ -1,6 +1,8 @@
 import FvModexp.Proofs.Arm64.Nat.DrsCRel
 import FvModexp.Proofs.Arm64.Nat.DrsMulP
 
+set_option autoImplicit false
+
 /-!
 # `divRecursiveStep` (arm64), loop body: after `qhatv = qhatv.mul(stk, qhat, v[:s])` (natdiv.go:831; pure)
 
@@ -158,7 +160,7 @@ theorem mul_post {R : RtInv} {c : Cx} {s S X T : State} {Lk : List (Nat × Nat)}
     · left; exact ⟨h1, by omega⟩
     · right; exact ⟨hin.sub (Nat.le_refl _) (by omega), ApartAll.sub' hap (Nat.le_refl _) (by omega)⟩
   have hlo := hloc2.out
-  have hsb := hsbL.toStackBack
+  have hsb := hsbL
   rw [hm] at hsb
   have hl : stLen s.mem c.st ≤ stLen S.mem c.st := by rw [hlen]; simp only [Cx.l1]; omega
   have hEv : Ev R c s L' b' T.mem := Ev.callS hcr hev hl hMF hLF hS hlo.1 hlo.2 hx hinv hsb hreg

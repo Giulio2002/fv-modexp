@@ -3,6 +3,8 @@ import FvModexp.Proofs.Arm64.Nat.DrsCallS
 import FvModexp.Proofs.Arm64.Nat.SubVW
 import FvModexp.Proofs.Arm64.Nat.DivOneF
 
+set_option autoImplicit false
+
 /-!
 # `divRecursiveStep` (arm64), correction loop: `Mc` across a non-allocating callee (pure)
 
@@ -29,11 +31,12 @@ theorem stackBack_keep {R : RtInv} {c : Cx} {s : State} {Lk L' : List (Nat × Na
     {wsS ws : List (Nat × Nat)} (hcr : Cr R c s) (h : Ev R c s Lk bk M)
     (hF : MemFrame M M' (R.rt ++ wsS ++ ws)) (hL : LiveFrame M M' Lk ws)
     (hS : ∀ x k, Outside x k (winA s c.W 96) → Outside x k wsS) (hst : Outside c.st 24 ws)
-    (hx : LiveExt R Lk L') : StackBack R Lk L' c.st M M' := by
+    (hx : LiveExt R Lk L') : StackBackL R Lk L' c.st M M' := by
   obtain ⟨eW, eL, eC⟩ := hdr_keep hcr h hF hL hS hst
   have hok := stkOK_moveS h.sok eW eL eC hF.accessible
   obtain ⟨h1, h2, h3, h4, h5, h6, h7⟩ := hok
-  exact ⟨⟨h1, hx.held h2, h3, h4, NatDiv.natLive_ext h5 (fun _ _ _ => rfl) hx, h6, h7⟩, eL, Or.inl ⟨eW, eC⟩⟩
+  exact ⟨⟨⟨h1, hx.held h2, h3, h4, NatDiv.natLive_ext h5 (fun _ _ _ => rfl) hx, h6, h7⟩, eL, Or.inl ⟨eW, eC⟩⟩,
+    fun hn => absurd ⟨eW, eC⟩ hn⟩
 
 theorem Rg.ext {R : RtInv} {c : Cx} {s : State} {Lk L' : List (Nat × Nat)} {a n : Nat} (h : Rg R c s Lk a n)
     (hx : LiveExt R Lk L') : Rg R c s L' a n :=

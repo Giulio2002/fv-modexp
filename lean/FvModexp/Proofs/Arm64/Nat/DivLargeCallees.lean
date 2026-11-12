@@ -1,6 +1,8 @@
 import FvModexp.Proofs.Arm64.Nat.DivLargeDefs
 import FvModexp.Proofs.Arm64.Nat.Callees2
 
+set_option autoImplicit false
+
 /-!
 # `divLarge` (arm64): the callees, moved into `LibDivL.program`
 
@@ -35,7 +37,7 @@ def dbsum (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : Rt
     (hmc : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
     (hwb : WbLiveContract (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2)
     (b : Nat) (L : List (Nat × Nat)) (qp ql qc st up ul uc vp vl vc : BitVec 64) :=
-  Ensures.toSummaryIn (DivBasic.ens impl hap R hgr hmc hwb b L qp ql qc st up ul uc vp vl vc)
+  Ensures.toSummaryIn (DivBasic.ensL impl hap R hgr hmc hwb b L qp ql qc st up ul uc vp vl vc)
     (noExit_restrict hap DivBasic.names)
     (show CodeIn ((Extracted.program.onlySegments DivBasic.names).link impl) (LibDivL.program.link impl) by
       rw [LibDivL.eq_only]; exact codeIn_restrict_mono hap (sub_of_all (by decide)))

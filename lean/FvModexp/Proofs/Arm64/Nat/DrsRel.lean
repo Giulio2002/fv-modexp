@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Nat.DrsNat
 
+set_option autoImplicit false
+
 /-!
 # `divRecursiveStep` (arm64), big path (`n ≥ 40`, `len u ≥ n`): the shared relations (no janus runs)
 
@@ -10,8 +12,8 @@ relation module).
   address `t0` of `qhat0 = stk.nat(B + 1)` and the live set `L1` right after that call.
 * `Cr R c s`: the facts fixed from the call of `stk.nat(B + 1)` on (entry pre, `qhat0`'s location and separation).
 * `Ev R c s Lk bk M`: the environment at a later memory `M` (live set `Lk ⊇ L1`, budget `bk`, frames from the entry,
-  the stack object kept healthy, its array the entry one or fresh). NOTE: no `ArrIn` (StackBackL) half yet —
-  it needs `DrsPostW` (and divBasic's post) in the `StackBackL` form first, see NOTES-asm s22.
+  the stack object kept healthy, its array the entry one or fresh, and when fresh an element of `Lk` with `0 < cap`
+  (`sarrL`, the `StackBackL` half; asm s31).
 * `Fp R c s Lk M lM`: the stack's free part `[w + 8·lM, w + 8·cap)` at the current length `lM`, separated from
   everything the body uses.
 * `Sl c s M`: the fixed frame slots (saved FP/LR, defer record and bit, `m`, `n`, `len u`, `B`, `qhat0`, the spills).
@@ -107,6 +109,7 @@ structure Ev (R : RtInv) (c : Cx) (s : State) (Lk : List (Nat × Nat)) (bk : Nat
   sok : StkOK M R Lk c.st
   sarr : (stW M c.st = stW s.mem c.st ∧ stCap M c.st = stCap s.mem c.st) ∨
     (InRanges (stW M c.st) (8 * stCap M c.st) R.rt ∧ ApartAll (stW M c.st) (8 * stCap M c.st) c.L)
+  sarrL : ArrIn Lk c.st s.mem M
 
 /-- the free part at the current stack length `lM` -/
 structure Fp (R : RtInv) (c : Cx) (s : State) (Lk : List (Nat × Nat)) (M : Memory) (lM : Nat) : Prop where

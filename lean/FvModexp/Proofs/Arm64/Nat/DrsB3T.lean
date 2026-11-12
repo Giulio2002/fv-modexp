@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Nat.DrsB3S
 
+set_option autoImplicit false
+
 /-!
 # `divRecursiveStep` (arm64), loop body segment 3b: after `stk.nat(3n)` (natdiv.go:829; pure)
 
@@ -27,7 +29,7 @@ theorem t3_post {R : RtInv} {c : Cx} {s X T : State} {Lk : List (Nat × Nat)} {b
     ⟨-, -, hqh, hqo, -⟩, ⟨-, -, huh, huo, -⟩, ⟨-, -, hvh, hvo, -, -, -⟩, -, -, -,
     ⟨-, hstw, -, -⟩, -, ⟨hqs, -⟩, ⟨hus, -⟩, ⟨hvs, -⟩, -⟩ := hcr.pre
   obtain ⟨-, ⟨-, hb', -, hw⟩, -, hout, -, -, -, -⟩ := hce
-  obtain ⟨hq0, hq1, hq2, L', b', ⟨hx, hbud, hinv⟩, hok, hlen, hsame, hgrow, hMF, hLF, -⟩ := hq
+  obtain ⟨hq0, hq1, hq2, L', b', ⟨hx, hbud, hinv⟩, hok, hlen, hsame, hgrow, hMF, hLF, hmem⟩ := hq
   have hl := hfp.len
   have hlc : stLen X.mem c.st ≤ stCap X.mem c.st := hev.sok.2.2.2.2.2.1
   have fq := hfp.fq; have fu := hfp.fu; have fv := hfp.fv; have ffw := hfp.fw; have ft0 := hfp.ft0
@@ -60,7 +62,7 @@ theorem t3_post {R : RtInv} {c : Cx} {s X T : State} {Lk : List (Nat × Nat)} {b
   have ft : ∀ x n, c.t0 ≤ x → x + n ≤ c.t0 + 8 * (c.vl / 2 + 1) → T.mem.readLE x n = X.mem.readLE x n :=
     fun x n h1 h2 => rd_sub kt0 h1 h2
   -- the environment
-  rw [hl] at hlen hsame hgrow hbud
+  rw [hl] at hlen hsame hgrow hbud hmem
   have hS : ∀ x k, Outside x k (winA s c.W 96) → Outside x k (winA X 4208 24) := fun x k ho => by
     simp only [winA, outside_cons, outside_nil, and_true] at ho ⊢; rw [hspn]; omega
   have hsar : (stW T.mem c.st = stW X.mem c.st ∧ stCap T.mem c.st = stCap X.mem c.st) ∨
@@ -75,6 +77,7 @@ theorem t3_post {R : RtInv} {c : Cx} {s X T : State} {Lk : List (Nat × Nat)} {b
   rw [hN.r28] at hinv
   have hEv : Ev R c s L' b' T.mem := Ev.callG hcr hev hl' hMF' hLF hS
     (fun _ _ _ => by simp only [outside_nil]) (fun _ _ _ _ => by simp only [outside_nil]) hx hinv hok hsar hreg
+    (ArrIn.of_nat (L1 := L') (m0 := X.mem) (m := T.mem) hok.2.2.2.2.2.1 hlen hsame hmem)
   obtain ⟨hFp, hRg, hFL⟩ := Fp.grow (lM' := c.l1 s + StackNat.rnd (3 * c.vl)) hcr hev hfp (by omega)
     (by simp only [Cx.l1, StackNat.rnd]; omega) hok hlen hsar
   have hrg : Rg R c s L' (c.qv s T.mem) (8 * (3 * c.vl)) :=

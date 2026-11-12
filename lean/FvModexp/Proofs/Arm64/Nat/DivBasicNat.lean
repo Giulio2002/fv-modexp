@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Nat.DivBasicRel
 import FvModexp.Proofs.Arm64.Nat.Callees2
+
+set_option autoImplicit false
 /-!
 # `divBasic` (arm64): the call `qhatv := stk.nat(n + 1)` (natdiv.go:651)
 
@@ -17,7 +19,7 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 theorem pro2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
-    (stkSN abSN : Nat) (hSN : ExpHyp.StackNatHyp impl R [ExpHyp.fnStackNat] stkSN abSN)
+    (stkSN abSN : Nat) (hSN : StackNat.HypL impl R [ExpHyp.fnStackNat] stkSN abSN)
     (hk1 : stkSN ≤ 4224) (hk2 : abSN ≤ 96)
     (b : Nat) (L : List (Nat × Nat)) (qp ql st up ul uc vp vl vc : BitVec 64) (s : State)
     (hpre : Pre R b L qp.toNat ql.toNat st.toNat up.toNat ul.toNat uc.toNat vp.toNat vl.toNat s)
@@ -84,9 +86,10 @@ theorem pro2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
       Outside (s.mem.readLE st.toNat 8) (8 * s.mem.readLE (st.toNat + 16) 8) R.rt := a2
     janus_run [p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, hn2] until [callNat + 4]
       calls [hSN' b L]
-    rename_i hpc' hsp' h28' h29' h18' hr1 hr2 L1 b1 hext hr0 hbud hinv2 k1 k2 k3 k4 k5 k6 k7 hlen2 hsame hgrow hF2 hLF2
+    rename_i hpc' hsp' h28' h29' h18' hr1 hr2 L1 b1 hext hr0 hbud hinv2 k1 k2 k3 k4 k5 k6 k7 hlen2 hsame hgrow hF2 hLF2 hmem
     refine k s' L1 b1 ⟨?qpc, ?qsp, ?q28, ?q29, ?q18, ?q0, ?q1, ?q2, hext, by simpa using hbud, hinv2,
-      ⟨k1, k2, by rw [hF2.accessible, hF.accessible]; exact k3, by omega, k5, k6, k7⟩, ?qlen, ?qsame, ?qgrow, ?F2, ?LF2⟩
+      ⟨k1, k2, by rw [hF2.accessible, hF.accessible]; exact k3, by omega, k5, k6, k7⟩, ?qlen, ?qsame, ?qgrow, ?F2, ?LF2, ?qmem⟩
+    case qmem => intro h; exact hmem h
     case qlen => rw [hlen2]
     case qsame => intro h; exact hsame h
     case qgrow => intro h; exact hgrow h
@@ -107,9 +110,10 @@ theorem pro2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     case qpc => rw [hpc']; janus_simp
   · janus_run [p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, hn2] until [callNat + 4]
       calls [hSN' b L]
-    rename_i hpc' hsp' h28' h29' h18' hr1 hr2 L1 b1 hext hr0 hbud hinv2 k1 k2 k3 k4 k5 k6 k7 hlen2 hsame hgrow hF2 hLF2
+    rename_i hpc' hsp' h28' h29' h18' hr1 hr2 L1 b1 hext hr0 hbud hinv2 k1 k2 k3 k4 k5 k6 k7 hlen2 hsame hgrow hF2 hLF2 hmem
     refine k s' L1 b1 ⟨?qpc, ?qsp, ?q28, ?q29, ?q18, ?q0, ?q1, ?q2, hext, by simpa using hbud, hinv2,
-      ⟨k1, k2, by rw [hF2.accessible, hF.accessible]; exact k3, by omega, k5, k6, k7⟩, ?qlen, ?qsame, ?qgrow, ?F2, ?LF2⟩
+      ⟨k1, k2, by rw [hF2.accessible, hF.accessible]; exact k3, by omega, k5, k6, k7⟩, ?qlen, ?qsame, ?qgrow, ?F2, ?LF2, ?qmem⟩
+    case qmem => intro h; exact hmem h
     case qlen => rw [hlen2]
     case qsame => intro h; exact hsame h
     case qgrow => intro h; exact hgrow h

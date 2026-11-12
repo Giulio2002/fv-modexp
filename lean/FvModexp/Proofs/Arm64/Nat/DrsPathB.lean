@@ -3,6 +3,8 @@ import FvModexp.Proofs.Arm64.Nat.DivBasic
 import FvModexp.Proofs.Arm64.Nat.DivLargeCallees
 import FvModexp.Proofs.Common.DivmcNat
 
+set_option autoImplicit false
+
 /-!
 # `divRecursiveStep` (arm64): `n < divRecursiveThreshold` → `z.divBasic(stk, u, v)` (natdiv.go:762-765)
 
@@ -50,7 +52,7 @@ def dbsumS (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
     (hmc : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
     (hwb : WbLiveContract (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2)
     (b : Nat) (L : List (Nat × Nat)) (qp ql qc st up ul uc vp vl vc : BitVec 64) :=
-  Ensures.toSummaryIn (DivBasic.ens impl hap R hgr hmc hwb b L qp ql qc st up ul uc vp vl vc)
+  Ensures.toSummaryIn (DivBasic.ensL impl hap R hgr hmc hwb b L qp ql qc st up ul uc vp vl vc)
     (noExit_restrict hap DivBasic.names)
     (show CodeIn ((Extracted.program.onlySegments DivBasic.names).link impl) (LibDrs.program.link impl) by
       rw [LibDrs.eq_only]; exact codeIn_restrict_mono hap (sub_of_all (by decide)))
@@ -200,7 +202,7 @@ theorem db_postS {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c W qp ql qc st 
     (hF : MemFrame s.mem X.mem (fw s)) (hsp : X.sp = s.sp - 400#64) (h28 : X.regs 28 = s.regs 28)
     (hle : ul' ≤ ul) (hU : natVal s.mem up ul' = natVal s.mem up ul)
     (hc : c = ExpHyp.stackNatCost (stLen s.mem st) (vl + 1))
-    (hpost : DivBasic.Post R b L qp ql st up ul' vp vl X T) :
+    (hpost : DivBasic.PostL R b L qp ql st up ul' vp vl X T) :
     DrsPostW R b L c W qp ql st up ul vp vl s T := by
   obtain ⟨hce, -, -, -, -, -, -, -, -, hv2, -, htop, hq0, -,
     ⟨-, hq48, hqh, hqo, -⟩, ⟨-, hu48, huh, huo, -⟩, ⟨-, -, -, hvo, -, -, -⟩, hqu, -, -,
@@ -273,9 +275,10 @@ theorem db_postS {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c W qp ql qc st 
     have e := natVal_add T.mem up ul' (ul - ul')
     rw [show ul' + (ul - ul') = ul by omega, hhi, Nat.mul_zero, Nat.add_zero] at e
     rw [e]; exact hrv
-  · obtain ⟨hok', hlen, hor⟩ := hSB
-    refine ⟨hok', by rw [hlen, eL], ?_⟩
-    rw [eW, eC] at hor; exact hor
+  · obtain ⟨⟨hok', hlen, hor⟩, harr⟩ := hSB
+    refine ⟨⟨hok', by rw [hlen, eL], ?_⟩, ?_⟩
+    · rw [eW, eC] at hor; exact hor
+    · intro hn; rw [← eW, ← eC] at hn; exact harr hn
   · refine hF.trans hMF fun a n ho => ⟨?_, ?_⟩
     · simp only [outside_append, winA, outside_cons, outside_nil, and_true] at ho
       simp only [fw, winA, outside_cons, outside_nil, and_true]
@@ -298,7 +301,7 @@ set_option maxHeartbeats 8000000 in
 theorem db_slot {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c W qp ql qc st up ul uc vp vl vc : Nat}
     {s X T : State} {ul' : Nat} (hpre : DrsPreW R b L c W qp ql qc st up ul uc vp vl vc s) (hW : 4864 ≤ W)
     (hF : MemFrame s.mem X.mem (fw s)) (hsp : X.sp = s.sp - 400#64) (hle : ul' ≤ ul)
-    (hpost : DivBasic.Post R b L qp ql st up ul' vp vl X T) {a n : Nat} (h1 : s.sp.toNat - 408 ≤ a)
+    (hpost : DivBasic.PostL R b L qp ql st up ul' vp vl X T) {a n : Nat} (h1 : s.sp.toNat - 408 ≤ a)
     (h2 : a + n ≤ s.sp.toNat - 392) :
     T.mem.readLE a n = X.mem.readLE a n ∧ ∀ a n w, T.mem.accessible a n w = s.mem.accessible a n w := by
   obtain ⟨hce, -, -, -, -, -, -, -, -, -, -, -, -, -, ⟨-, -, -, hqo, -⟩, ⟨-, -, -, huo, -⟩, -, -, -, -,

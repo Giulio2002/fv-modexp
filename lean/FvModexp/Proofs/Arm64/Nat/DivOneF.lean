@@ -1,6 +1,8 @@
 import FvModexp.Proofs.Arm64.Nat.DivPostK
 import FvModexp.Proofs.Arm64.Nat.DivRel
 
+set_option autoImplicit false
+
 /-!
 # `nat.div` (arm64), `len v = 1`: the postcondition from `AtW` and the `setWord` tail's facts (pure)
 -/
@@ -60,7 +62,7 @@ theorem oneFin {R : RtInv} {b : Nat} {dc : Nat → Nat → Nat → Nat} {L : Lis
     (hext2 : LiveExt R L' L'') (hb2 : b' - makeCost 1 ≤ b'')
     (hinv : R.inv b'' L'' (s.regs 28).toNat (view R.rt L'' s'.mem))
     (hr : ExpHyp.NatOF R L L'' s'.mem z2 z2c 1 r rl rc (natVal s.mem u ul % natVal s.mem v 1)) :
-    Post R b dc L zp zc st z2 z2c u ul v 1 s s' := by
+    PostL R b dc L zp zc st z2 z2c u ul v 1 s s' := by
   have hp := hpre.f
   have hout := hp.ce.2.2.2.1
   have hb' := hp.ce.2.1.2.1

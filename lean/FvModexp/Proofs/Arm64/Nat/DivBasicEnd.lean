@@ -1,4 +1,6 @@
 import FvModexp.Proofs.Arm64.Nat.DivBasicRel
+
+set_option autoImplicit false
 /-!
 # `divBasic` (arm64): the postcondition at the return (pure)
 
@@ -43,7 +45,7 @@ theorem post_fin {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul u
     (hFE : MemFrame M E [(s.sp.toNat - 137, s.sp.toNat - 136)])
     (hFF : MemFrame E F (wsF s.sp.toNat st)) (hlen : F.readLE (st + 8) 8 = stLen s.mem st)
     (s' : State) (hs' : s'.mem = F) :
-    Post R b L qp ql st up ul vp vl s s' := by
+    PostL R b L qp ql st up ul vp vl s s' := by
   subst hs'
   have hl := hE.lay
   have hsp0 := hl.sp0; have hsp1 := hl.sp1
@@ -79,7 +81,7 @@ theorem post_fin {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul u
       · right; simpa using h
       · left; simpa using h
   case sb =>
-    refine ⟨⟨hst8, hE.ext.held hsth, by rw [hacc]; exact hstacc, hst48, ?_, ?_, ?_⟩, hlen, ?_⟩
+    refine ⟨⟨⟨hst8, hE.ext.held hsth, by rw [hacc]; exact hstacc, hst48, ?_, ?_, ?_⟩, hlen, ?_⟩, ?_⟩
     · show NatLive s'.mem R L1 (s'.mem.readLE st 8) (s'.mem.readLE (st + 16) 8)
       rw [hW, hC]
       intro h0
@@ -93,6 +95,9 @@ theorem post_fin {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul u
         (InRanges (s'.mem.readLE st 8) (8 * s'.mem.readLE (st + 16) 8) R.rt ∧
           ApartAll (s'.mem.readLE st 8) (8 * s'.mem.readLE (st + 16) 8) L)
       rw [hW, hC]; exact hE.arr
+    · show ¬(s'.mem.readLE st 8 = stW s.mem st ∧ s'.mem.readLE (st + 16) 8 = stCap s.mem st) →
+        (s'.mem.readLE st 8, s'.mem.readLE st 8 + 8 * s'.mem.readLE (st + 16) 8) ∈ L1 ∧ 0 < s'.mem.readLE (st + 16) 8
+      rw [hW, hC]; exact hE.arrL
   case mf =>
     refine hMF.mono fun a n ho => ?_
     simp only [winA, ws, wsL, wsF, stkWs, outside_append, outside_cons, outside_nil, and_true] at ho ⊢

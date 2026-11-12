@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Nat.DivLargeQRel
 
+set_option autoImplicit false
+
 /-!
 # `divLarge` (arm64): the state after the division call (`fn + 0x450`) — relations (pure)
 
@@ -290,5 +292,6 @@ structure AtD (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (c : Nat) (zp zc st 
   qval : natVal S.mem qp (il - vl + 1) = natVal s.mem ip il / natVal s.mem vp vl
   rval : natVal S.mem P (il + 1) = natVal s.mem ip il % natVal s.mem vp vl * 2 ^ sh
   reg : S.mem.regions = s.mem.regions
+  arrL2 : ¬(w2 = w1 ∧ c2 = c1) → (w2, w2 + 8 * c2) ∈ L2 ∧ 0 < c2
 
 end FvModexp.Arm64.DivLarge

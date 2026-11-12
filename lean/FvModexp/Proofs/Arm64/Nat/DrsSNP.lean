@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Nat.DrsRel
 
+set_option autoImplicit false
+
 /-!
 # `divRecursiveStep` (arm64), big path: pure lemmas about the relations (frames, separation, the loop entry)
 
@@ -93,7 +95,7 @@ theorem Ev.own {R : RtInv} {c : Cx} {s : State} {Lk : List (Nat × Nat)} {bk : N
   have eC : stCap M' c.st = stCap M c.st := hF.readLE _ _ (hst.of_sub (by omega) (by omega))
   refine ⟨h.ext, by rw [hreg]; exact h.reg, RtInv.inv_frame' hF hrt h.inv,
     mf_trans' h.fr (hF.mono fun x k ho => hsub x k ho), ?_, stkOK_moveS h.sok eW eL eC hF.accessible,
-    by rw [eW, eC]; exact h.sarr⟩
+    by rw [eW, eC]; exact h.sarr, h.sarrL.congr eW eC fun _ h => h⟩
   refine ⟨fun x k hin ho => ?_⟩
   rw [hF.readLE x k ?_]
   · exact h.lf.readLE x k hin ho

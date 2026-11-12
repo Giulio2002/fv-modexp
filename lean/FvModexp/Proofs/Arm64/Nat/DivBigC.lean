@@ -1,6 +1,8 @@
 import FvModexp.Proofs.Arm64.Nat.DivBigP
 import FvModexp.Proofs.Arm64.Nat.DivBigF
 
+set_option autoImplicit false
+
 /-!
 # `nat.div` (arm64), `u ≥ v`: the `divLarge` call (premise `DivLarge.Hyp`), the results stored, return
 -/
@@ -24,7 +26,7 @@ theorem big3 (impl : List Segment) {R : RtInv} {b : Nat} {dc : Nat → Nat → N
     (hq : ExpHyp.NatOF R L L' T.mem zp zc 1 q ql qc (natVal X.mem u ul / natVal X.mem v vl))
     (hr : ExpHyp.NatOF R L L' T.mem z2 z2c 1 r rl rc (natVal X.mem u ul % natVal X.mem v vl))
     (hrt : ExpHyp.RtPost R b (DivLarge.cost dc (stLen X.mem st) ul vl) L L' b'' X T)
-    (hsb : StackBack R L L' st X.mem T.mem)
+    (hsb : StackBackL R L L' st X.mem T.mem)
     (hfr : ¬ (r = z2 ∧ rc = z2c) → 0 < rc → 0 < stCap T.mem st →
       Apart r (8 * rc) (stW T.mem st) (8 * stCap T.mem st))
     (hmf : MemFrame X.mem T.mem (R.rt ++ winA X 41264 112 ++ (ar zp zc ++ ar z2 z2c) ++ stkWs X.mem st))

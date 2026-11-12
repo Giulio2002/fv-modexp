@@ -1,4 +1,6 @@
 import FvModexp.Proofs.Arm64.Nat.DivBasicRel
+
+set_option autoImplicit false
 /-!
 # `divBasic` (arm64): after `stk.nat` — `vn1 := v[n-1]`, `rec := reciprocalWord(vn1)`, `j := m`, `ujn := 0`, to the
 loop head (natdiv.go:654-662)
@@ -24,12 +26,13 @@ theorem env_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc 
     (hsame : stLen s.mem st + (vl + 1 + 3) / 4 * 4 ≤ stCap s.mem st → stW S2 st = stW s.mem st ∧ stCap S2 st = stCap s.mem st)
     (hgrow : stCap s.mem st < stLen s.mem st + (vl + 1 + 3) / 4 * 4 → InRanges (stW S2 st) (8 * stCap S2 st) R.rt ∧
       ApartAll (stW S2 st) (8 * stCap S2 st) L)
-    (hacc2 : ∀ a n v, S2.accessible a n v = s.mem.accessible a n v) :
+    (hacc2 : ∀ a n v, S2.accessible a n v = s.mem.accessible a n v)
+    (hmem : stCap s.mem st < stLen s.mem st + (vl + 1 + 3) / 4 * 4 → (stW S2 st, stW S2 st + 8 * stCap S2 st) ∈ L1) :
     Env R b L qp ql st up ul uc vp vl s (stW S2 st + 8 * stLen s.mem st) L1 b1 (stW S2 st) (stCap S2 st) := by
   have hscr := Scr.of_post (m0 := s.mem) hok hlen (by omega) hsame hgrow rfl
   have hok' := hok
   obtain ⟨-, -, -, -, hnl, hlc, hcb⟩ := hok'
-  refine ⟨hpre, rfl, ⟨hscr.b48, ?_, hscr.al, hscr.held, hscr.loc⟩, hext, hbud, ?_, ?_, hcb, ?_⟩
+  refine ⟨hpre, rfl, ⟨hscr.b48, ?_, hscr.al, hscr.held, hscr.loc⟩, hext, hbud, ?_, ?_, hcb, ?_, ?_⟩
   · rw [← hacc2]; exact hscr.acc
   · by_cases hc : stLen s.mem st + (vl + 1 + 3) / 4 * 4 ≤ stCap s.mem st
     · left; exact hsame hc
@@ -38,6 +41,7 @@ theorem env_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc 
   · intro h0
     obtain ⟨a1, a2, a3, a4⟩ := hnl h0
     exact ⟨a1, a2, by rw [← hacc2]; exact a3, a4⟩
+  · exact (ArrIn.of_nat (L1 := L1) (m0 := s.mem) (m := S2) hlc hlen hsame hmem :)
 
 
 
@@ -59,7 +63,7 @@ theorem pro3 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
         S.mem.readLE a n = s.mem.readLE a n) → ReachesRet (LibDivBasic.program.link impl) (s.regs 30) S Q) :
     ReachesRet (LibDivBasic.program.link impl) (s.regs 30) S2 Q := by
   obtain ⟨-, -, -, -, -, -, -, hF, hreg, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17⟩ := hP
-  obtain ⟨hpc2, hsp2, h28, h29, h18, hr0, hr1, hr2, hext, hbud, hinv2, hok, hlen2, hsame, hgrow, hF2, hLF2⟩ := hA
+  obtain ⟨hpc2, hsp2, h28, h29, h18, hr0, hr1, hr2, hext, hbud, hinv2, hok, hlen2, hsame, hgrow, hF2, hLF2, hmem⟩ := hA
   obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, -, hout, hga, hgr, hLs, -⟩ := hpre.ce
   have hsw := hpre.stw; simp only [win, outside_cons, outside_nil, and_true] at hsw
   have hfw := hpre.stfw; simp only [win, outside_cons, outside_nil, and_true, freeP, freeN] at hfw
@@ -67,7 +71,7 @@ theorem pro3 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
   have hPs : ∀ a n, (a + n ≤ s.sp.toNat - 248 ∨ s.sp.toNat + 88 ≤ a) → P.mem.readLE a n = s.mem.readLE a n :=
     fun a n h => hF.readLE _ _ (by simp only [proWs, outside_cons, outside_nil, and_true]; omega)
   have hE := env_of (S2 := S2.mem) hpre hext hbud hok hlen2 hsame hgrow
-    (fun a n v => by rw [hF2.accessible, hF.accessible])
+    (fun a n v => by rw [hF2.accessible, hF.accessible]) hmem
   have hl := hE.lay
   have hsp0 := hl.sp0; have hsp1 := hl.sp1; have hv2 := hl.v2; have hvb := hl.vb; have hv48 := hl.v48
   -- reads of `S2.mem` in the frame

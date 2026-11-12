@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Nat.DivDefs
 
+set_option autoImplicit false
+
 /-!
 # `nat.div` (arm64): the postcondition when the stack is untouched (`len v = 1`, `u < v` paths; pure)
 
@@ -26,7 +28,7 @@ theorem post_kept {R : RtInv} {b : Nat} {dc : Nat → Nat → Nat → Nat} {L : 
     (hinv : R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem))
     (hMF : MemFrame s.mem s'.mem (R.rt ++ winA s 41504 112 ++ ar zp zc ++ ar z2 z2c))
     (hLF : LiveFrame s.mem s'.mem L (ar zp zc ++ ar z2 z2c)) :
-    Post R b dc L zp zc st z2 z2c u ul v vl s s' := by
+    PostL R b dc L zp zc st z2 z2c u ul v vl s s' := by
   have hp := hpre.f
   obtain ⟨hst8, hsth, hstacc, hst48, hnl, hlc, hc40⟩ := hp.sok
   have hsw := hp.sw
@@ -50,7 +52,7 @@ theorem post_kept {R : RtInv} {b : Nat} {dc : Nat → Nat → Nat → Nat} {L : 
   have ew : stW s'.mem st = stW s.mem st := hhd st 8 (Nat.le_refl _) (by omega)
   have el : stLen s'.mem st = stLen s.mem st := hhd (st + 8) 8 (by omega) (by omega)
   have ec : stCap s'.mem st = stCap s.mem st := hhd (st + 16) 8 (by omega) (by omega)
-  refine ⟨q, ql, qc, r, rl, rc, h0, h1, h2, h3, h4, h5, L', b', hq, hr, ⟨hext, hb, hinv⟩, ⟨?sok, el, Or.inl ⟨ew, ec⟩⟩,
+  refine ⟨q, ql, qc, r, rl, rc, h0, h1, h2, h3, h4, h5, L', b', hq, hr, ⟨hext, hb, hinv⟩, ⟨⟨?sok, el, Or.inl ⟨ew, ec⟩⟩, fun hn => absurd ⟨ew, ec⟩ hn⟩,
     ?fresh, ?mf, ?lf⟩
   case sok =>
     refine ⟨hst8, hext.held hsth, by rw [hMF.accessible]; exact hstacc, hst48, ?_, by rw [el, ec]; exact hlc,

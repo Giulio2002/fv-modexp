@@ -2,6 +2,9 @@ import FvModexp.Proofs.Arm64.Nat.LibDiv
 import FvModexp.Proofs.Arm64.Nat.DivLargeDefs
 import FvModexp.Proofs.Arm64.Nat.DivWZ
 import FvModexp.Proofs.Arm64.CmpSum
+import FvModexp.Proofs.Arm64.Exp.ExpHypL
+
+set_option autoImplicit false
 
 /-!
 # `(z nat) div(stk *stack, z2, u, v nat) (q, r nat)` (go-bigmodexpfix natdiv.go:518), arm64 — statement and callees
@@ -58,11 +61,16 @@ def wordT : Nat := Extracted.dataAddr.«type:big.Word#51b931e8»
     (zp zc st z2 z2c u ul v vl : Nat) (s s' : State) : Prop :=
   ExpHyp.DivPost R b (cost dc) L 41504 112 zp zc st z2 z2c u ul v vl s s'
 
+/-- `Post` with `StackBackL` (`ExpHyp.DivPostL`, expmc's "[expmc s24] REQUEST") -/
+@[reducible] def PostL (R : RtInv) (b : Nat) (dc : Nat → Nat → Nat → Nat) (L : List (Nat × Nat))
+    (zp zc st z2 z2c u ul v vl : Nat) (s s' : State) : Prop :=
+  ExpHyp.DivPostL R b (cost dc) L 41504 112 zp zc st z2 z2c u ul v vl s s'
+
 /-- the return relation: callee-saved registers and `Post` -/
 @[reducible] def RQ (R : RtInv) (b : Nat) (dc : Nat → Nat → Nat → Nat) (L : List (Nat × Nat))
     (zp zc st z2 z2c u ul v vl : Nat) (s s' : State) : Prop :=
   (s'.sp = s.sp ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧ s'.regs 18 = s.regs 18) ∧
-    Post R b dc L zp zc st z2 z2c u ul v vl s s'
+    PostL R b dc L zp zc st z2 z2c u ul v vl s s'
 
 /-- `nat.div`'s `Ensures` = `ExpHyp.DivHyp impl R names 41504 112 (cost dc)` (definitionally) -/
 def Hyp (impl : List Segment) (R : RtInv) (dc : Nat → Nat → Nat → Nat) : Prop :=

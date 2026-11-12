@@ -11,6 +11,8 @@ import FvModexp.Proofs.Common.AsmModel
 import FvModexp.Proofs.Common.StackScr
 import FvModexp.Proofs.Common.DivBasicMem
 
+set_option autoImplicit false
+
 /-!
 # `(q nat) divBasic(stk *stack, u, v nat)` (go-bigmodexpfix natdiv.go:646), arm64 — statement and segment relations
 
@@ -188,6 +190,20 @@ theorem Pre.inv {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul uc
       MemFrame s.mem s'.mem (R.rt ++ winA s 4464 88 ++ ws s.mem qp ql st up ul vl) ∧
       LiveFrame s.mem s'.mem L (ws s.mem qp ql st up ul vl)
 
+/-- `Post` with `StackBackL` (STACK-IN-LIVE-SET decision): a grown stack array is an element of `L'`, `0 < cap` -/
+@[reducible] def PostL (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (qp ql st up ul vp vl : Nat) (s s' : State) : Prop :=
+  (vl ≤ ul → natVal s'.mem qp (qn ql ul vl) = natVal s.mem up ul / natVal s.mem vp vl) ∧
+    natVal s'.mem up ul = natVal s.mem up ul % natVal s.mem vp vl ∧
+    ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b - ExpHyp.stackNatCost (stLen s.mem st) (vl + 1) ≤ b' ∧
+      R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem) ∧ StackBackL R L L' st s.mem s'.mem ∧
+      MemFrame s.mem s'.mem (R.rt ++ winA s 4464 88 ++ ws s.mem qp ql st up ul vl) ∧
+      LiveFrame s.mem s'.mem L (ws s.mem qp ql st up ul vl)
+
+theorem PostL.toPost {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {qp ql st up ul vp vl : Nat} {s s' : State}
+    (h : PostL R b L qp ql st up ul vp vl s s') : Post R b L qp ql st up ul vp vl s s' := by
+  obtain ⟨h1, h2, L', b', h3, h4, h5, h6, h7, h8⟩ := h
+  exact ⟨h1, h2, L', b', h3, h4, h5, h6.1, h7, h8⟩
+
 /-! ## After `qhatv := stk.nat(n + 1)` -/
 
 /-- the address of the closure `nat.divBasic.deferwrap1` (`ADRP 4096(PC); ADD $848`) -/
@@ -206,6 +222,7 @@ structure Env (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (qp ql st up ul uc v
   c1len : stLen s.mem st + (vl + 1 + 3) / 4 * 4 ≤ c1
   c1b : c1 < 2 ^ 40
   w1live : NatLive s.mem R L1 w1 c1
+  arrL : ¬(w1 = stW s.mem st ∧ c1 = stCap s.mem st) → (w1, w1 + 8 * c1) ∈ L1 ∧ 0 < c1
 
 /-- the ranges written after the `stk.nat` call: `q[0:qn]`, `u`, `qhatv` -/
 @[reducible] def wsL (qp ql up ul vl t : Nat) : List (Nat × Nat) :=
@@ -258,6 +275,6 @@ limb lists of `q` and `u` -/
 /-- what every segment lemma concludes (registers kept + `Post`) -/
 @[reducible] def RQ (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (qp ql st up ul vp vl : Nat) (s s' : State) : Prop :=
   (s'.sp = s.sp ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧ s'.regs 18 = s.regs 18) ∧
-    Post R b L qp ql st up ul vp vl s s'
+    PostL R b L qp ql st up ul vp vl s s'
 
 end FvModexp.Arm64.DivBasic

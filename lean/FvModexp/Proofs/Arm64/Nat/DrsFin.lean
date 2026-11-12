@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Nat.DrsCall
 
+set_option autoImplicit false
+
 /-!
 # `divRecursiveStep` (arm64): the epilogues and the post of the paths that write only the frame
 
@@ -43,8 +45,8 @@ theorem post_frame {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c W qp ql qc s
   · rw [natVal_frame hF (fw_out hW hqo.2.2.2.1)]; exact hq
   · rw [natVal_frame hF (fw_out hW huo.2.2.2.1)]; exact hu
   · obtain ⟨⟨h1, h2, h3, h4, h5, h6, h7⟩, -⟩ := hsti
-    refine ⟨⟨h1, h2, by rw [hF.accessible]; exact h3, h4, ?_, by rw [e1, e2]; exact h6, by rw [e2]; exact h7⟩,
-      e1, Or.inl ⟨e0, e2⟩⟩
+    refine ⟨⟨⟨h1, h2, by rw [hF.accessible]; exact h3, h4, ?_, by rw [e1, e2]; exact h6, by rw [e2]; exact h7⟩,
+      e1, Or.inl ⟨e0, e2⟩⟩, fun hn => absurd ⟨e0, e2⟩ hn⟩
     rw [e0, e2]; intro hc; obtain ⟨a1, a2, a3, a4⟩ := h5 hc; exact ⟨a1, a2, by rw [hF.accessible]; exact a3, a4⟩
   · refine hF.mono fun a n ho => ?_
     simp only [outside_append, winA, outside_cons, outside_nil, and_true] at ho
@@ -181,8 +183,8 @@ theorem post_clr {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c W qp ql qc st 
       unfold natVal; exact hrd _ _ huh huo (by unfold Apart at hqu ⊢; omega)
     rw [this]; exact hu
   · obtain ⟨⟨h1, h2, h3, h4, h5, h6, h7⟩, -⟩ := hsti
-    refine ⟨⟨h1, h2, by rw [hacc]; exact h3, h4, ?_, by rw [e1, e2]; exact h6, by rw [e2]; exact h7⟩,
-      e1, Or.inl ⟨e0, e2⟩⟩
+    refine ⟨⟨⟨h1, h2, by rw [hacc]; exact h3, h4, ?_, by rw [e1, e2]; exact h6, by rw [e2]; exact h7⟩,
+      e1, Or.inl ⟨e0, e2⟩⟩, fun hn => absurd ⟨e0, e2⟩ hn⟩
     rw [e0, e2]; intro hc; obtain ⟨a1, a2, a3, a4⟩ := h5 hc; exact ⟨a1, a2, by rw [hacc]; exact a3, a4⟩
   · refine hF.trans hMF fun a n ho => ⟨?_, ?_⟩
     · simp only [outside_append, winA, outside_cons, outside_nil, and_true] at ho

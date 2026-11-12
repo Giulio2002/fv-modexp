@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Nat.DivLargeTN
 
+set_option autoImplicit false
+
 /-!
 # `divLarge` (arm64): the postcondition from the facts at the return (pure)
 
@@ -68,7 +70,7 @@ theorem lpost {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st 
   have hext : LiveExt R L L2 := hE.ext.trans (hT.ext3.trans hT.ext4)
   have hsth := hpre.sti.1.2.1
   refine ⟨qp, ql, qc, P, rl, C, h0, h1, h2, h3, h4, h5, L2, b2, ⟨?qv, ?qn, by omega, hQ.c40, ?qlive, ?qror⟩,
-    ⟨?rv, ?rn, by omega, hU.c40, ?rlive, ?rror⟩, ⟨hext, hT.bud, ?inv⟩, ⟨?stok, hlen, ?arr⟩, ?fresh, ?fr, ?lf⟩
+    ⟨?rv, ?rn, by omega, hU.c40, ?rlive, ?rror⟩, ⟨hext, hT.bud, ?inv⟩, ⟨⟨?stok, hlen, ?arr⟩, ?arrL⟩, ?fresh, ?fr, ?lf⟩
   case qv =>
     rw [← hT.qval]; unfold natVal
     exact rdf _ _ (by have := hQ.pw; omega) (by have := hQ.ps; unfold Apart at this; omega)
@@ -113,6 +115,17 @@ theorem lpost {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st 
       · exact Or.inl h
       · exact Or.inr h
     · exact Or.inr ⟨hin, fun r hr => hap r (hT.ext3.mem_old (hE.ext.mem_old hr))⟩
+  case arrL =>
+    show ¬(stW s'.mem st = stW s.mem st ∧ stCap s'.mem st = stCap s.mem st) →
+      (stW s'.mem st, stW s'.mem st + 8 * stCap s'.mem st) ∈ L2 ∧ 0 < stCap s'.mem st
+    rw [hW2, hC2]
+    intro hn
+    by_cases h21 : w2 = w1 ∧ c2 = c1
+    · obtain ⟨e1, e2⟩ := h21
+      subst e1 e2
+      obtain ⟨hm, hc⟩ := hE.arrL hn
+      exact ⟨(hT.ext3.trans hT.ext4).mem_old hm, hc⟩
+    · exact hT.arrL2 h21
   case fresh =>
     intro hne hC0 hc0
     rw [hW2, hC2]

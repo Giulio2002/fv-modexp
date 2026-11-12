@@ -84,7 +84,7 @@ theorem postF {R : RtInv} {c : Cx} {s : State} {Lk : List (Nat × Nat)} {bk : Na
   have hext : LiveExt R c.L Lk := hcr.ext1.trans hev.ext
   obtain ⟨h1, h2, h3, h4, h5, h6, h7⟩ := hev.sok
   have hfl := hG.fp.len
-  refine ⟨?q, ?u, Lk, bk, ⟨hext, ?bud, ?inv⟩, ⟨?stok, eL, ?arr⟩, ?fr, ?lf⟩
+  refine ⟨?q, ?u, Lk, bk, ⟨hext, ?bud, ?inv⟩, ⟨⟨?stok, eL, ?arr⟩, hev.sarrL.congr eW eC fun _ h => h⟩, ?fr, ?lf⟩
   case q =>
     have e : natVal s'.mem c.qp c.ql = natVal S.mem c.qp c.ql := rdf _ _ (by omega) (by unfold Apart at hqs; omega)
     have e2 : natVal S.mem c.qp c.ql = Mdl.val (Asm.limbs S.mem c.qp c.ql) := (Asm.val_limbs _ _ _).symm
