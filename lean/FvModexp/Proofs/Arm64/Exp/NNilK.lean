@@ -42,6 +42,7 @@ theorem epiK1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (re
     {costS costP : Nat → Nat → Nat → Nat → Nat}
     {g sp zp zl zc st0 xp xl xc yp yl yc mp n mc slow : Nat} {s : State}
     (hP : PreNil R b L K costF needR costR needS needP costS costP g sp zp zl zc st0 xp xl xc yp yl yc mp n mc slow s)
+    (hx0 : xl ≠ 0)
     {L1 : List (Nat × Nat)} {b1 st : Nat} {M1 : Memory} (hN : NewStk R L L1 b b1 g M1 st)
     (hF : MemFrame s.mem M1 (R.rt ++ wN sp K)) (hLF : LiveFrame s.mem M1 L [])
     (h1182 : M1.readLE (sp + 1182) 1 = 1) (h1296 : M1.readLE (sp + 1296) 8 = sp + 1272)
@@ -55,7 +56,8 @@ theorem epiK1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (re
   intro r S hr hpc hsp h18 h28 hacc h29v h30v hsl hPo
   obtain ⟨⟨hs1, hs28, hg1, hg2, hg3, hgo, hal, hK4, hKs, hsp2, hwacc, hwrt, hLs, -, hsv⟩, -, -, -, -, -,
     -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -,
-    -, -, -, ⟨hgz, -⟩, -⟩ := id hP
+    -, ⟨hzlc, -, hxlz, -⟩, -, ⟨hgz0, -⟩, -⟩ := id hP
+  have hgz := hgz0 (by omega)
   have hwout : Outside (sp - K) (K + 1432) R.rt := by
     have := hwrt _ (List.mem_singleton_self _)
     simp only at this; rwa [show sp + 1432 - (sp - K) = K + 1432 by omega] at this

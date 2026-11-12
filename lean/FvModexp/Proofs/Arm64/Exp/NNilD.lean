@@ -8,7 +8,11 @@ import FvModexp.Proofs.Arm64.Exp.NGet
 `stk.free()` (`nat.expNN.deferwrap1`: `len := 0`, `sync.(*Pool).Put`).
 
 * `NE0` / `ZOK0`: `NDefs.NE` / `ZOK` without the stack conjuncts (there is no stack at the entry).
-* `PreNil`: `NDefs.NPre` with `st = 0` and without the stack block; the stack-size bounds and the budget at
+* `PreNil`: `NDefs.NPre` with `st = 0` and without the stack block, for the call `(*Int).exp` makes (`x = z`:
+  `xp = zp ∧ xl = zl ∧ xc = zc`); the facts locating `x`, `y` (`z`) are stated only for a positive length (capacity) —
+  a nil operand (`(0, 0, 0)`, e.g. `Run`'s exponent of length 0) is never dereferenced (the trivial cases `len(y) == 0`,
+  `len(x) == 0` return before the stack is taken), and `natOne` only matters when `z`'s array exists, since with
+  `x = z` an empty `z` means `len(x) = 0`; the stack-size bounds and the budget at
   `stLen = 0`, the budget also pays the 24-byte `newobject`; `z`'s array (when non-empty) is held and apart from the
   window even when the alias test drops it (at `(*Int).exp`'s call it is the receiver's live array), and `z`'s range is
   apart from the goroutine's stack-guard word (the deferred `stk.free()` runs after `z` may have been written); address 0 is not a runtime object (`Outside 0 1 R.rt`: `newobject`'s result is non-nil); the pool's `New` word is `0` (the `Get` pre) and lies
@@ -44,15 +48,16 @@ def PreNil (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K : Nat) (costF : Nat 
   0 < n ∧ n ≤ 128 ∧ n ≤ mc ∧ mc < 2 ^ 40 ∧
   NE0 R L sp K mp (8 * n) ∧ s.mem.accessible mp (8 * n) false = true ∧ mp + 8 * n ≤ 2 ^ 48 ∧
     NatNorm s.mem mp n ∧
-  NE0 R L sp K yp (8 * yl) ∧ s.mem.accessible yp (8 * yl) false = true ∧ yp + 8 * yl ≤ 2 ^ 48 ∧
-    NatNorm s.mem yp yl ∧ yl ≤ 2 ^ 9 ∧ yc < 2 ^ 64 ∧
-  NE0 R L sp K xp (8 * xl) ∧ s.mem.accessible xp (8 * xl) false = true ∧ xp + 8 * xl ≤ 2 ^ 48 ∧
-    NatNorm s.mem xp xl ∧ xl ≤ 128 ∧ xp < 2 ^ 64 ∧ xc < 2 ^ 64 ∧
-  zp < 2 ^ 64 ∧ zl ≤ zc ∧ zc < 2 ^ 40 ∧ (Apart (g + 16) 8 zp (8 * zc) ∧ (0 < zc → NE0 R L sp K zp (8 * zc))) ∧
+  (0 < yl → NE0 R L sp K yp (8 * yl)) ∧ (0 < yl → s.mem.accessible yp (8 * yl) false = true) ∧
+    (0 < yl → yp + 8 * yl ≤ 2 ^ 48) ∧ NatNorm s.mem yp yl ∧ yl ≤ 2 ^ 9 ∧ (yc < 2 ^ 64 ∧ yp < 2 ^ 64) ∧
+  (0 < xl → NE0 R L sp K xp (8 * xl)) ∧ (0 < xl → s.mem.accessible xp (8 * xl) false = true) ∧
+    (0 < xl → xp + 8 * xl ≤ 2 ^ 48) ∧ NatNorm s.mem xp xl ∧ xl ≤ 128 ∧ xp < 2 ^ 64 ∧ xc < 2 ^ 64 ∧
+  zp < 2 ^ 64 ∧ (zl ≤ zc ∧ xp = zp ∧ xl = zl ∧ xc = zc) ∧ zc < 2 ^ 40 ∧
+  ((0 < zc → Apart (g + 16) 8 zp (8 * zc)) ∧ (0 < zc → NE0 R L sp K zp (8 * zc))) ∧
   (0 < zc → (0 < xc ∧ zp + 8 * zc = xp + 8 * xc) ∨ (0 < yc ∧ zp + 8 * zc = yp + 8 * yc) ∨
     ZOK0 R L g sp K zp zc xp xl yp yl mp n s.mem) ∧
   NE0 R L sp K RunIface.gA 32 ∧
-  (∃ op, EvenHyp.NatOne R L s.mem op [(sp - K, sp + 1432), (zp, zp + 8 * zc)]) ∧
+  (0 < zc → ∃ op, EvenHyp.NatOne R L s.mem op [(sp - K, sp + 1432), (zp, zp + 8 * zc)]) ∧
   st = 0 ∧ s.mem.accessible StackNat.wbA 4 false = true ∧
   StackNat.rnd (23 * n) + StackNat.rnd (xl - n + 1) + StackNat.rnd n + 16 * xl + StackNat.rnd n +
     2 * StackNat.rnd (2 * n) + 32 * n + 80 ≤ 2 ^ 16 ∧

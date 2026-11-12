@@ -159,8 +159,8 @@ theorem postNil_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {cost
   have hwout : Outside (sp - K) (K + 1432) R.rt := by
     have := hwrt _ (List.mem_singleton_self _)
     simp only at this; rwa [show sp + 1432 - (sp - K) = K + 1432 by omega] at this
-  have ex := (opnd_v hxO hLF hF hxN).1
-  have ey := (opnd_v hyO hLF hF hyN).1
+  have ex := (opnd_v0 hxO hLF hF hxN).1
+  have ey := (opnd_v0 hyO hLF hF hyN).1
   have em := (opnd_v hmO hLF hF hmN).1
   rw [ex, ey, em] at hv
   rw [em, hl0] at hb
