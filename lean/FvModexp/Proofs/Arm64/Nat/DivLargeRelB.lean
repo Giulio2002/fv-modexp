@@ -68,6 +68,30 @@ theorem uarr_liveOut {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp
   · obtain ⟨r, hr, i1, i2⟩ := hin
     have := hap r (hE.ext.mem_old hr); unfold Apart at this; omega
 
+/-- the stack guard word is outside the written ranges -/
+theorem g_wsL {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st up uc ip il vp vl : Nat} {s : State}
+    {t : Nat} {L1 : List (Nat × Nat)} {b1 w1 c1 : Nat} (hE : Env R b L c zp zc st up uc ip il vp vl s t L1 b1 w1 c1) :
+    Outside ((s.regs 28).toNat + 16) 8 (wsL zp zc up uc vl t) := by
+  have hgr : Outside ((s.regs 28).toNat + 16) 8 R.rt := hE.pre.ce.2.2.2.2.2.1
+  refine outside_wsL ?_ (fun h => by have := (hE.pre.zo.2.2 h).2; unfold Apart at this; omega)
+    (fun h => by have := (hE.pre.uo.2.2 h).2; unfold Apart at this; omega)
+  rcases hE.scr.loc with ⟨hc, h1, h2⟩ | ⟨hin, -⟩
+  · have := (hE.pre.sti.2.2.2 hc).2; unfold Apart at this; omega
+  · have := outside_of_inRanges hgr hin; omega
+
+/-- the live set after `u.make` is apart from the frame window -/
+theorem lsep_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st up uc ip il vp vl : Nat}
+    {s : State} {t : Nat} {L1 : List (Nat × Nat)} {b1 w1 c1 : Nat}
+    (hE : Env R b L c zp zc st up uc ip il vp vl s t L1 b1 w1 c1) {Lk : List (Nat × Nat)} (hx : LiveExt R L1 Lk) :
+    ∀ r ∈ Lk, r.1 + (r.2 - r.1) ≤ s.sp.toNat - 41264 ∨ s.sp.toNat + 112 ≤ r.1 := by
+  have hl := hE.lay
+  have hout : Outside (s.sp.toNat - 41264) (41264 + 112) R.rt := hE.pre.ce.2.2.2.1
+  rcases hx with ⟨ns, rfl, hn, -⟩
+  intro r hr
+  rcases List.mem_append.1 hr with hr | hr
+  · exact hl.lsep r hr
+  · have := outside_of_inRanges hout (hn r hr).1; omega
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 8000000 in
 /-- **`Mem` across a frame** (pure) -/
@@ -156,6 +180,7 @@ structure MemU (R : RtInv) (L : List (Nat × Nat)) (zp zc st up uc ip il ic vp v
   sL : M.readLE (s.sp.toNat - 192) 8 = il + 1
   sP : M.readLE (s.sp.toNat - 104) 8 = P
   ssh : M.readLE (s.sp.toNat - 120) 8 = sh
+  grd : M.readLE ((s.regs 28).toNat + 16) 8 = s.mem.readLE ((s.regs 28).toNat + 16) 8
 
 set_option maxRecDepth 20000 in
 theorem MemU.frame {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st up uc ip il ic vp vl vc : Nat}
@@ -179,7 +204,13 @@ theorem MemU.frame {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp z
     (rdw _ (by omega) (by omega) (by simp only [scrB, outside_cons, outside_nil, and_true]; omega)).trans hM.sC,
     (rdw _ (by omega) (by omega) (by simp only [scrB, outside_cons, outside_nil, and_true]; omega)).trans hM.sL,
     (rdw _ (by omega) (by omega) (by simp only [scrB, outside_cons, outside_nil, and_true]; omega)).trans hM.sP,
-    (rdw _ (by omega) (by omega) (by simp only [scrB, outside_cons, outside_nil, and_true]; omega)).trans hM.ssh⟩
+    (rdw _ (by omega) (by omega) (by simp only [scrB, outside_cons, outside_nil, and_true]; omega)).trans hM.ssh, ?g⟩
+  case g =>
+    have hga := hE.pre.ce.2.2.2.2.1; have hgr : Outside ((s.regs 28).toNat + 16) 8 R.rt := hE.pre.ce.2.2.2.2.2.1
+    have hpg := hU.pg
+    unfold Apart at hga hpg
+    rw [hf.readLE _ _ (out4 hgr (by simp only [scrB, outside_cons, outside_nil, and_true]; omega) (g_wsL hE) (by omega))]
+    exact hM.grd
   simp only [outside_append] at ho ⊢
   obtain ⟨⟨⟨h1, h2⟩, h3⟩, h4⟩ := ho
   refine ⟨⟨⟨h1, ?_⟩, h3⟩, h4⟩
