@@ -924,3 +924,17 @@ DivLargeDBP 22 s / 2.3 GB (db_pre: was 10 GB / >3 min with unfolded disjunctions
 31 s / 4.9 GB, DivLargeDB 6 s, DivLargeDBR 6 s, DivLargeDRP 28 s, DivLargeDRR 5 s, DivLargeDRM 17 s / 3.3 GB, DivLargeTN 7 s,
 DivLargeT1 16 s / 3.1 GB, DivLargeTP 4 s, DivLargeT2 8 s, DivLarge (composition) 3 s. omega: nested subtraction of a large
 literal (`sp - 304 - 40960`) hits maxRecDepth — rewrite to `sp - 41264` first.
+
+## divmc session 17 (arm64, dev compile, LEAN_NUM_THREADS=4) — mul SCC, nat.mul member modules
+| module | wall | peak RSS |
+|---|---|---|
+| Common/MulCost | 1.8 s | 2.0 GB |
+| MulDefs / MulRel / MulCall / MulOps / MulLift / MulKPre | ≤ 7 s each | ≤ 2.6 GB |
+| MulMake (make_reuse / make_alloc) | ~40 s | 2.9 GB |
+| MulNorm (normA / normB / retB0) | 6 s | 2.3 GB |
+| MulBM (basicMul path) | 82 s | 4.3 GB (was 194 s / 8.3 GB: one omega 93 s with unfolded `Apart` disjunctions hpx/hpy/hpg/hga in context → `clear` them after the call: 18 s) |
+| MulZero | 10 s | 2.4 GB |
+| MulSwap (swap / swap2) | 45 s | 3.7 GB (a `Summary.mono` post-conversion lambda without type ascriptions ran > 10 min / > 10 GB: give every `have` inside it an explicit type, name implicit args of keep-lemmas) |
+| MulKar (karEq / karEq2) | 56 s | 4.3 GB |
+LESSON: inside `Summary.mono (ih …) (pre' := …) (post' := …) conv conv`, elaborate every intermediate fact with an explicit
+type (`have h : T := …`) — implicit-argument unification against the reducible `MPost` blew up memory.

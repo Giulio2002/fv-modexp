@@ -127,4 +127,27 @@ theorem mpost_up {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp xl
       · exact Or.inr h
     · rw [eW3, eC3]; intro hn'; apply sbm; rw [eW, eC]; exact hn'
 
+set_option maxRecDepth 20000 in
+/-- a callee called at `SP - f` with a frame `R.rt ++ winA S1 W1 88 ++ [z] ++ stkWs` (an inner `nat.mul`) keeps the
+caller's frame outside the callee's window: the saved `FP`/`LR` slots `[S1.sp - 8, S1.sp + 8)` and the upper part
+`[S1.sp + 88, SP + 88)` -/
+theorem mul_keeps {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp xl xc yp yl yc : Nat}
+    {s S1 : State} {m2 : Memory} {f W1 zp' zc' : Nat} (hpre : MPre R b L W zp zc st xp xl xc yp yl yc s)
+    (hsp : S1.sp.toNat = s.sp.toNat - f) (hk : f + W1 ≤ W) (hf : 96 ≤ f) (hW1 : 96 ≤ W1)
+    (hF : MemFrame s.mem S1.mem (winA s W 88)) (hz' : Outside zp' (8 * zc') (win s W 88))
+    (hMF : MemFrame S1.mem m2 (R.rt ++ winA S1 W1 88 ++ [(zp', zp' + 8 * zc')] ++ stkWs S1.mem st)) :
+    ∀ a n, (S1.sp.toNat - 8 ≤ a ∧ a + n ≤ S1.sp.toNat + 8) ∨ (S1.sp.toNat + 88 ≤ a ∧ a + n ≤ s.sp.toNat + 88) →
+      m2.readLE a n = S1.mem.readLE a n := by
+  obtain ⟨hce, -, -, -, -, -, hstk, -, -⟩ := hpre
+  obtain ⟨-, ⟨hal, hb', ha, hw⟩, -, hout, -, -, -, -⟩ := hce
+  obtain ⟨-, -, hstw, -, -, -, hfw, -⟩ := hstk
+  obtain ⟨eW, eL, eC⟩ := hdr_frame hF (winA_of_win' hstw)
+  simp only [win, outside_cons, outside_nil, and_true] at hstw hfw hz'
+  simp only [BasicSqr.freeP, BasicSqr.freeN] at hfw
+  intro a n h
+  refine hMF.readLE _ _ ?_
+  simp only [stkWs, winA, outside_append, outside_cons, outside_nil, and_true]
+  rw [eW, eL, eC]
+  exact ⟨⟨⟨hout.of_sub (by omega) (by omega), by omega, by omega⟩, by omega⟩, by omega, by omega⟩
+
 end FvModexp.Arm64.NatMul
