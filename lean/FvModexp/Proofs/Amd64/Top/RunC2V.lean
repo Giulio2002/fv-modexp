@@ -111,4 +111,12 @@ theorem relV_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c p len cp : BitV
     obtain ⟨a1, a2, -, a4, a5⟩ := hfr3 h
     exact ⟨a1, a2, a4, a5⟩
 
+/-- `RelV` reads only `RSP`, `R14`, `RBP`, `AX`, `BX`, `X15`, `fsBase`, `DF` and the memory. -/
+theorem RelV.congr {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {p len : BitVec 64} {s : State} {ret W : Nat}
+    {Lk : List (Nat × Nat)} {bk : Nat} {V V' : State} (h : RelV R b L p len s ret W Lk bk V)
+    (hr : V'.regs = V.regs) (hm : V'.mem = V.mem) (hx : V'.xmm = V.xmm) (hfs : V'.fsBase = V.fsBase)
+    (hdf : V'.df = V.df) : RelV R b L p len s ret W Lk bk V' := by
+  unfold RelV at *
+  rw [hr, hm, hx, hfs, hdf]; exact h
+
 end FvModexp.Amd64.Run
