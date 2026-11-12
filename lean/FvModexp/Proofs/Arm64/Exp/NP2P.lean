@@ -124,7 +124,7 @@ theorem p2Path (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
   rw [tN' hzq, tN' (by omega : n < 2 ^ 64), tN' (by omega : zcq < 2 ^ 64), tN' (by omega : st < 2 ^ 64), tN' hxp,
     tN' (by omega : xl < 2 ^ 64), tN' (by omega : yp < 2 ^ 64), tN' (by omega : yl < 2 ^ 64),
     tN' (by omega : k < 2 ^ 64), show segAddr Extracted.program NHyp.fnP2 = p2A by decide] at hE
-  have hacc2 : S'.mem.accessible (sp + 1048) 216 true = true := by
+  have hacc2 : S'.mem.accessible (sp + 1048) 256 true = true := by
     rw [e7, hF0.accessible]; exact Memory.accessible_mono _ hacc (by omega) (by omega)
   have hS'sp : S'.sp = BitVec.ofNat 64 (sp + 1056) := e2.trans hSsp
   have hS's : S'.sp.toNat = sp + 1056 := by rw [hS'sp, BitVec.toNat_ofNat]; omega

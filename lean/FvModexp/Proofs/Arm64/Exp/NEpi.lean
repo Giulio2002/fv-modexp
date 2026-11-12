@@ -73,7 +73,7 @@ def EpiK (impl : List Segment) (ret0 : Nat) (F : State → Prop) (sp f29 : Nat) 
     (P : State → Prop) : Prop :=
   ∀ (r : Nat) (S : State), RetPt r → S.pc = BitVec.ofNat 64 r → S.sp = BitVec.ofNat 64 (sp + 1056) →
     S.regs 18 = r18 → S.regs 28 = r28 →
-    S.mem.accessible (sp + 1048) 216 true = true → S.mem.readLE (sp + 1048) 8 = f29 →
+    S.mem.accessible (sp + 1048) 256 true = true → S.mem.readLE (sp + 1048) 8 = f29 →
     S.mem.readLE (sp + 1056) 8 = ret0 → SlotEq S.mem M0 sp →
     (∀ s'' : State, MemFrame S.mem s''.mem [(sp + 1232, sp + 1256)] → s''.regs 0 = S.regs 0 →
       s''.regs 1 = S.regs 1 → s''.regs 2 = S.regs 2 → P s'') →
@@ -87,7 +87,7 @@ theorem epiK0 (impl : List Segment) (ret0 : Nat) (hret : RetAddr (LibN.program.l
       s''.regs 18 = r18 → s''.regs 28 = r28 → P s'' → F s'') :
     EpiK impl ret0 F sp f29 r18 r28 M0 P := by
   intro r S hr hpc hsp h18 h28 hacc h29v h30v hsl hP
-  exact epi0 impl ret0 hret F sp f29 r S.mem hr hal hsp1 hsp2 hacc h29v h30v
+  exact epi0 impl ret0 hret F sp f29 r S.mem hr hal hsp1 hsp2 (Memory.accessible_mono _ hacc (by omega) (by omega)) h29v h30v
     ((hsl _ _ (Or.inl ⟨Nat.le_refl _, by omega⟩)).trans hfl) S hpc hsp rfl
     fun s'' f1 f2 f3 f4 f5 f6 f7 f8 _ => hK' s'' f1 f2 (f6.trans h18) (f7.trans h28) (hP s'' f8 f3 f4 f5)
 

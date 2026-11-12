@@ -179,7 +179,7 @@ theorem oddPath (impl : List Segment) (hap : ImplApart Extracted.program impl) (
   have hE := ExpOdd.ens impl hap R hclr hmv hmk hgr hwb nsD stkD costF hDiv hnsD hnsW4 hnsW2 b1 L1 K hKD (by omega)
     zq n zcq st xp xl xc yp yl yc mp n mc
   rw [show segAddr Extracted.program ExpOdd.fn = oddA by decide] at hE
-  have hacc2 : S.mem.accessible (sp + 1048) 216 true = true := by
+  have hacc2 : S.mem.accessible (sp + 1048) 256 true = true := by
     rw [hF0.accessible]; exact Memory.accessible_mono _ hacc (by omega) (by omega)
   obtain ⟨a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12⟩ := hA
   refine callC impl hap odd_sub odd_n11 ret0 hret F hs hal hKs (by omega) hsp2 hLs hwrt hsok hstw hF0 hLF0 hx1

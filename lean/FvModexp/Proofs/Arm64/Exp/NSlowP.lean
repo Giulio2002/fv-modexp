@@ -60,7 +60,7 @@ theorem slowPath (impl : List Segment) (hap : ImplApart Extracted.program impl) 
     tN' (by omega : xl < 2 ^ 64), tN' (by omega : yp < 2 ^ 64), tN' (by omega : yl < 2 ^ 64),
     tN' (by omega : mp < 2 ^ 64),
     show segAddr Extracted.program NHyp.fnSlow = slowA by decide] at hE
-  have hacc2 : S.mem.accessible (sp + 1048) 216 true = true := by
+  have hacc2 : S.mem.accessible (sp + 1048) 256 true = true := by
     rw [hF0.accessible]; exact Memory.accessible_mono _ hacc (by omega) (by omega)
   refine callC impl hap hns hn11 ret0 hret F hs hal hKs (by omega) hsp2 hLs hwrt hsok hstw hF0 hLF0 hx1
     hb1 hZA hstk h28 ?_ ?_ (Or.inr (Or.inl rfl)) hE hpc hSsp h30 ?_ ⟨?_, ?_, ?_, ?_⟩ (fun s' h => cpostG_of h)

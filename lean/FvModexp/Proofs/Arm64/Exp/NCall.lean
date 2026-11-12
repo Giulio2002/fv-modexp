@@ -91,7 +91,7 @@ theorem callC (impl : List Segment) (hap : ImplApart Extracted.program impl) {ns
     (hargs : ArgsFrom S 0 args) (hPS : P S) (hQ : ∀ s', Q S s' → CPostG R b1 L1 stk 112 zq zcq st v cst S s')
     (harr : 0 < stCap S.mem st → Apart (stW S.mem st) (8 * stCap S.mem st) (sp - K) (K + 1432))
     (hc0 : stCap S.mem st = 0 → stW S.mem st = 0) (hlc : stLen S.mem st ≤ stCap S.mem st)
-    (hacc : S.mem.accessible (sp + 1048) 216 true = true) (h29v : S.mem.readLE (sp + 1048) 8 = f29)
+    (hacc : S.mem.accessible (sp + 1048) 256 true = true) (h29v : S.mem.readLE (sp + 1048) 8 = f29)
     (h30v : S.mem.readLE (sp + 1056) 8 = ret0) {M0 : Memory} (hsl : SlotEq S.mem M0 sp)
     (hEk : EpiK impl ret0 F sp f29 (S.regs 18) (S.regs 28) M0
       (Post R b L K costF costR costS costP zp zc st xp xl yp yl mp n s)) :

@@ -92,7 +92,7 @@ theorem remPath (impl : List Segment) (hap : ImplApart Extracted.program impl) (
   rw [tN' hzp', tN' (by omega : zl' < 2 ^ 64), tN' hzc', tN' (by omega : st < 2 ^ 64), tN' hxp,
     tN' (by omega : xl < 2 ^ 64), tN' (by omega : n < 2 ^ 64), tN' (by omega : mp < 2 ^ 64),
     show segAddr Extracted.program NHyp.fnRem = remA by decide] at hE
-  have hacc2 : S.mem.accessible (sp + 1048) 216 true = true := by
+  have hacc2 : S.mem.accessible (sp + 1048) 256 true = true := by
     rw [hF.accessible]; exact Memory.accessible_mono _ hacc (by omega) (by omega)
   refine callC impl hap hns hn11 ret0 hret F hs hal hKs (by omega) hsp2 hLs hwrt hsok hstw hF0 hLF0 (LiveExt.refl R L)
     (mk := 0) (Nat.sub_le _ _) hZA hstk h28 ?_ ?_ (Or.inl rfl) hE hpc hSsp h30 ?_ ⟨?_, by omega⟩ (fun s' h => cpostG_of h)
