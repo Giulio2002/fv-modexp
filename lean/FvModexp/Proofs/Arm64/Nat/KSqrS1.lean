@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Arm64.Nat.KSqrB
+import FvModexp.Proofs.Arm64.Nat.KSqrS1c
 
 /-!
 # `karatsubaSqr` (arm64): `z1.abs = z1.abs.sqr(stk, tx.abs); z1.neg = true; clear(z)` (natmul.go:297-299), `KB2 → KB3`
@@ -15,102 +15,118 @@ namespace FvModexp.Arm64.NatSqr
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-set_option linter.janusRenameI false in
-set_option janus.callRegions true in
-theorem kS1clr (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+/-- the stores of `z1`'s new header (`0x1bc488 → 0x1bc49c`), then `kS1clr` -/
+theorem kS1st (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hmc : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
     {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State} {lx0 lx1 t : Nat}
-    {Lk : List (Nat × Nat)} {bk : Nat} (S : State) (hpc : S.pc = BitVec.ofNat 64 0x1bc49c)
+    {Lk : List (Nat × Nat)} {bk : Nat} (S : State) (hpc : S.pc = BitVec.ofNat 64 0x1bc488)
     (hsp : S.sp = s.sp - 320#64) (h28 : S.regs 28 = s.regs 28) (h29 : S.regs 29 = s.sp - 328#64)
     (h18 : S.regs 18 = s.regs 18)
     (hkm : KM R b L W st zp zc xp n xc s lx0 lx1 t Lk bk (kc3 (stLen s.mem st) n) S.mem) {l1 : Nat}
-    (hz1 : IntAt S.mem (s.sp.toNat - 200) 1 t l1 (kT n)) (hl1 : l1 ≤ 2 * kn2 n)
+    (r0 : S.regs 0 = BitVec.ofNat 64 t) (r1 : S.regs 1 = BitVec.ofNat 64 l1)
+    (r2 : S.regs 2 = BitVec.ofNat 64 (kT n)) (hl1 : l1 ≤ 2 * kn2 n)
     (hz1v : natVal S.mem t l1 = kD s xp n * kD s xp n) (hz1n : NatNorm S.mem t l1)
     (hz0 : Z0H s S.mem zp zc n) (hz2 : Z2H s S.mem zp zc n)
     (hK : ∀ (S' : State) (Lk' : List (Nat × Nat)) (bk' l1 : Nat),
       KB3 R b L W st zp zc xp n xc s lx0 lx1 t S' Lk' bk' l1 → KGoal impl R b L W st zp xp n s S') :
     KGoal impl R b L W st zp xp n s S := by
-  have hc : CodeIn (Extracted.program.ofImpl impl) (LibSqr.program.link impl) := by
-    rw [LibSqr.eq_only]; exact codeIn_ofImpl_restrict_of_apart hap LibSqr.names
-  have hmc' := MemclrNoHeapPointersLive.of_codeIn hc hmc
-  clear hc
-  obtain ⟨hW, hWs, hal, ha48, h80, hn12, hxc, hxc40, hzl, hzc40, hout, hgr, hga⟩ := hkm.lay
-  obtain ⟨-, hzlive, hzw, hzg, -, -, -, hzal, hzh, hz48⟩ := hkm.zops
-  have hsv : RunIface.Serves R := hkm.pre.2.2.1
-  have hok : R.ok (cA "runtime.memclrNoHeapPointers") [zp, 8 * (2 * n)] := hsv.2.2.1 _ _ (by omega)
-  have hzacc : S.mem.accessible zp (8 * (2 * n)) true = true := by
-    obtain ⟨-, -, hacc, -⟩ := hzlive (by omega); exact Memory.accessible_mono _ hacc (by omega) (by omega)
-  have hzH : InRanges zp (8 * (2 * n)) Lk ∨ Outside zp (8 * (2 * n)) R.rt := hzh.sub (by omega) (by omega)
-  have hzg' : Apart zp (8 * (2 * n)) ((s.regs 28).toNat + 16) 8 := by
-    simp only [guard] at hzg; unfold Apart at hzg ⊢; omega
-  have hzw' : zp + 8 * (2 * n) ≤ s.sp.toNat - W ∨ s.sp.toNat + 48 ≤ zp := by
-    simp only [win, outside_cons, outside_nil, and_true] at hzw; omega
-  have hgQ := hkm.grd
-  obtain ⟨⟨hg1, hg2, hg3⟩, -⟩ := hkm.pre.1
-  have hg2' : S.mem.accessible ((s.regs 28).toNat + 16) 8 false = true := by rw [hkm.fr.accessible]; exact hg2
-  have hg3' : S.mem.readLE ((s.regs 28).toNat + 16) 8 + 4096 < s.sp.toNat - 320 := by rw [hgQ]; omega
-  have hga1 : (s.regs 28).toNat + 16 + 8 ≤ s.sp.toNat - 320 - 4096 ∨ s.sp.toNat - 320 - 8 ≤ (s.regs 28).toNat + 16 := by
-    unfold Apart at hga; omega
-  have hga2 : (s.regs 28).toNat + 16 ≤ s.sp.toNat - 320 ∨ s.sp.toNat - 320 + 8 ≤ (s.regs 28).toNat := by
-    unfold Apart at hga; omega
-  clear hg2 hg3
-  have hL1 := hkm.lsep
-  have hinv := hkm.inv
+  obtain ⟨hW, hWs, hal, ha48, h80, hn12, hxc, hxc40, hzl, hzc40, -, -, -⟩ := hkm.lay
   have hw0 : s.mem.accessible (s.sp.toNat - W) (W + 48) true = true := hkm.pre.1.2.1.2.2.2
-  have hsacc : S.mem.accessible (s.sp.toNat - W) (W + 48) true = true := by rw [hkm.fr.accessible]; exact hw0
+  have hsacc : S.mem.accessible (s.sp.toNat - 328) 376 true = true := by
+    rw [hkm.fr.accessible]; exact Memory.accessible_mono _ hw0 (by omega) (by omega)
   clear hw0
-  have q344 : S.mem.readLE (s.sp.toNat + 24) 8 = 2 * n := hkm.s3
-  have q336 : S.mem.readLE (s.sp.toNat + 16) 8 = zp := hkm.s2
+  have ht := hkm.tops
+  have htw : t + 8 * kT n ≤ s.sp.toNat - W ∨ s.sp.toNat + 48 ≤ t := by
+    have := ht.2.1; simp only [win, outside_cons, outside_nil, and_true] at this; omega
+  have ht48 : t + 8 * kT n ≤ 2 ^ 48 := ht.2.2.2.2.2
+  clear ht
+  have hl1' : l1 < 2 ^ 64 := by simp only [kn2] at hl1; omega
   unfold KGoal
-  have htops := hkm.tops
-  have hstw : Outside st 24 (win s W 48) := hkm.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1.2.2.1
-  have hsz : Apart st 24 zp (8 * zc) := (hkm.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1).1
-  janus_run [q344, q336] until [0x1bc4ac] calls [hmc' Lk bk]
-  rename_i jk fl vv w ex ep hFc hLFc hinvw hz
-  have hreg : w.regions = S.mem.regions := by janus_assumption
-  obtain ⟨hlive, htw, -, htz, -, ht48⟩ := htops
-  simp only [win, outside_cons, outside_nil, and_true] at htw hstw
-  unfold Apart at htz hsz
-  have hF1 : MemFrame S.mem w (R.rt ++ [(s.sp.toNat - 320 - 4096, s.sp.toNat - 320 - 8),
-      (s.sp.toNat - 320 + 8, s.sp.toNat - 320 + 24)] ++ [(zp, zp + 8 * (2 * n))]) :=
-    hFc.mono fun a k ho => by
-      simp only [outside_append, outside_cons, outside_nil, and_true] at ho ⊢
-      exact ⟨⟨ho.1.1, ho.1.2.1, by omega⟩, ho.2⟩
-  have hsb : StackBack R Lk Lk st S.mem w := by
-    refine stackBack_keep' hkm.sok (ws := [(s.sp.toNat - 320 - 4096, s.sp.toNat - 320 - 8),
-      (s.sp.toNat - 320 + 8, s.sp.toNat - 320 + 8 + 16)] ++ [(zp, zp + 8 * (2 * n))]) ?_
-      (FvModexp.LiveFrame.mono_ws hLFc fun a k ho => by rw [outside_append] at ho; exact ho.2) ?_ (LiveExt.refl R Lk)
-    · rw [← List.append_assoc]; exact hFc
-    · simp only [outside_append, outside_cons, outside_nil, and_true]; omega
-  have hkm1 := hkm.step (k := 4096) (a := 24) (by omega) (by omega) (ws := [(zp, zp + 8 * (2 * n))])
-    (fun r hr => by
-      simp only [List.mem_cons, List.not_mem_nil, or_false] at hr; subst hr
-      exact ⟨by simp only; omega, Or.inl ⟨by simp only; omega, by simp only; omega⟩⟩)
-    hF1 hLFc hreg (LiveExt.refl R Lk) (c := 0) (by omega) hinvw hsb
-  rw [Nat.add_zero] at hkm1
-  have hrd : ∀ x m, s.sp.toNat - 256 ≤ x → x + m ≤ s.sp.toNat + 48 → w.readLE x m = S.mem.readLE x m :=
-    fun x m h1 h2 => hkm.rdW (k := 4096) (a := 24) (by omega) (by omega) hF1 h1 h2
-      (by simp only [outside_cons, outside_nil, and_true]; omega)
-  have htH : Held R Lk t (8 * kT n) := hkm.scr.held
-  have hrt : ∀ x m, t ≤ x → x + m ≤ t + 8 * kT n → w.readLE x m = S.mem.readLE x m :=
-    fun x m h1 h2 => Held.readLE2 (htH.sub h1 h2) hFc hLFc
-      (by simp only [outside_cons, outside_nil, and_true]; omega)
-      (by simp only [outside_cons, outside_nil, and_true]; omega)
-  refine hK _ Lk bk l1 ⟨⟨?_, ?_, ?_, ?_, ?_⟩, hkm1, hz1.keep fun x m h1 h2 => hrd x m (by omega) (by omega), hl1,
-    ?_, ?_, hz0.keep fun x m h1 h2 => hrd x m (by omega) (by omega),
-    hz2.keep fun x m h1 h2 => hrd x m (by omega) (by omega), ?_⟩
-  · rfl
-  · rfl
-  · simp only [retStateX, callRegs_apply]; simp; exact h28
-  · simp only [retStateX, callRegs_apply]; simp; exact h29
-  · simp only [retStateX, callRegs_apply]; simp; exact h18
-  · show natVal w t l1 = _
-    rw [← hz1v]; unfold natVal; exact hrt _ _ (Nat.le_refl _) (by simp only [kT, kn2] at hl1 ⊢; omega)
-  · show NatNorm w t l1
-    rcases hz1n with h0 | h0
-    · exact Or.inl h0
-    · right; rwa [hrt _ _ (by omega) (by simp only [kT, kn2] at hl1 ⊢; omega)]
-  · show natVal w zp (2 * n) = 0
-    unfold natVal; exact FvModexp.readLE_of_zeroed hz _ _ (Nat.le_refl _) (Nat.le_refl _)
+  janus_run until [0x1bc49c]
+  refine kS1mid impl hap R hmc _ rfl rfl ?_ ?_ ?_ hkm ?fr ?reg ?z1 hl1 hz1v hz1n hz0 hz2 hK
+  case fr => janus_frame
+  all_goals (try simp only [IntAt])
+  all_goals janus_simp
+
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 64000000 in
+/-- **`KB2 → KB3`**: the loads and the inner `nat.sqr(z1 ← tx)` (`ks_sqcallR`, result reused in `t`), then `kS1st` -/
+theorem kS1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+    (hmc : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
+    {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State} {lx0 lx1 t : Nat}
+    (ih : ∀ a, IH impl R (2 * n) (false, a))
+    {Lk : List (Nat × Nat)} {bk tng ltx : Nat} (S : State)
+    (hB : KB2 R b L W st zp zc xp n xc s lx0 lx1 t S Lk bk tng ltx)
+    (hK : ∀ (S' : State) (Lk' : List (Nat × Nat)) (bk' l1 : Nat),
+      KB3 R b L W st zp zc xp n xc s lx0 lx1 t S' Lk' bk' l1 → KGoal impl R b L W st zp xp n s S') :
+    KGoal impl R b L W st zp xp n s S := by
+  have hkm := hB.km
+  obtain ⟨hW, hWs, hal, ha48, h80, hn12, hxc, hxc40, hzl, hzc40, hout, -, -⟩ := hkm.lay
+  obtain ⟨hpc, hsp, h28, h29, h18⟩ := hB.pos
+  obtain ⟨-, z1b, z1c, z1d⟩ := hB.z1h
+  obtain ⟨-, txb, txc, txd⟩ := hB.txh
+  have q192 : S.mem.readLE (s.sp.toNat - 192) 8 = t := by rw [show s.sp.toNat - 192 = s.sp.toNat - 200 + 8 by omega]; exact z1b
+  have q184 : S.mem.readLE (s.sp.toNat - 184) 8 = kT n := by rw [show s.sp.toNat - 184 = s.sp.toNat - 200 + 16 by omega]; exact z1c
+  have q176 : S.mem.readLE (s.sp.toNat - 176) 8 = kT n := by rw [show s.sp.toNat - 176 = s.sp.toNat - 200 + 24 by omega]; exact z1d
+  have q224 : S.mem.readLE (s.sp.toNat - 224) 8 = zp := by rw [show s.sp.toNat - 224 = s.sp.toNat - 232 + 8 by omega]; exact txb
+  have q216 : S.mem.readLE (s.sp.toNat - 216) 8 = ltx := by rw [show s.sp.toNat - 216 = s.sp.toNat - 232 + 16 by omega]; exact txc
+  have q208 : S.mem.readLE (s.sp.toNat - 208) 8 = zc := by rw [show s.sp.toNat - 208 = s.sp.toNat - 232 + 24 by omega]; exact txd
+  have q328 : S.mem.readLE (s.sp.toNat + 8) 8 = st := hkm.s1
+  clear z1b z1c z1d txb txc txd
+  have hltx := hB.hltx
+  have hst : st + 24 ≤ 2 ^ 48 := hkm.sok.2.2.2.1
+  obtain ⟨-, hzlive, hzw, -, hzs, -, -, -, hzh, hz48⟩ := hkm.zops
+  obtain ⟨htl, htw, htg, htz, -, ht48⟩ := hkm.tops
+  have htsep := hkm.tsep
+  have hsc : kc2 (stLen s.mem st) n + kcS (stLen s.mem st) n ≤ ksqrC (stLen s.mem st) n := by
+    have := kc7_le (ℓ := stLen s.mem st) h80; unfold kc7 kc6 kc5 kc4 kc3 at this; omega
+  have hxacc : S.mem.accessible zp (8 * ltx) false = true := by
+    obtain ⟨-, -, hacc, -⟩ := hzlive (by omega)
+    exact Memory.accessible_sub _ hacc (Or.inr rfl) (Nat.le_refl _) (by simp only [kn2] at hltx; omega)
+  have hw0 : s.mem.accessible (s.sp.toNat - W) (W + 48) true = true := hkm.pre.1.2.1.2.2.2
+  have hsacc : S.mem.accessible (s.sp.toNat - 328) 376 false = true := by
+    rw [hkm.fr.accessible]; exact Memory.accessible_sub _ hw0 (Or.inl rfl) (by omega) (by omega)
+  clear hw0
+  have hz0 := hB.z0h; have hz2 := hB.z2h; have htv := hB.tv
+  unfold KGoal
+  janus_run [q192, q184, q176, q224, q216, q208, q328] until [0x1bb420]
+  refine ks_sqcallR impl R hkm ih _ ?pcS ?sp ?g ?hm ?l4 ?l48 (zp' := t) (zl' := kT n) (zc' := kT n) (xp' := zp)
+    (xl' := ltx) (xc' := zc) (by omega) (by simp only [kT, kn2]; omega) (by simp only [kT, kn2]; omega) (by omega)
+    (by omega) (by simp only [kn2] at hltx; omega) (by omega) ?r0 ?r1 ?r2 ?r3 ?r4 ?r5 ?r6 hltx
+    (by simp only [kn2] at hltx; omega) hzc40 hxacc (fun _ => ⟨hzh, hz48⟩)
+    (fun _ => hzw.of_sub (by omega) (by simp only [kn2] at hltx; omega)) (by simp only [kT, kn2]; omega) htl htw
+    (fun _ => ⟨htg, htsep⟩) (fun _ _ => by unfold Apart at htz ⊢; simp only [kn2] at hltx; omega)
+    (fun _ => hzs.sub (by simp only [kn2] at hltx; omega)) (by simp only [kT, kn2] at hltx ⊢; omega)
+    (by unfold Apart at htz; simp only [kT, kn2] at htz ⊢; omega) (Or.inr ⟨Nat.le_refl _, by simp only [kT, kn2] at hltx ⊢; omega⟩)
+    hsc ?cont
+  case cont =>
+    intro s2 Lk' bk' l' hr hreg hk hkm' e0 e1 e2 hval hnn hl2 hv2 hF hLF
+    have e320 : (s.sp - 320#64).toNat = s.sp.toNat - 320 := by
+      simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
+    have hF' := hF
+    simp only [winA, e320] at hF'
+    rw [List.append_assoc] at hF'
+    obtain ⟨-, -, -, -, -, -, hfw, -⟩ := (hkm.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1 : StkPre R L s W 48 st)
+    have hstw : Outside st 24 (win s W 48) := hkm.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1.2.2.1
+    have hfw' := hkm.stk.2.2.1
+    simp only [win, outside_cons, outside_nil, and_true, BasicSqr.freeP, BasicSqr.freeN] at hstw hfw' htw
+    have hlc := hkm.sok.2.2.2.2.2.1
+    have htw2 : t + 8 * (2 * ltx) ≤ s.sp.toNat - W ∨ s.sp.toNat + 48 ≤ t := by
+      simp only [kT, kn2] at htw hltx; omega
+    have hrd : ∀ x m, s.sp.toNat - 256 ≤ x → x + m ≤ s.sp.toNat + 48 → s2.mem.readLE x m = S.mem.readLE x m :=
+      fun x m h1 h2 => hkm.rdW (k := W - 320) (a := 64) (by omega) (Nat.le_refl _) hF' h1 h2
+        (by simp only [stkWs, List.cons_append, List.nil_append, outside_cons, outside_nil, and_true]; omega)
+    refine kS1st impl hap R hmc s2 ?pc2 ?sp2 ?g2 ?f2 ?x2 hkm' e0 e1 e2 (by simp only [kn2] at hltx ⊢; omega)
+      (by rw [hval, htv]) hnn (hz0.keep fun x m h1 h2 => hrd x m (by omega) (by omega))
+      (hz2.keep fun x m h1 h2 => hrd x m (by omega) (by omega)) hK
+    case pc2 => rw [hr]; rfl
+    case sp2 => rw [hk.1]
+    case g2 => rw [hk.2.1]; janus_simp
+    case f2 => rw [hk.2.2.1]; janus_simp
+    case x2 => rw [hk.2.2.2]; janus_simp
+  case pcS => rfl
+  case hm => rfl
+  all_goals janus_simp
 
 end FvModexp.Arm64.NatSqr
