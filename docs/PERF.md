@@ -1019,3 +1019,16 @@ unification of `setReg` chains / `retStateX` against the contract post; fixed by
 | Arm64/Top/RunD3ZA | 279 s / 6.38 GB | 119 s / 6.2 GB | `Box` `hpw`/`hcw`/`hga`/`hut` right after the makeslice run |
 | Arm64/Top/RunD3P | 186 s / 5.65 GB | 143 s / 6.1 GB | `hpo'`/`hco'` and the memmove source-vs-callee-window facts (`hsw1/2`) proved BEFORE the run, then `Box`ed with `hpw`/`hcw`; unbox locally |
 (`hga` must stay visible across a run that ends in a runtime call: the callee pre needs the g-struct slot apart from the callee window.)
+
+## divmc session 20 (arm64, dev compile, LEAN_NUM_THREADS=4) — nat.mul chunk loop: head/call/addTo/induction
+| module | wall | peak RSS |
+|---|---|---|
+| MulLoopHead (lsp, LH, LM, LB.wk/hdrWin, TOK.winKeep, LB.winVal) | 1.5 s | 2.3 GB |
+| MulLoopLM (LB.calleeKeep, LB.xval/yval, lm_of) | 7.4 s | 2.7 GB |
+| MulLoopCall (lcall2 IH call, lcall head → call) | 8.0 s | 2.6 GB |
+| MulLoopAdd (addSum, mul_ra, addPre, add_val, ladd_call, ladd) | 11.6 s | 2.6 GB |
+| MulLoop (lloop induction) | 1.2 s | 2.3 GB |
+LESSON: after `janus_run … calls [hBS]` NEVER call `omega` for a sp fact (`(s.sp - 256#64).toNat = …`): 80 s / 4.9 GB
+(huge hypotheses in context); `rw [hs1, ← hsp]; exact hsp'` = ms (lcall2: 84 s → 2 s). Same for `janus_simp` closers:
+prefer `rw [hk]; simp only [setReg_apply]; exact h28`. A `rw` closing by `rfl` on memory terms can time out: state
+value equations as separate `have`s with explicit types (lm_of: timeout → 7 s).
