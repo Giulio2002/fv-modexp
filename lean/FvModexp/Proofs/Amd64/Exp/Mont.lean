@@ -52,7 +52,7 @@ def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl yp yl : BitVe
     R.ok (Extracted.program.contractAddr "runtime.memmove") [zp.toNat, zp.toNat + n * 8, n * 8]
 
 def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp yp : BitVec 64) (mp k n : Nat) (s s' : State) : Prop :=
-  s'.regs 0 = zp ∧ (s'.regs 3).toNat = n ∧ s'.regs 1 = zc ∧
+  s'.fsBase = s.fsBase ∧ s'.df = s.df ∧ s'.regs 0 = zp ∧ (s'.regs 3).toNat = n ∧ s'.regs 1 = zc ∧
     s'.mem.readLE zp.toNat (8 * n) =
       montgomery n (s.mem.readLE xp.toNat (8 * n)) (s.mem.readLE yp.toNat (8 * n)) (s.mem.readLE mp (8 * n)) k ∧
     ∃ (L' : List (Nat × Nat)) (b' : Nat), L' = L ∧ b' = b ∧
@@ -190,7 +190,7 @@ theorem ens' (impl : List Amd64.Segment) (R : RtInv)
     | stub _ _ _ => exact ho.elim
     | returned s' =>
       simp only [isReturn_returned] at ho ⊢
-      obtain ⟨e1, e2, e3, e4, e5, e6, e7, ev, ei, ef, el⟩ := ho
+      obtain ⟨e1, e2, e3, e4, ed, efs, e5, e6, e7, ev, ei, ef, el⟩ := ho
       have hF0 : MemFrame s.mem w (R.rt ++ [((s.regs 4).toNat - 4288, (s.regs 4).toNat + 104),
           (zp.toNat, zp.toNat + (n + n) * 8)]) := by janus_frame
       have hL0 : LiveFrame s.mem w L [(zp.toNat, zp.toNat + (n + n) * 8)] := by
@@ -200,7 +200,7 @@ theorem ens' (impl : List Amd64.Segment) (R : RtInv)
         have := hLs r hr
         simp only [outside_cons, outside_nil, and_true] at this
         simp (disch := omega) only [Janus.Arm64.Memory.readLE_writeLE_of_disjoint]
-      refine ⟨⟨e1, e2, e3, e4⟩, by rw [e5, FvModexp.Expmc.bv_ofNat_toNat], by rw [e6]; simp; omega,
+      refine ⟨⟨e1, e2, e3, e4⟩, efs, by rw [ed, hdf], by rw [e5, FvModexp.Expmc.bv_ofNat_toNat], by rw [e6]; simp; omega,
         by rw [e7, FvModexp.Expmc.bv_ofNat_toNat], by rw [ev, hX, hY, hM], L, b, rfl, rfl, ei, ?_, ?_⟩
       · refine hF0.trans ef (fun a k hk => ?_)
         simp only [outside_append, outside_cons, outside_nil, and_true] at hk ⊢
