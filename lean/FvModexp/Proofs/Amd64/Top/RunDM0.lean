@@ -103,7 +103,7 @@ theorem dM0 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
     ⟨RelD.mk' hin0 ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ hl0 hl1 hl2 hnz
     ⟨fun h => absurd h (by decide), fun h => absurd h (by decide)⟩ ?_ ?_ (hext.trans hext') ?_ ?_
     (hext'.liveSep hLsS hwrt) ?_ ?_ (fun j hj => absurd hj (Nat.not_lt_zero j)) (fun _ _ _ h => absurd h (Nat.not_lt_zero _)),
-    fun _ => ?sl, ?zb, hsrc.1, hsrc.2.1, hsrc.2.2, ?d48, hacc', liveSep_of_apartAll hAp,
+    fun _ => ?sl, ?zb, hsrc.1, hsrc.2.1, hsrc.2.2, ?d48, hacc', hext, liveSep_of_apartAll hAp,
     fun i h => absurd h (Nat.not_lt_zero i)⟩ ⟨Nat.add_le_add_left hsz _, by simpa using hIn,
       by simpa using fresh_out_win hb' hIn hout⟩ (by janus64_simp) (by janus64_simp) (by janus64_simp [hr3]) ?r10
       (by janus64_simp [hr1]) ?r2 (by janus64_simp [hr13])

@@ -65,7 +65,7 @@ theorem dP0 (impl : List Amd64.Segment) (R : RtInv)
   refine hk _ b1 ⟨RelD.mk' hin0 ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ hl0 hl1 hl2 hnz
     ⟨fun h => absurd h (by decide), fun h => absurd h (by decide)⟩ ?_ ?_ (by rw [List.append_nil]; exact hext) ?_ ?_
     hLsL ?_ ?_ (fun j hj => absurd hj (Nat.not_lt_zero j)) (fun _ _ _ h => absurd h (Nat.not_lt_zero _)),
-    fun _ => ?sl, ?zb, hsrc.1, hsrc.2.1, hsrc.2.2, ?d48, ?dacc, fun _ _ => trivial,
+    fun _ => ?sl, ?zb, hsrc.1, hsrc.2.1, hsrc.2.2, ?d48, ?dacc, hext, fun _ _ => trivial,
     fun i h => absurd h (Nat.not_lt_zero i)⟩ (by janus64_simp) ?r6 (by janus64_simp [hr3]) ?r10 (by janus64_simp [hr1])
     ?r2 (by janus64_simp [hr13])
   all_goals try (janus64_simp [hTm, hT4, hT14, hT5, hTx, hTfs, hTdf, hsp, h14, h5, hx15, hfs, hdf, hm1, hm2, hm3, hm4, hm5, hm6, hr1, hr13, hr0, hr3, hr7, hr9, hc]; done)
