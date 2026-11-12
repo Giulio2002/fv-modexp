@@ -1,12 +1,13 @@
 import FvModexp.Proofs.Arm64.Nat.DivW
 import FvModexp.Proofs.Arm64.Nat.RowLink
 import FvModexp.Proofs.Arm64.Witness.AsmWit
+import FvModexp.Proofs.Arm64.Witness.StubsMvz
 
 /-!
 # Row: `nat.divW` (arm64) on the Run extraction
 
 `correctness` = `DivW.ens` moved to `Extracted.program.link impl` (`Ensures.full`); runtime premises: the live
-`makeslice` and `memmove` contracts. `Witness.nonvacuous`: the shared witness runtime (`WStubs.impl`), the toy
+`makeslice` and `memmove` contracts and the zero-length `memmove` contract (Janus PR #2, `MemmoveZeroLive`). `Witness.nonvacuous`: the shared witness runtime (`WStubs.impl`), the toy
 allocator invariant, the Run extraction's read-only data loaded, and the call `z.divW(x, 3)` with an empty `z`
 (`cap 0`, so `make(nat, 2, 6)` is requested) and the two-limb `x = 5 + 9·B`; plus one call-site state per contract.
 -/
@@ -21,10 +22,11 @@ theorem correctness (impl : List Segment) (hap : ImplApart Extracted.program imp
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice")
       4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
+    (hmz : MemmoveZeroLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc y : BitVec 64) :
     Ensures (Extracted.program.link impl) (segAddr Extracted.program DivW.fn) [zp, zl, zc, xp, xl, xc, y]
       (DivW.Pre R b L zp zc xp xl y) (DivW.Post R b L zp zc xp xl y) :=
-  Ensures.full hap (DivW.ens impl hap R hmk hmv b L zp zl zc xp xl xc y)
+  Ensures.full hap (DivW.ens impl hap R hmk hmv hmz b L zp zl zc xp xl xc y)
 
 end FvModexp.Arm64.DivWRow
 
@@ -63,7 +65,7 @@ theorem pre : DivW.Pre R 0x1000 [] (BitVec.ofNat 64 OA) 0 (BitVec.ofNat 64 OB) 2
     ⟨by decide +kernel, by decide +kernel, by decide +kernel,
       by rw [show s0.mem = wmem (toyBytes g) stdRegs from rfl, acc_eq]; decide +kernel⟩,
     dataLoaded _ _, ?_, ?_, ?_, fun r hr => by simp at hr, roOut⟩, ?_, by decide, by decide, by decide,
-    fun h => absurd h (by decide), ?_, fun h => absurd h (by decide),
+    fun h => absurd h (by decide), fun h => absurd h (by decide), fun h => absurd h (by decide),
     by rw [show s0.mem = wmem (toyBytes g) stdRegs from rfl, acc_eq]; decide +kernel, by decide, Or.inr ?_,
     Or.inr top, ?_, ?_, fun _ => ⟨trivial, by decide⟩, fun _ _ _ _ => trivial, fun h => absurd h (by decide)⟩
   all_goals first
@@ -80,6 +82,7 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
     ImplApart Extracted.program impl ∧
     MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R ∧
     MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R ∧
+    MemmoveZeroLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R ∧
     RetAddr (Extracted.program.link impl) ret ∧
     CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program DivW.fn)
       [zp, zl, zc, xp, xl, xc, y] s ∧
@@ -93,12 +96,12 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
     Returns ((Extracted.program.link impl).withExit ret) s fun s' => ABIReturn s s' ∧ DivW.Post R b L zp zc xp xl y s s' :=
   ⟨WStubs.impl, R, 0x1000, [], BitVec.ofNat 64 OA, 0, 0, BitVec.ofNat 64 OB, 2, 2, 3, RET, s0, WStubs.hap,
     by rw [WStubs.addr_mk]; exact WStubs.mk [] (by intro t ht; simp at ht) _,
-    by rw [WStubs.addr_mv]; exact WStubs.mv R, hret, setup, pre,
+    by rw [WStubs.addr_mv]; exact WStubs.mv R, by rw [WStubs.addr_mv]; exact WStubs.mvz R, hret, setup, pre,
     ⟨[], 0x1000, callS WStubs.mkA Extracted.dataAddr.«type:big.Word#51b931e8» 1 1, by rw [WStubs.addr_mk]; rfl,
       by rw [WStubs.addr_mk]; exact site_mk _⟩,
     ⟨[], 0x1000, callS WStubs.mvA OA OB 8, by rw [WStubs.addr_mv]; rfl, by rw [WStubs.addr_mv]; exact site_mv _⟩,
     correctness WStubs.impl WStubs.hap R (by rw [WStubs.addr_mk]; exact WStubs.mk [] (by intro t ht; simp at ht) _)
-      (by rw [WStubs.addr_mv]; exact WStubs.mv R) 0x1000 [] (BitVec.ofNat 64 OA) 0 0 (BitVec.ofNat 64 OB) 2 2 3 RET
+      (by rw [WStubs.addr_mv]; exact WStubs.mv R) (by rw [WStubs.addr_mv]; exact WStubs.mvz R) 0x1000 [] (BitVec.ofNat 64 OA) 0 0 (BitVec.ofNat 64 OB) 2 2 3 RET
       hret s0 setup pre⟩
 
 end FvModexp.Arm64.DivWRow.Witness
