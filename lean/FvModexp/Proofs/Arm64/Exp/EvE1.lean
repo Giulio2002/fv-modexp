@@ -9,7 +9,7 @@ set_option autoImplicit false
 `runE1`: `R3 = stk`, `R4..R9 = x, y` (spills), `R10..R12 = m1` (slots `288/208/216`), `R13 = 0`, `CALL nat.expNN`
 (`R0..R2` = the scratch `z1` from `stk.nat`). `segE1` (`J5 → J6`): the premise `EvenHyp.ExpNNHypNE0` (`m1 = 2^n`: the
 power-of-two disjunct), `ExpN.NPre` from `npre_of`; `m1`, `m2` and the scratch survive (`stepC`, apart from `z1`'s
-array); the result is located (`LN.of_expN`; empty ⇒ the scratch, since the alias test cannot fire: `noAlias`).
+array); the result is located (`LN.of_expN`); an empty result (possibly `nil`) is kept as `(X0, 0, 0)`.
 -/
 
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvModexp
@@ -72,7 +72,7 @@ theorem segE1 {impl : List Segment} (hap : ImplApart Extracted.program impl)
     (hE : EvenHyp.ExpNNHypNE0 impl R KN costF needR costR needS needP costS costP)
     (hKN : 4304 ≤ KN) (hKN1 : KN + 1312 ≤ K) (hKN2 : KN + 288 ≤ 2 ^ 20)
     (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) (hM : 0 < natVal s.mem mp ml)
-    (hev : natVal s.mem mp ml % 2 = 0) (hcx : CapW R L s.mem st xp xc) (hcy : CapW R L s.mem st yp yc)
+    (hev : natVal s.mem mp ml % 2 = 0)
     (hst : ∀ l1 l2, l1 ≤ ml → l2 ≤ ml → NStkE needR needS needP xl yl l1 (ℓ3 s st mp ml l1 l2) (nE s mp ml))
     {rk rk' : Nat}
     (hrk : ∀ l1 l2, l1 ≤ ml → l2 ≤ ml →
@@ -150,10 +150,9 @@ theorem segE1 {impl : List Segment} (hap : ImplApart Extracted.program impl)
   · simp only [ArgsFrom]
     exact ⟨r0.trans h.r0, r1.trans h.r1, r2.trans h.r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, trivial⟩
   · refine ⟨by rw [hgN', hsN']; exact hnp, Or.inr ⟨nE s mp ml, by rw [fm]; exact hv1⟩⟩
-  · obtain ⟨⟨p, l, c, g0, g1, g2, hv, hN, hlc, hc64, L2, b2, hx, hb, hinv, hlv, hres, hsb, hF, hLF, hrs⟩, hc40,
-      hc0⟩ := hq
+  · obtain ⟨⟨p, l, c, g0, g1, g2, hv, hN, hlc, hc64, L2, b2, hx, hb, hinv, hlv, hres, hsb, hF, hLF, hrs⟩, hc40⟩ := hq
     have tc : (s'.regs 2).toNat = c := by rw [g2, BitVec.toNat_ofNat]; omega
-    rw [tc] at hc40 hc0
+    rw [tc] at hc40
     simp only [winA, hsN'] at hF
     rw [fm] at hF hLF hrg hsb hrs hv hb
     rw [hgN'] at hinv
@@ -175,27 +174,19 @@ theorem segE1 {impl : List Segment} (hap : ImplApart Extracted.program impl)
     have k200 := hk (sp + 200) 8 (Or.inr ⟨by omega, by omega⟩)
     have k224 := hk (sp + 224) 8 (Or.inr ⟨by omega, by omega⟩)
     rcases Nat.eq_zero_or_pos c with c0 | c0
-    · -- empty result: the scratch itself (the alias test cannot fire)
+    · -- empty result (possibly `nil`): only its register value is kept
       subst c0
       have hl0 : l = 0 := by omega
       subst hl0
-      have hpr : (s'.regs 0).toNat = r := by
-        rcases hc0 rfl with e | ⟨-, hal1 | hal2⟩
-        · exact e
-        · exact absurd hal1 (noAlias hrl hk0 hcx)
-        · exact absurd hal2 (noAlias hrl hk0 hcy)
-      have er : s'.regs 0 = BitVec.ofNat 64 r := by
-        apply BitVec.eq_of_toNat_eq; rw [hpr, BitVec.toNat_ofNat]; omega
-      have hz0 : LN R L s.mem st s'.mem L2 r 0 0
+      have hz0 : LN R L s.mem st s'.mem L2 (s'.regs 0).toNat 0 0
           (natVal s.mem xp xl ^ natVal s.mem yp yl % 2 ^ nE s mp ml) :=
         ⟨⟨by decide, fun h0 => absurd h0 (Nat.lt_irrefl 0), fun h0 => absurd h0 (Nat.lt_irrefl 0)⟩, Nat.le_refl _,
           by rw [← hz.2.2.1]; rfl, Or.inl rfl⟩
-      exact K6 s' L2 b2 p1 l1 c1 q l2 r 0 0 ⟨hjx, hr.trans r30, er, g1, g2,
+      exact K6 s' L2 b2 p1 l1 c1 q l2 (s'.regs 0).toNat 0 0 ⟨hjx, hr.trans r30, (BitVec.eq_of_toNat_eq (by rw [BitVec.toNat_ofNat, Nat.mod_eq_of_lt (BitVec.isLt _)])), g1, g2,
         by rw [k288]; exact h.s288, by rw [k208]; exact h.s208, by rw [k216]; exact h.s216,
         by rw [k280]; exact h.s280, by rw [k192]; exact h.s192, by rw [k200]; exact h.s200,
-        by rw [k224]; exact h.s224, hm1', h.c1p, hm2', h.ap, hz0, fun _ => DL.ln0 hre,
-        fun h0 => absurd h0 (Nat.lt_irrefl 0), fun h0 => absurd h0 (Nat.lt_irrefl 0), fun _ => h.ap1,
-        fun _ => h.ap2⟩
+        by rw [k224]; exact h.s224, hm1', h.c1p, hm2', h.ap, hz0, BitVec.isLt _,
+        fun h0 => absurd h0 (Nat.lt_irrefl 0), fun h0 => absurd h0 (Nat.lt_irrefl 0)⟩
     · have ha2 : 0 < a2 ml (nE s mp ml) := by simp only [a2]; omega
       have hza : ∀ (t n : Nat), Held R L1 t n → Apart r (8 * (2 * max l1 l2)) t n → Apart p (8 * c) t n := by
         intro t n hh ht
@@ -206,9 +197,8 @@ theorem segE1 {impl : List Segment} (hap : ImplApart Extracted.program impl)
       exact K6 s' L2 b2 p1 l1 c1 q l2 p l c ⟨hjx, hr.trans r30, g0, g1, g2,
         by rw [k288]; exact h.s288, by rw [k208]; exact h.s208, by rw [k216]; exact h.s216,
         by rw [k280]; exact h.s280, by rw [k192]; exact h.s192, by rw [k200]; exact h.s200,
-        by rw [k224]; exact h.s224, hm1', h.c1p, hm2', h.ap, hz, fun h0 => absurd h0 (by omega),
-        fun _ => hza _ _ (hm1.1.2.1 h.c1p).2.1 h.ap1, fun _ => hza _ _ (hm2.1.2.1 ha2).2.1 h.ap2,
-        fun h0 => absurd h0 (by omega), fun h0 => absurd h0 (by omega)⟩
+        by rw [k224]; exact h.s224, hm1', h.c1p, hm2', h.ap, hz, by have := (hlv c0).2.2.2; omega,
+        fun _ => hza _ _ (hm1.1.2.1 h.c1p).2.1 h.ap1, fun _ => hza _ _ (hm2.1.2.1 ha2).2.1 h.ap2⟩
 
 end
 

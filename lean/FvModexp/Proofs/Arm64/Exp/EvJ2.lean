@@ -6,31 +6,16 @@ set_option autoImplicit false
 /-!
 # `nat.expNNEven` (arm64): the join points around the two `nat.expNN` calls (agent infra)
 
-* `CapW R L m0 st p c`: the last capacity word of an operand (`x`, `y`) is held at the entry and apart from the entry
-  free part of the stack — so `nat.expNN`'s alias test (`alias(z, x)`: same last capacity word) never fires for a
-  located scratch `z` (`noAlias`), and an empty `nat.expNN` result is the scratch itself (`ExpNNHypNE0`).
-* `J6` (`exp1R`): `m1`, `m2` in their slots, `z1 = x^y mod m1` with its array located (also when empty).
+* `J6` (`exp1R`): `m1`, `m2` in their slots, `z1 = x^y mod m1` with its array located; an EMPTY `z1` may be `nil`
+  or any pointer (NOTES-conventions "[infra s30] FINDING"): nothing is tracked about it but `pz < 2^64`.
 -/
 
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvModexp
 
 namespace FvModexp.Arm64.ExpEven
 
-/-- the last capacity word of an operand is held at the entry and apart from the entry free part -/
-@[reducible] def CapW (R : RtInv) (L : List (Nat × Nat)) (m0 : Memory) (st p c : Nat) : Prop :=
-  0 < c → Held R L (p + 8 * c - 8) 8 ∧ Apart (p + 8 * c - 8) 8 (free m0 st).1 (free m0 st).2
-
-/-- a located array never has the same last word as a `CapW` operand -/
-theorem noAlias {R : RtInv} {L : List (Nat × Nat)} {m0 : Memory} {st t k p c : Nat} (hl : Loc R L m0 st t k)
-    (hk : 0 < k) (hc : CapW R L m0 st p c) : ¬ (0 < c ∧ t + 8 * k = p + 8 * c) := by
-  rintro ⟨c0, e⟩
-  obtain ⟨hh, hf⟩ := hc c0
-  rcases hl with ⟨-, l1, l2⟩ | ⟨hin, hap⟩
-  · simp only [free, Apart] at hf; omega
-  · have := hfresh hh hap hin; unfold Apart at this; omega
-
 /-- the join point `exp1R` (return of `z1 = z1.expNN(stk, x, y, m1, false)`): `m1`, `m2` in their slots, slot 224 =
-`2·max`, `z1 = (pz, lz, cz)` of value `x^y mod 2^n`; its array (the scratch when `cz = 0`) apart from `m1`, `m2` -/
+`2·max`, `z1 = (pz, lz, cz)` of value `x^y mod 2^n`; its array apart from `m1`, `m2` -/
 structure J6 (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl yc mp ml mc ret : Nat) (s : State)
     (rk : Nat) (S : State) (L1 : List (Nat × Nat)) (b1 p1 l1 c1 q l2 pz lz cz : Nat) : Prop where
   jx : JX R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s S L1 b1 (ℓ3 s st mp ml l1 l2) rk
@@ -50,11 +35,9 @@ structure J6 (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl
   m2 : LN R L s.mem st S.mem L1 q l2 (a2 ml (nE s mp ml)) (natVal s.mem mp ml / 2 ^ nE s mp ml)
   ap : Apart q (8 * a2 ml (nE s mp ml)) p1 (8 * c1)
   z1 : LN R L s.mem st S.mem L1 pz lz cz (natVal s.mem xp xl ^ natVal s.mem yp yl % 2 ^ nE s mp ml)
-  z1e : cz = 0 → LN R L s.mem st S.mem L1 pz 0 (2 * max l1 l2) 0
+  pz64 : pz < 2 ^ 64
   za1 : 0 < cz → Apart pz (8 * cz) p1 (8 * c1)
   za2 : 0 < cz → Apart pz (8 * cz) q (8 * a2 ml (nE s mp ml))
-  ze1 : cz = 0 → Apart pz (8 * (2 * max l1 l2)) p1 (8 * c1)
-  ze2 : cz = 0 → Apart pz (8 * (2 * max l1 l2)) q (8 * a2 ml (nE s mp ml))
 
 /-- `nat.expNN`'s program is inside `LibNE` -/
 theorem libN_sub : ∀ x, ExpN.names.contains x = true → LibNE.names.contains x = true := by
@@ -128,15 +111,12 @@ structure J7 (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl
   m2 : LN R L s.mem st S.mem L1 q l2 (a2 ml (nE s mp ml)) (natVal s.mem mp ml / 2 ^ nE s mp ml)
   ap : Apart q (8 * a2 ml (nE s mp ml)) p1 (8 * c1)
   z1 : LN R L s.mem st S.mem L1 pz lz cz (natVal s.mem xp xl ^ natVal s.mem yp yl % 2 ^ nE s mp ml)
-  z1e : cz = 0 → LN R L s.mem st S.mem L1 pz 0 (2 * max l1 l2) 0
+  pz64 : pz < 2 ^ 64
   za1 : 0 < cz → Apart pz (8 * cz) p1 (8 * c1)
   za2 : 0 < cz → Apart pz (8 * cz) q (8 * a2 ml (nE s mp ml))
-  ze1 : cz = 0 → Apart pz (8 * (2 * max l1 l2)) p1 (8 * c1)
-  ze2 : cz = 0 → Apart pz (8 * (2 * max l1 l2)) q (8 * a2 ml (nE s mp ml))
   d4 : DL R L s.mem st S.mem L1 t (2 * max l1 l2)
   tm1 : Apart t (8 * (2 * max l1 l2)) p1 (8 * c1)
   tm2 : Apart t (8 * (2 * max l1 l2)) q (8 * a2 ml (nE s mp ml))
   tz1 : 0 < cz → Apart t (8 * (2 * max l1 l2)) pz (8 * cz)
-  tz1e : cz = 0 → Apart t (8 * (2 * max l1 l2)) pz (8 * (2 * max l1 l2))
 
 end FvModexp.Arm64.ExpEven
