@@ -906,3 +906,10 @@ goals with a tiny pure lemma (`bud_step`, `bud_room2`) instead.
 P2PreWbC 5 s, P2PreA 17 s / 2.5 GB, P2PreB 20 s / 2.7 GB, P2PreC 15 s / 2.4 GB, P2PreD 15 s / 2.4 GB, P2PreLoop 1 s,
 P2PreF 10 s / 2.2 GB, P2PreMv 4 s, P2PreX 66 s / 4.4 GB (before: memmove via `calls [hmv]` 86-177 s / 6-7.6 GB;
 disjunction hypotheses visible to ~40 omegas → >900 s: hidden in `Hide`, unhidden per proof → 41-66 s).
+
+### infra s17 (arm64 buildPrecomputationWindowModPower2 complete: pre-loop + composition; J=2 closure rebuild, load ~20)
+P2PreX0 2 s, P2PreXTr 3 s, P2PreXT 8 s / 2.2 GB (before: 12+ min — the stored ptr `bp + 8 * (1 * W lm)` in the
+lemma-side memory vs the run's simp-normalised `bp + 8 * W lm`: the defeq check unfolded `Nat.mul` on non-literals;
+fixed by `rw [Nat.one_mul] at h0` before the run and writing the lemma memories in the run's form), P2PreX1 10 s,
+P2PreE1 7 s, P2PreE 12 s, P2Pre 5 s; rebuilt after the `Pre` change: P2PreH 27 s / 3.1 GB, P2PreX 45 s / 4.4 GB,
+P2PreA 16 s, P2PreB 21 s / 2.7 GB, P2PreC 14 s, P2PreD 13 s (all ≤ 4.4 GB).
