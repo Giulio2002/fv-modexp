@@ -86,9 +86,14 @@ theorem kPC (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
       z0h := ?z0h, z2h := ?z2h } hK
   case fr => exact hQ.fr.trans (by janus_frame) fun a k h => ⟨h, h⟩
   case reg => simp only [Memory.regions_writeLE]; exact hQ.reg
+  -- close the frame-record / spill goals BY NAME: a failing `exact hQ.lr` on the `fp` goal unfolds `Nat.sub`
+  -- literals for 63 s (profile s27: 108 s of 127 s)
+  case lr => janus_simp; exact hQ.lr
+  case fp => janus_simp; exact hQ.fp
+  case s5 => janus_simp; exact hQ.s5
   all_goals (try simp only [IntAt, Z0H, Z2H])
   all_goals janus_simp
-  all_goals first | exact hQ.lr | exact hQ.fp | exact hQ.s5 | exact Nat.mod_eq_of_lt (by omega) | skip
+  all_goals first | exact Nat.mod_eq_of_lt (by omega) | skip
   all_goals (simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega)
 
 end FvModexp.Arm64.NatSqr
