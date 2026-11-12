@@ -1242,3 +1242,10 @@ New modules DrsFRel4 3.6 s, DrsFMulQ 57.6 s / 4.2 GB (copy of DrsMulQ; trim cand
 DrsF4 4.0 s, DrsFCE 1.6 s, DrsFC1 3.9 s, DrsFC2 5.7 s, DrsFC6R 3.4 s, DrsFC2B 4.8 s, DrsFC3 2.9 s, DrsFC4R 6.2 s,
 DrsFC4 7.4 s, DrsFC5R 5.1 s, DrsFC5 3.9 s, DrsFC5S 2.2 s, DrsFC6 12.4 s, DrsFC6X 1.2 s, DrsFCL 1.1 s, DrsFV 5.0 s,
 DrsFD1 2.7 s, DrsFD2 2.9 s, DrsFD3 10.4 s, DrsFD4 7.3 s, DrsFD5R 4.8 s, DrsFD5 7.2 s (all ≤ 2.8 GB except FMulQ).
+
+## divmc s25 (2026-11-12) — karatsuba arm64 finished, nat.mul arm64 SCC (dev, LEAN_NUM_THREADS=4, load ~30-50)
+KMulS3 (WIP > 900 s) → KMulS3c (post lemma `kS3post`) 130 s / 5.7 GB → 21 s / 2.8 GB (two omegas with 8 unfolded
+disjunctive Apart/Outside facts in context: 102 s + 39 s; `clear` of the unrelated ones before each) + KMulS3 5 s / 2.4 GB.
+Prologue: KMulLoop (4 norm loops) 4 s, KMulPD 1.3 s, KMulPA 6-8 s, KMulPB 151 s → 11-13 s (a failing `first | exact hQ.lr | …`
+closer did 30-60 s of `Nat.sub` literal unfolding per goal; KQm reads now closed by name), KMulPN 16 s / 3.1 GB, KMulPC 55 s /
+3.6 GB, KMulPE 31 s / 2.6 GB, KMulPro 4 s, KMulStep 2 s, MulSCC 1.6 s, NatMul 1.7 s.
