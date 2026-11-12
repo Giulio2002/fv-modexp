@@ -906,3 +906,9 @@ goals with a tiny pure lemma (`bud_step`, `bud_room2`) instead.
 P2PreWbC 5 s, P2PreA 17 s / 2.5 GB, P2PreB 20 s / 2.7 GB, P2PreC 15 s / 2.4 GB, P2PreD 15 s / 2.4 GB, P2PreLoop 1 s,
 P2PreF 10 s / 2.2 GB, P2PreMv 4 s, P2PreX 66 s / 4.4 GB (before: memmove via `calls [hmv]` 86-177 s / 6-7.6 GB;
 disjunction hypotheses visible to ~40 omegas → >900 s: hidden in `Hide`, unhidden per proof → 41-66 s).
+### expmc session 17 (2026-11-12): LibW re-target, nat.expNNOdd (arm64)
+* Re-targeting the window closure from `LibExp.program` to `LibW.program` (74 instead of 77 segments) changed no module
+  time measurably (J=2 dev rebuild of the whole W4/W2 closure, 146 modules: ≈ 40 min wall at load ≈ 10).
+* `LibW` 38 s / 3.0 GB, `LibOdd` 37 s / 3.1 GB (generated mask proofs), `LibWC` 15 s / 3.5 GB, `OddDefs` 4 s / 2.5 GB,
+  `OddPro` 5 s / 2.1 GB, `OddPost` 2.4 s / 2.5 GB, `OddFun` 81 s / 6.9 GB (imports W4FunE + W2FunE; the two dispatch
+  branches could go to separate modules if a row needs the memory).
