@@ -21,7 +21,7 @@ Premise forms used by `ExpSlow.hyp` (callee summaries stay premises; the owners 
   already has every operand fact under `0 < xl`/`0 < xc` EXCEPT `accessible xp (8 * xl)`.
 * `MulHypG` (infra's, EvMulD; proved: `ExpEven.NatMulG.hypG`) — unchanged.
 * `DivHypLG` (asm): `DivHypL` with the dividend `RdIn0` and every apartness fact of `u` under `0 < ul`
-  (`DivPreG`; post `DivPostL` unchanged).
+  (`DivPreG`; post `DivPostLG` = `DivPostL` + the two results apart when both non-empty).
 -/
 
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvModexp
@@ -87,7 +87,31 @@ def SqrHypG (impl : List Segment) (R : RtInv) (ns : List String) (stk above : Na
       Apart p (8 * c) (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st))) ∧
     cost (stLen s.mem st) ul vl ≤ b ∧ R.inv b L (s.regs 28).toNat (view R.rt L s.mem)
 
-/-- **`nat.div`**, empty-tolerant dividend, `StackBackL` post (see the module doc) -/
+/-- `ExpHyp.DivPostL` + the two results apart when both non-empty (both may be fresh: `NatOF` alone does not separate
+two allocations of the same call; `nat.expNNSlow` later passes them as destination and operand of one call) -/
+@[reducible] def DivPostLG (R : RtInv) (b : Nat) (cost : Nat → Nat → Nat → Nat) (L : List (Nat × Nat))
+    (stk above zp zc st z2 z2c u ul v vl : Nat) (s s' : State) : Prop :=
+  ∃ (q ql qc r rl rc : Nat), s'.regs 0 = BitVec.ofNat 64 q ∧ s'.regs 1 = BitVec.ofNat 64 ql ∧
+    s'.regs 2 = BitVec.ofNat 64 qc ∧ s'.regs 3 = BitVec.ofNat 64 r ∧ s'.regs 4 = BitVec.ofNat 64 rl ∧
+    s'.regs 5 = BitVec.ofNat 64 rc ∧
+    ∃ (L' : List (Nat × Nat)) (b' : Nat),
+      ExpHyp.NatOF R L L' s'.mem zp zc 1 q ql qc (natVal s.mem u ul / natVal s.mem v vl) ∧
+      ExpHyp.NatOF R L L' s'.mem z2 z2c 1 r rl rc (natVal s.mem u ul % natVal s.mem v vl) ∧
+      ExpHyp.RtPost R b (cost (stLen s.mem st) ul vl) L L' b' s s' ∧ StackBackL R L L' st s.mem s'.mem ∧
+      (¬ (r = z2 ∧ rc = z2c) → 0 < rc → 0 < stCap s'.mem st →
+        Apart r (8 * rc) (stW s'.mem st) (8 * stCap s'.mem st)) ∧
+      MemFrame s.mem s'.mem (R.rt ++ winA s stk above ++ [(zp, zp + 8 * zc), (z2, z2 + 8 * z2c)] ++ ExpHyp.stWs s.mem st) ∧
+      LiveFrame s.mem s'.mem L ([(zp, zp + 8 * zc), (z2, z2 + 8 * z2c)] ++ ExpHyp.stWs s.mem st) ∧
+      (0 < qc → 0 < rc → Apart q (8 * qc) r (8 * rc))
+
+theorem DivPostLG.toL {R : RtInv} {b : Nat} {cost : Nat → Nat → Nat → Nat} {L : List (Nat × Nat)}
+    {stk above zp zc st z2 z2c u ul v vl : Nat} {s s' : State}
+    (h : DivPostLG R b cost L stk above zp zc st z2 z2c u ul v vl s s') :
+    DivPostL R b cost L stk above zp zc st z2 z2c u ul v vl s s' := by
+  obtain ⟨q, ql, qc, r, rl, rc, h0, h1, h2, h3, h4, h5, L', b', hq, hr, hp, hsb, ha, hf, hl, -⟩ := h
+  exact ⟨q, ql, qc, r, rl, rc, h0, h1, h2, h3, h4, h5, L', b', hq, hr, hp, hsb, ha, hf, hl⟩
+
+/-- **`nat.div`**, empty-tolerant dividend, `StackBackL` post, results apart (see the module doc) -/
 def DivHypLG (impl : List Segment) (R : RtInv) (ns : List String) (stk above : Nat) (cost : Nat → Nat → Nat → Nat) :
     Prop :=
   ∀ (b : Nat) (L : List (Nat × Nat)) (z zl zc st z2 z2l z2c u ul uc v vl vc : BitVec 64),
@@ -95,7 +119,7 @@ def DivHypLG (impl : List Segment) (R : RtInv) (ns : List String) (stk above : N
       [z, zl, zc, st, z2, z2l, z2c, u, ul, uc, v, vl, vc]
       (fun s => DivPreG R b cost L stk above z.toNat zl.toNat zc.toNat st.toNat z2.toNat z2l.toNat z2c.toNat u.toNat
         ul.toNat v.toNat vl.toNat s)
-      (fun s s' => DivPostL R b cost L stk above z.toNat zc.toNat st.toNat z2.toNat z2c.toNat u.toNat ul.toNat v.toNat
+      (fun s s' => DivPostLG R b cost L stk above z.toNat zc.toNat st.toNat z2.toNat z2c.toNat u.toNat ul.toNat v.toNat
         vl.toNat s s')
 
 end FvModexp.Arm64.ExpSlow

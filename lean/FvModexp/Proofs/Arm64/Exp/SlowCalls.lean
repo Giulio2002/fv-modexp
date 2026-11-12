@@ -18,7 +18,7 @@ namespace FvModexp.Arm64.ExpSlow
 
 open FvModexp.Arm64.EvenHyp
 open FvModexp.Arm64.ExpEven (CapIn0 MulPreG MulXG MulHypG)
-open FvModexp.Arm64.ExpHyp (DivPostL fnDiv)
+open FvModexp.Arm64.ExpHyp (fnDiv)
 open FvModexp.Arm64.LibCalls (tN)
 
 set_option maxRecDepth 20000 in
@@ -100,7 +100,7 @@ theorem divCallG {impl : List Segment} (hap : ImplApart Extracted.program impl) 
     (hpre : DivPreG R b cost L stk above zp zl zc st z2 z2l z2c u ul v vl S)
     (K : ∀ s', s'.pc = BitVec.ofNat 64 ra → s'.sp = S.sp → s'.regs 28 = S.regs 28 → s'.regs 29 = S.regs 29 →
       s'.regs 18 = S.regs 18 → s'.mem.regions = S.mem.regions →
-      DivPostL R b cost L stk above zp zc st z2 z2c u ul v vl S s' →
+      DivPostLG R b cost L stk above zp zc st z2 z2c u ul v vl S s' →
       ReachesRet (LibW.program.link impl) ret s' Q) :
     ReachesRet (LibW.program.link impl) ret S Q := by
   have hS := CallWW.hypSum hap hns (hdv b L (BitVec.ofNat 64 zp) (BitVec.ofNat 64 zl) (BitVec.ofNat 64 zc)
