@@ -73,6 +73,31 @@ theorem post_own (hP : NHyp.CPre R b L stk A zp zl zc st ins need cst s) (hA8 : 
     exact ⟨by have := liveSep_inRanges hLs hin; simp only [win, ownW, outside_cons, outside_nil, and_true] at this ⊢; omega,
       hzout ho.1⟩
 
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 16000000 in
+/-- **the post of a path that changes only the runtime ranges and its own frame** (live objects untouched; the result
+`(p, l, c)` old or fresh as `NatOF` says) -/
+theorem post_rt (hP : NHyp.CPre R b L stk A zp zl zc st ins need cst s) {M' : Memory}
+    (hF : MemFrame s.mem M' (R.rt ++ ownW s stk A)) (hLF : LiveFrame s.mem M' L [])
+    {L' : List (Nat × Nat)} {b' : Nat} (hx : LiveExt R L L') (hb : b - cst ≤ b')
+    (hinv : R.inv b' L' (s.regs 28).toNat (view R.rt L' M')) {p l c v : Nat}
+    (hof : NatOF R L L' M' zp zc 1 p l c v)
+    {s' : State} (hm : s'.mem = M') (e0 : s'.regs 0 = BitVec.ofNat 64 p) (e1 : s'.regs 1 = BitVec.ofNat 64 l)
+    (e2 : s'.regs 2 = BitVec.ofNat 64 c) :
+    NHyp.CPostR R b L stk A zp zc st v cst s s' := by
+  have hsok := hP.2.2.2.2.2.2.2.2.1
+  have hstw := hP.2.2.2.2.2.2.2.2.2.1
+  subst hm
+  have ho : Outside st 24 (ownW s stk A) := by
+    simp only [win, ownW, outside_cons, outside_nil, and_true] at hstw ⊢; omega
+  obtain ⟨ew, el, ec⟩ := hdr_eq hsok.2.1 hF hLF ho
+  refine ⟨p, l, c, e0, e1, e2, L', b', hof, ⟨hx, hb, hinv⟩,
+    ⟨⟨stkOK_hdr hsok hF ew el ec hx, el, Or.inl ⟨ew, ec⟩⟩, fun hn' => absurd ⟨ew, ec⟩ hn'⟩, ?_,
+    LiveFrame.of_nil' hLF _, fun _ hn' => absurd ⟨ew, ec⟩ hn'⟩
+  refine hF.mono fun a k ho => ?_
+  simp only [stWs, stkWs, winA, ownW, outside_append] at ho ⊢
+  exact ⟨ho.1.1.1, ho.1.1.2⟩
+
 end
 
 end FvModexp.Arm64.P2D
