@@ -83,4 +83,35 @@ theorem rnorm (impl : List Segment) (r : W64) (M : Memory) (p n0 V : Nat) (SP G 
       all_goals try janus_simp
       rw [show p + 8 * i = p + i * 8 by omega]; exact hz
 
+/-- the join after `rshVU(u, u, shift)` (natdiv.go:636; `fn + 0x4ac`) -/
+abbrev rJoin : Nat := segAddr Extracted.program fn + 0x4ac
+
+/-- the state at `rJoin`: `q` normalised (`ql` words, stored in its slots), `u = U mod V` -/
+structure AtR (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (c : Nat) (zp zc st up uc ip il ic vp vl vc : Nat)
+    (s : State) (t w1 c1 : Nat) (L1 : List (Nat × Nat)) (Lq : List (Nat × Nat)) (P C sh qp qc : Nat)
+    (L2 : List (Nat × Nat)) (b2 w2 c2 ql : Nat) (S : State) : Prop where
+  pc : S.pc = BitVec.ofNat 64 rJoin
+  sp : S.sp = s.sp - 304#64
+  r28 : S.regs 28 = s.regs 28
+  r29 : S.regs 29 = s.sp - 312#64
+  r18 : S.regs 18 = s.regs 18
+  mem : MemU R L zp zc st up uc ip il ic vp vl vc s t w2 c2 L2 b2 P C sh S.mem
+  sq0 : S.mem.readLE (s.sp.toNat - 64) 8 = qp
+  sq1 : S.mem.readLE (s.sp.toNat - 56) 8 = ql
+  sq2 : S.mem.readLE (s.sp.toNat - 48) 8 = qc
+  ua : UArr R zp zc st up uc ip il vp vl s t w1 c1 L1 Lq P C S.mem
+  qa : QArr R zp zc st vp vl il s t w1 c1 L1 L2 (stLen s.mem st + StackNat.rnd vl) P C qp qc S.mem
+  ext3 : LiveExt R L1 Lq
+  ext4 : LiveExt R Lq L2
+  bud : b - c ≤ b2
+  arr2 : (w2 = w1 ∧ c2 = c1) ∨ (InRanges w2 (8 * c2) R.rt ∧ ApartAll w2 (8 * c2) Lq)
+  live2 : NatLive S.mem R L2 w2 c2
+  c2len : stLen s.mem st + StackNat.rnd vl ≤ c2
+  c2b : c2 < 2 ^ 40
+  qle : ql ≤ il - vl + 1
+  qval : natVal S.mem qp ql = natVal s.mem ip il / natVal s.mem vp vl
+  qnrm : NatNorm S.mem qp ql
+  rval : natVal S.mem P (il + 1) = natVal s.mem ip il % natVal s.mem vp vl
+  reg : S.mem.regions = s.mem.regions
+
 end FvModexp.Arm64.DivLarge

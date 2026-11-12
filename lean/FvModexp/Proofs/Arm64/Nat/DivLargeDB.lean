@@ -139,7 +139,7 @@ theorem divPost {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {dc : Nat → Nat 
     sq0 := (rdT _ (by omega) (by omega)).trans hq0,
     sq1 := (rdT _ (by omega) (by omega)).trans hq1,
     sq2 := (rdT _ (by omega) (by omega)).trans hq2,
-    ua := (hU.live hx).frame hacc,
+    ua := hU.frame hacc,
     qa := { hQ with pheld := hx.held hQ.pheld, pacc := by rw [hacc]; exact hQ.pacc },
     ext3 := hS.ext3, ext4 := hx, bud := hbud,
     arr2 := by rw [hW, hCp] at harr; exact harr,

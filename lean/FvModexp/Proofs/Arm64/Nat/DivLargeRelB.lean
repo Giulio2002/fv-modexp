@@ -98,12 +98,12 @@ set_option maxHeartbeats 8000000 in
 theorem Mem.frame {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st up uc ip il ic vp vl vc : Nat}
     {s : State} {t : Nat} {L1 : List (Nat × Nat)} {b1 w1 c1 : Nat}
     (hE : Env R b L c zp zc st up uc ip il vp vl s t L1 b1 w1 c1) {Lk : List (Nat × Nat)} {bk P C : Nat}
-    {M M' : Memory} (hM : Mem R L zp zc st up uc ip il ic vp vl vc s t w1 c1 Lk bk M)
+    {M M' : Memory} {wS cS : Nat} (hM : Mem R L zp zc st up uc ip il ic vp vl vc s t wS cS Lk bk M)
     (hU : UArr R zp zc st up uc ip il vp vl s t w1 c1 L1 Lk P C M)
     (hf : MemFrame M M' (R.rt ++ scrA s ++ wsL zp zc up uc vl t ++ [(P, P + 8 * C)]))
     (hlf : LiveFrame M M' L (wsL zp zc up uc vl t ++ [(P, P + 8 * C)]))
     {Lk' : List (Nat × Nat)} {bk' : Nat} (hinv : R.inv bk' Lk' (s.regs 28).toNat (view R.rt Lk' M')) :
-    Mem R L zp zc st up uc ip il ic vp vl vc s t w1 c1 Lk' bk' M' := by
+    Mem R L zp zc st up uc ip il ic vp vl vc s t wS cS Lk' bk' M' := by
   have hl := hE.lay
   have hsp0 := hl.sp0; have hsp1 := hl.sp1
   have hout : Outside (s.sp.toNat - 41264) (41264 + 112) R.rt := hE.pre.ce.2.2.2.1
@@ -186,12 +186,12 @@ set_option maxRecDepth 20000 in
 theorem MemU.frame {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st up uc ip il ic vp vl vc : Nat}
     {s : State} {t : Nat} {L1 : List (Nat × Nat)} {b1 w1 c1 : Nat}
     (hE : Env R b L c zp zc st up uc ip il vp vl s t L1 b1 w1 c1) {Lk : List (Nat × Nat)} {bk P C sh : Nat}
-    {M M' : Memory} (hM : MemU R L zp zc st up uc ip il ic vp vl vc s t w1 c1 Lk bk P C sh M)
+    {M M' : Memory} {wS cS : Nat} (hM : MemU R L zp zc st up uc ip il ic vp vl vc s t wS cS Lk bk P C sh M)
     (hU : UArr R zp zc st up uc ip il vp vl s t w1 c1 L1 Lk P C M)
     (hf : MemFrame M M' (R.rt ++ scrB s ++ wsL zp zc up uc vl t ++ [(P, P + 8 * C)]))
     (hlf : LiveFrame M M' L (wsL zp zc up uc vl t ++ [(P, P + 8 * C)]))
     {Lk' : List (Nat × Nat)} {bk' : Nat} (hinv : R.inv bk' Lk' (s.regs 28).toNat (view R.rt Lk' M')) :
-    MemU R L zp zc st up uc ip il ic vp vl vc s t w1 c1 Lk' bk' P C sh M' := by
+    MemU R L zp zc st up uc ip il ic vp vl vc s t wS cS Lk' bk' P C sh M' := by
   have hl := hE.lay
   have hsp0 := hl.sp0; have hsp1 := hl.sp1
   have hout : Outside (s.sp.toNat - 41264) (41264 + 112) R.rt := hE.pre.ce.2.2.2.1
