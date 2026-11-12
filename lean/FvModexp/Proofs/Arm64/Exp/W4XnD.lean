@@ -35,6 +35,8 @@ namespace FvModexp.Arm64.W4Pro
   (∀ p c, (p = qp ∧ c = qc) ∨ (p = z2p ∧ c = z2c) → 0 < c → Apart p (8 * c) up (8 * ul) ∧
     Apart p (8 * c) mp (8 * n) ∧ Apart p (8 * c) st 24 ∧
     Apart p (8 * c) (stW M st + 8 * stLen M st) (8 * (stCap M st - stLen M st))) ∧
+  Apart qp (8 * qc) RunIface.gA 32 ∧ Apart z2p (8 * z2c) RunIface.gA 32 ∧ Apart st 24 RunIface.gA 32 ∧
+  Apart (stW M st + 8 * stLen M st) (8 * (stCap M st - stLen M st)) RunIface.gA 32 ∧
   costF (stLen M st) ul n ≤ cost ∧ cost ≤ b ∧ R.inv b L g (view R.rt L M)
 
 /-- the callee's post about the remainder and the memory (memory form) -/
@@ -79,7 +81,7 @@ theorem divCallG (impl : List Segment) (hap : ImplApart Extracted.program impl) 
       Reaches ((LibW.program.link impl).withExit ret) S' Q) :
     Reaches ((LibW.program.link impl).withExit ret) S Q := by
   obtain ⟨hce, hKD, hserv, hgl, hn128, hn, hqlc, hzlc, ⟨hqc, hqL, hqWG⟩, ⟨hzc, hzL, hzWG⟩, hul, hua, hu48, huH,
-    huW, hma, hm48, hmH, hmW, huN, hmN, hsok, hstW, harr, hslen, hcap, huSt, huFr, hvSt, hvFr, hqz, hpair, hcF, hcost, hinv⟩ := hpre
+    huW, hma, hm48, hmH, hmW, huN, hmN, hsok, hstW, harr, hslen, hcap, huSt, huFr, hvSt, hvFr, hqz, hpair, hgq, hgz, hgst, hgfr, hcF, hcost, hinv⟩ := hpre
   have hce0 := hce
   obtain ⟨hal, hK, hA, hacc, hg1, hg2, hg3, hrt, hga, hgrt, hLs, hd, hro⟩ := hce0
   have hS0 := LibWC.hypSum hap hnsD (hDiv b L (BitVec.ofNat 64 qp) (BitVec.ofNat 64 ql) (BitVec.ofNat 64 qc)
@@ -115,6 +117,7 @@ theorem divCallG (impl : List Segment) (hap : ImplApart Extracted.program impl) 
       ⟨by omega, hua, hu48, huH, out_win hKD huW⟩, ⟨by omega, hma, hm48, hmH, out_win hKD hmW⟩, hul, hn, by omega,
       huN, hmN, hsok, out_win hKD hstW, fun hc => ⟨out_win hKD (harr hc).1, (harr hc).2⟩, hslen,
       fun h => absurd h (by omega), huSt, huFr, hvSt, hvFr,
+      fun _ => hgq, fun _ => hgz, hgst, hgfr,
       hqz, fun p c hpc' hc0 => ?_, Nat.le_trans hcF hcost, hinv⟩
     simp only [List.mem_cons, List.not_mem_nil, or_false, Prod.mk.injEq] at hpc'
     exact hpair p c hpc' hc0

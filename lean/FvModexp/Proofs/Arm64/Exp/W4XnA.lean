@@ -18,6 +18,14 @@ namespace FvModexp.Arm64.W4Pro
 open FvModexp.Arm64.W4Loop (Env Inp Buf FinEnv)
 
 set_option maxRecDepth 20000 in
+/-- the threshold globals as an object of the context (asm s16 DivHyp addendum) -/
+theorem CtxB.ga {R : RtInv} {L : List (Nat × Nat)}
+    {g sp K n mp mc Mv yp ylen Y yi zp zc st n0 l0 ret : Nat} {r29 : BitVec 64} {ex : List (Nat × Nat)} {M : Memory}
+    (h : CtxB R L g sp K n mp mc Mv yp ylen Y yi zp zc st n0 l0 ret r29 ex M) : Obj R L sp K st l0 ex M RunIface.gA 32 := by
+  obtain ⟨-, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, hga, -⟩ := h
+  exact hga
+
+set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem CtxB.addEx {R : RtInv} {L : List (Nat × Nat)}
     {g sp K n mp mc Mv yp ylen Y yi zp zc st n0 l0 ret : Nat} {r29 : BitVec 64} {ex : List (Nat × Nat)}
@@ -178,6 +186,8 @@ theorem xnA2K (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
       (by decide) (by decide) (by decide)
   have hpre : DvPreG R b costF costD L g sp K stkD st qp k k (stW M st + 8 * (l0 + StackNat.rnd k)) n n xp xl mp n M := by
     obtain ⟨a1, a2⟩ := harr0
+    have hga := CtxB.ga hB
+    have hgu := hga.2.2.2.1
     obtain ⟨o1, o2, o3, o4, o5⟩ := hxO
     obtain ⟨m1, m2, m3, m4, m5⟩ := hmO
     have ox := o5 _ (List.mem_cons_self ..)
@@ -189,7 +199,9 @@ theorem xnA2K (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
         fun _ => ⟨by simp only [AW, Apart] at a1 ⊢; omega, by unfold Apart at a2 ⊢; omega⟩⟩,
       by omega, hxa, hx48, o1, o2, hm.1, hm.2.1, hm.2.2.1, m2, hxN, hnm, hsok, hstw, harr, by omega,
       by omega, o3, by simp only [stUp, Apart] at o4 ⊢; omega, m3, by simp only [stUp, Apart] at m4 ⊢; omega,
-      fun _ _ => hqz, fun p c hpc hc0 => ?_, cf_eq hcX (by omega), by unfold xjBud at hbC; omega, hinv⟩
+      fun _ _ => hqz, fun p c hpc hc0 => ?_, (hga.2.2.2.2 _ (List.mem_cons_self ..)).symm,
+      by simp only [stUp, Apart] at hgu ⊢; omega, hga.2.2.1.symm, by simp only [stUp, Apart] at hgu ⊢; omega,
+      cf_eq hcX (by omega), by unfold xjBud at hbC; omega, hinv⟩
     rcases hpc with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
     · refine ⟨ox.symm, om.symm, hqS, ?_⟩
       rcases hqB with h | h

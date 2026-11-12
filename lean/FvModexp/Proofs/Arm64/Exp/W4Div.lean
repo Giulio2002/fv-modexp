@@ -37,6 +37,8 @@ abbrev divE : Nat := 1806848
   (∀ p, p = qp ∨ p = rrp → Apart p (8 * (2 * n)) zzp (8 * zzl) ∧ Apart p (8 * (2 * n)) mp (8 * n) ∧
     Apart p (8 * (2 * n)) st 24 ∧
     Apart p (8 * (2 * n)) (stW M st + 8 * stLen M st) (8 * (stCap M st - stLen M st))) ∧
+  Apart qp (8 * (2 * n)) RunIface.gA 32 ∧ Apart rrp (8 * (2 * n)) RunIface.gA 32 ∧ Apart st 24 RunIface.gA 32 ∧
+  Apart (stW M st + 8 * stLen M st) (8 * (stCap M st - stLen M st)) RunIface.gA 32 ∧
   costF (stLen M st) zzl n ≤ cost ∧ cost ≤ b ∧ R.inv b L g (view R.rt L M)
 
 theorem out_win {sp K stkD a k : Nat} (hKD : stkD ≤ K) (h : AW sp K a k) :
@@ -98,7 +100,7 @@ theorem divCallK (impl : List Segment) (hap : ImplApart Extracted.program impl) 
       Reaches ((LibW.program.link impl).withExit ret) S' Q) :
     Reaches ((LibW.program.link impl).withExit ret) S Q := by
   obtain ⟨hce, hKD, hserv, hgl, hn128, hn, hqL, hqW, hqG, hrL, hrW, hrG, hzl, hza, hz48, hzH, hzW, hma, hm48, hmH, hmW,
-    hzN, hmN, hsok, hstW, harr, hslen, hcap, huH, huF, hvH, hvF, hqr, hpair, hcF, hcost, hinv⟩ := hpre
+    hzN, hmN, hsok, hstW, harr, hslen, hcap, huH, huF, hvH, hvF, hqr, hpair, hgq, hgz, hgst, hgfr, hcF, hcost, hinv⟩ := hpre
   have hce0 := hce
   obtain ⟨hal, hK, hA, hacc, hg1, hg2, hg3, hrt, hga, hgrt, hLs, hd, hro⟩ := hce0
   have hS0 := LibWC.hypSum hap hnsD (hDiv b L (BitVec.ofNat 64 qp) (BitVec.ofNat 64 (2 * n)) (BitVec.ofNat 64 (2 * n))
@@ -135,6 +137,7 @@ theorem divCallK (impl : List Segment) (hap : ImplApart Extracted.program impl) 
       ⟨by omega, hza, hz48, hzH, out_win hKD hzW⟩, ⟨by omega, hma, hm48, hmH, out_win hKD hmW⟩, hzl, hn, by omega,
       hzN, hmN, hsok, out_win hKD hstW, fun hc => ⟨out_win hKD (harr hc).1, (harr hc).2⟩, hslen,
       fun h => absurd h (by omega), huH, huF, hvH, hvF,
+      fun _ => hgq, fun _ => hgz, hgst, hgfr,
       fun _ _ => hqr, fun p c hpc' _ => ?_, Nat.le_trans hcF hcost, hinv⟩
     simp only [List.mem_cons, List.not_mem_nil, or_false, Prod.mk.injEq] at hpc'
     rcases hpc' with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
