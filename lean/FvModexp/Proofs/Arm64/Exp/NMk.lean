@@ -1,0 +1,130 @@
+import FvModexp.Proofs.Arm64.Exp.NDefs
+import FvModexp.Proofs.Common.BitLemmas
+
+/-!
+# `nat.expNN` (arm64): `z = z.make(len m)` (nat.go:694, nat.go:57-69), `J5` = fn+0x324 → a dispatch start point
+
+`len m ≠ 0` (`CBZ R11` not taken); `n ≤ cap z` → reuse (`KU` at fn+0x330); else `st` spilled to `SP' + 232`, and
+`makeslice(Word, 1, 1)` (`n = 1`) or `makeslice(Word, n, n + 4)` (`n + 4` spilled to `SP' + 128`); `KA` at the
+return point (fn+0x35c / fn+0x3b4) with the contract's raw facts.
+-/
+
+open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvModexp
+
+namespace FvModexp.Arm64.ExpN
+
+theorem out_sub {a n b k : Nat} : ∀ {rs : List (Nat × Nat)}, Outside a n rs → a ≤ b → b + k ≤ a + n → Outside b k rs
+  | [], _, _, _ => trivial
+  | (_, _) :: _, ⟨h1, h2⟩, hb, hk => ⟨by omega, out_sub h2 hb hk⟩
+
+/-- the frames of the `makeslice` paths, from the spill stores (`W`) and the contract's post -/
+theorem mk_frames {R : RtInv} {L : List (Nat × Nat)} {K sp st : Nat} {M W m : Memory}
+    (hK : 4304 ≤ K) (hKs : K ≤ sp) (hwrt : Outside (sp - K) (K + 1432) R.rt)
+    (hW : MemFrame M W [(sp + 1184, sp + 1192), (sp + 1288, sp + 1296)]) (hWL : LiveFrame M W L [])
+    (hW232 : W.readLE (sp + 1056 + 232) 8 = st) (hLF : LiveFrame W m L [])
+    (hMF : MemFrame W m (R.rt ++ [(sp - 3040, sp + 1048), (sp + 1056 + 8, sp + 1056 + 8 + 24)])) :
+    LiveFrame M m L [] ∧
+      MemFrame M m (R.rt ++ [(sp + 1056 - 4096, sp + 1048), (sp + 1064, sp + 1088), (sp + 1184, sp + 1192),
+        (sp + 1288, sp + 1296)]) ∧ m.readLE (sp + 1056 + 232) 8 = st := by
+  refine ⟨hWL.trans hLF (fun _ _ h => h), hW.trans hMF (fun a k ho => ⟨?_, ?_⟩), ?_⟩
+  · simp only [outside_append, outside_cons, outside_nil, and_true] at ho ⊢; omega
+  · simp only [outside_append, outside_cons, outside_nil, and_true] at ho ⊢; exact ⟨ho.1, by omega, by omega⟩
+  · rw [hMF.readLE _ _ ?_, hW232]
+    simp only [outside_append, outside_cons, outside_nil, and_true]
+    exact ⟨out_sub hwrt (by omega) (by omega), by omega, by omega⟩
+
+set_option maxRecDepth 20000 in
+set_option janus.callRegions true in
+set_option maxHeartbeats 64000000 in
+set_option linter.janusRenameI false in
+theorem mk (impl : List Segment) (R : RtInv)
+    (hmk : MakesliceLiveContract (LibN.program.link impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
+    (ret0 : Nat) (hret : RetAddr (LibN.program.link impl) ret0) (Q : Outcome → Prop)
+    (b : Nat) (L : List (Nat × Nat)) (K g sp zc st n : Nat) (M : Memory)
+    (hal : sp % 16 = 0) (hK : 4304 ≤ K) (hKs : K ≤ sp) (hsp2 : sp + 1432 ≤ 2 ^ 48)
+    (hwacc : M.accessible (sp - K) (K + 1432) true = true)
+    (hg1 : g + 24 ≤ 2 ^ 48) (hg2 : M.accessible (g + 16) 8 false = true) (hg3 : M.readLE (g + 16) 8 + K < sp)
+    (hwrt : Outside (sp - K) (K + 1432) R.rt) (hgw : Apart (g + 16) 8 (sp - K) (K + 1432))
+    (hgrt : Outside (g + 16) 8 R.rt) (hLs : LiveSep L [(sp - K, sp + 1432)])
+    (hd : Extracted.program.DataLoaded M) (hro : RoOut R) (hty : Outside StackNat.wT 16 R.rt)
+    (hzc : zc < 2 ^ 40) (hst : st < 2 ^ 64) (hn0 : 0 < n) (hn : n ≤ 2 ^ 16)
+    (hok : zc < n → R.ok (Extracted.program.contractAddr "runtime.makeslice") [StackNat.wT, n, makeCap n] ∧
+      blockSize (8 * makeCap n) true ≤ b)
+    (hinv : R.inv b L g (view R.rt L M))
+    (S : State) (hpc : S.pc = BitVec.ofNat 64 1787348) (hsp : S.sp = BitVec.ofNat 64 (sp + 1056))
+    (h2 : S.regs 2 = BitVec.ofNat 64 zc) (h3 : S.regs 3 = BitVec.ofNat 64 st) (h11 : S.regs 11 = BitVec.ofNat 64 n)
+    (h28 : S.regs 28 = BitVec.ofNat 64 g) (hmem : S.mem = M)
+    (KU : n ≤ zc → ∀ S' : State, S'.pc = BitVec.ofNat 64 1787360 → S'.sp = S.sp →
+      S'.regs 0 = S.regs 0 → S'.regs 2 = S.regs 2 → S'.regs 3 = S.regs 3 →
+      S'.regs 4 = S.regs 4 → S'.regs 5 = S.regs 5 → S'.regs 6 = S.regs 6 → S'.regs 7 = S.regs 7 →
+      S'.regs 8 = S.regs 8 → S'.regs 9 = S.regs 9 → S'.regs 10 = S.regs 10 → S'.regs 11 = S.regs 11 →
+      S'.regs 12 = S.regs 12 → S'.regs 13 = S.regs 13 → S'.regs 18 = S.regs 18 → S'.regs 28 = S.regs 28 →
+      S'.mem = M → Reaches ((LibN.program.link impl).withExit ret0) S' Q)
+    (KA : zc < n → ∀ (S' : State) (p r : Nat) (m : Memory),
+      (S'.pc = BitVec.ofNat 64 1787404 ∧ n = 1 ∨ S'.pc = BitVec.ofNat 64 1787492 ∧ n ≠ 1 ∧
+        m.readLE (sp + 1056 + 128) 8 = n + 4) →
+      S'.sp = S.sp → S'.regs 0 = BitVec.ofNat 64 p → S'.regs 18 = S.regs 18 → S'.regs 28 = S.regs 28 → S'.mem = m →
+      m.readLE (sp + 1056 + 232) 8 = st →
+      LiveFrame M m L [] →
+      MemFrame M m (R.rt ++ [(sp + 1056 - 4096, sp + 1048), (sp + 1064, sp + 1088), (sp + 1184, sp + 1192),
+        (sp + 1288, sp + 1296)]) →
+      m.regions = M.regions → ApartAll p r L → InRanges p r R.rt → p + r ≤ 2 ^ 48 → M.accessible p r true = true →
+      p % 8 = 0 → 8 * makeCap n ≤ r → r = blockSize (8 * makeCap n) true →
+      R.inv (b - r) (L ++ [(p, p + r)]) g (view R.rt (L ++ [(p, p + r)]) m) →
+      Reaches ((LibN.program.link impl).withExit ret0) S' Q) :
+    Reaches ((LibN.program.link impl).withExit ret0) S Q := by
+  by_cases hr : n ≤ zc
+  · janus_run [] until [1787360]
+    refine KU hr _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl
+    all_goals first | (janus_simp; done) | skip
+  · have hr' : zc < n := by omega
+    obtain ⟨hok1, hbs⟩ := hok hr'
+    have hwt : Apart StackNat.wT 16 (sp - K) (K + 1432) := apart_of_data hd 1 (by decide) (by decide) hwacc
+    janus_data hd
+    janus_eval_nat h_t : StackNat.wT
+    rw [h_t] at hty hok1 hwt
+    unfold Apart at hwt hgw
+    have hLs' : ∀ r ∈ L, (r.1 + (r.2 - r.1) ≤ sp + 1056 - 4096 ∨ sp + 1048 ≤ r.1) ∧
+        (r.1 + (r.2 - r.1) ≤ sp + 1064 ∨ sp + 1064 + 24 ≤ r.1) := by
+      intro r hr
+      have := hLs r hr
+      simp only [Outside, and_true] at this
+      omega
+    by_cases hn1 : n = 1
+    · subst hn1
+      simp only [makeCap, if_pos] at hok1 hbs KA
+      janus_run [] until [1787404] calls [hmk.pos]
+      rename_i ptr _ _ _ m _ _ hLF hMF hAp hIn hle hacc h8 _ _ _ _ hinv' _ _
+      have hW : MemFrame M (M.writeLE (sp + 1056 + 232) 8 st) [(sp + 1184, sp + 1192), (sp + 1288, sp + 1296)] :=
+        (MemFrame.refl M _).writeLE_inRanges _ ⟨(sp + 1288, sp + 1296), by simp, by omega, by omega⟩
+      have hWL : LiveFrame M (M.writeLE (sp + 1056 + 232) 8 st) L [] :=
+        (LiveFrame.refl _ _ _).writeLE _ (FvModexp.Expmc.outside_of_liveSep hLs (by omega) (by omega))
+      have h232 : (M.writeLE (sp + 1056 + 232) 8 st).readLE (sp + 1056 + 232) 8 = st := by
+        rw [Memory.readLE_writeLE_self]; exact Nat.mod_eq_of_lt (by omega)
+      obtain ⟨f1, f2, f3⟩ := mk_frames hK hKs hwrt hW hWL h232 hLF hMF
+      refine KA hr' _ ptr.toNat 8 m (Or.inl ⟨by janus_simp, trivial⟩) (by janus_simp) (by janus_simp) (by janus_simp)
+        (by janus_simp) rfl f3 f1 f2 hrg1 hAp hIn (by omega) hacc h8 (by decide) (by decide) hinv'
+    · simp only [makeCap, if_neg hn1] at hok1 hbs KA
+      janus_run [] until [1787492] calls [hmk.pos]
+      rename_i ptr _ _ _ m _ _ hLF hMF hAp hIn hle hacc h8 _ _ hsz _ hinv' _ _
+      have hW : MemFrame M ((M.writeLE (sp + 1056 + 232) 8 st).writeLE (sp + 1056 + 128) 8 (n + 4))
+          [(sp + 1184, sp + 1192), (sp + 1288, sp + 1296)] :=
+        ((MemFrame.refl M _).writeLE_inRanges _ ⟨(sp + 1288, sp + 1296), by simp, by omega, by omega⟩).writeLE_inRanges _
+          ⟨(sp + 1184, sp + 1192), by simp, by omega, by omega⟩
+      have hWL : LiveFrame M ((M.writeLE (sp + 1056 + 232) 8 st).writeLE (sp + 1056 + 128) 8 (n + 4)) L [] :=
+        ((LiveFrame.refl _ _ _).writeLE _ (FvModexp.Expmc.outside_of_liveSep hLs (by omega) (by omega))).writeLE _
+          (FvModexp.Expmc.outside_of_liveSep hLs (by omega) (by omega))
+      have h232 : ((M.writeLE (sp + 1056 + 232) 8 st).writeLE (sp + 1056 + 128) 8 (n + 4)).readLE (sp + 1056 + 232) 8
+          = st := by
+        rw [Memory.readLE_writeLE_of_disjoint _ _ (by omega), Memory.readLE_writeLE_self]; exact Nat.mod_eq_of_lt (by omega)
+      have h128 : m.readLE (sp + 1056 + 128) 8 = n + 4 := by
+        rw [hMF.readLE _ _ ?_, Memory.readLE_writeLE_self]
+        · exact Nat.mod_eq_of_lt (by omega)
+        · simp only [outside_append, outside_cons, outside_nil, and_true]
+          exact ⟨out_sub hwrt (by omega) (by omega), by omega, by omega⟩
+      obtain ⟨f1, f2, f3⟩ := mk_frames hK hKs hwrt hW hWL h232 hLF hMF
+      refine KA hr' _ ptr.toNat _ m (Or.inr ⟨by janus_simp, hn1, h128⟩) (by janus_simp) (by janus_simp)
+        (by janus_simp) (by janus_simp) rfl f3 f1 f2 hrg1 hAp hIn (by omega) hacc (h8 (Or.inr (by omega))) hsz rfl
+        hinv'
+
+end FvModexp.Arm64.ExpN
