@@ -92,10 +92,9 @@ theorem callC (impl : List Segment) (hap : ImplApart Extracted.program impl) {ns
     (harr : 0 < stCap S.mem st → Apart (stW S.mem st) (8 * stCap S.mem st) (sp - K) (K + 1432))
     (hc0 : stCap S.mem st = 0 → stW S.mem st = 0) (hlc : stLen S.mem st ≤ stCap S.mem st)
     (hacc : S.mem.accessible (sp + 1048) 216 true = true) (h29v : S.mem.readLE (sp + 1048) 8 = f29)
-    (h30v : S.mem.readLE (sp + 1056) 8 = ret0) (hfl : S.mem.readLE (sp + 1182) 1 = 0)
-    (hK' : ∀ s'' : State, s''.sp = BitVec.ofNat 64 (sp + 1312) → s''.regs 29 = BitVec.ofNat 64 f29 →
-      s''.regs 18 = S.regs 18 → s''.regs 28 = S.regs 28 →
-      Post R b L K costF costR costS costP zp zc st xp xl yp yl mp n s s'' → F s'') :
+    (h30v : S.mem.readLE (sp + 1056) 8 = ret0) {M0 : Memory} (hsl : SlotEq S.mem M0 sp)
+    (hEk : EpiK impl ret0 F sp f29 (S.regs 18) (S.regs 28) M0
+      (Post R b L K costF costR costS costP zp zc st xp xl yp yl mp n s)) :
     Reaches ((LibN.program.link impl).withExit ret0) S (IsReturn F) := by
   have hS := hypSumN hap hns hE
   have hSs : S.sp.toNat = sp + 1056 := by rw [hSsp, BitVec.toNat_ofNat]; omega
@@ -110,10 +109,9 @@ theorem callC (impl : List Segment) (hap : ImplApart Extracted.program impl) {ns
   obtain ⟨-, -, -, -, -, -, -, -, -, -, -, hFq, -⟩ := hq2
   have kp := fun {a k : Nat} (h : (sp + 1048 ≤ a ∧ a + k ≤ sp + 1064) ∨ (sp + 1168 ≤ a ∧ a + k ≤ sp + 1432)) =>
     keepS hSs hstk hK hrt hzq hstw harr hc0 hlc hFq h
-  refine epi0 impl ret0 hret F sp f29 r s'.mem hr hal hsp1 hsp2 (by rw [hFq.accessible]; exact hacc)
+  refine hEk r s' hr (hr'.trans h30) (e1.trans hSsp) e4 e2 (by rw [hFq.accessible]; exact hacc)
     (by rw [kp (Or.inl ⟨Nat.le_refl _, by omega⟩)]; exact h29v) (by rw [kp (Or.inl ⟨by omega, by omega⟩)]; exact h30v)
-    (by rw [kp (Or.inr ⟨by omega, by omega⟩)]; exact hfl) s' (hr'.trans h30) (e1.trans hSsp) rfl
-    fun s'' f1 f2 f3 f4 f5 f6 f7 f8 _ => hK' s'' f1 f2 (f6.trans e4) (f7.trans e2) ?_
-  exact post_call hs hK hLs hrw hsok hstw hF0 hLF0 hx1 hb1 hzq hSs hstk h28 hv hC hq' f8 f3 f4 f5
+    (hsl.of_rd fun a k hs => kp (by unfold Slot at hs; omega))
+    fun s'' f8 f3 f4 f5 => post_call hs hK hLs hrw hsok hstw hF0 hLF0 hx1 hb1 hzq hSs hstk h28 hv hC hq' f8 f3 f4 f5
 
 end FvModexp.Arm64.ExpN

@@ -41,18 +41,49 @@ open Janus Janus.Arm64 Janus.Contracts
     ((stW m st = stW m0 st ∧ stCap m st = stCap m0 st) ∨
       (InRanges (stW m st) (8 * stCap m st) R.rt ∧ ApartAll (stW m st) (8 * stCap m st) L))
 
+/-- the stack's array of `m` is that of `m0`, or (fresh) an exact element of `L1` with a POSITIVE capacity
+(`StackBackL`'s second half). The `0 < cap` half (coordinator decision on "[expmc s25] PROPOSAL"): a grown array is
+never empty, so the pool shape's `cap = 0 → ptr = 0` (`StkSh`) is re-established at the `sync.(*Pool).Put`. -/
+@[reducible] def ArrIn (L1 : List (Nat × Nat)) (st : Nat) (m0 m : Memory) : Prop :=
+  ¬(stW m st = stW m0 st ∧ stCap m st = stCap m0 st) →
+    (stW m st, stW m st + 8 * stCap m st) ∈ L1 ∧ 0 < stCap m st
+
 /-- `StackBack` plus (coordinator's STACK-IN-LIVE-SET DECISION): when the stack's array is not the entry one, its range
-is an exact element of the final live set (needed by `sync.(*Pool).Put` of the `stk == nil` path) -/
+is an exact element of the final live set (needed by `sync.(*Pool).Put` of the `stk == nil` path) and not empty -/
 @[reducible] def StackBackL (R : RtInv) (L L1 : List (Nat × Nat)) (st : Nat) (m0 m : Memory) : Prop :=
-  StackBack R L L1 st m0 m ∧
-    (¬(stW m st = stW m0 st ∧ stCap m st = stCap m0 st) → (stW m st, stW m st + 8 * stCap m st) ∈ L1)
+  StackBack R L L1 st m0 m ∧ ArrIn L1 st m0 m
 
 theorem StackBackL.toStackBack {R : RtInv} {L L1 : List (Nat × Nat)} {st : Nat} {m0 m : Memory}
     (h : StackBackL R L L1 st m0 m) : StackBack R L L1 st m0 m := h.1
 
-/-- the stack's array of `m` is that of `m0`, or an exact element of `L1` (`StackBackL`'s second half) -/
-@[reducible] def ArrIn (L1 : List (Nat × Nat)) (st : Nat) (m0 m : Memory) : Prop :=
-  ¬(stW m st = stW m0 st ∧ stCap m st = stCap m0 st) → (stW m st, stW m st + 8 * stCap m st) ∈ L1
+/-- the s15 second half of `StackBackL` (membership only) -/
+theorem ArrIn.mem {L1 : List (Nat × Nat)} {st : Nat} {m0 m : Memory} (h : ArrIn L1 st m0 m)
+    (hn : ¬(stW m st = stW m0 st ∧ stCap m st = stCap m0 st)) : (stW m st, stW m st + 8 * stCap m st) ∈ L1 :=
+  (h hn).1
+
+theorem ArrIn.cap {L1 : List (Nat × Nat)} {st : Nat} {m0 m : Memory} (h : ArrIn L1 st m0 m)
+    (hn : ¬(stW m st = stW m0 st ∧ stCap m st = stCap m0 st)) : 0 < stCap m st :=
+  (h hn).2
+
+/-- the pool-shape fact `cap = 0 → ptr = 0` survives a stack user (`ArrIn`) -/
+theorem ArrIn.cap0 {L1 : List (Nat × Nat)} {st : Nat} {m0 m : Memory} (h : ArrIn L1 st m0 m)
+    (h0 : stCap m0 st = 0 → stW m0 st = 0) : stCap m st = 0 → stW m st = 0 := by
+  intro hc
+  by_cases hs : stW m st = stW m0 st ∧ stCap m st = stCap m0 st
+  · rw [hs.1]; exact h0 (by rw [← hs.2]; exact hc)
+  · have := h.cap hs; omega
+
+/-- `ArrIn` after `(*stack).nat` (the `PostL` shape: same array when it fits, else a member of `L1`): a grown array
+has `cap ≥ len = len0 + r > cap0 ≥ 0` -/
+theorem ArrIn.of_nat {L1 : List (Nat × Nat)} {st len0 r : Nat} {m0 m : Memory}
+    (hlc : stLen m st ≤ stCap m st) (hlen : stLen m st = len0 + r)
+    (hsame : len0 + r ≤ stCap m0 st → stW m st = stW m0 st ∧ stCap m st = stCap m0 st)
+    (hmem : stCap m0 st < len0 + r → (stW m st, stW m st + 8 * stCap m st) ∈ L1) :
+    ArrIn L1 st m0 m := by
+  intro hn
+  by_cases hc : len0 + r ≤ stCap m0 st
+  · exact absurd (hsame hc) hn
+  · exact ⟨hmem (by omega), by omega⟩
 
 /-- `StackBack` with the array kept is `StackBackL` -/
 theorem StackBack.toL {R : RtInv} {L L1 : List (Nat × Nat)} {st : Nat} {m0 m : Memory}
@@ -61,18 +92,17 @@ theorem StackBack.toL {R : RtInv} {L L1 : List (Nat × Nat)} {st : Nat} {m0 m : 
 
 /-- `ArrIn` composes along a callee that brought the stack back in the L form -/
 theorem ArrIn.trans {R : RtInv} {L L' : List (Nat × Nat)} {st : Nat} {m0 m m' : Memory}
-    (h : ArrIn L st m0 m) (hb : ¬(stW m' st = stW m st ∧ stCap m' st = stCap m st) →
-      (stW m' st, stW m' st + 8 * stCap m' st) ∈ L') (he : LiveExt R L L') : ArrIn L' st m0 m' := by
+    (h : ArrIn L st m0 m) (hb : ArrIn L' st m m') (he : LiveExt R L L') : ArrIn L' st m0 m' := by
   intro hn
   by_cases hs : stW m' st = stW m st ∧ stCap m' st = stCap m st
-  · rw [hs.1, hs.2] at hn ⊢; exact he.mem_old (h hn)
+  · rw [hs.1, hs.2] at hn ⊢; exact ⟨he.mem_old (h hn).1, (h hn).2⟩
   · exact hb hs
 
 /-- `ArrIn` survives frames that keep the header -/
 theorem ArrIn.congr {L L' : List (Nat × Nat)} {st : Nat} {m0 m m' : Memory}
     (h : ArrIn L st m0 m) (hw : stW m' st = stW m st) (hc : stCap m' st = stCap m st) (hL : ∀ r ∈ L, r ∈ L') :
     ArrIn L' st m0 m' := by
-  intro hn; rw [hw, hc] at hn ⊢; exact hL _ (h hn)
+  intro hn; rw [hw, hc] at hn ⊢; exact ⟨hL _ (h hn).1, (h hn).2⟩
 
 /-- a scratch nat of `k > 0` words at `t` (see the module doc) -/
 structure Scr (R : RtInv) (L L1 : List (Nat × Nat)) (m0 m : Memory) (st t k : Nat) : Prop where

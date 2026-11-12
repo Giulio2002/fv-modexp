@@ -153,8 +153,9 @@ theorem fromJ1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
         (u1.trans (t1.trans h1)) (u2.trans (t2.trans h2)) (u3.trans (t3.trans h3)) (u4.trans (t4.trans h4))
         (u5.trans (t5.trans h5)) (u6.trans (t6.trans h6)) (u7.trans (t10.trans h10)) (u8.trans (t11.trans h11))
         (u9.trans (t12.trans h12)) (u28.trans (t28.trans h28)) u30
-        (by rw [um, hk2 (Or.inl rfl)]; exact h29v) (by rw [um, hk2 (Or.inr rfl)]; exact h30v) (by rw [um]; exact hfl2)
-        (fun s'' a1 a2 a3 a4 hq => hK' s'' a1 a2 (a3.trans (u18.trans t18)) (a4.trans (u28.trans t28)) hq)
+        (by rw [um, hk2 (Or.inl rfl)]; exact h29v) (by rw [um, hk2 (Or.inr rfl)]; exact h30v) (SlotEq.refl _ _)
+        (epiK0 impl ret0 hret F sp f29 _ _ U.mem _ hal (by omega) hsp2 (by rw [um]; exact hfl2)
+          fun s'' a1 a2 a3 a4 hq => hK' s'' a1 a2 (a3.trans (u18.trans t18)) (a4.trans (u28.trans t28)) hq)
     case KD =>
       intro hny U M2 upc usp u0 u1 u2 u3 u4 u5 u6 u7 u8 u9 u10 u11 u12 u13 u14 u18 u28 um hF2 hrg2 hfl2
         r296 r304 r312 r320 r328 r336 r344 r352 r360 r368
@@ -184,8 +185,9 @@ theorem fromJ1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
         (u5.trans (t5.trans h5)) (u6.trans (t6.trans h6)) (u7.trans (t7.trans h7)) (u8.trans (t8.trans h8))
         (u9.trans (t9.trans h9)) (u10.trans (t10.trans h10)) (u11.trans (t11.trans h11))
         (u12.trans (t12.trans h12)) (by rw [u13, t13, h13, hslow]) (u28.trans (t28.trans h28)) um hFU
-        (by rw [hrg2, hrg]) hspl (by rw [hk2 (Or.inl rfl)]; exact h29v) (by rw [hk2 (Or.inr rfl)]; exact h30v) hfl2
-        (fun s'' a1 a2 a3 a4 hq => hK' s'' a1 a2 (a3.trans (u18.trans t18)) (a4.trans (u28.trans t28)) hq)
+        (by rw [hrg2, hrg]) hspl (by rw [hk2 (Or.inl rfl)]; exact h29v) (by rw [hk2 (Or.inr rfl)]; exact h30v)
+        (SlotEq.refl _ _) (epiK0 impl ret0 hret F sp f29 _ _ M2 _ hal (by omega) hsp2 hfl2
+          fun s'' a1 a2 a3 a4 hq => hK' s'' a1 a2 (a3.trans (u18.trans t18)) (a4.trans (u28.trans t28)) hq)
       rw [← hy0M (by omega)]; exact hny
 
 end FvModexp.Arm64.ExpN

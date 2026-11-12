@@ -44,11 +44,8 @@ theorem toNat_lt' {v : Nat} (h : v < 2 ^ 64) : (BitVec.ofNat 64 v).toNat = v := 
 
 /-- the stack array after a stack-nat call: kept, or the callee's fresh element of `L'` -/
 theorem SnPost.arrIn {R : RtInv} {b : Nat} {L L' : List (Nat × Nat)} {b' g sp st k : Nat} {M M' : Memory}
-    (hS : SnPost R b L L' b' g sp st k M M') : ArrIn L' st M M' := by
-  intro hn
-  by_cases hc : stLen M st + StackNat.rnd k ≤ stCap M st
-  · exact absurd (hS.2.2.2.2.2.1 hc) hn
-  · exact hS.2.2.2.2.2.2.2.2.2.2 (by omega)
+    (hS : SnPost R b L L' b' g sp st k M M') : ArrIn L' st M M' :=
+  ArrIn.of_nat hS.2.2.2.1.2.2.2.2.2.1 hS.2.2.2.2.1 hS.2.2.2.2.2.1 hS.2.2.2.2.2.2.2.2.2.2
 
 set_option maxRecDepth 20000 in
 set_option janus.callRegions true in
