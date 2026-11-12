@@ -6,9 +6,9 @@ set -e
 DEV=/srv/fv-modexp-ops/cache-expmc/dev
 isa=arm64
 if [ "$1" = "-x" ]; then isa=$2; shift 2; fi
-OUT=${OUT:-$DEV/oleans-$isa}
+OUT=${OUT:-$DEV/oleans-$isa-031}
 pkg=$(cd "$(dirname "${BASH_SOURCE[0]}")/../lean" && pwd)
-LP="$OUT:$DEV/janus/.lake/build/lib/lean:$DEV/ethlib/.lake/build/lib/lean:/root/.elan/toolchains/leanprover--lean4---v4.34.1/lib/lean"
+LP="$OUT:$DEV/${JDIR:-janus031}/.lake/build/lib/lean:$DEV/ethlib/.lake/build/lib/lean:/root/.elan/toolchains/leanprover--lean4---v4.34.1/lib/lean"
 LEAN=/root/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean
 for f in "$@"; do
   f=$(realpath "$f")
