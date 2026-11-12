@@ -7,7 +7,7 @@ set_option autoImplicit false
 # `nat.expNNEven` (arm64): `exp1R` → `z2 = stk.nat(2·max(len m1, len m2))` → `nat4R` (agent infra)
 
 `runN4`: spill `z1` to `264/152/160`, `R0 = stk`, `R1 = 2·max` (slot 224), `CALL (*stack).nat`. `segN4` (`J6 → J7`):
-divmc's `StackNat.HypL`; `m1`, `m2`, `z1` (and `z1`'s array when empty) survive (`LN.stkN`), the scratch `z2` is apart
+divmc's `StackNat.HypL`; `m1`, `m2`, `z1` survive (`LN.stkN`), the scratch `z2` is apart
 from all of them (`Scr.apartLN`).
 -/
 
@@ -91,10 +91,7 @@ theorem segN4 {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns
   have hlz := h.z1.2.1
   have hacc : S.mem.accessible (sp + 136) 312 true = true := by
     rw [hw.fr.accessible]; exact Memory.accessible_mono _ hacc0 (by omega) (by omega)
-  have hpz : pz < 2 ^ 64 := by
-    rcases Nat.eq_zero_or_pos cz with c0 | c0
-    · have := ((h.z1e c0).1.2.1 (by omega)).2.2.2; omega
-    · have := (h.z1.1.2.1 c0).2.2.2; omega
+  have hpz : pz < 2 ^ 64 := h.pz64
   refine runN4 ret0 Q sp st pz lz cz (2 * max l1 l2) S.mem hal hsp2 hacc h.jx.esl.2.2.2.2.2.2.2.2.1 h.s224
     hpz (by omega) (by omega) S h.pc h.jx.esp rfl h.r0 h.r1 h.r2 ?_
   intro S2 M2 f0 fsp f1 f2 f30 f18 f28 f29 fm hF hrg r264 r152 r160
@@ -128,10 +125,9 @@ theorem segN4 {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns
   refine K7 s' L2 b2 p1 l1 c1 q l2 pz lz cz _ ⟨⟨g2.trans hS2, g3.trans h28, g4.trans (f29.trans h.jx.e29),
       g5.trans (f18.trans h.jx.e18), hw3, hesl.keep (fun a k ha => hk a k (by simp only [SlotR] at ha; omega))
         (by omega), bud_step hb1 (hrk l1 l2 hl1 hl2) hb2⟩, g1, hz0, hz1, hz2, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_,
-    kN hm1, h.c1p, kN hm2, h.ap, kN hz, fun e => kN (hown _ _ _ _ (h.z1e e)), h.za1, h.za2, h.ze1, h.ze2,
+    kN hm1, h.c1p, kN hm2, h.ap, kN hz, h.pz64, h.za1, h.za2,
     DL.of_scr hw3 hscE rfl (by have := rnd_ge (2 * max l1 l2); omega) (by omega),
-    Scr.apartLN hscC hlc hm1 h.c1p, Scr.apartLN hscC hlc hm2 ha2, fun c0 => Scr.apartLN hscC hlc hz c0,
-    fun e => Scr.apartLN hscC hlc (hown _ _ _ _ (h.z1e e)) hmx0⟩
+    Scr.apartLN hscC hlc hm1 h.c1p, Scr.apartLN hscC hlc hm2 ha2, fun c0 => Scr.apartLN hscC hlc hz c0⟩
   all_goals rw [hk _ _ (Or.inr ⟨by omega, by omega⟩)]
   · rw [hF.readLE _ _ (by simp only [outside_cons, outside_nil, and_true]; omega)]; exact h.s288
   · rw [hF.readLE _ _ (by simp only [outside_cons, outside_nil, and_true]; omega)]; exact h.s208
