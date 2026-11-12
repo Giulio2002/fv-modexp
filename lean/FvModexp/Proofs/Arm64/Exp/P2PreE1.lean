@@ -98,11 +98,7 @@ theorem ctx0 (hpre : Pre R kc sqC mlC b L st pw pl ws lm x xl s) (hkc : 4608 ≤
     · rcases hsth with hL | hO
       · exact hap.apart_of_inRanges hL
       · exact (hin.apart hO).symm
-  have hain : ArrIn L' st s.mem s'.mem := by
-    intro hne
-    by_cases hc : stLen s.mem st + StackNat.rnd (NB pl lm) ≤ stCap s.mem st
-    · exact absurd (hsame hc) hne
-    · exact hmemb (by omega)
+  have hain : ArrIn L' st s.mem s'.mem := ArrIn.of_nat hok.2.2.2.2.2.1 hlen hsame hmemb
   have hbu : BU s'.mem st (stW s'.mem st + 8 * stLen s.mem st) (8 * NB pl lm) := by
     left; rw [hlen]; simp only [StackNat.rnd]; omega
   refine ⟨hfr, hlf, hrg'.trans hrg, hLE, hinv, hscr, hsa, hsap, ?_, hain, hbu⟩

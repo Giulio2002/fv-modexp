@@ -77,10 +77,9 @@ theorem p2Path (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     (hpc : S.pc = BitVec.ofNat 64 powH) (hSsp : S.sp = BitVec.ofNat 64 (sp + 1056))
     (hA : DArgs S zq zcq st xp xl xc yp yl yc mp n mc) (h13 : S.regs 13 = 0#64) (h28 : S.regs 28 = s.regs 28)
     (h29v : S.mem.readLE (sp + 1048) 8 = f29) (h30v : S.mem.readLE (sp + 1056) 8 = ret0)
-    (hfl : S.mem.readLE (sp + 1182) 1 = 0)
-    (hK' : ∀ s'' : State, s''.sp = BitVec.ofNat 64 (sp + 1312) → s''.regs 29 = BitVec.ofNat 64 f29 →
-      s''.regs 18 = S.regs 18 → s''.regs 28 = S.regs 28 →
-      Post R b L K costF costR costS costP zp zc st xp xl yp yl mp n s s'' → F s'') :
+    {M0 : Memory} (hsl : SlotEq S.mem M0 sp)
+    (hEk : EpiK impl ret0 F sp f29 (S.regs 18) (S.regs 28) M0
+      (Post R b L K costF costR costS costP zp zc st xp xl yp yl mp n s)) :
     Reaches ((LibN.program.link impl).withExit ret0) S (IsReturn F) := by
   have hP' := hP
   obtain ⟨⟨hs1, hs28, hg1, -, -, -, hal, hK4, hKs, hsp2, hacc, hwrt, hLs, -, -⟩, -, -, -, -, -,
@@ -129,15 +128,14 @@ theorem p2Path (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     rw [e7, hF0.accessible]; exact Memory.accessible_mono _ hacc (by omega) (by omega)
   have hS'sp : S'.sp = BitVec.ofNat 64 (sp + 1056) := e2.trans hSsp
   have hS's : S'.sp.toNat = sp + 1056 := by rw [hS'sp, BitVec.toNat_ofNat]; omega
-  rw [← e7] at hF0 hLF0 hrg hinv1 hZQ ew el ec h29v h30v hfl hrdx hrdy
+  rw [← e7] at hF0 hLF0 hrg hinv1 hZQ ew el ec h29v h30v hsl hrdx hrdy
   refine callC impl hap hns hn11 ret0 hret F hs hal hKs (by omega) hsp2 hLs hwrt hsok hstw hF0 hLF0 hx1
     hb1 hZA hstk ((r 28 (by decide) (by decide) (by decide) (by decide) (by decide) (by decide)).trans h28) ?_ ?_
     (Or.inr (Or.inr (Or.inr rfl))) hE e1 hS'sp e6 ?_ ⟨?_, ?_, ?_, by omega, by omega, ?_⟩ (fun s' h => cpostG_of h)
     (by rw [ec, ew]; intro hc; exact (harr hc).1) (by rw [ec, ew]; exact hc0)
-    (by rw [el, ec]; exact hsok.2.2.2.2.2.1) hacc2 h29v h30v hfl
-    (fun s'' f1 f2 f3 f4 hq => hK' s'' f1 f2
-      (f3.trans (r 18 (by decide) (by decide) (by decide) (by decide) (by decide) (by decide)))
-      (f4.trans (r 28 (by decide) (by decide) (by decide) (by decide) (by decide) (by decide))) hq)
+    (by rw [el, ec]; exact hsok.2.2.2.2.2.1) hacc2 h29v h30v hsl
+    (by rw [r 18 (by decide) (by decide) (by decide) (by decide) (by decide) (by decide),
+      r 28 (by decide) (by decide) (by decide) (by decide) (by decide) (by decide)]; exact hEk)
   · rw [hrdx, hrdy, hk]
   · rw [el, hlog]; unfold NCost; omega
   · simp only [ArgsFrom]

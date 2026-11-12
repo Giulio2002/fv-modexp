@@ -209,8 +209,10 @@ theorem enStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     have hcap3 : stLen M3 st ≤ stCap M3 st := by simp only [stLen, stCap] at q2 q3 hgcl ⊢; omega
     have hc3 : stCap M3 st < 2 ^ 40 := by simp only [stCap] at q3 ⊢; rw [q3]; exact hgcb
     have hkfG : ArrKF R L st s.mem M3 := Or.inr (by simp only [stW, stCap] at q1 q3 ⊢; rw [q1, q3]; exact ⟨hpin, hapL⟩)
+    have hgc0 : 0 < growCap8 (stLen s.mem st + StackNat.rnd (23 * n)) (stCap s.mem st) :=
+      Nat.lt_of_lt_of_le (by simp only [StackNat.rnd]; omega) hgcl
     have haiG : ArrIn (L ++ [(p, p + 8 * growCap8 (stLen s.mem st + StackNat.rnd (23 * n)) (stCap s.mem st))]) st s.mem M3 :=
-      fun _ => by simp only [stW, stCap] at q1 q3 ⊢; rw [q1, q3]; exact List.mem_append_right _ (List.mem_singleton_self _)
+      fun _ => by simp only [stW, stCap] at q1 q3 ⊢; rw [q1, q3]; exact ⟨List.mem_append_right _ (List.mem_singleton_self _), hgc0⟩
     have hFp : MemFrame s.mem M3 (R.rt ++ [(sp - K, sp + 920), (sp + 936, sp + 1040), (st, st + 24)]) := by
       refine MemFrame.trans hF12p hF3 fun a k ho => ?_
       simp only [outside_append, outside_cons, outside_nil, and_true] at ho ⊢

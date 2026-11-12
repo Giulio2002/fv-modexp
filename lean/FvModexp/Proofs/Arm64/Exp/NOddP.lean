@@ -153,10 +153,9 @@ theorem oddPath (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (hA : DArgs S zq zcq st xp xl xc yp yl yc mp n mc) (h28 : S.regs 28 = s.regs 28)
     (h30 : S.regs 30 = BitVec.ofNat 64 1787680)
     (h29v : S.mem.readLE (sp + 1048) 8 = f29) (h30v : S.mem.readLE (sp + 1056) 8 = ret0)
-    (hfl : S.mem.readLE (sp + 1182) 1 = 0)
-    (hK' : ∀ s'' : State, s''.sp = BitVec.ofNat 64 (sp + 1312) → s''.regs 29 = BitVec.ofNat 64 f29 →
-      s''.regs 18 = S.regs 18 → s''.regs 28 = S.regs 28 →
-      Post R b L K costF costR costS costP zp zc st xp xl yp yl mp n s s'' → F s'') :
+    {M0 : Memory} (hsl : SlotEq S.mem M0 sp)
+    (hEk : EpiK impl ret0 F sp f29 (S.regs 18) (S.regs 28) M0
+      (Post R b L K costF costR costS costP zp zc st xp xl yp yl mp n s)) :
     Reaches ((LibN.program.link impl).withExit ret0) S (IsReturn F) := by
   have hP' := hP
   obtain ⟨⟨hs1, hs28, hg1, -, -, -, hal, hK4, hKs, hsp2, hacc, hwrt, hLs, -, -⟩, -, -, -, -, -,
@@ -187,7 +186,7 @@ theorem oddPath (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     hb1 hZA (Nat.le_refl _) h28 ?_ ?_ (Or.inr (Or.inr (Or.inl rfl))) hE hpc hSsp h30 ?_ ⟨?_, by omega, ?_, ?_, ?_, ?_⟩
     (fun s' h => cpostG_odd h)
     (by rw [ec, ew]; intro hc; exact (harr hc).1) (by rw [ec, ew]; exact hc0)
-    (by rw [el, ec]; exact hsok.2.2.2.2.2.1) hacc2 h29v h30v hfl hK'
+    (by rw [el, ec]; exact hsok.2.2.2.2.2.1) hacc2 h29v h30v hsl hEk
   · rw [hrdx, hrdy, hrdm]
   · rw [el]; unfold NCost; omega
   · simp only [ArgsFrom]

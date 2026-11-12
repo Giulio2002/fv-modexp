@@ -87,10 +87,9 @@ theorem fromJ5 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     (hF : MemFrame s.mem M (wN sp K)) (hrg : M.regions = s.mem.regions)
     (hsp : SpillsB M sp xp xl xc yp yl yc mp n mc)
     (h29v : M.readLE (sp + 1048) 8 = f29) (h30v : M.readLE (sp + 1056) 8 = ret0)
-    (hfl : M.readLE (sp + 1182) 1 = 0)
-    (hK' : ∀ s'' : State, s''.sp = BitVec.ofNat 64 (sp + 1312) → s''.regs 29 = BitVec.ofNat 64 f29 →
-      s''.regs 18 = S.regs 18 → s''.regs 28 = S.regs 28 →
-      Post R b L K costF costR costS costP zp zc st xp xl yp yl mp n s s'' → F s'') :
+    {M0 : Memory} (hsl : SlotEq M M0 sp)
+    (hE : EpiK impl ret0 F sp f29 (S.regs 18) (S.regs 28) M0
+      (Post R b L K costF costR costS costP zp zc st xp xl yp yl mp n s)) :
     Reaches ((LibN.program.link impl).withExit ret0) S (IsReturn F) := by
   have hP' := hP
   obtain ⟨⟨hs1, hs28, hg1, hg2, hg3, hgo, hal, hK4, hKs, hsp2, hacc, hwrt, hLs, hd, hsv⟩, -, -, hro, hty, -,
@@ -119,7 +118,7 @@ theorem fromJ5 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
   -- the three dispatch targets, from a dispatch start point with context `ZM`
   have tgt : ∀ (D : State) (M1 : Memory) (L1 : List (Nat × Nat)) (b1 zq zcq mk : Nat),
       ZM R b L g sp K zp zc st xp xl yp yl mp n s.mem M1 L1 b1 zq zcq mk →
-      M1.readLE (sp + 1048) 8 = f29 → M1.readLE (sp + 1056) 8 = ret0 → M1.readLE (sp + 1182) 1 = 0 →
+      M1.readLE (sp + 1048) 8 = f29 → M1.readLE (sp + 1056) 8 = ret0 → SlotEq M1 M0 sp →
       M1.accessible (sp + 1048) 384 true = true →
       D.sp = BitVec.ofNat 64 (sp + 1056) → DStart D sp zq zcq st xp xl xc yp yl yc mp n mc → D.mem = M1 →
       D.regs 18 = S.regs 18 → D.regs 28 = S.regs 28 →
@@ -141,13 +140,12 @@ theorem fromJ5 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     · intro _ _ S' e1 e2 e3 e4 e5 e6 e7
       rw [← e7] at hZ f1 f2 f3
       exact slowPath impl hap R H.slow H.hnsS H.hn11S ret0 hret F hP H.hKS hZ hxl0 hyl0 hy1 e1 (e2.trans hDsp) e3
-        ((e5.trans hD28).trans h28) e6 f1 f2 f3
-        (fun s'' a1 a2 a3 a4 hq => hK' s'' a1 a2 ((a3.trans e4).trans hD18) ((a4.trans e5).trans hD28) hq)
+        ((e5.trans hD28).trans h28) e6 f1 f2 f3 (by rw [e4, hD18, e5, hD28]; exact hE)
     · intro _ hodd S' e1 e2 e3 e4 e5 e6 e7
       rw [← e7] at hZ f1 f2 f3
       exact oddPath impl hap R H.clr H.mv H.mkO H.gr H.wb nsD stkD H.div H.hnsD H.hnsW4 H.hnsW2 ret0 hret F H.hKD
         hP hZ hxl0 hyl0 (by rw [← hm01]; exact hodd) hm1 e1 (e2.trans hDsp) e3 ((e5.trans hD28).trans h28) e6 f1 f2 f3
-        (fun s'' a1 a2 a3 a4 hq => hK' s'' a1 a2 ((a3.trans e4).trans hD18) ((a4.trans e5).trans hD28) hq)
+        (by rw [e4, hD18, e5, hD28]; exact hE)
     · intro _ hev0 S' e1 e2 e3 e4 e5 e6 e7
       rw [← e7] at hZ f1 f2 f3
       have hm0 : s.mem.readLE mp 8 % 2 = 0 := by rw [← hm01]; exact hev0
@@ -156,8 +154,7 @@ theorem fromJ5 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
         · rw [val_mod2 hn] at h; omega
         · exact h
       exact p2Path impl hap R H.p2 H.hnsP H.hn11P ret0 hret F hP H.hKP hZ hxl0 hyl0 hpow hm0 e1 (e2.trans hDsp) e3 e4
-        ((e6.trans hD28).trans h28) f1 f2 f3
-        (fun s'' a1 a2 a3 a4 hq => hK' s'' a1 a2 ((a3.trans e5).trans hD18) ((a4.trans e6).trans hD28) hq)
+        ((e6.trans hD28).trans h28) f1 f2 f3 (by rw [e5, hD18, e6, hD28]; exact hE)
   refine mk impl R H.mkN ret0 hret _ b L K g sp zc' st n M hal hK4 hKs hsp2
     (by rw [hF.accessible]; exact hacc) hg1 (by rw [hF.accessible]; exact hg2)
     (by rw [hF.readLE _ _ hgw]; exact hg3) hout (by unfold Apart; omega) hgo.2 hLs
@@ -169,25 +166,28 @@ theorem fromJ5 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
   · intro hle S' e1 e2 e0 e2' e3 e4 e5 e6 e7 e8 e9 e10 e11 e12 e13 e18 e28 em
     have hz' : (zp' = zp ∧ zc' = zc ∧ (0 < zc → ZOK R L g sp K st zp zc xp xl yp yl mp n s.mem)) ∨
         (zp' = 0 ∧ zc' = 0) := hz
-    refine tgt S' M L b zp' zc' 0 (zm_keep hP hF hLF hrg hz' hle) h29v h30v hfl
+    refine tgt S' M L b zp' zc' 0 (zm_keep hP hF hLF hrg hz' hle) h29v h30v hsl
       (by rw [hF.accessible]; exact Memory.accessible_mono _ hacc (by omega) (by omega)) (e2.trans hSsp)
       ⟨e0.trans h0, Or.inl ⟨e1, e2'.trans h2, e3.trans h3, e4.trans h4, e5.trans h5, e6.trans h6, e7.trans h7,
         e8.trans h8, e9.trans h9, e10.trans h10, e11.trans h11, e12.trans h12, e13.trans h13⟩⟩ em e18 e28
   · intro hlt S' p r m hpcs e2 e0 e18 e28 em h232 hLF' hMF hrg' hAp hIn hp48 haccp hp8 hr8 hr hinv'
     have hZ := zm_fresh hP hF' hLF hrg hLF' hMF hrg' hAp hIn hp48 haccp hp8 hr8 hr hinv'
     have kp : ∀ {a k : Nat}, (sp + 1048 ≤ a ∧ a + k ≤ sp + 1064) ∨ (sp + 1176 ≤ a ∧ a + k ≤ sp + 1184) ∨
-        (sp + 1352 ≤ a ∧ a + k ≤ sp + 1432) → m.readLE a k = M.readLE a k := fun h => by
+        (sp + 1352 ≤ a ∧ a + k ≤ sp + 1432) ∨ (sp + 1272 ≤ a ∧ a + k ≤ sp + 1288) ∨
+        (sp + 1296 ≤ a ∧ a + k ≤ sp + 1304) → m.readLE a k = M.readLE a k := fun h => by
       refine hMF.readLE _ _ ?_
       simp only [outside_append, outside_cons, outside_nil, and_true]
       refine ⟨?_, by omega, by omega, by omega, by omega⟩
-      rcases h with h | h | h
+      rcases h with h | h | h | h | h
+      · exact hout.of_sub (by omega) (by omega)
+      · exact hout.of_sub (by omega) (by omega)
       · exact hout.of_sub (by omega) (by omega)
       · exact hout.of_sub (by omega) (by omega)
       · exact hout.of_sub (by omega) (by omega)
     have hsp' : Spills m sp st xp xl xc yp yl yc mp n mc :=
-      spills_fr hsp h232 fun a k h1 h2 => kp (Or.inr (Or.inr ⟨h1, h2⟩))
+      spills_fr hsp h232 fun a k h1 h2 => kp (Or.inr (Or.inr (Or.inl ⟨h1, h2⟩)))
     refine tgt S' m _ _ p (makeCap n) r hZ (by rw [kp (by omega)]; exact h29v) (by rw [kp (by omega)]; exact h30v)
-      (by rw [kp (by omega)]; exact hfl)
+      (hsl.of_rd fun a k hs => kp (by unfold Slot at hs; omega))
       (by rw [hMF.accessible, hF.accessible]; exact Memory.accessible_mono _ hacc (by omega) (by omega))
       (e2.trans hSsp) ⟨e0, ?_⟩ em e18 e28
     rcases hpcs with ⟨hpc1, rfl⟩ | ⟨hpc2, hn1, h128⟩

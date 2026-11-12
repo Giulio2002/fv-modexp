@@ -99,6 +99,8 @@ structure LI (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl
   na : NatNorm M pA lA
   ca : BC R L K g sp st zp zc M L1 zzp bp lm u pA cA
   cb : BC R L K g sp st zp zc M L1 zzp bp lm (!u) pB cB
+  zo : Z % 2 = 1
+  cb0 : 0 < cB
 
 /-- the continuation at the loop test: every state there with `LI`, the register layout, the parity, the budget
 `b + (c + 32 i)·bc + tC ≤ b1 + cst` and the model `outerLoop … i yi c Z = FV` reaches `Q` -/
