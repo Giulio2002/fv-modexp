@@ -912,3 +912,9 @@ disjunction hypotheses visible to ~40 omegas → >900 s: hidden in `Hide`, unhid
 * `LibW` 38 s / 3.0 GB, `LibOdd` 37 s / 3.1 GB (generated mask proofs), `LibWC` 15 s / 3.5 GB, `OddDefs` 4 s / 2.5 GB,
   `OddPro` 5 s / 2.1 GB, `OddPost` 2.4 s / 2.5 GB, `OddFun` 81 s / 6.9 GB (imports W4FunE + W2FunE; the two dispatch
   branches could go to separate modules if a row needs the memory).
+
+## asm s17 (2026-11-12) — divLarge arm64 division segment + tail + composition (dev, J=2, loaded host)
+DivLargeDBP 22 s / 2.3 GB (db_pre: was 10 GB / >3 min with unfolded disjunctions in the top-level context), DivLargeDRel
+31 s / 4.9 GB, DivLargeDB 6 s, DivLargeDBR 6 s, DivLargeDRP 28 s, DivLargeDRR 5 s, DivLargeDRM 17 s / 3.3 GB, DivLargeTN 7 s,
+DivLargeT1 16 s / 3.1 GB, DivLargeTP 4 s, DivLargeT2 8 s, DivLarge (composition) 3 s. omega: nested subtraction of a large
+literal (`sp - 304 - 40960`) hits maxRecDepth — rewrite to `sp - 41264` first.
