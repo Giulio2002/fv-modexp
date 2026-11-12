@@ -244,4 +244,105 @@ theorem mem_of_nat {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp z
     rw [hML.readLE a n (hE.ext.inRanges_old hin) (by simp), hLF2.readLE a n hin hws']
     exact hF.readLE a n (by simp only [proWs, outside_cons, outside_nil, and_true]; omega)
 
+/-- the free part of the stack after `stk.nat(n)` is inside the array `(w1, c1)`, and that array is the entry one or
+fresh: an operand array apart from the entry free part and held in `L` is apart from the new free part -/
+theorem apart_free {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st up uc ip il vp vl : Nat}
+    {s : State} {t : Nat} {L1 : List (Nat × Nat)} {b1 w1 c1 : Nat}
+    (hE : Env R b L c zp zc st up uc ip il vp vl s t L1 b1 w1 c1) {p n : Nat} (hn : 0 < n)
+    (hh : Held R L p n) (hfr : Apart p n (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st))) :
+    Apart p n (w1 + 8 * (stLen s.mem st + StackNat.rnd vl)) (8 * (c1 - (stLen s.mem st + StackNat.rnd vl))) := by
+  have hlc := hE.c1len
+  have hle := hE.pre.sti.1.2.2.2.2.2.1
+  rcases hE.arr with ⟨rfl, rfl⟩ | ⟨hin, hap⟩
+  · unfold Apart at hfr ⊢; omega
+  · rcases hh with hi | ho
+    · obtain ⟨r, hr, h1, h2⟩ := hi; have := hap r hr; unfold Apart at this ⊢; omega
+    · have := outside_of_inRanges ho hin; unfold Apart; omega
+
+set_option maxHeartbeats 4000000 in
+/-- `UArr` on the reuse path (`len uIn + 1 ≤ cap u`): `(P, C) = (up, uc)` -/
+theorem uarr_reuse {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st up uc ip il vp vl : Nat}
+    {s : State} {t : Nat} {L1 : List (Nat × Nat)} {b1 w1 c1 : Nat}
+    (hE : Env R b L c zp zc st up uc ip il vp vl s t L1 b1 w1 c1) (hz : il + 1 ≤ uc) {M : Memory}
+    (hacc : ∀ a n w, M.accessible a n w = s.mem.accessible a n w) :
+    UArr R zp zc st up uc ip il vp vl s t w1 c1 L1 L1 up uc M := by
+  have hl := hE.lay
+  have hpre := hE.pre
+  have hu0 : 0 < uc := by omega
+  obtain ⟨hu40, hul, huw⟩ := hpre.uo
+  obtain ⟨hu8, huh, huacc, hu48⟩ := hul hu0
+  have hut := hl.tu hu0
+  have hsu := hpre.su hu0
+  exact {
+    cap := hz, c40 := hu40, p8 := hu8, p48 := hu48, pacc := by rw [hacc]; exact huacc,
+    pw := hl.uw hu0, pg := (huw hu0).2, pheld := hE.ext.held huh, ror := Or.inl ⟨rfl, rfl⟩,
+    pi := hpre.ui.imp id (fun h => h hu0), pv := hpre.uv hu0,
+    pt := by unfold Apart; omega, ps := hsu.1,
+    pz := fun h => by have := hpre.zu h hu0; unfold Apart at this ⊢; omega,
+    pf := apart_free hE (by omega) huh hsu.2 }
+
+set_option maxHeartbeats 4000000 in
+/-- `UArr` on the allocation path: `makeslice` returned `[ptr, ptr + round)` (fresh, apart from `L1`) -/
+theorem uarr_alloc {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st up uc ip il vp vl : Nat}
+    {s : State} {t : Nat} {L1 : List (Nat × Nat)} {b1 w1 c1 : Nat}
+    (hE : Env R b L c zp zc st up uc ip il vp vl s t L1 b1 w1 c1) (hz : uc < il + 1) {M : Memory}
+    {ptr round : Nat} (hAp : ApartAll ptr round L1) (hIn : InRanges ptr round R.rt) (hle : ptr + round ≤ 2 ^ 48)
+    (hacc : M.accessible ptr round true = true) (h8 : ptr % 8 = 0) (hsz : 8 * (il + 1 + 4) ≤ round)
+    (hw1h : Held R L1 w1 (8 * c1)) :
+    UArr R zp zc st up uc ip il vp vl s t w1 c1 L1 (L1 ++ [(ptr, ptr + round)]) ptr (il + 1 + 4) M := by
+  have hl := hE.lay
+  have hpre := hE.pre
+  have hout : Outside (s.sp.toNat - 41264) (41264 + 112) R.rt := hpre.ce.2.2.2.1
+  have hgr : Outside ((s.regs 28).toNat + 16) 8 R.rt := hpre.ce.2.2.2.2.2.1
+  have hpo := outside_of_inRanges hout hIn
+  have hgo := outside_of_inRanges hgr hIn
+  have hil9 := hl.il9
+  -- fresh ⇒ apart from anything held in `L1`
+  have fr : ∀ p n, Held R L1 p n → Apart ptr (8 * (il + 1 + 4)) p n := by
+    intro p n hh
+    rcases hh with hi | ho
+    · obtain ⟨r, hr, h1, h2⟩ := hi; have := hAp r hr; unfold Apart at this ⊢; omega
+    · have := outside_of_inRanges ho hIn; unfold Apart; omega
+  exact {
+    cap := by omega, c40 := by omega, p8 := h8, p48 := by omega,
+    pacc := Memory.accessible_mono _ hacc (Nat.le_refl _) (by omega),
+    pw := by omega, pg := by unfold Apart; omega,
+    pheld := Or.inl ⟨(ptr, ptr + round), by simp, Nat.le_refl _, by simp only; omega⟩,
+    ror := Or.inr ⟨hz, hIn.sub (Nat.le_refl _) (by omega), fun r hr => (hAp r hr).mono (by omega) (Nat.le_refl _)⟩,
+    pi := Or.inr (fr _ _ (hE.ext.held hpre.io.2.2.2.1)),
+    pv := fr _ _ (hE.ext.held hpre.vo.2.2.2.1),
+    pt := fr _ _ hl.theld,
+    ps := fr _ _ (hE.ext.held hpre.sti.1.2.1),
+    pz := fun h => fr _ _ (hE.ext.held (hpre.zo.2.1 h).2.1),
+    pf := by have h1 := fr _ _ hw1h; have h2 := hE.c1len; unfold Apart at h1 ⊢; omega }
+
+/-- reads of `S2.mem` (after `stk.nat`) at the frame slots: the prologue's values -/
+theorem rdS2 {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st up uc ip il vp vl : Nat}
+    {s : State} (hpre : Pre R b L c zp zc st up uc ip il vp vl s) {stkSN abSN : Nat} (hk1 : stkSN ≤ 4224)
+    (hk2 : abSN ≤ 96) {P S2 : State} {L1 : List (Nat × Nat)} {b1 : Nat}
+    (hA : AfterNat R b L st vl s P S2 stkSN abSN L1 b1) (a n : Nat) (h1 : s.sp.toNat - 208 ≤ a)
+    (h2 : a + n ≤ s.sp.toNat + 112) (h3 : a + n ≤ s.sp.toNat - 8 ∨ s.sp.toNat + 8 ≤ a) :
+    S2.mem.readLE a n = P.mem.readLE a n := by
+  have hout : Outside (s.sp.toNat - 41264) (41264 + 112) R.rt := hpre.ce.2.2.2.1
+  obtain ⟨hal, hb', ha, hw⟩ := hpre.ce.2.1
+  have hsw := hpre.sti.2.1
+  have hfw := hpre.fw
+  simp only [win, outside_cons, outside_nil, and_true] at hsw hfw
+  refine hA.F2.readLE a n ?_
+  simp only [stkWs, outside_append, outside_cons, outside_nil, and_true]
+  exact ⟨⟨hout.of_sub (by omega) (by omega), by omega, by omega⟩, by omega, by omega⟩
+
+/-- a range apart from the stack header and (when the stack has an array) from the whole array is outside the stack's
+written ranges (`cap = 0` ⇒ `w = 0`, so the empty free part is the point `0`) -/
+theorem outside_stkWs {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st up uc ip il vp vl : Nat}
+    {s : State} (hpre : Pre R b L c zp zc st up uc ip il vp vl s) {a n : Nat} (h1 : Apart a n st 24)
+    (h2 : 0 < stCap s.mem st → Apart a n (stW s.mem st) (8 * stCap s.mem st)) : Outside a n (stkWs s.mem st) := by
+  have hlc := hpre.sti.1.2.2.2.2.2.1
+  simp only [stkWs, outside_cons, outside_nil, and_true]
+  unfold Apart at h1
+  refine ⟨h1, ?_⟩
+  by_cases hc : 0 < stCap s.mem st
+  · have := h2 hc; unfold Apart at this; omega
+  · have := hpre.w0 (by omega); rw [this]; omega
+
 end FvModexp.Arm64.DivLarge
