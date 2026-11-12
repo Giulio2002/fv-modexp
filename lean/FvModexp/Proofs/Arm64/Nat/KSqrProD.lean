@@ -191,11 +191,7 @@ theorem kmOf {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc :
         by_cases hc : stLen s.mem st + StackNat.rnd (kT n) ≤ stCap s.mem st
         · exact Or.inl (hsame hc)
         · exact Or.inr (hgrow (by omega)),
-      smem := by
-        intro hn
-        by_cases hc : stLen s.mem st + StackNat.rnd (kT n) ≤ stCap s.mem st
-        · exact absurd (hsame hc) hn
-        · exact hmem (by omega),
+      smem := ArrIn.of_nat hok.2.2.2.2.2.1 hlS hsame hmem,
       lr := (hrd2 _ _ (by omega) (by omega) (by omega)).trans h.lr,
       fp := (hrd2 _ _ (by omega) (by omega) (by omega)).trans h.fp,
       bit := (hrd2 _ _ (by omega) (by omega) (by omega)).trans h.bit,
