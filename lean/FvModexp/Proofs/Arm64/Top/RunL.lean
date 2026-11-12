@@ -73,6 +73,9 @@ theorem lb (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
   have hI7 := toInt_small (T.regs 7) (by omega)
   have hI9 := toInt_small (T.regs 9) (by omega)
   have hIl : len.toInt = (len.toNat : Int) := toInt_small len (by omega)
+  have hT4 : Apart 2762976 16 (s.sp.toNat - stk) (stk + 40) :=
+    apart_of_data hd 3 (by decide) ⟨by decide +kernel, by decide +kernel⟩ (by simp only [stk]; exact hw)
+  simp only [stk] at hT4; unfold Apart at hT4
   clear hinS hcS hLs hcheld hheld hpw hcw hpacc hd hno hdS hro hrecv
   janus_run [hm1, hm2, hm3, hm4, hm5, hm6, hc1, hT2, hI6, hI7, hI9, hIl, toInt_ite, toNat_ite, ite3_int_gt, ite3_nat_le] until [pcC0,
     segAddr Extracted.program fn + 0x3c4] calls [hnoP]
