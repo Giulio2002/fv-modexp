@@ -99,7 +99,6 @@ theorem d2x (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
       Memory.accessible_mono _ hpacc (by omega) hsrcL
     have hW : p.toNat + off + mN + hdrV s p len 1 ≤ BitVec.toNat s.sp - 624 - 4160 ∨
         BitVec.toNat s.sp - 624 + 48 ≤ p.toNat + off + mN := by omega
-    janus_data hdS
     have hRA := raSB impl hap 0x203710 (by decide)
     janus_run [hm1, hm2, hm3, hm4, hm5, hm6, hgS, natLive_zero] until [pcD2] calls [hP := hS]
     obtain ⟨⟨-, p2, n2, c2, hp2, hn2, hc2, hv2, hnorm2, hnc2, hnw2, L2, b2, hext2, hb2, hinv2, hlive2, hor2, hMF2, hLF2⟩,
