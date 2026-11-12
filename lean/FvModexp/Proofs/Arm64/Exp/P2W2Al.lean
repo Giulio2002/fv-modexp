@@ -299,20 +299,20 @@ theorem mkCall {impl : List Segment} {mk : Nat} (hmkE : Extracted.program.contra
     (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ)
     {n c ra : Nat} (hnc : n ≤ c) (hc0 : 0 < c) (hc : c ≤ 2 ^ 17) (hra4 : ra % 4 = 0) (hra : ra < 2 ^ 48)
     (hcost : blockSize (8 * c) true ≤ b1)
-    (KC : ∀ (T : State) (ptr : W64) (junk : Nat → W64) (f : Flags) (v : Nat → BitVec 128) (m : Memory)
-      (ex : Option (Nat × Nat)) (ep : Nat → Bool),
-      AllocR R L K g sp st zp zc s.mem M L1 b1 ℓ m ptr.toNat (blockSize (8 * c) true) (8 * c) →
-      ReachesRet (LibExp.program.link impl) ret0 (retStateX T junk [ptr] f v m ex ep) Q)
     (T : State) (hpc : T.pc = BitVec.ofNat 64 mk) (hsp : T.sp = BitVec.ofNat 64 sp)
     (h28 : T.regs 28 = BitVec.ofNat 64 g) (hm : T.mem = M) (h0 : T.regs 0 = 2641088#64)
-    (h1 : T.regs 1 = BitVec.ofNat 64 n) (h2 : T.regs 2 = BitVec.ofNat 64 c) (h30 : T.regs 30 = BitVec.ofNat 64 ra) :
+    (h1 : T.regs 1 = BitVec.ofNat 64 n) (h2 : T.regs 2 = BitVec.ofNat 64 c) (h30 : T.regs 30 = BitVec.ofNat 64 ra)
+    (KC : ∀ (ptr : W64) (junk : Nat → W64) (f : Flags) (v : Nat → BitVec 128) (m : Memory)
+      (ex : Option (Nat × Nat)) (ep : Nat → Bool),
+      AllocR R L K g sp st zp zc s.mem M L1 b1 ℓ m ptr.toNat (blockSize (8 * c) true) (8 * c) →
+      ReachesRet (LibExp.program.link impl) ret0 (retStateX T junk [ptr] f v m ex ep) Q) :
     ReachesRet (LibExp.program.link impl) ret0 T Q := by
   have e30 : (T.regs 30).toNat = ra := by rw [h30, BitVec.toNat_ofNat]; omega
   refine ReachesRet.call_regions (hmk L1 b1) hpc
     (mkPre hP h hmkE T hsp h28 hm h0 h1 h2 (by rw [e30]; exact hra4) (by rw [e30]; exact hra) hnc hc hcost) ?_
   intro S1 _ hpost hrg1
   obtain ⟨ptr, junk, f, v, m, ex, ep, rfl, hA⟩ := mkPost hP h T hsp h28 hm h0 h2 hc0 hc S1 hrg1 hpost
-  exact KC T ptr junk f v m ex ep hA
+  exact KC ptr junk f v m ex ep hA
 
 set_option maxRecDepth 20000 in
 /-- **`newobject([1]Word)` from `SP = sp`** (continuation form) -/
@@ -320,20 +320,20 @@ theorem noCall {impl : List Segment} {no : Nat} (hnoE : Extracted.program.contra
     (hno : NewobjectLiveContract (LibExp.program.link impl) no 4096 R) (ret0 : BitVec 64) (Q : State → Prop)
     (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ)
     {ra : Nat} (hra4 : ra % 4 = 0) (hra : ra < 2 ^ 48) (hcost : blockSize 8 true ≤ b1)
-    (KC : ∀ (T : State) (ptr : W64) (junk : Nat → W64) (f : Flags) (v : Nat → BitVec 128) (m : Memory)
-      (ex : Option (Nat × Nat)) (ep : Nat → Bool),
-      AllocR R L K g sp st zp zc s.mem M L1 b1 ℓ m ptr.toNat (blockSize 8 true) 8 →
-      ReachesRet (LibExp.program.link impl) ret0 (retStateX T junk [ptr] f v m ex ep) Q)
     (T : State) (hpc : T.pc = BitVec.ofNat 64 no) (hsp : T.sp = BitVec.ofNat 64 sp)
     (h28 : T.regs 28 = BitVec.ofNat 64 g) (hm : T.mem = M) (h0 : T.regs 0 = 2671872#64)
-    (h30 : T.regs 30 = BitVec.ofNat 64 ra) :
+    (h30 : T.regs 30 = BitVec.ofNat 64 ra)
+    (KC : ∀ (ptr : W64) (junk : Nat → W64) (f : Flags) (v : Nat → BitVec 128) (m : Memory)
+      (ex : Option (Nat × Nat)) (ep : Nat → Bool),
+      AllocR R L K g sp st zp zc s.mem M L1 b1 ℓ m ptr.toNat (blockSize 8 true) 8 →
+      ReachesRet (LibExp.program.link impl) ret0 (retStateX T junk [ptr] f v m ex ep) Q) :
     ReachesRet (LibExp.program.link impl) ret0 T Q := by
   have e30 : (T.regs 30).toNat = ra := by rw [h30, BitVec.toNat_ofNat]; omega
   refine ReachesRet.call_regions (hno L1 b1) hpc
     (noPre hP h hnoE T hsp h28 hm h0 (by rw [e30]; exact hra4) (by rw [e30]; exact hra) hcost) ?_
   intro S1 _ hpost hrg1
   obtain ⟨ptr, junk, f, v, m, ex, ep, rfl, hA⟩ := noPost hP h T hsp h28 hm h0 S1 hrg1 hpost
-  exact KC T ptr junk f v m ex ep hA
+  exact KC ptr junk f v m ex ep hA
 
 end
 
