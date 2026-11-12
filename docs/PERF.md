@@ -937,3 +937,9 @@ P2Pre 7.7 s; all ≤ 4.4 GB).
 
 ### expmc session 22 (2026-11-12), arm64 dev compile, wall / max RSS
 NCallP 8 s / 2.8 GB; NCPre 4 s / 2.6 GB; NCall 2 s / 2.5 GB; NRemP 5 s / 2.6 GB (all pure/composition; no janus_run).
+
+### expmc session 23 (2026-11-12), arm64 dev compile, wall / max RSS
+NMkP 3 s / 2.5 GB; NSlowP 5 s / 2.6 GB; NP2P 22 s / 2.7 GB (powAll induction + P2Hyp call); NOddP 12 s / 3.2 GB (opre_at 5 s);
+NMid 8 s / 2.7 GB. Post-merge rebuild of the N* closure clean (NPro 20 s, others <= 15 s).
+Pitfall: omega proof reconstruction fails ("Application type mismatch") with an `∃` hypothesis or a reducible bundle
+containing a 1-byte readLE fact in context -> hide them behind irreducible defs (NMid.SpillsB / NoEvenB).
