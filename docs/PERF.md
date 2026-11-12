@@ -901,3 +901,8 @@ goals with a tiny pure lemma (`bud_step`, `bud_room2`) instead.
   unifier pick `S1 := S` (the pre-run state) before the goal fixes it — pass `?hm`/`?g` and close them after.
 * LESSON: memory-goal `janus_simp` after header stores (`natVal (writes) t l = …`) ran > 5 min (killed); take
   `MemFrame Q S.mem [stores]` from `janus_frame` once and transport everything in a pure lemma (kS1mid): 6 s.
+
+### infra s16 (arm64 buildPrecomputationWindowModPower2, single-file dev compiles, load ~28)
+P2PreWbC 5 s, P2PreA 17 s / 2.5 GB, P2PreB 20 s / 2.7 GB, P2PreC 15 s / 2.4 GB, P2PreD 15 s / 2.4 GB, P2PreLoop 1 s,
+P2PreF 10 s / 2.2 GB, P2PreMv 4 s, P2PreX 66 s / 4.4 GB (before: memmove via `calls [hmv]` 86-177 s / 6-7.6 GB;
+disjunction hypotheses visible to ~40 omegas → >900 s: hidden in `Hide`, unhidden per proof → 41-66 s).
