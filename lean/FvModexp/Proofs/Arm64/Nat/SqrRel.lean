@@ -352,9 +352,11 @@ theorem post_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp xl 
     obtain ⟨hp, hc⟩ := hJ.ru h1 h2
     subst hp hc
     refine ⟨rfl, rfl, by rw [natVal_frame F3 (by simp only [winA, outside_cons, outside_nil, and_true]; omega), v2],
-      ?_⟩
-    exact chain f1 F2 F3 fun a n h => by
-      simp only [outside_append, outside_cons, outside_nil, and_true] at h; exact h.1.2
+      chain f1 F2 F3 fun a n h => by
+        simp only [outside_append, outside_cons, outside_nil, and_true] at h; exact h.1.2, ?_⟩
+    refine LiveFrame.trans (LiveFrame.trans (LiveFrame.trans ⟨fun a n hin _ => hJ.LF.readLE a n hin trivial⟩
+      (lf_win _ hS hLs') fun _ _ h => h) ?_ fun _ _ h => h) (lf_win _ F3 hLs') fun _ _ h => h
+    exact ⟨fun a n hin ho => LF2.readLE a n (hJ.ext.inRanges_old hin) ho⟩
   · refine ⟨?_, by rw [eL', sblen, eL], ?_⟩
     · exact stkOK_frame sbok F3 (by simp only [winA, outside_cons, outside_nil, and_true]; omega)
     · rw [eW', eC']

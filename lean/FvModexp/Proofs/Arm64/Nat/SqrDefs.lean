@@ -79,7 +79,8 @@ a fresh one (apart from the live set and from the stack's final array); the stac
         Apart p' (8 * c') (stW s'.mem st) (8 * stCap s'.mem st)) ∧
       (2 * xl ≤ zc → zp + 8 * zc ≠ xp + 8 * xc → p' = zp ∧ c' = zc ∧
         natVal s'.mem zp (2 * xl) = natVal s.mem xp xl * natVal s.mem xp xl ∧
-        MemFrame s.mem s'.mem (R.rt ++ winA s W 64 ++ [(zp, zp + 8 * (2 * xl))] ++ stkWs s.mem st)) ∧
+        MemFrame s.mem s'.mem (R.rt ++ winA s W 64 ++ [(zp, zp + 8 * (2 * xl))] ++ stkWs s.mem st) ∧
+        LiveFrame s.mem s'.mem L ([(zp, zp + 8 * (2 * xl))] ++ stkWs s.mem st)) ∧
       StackBack R L L' st s.mem s'.mem ∧
       MemFrame s.mem s'.mem (R.rt ++ winA s W 64 ++ [(zp, zp + 8 * zc)] ++ stkWs s.mem st) ∧
       LiveFrame s.mem s'.mem L ([(zp, zp + 8 * zc)] ++ stkWs s.mem st)

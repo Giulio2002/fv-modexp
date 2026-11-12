@@ -503,4 +503,120 @@ theorem KM.intPre {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n
   simp only [win, outside_cons, outside_nil, and_true] at hzw
   refine ⟨by simp only [guard] at q1; rw [hg]; exact q1, by unfold Apart; omega, q2, q3⟩
 
+/-- a range separated from the entry stack (and held) is separated from the current one -/
+theorem KM.sepOf {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State}
+    {lx0 lx1 t : Nat} {Lk : List (Nat × Nat)} {bk spent : Nat} {M : Memory}
+    (h : KM R b L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) {p k : Nat} (hs : StkSep s.mem st p k)
+    (hh : Held R L p k) : StkSep M st p k := by
+  refine ⟨hs.1, ?_, hs.2.2⟩
+  have hf := hs.2.1
+  have hlc := h.sok.2.2.2.2.2.1
+  simp only [BasicSqr.freeP, BasicSqr.freeN] at hf hlc ⊢
+  rcases h.free with ⟨e1, e2, e3⟩ | ⟨hin, hap⟩
+  · rw [e2] at hlc; rw [e1, e2]; unfold Apart at hf ⊢; omega
+  · have := apart_of_held hh hin hap; unfold Apart at this ⊢; omega
+
+/-- `x` is never written -/
+theorem KM.xrd {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State}
+    {lx0 lx1 t : Nat} {Lk : List (Nat × Nat)} {bk spent : Nat} {M : Memory}
+    (h : KM R b L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) {a k : Nat} (h1 : xp ≤ a)
+    (h2 : a + k ≤ xp + 8 * n) : M.readLE a k = s.mem.readLE a k := by
+  have hxh : Held R L xp (8 * xc) := h.pre.2.2.2.2.2.2.2.2.2.2.1
+  have hxw : Outside xp (8 * n) (win s W 48) := h.pre.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hzx : Apart zp (8 * zc) xp (8 * n) := h.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hxs : StkSep s.mem st xp (8 * n) := h.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hxc : n ≤ xc := h.pre.2.2.2.2.2.2.1
+  have hzl : 2 * n ≤ zc := h.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  obtain ⟨hs1, hs2, -⟩ := hxs
+  simp only [BasicSqr.freeP, BasicSqr.freeN] at hs2
+  simp only [win, outside_cons, outside_nil, and_true] at hxw
+  unfold Apart at hzx hs1 hs2
+  refine Held.readLE2 (hxh.sub (by omega) (by omega)) h.fr h.lf ?_ ?_
+  · simp only [winA, outside_cons, outside_nil, and_true]; omega
+  · simp only [kws, stkWs, outside_cons, outside_nil, and_true]; omega
+
+/-- what is left of the budget -/
+theorem KM.cost {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State}
+    {lx0 lx1 t : Nat} {Lk : List (Nat × Nat)} {bk spent : Nat} {M : Memory}
+    (h : KM R b L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) {c : Nat}
+    (hc : spent + c ≤ ksqrC (stLen s.mem st) n) : c ≤ bk := by
+  have hb : ksqrC (stLen s.mem st) n ≤ b := h.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have := h.bud; omega
+
+/-- **Stores in the frame's `*Int` header areas keep `KM`** -/
+theorem KM.store {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State}
+    {lx0 lx1 t : Nat} {Lk : List (Nat × Nat)} {bk spent : Nat} {M : Memory}
+    (h : KM R b L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) {M' : Memory} {ws : List (Nat × Nat)}
+    (hws : ∀ r ∈ ws, r.1 ≤ r.2 ∧ ((s.sp.toNat - 232 ≤ r.1 ∧ r.2 ≤ s.sp.toNat - 168) ∨
+      (s.sp.toNat - 144 ≤ r.1 ∧ r.2 ≤ s.sp.toNat - 80)))
+    (hF : MemFrame M M' ws) (hreg : M'.regions = M.regions) :
+    KM R b L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M' := by
+  obtain ⟨hW, hWs, -, -, -, -, -, -, -, -, hout, -, -⟩ := h.lay
+  have hstw : Outside st 24 (win s W 48) := h.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1.2.2.1
+  simp only [win, outside_cons, outside_nil, and_true] at hstw
+  have hrt : ∀ r ∈ ws, Outside r.1 (r.2 - r.1) R.rt := fun r hr => by
+    obtain ⟨h1, h2 | h2⟩ := hws r hr <;> exact hout.of_sub (by omega) (by omega)
+  have hF' : MemFrame M M' (R.rt ++ [(s.sp.toNat - 320 - 0, s.sp.toNat - 320 - 8),
+      (s.sp.toNat - 320 + 8, s.sp.toNat - 320 + 8)] ++ ws) :=
+    hF.mono fun a k ho => by simp only [outside_append] at ho; exact ho.2
+  have hLF : LiveFrame M M' Lk ws := ⟨fun a k _ ho => hF.readLE a k ho⟩
+  have hinv := RtInv.inv_frame' hF (fun r hr => Or.inl (hrt r hr)) h.inv
+  have hsb : StackBack R Lk Lk st M M' := stackBack_keep' h.sok (hF.mono fun a k ho => by
+      simp only [outside_append] at ho; exact ho.2) hLF (outside_of_forall fun r hr => by
+      obtain ⟨h1, h2 | h2⟩ := hws r hr <;> omega) (LiveExt.refl R Lk)
+  have := h.step (k := 0) (a := 8) (by omega) (by omega) (fun r hr => by
+      obtain ⟨h1, h2 | h2⟩ := hws r hr
+      · exact ⟨h1, Or.inr (Or.inr (Or.inl h2))⟩
+      · exact ⟨h1, Or.inr (Or.inr (Or.inr (Or.inl h2)))⟩) hF' hLF hreg (LiveExt.refl R Lk) (c := 0)
+    (by omega) hinv hsb
+  simpa using this
+
+/-- the registers at a segment boundary (`SP' = SP - 320`, frame pointer `SP - 328`) -/
+@[reducible] def KAt (s S : State) (pc : Nat) : Prop :=
+  S.pc = BitVec.ofNat 64 pc ∧ S.sp = s.sp - 320#64 ∧ S.regs 28 = s.regs 28 ∧ S.regs 29 = s.sp - 328#64 ∧
+    S.regs 18 = s.regs 18
+
+/-- the goal of every segment -/
+@[reducible] def KGoal (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (W st zp xp n : Nat)
+    (s S : State) : Prop :=
+  ReachesRet (LibSqr.program.link impl) (s.regs 30) S fun s' =>
+    Kept s s' ∧ KPost R b L W st zp (2 * n) xp n s s'
+
+/-- the values of the halves of `x` -/
+@[reducible] def kX0 (s : State) (xp n : Nat) : Nat := natVal s.mem xp (kn2 n)
+@[reducible] def kX1 (s : State) (xp n : Nat) : Nat := natVal s.mem (xp + 8 * kn2 n) (n - kn2 n)
+
+/-- the budget charged after each call (`ℓ` the entry stack length): `stk.nat`, `tx.Sub`, the three inner squares,
+the two `z1.Add` -/
+def kcS (ℓ n : Nat) : Nat := makeB (2 * kn2 n) + ksqrC (ℓ + StackNat.rnd (kT n)) (kn2 n)
+def kc1 (ℓ n : Nat) : Nat := stackNatCost ℓ (kT n)
+def kc2 (ℓ n : Nat) : Nat := kc1 ℓ n + asB (kT n)
+def kc3 (ℓ n : Nat) : Nat := kc2 ℓ n + kcS ℓ n
+def kc4 (ℓ n : Nat) : Nat := kc3 ℓ n + kcS ℓ n
+def kc5 (ℓ n : Nat) : Nat := kc4 ℓ n + kcS ℓ n
+def kc6 (ℓ n : Nat) : Nat := kc5 ℓ n + asB (kT n)
+def kc7 (ℓ n : Nat) : Nat := kc6 ℓ n + asB (kT n)
+
+theorem kc7_le {ℓ n : Nat} (h : 80 ≤ n) : kc7 ℓ n ≤ ksqrC ℓ n := by
+  rw [ksqrC_big h]; unfold kc7 kc6 kc5 kc4 kc3 kc2 kc1 kcS; simp only [StackNat.rnd, kT, kn2]; omega
+
+theorem StkSep.sub {m : Memory} {st p k k' : Nat} (h : StkSep m st p k) (hk : k' ≤ k) : StkSep m st p k' := by
+  obtain ⟨h1, h2, h3⟩ := h; unfold Apart at h1 h2 h3; exact ⟨by unfold Apart; omega, by unfold Apart; omega,
+    by unfold Apart; omega⟩
+
+/-- a part of a zero nat is zero -/
+theorem natVal_zero_part {m : Memory} {p N i k : Nat} (h : natVal m p N = 0) (hik : i + k ≤ N) :
+    natVal m (p + 8 * i) k = 0 := by
+  have e := natVal_add m p i (N - i)
+  rw [show i + (N - i) = N by omega, h] at e
+  have e2 := natVal_add m (p + 8 * i) k (N - i - k)
+  rw [show k + (N - i - k) = N - i by omega] at e2
+  have hpos : 0 < 2 ^ (64 * i) := Nat.pow_pos (by decide)
+  have hpos2 : 0 < 2 ^ (64 * k) := Nat.pow_pos (by decide)
+  have h1 : natVal m (p + 8 * i) (N - i) = 0 := by
+    rcases Nat.eq_zero_or_pos (natVal m (p + 8 * i) (N - i)) with h0 | h0
+    · exact h0
+    · have := Nat.mul_le_mul_left (2 ^ (64 * i)) h0; omega
+  omega
+
 end FvModexp.Arm64.NatSqr
