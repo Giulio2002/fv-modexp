@@ -17,7 +17,7 @@ open FvModexp.Arm64.EvenHyp
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 4000000 in
 theorem callSub {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
-    (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains SubMod2N.fn = false)
+    (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains SubMod2N.fn = false)
     {stkT aboveT : Nat} (hkT : stkT ≤ 4464) (haT : aboveT ≤ 88) (htr : Trunc.Hyp2 impl R ns stkT aboveT)
     (hsub : SubMod2N.SubHypR impl R) (hadd : SubMod2N.AddHypR impl R) {kc : Nat} (hkc : 4608 ≤ kc)
     {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat} {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat}
@@ -39,8 +39,8 @@ theorem callSub {impl : List Segment} (hap : ImplApart Extracted.program impl) {
       Mid R kc L s zp zc st xp xl xc n s'.mem L' b' p l' c q ql qc →
       natVal s'.mem p l' = Exp.subMod2N (natVal M p l) (natVal M q ql) e → NatNorm s'.mem p l' →
       natVal s'.mem q ql = natVal M q ql → NatNorm s'.mem q ql →
-      b1 - SubMod2N.cost e ≤ b' → SlotsKept s M s'.mem → ReachesRet (LibExp.program.link impl) ret s' Q) :
-    ReachesRet (LibExp.program.link impl) ret S' Q := by
+      b1 - SubMod2N.cost e ≤ b' → SlotsKept s M s'.mem → ReachesRet (LibW.program.link impl) ret s' Q) :
+    ReachesRet (LibW.program.link impl) ret S' Q := by
   have hK := sp_K hpre
   have hS' := sp'_eq hsp
   have hn2 : n ≤ 2 ^ 15 := hpre.2.2.2.2.1
@@ -51,7 +51,7 @@ theorem callSub {impl : List Segment} (hap : ImplApart Extracted.program impl) {
   have hq64 : q < 2 ^ 64 := hmid.2.2.2.1.2.1
   have hqc40 : qc < 2 ^ 40 := hmid.2.2.2.1.1
   have hW : SubMod2N.W e + 1 ≤ c := by simp only [SubMod2N.W, NW] at hnc ⊢; omega
-  obtain ⟨op, hone⟩ := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2
+  obtain ⟨op, hone⟩ := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
   refine ReachesRet.call_regions (SubMod2N.full impl hap R hns hnf hkT haT htr hsub hadd b1 L1 op p l c q ql qc e)
     hpc ⟨h0, h1, h2, h3, h4, h5, h6, h7, h8, h9, ?_⟩ fun s' hr ⟨⟨e1, e2, e3, e4⟩, hpost⟩ hreg => ?_
   · refine subPre_at hpre hkc hmid hone hsp h28 hm he1 (by omega) (by omega) (by simp only [NW] at hl; omega)
@@ -63,7 +63,7 @@ theorem callSub {impl : List Segment} (hap : ImplApart Extracted.program impl) {
     rw [hm] at hF hLF hreg hv
     rw [h28] at hinv
     obtain ⟨hF2, hLF2, hsb, se0, se2⟩ := nostk hpre hmid.2.1 hS' hkc (by decide) hmid.2.2.1 hF hLF hLE
-    obtain ⟨mid2, hqv, hsl⟩ := after_z hpre hkc hmid hS' hkc (by decide) hreg hF2 hLF2 hLE hinv hsb hlive hc40' hp64
+    obtain ⟨mid2, hqv, hsl⟩ := after_z hpre hkc hmid hS' hkc (by decide) hreg hF2 hLF2 hLE hinv hsb (ain_keep se0 se2) hlive hc40' hp64
       (Or.inl ⟨rfl, rfl⟩) (fun h => absurd ⟨rfl, rfl⟩ h) hlc' hnc
     have hqlc : ql ≤ qc := hmid.2.2.2.2.2.2.1
     refine K s' l' L' b' (hr.trans h30) (e1.trans hsp) (e2.trans h28) (e4.trans h18) (by rw [← f0, BitVec.ofNat_toNat, BitVec.setWidth_eq])

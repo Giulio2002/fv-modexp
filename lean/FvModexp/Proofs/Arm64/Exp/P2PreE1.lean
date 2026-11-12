@@ -188,7 +188,7 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- **`buf = stk.nat((len+1) w)`** from the callee entry, then the reloads → `FillJ 0` -/
 theorem callSN (hap : ImplApart Extracted.program impl) {ns : List String}
-    (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
+    (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
     {stkS aboveS : Nat} (hsn : StackNat.HypL impl R ns stkS aboveS) (hkS : stkS ≤ kc) (haS : aboveS ≤ 88)
     (hkc : 4608 ≤ kc) (hpre : Pre R kc sqC mlC b L st pw pl ws lm x xl s)
     (kF : FillJ impl R kc sqC mlC b L st pw pl lm x xl s 0) {M : Memory}
@@ -197,7 +197,7 @@ theorem callSN (hap : ImplApart Extracted.program impl) {ns : List String}
     (h29 : S'.regs 29 = BitVec.ofNat 64 (s.sp.toNat - 216)) (h18 : S'.regs 18 = s.regs 18) (hm : S'.mem = M)
     (hpc : S'.pc = BitVec.ofNat 64 1784176) (h30 : S'.regs 30 = BitVec.ofNat 64 1791052)
     (h0 : S'.regs 0 = BitVec.ofNat 64 st) (h1 : S'.regs 1 = BitVec.ofNat 64 (NB pl lm)) :
-    ReachesRet (LibExp.program.link impl) (s.regs 30) S' (GoalQ R kc sqC mlC b L st pw pl lm x xl s) := by
+    ReachesRet (LibW.program.link impl) (s.regs 30) S' (GoalQ R kc sqC mlC b L st pw pl lm x xl s) := by
   have hsl0 := s.sp.isLt
   have hK : 208 + kc ≤ s.sp.toNat := by have := hpre.1.2.1.2.1; simpa only [K] using this
   have hspN : S'.sp.toNat = s.sp.toNat - 208 := by

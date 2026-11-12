@@ -19,6 +19,10 @@ open FvModexp.Arm64.ExpHyp (stWs)
 theorem apartAll_old {R : RtInv} {L L1 : List (Nat × Nat)} (h : LiveExt R L L1) {p n : Nat}
     (ha : ApartAll p n L1) : ApartAll p n L := fun r hr => ha r (h.mem_old hr)
 
+/-- the stack's array not re-allocated (header kept) -/
+theorem ain_keep {L : List (Nat × Nat)} {st : Nat} {M M' : Memory} (e0 : stW M' st = stW M st)
+    (e2 : stCap M' st = stCap M st) : ArrIn L st M M' := fun hn => absurd ⟨e0, e2⟩ hn
+
 theorem rtM_call {R : RtInv} {kc : Nat} {L : List (Nat × Nat)} {s : State} {zp zc st : Nat} {M0 M1 : Memory}
     {L1 L2 : List (Nat × Nat)} {b1 b2 : Nat} {ws : List (Nat × Nat)}
     (hrt : RtM R kc L s zp zc st M0 L1 b1) (hreg : M1.regions = M0.regions) (hF : MemFrame M0 M1 (R.rt ++ ws))
@@ -27,12 +31,12 @@ theorem rtM_call {R : RtInv} {kc : Nat} {L : List (Nat × Nat)} {s : State} {zp 
     (hLF : LiveFrame M0 M1 L1 ws)
     (hwsL : ∀ a k, InRanges a k L → Outside a k ([(zp, zp + 8 * zc)] ++ stWs s.mem st) → Outside a k ws)
     (hLE : LiveExt R L1 L2) (hinv : R.inv b2 L2 (s.regs 28).toNat (view R.rt L2 M1))
-    (hstk : StackBack R L1 L2 st M0 M1) : RtM R kc L s zp zc st M1 L2 b2 := by
-  obtain ⟨r0, F0, LF0, LE0, -, -, len0, arr0⟩ := hrt
+    (hstk : StackBack R L1 L2 st M0 M1) (hain : ArrIn L2 st M0 M1) : RtM R kc L s zp zc st M1 L2 b2 := by
+  obtain ⟨r0, F0, LF0, LE0, -, -, len0, arr0, ain0⟩ := hrt
   obtain ⟨hk1, hk2, hk3⟩ := hstk
   refine ⟨hreg.trans r0, F0.trans hF (fun a k h => ⟨h, hws a k h⟩),
     ⟨fun a k hin hout => (hLF.readLE a k (LE0.inRanges_old hin) (hwsL a k hin hout)).trans (LF0.readLE a k hin hout)⟩,
-    LE0.trans hLE, hinv, hk1, hk2.trans len0, ?_⟩
+    LE0.trans hLE, hinv, hk1, hk2.trans len0, ?_, ArrIn.trans ain0 hain hLE⟩
   rcases hk3 with ⟨e1, e2⟩ | ⟨i1, i2⟩
   · rw [e1, e2]; exact arr0
   · exact Or.inr ⟨i1, apartAll_old LE0 (apartAll_old (L1 := L1) (LiveExt.refl R L1) i2)⟩
@@ -102,7 +106,7 @@ theorem alloc_jm {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat
   have e1 : stLen m st = stLen Mc st := hhdr 8 (by omega)
   have e2 : stCap m st = stCap Mc st := hhdr 16 (by omega)
   have hsb : StackBack R L (L ++ [(p, p + r)]) st Mc m := stackBack_hdr hstk hMF e0 e1 e2 hLE
-  refine ⟨⟨⟨?_, ?_⟩, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩, rtM_call hrt.1 hrg hMF ?_ hLF' ?_ hLE hinv hsb, by omega, ?_⟩
+  refine ⟨⟨⟨?_, ?_⟩, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩, rtM_call hrt.1 hrg hMF ?_ hLF' ?_ hLE hinv hsb (ain_keep e0 e2), by omega, ?_⟩
   · rw [hrd _ (by omega) (by omega)]; exact f1
   · rw [hrd _ (by omega) (by omega)]; exact f2
   · rw [hrd _ (by omega) (by omega)]; exact f3
@@ -126,11 +130,14 @@ theorem alloc_jm {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat
     unfold Apart at hw1
     refine ⟨by omega, by omega, fun _ => ⟨h8, Or.inl ⟨(p, p + r), by simp, by omega, by simp only; omega⟩, hacc,
       by omega⟩, Or.inr ⟨hIn', hAp'⟩, by simp only [win, K, A, outside_cons, outside_nil, and_true]; omega,
-      fresh_out hIn' hgrt, fresh_apart hIn' hAp' hxh, fun _ => ⟨fresh_apart hIn' hAp' hstk.2.1, ?_⟩⟩
-    rw [e0, e1, e2]
-    intro hlt
-    obtain ⟨-, hh, -, -⟩ := hstk.2.2.2.2.1 (by omega)
-    exact fresh_apart hIn' hAp' (hh.sub (by omega) (by rw [Nat.mul_sub]; omega))
+      fresh_out hIn' hgrt, fresh_apart hIn' hAp' hxh, fun _ => ⟨fresh_apart hIn' hAp' hstk.2.1, ?_⟩, ?_⟩
+    · rw [e0, e1, e2]
+      intro hlt
+      obtain ⟨-, hh, -, -⟩ := hstk.2.2.2.2.1 (by omega)
+      exact fresh_apart hIn' hAp' (hh.sub (by omega) (by rw [Nat.mul_sub]; omega))
+    · intro _ _ hcap
+      rw [e2] at hcap; rw [e0, e2]
+      exact fresh_apart hIn' hAp' (hstk.2.2.2.2.1 hcap).2.1
 
 /-- the frame environment at a memory reached by stack-only stores -/
 theorem env_of {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}

@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.CallWW
 import FvModexp.Proofs.Arm64.Exp.EvenHyp
 import FvModexp.Proofs.Arm64.Exp.CallW
 import FvModexp.Proofs.Arm64.Exp.CmpW
@@ -38,7 +39,7 @@ open FvModexp.Arm64.EvenHyp
 
 def fn : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.nat.subMod2N"
 
-theorem fnBase : segAddr LibExp.program fn = 1805584 := by decide
+theorem fnBase : segAddr LibW.program fn = 1805584 := by decide
 
 /-- stack bytes below `SP` -/
 abbrev K : Nat := 4608

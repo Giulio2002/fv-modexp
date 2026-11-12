@@ -65,8 +65,8 @@ theorem one_ctx (hpre : Pre R kc sqC mlC b L st pw pl ws lm x xl s) {bp : Nat} {
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem exitF (hmv : MemmoveLive (LibExp.program.link impl) (cA "runtime.memmove") 4096 R)
-    (hwb : WbLiveContract (LibExp.program.link impl) wbE 4096 R 2) (hkc : 4608 ≤ kc)
+theorem exitF (hmv : MemmoveLive (LibW.program.link impl) (cA "runtime.memmove") 4096 R)
+    (hwb : WbLiveContract (LibW.program.link impl) wbE 4096 R 2) (hkc : 4608 ≤ kc)
     (hpre : Pre R kc sqC mlC b L st pw pl ws lm x xl s) (kX : X1J impl R kc sqC mlC b L st pw pl lm x xl s) :
     FillJ impl R kc sqC mlC b L st pw pl lm x xl s pl := by
   intro S bp L1 b1 hpc hsp h28 h29 h18 h0 h1 h2 h3 h4 h5 hc hd _ hb
@@ -126,7 +126,7 @@ theorem exitF (hmv : MemmoveLive (LibExp.program.link impl) (cA "runtime.memmove
   clear hpww
   have hnA : natOneA = 7356432 := rfl
   rw [hnA] at n0 n8 nacc
-  have hmv' : MemmoveLive (LibExp.program.link impl) mvE 4096 R := by rw [← mvE_eq]; exact hmv
+  have hmv' : MemmoveLive (LibW.program.link impl) mvE 4096 R := by rw [← mvE_eq]; exact hmv
   unfold Goal
   janus_run [n0, n8, t0, t2, f224, f232, f144] until [mvE]
   refine mvCall hmv' hpre hkc hc3 rfl rfl (by janus_simp) rfl (ra := 1791400) (by janus_simp) (by decide) (by decide)

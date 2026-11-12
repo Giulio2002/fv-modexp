@@ -33,7 +33,11 @@ object is back (`StkOK`, same length, old or fresh array) -/
     R.inv b1 L1 (s.regs 28).toNat (view R.rt L1 M) ∧
     StkOK M R L1 st ∧ stLen M st = stLen s.mem st ∧
     ((stW M st = stW s.mem st ∧ stCap M st = stCap s.mem st) ∨
-      (InRanges (stW M st) (8 * stCap M st) R.rt ∧ ApartAll (stW M st) (8 * stCap M st) L))
+      (InRanges (stW M st) (8 * stCap M st) R.rt ∧ ApartAll (stW M st) (8 * stCap M st) L)) ∧ ArrIn L1 st s.mem M
+
+/-- (s25) an owned array other than the caller's `z` is apart from the stack's whole array (divmc's `OpX`, `ResSep`) -/
+def WA (zp zc st : Nat) (M : Memory) (p c : Nat) : Prop :=
+  ¬(p = zp ∧ c = zc) → 0 < c → 0 < stCap M st → Apart p (8 * c) (stW M st) (8 * stCap M st)
 
 /-- an array `(p, c)` the function writes from now on: live, the caller's `z` or fresh, outside the window, apart from
 `x` and from the stack object -/
@@ -42,7 +46,7 @@ object is back (`StkOK`, same length, old or fresh array) -/
   c < 2 ^ 40 ∧ p < 2 ^ 64 ∧ NatLive M R L1 p c ∧
     ((p = zp ∧ c = zc) ∨ (InRanges p (8 * c) R.rt ∧ ApartAll p (8 * c) L)) ∧
     Outside p (8 * c) (win s (K kc) A) ∧ Apart p (8 * c) ((s.regs 28).toNat + 16) 8 ∧ Apart p (8 * c) xp (8 * xl) ∧
-    StkApart M st p (8 * c)
+    StkApart M st p (8 * c) ∧ WA zp zc st M p c
 
 /-- **JM** (`+0x15c`, after `z = z.make(numWords + 1)`): `X0 = z'.ptr`, `X1 = numWords + 1`, `X2 = cap z'`, `X3 … X10` =
 `stk, x, n, n + 63, numWords, k0` -/
@@ -73,7 +77,7 @@ theorem rt0 {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → 
   have hst' : Outside st 24 (winA s (K kc) A) := by
     simp only [win, winA, outside_cons, outside_nil, and_true] at hstw ⊢; simp only [K] at hstw ⊢; omega
   obtain ⟨hstk, e0, e1, e2⟩ := stkOK_frame hst hF hst' (LiveExt.refl R L)
-  refine ⟨⟨hreg, hF.mono fun a k h => ?_, ?_, LiveExt.refl R L, ?_, hstk, e1, Or.inl ⟨e0, e2⟩⟩,
+  refine ⟨⟨hreg, hF.mono fun a k h => ?_, ?_, LiveExt.refl R L, ?_, hstk, e1, Or.inl ⟨e0, e2⟩, fun hn => absurd ⟨e0, e2⟩ hn⟩,
     hzc40, hzp, ?_, Or.inl ⟨rfl, rfl⟩, (hzw hzc0).1, (hzw hzc0).2, (hzx hzc0).mono (Nat.le_refl _) (by omega), ?_⟩
   · simp only [outside_append] at h; exact h.1.1.2
   · refine Expmc.liveFrame_of_frame hF fun a k hin hws => ?_
@@ -87,6 +91,6 @@ theorem rt0 {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → 
   · intro hc
     obtain ⟨a1, a2, a3, a4⟩ := hzlive hc
     exact ⟨a1, a2, by rw [hF.accessible]; exact a3, a4⟩
-  · unfold StkApart; rw [e0, e1, e2]; exact hsz
+  · exact ⟨by unfold StkApart; rw [e0, e1, e2]; exact hsz, fun h => absurd ⟨rfl, rfl⟩ h⟩
 
 end FvModexp.Arm64.ModInv

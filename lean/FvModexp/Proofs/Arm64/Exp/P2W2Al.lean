@@ -311,7 +311,7 @@ theorem fresh1 (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {m : Memory
 set_option maxRecDepth 20000 in
 /-- **`makeslice(Word, n, c)` from `SP = sp`** (continuation form; the return state is `retStateX T …`) -/
 theorem mkCall {impl : List Segment} {mk : Nat} (hmkE : Extracted.program.contractAddr "runtime.makeslice" = mk)
-    (hmk : MakesliceLiveContract (LibExp.program.link impl) mk 4096 R) (ret0 : BitVec 64) (Q : State → Prop)
+    (hmk : MakesliceLiveContract (LibW.program.link impl) mk 4096 R) (ret0 : BitVec 64) (Q : State → Prop)
     (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ)
     {n c ra : Nat} (hnc : n ≤ c) (hc0 : 0 < c) (hc : c ≤ 2 ^ 17) (hra4 : ra % 4 = 0) (hra : ra < 2 ^ 48)
     (hcost : blockSize (8 * c) true ≤ b1)
@@ -321,8 +321,8 @@ theorem mkCall {impl : List Segment} {mk : Nat} (hmkE : Extracted.program.contra
     (KC : ∀ (ptr : W64) (junk : Nat → W64) (f : Flags) (v : Nat → BitVec 128) (m : Memory)
       (ex : Option (Nat × Nat)) (ep : Nat → Bool),
       AllocR R L K g sp st zp zc s.mem M L1 b1 ℓ m ptr.toNat (blockSize (8 * c) true) (8 * c) →
-      ReachesRet (LibExp.program.link impl) ret0 (retStateX T junk [ptr] f v m ex ep) Q) :
-    ReachesRet (LibExp.program.link impl) ret0 T Q := by
+      ReachesRet (LibW.program.link impl) ret0 (retStateX T junk [ptr] f v m ex ep) Q) :
+    ReachesRet (LibW.program.link impl) ret0 T Q := by
   have e30 : (T.regs 30).toNat = ra := by rw [h30, BitVec.toNat_ofNat]; omega
   refine ReachesRet.call_regions (hmk L1 b1) hpc
     (mkPre hP h hmkE T hsp h28 hm h0 h1 h2 (by rw [e30]; exact hra4) (by rw [e30]; exact hra) hnc hc hcost) ?_
@@ -333,7 +333,7 @@ theorem mkCall {impl : List Segment} {mk : Nat} (hmkE : Extracted.program.contra
 set_option maxRecDepth 20000 in
 /-- **`newobject([1]Word)` from `SP = sp`** (continuation form) -/
 theorem noCall {impl : List Segment} {no : Nat} (hnoE : Extracted.program.contractAddr "runtime.newobject" = no)
-    (hno : NewobjectLiveContract (LibExp.program.link impl) no 4096 R) (ret0 : BitVec 64) (Q : State → Prop)
+    (hno : NewobjectLiveContract (LibW.program.link impl) no 4096 R) (ret0 : BitVec 64) (Q : State → Prop)
     (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ)
     {ra : Nat} (hra4 : ra % 4 = 0) (hra : ra < 2 ^ 48) (hcost : blockSize 8 true ≤ b1)
     (T : State) (hpc : T.pc = BitVec.ofNat 64 no) (hsp : T.sp = BitVec.ofNat 64 sp)
@@ -342,8 +342,8 @@ theorem noCall {impl : List Segment} {no : Nat} (hnoE : Extracted.program.contra
     (KC : ∀ (ptr : W64) (junk : Nat → W64) (f : Flags) (v : Nat → BitVec 128) (m : Memory)
       (ex : Option (Nat × Nat)) (ep : Nat → Bool),
       AllocR R L K g sp st zp zc s.mem M L1 b1 ℓ m ptr.toNat (blockSize 8 true) 8 →
-      ReachesRet (LibExp.program.link impl) ret0 (retStateX T junk [ptr] f v m ex ep) Q) :
-    ReachesRet (LibExp.program.link impl) ret0 T Q := by
+      ReachesRet (LibW.program.link impl) ret0 (retStateX T junk [ptr] f v m ex ep) Q) :
+    ReachesRet (LibW.program.link impl) ret0 T Q := by
   have e30 : (T.regs 30).toNat = ra := by rw [h30, BitVec.toNat_ofNat]; omega
   refine ReachesRet.call_regions (hno L1 b1) hpc
     (noPre hP h hnoE T hsp h28 hm h0 (by rw [e30]; exact hra4) (by rw [e30]; exact hra) hcost) ?_

@@ -76,7 +76,7 @@ set_option maxRecDepth 20000 in
 set_option janus.callRegions true in
 set_option maxHeartbeats 64000000 in
 theorem mkzz (impl : List Segment) (R : RtInv)
-    (hmk : MakesliceLiveContract (LibExp.program.link impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
+    (hmk : MakesliceLiveContract (LibW.program.link impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
     (kc : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat) (L : List (Nat × Nat))
     (zp zl zc st xp xl xc n : Nat) (s : State) (hkc : 4608 ≤ kc)
     (kJ : J2 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s) :

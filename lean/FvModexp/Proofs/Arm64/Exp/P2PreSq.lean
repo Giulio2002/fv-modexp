@@ -43,7 +43,7 @@ variable {impl : List Segment} {R : RtInv} {kc : Nat} {sqC : Nat → Nat → Nat
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 4000000 in
 theorem callSqrH (hap : ImplApart Extracted.program impl) {ns : List String}
-    (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
+    (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
     {stkS aboveS : Nat} (hsq : SqrHypX impl R ns stkS aboveS sqC) (hkS : stkS ≤ kc) (haS : aboveS ≤ 88)
     (hsm : ∀ ℓ a a', a ≤ a' → sqC ℓ a ≤ sqC ℓ a') (hkc : 4608 ≤ kc)
     (hpre : Pre R kc sqC mlC b L st pw pl ws lm x xl s) {i : Nat}
@@ -59,7 +59,7 @@ theorem callSqrH (hap : ImplApart Extracted.program impl) {ns : List String}
     (h4 : S'.regs 4 = BitVec.ofNat 64 (bp + 8 * (i / 2 * W lm)))
     {xl' : Nat} (hxl : M.readLE (pw + 24 * (i / 2) + 8) 8 = xl') (h5 : S'.regs 5 = BitVec.ofNat 64 xl')
     (h6 : S'.regs 6 = BitVec.ofNat 64 (W lm)) :
-    ReachesRet (LibExp.program.link impl) (s.regs 30) S' (GoalQ R kc sqC mlC b L st pw pl lm x xl s) := by
+    ReachesRet (LibW.program.link impl) (s.regs 30) S' (GoalQ R kc sqC mlC b L st pw pl lm x xl s) := by
   subst hxl
   have hf := pf_of hpre (by omega)
   have hspN : S'.sp.toNat = s.sp.toNat - 208 := by

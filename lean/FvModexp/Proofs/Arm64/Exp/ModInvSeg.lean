@@ -20,7 +20,7 @@ open FvModexp.Arm64.EvenHyp
 /-- what the function promises, from a state `S` inside its frame (entry state `s`) -/
 @[reducible] def Goal (impl : List Segment) (R : RtInv) (kc : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat)
     (b : Nat) (L : List (Nat × Nat)) (zp zc st xp xl n : Nat) (s S : State) : Prop :=
-  ReachesRet (LibExp.program.link impl) (s.regs 30) S (fun s' =>
+  ReachesRet (LibW.program.link impl) (s.regs 30) S (fun s' =>
     (s'.sp = s.sp ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧ s'.regs 18 = s.regs 18) ∧
       Post R kc sqrC mulC b L zp zc st xp xl n s s')
 

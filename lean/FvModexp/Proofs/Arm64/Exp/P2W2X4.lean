@@ -30,7 +30,7 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
 /-- the exit's reuse path (`n ≤ cap zz`), from the join -/
 theorem xEvR (hap : ImplApart Extracted.program impl)
-    (hmv : MemmoveLive (LibExp.program.link impl) P2Pre.mvE 4096 R)
+    (hmv : MemmoveLive (LibW.program.link impl) P2Pre.mvE 4096 R)
     (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (hr4 : (s.regs 30).toNat % 4 = 0)
     (hr48 : (s.regs 30).toNat < 2 ^ 48) {M0 : Memory} {L1 : List (Nat × Nat)} {b1 : Nat}
     (hBF : BF R L K g sp st zp zc xp xl xc yp yl lm (s.regs 30).toNat s M0 L1 b1 zzp bp) {pA lA cA pB cB Z : Nat}
@@ -42,7 +42,7 @@ theorem xEvR (hap : ImplApart Extracted.program impl)
     (hF : MemFrame M0 T.mem [(sp + 280, sp + 280 + 8), (sp + 112, sp + 112 + 8)]) (hrg : T.mem.regions = M0.regions)
     (h0 : T.regs 0 = BitVec.ofNat 64 pB) (h1 : T.regs 1 = BitVec.ofNat 64 lA) (h15 : T.regs 15 = BitVec.ofNat 64 cB)
     (h2 : T.regs 2 = BitVec.ofNat 64 lA) (h3 : T.regs 3 = BitVec.ofNat 64 pA) :
-    ReachesRet (LibExp.program.link impl) (s.regs 30) T (FQ R b L K zp zc st Z cst s) := by
+    ReachesRet (LibW.program.link impl) (s.regs 30) T (FQ R b L K zp zc st Z cst s) := by
   have hlA := len_pos hAn.2.1 hAn.2.2.2
   obtain ⟨hB', -, hkeep⟩ := BF.win hP hBF hF hrg (fun r hr => by
     simp only [List.mem_cons, List.not_mem_nil, or_false] at hr
@@ -58,8 +58,8 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
 /-- the exit's `make(nat, n, n + 4)` path, from the `makeslice` call -/
 theorem xEv2 (hap : ImplApart Extracted.program impl)
-    (hmv : MemmoveLive (LibExp.program.link impl) P2Pre.mvE 4096 R)
-    (hmk : MakesliceLiveContract (LibExp.program.link impl) mkE 4096 R)
+    (hmv : MemmoveLive (LibW.program.link impl) P2Pre.mvE 4096 R)
+    (hmk : MakesliceLiveContract (LibW.program.link impl) mkE 4096 R)
     (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (hr4 : (s.regs 30).toNat % 4 = 0)
     (hr48 : (s.regs 30).toNat < 2 ^ 48) {M0 : Memory} {L1 : List (Nat × Nat)} {b1 : Nat}
     (hBF : BF R L K g sp st zp zc xp xl xc yp yl lm (s.regs 30).toNat s M0 L1 b1 zzp bp) {pA lA cA Z : Nat}
@@ -73,7 +73,7 @@ theorem xEv2 (hap : ImplApart Extracted.program impl)
     (r96 : T.mem.readLE (sp + 96) 8 = lA + 4)
     (h0 : T.regs 0 = 2641088#64) (h1 : T.regs 1 = BitVec.ofNat 64 lA) (h2 : T.regs 2 = BitVec.ofNat 64 (lA + 4))
     (h30 : T.regs 30 = BitVec.ofNat 64 1796664) :
-    ReachesRet (LibExp.program.link impl) (s.regs 30) T (FQ R b L K zp zc st Z cst s) := by
+    ReachesRet (LibW.program.link impl) (s.regs 30) T (FQ R b L K zp zc st Z cst s) := by
   have hlA := len_pos hAn.2.1 hAn.2.2.2
   obtain ⟨hB', -, hkeep⟩ := BF.win hP hBF hF hrg (fun r hr => by
     simp only [List.mem_cons, List.not_mem_nil, or_false] at hr
@@ -97,7 +97,7 @@ theorem xOd (hap : ImplApart Extracted.program impl)
     (hF : MemFrame M0 T.mem [(sp + 280, sp + 280 + 8), (sp + 112, sp + 112 + 8)]) (hrg : T.mem.regions = M0.regions)
     (h0 : T.regs 0 = BitVec.ofNat 64 pA) (h1 : T.regs 1 = BitVec.ofNat 64 lA)
     (h15 : T.regs 15 = BitVec.ofNat 64 cA) :
-    ReachesRet (LibExp.program.link impl) (s.regs 30) T (FQ R b L K zp zc st Z cst s) := by
+    ReachesRet (LibW.program.link impl) (s.regs 30) T (FQ R b L K zp zc st Z cst s) := by
   have hlA := len_pos hAn.2.1 hAn.2.2.2
   obtain ⟨hB', -, hkeep⟩ := BF.win hP hBF hF hrg (fun r hr => by
     simp only [List.mem_cons, List.not_mem_nil, or_false] at hr
@@ -109,8 +109,8 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
 /-- **the loop exit** (premise `hexit` of `loopKL`) -/
 theorem exitKI (hap : ImplApart Extracted.program impl)
-    (hmv : MemmoveLive (LibExp.program.link impl) P2Pre.mvE 4096 R)
-    (hmk : MakesliceLiveContract (LibExp.program.link impl) mkE 4096 R)
+    (hmv : MemmoveLive (LibW.program.link impl) P2Pre.mvE 4096 R)
+    (hmk : MakesliceLiveContract (LibW.program.link impl) mkE 4096 R)
     (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (hr4 : (s.regs 30).toNat % 4 = 0)
     (hr48 : (s.regs 30).toNat < 2 ^ 48) (hcb : cst ≤ b) :
     KI impl (s.regs 30) (FQ R b L K zp zc st FV cst s) R b L K g sp st zp zc xp xl xc yp yl lm (s.regs 30).toNat s r29

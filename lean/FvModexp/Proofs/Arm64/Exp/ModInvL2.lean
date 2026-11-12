@@ -1,4 +1,6 @@
 import FvModexp.Proofs.Arm64.Exp.ModInvSegC
+import FvModexp.Proofs.Arm64.Exp.ModInvX
+import FvModexp.Proofs.Arm64.Exp.LibCallsX
 
 /-!
 # `nat.modularInverseModPowerOfTwo` (arm64): loop round, `S2` → `zz = zz.mul(stk, zz, x[:min(i, len x)])` → `S3`
@@ -35,7 +37,7 @@ theorem postL2 {J : Nat} {kc : Nat} (hkc : 4608 ≤ kc) {stkM aboveM : Nat} (hkM
     (h18 : S'.regs 18 = s.regs 18) (hm : S'.mem = M)
     (hpc' : s'.pc = BitVec.ofNat 64 1797920) (hsp' : s'.sp = S'.sp) (h28' : s'.regs 28 = S'.regs 28)
     (h18' : s'.regs 18 = S'.regs 18) (hreg : s'.mem.regions = S'.mem.regions)
-    (hpost : MulPost R b1 (mulC ql (min (2 ^ j) xl)) L1 stkM aboveM q qc st q ql xp (min (2 ^ j) xl) S' s') :
+    (hpost : MulPostL R b1 (mulC ql (min (2 ^ j) xl)) L1 stkM aboveM q qc st q ql xp (min (2 ^ j) xl) S' s') :
     Goal impl R kc sqrC mulC b L zp zc st xp xl n s s' := by
   obtain ⟨q', ql', qc', e0, e1, e2, L', b', ⟨hv', hn', hlc', hc40', hlive', hof⟩, ⟨hLE, hbud', hinv'⟩, hsb, hstkA,
     hF', hLF'⟩ := hpost
@@ -52,7 +54,7 @@ theorem postL2 {J : Nat} {kc : Nat} (hkc : 4608 ≤ kc) {stkM aboveM : Nat} (hkM
     rcases hof with ⟨rfl, -⟩ | -
     · exact hmid.2.2.2.1.2.1
     · have := (hlive' hqc').2.2.2; omega
-  obtain ⟨mid2, hzv2, hsl⟩ := after_zz hpre hkc hmid hS' hkM haM hreg hF' hLF' hLE hinv' hsb hlive' hc40' hq'
+  obtain ⟨mid2, hzv2, hsl⟩ := after_zz hpre hkc hmid hS' hkM haM hreg hF' hLF' hLE hinv' hsb.1 hsb.2 hlive' hc40' hq'
     (hof.imp id fun h => h.2) (fun h1 h2 h3 _ => hstkA h1 h2 h3) hlc' hqc'
   have hsp0 : 240 ≤ s.sp.toNat := by have := sp_K hpre; omega
   have hxv : natVal M xp (min (2 ^ j) xl) = natVal s.mem xp (min (2 ^ j) xl) :=
@@ -72,8 +74,8 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 4000000 in
 /-- at `mul`'s entry (`0x1bae70`): the call -/
 theorem callL2 {J : Nat} {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
-    (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
-    {stkM aboveM : Nat} {mlC : Nat → Nat → Nat → Nat} (hmu : MulHyp impl R ns stkM aboveM mlC) {kc : Nat}
+    (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
+    {stkM aboveM : Nat} {mlC : Nat → Nat → Nat → Nat} (hmu : MulHypX impl R ns stkM aboveM mlC) {kc : Nat}
     (hkc : 4608 ≤ kc) (hkM : stkM ≤ kc) (haM : aboveM ≤ 88) {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
     (hml : ∀ x y, mlC (stLen s.mem st) x y = mulC x y)
@@ -95,7 +97,7 @@ theorem callL2 {J : Nat} {impl : List Segment} (hap : ImplApart Extracted.progra
     (h3 : S'.regs 3 = BitVec.ofNat 64 st) (h4 : S'.regs 4 = BitVec.ofNat 64 q) (h5 : S'.regs 5 = BitVec.ofNat 64 ql)
     (h6 : S'.regs 6 = BitVec.ofNat 64 qc) (h7 : S'.regs 7 = BitVec.ofNat 64 xp)
     (h8 : S'.regs 8 = BitVec.ofNat 64 (min (2 ^ j) xl)) (h9 : S'.regs 9 = BitVec.ofNat 64 xc) :
-    ReachesRet (LibExp.program.link impl) (s.regs 30) S' (fun s' =>
+    ReachesRet (LibW.program.link impl) (s.regs 30) S' (fun s' =>
       (s'.sp = s.sp ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧ s'.regs 18 = s.regs 18) ∧
         Post R kc sqrC mulC b L zp zc st xp xl n s s') := by
   have hK := sp_K hpre
@@ -113,11 +115,13 @@ theorem callL2 {J : Nat} {impl : List Segment} (hap : ImplApart Extracted.progra
   have hxl : xl ≤ 2 ^ 12 := hpre.2.2.2.2.2.2.2.2.2.2.2.2.1
   have hlen : stLen S'.mem st = stLen s.mem st := by rw [hm]; exact stLen_M hmid'.2.1
   have hmc : mulC ql (min (2 ^ j) xl) ≤ mulC (2 * NW n + 2) (NW n) := hmm _ _ _ _ (by omega) (by omega)
-  refine mulCall hap hns hmu (b := b1) (L := L1) (zp := q) (zl := ql) (zc := qc) (st := st) (x := q) (xl := ql) (xc := qc) (y := xp)
-    (yl := min (2 ^ j) xl) (yc := xc) (ra_mi hap hnf 204 (by omega)) (by rw [hpc, mul_addr]) h30 h0 h1 h2 h3 h4 h5
-    h6 h7 h8 h9 hmid.2.2.2.1.2.1 (by have := hmid.2.2.2.1.1; omega) (by have := hmid.2.2.2.1.1; omega) hst
-    hmid.2.2.2.1.2.1 (by have := hmid.2.2.2.1.1; omega) hxp (by omega) (by omega) ?_
-    fun s' hpc' hsp' h28' h29' h18' hreg' hpost => ?_
+  obtain ⟨hcx, hcy, hX⟩ := mulX_at hpre hmid' hsp h28 hm hkM haM (Nat.min_le_right (2 ^ j) xl)
+  refine LibCalls.mulCallX hap hns hmu (b := b1) (L := L1) (zp := q) (zl := ql) (zc := qc) (st := st) (x := q)
+    (xl := ql) (xc := qc) (y := xp) (yl := min (2 ^ j) xl) (yc := xc) (ra_mi hap hnf 204 (by omega))
+    (by rw [hpc, mul_addr]) h30 h0 h1 h2 h3 h4 h5 h6 h7 h8 h9 hmid.2.2.2.1.2.1 (by have := hmid.2.2.2.1.1; omega)
+    (by have := hmid.2.2.2.1.1; omega) hst hmid.2.2.2.1.2.1 (by have := hmid.2.2.2.1.1; omega)
+    (by have := hmid.2.2.2.1.1; omega) hxp (by omega) (by omega) (by omega) ?_ hcx hcy hX
+    fun s' hpc' hsp' h28' h29' h18' hreg' hpost _ => ?_
   · rw [hlen, hml]
     exact mulPre_at hpre hmid' hsp h28 hm hkM haM (Nat.min_le_right _ _) (by omega)
       (bud_ok hb hbud (m := mulC (2 * NW n + 2) (NW n)) (by simp only [roundCost, P2, P1]; omega) hmc)
@@ -133,8 +137,8 @@ theorem callL2 {J : Nat} {impl : List Segment} (hap : ImplApart Extracted.progra
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem segL2 {J : Nat} {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
-    (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
-    {stkM aboveM : Nat} {mlC : Nat → Nat → Nat → Nat} (hmu : MulHyp impl R ns stkM aboveM mlC) {kc : Nat}
+    (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
+    {stkM aboveM : Nat} {mlC : Nat → Nat → Nat → Nat} (hmu : MulHypX impl R ns stkM aboveM mlC) {kc : Nat}
     (hkc : 4608 ≤ kc) (hkM : stkM ≤ kc) (haM : aboveM ≤ 88) {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
     (hml : ∀ x y, mlC (stLen s.mem st) x y = mulC x y)

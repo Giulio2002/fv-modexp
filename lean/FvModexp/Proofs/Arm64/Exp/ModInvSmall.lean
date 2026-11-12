@@ -66,8 +66,10 @@ theorem post_keep {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Na
     rcases hzr with rfl | ⟨hc, rfl⟩
     · simp
     · have := (hsz (by omega)).1; unfold Apart at this; simp only [outside_cons, outside_nil, and_true]; omega
+  obtain ⟨-, k0, -, k2⟩ := stkOK_frame hst hF hst' (LiveExt.refl R L)
   refine ⟨zp, l', zc, e0, e1, e2, hv, hn, hlc, hzc40, L, b, LiveExt.refl R L, Nat.sub_le _ _, hinv, ?_,
-    Or.inl ⟨rfl, rfl⟩, stackBack_frame hst hF hst' (LiveExt.refl R L), hFb, ?_⟩
+    Or.inl ⟨rfl, rfl⟩, ⟨stackBack_frame hst hF hst' (LiveExt.refl R L), fun hn => absurd ⟨k0, k2⟩ hn⟩, hFb, ?_,
+    fun _ hn => absurd ⟨k0, k2⟩ hn⟩
   · intro hc
     obtain ⟨a1, a2, a3, a4⟩ := hzlive hc
     exact ⟨a1, a2, by rw [hF.accessible]; exact a3, a4⟩
@@ -84,7 +86,7 @@ theorem post_keep {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Na
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem small (impl : List Segment) (R : RtInv)
-    (hmk : MakesliceLiveContract (LibExp.program.link impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
+    (hmk : MakesliceLiveContract (LibW.program.link impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
     (kc : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat) (L : List (Nat × Nat))
     (zp zl zc st xp xl xc n : Nat) (s : State) (hkc : 4608 ≤ kc) :
     JS impl R kc sqrC mulC b L zp zl zc st xp xl xc n s := by

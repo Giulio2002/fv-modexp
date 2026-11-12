@@ -33,7 +33,7 @@ theorem nmT (hap : ImplApart Extracted.program impl) (hP : EPre R b L K g sp st 
     (S : State) (hpc : S.pc = BitVec.ofNat 64 nmE) (hsp : S.sp = BitVec.ofNat 64 sp)
     (h28 : S.regs 28 = BitVec.ofNat 64 g) (h18 : S.regs 18 = s.regs 18) (hm : S.mem = M)
     (h0 : S.regs 0 = BitVec.ofNat 64 p) (h1 : S.regs 1 = BitVec.ofNat 64 l) (h15 : S.regs 15 = BitVec.ofNat 64 c) :
-    ReachesRet (LibExp.program.link impl) (s.regs 30) S (FQ R b L K zp zc st v cst s) := by
+    ReachesRet (LibW.program.link impl) (s.regs 30) S (FQ R b L K zp zc st v cst s) := by
   obtain ⟨hlc, hval, hN, hodd⟩ := hv
   have hl0 : 0 < l := len_pos hval hodd
   have hc0 : 0 < c := by omega

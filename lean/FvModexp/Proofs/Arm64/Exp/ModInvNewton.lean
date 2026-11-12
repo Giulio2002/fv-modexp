@@ -30,13 +30,13 @@ theorem newtonIter (impl : List Segment) {ret : BitVec 64} {Q : State → Prop} 
       S'.regs 0 = S.regs 0 → S'.regs 2 = S.regs 2 → S'.regs 3 = S.regs 3 → S'.regs 4 = S.regs 4 →
       S'.regs 5 = S.regs 5 → S'.regs 6 = S.regs 6 → S'.regs 7 = S.regs 7 → S'.regs 18 = S.regs 18 →
       S'.regs 28 = S.regs 28 → S'.regs 29 = S.regs 29 → S'.mem = S.mem → S'.sp = S.sp →
-      ReachesRet (LibExp.program.link impl) ret S' Q)
+      ReachesRet (LibW.program.link impl) ret S' Q)
     (KE : ∀ S' : State, ¬ 2 ^ j < n0 → S'.pc = BitVec.ofNat 64 1797204 → S'.regs 10 = BitVec.ofNat 64 k →
       S'.regs 0 = S.regs 0 → S'.regs 2 = S.regs 2 → S'.regs 3 = S.regs 3 → S'.regs 4 = S.regs 4 →
       S'.regs 5 = S.regs 5 → S'.regs 6 = S.regs 6 → S'.regs 7 = S.regs 7 → S'.regs 18 = S.regs 18 →
       S'.regs 28 = S.regs 28 → S'.regs 29 = S.regs 29 → S'.mem = S.mem → S'.sp = S.sp →
-      ReachesRet (LibExp.program.link impl) ret S' Q) :
-    ReachesRet (LibExp.program.link impl) ret S Q := by
+      ReachesRet (LibW.program.link impl) ret S' Q) :
+    ReachesRet (LibW.program.link impl) ret S Q := by
   have hB : Exp.B = 2 ^ 64 := Exp.B_def
   have hjp : 2 ^ (j + 1) = 2 ^ j + 2 ^ j := by rw [Nat.pow_succ]; omega
   by_cases hc : 2 ^ j < n0
@@ -62,8 +62,8 @@ theorem newtonLoop_run (impl : List Segment) {ret : BitVec 64} {Q : State → Pr
       S'.regs 0 = S.regs 0 → S'.regs 2 = S.regs 2 → S'.regs 3 = S.regs 3 → S'.regs 4 = S.regs 4 →
       S'.regs 5 = S.regs 5 → S'.regs 6 = S.regs 6 → S'.regs 7 = S.regs 7 → S'.regs 18 = S.regs 18 →
       S'.regs 28 = S.regs 28 → S'.regs 29 = S.regs 29 → S'.mem = S.mem → S'.sp = S.sp →
-      ReachesRet (LibExp.program.link impl) ret S' Q) →
-    ReachesRet (LibExp.program.link impl) ret S Q := by
+      ReachesRet (LibW.program.link impl) ret S' Q) →
+    ReachesRet (LibW.program.link impl) ret S Q := by
   intro fuel
   induction fuel with
   | zero =>

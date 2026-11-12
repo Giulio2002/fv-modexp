@@ -65,8 +65,8 @@ theorem xAft (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {M : Memory} 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
 /-- **`make(nat, 1)`** at the exit (from the `makeslice` call) -/
-theorem xA1 (hap : ImplApart Extracted.program impl) (hmv : MemmoveLive (LibExp.program.link impl) P2Pre.mvE 4096 R)
-    (hmk : MakesliceLiveContract (LibExp.program.link impl) mkE 4096 R)
+theorem xA1 (hap : ImplApart Extracted.program impl) (hmv : MemmoveLive (LibW.program.link impl) P2Pre.mvE 4096 R)
+    (hmk : MakesliceLiveContract (LibW.program.link impl) mkE 4096 R)
     (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {M : Memory} {L1 : List (Nat × Nat)} {b1 zzp bp : Nat}
     (hB : BF R L K g sp st zp zc xp xl xc yp yl lm (s.regs 30).toNat s M L1 b1 zzp bp)
     (hr4 : (s.regs 30).toNat % 4 = 0) (hr48 : (s.regs 30).toNat < 2 ^ 48) {Z cst : Nat}
@@ -76,7 +76,7 @@ theorem xA1 (hap : ImplApart Extracted.program impl) (hmv : MemmoveLive (LibExp.
     (h28 : T.regs 28 = BitVec.ofNat 64 g) (h18 : T.regs 18 = s.regs 18) (hm : T.mem = M)
     (h0 : T.regs 0 = 2641088#64) (h1 : T.regs 1 = BitVec.ofNat 64 1) (h2 : T.regs 2 = BitVec.ofNat 64 1)
     (h30 : T.regs 30 = BitVec.ofNat 64 1796624) :
-    ReachesRet (LibExp.program.link impl) (s.regs 30) T (FQ R b L K zp zc st Z cst s) := by
+    ReachesRet (LibW.program.link impl) (s.regs 30) T (FQ R b L K zp zc st Z cst s) := by
   have hK := hP.1.2.2.2.2.2.2.2.1
   have hK1 := hP.1.2.2.2.2.2.2.2.2.1
   have hsp2 := hP.1.2.2.2.2.2.2.2.2.2.1
@@ -102,8 +102,8 @@ theorem xA1 (hap : ImplApart Extracted.program impl) (hmv : MemmoveLive (LibExp.
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
 /-- **`make(nat, n, n + 4)`** at the exit (from the `makeslice` call; `96 = n + 4` already stored) -/
-theorem xA2 (hap : ImplApart Extracted.program impl) (hmv : MemmoveLive (LibExp.program.link impl) P2Pre.mvE 4096 R)
-    (hmk : MakesliceLiveContract (LibExp.program.link impl) mkE 4096 R)
+theorem xA2 (hap : ImplApart Extracted.program impl) (hmv : MemmoveLive (LibW.program.link impl) P2Pre.mvE 4096 R)
+    (hmk : MakesliceLiveContract (LibW.program.link impl) mkE 4096 R)
     (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {M : Memory} {L1 : List (Nat × Nat)} {b1 zzp bp : Nat}
     (hB : BF R L K g sp st zp zc xp xl xc yp yl lm (s.regs 30).toNat s M L1 b1 zzp bp)
     (hr4 : (s.regs 30).toNat % 4 = 0) (hr48 : (s.regs 30).toNat < 2 ^ 48) {n Z cst : Nat} (hn1 : 0 < n)
@@ -114,7 +114,7 @@ theorem xA2 (hap : ImplApart Extracted.program impl) (hmv : MemmoveLive (LibExp.
     (h28 : T.regs 28 = BitVec.ofNat 64 g) (h18 : T.regs 18 = s.regs 18) (hm : T.mem = M)
     (h0 : T.regs 0 = 2641088#64) (h1 : T.regs 1 = BitVec.ofNat 64 n) (h2 : T.regs 2 = BitVec.ofNat 64 (n + 4))
     (h30 : T.regs 30 = BitVec.ofNat 64 1796664) :
-    ReachesRet (LibExp.program.link impl) (s.regs 30) T (FQ R b L K zp zc st Z cst s) := by
+    ReachesRet (LibW.program.link impl) (s.regs 30) T (FQ R b L K zp zc st Z cst s) := by
   have hK := hP.1.2.2.2.2.2.2.2.1
   have hK1 := hP.1.2.2.2.2.2.2.2.2.1
   have hsp2 := hP.1.2.2.2.2.2.2.2.2.2.1

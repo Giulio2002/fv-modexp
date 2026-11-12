@@ -39,7 +39,7 @@ variable {impl : List Segment} {ret0 : BitVec 64} {Q : State → Prop} {R : RtIn
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
 theorem callB4 (hap : ImplApart Extracted.program impl) {ns : List String}
-    (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
+    (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
     {stkM aboveM : Nat} (hmu : MulHypX impl R ns stkM aboveM mlC) (hkM : stkM ≤ K) (haM : aboveM ≤ 88)
     (hmm : ∀ ℓ a a' c c', a ≤ a' → c ≤ c' → mlC ℓ a c ≤ mlC ℓ a' c')
     (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (hX : natVal s.mem xp xl % 2 = 1)
@@ -59,7 +59,7 @@ theorem callB4 (hap : ImplApart Extracted.program impl) {ns : List String}
     (h6 : T.regs 6 = BitVec.ofNat 64 c2) (h7 : T.regs 7 = BitVec.ofNat 64 (bp + 8 * (dOf yi * W lm)))
     (h8 : T.regs 8 = BitVec.ofNat 64 (M0.readLE (sp + 320 + 24 * dOf yi + 8) 8))
     (h9 : T.regs 9 = BitVec.ofNat 64 (W lm)) :
-    ReachesRet (LibExp.program.link impl) ret0 T Q := by
+    ReachesRet (LibW.program.link impl) ret0 T Q := by
   have hjc := h.jc
   obtain ⟨hB, hrd, hkeep⟩ := BF.win hP hjc.bf hF hrg (fun r hr => by
     simp only [List.mem_cons, List.not_mem_nil, or_false] at hr
@@ -108,7 +108,7 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
 /-- **B4** -/
 theorem segB4 (hap : ImplApart Extracted.program impl) {ns : List String}
-    (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
+    (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
     {stkM aboveM : Nat} (hmu : MulHypX impl R ns stkM aboveM mlC) (hkM : stkM ≤ K) (haM : aboveM ≤ 88)
     (hmm : ∀ ℓ a a' c c', a ≤ a' → c ≤ c' → mlC ℓ a c ≤ mlC ℓ a' c')
     (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (hX : natVal s.mem xp xl % 2 = 1)

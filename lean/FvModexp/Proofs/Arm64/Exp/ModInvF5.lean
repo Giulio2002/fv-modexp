@@ -24,10 +24,18 @@ theorem post_mid (s' : State) {L' : List (Nat × Nat)} {b' p l c q ql qc : Nat}
     (mid : Mid R kc L s zp zc st xp xl xc n s'.mem L' b' p l c q ql qc)
     (e0 : (s'.regs 0).toNat = p) (e1 : (s'.regs 1).toNat = l) (e2 : (s'.regs 2).toNat = c)
     (hv : natVal s'.mem p l = val (natVal s.mem xp xl) n) (hn : NatNorm s'.mem p l)
-    (hb : b - cost sqrC mulC n ≤ b') :
+    (hb : b - cost sqrC mulC n ≤ b') (hzh : Held R L zp (8 * zc)) :
     Post R kc sqrC mulC b L zp zc st xp xl n s s' := by
-  obtain ⟨-, ⟨-, hF, hLF, hLE, hinv, hstk, hlen, hstw⟩, ⟨hc40, -, hlive, hold, -⟩, -, -, hlc, -⟩ := mid
-  exact ⟨p, l, c, e0, e1, e2, hv, hn, hlc, hc40, L', b', hLE, hb, hinv, hlive, hold, ⟨hstk, hlen, hstw⟩, hF, hLF⟩
+  obtain ⟨-, ⟨-, hF, hLF, hLE, hinv, hstk, hlen, hstw, hain⟩, ⟨hc40, -, hlive, hold, -, -, -, -, hwa⟩, -, -, hlc,
+    -⟩ := mid
+  refine ⟨p, l, c, e0, e1, e2, hv, hn, hlc, hc40, L', b', hLE, hb, hinv, hlive, hold, ⟨⟨hstk, hlen, hstw⟩, hain⟩,
+    hF, hLF, fun hc hnk => ?_⟩
+  by_cases hz : p = zp ∧ c = zc
+  · obtain ⟨rfl, rfl⟩ := hz
+    rcases hstw with h | ⟨hIn, hAp⟩
+    · exact absurd h hnk
+    · have := fresh_apart hIn hAp hzh; unfold Apart at this ⊢; omega
+  · exact hwa hz hc (ArrIn.cap hain hnk)
 
 /-- the final budget: at most `numWords` rounds before the final one -/
 theorem bud_final {j b b1 b' : Nat} (hj1 : 1 ≤ j) (hjn : 2 ^ (j - 1) < NW n)
@@ -69,7 +77,7 @@ theorem retF5 {impl : List Segment} {R : RtInv} {kc : Nat} (hkc : 4608 ≤ kc) {
     rw [show s.sp.toNat - 240 - 8 = s.sp.toNat - 248 by omega]; exact hmid.1.1.2
   unfold Goal
   janus_run [f1, f2]
-  refine ⟨?_, post_mid _ hmid ?_ ?_ ?_ hv hn hb⟩
+  refine ⟨?_, post_mid _ hmid ?_ ?_ ?_ hv hn hb (hpre.2.2.2.2.2.2.2.2.1.2.1 hpre.2.2.2.2.2.2.2.1).2.1⟩
   · have hsl := s.sp.isLt
     apply BitVec.eq_of_toNat_eq
     simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega
@@ -102,7 +110,7 @@ theorem contF5 {impl : List Segment} {R : RtInv} {kc : Nat} (hkc : 4608 ≤ kc) 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem segF5 {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
-    (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains SubMod2N.fn = false)
+    (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains SubMod2N.fn = false)
     {stkT aboveT : Nat} (hkT : stkT ≤ 4464) (haT : aboveT ≤ 88) (htr : Trunc.Hyp2 impl R ns stkT aboveT)
     (hsub : SubMod2N.SubHypR impl R) (hadd : SubMod2N.AddHypR impl R) {kc : Nat} (hkc : 4608 ≤ kc)
     {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat} {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat}

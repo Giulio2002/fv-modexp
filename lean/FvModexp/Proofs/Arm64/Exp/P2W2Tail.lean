@@ -17,16 +17,16 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvMod
 
 namespace FvModexp.Arm64.P2W2
 
-/-- the closure (`Defer.sum`, proved on `LibDefer`) as a callee in `LibExp` (as agent expmc's `DeferW.sum`) -/
+/-- the closure (`Defer.sum`, proved on `LibDefer`) as a callee in `LibW` (as agent expmc's `DeferW.sum`) -/
 theorem dfrSum (impl : List Segment) (hap : ImplApart Extracted.program impl) :
-    Summary (LibExp.program.link impl) dwE Defer.Pre Defer.Post := by
-  have hsub : ∀ x, LibDefer.names.contains x = true → LibExp.names.contains x = true := by
-    have h : LibDefer.names.all LibExp.names.contains = true := by decide
+    Summary (LibW.program.link impl) dwE Defer.Pre Defer.Post := by
+  have hsub : ∀ x, LibDefer.names.contains x = true → LibW.names.contains x = true := by
+    have h : LibDefer.names.all LibW.names.contains = true := by decide
     intro x hx
     rw [List.all_eq_true] at h
     exact h x (by simpa using hx)
   have hc := codeIn_restrict_mono hap hsub
-  rw [← LibDefer.eq_only, ← LibExp.eq_only] at hc
+  rw [← LibDefer.eq_only, ← LibW.eq_only] at hc
   have h := Janus.Contracts.EqHashModel.Summary.of_codeIn hc (Defer.sum impl
     "github.com/ethereum/go-bigmodexpfix/src/math/big.nat.expNNPowerOfTwoWindowSize2.deferwrap1" (by simp))
   have e : segAddr LibDefer.program
@@ -67,7 +67,7 @@ theorem tailA {impl : List Segment} (hap : ImplApart Extracted.program impl) (Q 
     (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (hmem : S.mem = M)
     (hp : p < 2 ^ 64) (hl : l < 2 ^ 64) (hc : c < 2 ^ 64) (he : TEnv sp g st n0 r29 ret M)
     (KF : ∀ s', TPost sp g st n0 p l c r18 r29 M s' → Q s') :
-    ReachesRet (LibExp.program.link impl) (BitVec.ofNat 64 ret) S Q := by
+    ReachesRet (LibW.program.link impl) (BitVec.ofNat 64 ret) S Q := by
   obtain ⟨hal, hsp1, hsp2, hacc, hg1, hg2, hg3, hgw, r448, r416, r424, r432, hst1, hst2, hn0, hstw, hstg, rfp, rlr,
     hr4, hr48⟩ := he
   have hD := dfrSum impl hap
@@ -91,7 +91,7 @@ theorem tailB {impl : List Segment} (hap : ImplApart Extracted.program impl) (Q 
     (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (hmem : S.mem = M)
     (hp : p < 2 ^ 64) (hl : l < 2 ^ 64) (hc : c < 2 ^ 64) (he : TEnv sp g st n0 r29 ret M)
     (KF : ∀ s', TPost sp g st n0 p l c r18 r29 M s' → Q s') :
-    ReachesRet (LibExp.program.link impl) (BitVec.ofNat 64 ret) S Q := by
+    ReachesRet (LibW.program.link impl) (BitVec.ofNat 64 ret) S Q := by
   obtain ⟨hal, hsp1, hsp2, hacc, hg1, hg2, hg3, hgw, r448, r416, r424, r432, hst1, hst2, hn0, hstw, hstg, rfp, rlr,
     hr4, hr48⟩ := he
   have hD := dfrSum impl hap
@@ -116,7 +116,7 @@ theorem tailN {impl : List Segment} (hap : ImplApart Extracted.program impl) (Q 
     (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (hmem : S.mem = M)
     (hp : p < 2 ^ 64) (he : TEnv sp g st n0 r29 ret M)
     (KF : ∀ s', TPost sp g st n0 p 1 1 r18 r29 M s' → Q s') :
-    ReachesRet (LibExp.program.link impl) (BitVec.ofNat 64 ret) S Q := by
+    ReachesRet (LibW.program.link impl) (BitVec.ofNat 64 ret) S Q := by
   obtain ⟨hal, hsp1, hsp2, hacc, hg1, hg2, hg3, hgw, r448, r416, r424, r432, hst1, hst2, hn0, hstw, hstg, rfp, rlr,
     hr4, hr48⟩ := he
   have hD := dfrSum impl hap

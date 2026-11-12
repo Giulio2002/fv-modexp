@@ -16,7 +16,7 @@ open FvModexp.Arm64.EvenHyp
 
 set_option maxRecDepth 20000 in
 theorem sqrCallX {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
-    (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) {stk above : Nat} {cost : Nat → Nat → Nat}
+    (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) {stk above : Nat} {cost : Nat → Nat → Nat}
     (hsq : SqrHypX impl R ns stk above cost) {b : Nat} {L : List (Nat × Nat)} {zp zl zc st x xl xc : Nat}
     {S : State} {ret : BitVec 64} {Q : State → Prop} {ra : Nat}
     (hra : RetAddr ((Extracted.program.onlySegments ns).link impl) ra)
@@ -31,9 +31,9 @@ theorem sqrCallX {impl : List Segment} (hap : ImplApart Extracted.program impl) 
     (K : ∀ s', s'.pc = BitVec.ofNat 64 ra → s'.sp = S.sp → s'.regs 28 = S.regs 28 → s'.regs 29 = S.regs 29 →
       s'.regs 18 = S.regs 18 → s'.mem.regions = S.mem.regions →
       SqrPostL R b (cost (stLen S.mem st) xl) L stk above zp zc st x xl S s' → Reuse (2 * xl) zp zc [(x, xc)] s' →
-      ReachesRet (LibExp.program.link impl) ret s' Q) :
-    ReachesRet (LibExp.program.link impl) ret S Q := by
-  have hS := CallW.hypSum hap hns (hsq b L (BitVec.ofNat 64 zp) (BitVec.ofNat 64 zl) (BitVec.ofNat 64 zc)
+      ReachesRet (LibW.program.link impl) ret s' Q) :
+    ReachesRet (LibW.program.link impl) ret S Q := by
+  have hS := CallWW.hypSum hap hns (hsq b L (BitVec.ofNat 64 zp) (BitVec.ofNat 64 zl) (BitVec.ofNat 64 zc)
     (BitVec.ofNat 64 st) (BitVec.ofNat 64 x) (BitVec.ofNat 64 xl) (BitVec.ofNat 64 xc))
   refine ReachesRet.call_regions hS hpc ⟨?_, ?_, ?_⟩ fun s' hr ⟨⟨e1, e2, e3, e4⟩, hq⟩ hrg => ?_
   · rw [h30, tN bra]; exact hra
@@ -44,7 +44,7 @@ theorem sqrCallX {impl : List Segment} (hap : ImplApart Extracted.program impl) 
 
 set_option maxRecDepth 20000 in
 theorem mulCallX {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
-    (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) {stk above : Nat} {cost : Nat → Nat → Nat → Nat}
+    (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) {stk above : Nat} {cost : Nat → Nat → Nat → Nat}
     (hmu : MulHypX impl R ns stk above cost) {b : Nat} {L : List (Nat × Nat)} {zp zl zc st x xl xc y yl yc : Nat}
     {S : State} {ret : BitVec 64} {Q : State → Prop} {ra : Nat}
     (hra : RetAddr ((Extracted.program.onlySegments ns).link impl) ra)
@@ -62,9 +62,9 @@ theorem mulCallX {impl : List Segment} (hap : ImplApart Extracted.program impl) 
     (K : ∀ s', s'.pc = BitVec.ofNat 64 ra → s'.sp = S.sp → s'.regs 28 = S.regs 28 → s'.regs 29 = S.regs 29 →
       s'.regs 18 = S.regs 18 → s'.mem.regions = S.mem.regions →
       MulPostL R b (cost (stLen S.mem st) xl yl) L stk above zp zc st x xl y yl S s' →
-      Reuse (xl + yl) zp zc [(x, xc), (y, yc)] s' → ReachesRet (LibExp.program.link impl) ret s' Q) :
-    ReachesRet (LibExp.program.link impl) ret S Q := by
-  have hS := CallW.hypSum hap hns (hmu b L (BitVec.ofNat 64 zp) (BitVec.ofNat 64 zl) (BitVec.ofNat 64 zc)
+      Reuse (xl + yl) zp zc [(x, xc), (y, yc)] s' → ReachesRet (LibW.program.link impl) ret s' Q) :
+    ReachesRet (LibW.program.link impl) ret S Q := by
+  have hS := CallWW.hypSum hap hns (hmu b L (BitVec.ofNat 64 zp) (BitVec.ofNat 64 zl) (BitVec.ofNat 64 zc)
     (BitVec.ofNat 64 st) (BitVec.ofNat 64 x) (BitVec.ofNat 64 xl) (BitVec.ofNat 64 xc) (BitVec.ofNat 64 y)
     (BitVec.ofNat 64 yl) (BitVec.ofNat 64 yc))
   refine ReachesRet.call_regions hS hpc ⟨?_, ?_, ?_⟩ fun s' hr ⟨⟨e1, e2, e3, e4⟩, hq⟩ hrg => ?_
@@ -77,7 +77,7 @@ theorem mulCallX {impl : List Segment} (hap : ImplApart Extracted.program impl) 
 set_option maxRecDepth 20000 in
 /-- `LibCalls.stkNatCall` with the `StackBackL`-ready post (`StackNat.HypL` / `PostL`) -/
 theorem stkNatCallL {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
-    (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) {stk above : Nat}
+    (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) {stk above : Nat}
     (hsn : StackNat.HypL impl R ns stk above) {b : Nat} {L : List (Nat × Nat)} {st n : Nat}
     {S : State} {ret : BitVec 64} {Q : State → Prop} {ra : Nat}
     (hra : RetAddr ((Extracted.program.onlySegments ns).link impl) ra)
@@ -87,9 +87,9 @@ theorem stkNatCallL {impl : List Segment} (hap : ImplApart Extracted.program imp
     (hpre : StackNat.Pre R b L stk above st n S)
     (K : ∀ s', s'.pc = BitVec.ofNat 64 ra → s'.sp = S.sp → s'.regs 28 = S.regs 28 → s'.regs 29 = S.regs 29 →
       s'.regs 18 = S.regs 18 → s'.mem.regions = S.mem.regions → StackNat.PostL R b L stk above st n S s' →
-      ReachesRet (LibExp.program.link impl) ret s' Q) :
-    ReachesRet (LibExp.program.link impl) ret S Q := by
-  have hS := CallW.hypSum hap hns (hsn b L (BitVec.ofNat 64 st) (BitVec.ofNat 64 n))
+      ReachesRet (LibW.program.link impl) ret s' Q) :
+    ReachesRet (LibW.program.link impl) ret S Q := by
+  have hS := CallWW.hypSum hap hns (hsn b L (BitVec.ofNat 64 st) (BitVec.ofNat 64 n))
   refine ReachesRet.call_regions hS hpc ⟨?_, ?_, ?_⟩ fun s' hr ⟨⟨e1, e2, e3, e4⟩, hq⟩ hrg => ?_
   · rw [h30, LibCalls.tN bra]; exact hra
   · simp only [ArgsFrom]; exact ⟨h0, h1, trivial⟩

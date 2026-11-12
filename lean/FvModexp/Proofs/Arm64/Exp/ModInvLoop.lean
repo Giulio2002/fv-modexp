@@ -57,12 +57,12 @@ theorem j2_all {impl : List Segment} {R : RtInv} {kc : Nat} {sqrC : Nat → Nat}
 set_option maxRecDepth 20000 in
 /-- **the loop**: `J2` at every round, from the callees' summaries -/
 theorem loop {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
-    (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
+    (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
     (hnfS : ns.contains SubMod2N.fn = false) {kc : Nat} (hkc : 4608 ≤ kc)
-    {stkS aboveS : Nat} {sqC : Nat → Nat → Nat} (hsq : SqrHyp impl R ns stkS aboveS sqC)
+    {stkS aboveS : Nat} {sqC : Nat → Nat → Nat} (hsq : SqrHypX impl R ns stkS aboveS sqC)
     (hkS : stkS ≤ kc) (haS : aboveS ≤ 88)
     {stkT aboveT : Nat} (htr : Trunc.Hyp2 impl R ns stkT aboveT) (hkT : stkT ≤ kc) (haT : aboveT ≤ 88)
-    {stkM aboveM : Nat} {mlC : Nat → Nat → Nat → Nat} (hmu : MulHyp impl R ns stkM aboveM mlC)
+    {stkM aboveM : Nat} {mlC : Nat → Nat → Nat → Nat} (hmu : MulHypX impl R ns stkM aboveM mlC)
     (hkM : stkM ≤ kc) (haM : aboveM ≤ 88)
     {stkL aboveL : Nat} (hls : Lsh.Hyp2 impl R ns stkL aboveL) (hkL : stkL ≤ kc) (haL : aboveL ≤ 88)
     (hkT4 : stkT ≤ 4464)

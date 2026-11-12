@@ -21,7 +21,7 @@ variable {impl : List Segment} {ret0 : BitVec 64} {Q : State → Prop} {R : RtIn
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
 theorem callB1 (hap : ImplApart Extracted.program impl) {ns : List String}
-    (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
+    (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
     {stkT aboveT : Nat} (htr : Trunc.Hyp2 impl R ns stkT aboveT) (hkT : stkT ≤ K) (haT : aboveT ≤ 88)
     (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {i c yi Z : Nat} {u : Bool}
     (K2 : KJ impl ret0 Q (J2 R b L K g sp st zp zc xp xl xc yp yl lm ret s r29 zzp bp kk cst FV sqC mlC i c yi Z u))
@@ -34,7 +34,7 @@ theorem callB1 (hap : ImplApart Extracted.program impl) {ns : List String}
     (h0 : T.regs 0 = BitVec.ofNat 64 p1) (h1 : T.regs 1 = BitVec.ofNat 64 l1) (h2 : T.regs 2 = BitVec.ofNat 64 c1)
     (h3 : T.regs 3 = BitVec.ofNat 64 p1) (h4 : T.regs 4 = BitVec.ofNat 64 l1) (h5 : T.regs 5 = BitVec.ofNat 64 c1)
     (h6 : T.regs 6 = BitVec.ofNat 64 lm) :
-    ReachesRet (LibExp.program.link impl) ret0 T Q := by
+    ReachesRet (LibW.program.link impl) ret0 T Q := by
   have hB := h.jc.bf
   have hb := h.hb
   have hcb := h.jc.hcb
@@ -60,7 +60,7 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
 /-- **B1** -/
 theorem segB1 (hap : ImplApart Extracted.program impl) {ns : List String}
-    (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
+    (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
     {stkT aboveT : Nat} (htr : Trunc.Hyp2 impl R ns stkT aboveT) (hkT : stkT ≤ K) (haT : aboveT ≤ 88)
     (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {i c yi Z : Nat} {u : Bool}
     (K2 : KJ impl ret0 Q (J2 R b L K g sp st zp zc xp xl xc yp yl lm ret s r29 zzp bp kk cst FV sqC mlC i c yi Z u)) :

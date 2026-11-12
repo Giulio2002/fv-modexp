@@ -87,12 +87,41 @@ theorem out_sub {p n a k i j : Nat} {rs : List (Nat × Nat)} (hin : InRanges p n
   have := MemFrame.outside_mem ho hr
   simp only [outside_cons, outside_nil, and_true]; omega
 
+/-- `WA` of an array held by the callee's live set, through the callee's `StackBack` -/
+theorem wa_back {R : RtInv} {L1 L2 : List (Nat × Nat)} {zp zc st : Nat} {M M' : Memory} {p c : Nat}
+    (hb : StackBack R L1 L2 st M M') (h : WA zp zc st M p c) (hh : 0 < c → Held R L1 p (8 * c)) :
+    WA zp zc st M' p c := by
+  intro hne hc hcap
+  rcases hb.2.2 with ⟨e0, e2⟩ | ⟨hIn, hAp⟩
+  · rw [e2] at hcap; rw [e0, e2]; exact h hne hc hcap
+  · have := fresh_apart hIn hAp (hh hc); unfold Apart at this ⊢; omega
+
+/-- `WA` of a callee's result: the caller's array reused (`WA` kept), or fresh (callee's apartness conjunct; when
+the callee kept the stack's array, that array is held by the callee's entry live set) -/
+theorem wa_new {R : RtInv} {L1 L2 : List (Nat × Nat)} {zp zc st : Nat} {M M' : Memory} {t tc t' tc' : Nat}
+    (hb : StackBack R L1 L2 st M M') (hok : StkOK M R L1 st) (ht : WA zp zc st M t tc)
+    (hth : 0 < tc → Held R L1 t (8 * tc))
+    (hof : (t' = t ∧ tc' = tc) ∨ (InRanges t' (8 * tc') R.rt ∧ ApartAll t' (8 * tc') L1))
+    (hstkA : ¬ (t' = t ∧ tc' = tc) → 0 < tc' → 0 < stCap M' st →
+      ¬ (stW M' st = stW M st ∧ stCap M' st = stCap M st) → Apart t' (8 * tc') (stW M' st) (8 * stCap M' st)) :
+    WA zp zc st M' t' tc' := by
+  rcases hof with ⟨rfl, rfl⟩ | ⟨hIn, hAp⟩
+  · exact wa_back hb ht hth
+  by_cases hsame : t' = t ∧ tc' = tc
+  · obtain ⟨rfl, rfl⟩ := hsame; exact wa_back hb ht hth
+  intro _ hc hcap
+  by_cases hk : stW M' st = stW M st ∧ stCap M' st = stCap M st
+  · obtain ⟨e0, e2⟩ := hk
+    rw [e2] at hcap; rw [e0, e2]
+    exact fresh_apart hIn hAp (hok.2.2.2.2.1 hcap).2.1
+  · exact hstkA hsame hc hcap hk
+
 /-- an owned array stays owned after a callee: its array is live in the new live set, and the stack came back -/
 theorem own_back {R : RtInv} {kc : Nat} {L L1 L2 : List (Nat × Nat)} {s : State} {zp zc st xp xl : Nat}
     {M M' : Memory} {o oc : Nat} (h : Own R kc L L1 s zp zc st xp xl M o oc) (hlive : NatLive M' R L2 o oc)
     (hsb : StackBack R L1 L2 st M M') : Own R kc L L2 s zp zc st xp xl M' o oc := by
-  obtain ⟨a1, a2, a3, a4, a5, a6, a7, a8⟩ := h
-  refine ⟨a1, a2, hlive, a4, a5, a6, a7, fun hc => ?_⟩
+  obtain ⟨a1, a2, a3, a4, a5, a6, a7, a8, a9⟩ := h
+  refine ⟨a1, a2, hlive, a4, a5, a6, a7, fun hc => ?_, wa_back hsb a9 fun hc => (a3 hc).2.1⟩
   have hc' : 0 < oc := by omega
   exact stkApart_back hsb a8 (a3 hc').2.1 hc
 

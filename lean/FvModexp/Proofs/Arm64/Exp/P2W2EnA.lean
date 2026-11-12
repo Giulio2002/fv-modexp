@@ -39,7 +39,7 @@ theorem enA (impl : List Segment) (ret0 : BitVec 64) (Q : State → Prop)
       S'.regs 18 = S.regs 18 → S'.regs 28 = BitVec.ofNat 64 g → S'.regs 29 = BitVec.ofNat 64 (sp - 8) →
       S'.mem = M' → MemFrame M M' [(sp - 8, sp + 456), (sp + 472, sp + 560)] → M'.regions = M.regions →
       ESl M' sp st r29 ret zp zc xp xl xc yp yl lm len0 →
-      ReachesRet (LibExp.program.link impl) ret0 S' Q)
+      ReachesRet (LibW.program.link impl) ret0 S' Q)
     (KG : cap0 < len0 + 8 * W lm → ∀ (S' : State) (M' : Memory),
       S'.pc = BitVec.ofNat 64 grE → S'.sp = BitVec.ofNat 64 sp →
       S'.regs 0 = BitVec.ofNat 64 w0 → S'.regs 1 = BitVec.ofNat 64 (len0 + 8 * W lm) →
@@ -51,8 +51,8 @@ theorem enA (impl : List Segment) (ret0 : BitVec 64) (Q : State → Prop)
       M'.readLE (sp + 240) 8 = len0 + 8 * W lm → M'.readLE (sp + 176) 8 = len0 →
       M'.readLE (sp + 192) 8 = len0 + 8 * W lm - cap0 → M'.readLE (sp + 232) 8 = cap0 →
       M'.readLE (sp + 248) 8 = W lm →
-      ReachesRet (LibExp.program.link impl) ret0 S' Q) :
-    ReachesRet (LibExp.program.link impl) ret0 S Q := by
+      ReachesRet (LibW.program.link impl) ret0 S' Q) :
+    ReachesRet (LibW.program.link impl) ret0 S Q := by
   generalize e18 : S.regs 18 = x18 at KJ KG
   have hW : W lm ≤ 128 := by simp only [W]; omega
   have hsh := shr6 lm (by omega)

@@ -97,8 +97,8 @@ end
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem segL0 {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
-    (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
-    {stkS aboveS : Nat} {sqC : Nat → Nat → Nat} (hsq : SqrHyp impl R ns stkS aboveS sqC) {kc : Nat}
+    (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
+    {stkS aboveS : Nat} {sqC : Nat → Nat → Nat} (hsq : SqrHypX impl R ns stkS aboveS sqC) {kc : Nat}
     (hkc : 4608 ≤ kc) (hkS : stkS ≤ kc) (haS : aboveS ≤ 88) {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
     (hsc : ∀ x, sqC (stLen s.mem st) x = sqrC x) (hsm : ∀ a a', a ≤ a' → sqrC a ≤ sqrC a')

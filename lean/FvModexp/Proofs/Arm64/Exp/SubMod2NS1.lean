@@ -100,7 +100,7 @@ theorem s1t (impl : List Segment) {R : RtInv} {b : Nat} {L : List (Nat × Nat)} 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem s1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv) {ns : List String}
-    (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
+    (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
     {stkT aboveT : Nat} (hkT : stkT ≤ 4464) (haT : aboveT ≤ 88) (htr : Trunc.Hyp2 impl R ns stkT aboveT)
     (b : Nat) (L : List (Nat × Nat)) (op zp zl zc yp yl yc n : Nat) (s : State)
     (hpc : s.pc = BitVec.ofNat 64 1805584)

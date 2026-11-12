@@ -83,8 +83,8 @@ variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem blH {impl : List Segment} (hmv : MemmoveLive (LibExp.program.link impl) P2Pre.mvE 4096 R)
-    (hmk : MakesliceLiveContract (LibExp.program.link impl) mkE 4096 R)
+theorem blH {impl : List Segment} (hmv : MemmoveLive (LibW.program.link impl) P2Pre.mvE 4096 R)
+    (hmk : MakesliceLiveContract (LibW.program.link impl) mkE 4096 R)
     (ret0 : BitVec 64) (Q : State → Prop) (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s)
     {sqC : Nat → Nat → Nat} {mlC : Nat → Nat → Nat → Nat} {cst FV : Nat} {r29 : BitVec 64}
     (KL : ∀ kk, KL impl ret0 Q R b L K g sp st zp zc xp xl xc yp yl lm ret s r29 sqC mlC zzp bp kk cst FV)
@@ -99,7 +99,7 @@ theorem blH {impl : List Segment} (hmv : MemmoveLive (LibExp.program.link impl) 
     (hFV : Exp.outerLoop 2 (stp lm (natVal s.mem xp xl)) (natVal s.mem yp yl) 32 i
       (yi * 2 ^ (64 - (kkOf yi - 1) * 2) % 2 ^ 64) (kkOf yi - 1)
       (Exp.p2Pow lm (natVal s.mem xp xl) (yi / 2 ^ ((kkOf yi - 1) * 2))) = FV) :
-    ReachesRet (LibExp.program.link impl) ret0 S Q := by
+    ReachesRet (LibW.program.link impl) ret0 S Q := by
   have hK := hP.1.2.2.2.2.2.2.2.1
   have hK1 := hP.1.2.2.2.2.2.2.2.2.1
   have hsp2 := hP.1.2.2.2.2.2.2.2.2.2.1

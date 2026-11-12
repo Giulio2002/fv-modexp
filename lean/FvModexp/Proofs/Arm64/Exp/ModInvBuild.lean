@@ -41,7 +41,7 @@ theorem sqrPre_at (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M : 
     wrOut_own hzz hK hsp' h28 hm hstk habove, rdIn_own hz (by omega) hlc hK hsp' hm hstk habove,
     by simp only [NW] at hl; omega, Or.inr fun _ _ => by unfold Apart at hap ⊢; omega,
     stkIn_at hpre hrt hsp' h28 hm hstk habove, by rw [hm, hlen]; simp only [NW] at hl hsl ⊢; omega,
-    by rw [hm]; exact hzz.2.2.2.2.2.2.2, by rw [hm]; exact stkApart_sub hz.2.2.2.2.2.2.2 (by omega), hb,
+    by rw [hm]; exact hzz.2.2.2.2.2.2.2.1, by rw [hm]; exact stkApart_sub hz.2.2.2.2.2.2.2.1 (by omega), hb,
     by rw [h28, hm]; exact hrt.2.2.2.2.1⟩
 
 set_option maxRecDepth 20000 in
@@ -65,7 +65,7 @@ theorem mulPre_at (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M : 
     rdIn_x hpre hrt hk hsp' hm hstk habove, by simp only [NW] at hqk; omega, by omega, Or.inl rfl,
     Or.inr fun _ _ => ?_, stkIn_at hpre hrt hsp' h28 hm hstk habove,
     by rw [hm, hlen]; simp only [NW] at hqk hsl ⊢; omega,
-    by rw [hm]; exact hzz.2.2.2.2.2.2.2, by rw [hm]; exact stkApart_sub hzz.2.2.2.2.2.2.2 (by omega),
+    by rw [hm]; exact hzz.2.2.2.2.2.2.2.1, by rw [hm]; exact stkApart_sub hzz.2.2.2.2.2.2.2.1 (by omega),
     by rw [hm]; exact stkApart_sub (stkApart_rt hrt hsx hxh) (by omega), hb,
     by rw [h28, hm]; exact hrt.2.2.2.2.1⟩
   have := hzz.2.2.2.2.2.2.1
