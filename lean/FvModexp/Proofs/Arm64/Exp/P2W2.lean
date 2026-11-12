@@ -33,11 +33,11 @@ def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K : Nat) (sqC : Nat → N
   EPre R b L K (s.regs 28).toNat (s.sp.toNat - 464) st zp zc xp xl xc yp yl lm s ∧
     natVal s.mem xp xl % 2 = 1 ∧ 0 < natVal s.mem yp yl ∧ cost sqC mlC (stLen s.mem st) lm ≤ b
 
-/-- the postcondition: the common exit shape with `ResSep` (`NHyp.CPostR`, local copy `CPostRL`) and the value
+/-- the postcondition: the common exit shape with `ResSep` (`NHyp.CPostR`) and the value
 `x^y mod 2^logM` -/
 @[reducible] def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K : Nat) (sqC : Nat → Nat → Nat)
     (mlC : Nat → Nat → Nat → Nat) (zp zc st xp xl yp yl lm : Nat) (s s' : State) : Prop :=
-  CPostRL R b L (K + 464) 96 zp zc st (natVal s.mem xp xl ^ natVal s.mem yp yl % 2 ^ lm)
+  NHyp.CPostR R b L (K + 464) 96 zp zc st (natVal s.mem xp xl ^ natVal s.mem yp yl % 2 ^ lm)
     (cost sqC mlC (stLen s.mem st) lm) s s'
 
 set_option maxRecDepth 20000 in

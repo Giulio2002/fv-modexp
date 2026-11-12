@@ -48,7 +48,7 @@ theorem nmT (hap : ImplApart Extracted.program impl) (hP : EPre R b L K g sp st 
   have hsub : BitVec.ofNat 64 l - 1#64 = BitVec.ofNat 64 (l - 1) := by
     apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
   have he := tenv_of hP hw hsl hr4 hr48
-  have hrs : RSepL s.mem M st p c := fun hc hn => by
+  have hrs : ResSep s.mem M st p c := fun hc hn => by
     rcases hub.rs hc (hw.ain hn).2 with ⟨rfl, rfl⟩ | h
     · exact rs_z hP hw hc hn
     · exact h
