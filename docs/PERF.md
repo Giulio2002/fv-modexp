@@ -1207,3 +1207,30 @@ amd64 Top_RunErr in the same run: **FAIL (timeout) 901 s**, peak 1.4 GB — at l
 amd64-only re-measure after the trims (cache-top-freshD, `ONLY_ISA=amd64`, load 45-55): warm-up 1110 s, amd64 Top_RunErr
 **PASS 886 s / 4.9 GB** (was TIMEOUT 901 s / at similar load; 802 s at load ~15 in s17). Margin is thin under load:
 remaining trim candidates RunLLo/RunLHi (janus64_data 28 s + failing `first` alternatives 15 s each), RunH1, RunH2M/H3M.
+
+## agent top s19 (2026-11-12) — RunErr row margin (both ISAs) + success-chain trims (dev compile, LEAN_NUM_THREADS=4, load ~20-40)
+* amd64 RunLLo / RunLHi 160 → 80-98 s: `janus64_data` on `RunSmall.errProg` (program restricted to the one data segment the
+  run reads, errT) instead of the 49-segment `Extracted.program` (29 s → 1 s; the run's literal-address reads also cheaper:
+  74 → 61 s); post-run dispatch `all_goals first | C | B | A` with the newobject-call alternative first, guarded by its
+  `rename_i` (too few inaccessible names on other goals → fails at once) and the return alternative by `guard_target =~ Q _`
+  (the A alternative failing on a C goal cost 11-13 s). NOT usable: `show Reaches _ ?T _` + `?T.rip` check under `all_goals`
+  (named mvar reused across goals: "synthetic hole has already been defined").
+* amd64 RunSmall 31 → 1.6 s (unused `errT_data`, a full `janus64_data`, removed).
+* LibRun (both ISAs, every segment): `eq_only` via `names_eq : names = segments.map name := rfl` + `List.filter_eq_self`
+  instead of 14 `decide +kernel` string masks: amd64 55 s compile + 40 s kernel replay → 1.5 s (generator fast path).
+* arm64 RunErr (witness) 102 → 4 s: witness memory via `AsmWit.wbytes` / generic `AsmWit.dataLoaded` instead of 49
+  per-object `decide +kernel` DataLoaded proofs (they also cost again in the kernel replay).
+* arm64 RunH2S / RunH3S (126 / 153 s, on the critical path) split into A/B branch modules (`h2sA/B`, `h3sA/B`, 64-72 s each,
+  compiled in parallel; the S module is a 1 s `by_cases`).
+* `lenW_op0/1/2` (literal operand addresses): `lenW_op (hop j _) _ : lenW M (sp - 136) ≤ …` made the elaborator unify
+  `opAt s ?j` with a literal (≈ 16 s per use, 4-6 uses per module): arm64 RunC2M 133 → 19 s, RunC2EX 102 → 22 s, amd64
+  RunC2M 45 → 18 s, RunC2EX 37 → 21 s.
+* Kernel replay inside a row ran ONE leanchecker at a time (Janus sizes replay workers by 5 GiB for 2 threads; memcap 16G →
+  1 worker): 147 s (arm64) / 206 s (amd64) of the RunErr rows. verify-all now exports `JANUS_REPLAY_THREADS=1` (2 GiB per
+  worker → 4 workers; our modules replay in ≤ 3 GB each). Also one cache warm-up per ISA (the amd64 Run extraction's
+  `Extracted`/`JanusTrusted` compile, 85 s, was charged to the amd64 RunErr row).
+* Fresh-cache RunErr rows (cache-top-freshE, load 20-25, before the replay/warm-up change): arm64 PASS 545 s / 5.0 GB
+  (own compile 384 s, replay 147 s, audit 9 s), amd64 PASS 629 s / 5.2 GB (own compile 327 s incl. 85 s Extracted/JanusTrusted,
+  replay 206 s, audit 7 s). Was 751 / 886 s (s18, load 35-60).
+* Next trim candidate (success chain): arm64 RunD3LB 81 s of which 48 s are 12 `janus_simp [opAt]` side goals of
+  `OpDone.transport` (each ≈ 4 s incl. a failing `janus_disch` ≈ 3.4 s over the big context) — prove the slot-frame fact once.
