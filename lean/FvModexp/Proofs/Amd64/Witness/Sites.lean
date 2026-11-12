@@ -48,7 +48,10 @@ theorem site_no (addr : Nat) : noSite R addr [] 0x1000 (callS addr Extracted.dat
   refine ⟨⟨cs_callOK _ _ _ _ 1 (by omega), ?_, ?_⟩, cs_room _ _ _ _ 1 (by omega),
     trivial, cs_inv _ _ _ _, ?_, fun r hr => absurd hr (by simp), cs_winR _ _ _ _ 1 (by omega)⟩
   all_goals try simp only [newobjectRound64, TypeOK, cs_mem, cs_r0, BitVec.toNat_ofNat]
-  all_goals first | decide +kernel | exact ⟨by decide +kernel, by rw [memZ_acc]; decide +kernel⟩
+  all_goals first
+    | decide +kernel
+    | exact ⟨by decide +kernel, by rw [memZ_acc]; decide +kernel⟩
+    | (simp only [calleeStack64, cs_sp, BitVec.toNat_ofNat, outside_cons, outside_nil, and_true]; decide +kernel)
 
 /-- the premise of `WbLiveContract64 … n` at a call -/
 @[reducible] def wbSite (R : RtInv) (addr n : Nat) (L : List (Nat × Nat)) (b : Nat) (s : State) : Prop :=
@@ -92,5 +95,10 @@ theorem site_gr (addr : Nat) :
     | decide +kernel
     | exact ⟨by decide +kernel, by rw [memZ_acc]; decide +kernel⟩
     | (rw [memZ_acc]; decide +kernel)
+    | (simp only [calleeStack64, cs5_sp, BitVec.toNat_ofNat, outside_cons, outside_nil, and_true]; decide +kernel)
+    | exact ⟨by decide +kernel,
+        by simp only [calleeStack64, cs5_sp, BitVec.toNat_ofNat, outside_cons, outside_nil, and_true]; decide +kernel⟩
+    | exact ⟨by rw [memZ_acc]; decide +kernel,
+        by simp only [calleeStack64, cs5_sp, BitVec.toNat_ofNat, outside_cons, outside_nil, and_true]; decide +kernel⟩
 
 end FvModexp.Amd64.AsmWit
