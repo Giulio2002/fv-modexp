@@ -189,7 +189,10 @@ theorem npre_of (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s)
   obtain ⟨rc40, rlv, rlo⟩ := hd
   obtain ⟨ral, -, racc, r48⟩ := rlv hk
   obtain ⟨rl, ro⟩ := rlo hk
-  obtain ⟨-, -, rg, -⟩ := Loc.ap hP rl
+  obtain ⟨rw1, -, rg, -⟩ := Loc.ap hP rl
+  have rwo : Outside r (8 * k) [(sp - 1312 - KN, sp - 1312 + 1432)] := by
+    have := hP.1.2.2.2.2.2.2.2.2.1
+    simp only [outside_cons, outside_nil, and_true]; unfold Apart at rw1; omega
   have hP' := hP
   obtain ⟨-, -, -, hro, hwT, -, -, hoy, hay, hy48, hyN, -, hyl, hox, hax, hx48, hxN, hxl, hxp, hxc, -, -, hz,
     hogA, -, -, -, -, -, -, -, -, -, -, hmo, -⟩ := hP'
@@ -207,10 +210,10 @@ theorem npre_of (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s)
     ne_oe h hKN1 hoy, by rw [h.fr.accessible]; exact hay, hy48, yN, hyl, hmo.2.2.2.2.2.2.1,
     ne_oe h hKN1 hox, by rw [h.fr.accessible]; exact hax, hx48, xN, hxl, hxp, hxc,
     Nat.lt_of_le_of_lt (Nat.le_trans (Nat.le_add_right r _) r48) (by decide), Nat.le_refl _, rc40,
-    fun _ => Or.inr (Or.inr ⟨ne_loc hP h hKN1 rl ro (Nat.le_refl _), racc, r48, ral, rlv, rg.symm,
+    ⟨fun _ => Or.inr (Or.inr ⟨ne_loc hP h hKN1 rl ro (Nat.le_refl _), racc, r48, ral, rlv, rg.symm,
       apart_shrink hap h8,
       Loc.apart rl hk hoy.1 (fun _ => hoy.2.2.2), Loc.apart rl hk hox.1 (fun _ => hox.2.2.2),
-      Loc.apart rl hk hogA.1 (fun _ => hogA.2.2.2)⟩),
+      Loc.apart rl hk hogA.1 (fun _ => hogA.2.2.2)⟩), rwo⟩,
     ne_oe h hKN1 hogA, ⟨op, hone, hsa⟩, hstk.1, hstk.2.1, hstk.2.2.1, hstk.2.2.2.1, hstk.2.2.2.2.1,
     hstk.2.2.2.2.2.1, hstk.2.2.2.2.2.2.1, hstk.2.2.2.2.2.2.2.1, hstk.2.2.2.2.2.2.2.2.1, hstk.2.2.2.2.2.2.2.2.2.1,
     hstk.2.2.2.2.2.2.2.2.2.2, hs1, hs2, hs3, hs4, hbud, h.inv⟩
