@@ -156,7 +156,7 @@ theorem evPath (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
       by rw [hrdx]; exact val_pos hxN hxl0, by rw [hrdy]; exact val_two hyN hyl0 hy1,
       by rw [hrdm]; exact val_pos hmN (by omega), by rw [hrdm, val_mod2 hn]; exact hm0,
       hxl, hn128, hst0, hnmc, hmc, op, natOne_at hOne hSA hF0 hLF0 hx1 hS's hstk hKs hZA (by omega) ew el ec⟩
-  · rw [e6, BitVec.toNat_ofNat]; decide
+  · rw [e6, BitVec.toNat_ofNat]
   · rw [e6, BitVec.toNat_ofNat]; decide
 
 end FvModexp.Arm64.ExpN

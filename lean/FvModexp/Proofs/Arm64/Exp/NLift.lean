@@ -10,13 +10,13 @@ import FvModexp.Proofs.Common.ReachLift
 (`LibN.names ⊆ LibNE.names`, same stubs and exit).
 -/
 
-open Janus Janus.Arm64 Janus.Tactic Janus.Contracts.EqHashModel FvModexp
+open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Contracts.EqHashModel FvModexp
 
 set_option autoImplicit false
 
 namespace FvModexp.Arm64.ExpN
 
-theorem names_all : LibN.names.all (fun x => LibNE.names.contains x) = true := by decide
+theorem names_all : LibN.names.all (fun x => LibNE.names.contains x) = true := by decide +kernel
 
 theorem names_sub : ∀ x, LibN.names.contains x = true → LibNE.names.contains x = true := by
   intro x hx
@@ -31,9 +31,10 @@ theorem codeInNE (impl : List Segment) (hap : ImplApart Extracted.program impl) 
 theorem liftNE (impl : List Segment) (hap : ImplApart Extracted.program impl) {r : Nat} {S : State}
     {Q : Outcome → Prop} (h : Reaches ((LibN.program.link impl).withExit r) S Q) :
     Reaches ((LibNE.program.link impl).withExit r) S Q := by
-  have hc := codeIn_restrict_mono hap names_sub
-  rw [← LibN.eq_only, ← LibNE.eq_only] at hc
-  refine Reaches.mono (fun pc w hf => (hc pc w hf).1) ?_ rfl h
+  have hc := codeInNE impl hap
+  refine Reaches.mono (p := (LibN.program.link impl).withExit r) (P := (LibNE.program.link impl).withExit r)
+    (fun pc w hf => (hc pc w hf).1) ?_ rfl h
+  simp only [Program.withExit, Program.link]
   rw [LibN.eq_only, LibNE.eq_only]; rfl
 
 theorem segs_sub (impl : List Segment) {seg : Segment} (h : seg ∈ (LibN.program.link impl).segments) :

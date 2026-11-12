@@ -94,7 +94,7 @@ theorem powAllE (impl : List Segment) (ret0 : Nat) (hret : RetAddr (LibNE.progra
     refine powStepE impl ret0 hret Q mp n i M hmp hma hi hst.1 hst.2 S hpc
       ((hG 1 (by decide) (by decide) (by decide)).trans h1) ((hG 10 (by decide) (by decide) (by decide)).trans h10)
       h13 hmem (fun h0 S' e1 e2 e3 e4 e5 => ih (i + 1) S' (by omega) (hst.1 h0)
-        (fun j hj => by rcases Nat.lt_succ_iff_lt_or_eq.1 hj with hj | rfl; exacts [hz j hj, h0])
+        (fun j hj => if h : j < i then hz j h else by rw [show j = i by omega]; exact h0)
         e1 (e2.trans hsp) (fun r a b c => (e3 r a b).trans (hG r a b c)) e4 e5)
       (fun _ S' e1 e2 e3 e4 e5 e6 e7 => KE S' e1 (e2.trans hsp)
         (fun r a b c d f g => by rw [e3 r a b c d f g, hG r c d f])
