@@ -1012,3 +1012,10 @@ deterministic order janus_run produces them), P2W2Tail 24 s / 2.9 GB, P2W2Fin 3.
 P2W2R1b 8.5 s (before: > 9 min — applying `mkPost hP hw _ rfl … rfl` to the janus literal call state: `rfl`
 unification of `setReg` chains / `retStateX` against the contract post; fixed by the continuation-form wrappers
 `mkCall`/`noCall` whose state equations are left as goals for `janus_simp`), P2W2Ret1 1.2 s. All ≤ 2.9 GB.
+
+### infra s22 (arm64 P2W2: loop invariant layer, first window copy, table → loop test; dev compile)
+P2W2LI 1.5 s, P2W2UB 1.4 s, P2W2Mv 1.8 s, P2W2Cp1 (`li_first`) 7.4 s / 2.4 GB, P2W2Cp2 (`cpM`: memmove + run to
+LT) 41 s / 2.4 GB, P2W2Cp3 (`CPF`, `cpC`) 4.6 s, P2W2Cp4 (`blH`: bitLen + three make paths) 23 s / 2.5 GB,
+P2W2Cp5 (`afterT`) 1.2 s; P2W2Al (+`rdH`/`macc`) unchanged 4.5 s. LESSON: after a `janus_run` that stores into
+the frame, `generalize hM : <literal write chain> = M1` (copy the chain from `trace_state`) and prove the transport
+facts about `M1` once — every later lemma then takes an abstract memory (no `(M := _)` unification tricks).
