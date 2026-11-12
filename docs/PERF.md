@@ -821,3 +821,16 @@ Row amd64 RunErr (janus-provfix, warm cache-top): 491 s wall, peak 5.94 GB (cold
 | Arm64/Exp/SubMod2NS1 / S2 / S4C (Trunc.Hyp2) | 54 / 58 / ~80 s | 64 / 73 / 77 s | unchanged structure (load differences) |
 | Amd64/Nat/RshMainA/B → RshMainAC/AS/BC/BS | 65 / 86 / 81 / 74 s / ≤ 2.6 GB (load ~35, was 131 / 110 s) | one makeslice run per module (copy / shift), shr6 moved to RshDefs |
 | rows (arm64 / amd64), all PASS | Trunc 257 s / 3.2 GB, 426 s / 4.2 GB; Lsh 244 s / 3.9 GB, 249 s / 4.5 GB; Rsh 155 s / 3.5 GB, 253 s / 4.7 GB | shared cache-asm, own modules only |
+
+### asm s15: divLarge arm64, front half (dev `m13.sh` J=2, host load ~22, wall / peak RSS)
+| module | time | RSS |
+|---|---|---|
+| Arm64/Nat/DivLargeDefs | 1.4 s | 2.1 GB |
+| Arm64/Nat/DivLargePro (`pro1`, entry → CALL stk.nat) | 15–21 s (was 370 s timeout: blanket `apply BitVec.eq_of_toNat_eq` closer on a state literal; now `janus_simp; omega`) | 2.5 GB |
+| Arm64/Nat/DivLargeNat (`pro2`, stk.nat call) | 67–83 s (two cap>0 runs: split into two modules if the row is tight) | 3.3 GB |
+| Arm64/Nat/DivLargeRel | 1.2–2 s | 2.1 GB |
+| Arm64/Nat/DivLargeMem (Lay, mem_of_nat, uarr_*) | 25–28 s | 2.9 GB |
+| Arm64/Nat/DivLargeMkU (`mkR`) | 8 s | 2.4 GB |
+| Arm64/Nat/DivLargeMkA (`mkA`, makeslice) | 35–39 s | 2.6 GB |
+| Arm64/Nat/DivLargeCallees | 10 s | 2.6 GB |
+| Common/DivLargeMath | 1.1 s | 2.0 GB |
