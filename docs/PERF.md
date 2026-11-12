@@ -1317,3 +1317,8 @@ close sp / slot goals with tiny lemmas (`sp_ret`, `Nat.sub_sub`) instead of omeg
   implications removed earlier; natOne/pool reads boxed).
 * Frame composition at byte granularity (`Common/ByteFrame`: `MemFrame.of_bytes` + per-byte `MemFrame.byte`) with the
   range arithmetic in tiny standalone lemmas (`IExpDefs.out_atN/out_slot/out_post/out_live`): no omega in big contexts.
+
+### infra s33 (2026-11-13, host load ~25-45, dev-compile, LEAN_NUM_THREADS=4)
+* SubMod2N re-derived from `ensG` (old S1..S4C chain deleted): SubMod2NBase 6.7 s / 2.5 GB, SubMod2N 3 s; G chain unchanged
+  (GS4C 109 s / 2.6 GB = slowest, GS3 48 s / 4.2 GB). ModInv chain rebuilt on SubHypR0: max ModInvMake 73 s / 3.7 GB.
+* expNNEven: EvSmP 1.6 s, EvSm 2.5 s / 2.6 GB (runSm), EvSmS (segSm) 4.8 s / 2.8 GB; all other Ev modules ≤ 32 s as before.
