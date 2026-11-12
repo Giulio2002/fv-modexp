@@ -280,7 +280,7 @@ theorem nonvacuous_of (stkM aboveM : Nat) (hM : RunIface.ModSpec WStubs.impl R s
     by rw [WStubs.addr_mv]; exact model_mv, by rw [WStubs.addr_mv]; exact model_mvz,
     by rw [WStubs.addr_no]; exact model_no, hW, by decide, hab, hk1, ha1, Witness.hret, setup,
     pre.1, pre.2.1, pre.2.2.1, pre.2.2.2.1, pre.2.2.2.2.1, pre.2.2.2.2.2.1, pre.2.2.2.2.2.2.1, pre.2.2.2.2.2.2.2.1,
-    pre.2.2.2.2.2.2.2.2,
+    pre.2.2.2.2.2.2.2.2.1, pre.2.2.2.2.2.2.2.2.2,
     compute1,
     ⟨[], 0x1000, callS WStubs.mkA Extracted.dataAddr.«type:big.Word#51b931e8» 1 1, by rw [WStubs.addr_mk]; rfl,
       by rw [WStubs.addr_mk]; exact site_mk _⟩,

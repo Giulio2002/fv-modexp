@@ -291,7 +291,7 @@ theorem nonvacuous_of (stkM aboveM : Nat) (hM : RunIface.ModSpec implAt R stkM a
     by rw [addr_mk]; exact model_mkz, by rw [addr_mv]; exact model_mv,
     by rw [addr_mv]; exact model_mvz, by rw [addr_no]; exact model_no, hW, by decide, hab, hk1, ha1, hret, setup,
     pre.1, pre.2.1, pre.2.2.1, pre.2.2.2.1, pre.2.2.2.2.1, pre.2.2.2.2.2.1, pre.2.2.2.2.2.2.1, pre.2.2.2.2.2.2.2.1,
-    pre.2.2.2.2.2.2.2.2,
+    pre.2.2.2.2.2.2.2.2.1, pre.2.2.2.2.2.2.2.2.2,
     compute1, ⟨[], 0x1000, sMz, by rw [addr_mv]; rfl, by rw [addr_mv]; exact site_mz⟩,
     ⟨[], 0x1000, sMkz, by rw [addr_mk]; rfl, by rw [addr_mk]; exact site_mkz⟩,
     returnsF stkM aboveM hM hE hW hab hk1 ha1⟩
