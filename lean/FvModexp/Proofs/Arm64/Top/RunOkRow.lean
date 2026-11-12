@@ -39,7 +39,7 @@ theorem correctness_ok (impl : List Segment) (hap : ImplApart Extracted.program 
     Ensures (Extracted.program.link impl) (segAddr Extracted.program RunArm64.fn) [c, p, len, cp]
       (fun s => RunArm64.EnvW R L s W ∧ RunArm64.Input R L c p len cp s ∧ OsakaReceiver s.mem c.toNat ∧
         R.inv b L (s.regs 28).toNat (view R.rt L s.mem) ∧ RunArm64.OkReqs R ∧
-        RunArm64.Globals R s.mem (RunArm64.windowW s W) ∧
+        RunArm64.Globals R s.mem (RunArm64.windowW s W) ∧ RunArm64.NatOne R s.mem (RunArm64.windowW s W) ∧
         RunArm64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat)) ≤ b ∧
         LengthsPass (bytesAt s.mem p.toNat len.toNat))
       (fun s s' => RunArm64.OkRet (bytesAt s.mem p.toNat len.toNat) s' ∧
@@ -65,9 +65,13 @@ def WW : Nat := 0x20000
 def bW : Nat := 0x300000
 def gAw : Nat := 0x6d0e80
 def wbAw : Nat := 0x743640
+/-- `natOne`'s header (`.data`) and the witness's choice of its backing word. -/
+def nAw : Nat := 7356432
+def opw : Nat := 0x6d0f00
 
 theorem gA_eq : RunIface.gA = gAw := by decide
 theorem wbA_eq : RunIface.wbA = wbAw := by decide
+theorem nA_eq : RunIface.natOneA = nAw := by decide
 
 /-- Below `0x500000` (the read-only data, the bump cell) the bytes of the error witness; the receiver flags; the call
 data: lengths `1, 1, 1` (bytes 31, 63, 95), base `3`, exponent `5`, modulus `7`; the four `math/big` thresholds
@@ -77,11 +81,13 @@ def bytes1 (a : Nat) : Byte :=
   if a = cR then 1 else if a = cR + 1 then 1 else if a = cR + 2 then 1 else
   if a = pI + 31 then 1 else if a = pI + 63 then 1 else if a = pI + 95 then 1 else
   if a = pI + 96 then 3 else if a = pI + 97 then 5 else if a = pI + 98 then 7 else
-  if a = gAw then 40 else if a = gAw + 8 then 40 else if a = gAw + 16 then 12 else if a = gAw + 24 then 80 else 0
+  if a = gAw then 40 else if a = gAw + 8 then 40 else if a = gAw + 16 then 12 else if a = gAw + 24 then 80 else
+  if a = nAw + 1 then 0x0f else if a = nAw + 2 then 0x6d else if a = nAw + 8 then 1 else if a = nAw + 16 then 1 else
+  if a = opw then 1 else 0
 
 def mem1 : Memory :=
   ⟨bytes1, [⟨sp0 - WW, WW + 40, true⟩, ⟨g0, 0x100, false⟩, ⟨cR, 0x200, false⟩, ⟨BUMP, 0x200, true⟩,
-    ⟨HEAP, HSIZE, true⟩, ⟨gAw, 32, true⟩, ⟨wbAw, 16, true⟩] ++
+    ⟨HEAP, HSIZE, true⟩, ⟨gAw, 32, true⟩, ⟨wbAw, 16, true⟩, ⟨nAw, 24, true⟩, ⟨opw, 8, true⟩] ++
     Extracted.data.map fun d => ⟨d.base, d.bytes.length, false⟩⟩
 
 def c1 : BitVec 64 := BitVec.ofNat 64 cR
@@ -118,7 +124,7 @@ theorem dataLoaded : Extracted.program.DataLoaded s1.mem := by
 
 theorem bytes1_heap (i : Nat) (hi : HEAP ≤ i) : bytes1 i = 0 := by
   simp only [HEAP] at hi
-  unfold bytes1 cR pI gAw
+  unfold bytes1 cR pI gAw nAw opw
   repeat rw [if_neg (by omega)]
 
 theorem bytes1_bump : mem1.readLE BUMP 8 = HEAP := by decide +kernel
@@ -146,9 +152,22 @@ theorem globals1 : RunArm64.Globals R s1.mem (RunArm64.windowW s1 WW) := by
   · show Outside wbAw 4 _
     simp only [RunArm64.windowW, outside_cons, outside_nil, and_true]; decide +kernel
 
+theorem op1 : s1.mem.readLE RunIface.natOneA 8 = opw := by rw [nA_eq]; decide +kernel
+
+theorem one1 : RunArm64.NatOne R s1.mem (RunArm64.windowW s1 WW) := by
+  dsimp only [RunArm64.NatOne]
+  rw [show Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.natOne» = RunIface.natOneA from rfl, op1,
+    nA_eq]
+  refine ⟨by decide +kernel, by decide +kernel, by decide +kernel, by decide +kernel, ?_, ?_, by decide +kernel,
+    by decide, ?_, ?_⟩
+  · rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide
+  · simp only [RunArm64.windowW, outside_cons, outside_nil, and_true]; decide +kernel
+  · rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide
+  · simp only [RunArm64.windowW, outside_cons, outside_nil, and_true]; decide +kernel
+
 theorem pre : RunArm64.EnvW R [] s1 WW ∧ RunArm64.Input R [] c1 p1 99 99 s1 ∧ OsakaReceiver s1.mem c1.toNat ∧
     R.inv bW [] (s1.regs 28).toNat (view R.rt [] s1.mem) ∧ RunArm64.OkReqs R ∧
-    RunArm64.Globals R s1.mem (RunArm64.windowW s1 WW) ∧
+    RunArm64.Globals R s1.mem (RunArm64.windowW s1 WW) ∧ RunArm64.NatOne R s1.mem (RunArm64.windowW s1 WW) ∧
     RunArm64.okBudget (parseLengths (bytesAt s1.mem p1.toNat (99 : BitVec 64).toNat)) ≤ bW ∧
     LengthsPass (bytesAt s1.mem p1.toNat (99 : BitVec 64).toNat) := by
   refine ⟨⟨⟨⟨by decide +kernel, by decide +kernel, by decide +kernel⟩,
@@ -159,7 +178,7 @@ theorem pre : RunArm64.EnvW R [] s1 WW ∧ RunArm64.Input R [] c1 p1 99 99 s1 �
     ⟨by decide +kernel, by decide +kernel, by decide +kernel⟩, inv1,
     ⟨fun _ _ _ _ => trivial, fun _ _ _ _ => trivial, fun _ _ _ => trivial, fun _ _ _ _ _ _ => trivial,
       fun _ => trivial, fun _ => trivial, fun _ => trivial, fun _ => trivial, fun _ => trivial⟩,
-    globals1, budget1, pass1⟩
+    globals1, one1, budget1, pass1⟩
   · rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel
   · simp only [Apart]; decide +kernel
   · rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel
@@ -237,7 +256,7 @@ theorem nonvacuous_of (stkM aboveM : Nat) (hM : RunIface.ModSpec implAt R stkM a
     CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program RunArm64.fn) [c, p, len, cp] s ∧
     RunArm64.EnvW R L s W ∧ RunArm64.Input R L c p len cp s ∧ OsakaReceiver s.mem c.toNat ∧
     R.inv b L (s.regs 28).toNat (view R.rt L s.mem) ∧ RunArm64.OkReqs R ∧
-    RunArm64.Globals R s.mem (RunArm64.windowW s W) ∧
+    RunArm64.Globals R s.mem (RunArm64.windowW s W) ∧ RunArm64.NatOne R s.mem (RunArm64.windowW s W) ∧
     RunArm64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat)) ≤ b ∧
     LengthsPass (bytesAt s.mem p.toNat len.toNat) ∧
     compute (bytesAt s.mem p.toNat len.toNat) (parseLengths (bytesAt s.mem p.toNat len.toNat)) = ⟨#[5]⟩ ∧
@@ -259,7 +278,8 @@ theorem nonvacuous_of (stkM aboveM : Nat) (hM : RunIface.ModSpec implAt R stkM a
   ⟨implAt, R, bW, [], c1, p1, 99, 99, ret, s1, WW, hap, by rw [addr_mk]; exact model_mk,
     by rw [addr_mk]; exact model_mkz, by rw [addr_mv]; exact model_mv,
     by rw [addr_mv]; exact model_mvz, by rw [addr_no]; exact model_no, hW, by decide, hab, hk1, ha1, hret, setup,
-    pre.1, pre.2.1, pre.2.2.1, pre.2.2.2.1, pre.2.2.2.2.1, pre.2.2.2.2.2.1, pre.2.2.2.2.2.2.1, pre.2.2.2.2.2.2.2,
+    pre.1, pre.2.1, pre.2.2.1, pre.2.2.2.1, pre.2.2.2.2.1, pre.2.2.2.2.2.1, pre.2.2.2.2.2.2.1, pre.2.2.2.2.2.2.2.1,
+    pre.2.2.2.2.2.2.2.2,
     compute1, ⟨[], 0x1000, sMz, by rw [addr_mv]; rfl, by rw [addr_mv]; exact site_mz⟩,
     ⟨[], 0x1000, sMkz, by rw [addr_mk]; rfl, by rw [addr_mk]; exact site_mkz⟩,
     returnsF stkM aboveM hM hE hW hab hk1 ha1⟩

@@ -60,7 +60,7 @@ theorem okReach (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (hin : InputOK R L c p len cp s) (hinv : R.inv b L (s.regs 28).toNat (view R.rt L s.mem))
     (hrecv : s.mem.readLE c.toNat 3 = 65793)
     (hglob : RunIface.Globals R s.mem (win s W 40)) (hgL : ApartAll ((s.regs 28).toNat + 16) 8 L)
-    (hbB : okB s p len ≤ b)
+    (hbB : okB s p len ≤ b) (hone : FvModexp.Spec.RunArm64.NatOne R s.mem (win s W 40))
     (hpass : hdrV s p len 0 ≤ 1024 ∧ hdrV s p len 1 ≤ 1024 ∧ hdrV s p len 2 ≤ 1024)
     (Q : Outcome → Prop)
     (hOk : ∀ S' : State, ABIReturn s S' → OkRet S' (resV s p len) (hdrV s p len 2) →
@@ -107,7 +107,7 @@ theorem okReach (impl : List Segment) (hap : ImplApart Extracted.program impl) (
   by_cases hv0 : opV s p len 0 = 1
   · exact c2m impl hap R stkM aboveM hM hBy hsv' b L c p len cp ret hret s Q W henvW hW hW1 hab hglob hgL hbB L4 b4 T
       hrelT hTpc h7 hv0 hV hkV
-  · exact c2e impl hap R stkM aboveM hE hBy hsv' b L c p len cp ret hret s Q W henvW hW hW1 hab hglob hgL hbB L4 b4 T
+  · exact c2e impl hap R stkM aboveM hE hBy hsv' b L c p len cp ret hret s Q W henvW hW hW1 hab hglob hgL hbB hone L4 b4 T
       hrelT hTpc h7 hv0 hV hkV
 
 end FvModexp.Arm64.Run

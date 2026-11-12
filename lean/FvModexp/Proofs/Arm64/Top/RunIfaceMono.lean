@@ -59,9 +59,14 @@ theorem ModSpec.mono {impl : List Segment} {R : RtInv} {k a k' a' : Nat} (h : Mo
   (h b L z y).mono (fun _ ⟨hp, h1, h2, h3⟩ => ⟨intPre_mono hk ha hp, h1, h2, h3⟩) fun _ _ _ ⟨h0, h1, h2⟩ =>
     ⟨h0, intPost_mono hk ha h1, h2⟩
 
+theorem oneG_mono {R : RtInv} {L : List (Nat × Nat)} {m : Memory} {xs : List Nat} {s : State} {k a k' a' : Nat}
+    (hk : k ≤ k') (ha : a ≤ a') (h : OneG R L m (win s k' a') xs) : OneG R L m (win s k a) xs := by
+  obtain ⟨op, ⟨h0, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10⟩, hx⟩ := h
+  exact ⟨op, ⟨h0, h1, h2, h3, h4, h5, outside_win_mono hk ha h6, h7, h8, h9, outside_win_mono hk ha h10⟩, hx⟩
+
 theorem ExpSpec.mono {impl : List Segment} {R : RtInv} {k a k' a' : Nat} (h : ExpSpec impl R k a) (hk : k ≤ k')
     (ha : a ≤ a') : ExpSpec impl R k' a' := fun b L z y mm =>
-  (h b L z y mm).mono (fun _ ⟨hp, h1, h2, h3, h4⟩ => ⟨intPre_mono hk ha hp, h1, h2, h3, h4⟩) fun _ _ _ ⟨h0, h1⟩ =>
-    ⟨h0, intPost_mono hk ha h1⟩
+  (h b L z y mm).mono (fun _ ⟨hp, h1, h2, h3, h4, h5⟩ => ⟨intPre_mono hk ha hp, h1, h2, h3, h4, oneG_mono hk ha h5⟩)
+    fun _ _ _ ⟨h0, h1⟩ => ⟨h0, intPost_mono hk ha h1⟩
 
 end FvModexp.Arm64.RunIface

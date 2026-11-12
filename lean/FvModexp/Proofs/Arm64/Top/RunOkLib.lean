@@ -56,15 +56,15 @@ theorem ensOkLib (impl : List Segment) (hap : ImplApart Extracted.program impl) 
     Ensures (Extracted.program.link impl) (segAddr Extracted.program RunArm64.fn) [c, p, len, cp]
       (fun s => RunArm64.EnvW R L s W ∧ RunArm64.Input R L c p len cp s ∧ OsakaReceiver s.mem c.toNat ∧
         R.inv b L (s.regs 28).toNat (view R.rt L s.mem) ∧ RunArm64.OkReqs R ∧
-        RunArm64.Globals R s.mem (RunArm64.windowW s W) ∧
+        RunArm64.Globals R s.mem (RunArm64.windowW s W) ∧ RunArm64.NatOne R s.mem (RunArm64.windowW s W) ∧
         RunArm64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat)) ≤ b ∧
         LengthsPass (bytesAt s.mem p.toNat len.toNat))
       (fun s s' => RunArm64.OkRet (bytesAt s.mem p.toNat len.toNat) s' ∧
         RunArm64.FrameW R b (RunArm64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat))) L W s s') := by
-  intro ret hret s hs ⟨⟨henvW, hgL⟩, hin, hrecv, hinv, hsv, hglob, hbud, hpass⟩
+  intro ret hret s hs ⟨⟨henvW, hgL⟩, hin, hrecv, hinv, hsv, hglob, hone, hbud, hpass⟩
   rw [okB_spec] at hbud
   obtain ⟨n, o, hrun, hQ⟩ := okReach impl hap R hmk hmv hmz hno stkM aboveM hM hE hBy hsv b L c p len cp ret hret s hs
-    W henvW hW hW1 hab hin hinv (osaka_read hrecv) hglob hgL hbud (pass_hdr hpass)
+    W henvW hW hW1 hab hin hinv (osaka_read hrecv) hglob hgL hbud hone (pass_hdr hpass)
     (fun o => ∃ s', o = .returned s' ∧ ABIReturn s s' ∧ RunArm64.OkRet (bytesAt s.mem p.toNat len.toNat) s' ∧
       RunArm64.FrameW R b (RunArm64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat))) L W s s')
     (fun S' habi hret' hfr => ⟨S', rfl, habi, okRet_spec hret', by
