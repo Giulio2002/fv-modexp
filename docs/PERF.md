@@ -1039,3 +1039,14 @@ LT) 41 s / 2.4 GB, P2W2Cp3 (`CPF`, `cpC`) 4.6 s, P2W2Cp4 (`blH`: bitLen + three 
 P2W2Cp5 (`afterT`) 1.2 s; P2W2Al (+`rdH`/`macc`) unchanged 4.5 s. LESSON: after a `janus_run` that stores into
 the frame, `generalize hM : <literal write chain> = M1` (copy the chain from `trace_state`) and prove the transport
 facts about `M1` once — every later lemma then takes an abstract memory (no `(M := _)` unification tricks).
+### agent top s17: fresh-cache release-style run of the two RunErr rows (coordinator check of the warm-up design)
+`JANUS_CACHE_DIR=<empty dir> SKIP_HARNESS=1 ROWS=1 scripts/verify-all.sh Top_RunErr` (janus-provfix 859eaa2a, host load ~13-16, a dev build alongside):
+| step | wall | peak | kernel replay |
+|---|---|---|---|
+| warm-up (`Proofs/Warmup.lean` on the Run arm64 extraction: framework build + EthLib + Spec) | 702 s | — | 342 modules replayed (fills the replay cache) |
+| row arm64 Top_RunErr | **535 s PASS** | 6.4 GB | 384 modules, 341 cached |
+| row amd64 Top_RunErr (after arm64: Common modules already compiled) | **802 s PASS** | 6.2 GB | 400 modules, 346 cached |
+Confirms: with the warm-up, a row pays only its own compile + own replay (s16 without warm-up: both TIMEOUT). Fixes needed in
+verify-all for this: the warm-up extraction did not pass its row's extract flags (Run needs the runtime contracts and
+`--max-functions 100`), so it failed in 0 s and filled nothing; now it uses `contract_flags` and reports a failed warm-up.
+amd64 RunErr has the smaller margin (802 s of 900): next trim target (the La/H3 chain modules).
