@@ -100,6 +100,7 @@ theorem post_triv {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {costF
     (hsok : StkOK s.mem R L st) (hstw : Apart st 24 (sp - K) (K + 1432))
     (hinv : R.inv b L (s.regs 28).toNat (view R.rt L s.mem))
     (hz : (zp' = zp ∧ zc' = zc ∧ NatLive s.mem R L zp zc) ∨ (zp' = 0 ∧ zc' = 0)) (hzc : zc < 2 ^ 40)
+    (hzp : zp < 2 ^ 64)
     (hv : natVal s.mem xp xl ^ natVal s.mem yp yl % natVal s.mem mp n = 0)
     (hF : MemFrame s.mem s'.mem (wN sp K))
     (h0 : s'.regs 0 = BitVec.ofNat 64 zp') (h1 : s'.regs 1 = 0#64) (h2 : s'.regs 2 = BitVec.ofNat 64 zc') :
@@ -110,7 +111,7 @@ theorem post_triv {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {costF
   refine ⟨zp', 0, zc', h0, h1, h2, by rw [hv]; rfl, Or.inl rfl, Nat.zero_le _, ?_, L, b, hx, Nat.sub_le _ _,
     Expmc.inv_frame hF (fun r hr => Or.inr (out_rt_wN hrw r hr)) hinv, ?_, ?_, stackBack_keep hsok hx hF hso,
     frame_post (ws := []) hs hF (fun _ _ _ => trivial), LiveFrame.of_win hF (liveSep_wN hLs), resSep_keep hF hso⟩
-  · rcases hz with ⟨-, rfl, -⟩ | ⟨-, rfl⟩ <;> omega
+  · rcases hz with ⟨e, rfl, -⟩ | ⟨e, rfl⟩ <;> exact ⟨by omega, by omega⟩
   · rcases hz with ⟨rfl, rfl, h⟩ | ⟨rfl, rfl⟩
     · exact natLive_frame h hx hF
     · simp
@@ -148,7 +149,7 @@ theorem post_oneA {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {costF
   have hz8 : InRanges zp 8 L ∨ Outside zp 8 R.rt :=
     hzH.elim (fun h => Or.inl (h.sub (Nat.le_refl _) (by omega))) (fun h => Or.inr (h.of_sub (Nat.le_refl _) (by omega)))
   refine ⟨zp, 1, zc, h0, h1, h2, by rw [hv]; exact hv1, Or.inr (by simp only [Nat.sub_self, Nat.mul_zero, Nat.add_zero]; rw [hv1]; decide),
-    hzc0, by omega, L, b, hx, Nat.sub_le _ _, Expmc.inv_frame hF ?_ hinv, natLive_frame hzL hx hF,
+    hzc0, ⟨by omega, by have := (hzL hzc0).2.2.2; omega⟩, L, b, hx, Nat.sub_le _ _, Expmc.inv_frame hF ?_ hinv, natLive_frame hzL hx hF,
     Or.inr (Or.inl ⟨rfl, rfl⟩), stackBack_keep hsok hx hF hso, frame_post hs hF ?_, ⟨fun a k hin hout => hF.readLE a k ?_⟩,
     resSep_keep hF hso⟩
   · intro r hr
@@ -236,7 +237,7 @@ theorem post_oneB {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {costF
   have hacS : ∀ a k w, s'.mem.accessible a k w = s.mem.accessible a k w := fun a k w => by
     rw [hF2.accessible, hMF.accessible, hF0.accessible]
   refine ⟨p, 1, 1, h0, h1, h2, by rw [hv]; exact hv1,
-    Or.inr (by simp only [Nat.sub_self, Nat.mul_zero, Nat.add_zero]; rw [hv1]; decide), Nat.le_refl _, by decide,
+    Or.inr (by simp only [Nat.sub_self, Nat.mul_zero, Nat.add_zero]; rw [hv1]; decide), Nat.le_refl _, ⟨by decide, by omega⟩,
     L ++ [(p, p + r)], b - r, hx, by unfold NCost; omega, Expmc.inv_frame hF2 ?_ hinv, ?_, ?_, ?_,
     frame_post (ws := R.rt) hs hS (fun a k ho => by rw [outside_append] at ho; exact ho.1), ?_,
     fun _ hn => absurd ⟨ew, ec⟩ hn⟩

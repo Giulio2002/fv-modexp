@@ -40,6 +40,7 @@ theorem contRE (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     (h1182 : M1.readLE (sp + 1182) 1 = 1) (h1296 : M1.readLE (sp + 1296) 8 = sp + 1272)
     (h1272 : M1.readLE (sp + 1272) 8 = dwA) (h1280 : M1.readLE (sp + 1280) 8 = st)
     (hz : ZKeep0 R L g sp K zp zl zc xp xl yp yl mp n zp' zl' zc' s.mem)
+    (hna : NHyp.NoAlias zp' zc' xp xc)
     (hy : yl = 1 ∧ s.mem.readLE yp 8 = 1) (hxl0 : xl ≠ 0)
     (S : State) (hpc : S.pc = BitVec.ofNat 64 remA) (hSsp : S.sp = BitVec.ofNat 64 (sp + 1056))
     (h0 : S.regs 0 = BitVec.ofNat 64 zp') (h1 : S.regs 1 = BitVec.ofNat 64 zl') (h2 : S.regs 2 = BitVec.ofNat 64 zc')
@@ -52,7 +53,7 @@ theorem contRE (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
       PostNil R b L K costF costR costS costP zp zc xp xl yp yl mp n s s'' → F s'') :
     Reaches ((LibNE.program.link impl).withExit ret0) S (IsReturn F) :=
   liftNE impl hap (contR impl hap R hput hRem hns hn11 ret0 (retAddr_down hret) F hP hstk hN hF hLF hrg
-    h1182 h1296 h1272 h1280 hz hy hxl0 S hpc hSsp h0 h1 h2 h3 h4 h5 h6 h7 h8 h9 h28 h30 hmem h29v h30v hK')
+    h1182 h1296 h1272 h1280 hz hna hy hxl0 S hpc hSsp h0 h1 h2 h3 h4 h5 h6 h7 h8 h9 h28 h30 hmem h29v h30v hK')
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in

@@ -123,6 +123,12 @@ theorem opnd_v0 {R : RtInv} {L : List (Nat × Nat)} {sp K p k : Nat} {M M1 : Mem
   · exact opnd_v (h hk0) hLF hF hN
 
 set_option maxRecDepth 20000 in
+/-- a range apart from expNN's window `[sp - K, sp + 1432)` is outside it -/
+theorem out_w_of_apart {sp K a k : Nat} (h : Apart a k (sp - K) (K + 1432)) (hK : K ≤ sp) :
+    Outside a k [(sp - K, sp + 1432)] := by
+  simp only [outside_cons, outside_nil, and_true]; unfold Apart at h; omega
+
+set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- **the virtual entry**: `PreNil` at `s` and the new stack at `M1` ⇒ `NPre` at `{s with mem := M1}` -/
 theorem npreV {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {costF : Nat → Nat → Nat → Nat}
@@ -137,7 +143,7 @@ theorem npreV {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {costF : N
       { s with mem := M1 } := by
   obtain ⟨⟨hs1, hs28, hg1, hg2, hg3, hgo, hal, hK4, hKs, hsp2, hacc, hwrt, hLs, hd, hsv⟩, hK20, hG, ⟨hro, -⟩, hwT, hslow,
     hn, hn128, hnmc, hmc, hmO, hma, hm48, hmN, hyO, hya, hy48, hyN, hyl, hyc, hxO, hxa, hx48, hxN, hxl, hxp, hxc,
-    hzp, ⟨hzlc, hxz, hxlz, hxcz⟩, hzc, -, hali, hgAO, hone0, -, hwb, hb1, hb2, hb3, hb4, hbud, -, -, -⟩ := hP
+    hzp, ⟨hzlc, hxz, hxlz, hxcz⟩, hzc, ⟨-, hzNE⟩, hali, hgAO, hone0, -, hwb, hb1, hb2, hb3, hb4, hbud, -, -, -⟩ := hP
   have hzc0 : 0 < zc := by omega
   obtain ⟨op, hone⟩ := hone0 hzc0
   clear hone0
@@ -216,7 +222,7 @@ theorem npreV {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {costF : N
       simp only [wN, outside_cons, outside_nil, and_true] at this ⊢; omega), hro, hwT, hslow, hn, hn128, hnmc, hmc,
     ne_v hmO hN, by rw [hacM]; exact hma, hm48, hmv.2,
     ne_v hyO hN, by rw [hacM]; exact hya, hy48, hyv.2, hyl, hyc.1,
-    ne_v hxO hN, by rw [hacM]; exact hxa, hx48, hxv.2, hxl, hxp, hxc, hzp, hzlc, hzc, ?_, ne_v hgAO hN,
+    ne_v hxO hN, by rw [hacM]; exact hxa, hx48, hxv.2, hxl, hxp, hxc, hzp, hzlc, hzc, ⟨?_, out_w_of_apart (hzNE hzc0).2 (by omega)⟩, ne_v hgAO hN,
     ⟨op, hone'⟩, hst0, by omega, hsok, hstw, hstg, harr, hc0, by rw [hacM]; exact hwb, hwbA, hstfr, hfgA, ?_⟩
   · show M1.readLE (g + 16) 8 + K < sp
     rw [hrdO hgo.2 (by simp only [outside_cons, outside_nil, and_true]; omega)]; exact hg3

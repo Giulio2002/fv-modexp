@@ -137,7 +137,7 @@ theorem postNil_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {cost
     (hF : MemFrame s.mem M1 (R.rt ++ wN sp K)) (hLF : LiveFrame s.mem M1 L [])
     {M2 m4 : Memory} {p l c b' : Nat} {L2 : List (Nat × Nat)}
     (hv : natVal M2 p l = natVal M1 xp xl ^ natVal M1 yp yl % natVal M1 mp n) (hnm : NatNorm M2 p l)
-    (hlc : l ≤ c) (hc64 : c < 2 ^ 40) (hx : LiveExt R L1 L2)
+    (hlc : l ≤ c) (hc64 : c < 2 ^ 40 ∧ p < 2 ^ 64) (hx : LiveExt R L1 L2)
     (hb : b1 - NCost costF costR costS costP xl yl n (stLen M1 st) (Nat.log2 (natVal M1 mp n)) ≤ b')
     (hnl : NatLive M2 R L2 p c)
     (hd : (c = 0 ∧ p = 0) ∨ (p = zp ∧ c = zc) ∨ (InRanges p (8 * c) R.rt ∧ ApartAll p (8 * c) L1))

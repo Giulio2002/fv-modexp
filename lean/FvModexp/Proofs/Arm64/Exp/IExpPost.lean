@@ -28,7 +28,7 @@ theorem post_of {R : RtInv} {b B : Nat} {L : List (Nat × Nat)} {stk above : Nat
     (s' : State) (hm : s'.mem = (Mw.writeLE (zA + 8) 8 p).writeLE zA 1 0) :
     IntPost R b B L stk above zA V s s' ∧ s'.mem.readLE (zA + 24) 8 < 2 ^ 40 := by
   obtain ⟨⟨-, ⟨-, hstk, -, -⟩, -, hrt, -, -, -, -⟩, -, -, -, -, hops, -⟩ := hpre
-  obtain ⟨⟨-, hz8, hz48, hzacc, hzH, -, -, -, hzap⟩, hzW, hzO, -, -⟩ := hops zA (by simp)
+  obtain ⟨⟨-, hz8, hz48, hzacc, hzH, -, -, -, hzap, -⟩, hzW, hzO, -, -⟩ := hops zA (by simp)
   clear hops
   have hst : stk ≤ s.sp.toNat := hstk
   have hzH1 : Held R L' zA 32 := hA.ext.held hzH
@@ -109,7 +109,7 @@ theorem post_of {R : RtInv} {b B : Nat} {L : List (Nat × Nat)} {stk above : Nat
   have hFH : MemFrame M (hdrW M zA l c) [(zA, zA + 32)] := by simp only [hdrW]; janus_frame
   have hF2 : MemFrame Mw ((Mw.writeLE (zA + 8) 8 p).writeLE zA 1 0) [(zA, zA + 32)] := by janus_frame
   rw [← hm] at hF2
-  refine ⟨⟨?_, L', b', hA.ext, hA.bud, ?_, ⟨?_, hz8, hz48, ?_, hzH1, ?_, ?_, ?_, ?_⟩, ?_, ?_, ?_⟩, by rw [eC]; exact hc40⟩
+  refine ⟨⟨?_, L', b', hA.ext, hA.bud, ?_, ⟨?_, hz8, hz48, ?_, hzH1, ?_, ?_, ?_, ?_, by rw [eC]; exact hc40⟩, ?_, ?_, ?_⟩, by rw [eC]; exact hc40⟩
   · simp only [RunIface.IntV]; rw [eP, eL, eV]
   · rw [hm, view_writeLE_held (hzH1.sub (by omega) (by omega)), view_writeLE_held (hzH1.sub (by omega) (by omega))]
     exact hIw

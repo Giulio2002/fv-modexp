@@ -16,12 +16,18 @@ set_option autoImplicit false
 
 namespace FvModexp.Arm64.ExpN
 
-theorem names_all : LibN.names.all (fun x => LibNE.names.contains x) = true := by decide +kernel
+/-- the position in `LibNE.names` of each name of `LibN.names` (generated; checked by `n_idx`) -/
+def nIdx : List Nat := [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77]
+
+/-- one string equality per name (instead of the quadratic `contains` sweep) -/
+theorem n_idx : LibN.names.map some = nIdx.map (fun i => LibNE.names[i]?) := by decide +kernel
 
 theorem names_sub : ∀ x, LibN.names.contains x = true → LibNE.names.contains x = true := by
   intro x hx
-  have h := List.all_eq_true.1 names_all x (List.elem_iff.1 hx)
-  exact h
+  have h1 : some x ∈ LibN.names.map some := List.mem_map_of_mem (List.elem_iff.1 hx)
+  rw [n_idx] at h1
+  obtain ⟨i, -, hi⟩ := List.mem_map.1 h1
+  exact List.elem_iff.2 (List.mem_of_getElem? hi)
 
 theorem codeInNE (impl : List Segment) (hap : ImplApart Extracted.program impl) :
     CodeIn (LibN.program.link impl) (LibNE.program.link impl) := by
