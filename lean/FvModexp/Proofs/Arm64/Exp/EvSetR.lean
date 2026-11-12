@@ -15,10 +15,6 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvMod
 
 namespace FvModexp.Arm64.ExpEven
 
-/-- the join after `copy` when `z` and `z2` share the pointer (the `BEQ` target; `memmove`'s return `mvR` falls into
-it after reloading `X0`, `X2`) -/
-abbrev mvJ : Nat := 1790424
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
 /-- the run `exp2R` → `setJ` (reuse) / `makeslice` (two sizes) -/
