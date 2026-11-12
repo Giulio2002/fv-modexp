@@ -1326,6 +1326,11 @@ close sp / slot goals with tiny lemmas (`sp_ret`, `Nat.sub_sub`) instead of omeg
 ### infra s34 (2026-11-13, dev compile, LEAN_NUM_THREADS=4, host load ~40-80)
 EvJ11 6.0 s / 2.7 GB; EvMiP 2.9 s; EvMiR 5.5 s; EvMi 10.0 s / 2.6 GB; EvDst 22.8 s / 2.4 GB; EvMulP ~6 s; EvJ12/EvJ13/EvJ14/EvTrD ≤ 6 s;
 EvM1 6.7 s / 2.6 GB; EvTr 8.5 s / 2.8 GB; EvM2 6.2 s / 2.6 GB. (Full closure rebuild after top's RunIface edit: 224 modules, ~65 min at load 80.)
+### infra s35 (2026-11-13, dev compile, LEAN_NUM_THREADS=4, host load ~60-80)
+expNNEven arm64 closure: EvAddP 2.8 s; EvAdd (runAdd + segAdd) 6.6 s / 2.6 GB; EvTail (janus_run through deferwrap1) 10.5 s /
+2.5 GB; EvFin 6.9 s / 2.6 GB; EvCost < 5 s; EvFull (16-segment composition, all side conditions by small lemmas) 3.0 s /
+2.5 GB; EvSum 2.0 s. Rebuild of the Ev chain after EvLZ (ObZ) / EvPre import change: every module ≤ 23 s / 2.8 GB.
+ModInv chain after ModInvDefs → SubMod2NDefs: all ModInv* modules rebuilt, max as s33.
 ## divmc s27 (2026-11-12): SqrRow trim (arm64; dev compile, LEAN_NUM_THREADS=4, host load 25-40)
 | module | before | after | fix |
 |---|---|---|---|
