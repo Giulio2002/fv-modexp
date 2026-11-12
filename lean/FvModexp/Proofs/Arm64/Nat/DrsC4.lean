@@ -65,7 +65,7 @@ theorem Mc.ownA {R : RtInv} {c : Cx} {s : State} {Lk : List (Nat × Nat)} {bk : 
     by rw [limbs_congr (rd _ _ hrw)]; exact h.bf,
     by rw [limbs_congr (ru _ _ (by omega) (by omega))]; exact h.wk,
     by rw [limbs_congr (ru _ _ (Nat.le_refl _) (by omega))]; exact h.lk, h.bud,
-    by rw [hF3.accessible]; exact h.qa, h.qloc, h.qal⟩
+    by rw [hF3.accessible]; exact h.qa, h.qloc, h.qal, FL.own hcr h.fl rd⟩
 
 theorem ret0_r (X : State) (junk : Nat → W64) (f : Flags) (v : Nat → BitVec 128) (fpsr : BitVec 32) (m : Memory)
     (i : Nat) (hi : i = 18 ∨ i = 28 ∨ i = 29) : (retState0 X junk f v fpsr m).regs i = X.regs i := by

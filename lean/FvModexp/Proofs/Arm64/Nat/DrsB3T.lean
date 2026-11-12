@@ -75,7 +75,7 @@ theorem t3_post {R : RtInv} {c : Cx} {s X T : State} {Lk : List (Nat × Nat)} {b
   rw [hN.r28] at hinv
   have hEv : Ev R c s L' b' T.mem := Ev.callG hcr hev hl' hMF' hLF hS
     (fun _ _ _ => by simp only [outside_nil]) (fun _ _ _ _ => by simp only [outside_nil]) hx hinv hok hsar hreg
-  obtain ⟨hFp, hRg⟩ := Fp.grow (lM' := c.l1 s + StackNat.rnd (3 * c.vl)) hcr hev hfp (by omega)
+  obtain ⟨hFp, hRg, hFL⟩ := Fp.grow (lM' := c.l1 s + StackNat.rnd (3 * c.vl)) hcr hev hfp (by omega)
     (by simp only [Cx.l1, StackNat.rnd]; omega) hok hlen hsar
   have hrg : Rg R c s L' (c.qv s T.mem) (8 * (3 * c.vl)) :=
     hRg.sub (Nat.le_refl _) (by simp only [Cx.qv, StackNat.rnd]; omega)
@@ -85,7 +85,7 @@ theorem t3_post {R : RtInv} {c : Cx} {s X T : State} {Lk : List (Nat × Nat)} {b
   have hBs : Bs c s T.mem j := hN.bs.frame hMF (bOut_callee hout (by omega) (by omega) hspn (by omega) bo)
   refine ⟨by rw [hq0 (by omega), hl], hq1, hq2, L', b', hcr, hEv, hFp, hBd, hBs, hN.jB, hN.li,
     by rw [limbs_congr kt0]; exact hN.qk, by rw [limbs_congr (ku _ _ (Nat.le_refl _) (by omega))]; exact hN.uk,
-    hN.qle, ?_, ?_, hN.q3.frame hMF hhi h0, hrg, by have := hN.bud; omega⟩
+    hN.qle, ?_, ?_, hN.q3.frame hMF hhi h0, hrg, hFL, by have := hN.bud; omega⟩
   · show T.mem.readLE c.t0 (8 * qn) = T.mem.readLE c.t0 (8 * (c.vl / 2 + 1))
     rw [ft _ _ (Nat.le_refl _) (by have := hN.qle; omega), ft _ _ (Nat.le_refl _) (Nat.le_refl _)]; exact hN.qv
   · rcases hN.qN with h | h

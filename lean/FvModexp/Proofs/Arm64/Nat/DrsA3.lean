@@ -32,6 +32,24 @@ structure Rg (R : RtInv) (c : Cx) (s : State) (Lk : List (Nat × Nat)) (a n : Na
 theorem apSR {a n b k b' k' : Nat} (h : Apart a n b k) (h1 : b ≤ b') (h2 : b' + k' ≤ b + k) : Apart a n b' k' := by
   unfold Apart at h ⊢; omega
 
+/-- the stack's array from the length `l1` (after `qhat0`) on: the part `stk.restore(mark)` frees again -/
+@[reducible] def FL (R : RtInv) (c : Cx) (s : State) (Lk : List (Nat × Nat)) (M : Memory) : Prop :=
+  Rg R c s Lk (stW M c.st + 8 * c.l1 s) (8 * (stCap M c.st - c.l1 s))
+
+/-- `FL` with the stack header unchanged -/
+theorem FL.hdr {R : RtInv} {c : Cx} {s : State} {Lk : List (Nat × Nat)} {M M' : Memory} (h : FL R c s Lk M)
+    (eW : stW M' c.st = stW M c.st) (eC : stCap M' c.st = stCap M c.st) : FL R c s Lk M' := by
+  unfold FL; rw [eW, eC]; exact h
+
+/-- `FL` across own stores (reads outside the own window kept) -/
+theorem FL.own {R : RtInv} {c : Cx} {s : State} {Lk : List (Nat × Nat)} {M M' : Memory}
+    (hcr : Cr R c s) (h : FL R c s Lk M)
+    (rd : ∀ x n, Outside x n (win s c.W 96) → M'.readLE x n = M.readLE x n) : FL R c s Lk M' := by
+  have hsto : Outside c.st 24 (win s c.W 96) := hcr.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1.2.1
+  have eW : stW M' c.st = stW M c.st := rd _ _ (hsto.of_sub (by omega) (by omega))
+  have eC : stCap M' c.st = stCap M c.st := rd _ _ (hsto.of_sub (by omega) (by omega))
+  exact h.hdr eW eC
+
 /-- a sub-range of the free part -/
 theorem Fp.rg {R : RtInv} {c : Cx} {s : State} {Lk : List (Nat × Nat)} {M : Memory} {lM a n : Nat}
     (h : Fp R c s Lk M lM) (h1 : stW M c.st + 8 * lM ≤ a) (h2 : a + n ≤ stW M c.st + 8 * stCap M c.st) :
@@ -92,7 +110,8 @@ theorem Fp.grow {R : RtInv} {c : Cx} {s : State} {Lk L' : List (Nat × Nat)} {bk
     (hcr : Cr R c s) (hev : Ev R c s Lk bk M) (h : Fp R c s Lk M lM) (hle : lM ≤ lM') (hl0 : 0 < lM') (hok : StkOK M' R L' c.st) (hlen : stLen M' c.st = lM')
     (hsar : (stW M' c.st = stW M c.st ∧ stCap M' c.st = stCap M c.st) ∨
       (InRanges (stW M' c.st) (8 * stCap M' c.st) R.rt ∧ ApartAll (stW M' c.st) (8 * stCap M' c.st) Lk)) :
-    Fp R c s L' M' lM' ∧ Rg R c s L' (stW M' c.st + 8 * lM) (8 * (lM' - lM)) := by
+    Fp R c s L' M' lM' ∧ Rg R c s L' (stW M' c.st + 8 * lM) (8 * (lM' - lM)) ∧
+      Rg R c s L' (stW M' c.st + 8 * lM) (8 * (stCap M' c.st - lM)) := by
   have hlc := hok.2.2.2.2.2.1
   rw [hlen] at hlc
   have hh : Held R L' (stW M' c.st + 8 * lM) (8 * (stCap M' c.st - lM)) := by
@@ -120,7 +139,40 @@ theorem Fp.grow {R : RtInv} {c : Cx} {s : State} {Lk L' : List (Nat × Nat)} {bk
         sub' ((fresh_apart (hev.ext.held hcr.t0h) hin hap))⟩
       simp only [win, outside_cons, outside_nil, and_true]; omega
   have h2 := hR.sub (a' := stW M' c.st + 8 * lM') (n' := 8 * (stCap M' c.st - lM')) (by omega) (by omega)
-  exact ⟨⟨hlen, h2.h, h2.w, h2.g, h2.st, h2.gA, h2.q, h2.u, h2.v, h2.t0⟩, hR.sub (by omega) (by omega)⟩
+  exact ⟨⟨hlen, h2.h, h2.w, h2.g, h2.st, h2.gA, h2.q, h2.u, h2.v, h2.t0⟩, hR.sub (by omega) (by omega), hR⟩
+
+/-- `FL` (the array from `l1` on) survives a callee that keeps the stack length (it may grow the array) -/
+theorem FL.callS {R : RtInv} {c : Cx} {s : State} {Lk L' : List (Nat × Nat)} {bk : Nat} {M M' : Memory}
+    (hcr : Cr R c s) (hev : Ev R c s Lk bk M) (h : FL R c s Lk M) (hl0 : 0 < stLen M c.st) (hl1 : c.l1 s ≤ stLen M c.st) (hx : LiveExt R Lk L')
+    (hsb : StackBack R Lk L' c.st M M') : FL R c s L' M' := by
+  obtain ⟨hok, hlen, hsar⟩ := hsb
+  rcases hsar with ⟨e1, e2⟩ | ⟨hin, hap⟩
+  · have h' := h.hdr e1 e2
+    exact ⟨hx.held h'.h, h'.w, h'.g, h'.st, h'.gA, h'.q, h'.u, h'.v, h'.t0⟩
+  · have hW := hcr.hW; have := drsW_ge c.vl
+    have hext : LiveExt R c.L Lk := hcr.ext1.trans hev.ext
+    obtain ⟨hce, -, -, -, -, -, -, -, -, -, -, -, -, -, ⟨-, -, hqh, -, -⟩, ⟨-, -, huh, -, -⟩,
+      ⟨-, -, hvh, -, -, -, -⟩, -⟩ := hcr.pre
+    obtain ⟨-, -, -, hout, -, hgr, -, -⟩ := hce
+    have hlc := hok.2.2.2.2.2.1
+    have hl' : c.l1 s ≤ stLen M' c.st := by rw [hlen]; exact hl1
+    have hl0' : 0 < stLen M' c.st := by rw [hlen]; exact hl0
+    have fh : Held R L' (stW M' c.st + 8 * c.l1 s) (8 * (stCap M' c.st - c.l1 s)) := by
+      obtain ⟨-, hh, -, -⟩ := hok.2.2.2.2.1 (by omega)
+      exact hh.sub (by omega) (by omega)
+    have sub : ∀ {x k}, Apart x k (stW M' c.st) (8 * stCap M' c.st) →
+        Apart x k (stW M' c.st + 8 * c.l1 s) (8 * (stCap M' c.st - c.l1 s)) := fun hh => by unfold Apart at hh ⊢; omega
+    have sub' : ∀ {x k}, Apart x k (stW M' c.st) (8 * stCap M' c.st) →
+        Apart (stW M' c.st + 8 * c.l1 s) (8 * (stCap M' c.st - c.l1 s)) x k := fun hh => by unfold Apart at hh ⊢; omega
+    have hw1 := FvModexp.Arm64.NatAdd.outside_of_inRanges hout hin
+    have hg1 := FvModexp.Arm64.NatAdd.outside_of_inRanges hgr hin
+    have hgA1 := FvModexp.Arm64.NatAdd.outside_of_inRanges hcr.pre.2.2.1.2.2.2.2.2.2.2.2.1 hin
+    refine ⟨fh, ?_, sub' (by unfold Apart; omega), sub (fresh_apart hev.sok.2.1 hin hap),
+      sub' (by unfold Apart; omega), sub' ((fresh_apart (hext.held hqh) hin hap)),
+      sub' ((fresh_apart (hext.held huh) hin hap)), sub' ((fresh_apart (hext.held hvh) hin hap)),
+      sub' ((fresh_apart (hev.ext.held hcr.t0h) hin hap))⟩
+    simp only [win, outside_cons, outside_nil, and_true]; omega
+
 
 /-! ## slots of segment 3 -/
 
@@ -224,6 +276,7 @@ structure A3 (R : RtInv) (c : Cx) (s : State) (Lk : List (Nat × Nat)) (bk : Nat
   q3 : Q3 c s S.mem qn
   v3 : V3 c s S.mem (c.qv s S.mem)
   rg : Rg R c s Lk (c.qv s S.mem) (8 * (3 * c.vl))
+  fl : FL R c s Lk S.mem
   z0 : S.mem.readLE (c.qv s S.mem) (8 * (3 * c.vl)) = 0
   bud : (j / (c.vl / 2)) * c.K s + mulC (c.l1 s + StackNat.rnd (3 * c.vl)) (c.vl / 2 + 1) (c.vl / 2 - 1) ≤ bk
 
