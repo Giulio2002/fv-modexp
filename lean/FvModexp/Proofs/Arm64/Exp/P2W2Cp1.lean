@@ -33,7 +33,7 @@ theorem li_first (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {M : Memo
     (hw : WC R L K g sp st zp zc s.mem M L1 b1 (ℓL (stLen s.mem st) lm)) {ret : Nat}
     (hsl : ESl M sp st (s.regs 29) ret zp zc xp xl xc yp yl lm (stLen s.mem st)) {zzp bp : Nat}
     (htz : TZ R L s.mem M L1 st sp zzp bp lm (natVal s.mem xp xl)) {dp dc n d kk i : Nat}
-    (hub : UB R L K g sp st zp zc M L1 zzp bp lm dp dc) (hnd : n ≤ dc) (hn1 : 0 < n) (hd : d < 4)
+    (hub : UB R L K g sp st zp zc M L1 zzp bp lm dp dc) (hnd : n ≤ dc) (hn1 : 0 < n) (hd : d < 4) (hZo : Exp.p2Pow lm (natVal s.mem xp xl) d % 2 = 1)
     (hlen : M.readLE (sp + 320 + 24 * d + 8) 8 = n)
     {M1 m M' : Memory}
     (hF1 : MemFrame M M1 [(sp + 136, sp + 144), (sp + 152, sp + 160), (sp + 296, sp + 304)])
@@ -117,7 +117,7 @@ theorem li_first (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {M : Memo
     rw [k3 _ _ (by omega), Expmc.readLE_of_copied hcp, k1 _ _ (by omega)]
   refine ⟨hw3, ESl.keep hsl (fun a k ha => kW a k (by omega) (by omega)) (by omega), r200, r208,
     htz.keep hacc (LiveExt.refl R L1) ee0 ee1 ee2 fun a k ha => ?_, by omega, hnd, Nat.le_refl _, ?_, ?_,
-    hub.keep hacc (LiveExt.refl R L1) ee0 ee1 ee2, ⟨rfl, rfl⟩⟩
+    hub.keep hacc (LiveExt.refl R L1) ee0 ee1 ee2, ⟨rfl, rfl⟩, hZo, by have := hP.2.2.2.2.2.1; simp only [W]; omega⟩
   · rcases ha with ha | ha
     · exact kW a k (by omega) (by omega)
     · exact kB a k ha.1 ha.2

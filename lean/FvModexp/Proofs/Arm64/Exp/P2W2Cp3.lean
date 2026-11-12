@@ -116,7 +116,7 @@ theorem cpC {impl : List Segment} (hmv : MemmoveLive (LibExp.program.link impl) 
     {sqC : Nat → Nat → Nat} {mlC : Nat → Nat → Nat → Nat} {kk cst FV : Nat} {r29 : BitVec 64}
     (KL : KL impl ret0 Q R b L K g sp st zp zc xp xl xc yp yl lm ret s r29 sqC mlC zzp bp kk cst FV)
     (hc : CPF R L K g sp st zp zc xp xl xc yp yl lm ret s M L1 b1 zzp bp) {dp dc n d i yi : Nat}
-    (hub : UB R L K g sp st zp zc M L1 zzp bp lm dp dc) (hnd : n ≤ dc) (hn1 : 0 < n) (hd : d < 4)
+    (hub : UB R L K g sp st zp zc M L1 zzp bp lm dp dc) (hnd : n ≤ dc) (hn1 : 0 < n) (hd : d < 4) (hZo : Exp.p2Pow lm (natVal s.mem xp xl) d % 2 = 1)
     (hlen : M.readLE (sp + 320 + 24 * d + 8) 8 = n)
     (s160 : M.readLE (sp + 160) 8 = yi) (s200 : M.readLE (sp + 200) 8 = kk) (s240 : M.readLE (sp + 240) 8 = kk - 1)
     (s208 : M.readLE (sp + 208) 8 = i) (hkk1 : 1 ≤ kk) (hkk : kk ≤ 32) (hi : i < yl) (hyi : yi < 2 ^ 64)
@@ -152,7 +152,7 @@ theorem cpC {impl : List Segment} (hmv : MemmoveLive (LibExp.program.link impl) 
     rw [hc.wc.fr.accessible]; exact hP.1.2.2.2.2.2.2.2.2.2.2.1
   subst hm
   janus_run [hne, hlt, lsl3, e8n n (by omega), hmacc] until [P2Pre.mvE]
-  refine cpM hmv ret0 Q hP KL hc.wc hc.esl hc.tz hc.z280 hc.z112 hc.z120 hub hnd hn1 hd hlen s160 s200 s240 s208
+  refine cpM hmv ret0 Q hP KL hc.wc hc.esl hc.tz hc.z280 hc.z112 hc.z120 hub hnd hn1 hd hZo hlen s160 s200 s240 s208
     hkk1 hkk hi hyi hbud hFV ?F1 ?rg1 ?r136 ?r152 ?r296 _ ?_ ?_ ?_ ?_ ?_ rfl ?_ ?_ ?_ ?_
   case F1 => janus_frame
   case rg1 => simp only [Memory.regions_writeLE]

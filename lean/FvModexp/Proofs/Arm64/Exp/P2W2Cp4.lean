@@ -174,7 +174,7 @@ theorem blH {impl : List Segment} (hmv : MemmoveLive (LibExp.program.link impl) 
   rotate_right
   · -- reuse `z` (`n ≤ cap z`)
     have hnz : n ≤ zc := by omega
-    refine cpC hmv ret0 Q hP (KL (kkOf yi)) hc1 (ub_z hP hc1.wc hc1.tz) hnz hn1 hd4 hn q160 q200 q240 q208 hk1 hk32
+    refine cpC hmv ret0 Q hP (KL (kkOf yi)) hc1 (ub_z hP hc1.wc hc1.tz) hnz hn1 hd4 (p2Pow_odd lm _ _ (by have := hP.2.2.2.2.2.1; omega) hX) hn q160 q200 q240 q208 hk1 hk32
       hi hyi (by omega) hFV _ ?_ ?_ ?_ ?_ ?_ rfl ?_ ?_ ?_ ?_ ?_
     all_goals first | (janus_simp; done) | skip
   · -- `make(nat, 1)`
@@ -218,7 +218,7 @@ theorem blH {impl : List Segment} (hmv : MemmoveLive (LibExp.program.link impl) 
     janus_run [u200, u240, u208, u160, u168, u304, u528, u536, u552, hmacc3] until [CP]
     refine cpC hmv ret0 Q hP (KL (kkOf yi)) hc3
       (ub_fresh hP hc2.wc hlpos hA hc2.tz (c := 1) (by decide) (by omega) (by decide)) (Nat.le_refl 1) (by decide)
-      hd4 ulen u160 u200 u240 u208 hk1 hk32 hi hyi (by omega) hFV _ ?_ ?_ ?_ ?_ ?_ rfl ?_ ?_ ?_ ?_ ?_
+      hd4 (p2Pow_odd lm _ _ (by have := hP.2.2.2.2.2.1; omega) hX) ulen u160 u200 u240 u208 hk1 hk32 hi hyi (by omega) hFV _ ?_ ?_ ?_ ?_ ?_ rfl ?_ ?_ ?_ ?_ ?_
     all_goals first | (janus_simp; done) | skip
   · -- `make(nat, n, n + 4)`
     have hn2 : n ≠ 1 := by omega
@@ -268,7 +268,7 @@ theorem blH {impl : List Segment} (hmv : MemmoveLive (LibExp.program.link impl) 
     janus_run [u200, u240, u208, u160, u168, u304, u104, u528, u536, u552, hmacc3] until [CP]
     refine cpC hmv ret0 Q hP (KL (kkOf yi)) hc3
       (ub_fresh hP hc2.wc hlpos hA hc2.tz (c := n + 4) (by omega) (by omega) (by omega)) (by omega) hn1
-      hd4 ulen u160 u200 u240 u208 hk1 hk32 hi hyi (by omega) hFV _ ?_ ?_ ?_ ?_ ?_ rfl ?_ ?_ ?_ ?_ ?_
+      hd4 (p2Pow_odd lm _ _ (by have := hP.2.2.2.2.2.1; omega) hX) ulen u160 u200 u240 u208 hk1 hk32 hi hyi (by omega) hFV _ ?_ ?_ ?_ ?_ ?_ rfl ?_ ?_ ?_ ?_ ?_
     all_goals first | (janus_simp; done) | skip
 
 end
