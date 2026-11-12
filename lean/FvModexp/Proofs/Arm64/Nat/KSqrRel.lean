@@ -66,6 +66,7 @@ structure KM (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (W st zp zc xp n xc :
   slen : stLen M st = stLen s.mem st + StackNat.rnd (kT n)
   sarr : (stW M st = stW s.mem st ∧ stCap M st = stCap s.mem st) ∨
     (InRanges (stW M st) (8 * stCap M st) R.rt ∧ ApartAll (stW M st) (8 * stCap M st) L)
+  smem : ArrIn Lk st s.mem M
   -- the frame record
   lr : M.readLE (s.sp.toNat - 320) 8 = (s.regs 30).toNat
   fp : M.readLE (s.sp.toNat - 328) 8 = (s.regs 29).toNat
@@ -178,7 +179,7 @@ theorem KM.step {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n x
     (hF : MemFrame M M' (R.rt ++ [(s.sp.toNat - 320 - k, s.sp.toNat - 320 - 8), (s.sp.toNat - 320 + 8,
       s.sp.toNat - 320 + a)] ++ ws)) (hLF : LiveFrame M M' Lk ws) (hreg : M'.regions = M.regions)
     {Lk' : List (Nat × Nat)} {bk' c : Nat} (hext : LiveExt R Lk Lk') (hb : bk - c ≤ bk')
-    (hinv : R.inv bk' Lk' (s.regs 28).toNat (view R.rt Lk' M')) (hsb : StackBack R Lk Lk' st M M') :
+    (hinv : R.inv bk' Lk' (s.regs 28).toNat (view R.rt Lk' M')) (hsb : StackBackL R Lk Lk' st M M') :
     KM R b L W st zp zc xp n xc s lx0 lx1 t Lk' bk' (spent + c) M' := by
   obtain ⟨hW, hWs, -, -, -, -, -, -, -, -, hout, -, -⟩ := h.lay
   have hcl := h.wcls hws
@@ -199,7 +200,7 @@ theorem KM.step {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n x
     · have := hko q hq; omega
     · have := NatSub.outside_of_inRanges (hout.of_sub (a := x) (n := m) (by omega) (by omega)) hin; omega
   -- the stack after the call
-  obtain ⟨hok', hlen', harr'⟩ := hsb
+  obtain ⟨⟨hok', hlen', harr'⟩, hmem'⟩ := hsb
   have hsarr : (stW M' st = stW s.mem st ∧ stCap M' st = stCap s.mem st) ∨
       (InRanges (stW M' st) (8 * stCap M' st) R.rt ∧ ApartAll (stW M' st) (8 * stCap M' st) L) := by
     rcases harr' with ⟨e1, e2⟩ | ⟨hin, hap⟩
@@ -220,7 +221,7 @@ theorem KM.step {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n x
     { pre := h.pre, l0 := h.l0, v0 := h.v0, nn0 := h.nn0, l1 := h.l1, v1 := h.v1, nn1 := h.nn1,
       scr := { h.scr with held := hext.held h.scr.held }, tsep := htsep, ext := h.ext.trans hext,
       bud := by have := h.bud; omega, inv := hinv, reg := hreg.trans h.reg, fr := ?_, lf := ?_, sok := hok', slen := by rw [hlen']; exact h.slen,
-      sarr := hsarr, lr := ?_, fp := ?_, bit := ?_, n2s := ?_, n1s := ?_, dfn := ?_, dst := ?_, dln := ?_, dpt := ?_,
+      sarr := hsarr, smem := h.smem.trans hmem' hext, lr := ?_, fp := ?_, bit := ?_, n2s := ?_, n1s := ?_, dfn := ?_, dst := ?_, dln := ?_, dpt := ?_,
       s1 := ?_, s2 := ?_, s3 := ?_, s4 := ?_, s5 := ?_, x0h := ?_, x1h := ?_ }
   · refine h.fr.trans hF fun x m ho => ⟨ho, ?_⟩
     rw [outside_append, outside_append] at ho
@@ -561,7 +562,7 @@ theorem KM.store {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n 
     hF.mono fun a k ho => by simp only [outside_append] at ho; exact ho.2
   have hLF : LiveFrame M M' Lk ws := ⟨fun a k _ ho => hF.readLE a k ho⟩
   have hinv := RtInv.inv_frame' hF (fun r hr => Or.inl (hrt r hr)) h.inv
-  have hsb : StackBack R Lk Lk st M M' := stackBack_keep' h.sok (hF.mono fun a k ho => by
+  have hsb : StackBackL R Lk Lk st M M' := stackBack_keep' h.sok (hF.mono fun a k ho => by
       simp only [outside_append] at ho; exact ho.2) hLF (outside_of_forall fun r hr => by
       obtain ⟨h1, h2 | h2⟩ := hws r hr <;> omega) (LiveExt.refl R Lk)
   have := h.step (k := 0) (a := 8) (by omega) (by omega) (fun r hr => by

@@ -282,7 +282,7 @@ theorem KM.intStep {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp 
   have hF' : MemFrame M M' (R.rt ++ ([(s.sp.toNat - 320 - 4560, s.sp.toNat - 320 - 8),
       (s.sp.toNat - 320 + 8, s.sp.toNat - 320 + 32)] ++ [(z, z + 32), (q, q + 8 * w)])) := by
     rw [← List.append_assoc]; exact hF
-  have hsb : StackBack R Lk Lk' st M M' := by
+  have hsb : StackBackL R Lk Lk' st M M' := by
     refine stackBack_keep' h.sok hF' (FvModexp.LiveFrame.mono_ws hLF fun a k ho => by rw [outside_append] at ho; exact ho.2) ?_ hext
     simp only [outside_append, outside_cons, outside_nil, and_true]
     refine ⟨⟨by omega, by omega⟩, by omega, by omega⟩
@@ -306,7 +306,7 @@ theorem KM.sqStep {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n
     (hF : MemFrame M M' (R.rt ++ winA S1 (W - 320) 64 ++ [(q, q + 8 * w)] ++ stkWs M st))
     (hLF : LiveFrame M M' Lk ([(q, q + 8 * w)] ++ stkWs M st)) (hreg : M'.regions = M.regions)
     {Lk' : List (Nat × Nat)} {bk' c : Nat} (hext : LiveExt R Lk Lk') (hb : bk - c ≤ bk')
-    (hinv : R.inv bk' Lk' (s.regs 28).toNat (view R.rt Lk' M')) (hsb : StackBack R Lk Lk' st M M') :
+    (hinv : R.inv bk' Lk' (s.regs 28).toNat (view R.rt Lk' M')) (hsb : StackBackL R Lk Lk' st M M') :
     KM R b L W st zp zc xp n xc s lx0 lx1 t Lk' bk' (spent + c) M' := by
   obtain ⟨hW, -⟩ := h.lay
   have hlc := h.sok.2.2.2.2.2.1

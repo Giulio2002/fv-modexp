@@ -65,7 +65,7 @@ def SPre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (W zp zc st xp xl xc : Na
 
 /-- **`z.sqr(stk, x)` postcondition**: `(p', l', c')` in `X0..X2` holds `X²` normalised; the array is `z`'s
 (always when `cap z ≥ 2·len x` and `z` is not `x`'s alias, and then exactly `z[0:2·len x]` is written, holding `X²`) or
-a fresh one (apart from the live set and from the stack's final array); the stack is back (`StackBack`). -/
+a fresh one (apart from the live set and from the stack's final array); the stack is back (`StackBackL`: a new array is an element of the final live set). -/
 @[reducible] def SPost (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (W zp zc st xp xl xc : Nat) (s s' : State) :
     Prop :=
   ∃ (p' l' c' : Nat), s'.regs 0 = BitVec.ofNat 64 p' ∧ s'.regs 1 = BitVec.ofNat 64 l' ∧
@@ -81,7 +81,7 @@ a fresh one (apart from the live set and from the stack's final array); the stac
         natVal s'.mem zp (2 * xl) = natVal s.mem xp xl * natVal s.mem xp xl ∧
         MemFrame s.mem s'.mem (R.rt ++ winA s W 64 ++ [(zp, zp + 8 * (2 * xl))] ++ stkWs s.mem st) ∧
         LiveFrame s.mem s'.mem L ([(zp, zp + 8 * (2 * xl))] ++ stkWs s.mem st)) ∧
-      StackBack R L L' st s.mem s'.mem ∧
+      StackBackL R L L' st s.mem s'.mem ∧
       MemFrame s.mem s'.mem (R.rt ++ winA s W 64 ++ [(zp, zp + 8 * zc)] ++ stkWs s.mem st) ∧
       LiveFrame s.mem s'.mem L ([(zp, zp + 8 * zc)] ++ stkWs s.mem st)
 
@@ -102,7 +102,7 @@ stack's header and free part, the runtime's memory and the window; the stack is 
 @[reducible] def KPost (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (W st zp zl xp xl : Nat) (s s' : State) : Prop :=
   natVal s'.mem zp zl = natVal s.mem xp xl * natVal s.mem xp xl ∧
     ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b - ksqrC (stLen s.mem st) xl ≤ b' ∧
-      R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem) ∧ StackBack R L L' st s.mem s'.mem ∧
+      R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem) ∧ StackBackL R L L' st s.mem s'.mem ∧
       MemFrame s.mem s'.mem (R.rt ++ winA s W 48 ++ (zp, zp + 8 * zl) :: stkWs s.mem st) ∧
       LiveFrame s.mem s'.mem L ((zp, zp + 8 * zl) :: stkWs s.mem st)
 

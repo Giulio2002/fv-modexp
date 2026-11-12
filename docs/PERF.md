@@ -919,3 +919,8 @@ lemma-side memory vs the run's simp-normalised `bp + 8 * W lm`: the defeq check 
 fixed by `rw [Nat.one_mul] at h0` before the run and writing the lemma memories in the run's form), P2PreX1 10 s,
 P2PreE1 7 s, P2PreE 12 s, P2Pre 5 s; rebuilt after the `Pre` change: P2PreH 27 s / 3.1 GB, P2PreX 45 s / 4.4 GB,
 P2PreA 16 s, P2PreB 21 s / 2.7 GB, P2PreC 14 s, P2PreD 13 s (all ≤ 4.4 GB).
+## asm s17 (2026-11-12) — divLarge arm64 division segment + tail + composition (dev, J=2, loaded host)
+DivLargeDBP 22 s / 2.3 GB (db_pre: was 10 GB / >3 min with unfolded disjunctions in the top-level context), DivLargeDRel
+31 s / 4.9 GB, DivLargeDB 6 s, DivLargeDBR 6 s, DivLargeDRP 28 s, DivLargeDRR 5 s, DivLargeDRM 17 s / 3.3 GB, DivLargeTN 7 s,
+DivLargeT1 16 s / 3.1 GB, DivLargeTP 4 s, DivLargeT2 8 s, DivLarge (composition) 3 s. omega: nested subtraction of a large
+literal (`sp - 304 - 40960`) hits maxRecDepth — rewrite to `sp - 41264` first.

@@ -160,14 +160,16 @@ theorem Core.win {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp xl
 /-- the stack is untouched by a callee that writes held memory only in `ws` (e.g. `basicMul`) -/
 theorem stackBack_keep' {R : RtInv} {L L2 : List (Nat × Nat)} {st : Nat} {m m' : Memory} {ws : List (Nat × Nat)}
     (h : StkOK m R L st) (hF : MemFrame m m' (R.rt ++ ws)) (hLF : LiveFrame m m' L ws) (ho : Outside st 24 ws)
-    (he : LiveExt R L L2) : StackBack R L L2 st m m' := by
+    (he : LiveExt R L L2) : StackBackL R L L2 st m m' := by
   obtain ⟨h1, h2, h3, h4, h5, h6, h7⟩ := h
   have e : ∀ k, k + 8 ≤ 24 → m'.readLE (st + k) 8 = m.readLE (st + k) 8 := fun k hk =>
     Held.readLE (h2.sub (by omega) (by omega)) hF hLF (ho.of_sub (by omega) (by omega))
   have e0 := e 0 (by omega); have e1 := e 8 (by omega); have e2 := e 16 (by omega)
   simp only [Nat.add_zero] at e0
-  refine ⟨⟨h1, he.held h2, by rw [hF.accessible]; exact h3, h4, ?_, ?_, ?_⟩, by simp only [stLen]; rw [e1],
-    Or.inl ⟨by simp only [stW]; rw [e0], by simp only [stCap]; rw [e2]⟩⟩
+  have hW : stW m' st = stW m st := by simp only [stW]; rw [e0]
+  have hC : stCap m' st = stCap m st := by simp only [stCap]; rw [e2]
+  refine StackBack.toL ⟨⟨h1, he.held h2, by rw [hF.accessible]; exact h3, h4, ?_, ?_, ?_⟩, by simp only [stLen]; rw [e1],
+    Or.inl ⟨hW, hC⟩⟩ ⟨hW, hC⟩
   · simp only [stW, stCap] at h5 ⊢; rw [e0, e2]; intro hc
     obtain ⟨q1, q2, q3, q4⟩ := h5 hc; exact ⟨q1, he.held q2, by rw [hF.accessible]; exact q3, q4⟩
   · simp only [stLen, stCap] at h6 ⊢; rw [e1, e2]; exact h6
@@ -214,14 +216,14 @@ theorem core_reuse {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp 
 /-- the stack is untouched (`n < 12`: no scratch) -/
 theorem stackBack_keep {R : RtInv} {L L2 : List (Nat × Nat)} {st : Nat} {m m' : Memory} {rs : List (Nat × Nat)}
     (h : StkOK m R L st) (hF : MemFrame m m' rs) (ho : Outside st 24 rs) (he : LiveExt R L L2) :
-    StackBack R L L2 st m m' := by
+    StackBackL R L L2 st m m' := by
   have e1 : m'.readLE (st + 8) 8 = m.readLE (st + 8) 8 := hF.readLE _ _ (ho.of_sub (by omega) (by omega))
   have h' := stkOK_frame h hF ho
   obtain ⟨h1, h2, h3, h4, h5, h6, h7⟩ := h'
-  refine ⟨⟨h1, he.held h2, h3, h4, ?_, h6, h7⟩, by simp only [stLen]; rw [e1], Or.inl ⟨?_, ?_⟩⟩
-  · intro hc; obtain ⟨q1, q2, q3, q4⟩ := h5 hc; exact ⟨q1, he.held q2, q3, q4⟩
-  · simp only [stW]; exact hF.readLE _ _ (ho.of_sub (Nat.le_refl _) (by omega))
-  · simp only [stCap]; exact hF.readLE _ _ (ho.of_sub (by omega) (by omega))
+  have hW : stW m' st = stW m st := by simp only [stW]; exact hF.readLE _ _ (ho.of_sub (Nat.le_refl _) (by omega))
+  have hC : stCap m' st = stCap m st := by simp only [stCap]; exact hF.readLE _ _ (ho.of_sub (by omega) (by omega))
+  refine StackBack.toL ⟨⟨h1, he.held h2, h3, h4, ?_, h6, h7⟩, by simp only [stLen]; rw [e1], Or.inl ⟨hW, hC⟩⟩ ⟨hW, hC⟩
+  intro hc; obtain ⟨q1, q2, q3, q4⟩ := h5 hc; exact ⟨q1, he.held q2, q3, q4⟩
 
 /-- `z` fresh from `makeslice(Word, 2n, c)` (called one frame down with the contract's window `cs` inside ours) -/
 theorem core_alloc {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp xl xc : Nat} {s : State}
@@ -259,7 +261,7 @@ theorem post_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp xl 
     (v2 : natVal M2 p (2 * xl) = natVal s.mem xp xl * natVal s.mem xp xl)
     (e2 : LiveExt R L1 L2) (bud2 : b1 - k ≤ b2) (hk : makeB (2 * xl) + k ≤ sqrC (stLen s.mem st) xl)
     (inv2 : R.inv b2 L2 (s.regs 28).toNat (view R.rt L2 M2))
-    (sb2 : StackBack R L1 L2 st MS M2)
+    (sb2 : StackBackL R L1 L2 st MS M2)
     (F2 : MemFrame MS M2 (R.rt ++ winA s W 64 ++ (p, p + 8 * (2 * xl)) :: stkWs MS st))
     (LF2 : LiveFrame MS M2 L1 ((p, p + 8 * (2 * xl)) :: stkWs MS st))
     {s' : State} {l' : Nat} (F3 : MemFrame M2 s'.mem (winA s W 64))
@@ -294,7 +296,7 @@ theorem post_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp xl 
   have eC' : stCap s'.mem st = stCap M2 st := by simp only [stCap]; rw [hd3 16 (by omega)]
   have eWs : stkWs MS st = stkWs s.mem st := by simp only [stkWs]; rw [eW, eL, eC]
   rw [eWs] at F2 LF2
-  obtain ⟨sbok, sblen, sbor⟩ := sb2
+  obtain ⟨⟨sbok, sblen, sbor⟩, sbm⟩ := sb2
   have hacc : ∀ a n w, s'.mem.accessible a n w = M.accessible a n w := fun a n w => by
     rw [F3.accessible, F2.accessible, hS.accessible]
   have hext : LiveExt R L L2 := hJ.ext.trans e2
@@ -357,11 +359,12 @@ theorem post_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp xl 
     refine LiveFrame.trans (LiveFrame.trans (LiveFrame.trans ⟨fun a n hin _ => hJ.LF.readLE a n hin trivial⟩
       (lf_win _ hS hLs') fun _ _ h => h) ?_ fun _ _ h => h) (lf_win _ F3 hLs') fun _ _ h => h
     exact ⟨fun a n hin ho => LF2.readLE a n (hJ.ext.inRanges_old hin) ho⟩
-  · refine ⟨?_, by rw [eL', sblen, eL], ?_⟩
+  · refine ⟨⟨?_, by rw [eL', sblen, eL], ?_⟩, ?_⟩
     · exact stkOK_frame sbok F3 (by simp only [winA, outside_cons, outside_nil, and_true]; omega)
     · rw [eW', eC']
       rcases sbor with ⟨h1, h2⟩ | ⟨h1, h2⟩
       · exact Or.inl ⟨by rw [h1, eW], by rw [h2, eC]⟩
       · exact Or.inr ⟨h1, fun r hr => h2 r (hJ.ext.mem_old hr)⟩
+    · rw [eW', eC']; intro hn; apply sbm; rw [eW, eC]; exact hn
 
 end FvModexp.Arm64.NatSqr

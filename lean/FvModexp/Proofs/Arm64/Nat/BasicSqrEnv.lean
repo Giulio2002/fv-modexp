@@ -18,18 +18,19 @@ theorem env_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl 
     (hsame : stLen P st + (2 * xl + 3) / 4 * 4 ≤ stCap P st → stW S2 st = stW P st ∧ stCap S2 st = stCap P st)
     (hgrow : stCap P st < stLen P st + (2 * xl + 3) / 4 * 4 → InRanges (stW S2 st) (8 * stCap S2 st) R.rt ∧
       ApartAll (stW S2 st) (8 * stCap S2 st) L)
-    (hacc2 : ∀ a n v, S2.accessible a n v = P.accessible a n v) :
+    (hacc2 : ∀ a n v, S2.accessible a n v = P.accessible a n v)
+    (hmem : stCap P st < stLen P st + (2 * xl + 3) / 4 * 4 → (stW S2 st, stW S2 st + 8 * stCap S2 st) ∈ L1) :
     Env R b L st zp zl zc xp xl s (stW S2 st + 8 * stLen s.mem st) L1 b1 (stW S2 st) (stCap S2 st) := by
   have eW : stW P st = stW s.mem st := hPs 0 (by omega)
   have eL : stLen P st = stLen s.mem st := hPs 8 (by omega)
   have eC : stCap P st = stCap s.mem st := hPs 16 (by omega)
   rw [eW, eL, eC] at hsame
-  rw [eL, eC] at hgrow
+  rw [eL, eC] at hgrow hmem
   rw [eL] at hlen hbud
   have hscr := Scr.of_post (m0 := s.mem) hok hlen (by omega) hsame hgrow rfl
   have hok' := hok
   obtain ⟨-, -, -, -, hnl, hlc, hcb⟩ := hok'
-  refine ⟨hpre, hbig, rfl, ⟨hscr.b48, ?_, hscr.al, hscr.held, hscr.loc⟩, hext, hbud, ?_, ?_, hcb, ?_⟩
+  refine ⟨hpre, hbig, rfl, ⟨hscr.b48, ?_, hscr.al, hscr.held, hscr.loc⟩, hext, hbud, ?_, ?_, hcb, ?_, ?_⟩
   · rw [← hPacc, ← hacc2]; exact hscr.acc
   · by_cases hc : stLen s.mem st + (2 * xl + 3) / 4 * 4 ≤ stCap s.mem st
     · left; exact hsame hc
@@ -38,5 +39,9 @@ theorem env_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl 
   · intro h0
     obtain ⟨a1, a2, a3, a4⟩ := hnl h0
     exact ⟨a1, a2, by rw [← hPacc, ← hacc2]; exact a3, a4⟩
+  · intro hn
+    by_cases hc : stLen s.mem st + (2 * xl + 3) / 4 * 4 ≤ stCap s.mem st
+    · exact absurd (hsame hc) hn
+    · exact hmem (by omega)
 
 end FvModexp.Arm64.BasicSqr

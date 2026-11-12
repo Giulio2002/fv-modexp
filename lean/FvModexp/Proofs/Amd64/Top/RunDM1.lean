@@ -63,8 +63,8 @@ theorem dM1 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
   generalize hstv : min (hdrV s p len 0) (len.toNat - 96) = st at hsl1 hsl2 hndir hst hst0 hsteq
   have hst63 : (BitVec.ofNat 64 st).toNat < 2 ^ 63 := by rw [BitVec.toNat_ofNat, Nat.mod_eq_of_lt (by omega)]; omega
   have hcb : (len.toNat - 96 < st + hdrV s p len 1) = True := eq_true hndir
-  have hsubB : BitVec.ofNat 64 (len.toNat - 96) - BitVec.ofNat 64 st = BitVec.ofNat 64 (len.toNat - 96 - st) := by
-    apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
+  have hsubB : BitVec.ofNat 64 (len.toNat - 96) - BitVec.ofNat 64 st = BitVec.ofNat 64 (len.toNat - 96 - st) :=
+    ofNat_sub64 hst (by omega)
   have hJG : ((BitVec.ofNat 64 (len.toNat - 96 - st)).toInt < ↑(hdrV s p len 1)) = True := by
     rw [toInt_small _ (by rw [BitVec.toNat_ofNat]; omega), BitVec.toNat_ofNat, Nat.mod_eq_of_lt (by omega)]; simp; omega
   have hc32 : (32 < hdrV s p len 1) = True := eq_true hbig
@@ -80,15 +80,11 @@ theorem dM1 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
   janus_eval_nat h_u : uint8T
   have hokb : R.ok (cA "runtime.makeslice") [7231264, hdrV s p len 1, hdrV s p len 1] := by
     have := hokB _ l1; rwa [h_u] at this
-  have hU2 : S.mem.readLE 7231264 8 = 1 := by
-    janus64_data hdS; rw [h_rodata _ _ (by decide)]; decide
-  have hU3 : S.mem.readLE 7231272 8 = 0 := by
-    janus64_data hdS; rw [h_rodata _ _ (by decide)]; decide
+  obtain ⟨hU2, hU3⟩ := uint8_words hdS
   have hut : Apart 7231264 16 ((s.regs 4).toNat - 4800) (4800 + 40) :=
     apart_of_data (x := 7231264) (l := 16) hd 0 (by decide) (by decide) hw
   unfold Apart at hut
-  have hU1 : S.mem.accessible 7231264 16 false = true := by
-    rw [hMF.accessible]; janus64_data hd; exact Janus.Arm64.Memory.accessible_mono _ h_data0 (by omega) (by omega)
+  have hU1 : S.mem.accessible 7231264 16 false = true := by rw [hMF.accessible]; exact uint8_acc hd
   have hAl : allocCost (hdrV s p len 1) ≤ allocCost 1024 := by unfold allocCost; exact Nat.add_le_add_right (Nat.mul_le_mul_left _ l1) _
   have hBA : blockSize (hdrV s p len 1) true ≤ allocCost 1024 := Nat.le_trans (blockSize_le_allocCost _ true) hAl
   have hcst : cstD 1 + allocCost 1024 ≤ cstE 1 := Nat.le_refl _

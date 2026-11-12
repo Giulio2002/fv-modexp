@@ -48,6 +48,110 @@ theorem Mem.glob {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc 
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
+/-- **`AtD` after a division callee** (pure): `X` = the callee's entry (memory = `AtJ`'s with `scrB` slots and `q`
+written), `T` = after the call (window `K / A`) -/
+theorem divPost {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {dc : Nat → Nat → Nat → Nat}
+    {zp zc st up uc ip il ic vp vl vc : Nat} {s : State} {t w1 c1 : Nat} {L1 : List (Nat × Nat)} {b1 : Nat}
+    {Lq : List (Nat × Nat)} {bq P C sh qp qc : Nat}
+    (hE : Env R b L (cost dc (stLen s.mem st) il vl) zp zc st up uc ip il vp vl s t L1 b1 w1 c1) {S : State}
+    (hS : AtJ R b L zp zc st up uc ip il ic vp vl vc s t w1 c1 L1 b1 Lq bq P C sh qp qc S) {X : State}
+    (hsp : X.sp = s.sp - 304#64) (hA : MemFrame S.mem X.mem (R.rt ++ scrB s ++ [(qp, qp + 8 * qc)]))
+    (hAL : LiveFrame S.mem X.mem Lq [(qp, qp + 8 * qc)])
+    (hq0 : X.mem.readLE (s.sp.toNat - 64) 8 = qp) (hq1 : X.mem.readLE (s.sp.toNat - 56) 8 = il - vl + 1)
+    (hq2 : X.mem.readLE (s.sp.toNat - 48) 8 = qc) (hreg : X.mem.regions = s.mem.regions)
+    {K A : Nat} (hK : K ≤ 40960) (hAb : A ≤ 96)
+    {T : State} (hpc : T.pc = BitVec.ofNat 64 joinD) (hTsp : T.sp = s.sp - 304#64) (h28 : T.regs 28 = s.regs 28)
+    (h29 : T.regs 29 = s.sp - 312#64) (h18 : T.regs 18 = s.regs 18) (hTreg : T.mem.regions = X.mem.regions)
+    (hqv : natVal T.mem qp (il - vl + 1) = natVal X.mem P (il + 1) / natVal X.mem t vl)
+    (hrv : natVal T.mem P (il + 1) = natVal X.mem P (il + 1) % natVal X.mem t vl)
+    {L' : List (Nat × Nat)} {b' : Nat} (hx : LiveExt R Lq L')
+    (hbud : b - cost dc (stLen s.mem st) il vl ≤ b')
+    (hinv : R.inv b' L' (s.regs 28).toNat (view R.rt L' T.mem)) (hSB : StackBack R Lq L' st X.mem T.mem)
+    (hMF : MemFrame X.mem T.mem (R.rt ++ winA X K A ++ [(qp, qp + 8 * (il - vl + 1)), (P, P + 8 * (il + 1))] ++
+      stkWs X.mem st))
+    (hLF : LiveFrame X.mem T.mem Lq ([(qp, qp + 8 * (il - vl + 1)), (P, P + 8 * (il + 1))] ++ stkWs X.mem st)) :
+    AtD R b L (cost dc (stLen s.mem st) il vl) zp zc st up uc ip il ic vp vl vc s t w1 c1 L1 Lq P C sh qp qc L' b'
+      (stW T.mem st) (stCap T.mem st) T := by
+  have hl := hE.lay
+  have hsp0 := hl.sp0; have hsp1 := hl.sp1; have hil9 := hl.il9; have hvil := hl.vil; have hv2 := hl.v2
+  have hspn : X.sp.toNat = s.sp.toNat - 304 := by
+    rw [hsp, BitVec.toNat_sub_of_le (by simp only [BitVec.le_def, BitVec.toNat_ofNat]; omega)]; rfl
+  have hMU := hS.mem
+  have hM := hMU.mem
+  have hU := hS.ua
+  have hQ := hS.qa
+  have hqcap := hQ.cap
+  -- reads of held ranges outside `scrB` and `q`
+  have rdY : ∀ a n, Held R Lq a n → (a + n ≤ s.sp.toNat - 41264 ∨ s.sp.toNat + 112 ≤ a) →
+      (a + n ≤ qp ∨ qp + 8 * qc ≤ a) → X.mem.readLE a n = S.mem.readLE a n := by
+    intro a n hh hw hq
+    rcases hh with hi | ho
+    · exact hAL.readLE a n hi (by simp only [outside_cons, outside_nil, and_true]; exact hq)
+    · refine hA.readLE a n ?_
+      rw [outside_append, outside_append]
+      exact ⟨⟨ho, by simp only [scrB, outside_cons, outside_nil, and_true]; omega⟩,
+        by simp only [outside_cons, outside_nil, and_true]; exact hq⟩
+  have hsth := hE.pre.sti.1.2.1
+  have hW : stW X.mem st = w1 := by
+    simp only [stW]
+    rw [rdY _ _ (hS.ext3.held (hE.ext.held (hsth.sub (Nat.le_refl _) (by omega)))) (by have := hl.sw; omega)
+      (by have := hQ.ps; unfold Apart at this; omega)]; exact hM.hw
+  have hLn : stLen X.mem st = stLen s.mem st + StackNat.rnd vl := by
+    simp only [stLen]
+    rw [rdY _ _ (hS.ext3.held (hE.ext.held (hsth.sub (by omega) (by omega)))) (by have := hl.sw; omega)
+      (by have := hQ.ps; unfold Apart at this; omega)]; exact hM.hlen
+  have hCp : stCap X.mem st = c1 := by
+    simp only [stCap]
+    rw [rdY _ _ (hS.ext3.held (hE.ext.held (hsth.sub (by omega) (by omega)))) (by have := hl.sw; omega)
+      (by have := hQ.ps; unfold Apart at this; omega)]; exact hM.hcap
+  have hAL' : LiveFrame S.mem X.mem L [(qp, qp + 8 * qc)] :=
+    ⟨fun a n hin ho => hAL.readLE a n (hS.ext3.inRanges_old (hE.ext.inRanges_old hin)) ho⟩
+  obtain ⟨hf, hlf⟩ := frameX hE hS hspn hA hAL' (K := K) (A := A) (qn := il - vl + 1) hK hAb (by omega) hMF hLF
+  obtain ⟨hok, hlen, harr⟩ := hSB
+  have hcb := hok.2.2.2.2.2.2
+  -- reads above the callee's window
+  have rdT : ∀ a, s.sp.toNat - 200 ≤ a → a + 8 ≤ s.sp.toNat - 40 → T.mem.readLE a 8 = X.mem.readLE a 8 := by
+    intro a h1 h2
+    refine hMF.readLE a 8 ?_
+    have hout : Outside (s.sp.toNat - 41264) (41264 + 112) R.rt := hE.pre.ce.2.2.2.1
+    have hqw := hQ.pw; have hpw := hU.pw
+    have hsw := hl.sw
+    have h1 := (w1_facts hE).2.1
+    refine out3 ?_ (by omega) (by have := hU.cap; omega) ?_
+    · rw [outside_append]
+      exact ⟨hout.of_sub (by omega) (by omega), by simp only [winA, outside_cons, outside_nil, and_true]; rw [hspn]; omega⟩
+    · simp only [stkWs, hW, hLn, hCp, outside_cons, outside_nil, and_true]; omega
+  -- values
+  have hvv : natVal X.mem t vl = natVal s.mem vp vl * 2 ^ sh := by
+    rw [← hS.vval]; unfold natVal
+    exact rdY _ _ (hS.ext3.held hl.theld) (by have := hl.tw; omega) (by have := hQ.pt; unfold Apart at this; omega)
+  have huv : natVal X.mem P (il + 1) = natVal s.mem ip il * 2 ^ sh := by
+    rw [← hS.uval]; unfold natVal
+    have hcap := hU.cap
+    exact rdY _ _ (hU.pheld.sub (Nat.le_refl _) (by omega)) (by have := hU.pw; omega)
+      (by have := hQ.pu; unfold Apart at this; omega)
+  rw [hLn] at hlen
+  have hacc : ∀ a n w, T.mem.accessible a n w = S.mem.accessible a n w := fun a n w => by
+    rw [hMF.accessible, hA.accessible]
+  exact {
+    pc := hpc, sp := hTsp, r28 := h28, r29 := h29, r18 := h18,
+    mem := MemU.frameS hE hMU hU hQ hf hlf rfl (by simp only [stLen] at hlen; exact hlen) rfl hinv,
+    sq0 := (rdT _ (by omega) (by omega)).trans hq0,
+    sq1 := (rdT _ (by omega) (by omega)).trans hq1,
+    sq2 := (rdT _ (by omega) (by omega)).trans hq2,
+    ua := hU.frame hacc,
+    qa := { hQ with pheld := hx.held hQ.pheld, pacc := by rw [hacc]; exact hQ.pacc },
+    ext3 := hS.ext3, ext4 := hx, bud := hbud,
+    arr2 := by rw [hW, hCp] at harr; exact harr,
+    live2 := hok.2.2.2.2.1, c2len := by have := hok.2.2.2.2.2.1; omega, c2b := hcb, sh63 := hS.sh63,
+    qval := by
+      rw [hqv, huv, hvv, Nat.mul_div_mul_right _ _ (Nat.two_pow_pos _)],
+    rval := by
+      rw [hrv, huv, hvv, Nat.mul_mod_mul_right],
+    reg := by rw [hTreg, hreg] }
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 16000000 in
 /-- **`AtD` after `divBasic`** (pure) -/
 theorem dbPost {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {dc : Nat → Nat → Nat → Nat}
     {zp zc st up uc ip il ic vp vl vc : Nat} {s : State} {t w1 c1 : Nat} {L1 : List (Nat × Nat)} {b1 : Nat}
@@ -70,76 +174,28 @@ theorem dbPost {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {dc : Nat → Nat �
     AtD R b L (cost dc (stLen s.mem st) il vl) zp zc st up uc ip il ic vp vl vc s t w1 c1 L1 Lq P C sh qp qc L' b'
       (stW T.mem st) (stCap T.mem st) T := by
   have hl := hE.lay
-  have hsp0 := hl.sp0; have hsp1 := hl.sp1; have hil9 := hl.il9; have hvil := hl.vil; have hv2 := hl.v2
-  have hspn : X.sp.toNat = s.sp.toNat - 304 := by
-    rw [hsp, BitVec.toNat_sub_of_le (by simp only [BitVec.le_def, BitVec.toNat_ofNat]; omega)]; rfl
-  have hMU := hS.mem
-  have hM := hMU.mem
-  have hU := hS.ua
-  have hQ := hS.qa
-  have hqcap := hQ.cap
-  have rdX : ∀ a n, a + n ≤ s.sp.toNat - 64 ∨ s.sp.toNat - 40 ≤ a → X.mem.readLE a n = S.mem.readLE a n :=
-    fun a n h => hF.readLE a n (by simp only [outside_cons, outside_nil, and_true]; exact h)
-  have hW : stW X.mem st = w1 := by
-    simp only [stW]; rw [rdX _ _ (by have := hl.sw; omega)]; exact hM.hw
-  have hLn : stLen X.mem st = stLen s.mem st + StackNat.rnd vl := by
-    simp only [stLen]; rw [rdX _ _ (by have := hl.sw; omega)]; exact hM.hlen
-  have hCp : stCap X.mem st = c1 := by
-    simp only [stCap]; rw [rdX _ _ (by have := hl.sw; omega)]; exact hM.hcap
-  -- frames
+  have hsp0 := hl.sp0; have hsp1 := hl.sp1
   have hA : MemFrame S.mem X.mem (R.rt ++ scrB s ++ [(qp, qp + 8 * qc)]) := hF.mono fun a n ho => by
     simp only [outside_append] at ho
     have := ho.1.2
     simp only [scrB, outside_cons, outside_nil, and_true] at this ⊢; omega
-  have hAL : LiveFrame S.mem X.mem L [(qp, qp + 8 * qc)] := ⟨fun a n hin _ => hF.readLE a n (by
-    have hLs := hl.lsep
+  have hAL : LiveFrame S.mem X.mem Lq [(qp, qp + 8 * qc)] := ⟨fun a n hin _ => hF.readLE a n (by
+    have hLs := lsep_of hE hS.ext3
     obtain ⟨r, hr, i1, i2⟩ := hin
-    have := hLs r (hE.ext.mem_old hr)
+    have := hLs r hr
     simp only [outside_cons, outside_nil, and_true]; omega)⟩
-  obtain ⟨hf, hlf⟩ := frameX hE hS hspn hA hAL (K := 4464) (A := 88) (qn := il - vl + 1) (by omega) (by omega)
-    (by omega) hMF hLF
-  obtain ⟨hok, hlen, harr⟩ := hSB
-  have hsl := hok.2.2.2.2.2.1
-  have hcb := hok.2.2.2.2.2.2
-  -- reads above the callee's window
-  have rdT : ∀ a, s.sp.toNat - 200 ≤ a → a + 8 ≤ s.sp.toNat - 40 → T.mem.readLE a 8 = X.mem.readLE a 8 := by
-    intro a h1 h2
-    refine hMF.readLE a 8 ?_
-    have hout : Outside (s.sp.toNat - 41264) (41264 + 112) R.rt := hE.pre.ce.2.2.2.1
-    have hqw := hQ.pw; have hpw := hU.pw
-    have hsw := hl.sw
-    have h1 := (w1_facts hE).2.1
-    refine out3 ?_ (by omega) (by have := hU.cap; omega) ?_
-    · rw [outside_append]
-      exact ⟨hout.of_sub (by omega) (by omega), by simp only [winA, outside_cons, outside_nil, and_true]; rw [hspn]; omega⟩
-    · simp only [stkWs, hW, hLn, hCp, outside_cons, outside_nil, and_true]; omega
-  -- values
-  have hvv : natVal X.mem t vl = natVal s.mem vp vl * 2 ^ sh := by
-    rw [← hS.vval]; unfold natVal; exact rdX _ _ (by have := hl.tw; omega)
-  have huv : natVal X.mem P (il + 1) = natVal s.mem ip il * 2 ^ sh := by
-    rw [← hS.uval]; unfold natVal; exact rdX _ _ (by have := hU.pw; omega)
-  have hb3 := hS.bud3
-  have hb1 := hE.bud
-  have hc := hE.pre.cost
-  rw [hLn] at hb hlen
-  simp only [cost] at hc
-  have hacc : ∀ a n w, T.mem.accessible a n w = S.mem.accessible a n w := fun a n w => by
-    rw [hMF.accessible, hF.accessible]
-  exact {
-    pc := hpc, sp := hTsp, r28 := h28, r29 := h29, r18 := h18,
-    mem := MemU.frameS hE hMU hU hQ hf hlf rfl (by simp only [stLen] at hlen; exact hlen) rfl hinv,
-    sq0 := (rdT _ (by omega) (by omega)).trans hq0,
-    sq1 := (rdT _ (by omega) (by omega)).trans hq1,
-    sq2 := (rdT _ (by omega) (by omega)).trans hq2,
-    ua := (hU.live hx).frame hacc,
-    qa := { hQ with pheld := hx.held hQ.pheld, pacc := by rw [hacc]; exact hQ.pacc },
-    ext3 := hS.ext3, ext4 := hx, bud := by simp only [cost]; omega,
-    arr2 := by rw [hW, hCp] at harr; exact harr,
-    live2 := hok.2.2.2.2.1, c2len := by omega, c2b := hcb, sh63 := hS.sh63,
-    qval := by
-      rw [hqv, huv, hvv, Nat.mul_div_mul_right _ _ (Nat.two_pow_pos _)],
-    rval := by
-      rw [hrv, huv, hvv, Nat.mul_mod_mul_right],
-    reg := by rw [hTreg, hreg] }
+  have hLn : stLen X.mem st = stLen s.mem st + StackNat.rnd vl := by
+    simp only [stLen]
+    rw [hF.readLE _ _ (by have := hl.sw; simp only [outside_cons, outside_nil, and_true]; omega)]
+    exact hS.mem.mem.hlen
+  have hbud : b - cost dc (stLen s.mem st) il vl ≤ b' := by
+    have hb3 := hS.bud3
+    have hb1 := hE.bud
+    have hc := hE.pre.cost
+    rw [hLn] at hb
+    simp only [cost] at hc ⊢
+    omega
+  exact divPost hE hS hsp hA hAL hq0 hq1 hq2 hreg (K := 4464) (A := 88) (by omega) (by omega) hpc hTsp h28 h29 h18
+    hTreg hqv hrv hx hbud hinv hSB hMF hLF
 
 end FvModexp.Arm64.DivLarge

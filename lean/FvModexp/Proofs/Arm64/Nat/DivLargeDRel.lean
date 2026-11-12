@@ -277,7 +277,7 @@ structure AtD (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (c : Nat) (zp zc st 
   sq0 : S.mem.readLE (s.sp.toNat - 64) 8 = qp
   sq1 : S.mem.readLE (s.sp.toNat - 56) 8 = il - vl + 1
   sq2 : S.mem.readLE (s.sp.toNat - 48) 8 = qc
-  ua : UArr R zp zc st up uc ip il vp vl s t w1 c1 L1 L2 P C S.mem
+  ua : UArr R zp zc st up uc ip il vp vl s t w1 c1 L1 Lq P C S.mem
   qa : QArr R zp zc st vp vl il s t w1 c1 L1 L2 (stLen s.mem st + StackNat.rnd vl) P C qp qc S.mem
   ext3 : LiveExt R L1 Lq
   ext4 : LiveExt R Lq L2

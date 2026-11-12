@@ -74,7 +74,7 @@ theorem KM.addStep {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp 
       (s.sp.toNat - 320 + 8, s.sp.toNat - 320 + 48)] ++
       [(zp + 8 * kn2 n, zp + 8 * kn2 n + 8 * (2 * n - kn2 n))])) := by
     rw [← List.append_assoc]; exact hF
-  have hsb : StackBack R Lk Lk' st M M' := by
+  have hsb : StackBackL R Lk Lk' st M M' := by
     refine stackBack_keep' h.sok hF' (FvModexp.LiveFrame.mono_ws hLF fun a k ho => by rw [outside_append] at ho; exact ho.2) ?_ hext
     simp only [outside_append, outside_cons, outside_nil, and_true]
     refine ⟨⟨by omega, by omega⟩, by omega⟩
@@ -194,7 +194,7 @@ theorem kEndFin {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n x
       · right; simpa using h1
       · left; simpa using h1
   case sb =>
-    refine ⟨⟨hst8, hsth, by rw [hacc]; exact hstacc, hst48, ?_, ?_, ?_⟩, hlen, ?_⟩
+    refine ⟨⟨⟨hst8, hsth, by rw [hacc]; exact hstacc, hst48, ?_, ?_, ?_⟩, hlen, ?_⟩, ?_⟩
     · show NatLive s'.mem R Lk (s'.mem.readLE st 8) (s'.mem.readLE (st + 16) 8)
       rw [eW, eC]
       intro h0
@@ -208,6 +208,9 @@ theorem kEndFin {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n x
         (InRanges (s'.mem.readLE st 8) (8 * s'.mem.readLE (st + 16) 8) R.rt ∧
           ApartAll (s'.mem.readLE st 8) (8 * s'.mem.readLE (st + 16) 8) L)
       rw [eW, eC]; exact h.sarr
+    · show ¬(s'.mem.readLE st 8 = stW s.mem st ∧ s'.mem.readLE (st + 16) 8 = stCap s.mem st) →
+        (s'.mem.readLE st 8, s'.mem.readLE st 8 + 8 * s'.mem.readLE (st + 16) 8) ∈ Lk
+      rw [eW, eC]; exact h.smem
   case mf =>
     refine h.fr.trans hF fun x m ho => ⟨ho, ?_⟩
     simp only [winA, stkWs, outside_append, outside_cons, outside_nil, and_true] at ho ⊢
