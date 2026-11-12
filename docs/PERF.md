@@ -919,3 +919,8 @@ lemma-side memory vs the run's simp-normalised `bp + 8 * W lm`: the defeq check 
 fixed by `rw [Nat.one_mul] at h0` before the run and writing the lemma memories in the run's form), P2PreX1 10 s,
 P2PreE1 7 s, P2PreE 12 s, P2Pre 5 s; rebuilt after the `Pre` change: P2PreH 27 s / 3.1 GB, P2PreX 45 s / 4.4 GB,
 P2PreA 16 s, P2PreB 21 s / 2.7 GB, P2PreC 14 s, P2PreD 13 s (all ≤ 4.4 GB).
+
+### infra s18 (arm64 expNNPowerOfTwoWindowSize2 entry, dev compile)
+P2W2Defs 3.5 s, P2W2EnA 17 s, P2W2EnG3 16 s, P2W2EnG 9.6 s (before: >18 min — `growCap_lt`'s `(8n+3)/4*4` form
+unified against `growCap8 (len0 + 8n)` by defeq; fixed by rewriting the fact to the `8 * n` form first), P2W2EnJ 4.7 s
+(all ≤ 2.4 GB).
