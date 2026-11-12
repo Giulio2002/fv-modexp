@@ -767,7 +767,7 @@ theorem g_alloc (tys : Tys) (hty : TysOK tys) (ok : Nat → List Nat → Prop) (
       s.mem.accessible (s.regs 0).toNat (8 * ((s.regs 3).toNat - (s.regs 7).toNat)) false = true := by
     rcases Nat.eq_zero_or_pos ((s.regs 3).toNat - (s.regs 7).toNat) with h | h
     · left; omega
-    · right; exact (hold h).2
+    · right; exact (hold h).2.1
   have hsrc48 : 0 < 8 * ((s.regs 3).toNat - (s.regs 7).toNat) →
       (s.regs 0).toNat + 8 * ((s.regs 3).toNat - (s.regs 7).toNat) ≤ 2 ^ 48 := fun h => (hold (by omega)).1
   have eob : ((s.regs 3 - s.regs 7) <<< 3).toNat = 8 * ((s.regs 3).toNat - (s.regs 7).toNat) := by
@@ -838,7 +838,7 @@ theorem gr (tys : Tys) (hty : TysOK tys) (ok : Nat → List Nat → Prop) :
   obtain ⟨⟨⟨hcall, -, -, -, h71, h1n3, h13, hn40⟩, -⟩, -⟩ := pre
   have hle := le_nextslicecap (s.regs 3).toNat (s.regs 1).toNat
   have hle2 := nsc_le (s.regs 3).toNat (s.regs 1).toNat h13
-  exact nsc_entry s hpc h13 hn40 fun T hT hpcT h8 =>
+  exact nsc_entry s hpc h13 hn40.1 fun T hT hpcT h8 =>
     chain s T _ hpcT hT h8 (by omega) (by omega) fun U hU hpcU h10 => g_alloc tys hty ok L b s U pre0 hpcU hU h10
 
 end FvModexp.Amd64.WStubs
