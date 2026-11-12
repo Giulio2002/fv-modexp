@@ -188,5 +188,6 @@ theorem mul_post {R : RtInv} {c : Cx} {s S X T : State} {Lk : List (Nat × Nat)}
     exact Memory.accessible_mono _ hacA (by simp only [Cx.qv]; omega) hqin
   · exact hloc
   · simp only [Cx.qv]; omega
+  · exact FL.callS hcr hev hA.fl (by rw [hlen]; simp only [Cx.l1, StackNat.rnd]; omega) (by rw [hlen]; omega) hx hsb
 
 end FvModexp.Arm64.DivRec

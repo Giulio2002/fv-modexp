@@ -30,6 +30,7 @@ structure T3 (R : RtInv) (c : Cx) (s : State) (Lk : List (Nat × Nat)) (bk : Nat
   qN : NatNorm M c.t0 qn
   q3 : Q3 c s M qn
   rg : Rg R c s Lk (c.qv s M) (8 * (3 * c.vl))
+  fl : FL R c s Lk M
   bud : (j / (c.vl / 2)) * c.K s + mulC (c.l1 s + StackNat.rnd (3 * c.vl)) (c.vl / 2 + 1) (c.vl / 2 - 1) ≤ bk
 
 /-- a range of the stack's array from a length `≥` the entry length is a `Loc` range -/
@@ -91,6 +92,7 @@ theorem b3m (impl : List Segment) (R : RtInv)
   -- the header is kept by the own stores
   have hsto : Outside c.st 24 (win s c.W 96) := hcr.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1.2.1
   have eW0 : stW X.mem c.st = stW M c.st := rd3 _ _ (hsto.of_sub (by omega) (by omega))
+  have eC0 : stCap X.mem c.st = stCap M c.st := rd3 _ _ (hsto.of_sub (by omega) (by omega))
   have hqvX : c.qv s X.mem = c.qv s M := by simp only [Cx.qv]; rw [eW0]
   have hlc := hev.sok.2.2.2.2.2.1
   have hl2 := hT.fp.len
@@ -156,8 +158,8 @@ theorem b3m (impl : List Segment) (R : RtInv)
   have hmT : (retStateX X junk [] f v m ex ep).mem = m := rfl
   refine k _ ⟨?_, hsp, ?_, ?_, ?_, hcr, hEvT, Fp.hdr hFpX eW eL eC, hBdT, hBsX.frame hMF hbo, hT.jB, hT.li,
     by rw [hmT, limbs_congr kt0]; exact hT.qk, by rw [hmT, limbs_congr ku]; exact hT.uk, hT.qle, ?_, ?_,
-    hQ3X.frame hMF hhi h0', ⟨?_, ?_, ?_⟩, by rw [hmT, eqv]; exact hrg, by rw [hmT, eqv]; exact FvModexp.Expmc.readLE_zeroed hzr,
-    hT.bud⟩
+    hQ3X.frame hMF hhi h0', ⟨?_, ?_, ?_⟩, by rw [hmT, eqv]; exact hrg, FL.hdr (FL.hdr hT.fl eW0 eC0) eW eC,
+    by rw [hmT, eqv]; exact FvModexp.Expmc.readLE_zeroed hzr, hT.bud⟩
   · rw [hT']; simp only [h30]
   · simp only [retStateX, callRegs, h28]; simp
   · simp only [retStateX, callRegs, h29]; simp

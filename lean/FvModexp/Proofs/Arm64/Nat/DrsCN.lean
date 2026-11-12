@@ -74,6 +74,7 @@ theorem Mc.callN {R : RtInv} {c : Cx} {s X : State} {Lk L' : List (Nat × Nat)} 
   have hL' : LiveFrame M M' Lk ([(p, p + n)] ++ stkWs M c.st) :=
     SubVW.liveFrame_mono hL fun x m ho => by simp only [outside_append] at ho; exact ho.1
   have hsb := stackBack_keep hcr hev hF hL hS hst' hx
+  obtain ⟨eW, -, eC⟩ := hdr_keep hcr hev hF hL hS hst'
   have hl : stLen s.mem c.st ≤ stLen M c.st := by rw [h.fp.len]; simp only [Cx.l1]; omega
   have hEv : Ev R c s L' b' M' := Ev.callS hcr hev hl hF' hL' hS hW1 hW2 hx hinv hsb hreg
   have hFp : Fp R c s L' M' (c.l1 s + StackNat.rnd (3 * c.vl)) :=
@@ -101,6 +102,6 @@ theorem Mc.callN {R : RtInv} {c : Cx} {s X : State} {Lk L' : List (Nat × Nat)} 
     hiOut_callee hout (by omega) (by omega) hX (by omega) (hiOut_win hw (by omega) (by omega))
   exact ⟨hcr, hEv, hFp, h.bd.frame hF hfo hio kv kt kq, h.bs.frame hF hbo, h.jB, h.li, h.q3.frame hF hhi h0',
     h.rg.ext hx, hqk, hbf, hwk, by rw [limbs_congr kl]; exact h.lk, Nat.le_trans h.bud hb,
-    by rw [hF.accessible]; exact h.qa, h.qloc, h.qal⟩
+    by rw [hF.accessible]; exact h.qa, h.qloc, h.qal, Rg.ext (FL.hdr h.fl eW eC) hx⟩
 
 end FvModexp.Arm64.DivRec
