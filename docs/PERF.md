@@ -1088,3 +1088,14 @@ hypotheses before ~40 omega calls; per-goal `apL`/`apR` sub-range lemmas instead
 LESSONS: (1) never `repeat apply` on big terms without `with_reducible` (the last, failing iteration is the expensive one);
 (2) `janus64_data`/`janus_data` costs ~15 s per call — call it in a small lemma (`RunSmall.errT_word`, `RunDKDefs.uint8_words`)
 or not at all; (3) budget goals: one-line Nat lemmas, never `omega` in the post-run context.
+
+## asm s24 (2026-11-12) — drs segment 3b + nat.mul call (arm64, dev compile, LEAN_NUM_THREADS=4)
+| module | time | mem | note |
+|---|---|---|---|
+| Common/DrsMulVal | 1.6 s | 2.0 GB | pure list/limb lemmas |
+| Arm64/Nat/DrsB3T | 2.8 s | 2.3 GB | `t3_post` (pure) |
+| Arm64/Nat/DrsB3C | 3.7 s | 2.3 GB | `b3s`; was 567 s with two failing `omega`s after `simp only [..] at *` — fixed by giving omega only the needed facts |
+| Arm64/Nat/DrsMulP | 6.5 s | 2.5 GB | `mul_pre` |
+| Arm64/Nat/DrsCRel | 2.6 s | 2.3 GB | corr-loop relations, `Mc.own3` |
+| Arm64/Nat/DrsMulQ | 76–102 s | 4.4 GB | `mul_post` — to trim (split value part / env part) |
+| Arm64/Nat/DrsB4 | > 8 GB (memcap kill) | — | WIP, not committed: v1 (post lemma applied with X pinned only by `X.mem = S.mem`) > 9 min / 9.6 GB; v2 (abstract call state `b4c`) still > 8 GB — profile next session |
