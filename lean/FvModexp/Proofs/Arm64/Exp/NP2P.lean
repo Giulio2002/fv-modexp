@@ -84,7 +84,7 @@ theorem p2Path (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
   have hP' := hP
   obtain ⟨⟨hs1, hs28, hg1, -, -, -, hal, hK4, hKs, hsp2, hacc, hwrt, hLs, -, -⟩, -, -, -, -, -,
     hn, hn128, -, hmc, hmO, hma, hm48, hmN, hyO, -, hy48, hyN, hyl, hyc, hxO, -, -, hxN, hxl, hxp, hxc, -, -, -, -,
-    -, ⟨op, hOne, hSA⟩, -, hst48, hsok, hstw, -, harr, hc0, -, -, -, -, -, -, -, hnP, hbud, -⟩ := hP'
+    -, ⟨op, hOne, hSA⟩, hst0, hst48, hsok, hstw, -, harr, hc0, -, -, -, -, -, -, -, hnP, hbud, -⟩ := hP'
   obtain ⟨hF0, hLF0, hrg, hx1, hb1, hmk, hinv1, hZQ, hZA, hnz, hzq⟩ := hZ
   have hs : s.sp.toNat = sp + 1312 := by rw [hs1, BitVec.toNat_ofNat]; omega
   have hSs : S.sp.toNat = sp + 1056 := by rw [hSsp, BitVec.toNat_ofNat]; omega
@@ -131,7 +131,7 @@ theorem p2Path (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
   rw [← e7] at hF0 hLF0 hrg hinv1 hZQ ew el ec h29v h30v hsl hrdx hrdy
   refine callC impl hap hns hn11 ret0 hret F hs hal hKs (by omega) hsp2 hLs hwrt hsok hstw hF0 hLF0 hx1
     hb1 hZA hstk ((r 28 (by decide) (by decide) (by decide) (by decide) (by decide) (by decide)).trans h28) ?_ ?_
-    (Or.inr (Or.inr (Or.inr rfl))) hE e1 hS'sp e6 ?_ ⟨?_, ?_, ?_, by omega, by omega, ?_⟩ (fun s' h => cpostG_of h)
+    (Or.inr (Or.inr (Or.inr rfl))) hE e1 hS'sp e6 ?_ ⟨?_, ?_, ?_, by omega, by omega, hst0, ?_⟩ (fun s' h => cpostG_of h)
     (by rw [ec, ew]; intro hc; exact (harr hc).1) (by rw [ec, ew]; exact hc0)
     (by rw [el, ec]; exact hsok.2.2.2.2.2.1) hacc2 h29v h30v hsl
     (by rw [r 18 (by decide) (by decide) (by decide) (by decide) (by decide) (by decide),
