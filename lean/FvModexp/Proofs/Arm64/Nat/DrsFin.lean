@@ -136,4 +136,76 @@ theorem epiF (impl : List Segment) (s T : State) (hpc : T.pc = BitVec.ofNat 64 0
   · simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, hfp]; apply BitVec.eq_of_toNat_eq; simp
   · simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, h18]
 
+set_option maxHeartbeats 4000000 in
+/-- **the post of a path that clears `z` by a live runtime call** (pure): the frame `fw s` up to `M0`, then a call whose
+written ranges are `R.rt`, its stack `cs` (inside the window) and `z`'s array -/
+theorem post_clr {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c W qp ql qc st up ul uc vp vl vc : Nat}
+    {s s' : State} {M0 : Memory} {cs : List (Nat × Nat)} (hpre : DrsPreW R b L c W qp ql qc st up ul uc vp vl vc s)
+    (hW : 408 ≤ W) (hF : MemFrame s.mem M0 (fw s))
+    (hMF : MemFrame M0 s'.mem (R.rt ++ cs ++ [(qp, qp + 8 * ql)])) (hLF : LiveFrame M0 s'.mem L [(qp, qp + 8 * ql)])
+    (hcs : ∀ a n, Outside a n (winA s W 96) → Outside a n cs)
+    (hinv : R.inv b L (s.regs 28).toNat (view R.rt L s'.mem))
+    (hq : natVal s'.mem qp ql = natVal s.mem up ul / natVal s.mem vp vl)
+    (hu : natVal s.mem up ul = natVal s.mem up ul % natVal s.mem vp vl) :
+    DrsPostW R b L c W qp ql st up ul vp vl s s' := by
+  obtain ⟨hce, -, -, -, -, -, -, -, -, -, -, -, -, -, -, ⟨-, -, huh, huo, -⟩, -, hqu, -, -, hsti, -, ⟨hqs, -⟩, -, -,
+    -, -, -, -, -, hinv0⟩ := hpre
+  have hce' := hce
+  obtain ⟨-, ⟨-, hb', -, -⟩, -, hout, -, -, hLs, -⟩ := hce'
+  have hst := hsti.2.1
+  have hwA : ∀ a n, Outside a n (win s W 96) → Outside a n (winA s W 96) := fun a n h => by
+    simp only [win, winA, outside_cons, outside_nil, and_true] at h ⊢; omega
+  have hfw : ∀ a n, Outside a n (win s W 96) → Outside a n (fw s) := fun a n h => fw_out hW h
+  have hrd : ∀ a n, Held R L a n → Outside a n (win s W 96) → Apart a n qp (8 * ql) →
+      s'.mem.readLE a n = s.mem.readLE a n := by
+    intro a n hh ho hap
+    rw [FvModexp.Expmc.held_readLE hh hMF hLF (hcs a n (hwA a n ho))
+      (by simp only [outside_cons, outside_nil, and_true]; unfold Apart at hap; omega)]
+    exact hF.readLE a n (hfw a n ho)
+  have hSh := hsti.1.2.1
+  have hsq : Apart st 24 qp (8 * ql) := by unfold Apart at hqs ⊢; omega
+  have e0 : stW s'.mem st = stW s.mem st :=
+    hrd _ _ (hSh.sub (Nat.le_refl _) (by omega)) (hst.of_sub (Nat.le_refl _) (by omega)) (by unfold Apart at hsq ⊢; omega)
+  have e1 : stLen s'.mem st = stLen s.mem st :=
+    hrd _ _ (hSh.sub (by omega) (by omega)) (hst.of_sub (by omega) (by omega)) (by unfold Apart at hsq ⊢; omega)
+  have e2 : stCap s'.mem st = stCap s.mem st :=
+    hrd _ _ (hSh.sub (by omega) (by omega)) (hst.of_sub (by omega) (by omega)) (by unfold Apart at hsq ⊢; omega)
+  have hacc : ∀ a n w, s'.mem.accessible a n w = s.mem.accessible a n w := fun a n w => by
+    rw [hMF.accessible, hF.accessible]
+  have hrt : ∀ r ∈ fw s, Outside r.1 (r.2 - r.1) R.rt ∨ InRanges r.1 (r.2 - r.1) L := by
+    intro r hr
+    simp only [fw, winA, List.mem_cons, List.not_mem_nil, or_false] at hr
+    rcases hr with rfl | rfl <;> (left; exact hout.of_sub (by simp only; omega) (by simp only; omega))
+  refine ⟨hq, ?_, L, b, ⟨LiveExt.refl R L, Nat.sub_le _ _, hinv⟩, ?_, ?_, ?_⟩
+  · have : natVal s'.mem up ul = natVal s.mem up ul := by
+      unfold natVal; exact hrd _ _ huh huo (by unfold Apart at hqu ⊢; omega)
+    rw [this]; exact hu
+  · obtain ⟨⟨h1, h2, h3, h4, h5, h6, h7⟩, -⟩ := hsti
+    refine ⟨⟨h1, h2, by rw [hacc]; exact h3, h4, ?_, by rw [e1, e2]; exact h6, by rw [e2]; exact h7⟩,
+      e1, Or.inl ⟨e0, e2⟩⟩
+    rw [e0, e2]; intro hc; obtain ⟨a1, a2, a3, a4⟩ := h5 hc; exact ⟨a1, a2, by rw [hacc]; exact a3, a4⟩
+  · refine hF.trans hMF fun a n ho => ⟨?_, ?_⟩
+    · simp only [outside_append, winA, outside_cons, outside_nil, and_true] at ho
+      simp only [fw, winA, outside_cons, outside_nil, and_true]
+      omega
+    · simp only [outside_append] at ho ⊢
+      refine ⟨⟨ho.1.1.1, hcs a n ho.1.1.2⟩, ?_⟩
+      have := ho.1.2; simp only [outside_cons, outside_nil, and_true] at this ⊢; exact this.1
+  · refine ⟨fun a n hin ho => ?_⟩
+    simp only [List.cons_append, outside_cons, List.nil_append] at ho
+    rw [hLF.readLE a n hin (by simp only [outside_cons, outside_nil, and_true]; exact ho.1)]
+    refine hF.readLE a n ?_
+    obtain ⟨r, hr, h1, h2⟩ := hin
+    have := hLs r hr
+    simp only [win, fw, winA, outside_cons, outside_nil, and_true] at this ⊢
+    omega
+
+/-- `U < V` when the normalised `len u` is below `len v` (whose top word is not zero) -/
+theorem u_lt_v {M : Memory} {up ul ul' vp vl : Nat} (hv1 : 1 ≤ vl) (htop : 2 ^ 63 ≤ M.readLE (vp + 8 * (vl - 1)) 8)
+    (hlt : ul' < vl) (hU : natVal M up ul' = natVal M up ul) : natVal M up ul < natVal M vp vl := by
+  have h1 := natVal_lt M up ul'
+  have h3 := natVal_ge M vp vl hv1 (by omega)
+  have h4 : 2 ^ (64 * ul') ≤ 2 ^ (64 * (vl - 1)) := Nat.pow_le_pow_right (by decide) (by omega)
+  omega
+
 end FvModexp.Arm64.DivRec

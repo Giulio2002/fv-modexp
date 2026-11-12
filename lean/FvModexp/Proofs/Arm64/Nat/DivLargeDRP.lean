@@ -275,7 +275,7 @@ theorem dr_pre {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st
     · rw [h28]; exact hpre.sti.2.2.1
     · simp only [win, outside_cons, outside_nil, and_true]; rw [(win_e hspn hsp0).1, (win_e hspn hsp0).2]; exact wsub h1 hsp0
     · rw [h28]; exact h2
-  case stlen => have := hpre.stl; omega
+  case stlen => exact ⟨by have := hpre.stl; omega, hc0⟩
   case sq => exact hQ.ps.mono (by omega) (Nat.le_refl _)
   case fq => exact hQ.pf.mono (by omega) (Nat.le_refl _)
   case sp => exact hU.ps.mono (by omega) (Nat.le_refl _)

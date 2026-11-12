@@ -66,7 +66,7 @@ def DrsPreW (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (cost W : Nat) (qp ql 
   (s.mem.accessible vp (8 * vl) false = true ∧ vp + 8 * vl ≤ 2 ^ 48 ∧ Held R L vp (8 * vl) ∧
     Outside vp (8 * vl) (win s W 96) ∧ Apart vp (8 * vl) RunIface.gA 32 ∧ Held R L vp (8 * vc) ∧ vp + 8 * vc ≤ 2 ^ 48) ∧
   Apart qp (8 * ql) up (8 * ul) ∧ Apart qp (8 * ql) vp (8 * vl) ∧ Apart up (8 * ul) vp (8 * vl) ∧
-  EvenHyp.StkIn R L s W 96 st ∧ stLen s.mem st + 12 * vl + 64 ≤ 2 ^ 16 ∧
+  EvenHyp.StkIn R L s W 96 st ∧ (stLen s.mem st + 12 * vl + 64 ≤ 2 ^ 16 ∧ 0 < stCap s.mem st) ∧
   (Apart qp (8 * ql) st 24 ∧ Apart qp (8 * ql) (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st))) ∧
   (Apart up (8 * ul) st 24 ∧ Apart up (8 * ul) (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st))) ∧
   (Apart vp (8 * vl) st 24 ∧ Apart vp (8 * vl) (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st))) ∧ Apart st 24 StackNat.wbA 4 ∧
