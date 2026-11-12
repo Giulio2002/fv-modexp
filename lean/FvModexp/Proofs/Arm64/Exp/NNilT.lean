@@ -34,7 +34,7 @@ theorem getT (impl : List Segment) (ret0 : Nat) (hret : RetAddr (LibN.program.li
     (S : State) (hpc : S.pc = BitVec.ofNat 64 getR) (hsp : S.sp = BitVec.ofNat 64 (sp + 1056))
     (h0 : S.regs 0 = BitVec.ofNat 64 Free.stkT) (h1 : S.regs 1 = BitVec.ofNat 64 d) (hmem : S.mem = M)
     (KR : yl = 1 → M.readLE yp 8 = 1 → ∀ (S' : State) (M' : Memory),
-      S'.pc = BitVec.ofNat 64 remA → S'.sp = S.sp →
+      S'.pc = BitVec.ofNat 64 1806400 → S'.sp = S.sp →
       S'.regs 0 = BitVec.ofNat 64 z0 → S'.regs 1 = BitVec.ofNat 64 z1 → S'.regs 2 = BitVec.ofNat 64 z2 →
       S'.regs 3 = BitVec.ofNat 64 d → S'.regs 4 = BitVec.ofNat 64 x4 → S'.regs 5 = BitVec.ofNat 64 x5 →
       S'.regs 6 = BitVec.ofNat 64 x6 → S'.regs 7 = BitVec.ofNat 64 x10 → S'.regs 8 = BitVec.ofNat 64 n →
@@ -70,7 +70,9 @@ theorem getT (impl : List Segment) (ret0 : Nat) (hret : RetAddr (LibN.program.li
   have hx10 : x10 < 2 ^ 64 := r344 ▸ Memory.readLE_lt _ _ _
   have hn : n < 2 ^ 64 := r352 ▸ Memory.readLE_lt _ _ _
   have hx12 : x12 < 2 ^ 64 := r360 ▸ Memory.readLE_lt _ _ _
-  janus_run [r208, r152, r168, r296, r304, r312, r320, r328, r336, r344, r352, r360, r368] until [remA, 1787348]
+  have h0' : S.regs 0 = BitVec.ofNat 64 2841824 := by rw [h0]; rfl
+  clear h0
+  janus_run [r208, r152, r168, r296, r304, r312, r320, r328, r336, r344, r352, r360, r368] until [1806400, 1787348]
   all_goals (try simp (disch := omega) only [Memory.readLE_writeLE_of_disjoint] at *)
   all_goals first
     | (refine KR (by omega) (by janus_assumption) _ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_)
