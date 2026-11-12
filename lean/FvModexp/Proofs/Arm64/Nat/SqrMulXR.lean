@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Nat.SqrMulX
 
+set_option autoImplicit false
+
 /-!
 # `ResSep` for the `nat.sqr` / `nat.mul` export posts (arm64; owner divmc)
 -/
