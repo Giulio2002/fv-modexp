@@ -1,4 +1,6 @@
 import FvModexp.Proofs.Amd64.Int.IntASDefs
+import FvModexp.Proofs.Amd64.Nat.NatAdd
+import FvModexp.Proofs.Amd64.Nat.NatSub
 import FvModexp.Proofs.Common.Link
 import FvModexp.Proofs.Amd64.Nat.Callees
 

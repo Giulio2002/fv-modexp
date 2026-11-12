@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Amd64.Nat.NatAddAlloc
+import FvModexp.Proofs.Amd64.Nat.NatAddComp
 import FvModexp.Proofs.Amd64.Nat.NatAddSetE
 
 /-! # `nat.add` (amd64): the body for `len y ≤ len x`, as a `Summary` at the entry (see the arm64 twin) -/

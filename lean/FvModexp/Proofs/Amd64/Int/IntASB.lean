@@ -1,4 +1,7 @@
-import FvModexp.Proofs.Amd64.Int.IntASA
+import FvModexp.Proofs.Amd64.Int.IntASCallH
+import FvModexp.Proofs.Amd64.Int.IntASAt
+import FvModexp.Proofs.Amd64.Int.IntASTail
+import FvModexp.Proofs.Amd64.Int.IntASVal
 
 set_option autoImplicit false
 

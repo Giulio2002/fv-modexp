@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Amd64.Nat.NatAddMid
+import FvModexp.Proofs.Amd64.Nat.NatAddCont
 
 /-!
 # `nat.add` (amd64): `z[m] = c; return z.norm()` (`+0x1c1` … return)
@@ -12,9 +12,6 @@ open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Spec Janus.Con
 namespace FvModexp.Amd64.NatAdd
 
 abbrev hTail : Nat := segAddr Extracted.program fn + 0x1c1
-
-/-- The return site of `addVV.abi0`. -/
-abbrev hAfterVV : Nat := segAddr Extracted.program fn + 0x12a
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in

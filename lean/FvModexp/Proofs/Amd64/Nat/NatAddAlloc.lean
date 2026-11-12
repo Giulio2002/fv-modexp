@@ -1,4 +1,9 @@
-import FvModexp.Proofs.Amd64.Nat.NatAddReuse
+import FvModexp.Proofs.Amd64.Nat.WordTData
+import FvModexp.Proofs.Amd64.Nat.NatAddCont
+import FvModexp.Proofs.Amd64.Nat.AddVW
+import FvModexp.Proofs.Common.DivmcBits
+import FvModexp.Proofs.Common.DivmcNat
+import FvModexp.Proofs.Common.BitLemmas
 
 /-! # `nat.add` (amd64): the entry → `makeslice(Word, m + 1, m + 5)` → `+0xe6` (`0 < n ≤ m`, `zc < m + 1`), then `vv` -/
 
@@ -9,9 +14,9 @@ namespace FvModexp.Amd64.NatAdd
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem alloc (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
+theorem allocH (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
     (hmk : MakesliceLiveContract64 (LibNatAdd.program.link impl) (cA "runtime.makeslice") 4096 R)
-    (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
+    (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R) (hV : VVStmt impl hap R hmv)
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc yp yl yc : BitVec 64) (s : State)
     (he : Entry s zp zl zc xp xl xc yp yl yc) (hyx : yl.toNat ≤ xl.toNat) (hy0 : 0 < yl.toNat)
     (hz : zc.toNat < xl.toNat + 1) (hpre : PreS 4288 R b L zp zc xp xl xc yp yl yc s) :
@@ -32,7 +37,7 @@ theorem alloc (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progr
   have hbs : blockSize (8 * (xl.toNat + 5)) true ≤ b := by omega
   have hwt : Apart wordT 16 ((s.regs 4).toNat - 4288) (4288 + 80) := apart_of_data hd 1 (by decide) (by decide) hw
   unfold Apart at hwt hga
-  janus64_data hd
+  obtain ⟨_hwa, _hws, _hwp⟩ := FvModexp.Amd64.wordT_data hd
   janus_eval_nat h_t : wordT
   rw [h_t] at hty hok1 hwt
   simp only [LiveSep, win] at hLs
@@ -46,7 +51,7 @@ theorem alloc (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progr
       [((s.regs 4).toNat - 152 - 4096, (s.regs 4).toNat - 152),
         ((s.regs 4).toNat - 152 + 8, (s.regs 4).toNat - 152 + 8 + 24)] := by
     intro a n h; simp only [outside_cons, outside_nil, and_true]; omega
-  refine vv impl hap R hmv b L zp zc xp xl xc yp yl yc s ptr.toNat (xl.toNat + 5) _ _ m
+  refine hV b L zp zc xp xl xc yp yl yc s ptr.toNat (xl.toNat + 5) _ _ m
     (mid_of_alloc hpre hyx hra hx15 hdf hz ?hF ?_ ?_ ?_ ?_ ?_ ?_ ?_ (fun r hr => by
         simp only [List.mem_cons, List.not_mem_nil, or_false] at hr
         rcases hr with rfl | rfl <;> simp only <;> omega) hLF hMF hAp hIn hle

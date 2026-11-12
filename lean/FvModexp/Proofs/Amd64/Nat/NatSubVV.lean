@@ -1,4 +1,7 @@
-import FvModexp.Proofs.Amd64.Nat.NatSubVW
+import FvModexp.Proofs.Amd64.Nat.NatSubCont
+import FvModexp.Proofs.Amd64.Nat.SubVW
+import FvModexp.Proofs.Common.DivmcBits
+import FvModexp.Proofs.Common.DivmcNat
 
 /-!
 # `nat.sub` (amd64): `c := subVV(z[0:n], x, y)` (`+0x13d` … `+0x189`), then `afterVV`
@@ -45,8 +48,8 @@ theorem vv_after {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl xc y
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem vv (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
-    (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
+theorem vvH (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
+    (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R) (hA : AfterVVStmt impl hap R hmv)
     (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl xc yp yl yc : BitVec 64)
     (s : State) (p c : Nat) (L' : List (Nat × Nat)) (b' : Nat) (M : Janus.Arm64.Memory)
     (h : Mid R b L zp zc xp xl xc yp yl s p c L' b' M) (hyx : yl.toNat ≤ xl.toNat) (hy0 : 0 < yl.toNat)
@@ -101,7 +104,7 @@ theorem vv (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program 
     exact hv
   have hb1 : w.readLE ((s.regs 4).toNat - 72) 8 ≤ 1 := by
     rw [show (s.regs 4).toNat - 72 = (s.regs 4).toNat - 152 + 80 by omega, hc]; split <;> omega
-  refine afterVV impl hap R hmv b L zp zc xp xl xc yp yl s p c L' b' w hm2 hyx hy0 hxc hxc63 hps hcs hms hlo hb1 hge
+  refine hA b L zp zc xp xl xc yp yl s p c L' b' w hm2 hyx hy0 hxc hxc63 hps hcs hms hlo hb1 hge
     (hhi.trans hvh) _ ?_ ?_ ?_ ?_ ?_ ?_
   all_goals janus64_simp
 
