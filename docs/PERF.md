@@ -1218,3 +1218,7 @@ context — every `omega` case-split them: > 6 min, killed; split into `nenv_of`
 EvJ2 9.1 s / 3.0 GB (`libN_sub` by `List.all … contains` decide +kernel: 26.6 s / 7.0 GB → `Sublist` decide 9.1 s / 3.0 GB);
 EvE1 5.7 s / 2.5 GB; EvN4 6.0 s / 2.5 GB; EvenNHyp 1.1 s; re-checked EvN1 7.9 s, EvN2 4.7 s, EvLsh 7.0 s, EvRsh 5.7 s,
 EvN3 32 s / 2.7 GB.
+
+### infra s30 (2026-11-12, host load ~40, dev compile, arm64)
+EvJ2 10.2 s / 3.0 GB · EvE1 5.5 s / 2.6 GB · EvN4 5.5 s / 2.6 GB · EvJ3 1.4 s / 2.5 GB · EvE2 5.3 s / 2.6 GB ·
+EvAl 3.3 s / 2.1 GB · EvMv 2.5 s / 2.1 GB · EvLZ < 10 s · EvSetR 8.7 s / 2.6 GB (all ≤ 11 s).
