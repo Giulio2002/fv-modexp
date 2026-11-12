@@ -11,6 +11,17 @@ import re, sys, os
 D = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'lean', 'FvModexp', 'Proofs', 'Arm64', 'Exp')
 TWINS = ['NPro', 'NTriv', 'NMk', 'NDisp', 'NStkNil', 'NGet', 'NNilT', 'NNilN', 'NNilJ']
 PFX = 'FvModexp.Proofs.Arm64.Exp.'
+# s32: the stack-nil COMPOSITION modules (no janus_run; calls of twinned lemmas): extra imports + text substitutions
+# (`NoEvenB` premise -> `EvH` = the even call's summary; `one` (on LibN) lifted by `liftNE`)
+COMP = {
+    'NNilST': (['NNilTE', 'NNilCE'], []),
+    'NNilSN': (['NNilNE', 'NNilJE', 'NNilCE'], []),
+    'NNilSK': (['NNilSTE', 'NNilSNE', 'NStkNilE', 'NGetE'], []),
+    'NJ1N': (['NNilSKE', 'NTrivE', 'NLift'],
+             [('refine one impl R H.mkN ret0 hret ', 'refine liftNE impl hap <| one impl R H.mkN ret0 (retAddr_down hret) ')]),
+}
+COMP_SUBS = [('NoEvenB s.mem mp n', 'EvH impl R K needS costS xl yl n')]
+HAND = {'contR': 'contRE', 'contD': 'contDE'}  # NNilCE.lean (hand-written)
 
 def thm_names(src):
     # only the theorems about the program (their chunk mentions `LibN.program`) are twinned
@@ -21,9 +32,10 @@ def thm_names(src):
     return out
 
 allnames = {}
-for m in TWINS:
+for m in TWINS + list(COMP):
     for n in thm_names(open(os.path.join(D, m + '.lean')).read()):
         allnames[n] = n + 'E'
+allnames.update(HAND)
 
 def gen(m):
     src = open(os.path.join(D, m + '.lean')).read()
@@ -41,11 +53,16 @@ def gen(m):
     out = out.replace('LibN.program', 'LibNE.program')
     out = re.sub(r'\b(' + '|'.join(map(re.escape, sorted(allnames, key=len, reverse=True))) + r')\b',
                  lambda mo: allnames[mo.group(1)], out)
+    if m in COMP:
+        for a, b in COMP_SUBS + COMP[m][1]:
+            assert a in out, (m, a)
+            out = out.replace(a, b)
     imps = re.findall(r'^import (\S+)', head, re.M)
     newimps = [PFX + m]
     for i in imps:
         base = i[len(PFX):] if i.startswith(PFX) else None
         if base in TWINS: newimps.append(PFX + base + 'E')
+    if m in COMP: newimps += [PFX + e for e in COMP[m][0]]
     newimps.append(PFX + 'LibNE')
     opens = re.findall(r'^open .*$', head, re.M)
     hdr = '\n'.join('import ' + i for i in dict.fromkeys(newimps))
@@ -55,10 +72,10 @@ def gen(m):
     return hdr + out + '\n\nend FvModexp.Arm64.ExpN\n'
 
 bad = 0
-for m in TWINS:
+for m in TWINS + list(COMP):
     t = gen(m); p = os.path.join(D, m + 'E.lean')
     if '--check' in sys.argv:
         if not os.path.exists(p) or open(p).read() != t: print('DIFFERS', p); bad = 1
-    else:
+    elif not os.path.exists(p) or open(p).read() != t:  # keep mtimes of unchanged twins (dev builds are mtime-based)
         open(p, 'w').write(t); print('wrote', p)
 sys.exit(bad)
