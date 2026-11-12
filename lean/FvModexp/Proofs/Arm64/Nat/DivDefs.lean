@@ -188,6 +188,9 @@ theorem codeIn_lib (impl : List Segment) (hap : ImplApart Extracted.program impl
 theorem tN {v : Nat} (h : v < 2 ^ 64) : (BitVec.ofNat 64 v).toNat = v := by
   rw [BitVec.toNat_ofNat]; exact Nat.mod_eq_of_lt h
 
+theorem ofNat_modL (x : Nat) : BitVec.ofNat 64 (x % 18446744073709551616) = BitVec.ofNat 64 x := by
+  apply BitVec.eq_of_toNat_eq; simp
+
 /-- an array's range, empty when `c = 0` (a `cap = 0` nat has no array: its pointer is arbitrary) -/
 @[reducible] def ar (p c : Nat) : List (Nat × Nat) := if 0 < c then [(p, p + 8 * c)] else []
 
