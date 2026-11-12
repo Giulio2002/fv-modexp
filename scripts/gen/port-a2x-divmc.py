@@ -20,7 +20,7 @@ t = t.replace("Janus.Arm64.Janus.Arm64.", "Janus.Arm64.")
 t = re.sub(r"\b([A-Za-z][A-Za-z0-9_']*)\.sp\.toNat\b", r"(\1.regs 4).toNat", t)
 t = re.sub(r"\b([A-Za-z][A-Za-z0-9_']*)\.sp\b", r"(\1.regs 4)", t)
 t = t.replace("regs 28", "regs 14")
-t = re.sub(r"\bwinA\b", "win", t)
+t = re.sub(r"\bwinA\b", "win", t).replace("inv_frame_winA", "inv_frame_win")
 t = re.sub(r"\(impl : List Segment\)", "(impl : List Amd64.Segment)", t)
 t = re.sub(r"\(hap : ImplApart ", "(hap : Amd64.ImplApart ", t)
 if "set_option autoImplicit false" not in t:
