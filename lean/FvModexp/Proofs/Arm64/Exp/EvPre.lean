@@ -65,7 +65,7 @@ def EPre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc
     EvenHyp.StkApart s.mem st op 8) ∧
   (OE R L sp K st s.mem mp (8 * ml) ∧ s.mem.accessible mp (8 * ml) false = true ∧ mp + 8 * ml ≤ 2 ^ 48 ∧
     NatNorm s.mem mp ml ∧ (0 < zc → Apart zp (8 * zc) mp (8 * ml)) ∧ yp < 2 ^ 64 ∧ yc < 2 ^ 64 ∧ mp < 2 ^ 64 ∧
-    mc < 2 ^ 64 ∧ (stCap s.mem st = 0 → stW s.mem st = 0)) ∧
+    (mc < 2 ^ 40 ∧ ml ≤ mc) ∧ (stCap s.mem st = 0 → stW s.mem st = 0)) ∧
   R.inv b L g (view R.rt L s.mem)
 
 /-- the array at a later point: kept or fresh -/

@@ -73,7 +73,8 @@ theorem seg1 {impl : List Segment} (hap : ImplApart Extracted.program impl) {R :
   have hstw := hP.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
   have hmo := hP.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
   have hsok := hP.stk0
-  obtain ⟨hmO, hmacc, hm48, -, -, hyp, hyc, hmp, hmc, -⟩ := hmo
+  obtain ⟨hmO, hmacc, hm48, -, -, hyp, hyc, hmp, hmcl, -⟩ := hmo
+  have hmc : mc < 2 ^ 64 := by have := hmcl.1; omega
   have hmw := hmO.2.1
   unfold Apart at hstw hmw
   have hst48 := hsok.2.2.2.1
