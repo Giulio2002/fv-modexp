@@ -78,6 +78,12 @@ theorem contR (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     ⟨hy.1, by rw [rd0_v hyO (by omega) hLF hF]; exact hy.2⟩ hpc hSsp h0 h1 h2 h3 h4 h5 h6 h7 h8 h9 h28 h30 h29v h30v
     (SlotEq.refl _ _) (epiK1 impl hap ret0 hret R hput F hP hxl0 hN hF hLF h1182 h1296 h1272 h1280 f29 _ _ hg28 hK')
 
+/-- `x`'s `XFacts` at the virtual entry (the new stack only adds ranges to the live set) -/
+theorem xfacts_new {R : RtInv} {L L1 : List (Nat × Nat)} {b b1 g st xp xl xc : Nat} {M1 : Memory}
+    (hN : NewStk R L L1 b b1 g M1 st) (hX : NHyp.XFacts R L xp xl xc) : NHyp.XFacts R L1 xp xl xc :=
+  ⟨⟨hX.1.1, hX.1.2.1, fun hc => ⟨(hX.1.2.2 hc).1.imp
+    (fun h => h.of_subset fun r hr => by rw [hN.1]; exact List.mem_append_left _ hr) id, (hX.1.2.2 hc).2⟩⟩, hX.2⟩
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- `y ≠ 1`: `J5` at the virtual entry -/
@@ -91,6 +97,7 @@ theorem contD (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     {b : Nat} {L : List (Nat × Nat)} {g sp zp zl zc st0 xp xl xc yp yl yc mp n mc slow f29 zp' zl' zc' : Nat}
     {s : State}
     (hP : PreNil R b L K costF needR costR needS needP costS costP g sp zp zl zc st0 xp xl xc yp yl yc mp n mc slow s)
+    (hX : NHyp.XFacts R L xp xl xc)
     {L1 : List (Nat × Nat)} {b1 st : Nat} {M1 : Memory} (hN : NewStk R L L1 b b1 g M1 st)
     (hF : MemFrame s.mem M1 (R.rt ++ wN sp K)) (hLF : LiveFrame s.mem M1 L []) (hrg : M1.regions = s.mem.regions)
     (h1182 : M1.readLE (sp + 1182) 1 = 1) (h1296 : M1.readLE (sp + 1296) 8 = sp + 1272)
@@ -126,7 +133,7 @@ theorem contD (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
   have ey := rd0_v hyO (by omega) hLF hF
   have em := rd0_v hmO hn0 hLF hF
   have emv := (opnd_v hmO hLF hF hmN).1
-  refine fromJ5 impl hap R H ret0 hret F hPV hzJ hxl0 hyl0 (by show ¬(yl = 1 ∧ M1.readLE yp 8 = 1); rw [ey]; exact hy1)
+  refine fromJ5 impl hap R H ret0 hret F hPV (xfacts_new hN hX) hzJ hxl0 hyl0 (by show ¬(yl = 1 ∧ M1.readLE yp 8 = 1); rw [ey]; exact hy1)
     (by show ¬(n = 1 ∧ M1.readLE mp 8 = 1); rw [em]; exact hm1) (by show NoEvenB M1 mp n; unfold NoEvenB; rw [emv]; exact hev)
     S M1 hpc hSsp h0 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 h12 h13 h28 hmem (MemFrame.refl _ _) rfl hsp h29v h30v
     (SlotEq.refl _ _) (epiK1 impl hap ret0 hret R hput F hP hxl0 hN hF hLF h1182 h1296 h1272 h1280 f29 _ _ hg28 hK')

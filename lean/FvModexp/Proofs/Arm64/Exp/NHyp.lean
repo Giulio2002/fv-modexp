@@ -71,6 +71,35 @@ open FvModexp.Arm64.ExpHyp
       MemFrame s.mem s'.mem (R.rt ++ winA s stk above ++ [(zp, zp + 8 * zc)] ++ stWs s.mem st) ∧
       LiveFrame s.mem s'.mem L ([(zp, zp + 8 * zc)] ++ stWs s.mem st) ∧ ResSep s.mem s'.mem st p c
 
+/-- `ExpHyp.NatOF` with need `1` and the EMPTY result allowed `nil` (`(0, 0, 0)`: the last `div`'s remainder in a
+`nil` `r` buffer, e.g. `modexp(2, 4, 4)`; FINDING part 3 of NOTES-conventions "[expmc s37]"); the three location
+disjuncts are `ExpN.Post`'s (moved from `ExpSlow`, batch "[expmc s40] ANNOUNCE") -/
+@[reducible] def NatOF0 (R : RtInv) (L L' : List (Nat × Nat)) (m' : Memory) (zp zc p' l' c' v : Nat) : Prop :=
+  natVal m' p' l' = v ∧ NatNorm m' p' l' ∧ l' ≤ c' ∧ c' < 2 ^ 40 ∧ NatLive m' R L' p' c' ∧
+    ((c' = 0 ∧ p' = 0) ∨ (p' = zp ∧ c' = zc) ∨ (1 ≤ c' ∧ InRanges p' (8 * c') R.rt ∧ ApartAll p' (8 * c') L))
+
+/-- `CPostR` with `NatOF0` (a `nil` result allowed) -/
+@[reducible] def CPostR0 (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (stk above zp zc st v cst : Nat) (s s' : State) :
+    Prop :=
+  ∃ p l c : Nat, s'.regs 0 = BitVec.ofNat 64 p ∧ s'.regs 1 = BitVec.ofNat 64 l ∧ s'.regs 2 = BitVec.ofNat 64 c ∧
+    ∃ (L' : List (Nat × Nat)) (b' : Nat), NatOF0 R L L' s'.mem zp zc p l c v ∧ RtPost R b cst L L' b' s s' ∧
+      StackBackL R L L' st s.mem s'.mem ∧
+      MemFrame s.mem s'.mem (R.rt ++ winA s stk above ++ [(zp, zp + 8 * zc)] ++ stWs s.mem st) ∧
+      LiveFrame s.mem s'.mem L ([(zp, zp + 8 * zc)] ++ stWs s.mem st) ∧ ResSep s.mem s'.mem st p c
+
+/-- the extra facts of the operand `x` of `expNNSlow` / `expNNPowerOfTwo` / `expNNEven` (`zz.mul(stk, z, x)`: every
+`nat.mul` premise form needs its operands' capacity facts — Go's `alias` compares cap ends — and apartness from the
+threshold globals `gA`; `nat(nil).rsh(x, i)` slices `x`): `len ≤ cap < 2^40`, the cap range held below `2^48`, the
+words apart from `gA` (coordinator DECISION 2; = the former `ExpSlow.SlowX`) -/
+@[reducible] def XFacts (R : RtInv) (L : List (Nat × Nat)) (x xl xc : Nat) : Prop :=
+  (xl ≤ xc ∧ xc < 2 ^ 40 ∧ (0 < xc → Held R L x (8 * xc) ∧ x + 8 * xc ≤ 2 ^ 48)) ∧
+    (0 < xl → Apart x (8 * xl) RunIface.gA 32)
+
+/-- `XFacts` survives a live-set extension -/
+theorem XFacts.ext {R : RtInv} {L L' : List (Nat × Nat)} {x xl xc : Nat} (h : LiveExt R L L') (hx : XFacts R L x xl xc) :
+    XFacts R L' x xl xc :=
+  ⟨⟨hx.1.1, hx.1.2.1, fun hc => ⟨h.held (hx.1.2.2 hc).1, (hx.1.2.2 hc).2⟩⟩, hx.2⟩
+
 /-! ## `z.rem(stk, u, v)` (natdiv.go:505) — z X0..X2, st X3, u X4..X6, v X7..X9; result `U % V` -/
 
 def fnRem : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.nat.rem"
@@ -87,7 +116,7 @@ def RemHyp (impl : List Segment) (R : RtInv) (ns : List String) (stk above : Nat
       [z, zl, zc, st, u, ul, uc, v, vl, vc]
       (fun s => (CPre R b L stk above z.toNat zl.toNat zc.toNat st.toNat [(u.toNat, ul.toNat), (v.toNat, vl.toNat)]
           (need ul.toNat vl.toNat) (cost (stLen s.mem st.toNat) ul.toNat vl.toNat) s ∧
-        0 < vl.toNat) ∧ NoAlias z.toNat zc.toNat u.toNat uc.toNat)
+        0 < vl.toNat) ∧ NoAlias z.toNat zc.toNat u.toNat uc.toNat ∧ 0 < st.toNat)
       (fun s s' => CPostR R b L stk above z.toNat zc.toNat st.toNat
         (natVal s.mem u.toNat ul.toNat % natVal s.mem v.toNat vl.toNat)
         (cost (stLen s.mem st.toNat) ul.toNat vl.toNat) s s')
@@ -101,12 +130,12 @@ def SlowHyp (impl : List Segment) (R : RtInv) (ns : List String) (stk above : Na
   ∀ (b : Nat) (L : List (Nat × Nat)) (z zl zc st x xl xc y yl yc m ml mc : BitVec 64),
     Ensures ((Extracted.program.onlySegments ns).link impl) (segAddr Extracted.program fnSlow)
       [z, zl, zc, st, x, xl, xc, y, yl, yc, m, ml, mc]
-      (fun s => CPre R b L stk above z.toNat zl.toNat zc.toNat st.toNat
+      (fun s => (CPre R b L stk above z.toNat zl.toNat zc.toNat st.toNat
           [(x.toNat, xl.toNat), (y.toNat, yl.toNat), (m.toNat, ml.toNat)]
           (need xl.toNat yl.toNat ml.toNat) (cost (stLen s.mem st.toNat) xl.toNat yl.toNat ml.toNat) s ∧
         0 < natVal s.mem x.toNat xl.toNat ∧ 2 ≤ natVal s.mem y.toNat yl.toNat ∧ 0 < natVal s.mem m.toNat ml.toNat ∧
-        0 < st.toNat)
-      (fun s s' => CPostR R b L stk above z.toNat zc.toNat st.toNat
+        0 < st.toNat) ∧ XFacts R L x.toNat xl.toNat xc.toNat)
+      (fun s s' => CPostR0 R b L stk above z.toNat zc.toNat st.toNat
         (natVal s.mem x.toNat xl.toNat ^ natVal s.mem y.toNat yl.toNat % natVal s.mem m.toNat ml.toNat)
         (cost (stLen s.mem st.toNat) xl.toNat yl.toNat ml.toNat) s s')
 
@@ -121,11 +150,12 @@ def P2Hyp (impl : List Segment) (R : RtInv) (ns : List String) (stk above : Nat)
   ∀ (b : Nat) (L : List (Nat × Nat)) (z zl zc st x xl xc y yl yc lm : BitVec 64),
     Ensures ((Extracted.program.onlySegments ns).link impl) (segAddr Extracted.program fnP2)
       [z, zl, zc, st, x, xl, xc, y, yl, yc, lm]
-      (fun s => CPre R b L stk above z.toNat zl.toNat zc.toNat st.toNat [(x.toNat, xl.toNat), (y.toNat, yl.toNat)]
+      (fun s => (CPre R b L stk above z.toNat zl.toNat zc.toNat st.toNat [(x.toNat, xl.toNat), (y.toNat, yl.toNat)]
           (need xl.toNat yl.toNat lm.toNat) (cost (stLen s.mem st.toNat) xl.toNat yl.toNat lm.toNat) s ∧
-        0 < natVal s.mem x.toNat xl.toNat ∧ 0 < natVal s.mem y.toNat yl.toNat ∧ 1 ≤ lm.toNat ∧ lm.toNat ≤ 2 ^ 13 ∧ 0 < st.toNat ∧
+        0 < natVal s.mem x.toNat xl.toNat ∧ 0 < natVal s.mem y.toNat yl.toNat ∧ 1 ≤ lm.toNat ∧ lm.toNat ≤ 2 ^ 13 ∧
+        0 < st.toNat ∧
         ∃ op, EvenHyp.NatOne R L s.mem op (win s stk above ++ [(z.toNat, z.toNat + 8 * zc.toNat)] ++ stWs s.mem st.toNat) ∧
-          EvenHyp.StkApart s.mem st.toNat op 8)
+          EvenHyp.StkApart s.mem st.toNat op 8) ∧ xl.toNat ≤ xc.toNat ∧ xc.toNat < 2 ^ 40)
       (fun s s' => CPostR R b L stk above z.toNat zc.toNat st.toNat
         (natVal s.mem x.toNat xl.toNat ^ natVal s.mem y.toNat yl.toNat % 2 ^ lm.toNat)
         (cost (stLen s.mem st.toNat) xl.toNat yl.toNat lm.toNat) s s')

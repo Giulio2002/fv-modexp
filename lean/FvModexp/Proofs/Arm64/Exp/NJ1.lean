@@ -37,6 +37,7 @@ theorem fromJ1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     {b : Nat} {L : List (Nat × Nat)} {g sp zp zl zc st xp xl xc yp yl yc mp n mc slow f29 zp' zl' zc' : Nat}
     {s : State}
     (hP : NPre R b L K costF needR costR needS needP costS costP g sp zp zl zc st xp xl xc yp yl yc mp n mc slow s)
+    (hX : NHyp.XFacts R L xp xl xc)
     (hev : NoEvenB s.mem mp n)
     (hz : ZKeep R L g sp K st zp zl zc xp xl yp yl mp n zp' zl' zc' s.mem)
     (hna : NHyp.NoAlias zp' zc' xp xc)
@@ -183,7 +184,7 @@ theorem fromJ1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
         rcases hz with ⟨a, -, c, d⟩ | ⟨a, -, c⟩
         · exact Or.inl ⟨a, c, d⟩
         · exact Or.inr ⟨a, c⟩
-      refine fromJ5 impl hap R H ret0 hret F hP hzJ hx0 hy0 ?_ hm1 hev U M2 upc (usp.trans (tsp.trans hsp))
+      refine fromJ5 impl hap R H ret0 hret F hP hX hzJ hx0 hy0 ?_ hm1 hev U M2 upc (usp.trans (tsp.trans hsp))
         (u0.trans (t0.trans h0)) (u2.trans (t2.trans h2)) (u3.trans (t3.trans h3)) (u4.trans (t4.trans h4))
         (u5.trans (t5.trans h5)) (u6.trans (t6.trans h6)) (u7.trans (t7.trans h7)) (u8.trans (t8.trans h8))
         (u9.trans (t9.trans h9)) (u10.trans (t10.trans h10)) (u11.trans (t11.trans h11))

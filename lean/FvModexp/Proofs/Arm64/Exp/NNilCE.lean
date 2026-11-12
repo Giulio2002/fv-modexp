@@ -68,6 +68,7 @@ theorem contDE (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     {b : Nat} {L : List (Nat × Nat)} {g sp zp zl zc st0 xp xl xc yp yl yc mp n mc slow f29 zp' zl' zc' : Nat}
     {s : State}
     (hP : PreNil R b L K costF needR costR needS needP costS costP g sp zp zl zc st0 xp xl xc yp yl yc mp n mc slow s)
+    (hX : NHyp.XFacts R L xp xl xc)
     {L1 : List (Nat × Nat)} {b1 st : Nat} {M1 : Memory} (hN : NewStk R L L1 b b1 g M1 st)
     (hF : MemFrame s.mem M1 (R.rt ++ wN sp K)) (hLF : LiveFrame s.mem M1 L []) (hrg : M1.regions = s.mem.regions)
     (h1182 : M1.readLE (sp + 1182) 1 = 1) (h1296 : M1.readLE (sp + 1296) 8 = sp + 1272)
@@ -102,7 +103,7 @@ theorem contDE (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     · exact Or.inr ⟨a, c⟩
   have ey := rd0_v hyO (by omega) hLF hF
   have em := rd0_v hmO hn0 hLF hF
-  refine fromJ5E impl hap R H hEv hstkE ret0 hret F hPV hzJ hxl0 hyl0 (by show ¬(yl = 1 ∧ M1.readLE yp 8 = 1); rw [ey]; exact hy1)
+  refine fromJ5E impl hap R H hEv hstkE ret0 hret F hPV (xfacts_new hN hX) hzJ hxl0 hyl0 (by show ¬(yl = 1 ∧ M1.readLE yp 8 = 1); rw [ey]; exact hy1)
     (by show ¬(n = 1 ∧ M1.readLE mp 8 = 1); rw [em]; exact hm1) hnE hcE
     S M1 hpc hSsp h0 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 h12 h13 h28 hmem (MemFrame.refl _ _) rfl hsp h29v h30v
     (SlotEq.refl _ _) (epiK1 impl hap ret0 (retAddr_down hret) R hput F hP hxl0 hN hF hLF h1182 h1296 h1272 h1280 f29 _ _ hg28 hK')

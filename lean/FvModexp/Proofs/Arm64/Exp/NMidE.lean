@@ -30,6 +30,7 @@ theorem fromJ5E (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     {b : Nat} {L : List (Nat × Nat)} {g sp zp zl zc st xp xl xc yp yl yc mp n mc slow f29 zp' zc' : Nat}
     {s : State}
     (hP : NPre R b L K costF needR costR needS needP costS costP g sp zp zl zc st xp xl xc yp yl yc mp n mc slow s)
+    (hX : NHyp.XFacts R L xp xl xc)
     (hz : (zp' = zp ∧ zc' = zc ∧ (0 < zc → ZOK R L g sp K st zp zc xp xl yp yl mp n s.mem)) ∨ (zp' = 0 ∧ zc' = 0))
     (hxl0 : xl ≠ 0) (hyl0 : yl ≠ 0) (hy1 : ¬(yl = 1 ∧ s.mem.readLE yp 8 = 1))
     (hm1 : ¬(n = 1 ∧ s.mem.readLE mp 8 = 1))
@@ -96,7 +97,7 @@ theorem fromJ5E (impl : List Segment) (hap : ImplApart Extracted.program impl) (
       hal (by omega) hsp2 hacc1 D hDsp hDS hDm ?_ ?_ ?_
     · intro _ _ S' e1 e2 e3 e4 e5 e6 e7
       rw [← e7] at hZ f1 f2 f3
-      exact liftNE impl hap <| slowPath impl hap R H.slow H.hnsS H.hn11S ret0 (retAddr_down hret) F hP H.hKS hZ hxl0 hyl0 hy1 e1 (e2.trans hDsp) e3
+      exact liftNE impl hap <| slowPath impl hap R H.slow H.hnsS H.hn11S ret0 (retAddr_down hret) F hP hX H.hKS hZ hxl0 hyl0 hy1 e1 (e2.trans hDsp) e3
         ((e5.trans hD28).trans h28) e6 f1 f2 f3 (by rw [e4, hD18, e5, hD28]; exact hE)
     · intro _ hodd S' e1 e2 e3 e4 e5 e6 e7
       rw [← e7] at hZ f1 f2 f3
@@ -107,10 +108,10 @@ theorem fromJ5E (impl : List Segment) (hap : ImplApart Extracted.program impl) (
       rw [← e7] at hZ f1 f2 f3
       have hm0 : s.mem.readLE mp 8 % 2 = 0 := by rw [← hm01]; exact hev0
       by_cases hpow : ∃ k, natVal s.mem mp n = 2 ^ k
-      · exact liftNE impl hap <| p2Path impl hap R H.p2 H.hnsP H.hn11P ret0 (retAddr_down hret) F hP H.hKP hZ hxl0
+      · exact liftNE impl hap <| p2Path impl hap R H.p2 H.hnsP H.hn11P ret0 (retAddr_down hret) F hP hX H.hKP hZ hxl0
           hyl0 hpow hm0 e1 (e2.trans hDsp) e3 e4 ((e6.trans hD28).trans h28) f1 f2 f3
           (by rw [e5, hD18, e6, hD28]; exact hE)
-      · exact evPath impl hap R hEv ret0 hret F hP hstkE hnE hcE hZ hxl0 hyl0 hy1 hpow hm0 e1 (e2.trans hDsp) e3 e4
+      · exact evPath impl hap R hEv ret0 hret F hP hX hstkE hnE hcE hZ hxl0 hyl0 hy1 hpow hm0 e1 (e2.trans hDsp) e3 e4
           ((e6.trans hD28).trans h28) f1 f2 f3 (by rw [e5, hD18, e6, hD28]; exact hE)
   refine mkE impl R (MakesliceLiveContract.of_codeIn (codeInNE impl hap) H.mkN) ret0 hret _ b L K g sp zc' st n M hal hK4 hKs hsp2
     (by rw [hF.accessible]; exact hacc) hg1 (by rw [hF.accessible]; exact hg2)

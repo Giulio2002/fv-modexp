@@ -29,6 +29,7 @@ theorem k2N (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     {b : Nat} {L : List (Nat × Nat)} {g sp zp zl zc st0 xp xl xc yp yl yc mp n mc slow f29 zp' zl' zc' : Nat}
     {s : State}
     (hP : PreNil R b L K costF needR costR needS needP costS costP g sp zp zl zc st0 xp xl xc yp yl yc mp n mc slow s)
+    (hX : NHyp.XFacts R L xp xl xc)
     (hz : ZKeep0 R L g sp K zp zl zc xp xl yp yl mp n zp' zl' zc' s.mem)
     (hna : NHyp.NoAlias zp' zc' xp xc)
     (hm1 : ¬(n = 1 ∧ s.mem.readLE mp 8 = 1)) (hev : NoEvenB s.mem mp n) (hx0 : xl ≠ 0) (hy0 : yl ≠ 0)
@@ -129,7 +130,7 @@ theorem k2N (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
       · rw [rd_sl hF4 _ _ (by omega), rdm2 _ _ (by omega)]; exact g352
       · rw [rd_sl hF4 _ _ (by omega), rdm2 _ _ (by omega)]; exact g360
       · rw [rd_sl hF4 _ _ (by omega), rdm2 _ _ (by omega)]; exact g368
-    exact contD impl hap R hput H ret0 hret F hP hN hF5.1 hF5.2 (by rw [hrg4, hNN.rg, hrgm, hrgg])
+    exact contD impl hap R hput H ret0 hret F hP hX hN hF5.1 hF5.2 (by rw [hrg4, hNN.rg, hrgm, hrgg])
       f1182 f1296 f1272 f1280 hz hx0 hy0 hny hm1 hev S4 p4 (sp4.trans (sp6.trans (sp5.trans sp3))) a0 a2 a3 a4 a5 a6
       a7 a8 a9 a10 a11 a12 a13 (a28.trans (z28.trans (y28.trans (x28.trans hr28)))) hm4 hspl
       (by rw [rd_sl hF4 _ _ (by omega), rdm2 _ _ (by omega)]; exact g1048)
