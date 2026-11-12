@@ -851,3 +851,17 @@ janus runs into the callee's code.
 Method: `lean -Dtrace.profiler=true -Dtrace.profiler.threshold=300` on the slow module; every hot spot was `omega` in a
 context of ~150 hypotheses (unfolded `Apart` disjunctions make it case-split). A side goal that depends on few facts
 goes into a top-level lemma taking exactly those facts.
+### infra s15 (2026-11-12) — buildPrecomputationWindowModPower2 arm64 loop pieces (dev compile, load ~25)
+| module | wall | peak RSS |
+|---|---|---|
+| P2PreJ (joins RS/JX/JA..JD) | 1.1 s | 2.0 GB |
+| P2PreRS (slot_keep, pwd_keep, rs_call) | 3.6 s | 2.1 GB |
+| P2PreBld (pf_of, cenv_ctx, globals_ctx, bufObj, stkIn_ctx) | 4.5 s | 2.1 GB |
+| P2PreCall (ra_bp, bufArr, budget lemmas) | 1.3 s | 2.1 GB |
+| P2PreSq (callSqrH) | 11.7 s | 2.4 GB |
+| P2PreTr (callTr) | 8.3 s | 2.3 GB |
+| P2PreMu (callMulH) | 9.3 s | 2.3 GB |
+| P2PreH (segH: head → sqr, one janus_run) | 45 s | 3.1 GB |
+| Common/RotA64 | 0.4 s | 0.5 GB |
+Lesson: omega treats a goal `b - (c0 + … + cst) ≤ b'` coming from a join `def` as an atom (no split) — close budget
+goals with a tiny pure lemma (`bud_step`, `bud_room2`) instead.
