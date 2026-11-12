@@ -69,6 +69,8 @@ def DrsPre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (cost : Nat) (qp ql qc 
   (Apart vp (8 * vl) st 24 ∧ Apart vp (8 * vl) (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st))) ∧ Apart st 24 StackNat.wbA 4 ∧
   Apart st 24 (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st)) ∧
   Outside (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st)) (win s 40960 96) ∧
+  (Apart qp (8 * ql) RunIface.gA 32 ∧ Apart up (8 * ul) RunIface.gA 32 ∧ Apart st 24 RunIface.gA 32 ∧
+    Apart (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st)) RunIface.gA 32) ∧
   cost ≤ b ∧ R.inv b L (s.regs 28).toNat (view R.rt L s.mem)
 
 /-- the postcondition of `divRecursiveStep` -/
@@ -116,6 +118,9 @@ def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (c : Nat) (zp zc st up uc 
   (Apart vp (8 * vl) st 24 ∧ Apart vp (8 * vl) (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st))) ∧ Apart st 24 StackNat.wbA 4 ∧
   Apart st 24 (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st)) ∧
   (stCap s.mem st = 0 → stW s.mem st = 0) ∧
+  ((0 < zc → Apart zp (8 * zc) RunIface.gA 32) ∧ (0 < uc → Apart up (8 * uc) RunIface.gA 32) ∧
+    Apart st 24 RunIface.gA 32 ∧
+    Apart (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st)) RunIface.gA 32) ∧
   c ≤ b ∧ R.inv b L (s.regs 28).toNat (view R.rt L s.mem)
 
 theorem Pre.ce {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st up uc ip il vp vl : Nat} {s : State}
@@ -176,10 +181,15 @@ theorem Pre.fw {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st
     simp only [win, outside_cons, outside_nil, and_true] at this ⊢; omega
   · have := h0 (by omega)
     simp only [win, outside_cons, outside_nil, and_true]; rw [this]; omega
+theorem Pre.ga {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st up uc ip il vp vl : Nat} {s : State}
+    (h : Pre R b L c zp zc st up uc ip il vp vl s) : (0 < zc → Apart zp (8 * zc) RunIface.gA 32) ∧
+      (0 < uc → Apart up (8 * uc) RunIface.gA 32) ∧ Apart st 24 RunIface.gA 32 ∧
+      Apart (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st)) RunIface.gA 32 :=
+  h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
 theorem Pre.cost {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st up uc ip il vp vl : Nat} {s : State}
-    (h : Pre R b L c zp zc st up uc ip il vp vl s) : c ≤ b := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+    (h : Pre R b L c zp zc st up uc ip il vp vl s) : c ≤ b := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
 theorem Pre.inv {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st up uc ip il vp vl : Nat} {s : State}
-    (h : Pre R b L c zp zc st up uc ip il vp vl s) : R.inv b L (s.regs 28).toNat (view R.rt L s.mem) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2
+    (h : Pre R b L c zp zc st up uc ip il vp vl s) : R.inv b L (s.regs 28).toNat (view R.rt L s.mem) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2
 
 
 /-- The postcondition: `q = U / V` (old `z` array or a fresh one), `r = U mod V` (old `u` array or a fresh one; a fresh
