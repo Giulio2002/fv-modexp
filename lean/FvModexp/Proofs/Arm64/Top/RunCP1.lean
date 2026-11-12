@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Arm64.Top.RunCPDefs
+import FvModexp.Proofs.Arm64.Top.RunU8
 
 /-! # `Run` (arm64): `V` to the return (`len(v) ≥ modLen`) or to `P` (`makeslice` of the `LeftPadBytes` buffer) -/
 
@@ -57,12 +58,9 @@ theorem cp1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     janus_eval_nat h_u : uint8T
     have hokb : R.ok (cA "runtime.makeslice") [uint8T, hdrV s p len 2, hdrV s p len 2] := hokB _ hl2
     rw [h_u] at hokb
-    have hU1 : s.mem.accessible 2639168 16 false = true := by
-      janus_data hd; exact Memory.accessible_mono _ h_data0 (by omega) (by omega)
-    have hU2 : V.mem.readLE 2639168 8 = 1 := by
-      janus_data hdS; rw [h_rodata _ _ (by decide)]; decide
-    have hU3 : V.mem.readLE 2639176 8 = 0 := by
-      janus_data hdS; rw [h_rodata _ _ (by decide)]; decide
+    have hU1 : s.mem.accessible 2639168 16 false = true := u8T_acc hd
+    have hU2 : V.mem.readLE 2639168 8 = 1 := u8T_size hdS
+    have hU3 : V.mem.readLE 2639176 8 = 0 := u8T_ptr hdS
     have hut : Apart 2639168 16 (s.sp.toNat - W) (W + 40) :=
       apart_of_data (x := 2639168) (l := 16) hdS 0 (by decide) (by decide) hwS
     unfold Apart at hut
