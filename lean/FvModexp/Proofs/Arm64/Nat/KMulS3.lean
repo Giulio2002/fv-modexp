@@ -57,8 +57,8 @@ theorem kS3 (impl : List Segment) (R : RtInv)
       (hC S.mem (s.sp.toNat - 80)) (hP S.mem (s.sp.toNat - 144)) (hL S.mem (s.sp.toNat - 144))
       (hC S.mem (s.sp.toNat - 144)) := by
     simp only [hP, hL, hC, x2, x3, x4, y2, y3, y4, z2, z4]
-    exact ⟨⟨by omega, by omega, by omega, hxacc, fun _ => ⟨hxH, hxc48⟩, fun _ => ⟨hxw, hxs⟩⟩,
-      ⟨by omega, by omega, by omega, hyacc, fun _ => ⟨hyH, hyc48⟩, fun _ => ⟨hyw, hys⟩⟩,
+    exact ⟨⟨by omega, by omega, by omega, fun _ => hxacc, fun _ => ⟨hxH, hxc48⟩, fun _ => ⟨hxw, hxs⟩⟩,
+      ⟨by omega, by omega, by omega, fun _ => hyacc, fun _ => ⟨hyH, hyc48⟩, fun _ => ⟨hyw, hys⟩⟩,
       ⟨by omega, hzlive, hzw, fun _ => ⟨hzg, hzs⟩, Or.inr fun _ _ => by unfold Apart at hzx0 ⊢; omega,
         Or.inr fun _ _ => by unfold Apart at hzy0 ⊢; omega⟩, hsl⟩
   have q456 : S.mem.readLE (s.sp.toNat + 8) 8 = st := hkm.s1

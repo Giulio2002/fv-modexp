@@ -38,12 +38,13 @@ def names : List String := LibMul.names
 /-- the operand facts of `z.mul(stk, x, y)` (`z = (zp, ·, zc)`, `x = (xp, xl, xc)`, `y = (yp, yl, yc)`) in memory `m`,
 `ws` the window to stay outside of, `g` the goroutine pointer: operands readable, held (cap range), outside `ws`,
 apart from the stack's header and free part and the threshold globals; `z` live, is an operand itself (same array and
-capacity) or apart from it -/
+capacity) or apart from it. An empty operand (`len = 0`) carries no location fact (coordinator decision on
+"[infra s30] FINDING": a nil `nat` may be passed; the code never dereferences it). -/
 @[reducible] def Ops (R : RtInv) (L : List (Nat × Nat)) (m : Memory) (g : Nat) (ws : List (Nat × Nat))
     (st zp zc xp xl xc yp yl yc : Nat) : Prop :=
-  (xl ≤ xc ∧ xc < 2 ^ 40 ∧ xl ≤ 2 ^ 12 ∧ m.accessible xp (8 * xl) false = true ∧
+  (xl ≤ xc ∧ xc < 2 ^ 40 ∧ xl ≤ 2 ^ 12 ∧ (0 < xl → m.accessible xp (8 * xl) false = true) ∧
     (0 < xc → Held R L xp (8 * xc) ∧ xp + 8 * xc ≤ 2 ^ 48) ∧ (0 < xl → Outside xp (8 * xl) ws ∧ StkSep m st xp (8 * xl))) ∧
-  (yl ≤ yc ∧ yc < 2 ^ 40 ∧ yl ≤ 2 ^ 12 ∧ m.accessible yp (8 * yl) false = true ∧
+  (yl ≤ yc ∧ yc < 2 ^ 40 ∧ yl ≤ 2 ^ 12 ∧ (0 < yl → m.accessible yp (8 * yl) false = true) ∧
     (0 < yc → Held R L yp (8 * yc) ∧ yp + 8 * yc ≤ 2 ^ 48) ∧ (0 < yl → Outside yp (8 * yl) ws ∧ StkSep m st yp (8 * yl))) ∧
   (zc < 2 ^ 40 ∧ NatLive m R L zp zc ∧ Outside zp (8 * zc) ws ∧
     (0 < zc → Apart zp (8 * zc) (g + 16) 8 ∧ StkSep m st zp (8 * zc)) ∧

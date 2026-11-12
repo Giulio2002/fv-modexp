@@ -97,11 +97,11 @@ theorem LB.mpreT (h : LB R b L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk bk 
   have hmc := mulW_chunk hc0 hcn (by omega : 2 * cc ≤ xl)
   subst hm
   refine ⟨h.callee hsp hg rfl (by omega) (by omega), by omega, hsv, h.glob hwin, hwt, ⟨⟨by omega, by omega, by omega,
-    by rw [hacc]; exact Memory.accessible_mono _ hxacc (by omega) (by omega),
+    fun _ => by rw [hacc]; exact Memory.accessible_mono _ (hxacc (by omega)) (by omega) (by omega),
     fun _ => ⟨h.ext.held (h.core.ext.held ((hxh (by omega)).1.sub (by omega) (by omega))), by
       have := (hxh (by omega)).2; omega⟩,
     fun _ => ⟨hwin _ _ (hxo.of_sub (by omega) (by omega)), stkSep_sub (h.sep hxH hxs) (by omega) (by omega)⟩⟩,
-    ⟨hylc, hyc40, hy12, by rw [hacc]; exact hyacc,
+    ⟨hylc, hyc40, hy12, fun h0 => by rw [hacc]; exact hyacc h0,
     fun hc => ⟨h.ext.held (h.core.ext.held (hyh hc).1), (hyh hc).2⟩, fun _ => ⟨hwin _ _ hyo, h.sep hyH hys⟩⟩,
     ⟨ht40, htl, hwin _ _ htw, fun _ => ⟨by simp only [NatSqr.guard] at htg; rw [hg]; exact htg, hts⟩,
       Or.inr fun _ _ => by unfold Apart at htx ⊢; omega, Or.inr fun _ _ => hty⟩, ?_⟩,

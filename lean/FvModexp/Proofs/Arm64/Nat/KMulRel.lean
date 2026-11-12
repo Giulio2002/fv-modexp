@@ -80,8 +80,8 @@ theorem KPre.F {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc
     ⟨hyl, hyc40, -, hyacc, hyh, hyw⟩, ⟨hzc40, hzlive, hzw, hzg, -, -⟩, hslb⟩, hzx, hzy, hnex, hney, hsp, hcost,
     hinv⟩ := h
   have hn : 0 < n := by omega
-  exact ⟨henv, hW, hsv, hgl, hwt, h40, hzc, hxl, hxc40, hx12, hxacc, (hxh (by omega)).1, (hxh (by omega)).2,
-    (hxw hn).1, (hxw hn).2, hyl, hyc40, hyacc, (hyh (by omega)).1, (hyh (by omega)).2, (hyw hn).1, (hyw hn).2,
+  exact ⟨henv, hW, hsv, hgl, hwt, h40, hzc, hxl, hxc40, hx12, hxacc (by omega), (hxh (by omega)).1, (hxh (by omega)).2,
+    (hxw hn).1, (hxw hn).2, hyl, hyc40, hyacc (by omega), (hyh (by omega)).1, (hyh (by omega)).2, (hyw hn).1, (hyw hn).2,
     hzc40, hzlive, hzw, (hzg (by omega)).1, (hzg (by omega)).2, hslb, hzx, hzy, hnex, hney, hsp, hcost, hinv⟩
 
 /-- the writes `karatsuba` may make (relative to the entry): `z[0:2n]` and the entry stack's header / free part -/

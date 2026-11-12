@@ -69,7 +69,8 @@ theorem kS1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
       (hC S.mem (s.sp.toNat - 296)) (hP S.mem (s.sp.toNat - 328)) (hL S.mem (s.sp.toNat - 328))
       (hC S.mem (s.sp.toNat - 328)) := by
     simp only [hP, hL, hC, t2, t3, t4, y2, y3, y4, z2, z4]
-    refine ⟨hxo, hyo, ⟨by simp only [kT]; omega, hlive, htw, fun _ => ⟨htg, hts⟩, Or.inr fun _ _ => ?_,
+    refine ⟨⟨hxo.1, hxo.2.1, hxo.2.2.1, fun _ => hxo.2.2.2.1, hxo.2.2.2.2⟩,
+      ⟨hyo.1, hyo.2.1, hyo.2.2.1, fun _ => hyo.2.2.2.1, hyo.2.2.2.2⟩, ⟨by simp only [kT]; omega, hlive, htw, fun _ => ⟨htg, hts⟩, Or.inr fun _ _ => ?_,
       Or.inr fun _ _ => ?_⟩, hsl⟩
     · unfold Apart at htz ⊢; omega
     · unfold Apart at htz ⊢; omega

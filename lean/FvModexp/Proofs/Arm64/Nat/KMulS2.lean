@@ -56,8 +56,8 @@ theorem kS2 (impl : List Segment) (R : RtInv)
       (hC S.mem (s.sp.toNat - 48)) (hP S.mem (s.sp.toNat - 112)) (hL S.mem (s.sp.toNat - 112))
       (hC S.mem (s.sp.toNat - 112)) := by
     simp only [hP, hL, hC, x2, x3, x4, y2, y3, y4, z2, z4]
-    exact ⟨⟨by omega, hxc40, by omega, hxacc, fun _ => ⟨hxH, hxc48⟩, fun _ => ⟨hxw, hxs⟩⟩,
-      ⟨by omega, hyc40, by omega, hyacc, fun _ => ⟨hyH, hyc48⟩, fun _ => ⟨hyw, hys⟩⟩,
+    exact ⟨⟨by omega, hxc40, by omega, fun _ => hxacc, fun _ => ⟨hxH, hxc48⟩, fun _ => ⟨hxw, hxs⟩⟩,
+      ⟨by omega, hyc40, by omega, fun _ => hyacc, fun _ => ⟨hyH, hyc48⟩, fun _ => ⟨hyw, hys⟩⟩,
       ⟨hzc40, hzlive, hzw, fun _ => ⟨hzg, hzs⟩, Or.inr fun _ _ => hzx, Or.inr fun _ _ => hzy⟩, hsl⟩
   have q456 : S.mem.readLE (s.sp.toNat + 8) 8 = st := hkm.s1
   have hsacc : S.mem.accessible (s.sp.toNat - 456) 528 false = true := by

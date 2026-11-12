@@ -142,7 +142,7 @@ theorem one (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   simp only [show (1#64 : BitVec 64).toNat = 1 from rfl] at hpre hyx ⊢
   have hx0' : (xl = 0#64) = False := by
     simp only [eq_iff_iff, iff_false]; intro e; rw [e] at hyx; simp at hyx
-  have hy8 : s.mem.accessible yp.toNat 8 false = true := by simpa using hyacc
+  have hy8 : s.mem.accessible yp.toNat 8 false = true := by simpa using hyacc (by omega)
   janus_run [toInt_small xl (by omega), hx0'] until [0x1bb108]
   refine one2 impl hap R hmk (zl := zl) hpre (by omega) _ ?hy0 _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?_
     (by simp only [winA]; janus_frame) ?qreg ?qlr ?qfp hl4 hl48

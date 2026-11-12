@@ -77,9 +77,9 @@ theorem bm2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   have hpaccS : S.mem.accessible p (8 * (xl.toNat + yl.toNat)) true = true := by
     rw [hF.accessible]; exact Memory.accessible_mono _ hpacc (Nat.le_refl _) (by omega)
   have hxaccS : S.mem.accessible xp.toNat (8 * xl.toNat) false = true := by
-    rw [hF.accessible, hJ.F.accessible]; exact hxacc
+    rw [hF.accessible, hJ.F.accessible]; exact hxacc (by omega)
   have hyaccS : S.mem.accessible yp.toNat (8 * yl.toNat) false = true := by
-    rw [hF.accessible, hJ.F.accessible]; exact hyacc
+    rw [hF.accessible, hJ.F.accessible]; exact hyacc (by omega)
   have hph1 : Held R L1 p (8 * (xl.toNat + yl.toNat)) := hph.sub (Nat.le_refl _) (by omega)
   have hok : R.ok (cA "runtime.memclrNoHeapPointers") [p, 8 * (xl.toNat + yl.toNat)] := hsv.2.2.1 _ _ (by omega)
   have hp64 : p < 2 ^ 64 := by omega
