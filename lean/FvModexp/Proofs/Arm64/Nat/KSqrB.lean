@@ -165,4 +165,77 @@ theorem KM.tops {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n x
     have hg := NatSub.outside_of_inRanges hgr hin
     exact ⟨hlive, by omega, by simp only [guard]; unfold Apart; omega, hzt, apart_of_held (hxh.sub (by omega) (by omega)) hin hap, hsc.b48⟩
 
+/-! ## Calls out of `karatsubaSqr` -/
+
+set_option maxRecDepth 20000 in
+/-- a return address inside `karatsubaSqr` (segment `seg56`, base `0x1bc2b0`, 204 words) -/
+theorem ks_ra {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns : List String}
+    (hn : ns.contains fnK = false) (i : Nat) (hi : i < 204) :
+    RetAddr ((Extracted.program.onlySegments ns).link impl) (0x1bc2b0 + 4 * i) := by
+  have := IntAS.retAddr_restrict hap (cs := Extracted.seg56)
+    (show Extracted.seg56 ∈ Extracted.program.segments from
+      List.getElem_mem (l := Extracted.program.segments) (n := 56) (by decide))
+    (show ns.contains Extracted.seg56.name = false from hn) i
+    (by simp [Extracted.seg56]; omega) (by simp [Extracted.seg56]; omega) (by decide)
+  simpa [Extracted.seg56] using this
+
+/-- `(*Int).Add` / `(*Int).Sub` (`IntAS.ens`) as a summary in `LibSqr.program` -/
+theorem ksIntSum (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+    (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
+    (hmv : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
+    (hwb : WbLiveContract (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2)
+    (sub : Bool) (b : Nat) (L : List (Nat × Nat)) (z x y : BitVec 64) :
+    Summary (LibSqr.program.link impl) (IntAS.entry sub)
+      (fun s => RetAddr ((Extracted.program.onlySegments IntAS.names).link impl) (s.regs 30).toNat ∧
+        ArgsFrom s 0 [z, x, y] ∧ IntAS.Pre R b L z.toNat x.toNat y.toNat s)
+      (fun s s' => (s'.sp = s.sp ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧ s'.regs 18 = s.regs 18) ∧
+        IntAS.Post sub R b L z.toNat x.toNat y.toNat s s') := by
+  have hS := Ensures.toSummaryIn (IntAS.ens impl hap R hmk hmv hwb sub b L z x y)
+    (noExit_restrict hap IntAS.names) (codeIn_restrict_mono hap (IntAS.sub_of_all (ms := LibSqr.names) (by decide)))
+  rw [← LibSqr.eq_only, IntAS.entry_eq] at hS
+  exact hS
+
+/-- **A `(*Int).Add/Sub(z, x, y)` call from `karatsubaSqr`'s frame** (at the callee entry, return address inside
+`karatsubaSqr`): `KM.intPre` discharges the callee's precondition; the continuation gets its postcondition. -/
+theorem ks_intcall (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+    (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
+    (hmv : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
+    (hwb : WbLiveContract (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2)
+    {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat}
+    {s : State} {lx0 lx1 t : Nat} {Lk : List (Nat × Nat)} {bk spent : Nat} {M : Memory}
+    (h : KM R b L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) (sub : Bool)
+    (S1 : State) (hpc : S1.pc = BitVec.ofNat 64 (IntAS.entry sub)) (hsp : S1.sp.toNat = s.sp.toNat - 320)
+    (hg : S1.regs 28 = s.regs 28) (hm : S1.mem = M) {i : Nat} (hi : i < 204)
+    (hra : S1.regs 30 = BitVec.ofNat 64 (0x1bc2b0 + 4 * i))
+    {z x y : Nat} (r0 : S1.regs 0 = BitVec.ofNat 64 z) (r1 : S1.regs 1 = BitVec.ofNat 64 x)
+    (r2 : S1.regs 2 = BitVec.ofNat 64 y)
+    (hz1 : s.sp.toNat - 232 ≤ z) (hz2 : z + 32 ≤ s.sp.toNat - 16)
+    (hx1 : s.sp.toNat - 232 ≤ x) (hx2 : x + 32 ≤ s.sp.toNat - 16)
+    (hy1 : s.sp.toNat - 232 ≤ y) (hy2 : y + 32 ≤ s.sp.toNat - 16)
+    (hzx : z = x ∨ Apart z 32 x 32) (hzy : Apart z 32 y 32)
+    (hox : IOp R Lk s W M x) (hoy : IOp R Lk s W M y)
+    (hzc : IntAS.hC M z < 2 ^ 40) (hzl : NatLive M R Lk (IntAS.hP M z) (IntAS.hC M z))
+    (hzw : Outside (IntAS.hP M z) (8 * IntAS.hC M z) (win s W 48))
+    (hza : 0 < IntAS.hC M z → Apart (IntAS.hP M z) (8 * IntAS.hC M z) (guard s) 8 ∧
+      (IntAS.hP M z = IntAS.hP M x ∨ Apart (IntAS.hP M z) (8 * IntAS.hC M z) (IntAS.hP M x) (8 * IntAS.hL M x)) ∧
+      (IntAS.hP M z = IntAS.hP M y ∨ Apart (IntAS.hP M z) (8 * IntAS.hC M z) (IntAS.hP M y) (8 * IntAS.hL M y)))
+    (hcost : IntAS.asCost (IntAS.hL M x) (IntAS.hL M y) ≤ bk)
+    {ret : BitVec 64} {Q : State → Prop}
+    (hK : ∀ s2 : State, s2.pc = S1.regs 30 → s2.mem.regions = M.regions →
+      (s2.sp = S1.sp ∧ s2.regs 28 = S1.regs 28 ∧ s2.regs 29 = S1.regs 29 ∧ s2.regs 18 = S1.regs 18) →
+      IntAS.Post sub R bk Lk z x y S1 s2 → ReachesRet (LibSqr.program.link impl) ret s2 Q) :
+    ReachesRet (LibSqr.program.link impl) ret S1 Q := by
+  have hb := h.lay
+  have hz64 : z < 2 ^ 64 := by omega
+  have hx64 : x < 2 ^ 64 := by omega
+  have hy64 : y < 2 ^ 64 := by omega
+  have hP := h.intPre hsp hg hm hz1 hz2 hx1 hx2 hy1 hy2 hzx hzy hox hoy hzc hzl hzw hza hcost
+  refine ReachesRet.call_regions (ksIntSum impl hap R hmk hmv hwb sub bk Lk (BitVec.ofNat 64 z)
+    (BitVec.ofNat 64 x) (BitVec.ofNat 64 y)) hpc ⟨?_, ⟨r0, r1, r2, trivial⟩, ?_⟩ fun s2 hr hq hreg => ?_
+  · rw [hra, tN' (by omega)]; exact ks_ra hap (by decide) i hi
+  · rw [tN' hz64, tN' hx64, tN' hy64]; exact hP
+  · obtain ⟨hk, hq⟩ := hq
+    rw [tN' hz64, tN' hx64, tN' hy64] at hq
+    exact hK s2 hr (by rw [hreg, hm]) hk hq
+
 end FvModexp.Arm64.NatSqr
