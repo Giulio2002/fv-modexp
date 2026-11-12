@@ -42,6 +42,20 @@ theorem Ctx.stnz {R : RtInv} {L : List (Nat × Nat)}
   obtain ⟨-, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, hfe, -, -, -, -, -, -, -, -, -, -, -, -, -⟩ := h
   exact FinEnv.stnz hfe
 
+set_option maxRecDepth 20000 in
+/-- the stack header's separation from the guard word, the write-barrier flag and the free part (asm s18, `DivPre`) -/
+theorem Ctx.hdr {R : RtInv} {L : List (Nat × Nat)}
+    {g sp K n mp mc Mv xp xc Xv yp ylen Y yi zp zc st n0 l0 ret : Nat} {r29 : BitVec 64} {ex : List (Nat × Nat)} {M : Memory}
+    (h : Ctx R L g sp K n mp mc Mv xp xc Xv yp ylen Y yi zp zc st n0 l0 ret r29 ex M) :
+    Apart st 24 (g + 16) 8 ∧ Apart st 24 StackNat.wbA 4 ∧
+      Apart st 24 (stW M st + 8 * stLen M st) (8 * (stCap M st - stLen M st)) := by
+  obtain ⟨-, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, hfe, -, -, hsok, -, hl0, -, -, -, -,
+    hsu, -, -, hwb, -⟩ := h
+  obtain ⟨-, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, hg, -⟩ := hfe
+  have hlc := hsok.2.2.2.2.2.1
+  refine ⟨hg, hwb, ?_⟩
+  simp only [stUp, Apart] at hsu ⊢; omega
+
 /-- a range inside the stack above `l0` is apart from everything apart from that part -/
 theorem free_of_up {a k st l0 : Nat} {M : Memory} (h : Apart a k (stUp M st l0).1 (stUp M st l0).2)
     (h1 : l0 ≤ stLen M st) (h2 : stLen M st ≤ stCap M st) :
@@ -122,7 +136,7 @@ theorem divStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
       by omega, by omega, Apart.mono hzS (by omega) (Nat.le_refl _),
       free_of_up (Apart.mono hzU (by omega) (Nat.le_refl _)) hl0 hlc, hmO.2.2.1, free_of_up hmO.2.2.2.1 hl0 hlc,
       hqr, fun p hp => ?_, (in_stUp hga.2.2.2.1 hqa hqb).symm,
-      (hga.2.2.2.2 _ (List.mem_singleton_self _)).symm, ⟨Ctx.stnz hC, hga.2.2.1.symm⟩, (free_of_up hga.2.2.2.1 hl0 hlc).symm,
+      (hga.2.2.2.2 _ (List.mem_singleton_self _)).symm, ⟨Ctx.stnz hC, hga.2.2.1.symm, Ctx.hdr hC⟩, (free_of_up hga.2.2.2.1 hl0 hlc).symm,
       hcF, by omega, hinv⟩
     rcases hp with rfl | rfl
     · refine ⟨((in_stUp hzU hqa hqb).symm).mono (Nat.le_refl _) (by omega), (in_stUp hmO.2.2.2.1 hqa hqb).symm,
