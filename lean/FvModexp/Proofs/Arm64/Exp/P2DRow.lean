@@ -82,6 +82,20 @@ theorem g0 : (s0.regs 28).toNat = G0 := by decide
 
 theorem bud : P2D.cP sqrC mulC 0 1 1 8 ≤ BW := by decide +kernel
 
+/-- the two inputs `x = [3]`, `y = [5]` are readable, held, outside the window, apart from the stack -/
+theorem insOK : ∀ p n, (p, n) ∈ [(XP, 1), (YP, 1)] → RdIn R [] s0 KW 112 p n ∧ n ≤ 2 ^ 9 ∧ NatNorm s0.mem p n ∧
+    Apart p (8 * n) ST 24 ∧ Apart p (8 * n) (freeOf s0.mem ST).1 (freeOf s0.mem ST).2 ∧
+    (0 < 0 → Apart 0 (8 * 0) p (8 * n)) := by
+  have hm : s0.mem = mem0 := rfl
+  intro p n hpn
+  simp only [List.mem_cons, List.not_mem_nil, or_false, Prod.mk.injEq] at hpn
+  simp only [RdIn, freeOf, win, hm, stW0, stLen0, stCap0, mkS_sp]
+  rcases hpn with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩ <;>
+    exact ⟨⟨by decide, by rw [acc0]; decide +kernel, by decide,
+      Or.inr (by rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide),
+      by simp only [outside_cons, outside_nil, and_true]; decide⟩, by decide, by simp only [NatNorm]; decide +kernel,
+      by simp only [Apart]; decide, by simp only [Apart]; decide, fun h => absurd h (by decide)⟩
+
 set_option maxHeartbeats 64000000 in
 /-- the witness state satisfies the precondition (`3^5 mod 2^8`) at `stk = 71776` -/
 theorem pre : Pre R BW [] KW 0 0 0 ST XP 1 1 YP 1 8 s0 := by
@@ -102,22 +116,20 @@ theorem pre : Pre R BW [] KW 0 0 0 ST XP 1 1 YP 1 8 s0 := by
       | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
       | (simp only [LiveSep, List.mem_cons, List.mem_singleton, List.not_mem_nil, or_false, forall_eq_or_imp,
           forall_eq, rt_eq, outside_cons, outside_nil, and_true, SP0, HEAP, HEND, HSIZE, BUMP, WBUF]; omega)
-      | (intro r hr; simp at hr)
+      | (intro r hr; simp at hr; done)
+      | (intro r hr; simp only [List.mem_cons, List.not_mem_nil, or_false] at hr; subst hr; rw [rt_eq]
+         simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+      | trivial
+      | (intros; trivial)
       | (simp only [Apart, gA_eq, wbA_eq]; decide)
       | (simp only [GuardOK, StackOK, acc0]; decide +kernel)
       | (decide +kernel)
       | (rw [acc0]; decide +kernel)
       | (simp only [StkOK, NatLive, Held, InRanges, outside_cons, outside_nil, and_true, rt_eq, acc0, stW0, stLen0,
           stCap0]; decide +kernel)
-      | (intro p n hpn
-         simp only [List.mem_cons, List.mem_singleton, List.not_mem_nil, or_false, Prod.mk.injEq] at hpn
-         rcases hpn with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩ <;>
-           refine ⟨⟨by decide, by rw [acc0]; decide +kernel, by decide, Or.inr ?_, ?_⟩, by decide,
-             by simp only [NatNorm]; decide +kernel, by simp only [Apart]; decide, by simp only [Apart]; decide,
-             fun h => absurd h (by decide)⟩ <;>
-           first
-             | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide)
-             | (simp only [outside_cons, outside_nil, and_true]; decide))
+      | exact insOK
+      | (intro _; exact ⟨by simp only [outside_cons, outside_nil, and_true]; decide +kernel,
+          by simp only [Apart]; decide⟩)
       | (simp only [Globals, RunIface.Globals, gA_eq, wbA_eq]; decide +kernel)
       | skip
   · exact ⟨OP, one0 [] _ (by simp only [stWs, stkWs, stW0, stLen0, stCap0, List.cons_append, List.nil_append,
@@ -171,7 +183,7 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (stk b : Nat) (L : Li
     by rw [WStubs.addr_mk]; exact WStubs.mk [] (by intro t ht; simp at ht) _,
     by rw [WStubs.addr_no]; exact WStubs.no [] (by intro t ht; simp at ht) _,
     by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] (by intro t ht; simp at ht) _, Nat.le_refl _, by decide, hret,
-    setup _ args, pre,
+    setup _ args (by decide), pre,
     ⟨[], 0x1000, callS5 WStubs.grA OA 2 1 1 Extracted.dataAddr.«type:big.Word#51b931e8», by rw [WStubs.addr_gr]; rfl,
       by rw [WStubs.addr_gr]; exact site_gr _⟩,
     ⟨[], 0x1000, callS WStubs.clA OA 8 0, by rw [WStubs.addr_cl]; rfl, by rw [WStubs.addr_cl]; exact site_cl _⟩,
@@ -187,6 +199,6 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (stk b : Nat) (L : Li
       (by rw [WStubs.addr_no]; exact WStubs.no [] (by intro t ht; simp at ht) _)
       (by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] (by intro t ht; simp at ht) _) KW (Nat.le_refl _) (by decide)
       BW [] 0 0 0 (BitVec.ofNat 64 ST) (BitVec.ofNat 64 XP) 1 1 (BitVec.ofNat 64 YP) 1 1 8 RET hret s0
-      (setup _ args) pre⟩
+      (setup _ args (by decide)) pre⟩
 
 end FvModexp.Arm64.P2DRow.Witness

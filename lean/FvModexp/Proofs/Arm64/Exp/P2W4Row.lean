@@ -74,7 +74,8 @@ theorem pre : P2W4.Pre R BW [] KW sqrC mulC 0 0 ST XP 1 1 YP 1 8 s0 := by
   unfold P2W4.Pre
   rw [hm, stLen0]
   unfold EPre EEnv
-  rw [g0, sp0, stW0, stLen0, stCap0]
+  rw [g0, sp0]
+  simp only [hm, stW0, stLen0, stCap0]
   refine ⟨?_, by decide +kernel, by decide +kernel, bud⟩
   repeat' apply And.intro
   all_goals first
@@ -84,13 +85,19 @@ theorem pre : P2W4.Pre R BW [] KW sqrC mulC 0 0 ST XP 1 1 YP 1 8 s0 := by
     | exact WStubs.serves []
     | exact roOut
     | exact inv1 _
-    | exact ⟨OP, one0 [] _ (by simp only [outside_cons, outside_nil, and_true]; decide)
-        (by simp only [outside_cons, outside_nil, and_true]; decide), sa0⟩
+    | trivial
+    | (intros; trivial)
+    | exact ⟨OP, one0 [] _ (by simp only [stkWs, stW0, stLen0, stCap0, List.cons_append, List.nil_append, outside_cons,
+          outside_nil, and_true]; decide)
+        (by simp only [stkWs, stW0, stLen0, stCap0, List.cons_append, List.nil_append, outside_cons, outside_nil,
+          and_true]; decide), sa0⟩
     | (intro h; exact absurd h (by decide))
     | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
     | (simp only [LiveSep, List.mem_cons, List.mem_singleton, List.not_mem_nil, or_false, forall_eq_or_imp, forall_eq,
         rt_eq, outside_cons, outside_nil, and_true, SP0, HEAP, HEND, HSIZE, BUMP, WBUF]; omega)
-    | (intro r hr; simp at hr)
+    | (intro r hr; simp at hr; done)
+    | (intro r hr; simp only [List.mem_cons, List.not_mem_nil, or_false] at hr; subst hr; rw [rt_eq]
+       simp only [outside_cons, outside_nil, and_true]; decide +kernel)
     | (simp only [Apart, free, gA_eq, wbA_eq, stW0, stLen0, stCap0]; decide)
     | (simp only [OE, Apart, free, InRanges, gA_eq, rt_eq, outside_cons, outside_nil, and_true, stW0, stLen0, stCap0];
         decide +kernel)
@@ -148,7 +155,7 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
     by rw [WStubs.addr_mk]; exact WStubs.mk [] (by intro t ht; simp at ht) _,
     by rw [WStubs.addr_no]; exact WStubs.no [] (by intro t ht; simp at ht) _,
     by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] (by intro t ht; simp at ht) _, Nat.le_refl _, hret,
-    setup _ args, pre,
+    setup _ args (by decide), pre,
     ⟨[], 0x1000, callS5 WStubs.grA OA 2 1 1 Extracted.dataAddr.«type:big.Word#51b931e8», by rw [WStubs.addr_gr]; rfl,
       by rw [WStubs.addr_gr]; exact site_gr _⟩,
     ⟨[], 0x1000, callS WStubs.clA OA 8 0, by rw [WStubs.addr_cl]; rfl, by rw [WStubs.addr_cl]; exact site_cl _⟩,
@@ -163,6 +170,6 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
       (by rw [WStubs.addr_mk]; exact WStubs.mk [] (by intro t ht; simp at ht) _)
       (by rw [WStubs.addr_no]; exact WStubs.no [] (by intro t ht; simp at ht) _)
       (by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] (by intro t ht; simp at ht) _) BW [] KW (Nat.le_refl _)
-      0 0 0 ST XP 1 1 YP 1 1 8 RET hret s0 (setup _ args) pre⟩
+      0 0 0 ST XP 1 1 YP 1 1 8 RET hret s0 (setup _ args (by decide)) pre⟩
 
 end FvModexp.Arm64.P2W4Row.Witness

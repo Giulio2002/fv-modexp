@@ -104,7 +104,11 @@ theorem pre : ModInv.PreL R NatSqr.sqrWX sqrC mulC 0 BW [] ZP 0 2 ST XP 1 1 64 s
     | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
     | (simp only [LiveSep, List.mem_cons, List.mem_singleton, List.not_mem_nil, or_false, forall_eq_or_imp, forall_eq,
         rt_eq, outside_cons, outside_nil, and_true, SP0, HEAP, HEND, HSIZE, BUMP, WBUF]; omega)
-    | (intro r hr; simp at hr)
+    | (intro r hr; simp at hr; done)
+    | (intro r hr; simp only [List.mem_cons, List.not_mem_nil, or_false] at hr; subst hr; rw [rt_eq]
+       simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | trivial
+    | (intros; trivial)
     | (simp only [Apart, gA_eq, wbA_eq]; decide)
     | (intro _; simp only [Apart, gA_eq, wbA_eq]; decide)
     | (intro _; exact ⟨by simp only [Apart]; decide, fun _ => by simp only [Apart]; decide⟩)
@@ -162,7 +166,7 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (ℓ b : Nat) (L : Li
     by rw [WStubs.addr_cl]; exact WStubs.cl R,
     by rw [WStubs.addr_mv]; exact WStubs.mv R,
     by rw [WStubs.addr_mk]; exact WStubs.mk [] (by intro t ht; simp at ht) _,
-    by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] (by intro t ht; simp at ht) _, hret, setup _ args, pre,
+    by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] (by intro t ht; simp at ht) _, hret, setup _ args (by decide), pre,
     ⟨[], 0x1000, callS5 WStubs.grA OA 2 1 1 Extracted.dataAddr.«type:big.Word#51b931e8», by rw [WStubs.addr_gr]; rfl,
       by rw [WStubs.addr_gr]; exact site_gr _⟩,
     ⟨[], 0x1000, callS WStubs.clA OA 8 0, by rw [WStubs.addr_cl]; rfl, by rw [WStubs.addr_cl]; exact site_cl _⟩,
@@ -174,6 +178,6 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (ℓ b : Nat) (L : Li
       (by rw [WStubs.addr_cl]; exact WStubs.cl R) (by rw [WStubs.addr_mv]; exact WStubs.mv R)
       (by rw [WStubs.addr_mk]; exact WStubs.mk [] (by intro t ht; simp at ht) _)
       (by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] (by intro t ht; simp at ht) _) 0 BW [] ZP 0 2 ST XP 1 1 64
-      RET hret s0 (setup _ args) pre⟩
+      RET hret s0 (setup _ args (by decide)) pre⟩
 
 end FvModexp.Arm64.ModInvRow.Witness
