@@ -58,9 +58,9 @@ def mkS (pc : Nat) (args : List (BitVec 64)) : State :=
 @[simp] theorem mkS_mem (pc : Nat) (args : List (BitVec 64)) : (mkS pc args).mem = mem0 := rfl
 @[simp] theorem mkS_sp (pc : Nat) (args : List (BitVec 64)) : (mkS pc args).sp = BitVec.ofNat 64 SP0 := rfl
 
-theorem setup (pc : Nat) (args : List (BitVec 64)) :
+theorem setup (pc : Nat) (args : List (BitVec 64)) (hl : args.length ≤ 28) :
     CallSetup ((Extracted.program.link WStubs.impl).withExit RET) pc args (mkS pc args) :=
-  ⟨rfl, rfl, fun i h => by simp only [mkS, dif_pos h]⟩
+  ⟨rfl, by simp only [mkS, dif_neg (show ¬ 30 < args.length by omega)]; rfl, fun i h => by simp only [mkS, dif_pos h]⟩
 
 theorem hret : RetAddr (Extracted.program.link WStubs.impl) RET := RetAddr.of_check (by decide +kernel)
 
