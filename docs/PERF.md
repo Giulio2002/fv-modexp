@@ -1218,3 +1218,8 @@ context — every `omega` case-split them: > 6 min, killed; split into `nenv_of`
 EvJ2 9.1 s / 3.0 GB (`libN_sub` by `List.all … contains` decide +kernel: 26.6 s / 7.0 GB → `Sublist` decide 9.1 s / 3.0 GB);
 EvE1 5.7 s / 2.5 GB; EvN4 6.0 s / 2.5 GB; EvenNHyp 1.1 s; re-checked EvN1 7.9 s, EvN2 4.7 s, EvLsh 7.0 s, EvRsh 5.7 s,
 EvN3 32 s / 2.7 GB.
+
+## divmc s24 (2026-11-12) — karatsuba member arm64 (dev, LEAN_NUM_THREADS=4)
+KMulRel 9 s / 2.5 GB, KMulB 15 s / 2.9 GB, KMulI 35 s / 3.5 GB, KMulMath 2 s, KMulSub 21 s / 2.8 GB, KMulS1c 195 s / 7.7 GB →
+16 s / 2.5 GB (context cleared before janus_run + post lemma), KMulS1 8 s, KMulS2 47 s → 21 s / 2.9 GB (disjunctive hyps cleared
+before the tail), KMulAdd1 18 s, KMulAdd2 25 s, KMulEndP 10 s, KMulEnd 15 s. KMulS3: > 900 s (WIP, not committed; see NOTES).
