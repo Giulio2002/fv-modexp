@@ -1120,3 +1120,7 @@ Body segments are independent modules importing only BJ (ROW-TIME rule); composi
 * `LibNE` arm64 51 s / 3.0 GB, amd64 55 s / 3.0 GB (generated mask proofs, as LibN).
 * `Common/TzWord` 0.6 s, `Exp/EvDefs` 2.7 s, `Exp/EvTz` (trailingZeroBits loop, induction on `ml - i`) 4.1 s / 2.1 GB,
   `Exp/EvStmt` 1.5 s.
+
+## infra s27 (2026-11-12) — expNNEven arm64 entry layer (dev compile)
+* `Exp/EvPre` 2.5 s, `EvEP` 5.5 s / 2.2 GB, `EvCtx` 1.5 s, `EvWC` 3.4 s, `EvPP` ~5 s, `EvCalls` 1.6 s, `EvEnt` 13.3 s
+  / 2.3 GB (two janus_run segments), `EvRel` 2.0 s, `EvN1` 5.2–7.9 s / 2.2 GB.
