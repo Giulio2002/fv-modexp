@@ -39,7 +39,7 @@ theorem slowPath (impl : List Segment) (hap : ImplApart Extracted.program impl) 
   have hP' := hP
   obtain ⟨⟨hs1, hs28, hg1, -, -, -, hal, hK4, hKs, hsp2, hacc, hwrt, hLs, -, -⟩, -, -, -, -, -,
     hn, hn128, -, hmc, hmO, -, hm48, hmN, hyO, -, hy48, hyN, hyl, hyc, hxO, -, -, hxN, hxl, hxp, hxc, -, -, -, -,
-    -, -, -, hst48, hsok, hstw, -, harr, hc0, -, -, -, -, -, -, hnS, -, hbud, -⟩ := hP'
+    -, -, hst0, hst48, hsok, hstw, -, harr, hc0, -, -, -, -, -, -, hnS, -, hbud, -⟩ := hP'
   obtain ⟨hF0, hLF0, hrg, hx1, hb1, hmk, hinv1, hZQ, hZA, hnz, hzq⟩ := hZ
   have hs : s.sp.toNat = sp + 1312 := by rw [hs1, BitVec.toNat_ofNat]; omega
   have hH := hsok.2.1
@@ -63,7 +63,7 @@ theorem slowPath (impl : List Segment) (hap : ImplApart Extracted.program impl) 
   have hacc2 : S.mem.accessible (sp + 1048) 256 true = true := by
     rw [hF0.accessible]; exact Memory.accessible_mono _ hacc (by omega) (by omega)
   refine callC impl hap hns hn11 ret0 hret F hs hal hKs (by omega) hsp2 hLs hwrt hsok hstw hF0 hLF0 hx1
-    hb1 hZA hstk h28 ?_ ?_ (Or.inr (Or.inl rfl)) hE hpc hSsp h30 ?_ ⟨?_, ?_, ?_, ?_⟩ (fun s' h => cpostG_of h)
+    hb1 hZA hstk h28 ?_ ?_ (Or.inr (Or.inl rfl)) hE hpc hSsp h30 ?_ ⟨?_, ?_, ?_, ?_, hst0⟩ (fun s' h => cpostG_of h)
     (by rw [ec, ew]; intro hc; exact (harr hc).1) (by rw [ec, ew]; exact hc0)
     (by rw [el, ec]; exact hsok.2.2.2.2.2.1) hacc2 h29v h30v hsl hEk
   · rw [hrdx, hrdy, hrdm]

@@ -97,7 +97,8 @@ def SlowHyp (impl : List Segment) (R : RtInv) (ns : List String) (stk above : Na
       (fun s => CPre R b L stk above z.toNat zl.toNat zc.toNat st.toNat
           [(x.toNat, xl.toNat), (y.toNat, yl.toNat), (m.toNat, ml.toNat)]
           (need xl.toNat yl.toNat ml.toNat) (cost (stLen s.mem st.toNat) xl.toNat yl.toNat ml.toNat) s ∧
-        0 < natVal s.mem x.toNat xl.toNat ∧ 2 ≤ natVal s.mem y.toNat yl.toNat ∧ 0 < natVal s.mem m.toNat ml.toNat)
+        0 < natVal s.mem x.toNat xl.toNat ∧ 2 ≤ natVal s.mem y.toNat yl.toNat ∧ 0 < natVal s.mem m.toNat ml.toNat ∧
+        0 < st.toNat)
       (fun s s' => CPostR R b L stk above z.toNat zc.toNat st.toNat
         (natVal s.mem x.toNat xl.toNat ^ natVal s.mem y.toNat yl.toNat % natVal s.mem m.toNat ml.toNat)
         (cost (stLen s.mem st.toNat) xl.toNat yl.toNat ml.toNat) s s')
@@ -115,7 +116,7 @@ def P2Hyp (impl : List Segment) (R : RtInv) (ns : List String) (stk above : Nat)
       [z, zl, zc, st, x, xl, xc, y, yl, yc, lm]
       (fun s => CPre R b L stk above z.toNat zl.toNat zc.toNat st.toNat [(x.toNat, xl.toNat), (y.toNat, yl.toNat)]
           (need xl.toNat yl.toNat lm.toNat) (cost (stLen s.mem st.toNat) xl.toNat yl.toNat lm.toNat) s ∧
-        0 < natVal s.mem x.toNat xl.toNat ∧ 0 < natVal s.mem y.toNat yl.toNat ∧ 1 ≤ lm.toNat ∧ lm.toNat ≤ 2 ^ 13 ∧
+        0 < natVal s.mem x.toNat xl.toNat ∧ 0 < natVal s.mem y.toNat yl.toNat ∧ 1 ≤ lm.toNat ∧ lm.toNat ≤ 2 ^ 13 ∧ 0 < st.toNat ∧
         ∃ op, EvenHyp.NatOne R L s.mem op (win s stk above ++ [(z.toNat, z.toNat + 8 * zc.toNat)] ++ stWs s.mem st.toNat) ∧
           EvenHyp.StkApart s.mem st.toNat op 8)
       (fun s s' => CPostR R b L stk above z.toNat zc.toNat st.toNat
