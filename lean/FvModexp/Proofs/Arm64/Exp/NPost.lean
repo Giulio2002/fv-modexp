@@ -160,4 +160,102 @@ theorem post_oneA {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {costF
     simp only [outside_cons, outside_nil, and_true] at this ⊢
     omega
 
+theorem out_inR2 {a n p k : Nat} {rs : List (Nat × Nat)} (h : Outside a n rs) (hin : InRanges p k rs) :
+    a + n ≤ p ∨ p + k ≤ a := by
+  obtain ⟨r, hr, h1, h2⟩ := hin
+  have := MemFrame.outside_mem h hr
+  omega
+
+/-- a held range is apart from a fresh runtime block -/
+theorem apart_fresh {R : RtInv} {L : List (Nat × Nat)} {a n p r : Nat} (hH : InRanges a n L ∨ Outside a n R.rt)
+    (hAp : ApartAll p r L) (hIn : InRanges p r R.rt) : a + n ≤ p ∨ p + r ≤ a := by
+  rcases hH with ⟨q, hq, h1, h2⟩ | ho
+  · have := hAp q hq; unfold Apart at this; omega
+  · exact out_inR2 ho hIn
+
+/-- a held range keeps its bytes through a `makeslice` call -/
+theorem rd_mk {R : RtInv} {L ws : List (Nat × Nat)} {a n : Nat} {M m : Memory}
+    (hH : InRanges a n L ∨ Outside a n R.rt) (hLF : LiveFrame M m L []) (hMF : MemFrame M m (R.rt ++ ws))
+    (hws : Outside a n ws) : m.readLE a n = M.readLE a n := by
+  rcases hH with h | h
+  · exact hLF.readLE a n h trivial
+  · exact hMF.readLE a n (by rw [outside_append]; exact ⟨h, hws⟩)
+
+/-- the post of `z.setWord(1)` with a fresh `makeslice(Word, 1, 1)` block `[p, p + r)` (`z` empty) -/
+theorem post_oneB {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {costF : Nat → Nat → Nat → Nat}
+    {costR : Nat → Nat → Nat → Nat} {costS costP : Nat → Nat → Nat → Nat → Nat}
+    {sp zp zc st xp xl yp yl mp n p r : Nat} {s s' : State} {M m : Memory}
+    (hs : s.sp.toNat = sp + 1312) (hK : 4304 ≤ K) (hLs : LiveSep L [(sp - K, sp + 1432)])
+    (hrw : LiveSep [(sp - K, sp + 1432)] R.rt)
+    (hsok : StkOK s.mem R L st) (hstw : Apart st 24 (sp - K) (K + 1432))
+    (hv : natVal s.mem xp xl ^ natVal s.mem yp yl % natVal s.mem mp n = 1)
+    (hF0 : MemFrame s.mem M (wN sp K))
+    (hLF : LiveFrame M m L []) (hMF : MemFrame M m (R.rt ++ [(sp + 1056 - 4096, sp + 1048), (sp + 1064, sp + 1088)]))
+    (hAp : ApartAll p r L) (hIn : InRanges p r R.rt) (hp48 : p + r ≤ 2 ^ 48) (hacc : M.accessible p r true = true)
+    (h8 : p % 8 = 0) (hr8 : 8 ≤ r) (hr : r = blockSize 8 true)
+    (hinv : R.inv (b - r) (L ++ [(p, p + r)]) (s.regs 28).toNat (view R.rt (L ++ [(p, p + r)]) m))
+    (hF2 : MemFrame m s'.mem [(p, p + 8), (sp + 1232, sp + 1256)]) (hv1 : s'.mem.readLE p 8 = 1)
+    (h0 : s'.regs 0 = BitVec.ofNat 64 p) (h1 : s'.regs 1 = 1#64) (h2 : s'.regs 2 = 1#64) :
+    Post R b L K costF costR costS costP zp zc st xp xl yp yl mp n s s' := by
+  have hw := out_rt_wN hrw
+  have hwr : ∀ a k, Outside a k R.rt → a + k ≤ p ∨ p + 8 ≤ a := fun a k h => by
+    have := out_inR2 h hIn; omega
+  -- M → s'.mem over `R.rt ++ wN`
+  have hM2 : MemFrame M s'.mem (R.rt ++ wN sp K) := hMF.trans hF2 fun a k ho => by
+    have h1 := hwr a k (by rw [outside_append] at ho; exact ho.1)
+    simp only [wN, outside_append, outside_cons, outside_nil, and_true] at ho ⊢
+    exact ⟨⟨ho.1, by omega, by omega⟩, by omega, by omega⟩
+  have hS : MemFrame s.mem s'.mem (R.rt ++ wN sp K) := hF0.trans hM2 fun a k ho => by
+    rw [outside_append] at ho; exact ⟨ho.2, by rw [outside_append]; exact ho⟩
+  have hx : LiveExt R L (L ++ [(p, p + r)]) := ⟨[(p, p + r)], rfl, fun q hq => by
+    simp only [List.mem_singleton] at hq; subst hq; simp only [Nat.add_sub_cancel_left]; exact ⟨hIn, hAp⟩,
+    List.pairwise_singleton _ _⟩
+  have hin8 : InRanges p 8 (L ++ [(p, p + r)]) := ⟨(p, p + r), by simp, by simp only; omega, by simp only; omega⟩
+  have hbl := blockSize_le_allocCost 8 true
+  have e1 : makeCost 1 = allocCost 8 := rfl
+  -- the stack header through the three steps
+  obtain ⟨k1, k2, k3, k4, k5, k6, k7⟩ := hsok
+  have hstO : Outside st 24 (wN sp K) := by
+    simp only [wN, outside_cons, outside_nil, and_true]; unfold Apart at hstw; omega
+  have hstA := apart_fresh k2 hAp hIn
+  have rdst : ∀ o, o + 8 ≤ 24 → s'.mem.readLE (st + o) 8 = s.mem.readLE (st + o) 8 := fun o ho => by
+    rw [hF2.readLE _ _ (by simp only [outside_cons, outside_nil, and_true]; unfold Apart at hstw; omega),
+      rd_mk (k2.elim (fun h => Or.inl (h.sub (by omega) (by omega))) (fun h => Or.inr (h.of_sub (by omega) (by omega))))
+        hLF hMF (by simp only [outside_cons, outside_nil, and_true]; unfold Apart at hstw; omega),
+      hF0.readLE _ _ (hstO.of_sub (by omega) (by omega))]
+  have ew : stW s'.mem st = stW s.mem st := by have := rdst 0 (by omega); simpa using this
+  have el : stLen s'.mem st = stLen s.mem st := rdst 8 (by omega)
+  have ec : stCap s'.mem st = stCap s.mem st := rdst 16 (by omega)
+  have hacS : ∀ a k w, s'.mem.accessible a k w = s.mem.accessible a k w := fun a k w => by
+    rw [hF2.accessible, hMF.accessible, hF0.accessible]
+  refine ⟨p, 1, 1, h0, h1, h2, by rw [hv]; exact hv1,
+    Or.inr (by simp only [Nat.sub_self, Nat.mul_zero, Nat.add_zero]; rw [hv1]; decide), Nat.le_refl _, by decide,
+    L ++ [(p, p + r)], b - r, hx, by unfold NCost; omega, Expmc.inv_frame hF2 ?_ hinv, ?_, ?_, ?_,
+    frame_post (ws := R.rt) hs hS (fun a k ho => by rw [outside_append] at ho; exact ho.1), ?_⟩
+  · intro q hq
+    rcases List.mem_cons.mp hq with rfl | hq
+    · left; simpa using hin8
+    · right
+      have := hw (sp - K, sp + 1304) (List.mem_cons_self ..)
+      simp only [List.mem_singleton] at hq; subst hq
+      exact Outside.of_sub this (by simp only; omega) (by simp only; omega)
+  · intro _
+    refine ⟨h8, Or.inl (by simpa using hin8), ?_, by omega⟩
+    rw [hF2.accessible, hMF.accessible]; exact Memory.accessible_mono _ hacc (by omega) (by omega)
+  · exact Or.inr (Or.inr ⟨by simpa using hIn.sub (Nat.le_refl _) (by omega),
+      by simpa using ApartAll.sub' hAp (Nat.le_refl _) (by omega)⟩)
+  · refine ⟨⟨k1, k2.elim (fun h => Or.inl (hx.inRanges_old h)) Or.inr, by rw [hacS]; exact k3, k4, ?_,
+      by rw [el, ec]; exact k6, by rw [ec]; exact k7⟩, el, Or.inl ⟨ew, ec⟩⟩
+    rw [ew, ec]; intro hc
+    obtain ⟨a1, a2, a3, a4⟩ := k5 hc
+    exact ⟨a1, a2.elim (fun h => Or.inl (hx.inRanges_old h)) Or.inr, by rw [hacS]; exact a3, a4⟩
+  · refine ⟨fun a k hin _ => ?_⟩
+    obtain ⟨q, hq, e1, e2⟩ := hin
+    have hq1 := liveSep_wN hLs q hq
+    have hq2 := hAp q hq
+    unfold Apart at hq2
+    rw [hF2.readLE _ _ ?_, hLF.readLE a k ⟨q, hq, e1, e2⟩ trivial, hF0.readLE _ _ (Outside.of_sub hq1 e1 (by omega))]
+    simp only [wN, outside_cons, outside_nil, and_true] at hq1 ⊢
+    omega
+
 end FvModexp.Arm64.ExpN
