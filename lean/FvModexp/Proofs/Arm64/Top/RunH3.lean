@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Arm64.Top.RunH3S
+import FvModexp.Proofs.Arm64.Top.RunSmall
 
 /-! # `Run` (arm64): `B2` to `B3` (header 2 = `modLen`: `getData(input, 64, 32)`, std `setBytes`) -/
 
@@ -45,7 +46,6 @@ theorem h3 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
   have hwS : S.mem.accessible (s.sp.toNat - 4800) (4800 + 40) true = true := by rw [hMF.accessible]; exact hw
   have hspn : S.sp.toNat = s.sp.toNat - 624 := by rw [hsp, BitVec.toNat_sub]; simp; omega
   unfold Apart at hga
-  janus_data hdS
   have hS := RunCallees.sbStdD impl hap R hmk b1 L1
   have hwT : Outside SetBytesStd.wordT 16 R.rt := RoOut.out' hro 1 (by decide) (by decide)
   janus_eval_nat h_t : SetBytesStd.wordT
@@ -73,7 +73,7 @@ theorem h3 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
       (by janus_simp) (by janus_simp)
     all_goals try (janus_simp [hm1, hm2, hm3, hm4, hm5, hm6, hsl1, hsl2]; done)
     case refine_12 => janus_callpre
-    case refine_13 => simp [SetBytesStd.nW] at hb2; omega
+    case refine_13 => simp [SetBytesStd.nW] at hb2; first | exact bud_step hbud hb2 | omega
     case refine_14 =>
       dsimp only
       rw [view_writeLE_out (hout.of_sub (by omega) (by omega)), view_writeLE_out (hout.of_sub (by omega) (by omega)),
