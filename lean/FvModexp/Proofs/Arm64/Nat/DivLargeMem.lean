@@ -63,7 +63,6 @@ theorem Env.lay {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc s
   have hscr := hE.scr
   have hext := hE.ext
   have hsz := hpre.sz; have hsu := hpre.su; have hsi := hpre.si; have hsv := hpre.svv
-  simp only [EvenHyp.StkApart] at hsz hsu hsi hsv
   have hzio := hpre.zio; have huv := hpre.uv
   -- `t` is in the entry stack's free part (apart from everything the operands' `StkApart` excludes) or fresh
   have hfree : ∀ p n, Outside p n R.rt ∨ InRanges p n L →
@@ -89,16 +88,16 @@ theorem Env.lay {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc s
     uw := fun h => by have := (huw h).1; simp only [win, outside_cons, outside_nil, and_true] at this; omega,
     iw := by omega, vw := by omega, tw := htw, sw := by omega,
     tz := fun h => by
-      have := hfree zp (8 * zc) (hheld _ _ (hzl h).2.1) (fun _ h2 => (hsz (by omega)).2 h2) (by omega)
+      have := hfree zp (8 * zc) (hheld _ _ (hzl h).2.1) (fun _ _ => (hsz h).2) (by omega)
       unfold Apart at this; omega,
     tu := fun h => by
-      have := hfree up (8 * uc) (hheld _ _ (hul h).2.1) (fun _ h2 => (hsu (by omega)).2 h2) (by omega)
+      have := hfree up (8 * uc) (hheld _ _ (hul h).2.1) (fun _ _ => (hsu h).2) (by omega)
       unfold Apart at this; omega,
     ti := by
-      have := hfree ip (8 * il) (hheld _ _ hih) (fun _ h2 => (hsi (by omega)).2 h2) (by omega)
+      have := hfree ip (8 * il) (hheld _ _ hih) (fun _ _ => hsi.2) (by omega)
       unfold Apart at this; omega,
     tv := by
-      have := hfree vp (8 * vl) (hheld _ _ hvh) (fun _ h2 => (hsv (by omega)).2 h2) (by omega)
+      have := hfree vp (8 * vl) (hheld _ _ hvh) (fun _ _ => hsv.2) (by omega)
       unfold Apart at this; omega,
     ts := by
       rcases hscr.loc with ⟨hc0, hl1, hl2⟩ | ⟨hin, hap⟩
@@ -106,13 +105,13 @@ theorem Env.lay {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc s
       · rcases hsth with hi | ho
         · obtain ⟨r, hr, h1, h2⟩ := hi; have := hap r hr; unfold Apart at this; omega
         · have := outside_of_inRanges ho hin; omega,
-    sz := fun h => by have := (hsz (by omega)).1; unfold Apart at this; omega,
-    su := fun h => by have := (hsu (by omega)).1; unfold Apart at this; omega,
+    sz := fun h => by have := (hsz h).1; unfold Apart at this; omega,
+    su := fun h => by have := (hsu h).1; unfold Apart at this; omega,
     si := by
       by_cases h0 : il = 0
       · subst h0; omega
-      · have := (hsi (by omega)).1; unfold Apart at this; omega,
-    sv := by have := (hsv (by omega)).1; unfold Apart at this; omega,
+      · have := hsi.1; unfold Apart at this; omega,
+    sv := by have := hsv.1; unfold Apart at this; omega,
     zv := fun h => by have := (hzio h).2; unfold Apart at this; omega,
     zi := fun h => by
       by_cases h0 : il = 0
@@ -127,5 +126,122 @@ theorem Env.lay {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc s
       · have := hLs r hr; simp only [outside_cons, outside_nil, and_true] at this; omega
       · have := outside_of_inRanges hout (hn r hr).1; omega,
     theld := hscr.held }
+
+/-- the frame slots written between `stk.nat`'s return and the division call besides `Mem`'s (and the callee area) -/
+@[reducible] def slotsW (s : State) : List (Nat × Nat) :=
+  [(s.sp.toNat - 41264, s.sp.toNat - 312), (s.sp.toNat - 296, s.sp.toNat - 201), (s.sp.toNat - 200, s.sp.toNat - 168),
+    (s.sp.toNat - 160, s.sp.toNat - 144), (s.sp.toNat - 120, s.sp.toNat - 88)]
+
+theorem mfTrans {m₀ m₁ m₂ : Memory} {rs rs' : List (Nat × Nat)} (h₁ : MemFrame m₀ m₁ rs)
+    (h₂ : MemFrame m₁ m₂ rs') : MemFrame m₀ m₂ (rs ++ rs') where
+  readLE a k ho := by
+    rw [outside_append] at ho
+    rw [h₂.readLE a k ho.2, h₁.readLE a k ho.1]
+  accessible a k w := by rw [h₂.accessible, h₁.accessible]
+
+set_option maxHeartbeats 4000000 in
+/-- **`Mem` after `stk.nat`** (pure): from the prologue facts (`AtNat`), `stk.nat`'s frame (`F2`, `LF2`) and a frame `hM`
+of the slots written since (and of a runtime call: `R.rt` with a `LiveFrame`). -/
+theorem mem_of_nat {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st up uc ip il vp vl : Nat}
+    {s : State} {t : Nat} {L1 : List (Nat × Nat)} {b1 w1 c1 : Nat}
+    (hE : Env R b L c zp zc st up uc ip il vp vl s t L1 b1 w1 c1) {ic vc stkSN abSN : Nat}
+    (hk1 : stkSN ≤ 4224) (hk2 : abSN ≤ 96) {P : State} (hP : AtNat st up uc ip il ic vp vl vc zp zc s P)
+    {S2 : Memory} (hF2 : MemFrame P.mem S2 (R.rt ++ [(s.sp.toNat - 304 - stkSN, s.sp.toNat - 312),
+      (s.sp.toNat - 296, s.sp.toNat - 304 + abSN)] ++ stkWs s.mem st))
+    (hLF2 : LiveFrame P.mem S2 L (stkWs s.mem st))
+    (hw1 : S2.readLE st 8 = w1) (hl1 : S2.readLE (st + 8) 8 = stLen s.mem st + StackNat.rnd vl)
+    (hc1 : S2.readLE (st + 16) 8 = c1)
+    {M : Memory} {Lk : List (Nat × Nat)} {bk : Nat} (hM : MemFrame S2 M (R.rt ++ slotsW s)) (hML : LiveFrame S2 M L1 [])
+    (r1 : M.readLE (s.sp.toNat - 96) 8 = t) (r2 : M.readLE (s.sp.toNat - 160) 8 = vl)
+    (r3 : M.readLE (s.sp.toNat - 152) 8 = vl) (hinv : R.inv bk Lk (s.regs 28).toNat (view R.rt Lk M)) :
+    Mem R L zp zc st up uc ip il ic vp vl vc s t w1 c1 Lk bk M := by
+  have hl := hE.lay
+  have hsp0 := hl.sp0; have hsp1 := hl.sp1
+  have hout : Outside (s.sp.toNat - 41264) (41264 + 112) R.rt := hE.pre.ce.2.2.2.1
+  have hF := hP.fr
+  -- a window slot outside the callee area and the scratch slots keeps its `P` value
+  have rdW : ∀ a n, s.sp.toNat - 41264 ≤ a → a + n ≤ s.sp.toNat + 112 →
+      (a + n ≤ s.sp.toNat - 304 - stkSN ∨ s.sp.toNat - 312 ≤ a) → (a + n ≤ s.sp.toNat - 296 ∨ s.sp.toNat - 304 + abSN ≤ a) →
+      Outside a n (slotsW s) → M.readLE a n = P.mem.readLE a n := by
+    intro a n h1 h2 h3 h4 h5
+    rw [hM.readLE a n (by rw [outside_append]; exact ⟨hout.of_sub h1 (by omega), h5⟩)]
+    refine hF2.readLE a n ?_
+    simp only [stkWs, outside_append, outside_cons, outside_nil, and_true]
+    refine ⟨⟨hout.of_sub h1 (by omega), h3, h4⟩, ?_, ?_⟩
+    · have := hl.sw; omega
+    · have := hE.pre.fw
+      simp only [win, outside_cons, outside_nil, and_true] at this; omega
+  -- the slots
+  have k : ∀ (a : Nat) {x : Nat}, s.sp.toNat - 41264 ≤ a → a + 8 ≤ s.sp.toNat + 112 →
+      (a + 8 ≤ s.sp.toNat - 304 - stkSN ∨ s.sp.toNat - 312 ≤ a) → (a + 8 ≤ s.sp.toNat - 296 ∨ s.sp.toNat - 304 + abSN ≤ a) →
+      Outside a 8 (slotsW s) → P.mem.readLE a 8 = x → M.readLE a 8 = x :=
+    fun a _ h1 h2 h3 h4 h5 hx => (rdW a 8 h1 h2 h3 h4 h5).trans hx
+  have so : ∀ a n, (s.sp.toNat - 312 ≤ a ∧ a + n ≤ s.sp.toNat - 296) ∨ (s.sp.toNat - 201 ≤ a ∧ a + n ≤ s.sp.toNat - 200) ∨
+      (s.sp.toNat - 168 ≤ a ∧ a + n ≤ s.sp.toNat - 160) ∨ (s.sp.toNat - 144 ≤ a ∧ a + n ≤ s.sp.toNat - 120) ∨
+      (s.sp.toNat - 88 ≤ a ∧ a + n ≤ s.sp.toNat + 112) → Outside a n (slotsW s) := by
+    intro a n h; simp only [slotsW, outside_cons, outside_nil, and_true]; omega
+  have hheld : ∀ a n, Held R L a n → (a + n ≤ s.sp.toNat - 41264 ∨ s.sp.toNat + 112 ≤ a) → Outside a n (stkWs s.mem st) →
+      M.readLE a n = s.mem.readLE a n := by
+    intro a n hh hw hs
+    have h1 : P.mem.readLE a n = s.mem.readLE a n := hF.readLE a n (by
+      simp only [proWs, outside_cons, outside_nil, and_true]; omega)
+    have h2 : S2.readLE a n = P.mem.readLE a n :=
+      FvModexp.Expmc.held_readLE hh hF2 hLF2 (by simp only [outside_cons, outside_nil, and_true]; omega) hs
+    rw [← h1, ← h2]
+    rcases hh with hi | ho
+    · exact hML.readLE a n (hE.ext.inRanges_old hi) (by simp)
+    · exact hM.readLE a n (by
+        rw [outside_append]; exact ⟨ho, by simp only [slotsW, outside_cons, outside_nil, and_true]; omega⟩)
+  have hS2 : ∀ a n, Held R L a n → (a + n ≤ s.sp.toNat - 41264 ∨ s.sp.toNat + 112 ≤ a) → M.readLE a n = S2.readLE a n := by
+    intro a n hh hw
+    rcases hh with hi | ho
+    · exact hML.readLE a n (hE.ext.inRanges_old hi) (by simp)
+    · exact hM.readLE a n (by
+        rw [outside_append]; exact ⟨ho, by simp only [slotsW, outside_cons, outside_nil, and_true]; omega⟩)
+  have hsth : Held R L st 24 := hE.pre.sti.1.2.1
+  obtain ⟨-, -, -, -, -, -, -, -, -, plr, pfp, pdbit, pvtop, pil1, pmm, -, -, -, -, -, -, pdfn, pdst, pdn, pdp,
+    ps1, ps3, ps4, ps5, ps7, ps8, ps9, ps10, ps11, ps12, ps13⟩ := hP
+  refine ⟨k _ (by omega) (by omega) (by omega) (by omega) (so _ _ (by omega)) plr,
+    k _ (by omega) (by omega) (by omega) (by omega) (so _ _ (by omega)) pfp, ?_,
+    k _ (by omega) (by omega) (by omega) (by omega) (so _ _ (by omega)) pvtop,
+    k _ (by omega) (by omega) (by omega) (by omega) (so _ _ (by omega)) pil1,
+    k _ (by omega) (by omega) (by omega) (by omega) (so _ _ (by omega)) pmm, r1, r2, r3,
+    k _ (by omega) (by omega) (by omega) (by omega) (so _ _ (by omega)) pdfn,
+    k _ (by omega) (by omega) (by omega) (by omega) (so _ _ (by omega)) pdst,
+    k _ (by omega) (by omega) (by omega) (by omega) (so _ _ (by omega)) pdn,
+    k _ (by omega) (by omega) (by omega) (by omega) (so _ _ (by omega)) pdp,
+    k _ (by omega) (by omega) (by omega) (by omega) (so _ _ (by omega)) ps1,
+    k _ (by omega) (by omega) (by omega) (by omega) (so _ _ (by omega)) ps3,
+    k _ (by omega) (by omega) (by omega) (by omega) (so _ _ (by omega)) ps4,
+    k _ (by omega) (by omega) (by omega) (by omega) (so _ _ (by omega)) ps5,
+    k _ (by omega) (by omega) (by omega) (by omega) (so _ _ (by omega)) ps7,
+    k _ (by omega) (by omega) (by omega) (by omega) (so _ _ (by omega)) ps8,
+    k _ (by omega) (by omega) (by omega) (by omega) (so _ _ (by omega)) ps9,
+    k _ (by omega) (by omega) (by omega) (by omega) (so _ _ (by omega)) ps10,
+    k _ (by omega) (by omega) (by omega) (by omega) (so _ _ (by omega)) ps11,
+    k _ (by omega) (by omega) (by omega) (by omega) (so _ _ (by omega)) ps12,
+    k _ (by omega) (by omega) (by omega) (by omega) (so _ _ (by omega)) ps13, ?_, ?_, ?_, ?_, ?_, ?_, hinv⟩
+  · rw [rdW _ _ (by omega) (by omega) (by omega) (by omega) (so _ _ (by omega))]; exact pdbit
+  · rw [hS2 _ _ (hsth.sub (Nat.le_refl _) (by omega)) (by have := hl.sw; omega)]; exact hw1
+  · rw [hS2 _ _ (hsth.sub (by omega) (by omega)) (by have := hl.sw; omega)]; exact hl1
+  · rw [hS2 _ _ (hsth.sub (by omega) (by omega)) (by have := hl.sw; omega)]; exact hc1
+  · intro a n h1 h2
+    exact hheld a n (hE.pre.vo.2.2.2.1.sub h1 h2) (by have := hl.vw; omega) (by
+      simp only [stkWs, outside_cons, outside_nil, and_true]
+      refine ⟨by have := hl.sv; omega, ?_⟩
+      have := hE.pre.svv.2; unfold Apart at this; omega)
+  · refine (mfTrans (mfTrans hF hF2) hM).mono fun a n ho => ?_
+    simp only [outside_append] at ho
+    obtain ⟨⟨⟨hrt, hwa⟩, -⟩, hsk⟩ := ho
+    simp only [winA, outside_cons, outside_nil, and_true] at hwa
+    simp only [stkWs, outside_cons, outside_nil, and_true] at hsk
+    simp only [proWs, slotsW, outside_append, outside_cons, outside_nil, and_true]
+    exact ⟨⟨⟨by omega, by omega⟩, ⟨hrt, by omega, by omega⟩, hsk⟩, hrt, by omega, by omega, by omega, by omega, by omega⟩
+  · refine ⟨fun a n hin hws => ?_⟩
+    have hw0 : a + n ≤ s.sp.toNat - 41264 ∨ s.sp.toNat + 112 ≤ a := by
+      obtain ⟨r, hr, i1, i2⟩ := hin; have := hl.lsep r (hE.ext.mem_old hr); omega
+    have hws' : Outside a n (stkWs s.mem st) := by rw [outside_append] at hws; exact hws.2
+    rw [hML.readLE a n (hE.ext.inRanges_old hin) (by simp), hLF2.readLE a n hin hws']
+    exact hF.readLE a n (by simp only [proWs, outside_cons, outside_nil, and_true]; omega)
 
 end FvModexp.Arm64.DivLarge
