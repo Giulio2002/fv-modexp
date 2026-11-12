@@ -1433,3 +1433,9 @@ One fresh cache (`cache-infra`, v1 wiped), warm-up 1726 s (framework build; not 
 | Nat/TruncRow (asm's, lower row) | PASS | 383 s | 2.4 GB | |
 | Exp/SubMod2NRow | PASS | 691 s | 2.9 GB | 84 (incl. expmc's Mont* via LibWC, divmc's NatSub*/NatAdd*: run MontRow first to charge Mont* there) |
 Dev: SubMod2NRow 10 s / 2.4 GB.
+
+## agent top s24 (2026-11-14, dev, load 60-75, LEAN_NUM_THREADS=4, J=1 rebuild alongside)
+* amd64 divBasic: SubR 100 s (subRun was 196-230 s: 7 unfolded `Apart` disjunctions in the run context made every
+  failing simp-discharge omega split 2^7 ways — 35 discharges × 2-3 s; fix: callee-form Apart facts, Hide-box the
+  window disjunctions, re-open them only after the run), Sub 80 s, AddR 52 s, Add 55 s, TailR 120 s (3 paths), Tail 2 s,
+  Step 41 s, End 5 s, Exit 18 s, Loop 3 s, DivBasic 7 s. All ≤ 2.8 GB.
