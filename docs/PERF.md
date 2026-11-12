@@ -977,3 +977,11 @@ unfolded `Apart` (disjunction) made every omega case-split; fixed by hiding the 
 unfolding `Apart` at top level, and moving window arithmetic into tiny lemmas `nseg_ws`/`hdr_nseg`/`slot_*`).
 P2Pre closure after the swap: LibCallsX 1.2 s, P2PreXc 3.8 s, P2PreSq 14.5 s, P2PreMu 5.0 s, P2PreE1 8.3 s, P2PreX 49 s,
 rest unchanged (all ≤ 4.4 GB).
+## agent top s16 (2026-11-12, dev builds, host load ~19)
+| module | before | after | fix |
+|---|---|---|---|
+| Amd64/Top/RunDM1 | 170 s / 3.6 GB | 102 s / 3.2 GB | profile (`profiler.threshold 1500`): 69 `omega` calls = 281 s of 353 s in DM2 — every post-run `janus64_simp` closer runs omega over a context with 4 disjunctions (`hpw`, `lnz`, `hut`, `hcf3/4`). `Box` `hpw`+`lnz` right after their last use, `clear hut hcf1..4` after the makeslice run |
+| Amd64/Top/RunDM2 (generated from DM1) | 301-353 s / 4.2 GB | 133 s / 3.3 GB | same |
+| Amd64/Top/RunC2Sum | 31 s / 6.9 GB | 54 s / 3.4 GB | `namesMod`/`namesExp` ⊆ `LibRun.names` decided in 12-name chunks (`all_split`), one declaration per chunk |
+| Amd64/Top/RunCP2 (new) | — | ~25 s / 2.5 GB | frame-slot facts as small lemmas (`slot_out_call`, `outW_cs2/csd2`) |
+| Amd64/Top/RunOk, RunOkLib, RunOkRow (new) | — | 1 s / 1 s / 8 s | |
