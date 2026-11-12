@@ -821,3 +821,19 @@ Row amd64 RunErr (janus-provfix, warm cache-top): 491 s wall, peak 5.94 GB (cold
 | Arm64/Exp/SubMod2NS1 / S2 / S4C (Trunc.Hyp2) | 54 / 58 / ~80 s | 64 / 73 / 77 s | unchanged structure (load differences) |
 | Amd64/Nat/RshMainA/B → RshMainAC/AS/BC/BS | 65 / 86 / 81 / 74 s / ≤ 2.6 GB (load ~35, was 131 / 110 s) | one makeslice run per module (copy / shift), shr6 moved to RshDefs |
 | rows (arm64 / amd64), all PASS | Trunc 257 s / 3.2 GB, 426 s / 4.2 GB; Lsh 244 s / 3.9 GB, 249 s / 4.5 GB; Rsh 155 s / 3.5 GB, 253 s / 4.7 GB | shared cache-asm, own modules only |
+
+## divmc session 12 — `nat.sqr` arm64 member modules (dev compile, load ~35)
+| module | time | peak RSS | note |
+|---|---|---|---|
+| SqrRel (Core, post_of, callee env) | 6 s | 2.4 GB | pure |
+| SqrNorm (4 norm loops) | 10 s | 2.4 GB | generated |
+| SqrZero / SqrOne | 5 s / 25–38 s | 2.3 / 2.9 GB | |
+| SqrMake (reuse + alloc, 3 alloc branches) | 144 s | 4.7 GB | TRIM candidate: one continuation per branch |
+| SqrCall / SqrKPre (pure pre builders) | 10 s / 7 s | 2.5 GB | |
+| SqrBM / SqrBS / SqrKS | 76–93 s / 51 s / 27 s | 4.9 / 4.4 / 3.4 GB | |
+| SqrStep | 1.3 s | 2.2 GB | |
+Lesson: `first | assumption | exact h …` closers on goals that still hold state literals cost minutes (bm 93 s → 391 s);
+pass the hypotheses as terms / use named `case`s after `janus_simp` (bs 189 s → 51 s). A callee's pre built by a pure
+lemma is handed to janus through `Summary.mono` with a register/sp/mem-equality pre' (no 30-conjunct unfolding).
+A summary from an SCC induction hypothesis must be ascribed with the literal entry (`Summary P 0x1bc2b0 _ _`), else
+janus runs into the callee's code.

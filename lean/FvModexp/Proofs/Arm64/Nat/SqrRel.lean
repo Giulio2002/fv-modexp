@@ -122,6 +122,83 @@ theorem Core.lsep {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp x
     simp only [win, List.mem_cons, List.not_mem_nil, or_false] at hr; subst hr; simp only
     rw [show s.sp.toNat + 64 - (s.sp.toNat - W) = W + 64 by omega]; exact hout
 
+/-- the registers and spills at the join after `z = z.make(2n)` (`+0x104`): `R0..R2 = (p, 2n, c)`, `R3 = stk`,
+`R4..R6 = x`; `p`, `2n`, `c` spilled at `112`, `96`, `88(SP')` -/
+structure JoinAt (s S : State) (p c : Nat) (st xp xl xc : BitVec 64) : Prop where
+  pc : S.pc = BitVec.ofNat 64 0x1bb524
+  r0 : S.regs 0 = BitVec.ofNat 64 p
+  r1 : S.regs 1 = BitVec.ofNat 64 (2 * xl.toNat)
+  r2 : S.regs 2 = BitVec.ofNat 64 c
+  r3 : S.regs 3 = st
+  r4 : S.regs 4 = xp
+  r5 : S.regs 5 = xl
+  r6 : S.regs 6 = xc
+  sp : S.sp = s.sp - 176#64
+  g : S.regs 28 = s.regs 28
+  fp : S.regs 29 = s.sp - 184#64
+  x18 : S.regs 18 = s.regs 18
+  mlr : S.mem.readLE (s.sp.toNat - 176) 8 = (s.regs 30).toNat
+  mfp : S.mem.readLE (s.sp.toNat - 184) 8 = (s.regs 29).toNat
+  m64 : S.mem.readLE (s.sp.toNat - 64) 8 = p
+  m80 : S.mem.readLE (s.sp.toNat - 80) 8 = 2 * xl.toNat
+  m88 : S.mem.readLE (s.sp.toNat - 88) 8 = c
+  reg : S.mem.regions = s.mem.regions
+  px : Apart p (8 * c) xp.toNat (8 * xl.toNat)
+  na : p + 8 * c ≠ xp.toNat + 8 * xc.toNat
+
+/-- window stores after `make` keep `Core` -/
+theorem Core.win {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp xl xc : Nat} {s : State}
+    {p c : Nat} {L1 : List (Nat × Nat)} {b1 : Nat} {M M' : Memory}
+    (hJ : Core R b L W zp zc st xp xl xc s p c L1 b1 M) (hF : MemFrame M M' (winA s W 64)) :
+    Core R b L W zp zc st xp xl xc s p c L1 b1 M' := by
+  obtain ⟨⟨-, ⟨hal, hb', ha, hw⟩, -, hout, -, -, hLs, -⟩, -⟩ := hJ.pre
+  refine ⟨hJ.pre, hJ.F.trans hF fun a n h => ⟨h, by simp only [outside_append] at h; exact h.2⟩,
+    LiveFrame.trans hJ.LF (lf_win [] hF hLs) fun _ _ h => h, hJ.ext, hJ.bud,
+    inv_frame_winA hF hout (by omega) (by decide) hJ.inv, hJ.cap, hJ.c40, ?_, hJ.pw, hJ.kind, hJ.ru⟩
+  intro h; obtain ⟨q1, q2, q3, q4⟩ := hJ.live h; exact ⟨q1, q2, by rw [hF.accessible]; exact q3, q4⟩
+
+/-- the stack is untouched by a callee that writes held memory only in `ws` (e.g. `basicMul`) -/
+theorem stackBack_keep' {R : RtInv} {L L2 : List (Nat × Nat)} {st : Nat} {m m' : Memory} {ws : List (Nat × Nat)}
+    (h : StkOK m R L st) (hF : MemFrame m m' (R.rt ++ ws)) (hLF : LiveFrame m m' L ws) (ho : Outside st 24 ws)
+    (he : LiveExt R L L2) : StackBack R L L2 st m m' := by
+  obtain ⟨h1, h2, h3, h4, h5, h6, h7⟩ := h
+  have e : ∀ k, k + 8 ≤ 24 → m'.readLE (st + k) 8 = m.readLE (st + k) 8 := fun k hk =>
+    Held.readLE (h2.sub (by omega) (by omega)) hF hLF (ho.of_sub (by omega) (by omega))
+  have e0 := e 0 (by omega); have e1 := e 8 (by omega); have e2 := e 16 (by omega)
+  simp only [Nat.add_zero] at e0
+  refine ⟨⟨h1, he.held h2, by rw [hF.accessible]; exact h3, h4, ?_, ?_, ?_⟩, by simp only [stLen]; rw [e1],
+    Or.inl ⟨by simp only [stW]; rw [e0], by simp only [stCap]; rw [e2]⟩⟩
+  · simp only [stW, stCap] at h5 ⊢; rw [e0, e2]; intro hc
+    obtain ⟨q1, q2, q3, q4⟩ := h5 hc; exact ⟨q1, he.held q2, by rw [hF.accessible]; exact q3, q4⟩
+  · simp only [stLen, stCap] at h6 ⊢; rw [e1, e2]; exact h6
+  · simp only [stCap] at h7 ⊢; rw [e2]; exact h7
+
+/-- the call environment of a callee called at `SP - 176` (any window inside ours) -/
+theorem Core.callee {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp xl xc : Nat} {s : State}
+    {p c : Nat} {L1 : List (Nat × Nat)} {b1 : Nat} {M : Memory}
+    (hJ : Core R b L W zp zc st xp xl xc s p c L1 b1 M) {S1 : State} {stk1 above1 : Nat}
+    (hsp : S1.sp.toNat = s.sp.toNat - 176) (hg : S1.regs 28 = s.regs 28) (hF : MemFrame M S1.mem (winA s W 64))
+    (hreg : S1.mem.regions = s.mem.regions) (hk : 176 + stk1 ≤ W) (ha : above1 ≤ 168) :
+    CallEnv R L1 S1 stk1 above1 := by
+  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb, ha', hw⟩, hdl, hout, hga, hgr, hLs, hro⟩, -⟩ := hJ.pre
+  have hF1 : MemFrame s.mem S1.mem (R.rt ++ winA s W 64) :=
+    hJ.F.trans hF fun a n h => ⟨h, by simp only [outside_append] at h; exact h.2⟩
+  unfold Apart at hga
+  have hgr' : S1.mem.readLE ((S1.regs 28).toNat + 16) 8 = s.mem.readLE ((s.regs 28).toNat + 16) 8 := by
+    rw [hg]; exact hF1.readLE _ _ (by
+      simp only [winA, outside_append, outside_cons, outside_nil, and_true]; exact ⟨hgr, by omega, by omega⟩)
+  have hLs1 := hJ.lsep
+  refine ⟨⟨by rw [hg]; exact hg1, by rw [hg, hF1.accessible]; exact hg2, by rw [hgr', hsp]; omega⟩,
+    ⟨by omega, by omega, by omega, ?_⟩, ?_, ?_, ?_, by rw [hg]; exact hgr, ?_, hro⟩
+  · rw [hF1.accessible, hsp]; exact Memory.accessible_mono _ hw (by omega) (by omega)
+  · exact dataLoaded_win hdl hreg hro hF1 hw (by
+      intro r hr; simp only [winA, List.mem_cons, List.not_mem_nil, or_false] at hr
+      rcases hr with rfl | rfl <;> simp only <;> omega)
+  · rw [hsp]; exact hout.of_sub (by omega) (by omega)
+  · rw [hsp, hg]; unfold Apart; omega
+  · intro r hr; have := hLs1 r hr
+    simp only [win, outside_cons, outside_nil, and_true] at this ⊢; rw [hsp]; omega
+
 /-- `z` reused (`2n ≤ cap z`), memory changed in the window only -/
 theorem core_reuse {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp xl xc : Nat} {s : State} {M : Memory}
     (hpre : SPre R b L W zp zc st xp xl xc s) (hc : 2 * xl ≤ zc) (hF : MemFrame s.mem M (winA s W 64)) :
