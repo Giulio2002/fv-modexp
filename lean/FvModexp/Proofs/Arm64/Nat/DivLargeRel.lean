@@ -92,6 +92,51 @@ structure Mem (R : RtInv) (L : List (Nat × Nat)) (zp zc st up uc ip il ic vp vl
   lf : LiveFrame s.mem M L (wsL zp zc up uc vl t ++ stkWs s.mem st)
   inv : R.inv bk Lk (s.regs 28).toNat (view R.rt Lk M)
 
+/-- the remainder's array `u = u.make(len uIn + 1)` = `(P, C)` (live set `Lk`, memory `M`) -/
+structure UArr (R : RtInv) (zp zc st up uc ip il vp vl : Nat) (s : State) (t w1 c1 : Nat)
+    (L1 Lk : List (Nat × Nat)) (P C : Nat) (M : Memory) : Prop where
+  cap : il + 1 ≤ C
+  c40 : C < 2 ^ 40
+  p8 : P % 8 = 0
+  p48 : P + 8 * C ≤ 2 ^ 48
+  pacc : M.accessible P (8 * C) true = true
+  pw : P + 8 * C ≤ s.sp.toNat - 41264 ∨ s.sp.toNat + 112 ≤ P
+  pg : Apart P (8 * C) ((s.regs 28).toNat + 16) 8
+  pheld : Held R Lk P (8 * C)
+  ror : (P = up ∧ C = uc) ∨ (uc < il + 1 ∧ InRanges P (8 * C) R.rt ∧ ApartAll P (8 * C) L1)
+  pi : P = ip ∨ Apart P (8 * C) ip (8 * il)
+  pv : Apart P (8 * C) vp (8 * vl)
+  pt : Apart P (8 * C) t (8 * vl)
+  ps : Apart P (8 * C) st 24
+  pz : 0 < zc → Apart P (8 * C) zp (8 * zc)
+  pf : Apart P (8 * C) (w1 + 8 * (stLen s.mem st + StackNat.rnd vl)) (8 * (c1 - (stLen s.mem st + StackNat.rnd vl)))
+
+/-- the join after `u = u.make(len uIn + 1)` (`fn + 0x164`, before `CLZ`) -/
+abbrev joinU : Nat := segAddr Extracted.program fn + 0x164
+
+/-- the state at `joinU` -/
+structure AtU (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc st up uc ip il ic vp vl vc : Nat) (s : State)
+    (t w1 c1 : Nat) (L1 : List (Nat × Nat)) (b1 : Nat) (Lk : List (Nat × Nat)) (bk P C : Nat) (S : State) : Prop where
+  pc : S.pc = BitVec.ofNat 64 joinU
+  sp : S.sp = s.sp - 304#64
+  r28 : S.regs 28 = s.regs 28
+  r29 : S.regs 29 = s.sp - 312#64
+  r18 : S.regs 18 = s.regs 18
+  r0 : S.regs 0 = BitVec.ofNat 64 t
+  r1 : S.regs 1 = BitVec.ofNat 64 vl
+  r2 : S.regs 2 = BitVec.ofNat 64 vl
+  r3 : S.regs 3 = BitVec.ofNat 64 C
+  r4 : S.regs 4 = BitVec.ofNat 64 (il + 1)
+  r5 : S.regs 5 = BitVec.ofNat 64 P
+  mem : Mem R L zp zc st up uc ip il ic vp vl vc s t w1 c1 Lk bk S.mem
+  sC : S.mem.readLE (s.sp.toNat - 176) 8 = C
+  sL : S.mem.readLE (s.sp.toNat - 192) 8 = il + 1
+  sP : S.mem.readLE (s.sp.toNat - 104) 8 = P
+  ua : UArr R zp zc st up uc ip il vp vl s t w1 c1 L1 Lk P C S.mem
+  ext2 : LiveExt R L1 Lk
+  bud2 : b1 - makeCost (il + 1) ≤ bk
+  is : ∀ a n, ip ≤ a → a + n ≤ ip + 8 * il → S.mem.readLE a n = s.mem.readLE a n
+
 /-- `Env` from `stk.nat`'s post (pure) -/
 theorem env_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st up uc ip il vp vl : Nat} {s : State}
     (hpre : Pre R b L c zp zc st up uc ip il vp vl s) {S2 : Memory} {L1 : List (Nat × Nat)} {b1 : Nat}

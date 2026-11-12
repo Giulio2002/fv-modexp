@@ -865,3 +865,15 @@ goes into a top-level lemma taking exactly those facts.
 | Common/RotA64 | 0.4 s | 0.5 GB |
 Lesson: omega treats a goal `b - (c0 + … + cst) ≤ b'` coming from a join `def` as an atom (no split) — close budget
 goals with a tiny pure lemma (`bud_step`, `bud_room2`) instead.
+### asm s15: divLarge arm64, front half (dev `m13.sh` J=2, host load ~22, wall / peak RSS)
+| module | time | RSS |
+|---|---|---|
+| Arm64/Nat/DivLargeDefs | 1.4 s | 2.1 GB |
+| Arm64/Nat/DivLargePro (`pro1`, entry → CALL stk.nat) | 15–21 s (was 370 s timeout: blanket `apply BitVec.eq_of_toNat_eq` closer on a state literal; now `janus_simp; omega`) | 2.5 GB |
+| Arm64/Nat/DivLargeNat (`pro2`, stk.nat call) | 67–83 s (two cap>0 runs: split into two modules if the row is tight) | 3.3 GB |
+| Arm64/Nat/DivLargeRel | 1.2–2 s | 2.1 GB |
+| Arm64/Nat/DivLargeMem (Lay, mem_of_nat, uarr_*) | 25–28 s | 2.9 GB |
+| Arm64/Nat/DivLargeMkU (`mkR`) | 8 s | 2.4 GB |
+| Arm64/Nat/DivLargeMkA (`mkA`, makeslice) | 35–39 s | 2.6 GB |
+| Arm64/Nat/DivLargeCallees | 10 s | 2.6 GB |
+| Common/DivLargeMath | 1.1 s | 2.0 GB |
