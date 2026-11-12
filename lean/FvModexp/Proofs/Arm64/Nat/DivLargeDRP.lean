@@ -225,12 +225,12 @@ theorem dr_pre {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st
     rcases hU.ror with ⟨rfl, rfl⟩ | ⟨-, hin, -⟩
     · exact hpre.ga.2.1 (by omega)
     · have := outside_of_inRanges hgaw.2.1 hin; unfold Apart; omega
-  unfold DrsPre
+  unfold DrsPre DrsPreW
   simp only [hW, hLn, hCp]
   refine ⟨?ce, hpre.sv, ?gl, by omega, hq40, by omega, hc40, Nat.le_refl _, hvo.1, hv2, by omega, hvt, hz, hroom,
     ⟨?qacc, by omega, hQ.pheld.sub (Nat.le_refl _) (by omega), ?qw, ?qg⟩,
     ⟨?pacc, by omega, hU.pheld.sub (Nat.le_refl _) (by omega), ?pw, ?pg⟩,
-    ⟨?tacc, ht48, hx3.held hl.theld, ?tw⟩, ?qp, ?qt, ?pt, ?stk, ?stlen,
+    ⟨?tacc, ht48, hx3.held hl.theld, ?tw, ?tg, hx3.held hl.theld, ht48⟩, ?qp, ?qt, ?pt, ?stk, ?stlen,
     ⟨?sq, ?fq⟩, ⟨?sp, ?fp⟩, ⟨?st, ?ft⟩, hpre.wbap, hsf, ?stfw, ⟨?gq, ?gp, ?gs, ?gf⟩, hcost, by rw [h28]; exact hinvY⟩
   all_goals clear hroom
   case ce =>
@@ -285,6 +285,10 @@ theorem dr_pre {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st
   case stfw =>
     have h1 := (w1_facts hE).2.1
     simp only [win, outside_cons, outside_nil, and_true]; rw [hspn]; omega
+  case tg =>
+    have h := hgaw.1
+    simp only [outside_append, wsL, outside_cons] at h
+    have := h.1.1.2.1; unfold Apart; omega
   case gq => exact hgq.mono (by omega) (Nat.le_refl _)
   case gp => exact hgp.mono (by omega) (Nat.le_refl _)
   case gs => exact hpre.ga.2.2.1
