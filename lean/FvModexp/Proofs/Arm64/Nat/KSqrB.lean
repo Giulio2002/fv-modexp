@@ -101,6 +101,25 @@ structure KB5 (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (W st zp zc xp n xc 
   zlo : natVal S.mem zp (2 * kn2 n) = kX0 s xp n * kX0 s xp n
   zhi : natVal S.mem (zp + 16 * kn2 n) (2 * n - 2 * kn2 n) = kX1 s xp n * kX1 s xp n
 
+/-- after `z1.Add(z1, z0)` (`0x1bc504`): `z1 = X0² - (X0-X1)²` (signed) in `t` -/
+structure KB6 (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (W st zp zc xp n xc : Nat) (s : State)
+    (lx0 lx1 t : Nat) (S : State) (Lk : List (Nat × Nat)) (bk ng l l2 : Nat) : Prop where
+  pos : KAt s S 0x1bc504
+  km : KM R b L W st zp zc xp n xc s lx0 lx1 t Lk bk (kc6 (stLen s.mem st) n) S.mem
+  z1h : IntAt S.mem (s.sp.toNat - 200) ng t l (kT n)
+  hng : ng ≤ 1
+  hcan : ng = 1 → 0 < l
+  hl : l ≤ 2 * kn2 n
+  z1v : (if ng = 0 then (natVal S.mem t l : Int) else -(natVal S.mem t l : Int)) =
+    -((kD s xp n * kD s xp n : Nat) : Int) + ((kX0 s xp n * kX0 s xp n : Nat) : Int)
+  z1n : NatNorm S.mem t l
+  z2h : IntAt S.mem (s.sp.toNat - 144) 0 (zp + 16 * kn2 n) l2 (zc - 2 * kn2 n)
+  hl2 : l2 ≤ 2 * (n - kn2 n)
+  z2v : natVal S.mem (zp + 16 * kn2 n) l2 = kX1 s xp n * kX1 s xp n
+  z2n : NatNorm S.mem (zp + 16 * kn2 n) l2
+  zlo : natVal S.mem zp (2 * kn2 n) = kX0 s xp n * kX0 s xp n
+  zhi : natVal S.mem (zp + 16 * kn2 n) (2 * n - 2 * kn2 n) = kX1 s xp n * kX1 s xp n
+
 structure KB7 (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (W st zp zc xp n xc : Nat) (s : State)
     (lx0 lx1 t : Nat) (S : State) (Lk : List (Nat × Nat)) (bk l : Nat) : Prop where
   pos : KAt s S 0x1bc514
@@ -536,5 +555,21 @@ theorem KM.sqRd {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n x
   rw [List.append_assoc] at hF
   exact h.rdW (k := W - 320) (a := 64) (by omega) (Nat.le_refl _) hF h1 h2
     (by simp only [stkWs, List.cons_append, List.nil_append, outside_cons, outside_nil, and_true]; omega)
+
+/-- an `IOp` from a header in our frame and the facts about its array -/
+theorem KM.iop {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State}
+    {lx0 lx1 t : Nat} {Lk : List (Nat × Nat)} {bk spent : Nat} {M : Memory}
+    (_h : KM R b L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) {a ng p l c : Nat} (hh : IntAt M a ng p l c)
+    (hng : ng ≤ 1) (hlc : l ≤ c) (hc : c < 2 ^ 40) (hl : l ≤ 2 ^ 16) (hacc : M.accessible p (8 * l) false = true)
+    (h48 : p + 8 * l ≤ 2 ^ 48) (hH : Held R Lk p (8 * l)) (hn : NatNorm M p l) (hw : Outside p (8 * l) (win s W 48)) :
+    IOp R Lk s W M a := by
+  obtain ⟨q1, q2, q3, q4⟩ := hh
+  simp only [IOp, IntAS.hNeg, IntAS.hP, IntAS.hL, IntAS.hC, q1, q2, q3, q4]
+  exact ⟨hng, hlc, hc, hl, hacc, h48, hH, hn, hw⟩
+
+theorem intZ_of {M : Memory} {a ng p l c : Nat} (hh : IntAt M a ng p l c) :
+    IntAS.intZ M a = if ng = 0 then (natVal M p l : Int) else -(natVal M p l : Int) := by
+  obtain ⟨q1, q2, q3, -⟩ := hh
+  simp only [IntAS.intZ, IntAS.hNeg, IntAS.hP, IntAS.hL, q1, q2, q3]
 
 end FvModexp.Arm64.NatSqr
