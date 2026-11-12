@@ -24,6 +24,9 @@ open FvModexp.Arm64.W4Loop (Env Inp Buf FinEnv)
   stackNatCost l0 k + (stackNatCost (l0 + StackNat.rnd k) n + (costD +
     xjBud n costD (l0 + StackNat.rnd k + StackNat.rnd n)))
 
+/-- budget step for `xnAStep` (small context; omega in the step's context cost 15 s each) -/
+theorem bud3 {b b2 b4 x y z : Nat} (h : x + (y + z) ≤ b) (h2 : b - x ≤ b2) (h4 : b2 - y ≤ b4) : z ≤ b4 := by omega
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem xnAStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
@@ -182,11 +185,12 @@ theorem xnAStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     hserv ret hret b4 L4 g sp K n mp mc Mv Xv yp ylen Y yi zp zc st n0 l0 xp xl xc (stW M2 st + 8 * l0) k M4 r18 r29 f29
     hKD hKL hB4 (by rw [hlen4]) hk0 (by omega) (by omega) (hx4.held hqH3)
     (by rw [hk4.2.1, hk3.2.1]; exact M2.accessible_sub qacc (Or.inr rfl) (by omega) (by omega)) (by omega)
-    (by simp only [AW, Apart] at a1 ⊢; omega) (by unfold Apart at a2 ⊢; omega)
+    (Apart.sub a1 (Nat.le_add_right _ _) hqin.2 (Nat.le_refl _) (Nat.le_refl _))
+    (Apart.sub a2 (Nat.le_add_right _ _) hqin.2 (Nat.le_refl _) (Nat.le_refl _))
     (by have := hsu2; simp only [stUp, Apart] at this ⊢; omega) hqB hqz hxO4
     (by rw [hk4.2.1, hk3.2.1, hk2.2.1]; exact hxa) hx48 hxN4 hxl hxl' hxc
     (by rw [rdx _ _ (Nat.le_refl _) (Nat.le_refl _)]; exact hxv) hmB hMo hM1 (by omega)
-    (by unfold xnBudAC at hbAC; omega) (by unfold xnBudA at hbA; omega) hinv4
+    (bud3 hbAC hb2 hb4) (bud3 hbA hb2 hb4) hinv4
     (by rw [sl 904 (by omega) (by omega)]; exact q904) (by rw [sl 328 (by omega) (by omega)]; exact q328)
     (by rw [sl 320 (by omega) (by omega)]; exact q320) (by rw [rk 968 (by omega) (by omega)]; exact r968)
     (by rw [rk 976 (by omega) (by omega)]; exact r976) (by rw [rk 984 (by omega) (by omega)]; exact r984)
