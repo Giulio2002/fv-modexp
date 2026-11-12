@@ -81,8 +81,11 @@ theorem noPreN (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp : Nat) (M :
       simp only [List.mem_singleton] at hr; subst hr; simp only
       rw [show sp + 1432 - (sp - K) = K + 1432 by omega]; exact hwrt) hLs (hsv.2.2.2.2.1 _)
     (by rw [eg]; exact hinv) (by rw [hround]; exact hb)
-  refine ⟨⟨h.1, ⟨by rw [e0, stkTy_v]; decide, by rw [e0]; exact ht3⟩, ?_⟩, h.2.1, h.2.2⟩
-  simp only [typSize, e0, ht1, maxAlloc]; omega
+  refine ⟨⟨h.1, ⟨by rw [e0, stkTy_v]; decide, by rw [e0]; exact ht3⟩, ?_, ?_⟩, h.2.1, h.2.2⟩
+  · simp only [typSize, e0, ht1, maxAlloc]; omega
+  · rw [e0]
+    exact outside_calleeStack_of_data hd (by decide +kernel) (by rw [esp]; omega)
+      (by rw [esp]; exact Memory.accessible_mono _ hwacc (by omega) (by omega))
 
 /-- what `newobject(type:big.stack)` gives (`p` the object) -/
 structure NewN (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (g sp : Nat) (M m : Memory) (p : Nat) : Prop where

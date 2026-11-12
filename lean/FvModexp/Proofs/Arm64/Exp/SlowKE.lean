@@ -9,7 +9,7 @@ set_option autoImplicit false
 
 * `y_words`: `y`'s words are unchanged at every loop state (port of infra's `P2W4.y_words`);
 * `KE`: at the exit `EX` (`fnE + 0x528`, `return z.norm()`): `z` in `(X0, X5, X2)`;
-* `mkKT2`: `KT2` at a state whose memory is a slot store away from the context's;
+* `mkKT2w`: `KT2` at a state whose memory is a slot store away from the context's;
 * `itS`: the word test `IT` (`fnE + 0x364`, `TBNZ $63, R8`, `R8 = t - 1`): `t = 0` → `EX` (`KE`); `t = i + 1` →
   `216 := i`, `R9 := y[i]`, `R13 := 0`, `JMP` → `T2` (`KT2` at `j = 0`, word `i`, `v = y[i]`) (nat.go:766-769).
 -/
@@ -52,7 +52,7 @@ theorem y_words (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) {
 
 set_option maxRecDepth 20000 in
 /-- `KT2` at a state `T` whose memory is a slot-store frame of the context's (pure) -/
-theorem mkKT2 {S : State} {L1 : List (Nat × Nat)} {b1 j w : Nat} {v : BitVec 64}
+theorem mkKT2w {S : State} {L1 : List (Nat × Nat)} {b1 j w : Nat} {v : BitVec 64}
     {z zl zc' Zv zz zzl zzc r rl rc q ql qc : Nat}
     (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s)
     (hj : JC R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s r18 r29 ret S S.mem L1 b1)
@@ -128,7 +128,7 @@ theorem itS {impl : List Segment} (hP : EPre R b L K g sp st zp zc xp xl xc yp y
       simp only [decide_eq_true_eq]; rw [Nat.mod_eq_of_lt (by omega), Nat.div_eq_of_lt (by omega)]; decide
     clear KXE
     janus_run [hi8, hyw, ya1, hmacc] until [1789336]
-    refine KX2 _ i (BitVec.ofNat 64 (S.mem.readLE (yp + i * 8) 8)) rfl ?vv (mkKT2 (j := 0) (w := i) hP hj hB hzl (by omega) (by omega) _ (ws := [(sp + 216, sp + 224)]) ?ws ?F ?rg ?r216
+    refine KX2 _ i (BitVec.ofNat 64 (S.mem.readLE (yp + i * 8) 8)) rfl ?vv (mkKT2w (j := 0) (w := i) hP hj hB hzl (by omega) (by omega) _ (ws := [(sp + 216, sp + 224)]) ?ws ?F ?rg ?r216
       ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_)
     case ws => intro r hr; simp only [List.mem_cons, List.not_mem_nil, or_false] at hr; subst hr; omega
     case F => janus_frame
