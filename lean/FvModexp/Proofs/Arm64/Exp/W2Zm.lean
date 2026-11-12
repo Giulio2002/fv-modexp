@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.LibW
 import FvModexp.Proofs.Arm64.Conv
 import FvModexp.Proofs.Arm64.Exp.W2P01Defs
 import FvModexp.Proofs.Arm64.Exp.W2ZcDefs
@@ -75,8 +76,8 @@ set_option janus.callRegions true in
 set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 theorem zmake (impl : List Segment) (R : RtInv)
-    (hmk : MakesliceLiveContract (LibExp.program.link impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
-    (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret) (Q : Outcome → Prop)
+    (hmk : MakesliceLiveContract (LibW.program.link impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
+    (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret) (Q : Outcome → Prop)
     (b : Nat) (L : List (Nat × Nat)) (g sp n zp zc : Nat) (M : Memory) (r18 r29 : BitVec 64)
     (he : Env R L g sp M) (hn : 0 < n) (hn16 : n ≤ 2 ^ 16) (hzc : zc < 2 ^ 40)
     (hz : 2 * n ≤ zc → Buf R L g sp n M zp zc ∧ zp % 8 = 0)
@@ -93,8 +94,8 @@ theorem zmake (impl : List Segment) (R : RtInv)
       S'.regs 13 = BitVec.ofNat 64 n → S'.regs 14 = BitVec.ofNat 64 zc' →
       S'.regs 18 = r18 → S'.regs 28 = BitVec.ofNat 64 g → S'.regs 29 = r29 → S'.mem = M' →
       ZPost R L L' b b' g sp n M M' zp zc zp' zc' →
-      Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret) S Q := by
+      Reaches ((LibW.program.link impl).withExit ret) S' Q) :
+    Reaches ((LibW.program.link impl).withExit ret) S Q := by
   have he0 := he
   obtain ⟨hal, hsp1, hsp2, hwacc, hg1, hg2, hg3, hwrt, hgw, hgrt, hLs⟩ := he0
   by_cases hr : 2 * n ≤ zc

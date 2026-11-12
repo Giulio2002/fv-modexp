@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.LibW
 import FvModexp.Proofs.Arm64.Exp.W2Zm
 
 /-!
@@ -44,7 +45,7 @@ abbrev zl0 : Nat := 1803316
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- `var powers [4]nat` (6 `STP`s) and the call setup of `stk.nat(17n)` -/
-theorem zeroLoop (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret)
+theorem zeroLoop (impl : List Segment) (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret)
     (Q : Outcome → Prop) (R : RtInv) (L : List (Nat × Nat)) (g sp n st : Nat) (M : Memory) (r18 r29 : BitVec 64)
     (he : Env R L g sp M) (hn16 : n ≤ 2 ^ 16)
     (r672 : M.readLE (sp + 672) 8 = st)
@@ -56,8 +57,8 @@ theorem zeroLoop (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.progr
       S'.regs 1 = BitVec.ofNat 64 (5 * n) → S'.regs 30 = BitVec.ofNat 64 p01 →
       S'.regs 18 = r18 → S'.regs 28 = BitVec.ofNat 64 g → S'.regs 29 = r29 → S'.mem = M' →
       MemFrame M M' [(sp + 432, sp + 528)] → LiveFrame M M' L [] → M'.regions = M.regions →
-      Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret) S Q := by
+      Reaches ((LibW.program.link impl).withExit ret) S' Q) :
+    Reaches ((LibW.program.link impl).withExit ret) S Q := by
   have he0 := he
   obtain ⟨hal, hsp1, hsp2, hwacc, hg1, hg2, hg3, hwrt, hgw, hgrt, hLs⟩ := he0
   janus_run [r672, e17 hn16] until [snE]
@@ -120,7 +121,7 @@ set_option maxRecDepth 20000 in
 set_option janus.callRegions true in
 set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
-theorem oneSmall (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret)
+theorem oneSmall (impl : List Segment) (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret)
     (Q : Outcome → Prop) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (g sp n st : Nat) (M : Memory)
     (r18 r29 : BitVec 64)
     (he : Env R L g sp M) (hn : 0 < n) (hn4 : n ≤ 4)
@@ -134,8 +135,8 @@ theorem oneSmall (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.progr
       S'.regs 1 = BitVec.ofNat 64 (5 * n) → S'.regs 30 = BitVec.ofNat 64 p01 →
       S'.regs 18 = r18 → S'.regs 28 = BitVec.ofNat 64 g → S'.regs 29 = r29 → S'.mem = M' →
       OnePost R L L' b b' g sp n M M' onep →
-      Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret) S Q := by
+      Reaches ((LibW.program.link impl).withExit ret) S' Q) :
+    Reaches ((LibW.program.link impl).withExit ret) S Q := by
   have he0 := he
   obtain ⟨hal, hsp1, hsp2, hwacc, hg1, hg2, hg3, hwrt, hgw, hgrt, hLs⟩ := he0
   janus_run [r736, r672, fnBase'] until [zl0]
@@ -230,8 +231,8 @@ set_option janus.callRegions true in
 set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 theorem oneLarge (impl : List Segment) (R : RtInv)
-    (hmk : MakesliceLiveContract (LibExp.program.link impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
-    (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret)
+    (hmk : MakesliceLiveContract (LibW.program.link impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
+    (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret)
     (Q : Outcome → Prop) (b : Nat) (L : List (Nat × Nat)) (g sp n st : Nat) (M : Memory)
     (r18 r29 : BitVec 64)
     (he : Env R L g sp M) (hn4 : 4 < n) (hn16 : n ≤ 2 ^ 16)
@@ -247,8 +248,8 @@ theorem oneLarge (impl : List Segment) (R : RtInv)
       S'.regs 1 = BitVec.ofNat 64 (5 * n) → S'.regs 30 = BitVec.ofNat 64 p01 →
       S'.regs 18 = r18 → S'.regs 28 = BitVec.ofNat 64 g → S'.regs 29 = r29 → S'.mem = M' →
       OnePost R L L' b b' g sp n M M' onep →
-      Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret) S Q := by
+      Reaches ((LibW.program.link impl).withExit ret) S' Q) :
+    Reaches ((LibW.program.link impl).withExit ret) S Q := by
   have he0 := he
   obtain ⟨hal, hsp1, hsp2, hwacc, hg1, hg2, hg3, hwrt, hgw, hgrt, hLs⟩ := he0
   obtain ⟨hok1, hbs⟩ := hok

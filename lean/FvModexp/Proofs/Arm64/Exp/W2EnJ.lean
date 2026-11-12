@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Arm64.Exp.LibExp
+import FvModexp.Proofs.Arm64.Exp.LibW
 import FvModexp.Proofs.Arm64.Exp.W2EnDefs
 
 /-!
@@ -19,8 +19,8 @@ abbrev enS : Nat := 1802308
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem enJn (impl : List Segment) (R : RtInv)
-    (hwb : WbLiveContract (LibExp.program.link impl) wbE 4096 R 2)
-    (ret0 : Nat) (hret : RetAddr (LibExp.program.link impl) ret0) (Q : Outcome → Prop)
+    (hwb : WbLiveContract (LibW.program.link impl) wbE 4096 R 2)
+    (ret0 : Nat) (hret : RetAddr (LibW.program.link impl) ret0) (Q : Outcome → Prop)
     (b1 : Nat) (L1 : List (Nat × Nat)) (g sp st w1 len0 c1 n : Nat) (M : Memory)
     (hal : sp % 16 = 0) (hsp1 : 4304 ≤ sp) (hsp2 : sp + 752 ≤ 2 ^ 48)
     (hwacc : M.accessible (sp - 4096) (4096 + 8) true = true)
@@ -43,8 +43,8 @@ theorem enJn (impl : List Segment) (R : RtInv)
       MemFrame M M' (R.rt ++ [(st, st + 24), (sp - 4096, sp - 8)]) → LiveFrame M M' L1 [(st, st + 24)] →
       M'.regions = M.regions → R.inv b1 L1 g (view R.rt L1 M') →
       M'.readLE st 8 = w1 → M'.readLE (st + 8) 8 = len0 + StackNat.rnd (11 * n) → M'.readLE (st + 16) 8 = c1 →
-      Reaches ((LibExp.program.link impl).withExit ret0) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret0) S Q := by
+      Reaches ((LibW.program.link impl).withExit ret0) S' Q) :
+    Reaches ((LibW.program.link impl).withExit ret0) S Q := by
   have hrn : StackNat.rnd (11 * n) ≤ 11 * n + 3 := by simp only [StackNat.rnd]; omega
   have hacc16 : M.accessible (st + 8) 16 true = true := Memory.accessible_mono _ hsta (by omega) (by omega)
   have hacc8 : M.accessible st 8 true = true := Memory.accessible_mono _ hsta (by omega) (by omega)

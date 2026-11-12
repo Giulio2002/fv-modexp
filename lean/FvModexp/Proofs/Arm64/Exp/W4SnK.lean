@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.LibWC
 import FvModexp.Proofs.Arm64.Exp.W4Ctx
 
 /-!
@@ -15,7 +16,7 @@ set_option linter.janusRenameI false in
 /-- `stk.nat(k)` from the entry of `(*stack).nat` (return address `ra`) to `ra` -/
 theorem snCallK (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hSN : StackNat.Hyp impl R StackNat.names 4208 24)
-    (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret) (Q : Outcome → Prop)
+    (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret) (Q : Outcome → Prop)
     (b : Nat) (L : List (Nat × Nat)) (g sp k st ra : Nat) (M : Memory) (r18 r29 : BitVec 64)
     (hRA : RetAddr ((Extracted.program.onlySegments StackNat.names).link impl) ra) (hra : ra < 2 ^ 64)
     (hpre : SnPre R b L g sp st k M) (hst : st < 2 ^ 64) (hk : 0 < k)
@@ -29,13 +30,13 @@ theorem snCallK (impl : List Segment) (hap : ImplApart Extracted.program impl) (
       S'.regs 2 = BitVec.ofNat 64 k →
       S'.regs 18 = r18 → S'.regs 28 = BitVec.ofNat 64 g → S'.regs 29 = r29 → S'.mem = M' →
       SnPost R b L L' b' g sp st k M M' →
-      Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret) S Q := by
+      Reaches ((LibW.program.link impl).withExit ret) S' Q) :
+    Reaches ((LibW.program.link impl).withExit ret) S Q := by
   obtain ⟨hce, hserv, hsok, hstw, harr, hk16, hlen, hcost, hinv, hwba, hstwb, hstf⟩ := hpre
   have hce0 := hce
   obtain ⟨hal, hK, hA, hacc, hg1, hg2, hg3, hrt, hga, hgrt, hLs, hd, hro⟩ := hce0
-  have hns : ∀ x, StackNat.names.contains x = true → LibExp.names.contains x = true := MontW.sub_of_all (by decide)
-  have hS0 := CallW.hypSum hap hns (hSN b L (BitVec.ofNat 64 st) (BitVec.ofNat 64 k))
+  have hns : ∀ x, StackNat.names.contains x = true → LibW.names.contains x = true := MontW.sub_of_all (by decide)
+  have hS0 := LibWC.hypSum hap hns (hSN b L (BitVec.ofNat 64 st) (BitVec.ofNat 64 k))
   rw [show segAddr Extracted.program StackNat.fn = snE by decide] at hS0
   have tst := toNat_lt' hst
   have tk : (BitVec.ofNat 64 k).toNat = k := toNat_lt' (by omega)

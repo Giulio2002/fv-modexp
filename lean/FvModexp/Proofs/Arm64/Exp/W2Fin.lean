@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.LibWC
 import FvModexp.Proofs.Arm64.Exp.W2Defs
 import FvModexp.Proofs.Arm64.Exp.DeferW
 import FvModexp.Proofs.Common.ExpNorm
@@ -6,7 +7,7 @@ import FvModexp.Proofs.Common.ExpNorm
 # window-2 (arm64), the end: `return zz.norm()` (nat.go:1490) with the deferred `stk.restore`
 
 From the join point (entry + 0xbb4: `zz` in `X3..X5` after the final reduction) the inline `norm` loop, the named-result
-stores, the call of the open-coded defer closure (`DeferW.sum`) and the return.
+stores, the call of the open-coded defer closure (`LibWC.deferSum`) and the return.
 -/
 
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvModexp
@@ -21,9 +22,9 @@ end FvModexp.Arm64.DeferW
 namespace FvModexp.Arm64.W2Loop
 
 /-- the norm loop test `CMP $0, R4` -/
-abbrev njoin : Nat := segAddr LibExp.program fn + 0xb24
+abbrev njoin : Nat := segAddr LibW.program fn + 0xb24
 /-- after the norm loop: `CMP R5, R4` -/
-abbrev tailPc : Nat := segAddr LibExp.program fn + 0xb38
+abbrev tailPc : Nat := segAddr LibW.program fn + 0xb38
 
 /-- what the end guarantees (memory relative to the memory `M` at the join point) -/
 @[reducible] def FinPost (sp g st n0 p l c : Nat) (r18 r29 : BitVec 64) (M : Memory) (s' : State) : Prop :=
@@ -37,7 +38,7 @@ abbrev tailPc : Nat := segAddr LibExp.program fn + 0xb38
   sp % 16 = 0 ∧ 4288 ≤ sp ∧ sp + 752 ≤ 2 ^ 48 ∧ M.accessible (sp - 4288) (4288 + 752) true = true ∧
     g + 24 ≤ 2 ^ 48 ∧ M.accessible (g + 16) 8 false = true ∧ M.readLE (g + 16) 8 + 4288 < sp ∧
     Apart (g + 16) 8 (sp - 4288) (4288 + 752) ∧
-    M.readLE (sp + 624) 8 = sp + 552 ∧ M.readLE (sp + 552) 8 = segAddr LibExp.program DeferW.fnW2 ∧
+    M.readLE (sp + 624) 8 = sp + 552 ∧ M.readLE (sp + 552) 8 = segAddr LibW.program DeferW.fnW2 ∧
     M.readLE (sp + 560) 8 = st ∧ M.readLE (sp + 568) 8 = n0 ∧
     st + 24 ≤ 2 ^ 48 ∧ M.accessible st 24 true = true ∧ n0 ≤ M.readLE (st + 16) 8 ∧
     Apart st 24 (sp - 4288) (4288 + 752) ∧ Apart st 24 (g + 16) 8 ∧
@@ -47,16 +48,16 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 theorem tail (impl : List Segment) (hap : ImplApart Extracted.program impl) (ret : Nat)
-    (hret : RetAddr (LibExp.program.link impl) ret)
+    (hret : RetAddr (LibW.program.link impl) ret)
     (S : State) (sp g st n0 p l c : Nat) (r18 r29 : BitVec 64) (M : Memory)
     (hpc : S.pc = BitVec.ofNat 64 tailPc) (hsp : S.sp = BitVec.ofNat 64 sp)
     (h3 : S.regs 3 = BitVec.ofNat 64 p) (h4 : S.regs 4 = BitVec.ofNat 64 l) (h5 : S.regs 5 = BitVec.ofNat 64 c)
     (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (hmem : S.mem = M)
     (hlc : l ≤ c) (hc : c < 2 ^ 64) (he : FinEnv sp g st n0 r29 ret M) :
-    Reaches ((LibExp.program.link impl).withExit ret) S (IsReturn (FinPost sp g st n0 p l c r18 r29 M)) := by
+    Reaches ((LibW.program.link impl).withExit ret) S (IsReturn (FinPost sp g st n0 p l c r18 r29 M)) := by
   obtain ⟨hal, hsp1, hsp2, hacc, hg1, hg2, hg3, hgw, r624, r552, r560, r568, hst1, hst2, hn0, hstw, hstg, rfp, rlr⟩ := he
-  have hD := DeferW.sum impl hap DeferW.fnW2 (by simp [DeferW.fnW2])
-  have eD : segAddr LibExp.program DeferW.fnW2 = 1805072 := by decide
+  have hD := LibWC.deferSum impl hap DeferW.fnW2 (by simp [DeferW.fnW2])
+  have eD : segAddr LibW.program DeferW.fnW2 = 1805072 := by decide
   rw [eD] at hD r552
   janus_run [r624, r552, r560, r568, rfp, rlr] calls [hD]
   refine ⟨?sp, ?_, ?_, ?_, ?r0, ?_, ?_, ?st, ?fr⟩
@@ -71,7 +72,7 @@ set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 /-- one test of the inline `zz.norm()` loop (nat.go:68-74) from `njoin` with `R4 = l`: either the loop exits to `tailPc`
 (`l = 0` or limb `l-1` nonzero) or it goes back to `njoin` with `R4 = l - 1` (limb `l-1` zero). Continuation form. -/
-theorem finIter (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret) (Q : Outcome → Prop)
+theorem finIter (impl : List Segment) (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret) (Q : Outcome → Prop)
     (S : State) (sp g p l c : Nat) (r18 : BitVec 64) (M : Memory)
     (hpc : S.pc = BitVec.ofNat 64 njoin) (hsp : S.sp = BitVec.ofNat 64 sp)
     (h3 : S.regs 3 = BitVec.ofNat 64 p) (h4 : S.regs 4 = BitVec.ofNat 64 l) (h5 : S.regs 5 = BitVec.ofNat 64 c)
@@ -81,13 +82,13 @@ theorem finIter (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.progra
       S'.regs 3 = BitVec.ofNat 64 p → S'.regs 4 = BitVec.ofNat 64 l → S'.regs 5 = BitVec.ofNat 64 c →
       S'.regs 18 = r18 → S'.regs 28 = BitVec.ofNat 64 g → S'.mem = M →
       (l = 0 ∨ M.readLE (p + 8 * (l - 1)) 8 ≠ 0) →
-      Reaches ((LibExp.program.link impl).withExit ret) S' Q)
+      Reaches ((LibW.program.link impl).withExit ret) S' Q)
     (KL : ∀ S' : State, 0 < l → M.readLE (p + 8 * (l - 1)) 8 = 0 →
       S'.pc = BitVec.ofNat 64 njoin → S'.sp = BitVec.ofNat 64 sp →
       S'.regs 3 = BitVec.ofNat 64 p → S'.regs 4 = BitVec.ofNat 64 (l - 1) → S'.regs 5 = BitVec.ofNat 64 c →
       S'.regs 18 = r18 → S'.regs 28 = BitVec.ofNat 64 g → S'.mem = M →
-      Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret) S Q := by
+      Reaches ((LibW.program.link impl).withExit ret) S' Q) :
+    Reaches ((LibW.program.link impl).withExit ret) S Q := by
   rcases hpa with hl0 | ⟨hp48, hacc⟩
   · subst hl0
     janus_run until [njoin, tailPc]
@@ -106,14 +107,14 @@ theorem finIter (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.progra
 
 /-- the inline `zz.norm()` loop (nat.go:68-74) from the join point, then `tail` -/
 theorem fin (impl : List Segment) (hap : ImplApart Extracted.program impl) (ret : Nat)
-    (hret : RetAddr (LibExp.program.link impl) ret)
+    (hret : RetAddr (LibW.program.link impl) ret)
     (sp g st n0 p c : Nat) (r18 r29 : BitVec 64) (M : Memory) (hc : c < 2 ^ 64)
     (he : FinEnv sp g st n0 r29 ret M) :
     ∀ (l : Nat) (S : State), S.pc = BitVec.ofNat 64 njoin → S.sp = BitVec.ofNat 64 sp →
       S.regs 3 = BitVec.ofNat 64 p → S.regs 4 = BitVec.ofNat 64 l → S.regs 5 = BitVec.ofNat 64 c →
       S.regs 18 = r18 → S.regs 28 = BitVec.ofNat 64 g → S.mem = M → l ≤ c →
       (l = 0 ∨ (p + 8 * l ≤ 2 ^ 48 ∧ M.accessible p (8 * l) false = true)) →
-      Reaches ((LibExp.program.link impl).withExit ret) S
+      Reaches ((LibW.program.link impl).withExit ret) S
         (IsReturn (FinPost sp g st n0 p (Expmc.normL M p l) c r18 r29 M)) := by
   intro l
   induction l with

@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.LibWC
 import FvModexp.Proofs.Arm64.Exp.CallW
 import FvModexp.Proofs.Arm64.Exp.CmpW
 import FvModexp.Proofs.Arm64.Exp.W2ExitB
@@ -54,7 +55,7 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 /-- the second `zz.cmp(m)` with `len zz = 0 < len m`: result `-1`, reload `zz`, jump to the join -/
-theorem exCmp2 (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret) (Q : Outcome → Prop)
+theorem exCmp2 (impl : List Segment) (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret) (Q : Outcome → Prop)
     (S : State) (sp g p c mp n : Nat) (r18 r29 : BitVec 64) (M : Memory)
     (hpc : S.pc = BitVec.ofNat 64 cmpEntry) (h30 : S.regs 30 = BitVec.ofNat 64 cmp2Ret)
     (hsp : S.sp = BitVec.ofNat 64 sp) (h0 : S.regs 0 = BitVec.ofNat 64 p) (h1 : S.regs 1 = BitVec.ofNat 64 0)
@@ -69,9 +70,9 @@ theorem exCmp2 (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program
       S'.regs 3 = BitVec.ofNat 64 p → S'.regs 4 = BitVec.ofNat 64 0 → S'.regs 5 = BitVec.ofNat 64 c →
       S'.regs 18 = r18 → S'.regs 28 = BitVec.ofNat 64 g → S'.regs 29 = r29 → S'.mem = M' →
       MemFrame M M' (cmpF sp) → M'.regions = M.regions →
-      Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret) S Q := by
-  refine CmpW.call ((CmpW.sum impl).withExit hret) hpc
+      Reaches ((LibW.program.link impl).withExit ret) S' Q) :
+    Reaches ((LibW.program.link impl).withExit ret) S Q := by
+  refine CmpW.call ((LibWC.cmpSum impl).withExit hret) hpc
     (CmpW.pre_of (x := p) (xl := 0) hsp h28 h30 h0 h1 h3 h4 (by decide) (by decide) hal (by omega) (by omega)
       (by rw [hmem]; exact M.accessible_sub hacc (Or.inr rfl) (Nat.le_refl _) (by omega)) hg1
       (by rw [hmem]; exact hga) (by rw [hmem]; omega) (Or.inl rfl) (Or.inr ⟨hm48, by rw [hmem]; exact hma, hmw⟩)) ?_
@@ -109,7 +110,7 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 /-- after `zz = zz.sub(zz, m)` (result length 0): spills, the second `zz.cmp(m)`, the join -/
-theorem exSubT (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret) (Q : Outcome → Prop)
+theorem exSubT (impl : List Segment) (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret) (Q : Outcome → Prop)
     (S : State) (sp g p c mp n mc : Nat) (r18 r29 : BitVec 64) (M : Memory)
     (hpc : S.pc = BitVec.ofNat 64 subRet) (hsp : S.sp = BitVec.ofNat 64 sp)
     (h0 : S.regs 0 = BitVec.ofNat 64 p) (h1 : S.regs 1 = BitVec.ofNat 64 0) (h2 : S.regs 2 = BitVec.ofNat 64 c)
@@ -125,8 +126,8 @@ theorem exSubT (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program
       S'.regs 3 = BitVec.ofNat 64 p → S'.regs 4 = BitVec.ofNat 64 0 → S'.regs 5 = BitVec.ofNat 64 c →
       S'.regs 18 = r18 → S'.regs 28 = BitVec.ofNat 64 g → S'.regs 29 = r29 → S'.mem = M' →
       MemFrame M M' (tw sp) → M'.regions = M.regions →
-      Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret) S Q := by
+      Reaches ((LibW.program.link impl).withExit ret) S' Q) :
+    Reaches ((LibW.program.link impl).withExit ret) S Q := by
   have fnB := fnBase
   janus_run [r728, r736, r744, fnB] until [cmpEntry]
   have hW : MemFrame M (((M.writeLE (sp + 400) 8 p).writeLE (sp + 160) 8 0).writeLE (sp + 168) 8 c)
@@ -157,7 +158,7 @@ theorem exSub (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
     (hserv : RunIface.Serves R)
-    (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret) (Q : Outcome → Prop)
+    (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret) (Q : Outcome → Prop)
     (b : Nat) (L : List (Nat × Nat)) (g sp n mp mc zzp zzc : Nat) (r18 r29 : BitVec 64)
     (S : State) (M : Memory)
     (hpc : S.pc = BitVec.ofNat 64 subEntry) (hsp : S.sp = BitVec.ofNat 64 sp)
@@ -180,12 +181,12 @@ theorem exSub (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
       S'.regs 3 = BitVec.ofNat 64 p → S'.regs 4 = BitVec.ofNat 64 l → S'.regs 5 = BitVec.ofNat 64 c →
       S'.regs 18 = r18 → S'.regs 28 = BitVec.ofNat 64 g → S'.regs 29 = r29 → S'.mem = M' →
       JoinPost R b L g sp n zzp zzc 0 M p l c M' →
-      Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret) S Q := by
+      Reaches ((LibW.program.link impl).withExit ret) S' Q) :
+    Reaches ((LibW.program.link impl).withExit ret) S Q := by
   obtain ⟨hal, hK, hA, hacc, hg1, hg2, hg3, hrt, hga, hgrt, hLs, hd, hro⟩ := hce
   have hce : CallW.CEnv R L g sp 4304 752 M := ⟨hal, hK, hA, hacc, hg1, hg2, hg3, hrt, hga, hgrt, hLs, hd, hro⟩
-  have hns : ∀ x, NatSub.names.contains x = true → LibExp.names.contains x = true := MontW.sub_of_all (by decide)
-  have hS0 := CallW.hypSum hap hns (NatSub.ens impl hap R hmk hmv b L (BitVec.ofNat 64 zzp) (BitVec.ofNat 64 n)
+  have hns : ∀ x, NatSub.names.contains x = true → LibW.names.contains x = true := MontW.sub_of_all (by decide)
+  have hS0 := LibWC.hypSum hap hns (NatSub.ens impl hap R hmk hmv b L (BitVec.ofNat 64 zzp) (BitVec.ofNat 64 n)
     (BitVec.ofNat 64 zzc) (BitVec.ofNat 64 zzp) (BitVec.ofNat 64 n) (BitVec.ofNat 64 zzc) (BitVec.ofNat 64 mp)
     (BitVec.ofNat 64 n) (BitVec.ofNat 64 mc))
   rw [show segAddr Extracted.program NatSub.fn = subEntry by decide] at hS0

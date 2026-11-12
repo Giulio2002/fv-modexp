@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.LibW
 import FvModexp.Proofs.Arm64.Exp.W4Lsh
 
 /-!
@@ -32,7 +33,7 @@ theorem lsl7 {n : Nat} (hn : n ≤ 128) :
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem toLsh (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret)
+theorem toLsh (impl : List Segment) (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret)
     (Q : Outcome → Prop) (sp rrp n : Nat) (M : Memory)
     (hal : sp % 16 = 0) (hsp1 : 4288 ≤ sp) (hsp2 : sp + 1040 ≤ 2 ^ 48)
     (hacc : M.accessible (sp - 4288) (4288 + 1040) true = true)
@@ -48,8 +49,8 @@ theorem toLsh (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program.
       S'.regs 18 = S.regs 18 → S'.regs 28 = S.regs 28 → S'.regs 29 = S.regs 29 → S'.mem = M' →
       MemFrame M M' [(sp + 176, sp + 184), (sp + 408, sp + 416), (rrp, rrp + 8)] → M'.regions = M.regions →
       M'.readLE (sp + 176) 8 = 2 * n → M'.readLE (sp + 408) 8 = rrp → M'.readLE rrp 8 = 1 →
-      Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret) S Q := by
+      Reaches ((LibW.program.link impl).withExit ret) S' Q) :
+    Reaches ((LibW.program.link impl).withExit ret) S Q := by
   generalize e18 : S.regs 18 = x18 at KL
   generalize e28 : S.regs 28 = x28 at KL
   generalize e29 : S.regs 29 = x29 at KL

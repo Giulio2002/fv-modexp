@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.LibW
 import FvModexp.Proofs.Arm64.Exp.W4Exit
 import FvModexp.Proofs.Arm64.Exp.W4Fin
 
@@ -27,7 +28,7 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 /-- `cmp < 0`: reload `zz` and jump to the join -/
-theorem exLt (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret) (Q : Outcome → Prop) (S : State) (sp g zzp n zzc : Nat)
+theorem exLt (impl : List Segment) (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret) (Q : Outcome → Prop) (S : State) (sp g zzp n zzc : Nat)
     (r18 r29 : BitVec 64) (M : Memory)
     (hpc : S.pc = BitVec.ofNat 64 cmp1Ret) (hsp : S.sp = BitVec.ofNat 64 sp)
     (h0 : S.regs 0 = 18446744073709551615#64) (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g)
@@ -37,8 +38,8 @@ theorem exLt (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program.l
     (K : ∀ S' : State, S'.pc = BitVec.ofNat 64 njoinL → S'.sp = BitVec.ofNat 64 sp →
       S'.regs 3 = BitVec.ofNat 64 zzp → S'.regs 4 = BitVec.ofNat 64 n → S'.regs 5 = BitVec.ofNat 64 zzc →
       S'.regs 18 = r18 → S'.regs 28 = BitVec.ofNat 64 g → S'.regs 29 = r29 → S'.mem = M →
-      Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret) S Q := by
+      Reaches ((LibW.program.link impl).withExit ret) S' Q) :
+    Reaches ((LibW.program.link impl).withExit ret) S Q := by
   have fnB := fnBase
   janus_run [r400, r160, r168, fnB] until [njoinL]
   refine K _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl
@@ -48,7 +49,7 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 /-- `cmp ≥ 0`: load the arguments of `zz.sub(zz, m)` and call it -/
-theorem exGe (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret) (Q : Outcome → Prop) (S : State) (sp g zzp n zzc mp mc v : Nat)
+theorem exGe (impl : List Segment) (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret) (Q : Outcome → Prop) (S : State) (sp g zzp n zzc mp mc v : Nat)
     (r18 r29 : BitVec 64) (M : Memory)
     (hpc : S.pc = BitVec.ofNat 64 cmp1Ret) (hsp : S.sp = BitVec.ofNat 64 sp)
     (h0 : S.regs 0 = BitVec.ofNat 64 v) (hv : v ≤ 1) (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g)
@@ -62,8 +63,8 @@ theorem exGe (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program.l
       S'.regs 3 = BitVec.ofNat 64 zzp → S'.regs 4 = BitVec.ofNat 64 n → S'.regs 5 = BitVec.ofNat 64 zzc →
       S'.regs 6 = BitVec.ofNat 64 mp → S'.regs 7 = BitVec.ofNat 64 n → S'.regs 8 = BitVec.ofNat 64 mc →
       S'.regs 18 = r18 → S'.regs 28 = BitVec.ofNat 64 g → S'.regs 29 = r29 → S'.mem = M →
-      Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret) S Q := by
+      Reaches ((LibW.program.link impl).withExit ret) S' Q) :
+    Reaches ((LibW.program.link impl).withExit ret) S Q := by
   have fnB := fnBase
   have h63 : (BitVec.ofNat 64 v).getLsbD 63 = false := by
     simp only [BitVec.getLsbD_ofNat]; simp [Nat.testBit, Nat.shiftRight_eq_div_pow]; omega

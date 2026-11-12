@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.LibW
 import FvModexp.Proofs.Arm64.Exp.W4XjR
 
 /-!
@@ -28,18 +29,18 @@ theorem toInt_ofNat_lt {v : Nat} (h : v < 2 ^ 63) : (BitVec.ofNat 64 v).toInt = 
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem xnSplit (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret)
+theorem xnSplit (impl : List Segment) (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret)
     (Q : Outcome → Prop) (st xl n : Nat) (hst : st < 2 ^ 64) (hxl : xl < 2 ^ 40) (hn : n ≤ 128)
     (S : State) (hpc : S.pc = BitVec.ofNat 64 xnE) (h3 : S.regs 3 = BitVec.ofNat 64 st)
     (h5 : S.regs 5 = BitVec.ofNat 64 xl) (h11 : S.regs 11 = BitVec.ofNat 64 n)
     (KJ : xl ≤ n → ∀ S' : State, S'.pc = BitVec.ofNat 64 j238 → S'.sp = S.sp → S'.mem = S.mem →
-      (∀ i, S'.regs i = S.regs i) → Reaches ((LibExp.program.link impl).withExit ret) S' Q)
+      (∀ i, S'.regs i = S.regs i) → Reaches ((LibW.program.link impl).withExit ret) S' Q)
     (KA : n < xl → ∀ S' : State, S'.pc = BitVec.ofNat 64 snE → S'.sp = S.sp → S'.mem = S.mem →
       S'.regs 0 = BitVec.ofNat 64 st → S'.regs 1 = BitVec.ofNat 64 (xl - n + 1) →
       S'.regs 30 = BitVec.ofNat 64 aSn1Ret →
       S'.regs 18 = S.regs 18 → S'.regs 28 = S.regs 28 → S'.regs 29 = S.regs 29 →
-      Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret) S Q := by
+      Reaches ((LibW.program.link impl).withExit ret) S' Q) :
+    Reaches ((LibW.program.link impl).withExit ret) S Q := by
   have tx := toInt_ofNat_lt (v := xl) (by omega)
   have tn := toInt_ofNat_lt (v := n) (by omega)
   by_cases hc : xl ≤ n
@@ -60,7 +61,7 @@ theorem xnSplit (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.progra
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem xnA1 (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret)
+theorem xnA1 (impl : List Segment) (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret)
     (Q : Outcome → Prop) (sp st n qp ql qc : Nat) (M : Memory)
     (hal : sp % 16 = 0) (hsp1 : 4288 ≤ sp) (hsp2 : sp + 1040 ≤ 2 ^ 48)
     (hacc : M.accessible (sp - 4288) (4288 + 1040) true = true)
@@ -74,8 +75,8 @@ theorem xnA1 (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program.l
       S'.regs 18 = S.regs 18 → S'.regs 28 = S.regs 28 → S'.regs 29 = S.regs 29 → S'.mem = M' →
       MemFrame M M' [(sp + 320, sp + 336), (sp + 904, sp + 912)] → M'.regions = M.regions →
       M'.readLE (sp + 904) 8 = qp → M'.readLE (sp + 328) 8 = ql → M'.readLE (sp + 320) 8 = qc →
-      Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret) S Q := by
+      Reaches ((LibW.program.link impl).withExit ret) S' Q) :
+    Reaches ((LibW.program.link impl).withExit ret) S Q := by
   generalize e18 : S.regs 18 = x18 at KS
   generalize e28 : S.regs 28 = x28 at KS
   generalize e29 : S.regs 29 = x29 at KS
@@ -93,7 +94,7 @@ theorem xnA1 (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program.l
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem xnA2 (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret)
+theorem xnA2 (impl : List Segment) (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret)
     (Q : Outcome → Prop) (sp st qp ql qc xp xl xc mp n mc : Nat) (M : Memory)
     (hal : sp % 16 = 0) (hsp1 : 4288 ≤ sp) (hsp2 : sp + 1040 ≤ 2 ^ 48)
     (hacc : M.accessible (sp - 4288) (4288 + 1040) true = true)
@@ -109,8 +110,8 @@ theorem xnA2 (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program.l
       S'.regs 9 = BitVec.ofNat 64 xc → S'.regs 10 = BitVec.ofNat 64 mp → S'.regs 11 = BitVec.ofNat 64 n →
       S'.regs 12 = BitVec.ofNat 64 mc → S'.regs 30 = BitVec.ofNat 64 aDivRet →
       S'.regs 18 = S.regs 18 → S'.regs 28 = S.regs 28 → S'.regs 29 = S.regs 29 → S'.mem = M →
-      Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret) S Q := by
+      Reaches ((LibW.program.link impl).withExit ret) S' Q) :
+    Reaches ((LibW.program.link impl).withExit ret) S Q := by
   generalize e0 : S.regs 0 = y0 at KD
   generalize e1 : S.regs 1 = y1 at KD
   generalize e2 : S.regs 2 = y2 at KD
@@ -123,7 +124,7 @@ theorem xnA2 (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program.l
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem xnA3 (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret)
+theorem xnA3 (impl : List Segment) (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret)
     (Q : Outcome → Prop) (sp st yl mp n : Nat) (M : Memory)
     (hal : sp % 16 = 0) (hsp1 : 4288 ≤ sp) (hsp2 : sp + 1040 ≤ 2 ^ 48)
     (hacc : M.accessible (sp - 4288) (4288 + 1040) true = true)
@@ -134,8 +135,8 @@ theorem xnA3 (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program.l
       S'.regs 3 = BitVec.ofNat 64 st → S'.regs 4 = S.regs 3 → S'.regs 5 = S.regs 4 → S'.regs 6 = S.regs 5 →
       S'.regs 8 = BitVec.ofNat 64 yl → S'.regs 10 = BitVec.ofNat 64 mp → S'.regs 11 = BitVec.ofNat 64 n →
       S'.regs 18 = S.regs 18 → S'.regs 28 = S.regs 28 → S'.regs 29 = S.regs 29 → S'.mem = M →
-      Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret) S Q := by
+      Reaches ((LibW.program.link impl).withExit ret) S' Q) :
+    Reaches ((LibW.program.link impl).withExit ret) S Q := by
   generalize e3 : S.regs 3 = y3 at KJ
   generalize e4 : S.regs 4 = y4 at KJ
   generalize e5 : S.regs 5 = y5 at KJ
@@ -148,7 +149,7 @@ theorem xnA3 (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program.l
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem xnJ (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret)
+theorem xnJ (impl : List Segment) (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret)
     (Q : Outcome → Prop) (sp st xp xl n : Nat) (M : Memory)
     (hal : sp % 16 = 0) (hsp1 : 4288 ≤ sp) (hsp2 : sp + 1040 ≤ 2 ^ 48)
     (hacc : M.accessible (sp - 4288) (4288 + 1040) true = true)
@@ -157,14 +158,14 @@ theorem xnJ (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program.li
     (h3 : S.regs 3 = BitVec.ofNat 64 st) (h4 : S.regs 4 = BitVec.ofNat 64 xp) (h5 : S.regs 5 = BitVec.ofNat 64 xl)
     (h11 : S.regs 11 = BitVec.ofNat 64 n) (hmem : S.mem = M)
     (KC : n ≤ xl → ∀ S' : State, S'.pc = BitVec.ofNat 64 xJ → S'.sp = S.sp → S'.mem = S.mem →
-      (∀ i, S'.regs i = S.regs i) → Reaches ((LibExp.program.link impl).withExit ret) S' Q)
+      (∀ i, S'.regs i = S.regs i) → Reaches ((LibW.program.link impl).withExit ret) S' Q)
     (KB : xl < n → ∀ (S' : State) (M' : Memory), S'.pc = BitVec.ofNat 64 snE → S'.sp = BitVec.ofNat 64 sp →
       S'.regs 0 = BitVec.ofNat 64 st → S'.regs 1 = BitVec.ofNat 64 n → S'.regs 30 = BitVec.ofNat 64 bSnRet →
       S'.regs 18 = S.regs 18 → S'.regs 28 = S.regs 28 → S'.regs 29 = S.regs 29 → S'.mem = M' →
       MemFrame M M' [(sp + 312, sp + 320), (sp + 896, sp + 904)] → M'.regions = M.regions →
       M'.readLE (sp + 312) 8 = xl → M'.readLE (sp + 896) 8 = xp →
-      Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret) S Q := by
+      Reaches ((LibW.program.link impl).withExit ret) S' Q) :
+    Reaches ((LibW.program.link impl).withExit ret) S Q := by
   have tx := toInt_ofNat_lt (v := xl) (by omega)
   have tn := toInt_ofNat_lt (v := n) (by omega)
   by_cases hc : n ≤ xl

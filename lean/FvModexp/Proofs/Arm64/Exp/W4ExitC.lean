@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.LibWC
 import FvModexp.Proofs.Arm64.Exp.W4ExitS
 import FvModexp.Proofs.Common.ExpFinal
 
@@ -68,7 +69,7 @@ theorem exB (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
     (hserv : RunIface.Serves R)
-    (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret) (Q : Outcome → Prop)
+    (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret) (Q : Outcome → Prop)
     (b : Nat) (L : List (Nat × Nat)) (g sp n mp mc k0 yp ylen Y : Nat) (tbl pp pcap : Nat → Nat) {ext : List (Nat × Nat)} (M0 : Memory)
     (r18 r29 : BitVec 64)
     (hst : Static R L g sp n mp mc k0 yp ylen Y tbl pp pcap M0) (hce0 : CallW.CEnv R L g sp 4304 1040 M0)
@@ -86,8 +87,8 @@ theorem exB (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
       S'.regs 18 = r18 → S'.regs 28 = BitVec.ofNat 64 g → S'.regs 29 = r29 → S'.mem = M' →
       JoinPost R b L g sp n zzp zzc
         (if M0.readLE mp (8 * n) ≤ M.readLE zzp (8 * n) then 0 else M.readLE zzp (8 * n)) M p l c M' →
-      Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret) S Q := by
+      Reaches ((LibW.program.link impl).withExit ret) S' Q) :
+    Reaches ((LibW.program.link impl).withExit ret) S Q := by
   obtain ⟨he, hn, hn16, hmc, hmc', hk0, hyl, hyl', hm, hy, hY, hpw, r1016, r1024, r1032, r224, r1000, r992, hok⟩ := hst
   obtain ⟨hF, hLF, hinv, hrg0⟩ := hM
   obtain ⟨hal, hsp1, hsp2, hwacc, hg1, hg2, hg3, hwrt, hgw, hgrt, hLs⟩ := he
@@ -132,7 +133,7 @@ theorem exB (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     rw [hmem]; exact M.accessible_sub haccM (Or.inr rfl) (by omega) (by omega)
   have u1 := hzzw; have u2 := hmw; have u3 := hstzz; have u4 := hmw4; have u5 := hzzg; have u6 := hzzm
   unfold Apart at u1 u2 u3 u4 u5 u6
-  refine CmpW.call ((CmpW.sum impl).withExit hret) hpc
+  refine CmpW.call ((LibWC.cmpSum impl).withExit hret) hpc
     (CmpW.pre_of hsp h28 h30 h0 h1 h3 h4 (by decide) (by decide) hal (by omega) (by omega) hSacc hg1
       (by rw [hmem]; exact hg2M) (by rw [hmem]; omega)
       (Or.inr ⟨by omega, by rw [hmem, hF.accessible]; exact M0.accessible_sub hzza (Or.inr rfl) (Nat.le_refl _) (by omega),

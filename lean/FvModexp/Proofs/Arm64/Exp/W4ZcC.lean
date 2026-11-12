@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.LibW
 import FvModexp.Proofs.Arm64.Exp.W4Defs
 import FvModexp.Proofs.Arm64.Exp.W4ZcDefs
 
@@ -20,7 +21,7 @@ abbrev zr : Nat := 1800680
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
-theorem zcC (impl : List Segment) (R : RtInv) (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret)
+theorem zcC (impl : List Segment) (R : RtInv) (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret)
     (Q : Outcome → Prop)
     (b : Nat) (L : List (Nat × Nat)) (g sp n mp mc k0 yp ylen zp zc zzp zzc yi k V : Nat) (M m1 : Memory)
     (r18 r29 : BitVec 64)
@@ -47,8 +48,8 @@ theorem zcC (impl : List Segment) (R : RtInv) (ret : Nat) (hret : RetAddr (LibEx
       MemFrame M M' (R.rt ++ cw sp ++ [(zp, zp + 8 * n)]) → LiveFrame M M' L [(zp, zp + 8 * n)] →
       R.inv b L g (view R.rt L M') → M'.regions = M.regions →
       M'.readLE zp (8 * n) = V → M'.readLE (sp + 240) 8 = ylen - 1 →
-      Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret) S Q := by
+      Reaches ((LibW.program.link impl).withExit ret) S' Q) :
+    Reaches ((LibW.program.link impl).withExit ret) S Q := by
   obtain ⟨hal, hsp1, hsp2, hwacc, hg1, hg2, hg3, hwrt, hgw, hgrt, hLs⟩ := he
   have e64 : 64#64 - BitVec.ofNat 64 (k * 4) = BitVec.ofNat 64 (64 - k * 4) := by
     apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega

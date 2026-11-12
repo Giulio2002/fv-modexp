@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.LibW
 import FvModexp.Proofs.Arm64.Exp.W2EnPre
 import FvModexp.Proofs.Arm64.Exp.W2CtxB
 
@@ -133,7 +134,7 @@ theorem ctxB_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc x
     refine ⟨⟨h2, hzc, by rw [hacc']; exact b2, b3, hx.held b1.1, by have := b1.2.1; unfold Apart at this ⊢; omega,
       by unfold Apart at b5 ⊢; omega⟩, b4, obj b1, b6, b7⟩
   case fin =>
-    have e840 : segAddr LibExp.program DeferW.fnW2 = 1805072 := by decide
+    have e840 : segAddr LibW.program DeferW.fnW2 = 1805072 := by decide
     refine ⟨hal, by omega, hsp2, by rw [hacc']; exact Memory.accessible_mono _ hacc (by omega) (by omega), hg1,
       by rw [hacc']; exact hg2, by rw [hgr]; omega, by unfold Apart; omega, q3, by rw [e840]; exact q4, q5, q6, k4,
       by rw [hacc']; exact k3, by simp only [stLen, stCap] at hcap hlen ⊢; omega, by unfold Apart; omega,
