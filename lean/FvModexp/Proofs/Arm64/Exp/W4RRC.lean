@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Arm64.Exp.W4Ctx
+import FvModexp.Proofs.Arm64.Exp.W4RRRet
 
 /-!
 # window-4 (arm64): `rrRet` stated over the context `Ctx` (divRet → RET)

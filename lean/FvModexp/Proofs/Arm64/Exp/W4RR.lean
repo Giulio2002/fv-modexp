@@ -1,5 +1,4 @@
-import FvModexp.Proofs.Arm64.Exp.W4OneRet2
-import FvModexp.Proofs.Arm64.Exp.W4ZcDefs
+import FvModexp.Proofs.Arm64.Exp.W4One
 
 /-!
 # window-4 prologue (arm64): `RR` gets exactly `numWords` words (nat.go:1398-1403), from the return of

@@ -1,4 +1,6 @@
-import FvModexp.Proofs.Arm64.Exp.W4LshR
+import FvModexp.Proofs.Arm64.Exp.W4DivK
+import FvModexp.Proofs.Arm64.Exp.W4Lsh
+import FvModexp.Proofs.Arm64.Exp.W4Sn2K
 
 /-!
 # window-4 prologue (arm64): transfer lemmas around `zz := nil.lsh(RR, 128 n)`

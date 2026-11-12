@@ -1,5 +1,4 @@
 import FvModexp.Proofs.Arm64.Exp.W4P01Defs
-import FvModexp.Proofs.Common.MaskWord
 
 /-!
 # window-4 prologue (arm64): `powers[0]`, `powers[1]` (nat.go:1411-1414), `p01 → powHead`

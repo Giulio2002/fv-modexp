@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Arm64.Exp.W4Sn2
+import FvModexp.Proofs.Arm64.Exp.W4Sn2R
 import FvModexp.Proofs.Arm64.Nat.LshDefs
 
 /-!

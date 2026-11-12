@@ -1,4 +1,3 @@
-import FvModexp.Proofs.Arm64.Exp.W4Sn1
 import FvModexp.Proofs.Arm64.Exp.W4Anc
 
 /-!

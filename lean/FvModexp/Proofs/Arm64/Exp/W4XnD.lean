@@ -1,4 +1,5 @@
-import FvModexp.Proofs.Arm64.Exp.W4XnK
+import FvModexp.Proofs.Arm64.Exp.W4CtxB
+import FvModexp.Proofs.Arm64.Exp.W4Div
 
 /-!
 # window-4 prologue (arm64): a general `nat.div` call `q, r = z.div(stk, z2, u, m)` (`divCallG`)

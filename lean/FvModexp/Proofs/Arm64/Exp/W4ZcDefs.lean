@@ -1,5 +1,7 @@
-import FvModexp.Proofs.Arm64.Exp.W4PowAll
+import FvModexp.Proofs.Arm64.Exp.W4Defs
 import FvModexp.Proofs.Common.BitLenA64
+import FvModexp.Proofs.Common.ExpBase
+import FvModexp.Proofs.Common.ExpmcFrame
 import FvModexp.Proofs.Common.GenReg
 
 /-!

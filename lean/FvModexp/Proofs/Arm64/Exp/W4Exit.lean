@@ -1,5 +1,5 @@
-import FvModexp.Proofs.Arm64.Exp.W4Fin
-import FvModexp.Proofs.Arm64.Exp.CallW
+import FvModexp.Proofs.Arm64.Exp.ExpHyp
+import FvModexp.Proofs.Arm64.Exp.W4Defs
 
 /-!
 # window-4 (arm64), loop exit → join (nat.go:1478-1488)

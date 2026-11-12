@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Arm64.Exp.W4Xj
+import FvModexp.Proofs.Arm64.Exp.W4XjR
 
 /-!
 # window-4 prologue (arm64): run pieces of the `x` normalisation (nat.go:1377-1386, fn+0x1a4 .. `xJ` = fn+0x2e8)

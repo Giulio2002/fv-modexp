@@ -1,5 +1,6 @@
-import FvModexp.Proofs.Arm64.Exp.W4ExitB
 import FvModexp.Proofs.Arm64.Exp.CallW
+import FvModexp.Proofs.Arm64.Exp.CmpW
+import FvModexp.Proofs.Arm64.Exp.W4ExitB
 import FvModexp.Proofs.Arm64.Nat.NatSub
 
 /-!

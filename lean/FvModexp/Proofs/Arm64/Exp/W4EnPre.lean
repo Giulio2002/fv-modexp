@@ -1,5 +1,4 @@
 import FvModexp.Proofs.Arm64.Exp.W4EnG
-import FvModexp.Proofs.Arm64.Exp.W4Fin
 
 /-!
 # window-4 entry (arm64): the entry facts `EPre` of `nat.expNNOddMontgomeryWindowSize4`

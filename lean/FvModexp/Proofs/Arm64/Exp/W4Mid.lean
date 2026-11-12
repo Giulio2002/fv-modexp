@@ -1,6 +1,7 @@
-import FvModexp.Proofs.Arm64.Exp.W4Zc
 import FvModexp.Proofs.Arm64.Exp.W4Loop
+import FvModexp.Proofs.Arm64.Exp.W4P01Defs
 import FvModexp.Proofs.Arm64.Exp.W4Tail
+import FvModexp.Proofs.Arm64.Exp.W4Zc
 
 /-!
 # window-4 (arm64): from the join after `z = z.make(2n)` (`zj`) to the return

@@ -1,6 +1,5 @@
+import FvModexp.Proofs.Arm64.Exp.CallW
 import FvModexp.Proofs.Arm64.Exp.W4One
-import FvModexp.Proofs.Arm64.Exp.ExpHyp
-import FvModexp.Proofs.Arm64.Exp.MontW
 
 /-!
 # window-4 prologue (arm64): the call `buf := stk.nat(17n)` (nat.go:1412), `snE → p01`

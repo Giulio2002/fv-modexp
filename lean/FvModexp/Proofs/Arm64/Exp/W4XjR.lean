@@ -1,5 +1,5 @@
-import FvModexp.Proofs.Arm64.Exp.W4CtxB
 import FvModexp.Proofs.Arm64.Exp.W4K0
+import FvModexp.Proofs.Arm64.Exp.W4LshR
 
 /-!
 # window-4 prologue (arm64): run pieces between the `x` join and the first `stk.nat(2n)`

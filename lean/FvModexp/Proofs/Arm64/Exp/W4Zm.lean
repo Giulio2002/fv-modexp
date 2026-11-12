@@ -1,5 +1,6 @@
-import FvModexp.Proofs.Arm64.Exp.W4Zc
 import FvModexp.Proofs.Arm64.Conv
+import FvModexp.Proofs.Arm64.Exp.W4P01Defs
+import FvModexp.Proofs.Arm64.Exp.W4ZcDefs
 
 /-!
 # window-4 prologue (arm64): `z = z.make(2 * numWords)` (nat.go:1425, nat.go:58-69), `j4 → zj`

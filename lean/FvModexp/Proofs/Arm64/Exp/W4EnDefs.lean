@@ -1,6 +1,4 @@
-import FvModexp.Proofs.Arm64.Exp.W4Defs
 import FvModexp.Proofs.Arm64.Nat.StackNatN
-import FvModexp.Proofs.Common.BitLemmas
 import FvModexp.Proofs.Common.DivmcBits
 import FvModexp.Proofs.Common.DivmcLsl
 

@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Arm64.Exp.W4DivS
+import FvModexp.Proofs.Arm64.Exp.W4Ctx
 
 /-!
 # window-4 prologue (arm64): transfer lemmas for the `RR` section's own spills and `stk.nat` calls
