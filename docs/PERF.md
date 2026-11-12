@@ -1204,3 +1204,6 @@ amd64 Top_RunErr in the same run: **FAIL (timeout) 901 s**, peak 1.4 GB — at l
 |---|---|---|---|
 | NNilK (`epiK1`, flag-1 epilogue ⇒ PostNil) | 320 s / 8.3 GB | 9.8 s / 2.9 GB | two arithmetic DISJUNCTIONS (`a + k ≤ p ∨ p + r ≤ a`) were kept unfolded in the context: EVERY `by omega` case-splits on all `∨` hypotheses in scope (2^n blow-up across ~40 omega calls). Keep them folded as `Apart` and unfold locally (`have := h; unfold Apart at this`) right before the one omega that needs it. |
 | NNilKP / NNilG / NNilC / NNilS / NNilST / NNilSN / NNilSK / NNilQ | — | 1.7–6.9 s each, ≤ 2.9 GB | small glue lemmas, frame chains in standalone helpers |
+amd64-only re-measure after the trims (cache-top-freshD, `ONLY_ISA=amd64`, load 45-55): warm-up 1110 s, amd64 Top_RunErr
+**PASS 886 s / 4.9 GB** (was TIMEOUT 901 s / at similar load; 802 s at load ~15 in s17). Margin is thin under load:
+remaining trim candidates RunLLo/RunLHi (janus64_data 28 s + failing `first` alternatives 15 s each), RunH1, RunH2M/H3M.
