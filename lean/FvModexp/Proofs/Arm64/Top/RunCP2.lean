@@ -1,6 +1,5 @@
 import FvModexp.Proofs.Arm64.Top.RunCPDefs
 import FvModexp.Proofs.Common.GenReg
-import FvModexp.Proofs.Arm64.MemmoveZero
 
 /-! # `Run` (arm64): `P` to the return — `copy(buf[modLen - len(v):], v)` (`memmove`, or skipped) -/
 

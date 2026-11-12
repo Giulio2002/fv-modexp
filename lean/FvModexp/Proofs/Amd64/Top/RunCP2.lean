@@ -1,5 +1,4 @@
 import FvModexp.Proofs.Amd64.Top.RunCPDefs
-import FvModexp.Proofs.Amd64.MemmoveZero
 
 /-! # `Run` (amd64): `P` to the return — `copy(buf[modLen - len(v):], v)` (`memmove`, or skipped)
 

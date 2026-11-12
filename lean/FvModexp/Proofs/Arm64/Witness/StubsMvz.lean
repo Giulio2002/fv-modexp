@@ -1,10 +1,9 @@
 import FvModexp.Proofs.Arm64.Witness.Stubs
-import FvModexp.Proofs.Arm64.MemmoveZero
 
 /-! # Witness stub: `memmove(dst, src, 0)` (arm64)
 
 Adapted from agent/asm-mvz c0f7afc (`StubsMem.memmoveZero_sum_E0`/`memmoveZero_live_at`, `WStubs.mvz`), stated for the
-local copy `FvModexp.Arm64.MemmoveZeroLive` of Janus PR #2's contract (same text; see `Arm64/MemmoveZero.lean`).
+local copy `Janus.Contracts.MemmoveZeroLive` of Janus PR #2's contract (same text; see `Arm64/MemmoveZero.lean`).
 Delete when the Janus pin moves to a release with PR #2 and asm's `WStubs.mvz` lands in main. -/
 
 namespace FvModexp.Arm64.Stubs
@@ -13,8 +12,8 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts Janus
 open Janus.Contracts.RelocArm64 (summary_transport)
 
 /-- A call that changes only registers meets `LiveMemRet` with an empty written range (copied from Janus PR #2
-`Janus.Contracts.liveMemRet_none`, /srv/janus-mvzero Janus/Contracts/Live.lean:1235). -/
-theorem liveMemRet_none {R : RtInv} {d nargs b : Nat} {L : List (Nat × Nat)} {s fin : State}
+`Janus.Contracts.liveMemRet_noneL`, /srv/janus-mvzero Janus/Contracts/Live.lean:1235). -/
+theorem liveMemRet_noneL {R : RtInv} {d nargs b : Nat} {L : List (Nat × Nat)} {s fin : State}
     (hpc : fin.pc = s.regs 30) (hsp : fin.sp = s.sp) (h18 : fin.regs 18 = s.regs 18)
     (h28 : fin.regs 28 = s.regs 28) (h29 : fin.regs 29 = s.regs 29) (hdz : fin.dczid = s.dczid)
     (htp : fin.tpidr = s.tpidr) (hfc : fin.fpcr = s.fpcr) (hfs : fin.fpsr = s.fpsr)
@@ -39,7 +38,7 @@ theorem memmoveZero_sum_E0 (a : Nat) (R : RtInv) (L : List (Nat × Nat)) (b : Na
   have h2 : s.regs 2 = 0#64 := BitVec.eq_of_toNat_eq (by simpa using h0)
   change ReachesRet _ _ s _
   janus_run [h2]
-  all_goals exact liveMemRet_none rfl rfl rfl rfl rfl rfl rfl rfl rfl rfl hLm.2.1
+  all_goals exact liveMemRet_noneL rfl rfl rfl rfl rfl rfl rfl rfl rfl rfl hLm.2.1
 
 /-- `MemmoveZeroLive` for the looping stub `mvCode` placed at `a` in `p`, every runtime `R`. -/
 theorem memmoveZero_live_at (p : Program) (a : Nat) (R : RtInv) (hfit : a + 4 * 15 < 2 ^ 64)

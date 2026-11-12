@@ -1,5 +1,4 @@
 import FvModexp.Proofs.Arm64.Nat.DivLessF
-import FvModexp.Proofs.Arm64.MemmoveZero
 
 /-!
 # `nat.div` (arm64), `u < v`: `copy(r, u)` (`memmove`, zero-length `memmove` or skipped when `r`'s array is `u`'s),
