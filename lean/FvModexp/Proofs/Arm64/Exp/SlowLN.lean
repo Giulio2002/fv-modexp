@@ -12,7 +12,9 @@ Every local nat of `nat.expNNSlow` is one of four buffers (nat.go:742-781: `z = 
   runtime ranges, apart from all of `L`; `c = 0` allowed: an empty runtime slice), or `nil` `(0, 0)`. It gives
   apartness from the window, the stack header, the guard word, the threshold globals and the inputs `x, y, m`
   (`Loc.ap`), and the obligations of `WC.call` for a callee writing it (`Loc.sub` / `Loc.subL`, any capacity);
-* `DL` (a destination): `c < 2^40`, `NatLive`, `Loc` and `Ob` (held, apart from the CURRENT free part); `LN` (a
+* `DL` (a destination): `c < 2^40`, `NatLive`, `Loc`, `Ob` (held, apart from the CURRENT free part) and `nil` when
+  empty (every empty buffer is `nil`: the initial `zz, r, q`, and a callee's empty result is its destination —
+  `NatOF` needs `≥ 1`, `SqrHypG` returns `z[:0]` for an empty operand); `LN` (a
   live value) = `DL` + length, value, normalisation; `Pw` = apart when both non-empty.
 
 `DL.back`/`LN.keep` (a callee keeps a buffer), `LN.of_res` (a callee's `NatOF` result of a destination is a live
@@ -31,7 +33,7 @@ namespace FvModexp.Arm64.ExpSlow
 /-- a destination buffer `p[0:c]` at memory `M` (live set `L1`) -/
 @[reducible] def DL (R : RtInv) (L : List (Nat × Nat)) (st zp zc : Nat) (M : Memory) (L1 : List (Nat × Nat))
     (p c : Nat) : Prop :=
-  c < 2 ^ 40 ∧ NatLive M R L1 p c ∧ Loc R L zp zc p c ∧ (0 < c → Ob R L1 st M p c)
+  c < 2 ^ 40 ∧ NatLive M R L1 p c ∧ Loc R L zp zc p c ∧ (0 < c → Ob R L1 st M p c) ∧ (c = 0 → p = 0)
 
 /-- a live local nat `p[0:l]` (cap `c`) of value `v` -/
 @[reducible] def LN (R : RtInv) (L : List (Nat × Nat)) (st zp zc : Nat) (M : Memory) (L1 : List (Nat × Nat))
@@ -104,8 +106,8 @@ theorem DL.back {R : RtInv} {L : List (Nat × Nat)} {st zp zc : Nat} {M M' : Mem
     {p c : Nat} (h : DL R L st zp zc M L1 p c) (hx : LiveExt R L1 L2)
     (hacc : ∀ a n w, M'.accessible a n w = M.accessible a n w) (hsb : StackBack R L1 L2 st M M') :
     DL R L st zp zc M' L2 p c := by
-  obtain ⟨c40, hlv, hloc, hob⟩ := h
-  refine ⟨c40, fun hc => ?_, hloc, fun hc => (hob hc).back hx hsb⟩
+  obtain ⟨c40, hlv, hloc, hob, h0⟩ := h
+  refine ⟨c40, fun hc => ?_, hloc, fun hc => (hob hc).back hx hsb, h0⟩
   obtain ⟨a1, a2, a3, a4⟩ := hlv hc
   exact ⟨a1, hx.held a2, by rw [hacc]; exact a3, a4⟩
 
@@ -152,14 +154,15 @@ theorem LN.of_res {R : RtInv} {L : List (Nat × Nat)} {st zp zc : Nat} {M M' : M
     {L1 L2 : List (Nat × Nat)} {pd cd : Nat} (hd : DL R L st zp zc M L1 pd cd) (hLL : ∀ r ∈ L, r ∈ L1)
     (hok : StkOK M R L1 st) (hc0 : stCap M st = 0 → stW M st = 0)
     {need p' l' c' v : Nat} (hr : ExpHyp.NatOF R L1 L2 M' pd cd need p' l' c' v) (hx : LiveExt R L1 L2)
-    (hsb : StackBackL R L1 L2 st M M') (hrs : ResSep M M' st p' c') : LN R L st zp zc M' L2 p' l' c' v := by
+    (hsb : StackBackL R L1 L2 st M M') (hrs : ResSep M M' st p' c') (h0 : c' = 0 → p' = 0) :
+    LN R L st zp zc M' L2 p' l' c' v := by
   obtain ⟨hv, hn, hlc, hc40, hlv, hof⟩ := hr
-  refine ⟨⟨hc40, hlv, ?_, fun hc => ?_⟩, hlc, hv, hn⟩
+  refine ⟨⟨hc40, hlv, ?_, fun hc => ?_, h0⟩, hlc, hv, hn⟩
   · rcases hof with ⟨rfl, rfl⟩ | ⟨-, hin, hap⟩
     · exact hd.2.2.1
     · exact Or.inr (Or.inl ⟨hin, fun r hr => hap r (hLL r hr)⟩)
   · rcases hof with ⟨rfl, rfl⟩ | ⟨-, hin, hap⟩
-    · exact (hd.2.2.2 hc).back hx hsb.1
+    · exact (hd.2.2.2.1 hc).back hx hsb.1
     · exact ob_fresh hok hc0 hsb.1 hin hap (hlv hc).2.1 hrs hc
 
 /-- the result is `Pw`-apart from every non-empty live buffer other than the destination -/
@@ -220,7 +223,7 @@ theorem stepC2 (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) {M
   refine ⟨hw, hk, fun q l c v hq hqd hqe => hq.keep hx hF.accessible hsb.1 (fun c0 a k h1 h2 => ?_),
     fun q c hq => hq.back hx hF.accessible hsb.1⟩
   obtain ⟨w1, w2, -, -⟩ := Loc.ap hP hq.1.2.2.1 c0
-  have hob := hq.1.2.2.2 c0
+  have hob := hq.1.2.2.2.1 c0
   have hout := hob.out (h.sok.2.2.2.2.2.1) w2
   unfold Apart at w1
   simp only [stkWs, outside_cons, outside_nil, and_true] at hout

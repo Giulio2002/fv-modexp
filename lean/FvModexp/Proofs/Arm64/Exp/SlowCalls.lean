@@ -38,6 +38,7 @@ theorem sqrCallG {impl : List Segment} (hap : ImplApart Extracted.program impl) 
     (K : ∀ s', s'.pc = BitVec.ofNat 64 ra → s'.sp = S.sp → s'.regs 28 = S.regs 28 → s'.regs 29 = S.regs 29 →
       s'.regs 18 = S.regs 18 → s'.mem.regions = S.mem.regions →
       SqrPostL R b (cost (stLen S.mem st) xl) L stk above zp zc st x xl S s' →
+      (xl = 0 → s'.regs 0 = BitVec.ofNat 64 zp ∧ s'.regs 2 = BitVec.ofNat 64 zc) →
       ReachesRet (LibW.program.link impl) ret s' Q) :
     ReachesRet (LibW.program.link impl) ret S Q := by
   have hS := CallWW.hypSum hap hns (hsq b L (BitVec.ofNat 64 zp) (BitVec.ofNat 64 zl) (BitVec.ofNat 64 zc)
@@ -47,7 +48,7 @@ theorem sqrCallG {impl : List Segment} (hap : ImplApart Extracted.program impl) 
   · simp only [ArgsFrom]; exact ⟨h0, h1, h2, h3, h4, h5, h6, trivial⟩
   · rw [tN bz, tN bzl, tN bzc, tN bst, tN bx, tN bxl, tN bxc]; exact hpre
   · rw [tN bz, tN bzc, tN bst, tN bx, tN bxl] at hq
-    exact K s' (hr.trans h30) e1 e2 e3 e4 hrg hq
+    exact K s' (hr.trans h30) e1 e2 e3 e4 hrg hq.1 hq.2
 
 set_option maxRecDepth 20000 in
 theorem mulCallG {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}

@@ -141,7 +141,7 @@ theorem DL.op (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) {p 
   · subst e; exact ⟨fun h0 => absurd h0 (Nat.lt_irrefl 0), fun h0 => absurd h0 (Nat.lt_irrefl 0)⟩
   · have hc : 0 < c := by omega
     obtain ⟨-, w2, -, w4, -⟩ := Loc.ap hP h.2.2.1 hc
-    have hfr := (h.2.2.2 hc).free
+    have hfr := (h.2.2.2.1 hc).free
     refine ⟨fun _ => ⟨apart_shrinkL w2 hk, fun _ => apart_shrinkL hfr hk⟩, fun _ => ⟨?_, apart_shrinkL w4 hk⟩⟩
     simp only [frP, frN]; exact apart_shrinkL hfr hk
 
@@ -307,7 +307,7 @@ theorem divPreG (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s)
   have hua : 0 < lu → Apart pu (8 * lu) st 24 ∧ Apart pu (8 * lu) (frP M st) (frN M st) := fun hl => by
     have hc : 0 < cu := by have := hu.2.1; omega
     refine ⟨apart_shrinkL (Loc.ap hP hu.1.2.2.1 hc).2.1 (Nat.mul_le_mul_left 8 hu.2.1), ?_⟩
-    exact apart_shrinkL (hu.1.2.2.2 hc).free (Nat.mul_le_mul_left 8 hu.2.1)
+    exact apart_shrinkL (hu.1.2.2.2.1 hc).free (Nat.mul_le_mul_left 8 hu.2.1)
   have hdst : ∀ p c, (p, c) ∈ [(pq, cq), (pr, cr)] → 0 < c →
       (0 < lu → Apart p (8 * c) pu (8 * lu)) ∧ Apart p (8 * c) mp (8 * ml) ∧ Apart p (8 * c) st 24 ∧
       Apart p (8 * c) (frP M st) (frN M st) := by
@@ -318,7 +318,7 @@ theorem divPreG (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s)
           Apart p (8 * c) (frP M st) (frN M st) := fun hd hpw => by
       obtain ⟨-, a2, -, -, -, -, a7⟩ := Loc.ap hP hd.2.2.1 hc
       refine ⟨fun hl => apart_shrinkR (hpw (by have := hu.2.1; omega) hc).symm (Nat.mul_le_mul_left 8 hu.2.1), a7, a2,
-        (hd.2.2.2 hc).free⟩
+        (hd.2.2.2.1 hc).free⟩
     rcases hm with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
     · exact key hq hqu
     · exact key hr hru

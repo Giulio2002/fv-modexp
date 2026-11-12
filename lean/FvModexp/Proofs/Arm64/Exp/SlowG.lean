@@ -16,8 +16,9 @@ The Go code is fine (`sqr`: `n == 0 → return z[:0]`; `divW` with `len u = 0`; 
 
 Premise forms used by `ExpSlow.hyp` (callee summaries stay premises; the owners prove these forms):
 * `SqrHypG` (divmc): `SqrHypX` with the operand `RdIn0`, `CapIn0` (infra's, EvMulD) and `SqrXG` (alias-capacity fact
-  under `0 < zc → 0 < xl`); post `SqrPostL` (no `Reuse`). divmc's `SPre` already has every operand fact under
-  `0 < xl`/`0 < xc` EXCEPT `accessible xp (8 * xl)`.
+  under `0 < zc → 0 < xl`); post `SqrPostL` and, for an EMPTY operand, the result registers are `z`'s (`return
+  z[:0]`, natmul.go:76; `SqrPostL` alone allows a fresh cap-0 result at an unbounded pointer). divmc's `SPre`
+  already has every operand fact under `0 < xl`/`0 < xc` EXCEPT `accessible xp (8 * xl)`.
 * `MulHypG` (infra's, EvMulD; proved: `ExpEven.NatMulG.hypG`) — unchanged.
 * `DivHypLG` (asm): `DivHypL` with the dividend `RdIn0` and every apartness fact of `u` under `0 < ul`
   (`DivPreG`; post `DivPostL` unchanged).
@@ -59,7 +60,7 @@ def SqrHypG (impl : List Segment) (R : RtInv) (ns : List String) (stk above : Na
         x.toNat xl.toNat s ∧ CapIn0 R L x.toNat xl.toNat xc.toNat ∧
         SqrXG R L s stk above st.toNat z.toNat zc.toNat x.toNat xl.toNat xc.toNat)
       (fun s s' => SqrPostL R b (cost (stLen s.mem st.toNat) xl.toNat) L stk above z.toNat zc.toNat st.toNat x.toNat
-        xl.toNat s s')
+        xl.toNat s s' ∧ (xl.toNat = 0 → s'.regs 0 = z ∧ s'.regs 2 = zc))
 
 /-- `ExpHyp.DivPre` with the dividend `u` empty-tolerant: `RdIn0`, and each apartness fact of `u` under `0 < ul` -/
 @[reducible] def DivPreG (R : RtInv) (b : Nat) (cost : Nat → Nat → Nat → Nat) (L : List (Nat × Nat))
