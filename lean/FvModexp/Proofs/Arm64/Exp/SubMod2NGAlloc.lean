@@ -52,7 +52,8 @@ set_option maxRecDepth 20000 in
 /-- the `growslice` call's precondition at `SP' = SP - 144` -/
 theorem gcallG {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {op zp zl zc yp yl yc n : Nat} {s : State}
     (hpre : PreG R b L op zp zl zc yp yl yc n s) {bb : Nat} {M : Memory} {L1 : List (Nat × Nat)} {b1 k : Nat}
-    (hrt : Rt R bb L s zp zc n k M L1 b1) {p l c : Nat} (hlv : NatLive M R L1 p c) (hcl : c = l)
+    (hrt : Rt R bb L s zp zc n k M L1 b1) {p l c : Nat} (hlv : NatLive M R L1 p c) (hcur : CurA R L zp zc p c)
+    (hcl : c = l)
     (hlW : l + 1 ≤ W n) (hcost : 8 * growCap8 (l + 1) c ≤ b1)
     (T : State) (hm : T.mem = M) (hsp : T.sp = BitVec.ofNat 64 (s.sp.toNat - 144)) (h28 : T.regs 28 = s.regs 28)
     (h0 : (T.regs 0).toNat = p) (h1 : (T.regs 1).toNat = l + 1) (h2 : (T.regs 2).toNat = c)
@@ -89,16 +90,27 @@ theorem gcallG {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {op zp zl zc yp yl 
       rw [show s.sp.toNat - 144 + 88 - (s.sp.toNat - 144 - 4464) = 4464 + 88 by omega]; exact hrtw) hLs
     (by simp only [growsliceArgs, h0, h1, h2, h3, h4]; exact hsv.2.2.2.1 _ _ _ _ _ (by omega))
     (by rw [eg]; exact hinv) (by rw [hround]; exact hcost)
-  refine ⟨⟨⟨hc.1, ?_, ?_, ?_, by omega, by omega, by omega, by omega⟩, fun hp => ?_⟩, hc.2⟩
+  refine ⟨⟨⟨hc.1, ?_, ?_, ?_, by omega, by omega, by omega, by omega, ?_⟩, fun hp => ?_⟩, hc.2⟩
   · rw [h4]; exact ⟨by omega, ht3⟩
   · simp only [typSize, h4]; exact ht1
   · simp only [typPtrBytes, h4]; exact ht2
+  · -- v0.3.1: the type descriptor (rodata) is outside the callee's window
+    rw [h4]; simp only [calleeStack, esp, outside_cons, outside_nil, and_true]; omega
   · have e : (T.regs 1).toNat - (T.regs 3).toNat = c := by omega
     unfold GrowsliceOld
     rw [e] at hp ⊢
     obtain ⟨-, -, a3, a4⟩ := hlv hp
     rw [h0]
-    exact ⟨a4, Memory.accessible_weaken _ a3⟩
+    refine ⟨a4, Memory.accessible_weaken _ a3, ?_⟩
+    -- v0.3.1: the old array is outside the callee's window (it is z's, or fresh in the runtime ranges)
+    have hw : Apart p (8 * c) (s.sp.toNat - K) (K + A) := by
+      rcases hcur with ⟨q1, q2⟩ | ⟨hin, -⟩
+      · rw [q1, q2]
+        have := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+        simp only [win, outside_cons, outside_nil, and_true] at this; unfold Apart; omega
+      · have := hin.apart hpre.1.2.2.2.1; unfold Apart at this ⊢; omega
+    unfold Apart at hw
+    simp only [calleeStack, esp, outside_cons, outside_nil, and_true]; omega
 
 set_option maxRecDepth 20000 in
 /-- the runtime facts after the `growslice` call (callee window inside `winA`, new block fresh in `R.rt`, apart
