@@ -51,7 +51,7 @@ theorem lower {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns
       Exp.outerLoop 1 (stepM (natVal s.mem xp xl) (natVal s.mem mp ml)) (natVal s.mem yp yl) 64 i v.toNat 64 Zv = F →
       ReachesRet (LibW.program.link impl) (BitVec.ofNat 64 ret) S (FQ R b L K zp zc st F cst s) := by
   intro i
-  induction i using Nat.strong_induction_on with
+  induction i using Nat.strongRecOn with
   | _ i ih =>
   intro S L1 b1 v z zl zc' Zv zz zzl zzc r rl rc q ql qc hk hb hv
   refine loopL hap hns hnf hsq hmu hdv hkS haS hkM haM hkD haD hP hX hxl0 hM (w := i) (t := i) (n := 64 * i)
@@ -106,7 +106,7 @@ theorem body {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns 
   refine segV hP hk2 fun S3 v w hk3 hm3 => ?_
   have hw63 := hk3.w63
   have hPw : P * (w + 64 * (yl - 1)) + P * (64 - w) = P * (64 * yl) := by
-    rw [← Nat.mul_add]; congr 1; omega
+    rw [← Nat.mul_add, show w + 64 * (yl - 1) + (64 - w) = 64 * yl by omega]
   refine loopU hap hns hnf hsq hmu hdv hkS haS hkM haM hkD haD hP hX hxl0 hM (w := w) (t := yl - 1)
     (n := 64 * (yl - 1)) (B0 := b - cst) (F := F) ?_ w S3 L1 b1 0 v z xl zc' _ 0 0 0 0 0 0 0 0 0 hk3 (by omega)
     (by
