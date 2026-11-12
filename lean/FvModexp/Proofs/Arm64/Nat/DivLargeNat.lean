@@ -27,10 +27,10 @@ theorem pro2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
       zc.toNat s P)
     (hinvP : R.inv b L (s.regs 28).toNat (view R.rt L P.mem)) (Q : State → Prop)
     (k : ∀ S2 L1 b1, AfterNat R b L st.toNat vl.toNat s P S2 stkSN abSN L1 b1 →
-      ReachesRet (LibDiv.program.link impl) (s.regs 30) S2 Q) :
-    ReachesRet (LibDiv.program.link impl) (s.regs 30) P Q := by
-  have hc : CodeIn ((Extracted.program.onlySegments [ExpHyp.fnStackNat]).link impl) (LibDiv.program.link impl) := by
-    rw [LibDiv.eq_only]; exact codeIn_restrict_mono hap (sub_of_all (by decide))
+      ReachesRet (LibDivL.program.link impl) (s.regs 30) S2 Q) :
+    ReachesRet (LibDivL.program.link impl) (s.regs 30) P Q := by
+  have hc : CodeIn ((Extracted.program.onlySegments [ExpHyp.fnStackNat]).link impl) (LibDivL.program.link impl) := by
+    rw [LibDivL.eq_only]; exact codeIn_restrict_mono hap (sub_of_all (by decide))
   have hSN' := fun b L => Ensures.toSummaryRegs2 (fun a0 a1 => hSN b L a0 a1)
     (noExit_restrict hap [ExpHyp.fnStackNat]) hc
   clear hc

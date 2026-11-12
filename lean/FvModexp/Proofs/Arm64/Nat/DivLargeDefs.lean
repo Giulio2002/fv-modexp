@@ -1,4 +1,5 @@
-import FvModexp.Proofs.Arm64.Nat.LibDiv
+import FvModexp.Proofs.Arm64.Nat.LibDivL
+import FvModexp.Proofs.Arm64.Nat.LibDrs
 import FvModexp.Proofs.Arm64.Nat.DivBasic
 import FvModexp.Proofs.Arm64.Exp.MulHyp
 
@@ -40,7 +41,9 @@ namespace FvModexp.Arm64.DivLarge
 
 def fn : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.nat.divLarge"
 def drsFn : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.nat.divRecursiveStep"
-def names : List String := LibDiv.names
+def names : List String := LibDivL.names
+/-- the program of `divRecursiveStep`'s statement: the division tree without `divLarge` (and `nat.div`) -/
+def drsNames : List String := LibDrs.names
 def wordT : Nat := Extracted.dataAddr.«type:big.Word#51b931e8»
 
 /-! ## `divRecursiveStep` (natdiv.go:750) — the callee's statement (proved in DivRec*.lean)
@@ -85,7 +88,7 @@ def DrsPre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (cost : Nat) (qp ql qc 
 /-- `divRecursiveStep`'s `Ensures` (on the division library program) -/
 def DrsHyp (impl : List Segment) (R : RtInv) (dc : Nat → Nat → Nat → Nat) : Prop :=
   ∀ (b : Nat) (L : List (Nat × Nat)) (qp ql qc st up ul uc vp vl vc d : BitVec 64),
-    Ensures ((Extracted.program.onlySegments names).link impl) (segAddr Extracted.program drsFn)
+    Ensures ((Extracted.program.onlySegments drsNames).link impl) (segAddr Extracted.program drsFn)
       [qp, ql, qc, st, up, ul, uc, vp, vl, vc, d]
       (fun s => DrsPre R b L (dc (stLen s.mem st.toNat) ul.toNat vl.toNat) qp.toNat ql.toNat qc.toNat st.toNat up.toNat
         ul.toNat uc.toNat vp.toNat vl.toNat vc.toNat s)

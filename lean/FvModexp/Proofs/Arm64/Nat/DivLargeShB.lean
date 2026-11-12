@@ -36,8 +36,8 @@ theorem shB2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     (hx : X.mem.readLE (s.sp.toNat - 272) 8 = ip) (hs : X.mem.readLE (s.sp.toNat - 248) 8 = sh)
     (hXreg : X.mem.regions = s.mem.regions) (Q : State → Prop)
     (k : ∀ S', AtA R b L zp zc st up uc ip il ic vp vl vc s t w1 c1 L1 b1 Lk bk P C sh S' →
-      ReachesRet (LibDiv.program.link impl) (s.regs 30) S' Q) :
-    ReachesRet (LibDiv.program.link impl) (s.regs 30) X Q := by
+      ReachesRet (LibDivL.program.link impl) (s.regs 30) S' Q) :
+    ReachesRet (LibDivL.program.link impl) (s.regs 30) X Q := by
   have hl := hE.lay
   have hsp0 := hl.sp0; have hsp1 := hl.sp1; have hil9 := hl.il9
   have hU := hS.ua
@@ -115,8 +115,8 @@ theorem shB (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     (h28 : T.regs 28 = s.regs 28) (h29 : T.regs 29 = s.sp - 312#64) (h18 : T.regs 18 = s.regs 18) (hm : T.mem = m3)
     (hreg3 : m3.regions = s.mem.regions) (Q : State → Prop)
     (k : ∀ S', AtA R b L zp zc st up uc ip il ic vp vl vc s t w1 c1 L1 b1 Lk bk P C sh S' →
-      ReachesRet (LibDiv.program.link impl) (s.regs 30) S' Q) :
-    ReachesRet (LibDiv.program.link impl) (s.regs 30) T Q := by
+      ReachesRet (LibDivL.program.link impl) (s.regs 30) S' Q) :
+    ReachesRet (LibDivL.program.link impl) (s.regs 30) T Q := by
   have hl := hE.lay
   have hsp0 := hl.sp0; have hsp1 := hl.sp1; have hil9 := hl.il9
   have hU := hS.ua

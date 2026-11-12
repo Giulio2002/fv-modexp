@@ -16,7 +16,7 @@ namespace FvModexp.Arm64.DivLarge
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem cpA (impl : List Segment) (R : RtInv)
-    (hmv : MemmoveLive (LibDiv.program.link impl) (cA "runtime.memmove") 4096 R)
+    (hmv : MemmoveLive (LibDivL.program.link impl) (cA "runtime.memmove") 4096 R)
     (b : Nat) (L : List (Nat × Nat)) (c : Nat) (zp zc st up uc ip il ic vp vl vc : Nat) (s : State)
     (t w1 c1 : Nat) (L1 : List (Nat × Nat)) (b1 : Nat) (Lk : List (Nat × Nat)) (bk P C : Nat)
     (hE : Env R b L c zp zc st up uc ip il vp vl s t L1 b1 w1 c1) (S : State)
@@ -30,8 +30,8 @@ theorem cpA (impl : List Segment) (R : RtInv)
       LiveFrame (S.mem.writeLE (s.sp.toNat - 120) 8 0) m Lk [(t, t + 8 * vl)] →
       R.inv bk Lk (s.regs 28).toNat (view R.rt Lk m) →
       Mem.Copied (S.mem.writeLE (s.sp.toNat - 120) 8 0) m t vp (8 * vl) →
-      ReachesRet (LibDiv.program.link impl) (s.regs 30) T Q) :
-    ReachesRet (LibDiv.program.link impl) (s.regs 30) S Q := by
+      ReachesRet (LibDivL.program.link impl) (s.regs 30) T Q) :
+    ReachesRet (LibDivL.program.link impl) (s.regs 30) S Q := by
   have hl := hE.lay
   have hsp0 := hl.sp0; have hsp1 := hl.sp1; have hv2 := hl.v2; have hil9 := hl.il9
   have hM := hS.mem

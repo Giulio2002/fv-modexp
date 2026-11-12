@@ -34,8 +34,8 @@ theorem cpE (impl : List Segment) (R : RtInv)
     (h13 : X.regs 13 = BitVec.ofNat 64 il) (hm : X.mem = m4) (hreg4 : m4.regions = s.mem.regions)
     (Q : State → Prop)
     (k : ∀ S', AtA R b L zp zc st up uc ip il ic vp vl vc s t w1 c1 L1 b1 Lk bk P C 0 S' →
-      ReachesRet (LibDiv.program.link impl) (s.regs 30) S' Q) :
-    ReachesRet (LibDiv.program.link impl) (s.regs 30) X Q := by
+      ReachesRet (LibDivL.program.link impl) (s.regs 30) S' Q) :
+    ReachesRet (LibDivL.program.link impl) (s.regs 30) X Q := by
   have hl := hE.lay
   have hil9 := hl.il9
   have hU := hS.ua
