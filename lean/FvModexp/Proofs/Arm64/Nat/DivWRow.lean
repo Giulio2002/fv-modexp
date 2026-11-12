@@ -2,6 +2,7 @@ import FvModexp.Proofs.Arm64.Nat.DivW
 import FvModexp.Proofs.Arm64.Nat.RowLink
 import FvModexp.Proofs.Arm64.Witness.AsmWit
 import FvModexp.Proofs.Arm64.Witness.StubsMvz
+import FvModexp.Proofs.Arm64.Int.ModRowW
 
 /-!
 # Row: `nat.divW` (arm64) on the Run extraction
@@ -9,7 +10,7 @@ import FvModexp.Proofs.Arm64.Witness.StubsMvz
 `correctness` = `DivW.ens` moved to `Extracted.program.link impl` (`Ensures.full`); runtime premises: the live
 `makeslice` and `memmove` contracts and the zero-length `memmove` contract (Janus PR #2, `MemmoveZeroLive`). `Witness.nonvacuous`: the shared witness runtime (`WStubs.impl`), the toy
 allocator invariant, the Run extraction's read-only data loaded, and the call `z.divW(x, 3)` with an empty `z`
-(`cap 0`, so `make(nat, 2, 6)` is requested) and the two-limb `x = 5 + 9·B`; plus one call-site state per contract.
+(`cap 0`, so `make(nat, 2, 6)` is requested) and the two-limb `x = 5 + 9·B`; plus one call-site state per contract (incl. `MemmoveZeroLive`'s).
 -/
 
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
@@ -93,6 +94,11 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.memmove") ∧
       mvSite R (Extracted.program.contractAddr "runtime.memmove") L b s_c) ∧
+    (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
+      s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.memmove") ∧
+      (s_c.regs 2).toNat = 0 ∧ Mem.EqPre 4096 3 s_c ∧
+      LiveMemAt R (Extracted.program.contractAddr "runtime.memmove") [(s_c.regs 0).toNat, (s_c.regs 1).toNat,
+        (s_c.regs 2).toNat] L b s_c (calleeStack s_c 4096 3)) ∧
     Returns ((Extracted.program.link impl).withExit ret) s fun s' => ABIReturn s s' ∧ DivW.Post R b L zp zc xp xl y s s' :=
   ⟨WStubs.impl, R, 0x1000, [], BitVec.ofNat 64 OA, 0, 0, BitVec.ofNat 64 OB, 2, 2, 3, RET, s0, WStubs.hap,
     by rw [WStubs.addr_mk]; exact WStubs.mk [] (by intro t ht; simp at ht) _,
@@ -100,6 +106,7 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
     ⟨[], 0x1000, callS WStubs.mkA Extracted.dataAddr.«type:big.Word#51b931e8» 1 1, by rw [WStubs.addr_mk]; rfl,
       by rw [WStubs.addr_mk]; exact site_mk _⟩,
     ⟨[], 0x1000, callS WStubs.mvA OA OB 8, by rw [WStubs.addr_mv]; rfl, by rw [WStubs.addr_mv]; exact site_mv _⟩,
+    ⟨[], 0x1000, callS WStubs.mvA OA OB 0, by rw [WStubs.addr_mv]; rfl, by rw [WStubs.addr_mv]; exact site_mz _⟩,
     correctness WStubs.impl WStubs.hap R (by rw [WStubs.addr_mk]; exact WStubs.mk [] (by intro t ht; simp at ht) _)
       (by rw [WStubs.addr_mv]; exact WStubs.mv R) (by rw [WStubs.addr_mv]; exact WStubs.mvz R) 0x1000 [] (BitVec.ofNat 64 OA) 0 0 (BitVec.ofNat 64 OB) 2 2 3 RET
       hret s0 setup pre⟩
