@@ -125,13 +125,16 @@ def S5 (impl : List Segment) (R : RtInv) (kc : Nat) (sqrC : Nat → Nat) (mulC :
 /-- loop: `Kx j = 2^j` -/
 @[reducible] def kL (j : Nat) : Nat := 2 ^ j
 
-/-- loop stage facts: `i` (or `2i`) at `SP - 80`, `i·64` at `SP - 64`, `i < numWords` -/
-@[reducible] def ExL1 (s : State) (n j : Nat) (M : Memory) : Prop :=
-  M.readLE (s.sp.toNat - 80) 8 = 2 ^ j ∧ 2 ^ j < NW n
-@[reducible] def ExL2 (s : State) (n j : Nat) (M : Memory) : Prop :=
-  M.readLE (s.sp.toNat - 80) 8 = 2 ^ j ∧ M.readLE (s.sp.toNat - 64) 8 = 2 ^ j * 64 ∧ 2 ^ j < NW n
-@[reducible] def ExL3 (s : State) (n j : Nat) (M : Memory) : Prop :=
-  M.readLE (s.sp.toNat - 80) 8 = 2 ^ (j + 1) ∧ M.readLE (s.sp.toNat - 64) 8 = 2 ^ j * 64 ∧ 2 ^ j < NW n
+/-- loop round `J`: `i = 2^j < numWords` and `j = J` (fixes the round, for the induction over rounds) -/
+@[reducible] def LJ (n J j : Nat) : Prop := 2 ^ j < NW n ∧ j = J
+
+/-- loop stage facts: `i` (or `2i`) at `SP - 80`, `i·64` at `SP - 64`, round `J` -/
+@[reducible] def ExL1 (s : State) (n J j : Nat) (M : Memory) : Prop :=
+  M.readLE (s.sp.toNat - 80) 8 = 2 ^ j ∧ LJ n J j
+@[reducible] def ExL2 (s : State) (n J j : Nat) (M : Memory) : Prop :=
+  M.readLE (s.sp.toNat - 80) 8 = 2 ^ j ∧ M.readLE (s.sp.toNat - 64) 8 = 2 ^ j * 64 ∧ LJ n J j
+@[reducible] def ExL3 (s : State) (n J j : Nat) (M : Memory) : Prop :=
+  M.readLE (s.sp.toNat - 80) 8 = 2 ^ (j + 1) ∧ M.readLE (s.sp.toNat - 64) 8 = 2 ^ j * 64 ∧ LJ n J j
 
 /-- final round: `E = n`, `Kx = numWords`, `numWords ≤ i` -/
 @[reducible] def ExF (n j : Nat) (_M : Memory) : Prop := NW n ≤ 2 ^ j

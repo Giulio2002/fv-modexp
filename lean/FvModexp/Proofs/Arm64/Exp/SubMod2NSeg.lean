@@ -1,4 +1,6 @@
 import FvModexp.Proofs.Arm64.Exp.SubMod2NDefs
+import FvModexp.Proofs.Arm64.Nat.TruncDefs
+import FvModexp.Proofs.Common.BitLenA64
 
 /-!
 # `nat.subMod2N` (arm64): the join-point statements and the call helpers (agent infra)
@@ -286,10 +288,10 @@ theorem ra_of {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns
   simpa only [Extracted.seg40] using this
 
 set_option maxRecDepth 20000 in
-/-- a call of `nat.trunc` (premise `TruncHyp`) at its entry, continuation form, Nat-level arguments -/
+/-- a call of `nat.trunc` (asm's `Trunc.Hyp2`) at its entry, continuation form, Nat-level arguments -/
 theorem truncCall {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) {stk above : Nat}
-    (htr : TruncHyp impl R ns stk above) {b : Nat} {L : List (Nat × Nat)} {zp zl zc x xl xc n : Nat}
+    (htr : Trunc.Hyp2 impl R ns stk above) {b : Nat} {L : List (Nat × Nat)} {zp zl zc x xl xc n : Nat}
     {S : State} {ret : BitVec 64} {Q : State → Prop} {ra : Nat}
     (hra : RetAddr ((Extracted.program.onlySegments ns).link impl) ra)
     (hpc : S.pc = BitVec.ofNat 64 1786000) (h30 : S.regs 30 = BitVec.ofNat 64 ra)
@@ -297,21 +299,31 @@ theorem truncCall {impl : List Segment} (hap : ImplApart Extracted.program impl)
     (h3 : S.regs 3 = BitVec.ofNat 64 x) (h4 : S.regs 4 = BitVec.ofNat 64 xl) (h5 : S.regs 5 = BitVec.ofNat 64 xc)
     (h6 : S.regs 6 = BitVec.ofNat 64 n)
     (bz : zp < 2 ^ 64) (bzc : zc < 2 ^ 64) (bx : x < 2 ^ 64) (bxl : xl < 2 ^ 64) (bn : n < 2 ^ 64) (bra : ra < 2 ^ 64)
-    (hpre : TruncPre R b L stk above zp zl zc x xl n S)
+    (hpre : TruncPre R b L stk above zp zl zc x xl n S) (hnorm : NatNorm S.mem x xl ∨ (n + 63) / 64 ≤ xl)
+    (hcp : zp = x ∨ 0 < zc ∨ (0 < xl ∧ 0 < n))
     (K : ∀ s', s'.pc = BitVec.ofNat 64 ra → s'.sp = S.sp → s'.regs 28 = S.regs 28 → s'.regs 29 = S.regs 29 →
       s'.regs 18 = S.regs 18 → s'.mem.regions = S.mem.regions → TruncPost R b L stk above zp zc x xl n S s' →
       ReachesRet (LibExp.program.link impl) ret s' Q) :
     ReachesRet (LibExp.program.link impl) ret S Q := by
   have hS := CallW.hypSum hap hns (htr b L (BitVec.ofNat 64 zp) (BitVec.ofNat 64 zl) (BitVec.ofNat 64 zc)
     (BitVec.ofNat 64 x) (BitVec.ofNat 64 xl) (BitVec.ofNat 64 xc) (BitVec.ofNat 64 n))
-  rw [show segAddr Extracted.program fnTrunc = 1786000 by decide] at hS
+  rw [show segAddr Extracted.program Trunc.fn = 1786000 by decide] at hS
   have hzl : zl < 2 ^ 64 := by have := hpre.2.2.1; omega
   refine ReachesRet.call_regions hS hpc ⟨?_, ?_, ?_⟩ fun s' hr ⟨⟨e1, e2, e3, e4⟩, hq⟩ hrg => ?_
   · rw [h30, tN bra]; exact hra
   · simp only [ArgsFrom]; exact ⟨h0, h1, h2, h3, h4, h5, h6, trivial⟩
-  · rw [tN bz, tN hzl, tN bzc, tN bx, tN bxl, tN bn]; exact hpre
+  · rw [tN bz, tN hzl, tN bzc, tN bx, tN bxl, tN bn]; exact ⟨hpre, hnorm, hcp⟩
   · rw [tN bz, tN bzc, tN bx, tN bxl, tN bn] at hq
     exact K s' (hr.trans h30) e1 e2 e3 e4 hrg hq
+
+/-- `bitLen` of a word -/
+theorem bitLen_le64 (v : Nat) (h : v < 2 ^ 64) : Aux.bitLen v ≤ 64 := by
+  by_cases hv : v = 0
+  · subst hv; decide
+  · have h1 := (Util.bitLen_bounds v hv).1
+    have h2 : 2 ^ (Aux.bitLen v - 1) < 2 ^ 64 := by omega
+    have := (Nat.pow_lt_pow_iff_right (by omega)).1 h2
+    omega
 
 end FvModexp.Arm64.SubMod2N
 

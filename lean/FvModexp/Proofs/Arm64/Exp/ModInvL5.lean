@@ -60,15 +60,49 @@ theorem retL5 {impl : List Segment} {R : RtInv} {kc : Nat} (hkc : 4608 ≤ kc) {
     hnc hl hlc hqlc hqc (by omega) (by simpa using hjlt) hap hcong
   all_goals janus_simp
 
+set_option maxHeartbeats 4000000 in
+/-- the continuation after `subMod2N` (small context): value / length / budget facts, then `retL5` -/
+theorem contL5 {J : Nat} {impl : List Segment} {R : RtInv} {kc : Nat} (hkc : 4608 ≤ kc) {sqrC : Nat → Nat}
+    {mulC : Nat → Nat → Nat} {b : Nat} {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State} {j : Nat}
+    (kJ : J2j impl R kc sqrC mulC b L zp zl zc st xp xl xc n s (J + 1))
+    (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) (hn : 64 < n) {M : Memory} {p l c q ql qc Zv b1 : Nat}
+    (hj1 : 1 ≤ j) (hex : ExL3 s n J j M) (hqs : QS s M q ql qc)
+    (hcong : natVal s.mem xp xl * Zv % 2 ^ (2 ^ j * 32) = 1 % 2 ^ (2 ^ j * 32))
+    (hv : natVal M p l = Zv * 2)
+    (hvq : natVal M q ql = Zv * Zv % 2 ^ eL j * natVal s.mem xp (min (kL j) xl) % 2 ^ eL j)
+    (hb : b - spent sqrC mulC n j - P5 sqrC mulC n ≤ b1)
+    (hbud : spent sqrC mulC n j + roundCost sqrC mulC n ≤ b)
+    (hcm : SubMod2N.cost (2 ^ j * 64) ≤ SubMod2N.cost n)
+    (s' : State) (l' : Nat) (L' : List (Nat × Nat)) (b' : Nat) (f0 : s'.pc = BitVec.ofNat 64 1798016)
+    (f1 : s'.sp = BitVec.ofNat 64 (s.sp.toNat - 240)) (f2 : s'.regs 28 = s.regs 28) (f4 : s'.regs 18 = s.regs 18)
+    (g0 : s'.regs 0 = BitVec.ofNat 64 p) (g1 : s'.regs 1 = BitVec.ofNat 64 l') (g2 : s'.regs 2 = BitVec.ofNat 64 c)
+    (mid2 : Mid R kc L s zp zc st xp xl xc n s'.mem L' b' p l' c q ql qc)
+    (hv' : natVal s'.mem p l' = Exp.subMod2N (natVal M p l) (natVal M q ql) (2 ^ j * 64))
+    (hn' : NatNorm s'.mem p l') (hbud' : b1 - SubMod2N.cost (2 ^ j * 64) ≤ b') (hsl : SlotsKept s M s'.mem) :
+    Goal impl R kc sqrC mulC b L zp zc st xp xl n s s' := by
+  have hK : 240 + kc ≤ s.sp.toNat := sp_K hpre
+  have hsp0 : 240 ≤ s.sp.toNat := by omega
+  have hex1 := hex.1
+  obtain ⟨-, -, hjlt, hJ⟩ := hex
+  subst hJ
+  have hcong' := round_step hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1 hcong
+  simp only [eL, kL] at hvq
+  rw [← hv, ← hvq, ← hv'] at hcong'
+  have hvl : natVal s'.mem p l' < 2 ^ (64 * NW n) := by
+    rw [hv']; exact Nat.lt_of_lt_of_le (Exp.subMod2N_spec _ _ _).1 (Nat.pow_le_pow_right (by omega) (by omega))
+  refine retL5 hkc kJ hpre hn s' mid2 hj1 hjlt (by have := len_le hn' hvl; omega) ?_ hcong'
+    (slot_keep hsl hsp0 (by decide) (by decide) hex1) (qs_keep hsl hsp0 hqs) f0 f1 f2 f4 g0 g1 g2
+  rw [spent_succ _ _ _ _ hj1]; simp only [roundCost, P5, P4, P3, P2, P1] at hb hbud ⊢; omega
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem segL5 {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
+theorem segL5 {J : Nat} {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains SubMod2N.fn = false)
-    {stkT aboveT : Nat} (hkT : stkT ≤ 4464) (haT : aboveT ≤ 88) (htr : TruncHyp impl R ns stkT aboveT)
+    {stkT aboveT : Nat} (hkT : stkT ≤ 4464) (haT : aboveT ≤ 88) (htr : Trunc.Hyp2 impl R ns stkT aboveT)
     (hsub : SubMod2N.SubHypR impl R) (hadd : SubMod2N.AddHypR impl R) {kc : Nat} (hkc : 4608 ≤ kc)
     {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat} {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat}
     {s : State} (kJ : ∀ j, J2j impl R kc sqrC mulC b L zp zl zc st xp xl xc n s (j + 1)) :
-    S5 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s 1797984 (ExL3 s n) eL kL := by
+    S5 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s 1797984 (ExL3 s n J) eL kL := by
   intro S j p l c q ql qc L1 b1 Zv hrc hpc hex hqs h0 h1 h2 hv hnz hl hvq hnq hql hb
   obtain ⟨hpreB, hn, hsp, h28, h18, hmidB, hj1, hjn, hbud, hcong⟩ := hrc
   have hK : 240 + kc ≤ s.sp.toNat := sp_K hpreB.h
@@ -76,7 +110,6 @@ theorem segL5 {impl : List Segment} (hap : ImplApart Extracted.program impl) {R 
   simp only [K, A] at hb' ha hw
   have hwS : S.mem.accessible (s.sp.toNat - (240 + kc)) (240 + kc + 72) true = true := by
     rw [hmidB.h.2.1.2.1.accessible]; exact hw
-  have hsp0 : 240 ≤ s.sp.toNat := by omega
   have r216 : S.mem.readLE (s.sp.toNat - 240 + 216) 8 = q := by
     rw [show s.sp.toNat - 240 + 216 = s.sp.toNat - 24 by omega]; exact hqs.1
   have r112 : S.mem.readLE (s.sp.toNat - 240 + 112) 8 = ql := by
@@ -85,23 +118,19 @@ theorem segL5 {impl : List Segment} (hap : ImplApart Extracted.program impl) {R 
     rw [show s.sp.toNat - 240 + 120 = s.sp.toNat - 120 by omega]; exact hqs.2.2
   have r176 : S.mem.readLE (s.sp.toNat - 240 + 176) 8 = 2 ^ j * 64 := by
     rw [show s.sp.toNat - 240 + 176 = s.sp.toNat - 64 by omega]; exact hex.2.1
-  have hjlt := hex.2.2
-  have hen : 2 ^ j * 64 ≤ n := by simp only [NW] at hjlt; omega
+  have hen : 2 ^ j * 64 ≤ n := by have := hex.2.2; simp only [NW] at this; omega
   have hcm := cost_mono hen
+  have hbo : SubMod2N.cost (2 ^ j * 64) ≤ b1 :=
+    bud_ok hb hbud (m := SubMod2N.cost n) (by simp only [roundCost, P5, P4, P3, P2, P1]; omega) hcm
+  have hpre := hpreB.h
+  have hK' := contL5 hkc (kJ j) hpre hn hj1 hex hqs hcong hv hvq hb hbud hcm
+  clear hcong hv hvq hbud hcm hjn
   unfold Goal
   janus_run [r216, r112, r120, r176] until [1805584]
-  have hpre := hpreB.h
-  refine callSub hap hns hnf hkT haT htr hsub hadd hkc hpre hmidB.h (e := 2 ^ j * 64) (by have := Nat.one_le_two_pow (n := j); omega) hen hl hql
-    hnz hnq (bud_ok hb hbud (m := SubMod2N.cost n) (by simp only [roundCost, P5, P4, P3, P2, P1]; omega) hcm)
+  refine callSub hap hns hnf hkT haT htr hsub hadd hkc hpre hmidB.h (e := 2 ^ j * 64)
+    (by have := Nat.one_le_two_pow (n := j); omega) hen hl hql hnz hnq hbo
     (pcv := 1798016) ⟨by decide, by decide⟩ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
-    (fun s' l' L' b' f0 f1 f2 f3 f4 g0 g1 g2 mid2 hv' hn' hqv hnq' hbud' hsl => ?_)
-  all_goals try janus_simp
-  have hcong' := round_step hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1 hcong
-  rw [← hv, ← hvq, ← hv'] at hcong'
-  have hvl : natVal s'.mem p l' < 2 ^ (64 * NW n) := by
-    rw [hv']; exact Nat.lt_of_lt_of_le (Exp.subMod2N_spec _ _ _).1 (Nat.pow_le_pow_right (by omega) (by omega))
-  refine retL5 hkc (kJ j) hpre hn s' mid2 hj1 hjlt (by have := len_le hn' hvl; omega) ?_ hcong'
-    (slot_keep hsl hsp0 (by decide) (by decide) hex.1) (qs_keep hsl hsp0 hqs) f0 ?_ ?_ ?_ g0 g1 g2
-  · rw [spent_succ _ _ _ _ hj1]; simp only [roundCost, P5, P4, P3, P2, P1] at hb hbud ⊢; omega
+    (fun s' l' L' b' f0 f1 f2 f4 g0 g1 g2 mid2 hv' hn' _ _ hbud' hsl => hK' s' l' L' b' f0 f1 f2 f4 g0 g1 g2 mid2 hv' hn' hbud' hsl)
+  all_goals janus_simp
 
 end FvModexp.Arm64.ModInv

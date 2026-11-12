@@ -18,7 +18,7 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 4000000 in
 theorem callSub {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains SubMod2N.fn = false)
-    {stkT aboveT : Nat} (hkT : stkT ≤ 4464) (haT : aboveT ≤ 88) (htr : TruncHyp impl R ns stkT aboveT)
+    {stkT aboveT : Nat} (hkT : stkT ≤ 4464) (haT : aboveT ≤ 88) (htr : Trunc.Hyp2 impl R ns stkT aboveT)
     (hsub : SubMod2N.SubHypR impl R) (hadd : SubMod2N.AddHypR impl R) {kc : Nat} (hkc : 4608 ≤ kc)
     {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat} {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat}
     {s : State} (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {p l c q ql qc : Nat}
@@ -34,7 +34,7 @@ theorem callSub {impl : List Segment} (hap : ImplApart Extracted.program impl) {
     (h6 : S'.regs 6 = BitVec.ofNat 64 q) (h7 : S'.regs 7 = BitVec.ofNat 64 ql)
     (h8 : S'.regs 8 = BitVec.ofNat 64 qc) (h9 : S'.regs 9 = BitVec.ofNat 64 e) {ret : BitVec 64} {Q : State → Prop}
     (K : ∀ (s' : State) (l' : Nat) (L' : List (Nat × Nat)) (b' : Nat), s'.pc = BitVec.ofNat 64 pcv →
-      s'.sp = S'.sp → s'.regs 28 = S'.regs 28 → s'.regs 29 = S'.regs 29 → s'.regs 18 = S'.regs 18 →
+      s'.sp = BitVec.ofNat 64 (s.sp.toNat - 240) → s'.regs 28 = s.regs 28 → s'.regs 18 = s.regs 18 →
       s'.regs 0 = BitVec.ofNat 64 p → s'.regs 1 = BitVec.ofNat 64 l' → s'.regs 2 = BitVec.ofNat 64 c →
       Mid R kc L s zp zc st xp xl xc n s'.mem L' b' p l' c q ql qc →
       natVal s'.mem p l' = Exp.subMod2N (natVal M p l) (natVal M q ql) e → NatNorm s'.mem p l' →
@@ -66,7 +66,7 @@ theorem callSub {impl : List Segment} (hap : ImplApart Extracted.program impl) {
     obtain ⟨mid2, hqv, hsl⟩ := after_z hpre hkc hmid hS' hkc (by decide) hreg hF2 hLF2 hLE hinv hsb hlive hc40' hp64
       (Or.inl ⟨rfl, rfl⟩) (fun h => absurd ⟨rfl, rfl⟩ h) hlc' hnc
     have hqlc : ql ≤ qc := hmid.2.2.2.2.2.2.1
-    refine K s' l' L' b' (hr.trans h30) e1 e2 e3 e4 (by rw [← f0, BitVec.ofNat_toNat, BitVec.setWidth_eq])
+    refine K s' l' L' b' (hr.trans h30) (e1.trans hsp) (e2.trans h28) (e4.trans h18) (by rw [← f0, BitVec.ofNat_toNat, BitVec.setWidth_eq])
       (by rw [← f1, BitVec.ofNat_toNat, BitVec.setWidth_eq]) (by rw [← f2, BitVec.ofNat_toNat, BitVec.setWidth_eq])
       mid2 hv hn' (hqv ql hqlc) ?_ hbud hsl
     exact norm_keep hqv hqlc hnq
