@@ -33,4 +33,22 @@ theorem opavail_pad {l a h st : Nat} (hst : st = min a (l - 96)) (hd : l - 96 < 
     l - 96 - st = min h (l - 96 - a) := by
   subst hst; omega
 
+open Janus Janus.Contracts in
+/-- `n0_of_eq` for an operand starting at `a`: a fresh buffer at the copy source copies nothing. -/
+theorem n0_of_eq' {R : RtInv} {L L0 : List (Nat × Nat)} {dst src e h0 n p l a : Nat} (heq : dst = src)
+    (hfe : dst + h0 ≤ e) (hfrt : InRanges dst (e - dst) R.rt) (hheld : Held R L p l) (hext : LiveExt R L L0)
+    (hsep : LiveSep L0 [(dst, e)]) (hsrc : 0 < n → src = p + 96 + a) (hs : src + n ≤ p + l) (hn : n ≤ h0) :
+    n = 0 := by
+  rcases Nat.eq_zero_or_pos n with h | h
+  · exact h
+  · exfalso
+    have hs' := hsrc h
+    rcases hheld with ⟨r, hr, h1, h2⟩ | hout
+    · have := hsep r (hext.mem_old hr)
+      simp only [Janus.outside_cons, Janus.outside_nil, and_true] at this
+      omega
+    · obtain ⟨r, hr, h1, h2⟩ := hfrt
+      have := MemFrame.outside_mem hout hr
+      omega
+
 end FvModexp.Amd64.Run
