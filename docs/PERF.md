@@ -1098,3 +1098,14 @@ or not at all; (3) budget goals: one-line Nat lemmas, never `omega` in the post-
 | P2W2 (full) / P2W2E (ens/sum) | 2.2 / 5.7 s | ≤ 2.4 GB |
 | P2W2Cp2 after the UB.rs field (rebuild) | 81.7 s (s22: 41 s) | 2.4 GB |
 Body segments are independent modules importing only BJ (ROW-TIME rule); composition modules are trivial.
+
+## asm s24 (2026-11-12) — drs segment 3b + nat.mul call (arm64, dev compile, LEAN_NUM_THREADS=4)
+| module | time | mem | note |
+|---|---|---|---|
+| Common/DrsMulVal | 1.6 s | 2.0 GB | pure list/limb lemmas |
+| Arm64/Nat/DrsB3T | 2.8 s | 2.3 GB | `t3_post` (pure) |
+| Arm64/Nat/DrsB3C | 3.7 s | 2.3 GB | `b3s`; was 567 s with two failing `omega`s after `simp only [..] at *` — fixed by giving omega only the needed facts |
+| Arm64/Nat/DrsMulP | 6.5 s | 2.5 GB | `mul_pre` |
+| Arm64/Nat/DrsCRel | 2.6 s | 2.3 GB | corr-loop relations, `Mc.own3` |
+| Arm64/Nat/DrsMulQ | 76–102 s | 4.4 GB | `mul_post` — to trim (split value part / env part) |
+| Arm64/Nat/DrsB4 | > 8 GB (memcap kill) | — | WIP, not committed: v1 (post lemma applied with X pinned only by `X.mem = S.mem`) > 9 min / 9.6 GB; v2 (abstract call state `b4c`) still > 8 GB — profile next session |

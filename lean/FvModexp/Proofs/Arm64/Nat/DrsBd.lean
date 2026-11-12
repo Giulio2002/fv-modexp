@@ -139,7 +139,7 @@ theorem Ev.callN {R : RtInv} {c : Cx} {s : State} {Lk : List (Nat × Nat)} {bk b
 theorem Ev.grd {R : RtInv} {c : Cx} {s : State} {Lk : List (Nat × Nat)} {bk : Nat} {M : Memory}
     (hcr : Cr R c s) (h : Ev R c s Lk bk M) : M.readLE (grd s) 8 = s.mem.readLE (grd s) 8 := by
   obtain ⟨hce, -, -, -, -, -, -, -, -, -, -, -, -, -, ⟨-, -, -, -, hqg⟩, ⟨-, -, -, -, hug⟩, -, -, -, -,
-    ⟨-, -, hstg, harr⟩, ⟨-, hc0⟩, -⟩ := hcr.pre
+    ⟨-, -, hstg, harr⟩, ⟨-, hc0, -⟩, -⟩ := hcr.pre
   obtain ⟨-, -, -, -, hga, hgr, -, -⟩ := hce
   obtain ⟨-, hag⟩ := harr hc0
   refine h.fr.readLE _ _ ?_

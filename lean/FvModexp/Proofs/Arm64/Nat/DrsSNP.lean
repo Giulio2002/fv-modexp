@@ -47,7 +47,7 @@ theorem Loc.sep {R : RtInv} {c : Cx} {s : State} {a n : Nat}
     (hpre : DrsPreW R c.b c.L (drsC (stLen s.mem c.st) c.ul c.vl) c.W c.qp c.ql c.qc c.st c.up c.ul c.uc c.vp c.vl c.vc s)
     (h : Loc R c s a n) : Sep c s a n := by
   obtain ⟨hce, -, hgl, -, -, -, -, -, -, -, -, -, -, -, ⟨-, -, hqh, -, -⟩, ⟨-, -, huh, -, -⟩, ⟨-, -, hvh, -, -, -, -⟩,
-    -, -, -, hsti, ⟨-, hc0⟩, ⟨-, hqf⟩, ⟨-, huf⟩, ⟨-, hvf⟩, -, hstf, hfw, ⟨-, -, -, hfgA⟩, -, -⟩ := hpre
+    -, -, -, hsti, ⟨-, hc0, -⟩, ⟨-, hqf⟩, ⟨-, huf⟩, ⟨-, hvf⟩, -, hstf, hfw, ⟨-, -, -, hfgA⟩, -, -⟩ := hpre
   obtain ⟨-, ⟨-, hb', -, -⟩, -, hout, -, hgr, -, -⟩ := hce
   obtain ⟨⟨-, hsth, -, -, -, hlc, -⟩, -, -, harr⟩ := hsti
   obtain ⟨-, harg⟩ := harr hc0

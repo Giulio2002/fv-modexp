@@ -20,7 +20,7 @@ theorem Ev.callEnv {R : RtInv} {c : Cx} {s X : State} {Lk : List (Nat × Nat)} {
     (hk : k + 400 ≤ c.W) (ha : a + 8 ≤ 400) : CallEnv R Lk X k a := by
   have hpre := hcr.pre
   obtain ⟨hce, -, -, -, -, -, -, -, -, -, -, -, -, -, ⟨hqa, -, -, -, -⟩, ⟨hua, -, -, -, -⟩, -, -, -, -,
-    ⟨hsok, -, -, -⟩, ⟨-, hc0⟩, -⟩ := hpre
+    ⟨hsok, -, -, -⟩, ⟨-, hc0, -⟩, -⟩ := hpre
   have hLs1 := lsep hce (hcr.ext1.trans h.ext)
   obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb, ha', hw⟩, hdl, hout, hga, hgr, -, hro⟩ := hce
   unfold Apart at hga
