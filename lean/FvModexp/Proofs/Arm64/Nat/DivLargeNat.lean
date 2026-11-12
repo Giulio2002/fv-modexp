@@ -15,6 +15,7 @@ namespace FvModexp.Arm64.DivLarge
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
+set_option janus.callRegions true in
 set_option linter.janusRenameI false in
 theorem pro2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (stkSN abSN : Nat) (hSN : ExpHyp.StackNatHyp impl R [ExpHyp.fnStackNat] stkSN abSN)
@@ -89,7 +90,8 @@ theorem pro2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
       calls [hSN' b L]
     rename_i hpc' hsp' h28' h29' h18' hr1 hr2 L1 b1 hext hr0 hbud hinv2 k1 k2 k3 k4 k5 k6 k7 hlen2 hsame hgrow hF2 hLF2
     refine k s' L1 b1 ⟨?qpc, ?qsp, ?q28, ?q29, ?q18, ?q0, ?q1, ?q2, hext, by simpa using hbud, hinv2,
-      ⟨k1, k2, by rw [hF2.accessible, hF.accessible]; exact k3, by omega, k5, k6, k7⟩, ?qlen, ?qsame, ?qgrow, ?F2, ?LF2⟩
+      ⟨k1, k2, by rw [hF2.accessible, hF.accessible]; exact k3, by omega, k5, k6, k7⟩, ?qlen, ?qsame, ?qgrow, ?F2, ?LF2, ?qreg⟩
+    case qreg => rw [hrg1, hreg]
     case qlen => rw [hlen2]
     case qsame => intro h; exact hsame h
     case qgrow => intro h; exact hgrow h
@@ -112,7 +114,8 @@ theorem pro2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
       calls [hSN' b L]
     rename_i hpc' hsp' h28' h29' h18' hr1 hr2 L1 b1 hext hr0 hbud hinv2 k1 k2 k3 k4 k5 k6 k7 hlen2 hsame hgrow hF2 hLF2
     refine k s' L1 b1 ⟨?qpc, ?qsp, ?q28, ?q29, ?q18, ?q0, ?q1, ?q2, hext, by simpa using hbud, hinv2,
-      ⟨k1, k2, by rw [hF2.accessible, hF.accessible]; exact k3, by omega, k5, k6, k7⟩, ?qlen, ?qsame, ?qgrow, ?F2, ?LF2⟩
+      ⟨k1, k2, by rw [hF2.accessible, hF.accessible]; exact k3, by omega, k5, k6, k7⟩, ?qlen, ?qsame, ?qgrow, ?F2, ?LF2, ?qreg⟩
+    case qreg => rw [hrg1, hreg]
     case qlen => rw [hlen2]
     case qsame => intro h; exact hsame h
     case qgrow => intro h; exact hgrow h

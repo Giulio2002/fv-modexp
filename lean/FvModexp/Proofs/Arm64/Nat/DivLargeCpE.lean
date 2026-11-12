@@ -31,7 +31,8 @@ theorem cpE (impl : List Segment) (R : RtInv)
     (h0 : X.regs 0 = BitVec.ofNat 64 t) (h1 : X.regs 1 = BitVec.ofNat 64 vl) (h2 : X.regs 2 = BitVec.ofNat 64 vl)
     (h3 : X.regs 3 = BitVec.ofNat 64 C) (h4 : X.regs 4 = BitVec.ofNat 64 (il + 1))
     (h5 : X.regs 5 = BitVec.ofNat 64 P) (h11 : X.regs 11 = BitVec.ofNat 64 0) (h12 : X.regs 12 = BitVec.ofNat 64 vl)
-    (h13 : X.regs 13 = BitVec.ofNat 64 il) (hm : X.mem = m4) (Q : State → Prop)
+    (h13 : X.regs 13 = BitVec.ofNat 64 il) (hm : X.mem = m4) (hreg4 : m4.regions = s.mem.regions)
+    (Q : State → Prop)
     (k : ∀ S', AtA R b L zp zc st up uc ip il ic vp vl vc s t w1 c1 L1 b1 Lk bk P C 0 S' →
       ReachesRet (LibDiv.program.link impl) (s.regs 30) S' Q) :
     ReachesRet (LibDiv.program.link impl) (s.regs 30) X Q := by
@@ -47,6 +48,6 @@ theorem cpE (impl : List Segment) (R : RtInv)
   janus_run [hm, hPa] until [aliasPt]
   rw [show P + il * 8 = P + 8 * il by omega]
   exact k _ ⟨rfl, rfl, h28, h29, h18, h0, h1, h2, h3, h4, h5, h11, h12, hmU, hUA, hS.ext2, hS.bud2, by omega,
-    hvv, hvt, huv⟩
+    hvv, hvt, huv, by simp only [Memory.regions_writeLE]; exact hreg4⟩
 
 end FvModexp.Arm64.DivLarge

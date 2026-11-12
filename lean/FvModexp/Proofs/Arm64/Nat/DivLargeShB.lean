@@ -34,7 +34,7 @@ theorem shB2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     (hA2 : MemFrame m3 X.mem [(s.sp.toNat - 296, s.sp.toNat - 232)])
     (hz : X.mem.readLE (s.sp.toNat - 296) 8 = P) (hn : X.mem.readLE (s.sp.toNat - 288) 8 = il)
     (hx : X.mem.readLE (s.sp.toNat - 272) 8 = ip) (hs : X.mem.readLE (s.sp.toNat - 248) 8 = sh)
-    (Q : State → Prop)
+    (hXreg : X.mem.regions = s.mem.regions) (Q : State → Prop)
     (k : ∀ S', AtA R b L zp zc st up uc ip il ic vp vl vc s t w1 c1 L1 b1 Lk bk P C sh S' →
       ReachesRet (LibDiv.program.link impl) (s.regs 30) S' Q) :
     ReachesRet (LibDiv.program.link impl) (s.regs 30) X Q := by
@@ -79,8 +79,8 @@ theorem shB2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
       simp only [List.mem_singleton] at hr; subst hr; left
       exact (hE.pre.ce.2.2.2.1 : Outside (s.sp.toNat - 41264) (41264 + 112) R.rt).of_sub (by simp only; omega)
         (by simp only; omega)) hinv3)).1
-  refine ReachesRet.call (lshvu impl hap R bk Lk) hpc hpre ?_
-  intro T hT ⟨junk, f, v, fpsr, m4, hs4, hq, hinv4, _⟩
+  refine ReachesRet.call_regions (lshvu impl hap R bk Lk) hpc hpre ?_
+  intro T hT ⟨junk, f, v, fpsr, m4, hs4, hq, hinv4, _⟩ hrg
   subst hs4
   unfold LshVUSum.Q at hq
   rw [hspn, show s.sp.toNat - 304 + 8 = s.sp.toNat - 296 by omega, show s.sp.toNat - 304 + 16 = s.sp.toNat - 288 by omega,
@@ -93,7 +93,8 @@ theorem shB2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     hA1sh hQ1f hQ1v hA2 q3 q1 q2 hinv4 _ (by rw [hT, h30]) (by simp only [retState0]; exact hsp)
     (by simp only [retState0, regs0_apply]; simp only [Nat.reduceEqDiff, or_false, false_or, if_true, h28])
     (by simp only [retState0, regs0_apply]; simp only [Nat.reduceEqDiff, or_false, false_or, if_true, h29])
-    (by simp only [retState0, regs0_apply]; simp only [Nat.reduceEqDiff, or_false, false_or, if_true, h18]) rfl Q k
+    (by simp only [retState0, regs0_apply]; simp only [Nat.reduceEqDiff, or_false, false_or, if_true, h18]) rfl
+    (by simp only [retState0] at hrg; rw [hrg]; exact hXreg) Q k
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
@@ -112,7 +113,7 @@ theorem shB (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     (hinv3 : R.inv bk Lk (s.regs 28).toNat (view R.rt Lk m3))
     (T : State) (hpc : T.pc = BitVec.ofNat 64 (segAddr Extracted.program fn + 0x234)) (hsp : T.sp = s.sp - 304#64)
     (h28 : T.regs 28 = s.regs 28) (h29 : T.regs 29 = s.sp - 312#64) (h18 : T.regs 18 = s.regs 18) (hm : T.mem = m3)
-    (Q : State → Prop)
+    (hreg3 : m3.regions = s.mem.regions) (Q : State → Prop)
     (k : ∀ S', AtA R b L zp zc st up uc ip il ic vp vl vc s t w1 c1 L1 b1 Lk bk P C sh S' →
       ReachesRet (LibDiv.program.link impl) (s.regs 30) S' Q) :
     ReachesRet (LibDiv.program.link impl) (s.regs 30) T Q := by
@@ -139,7 +140,8 @@ theorem shB (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   rw [hsh] at hshb
   janus_run [hm, r4, r6, r8, r9, r10, r11] until [segAddr Extracted.program lshVUfn]
   refine shB2 impl hap R b L c zp zc st up uc ip il ic vp vl vc s t w1 c1 L1 b1 Lk bk P C hE S hS sh hsh hsh0 A1 m3 hA1
-    hA1sh hQ1f hQ1v hinv3 _ rfl rfl ?g28 ?g29 ?g18 rfl (by janus_frame) ?gz ?gn ?gx ?gs Q k
+    hA1sh hQ1f hQ1v hinv3 _ rfl rfl ?g28 ?g29 ?g18 rfl (by janus_frame) ?gz ?gn ?gx ?gs ?greg Q k
+  case greg => simp only [Memory.regions_writeLE]; first | exact hreg3 | (rw [hm]; exact hreg3)
   case g28 => simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, h28]
   case g29 => simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, h29]
   case g18 => simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, h18]

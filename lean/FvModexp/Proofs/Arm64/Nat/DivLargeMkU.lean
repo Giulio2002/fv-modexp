@@ -59,7 +59,8 @@ theorem mkR (impl : List Segment) (R : RtInv) (stkSN abSN : Nat) (hk1 : stkSN �
       (s.sp.toNat - 192) 8 (il + 1)).writeLE (s.sp.toNat - 104) 8 up) (slotsW s) := by
     simp only [slotsW]; janus_frame
   refine k _ ⟨?qpc, rfl, ?q28, ?q29, ?q18, hr0, ?q1, ?q2, ?q3, ?q4, ?q5, ?qmem, ?qC, ?qL, ?qP, ?qua, LiveExt.refl R L1,
-    Nat.sub_le _ _, ?qis⟩
+    Nat.sub_le _ _, ?qis, ?qreg⟩
+  case qreg => simp only [Memory.regions_writeLE]; exact hA.reg
   case qpc => janus_simp
   case q28 => simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, h28]
   case q29 => simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, h29]

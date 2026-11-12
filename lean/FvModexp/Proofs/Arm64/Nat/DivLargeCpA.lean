@@ -24,7 +24,7 @@ theorem cpA (impl : List Segment) (R : RtInv)
     (hgrd : S.mem.readLE ((s.regs 28).toNat + 16) 8 = s.mem.readLE ((s.regs 28).toNat + 16) 8)
     (hclz : clzNat 64 (s.mem.readLE (vp + 8 * (vl - 1)) 8) = 0) (Q : State → Prop)
     (k : ∀ (m : Memory) (T : State), T.pc = BitVec.ofNat 64 (segAddr Extracted.program fn + 0x198) →
-      T.sp = s.sp - 304#64 → T.regs 28 = s.regs 28 → T.regs 29 = s.sp - 312#64 → T.regs 18 = s.regs 18 → T.mem = m →
+      T.sp = s.sp - 304#64 → T.regs 28 = s.regs 28 → T.regs 29 = s.sp - 312#64 → T.regs 18 = s.regs 18 → T.mem = m → m.regions = s.mem.regions →
       MemFrame (S.mem.writeLE (s.sp.toNat - 120) 8 0) m (R.rt ++ [(s.sp.toNat - 304 - 4096, s.sp.toNat - 304 - 8),
         (s.sp.toNat - 304 + 8, s.sp.toNat - 304 + 8 + 8 * 3)] ++ [(t, t + 8 * vl)]) →
       LiveFrame (S.mem.writeLE (s.sp.toNat - 120) 8 0) m Lk [(t, t + 8 * vl)] →
@@ -57,7 +57,7 @@ theorem cpA (impl : List Segment) (R : RtInv)
   have hvil := hl.vil
   have hvh : Held R Lk t (8 * vl) := hS.ext2.held hl.theld
   janus_run [m1, m2, m3, hc0, hl3] until [cA "runtime.memmove"]
-  refine ReachesRet.call (hmv Lk bk) rfl (mv_pre (dst := t) (src := vp) (n := 8 * vl) hE hS.ext2 _ rfl ?q28 ?qg ?qa
+  refine ReachesRet.call_regions (hmv Lk bk) rfl (mv_pre (dst := t) (src := vp) (n := 8 * vl) hE hS.ext2 _ rfl ?q28 ?qg ?qa
     ?l1 ?l2 ?qi ?q0 ?q1 ?q2 (hsv.2.1 _ _ _ (by omega)) (by omega) ?dacc hvh (by have := hl.tw; omega) (by omega)
     ?sacc (by have := hl.vw; omega)) ?qk
   case q28 => simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, h28]
@@ -72,7 +72,7 @@ theorem cpA (impl : List Segment) (R : RtInv)
   case dacc => simp only [Memory.accessible_writeLE]; rw [hSacc]; exact hE.scr.acc
   case sacc => simp only [Memory.accessible_writeLE]; rw [hSacc]; exact hE.pre.vo.2.1
   case qk =>
-    intro T hT ⟨junk, f, v, m, ex, ep, hs, hMF, hLF, hinv, hcp⟩
+    intro T hT ⟨junk, f, v, m, ex, ep, hs, hMF, hLF, hinv, hcp⟩ hrg
     subst hs
     simp only [calleeStack, setReg_apply, Nat.reduceEqDiff, ↓reduceIte, hr0, BitVec.toNat_ofNat, e304, h28] at hMF hLF hcp hinv
     rw [Nat.mod_eq_of_lt (show t < 2 ^ 64 by omega), Nat.mod_eq_of_lt (show vp < 2 ^ 64 by omega),
@@ -81,6 +81,7 @@ theorem cpA (impl : List Segment) (R : RtInv)
     exact k m _ (by rw [hT]; simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte]; rfl) rfl
       (by simp only [retStateX, callRegs_apply, setReg_apply, Nat.reduceEqDiff, ↓reduceIte, h28, true_or, or_true, if_true])
       (by simp only [retStateX, callRegs_apply, setReg_apply, Nat.reduceEqDiff, ↓reduceIte, h29, true_or, or_true, if_true])
-      (by simp only [retStateX, callRegs_apply, setReg_apply, Nat.reduceEqDiff, ↓reduceIte, h18, true_or, or_true, if_true]) rfl hMF hLF hinv hcp
+      (by simp only [retStateX, callRegs_apply, setReg_apply, Nat.reduceEqDiff, ↓reduceIte, h18, true_or, or_true, if_true]) rfl
+      (by simp only [retStateX, Memory.regions_writeLE] at hrg ⊢; rw [hrg]; exact hS.reg) hMF hLF hinv hcp
 
 end FvModexp.Arm64.DivLarge
