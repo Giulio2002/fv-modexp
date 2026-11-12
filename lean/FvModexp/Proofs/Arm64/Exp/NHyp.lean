@@ -13,7 +13,8 @@ result nat into `z` (`X0..X2`) or a fresh array; they share one entry shape `CPr
   guard word, `stCap = 0 → stW = 0`, `stLen + need ≤ 2^16`); the write-barrier flag readable and apart from the header;
   the written ranges (`z`, header, free part) apart from the threshold globals `gA` (as `ExpHyp.DivPre`); `cst ≤ b`.
 * `CPost … zp zc st v cst s s'`: result `(p, l, c)` in `X0..X2` with value `v` (pre-state values), normalised, old or
-  fresh (`ExpHyp.NatOF … 1`), `RtPost`, `StackBack`, frame `R.rt ++ winA ++ [z] ++ stkWs`, `LiveFrame L ([z] ++ stkWs)`.
+  fresh (`ExpHyp.NatOF … 1`), `RtPost`, `StackBackL` (the stack array, when not the entry one, is an element of `L'`),
+  frame `R.rt ++ winA ++ [z] ++ stkWs`, `LiveFrame L ([z] ++ stkWs)`.
 
 Values: `rem` → `U % V`; `expNNSlow` → `X ^ Y % M` (`0 < X`, `2 ≤ Y`, `0 < M`; `Exp.expNNSlow_correct` bridges the model);
 `expNNPowerOfTwo` → `X ^ Y % 2 ^ logM` (`0 < X`, `0 < Y`, `1 ≤ logM ≤ 2^13`). Costs/needs are parameters (functions of
@@ -53,7 +54,7 @@ open FvModexp.Arm64.ExpHyp
     Prop :=
   ∃ p l c : Nat, s'.regs 0 = BitVec.ofNat 64 p ∧ s'.regs 1 = BitVec.ofNat 64 l ∧ s'.regs 2 = BitVec.ofNat 64 c ∧
     ∃ (L' : List (Nat × Nat)) (b' : Nat), NatOF R L L' s'.mem zp zc 1 p l c v ∧ RtPost R b cst L L' b' s s' ∧
-      StackBack R L L' st s.mem s'.mem ∧
+      StackBackL R L L' st s.mem s'.mem ∧
       MemFrame s.mem s'.mem (R.rt ++ winA s stk above ++ [(zp, zp + 8 * zc)] ++ stWs s.mem st) ∧
       LiveFrame s.mem s'.mem L ([(zp, zp + 8 * zc)] ++ stWs s.mem st)
 
