@@ -50,4 +50,16 @@ o = ["import Extracted", "import FvModexp.Proofs.Common.LibEq", "",
      "    simp only [List.cons_append, List.nil_append, FvModexp.maskFilter]",
      "  unfold program; simp only [" + ("Amd64.Program.onlySegments" if isa == "amd64" else "Program.onlySegments") + "]; rw [h]", "",
      f"end FvModexp.{IsaN}.{name}", ""]
+byidx = {v: k for k, v in segs.items()}
+if allnames == [byidx[i] for i in order]:
+    # every segment, names in extraction order: `names` IS `segments.map name` (rfl, no string decisions), so the filter
+    # keeps everything (agent top s19: the masked proof of the 82-segment amd64 LibRun cost 55 s compile + 40 s replay)
+    o = o[:o.index("/-- the mask of `names.contains seg.name` over the Run segments, in chunks (one kernel decision each) -/")] + [
+     "/-- `names` lists every segment's name, in extraction order -/",
+     "theorem names_eq : names = Extracted.program.segments.map (·.name) := rfl", "",
+     "theorem eq_only : program = Extracted.program.onlySegments names := by",
+     "  unfold program; simp only [" + ("Amd64.Program.onlySegments" if isa == "amd64" else "Program.onlySegments") + "]",
+     "  rw [List.filter_eq_self.2 (fun seg h => by rw [names_eq]; exact List.elem_eq_true_of_mem (List.mem_map_of_mem h))]",
+     "  rfl", "",
+     f"end FvModexp.{IsaN}.{name}", ""]
 open(out, "w").write("\n".join(o))
