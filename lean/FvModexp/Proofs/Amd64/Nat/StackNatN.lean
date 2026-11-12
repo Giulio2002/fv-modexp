@@ -31,7 +31,7 @@ theorem noGrow (impl : List Amd64.Segment) (R : RtInv)
     (hpre : Pre R b L 4192 24 st.toNat n.toNat s)
     (hk : stLen s.mem st.toNat + rnd n.toNat ≤ stCap s.mem st.toNat) :
     ReachesRet (LibStackNat.program.link impl) (retAddrOf s) s fun s' =>
-      RegsOK s s' ∧ Post R b L 4192 24 st.toNat n.toNat s s' := by
+      RegsOK s s' ∧ PostL R b L 4192 24 st.toNat n.toNat s s' := by
   have hpre' := hpre
   obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, hLs, hro, htls⟩, hsv, hok, hstw, harr, hn16, hln,
     hcost, hinv0, hwbf, hwbA, hfa⟩ := hpre'
@@ -53,7 +53,8 @@ theorem noGrow (impl : List Amd64.Segment) (R : RtInv)
     ?_ ?_ ?_ ?_ ?_ rfl
   · refine ⟨hpre, hra, ?_, ?_, hF.mono fun a k h => by rw [outside_append] at h; exact h.2, LiveFrame.of_win hF hLs,
       LiveExt.refl R L, by omega, ?_, hnl, hk, hcb, by simp only [stW]; exact Janus.Arm64.Memory.readLE_lt _ _ _,
-      fun _ => ⟨rfl, rfl⟩, fun h => absurd h (by simp only [stLen, stCap]; omega), hLs, fun h => (hcl h).1, hdf⟩
+      fun _ => ⟨rfl, rfl⟩, fun h => absurd h (by simp only [stLen, stCap]; omega), hLs, fun h => (hcl h).1, hdf,
+      fun h => absurd h (by simp only [stLen, stCap]; omega)⟩
     · rw [Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega)]
     · rw [Janus.Arm64.Memory.readLE_writeLE_self, Nat.mod_eq_of_lt (BitVec.isLt _)]
     · exact RtInv.inv_frame hF (fun r hr => by

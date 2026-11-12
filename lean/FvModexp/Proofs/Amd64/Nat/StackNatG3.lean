@@ -48,7 +48,7 @@ theorem g3 (impl : List Amd64.Segment) (R : RtInv)
     (s10 : S.mem.readLE ((s.regs 4).toNat - 16) 8 = p)
     (sst : S.mem.readLE ((s.regs 4).toNat + 8) 8 = st.toNat) (sn : S.mem.readLE ((s.regs 4).toNat + 16) 8 = n.toNat) :
     ReachesRet (LibStackNat.program.link impl) (retAddrOf s) S fun s' =>
-      RegsOK s s' ∧ Post R b L 4192 24 st.toNat n.toNat s s' := by
+      RegsOK s s' ∧ PostL R b L 4192 24 st.toNat n.toNat s s' := by
   have hpre' := hpre
   obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, hLs, hro, htls⟩, hsv, hok, hstw, harr, hn16, hln,
     hcost, hinv0, -⟩ := hpre'
@@ -105,7 +105,8 @@ theorem g3 (impl : List Amd64.Segment) (R : RtInv)
       List.pairwise_singleton _ _⟩
   have hJ : J R b L st.toNat n.toNat s (L ++ [(p, p + 8 * gc)]) (b - 8 * gc) p gc m3 := by
     refine ⟨hpre, hra, rra, rbp, ?_, ?_, hext, by omega, by rw [← h14]; exact hinv3, ?_, hgcl, hgcb, by omega,
-      fun h => absurd h (by omega), fun _ => ⟨hpin, hapL⟩, hLs1, ?_, hdf0⟩
+      fun h => absurd h (by omega), fun _ => ⟨hpin, hapL⟩, hLs1, ?_, hdf0,
+      fun _ => List.mem_append_right _ (List.mem_singleton_self _)⟩
     · refine hF.trans hMF3 fun a k ho => ⟨ho, ?_⟩
       simp only [wJ, win, outside_append, outside_cons, outside_nil, and_true] at ho ⊢
       obtain ⟨hrt, h1⟩ := ho

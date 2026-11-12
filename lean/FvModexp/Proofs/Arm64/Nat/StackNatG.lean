@@ -23,7 +23,7 @@ theorem grow (impl : List Segment) (R : RtInv)
     (hk : stCap s.mem st.toNat < stLen s.mem st.toNat + rnd n.toNat) :
     ReachesRet (LibStackNat.program.link impl) (s.regs 30) s fun s' =>
       (s'.sp = s.sp ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧ s'.regs 18 = s.regs 18) ∧
-        Post R b L 4208 24 st.toNat n.toNat s s' := by
+        PostL R b L 4208 24 st.toNat n.toNat s s' := by
   have hpre' := hpre
   obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, hd, hout, hga, hgr', hLs, hro⟩, hsv, hok, hstw, harr, hn16, hln,
     hcost, hinv0, hwbf, hwbA, hfa⟩ := hpre'

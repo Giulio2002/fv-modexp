@@ -26,7 +26,7 @@ theorem full (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
     Summary (LibStackNat.program.link impl) (segAddr Extracted.program fn)
       (fun s => s.mem.readLE (s.regs 4).toNat 8 < 2 ^ 47 ∧ s.xmm 15 = 0#128 ∧ s.df = false ∧
         s.regs 0 = st ∧ s.regs 3 = n ∧ Pre R b L 4192 24 st.toNat n.toNat s)
-      (fun s s' => RegsOK s s' ∧ Post R b L 4192 24 st.toNat n.toNat s s') := by
+      (fun s s' => RegsOK s s' ∧ PostL R b L 4192 24 st.toNat n.toNat s s') := by
   intro s hpc ⟨hra, hx15, hdf, h0, h3, hpre⟩
   have hc : CodeIn64 (Extracted.program.ofImpl impl) (LibStackNat.program.link impl) := by
     rw [LibStackNat.eq_only]; exact codeIn_ofImpl_restrict_of_apart64 hap names
@@ -34,6 +34,21 @@ theorem full (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
   · exact noGrow impl R (WbLiveContract64.of_codeIn hc hwb) b L st n s hpc hra hx15 hdf h0 h3 hpre hk
   · exact grow impl R (GrowsliceLiveContract64.of_codeIn hc hgr) (MemclrNoHeapPointersLive64.of_codeIn hc hmc)
       (WbLiveContract64.of_codeIn hc hwb) b L st n s hpc hra hx15 hdf h0 h3 hpre (by omega)
+
+/-- L form of `ens` (`PostL`) -/
+theorem ensL (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
+    (hgr : GrowsliceLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.growslice") 4096 R)
+    (hmc : MemclrNoHeapPointersLive64 (Extracted.program.ofImpl impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
+    (hwb : WbLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2)
+    (b : Nat) (L : List (Nat × Nat)) (st n : BitVec 64) :
+    Ensures ((Extracted.program.onlySegments names).link impl) (segAddr Extracted.program fn) [st, n]
+      (fun s => Pre R b L 4192 24 st.toNat n.toNat s) (fun s s' => PostL R b L 4192 24 st.toNat n.toNat s s') := by
+  rw [show names = LibStackNat.names from rfl, ← LibStackNat.eq_only]
+  intro ret hret s hs hpre
+  janus64_intro hs
+  refine Summary.returns (full impl hap R hgr hmc hwb b L st n) hret (by rw [h_rip]; rfl)
+    (by rw [retAddrOf, h_ret]) ⟨by rw [h_ret]; exact hret.user, h_x15, h_df, h_a0, h_a1, hpre⟩
+    fun s' ⟨⟨a, b, c, d⟩, hq⟩ => ⟨⟨a, b, c, d⟩, hq⟩
 
 /-- **`(*stack).nat`** (amd64): as `FvModexp.Arm64.StackNat.ens` (results `RAX, RBX, RCX`, `fsBase` kept). -/
 theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
@@ -48,7 +63,7 @@ theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
   janus64_intro hs
   refine Summary.returns (full impl hap R hgr hmc hwb b L st n) hret (by rw [h_rip]; rfl)
     (by rw [retAddrOf, h_ret]) ⟨by rw [h_ret]; exact hret.user, h_x15, h_df, h_a0, h_a1, hpre⟩
-    fun s' ⟨⟨a, b, c, d⟩, hq⟩ => ⟨⟨a, b, c, d⟩, hq⟩
+    fun s' ⟨⟨a, b, c, d⟩, hq⟩ => ⟨⟨a, b, c, d⟩, PostL.toPost hq⟩
 
 /-- `ens` in the premise form `Hyp`. -/
 theorem hyp (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
@@ -66,6 +81,24 @@ def sum (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program imp
     (b : Nat) (L : List (Nat × Nat)) (st n : BitVec 64) (ms : List String)
     (hsub : ∀ x, names.contains x = true → ms.contains x = true) :=
   Ensures.toSummaryIn (ens impl hap R hgr hmc hwb b L st n) (A64.noExit_restrict64 hap names)
+    (by simp [numIntRegs]) (A64.codeIn_restrict_mono64 hap hsub)
+
+/-- `ensL` in the premise form `HypL` -/
+theorem hypL (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
+    (hgr : GrowsliceLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.growslice") 4096 R)
+    (hmc : MemclrNoHeapPointersLive64 (Extracted.program.ofImpl impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
+    (hwb : WbLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2) :
+    HypL impl R names 4192 24 := fun b L st n => ensL impl hap R hgr hmc hwb b L st n
+
+set_option linter.defProp false in
+/-- `ensL` as a callee summary (as `sum`) -/
+def sumL (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
+    (hgr : GrowsliceLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.growslice") 4096 R)
+    (hmc : MemclrNoHeapPointersLive64 (Extracted.program.ofImpl impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
+    (hwb : WbLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2)
+    (b : Nat) (L : List (Nat × Nat)) (st n : BitVec 64) (ms : List String)
+    (hsub : ∀ x, names.contains x = true → ms.contains x = true) :=
+  Ensures.toSummaryIn (ensL impl hap R hgr hmc hwb b L st n) (A64.noExit_restrict64 hap names)
     (by simp [numIntRegs]) (A64.codeIn_restrict_mono64 hap hsub)
 
 end FvModexp.Amd64.StackNat

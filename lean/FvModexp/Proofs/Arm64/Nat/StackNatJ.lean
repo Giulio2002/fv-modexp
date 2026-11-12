@@ -42,6 +42,7 @@ structure J (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (st n : Nat) (s : Stat
   grow : stCap s.mem st < stLen s.mem st + rnd n → InRanges w1 (8 * c1) R.rt ∧ ApartAll w1 (8 * c1) L
   lsep : LiveSep L1 (win s 4208 24)
   wwin : 0 < c1 → Outside w1 (8 * c1) (win s 4208 24)
+  gmem : stCap s.mem st < stLen s.mem st + rnd n → (w1, w1 + 8 * c1) ∈ L1
 
 /-- the header is apart from the result's first word -/
 theorem J.hdr {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st n : Nat} {s : State} {L1 : List (Nat × Nat)}
@@ -77,7 +78,8 @@ theorem post_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st n : Nat} {s : 
       (stLen s.mem st + rnd n ≤ stCap s.mem st → stW M3 st = stW s.mem st ∧ stCap M3 st = stCap s.mem st) ∧
       (stCap s.mem st < stLen s.mem st + rnd n → InRanges (stW M3 st) (8 * stCap M3 st) R.rt ∧
         ApartAll (stW M3 st) (8 * stCap M3 st) L) ∧
-      MemFrame s.mem M3 (R.rt ++ winA s 4208 24 ++ stkWs s.mem st) ∧ LiveFrame s.mem M3 L (stkWs s.mem st) := by
+      MemFrame s.mem M3 (R.rt ++ winA s 4208 24 ++ stkWs s.mem st) ∧ LiveFrame s.mem M3 L (stkWs s.mem st) ∧
+      (stCap s.mem st < stLen s.mem st + rnd n → (stW M3 st, stW M3 st + 8 * stCap M3 st) ∈ L') := by
   obtain ⟨-, -, hok, -⟩ := h.pre
   obtain ⟨h8, hh, ha, h48, -, -, -⟩ := hok
   have e1 : stW M3 st = w1 := hw
@@ -86,7 +88,7 @@ theorem post_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st n : Nat} {s : 
   unfold StkOK
   rw [e1, e2, e3]
   refine ⟨L1, b1, ⟨h.ext, h.bud, hinv⟩, ⟨h8, h.ext.held hh, by rw [hacc]; exact ha, h48, ?_, ?_, h.c1b⟩, rfl, h.keep,
-    h.grow, hF, hLF⟩
+    h.grow, hF, hLF, h.gmem⟩
   · intro hc0
     obtain ⟨a1, a2, a3, a4⟩ := h.wl hc0
     exact ⟨a1, a2, by rw [hacc]; exact a3, a4⟩
@@ -108,7 +110,8 @@ theorem post_fin {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st n : Nat} {s :
       (stLen s.mem st + rnd n ≤ stCap s.mem st → stW M3 st = stW s.mem st ∧ stCap M3 st = stCap s.mem st) ∧
       (stCap s.mem st < stLen s.mem st + rnd n → InRanges (stW M3 st) (8 * stCap M3 st) R.rt ∧
         ApartAll (stW M3 st) (8 * stCap M3 st) L) ∧
-      MemFrame s.mem M3 (R.rt ++ winA s 4208 24 ++ stkWs s.mem st) ∧ LiveFrame s.mem M3 L (stkWs s.mem st) := by
+      MemFrame s.mem M3 (R.rt ++ winA s 4208 24 ++ stkWs s.mem st) ∧ LiveFrame s.mem M3 L (stkWs s.mem st) ∧
+      (stCap s.mem st < stLen s.mem st + rnd n → (stW M3 st, stW M3 st + 8 * stCap M3 st) ∈ L') := by
   have hpre := h.pre
   obtain ⟨⟨-, ⟨hal, hb', ha, hw0⟩, -, hout, -, -, hLs, -⟩, -, hok, hstw, harr, -, -, -, -, -⟩ := hpre
   obtain ⟨hst8, hsth, hstacc, hst48, hnl, hlc, hcb⟩ := hok

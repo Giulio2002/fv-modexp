@@ -65,6 +65,32 @@ abbrev wbA : Nat := Extracted.dataAddr.«runtime.writeBarrier»
         ApartAll (stW s'.mem st) (8 * stCap s'.mem st) L) ∧
       MemFrame s.mem s'.mem (R.rt ++ win s stk above ++ stkWs s.mem st) ∧ LiveFrame s.mem s'.mem L (stkWs s.mem st)
 
+/-- `Post` plus (STACK-IN-LIVE-SET DECISION): a grown array's range is an exact element of the final live set -/
+@[reducible] def PostL (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (stk above st n : Nat) (s s' : State) : Prop :=
+  s'.fsBase = s.fsBase ∧ s'.df = s.df ∧
+  (0 < n → s'.regs 0 = BitVec.ofNat 64 (stW s'.mem st + 8 * stLen s.mem st)) ∧ s'.regs 3 = BitVec.ofNat 64 n ∧
+    s'.regs 1 = BitVec.ofNat 64 n ∧
+    ∃ (L' : List (Nat × Nat)) (b' : Nat), (LiveExt R L L' ∧ b - stackNatCost (stLen s.mem st) n ≤ b' ∧
+      R.inv b' L' (s.regs 14).toNat (view R.rt L' s'.mem)) ∧
+      StkOK s'.mem R L' st ∧ stLen s'.mem st = stLen s.mem st + rnd n ∧
+      (stLen s.mem st + rnd n ≤ stCap s.mem st → stW s'.mem st = stW s.mem st ∧ stCap s'.mem st = stCap s.mem st) ∧
+      (stCap s.mem st < stLen s.mem st + rnd n → InRanges (stW s'.mem st) (8 * stCap s'.mem st) R.rt ∧
+        ApartAll (stW s'.mem st) (8 * stCap s'.mem st) L) ∧
+      MemFrame s.mem s'.mem (R.rt ++ win s stk above ++ stkWs s.mem st) ∧ LiveFrame s.mem s'.mem L (stkWs s.mem st) ∧
+      (stCap s.mem st < stLen s.mem st + rnd n → (stW s'.mem st, stW s'.mem st + 8 * stCap s'.mem st) ∈ L')
+
+theorem PostL.toPost {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {stk above st n : Nat} {s s' : State}
+    (h : PostL R b L stk above st n s s') : Post R b L stk above st n s s' := by
+  obtain ⟨h0, h0', h1, h2, h3, L', b', h4, h5, h6, h7, h8, h9, h10, -⟩ := h
+  exact ⟨h0, h0', h1, h2, h3, L', b', h4, h5, h6, h7, h8, h9, h10⟩
+
+/-- the L form of `Hyp` -/
+def HypL (impl : List Amd64.Segment) (R : RtInv) (ns : List String) (stk above : Nat) : Prop :=
+  ∀ (b : Nat) (L : List (Nat × Nat)) (st n : BitVec 64),
+    Ensures ((Extracted.program.onlySegments ns).link impl) (segAddr Extracted.program fn) [st, n]
+      (fun s => Pre R b L stk above st.toNat n.toNat s)
+      (fun s s' => PostL R b L stk above st.toNat n.toNat s s')
+
 def Hyp (impl : List Amd64.Segment) (R : RtInv) (ns : List String) (stk above : Nat) : Prop :=
   ∀ (b : Nat) (L : List (Nat × Nat)) (st n : BitVec 64),
     Ensures ((Extracted.program.onlySegments ns).link impl) (segAddr Extracted.program fn) [st, n]

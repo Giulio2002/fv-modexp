@@ -35,7 +35,7 @@ theorem g2 (impl : List Segment) (R : RtInv)
     (sst : S.mem.readLE (s.sp.toNat + 8) 8 = st.toNat) (sn : S.mem.readLE (s.sp.toNat + 16) 8 = n.toNat) :
     ReachesRet (LibStackNat.program.link impl) (s.regs 30) S fun s' =>
       (s'.sp = s.sp ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧ s'.regs 18 = s.regs 18) ∧
-        Post R b L 4208 24 st.toNat n.toNat s s' := by
+        PostL R b L 4208 24 st.toNat n.toNat s s' := by
   have hpre' := hpre
   obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, hd, hout, hga, hgr', hLs, hro⟩, hsv, hok, hstw, harr, hn16, hln,
     hcost, hinv0, -⟩ := hpre'
