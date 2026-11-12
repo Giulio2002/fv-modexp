@@ -127,4 +127,37 @@ theorem qarr_alloc {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp z
     ps := (by have := fr _ _ (hx.held (hE.ext.held hpre.sti.1.2.1)); unfold Apart; omega),
     pf := (by have := fr _ _ hw1h; unfold Apart; omega) }
 
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 8000000 in
+/-- the type descriptor `Word` (read-only data) is unchanged after `stk.nat` (pure) -/
+theorem Mem.wordK {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st up uc ip il ic vp vl vc : Nat}
+    {s : State} {t : Nat} {L1 : List (Nat × Nat)} {b1 w1 c1 : Nat}
+    (hE : Env R b L c zp zc st up uc ip il vp vl s t L1 b1 w1 c1) {Lk : List (Nat × Nat)} {bk : Nat} {M : Memory}
+    (hM : Mem R L zp zc st up uc ip il ic vp vl vc s t w1 c1 Lk bk M) :
+    Outside wordT 16 R.rt ∧ Apart wordT 16 (s.sp.toNat - 41264) (41264 + 112) ∧
+      ∀ a n, wordT ≤ a → a + n ≤ wordT + 16 → M.readLE a n = s.mem.readLE a n := by
+  have hpre := hE.pre
+  have hd := hpre.ce.2.2.1
+  have hro := hpre.ce.2.2.2.2.2.2.2
+  obtain ⟨hal, hb', ha, hw⟩ := hpre.ce.2.1
+  have hty : Outside wordT 16 R.rt := hro.out' 1 (by decide) (by decide)
+  have hwt : Apart wordT 16 (s.sp.toNat - 41264) (41264 + 112) := apart_of_data hd 1 (by decide) (by decide) hw
+  have hWw : Outside wordT 16 (stkWs s.mem st) := by
+    have hstacc := hpre.sti.1.2.2.1
+    refine outside_stkWs hpre (apart_of_data hd 1 (by decide) (by decide) hstacc) fun hc => ?_
+    exact apart_of_data hd 1 (by decide) (by decide) (hpre.sti.1.2.2.2.2.1 hc).2.2.1
+  have hWs : Outside wordT 16 (wsL zp zc up uc vl t) := by
+    have h1 : Apart wordT 16 t (8 * vl) := apart_of_data hd 1 (by decide) (by decide) hE.scr.acc
+    unfold Apart at h1
+    refine outside_wsL (by omega) (fun h => ?_) (fun h => ?_)
+    · have : Apart wordT 16 zp (8 * zc) := apart_of_data hd 1 (by decide) (by decide) ((hpre.zo.2.1 h).2.2.1)
+      unfold Apart at this; omega
+    · have : Apart wordT 16 up (8 * uc) := apart_of_data hd 1 (by decide) (by decide) ((hpre.uo.2.1 h).2.2.1)
+      unfold Apart at this; omega
+  refine ⟨hty, hwt, fun a n h1 h2 => hM.fr.readLE a n ?_⟩
+  unfold Apart at hwt
+  simp only [outside_append]
+  refine ⟨⟨⟨hty.of_sub h1 (by omega), ?_⟩, hWs.of_sub h1 (by omega)⟩, hWw.of_sub h1 (by omega)⟩
+  simp only [winA, outside_cons, outside_nil, and_true]; omega
+
 end FvModexp.Arm64.DivLarge
