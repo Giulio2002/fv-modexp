@@ -39,8 +39,7 @@ theorem val_rec {X Y lm : Nat} (hX : 0 < X) (hlo : Exp.tz X * Y < lm) :
     X ^ Y % 2 ^ lm = (X / 2 ^ Exp.tz X) ^ Y % 2 ^ (lm - Exp.tz X * Y) * 2 ^ (Exp.tz X * Y) := by
   have hs := (Exp.tz_spec hX).1
   have e1 : X ^ Y = 2 ^ (Exp.tz X * Y) * (X / 2 ^ Exp.tz X) ^ Y := by
-    conv_lhs => rw [hs]
-    rw [Nat.mul_pow, ← Nat.pow_mul]
+    rw [show X ^ Y = (2 ^ Exp.tz X * (X / 2 ^ Exp.tz X)) ^ Y from congrArg (· ^ Y) hs, Nat.mul_pow, ← Nat.pow_mul]
   have e2 : 2 ^ lm = 2 ^ (Exp.tz X * Y) * 2 ^ (lm - Exp.tz X * Y) := by
     rw [← Nat.pow_add]; congr 1; omega
   rw [e1, e2, Nat.mul_mod_mul_left, Nat.mul_comm]
@@ -49,8 +48,7 @@ theorem val_rec {X Y lm : Nat} (hX : 0 < X) (hlo : Exp.tz X * Y < lm) :
 theorem val_zero {X Y lm : Nat} (hX : 0 < X) (h : lm ≤ Exp.tz X * Y) : X ^ Y % 2 ^ lm = 0 := by
   have hs := (Exp.tz_spec hX).1
   have e1 : X ^ Y = 2 ^ (Exp.tz X * Y) * (X / 2 ^ Exp.tz X) ^ Y := by
-    conv_lhs => rw [hs]
-    rw [Nat.mul_pow, ← Nat.pow_mul]
+    rw [show X ^ Y = (2 ^ Exp.tz X * (X / 2 ^ Exp.tz X)) ^ Y from congrArg (· ^ Y) hs, Nat.mul_pow, ← Nat.pow_mul]
   rw [e1]
   exact Nat.mod_eq_zero_of_dvd (Nat.dvd_mul_right_of_dvd (Nat.pow_dvd_pow 2 h) _)
 
@@ -70,6 +68,11 @@ theorem tz_lt64 {X ml : Nat} (hX : 0 < X) (hXl : X < 2 ^ (64 * ml)) : Exp.tz X <
   obtain ⟨hts, -⟩ := Exp.tz_spec hX
   have h2 : 2 ^ Exp.tz X ≤ X := Nat.le_of_dvd hX ⟨_, hts⟩
   exact (Nat.pow_lt_pow_iff_right (by omega)).1 (Nat.lt_of_le_of_lt h2 hXl)
+
+/-- the three budget facts of the recursive path (kept out of the big context: `omega` there is slow) -/
+theorem bud3 {m a o S d C : Nat} (h1 : m ≤ a) (h2 : o ≤ S) (hc : C = S + a + d) :
+    m ≤ C ∧ m + o ≤ C ∧ m + o + d ≤ C := by
+  subst hc; omega
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
@@ -133,7 +136,7 @@ theorem sumF {impl : List Segment} (hap : ImplApart Extracted.program impl) {R :
   obtain ⟨z1, z2, z3, z4, z5, z6, z7, z8⟩ := hB
   refine entP impl _ s hP (by omega) (by omega) hpc hR
     (fun hl S hS hRE hm => oneP hmk hP (by omega) (by omega)
-      (Nat.le_trans (Nat.le_add_left _ _) (hcO lm (Nat.le_refl _))) hl hB.1 hxp hr4 hr48 S hS hRE hm)
+      (Nat.le_trans (Nat.le_add_left _ _) (hcO lm (Nat.le_refl _))) hl z1 hxp hr4 hr48 S hS hRE hm)
     (fun _ h => absurd h (by omega)) (fun hl _ hy1 S hS hRE hm => ?_) (fun hl _ hy1 S hS hRE h11 hm => ?_)
   · -- `len y > 1`: `Y ≥ 2^64 ≥ logM`
     obtain ⟨esp, e0, -, e2, -, -, -, -, -, -, -, -, e18, e28, -⟩ := hRE
@@ -152,7 +155,7 @@ theorem sumF {impl : List Segment} (hap : ImplApart Extracted.program impl) {R :
         (W0 s.mem (s.sp.toNat - 112) (s.regs 29).toNat (s.regs 30).toNat zp xp yp).readLE a k = s.mem.readLE a k :=
       fun a k h => w0_rd (by omega) (by simp only [outside_cons, outside_nil, and_true]; omega)
     have hy0 : (W0 s.mem (s.sp.toNat - 112) (s.regs 29).toNat (s.regs 30).toNat zp xp yp).readLE yp 8 = Y := by
-      rw [hW0 _ _ (by omega), ← hYd]; simp [natVal]
+      rw [hW0 _ _ (by omega), ← hYd]
     have hXl : X < Exp.B ^ xl := by
       have := Memory.readLE_lt s.mem xp (8 * xl)
       rw [show (256 : Nat) = 2 ^ 8 from rfl, ← Nat.pow_mul] at this
@@ -167,7 +170,7 @@ theorem sumF {impl : List Segment} (hap : ImplApart Extracted.program impl) {R :
       intro j hj
       rw [hW0 _ _ (by omega), ← hXd]
       exact Expmc.readLE_wd _ _ _ _ hj
-    refine tzLoopP (s.regs 30) _ xp xl X _ S.regs S.sp hmr
+    refine tzLoopP (s.regs 30) _ xp xl X yp _ S.regs S.sp hmr
       (by simp only [W0, Memory.accessible_writeLE]; exact hxa) hx48 hX0 hXl (by omega)
       (by simp only [W0, Memory.accessible_writeLE]; exact Memory.accessible_mono _ hya (by omega) (by omega)) (by omega)
       e4 e5 e7 ?_ (xl - 0) 0 S rfl (Nat.zero_le _) (fun j hj => absurd hj (by omega)) hS rfl (fun _ _ _ _ => rfl) h11 hm
@@ -188,7 +191,7 @@ theorem sumF {impl : List Segment} (hap : ImplApart Extracted.program impl) {R :
     · -- overflow / `tz·y ≥ logM`
       intro hz S3 g1 g2 g3 g4 g5 g6 g7
       have hle' : lm ≤ Exp.tz X * Y := by
-        generalize Exp.tz X * Y = P at hz; omega
+        generalize Exp.tz X * Y = P at hz ⊢; omega
       have hv := val_zero hX0 hle'
       exact zeroP hP (by omega) (by omega) (by rw [hXd, hYd]; exact hv) hr4 hr48 (Or.inr rfl) S3 g1
         (g2.trans (d2.trans esp)) (g3.trans ((r 0 (by omega) (by omega) (by omega)).trans e0))
@@ -200,20 +203,14 @@ theorem sumF {impl : List Segment} (hap : ImplApart Extracted.program impl) {R :
       have hlo0 : 0 < Exp.tz X * Y := Nat.mul_pos (tz_pos hX0 hXe) hY0
       have hneed : makeCost (Rsh.need xl (Exp.tz X)) ≤ makeCost (xl + 2) :=
         mk_mono (by simp only [Rsh.need]; omega) (by omega)
-      have hcO' := hcO (lm - Exp.tz X * Y) (by omega)
+      have hsup := le_supTo (costO (P2W2.cost sqC mlC) (P2W4.cost sqC mlC) (stLen s.mem st)) lm
+        (lm - Exp.tz X * Y) (by omega)
       have hcst : cP sqC mlC (stLen s.mem st) xl 1 lm = supTo (costO (P2W2.cost sqC mlC) (P2W4.cost sqC mlC)
           (stLen s.mem st)) lm + makeCost (xl + 2) + makeCost (lm / 64 + 2) := rfl
-      have hb1 : makeCost (Rsh.need xl (Exp.tz X)) ≤ cP sqC mlC (stLen s.mem st) xl 1 lm := by omega
-      have hb2 : makeCost (Rsh.need xl (Exp.tz X)) + cO sqC mlC (stLen s.mem st) (lm - Exp.tz X * Y) ≤
-          cP sqC mlC (stLen s.mem st) xl 1 lm := by
-        have := le_supTo (costO (P2W2.cost sqC mlC) (P2W4.cost sqC mlC) (stLen s.mem st)) lm
-          (lm - Exp.tz X * Y) (by omega)
-        omega
-      have hb3 : makeCost (Rsh.need xl (Exp.tz X)) + cO sqC mlC (stLen s.mem st) (lm - Exp.tz X * Y) +
-          makeCost (lm / 64 + 2) ≤ cP sqC mlC (stLen s.mem st) xl 1 lm := by
-        have := le_supTo (costO (P2W2.cost sqC mlC) (P2W4.cost sqC mlC) (stLen s.mem st)) lm
-          (lm - Exp.tz X * Y) (by omega)
-        omega
+      have hcOe : cO sqC mlC (stLen s.mem st) (lm - Exp.tz X * Y) =
+          costO (P2W2.cost sqC mlC) (P2W4.cost sqC mlC) (stLen s.mem st) (lm - Exp.tz X * Y) := rfl
+      rw [← hcOe] at hsup
+      obtain ⟨hb1, hb2, hb3⟩ := bud3 hneed hsup hcst
       have hodd := (Exp.tz_spec hX0).2
       have hv0 : 0 < (X / 2 ^ Exp.tz X) ^ Y % 2 ^ (lm - Exp.tz X * Y) := odd_pos hodd (by omega)
       have hvb : (X / 2 ^ Exp.tz X) ^ Y % 2 ^ (lm - Exp.tz X * Y) < 2 ^ (lm - Exp.tz X * Y) :=
