@@ -777,3 +777,19 @@ W4 chain rebuild after the r29/f29 split (sequential, light load): all ≤ 46 s 
 New entry modules: W4EnDefs 2 s, W4EnA 38 s / 2.4 GB, W4EnG 46 s / 2.3 GB, W4EnG2 15 s / 2.3 GB, W4EnJ 10 s / 2.2 GB,
 W4EnPre 2 s, W4EnCtx 18 s / 2.9 GB, W4EnX 4 s / 2.3 GB. W4EnJ: `refine K _ _ … rfl …` after a gcWriteBarrier2 call hung
 (> 10 min); `apply K` + bullets fixed it (649 s → 10 s).
+
+## divmc session 12 — `nat.sqr` arm64 member modules (dev compile, load ~35)
+| module | time | peak RSS | note |
+|---|---|---|---|
+| SqrRel (Core, post_of, callee env) | 6 s | 2.4 GB | pure |
+| SqrNorm (4 norm loops) | 10 s | 2.4 GB | generated |
+| SqrZero / SqrOne | 5 s / 25–38 s | 2.3 / 2.9 GB | |
+| SqrMake (reuse + alloc, 3 alloc branches) | 144 s | 4.7 GB | TRIM candidate: one continuation per branch |
+| SqrCall / SqrKPre (pure pre builders) | 10 s / 7 s | 2.5 GB | |
+| SqrBM / SqrBS / SqrKS | 76–93 s / 51 s / 27 s | 4.9 / 4.4 / 3.4 GB | |
+| SqrStep | 1.3 s | 2.2 GB | |
+Lesson: `first | assumption | exact h …` closers on goals that still hold state literals cost minutes (bm 93 s → 391 s);
+pass the hypotheses as terms / use named `case`s after `janus_simp` (bs 189 s → 51 s). A callee's pre built by a pure
+lemma is handed to janus through `Summary.mono` with a register/sp/mem-equality pre' (no 30-conjunct unfolding).
+A summary from an SCC induction hypothesis must be ascribed with the literal entry (`Summary P 0x1bc2b0 _ _`), else
+janus runs into the callee's code.
