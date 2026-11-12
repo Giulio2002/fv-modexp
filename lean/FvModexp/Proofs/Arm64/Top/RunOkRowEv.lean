@@ -72,7 +72,7 @@ theorem correctness_okEv (impl : List Segment) (hap : ImplApart Extracted.progra
       24 + ExpN.NCost (NatDiv.cost DivRec.drsC) costR
         (ExpN.addC costS (ExpEven.costE (NatDiv.cost DivRec.drsC) costR costS costP sqrC mulC mulC)) costP xl yl n 0 lm ≤
         RunIface.ExpBudget (max (max xl yl) n) yl)
-    (stkM aboveM : Nat) (hM : RunIface.ModSpec impl R stkM aboveM)
+    (stkM aboveM : Nat) (hM : RunIface.ModSpecM impl R stkM aboveM)
     (hKs : K + 1632 ≤ stkM) (W : Nat) (hW : 624 + stkM ≤ W) (hab : aboveM ≤ 160) (ha1 : 48 ≤ aboveM)
     (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64) :
     Ensures (Extracted.program.link impl) (segAddr Extracted.program RunArm64.fn) [c, p, len, cp]
