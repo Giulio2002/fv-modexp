@@ -10,12 +10,14 @@ state `S3` at `nat.expNN`'s entry (`SP = t - 320`, memory changed only in `(*Int
 window when `K + 1632 ≤ stk`.
 
 `PoolG` / `ExpX`: the facts top's FINAL `ExpSpec` adds (NOTES-conventions "[top s19] ANSWER": `PoolG`, `IntOK`'s cap
-bound) plus `m ≠ nil` (the code's `m != nil` test, int.go:589), stated locally until `RunIface` has them.
+bound) plus `m ≠ nil` (the code's `m != nil` test, int.go:589) and `z`'s header apart from the write-barrier flag
+(segment D stores into it, then reads the flag), stated locally until `RunIface` has them.
 -/
 
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Spec.Pool Janus.Contracts FvModexp
 
 set_option autoImplicit false
+set_option linter.constructorNameAsVariable false
 
 namespace FvModexp.Arm64.IExp
 
@@ -29,7 +31,7 @@ def PoolG (R : RtInv) (m : Memory) (w : List (Nat × Nat)) : Prop :=
 /-- the extra precondition facts of `(*Int).exp` beyond today's `RunIface.ExpSpec` (local; see the module doc) -/
 def ExpX (R : RtInv) (m : Memory) (w : List (Nat × Nat)) (z y mm : Nat) : Prop :=
   PoolG R m w ∧ m.readLE (z + 24) 8 < 2 ^ 40 ∧ m.readLE (y + 24) 8 < 2 ^ 40 ∧ m.readLE (mm + 24) 8 < 2 ^ 40 ∧
-    mm ≠ 0
+    mm ≠ 0 ∧ Apart z 32 RunIface.wbA 4
 
 /-- the threshold globals and the write-barrier flag survive a frame that keeps them (adapted from divmc's
 `NatSqr.globals_frame`, Arm64/Nat/SqrKPre.lean) -/
@@ -104,7 +106,7 @@ theorem preNF_of {R : RtInv} {b B : Nat} {L : List (Nat × Nat)} {stk above K : 
   obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hstk, hab48, hacc⟩, hd, hrt, hgap, hgrt, hLs, hro⟩, hsv, hG, hBb, hinv, hops, hpw⟩ :=
     hpre
   obtain ⟨op, ⟨hn1, hn2, hn3, hn4, hn5, hn6, hn7, hn8, hn9, hn10, hn11⟩, hoA⟩ := hone
-  obtain ⟨⟨h0rt, hpool, hpoolR, hpoolW⟩, hzc40, hyc40, hmc40, hmA0⟩ := hx
+  obtain ⟨⟨h0rt, hpool, hpoolR, hpoolW⟩, hzc40, hyc40, hmc40, hmA0, -⟩ := hx
   have hoz := hops zA (by simp)
   have hoy := hops yA (by simp)
   have hom := hops mA (by simp)
