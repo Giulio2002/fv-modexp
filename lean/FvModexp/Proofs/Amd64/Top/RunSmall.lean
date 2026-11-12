@@ -18,12 +18,17 @@ theorem bud_step {b b1 b2 m k : Nat} (h1 : b - k * m ≤ b1) (h2 : b1 ≤ b2 + m
 theorem bud_err {b b1 k : Nat} (h : b - k ≤ b1) : b - (k + allocCost 16) ≤ b1 - 16 := by unfold allocCost; omega
 
 set_option maxRecDepth 20000 in
-theorem errT_word {m : Janus.Arm64.Memory} (hd : Extracted.program.DataLoaded m) : m.readLE 7355552 8 = 16 := by
-  janus64_data hd; rw [h_rodata _ _ (by decide)]; decide
+/-- Both `errT` facts from ONE `janus64_data` (each call evaluates every data segment, ≈ 10 s). -/
+theorem errT_data {m : Janus.Arm64.Memory} (hd : Extracted.program.DataLoaded m) :
+    m.readLE 7355552 8 = 16 ∧ m.accessible 7355552 16 false = true := by
+  janus64_data hd
+  exact ⟨by rw [h_rodata _ _ (by decide)]; decide, Janus.Arm64.Memory.accessible_mono _ h_data3 (by omega) (by omega)⟩
 
-set_option maxRecDepth 20000 in
+theorem errT_word {m : Janus.Arm64.Memory} (hd : Extracted.program.DataLoaded m) : m.readLE 7355552 8 = 16 :=
+  (errT_data hd).1
+
 theorem errT_acc {m : Janus.Arm64.Memory} (hd : Extracted.program.DataLoaded m) :
-    m.accessible 7355552 16 false = true := by
-  janus64_data hd; exact Janus.Arm64.Memory.accessible_mono _ h_data3 (by omega) (by omega)
+    m.accessible 7355552 16 false = true :=
+  (errT_data hd).2
 
 end FvModexp.Amd64.Run
