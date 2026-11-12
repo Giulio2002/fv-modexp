@@ -65,7 +65,7 @@ theorem gcall_pre {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st n : Nat} {s 
     rw [show (s.regs 4).toNat + 24 - ((s.regs 4).toNat - 4192) = 4192 + 24 by omega]; exact hout
   have hgS : S.mem.readLE ((s.regs 14).toNat + 16) 8 = s.mem.readLE ((s.regs 14).toNat + 16) 8 :=
     hF.readLE _ _ (by simp only [outside_cons, outside_nil, and_true]; omega)
-  refine ⟨⟨⟨⟨hra, by omega, by omega, by omega, ?_⟩, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩, fun hp => ?_⟩, ⟨⟨?_, ?_, ?_⟩, ?_⟩,
+  refine ⟨⟨⟨⟨hra, by omega, by omega, by omega, ?_⟩, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩, fun hp => ?_⟩, ⟨⟨?_, ?_, ?_⟩, ?_⟩,
     ?_, ?_, ?_, ?_, ?_⟩
   · rw [hF.accessible]; exact Janus.Arm64.Memory.accessible_mono _ hw (by omega) (by omega)
   · rw [h6]; exact ⟨by omega, by rw [hF.accessible]; exact ht3⟩
@@ -76,12 +76,18 @@ theorem gcall_pre {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st n : Nat} {s 
   · omega
   · omega
   · omega
+  · -- v0.3.1: the type descriptor (rodata) is outside the callee's window
+    rw [h6]; simp only [calleeStack64, outside_cons, outside_nil, and_true]; omega
   · have e : (S.regs 3).toNat - (S.regs 7).toNat = s.mem.readLE (st + 16) 8 := by omega
     unfold GrowsliceOld64
     rw [e] at hp ⊢
     obtain ⟨-, -, a3, a4⟩ := hnl hp
+    have ha5 := (harr hp).1
+    simp only [win, outside_cons, outside_nil, and_true, stW, stCap] at ha5
     rw [h0]
-    exact ⟨a4, by rw [hF.accessible]; exact Janus.Arm64.Memory.accessible_weaken _ a3⟩
+    refine ⟨a4, by rw [hF.accessible]; exact Janus.Arm64.Memory.accessible_weaken _ a3, ?_⟩
+    -- v0.3.1: the old array is outside the callee's window (it is outside the caller's window)
+    simp only [stW, calleeStack64, outside_cons, outside_nil, and_true]; omega
   · rw [h14]; omega
   · rw [h14, hF.accessible]; exact hg2
   · rw [h14, hgS]; omega

@@ -1,5 +1,4 @@
 import FvModexp.Proofs.Arm64.Nat.DivWSet
-import FvModexp.Proofs.Arm64.MemmoveZero
 
 /-!
 # `nat.divW` (arm64): the `m = 0` paths

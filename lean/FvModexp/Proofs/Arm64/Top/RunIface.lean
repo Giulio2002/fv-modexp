@@ -274,13 +274,19 @@ def PoolG (R : RtInv) (m : Memory) (w : List (Nat × Nat)) : Prop :=
   Outside 0 1 R.rt ∧ m.readLE (stackPoolA + Pool.newOffset) 8 = 0 ∧ Outside (stackPoolA + Pool.newOffset) 8 R.rt ∧
     Outside (stackPoolA + Pool.newOffset) 8 w
 
+/-- `z`'s array (when it has one) is apart from the threshold globals at `gA` (divmc's `IMod.ModX`; folded into
+`ModSpec` at the v0.3.1 re-pin, formerly top's `RunModX.ModSpecM`) -/
+def ModX (m : Memory) (z : Nat) : Prop :=
+  0 < m.readLE (z + 24) 8 → Apart (m.readLE (z + 8) 8) (8 * m.readLE (z + 24) 8) gA 32
+
 /-- **`z.Mod(z, y)`** as Run calls it (`int.go:325`; `X0 = z`, `X1 = x = z`, `X2 = y`): returns `z` with `z = x mod y`. -/
 def ModSpec (impl : List Segment) (R : RtInv) (stk above : Nat) : Prop :=
   ∀ (b : Nat) (L : List (Nat × Nat)) (z y : BitVec 64),
     Ensures ((Extracted.program.onlySegments namesMod).link impl) (segAddr Extracted.program (P ++ "(*Int).Mod")) [z, z, y]
       (fun s => IntPre R b (ModBudget (max (lenW s.mem z.toNat) (lenW s.mem y.toNat))) L stk above [z.toNat, y.toNat] s ∧
         0 < IntV s.mem y.toNat ∧
-        IntLenLe s.mem z.toNat maxW ∧ IntLenLe s.mem y.toNat maxW ∧ PoolG R s.mem (win s stk above))
+        IntLenLe s.mem z.toNat maxW ∧ IntLenLe s.mem y.toNat maxW ∧ PoolG R s.mem (win s stk above) ∧
+        ModX s.mem z.toNat)
       (fun s s' => s'.regs 0 = z ∧ IntPost R b (ModBudget (max (lenW s.mem z.toNat) (lenW s.mem y.toNat)))
           L stk above z.toNat (IntV s.mem z.toNat % IntV s.mem y.toNat) s s' ∧
         IntV s'.mem y.toNat = IntV s.mem y.toNat)

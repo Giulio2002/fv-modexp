@@ -2,6 +2,7 @@ import FvModexp.Proofs.Arm64.Exp.NP2P
 import FvModexp.Proofs.Arm64.Exp.NPowE
 import FvModexp.Proofs.Arm64.Exp.NLift
 import FvModexp.Proofs.Arm64.Exp.EvStmt
+import FvModexp.Proofs.Arm64.Exp.NZOut
 
 /-!
 # `nat.expNN` (arm64): the even path — `m.isPow2()` fails, `z.expNNEven(stk, x, y, m)` (nat.go:717-718) to the return
@@ -90,10 +91,13 @@ theorem evPath (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     Reaches ((LibNE.program.link impl).withExit ret0) S (IsReturn F) := by
   have hP' := hP
   obtain ⟨⟨hs1, hs28, hg1, -, -, -, hal, hK4, hKs, hsp2, hacc, hwrt, hLs, -, -⟩, -, -, -, -, -,
-    hn, hn128, hnmc, hmc, hmO, hma, hm48, hmN, hyO, -, hy48, hyN, hyl, hyc, hxO, -, -, hxN, hxl, hxp, hxc, -, -, -, -,
+    hn, hn128, hnmc, hmc, hmO, hma, hm48, hmN, hyO, -, hy48, hyN, hyl, hyc, hxO, -, -, hxN, hxl, hxp, hxc, -, -, -, ⟨-, hzW⟩,
     -, ⟨op, hOne, hSA⟩, hst0, hst48, hsok, hstw, -, harr, hc0, -, -, -, -, -, -, hnS, -, hbud, -⟩ := hP'
   obtain ⟨hF0, hLF0, hrg, hx1, hb1, hmk, hinv1, hZQ, hZA, hnz, hzq⟩ := hZ
   have hs : s.sp.toNat = sp + 1312 := by rw [hs1, BitVec.toNat_ofNat]; omega
+  have hrtE : Outside (sp - K) (K + 1432) R.rt := by
+    have := hwrt _ (List.mem_singleton_self _)
+    simp only at this; rwa [show sp + 1432 - (sp - K) = K + 1432 by omega] at this
   have hSs : S.sp.toNat = sp + 1056 := by rw [hSsp, BitVec.toNat_ofNat]; omega
   have hH := hsok.2.1
   have rdh : ∀ o, o + 8 ≤ 24 → S.mem.readLE (st + o) 8 = s.mem.readLE (st + o) 8 := fun o ho =>
@@ -125,7 +129,7 @@ theorem evPath (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     (r 28 (by decide) (by decide) (by decide) (by decide) (by decide) (by decide)).trans h28
   rw [← e7] at hF0 hLF0 hrg hinv1 hZQ ew el ec h29v h30v hsl hrdx hrdy hrdm
   refine callE impl hap ret0 hret F hs hal hKs (by omega) hsp2 hLs hwrt hsok hstw hF0 hLF0 hx1
-    hb1 hZA hstk h28' ?_ ?_ hE e1 hS'sp e6 ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+    hb1 hZA hstk h28' ?_ ?_ hE e1 hS'sp e6 ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, hzq, hxc, hyc, ?_, ?_⟩
     (fun s' h => ⟨h.1, h.2.1, h.2.2.1, h.2.2.2.1, cpostG_of hzq h.2.2.2.2⟩)
     (by rw [ec, ew]; intro hc; exact (harr hc).1) (by rw [ec, ew]; exact hc0)
     (by rw [el, ec]; exact hsok.2.2.2.2.2.1) hacc2 h29v h30v hsl
@@ -155,7 +159,8 @@ theorem evPath (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
       (by omega) (by rw [el]; have := hcE (stLen s.mem st); omega),
       by rw [hrdx]; exact val_pos hxN hxl0, by rw [hrdy]; exact val_two hyN hyl0 hy1,
       by rw [hrdm]; exact val_pos hmN (by omega), by rw [hrdm, val_mod2 hn]; exact hm0,
-      hxl, hn128, hst0, hnmc, hmc, op, natOne_at hOne hSA hF0 hLF0 hx1 hS's hstk hKs hZA (by omega) ew el ec⟩
+      hxl, hn128, hst0, hnmc, hmc,
+      out_win_even (ZArg.out hZA hzW hrtE hKs) hS's hstk hKs, op, natOne_at hOne hSA hF0 hLF0 hx1 hS's hstk hKs hZA (by omega) ew el ec⟩
   · rw [e6, BitVec.toNat_ofNat]
   · rw [e6, BitVec.toNat_ofNat]; decide
 

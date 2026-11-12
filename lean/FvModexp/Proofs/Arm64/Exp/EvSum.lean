@@ -5,7 +5,7 @@ set_option autoImplicit false
 /-!
 # **`nat.expNNEven`** arm64 — the export `EvenSum` (agent infra)
 
-`full`: `ExpEven.EvenSum impl R stk 112 (needE needR needS needP) (costE costF costR costS costP sqC mlC mlG)` for every
+`full`: `ExpEven.EvenSum impl R stk 112 (needE needR needS needP) (costE costF costR costS costP bU cU sqC mlC mlG)` for every
 frame depth `stk` that covers the callees (`stk - 336` = the window below the function's frame), from `body`
 (`epre_of`, `zw_of`).
 -/
@@ -40,17 +40,18 @@ theorem full {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns 
     (hRm : ∀ x a a', a ≤ a' → needR x a ≤ needR x a')
     (hSm : ∀ x y a a', a ≤ a' → needS x y a ≤ needS x y a')
     (hPm : ∀ x y a a', a ≤ a' → needP x y a ≤ needP x y a')
+    {bU cU : Nat → Nat → Nat → Nat → Nat → Nat}
     (hNB : ∀ x y a a' l l' k k', a ≤ a' → l ≤ l' → k ≤ k' →
-      NBudE costF costR costS costP x y a l k ≤ NBudE costF costR costS costP x y a' l' k')
+      NBudE costF costR costS costP x y a l k ≤ bU x y a' l' k')
     (hNC : ∀ x y a a' l l' k k', a ≤ a' → l ≤ l' → k ≤ k' →
-      ExpN.NCost costF costR costS costP x y a l k ≤ ExpN.NCost costF costR costS costP x y a' l' k')
+      ExpN.NCost costF costR costS costP x y a l k ≤ cU x y a' l' k')
     (hsm : ∀ ℓ ℓ' a a', ℓ ≤ ℓ' → a ≤ a' → sqC ℓ a ≤ sqC ℓ' a')
     (hmm : ∀ ℓ ℓ' a a' c c', ℓ ≤ ℓ' → a ≤ a' → c ≤ c' → mlC ℓ a c ≤ mlC ℓ' a' c')
     (hgm : ∀ ℓ ℓ' a a' c c', ℓ ≤ ℓ' → a ≤ a' → c ≤ c' → mlG ℓ a c ≤ mlG ℓ' a' c')
     {stk : Nat} (hk1 : 4640 ≤ stk) (hk2 : stk ≤ 2 ^ 20 + 336)
     (hK : stkN ≤ stk - 336 ∧ stkL ≤ stk - 336 ∧ stkR ≤ stk - 336 ∧ KN + 1312 ≤ stk - 336 ∧ 240 + kc ≤ stk - 336 ∧
       stkM ≤ stk - 336 ∧ 4608 ≤ stk - 336) :
-    EvenSum impl R stk 112 (needE needR needS needP) (costE costF costR costS costP sqC mlC mlG) := by
+    EvenSum impl R stk 112 (needE needR needS needP) (costE costF costR costS costP bU cU sqC mlC mlG) := by
   intro b L zp zl zc st xp xl xc yp yl yc mp ml mc s hpc hs
   obtain ⟨h0, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11, h12, hPre, hzp, hxc, hyc, hr4, hr48⟩ := hs
   have hP := epre_of hPre hk1 hk2 hzp hxc hyc

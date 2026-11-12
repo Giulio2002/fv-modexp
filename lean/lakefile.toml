@@ -5,7 +5,7 @@ defaultTargets = ["FvModexp"]
 [[require]]
 name = "janus"
 git = "https://github.com/Giulio2002/Janus.git"
-rev = "9ff22946b804c2bd860c038b34817a4e1a06285b"
+rev = "1b51b4ac8fc70a736fad4a179641a6d0bd4d1d79"
 
 # ethereum/EthLib MODEXP spec, byte-identical to upstream ffd60c4b (see its UPSTREAM.md), on Lean v4.34.1.
 [[require]]

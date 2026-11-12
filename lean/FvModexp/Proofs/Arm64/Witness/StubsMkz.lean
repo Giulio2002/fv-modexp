@@ -1,5 +1,4 @@
 import FvModexp.Proofs.Arm64.Witness.Stubs
-import FvModexp.Proofs.Arm64.MakesliceZero
 
 /-! # Witness stub: zero-byte `makeslice` (arm64)
 
