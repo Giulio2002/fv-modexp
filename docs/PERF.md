@@ -929,3 +929,8 @@ literal (`sp - 304 - 40960`) hits maxRecDepth — rewrite to `sp - 41264` first.
 P2W2Defs 3.5 s, P2W2EnA 17 s, P2W2EnG3 16 s, P2W2EnG 9.6 s (before: >18 min — `growCap_lt`'s `(8n+3)/4*4` form
 unified against `growCap8 (len0 + 8n)` by defeq; fixed by rewriting the fact to the `8 * n` form first), P2W2EnJ 4.7 s
 (all ≤ 2.4 GB).
+
+### infra s19 (arm64 expNNPowerOfTwoWindowSize2 entry composition + stk.nat(2w), dev compile)
+P2W2Pre ~1 s, P2W2EnA 30 s (finer frame, under J=2 load), P2W2Ent 13.6 s / 2.5 GB, P2W2Ctx ~2 s, P2W2N 8.5 s / 2.3 GB.
+P2Pre closure rebuilt after the `Pre` Globals-list change: every module unchanged in time (P2PreX 53 s, P2PreD 22 s,
+P2Pre 7.7 s; all ≤ 4.4 GB).
