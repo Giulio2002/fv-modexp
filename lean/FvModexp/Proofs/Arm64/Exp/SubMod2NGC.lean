@@ -252,4 +252,24 @@ theorem post_ofG {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zl zc yp yl n
   rw [hg0 hW, Nat.zero_mul, Nat.sub_zero] at hb
   simp only [cost]; omega
 
+/-- `post_ofG` without growth (runtime facts relative to `b`) -/
+theorem post_ofG0 {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zl zc yp yl n k : Nat} {s s' : State}
+    {L2 : List (Nat × Nat)} {b2 : Nat} (hrt : Rt R b L s zp zc n k s'.mem L2 b2) (hk : k ≤ 5)
+    {p' l' c' : Nat} (e0 : (s'.regs 0).toNat = p') (e1 : (s'.regs 1).toNat = l') (e2 : (s'.regs 2).toNat = c')
+    (hv : natVal s'.mem p' l' = Exp.subMod2N (natVal s.mem zp zl) (natVal s.mem yp yl) n) (hnorm : NatNorm s'.mem p' l')
+    (hlc : l' ≤ c') (hc40 : c' < 2 ^ 40) (hlive : NatLive s'.mem R L2 p' c')
+    (hor : (p' = zp ∧ c' = zc) ∨ (InRanges p' (8 * c') R.rt ∧ ApartAll p' (8 * c') L))
+    (hre : W n + 1 ≤ zc → p' = zp ∧ c' = zc) :
+    PostG R b L zp zl zc yp yl n s s' := by
+  obtain ⟨-, hF, hLF, hLE, hb, hinv, -⟩ := hrt
+  have h1 : k * wCost n ≤ 5 * wCost n := Nat.mul_le_mul_right _ hk
+  exact ⟨p', l', c', e0, e1, e2, hv, hnorm, hlc, hc40, L2, b2, hLE, by simp only [costG, cost]; omega,
+    fun _ => by simp only [cost]; omega, hinv, hlive, hor, hF, hLF, hre⟩
+
+theorem sp_ret {x : BitVec 64} (h : 144 ≤ x.toNat) : BitVec.ofNat 64 (x.toNat - 144) + 144#64 = x := by
+  apply BitVec.eq_of_toNat_eq
+  rw [BitVec.toNat_add, BitVec.toNat_ofNat, BitVec.toNat_ofNat]
+  have := x.isLt
+  rw [Nat.mod_eq_of_lt (by omega)]; omega
+
 end FvModexp.Arm64.SubMod2N
