@@ -38,7 +38,7 @@ theorem natOne_at {R : RtInv} {L L1 : List (Nat × Nat)} {sp K zp zc st stk op z
     simp only [win, hSsp, ExpHyp.stWs, stkWs, ew, el, ec, List.cons_append, List.nil_append, outside_cons,
       outside_nil, and_true]
     refine ⟨by omega, ?_, h3, h4⟩
-    rcases hZA with h0 | ⟨e1, e2, -⟩ | ⟨hin, hap⟩
+    rcases hZA with ⟨h0, -⟩ | ⟨e1, e2, -⟩ | ⟨hin, hap⟩
     · omega
     · rw [e1, e2]; exact h2
     · have := apart_fresh hH hap hin; omega
@@ -131,7 +131,7 @@ theorem p2Path (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
   rw [← e7] at hF0 hLF0 hrg hinv1 hZQ ew el ec h29v h30v hsl hrdx hrdy
   refine callC impl hap hns hn11 ret0 hret F hs hal hKs (by omega) hsp2 hLs hwrt hsok hstw hF0 hLF0 hx1
     hb1 hZA hstk ((r 28 (by decide) (by decide) (by decide) (by decide) (by decide) (by decide)).trans h28) ?_ ?_
-    (Or.inr (Or.inr (Or.inr rfl))) hE e1 hS'sp e6 ?_ ⟨?_, ?_, ?_, by omega, by omega, hst0, ?_⟩ (fun s' h => cpostG_of h)
+    (Or.inr (Or.inr (Or.inr (Or.inl rfl)))) hE e1 hS'sp e6 ?_ ⟨?_, ?_, ?_, by omega, by omega, hst0, ?_⟩ (fun s' h => cpostG_of h)
     (by rw [ec, ew]; intro hc; exact (harr hc).1) (by rw [ec, ew]; exact hc0)
     (by rw [el, ec]; exact hsok.2.2.2.2.2.1) hacc2 h29v h30v hsl
     (by rw [r 18 (by decide) (by decide) (by decide) (by decide) (by decide) (by decide),

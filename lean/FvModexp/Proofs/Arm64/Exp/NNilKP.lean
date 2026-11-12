@@ -93,7 +93,7 @@ theorem freePre {R : RtInv} {L L1 L2 : List (Nat × Nat)} {b b1 b' g sp K st r :
   have e28 : (S.regs 28).toNat = g := by rw [h28, BitVec.toNat_ofNat]; omega
   have esp : S.sp.toNat = sp + 1056 := by rw [hsp, BitVec.toNat_ofNat]; omega
   have e26 : (S.regs 26).toNat = sp + 1272 := by rw [h26, BitVec.toNat_ofNat]; omega
-  have hr' : r < 2 ^ 40 ∧ (r + 32) % 4 = 0 := by rcases hr with rfl | rfl | rfl | rfl <;> decide
+  have hr' : r < 2 ^ 40 ∧ (r + 32) % 4 = 0 := by rcases hr with rfl | rfl | rfl | rfl | rfl <;> decide
   have e30 : (S.regs 30).toNat = r + 32 := by rw [h30, BitVec.toNat_ofNat]; omega
   have hso : Free.stkOf S = st := by
     show S.mem.readLE ((S.regs 26).toNat + 8) 8 = st
@@ -140,7 +140,7 @@ theorem postNil_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {cost
     (hlc : l ≤ c) (hc64 : c < 2 ^ 64) (hx : LiveExt R L1 L2)
     (hb : b1 - NCost costF costR costS costP xl yl n (stLen M1 st) (Nat.log2 (natVal M1 mp n)) ≤ b')
     (hnl : NatLive M2 R L2 p c)
-    (hd : c = 0 ∨ (p = zp ∧ c = zc) ∨ (InRanges p (8 * c) R.rt ∧ ApartAll p (8 * c) L1))
+    (hd : (c = 0 ∧ p = 0) ∨ (p = zp ∧ c = zc) ∨ (InRanges p (8 * c) R.rt ∧ ApartAll p (8 * c) L1))
     (hsb : StackBackL R L1 L2 st M1 M2)
     (hMF : MemFrame M1 M2 (R.rt ++ winA { s with mem := M1 } (K + 1312) 120 ++ [(zp, zp + 8 * zc)] ++ stkWs M1 st))
     (hLF2 : LiveFrame M1 M2 L1 ([(zp, zp + 8 * zc)] ++ stkWs M1 st)) (hrs : ResSep M1 M2 st p c)
@@ -174,7 +174,7 @@ theorem postNil_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {cost
     intro hc
     have key : Apart p (8 * c) (sp - K) (K + 1432) ∧ Apart p (8 * c) st 24 ∧
         (0 < stCap M1 st → Apart p (8 * c) (stW M1 st) (8 * stCap M1 st)) := by
-      rcases hd with h | ⟨rfl, rfl⟩ | ⟨hin, hap⟩
+      rcases hd with ⟨h, -⟩ | ⟨rfl, rfl⟩ | ⟨hin, hap⟩
       · omega
       · obtain ⟨hz1, hz2⟩ := hzN hc
         exact ⟨hz2, (hN.apart hz1).1, fun hc' => apart_fresh hz1 (hN.arr hc').2 (hN.arr hc').1⟩

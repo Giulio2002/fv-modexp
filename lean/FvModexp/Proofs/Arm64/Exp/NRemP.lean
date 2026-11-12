@@ -25,13 +25,13 @@ theorem zq_keep {R : RtInv} {L L1 : List (Nat × Nat)} {g sp K st zp zc xp xl yp
   · rcases Nat.eq_zero_or_pos zp' with - | -
     all_goals
       rcases Nat.eq_zero_or_pos zc' with h0 | h0
-      · exact ⟨⟨by omega, fun h => absurd h (by omega), fun h => absurd h (by omega)⟩, Or.inl h0⟩
+      · exact ⟨⟨by omega, fun h => absurd h (by omega), fun h => absurd h (by omega)⟩, Or.inl ⟨h0, Or.inr ⟨rfl, h0⟩⟩⟩
       · obtain ⟨⟨hH, hw, hst, hfr⟩, ha, h48, h8, -, hg, hm, hy, hxx, hgA⟩ := hzk h0
         refine ⟨⟨hzc, fun _ => ⟨h8, hx.held hH, by rw [hacc]; exact ha, h48⟩, fun _ => ⟨hw, by unfold Apart at hg ⊢; omega,
           hst, ?_, hgA, hxx, hy, hm⟩⟩, Or.inr (Or.inl ⟨rfl, rfl, hw⟩)⟩
         show Apart zp' (8 * zc') (stW M st + 8 * stLen M st) (8 * (stCap M st - stLen M st))
         rw [ew, el, ec]; exact hfr
-  · exact ⟨⟨by omega, fun h => absurd h (by omega), fun h => absurd h (by omega)⟩, Or.inl rfl⟩
+  · exact ⟨⟨by omega, fun h => absurd h (by omega), fun h => absurd h (by omega)⟩, Or.inl ⟨rfl, Or.inl rfl⟩⟩
 
 theorem tN' {v : Nat} (h : v < 2 ^ 64) : (BitVec.ofNat 64 v).toNat = v := by
   rw [BitVec.toNat_ofNat]; exact Nat.mod_eq_of_lt h

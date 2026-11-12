@@ -44,7 +44,7 @@ theorem postN_triv {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {cost
     · simp
   · rcases hz with ⟨rfl, rfl, -⟩ | ⟨rfl, rfl⟩
     · exact Or.inr (Or.inl ⟨rfl, rfl⟩)
-    · exact Or.inl rfl
+    · exact Or.inl ⟨rfl, rfl⟩
 
 set_option maxRecDepth 20000 in
 theorem postN_oneA {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {costF : Nat → Nat → Nat → Nat}

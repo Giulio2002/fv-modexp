@@ -1198,3 +1198,9 @@ amd64 Top_RunErr in the same run: **FAIL (timeout) 901 s**, peak 1.4 GB — at l
   arithmetic proved in a 3-hypothesis lemma). RULE for every segment: no `omega` after the callee post is in scope
   except on goals whose context was cleared; close budget/bounds goals with the EvJ lemmas.
 * `EvN2` 3.4 s, `EvN3` 22.8 s / 2.6 GB (the `CSEL GT` max run: `by_cases` + simp per goal).
+
+## expmc s30/s31 (2026-11-12) — nat.expNN `stk == nil` path (arm64, dev compile, LEAN_NUM_THREADS=4)
+| module | before | after | note |
+|---|---|---|---|
+| NNilK (`epiK1`, flag-1 epilogue ⇒ PostNil) | 320 s / 8.3 GB | 9.8 s / 2.9 GB | two arithmetic DISJUNCTIONS (`a + k ≤ p ∨ p + r ≤ a`) were kept unfolded in the context: EVERY `by omega` case-splits on all `∨` hypotheses in scope (2^n blow-up across ~40 omega calls). Keep them folded as `Apart` and unfold locally (`have := h; unfold Apart at this`) right before the one omega that needs it. |
+| NNilKP / NNilG / NNilC / NNilS / NNilST / NNilSN / NNilSK / NNilQ | — | 1.7–6.9 s each, ≤ 2.9 GB | small glue lemmas, frame chains in standalone helpers |
