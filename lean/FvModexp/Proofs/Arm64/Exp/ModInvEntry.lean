@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Arm64.Exp.ModInvSeg
+import FvModexp.Proofs.Common.Util
 
 /-!
 # `nat.modularInverseModPowerOfTwo` (arm64): entry → Newton loop → `JS` / `J0` (agent infra)

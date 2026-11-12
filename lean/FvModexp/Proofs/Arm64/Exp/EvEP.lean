@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Arm64.Exp.EvPre
+import FvModexp.Proofs.Arm64.Exp.EvStmt
 
 set_option autoImplicit false
 
@@ -43,7 +44,7 @@ theorem epre_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {stk : Nat} {need 
     (hk1 : 4640 ≤ stk) (hk2 : stk ≤ 2 ^ 20 + 336) (hzp : zp < 2 ^ 64) (hxc : xc < 2 ^ 64) (hyc : yc < 2 ^ 64) :
     EPre R b L (stk - 336) (s.regs 28).toNat (s.sp.toNat - 336) st zp zc xp xl xc yp yl yc mp ml mc s := by
   obtain ⟨⟨hce, hsv, hgl, hro, hwT, hzl, hwo, hins, hsok, hstw, hstg, harr, hcap0, hneed, hwba, hstwb, hstf, hzs,
-    hstgA, hfgA, hcst, hinv⟩, hX, hY, hM, hMe, hxl, hml, hst0, hmlc, hmc, op, hone, hsa⟩ := hP
+    hstgA, hfgA, hcst, hinv⟩, hX, hY, hM, hMe, hxl, hml, hst0, hmlc, hmc, -, op, hone, hsa⟩ := hP
   obtain ⟨hgd, hsok', hd, hwrt, hgw, hgrt, hLs, -⟩ := hce
   obtain ⟨hal, hle, h48, hacc⟩ := hsok'
   obtain ⟨g1, g2, g3⟩ := hgd
@@ -96,5 +97,15 @@ theorem epre_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {stk : Nat} {need 
       hfgA.symm⟩
   · simp only [win, hS] at hone
     rw [show SP - 336 - (stk - 336) = SP - stk by omega, show SP - 336 + 448 = SP + 112 by omega]; exact hone
+
+/-- the entry `z`'s window fact (`Pre`'s s35 conjunct) in the frame form of `segAdd` -/
+theorem zw_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {stk : Nat} {need : Nat → Nat → Nat → Nat}
+    {cost : Nat → Nat → Nat → Nat → Nat} {zp zl zc st xp xl yp yl mp ml mc : Nat} {s : State}
+    (hP : Pre R b L stk 112 need cost zp zl zc st xp xl yp yl mp ml mc s) (hk1 : 336 ≤ stk)
+    (hk2 : stk ≤ s.sp.toNat) :
+    Outside zp (8 * zc) [(s.sp.toNat - 336 - (stk - 336), s.sp.toNat - 336 + 448)] := by
+  have h := hP.2.2.2.2.2.2.2.2.2.2.1
+  simp only [win, outside_cons, outside_nil, and_true] at h ⊢
+  omega
 
 end FvModexp.Arm64.ExpEven

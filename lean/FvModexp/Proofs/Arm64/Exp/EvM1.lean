@@ -7,7 +7,7 @@ set_option autoImplicit false
 /-!
 # `nat.expNNEven` (arm64): **`segM1`** — `J11` (`miR`) → `z2 = z2.mul(stk, z1, m2inv)` → `J12` (`mul1R`) (agent infra)
 
-`runM1`: `R3 = stk`, `R4..R6 = z3` (`264/152/160`), `R7..R9 = m2inv` (`X0..X2`), `R0..R2 = z2` (`256/136/144`),
+`runMul1`: `R3 = stk`, `R4..R6 = z3` (`264/152/160`), `R7..R9 = m2inv` (`X0..X2`), `R0..R2 = z2` (`256/136/144`),
 `CALL nat.mul`. Premise `MulHypG` (empty `z3` tolerated); `mulPreG`; stack callee with a possibly EMPTY destination
 (`frmS_dst` + `stepC0`); `m2`, `z`, `z3` survive; the product is located (`LN.of_sm`) with `EL` (`EL.of_res`).
 -/
@@ -21,7 +21,7 @@ open FvModexp.Arm64.EvenHyp
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
 /-- the run `miR` → `nat.mul`'s entry -/
-theorem runM1 {impl : List Segment} (ret0 : BitVec 64) (Q : State → Prop) (sp st pw lw cw p3 l3 c3 : Nat)
+theorem runMul1 {impl : List Segment} (ret0 : BitVec 64) (Q : State → Prop) (sp st pw lw cw p3 l3 c3 : Nat)
     (M : Memory) (hal : sp % 16 = 0) (hsp2 : sp + 448 ≤ 2 ^ 48) (hacc : M.accessible (sp + 128) 320 false = true)
     (h368 : M.readLE (sp + 368) 8 = st) (h264 : M.readLE (sp + 264) 8 = p3) (h152 : M.readLE (sp + 152) 8 = l3)
     (h160 : M.readLE (sp + 160) 8 = c3) (h256 : M.readLE (sp + 256) 8 = pw) (h136 : M.readLE (sp + 136) 8 = lw)
@@ -104,7 +104,7 @@ theorem segM1 {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns
   have hl3c := h.z3.2.1
   have hl4c := h.mi.2.1
   have hlwc := h.z2.2.1
-  refine runM1 ret0 Q sp st pw lw cw p3 l3 c3 S.mem hal hsp2 hacc h.jx.esl.2.2.2.2.2.2.2.2.1 h.s264 h.s152 h.s160
+  refine runMul1 ret0 Q sp st pw lw cw p3 l3 c3 S.mem hal hsp2 hacc h.jx.esl.2.2.2.2.2.2.2.2.1 h.s264 h.s152 h.s160
     h.s256 h.s136 h.s144 S h.pc h.jx.esp rfl ?_
   intro S' f0 fsp fm r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r30 r18 r28 r29
   have hsN' : S'.sp.toNat = sp := by rw [fsp]; exact hsN

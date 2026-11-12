@@ -1,4 +1,5 @@
-import FvModexp.Proofs.Arm64.Exp.EvStmt
+import FvModexp.Proofs.Arm64.Exp.EvDefs
+import FvModexp.Proofs.Arm64.Exp.NHyp
 
 set_option autoImplicit false
 
