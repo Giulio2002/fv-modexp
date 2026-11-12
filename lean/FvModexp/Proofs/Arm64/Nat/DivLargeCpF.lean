@@ -1,4 +1,6 @@
 import FvModexp.Proofs.Arm64.Nat.DivLargeCall
+import FvModexp.Proofs.Common.AsmVW
+import FvModexp.Proofs.Common.SetBytesMath
 
 /-!
 # `divLarge` (arm64): the copy path's memory facts at the alias test (pure)
@@ -52,7 +54,7 @@ theorem cp_fin {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st
     have ho' := ho
     simp only [outside_append, outside_cons, outside_nil, and_true] at ho'
     obtain ⟨⟨⟨hrt, hsc⟩, hws⟩, hP⟩ := ho'
-    have ht := (wsL_parts hws).1
+    have ht := hws.1
     simp only [csW, outside_append, outside_cons, outside_nil, and_true]
     repeat' apply And.intro
     all_goals first | exact hrt | omega
