@@ -56,6 +56,8 @@ theorem d7 (impl : List Segment) (R : RtInv) (c : Cx) (s : State) (Lk : List (Na
   have r6 := hG.sj
   have hB : Box (G R c s Lk bk S j Z U) := ⟨hG⟩
   clear hG
+  have hsto' := hsto
+  simp only [win, outside_cons, outside_nil, and_true] at hsto'
   janus_run [r1, r2, r3, r4, r5, r6, hK] until [head]
   -- the state after the store
   have hG := hB.1
@@ -79,9 +81,5 @@ theorem d7 (impl : List Segment) (R : RtInv) (c : Cx) (s : State) (Lk : List (Na
   · exact h28
   · exact h29
   · exact h18
-  · rfl
-  · rfl
-  · rfl
-  · rfl
 
 end FvModexp.Arm64.DivRec
