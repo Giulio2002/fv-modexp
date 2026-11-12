@@ -35,11 +35,12 @@ theorem raN (impl : List Segment) (hap : ImplApart Extracted.program impl) {ns :
     RetAddr ((Extracted.program.onlySegments ns).link impl) r := by
   have hm : Extracted.seg11 ∈ Extracted.program.segments := by
     simp only [Extracted.program, Extracted.segments, List.mem_cons, true_or, or_true]
-  rcases hr with rfl | rfl | rfl | rfl
+  rcases hr with rfl | rfl | rfl | rfl | rfl
   · simpa only [Extracted.seg11] using CallW.retAddr_restrict hap hm hn 188 (by decide) (by decide) (by decide)
   · simpa only [Extracted.seg11] using CallW.retAddr_restrict hap hm hn 263 (by decide) (by decide) (by decide)
   · simpa only [Extracted.seg11] using CallW.retAddr_restrict hap hm hn 284 (by decide) (by decide) (by decide)
   · simpa only [Extracted.seg11] using CallW.retAddr_restrict hap hm hn 372 (by decide) (by decide) (by decide)
+  · simpa only [Extracted.seg11] using CallW.retAddr_restrict hap hm hn 389 (by decide) (by decide) (by decide)
 
 set_option maxRecDepth 20000 in
 /-- expNN's slots `[sp + 1048, sp + 1064)` (saved FP/LR) and `[sp + 1168, sp + 1432)` survive a callee entered with
@@ -59,7 +60,7 @@ theorem keepS {R : RtInv} {L : List (Nat × Nat)} {stk sp K zp zc zq zcq st : Na
   have hrt1 : Outside (a + i) 1 R.rt := hrt.of_sub (by omega) (by omega)
   simp only [ExpHyp.stWs, stkWs, winA, hSsp, outside_append, outside_cons, outside_nil, and_true]
   refine ⟨⟨⟨hrt1, by omega, by omega⟩, ?_⟩, by unfold Apart at hstw; omega, ?_⟩
-  · rcases hzq with h0 | ⟨e1, e2, hzw⟩ | ⟨hin, -⟩
+  · rcases hzq with ⟨h0, -⟩ | ⟨e1, e2, hzw⟩ | ⟨hin, -⟩
     · rw [h0]; omega
     · rw [e1, e2]; unfold Apart at hzw; omega
     · have := out_inR2 hrt1 hin; omega
@@ -102,7 +103,7 @@ theorem callC (impl : List Segment) (hap : ImplApart Extracted.program impl) {ns
     have := hrw _ (List.mem_singleton_self _)
     simp only at this; rwa [show sp + 1432 - (sp - K) = K + 1432 by omega] at this
   refine Reaches.call_regions (hS.withExit hret) hpc ⟨?_, hargs, hPS⟩ (fun s' hr' ⟨⟨e1, e2, e3, e4⟩, hq⟩ hrg' => ?_)
-  · rw [h30, BitVec.toNat_ofNat, Nat.mod_eq_of_lt (by rcases hr with rfl | rfl | rfl | rfl <;> decide)]
+  · rw [h30, BitVec.toNat_ofNat, Nat.mod_eq_of_lt (by rcases hr with rfl | rfl | rfl | rfl | rfl <;> decide)]
     exact raN impl hap hn11 hr
   have hq' := hQ s' hq
   have hq2 := hq'

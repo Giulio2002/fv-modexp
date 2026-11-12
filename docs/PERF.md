@@ -1191,3 +1191,9 @@ amd64 Top_RunErr in the same run: **FAIL (timeout) 901 s**, peak 1.4 GB — at l
 | MulITail (itail) | — | 42 s / 3.0 GB | two janus_run segments (wb on/off) |
 | MulICall / MulIMul | — | 2.4 s / 17 s | |
 | full mul chain rebuild after MulDefs change (36 modules, J=1) | — | max MulOne 173 s / 6.55 GB, MulBM 98 s, MulKar 77 s | all green |
+
+## expmc s30/s31 (2026-11-12) — nat.expNN `stk == nil` path (arm64, dev compile, LEAN_NUM_THREADS=4)
+| module | before | after | note |
+|---|---|---|---|
+| NNilK (`epiK1`, flag-1 epilogue ⇒ PostNil) | 320 s / 8.3 GB | 9.8 s / 2.9 GB | two arithmetic DISJUNCTIONS (`a + k ≤ p ∨ p + r ≤ a`) were kept unfolded in the context: EVERY `by omega` case-splits on all `∨` hypotheses in scope (2^n blow-up across ~40 omega calls). Keep them folded as `Apart` and unfold locally (`have := h; unfold Apart at this`) right before the one omega that needs it. |
+| NNilKP / NNilG / NNilC / NNilS / NNilST / NNilSN / NNilSK / NNilQ | — | 1.7–6.9 s each, ≤ 2.9 GB | small glue lemmas, frame chains in standalone helpers |

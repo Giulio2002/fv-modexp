@@ -16,7 +16,7 @@ namespace FvModexp.Arm64.ExpN
 
 /-- the `z` argument of a callee: empty, the entry's `z` (apart from the window), or a fresh runtime block -/
 @[reducible] def ZArg (R : RtInv) (L : List (Nat × Nat)) (sp K zp zc zq zcq : Nat) : Prop :=
-  zcq = 0 ∨ (zq = zp ∧ zcq = zc ∧ Apart zp (8 * zc) (sp - K) (K + 1432)) ∨
+  (zcq = 0 ∧ (zq = 0 ∨ (zq = zp ∧ zc = 0))) ∨ (zq = zp ∧ zcq = zc ∧ Apart zp (8 * zc) (sp - K) (K + 1432)) ∨
     (InRanges zq (8 * zcq) R.rt ∧ ApartAll zq (8 * zcq) L)
 
 theorem apartAll_ext {R : RtInv} {L L1 : List (Nat × Nat)} {a k : Nat} (hx : LiveExt R L L1) (h : ApartAll a k L1) :
@@ -90,7 +90,7 @@ theorem post_call {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {costF
   have hres : 0 < c → Apart p (8 * c) (sp - K) (K + 1304) := by
     intro hc
     rcases hof with ⟨rfl, rfl⟩ | ⟨hin, -⟩
-    · rcases hzq with h0 | ⟨e1, e2, hzw⟩ | ⟨hin, -⟩
+    · rcases hzq with ⟨h0, -⟩ | ⟨e1, e2, hzw⟩ | ⟨hin, -⟩
       · omega
       · rw [e1, e2]; unfold Apart at hzw ⊢; omega
       · have := out_inR2 hwrt hin; unfold Apart; omega
@@ -109,8 +109,9 @@ theorem post_call {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {costF
       simp only [List.mem_singleton] at hr; subst hr
       exact Or.inr (hwrt.of_sub (by simp only; omega) (by simp only; omega))) hinv
   · rcases hof with ⟨rfl, rfl⟩ | ⟨hin, hap⟩
-    · rcases hzq with h0 | ⟨h1, h2, -⟩ | ⟨hin, hap⟩
-      · exact Or.inl h0
+    · rcases hzq with ⟨h0, rfl | ⟨rfl, hz0⟩⟩ | ⟨h1, h2, -⟩ | ⟨hin, hap⟩
+      · exact Or.inl ⟨h0, rfl⟩
+      · exact Or.inr (Or.inl ⟨rfl, h0.trans hz0.symm⟩)
       · exact Or.inr (Or.inl ⟨h1, h2⟩)
       · exact Or.inr (Or.inr ⟨hin, hap⟩)
     · exact Or.inr (Or.inr ⟨hin, apartAll_ext hx1 hap⟩)
@@ -131,7 +132,7 @@ theorem post_call {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {costF
     simp only [winA, hs, stkWs, outside_cons, outside_nil, and_true] at hw1 hz hst
     have hzx : Outside x 1 [(zq, zq + 8 * zcq)] := by
       simp only [outside_cons, outside_nil, and_true]
-      rcases hzq with h0 | ⟨e1, e2, -⟩ | ⟨hin, -⟩
+      rcases hzq with ⟨h0, -⟩ | ⟨e1, e2, -⟩ | ⟨hin, -⟩
       · rw [h0]; omega
       · rw [e1, e2]; exact hz
       · have := out_inR2 hr hin; omega
@@ -149,7 +150,7 @@ theorem post_call {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {costF
       simp only [ExpHyp.stWs]; rw [hws]
       simp only [outside_append, outside_cons, outside_nil, and_true] at hout1 ⊢
       refine ⟨?_, hout1.2⟩
-      rcases hzq with h0 | ⟨e1, e2, -⟩ | ⟨-, hap⟩
+      rcases hzq with ⟨h0, -⟩ | ⟨e1, e2, -⟩ | ⟨-, hap⟩
       · rw [h0]; omega
       · rw [e1, e2]; exact hout1.1
       · have := hap q hq; unfold Apart at this; omega)

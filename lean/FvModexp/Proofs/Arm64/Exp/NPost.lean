@@ -116,7 +116,7 @@ theorem post_triv {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {costF
     · simp
   · rcases hz with ⟨rfl, rfl, -⟩ | ⟨rfl, rfl⟩
     · exact Or.inr (Or.inl ⟨rfl, rfl⟩)
-    · exact Or.inl rfl
+    · exact Or.inl ⟨rfl, rfl⟩
 
 /-- the `z.setWord(1)` value: `X ^ Y % M = 1` when `Y = 0` or `X = 1` (and `M > 1`) -/
 theorem val_one {M : Memory} {xp xl yp yl mp n : Nat} (hM : 1 < natVal M mp n)

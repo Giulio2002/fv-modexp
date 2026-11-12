@@ -72,7 +72,7 @@ def PostNil (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K : Nat) (costF : Nat
     ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧
       b - (24 + NCost costF costR costS costP xl yl n 0 (Nat.log2 (natVal s.mem mp n))) ≤ b' ∧
       R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem) ∧ NatLive s'.mem R L' p c ∧
-      (c = 0 ∨ (p = zp ∧ c = zc) ∨ (InRanges p (8 * c) R.rt ∧ ApartAll p (8 * c) L)) ∧
+      ((c = 0 ∧ p = 0) ∨ (p = zp ∧ c = zc) ∨ (InRanges p (8 * c) R.rt ∧ ApartAll p (8 * c) L)) ∧
       MemFrame s.mem s'.mem (R.rt ++ winA s (K + 1312) 120 ++ [(zp, zp + 8 * zc)]) ∧
       LiveFrame s.mem s'.mem L [(zp, zp + 8 * zc)]
 

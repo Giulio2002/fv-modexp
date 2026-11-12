@@ -12,8 +12,8 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvMod
 
 namespace FvModexp.Arm64.ExpN
 
-/-- the return points of the four callees (rem, slow, odd, power of two) -/
-@[reducible] def RetPt (r : Nat) : Prop := r = 1787296 ∨ r = 1787596 ∨ r = 1787680 ∨ r = 1788032
+/-- the return points of the five callees (rem, slow, odd, power of two, even) -/
+@[reducible] def RetPt (r : Nat) : Prop := r = 1787296 ∨ r = 1787596 ∨ r = 1787680 ∨ r = 1788032 ∨ r = 1788100
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
@@ -31,7 +31,7 @@ theorem epi0 (impl : List Segment) (ret0 : Nat) (hret : RetAddr (LibN.program.li
     apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
   have es2 : BitVec.ofNat 64 (sp + 1056) + 256#64 = BitVec.ofNat 64 (sp + 1312) := by
     apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega
-  rcases hr with rfl | rfl | rfl | rfl
+  rcases hr with rfl | rfl | rfl | rfl | rfl
   all_goals
     janus_run [es, es2, h29v, h30v, hfl]
     refine hK _ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_

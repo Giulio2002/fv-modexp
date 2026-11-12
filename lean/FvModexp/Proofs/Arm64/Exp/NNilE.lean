@@ -31,9 +31,9 @@ theorem epi1s (impl : List Segment) (ret0 : Nat) (hret : RetAddr (LibN.program.l
       S1.mem.readLE (sp + 1248) 8 = (S.regs 2).toNat →
       Reaches ((LibN.program.link impl).withExit ret0) S1 Q) :
     Reaches ((LibN.program.link impl).withExit ret0) S Q := by
-  rcases hr with rfl | rfl | rfl | rfl
+  rcases hr with rfl | rfl | rfl | rfl | rfl
   all_goals
-    janus_run [] until [1787304, 1787604, 1787688, 1788040]
+    janus_run [] until [1787304, 1787604, 1787688, 1788040, 1788108]
     refine K _ rfl hsp.symm rfl rfl rfl rfl rfl rfl ?_ ?_ ?_ ?_ ?_
     all_goals first | (janus_simp; done) | skip
     all_goals first
@@ -61,7 +61,7 @@ theorem epi1c (impl : List Segment) (ret0 : Nat) (hret : RetAddr (LibN.program.l
     Reaches ((LibN.program.link impl).withExit ret0) S Q := by
   have h240' : S.mem.readLE (sp + 1296) 8 = sp + 1272 := h240
   have h216' : S.mem.readLE (sp + 1272) 8 = 1788272 := h216
-  rcases hr with rfl | rfl | rfl | rfl
+  rcases hr with rfl | rfl | rfl | rfl | rfl
   all_goals
     janus_run [hfl, h240', h216'] until [1788272]
     refine K _ ?_ hsp.symm ?_ ?_ ?_ ?_ ?_ ?_ ?_
@@ -99,7 +99,7 @@ theorem epi1r (impl : List Segment) (ret0 : Nat) (hret : RetAddr (LibN.program.l
   obtain ⟨e1, hacc3, h30v, K⟩ := hK s3 hpost hrg3
   rw [h30] at hpc3
   rw [hsp] at e1
-  rcases hr with rfl | rfl | rfl | rfl
+  rcases hr with rfl | rfl | rfl | rfl | rfl
   all_goals
     janus_run [es, es2, h30v]
     refine K _ rfl ?_ ?_ ?_ ?_ ?_ ?_ rfl
