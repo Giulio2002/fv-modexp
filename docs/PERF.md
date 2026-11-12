@@ -795,3 +795,13 @@ Function-level frame plumbing: W4Anc 2.6 s / 2.2 GB, W4FunV 1.3 s, W4FunO 3.3 s 
 EnCtx 14 s, En 23 s / 2.7 GB (others unchanged ±20%). LESSON: a single `by omega` in a chain lemma's context (dozens
 of unfolded Apart/stack disjunctions) made W4DivS run > 5 min (4.5 s before): every arithmetic side goal of the new
 anchor plumbing goes through tiny lemmas (`ble1/ble2/ble3/le_cap_of/cap8/le_drop/bP`, W4Anc) — no omega in big contexts.
+
+### asm s14: nat.trunc amd64, speed-ups (dev `mkp.py`, host load ~35, wall / peak RSS)
+| module | time | note |
+|---|---|---|
+| Amd64/Nat/TruncDefs, Mid, Zero, Trunc | 1.7, 10.3, 15.3, 6.4 s / ≤ 2.6 GB | |
+| Amd64/Nat/TruncNorm (mask + norm + fromTst), TruncCopy, TruncSetC | 24, 22, 18 s / ≤ 2.6 GB | copyM stops at the memmove return, copyT continues (small context) |
+| Amd64/Nat/TruncMain / TruncMainA / TruncSet / TruncSetA | 13 / 91 / 12 / 88 s / ≤ 2.6 GB | MainA/SetA hold two makeslice runs (`w = 1` / `make(w, w+4)`): split if a row needs it |
+| Arm64/Nat/LshShiftC | 59 s / 2.6 GB (was 113-161 s / 3.4 GB) | post-call run moved into `shiftT` (small context), as amd64 s13 |
+| Amd64/Nat/RshMainA/B → RshMainAC/AS/BC/BS | see rows log | one makeslice run per module (copy / shift), shr6 moved to RshDefs |
+| row TruncRow arm64 / amd64 | PASS 257 s / 3.2 GB; PASS 426 s / 4.2 GB | |
