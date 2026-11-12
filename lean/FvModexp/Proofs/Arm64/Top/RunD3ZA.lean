@@ -1,6 +1,7 @@
 import FvModexp.Proofs.Arm64.Top.RunD3ZDefs
 import FvModexp.Proofs.Arm64.Top.RunGS
 import FvModexp.Proofs.Arm64.Top.RunBox
+import FvModexp.Proofs.Arm64.Top.RunDSlot
 
 /-! # `Run` (arm64): `D2` to `Z3`, modulus operand of more than 32 bytes longer than the input rest: the `makeslice`
 buffer of `RightPadBytes` (see `RunD3ZDefs`), with `nb` input bytes left to copy (`0` or more) -/
@@ -200,10 +201,10 @@ theorem d3zA (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
   have hnbm : (len.toNat - 96 - min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96)) % 18446744073709551616 = (len.toNat - 96 - min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96)) :=
     Nat.mod_eq_of_lt (Nat.lt_of_le_of_lt (Nat.le_trans (Nat.sub_le _ _) (Nat.sub_le _ _)) len.isLt)
   clear bxo hpo hLS1 hink hapk hzk
-  have ho0 : OpDone R mk s p len L L1 0 := OpDone.transport (hop 0 (by omega)) (by janus_simp [opAt]) (by janus_simp [opAt])
-    (by janus_simp [opAt]) (by janus_simp [opAt]) hLFS (fun _ _ h => h)
-  have ho1 : OpDone R mk s p len L L1 1 := OpDone.transport (hop 1 (by omega)) (by janus_simp [opAt]) (by janus_simp [opAt])
-    (by janus_simp [opAt]) (by janus_simp [opAt]) hLFS (fun _ _ h => h)
+  have ho0 : OpDone R mk s p len L L1 0 := OpDone.transportS (hop 0 (by omega)) (k := 2) (by omega)
+    (by intro a n h1 h2; simp only [opAt] at h1 h2; janus_simp) hLFS (fun _ _ h => h)
+  have ho1 : OpDone R mk s p len L L1 1 := OpDone.transportS (hop 1 (by omega)) (k := 2) (by omega)
+    (by intro a n h1 h2; simp only [opAt] at h1 h2; janus_simp) hLFS (fun _ _ h => h)
   refine hkZ _ (L1 ++ [(ptr.toNat, ptr.toNat + blockSize (hdrV s p len 2) true)]) (b1 - blockSize (hdrV s p len 2) true)
     ptr.toNat (p.toNat + off + mN) ⟨by janus_simp [hsp], by janus_simp [h28], by janus_simp [h29], by janus_simp [h18],
      by janus_simp [hm1], by janus_simp [hm2], by janus_simp [hm3], by janus_simp [hm4], by janus_simp [hm5],
@@ -214,8 +215,7 @@ theorem d3zA (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
      hrt', hsep, hbytes, hpast, hnbp, hdk, hinp, hcc, hext.trans hext', hbudk, hinvk, hls, hMF2, hLF2,
      ho0.transport rfl rfl rfl rfl (LiveFrame.refl _ _ _) (fun _ _ h => hext'.inRanges_old h),
      ho1.transport rfl rfl rfl rfl (LiveFrame.refl _ _ _) (fun _ _ h => hext'.inRanges_old h),
-     OpsApart.transport hopA (fun i hi => by
-       rcases (show i = 0 ∨ i = 1 by omega) with rfl | rfl <;> exact ⟨by janus_simp [opAt], by janus_simp [opAt]⟩),
+     OpsApart.transportS hopA (by intro a n h1 h2; simp only [opAt] at h1 h2; janus_simp),
      ⟨L1, rfl, hext, hsepB, ho0, ho1⟩⟩ (by janus_simp)
 
 end FvModexp.Arm64.Run

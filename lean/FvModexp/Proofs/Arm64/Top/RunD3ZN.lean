@@ -1,5 +1,6 @@
 import FvModexp.Proofs.Arm64.Top.RunD3J
 import FvModexp.Proofs.Arm64.Top.RunD3ZDefs
+import FvModexp.Proofs.Arm64.Top.RunDSlot
 
 /-! # `Run` (arm64): `Z2` to `J2` when the `copy` source differs from the fresh buffer: `memmove` of 0 bytes -/
 
@@ -113,11 +114,8 @@ theorem d3zN (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
      Memory.accessible_read_of_write _ hBacc, hBH, (by rcases hBW with h | h; exact Or.inl h; exact Or.inr (Or.inr h)),
      ?bytes, hd2, fun a n h1 h2 => (hheld.sub h1 h2).readLE hMF2 hLx (hpo'.of_sub h1 (by omega)),
      hcheld.readLE hMF2 hLx hco', hext, hbud, hinvm, hLsS, hMF2, hLF2,
-     OpDone.transport hop0 (by janus_simp [opAt]) (by janus_simp [opAt]) (by janus_simp [opAt])
-       (by janus_simp [opAt]) hLFS (fun _ _ h => h),
-     OpDone.transport hop1 (by janus_simp [opAt]) (by janus_simp [opAt]) (by janus_simp [opAt])
-       (by janus_simp [opAt]) hLFS (fun _ _ h => h), OpsApart.transport hopA (fun i hi => by
-       rcases (show i = 0 ∨ i = 1 by omega) with rfl | rfl <;> exact ⟨by janus_simp [opAt], by janus_simp [opAt]⟩)⟩
+     OpDone.transportS hop0 (k := 2) (by omega) (by intro a n h1 h2; simp only [opAt] at h1 h2; janus_simp) hLFS (fun _ _ h => h),
+     OpDone.transportS hop1 (k := 2) (by omega) (by intro a n h1 h2; simp only [opAt] at h1 h2; janus_simp) hLFS (fun _ _ h => h), OpsApart.transportS hopA (by intro a n h1 h2; simp only [opAt] at h1 h2; janus_simp)⟩
   case bytes =>
     intro j hj
     dsimp only

@@ -1,5 +1,6 @@
 import FvModexp.Proofs.Arm64.Top.RunD3J
 import FvModexp.Proofs.Arm64.Top.RunD3ZDefs
+import FvModexp.Proofs.Arm64.Top.RunDSlot
 
 /-! # `Run` (arm64): `Z3` to `J3` with `nb > 0` input bytes left for the modulus: `memmove` of the input rest into the
 fresh `makeslice` buffer (`copy(padded, data)` of `RightPadBytes`), the remaining bytes stay zero -/
@@ -126,6 +127,8 @@ theorem d3lB (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
           simp only [Janus.outside_append, Janus.outside_cons, Janus.outside_nil, and_true]
           omega),
         Memory.readLE_writeLE_of_disjoint _ _ (by omega), Memory.readLE_one, hBv j hj]
+  have hslot : SlotsEq U.mem m2 s 2 := by
+    intro a n h1 h2; simp only [opAt] at h1 h2; janus_simp
   refine d3join impl hap R hmk hokS b L c p len cp ret hret s henv0 hin0 Q hbudD hk _ (L0 ++ [(B, B + blockSize (hdrV s p len 2) true)]) bk B ?hj (by janus_simp)
   case hj =>
   refine ⟨by janus_simp [hsp], by janus_simp [h28], by janus_simp [h29], by janus_simp [h18],
@@ -137,10 +140,7 @@ theorem d3lB (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
      Memory.accessible_read_of_write _ hBacc, hBH, (by rcases hBW with h | h; exact Or.inl h; exact Or.inr (Or.inr h)),
      hbytes, hd2, fun a n h1 h2 => (hheld.sub h1 h2).readLE hMF2 hLx (hpo'.of_sub h1 (by omega)),
      hcheld.readLE hMF2 hLx hco', hext, hbud, hinvm, hLsS, hMF2, hLF2,
-     OpDone.transport hq0 (by janus_simp [opAt]) (by janus_simp [opAt]) (by janus_simp [opAt])
-       (by janus_simp [opAt]) hLFS (fun _ _ h => h.append_left _),
-     OpDone.transport hq1 (by janus_simp [opAt]) (by janus_simp [opAt]) (by janus_simp [opAt])
-       (by janus_simp [opAt]) hLFS (fun _ _ h => h.append_left _), OpsApart.transport hopA (fun i hi => by
-       rcases (show i = 0 ∨ i = 1 by omega) with rfl | rfl <;> exact ⟨by janus_simp [opAt], by janus_simp [opAt]⟩)⟩
+     OpDone.transportS hq0 (by omega) hslot hLFS (fun _ _ h => h.append_left _),
+     OpDone.transportS hq1 (by omega) hslot hLFS (fun _ _ h => h.append_left _), OpsApart.transportS hopA hslot⟩
 
 end FvModexp.Arm64.Run

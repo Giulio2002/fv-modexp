@@ -3,6 +3,7 @@ import FvModexp.Proofs.Arm64.Top.RunGS
 import FvModexp.Proofs.Arm64.Top.RunD2J
 import FvModexp.Proofs.Arm64.Top.RunArith
 import FvModexp.Proofs.Arm64.Top.RunBox
+import FvModexp.Proofs.Arm64.Top.RunDSlot
 
 /-! # `Run` (arm64): `D1` to `J2`, exponent operand longer than the input rest, more than 32 bytes: `makeslice` buffer,
 `memmove` (at least one input byte to copy) -/
@@ -208,8 +209,7 @@ theorem d2l (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
      hcheld.readLE hMF2 hLx hco', hext.trans hext',
      (by have hBS' := blockSize_le_allocCost (hdrV s p len 1) true
          simp only [dCost, allocCost] at hbud hBS' ⊢; omega), hinvm, ?ls, hMF2, hLF2,
-     OpDone.transport (hop 0 (by omega)) (by janus_simp [opAt]) (by janus_simp [opAt]) (by janus_simp [opAt])
-       (by janus_simp [opAt]) hLFS (fun _ _ h => hext'.inRanges_old h)⟩
+     OpDone.transportS (hop 0 (by omega)) (k := 1) (by omega) (by intro a n h1 h2; simp only [opAt] at h1 h2; janus_simp) hLFS (fun _ _ h => hext'.inRanges_old h)⟩
   case held => exact Or.inl ⟨_, List.mem_append_right _ (List.mem_singleton_self _), by dsimp only; omega, by dsimp only; omega⟩
   case ls =>
     intro r hr
