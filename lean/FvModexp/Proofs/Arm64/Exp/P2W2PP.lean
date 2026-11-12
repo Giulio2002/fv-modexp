@@ -214,7 +214,7 @@ theorem ppre (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R L K
   refine ⟨CallW.callEnv_of hce hsp h28 rfl (by simp only [P2Pre.K]; omega) (by simp only [P2Pre.A]; omega), hsv, ?_,
     Or.inl rfl, by decide, hlm2, hlm, by omega, by omega, ?_, hout.of_sub (by omega) (by omega), ?_, ?_, ?_, ?_,
     hxo.1, hxo.2.1, hxl, hxo.2.2.1, hsi, by rw [hlen]; omega, free_apart h hsok.2.1 hstf, ?_, by rw [hlen]; exact hcost,
-    by rw [hgN]; exact h.inv, by rw [h30]; decide, by rw [h30]; decide, ?_, ?_⟩
+    by rw [hgN]; exact h.inv, by rw [h30]; decide, by rw [h30]; decide, ?_, ?_, hstnz⟩
   · exact hgl
   · rw [h.fr.accessible]; exact Memory.accessible_mono _ hacc (by omega) (by omega)
   · simp only [win, P2Pre.K, P2Pre.A, hsN, outside_cons, outside_nil, and_true]; omega
@@ -227,5 +227,30 @@ theorem ppre (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R L K
   · exact hgO.2.2.1.symm
   · exact (free_apart h hgO.1 hgO.2.2.2).symm
 end
+
+/-- `BU` of a held object through a step that keeps the stack array (level not lower) or makes a fresh one -/
+theorem bu_after {R : RtInv} {L1 : List (Nat × Nat)} {st t n : Nat} {M M' : Memory} (h : P2Pre.BU M st t n)
+    (hh : Held R L1 t n) (hkf : ArrKF R L1 st M M') (hl : stLen M st ≤ stLen M' st) : P2Pre.BU M' st t n := by
+  rcases hkf with ⟨e1, e2⟩ | ⟨hin, hap⟩
+  · simp only [P2Pre.BU, stW, stLen, stCap] at h e1 e2 hl ⊢
+    rw [e1, e2]; rcases h with ⟨h1, h2⟩ | h
+    · left; omega
+    · right; exact h
+  · right
+    rcases hh with hL | hO
+    · have := hap.apart_of_inRanges hL; unfold Apart; omega
+    · have := hin.apart hO; unfold Apart at this ⊢; omega
+
+/-- a scratch nat made by a callee at `M` (relative to `M`) is apart from an object held before with `BU` -/
+theorem scr_apart_bu {R : RtInv} {L1 L2 : List (Nat × Nat)} {st t n bp k : Nat} {M M' : Memory}
+    (hs : Scr R L1 L2 M M' st bp k) (h : P2Pre.BU M st t n) (hh : Held R L1 t n) (hlc : stLen M st ≤ stCap M st) :
+    Apart t n bp (8 * k) := by
+  rcases hs.loc with ⟨-, l1, l2⟩ | ⟨hin, hap⟩
+  · rcases h with ⟨h1, h2⟩ | h
+    · unfold Apart; omega
+    · unfold Apart at h ⊢; omega
+  · rcases hh with hL | hO
+    · have := hap.apart_of_inRanges hL; unfold Apart; omega
+    · exact hin.apart hO
 
 end FvModexp.Arm64.P2W2

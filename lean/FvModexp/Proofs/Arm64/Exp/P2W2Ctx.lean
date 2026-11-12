@@ -1,7 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.P2W2Pre
 import FvModexp.Proofs.Arm64.Exp.CallW
 import FvModexp.Proofs.Common.StkFrame
-import FvModexp.Proofs.Arm64.Exp.LibCalls
+import FvModexp.Proofs.Arm64.Exp.LibCallsX
 
 /-!
 # `expNNPowerOfTwoWindowSize2` (arm64): call helpers (agent infra)
@@ -65,27 +65,5 @@ theorem obj_free {R : RtInv} {L : List (Nat × Nat)} {sp K st : Nat} {M0 M : Mem
       · have := hin.apart hO; unfold Apart at this; omega
     show Apart a k (stW M st + 8 * stLen M st) (8 * (stCap M st - stLen M st))
     unfold Apart; omega
-
-/-- `LibCalls.stkNatCall` with the `StackBackL`-ready post (`StackNat.HypL` / `PostL`) -/
-theorem stkNatCallL {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
-    (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) {stk above : Nat}
-    (hsn : StackNat.HypL impl R ns stk above) {b : Nat} {L : List (Nat × Nat)} {st n : Nat}
-    {S : State} {ret : BitVec 64} {Q : State → Prop} {ra : Nat}
-    (hra : RetAddr ((Extracted.program.onlySegments ns).link impl) ra)
-    (hpc : S.pc = BitVec.ofNat 64 (segAddr Extracted.program StackNat.fn)) (h30 : S.regs 30 = BitVec.ofNat 64 ra)
-    (h0 : S.regs 0 = BitVec.ofNat 64 st) (h1 : S.regs 1 = BitVec.ofNat 64 n)
-    (bst : st < 2 ^ 64) (bn : n < 2 ^ 64) (bra : ra < 2 ^ 64)
-    (hpre : StackNat.Pre R b L stk above st n S)
-    (K : ∀ s', s'.pc = BitVec.ofNat 64 ra → s'.sp = S.sp → s'.regs 28 = S.regs 28 → s'.regs 29 = S.regs 29 →
-      s'.regs 18 = S.regs 18 → s'.mem.regions = S.mem.regions → StackNat.PostL R b L stk above st n S s' →
-      ReachesRet (LibExp.program.link impl) ret s' Q) :
-    ReachesRet (LibExp.program.link impl) ret S Q := by
-  have hS := CallW.hypSum hap hns (hsn b L (BitVec.ofNat 64 st) (BitVec.ofNat 64 n))
-  refine ReachesRet.call_regions hS hpc ⟨?_, ?_, ?_⟩ fun s' hr ⟨⟨e1, e2, e3, e4⟩, hq⟩ hrg => ?_
-  · rw [h30, LibCalls.tN bra]; exact hra
-  · simp only [ArgsFrom]; exact ⟨h0, h1, trivial⟩
-  · rw [LibCalls.tN bst, LibCalls.tN bn]; exact hpre
-  · rw [LibCalls.tN bst, LibCalls.tN bn] at hq
-    exact K s' (hr.trans h30) e1 e2 e3 e4 hrg hq
 
 end FvModexp.Arm64.P2W2

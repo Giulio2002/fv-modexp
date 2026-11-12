@@ -46,7 +46,9 @@ theorem ctx0 (hpre : Pre R kc sqC mlC b L st pw pl ws lm x xl s) (hkc : 4608 ≤
     (hgrow : stCap S'.mem st < stLen S'.mem st + StackNat.rnd (NB pl lm) →
       InRanges (stW s'.mem st) (8 * stCap s'.mem st) R.rt ∧ ApartAll (stW s'.mem st) (8 * stCap s'.mem st) L)
     (hF' : MemFrame S'.mem s'.mem (R.rt ++ winA S' stk above ++ stkWs S'.mem st))
-    (hLF' : LiveFrame S'.mem s'.mem L (stkWs S'.mem st)) :
+    (hLF' : LiveFrame S'.mem s'.mem L (stkWs S'.mem st))
+    (hmemb : stCap S'.mem st < stLen S'.mem st + StackNat.rnd (NB pl lm) →
+      (stW s'.mem st, stW s'.mem st + 8 * stCap s'.mem st) ∈ L') :
     Ctx R kc L st pw pl lm s (stW s'.mem st + 8 * stLen s.mem st) s'.mem L' b' := by
   have hf := pf_of hpre (by omega)
   have hK := hf.w.sp
@@ -56,7 +58,7 @@ theorem ctx0 (hpre : Pre R kc sqC mlC b L st pw pl ws lm x xl s) (hkc : 4608 ≤
   simp only [K, A, win, outside_cons, outside_nil, and_true] at hK hrt hhd har
   obtain ⟨-, e0, e1, e2⟩ := stk_win hpre hF
   subst hm
-  simp only [e0, e1, e2] at hsame hgrow hlen
+  simp only [e0, e1, e2] at hsame hgrow hlen hmemb
   have hsfree := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
   have hstk := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
   obtain ⟨⟨-, hsth, -, -, -, -, -⟩, -, -, -⟩ := hstk
@@ -96,7 +98,14 @@ theorem ctx0 (hpre : Pre R kc sqC mlC b L st pw pl ws lm x xl s) (hkc : 4608 ≤
     · rcases hsth with hL | hO
       · exact hap.apart_of_inRanges hL
       · exact (hin.apart hO).symm
-  refine ⟨hfr, hlf, hrg'.trans hrg, hLE, hinv, hscr, hsa, hsap, ?_⟩
+  have hain : ArrIn L' st s.mem s'.mem := by
+    intro hne
+    by_cases hc : stLen s.mem st + StackNat.rnd (NB pl lm) ≤ stCap s.mem st
+    · exact absurd (hsame hc) hne
+    · exact hmemb (by omega)
+  have hbu : BU s'.mem st (stW s'.mem st + 8 * stLen s.mem st) (8 * NB pl lm) := by
+    left; rw [hlen]; simp only [StackNat.rnd]; omega
+  refine ⟨hfr, hlf, hrg'.trans hrg, hLE, hinv, hscr, hsa, hsap, ?_, hain, hbu⟩
   refine sl_keep (L := L) (L1 := L) hf.w hspN hk ha (fun r hr => ?_) hF' hsl
   simp only [stkWs, List.mem_cons, List.not_mem_nil, or_false] at hr
   intro hlt
@@ -184,7 +193,7 @@ set_option maxHeartbeats 64000000 in
 /-- **`buf = stk.nat((len+1) w)`** from the callee entry, then the reloads → `FillJ 0` -/
 theorem callSN (hap : ImplApart Extracted.program impl) {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
-    {stkS aboveS : Nat} (hsn : StackNat.Hyp impl R ns stkS aboveS) (hkS : stkS ≤ kc) (haS : aboveS ≤ 88)
+    {stkS aboveS : Nat} (hsn : StackNat.HypL impl R ns stkS aboveS) (hkS : stkS ≤ kc) (haS : aboveS ≤ 88)
     (hkc : 4608 ≤ kc) (hpre : Pre R kc sqC mlC b L st pw pl ws lm x xl s)
     (kF : FillJ impl R kc sqC mlC b L st pw pl lm x xl s 0) {M : Memory}
     (hF : MemFrame s.mem M (winA s (K kc) A)) (hrg : M.regions = s.mem.regions) (hsl : Sl s st pw pl lm M)
@@ -200,12 +209,12 @@ theorem callSN (hap : ImplApart Extracted.program impl) {ns : List String}
   obtain ⟨hok, e0, e1, e2⟩ := stk_win hpre hF
   have hnb0 : 0 < NB pl lm := Nat.mul_pos (by have := (pl_facts hpre).1; omega) (w_facts hpre).1
   have hnb := nb_le (pl_facts hpre).2.1 (w_facts hpre).2
-  refine LibCalls.stkNatCall hap hns hsn (b := b) (L := L) (ra_bp hap hnf 31 (by decide)) (by rw [hpc, sn_addr]) h30
+  refine LibCalls.stkNatCallL hap hns hsn (b := b) (L := L) (ra_bp hap hnf 31 (by decide)) (by rw [hpc, sn_addr]) h30
     h0 h1 (by have := hok.2.2.2.1; omega) (by omega) (by decide) (snPre hkS haS hkc hpre hF hrg hsp h28 hm)
     fun s' hpc' hsp' h28' h29' h18' hrg' hpost => ?_
-  obtain ⟨hr0, hr1, hr2, L', b', ⟨hLE, hbud, hinv'⟩, hok', hlen, hsame, hgrow, hF', hLF'⟩ := hpost
+  obtain ⟨hr0, hr1, hr2, L', b', ⟨hLE, hbud, hinv'⟩, hok', hlen, hsame, hgrow, hF', hLF', hmemb⟩ := hpost
   have hc := ctx0 hpre hkc hF hrg hsl hspN hm hkS haS hrg' hLE (by rw [h28] at hinv'; exact hinv') hok' hlen hsame
-    hgrow hF' hLF'
+    hgrow hF' hLF' hmemb
   rw [hm, e1] at hr0 hbud
   have hr0' := hr0 hnb0
   obtain ⟨-, -, -, f3, f4, -, f6, -, -, -, -, -⟩ := hc.sl

@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Arm64.Exp.LibCalls
+import FvModexp.Proofs.Arm64.Exp.LibCallsX
 import FvModexp.Proofs.Common.ExpPow2
 import FvModexp.Proofs.Common.ExpmcFrame
 
@@ -21,7 +21,8 @@ The function: `buf = stk.nat((len+1)·w)`, `powers[i] = buf[i w : (i+1) w : (i+2
 Statement restrictions (callers `expNNPowerOfTwoWindowSize{2,4}`): `windowSize ∈ {2, 4}`, `len = 2^windowSize`,
 `2 ≤ logM ≤ 2^13`, `x` normalised, a non-nil `stk`, `powers` a caller-frame array outside the runtime. The last two
 conjuncts of `Pre` (the stack header and free part apart from the threshold globals `gA`) are what `nat.sqr`'s
-`StkPre` needs (divmc s13); they are carried for the `sqr` call sites once `SqrHypR` is instantiated with divmc's `ens`.
+`StkPre` needs (divmc s13); with `st ≠ 0` they discharge divmc's `SqrX` / `MulX` at the `sqr` / `mul` call sites.
+`Post` (infra s20) also states `ArrIn` (a new stack array is an element of the final live set: `StackBackL`-ready).
 -/
 
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvModexp
@@ -84,7 +85,7 @@ abbrev A : Nat := 80
     cost sqC mlC (stLen s.mem st) pl lm ≤ b ∧ R.inv b L (s.regs 28).toNat (view R.rt L s.mem) ∧
     (s.regs 30).toNat % 4 = 0 ∧ (s.regs 30).toNat < 2 ^ 48 ∧
     Apart st 24 RunIface.gA 32 ∧
-    Apart (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st)) RunIface.gA 32
+    Apart (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st)) RunIface.gA 32 ∧ st ≠ 0
 
 /-- a computed `powers[j]` at memory `M`: header `(bp + 8 j w, l, w)`, `l ≤ w`, value `p2Pow`, normalised -/
 @[reducible] def PwD (M : Memory) (pw bp lm X j : Nat) : Prop :=
@@ -104,6 +105,10 @@ abbrev A : Nat := 80
     ((stW m st = stW m0 st ∧ stCap m st = stCap m0 st) ∨
       (InRanges (stW m st) (8 * stCap m st) R.rt ∧ ApartAll (stW m st) (8 * stCap m st) L))
 
+/-- `buf` (`[bp, bp + n)`) lies in the stack's current array below its level, or apart from the array -/
+@[reducible] def BU (M : Memory) (st bp n : Nat) : Prop :=
+  (stW M st ≤ bp ∧ bp + n ≤ stW M st + 8 * stLen M st) ∨ Apart bp n (stW M st) (8 * stCap M st)
+
 @[reducible] def Post (R : RtInv) (kc : Nat) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat) (b : Nat)
     (L : List (Nat × Nat)) (st pw pl lm x xl : Nat) (s s' : State) : Prop :=
   ∃ bp : Nat, (∀ j, j < pl → PwD s'.mem pw bp lm (natVal s.mem x xl) j) ∧
@@ -111,7 +116,8 @@ abbrev A : Nat := 80
       R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem) ∧
       Scr R L L' s.mem s'.mem st bp (NB pl lm) ∧ StkApart s'.mem st bp (8 * NB pl lm) ∧
       StkAfter R L L' st (stLen s.mem st) pl lm s.mem s'.mem ∧
-      MemFrame s.mem s'.mem (AW R kc s pw pl st) ∧ LiveFrame s.mem s'.mem L (LW s pw pl st)
+      MemFrame s.mem s'.mem (AW R kc s pw pl st) ∧ LiveFrame s.mem s'.mem L (LW s pw pl st) ∧
+      ArrIn L' st s.mem s'.mem ∧ BU s'.mem st bp (8 * NB pl lm)
 
 /-- the goal of every segment -/
 @[reducible] def GoalQ (R : RtInv) (kc : Nat) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat) (b : Nat)
@@ -144,5 +150,7 @@ structure Ctx (R : RtInv) (kc : Nat) (L : List (Nat × Nat)) (st pw pl lm : Nat)
   sa : StkAfter R L L1 st (stLen s.mem st) pl lm s.mem M
   sap : StkApart M st bp (8 * NB pl lm)
   sl : Sl s st pw pl lm M
+  ain : ArrIn L1 st s.mem M
+  bu : BU M st bp (8 * NB pl lm)
 
 end FvModexp.Arm64.P2Pre
