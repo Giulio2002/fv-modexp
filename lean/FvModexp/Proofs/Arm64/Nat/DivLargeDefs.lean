@@ -57,7 +57,7 @@ def DrsPreW (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (cost W : Nat) (qp ql 
     (s : State) : Prop :=
   CallEnv R L s W 96 ∧ Serves R ∧ RunIface.Globals R s.mem (win s W 96) ∧
   ql ≤ qc ∧ qc < 2 ^ 40 ∧ ul ≤ uc ∧ uc < 2 ^ 40 ∧ vl ≤ vc ∧ vc < 2 ^ 40 ∧
-  2 ≤ vl ∧ vl ≤ 2 ^ 9 ∧ 2 ^ 63 ≤ s.mem.readLE (vp + 8 * (vl - 1)) 8 ∧
+  2 ≤ vl ∧ (vl ≤ 2 ^ 9 ∧ ql ≤ 2 ^ 9) ∧ 2 ^ 63 ≤ s.mem.readLE (vp + 8 * (vl - 1)) 8 ∧
   natVal s.mem qp ql = 0 ∧ 2 * natVal s.mem up ul < 2 ^ (64 * (vl + ql)) ∧
   (s.mem.accessible qp (8 * ql) true = true ∧ qp + 8 * ql ≤ 2 ^ 48 ∧ Held R L qp (8 * ql) ∧
     Outside qp (8 * ql) (win s W 96) ∧ Apart qp (8 * ql) ((s.regs 28).toNat + 16) 8) ∧
