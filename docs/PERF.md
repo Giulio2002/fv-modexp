@@ -1098,3 +1098,13 @@ or not at all; (3) budget goals: one-line Nat lemmas, never `omega` in the post-
 | P2W2 (full) / P2W2E (ens/sum) | 2.2 / 5.7 s | ≤ 2.4 GB |
 | P2W2Cp2 after the UB.rs field (rebuild) | 81.7 s (s22: 41 s) | 2.4 GB |
 Body segments are independent modules importing only BJ (ROW-TIME rule); composition modules are trivial.
+
+### divmc session 22 (arm64, dev, LEAN_NUM_THREADS=4, host load ~50)
+| module | before | after | note |
+|---|---|---|---|
+| MulMake (reuse + alloc, one module) | 464 s / 8.1 GB | split | over cap |
+| MulMakeR (make_reuse) | — | 22-27 s / 2.4 GB | |
+| MulMakeA (make_alloc, old monolith) | — | 286 s / 8.0 GB | profile: janus_run 234 s (4 alias paths + makeslice via `calls`), closers 56 s; being replaced |
+| MulMakeA1 (alloc_head: entry → makeslice entry) | — | 35 s / 2.6 GB | |
+| MulMakeAP (mcall_pre / mfacts) | — | 4 s / 2.3 GB | makeslice pre in a standalone lemma |
+| MulMakeA2 (alloc_call) WIP | — | run + refine 6 s; blanket closers hang | rewrite `typNoscan` in the Fresh facts (else unification evaluates memory); close goals by name |
