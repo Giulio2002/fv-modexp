@@ -1,6 +1,6 @@
 import FvModexp.Proofs.Amd64.Top.RunC2RA
 import FvModexp.Proofs.Amd64.Top.RunC2Lem
-import FvModexp.Proofs.Amd64.Top.RunC2Lem3
+import FvModexp.Proofs.Amd64.Top.RunC2B
 
 /-! # `Run` (amd64): `C2` to `V` when `base = 1` (`base.BitLen() == 1`): `v = base.Mod(base, mod).Bytes()`
 
@@ -34,6 +34,7 @@ theorem c2m (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
       Reaches ((LibRun.program.link impl).withExit ret) V Q) :
     Reaches ((LibRun.program.link impl).withExit ret) T Q := by
   have henvW0 := henvW
+  have hrel0 := hrel
   obtain ⟨hg, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, hLs, hro, htls⟩ := henvW
   simp only [regSP, Janus.Amd64.GoABI.regG] at hb' ha hw hout hal hga hgr
   obtain ⟨hsp, h14, h5, hx15, hfs, hdf, hm1, hm2, -, -, -, -, -, -, hs3, -, -, -, hl0, hl1, hl2, hnz, -, -,
@@ -139,10 +140,45 @@ theorem c2m (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
     rw [BitVec.toNat_add, BitVec.toNat_sub]; simp; omega
   have hz200 : (s.regs 4 - 608#64 + 408#64).toNat = (s.regs 4).toNat - 200 := by
     rw [BitVec.toNat_add, BitVec.toNat_sub]; simp; omega
-  clear hIP hBm hRA
+  clear hRA
+  have hBB : RunIface.ModBudget (max (RunIface.lenW M ((s.regs 4).toNat - 136))
+      (RunIface.lenW M ((s.regs 4).toNat - 200))) + RunIface.BytesBudget RunIface.maxW ≤ b1 := by
+    rw [hlw0, hlw2]
+    have hbB' := hbB
+    simp only [okB, callB] at hbB'
+    exact budget_mod (w := wMax s p len) l0 l2 (Nat.le_refl _) hbud hbB'
+  have hbfin : ∀ b2 b3 lb, lb ≤ RunIface.maxW → b1 - RunIface.ModBudget (max (RunIface.lenW M ((s.regs 4).toNat - 136))
+      (RunIface.lenW M ((s.regs 4).toNat - 200))) ≤ b2 → b2 - RunIface.BytesBudget lb ≤ b3 →
+      b - (3 * makeCost 4 + 3 * dCost + callB s p len) ≤ b3 := fun b2 b3 lb hl h2 h3 => by
+    rw [hlw0, hlw2] at h2
+    unfold callB; exact budget_c2m l0 l2 hl hbud h2 h3
+  have hIV0 : RunIface.IntV M ((s.regs 4).toNat - 136) = 1 := by
+    have := hIV 0 (by omega); simp only [opAt, Nat.mul_zero, Nat.sub_zero] at this
+    rw [this, intV_eq]; simp only [natAt, show (s.regs 4).toNat - 136 + 8 = (s.regs 4).toNat - 128 by omega,
+      show (s.regs 4).toNat - 128 + 8 = (s.regs 4).toNat - 120 by omega]; exact hval0
+  have hIV2 : RunIface.IntV M ((s.regs 4).toNat - 200) = opV s p len 2 := by
+    have := hIV 2 (by omega)
+    simp only [opAt, show (s.regs 4).toNat - 136 - 32 * 2 = (s.regs 4).toNat - 200 by omega] at this
+    rw [this, intV_eq]
+    obtain ⟨-, hval2, -⟩ := hop 2 (by omega)
+    simp only [opAt, show (s.regs 4).toNat - 136 - 32 * 2 = (s.regs 4).toNat - 200 by omega] at hval2
+    exact hval2
+  have hv : RunIface.IntV M ((s.regs 4).toNat - 136) % RunIface.IntV M ((s.regs 4).toNat - 200) = resV s p len := by
+    rw [hIV0, hIV2, resV_eq _ _ _ hv2, hv0, Nat.one_pow]
+  have hvlt : RunIface.IntV M ((s.regs 4).toNat - 136) % RunIface.IntV M ((s.regs 4).toNat - 200) < opV s p len 2 := by
+    rw [hIV2]; exact Nat.mod_lt _ hv2
+  clear hBm hIV hMr hlw0 hlw2 hxs hpw hzl hyl hy0 l0 l2
   subst hMd
   janus64_run [hsp, h14, hfs, hdf, hx15, hn1, hx1, clz_one, hz136, hz200, hsp0] until
     [segAddr Extracted.program fn + 0xb94, segAddr Extracted.program fn + 0xb9b] calls [hP := hMod]
-  all_goals sorry
+  all_goals try (
+    obtain ⟨⟨⟨h4m, h5m, h14m, hxm⟩, hfsm, hdfm, hr0m, hpost, -⟩, hrgm⟩ := hP
+    exact c2B impl hap R stkM aboveM hBy hsv b L c p len cp ret hret s hx0 hdf0 Q W henvW0 hW hW1 hab ha8 hglob L1 b1 T
+      hrel0 hk _ _ _ 6639316 6639321 _ _ (fun t h4 hm h14t hfst => hIP t h4 (hm.trans (by janus64_simp [hsp0])) h14t hfst)
+      (by janus64_simp) (by janus64_simp [hsp0]) (by janus64_simp [h14]) (by janus64_simp [hfs]) hpost hrgm
+      (by janus64_simp [h4m]) (by janus64_simp [h5m]) (by janus64_simp [h14m, h14]) (by janus64_simp [hxm, hx15])
+      (by janus64_simp [hfsm, hfs]) (by janus64_simp [hdfm, hdf]) (by rw [hr0m]; janus64_simp [hsp, hz136])
+      (Or.inl ⟨by janus64_simp, rfl⟩) hv hvlt hBB hbfin)
+  all_goals (exact absurd hbr (by decide))
 
 end FvModexp.Amd64.Run
