@@ -61,13 +61,13 @@ theorem ensNil (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
   clear hev
   have hP' := hP
   obtain ⟨⟨hs1, hs28, hg1, hg2, hg3, -, hal, hK4, hKs, hsp2, hacc, -, -, -, -⟩, -, -, -, -, -,
-    -, -, -, -, -, -, -, -, -, -, hy48, -, -, hyc, -, -, -, -, -, hxp, hxc, hzp, hzlc, hzc, -, hali, -⟩ := hP'
+    -, -, -, -, -, -, -, -, -, -, -, -, hy48, hyc, -, -, -, -, -, hxp, hxc, hzp, hzlc, hzc, -, hali, -⟩ := hP'
   generalize hspd : s.sp.toNat - 1312 = sp at hP hs1 hg3 hal hKs hsp2 hacc hali
   generalize hgd : (s.regs 28).toNat = g at hP hs28 hg1 hg2 hg3 hali
   have hr48 := hret.user
   refine returns_of_reaches (pro impl ret hret _ sp g ret zp zc xp xc yp yc (s.regs 29) s.mem hal (by omega) hsp2
     (Memory.accessible_mono _ hacc (by omega) (by omega)) hg1 hg2 (by omega) hr48 hzp (by omega) hxp hxc
-    (by omega) hyc s h_pc hs1 h_x0 h_x2 h_x4 h_x6 h_x7 h_x9 hs28 rfl h_lr rfl ?Kk ?K0)
+    (by omega) hyc.1 s h_pc hs1 h_x0 h_x2 h_x4 h_x6 h_x7 h_x9 hs28 rfl h_lr rfl ?Kk ?K0)
   case Kk =>
     intro hk S M c1 c2 d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d18 d28 cm hF hrg q29 q30 _ _
     refine fromJ1N impl hap R H hget hno hput hRem hnsR hn11R hKR ret hret (fun s' => ABIReturn s s' ∧ PostNil R b L K costF costR costS costP zp zc xp xl yp yl mp n s s') hP hevB (zp' := zp) (zl' := zl) (zc' := zc)

@@ -54,6 +54,7 @@ theorem k2N (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   obtain ⟨⟨-, hs28, hg1, hg2, hg3, hgo, hal, hK4, hKs, hsp2, hwacc, hwrt, hLs, hd, hsv⟩, -, -, ⟨hro, hz0⟩, -, -,
     -, -, -, -, -, -, -, -, hyO, hya, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, hbud,
     -⟩ := id hP
+  replace hyO := hyO (by omega); replace hya := hya (by omega)
   have hwout : Outside (sp - K) (K + 1432) R.rt := by
     have := hwrt _ (List.mem_singleton_self _)
     simp only at this; rwa [show sp + 1432 - (sp - K) = K + 1432 by omega] at this
@@ -104,7 +105,7 @@ theorem k2N (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     have hN := newStk_N hNN hz0 hb24 hF4 (slots_rt hKs hwout)
     have hF5 := chainW hFm2 hF4 hLs (slots_win hKs) (sub_slots hKs)
     exact contR impl hap R hput hRem hns hn11 ret0 hret F hP hstk hN hF5.1 hF5.2 (by rw [hrg4, hNN.rg, hrgm, hrgg])
-      f1182 f1296 f1272 f1280 hz ⟨hy1, by rw [← hyM]; exact hyv⟩ S4 p4 (sp4.trans (sp6.trans (sp5.trans sp3)))
+      f1182 f1296 f1272 f1280 hz ⟨hy1, by rw [← hyM]; exact hyv⟩ hx0 S4 p4 (sp4.trans (sp6.trans (sp5.trans sp3)))
       a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 (a28.trans (z28.trans (y28.trans (x28.trans hr28)))) a30 hm4
       (by rw [rd_sl hF4 _ _ (by omega), rdm2 _ _ (by omega)]; exact g1048)
       (by rw [rd_sl hF4 _ _ (by omega), rdm2 _ _ (by omega)]; exact g1056)

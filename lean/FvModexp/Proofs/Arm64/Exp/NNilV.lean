@@ -114,6 +114,14 @@ theorem opnd_v {R : RtInv} {L : List (Nat × Nat)} {sp K p k : Nat} {M M1 : Memo
     rw [rd_held (held_sub h.1 (by omega) (by omega)) hLF hF (by have := h.2; unfold Apart at this ⊢; omega)]
     exact h1
 
+/-- `opnd_v` for an operand whose facts are stated only for a positive length -/
+theorem opnd_v0 {R : RtInv} {L : List (Nat × Nat)} {sp K p k : Nat} {M M1 : Memory}
+    (h : 0 < k → NE0 R L sp K p (8 * k)) (hLF : LiveFrame M M1 L []) (hF : MemFrame M M1 (R.rt ++ wN sp K))
+    (hN : NatNorm M p k) : natVal M1 p k = natVal M p k ∧ NatNorm M1 p k := by
+  rcases Nat.eq_zero_or_pos k with hk0 | hk0
+  · subst hk0; exact ⟨rfl, Or.inl rfl⟩
+  · exact opnd_v (h hk0) hLF hF hN
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- **the virtual entry**: `PreNil` at `s` and the new stack at `M1` ⇒ `NPre` at `{s with mem := M1}` -/
@@ -123,12 +131,18 @@ theorem npreV {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {costF : N
     {g sp zp zl zc st0 xp xl xc yp yl yc mp n mc slow : Nat} {s : State}
     (hP : PreNil R b L K costF needR costR needS needP costS costP g sp zp zl zc st0 xp xl xc yp yl yc mp n mc slow s)
     {L1 : List (Nat × Nat)} {b1 st : Nat} {M1 : Memory} (hN : NewStk R L L1 b b1 g M1 st)
-    (hF : MemFrame s.mem M1 (R.rt ++ wN sp K)) (hLF : LiveFrame s.mem M1 L []) (hrg : M1.regions = s.mem.regions) :
+    (hF : MemFrame s.mem M1 (R.rt ++ wN sp K)) (hLF : LiveFrame s.mem M1 L []) (hrg : M1.regions = s.mem.regions)
+    (hx0 : xl ≠ 0) (hy0 : yl ≠ 0) :
     NPre R b1 L1 K costF needR costR needS needP costS costP g sp zp zl zc st xp xl xc yp yl yc mp n mc slow
       { s with mem := M1 } := by
   obtain ⟨⟨hs1, hs28, hg1, hg2, hg3, hgo, hal, hK4, hKs, hsp2, hacc, hwrt, hLs, hd, hsv⟩, hK20, hG, ⟨hro, -⟩, hwT, hslow,
     hn, hn128, hnmc, hmc, hmO, hma, hm48, hmN, hyO, hya, hy48, hyN, hyl, hyc, hxO, hxa, hx48, hxN, hxl, hxp, hxc,
-    hzp, hzlc, hzc, -, hali, hgAO, ⟨op, hone⟩, -, hwb, hb1, hb2, hb3, hb4, hbud, -, -, -⟩ := hP
+    hzp, ⟨hzlc, hxz, hxlz, hxcz⟩, hzc, -, hali, hgAO, hone0, -, hwb, hb1, hb2, hb3, hb4, hbud, -, -, -⟩ := hP
+  have hzc0 : 0 < zc := by omega
+  obtain ⟨op, hone⟩ := hone0 hzc0
+  clear hone0
+  replace hyO := hyO (by omega); replace hya := hya (by omega); replace hy48 := hy48 (by omega)
+  replace hxO := hxO (by omega); replace hxa := hxa (by omega); replace hx48 := hx48 (by omega)
   have hN' := hN
   obtain ⟨-, -, hst0, hst8, hst48, hstacc, hlen, hcap40, hc0, hw8, hw48, hwacc, hdis, hbb, -, hinv⟩ := hN'
   have hacM : ∀ a k w, M1.accessible a k w = s.mem.accessible a k w := fun a k w => hF.accessible a k w
@@ -201,7 +215,7 @@ theorem npreV {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {costF : N
       rw [outside_append] at ho ⊢; refine ⟨ho.1, ?_⟩; have := ho.2
       simp only [wN, outside_cons, outside_nil, and_true] at this ⊢; omega), hro, hwT, hslow, hn, hn128, hnmc, hmc,
     ne_v hmO hN, by rw [hacM]; exact hma, hm48, hmv.2,
-    ne_v hyO hN, by rw [hacM]; exact hya, hy48, hyv.2, hyl, hyc,
+    ne_v hyO hN, by rw [hacM]; exact hya, hy48, hyv.2, hyl, hyc.1,
     ne_v hxO hN, by rw [hacM]; exact hxa, hx48, hxv.2, hxl, hxp, hxc, hzp, hzlc, hzc, ?_, ne_v hgAO hN,
     ⟨op, hone'⟩, hst0, by omega, hsok, hstw, hstg, harr, hc0, by rw [hacM]; exact hwb, hwbA, hstfr, hfgA, ?_⟩
   · show M1.readLE (g + 16) 8 + K < sp

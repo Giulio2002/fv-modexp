@@ -63,9 +63,9 @@ theorem fromJ1NE (impl : List Segment) (hap : ImplApart Extracted.program impl) 
     hF.readLE _ _ (by unfold Apart at h; simp only [outside_cons, outside_nil, and_true]; omega)
   have hm0M : M.readLE mp 8 = s.mem.readLE mp 8 := rdw (by have := hmO.2; unfold Apart at this ⊢; omega)
   have hx0M : 0 < xl → M.readLE xp 8 = s.mem.readLE xp 8 := fun h =>
-    rdw (by have := hxO.2; unfold Apart at this ⊢; omega)
+    rdw (by have := (hxO h).2; unfold Apart at this ⊢; omega)
   have hy0M : 0 < yl → M.readLE yp 8 = s.mem.readLE yp 8 := fun h =>
-    rdw (by have := hyO.2; unfold Apart at this ⊢; omega)
+    rdw (by have := (hyO h).2; unfold Apart at this ⊢; omega)
   have hinvM : R.inv b L g (view R.rt L M) := Expmc.inv_frame hFw (fun r hr => Or.inr (out_rt_wN hwrt r hr)) hinv
   have hinvs : R.inv b L (s.regs 28).toNat (view R.rt L s.mem) := by rw [hg]; exact hinv
   have hzc' : zc' < 2 ^ 40 := by rcases hz with ⟨-, -, rfl, -⟩ | ⟨-, -, rfl⟩ <;> omega
@@ -75,7 +75,7 @@ theorem fromJ1NE (impl : List Segment) (hap : ImplApart Extracted.program impl) 
     (by rw [hF.accessible]; exact Memory.accessible_mono _ hacc (by omega) (by omega)) (by omega) (by omega)
     (by omega) hxp (by omega)
     (fun h => by rw [hF.accessible]; exact Memory.accessible_mono _ hma (by omega) (by omega))
-    (fun h => by rw [hF.accessible]; exact Memory.accessible_mono _ hxa (by omega) (by omega))
+    (fun h => by rw [hF.accessible]; exact Memory.accessible_mono _ (hxa h) (by omega) (by omega))
     h29v h30v S hpc hsp h4 h5 h8 h10 h11 hmem ?F0 ?K1 ?K2
   case F0 =>
     intro hc s' e1 e2 e3 e4 e5 e6 e7 hF2 hrg2

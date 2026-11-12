@@ -49,6 +49,7 @@ theorem k2Nil (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
   obtain ⟨⟨hs1, hs28, hg1, hg2, hg3, hgo, hal, hK4, hKs, hsp2, hwacc, hwrt, hLs, -, hsv⟩, -, -, -, -, hslow,
     hn, hn128, -, hmc, hmO, -, hm48, -, hyO, hya, hy48, -, hyl, hyc, -, -, -, -, hxl, hxp, hxc, hzp, hzlc, hzc, -, -,
     -, -, hst0, -, -, -, -, -, -, hpool, hpoolO, hinv⟩ := id hP
+  replace hyO := hyO (by omega); replace hya := hya (by omega); replace hy48 := hy48 (by omega)
   have hwout : Outside (sp - K) (K + 1432) R.rt := by
     have := hwrt _ (List.mem_singleton_self _)
     simp only at this; rwa [show sp + 1432 - (sp - K) = K + 1432 by omega] at this
@@ -79,7 +80,7 @@ theorem k2Nil (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     hFg'.readLE _ _ (by simp only [outside_cons, outside_nil, and_true]; omega)
   rw [t0, tN' hzr.1] at r208; rw [t1, tN' hzr.2.1] at r152; rw [t2, tN' hzr.2.2] at r168
   rw [t4, tN' hxp] at r296; rw [t5, tN' (by omega)] at r304; rw [t6, tN' hxc] at r312
-  rw [t7, tN' (by omega)] at r320; rw [t8, tN' (by omega)] at r328; rw [t9, tN' hyc] at r336
+  rw [t7, tN' (by omega)] at r320; rw [t8, tN' (by omega)] at r328; rw [t9, tN' hyc.1] at r336
   rw [t10, tN' (by omega)] at r344; rw [t11, tN' (by omega)] at r352; rw [t12, tN' (by omega)] at r360
   rw [t13, hslow] at r368
   have g1048 : Mg.readLE (sp + 1048) 8 = f29 := by rw [hk2 _ (Or.inl rfl)]; exact h29v
