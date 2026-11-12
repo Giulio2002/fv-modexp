@@ -19,7 +19,7 @@ Here `sp := SP - 1312` (= `expNNOdd`'s `sp`) and the window is `[sp - K, sp + 14
   bounds of every callee, the budget `NBud`.
 * `Pre` = `NPre` ∧ (`M` odd ∨ `M` a power of two) (`noEven`: `expNNEven` is never called).
 * `Post`: `X0..X2 = (p, l, c)` with value `X ^ Y % M`, normalised, `c = 0` or `z`'s array or a fresh one, `LiveExt`,
-  budget `NCost`, `StackBack`, frame `R.rt ++ winA s (K + 1312) 120 ++ [z] ++ stkWs`, `LiveFrame`.
+  budget `NCost`, `StackBackL`, frame `R.rt ++ winA s (K + 1312) 120 ++ [z] ++ stkWs`, `LiveFrame`.
 -/
 
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvModexp
@@ -114,7 +114,7 @@ def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K : Nat) (costF : Nat �
       b - NCost costF costR costS costP xl yl n (stLen s.mem st) (Nat.log2 (natVal s.mem mp n)) ≤ b' ∧
       R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem) ∧ NatLive s'.mem R L' p c ∧
       (c = 0 ∨ (p = zp ∧ c = zc) ∨ (InRanges p (8 * c) R.rt ∧ ApartAll p (8 * c) L)) ∧
-      StackBack R L L' st s.mem s'.mem ∧
+      StackBackL R L L' st s.mem s'.mem ∧
       MemFrame s.mem s'.mem (R.rt ++ winA s (K + 1312) 120 ++ [(zp, zp + 8 * zc)] ++ stkWs s.mem st) ∧
       LiveFrame s.mem s'.mem L ([(zp, zp + 8 * zc)] ++ stkWs s.mem st)
 

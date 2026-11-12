@@ -63,7 +63,7 @@ theorem post_gen {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {costF 
       ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b - C ≤ b' ∧
         R.inv b' L' (S.regs 28).toNat (view R.rt L' s'.mem) ∧ NatLive s'.mem R L' p c ∧
         ((p = zp ∧ c = zc) ∨ (InRanges p (8 * c) R.rt ∧ ApartAll p (8 * c) L)) ∧
-        StackBack R L L' st S.mem s'.mem ∧
+        StackBackL R L L' st S.mem s'.mem ∧
         MemFrame S.mem s'.mem (R.rt ++ winA S stk 112 ++ [(zp, zp + 8 * zc)] ++ stkWs S.mem st) ∧
         LiveFrame S.mem s'.mem L ([(zp, zp + 8 * zc)] ++ stkWs S.mem st))
     (e0 : s''.regs 0 = s'.regs 0) (e1 : s''.regs 1 = s'.regs 1) (e2 : s''.regs 2 = s'.regs 2)
@@ -88,8 +88,10 @@ theorem post_gen {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {costF 
   · rcases hC with rfl | rfl
     · exact hb
     · rw [el] at hb; exact hb
-  · obtain ⟨k1, k2, k3⟩ := hsb
-    rw [em]; exact ⟨k1, k2.trans el, by rw [← ew, ← ec]; exact k3⟩
+  · obtain ⟨⟨k1, k2, k3⟩, k4⟩ := hsb
+    rw [em]
+    refine ⟨⟨k1, k2.trans el, by rw [← ew, ← ec]; exact k3⟩, fun hn => k4 ?_⟩
+    rw [ew, ec]; exact hn
   · rw [em]
     refine MemFrame.trans hFs hF fun a k ho => ?_
     rw [outside_append, outside_append, outside_append] at ho

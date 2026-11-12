@@ -73,8 +73,8 @@ theorem divStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
-    (hSN : StackNat.Hyp impl R StackNat.names 4208 24)
-    (nsD : List String) (stkD costD : Nat) (costF : Nat → Nat → Nat → Nat) (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costF)
+    (hSN : StackNat.HypL impl R StackNat.names 4208 24)
+    (nsD : List String) (stkD costD : Nat) (costF : Nat → Nat → Nat → Nat) (hDiv : ExpHyp.DivHypL impl R nsD stkD 112 costF)
     (hnsD : ∀ x, nsD.contains x = true → LibW.names.contains x = true)
     (hnsW : nsD.contains Extracted.seg35.name = false)
     (hserv : RunIface.Serves R)
@@ -150,7 +150,7 @@ theorem divStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (e3.trans h0) (e4.trans h1) (e5.trans h2) e6 e7 e8 e9 e10 e11 e12 e13 e14 e15 e16 (e17.trans h18) (e18.trans h28)
     (e19.trans h29) em (fun S2 M' L' b' r rl rc f1 f2 f3 f4 f5 f6 f7 f8 f9 hD => ?_)
   have hD0 := hD
-  obtain ⟨-, hx, hb', hinv', ⟨hsok', hlen', hst'⟩, -, hF, -, -⟩ := hD0
+  obtain ⟨-, hx, hb', hinv', ⟨⟨hsok', hlen', hst'⟩, -⟩, -, hF, -, -⟩ := hD0
   have hk := keeps_div hC hKD hqin hrL hrW hrG hD
   have hC' := Ctx.keep hC hk
   have hAn' := Anc.keep hAn hk hl0A (Nat.le_trans hl0 hlc) (fun e he => by

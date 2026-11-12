@@ -103,4 +103,25 @@ theorem akf_trans {R : RtInv} {L L' : List (Nat × Nat)} {st : Nat} {M0 M M' : M
   · rw [e1, e2]; exact h
   · exact Or.inr ⟨hin, apartAll_ext hx hap⟩
 
+/-- the stack array after a split stack-nat-like step (kept when it fits, else a fresh element of `L'`) -/
+theorem arrIn_split {L' : List (Nat × Nat)} {st r : Nat} {M M' : Memory}
+    (hk : stLen M st + r ≤ stCap M st → stW M' st = stW M st ∧ stCap M' st = stCap M st)
+    (hm : stCap M st < stLen M st + r → (stW M' st, stW M' st + 8 * stCap M' st) ∈ L') : ArrIn L' st M M' := by
+  intro hn
+  by_cases hc : stLen M st + r ≤ stCap M st
+  · exact absurd (hk hc) hn
+  · exact hm (by omega)
+
+/-- `ArrIn` along the window's chain: reserve, prologue (`Anc`), header-keeping steps, the `stk.nat(17n)` step -/
+theorem arrIn_chain {R : RtInv} {L1 Ld L2 L'' : List (Nat × Nat)} {st : Nat} {M0 M Md M1 M2 M' : Memory}
+    (h0 : ArrIn L1 st M0 M) (hd : ArrIn Ld st M Md) (hxd : LiveExt R L1 Ld)
+    (e1 : stW M1 st = stW Md st ∧ stCap M1 st = stCap Md st) (hs : ArrIn L2 st M1 M2) (hx3 : LiveExt R Ld L2)
+    (e2 : stW M' st = stW M2 st ∧ stCap M' st = stCap M2 st) (hx : LiveExt R L2 L'') : ArrIn L'' st M0 M' := by
+  intro hn
+  have a1 := ArrIn.trans h0 hd hxd
+  have a1' : ArrIn Ld st M0 M1 := by
+    intro h; rw [e1.1, e1.2] at h ⊢; exact a1 h
+  have a2 := ArrIn.trans a1' hs hx3
+  rw [e2.1, e2.2] at hn ⊢; exact hx.mem_old (a2 hn)
+
 end FvModexp.Arm64.W4Pro

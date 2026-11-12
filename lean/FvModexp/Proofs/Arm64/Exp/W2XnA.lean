@@ -93,7 +93,7 @@ theorem rem_xin {R : RtInv} {L L' : List (Nat × Nat)}
     (hD : DvPostG R b costD L L' b' g sp stkD st qp qc z2p n xp xl mp n M M' r rl rc) (hcap' : 0 < stCap M' st) :
     XIn R L' sp K st (stLen M' st) M' r rl rc ∧ M'.readLE r (8 * rl) = M.readLE xp (8 * xl) % Mv ∧ rl ≤ n ∧
       r < 2 ^ 64 := by
-  obtain ⟨⟨hv, hN, hlc, hc40, hlive, hor⟩, hx, -, -, ⟨hsok', hlen', hst'⟩, hfr, -, -, -⟩ := hD
+  obtain ⟨⟨hv, hN, hlc, hc40, hlive, hor⟩, hx, -, -, ⟨⟨hsok', hlen', hst'⟩, -⟩, hfr, -, -, -⟩ := hD
   have hsok0 := hsok
   obtain ⟨-, -, -, -, hla, hlcM, -⟩ := hsok0
   obtain ⟨la8, lah, laacc, la48⟩ := hla hcap
@@ -137,8 +137,8 @@ theorem xnA2K (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
-    (hSN : StackNat.Hyp impl R StackNat.names 4208 24)
-    (nsD : List String) (stkD costD : Nat) (costF : Nat → Nat → Nat → Nat) (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costF)
+    (hSN : StackNat.HypL impl R StackNat.names 4208 24)
+    (nsD : List String) (stkD costD : Nat) (costF : Nat → Nat → Nat → Nat) (hDiv : ExpHyp.DivHypL impl R nsD stkD 112 costF)
     (hnsD : ∀ x, nsD.contains x = true → LibW.names.contains x = true)
     (hnsW : nsD.contains Extracted.seg35.name = false)
     (nsL : List String) (stkL : Nat) (hLsh : Lsh.Hyp2 impl R nsL stkL 64)
@@ -240,8 +240,8 @@ theorem xnA2K (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
   have hAn5 := Anc.keepB hAn hk5 hl0A
     (by rw [hlen] at hlc; exact Nat.le_trans (Nat.le_trans (Nat.le_add_right _ _) (Nat.le_add_right _ _)) hlc) (fun e he => by
     simp only [List.mem_singleton] at he; subst he; exact hexA) hce.2.2.2.2.2.2.2.2.2.2.1 hK0
-  have hcap5 : 0 < stCap M5 st := hk5.2.2.2.2.2.2.2.2.2.2.2 hcap
-  have hlen5 : stLen M5 st = stLen M st := hD.2.2.2.2.1.2.1
+  have hcap5 : 0 < stCap M5 st := hk5.2.2.2.2.2.2.2.2.2.2.2.1 hcap
+  have hlen5 : stLen M5 st = stLen M st := hD.2.2.2.2.1.1.2.1
   obtain ⟨hxi, hval, hrln, hr64⟩ := rem_xin hrt hsth hsu hsok hcap harr0.1 hzin hn hmV hmB (by omega) hD hcap5
   have hB5' := hB5
   obtain ⟨he5, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -,

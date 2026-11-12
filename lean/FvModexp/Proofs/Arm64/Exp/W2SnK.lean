@@ -15,7 +15,7 @@ set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 /-- `stk.nat(k)` from the entry of `(*stack).nat` (return address `ra`) to `ra` -/
 theorem snCallK (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
-    (hSN : StackNat.Hyp impl R StackNat.names 4208 24)
+    (hSN : StackNat.HypL impl R StackNat.names 4208 24)
     (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret) (Q : Outcome → Prop)
     (b : Nat) (L : List (Nat × Nat)) (g sp k st ra : Nat) (M : Memory) (r18 r29 : BitVec 64)
     (hRA : RetAddr ((Extracted.program.onlySegments StackNat.names).link impl) ra) (hra : ra < 2 ^ 64)
@@ -59,10 +59,10 @@ theorem snCallK (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     obtain ⟨a1, a2⟩ := harr hc
     unfold Apart at a1
     exact ⟨by simp only [outside_cons, outside_nil, and_true]; omega, a2⟩
-  obtain ⟨hX0, hX1, hX2, L', b', ⟨hLE, hb', hinv'⟩, hsok', hlen', hkept, hfresh, hF, hLF⟩ := hq
-  simp only [tst, tk, hmem, tsp, tg, winA] at hX0 hX1 hX2 hb' hinv' hsok' hlen' hkept hfresh hF hLF
+  obtain ⟨hX0, hX1, hX2, L', b', ⟨hLE, hb', hinv'⟩, hsok', hlen', hkept, hfresh, hF, hLF, hmS⟩ := hq
+  simp only [tst, tk, hmem, tsp, tg, winA] at hX0 hX1 hX2 hb' hinv' hsok' hlen' hkept hfresh hF hLF hmS
   refine KB s' s'.mem L' b' (hr.trans h30) (e1.trans hsp) (hX0 hk) hX1 hX2 (e4.trans h18) (e2.trans h28) (e3.trans h29)
-    rfl ⟨hLE, hb', hinv', hsok', hlen', hkept, hfresh, hF, hLF, by rw [hrg, hmem]⟩
+    rfl ⟨hLE, hb', hinv', hsok', hlen', hkept, hfresh, hF, hLF, by rw [hrg, hmem], hmS⟩
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
@@ -74,7 +74,8 @@ theorem keeps_sn {R : RtInv} {L L' : List (Nat × Nat)}
   obtain ⟨he, hce, hK, hK20, hn, hn128, hmc, hmc', hm, hmO, hmV, hnm, hx, hxO, hxv, hy, hyO, hY, hyi, hyi0, hyl, hyl',
     hzc, hz, hfe, hsth, hstw, hsok, hn0, hl0, hcap, harr, hug, huw, hsu, hgl, hgO, hstwb, hro, hty,
     r728, r736, r744, r664, r648, r712, r704, r672, r616, r328, r320⟩ := hC
-  obtain ⟨hxS, hbS, hinvS, hsok2, hlen2, hkept, hfresh, hFS, hLS, hrgS⟩ := hS
+  have hai := hS.arrIn
+  obtain ⟨hxS, hbS, hinvS, hsok2, hlen2, hkept, hfresh, hFS, hLS, hrgS, -⟩ := hS
   have hce0 := hce
   obtain ⟨hal, hK0, hA, hacc, hg1, hg2, hg3, hrt, hga, hgrt, hLs, hd, hro'⟩ := hce0
   have hsok0 := hsok
@@ -85,7 +86,7 @@ theorem keeps_sn {R : RtInv} {L L' : List (Nat × Nat)}
   simp only [AW, Apart, stUp] at hstw huw hug hsu hga hstg
   clear hLs hd hro' hfe
   refine keeps_of hce hK hxS (by simpa only [List.append_assoc] using hFS) hLS hrgS ?_ ?_ ?_ ?_ ?_ ?_ hsok2
-    (by omega) ?_ ?_
+    (by omega) ?_ ?_ hai
   · clear hstw huw hug hsu hga hstg
     intro r hr' hlt
     simp only [stkWs, List.cons_append, List.nil_append, List.mem_cons, List.not_mem_nil, or_false] at hr'

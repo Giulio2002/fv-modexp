@@ -223,7 +223,8 @@ theorem go2 {g sp st : Nat} {M : Memory} (hsp : 4304 ≤ sp) (hga4 : Apart (g + 
   StkOK M2 R L2 st ∧ stLen M2 st = stLen M0 st + StackNat.rnd (17 * n) ∧
   (stLen M0 st + StackNat.rnd (17 * n) ≤ stCap M0 st → stW M2 st = stW M0 st ∧ stCap M2 st = stCap M0 st) ∧
   (stCap M0 st < stLen M0 st + StackNat.rnd (17 * n) → InRanges (stW M2 st) (8 * stCap M2 st) R.rt ∧
-    ApartAll (stW M2 st) (8 * stCap M2 st) L) ∧ M2.regions = M0.regions
+    ApartAll (stW M2 st) (8 * stCap M2 st) L) ∧ M2.regions = M0.regions ∧
+  (stCap M0 st < stLen M0 st + StackNat.rnd (17 * n) → (stW M2 st, stW M2 st + 8 * stCap M2 st) ∈ L2)
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
@@ -233,7 +234,7 @@ theorem afterOne (impl : List Segment) (hap : ImplApart Extracted.program impl) 
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
-    (hSN : StackNat.Hyp impl R StackNat.names 4208 24)
+    (hSN : StackNat.HypL impl R StackNat.names 4208 24)
     (hserv : RunIface.Serves R)
     (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret)
     (b : Nat) (L : List (Nat × Nat)) (g sp n mp mc t rrp rrc xp xc yp ylen Y yi zp zc zzp zzc st n0 : Nat)
@@ -334,7 +335,7 @@ theorem afterOne (impl : List Segment) (hap : ImplApart Extracted.program impl) 
   intro S2 M2 L2 b2 c1 c2 c3 c4 c5 c6 c7 c8 c9 hS
   rw [e2] at c3
   have hS0 := hS
-  obtain ⟨hxS2, hbS, hinvS, hsok2, hlen2, hkept, hfresh, hFS, hLS, hrgS⟩ := hS0
+  obtain ⟨hxS2, hbS, hinvS, hsok2, hlen2, hkept, hfresh, hFS, hLS, hrgS, hmemS⟩ := hS0
   have hx2 : LiveExt R L L2 := hxO.trans hxS2
   have hlc1 : stLen M1 st ≤ stCap M1 st := by rw [e2, e3]; exact hlc
   have harr1 : 0 < stCap M1 st → Apart (stW M1 st) (8 * stCap M1 st) (sp - 4304) (4304 + 1040) ∧
@@ -474,12 +475,13 @@ theorem afterOne (impl : List Segment) (hap : ImplApart Extracted.program impl) 
     (by rw [rs 1000 (by omega)]; exact r1000) (by rw [rs 992 (by omega)]; exact r992)
     (fun h => ⟨hokz h, by by_cases h4 : 4 < n <;> simp only [h4, ite_true, ite_false] at hbud2 <;> omega⟩) hokM hmw4 hnm2 (by rw [hmr]; exact hkk) (by rw [hmr]; exact hmB) hfe2
     (hx2.held hsth) hstw4 (bapL _ _ hsth hstf) S2 c1 c2 c3 c4 c5 c6 c7 c8 c9) ?_
-  refine isReturn_mono fun s' h => ⟨M2, L2, b2, ⟨?_, lf2, hx2, hbud2, hsok2, by rw [hlen2, e2], ?_, ?_, hrg2⟩, ?_⟩
+  refine isReturn_mono fun s' h => ⟨M2, L2, b2, ⟨?_, lf2, hx2, hbud2, hsok2, by rw [hlen2, e2], ?_, ?_, hrg2, ?_⟩, ?_⟩
   · simpa only [List.append_assoc] using fr2
   · intro h; rw [← e1, ← e3]; exact hkept (by rw [e2, e3]; exact h)
   · intro h
     obtain ⟨q1, q2⟩ := hfresh (by rw [e2, e3]; exact h)
     exact ⟨q1, fun r hr => q2 r (hxO.mem_old hr)⟩
+  · intro h; exact hmemS (by rw [e2, e3]; exact h)
   · rw [hmr, hxr, hrrr] at h; exact h
 
 end FvModexp.Arm64.W4Pro

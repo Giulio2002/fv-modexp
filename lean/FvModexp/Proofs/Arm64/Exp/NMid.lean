@@ -26,7 +26,7 @@ structure DHyps (impl : List Segment) (R : RtInv) (K : Nat) (costF : Nat → Nat
   mkO : MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R
   gr : GrowsliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.growslice") 4096 R
   wb : WbLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 4096 R 2
-  div : ExpHyp.DivHyp impl R nsD stkD 112 costF
+  div : ExpHyp.DivHypL impl R nsD stkD 112 costF
   hnsD : ∀ x, nsD.contains x = true → LibW.names.contains x = true
   hnsW4 : nsD.contains Extracted.seg34.name = false
   hnsW2 : nsD.contains Extracted.seg35.name = false

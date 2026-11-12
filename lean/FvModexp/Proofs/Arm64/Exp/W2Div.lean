@@ -1,11 +1,12 @@
 import FvModexp.Proofs.Arm64.Exp.LibWC
 import FvModexp.Proofs.Arm64.Exp.W2Ctx
 import FvModexp.Proofs.Arm64.Exp.W2RR
+import FvModexp.Proofs.Arm64.Exp.ExpHypL
 
 /-!
 # window-2 prologue (arm64): the call `_, RR = nat(stk.nat(2n)).div(stk, RR, zz, m)` (nat.go:1399), `divE → divRet`
 
-`nat.div` is a premise in expmc's `ExpHyp.DivHyp` shape (asm proves it), parametric in its names `nsD`, its stack bound
+`nat.div` is a premise in expmc's `ExpHyp.DivHypL` shape (asm proves it), parametric in its names `nsD`, its stack bound
 `stkD ≤ K` and its closed cost `costD`; its spill bound is `112` (13 register arguments). The call is made by hand
 (`Reaches.call_regions` + `LibWC.hypSum`, return address `divRet` = seg35 word ?). Arguments: `z` = the fresh
 stack nat `q` (`2n` words), `z2` = `RR` (pointer, len 1, cap `2n`), `u` = `zz` (`2^(128n)`), `v` = `m`.
@@ -50,7 +51,7 @@ theorem out_win {sp K stkD a k : Nat} (hKD : stkD ≤ K) (h : AW sp K a k) :
 @[reducible] def DvPost (R : RtInv) (b cost : Nat) (L L' : List (Nat × Nat)) (b' g sp stkD st qp rrp n zzp zzl mp : Nat)
     (M M' : Memory) (r rl rc : Nat) : Prop :=
   ExpHyp.NatOF R L L' M' rrp (2 * n) 1 r rl rc (natVal M zzp zzl % natVal M mp n) ∧
-  LiveExt R L L' ∧ b - cost ≤ b' ∧ R.inv b' L' g (view R.rt L' M') ∧ StackBack R L L' st M M' ∧
+  LiveExt R L L' ∧ b - cost ≤ b' ∧ R.inv b' L' g (view R.rt L' M') ∧ StackBackL R L L' st M M' ∧
   (¬ (r = rrp ∧ rc = 2 * n) → 0 < rc → 0 < stCap M' st → Apart r (8 * rc) (stW M' st) (8 * stCap M' st)) ∧
   MemFrame M M' (R.rt ++ [(sp - stkD, sp - 8), (sp + 8, sp + 112)] ++ [(qp, qp + 8 * (2 * n)), (rrp, rrp + 8 * (2 * n))] ++
     stkWs M st) ∧
@@ -77,7 +78,7 @@ set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 /-- `nat.div` from its entry (return address `divRet`) to `divRet` -/
 theorem divCallK (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
-    (nsD : List String) (stkD costD : Nat) (costF : Nat → Nat → Nat → Nat) (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costF)
+    (nsD : List String) (stkD costD : Nat) (costF : Nat → Nat → Nat → Nat) (hDiv : ExpHyp.DivHypL impl R nsD stkD 112 costF)
     (hnsD : ∀ x, nsD.contains x = true → LibW.names.contains x = true)
     (hnsW : nsD.contains Extracted.seg35.name = false)
     (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret) (Q : Outcome → Prop)

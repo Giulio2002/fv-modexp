@@ -61,6 +61,7 @@ theorem keeps_own2 {R : RtInv} {L : List (Nat × Nat)}
       by simp only [outside_cons, outside_nil, and_true]; omega⟩) hsok'
     (by simp only [stLen]; rw [e1]; exact Nat.le_refl _) (Or.inl ⟨by simp only [stW]; rw [e0], by simp only [stCap]; rw [e2]⟩)
     (fun h => by simp only [stCap] at h ⊢; rw [e2]; exact h)
+    (arrIn_kept ⟨by simp only [stW]; rw [e0], by simp only [stCap]; rw [e2]⟩)
   · obtain ⟨r, hr, h1, h2⟩ := hin2
     have := hLs r hr
     simp only [outside_cons, outside_nil, and_true] at this hout
@@ -107,6 +108,7 @@ theorem keeps_lsh {R : RtInv} {L L' : List (Nat × Nat)}
   refine keeps_of hce hK hx hF' hL hrg ?_ ?_ (fun a k ho => ?_) (fun j hj => ?_) ?_ ?_ hsok'
     (by simp only [stLen]; rw [e1]; exact Nat.le_refl _) (Or.inl ⟨by simp only [stW]; rw [e0], by simp only [stCap]; rw [e2]⟩)
     (fun h => by simp only [stCap] at h ⊢; rw [e2]; exact h)
+    (arrIn_kept ⟨by simp only [stW]; rw [e0], by simp only [stCap]; rw [e2]⟩)
   · intro r hr hlt
     simp only [List.cons_append, List.nil_append, List.mem_cons, List.not_mem_nil, or_false] at hr
     rcases hr with rfl | rfl | rfl

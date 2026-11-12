@@ -30,13 +30,13 @@ theorem mf_byte {m m' : Memory} {ws ws' : List (Nat × Nat)} (h : MemFrame m m' 
       simp only [Memory.readLE_one] at this
       exact BitVec.eq_of_toNat_eq this, h.accessible⟩
 
-/-- the callee post `post_call` consumes (`NHyp.CPost` and `ExpOdd.Post` both give it): result old or fresh, `StackBack` -/
+/-- the callee post `post_call` consumes (`NHyp.CPost` and `ExpOdd.Post` both give it): result old or fresh, `StackBackL` -/
 @[reducible] def CPostG (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (stk above zp zc st v cst : Nat) (s s' : State) :
     Prop :=
   ∃ p l c : Nat, s'.regs 0 = BitVec.ofNat 64 p ∧ s'.regs 1 = BitVec.ofNat 64 l ∧ s'.regs 2 = BitVec.ofNat 64 c ∧
     ∃ (L' : List (Nat × Nat)) (b' : Nat), (natVal s'.mem p l = v ∧ NatNorm s'.mem p l ∧ l ≤ c ∧ c < 2 ^ 64 ∧
       NatLive s'.mem R L' p c ∧ ((p = zp ∧ c = zc) ∨ (InRanges p (8 * c) R.rt ∧ ApartAll p (8 * c) L))) ∧
-      ExpHyp.RtPost R b cst L L' b' s s' ∧ StackBack R L L' st s.mem s'.mem ∧
+      ExpHyp.RtPost R b cst L L' b' s s' ∧ StackBackL R L L' st s.mem s'.mem ∧
       MemFrame s.mem s'.mem (R.rt ++ winA s stk above ++ [(zp, zp + 8 * zc)] ++ ExpHyp.stWs s.mem st) ∧
       LiveFrame s.mem s'.mem L ([(zp, zp + 8 * zc)] ++ ExpHyp.stWs s.mem st)
 
@@ -44,7 +44,7 @@ theorem cpostG_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {stk above zp zc
     (h : NHyp.CPost R b L stk above zp zc st v cst s s') : CPostG R b L stk above zp zc st v cst s s' := by
   obtain ⟨p, l, c, q0, q1, q2, L', b', ⟨hval, hnorm, hlc, hc40, hlive, hof⟩, hrt, hsb, hF, hLF⟩ := h
   exact ⟨p, l, c, q0, q1, q2, L', b', ⟨hval, hnorm, hlc, by omega, hlive,
-    hof.imp id (fun h => ⟨h.2.1, h.2.2⟩)⟩, hrt, hsb.toStackBack, hF, hLF⟩
+    hof.imp id (fun h => ⟨h.2.1, h.2.2⟩)⟩, hrt, hsb, hF, hLF⟩
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
@@ -64,7 +64,7 @@ theorem post_call {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {costF
     (hfin : MemFrame s'.mem s''.mem [(sp + 1232, sp + 1256)])
     (e0 : s''.regs 0 = s'.regs 0) (e1 : s''.regs 1 = s'.regs 1) (e2 : s''.regs 2 = s'.regs 2) :
     Post R b L K costF costR costS costP zp zc st xp xl yp yl mp n s s'' := by
-  obtain ⟨p, l, c, q0, q1, q2, L', b', ⟨hval, hnorm, hlc, hc40, hlive, hof⟩, ⟨hx2, hb2, hinv⟩, ⟨k1, k2, k3⟩,
+  obtain ⟨p, l, c, q0, q1, q2, L', b', ⟨hval, hnorm, hlc, hc40, hlive, hof⟩, ⟨hx2, hb2, hinv⟩, ⟨⟨k1, k2, k3⟩, k4⟩,
     hF, hLF⟩ := hq
   have hw := out_rt_wN hrw
   have hwrt : Outside (sp - K) (K + 1304) R.rt := by
@@ -114,12 +114,13 @@ theorem post_call {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {costF
       · exact Or.inr (Or.inl ⟨h1, h2⟩)
       · exact Or.inr (Or.inr ⟨hin, hap⟩)
     · exact Or.inr (Or.inr ⟨hin, apartAll_ext hx1 hap⟩)
-  · refine ⟨k1', el'.trans (k2.trans el), ?_⟩
-    have e3 := stkOK_frame k1 hfin hst'' (LiveExt.refl R L')
-    rw [e3.2.1, e3.2.2.2]
-    rcases k3 with ⟨a1, a2⟩ | ⟨a1, a2⟩
-    · exact Or.inl ⟨a1.trans ew, a2.trans ec⟩
-    · exact Or.inr ⟨a1, apartAll_ext hx1 a2⟩
+  · have e3 := stkOK_frame k1 hfin hst'' (LiveExt.refl R L')
+    refine ⟨⟨k1', el'.trans (k2.trans el), ?_⟩, ?_⟩
+    · rw [e3.2.1, e3.2.2.2]
+      rcases k3 with ⟨a1, a2⟩ | ⟨a1, a2⟩
+      · exact Or.inl ⟨a1.trans ew, a2.trans ec⟩
+      · exact Or.inr ⟨a1, apartAll_ext hx1 a2⟩
+    · intro hn; rw [e3.2.1, e3.2.2.2] at hn ⊢; exact k4 (by rw [ew, ec]; exact hn)
   · have h3 : MemFrame s.mem s''.mem ((R.rt ++ wN sp K) ++ ((R.rt ++ winA S stk 112 ++ [(zq, zq + 8 * zcq)] ++
         ExpHyp.stWs S.mem st) ++ [(sp + 1232, sp + 1256)])) :=
       hF0.trans (hF.trans hfin fun a k ho => by rw [outside_append] at ho; exact ho)

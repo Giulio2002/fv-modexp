@@ -8,7 +8,7 @@ import FvModexp.Proofs.Arm64.Exp.W2FunE
 
 `z.expNNOdd(stk, x, y, m)` returns `x^y mod m` (see `Pre`/`Post`): the prologue (`pro`), the call of window-4
 (`ExpW4.ens`, `len y > 1`) or window-2 (`ExpW2.ens`), the epilogue (`epi`). Premises: the live runtime contracts and
-`nat.div`'s shape `ExpHyp.DivHyp` (as the windows).
+`nat.div`'s shape `ExpHyp.DivHypL` (as the windows).
 -/
 
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvModexp
@@ -57,7 +57,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
     (hgr : GrowsliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.growslice") 4096 R)
     (hwb : WbLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 4096 R 2)
-    (nsD : List String) (stkD : Nat) (costF : Nat → Nat → Nat → Nat) (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costF)
+    (nsD : List String) (stkD : Nat) (costF : Nat → Nat → Nat → Nat) (hDiv : ExpHyp.DivHypL impl R nsD stkD 112 costF)
     (hnsD : ∀ x, nsD.contains x = true → LibW.names.contains x = true)
     (hnsW4 : nsD.contains Extracted.seg34.name = false) (hnsW2 : nsD.contains Extracted.seg35.name = false)
     (b : Nat) (L : List (Nat × Nat)) (K : Nat) (hKD : stkD ≤ K) (hKL : 4256 ≤ K)

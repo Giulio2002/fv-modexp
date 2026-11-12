@@ -44,8 +44,8 @@ theorem xnAStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
-    (hSN : StackNat.Hyp impl R StackNat.names 4208 24)
-    (nsD : List String) (stkD costD : Nat) (costF : Nat → Nat → Nat → Nat) (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costF)
+    (hSN : StackNat.HypL impl R StackNat.names 4208 24)
+    (nsD : List String) (stkD costD : Nat) (costF : Nat → Nat → Nat → Nat) (hDiv : ExpHyp.DivHypL impl R nsD stkD 112 costF)
     (hnsD : ∀ x, nsD.contains x = true → LibW.names.contains x = true)
     (hnsW : nsD.contains Extracted.seg35.name = false)
     (nsL : List String) (stkL : Nat) (hLsh : Lsh.Hyp2 impl R nsL stkL 64)
@@ -108,7 +108,7 @@ theorem xnAStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
   obtain ⟨hx2, hb2, hinv2, hsok2, hlen2, -, -, -, -, -⟩ := hS10
   rw [hl0e] at f3 hlen2 hb2
   have hlc2 := hsok2.2.2.2.2.2.1
-  have hcap2 : 0 < stCap M2 st := hk2.2.2.2.2.2.2.2.2.2.2.2 hcap
+  have hcap2 : 0 < stCap M2 st := hk2.2.2.2.2.2.2.2.2.2.2.2.1 hcap
   obtain ⟨q8, qH, qacc, q48⟩ := hsok2.2.2.2.2.1 hcap2
   have hqin : stW M2 st + 8 * l0 ≤ (stW M2 st + 8 * l0, 8 * k).1 ∧
       (stW M2 st + 8 * l0, 8 * k).1 + (stW M2 st + 8 * l0, 8 * k).2 ≤ stW M2 st + 8 * stCap M2 st := by
@@ -216,8 +216,8 @@ theorem xnStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
-    (hSN : StackNat.Hyp impl R StackNat.names 4208 24)
-    (nsD : List String) (stkD costD : Nat) (costF : Nat → Nat → Nat → Nat) (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costF)
+    (hSN : StackNat.HypL impl R StackNat.names 4208 24)
+    (nsD : List String) (stkD costD : Nat) (costF : Nat → Nat → Nat → Nat) (hDiv : ExpHyp.DivHypL impl R nsD stkD 112 costF)
     (hnsD : ∀ x, nsD.contains x = true → LibW.names.contains x = true)
     (hnsW : nsD.contains Extracted.seg35.name = false)
     (nsL : List String) (stkL : Nat) (hLsh : Lsh.Hyp2 impl R nsL stkL 64)

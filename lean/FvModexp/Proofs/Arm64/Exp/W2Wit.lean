@@ -8,7 +8,7 @@ import FvModexp.Proofs.Arm64.Witness.AsmWit
 `m = [7]` at `MP` (the call `3^5 mod 7`). The stack region is widened to `[SP0 - 0x10000, SP0 + 0x100)` so the window
 `[sp - K, sp + 752)` (`sp = SP0 - 640`) fits for every `4304 ≤ K ≤ KMAX` (`nat.div`'s stack depth `stkD ≤ K` is not
 known yet). `pre` holds for every `nat.div` cost function `costF` with `divCost costF 1 1 0 ≤ CD`. The row (`correctness` + `nonvacuous`) is completed when asm's `nat.div`
-summary lands (it replaces the `ExpHyp.DivHyp` premise of `ExpW2.ens`).
+summary lands (it replaces the `ExpHyp.DivHypL` premise of `ExpW2.ens`).
 -/
 
 namespace FvModexp.Arm64.ExpW2.Witness

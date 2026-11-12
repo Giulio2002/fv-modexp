@@ -63,6 +63,7 @@ theorem keeps_own {R : RtInv} {L : List (Nat × Nat)}
     (outside_ws_of_win (lo := sp + 8) (hi := sp + 1040) (by omega) hin) hsok'
     (by simp only [stLen]; rw [e1]; exact Nat.le_refl _) (Or.inl ⟨by simp only [stW]; rw [e0], by simp only [stCap]; rw [e2]⟩)
     (fun h => by simp only [stCap] at h ⊢; rw [e2]; exact h)
+    (arrIn_kept ⟨by simp only [stW]; rw [e0], by simp only [stCap]; rw [e2]⟩)
   · obtain ⟨r, hr, h1, h2⟩ := hin2
     have := hLs r hr
     simp only [outside_cons, outside_nil, and_true] at this

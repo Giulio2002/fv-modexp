@@ -138,7 +138,7 @@ theorem oddPath (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
     (hgr : GrowsliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.growslice") 4096 R)
     (hwb : WbLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 4096 R 2)
-    (nsD : List String) (stkD : Nat) {costF : Nat → Nat → Nat → Nat} (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costF)
+    (nsD : List String) (stkD : Nat) {costF : Nat → Nat → Nat → Nat} (hDiv : ExpHyp.DivHypL impl R nsD stkD 112 costF)
     (hnsD : ∀ x, nsD.contains x = true → LibW.names.contains x = true)
     (hnsW4 : nsD.contains Extracted.seg34.name = false) (hnsW2 : nsD.contains Extracted.seg35.name = false)
     (ret0 : Nat) (hret : RetAddr (LibN.program.link impl) ret0) (F : State → Prop)
