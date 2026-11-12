@@ -24,7 +24,7 @@ def Pre0 (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl y : BitVec 6
     NatLive s.mem R L zp.toNat zc.toNat ∧
     (0 < zc.toNat → Outside zp.toNat (8 * zc.toNat) (win s 4240 64)) ∧
     (0 < zc.toNat → Apart zp.toNat (8 * zc.toNat) ((s.regs 28).toNat + 16) 8 ∧
-      (zp = xp ∨ Apart zp.toNat (8 * zc.toNat) xp.toNat (8 * xl.toNat))) ∧
+      (0 < xl.toNat → zp = xp ∨ Apart zp.toNat (8 * zc.toNat) xp.toNat (8 * xl.toNat))) ∧
     (0 < xl.toNat → s.mem.accessible xp.toNat (8 * xl.toNat) false = true ∧ xp.toNat + 8 * xl.toNat ≤ 2 ^ 48 ∧
       Held R L xp.toNat (8 * xl.toNat) ∧ Outside xp.toNat (8 * xl.toNat) (win s 4240 64)) ∧
     NatNorm s.mem xp.toNat xl.toNat ∧
@@ -36,13 +36,14 @@ def Pre0 (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl y : BitVec 6
 theorem Pre2.toPre0 {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl y : BitVec 64} {s : State}
     (h : Pre2 R b L zp zc xp xl y s) : Pre0 R b L zp zc xp xl y s := by
   obtain ⟨a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16⟩ := h
-  exact ⟨a1, a2, a3, a4, a5, a6, a7, a8, fun _ => ⟨a9, a10, a11, a13⟩, a12, a14, a15, a16⟩
+  exact ⟨a1, a2, a3, a4, a5, a6, a7, fun h => ⟨(a8 h).1, fun _ => (a8 h).2⟩, fun _ => ⟨a9, a10, a11, a13⟩, a12, a14,
+    a15, a16⟩
 
 theorem Pre0.toPre2 {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl y : BitVec 64} {s : State}
     (h : Pre0 R b L zp zc xp xl y s) (hx : 0 < xl.toNat) : Pre2 R b L zp zc xp xl y s := by
   obtain ⟨a1, a2, a3, a4, a5, a6, a7, a8, a9, a12, a14, a15, a16⟩ := h
   obtain ⟨a9, a10, a11, a13⟩ := a9 hx
-  exact ⟨a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16⟩
+  exact ⟨a1, a2, a3, a4, a5, a6, a7, fun h => ⟨(a8 h).1, (a8 h).2 hx⟩, a9, a10, a11, a12, a13, a14, a15, a16⟩
 
 /-- the postcondition for `m = 0` (`q = z[:0]`, `r = 0`) from `Pre0` -/
 theorem post_zero0 {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl y : BitVec 64} {s : State}

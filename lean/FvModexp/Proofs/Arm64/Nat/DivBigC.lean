@@ -1,5 +1,6 @@
 import FvModexp.Proofs.Arm64.Nat.DivBigP
 import FvModexp.Proofs.Arm64.Nat.DivBigF
+import FvModexp.Proofs.Arm64.Nat.DivLargeG
 
 set_option autoImplicit false
 
@@ -13,6 +14,15 @@ open Janus.Contracts.EqHashModel
 set_option linter.janusRenameI false
 
 namespace FvModexp.Arm64.NatDiv
+
+set_option linter.defProp false in
+/-- `nat.divLarge` (premise `DivLarge.HypG`) as a summary in `LibDiv.program.link impl` (as `lsum`) -/
+def lsumG (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+    (dc : Nat → Nat → Nat → Nat) (hL : DivLarge.HypG impl R dc) (b : Nat) (L : List (Nat × Nat))
+    (z zl zc st u ul uc ip il ic vp vl vc : BitVec 64) :=
+  Ensures.toSummaryIn (hL b L z zl zc st u ul uc ip il ic vp vl vc) (noExit_restrict hap DivLarge.names)
+    (show CodeIn ((Extracted.program.onlySegments DivLarge.names).link impl) (LibDiv.program.link impl) by
+      rw [LibDiv.eq_only]; exact codeIn_restrict_mono hap (Callees.sub_of_all (by decide)))
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in
@@ -31,6 +41,9 @@ theorem big3 (impl : List Segment) {R : RtInv} {b : Nat} {dc : Nat → Nat → N
       Apart r (8 * rc) (stW T.mem st) (8 * stCap T.mem st))
     (hmf : MemFrame X.mem T.mem (R.rt ++ winA X 41264 112 ++ (ar zp zc ++ ar z2 z2c) ++ stkWs X.mem st))
     (hlf : LiveFrame X.mem T.mem L ((ar zp zc ++ ar z2 z2c) ++ stkWs X.mem st))
+    (hqr : 0 < qc → 0 < rc → Apart q (8 * qc) r (8 * rc))
+    (hqf : ¬ (q = zp ∧ qc = zc) → 0 < qc → 0 < stCap T.mem st →
+      Apart q (8 * qc) (stW T.mem st) (8 * stCap T.mem st))
     (T' : State) (hTe : T' = T)
     (hpcT : T.pc = BitVec.ofNat 64 retL) (hspT : T.sp = s.sp - 240#64) (h28T : T.regs 28 = s.regs 28)
     (h29T : T.regs 29 = s.sp - 248#64) (h18T : T.regs 18 = s.regs 18)
@@ -40,24 +53,26 @@ theorem big3 (impl : List Segment) {R : RtInv} {b : Nat} {dc : Nat → Nat → N
     (m2 : T.mem.readLE (s.sp.toNat - 248) 8 = (s.regs 29).toNat) (m3 : T.mem.readLE (s.sp.toNat - 122) 1 = 0)
     (hTacc : T.mem.accessible (s.sp.toNat - 41504) (41504 + 112) true = true)
     (hl4 : (s.regs 30).toNat % 4 = 0) (hl48 : (s.regs 30).toNat < 2 ^ 48) :
-    ReachesRet (LibDiv.program.link impl) (s.regs 30) T' (RQ R b dc L zp zc st z2 z2c u ul v vl s) := by
+    ReachesRet (LibDiv.program.link impl) (s.regs 30) T' (RQG R b dc L zp zc st z2 z2c u ul v vl s) := by
   subst hTe
   have hp := hpre.f
   obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, -, -, -, -, -, -⟩ := hp.ce
   have hB : Box (Pre R b dc L zp zl zc st z2 z2l z2c u ul v vl s) := ⟨hpre⟩
-  have hB2 := Box.mk (And.intro hq (And.intro hr (And.intro hrt (And.intro hsb (And.intro hfr (And.intro hmf hlf))))))
-  clear hpre hp hmf hlf hq hr hrt hsb hfr
+  have hB2 := Box.mk (And.intro hq (And.intro hr (And.intro hrt (And.intro hsb (And.intro hfr (And.intro hmf
+    (And.intro hlf (And.intro hqr hqf))))))))
+  clear hpre hp hmf hlf hq hr hrt hsb hfr hqr hqf
   janus_run [m1, m2, m3, e0, e1, e2, e3, e4, e5]
   obtain ⟨hpre⟩ := hB
-  obtain ⟨hq, hr, hrt, hsb, hfr, hmf, hlf⟩ := hB2.h
-  refine ⟨⟨?_, ?_, ?_, ?_⟩, bigFin hpre hsp h28 hF hq hr hrt hsb hfr hmf hlf _ (by janus_frame) ?_ ?_ ?_ ?_ ?_ ?_⟩
+  obtain ⟨hq, hr, hrt, hsb, hfr, hmf, hlf, hqr, hqf⟩ := hB2.h
+  refine ⟨⟨?_, ?_, ?_, ?_⟩, bigFin hpre hsp h28 hF hq hr hrt hsb hfr hmf hlf _ (by janus_frame) ?_ ?_ ?_ ?_ ?_ ?_
+    hqr hqf⟩
   all_goals janus_simp
   all_goals exact ofNat_modL _
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem big2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
-    (dc : Nat → Nat → Nat → Nat) (hL : DivLarge.Hyp impl R dc)
+    (dc : Nat → Nat → Nat → Nat) (hL : DivLarge.HypG impl R dc)
     {b : Nat} {L : List (Nat × Nat)} {zp zl zc st z2 z2l z2c u ul uc v vl vc : Nat} {s : State}
     (hpre : Pre R b dc L zp zl zc st z2 z2l z2c u ul v vl s) (hsep : HdrSep s st)
     (hge : natVal s.mem v vl ≤ natVal s.mem u ul) (hv2 : 2 ≤ vl)
@@ -74,7 +89,7 @@ theorem big2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     (mlr : X.mem.readLE (s.sp.toNat - 240) 8 = (s.regs 30).toNat)
     (mfp : X.mem.readLE (s.sp.toNat - 248) 8 = (s.regs 29).toNat) (mby : X.mem.readLE (s.sp.toNat - 122) 1 = 0)
     (hzp : zp < 2 ^ 64) (hz2 : z2 < 2 ^ 64) :
-    ReachesRet (LibDiv.program.link impl) (s.regs 30) X (RQ R b dc L zp zc st z2 z2c u ul v vl s) := by
+    ReachesRet (LibDiv.program.link impl) (s.regs 30) X (RQG R b dc L zp zc st z2 z2c u ul v vl s) := by
   have hp := hpre.f
   obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, hdl, hout, hga, hgr, hLs, hro⟩ := hp.ce
   have hspn : X.sp.toNat = s.sp.toNat - 240 := by
@@ -85,7 +100,7 @@ theorem big2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
   have hu48 := hp.uo.2.2.1; have hv48 := hp.vo.2.2.1
   have hst48 := hp.sok.2.2.2.1
   have e : ∀ x, x < 2 ^ 64 → (BitVec.ofNat 64 x).toNat = x := fun x h => tN h
-  have hsum := lsum impl hap R dc hL b L (BitVec.ofNat 64 zp) (BitVec.ofNat 64 zl) (BitVec.ofNat 64 zc)
+  have hsum := lsumG impl hap R dc hL b L (BitVec.ofNat 64 zp) (BitVec.ofNat 64 zl) (BitVec.ofNat 64 zc)
     (BitVec.ofNat 64 st) (BitVec.ofNat 64 z2) (BitVec.ofNat 64 z2l) (BitVec.ofNat 64 z2c) (BitVec.ofNat 64 u)
     (BitVec.ofNat 64 ul) (BitVec.ofNat 64 uc) (BitVec.ofNat 64 v) (BitVec.ofNat 64 vl) (BitVec.ofNat 64 vc)
   have e30 : (X.regs 30).toNat = retL := by rw [h30]; decide
@@ -106,7 +121,7 @@ theorem big2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     rw [ezp, ezc, est, ez2, ez2c, eu, eul, ev, evl]
     exact l_pre hpre hsep hge hv2 X hsp h28 hF hreg
   rw [ezp, ezc, est, ez2, ez2c, eu, eul, ev, evl] at hq
-  obtain ⟨q, ql, qc, r, rl, rc, e0, e1, e2, e3, e4, e5, L', b'', hq', hr', hrt, hsb, hfr, hmf, hlf⟩ := hq
+  obtain ⟨q, ql, qc, r, rl, rc, e0, e1, e2, e3, e4, e5, L', b'', hq', hr', hrt, hsb, hfr, hmf, hlf, hqr, hqf⟩ := hq
   have hk := slots_keep hpre hsp hF hmf
   have m1 : T.mem.readLE (s.sp.toNat - 240) 8 = (s.regs 30).toNat := by rw [hk _ _ (Or.inl ⟨i1, i2⟩)]; exact mlr
   have m2 : T.mem.readLE (s.sp.toNat - 248) 8 = (s.regs 29).toNat := by rw [hk _ _ (Or.inl ⟨Nat.le_refl _, i3⟩)]; exact mfp
@@ -118,7 +133,7 @@ theorem big2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
   have h18T : T.regs 18 = s.regs 18 := by rw [f4, h18]
   have hTacc : T.mem.accessible (s.sp.toNat - 41504) (41504 + 112) true = true := by
     rw [hmf.accessible, hF.accessible]; exact hw
-  exact big3 impl hpre hsp h28 hF hq' hr' hrt hsb hfr hmf hlf T rfl hpcT hspT h28T h29T h18T e0 e1 e2 e3 e4 e5 m1 m2 m3
+  exact big3 impl hpre hsp h28 hF hq' hr' hrt hsb hfr hmf hlf hqr hqf T rfl hpcT hspT h28T h29T h18T e0 e1 e2 e3 e4 e5 m1 m2 m3
     hTacc hl4 hl48
 
 end FvModexp.Arm64.NatDiv
