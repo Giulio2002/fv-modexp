@@ -43,6 +43,7 @@ structure J8 (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl
   z2 : LN R L s.mem st S.mem L1 pw lw cw
     (natVal s.mem xp xl ^ natVal s.mem yp yl % (natVal s.mem mp ml / 2 ^ nE s mp ml))
   pw64 : pw < 2 ^ 64
+  z2e : EL R L pw cw
   wa1 : 0 < cw → Apart pw (8 * cw) p1 (8 * c1)
   wa2 : 0 < cw → Apart pw (8 * cw) q (8 * a2 ml (nE s mp ml))
   wz : 0 < cw → 0 < cz → Apart pw (8 * cw) pz (8 * cz)

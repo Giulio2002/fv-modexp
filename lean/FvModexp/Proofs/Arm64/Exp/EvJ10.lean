@@ -47,6 +47,15 @@ theorem EL.out (h : EL R L p 0) {a n : Nat} (ho : Outside a n R.rt) : Apart p (8
   · unfold Apart; omega
   · exact ((show InRanges p (8 * 0) R.rt by simpa using hin).apart ho).symm
 
+/-- a result in the destination's array or fresh: empty-location from the destination's -/
+theorem EL.of_res {L1 : List (Nat × Nat)} {pd cd c' : Nat} (hd : EL R L pd cd) (hx : LiveExt R L L1)
+    (hor : (p = pd ∧ c' = cd) ∨ (InRanges p (8 * c') R.rt ∧ ApartAll p (8 * c') L1)) : EL R L p c' := by
+  intro hc
+  rcases hor with ⟨rfl, rfl⟩ | ⟨hin, hap⟩
+  · exact hd hc
+  · subst hc
+    exact Or.inr ⟨by simpa using hin, fun r hr => by simpa using hap r (hx.mem_old hr)⟩
+
 theorem EL.mono {L' : List (Nat × Nat)} (h : EL R L p 0) (hx : ∀ r ∈ L', r ∈ L) : EL R L' p 0 := fun e =>
   (h e).imp id fun ⟨hin, hap⟩ => ⟨hin, fun r hr => hap r (hx r hr)⟩
 
@@ -88,11 +97,13 @@ structure J10 (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp y
   z2 : LN R L s.mem st S.mem L1 pw lw cw
     (natVal s.mem xp xl ^ natVal s.mem yp yl % (natVal s.mem mp ml / 2 ^ nE s mp ml))
   pw64 : pw < 2 ^ 64
+  z2e : EL R L pw cw
   wa1 : 0 < cw → Apart pw (8 * cw) p1 (8 * c1)
   wa2 : 0 < cw → Apart pw (8 * cw) q (8 * a2 ml (nE s mp ml))
   zs : LZ R L st zp zc S.mem L1 pZ lw cZ
     (natVal s.mem xp xl ^ natVal s.mem yp yl % (natVal s.mem mp ml / 2 ^ nE s mp ml))
   pZ64 : pZ < 2 ^ 64
+  Ze : cZ = 0 → pZ = zp ∧ cZ = zc
   Za1 : 0 < cZ → Apart pZ (8 * cZ) p1 (8 * c1)
   Za2 : 0 < cZ → Apart pZ (8 * cZ) q (8 * a2 ml (nE s mp ml))
   Zz2 : 0 < cZ → 0 < cw → Apart pZ (8 * cZ) pw (8 * cw)
@@ -100,6 +111,7 @@ structure J10 (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp y
     (Exp.subMod2N (natVal s.mem xp xl ^ natVal s.mem yp yl % 2 ^ nE s mp ml)
       (natVal s.mem xp xl ^ natVal s.mem yp yl % (natVal s.mem mp ml / 2 ^ nE s mp ml)) (nE s mp ml))
   p364 : p3 < 2 ^ 64
+  z3e : EL R L p3 c3
   ta1 : 0 < c3 → Apart p3 (8 * c3) p1 (8 * c1)
   ta2 : 0 < c3 → Apart p3 (8 * c3) q (8 * a2 ml (nE s mp ml))
   tw : 0 < c3 → 0 < cw → Apart p3 (8 * c3) pw (8 * cw)

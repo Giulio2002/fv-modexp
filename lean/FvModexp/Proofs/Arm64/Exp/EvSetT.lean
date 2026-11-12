@@ -68,11 +68,13 @@ structure JS (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl
   z2 : LN R L s.mem st S.mem L1 pw lw cw
     (natVal s.mem xp xl ^ natVal s.mem yp yl % (natVal s.mem mp ml / 2 ^ nE s mp ml))
   pw64 : pw < 2 ^ 64
+  z2e : EL R L pw cw
   wa1 : 0 < cw → Apart pw (8 * cw) p1 (8 * c1)
   wa2 : 0 < cw → Apart pw (8 * cw) q (8 * a2 ml (nE s mp ml))
   wz : 0 < cw → 0 < cz → Apart pw (8 * cw) pz (8 * cz)
   dz : DZ R L st zp zc S.mem L1 pZ lw cZ
   pZ64 : pZ < 2 ^ 64
+  Ze : cZ = 0 → pZ = zp ∧ cZ = zc
   Za1 : 0 < cZ → Apart pZ (8 * cZ) p1 (8 * c1)
   Za2 : 0 < cZ → Apart pZ (8 * cZ) q (8 * a2 ml (nE s mp ml))
   Zz1 : 0 < cZ → 0 < cz → Apart pZ (8 * cZ) pz (8 * cz)
@@ -110,11 +112,13 @@ structure JO (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl
   z2 : LN R L s.mem st S.mem L1 pw lw cw
     (natVal s.mem xp xl ^ natVal s.mem yp yl % (natVal s.mem mp ml / 2 ^ nE s mp ml))
   pw64 : pw < 2 ^ 64
+  z2e : EL R L pw cw
   wa1 : 0 < cw → Apart pw (8 * cw) p1 (8 * c1)
   wa2 : 0 < cw → Apart pw (8 * cw) q (8 * a2 ml (nE s mp ml))
   wz : 0 < cw → 0 < cz → Apart pw (8 * cw) pz (8 * cz)
   dz : DZ R L st zp zc S.mem L1 pZ lw cZ
   pZ64 : pZ < 2 ^ 64
+  Ze : cZ = 0 → pZ = zp ∧ cZ = zc
   Za1 : 0 < cZ → Apart pZ (8 * cZ) p1 (8 * c1)
   Za2 : 0 < cZ → Apart pZ (8 * cZ) q (8 * a2 ml (nE s mp ml))
   Zz1 : 0 < cZ → 0 < cz → Apart pZ (8 * cZ) pz (8 * cz)
@@ -132,8 +136,8 @@ theorem JO.toJ9 {rk : Nat} {S : State} {L1 : List (Nat × Nat)} {b1 p1 l1 c1 q l
     (hn : NatNorm S.mem pZ lw) :
     J9 R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s rk S L1 b1 p1 l1 c1 q l2 pz lz cz pw lw cw pZ cZ :=
   ⟨h.jx, hpc, h0, h2, h4, h.s288, h.s208, h.s216, h.s280, h.s192, h.s200, h.s264, h.s152, h.s160, h.s256, h.s136,
-    h.s144, h.s272, h.s168, h.s176, h.m1, h.c1p, h.m2, h.ap, h.z1, h.pz64, h.z1e, h.za1, h.za2, h.z2, h.pw64, h.wa1, h.wa2,
-    h.wz, ⟨h.dz.1, h.dz.2.1, h.dz.2.2.1, h.dz.2.2.2, hv, hn⟩, h.pZ64, h.Za1, h.Za2, h.Zz1, h.Zz2⟩
+    h.s144, h.s272, h.s168, h.s176, h.m1, h.c1p, h.m2, h.ap, h.z1, h.pz64, h.z1e, h.za1, h.za2, h.z2, h.pw64, h.z2e, h.wa1, h.wa2,
+    h.wz, ⟨h.dz.1, h.dz.2.1, h.dz.2.2.1, h.dz.2.2.2, hv, hn⟩, h.pZ64, h.Ze, h.Za1, h.Za2, h.Zz1, h.Zz2⟩
 
 /-- an apartness from `[p, p + 8c)` gives one from a destination inside it (or an empty one at `0`) -/
 theorem ap_dst {p c d n a k : Nat} (hd : (d = 0 ∧ n = 0) ∨ (d = p ∧ n ≤ 8 * c ∧ 0 < c))
@@ -213,8 +217,8 @@ theorem JO.mv (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) {rk
     kN h.m1 (fun _ c0 => (h.Za1 c0).symm), h.c1p,
     kN h.m2 (fun _ c0 => (h.Za2 c0).symm), h.ap,
     kN h.z1 (fun c0 cZ0 => (h.Zz1 cZ0 c0).symm), h.pz64, h.z1e, h.za1, h.za2,
-    kN h.z2 (fun c0 cZ0 => (h.Zz2 cZ0 c0).symm), h.pw64, h.wa1, h.wa2, h.wz,
-    DZ.frm (LiveExt.refl R L1) hF.accessible hhd h.dz, h.pZ64, h.Za1, h.Za2, h.Zz1, h.Zz2⟩
+    kN h.z2 (fun c0 cZ0 => (h.Zz2 cZ0 c0).symm), h.pw64, h.z2e, h.wa1, h.wa2, h.wz,
+    DZ.frm (LiveExt.refl R L1) hF.accessible hhd h.dz, h.pZ64, h.Ze, h.Za1, h.Za2, h.Zz1, h.Zz2⟩
 
 end
 

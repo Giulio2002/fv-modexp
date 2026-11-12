@@ -22,11 +22,6 @@ namespace FvModexp.Arm64.ModInv
 
 open FvModexp.Arm64.EvenHyp
 
-/-- the precondition with the stack length fixed: `sqr` / `mul` budgets at `ℓ` -/
-@[reducible] def PreL (R : RtInv) (kc : Nat) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat) (ℓ b : Nat)
-    (L : List (Nat × Nat)) (zp zl zc st xp xl xc n : Nat) (s : State) : Prop :=
-  Pre R kc (sqC ℓ) (mlC ℓ) b L zp zl zc st xp xl xc n s ∧ stLen s.mem st = ℓ
-
 set_option maxRecDepth 20000 in
 /-- the whole function from its entry, as a `Summary` on the exp layer's program -/
 theorem full {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}

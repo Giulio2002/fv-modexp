@@ -43,6 +43,7 @@ structure JP (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl
   z2 : LN R L s.mem st S.mem L1 pw lw cw
     (natVal s.mem xp xl ^ natVal s.mem yp yl % (natVal s.mem mp ml / 2 ^ nE s mp ml))
   pw64 : pw < 2 ^ 64
+  z2e : EL R L pw cw
   wa1 : 0 < cw → Apart pw (8 * cw) p1 (8 * c1)
   wa2 : 0 < cw → Apart pw (8 * cw) q (8 * a2 ml (nE s mp ml))
   wz : 0 < cw → 0 < cz → Apart pw (8 * cw) pz (8 * cz)
@@ -107,7 +108,7 @@ theorem j8_own (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) (h
     (kF _ (by omega) (by omega)).trans h.s264, (kF _ (by omega) (by omega)).trans h.s152,
     (kF _ (by omega) (by omega)).trans h.s160, r256, r136, r144,
     hown _ _ _ _ h.m1, h.c1p, hown _ _ _ _ h.m2, ha2, h.ap, hown _ _ _ _ h.z1, h.pz64, h.z1e, h.za1, h.za2,
-    hown _ _ _ _ h.z2, h.pw64, h.wa1, h.wa2, h.wz, hlwm⟩
+    hown _ _ _ _ h.z2, h.pw64, h.z2e, h.wa1, h.wa2, h.wz, hlwm⟩
 
 /-- **reuse**: `len z2 ≤ cap z` → `JS` with `z`'s entry array -/
 theorem JP.reuseJS (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) {rk rk' : Nat} {S : State}
@@ -125,8 +126,8 @@ theorem JP.reuseJS (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s
   have hbud := h.jx.bud
   refine ⟨⟨h.jx.esp, h.jx.e28, h.jx.e29, h.jx.e18, hw, h.jx.esl, Nat.le_trans hrk hbud⟩, hpc, h0, h1, h2, h3, h4, h5,
     h.s288, h.s208, h.s216, h.s280, h.s192, h.s200, h.s264, h.s152, h.s160, h.s256, h.s136, h.s144, h.m1, h.c1p,
-    h.m2, h.ap, h.z1, h.pz64, h.z1e, h.za1, h.za2, h.z2, h.pw64, h.wa1, h.wa2, h.wz,
-    ⟨hzc, fun c0 => ?_, fun _ => Or.inl ⟨rfl, rfl⟩, hlz⟩, hzp,
+    h.m2, h.ap, h.z1, h.pz64, h.z1e, h.za1, h.za2, h.z2, h.pw64, h.z2e, h.wa1, h.wa2, h.wz,
+    ⟨hzc, fun c0 => ?_, fun _ => Or.inl ⟨rfl, rfl⟩, hlz⟩, hzp, fun _ => ⟨rfl, rfl⟩,
     fun c0 => ((Loc.ap hP (h.m1.1.2.2 h.c1p).1).2.2.2 c0).symm,
     fun c0 => ((Loc.ap hP (h.m2.1.2.2 h.a2p).1).2.2.2 c0).symm,
     fun c0 cz0 => ((Loc.ap hP (h.z1.1.2.2 cz0).1).2.2.2 c0).symm,
@@ -185,9 +186,9 @@ theorem JP.mkJS (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) {
     (hA.keep _ _ (Or.inr ⟨by omega, by omega⟩)).trans h.s264, (hA.keep _ _ (Or.inr ⟨by omega, by omega⟩)).trans h.s152,
     (hA.keep _ _ (Or.inr ⟨by omega, by omega⟩)).trans h.s160, (hA.keep _ _ (Or.inr ⟨by omega, by omega⟩)).trans h.s256,
     (hA.keep _ _ (Or.inr ⟨by omega, by omega⟩)).trans h.s136, (hA.keep _ _ (Or.inr ⟨by omega, by omega⟩)).trans h.s144,
-    kN h.m1, h.c1p, kN h.m2, h.ap, kN h.z1, h.pz64, h.z1e, h.za1, h.za2, kN h.z2, h.pw64, h.wa1, h.wa2, h.wz,
+    kN h.m1, h.c1p, kN h.m2, h.ap, kN h.z1, h.pz64, h.z1e, h.za1, h.za2, kN h.z2, h.pw64, h.z2e, h.wa1, h.wa2, h.wz,
     ⟨hc40, fun _ => ⟨hA.al, hheld, Memory.accessible_mono _ hA.acc (Nat.le_refl _) (by omega), by omega⟩,
-      fun _ => Or.inr ⟨hin, fun x hx' => hap1 x (hw.le.mem_old hx'), hob⟩, hc⟩, hptr,
+      fun _ => Or.inr ⟨hin, fun x hx' => hap1 x (hw.le.mem_old hx'), hob⟩, hc⟩, hptr, fun e => absurd e (by omega),
     fun _ => hfresh (h.m1.1.2.1 h.c1p).2.1 hap1 hin, fun _ => hfresh (h.m2.1.2.1 h.a2p).2.1 hap1 hin,
     fun _ cz0 => hfresh (h.z1.1.2.1 cz0).2.1 hap1 hin, fun _ cw0 => hfresh (h.z2.1.2.1 cw0).2.1 hap1 hin, h.lwm⟩
 

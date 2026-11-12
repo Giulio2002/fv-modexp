@@ -111,7 +111,7 @@ theorem segSm {impl : List Segment} (hap : ImplApart Extracted.program impl) (hE
       by rw [k280]; exact h.s280, by rw [k192]; exact h.s192, by rw [k200]; exact h.s200,
       by rw [k256]; exact h.s256, by rw [k136]; exact h.s136, by rw [k144]; exact h.s144,
       by rw [k272]; exact h.s272, by rw [k168]; exact h.s168, by rw [k176]; exact h.s176,
-      hm1', h.c1p, hm2', h.ap, hz2', h.pw64, h.wa1, h.wa2, hzs', h.pZ64, h.Za1, h.Za2, h.Zz2, hz3, hp3,
+      hm1', h.c1p, hm2', h.ap, hz2', h.pw64, h.z2e, h.wa1, h.wa2, hzs', h.pZ64, h.Ze, h.Za1, h.Za2, h.Zz2, hz3, hp3, EL.of_res h.z1e hw.le hor,
       apart_res hor hH1 h.za1,
       apart_res hor (h.m2.1.2.1 ha2).2.1 h.za2,
       fun c0 cw0 => apart_res hor (h.z2.1.2.1 cw0).2.1 (fun cz0 => (h.wz cw0 cz0).symm) c0,

@@ -67,7 +67,7 @@ theorem jo_own (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) {r
     (kF _ (by omega) (by omega)).trans h.s160, (kF _ (by omega) (by omega)).trans h.s256,
     (kF _ (by omega) (by omega)).trans h.s136, (kF _ (by omega) (by omega)).trans h.s144, r272, r168, r176,
     hown _ _ _ _ h.m1, h.c1p, hown _ _ _ _ h.m2, h.ap, hown _ _ _ _ h.z1, h.pz64, h.z1e, h.za1, h.za2,
-    hown _ _ _ _ h.z2, h.pw64, h.wa1, h.wa2, h.wz, DZ.frm (LiveExt.refl R L1) hF.accessible hhd h.dz, h.pZ64,
+    hown _ _ _ _ h.z2, h.pw64, h.z2e, h.wa1, h.wa2, h.wz, DZ.frm (LiveExt.refl R L1) hF.accessible hhd h.dz, h.pZ64, h.Ze,
     h.Za1, h.Za2, h.Zz1, h.Zz2⟩
 
 set_option maxRecDepth 20000 in

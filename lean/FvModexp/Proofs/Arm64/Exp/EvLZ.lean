@@ -174,12 +174,14 @@ structure J9 (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl
   z2 : LN R L s.mem st S.mem L1 pw lw cw
     (natVal s.mem xp xl ^ natVal s.mem yp yl % (natVal s.mem mp ml / 2 ^ nE s mp ml))
   pw64 : pw < 2 ^ 64
+  z2e : EL R L pw cw
   wa1 : 0 < cw → Apart pw (8 * cw) p1 (8 * c1)
   wa2 : 0 < cw → Apart pw (8 * cw) q (8 * a2 ml (nE s mp ml))
   wz : 0 < cw → 0 < cz → Apart pw (8 * cw) pz (8 * cz)
   zs : LZ R L st zp zc S.mem L1 pZ lw cZ
     (natVal s.mem xp xl ^ natVal s.mem yp yl % (natVal s.mem mp ml / 2 ^ nE s mp ml))
   pZ64 : pZ < 2 ^ 64
+  Ze : cZ = 0 → pZ = zp ∧ cZ = zc
   Za1 : 0 < cZ → Apart pZ (8 * cZ) p1 (8 * c1)
   Za2 : 0 < cZ → Apart pZ (8 * cZ) q (8 * a2 ml (nE s mp ml))
   Zz1 : 0 < cZ → 0 < cz → Apart pZ (8 * cZ) pz (8 * cz)

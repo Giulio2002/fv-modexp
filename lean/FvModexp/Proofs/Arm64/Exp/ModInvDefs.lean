@@ -68,7 +68,7 @@ def PX (R : RtInv) (L : List (Nat × Nat)) (s : State) (zp zc st xp xl xc : Nat)
 @[reducible] def Pre (R : RtInv) (kc : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
     (L : List (Nat × Nat)) (zp zl zc st xp xl xc n : Nat) (s : State) : Prop :=
   CallEnv R L s (K kc) A ∧ Serves R ∧
-    RunIface.Globals R s.mem (winA s (K kc) A ++ [(zp, zp + 8 * zc)] ++ stWs s.mem st) ∧
+    (RunIface.Globals R s.mem (winA s (K kc) A) ∧ Outside RunIface.gA 32 ([(zp, zp + 8 * zc)] ++ stWs s.mem st)) ∧
     1 ≤ n ∧ n ≤ 2 ^ 15 ∧ zl ≤ zc ∧ zp < 2 ^ 64 ∧ 0 < zc ∧ WrOut R L s (K kc) A zp zc ∧
     0 < xl ∧ xl ≤ xc ∧ xc < 2 ^ 40 ∧ xl ≤ 2 ^ 12 ∧ RdIn R L s (K kc) A xp xl ∧ NatNorm s.mem xp xl ∧
     natVal s.mem xp xl % 2 = 1 ∧ (0 < zc → Apart zp (8 * zc) xp (8 * xc)) ∧
@@ -88,5 +88,10 @@ def PX (R : RtInv) (L : List (Nat × Nat)) (s : State) (zp zc st xp xl xc : Nat)
       StackBackL R L L' st s.mem s'.mem ∧
       MemFrame s.mem s'.mem (R.rt ++ winA s (K kc) A ++ [(zp, zp + 8 * zc)] ++ stWs s.mem st) ∧
       LiveFrame s.mem s'.mem L ([(zp, zp + 8 * zc)] ++ stWs s.mem st) ∧ ResSep s.mem s'.mem st p' c'
+
+/-- the precondition with the stack length fixed: `sqr` / `mul` budgets at `ℓ` -/
+@[reducible] def PreL (R : RtInv) (kc : Nat) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat) (ℓ b : Nat)
+    (L : List (Nat × Nat)) (zp zl zc st xp xl xc n : Nat) (s : State) : Prop :=
+  Pre R kc (sqC ℓ) (mlC ℓ) b L zp zl zc st xp xl xc n s ∧ stLen s.mem st = ℓ
 
 end FvModexp.Arm64.ModInv

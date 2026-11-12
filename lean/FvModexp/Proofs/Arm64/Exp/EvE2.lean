@@ -180,12 +180,16 @@ theorem segE2 {impl : List Segment} (hap : ImplApart Extracted.program impl)
           (natVal s.mem xp xl ^ natVal s.mem yp yl % (natVal s.mem mp ml / 2 ^ nE s mp ml)) :=
         ⟨⟨by decide, fun h0 => absurd h0 (Nat.lt_irrefl 0), fun h0 => absurd h0 (Nat.lt_irrefl 0)⟩, Nat.le_refl _,
           by rw [← hz.2.2.1]; rfl, Or.inl rfl⟩
+      have el0 : EL R L (s'.regs 0).toNat 0 := fun _ => by
+        rcases hel tc hk0 with e | ⟨hin, hap'⟩
+        · exact Or.inl e
+        · exact Or.inr ⟨hin, fun r hr => hap' r (hw.le.mem_old hr)⟩
       exact K8 s' L2 b2 p1 l1 c1 q l2 pz lz cz (s'.regs 0).toNat 0 0 ⟨hjx, hr.trans r30,
         (BitVec.eq_of_toNat_eq (by rw [BitVec.toNat_ofNat, Nat.mod_eq_of_lt (BitVec.isLt _)])), g1, g2,
         by rw [k288]; exact h.s288, by rw [k208]; exact h.s208, by rw [k216]; exact h.s216,
         by rw [k280]; exact h.s280, by rw [k192]; exact h.s192, by rw [k200]; exact h.s200,
         by rw [k224]; exact h.s224, by rw [k264]; exact h.s264, by rw [k152]; exact h.s152,
-        by rw [k160]; exact h.s160, hm1', h.c1p, hm2', h.ap, hz1', h.pz64, h.z1e, h.za1, h.za2, hz0, BitVec.isLt _,
+        by rw [k160]; exact h.s160, hm1', h.c1p, hm2', h.ap, hz1', h.pz64, h.z1e, h.za1, h.za2, hz0, BitVec.isLt _, el0,
         fun h0 => absurd h0 (Nat.lt_irrefl 0), fun h0 => absurd h0 (Nat.lt_irrefl 0),
         fun h0 => absurd h0 (Nat.lt_irrefl 0)⟩
     · have ha2 : 0 < a2 ml (nE s mp ml) := by simp only [a2]; omega
@@ -201,6 +205,7 @@ theorem segE2 {impl : List Segment} (hap : ImplApart Extracted.program impl)
         by rw [k224]; exact h.s224, by rw [k264]; exact h.s264, by rw [k152]; exact h.s152,
         by rw [k160]; exact h.s160, hm1', h.c1p, hm2', h.ap, hz1', h.pz64, h.z1e, h.za1, h.za2, hz,
         by have := (hlv c0).2.2.2; omega,
+        fun e => absurd e (by omega),
         fun _ => hza _ _ (hm1.1.2.1 h.c1p).2.1 h.tm1, fun _ => hza _ _ (hm2.1.2.1 ha2).2.1 h.tm2,
         fun _ c1 => hza _ _ (hz1.1.2.1 c1).2.1 (h.tz1 c1)⟩
 

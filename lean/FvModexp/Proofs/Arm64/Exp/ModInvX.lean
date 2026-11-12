@@ -56,7 +56,7 @@ theorem opX_own (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M : Me
   obtain ⟨-, -, -, hor, -, -, -, -, hwa⟩ := ho
   rcases hor with h | ⟨hIn, -⟩
   · exact absurd h hz
-  have hgA : Apart p (8 * c) RunIface.gA 32 := fresh_out hIn hpre.2.2.1.2.2.2.2.2.2.2.2.1
+  have hgA : Apart p (8 * c) RunIface.gA 32 := fresh_out hIn hpre.2.2.1.1.2.2.2.2.2.2.2.2.1
   obtain ⟨-, -, -, -, -, hok, -, -, ain⟩ := hrt
   refine ⟨?_, hgA⟩
   rcases Nat.eq_zero_or_pos (stCap M st) with h0 | h0
@@ -102,7 +102,7 @@ theorem stkX_at (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M : Me
     (hstk : stk ≤ kc) (habove : above ≤ 88) : StkX R L1 S' stk above st := by
   obtain ⟨x0, x1, x2, x3, x4, x5, -⟩ := px_of hpre
   have hsi := stkIn_at hpre hrt hsp h28 hm hstk habove
-  have hgO : Outside RunIface.gA 32 R.rt := hpre.2.2.1.2.2.2.2.2.2.2.2.1
+  have hgO : Outside RunIface.gA 32 R.rt := hpre.2.2.1.1.2.2.2.2.2.2.2.2.1
   have hsh : Held R L st 24 := (hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1.1).2.1
   obtain ⟨-, -, -, -, -, hok, hlen, hor, ain⟩ := hrt
   have hlc := hok.2.2.2.2.2.1
