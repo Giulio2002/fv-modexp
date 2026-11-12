@@ -142,7 +142,7 @@ theorem LB0.lwsOut (h : LB0 R b L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk 
   rcases hq with rfl | rfl | rfl <;> simp only <;> omega
 
 /-- every classified write range is inside a range of `lws` or fresh -/
-theorem LB.cls (h : LB R b L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk bk spent Mi) {ws : List (Nat × Nat)}
+theorem LB0.cls (h : LB0 R b L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk bk spent Mi) {ws : List (Nat × Nat)}
     (hws : LCls R L1 M st p (xl + yl) ws) :
     ∀ r ∈ ws, r.1 ≤ r.2 ∧ ((∃ q ∈ lws M st p (xl + yl), q.1 ≤ r.1 ∧ r.2 ≤ q.2) ∨
       (InRanges r.1 (r.2 - r.1) R.rt ∧ ApartAll r.1 (r.2 - r.1) L1)) := by
