@@ -1,3 +1,4 @@
 build/
 lean/.lake/
 lean/Scratch/
+lean/FvModexp/Tmp/
