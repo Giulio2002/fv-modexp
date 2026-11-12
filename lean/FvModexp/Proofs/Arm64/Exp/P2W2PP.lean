@@ -214,7 +214,7 @@ theorem ppre (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R L K
   refine ⟨CallW.callEnv_of hce hsp h28 rfl (by simp only [P2Pre.K]; omega) (by simp only [P2Pre.A]; omega), hsv, ?_,
     Or.inl rfl, by decide, hlm2, hlm, by omega, by omega, ?_, hout.of_sub (by omega) (by omega), ?_, ?_, ?_, ?_,
     hxo.1, hxo.2.1, hxl, hxo.2.2.1, hsi, by rw [hlen]; omega, free_apart h hsok.2.1 hstf, ?_, by rw [hlen]; exact hcost,
-    by rw [hgN]; exact h.inv, by rw [h30]; decide, by rw [h30]; decide, ?_, ?_⟩
+    by rw [hgN]; exact h.inv, by rw [h30]; decide, by rw [h30]; decide, ?_, ?_, hstnz⟩
   · exact hgl
   · rw [h.fr.accessible]; exact Memory.accessible_mono _ hacc (by omega) (by omega)
   · simp only [win, P2Pre.K, P2Pre.A, hsN, outside_cons, outside_nil, and_true]; omega
