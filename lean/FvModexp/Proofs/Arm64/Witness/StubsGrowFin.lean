@@ -51,7 +51,7 @@ theorem g_alloc (tys : Tys) (hty : TysOK tys) (ok : Nat → List Nat → Prop) (
       s.mem.accessible (s.regs 0).toNat (8 * ((s.regs 1).toNat - (s.regs 3).toNat)) false = true := by
     rcases Nat.eq_zero_or_pos ((s.regs 1).toNat - (s.regs 3).toNat) with h | h
     · left; omega
-    · right; exact (hold h).2
+    · right; exact (hold h).2.1
   have hsrc48 : 0 < 8 * ((s.regs 1).toNat - (s.regs 3).toNat) →
       (s.regs 0).toNat + 8 * ((s.regs 1).toNat - (s.regs 3).toNat) ≤ 2 ^ 48 := fun h => (hold (by omega)).1
   refine g_copy s _ (U.regs 9) 4194304#64 (BitVec.ofNat 64 (s.mem.readLE 4194304 8)) (s.mem.readLE 4194304 8)
@@ -151,7 +151,7 @@ theorem grow_sum_E0 (tys : Tys) (hty : TysOK tys) (ok : Nat → List Nat → Pro
   obtain ⟨⟨⟨hcall, -, -, -, h31, h1n3, h21, hn40⟩, -⟩, -⟩ := pre
   have hle := le_nextslicecap (s.regs 1).toNat (s.regs 2).toNat
   have hle2 := nsc_le (s.regs 1).toNat (s.regs 2).toNat h21
-  exact nsc_entry s hpc h21 hn40 fun T hT hpcT h5 =>
+  exact nsc_entry s hpc h21 hn40.1 fun T hT hpcT h5 =>
     chain s T _ hpcT hT h5 (by omega) (by omega) fun U hU hpcU h9 => g_alloc tys hty ok a L b s U pre0 hpcU hU h9
 
 set_option maxRecDepth 100000 in
