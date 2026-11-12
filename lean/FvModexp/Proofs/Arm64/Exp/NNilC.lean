@@ -57,6 +57,7 @@ theorem contR (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     (h1182 : M1.readLE (sp + 1182) 1 = 1) (h1296 : M1.readLE (sp + 1296) 8 = sp + 1272)
     (h1272 : M1.readLE (sp + 1272) 8 = dwA) (h1280 : M1.readLE (sp + 1280) 8 = st)
     (hz : ZKeep0 R L g sp K zp zl zc xp xl yp yl mp n zp' zl' zc' s.mem)
+    (hna : NHyp.NoAlias zp' zc' xp xc)
     (hy : yl = 1 ∧ s.mem.readLE yp 8 = 1) (hxl0 : xl ≠ 0)
     (S : State) (hpc : S.pc = BitVec.ofNat 64 remA) (hSsp : S.sp = BitVec.ofNat 64 (sp + 1056))
     (h0 : S.regs 0 = BitVec.ofNat 64 zp') (h1 : S.regs 1 = BitVec.ofNat 64 zl') (h2 : S.regs 2 = BitVec.ofNat 64 zc')
@@ -73,7 +74,7 @@ theorem contR (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
   have hg28 : S.regs 28 = BitVec.ofNat 64 g := h28.trans hP.1.2.1
   subst hmem
   refine remPath impl hap R hRem hns hn11 ret0 hret F hPV hstk (MemFrame.refl _ _) rfl
-    (zkeepV hz hN fun a k w => hF.accessible a k w)
+    (zkeepV hz hN fun a k w => hF.accessible a k w) hna
     ⟨hy.1, by rw [rd0_v hyO (by omega) hLF hF]; exact hy.2⟩ hpc hSsp h0 h1 h2 h3 h4 h5 h6 h7 h8 h9 h28 h30 h29v h30v
     (SlotEq.refl _ _) (epiK1 impl hap ret0 hret R hput F hP hxl0 hN hF hLF h1182 h1296 h1272 h1280 f29 _ _ hg28 hK')
 

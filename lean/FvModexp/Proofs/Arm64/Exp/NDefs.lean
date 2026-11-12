@@ -71,8 +71,8 @@ def NPre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K : Nat) (costF : Nat �
   NE R L sp K st s.mem xp (8 * xl) ∧ s.mem.accessible xp (8 * xl) false = true ∧ xp + 8 * xl ≤ 2 ^ 48 ∧
     NatNorm s.mem xp xl ∧ xl ≤ 128 ∧ xp < 2 ^ 64 ∧ xc < 2 ^ 64 ∧
   zp < 2 ^ 64 ∧ zl ≤ zc ∧ zc < 2 ^ 40 ∧
-  (0 < zc → (0 < xc ∧ zp + 8 * zc = xp + 8 * xc) ∨ (0 < yc ∧ zp + 8 * zc = yp + 8 * yc) ∨
-    ZOK R L g sp K st zp zc xp xl yp yl mp n s.mem) ∧
+  ((0 < zc → (0 < xc ∧ zp + 8 * zc = xp + 8 * xc) ∨ (0 < yc ∧ zp + 8 * zc = yp + 8 * yc) ∨
+    ZOK R L g sp K st zp zc xp xl yp yl mp n s.mem) ∧ Outside zp (8 * zc) [(sp - K, sp + 1432)]) ∧
   NE R L sp K st s.mem RunIface.gA 32 ∧
   (∃ op, EvenHyp.NatOne R L s.mem op ([(sp - K, sp + 1432), (zp, zp + 8 * zc)] ++ stkWs s.mem st) ∧
     EvenHyp.StkApart s.mem st op 8) ∧
@@ -111,7 +111,7 @@ def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K : Nat) (costF : Nat �
     (zp zc st xp xl yp yl mp n : Nat) (s s' : State) : Prop :=
   ∃ p l c : Nat, s'.regs 0 = BitVec.ofNat 64 p ∧ s'.regs 1 = BitVec.ofNat 64 l ∧ s'.regs 2 = BitVec.ofNat 64 c ∧
     natVal s'.mem p l = natVal s.mem xp xl ^ natVal s.mem yp yl % natVal s.mem mp n ∧ NatNorm s'.mem p l ∧
-    l ≤ c ∧ c < 2 ^ 40 ∧
+    l ≤ c ∧ (c < 2 ^ 40 ∧ p < 2 ^ 64) ∧
     ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧
       b - NCost costF costR costS costP xl yl n (stLen s.mem st) (Nat.log2 (natVal s.mem mp n)) ≤ b' ∧
       R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem) ∧ NatLive s'.mem R L' p c ∧

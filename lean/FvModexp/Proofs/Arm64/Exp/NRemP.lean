@@ -2,6 +2,8 @@ import FvModexp.Proofs.Arm64.Exp.NCall
 import FvModexp.Proofs.Arm64.Exp.NCPre
 import FvModexp.Proofs.Arm64.Exp.NStk
 
+set_option autoImplicit false
+
 /-!
 # `nat.expNN` (arm64): the `y == 1` path — `z.rem(stk, x, m)` (nat.go:686) to expNN's return
 
@@ -33,6 +35,20 @@ theorem zq_keep {R : RtInv} {L L1 : List (Nat × Nat)} {g sp K st zp zc xp xl yp
         rw [ew, el, ec]; exact hfr
   · exact ⟨⟨by omega, fun h => absurd h (by omega), fun h => absurd h (by omega)⟩, Or.inl ⟨rfl, Or.inl rfl⟩⟩
 
+/-- `rem`'s `NoAlias` for the `z` kept by expNN's entry alias test (`¬alias(z, x)`, nat.go:640) -/
+theorem noAlias_keep {zp zc xp xc yp yc : Nat}
+    (hk : zc = 0 ∨ ((xc = 0 ∨ (xp + 8 * (xc - 1)) % 2 ^ 64 ≠ (zp + 8 * (zc - 1)) % 2 ^ 64) ∧
+      (yc = 0 ∨ (yp + 8 * (yc - 1)) % 2 ^ 64 ≠ (zp + 8 * (zc - 1)) % 2 ^ 64))) :
+    NHyp.NoAlias zp zc xp xc := by
+  intro h0 h1 he
+  rcases hk with h | ⟨h | h, -⟩
+  · omega
+  · omega
+  · exact h he.symm
+
+/-- `rem`'s `NoAlias` for the `nil` `z` of the alias branch -/
+theorem noAlias_nil (xp xc : Nat) : NHyp.NoAlias 0 0 xp xc := fun h => absurd h (Nat.lt_irrefl 0)
+
 theorem tN' {v : Nat} (h : v < 2 ^ 64) : (BitVec.ofNat 64 v).toNat = v := by
   rw [BitVec.toNat_ofNat]; exact Nat.mod_eq_of_lt h
 
@@ -52,6 +68,7 @@ theorem remPath (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (hF : MemFrame s.mem S.mem (wN sp K)) (hrg : S.mem.regions = s.mem.regions)
     (hz : (zp' = zp ∧ zl' = zl ∧ zc' = zc ∧ (0 < zc → ZOK R L g sp K st zp zc xp xl yp yl mp n s.mem)) ∨
       (zp' = 0 ∧ zl' = 0 ∧ zc' = 0))
+    (hna : NHyp.NoAlias zp' zc' xp xc)
     (hy : yl = 1 ∧ s.mem.readLE yp 8 = 1)
     (hpc : S.pc = BitVec.ofNat 64 remA) (hSsp : S.sp = BitVec.ofNat 64 (sp + 1056))
     (h0 : S.regs 0 = BitVec.ofNat 64 zp') (h1 : S.regs 1 = BitVec.ofNat 64 zl') (h2 : S.regs 2 = BitVec.ofNat 64 zc')
@@ -90,12 +107,12 @@ theorem remPath (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (BitVec.ofNat 64 xp) (BitVec.ofNat 64 xl) (BitVec.ofNat 64 xc) (BitVec.ofNat 64 mp) (BitVec.ofNat 64 n)
     (BitVec.ofNat 64 mc)
   rw [tN' hzp', tN' (by omega : zl' < 2 ^ 64), tN' hzc', tN' (by omega : st < 2 ^ 64), tN' hxp,
-    tN' (by omega : xl < 2 ^ 64), tN' (by omega : n < 2 ^ 64), tN' (by omega : mp < 2 ^ 64),
+    tN' (by omega : xl < 2 ^ 64), tN' (by omega : xc < 2 ^ 64), tN' (by omega : n < 2 ^ 64), tN' (by omega : mp < 2 ^ 64),
     show segAddr Extracted.program NHyp.fnRem = remA by decide] at hE
   have hacc2 : S.mem.accessible (sp + 1048) 256 true = true := by
     rw [hF.accessible]; exact Memory.accessible_mono _ hacc (by omega) (by omega)
   refine callC impl hap hns hn11 ret0 hret F hs hal hKs (by omega) hsp2 hLs hwrt hsok hstw hF0 hLF0 (LiveExt.refl R L)
-    (mk := 0) (Nat.sub_le _ _) hZA hstk h28 ?_ ?_ (Or.inl rfl) hE hpc hSsp h30 ?_ ⟨?_, by omega⟩ (fun s' h => cpostG_of h)
+    (mk := 0) (Nat.sub_le _ _) hZA hstk h28 ?_ ?_ (Or.inl rfl) hE hpc hSsp h30 ?_ ⟨⟨?_, by omega⟩, hna⟩ (fun s' h => cpostG_of hzp' h)
     (by rw [ec, ew]; intro hc; exact (harr hc).1) (by rw [ec, ew]; exact hc0)
     (by rw [el, ec]; exact hsok.2.2.2.2.2.1) hacc2 h29v h30v hsl hEk
   · rw [hrdx, hrdm]

@@ -126,7 +126,7 @@ theorem evPath (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
   rw [← e7] at hF0 hLF0 hrg hinv1 hZQ ew el ec h29v h30v hsl hrdx hrdy hrdm
   refine callE impl hap ret0 hret F hs hal hKs (by omega) hsp2 hLs hwrt hsok hstw hF0 hLF0 hx1
     hb1 hZA hstk h28' ?_ ?_ hE e1 hS'sp e6 ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
-    (fun s' h => ⟨h.1, h.2.1, h.2.2.1, h.2.2.2.1, cpostG_of h.2.2.2.2⟩)
+    (fun s' h => ⟨h.1, h.2.1, h.2.2.1, h.2.2.2.1, cpostG_of hzq h.2.2.2.2⟩)
     (by rw [ec, ew]; intro hc; exact (harr hc).1) (by rw [ec, ew]; exact hc0)
     (by rw [el, ec]; exact hsok.2.2.2.2.2.1) hacc2 h29v h30v hsl
     (by rw [r 18 (by decide) (by decide) (by decide) (by decide) (by decide) (by decide), h28'.trans h28.symm]; exact hEk)
