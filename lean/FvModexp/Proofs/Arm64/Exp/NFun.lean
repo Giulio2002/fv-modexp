@@ -1,6 +1,8 @@
 import FvModexp.Proofs.Arm64.Exp.NJ1
 import FvModexp.Proofs.Arm64.Exp.NPro
 
+set_option autoImplicit false
+
 /-!
 # `nat.expNN` (arm64), stack given, modulus odd or a power of two: `ens_noEven` (CONVENTIONS §3)
 
@@ -40,7 +42,7 @@ theorem ens_noEven (impl : List Segment) (hap : ImplApart Extracted.program impl
   clear hev
   have hP' := hP
   obtain ⟨⟨hs1, hs28, hg1, hg2, hg3, -, hal, hK4, hKs, hsp2, hacc, -, -, -, -⟩, -, -, -, -, -,
-    -, -, -, -, -, -, -, -, -, -, hy48, -, -, hyc, -, -, -, -, -, hxp, hxc, hzp, hzlc, hzc, hali, -⟩ := hP'
+    -, -, -, -, -, -, -, -, -, -, hy48, -, -, hyc, -, -, -, -, -, hxp, hxc, hzp, hzlc, hzc, ⟨hali, -⟩, -⟩ := hP'
   generalize hspd : s.sp.toNat - 1312 = sp at hP hs1 hg3 hal hKs hsp2 hacc hali
   generalize hgd : (s.regs 28).toNat = g at hP hs28 hg1 hg2 hg3 hali
   have hr48 := hret.user
@@ -50,7 +52,7 @@ theorem ens_noEven (impl : List Segment) (hap : ImplApart Extracted.program impl
   case Kk =>
     intro hk S M c1 c2 d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d18 d28 cm hF hrg q29 q30 _ _
     refine fromJ1 impl hap R H hRem hnsR hn11R hKR ret hret (fun s' => ABIReturn s s' ∧ Post R b L K costF costR costS costP zp zc st xp xl yp yl mp n s s') hP hevB (zp' := zp) (zl' := zl) (zc' := zc)
-      (Or.inl ⟨rfl, rfl, rfl, zok_of_keep hali hk⟩) S M c1 c2 (d0.trans h_x0) (d1.trans h_x1) (d2.trans h_x2)
+      (Or.inl ⟨rfl, rfl, rfl, zok_of_keep hali hk⟩) (noAlias_keep hk) S M c1 c2 (d0.trans h_x0) (d1.trans h_x1) (d2.trans h_x2)
       (d3.trans h_x3) (d4.trans h_x4) (d5.trans h_x5) (d6.trans h_x6) (d7.trans h_x7) (d8.trans h_x8)
       (d9.trans h_x9) (d10.trans h_x10) (d11.trans h_x11) (d12.trans h_x12) (d13.trans h_x13) d28 cm hF hrg q29 q30
       fun s'' a1 a2 a3 a4 hq => ⟨⟨a1.trans hs1.symm, a4.trans (d28.trans rfl), a2.trans (Expmc.bv_ofNat_toNat _),
@@ -58,7 +60,7 @@ theorem ens_noEven (impl : List Segment) (hap : ImplApart Extracted.program impl
   case K0 =>
     intro hz0 hk S M c1 c2 d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d18 d28 cm hF hrg q29 q30 _ _
     refine fromJ1 impl hap R H hRem hnsR hn11R hKR ret hret (fun s' => ABIReturn s s' ∧ Post R b L K costF costR costS costP zp zc st xp xl yp yl mp n s s') hP hevB (zp' := 0) (zl' := 0) (zc' := 0)
-      (Or.inr ⟨rfl, rfl, rfl⟩) S M c1 c2 d0 d1 d2 (d3.trans h_x3) (d4.trans h_x4) (d5.trans h_x5) (d6.trans h_x6)
+      (Or.inr ⟨rfl, rfl, rfl⟩) (noAlias_nil _ _) S M c1 c2 d0 d1 d2 (d3.trans h_x3) (d4.trans h_x4) (d5.trans h_x5) (d6.trans h_x6)
       (d7.trans h_x7) (d8.trans h_x8) (d9.trans h_x9) (d10.trans h_x10) (d11.trans h_x11) (d12.trans h_x12)
       (d13.trans h_x13) d28 cm hF hrg q29 q30
       fun s'' a1 a2 a3 a4 hq => ⟨⟨a1.trans hs1.symm, a4.trans (d28.trans rfl), a2.trans (Expmc.bv_ofNat_toNat _),

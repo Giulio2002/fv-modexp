@@ -67,7 +67,7 @@ theorem atN_of {R : RtInv} {b B : Nat} {L : List (Nat × Nat)} {stk above K : Na
     simp only [win, outside_cons, outside_nil, and_true] at this; exact this
   rw [winA, hS3] at hMF
   refine ⟨fun a k hak => Memory.readLE_congr fun i hi => ?_, p % 2 ^ 64, l, c, b', L', h0.trans hpe.symm, h1, h2,
-    ⟨?_, ?_, hlc, hc40, Nat.mod_lt _ (by omega), hx,
+    ⟨?_, ?_, hlc, hc40.1, Nat.mod_lt _ (by omega), hx,
     by omega, by rw [← h28]; exact hinv, ?_, ?_, ?_, ?_⟩⟩
   · -- the slots of `(*Int).exp`'s frame that `expNN` does not write
     exact MemFrame.byte hMF (out_slot hst hK hab hrt hz' hak hi)

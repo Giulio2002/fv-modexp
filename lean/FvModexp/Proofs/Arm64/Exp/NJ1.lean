@@ -3,6 +3,8 @@ import FvModexp.Proofs.Arm64.Exp.NRemP
 import FvModexp.Proofs.Arm64.Exp.NOne
 import FvModexp.Proofs.Arm64.Exp.NTriv
 
+set_option autoImplicit false
+
 /-!
 # `nat.expNN` (arm64): from `J1` (fn+0x8c, after the prologue and the alias test) to expNN's return
 
@@ -37,6 +39,7 @@ theorem fromJ1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     (hP : NPre R b L K costF needR costR needS needP costS costP g sp zp zl zc st xp xl xc yp yl yc mp n mc slow s)
     (hev : NoEvenB s.mem mp n)
     (hz : ZKeep R L g sp K st zp zl zc xp xl yp yl mp n zp' zl' zc' s.mem)
+    (hna : NHyp.NoAlias zp' zc' xp xc)
     (S : State) (M : Memory) (hpc : S.pc = BitVec.ofNat 64 1786684) (hsp : S.sp = BitVec.ofNat 64 (sp + 1056))
     (h0 : S.regs 0 = BitVec.ofNat 64 zp') (h1 : S.regs 1 = BitVec.ofNat 64 zl') (h2 : S.regs 2 = BitVec.ofNat 64 zc')
     (h3 : S.regs 3 = BitVec.ofNat 64 st) (h4 : S.regs 4 = BitVec.ofNat 64 xp) (h5 : S.regs 5 = BitVec.ofNat 64 xl)
@@ -85,7 +88,7 @@ theorem fromJ1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     h29v h30v S hpc hsp h4 h5 h8 h10 h11 hmem ?F0 ?K1 ?K2
   case F0 =>
     intro hc s' e1 e2 e3 e4 e5 e6 e7 hF2 hrg2
-    refine hK' s' e1 e2 e6 e7 (post_triv hs hLs hwrt hsok hstw hinvs ?_ hzc ?_ ?_ (e3.trans h0) e4 (e5.trans h2))
+    refine hK' s' e1 e2 e6 e7 (post_triv hs hLs hwrt hsok hstw hinvs ?_ hzc hzp ?_ ?_ (e3.trans h0) e4 (e5.trans h2))
     · rcases hz with ⟨rfl, -, rfl, hk⟩ | ⟨rfl, -, rfl⟩
       · refine Or.inl ⟨rfl, rfl, fun h => (hk h).2.2.2.2.1 h⟩
       · exact Or.inr ⟨rfl, rfl⟩
@@ -148,7 +151,7 @@ theorem fromJ1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
         ⟨ho, by simp only [wN, outside_cons, outside_nil, and_true] at ho ⊢; omega⟩
       have hk2 : ∀ {a}, (a = sp + 1048 ∨ a = sp + 1056) → M2.readLE a 8 = M.readLE a 8 := fun h =>
         hF2.readLE _ _ (by simp only [outside_cons, outside_nil, and_true]; omega)
-      refine remPath impl hap R hRem hnsR hn11R ret0 hret F hP hKR hFU (by rw [um, hrg2, hrg]) hz
+      refine remPath impl hap R hRem hnsR hn11R ret0 hret F hP hKR hFU (by rw [um, hrg2, hrg]) hz hna
         ⟨hy1, by rw [← hy0M (by omega)]; exact hyv⟩ upc (usp.trans (tsp.trans hsp)) (u0.trans (t0.trans h0))
         (u1.trans (t1.trans h1)) (u2.trans (t2.trans h2)) (u3.trans (t3.trans h3)) (u4.trans (t4.trans h4))
         (u5.trans (t5.trans h5)) (u6.trans (t6.trans h6)) (u7.trans (t10.trans h10)) (u8.trans (t11.trans h11))

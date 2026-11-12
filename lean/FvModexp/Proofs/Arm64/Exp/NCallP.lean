@@ -36,16 +36,21 @@ theorem mf_byte {m m' : Memory} {ws ws' : List (Nat × Nat)} (h : MemFrame m m' 
 @[reducible] def CPostG (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (stk above zp zc st v cst : Nat) (s s' : State) :
     Prop :=
   ∃ p l c : Nat, s'.regs 0 = BitVec.ofNat 64 p ∧ s'.regs 1 = BitVec.ofNat 64 l ∧ s'.regs 2 = BitVec.ofNat 64 c ∧
-    ∃ (L' : List (Nat × Nat)) (b' : Nat), (natVal s'.mem p l = v ∧ NatNorm s'.mem p l ∧ l ≤ c ∧ c < 2 ^ 40 ∧
+    ∃ (L' : List (Nat × Nat)) (b' : Nat), (natVal s'.mem p l = v ∧ NatNorm s'.mem p l ∧ l ≤ c ∧ (c < 2 ^ 40 ∧ p < 2 ^ 64) ∧
       NatLive s'.mem R L' p c ∧ ((p = zp ∧ c = zc) ∨ (InRanges p (8 * c) R.rt ∧ ApartAll p (8 * c) L))) ∧
       ExpHyp.RtPost R b cst L L' b' s s' ∧ StackBackL R L L' st s.mem s'.mem ∧
       MemFrame s.mem s'.mem (R.rt ++ winA s stk above ++ [(zp, zp + 8 * zc)] ++ ExpHyp.stWs s.mem st) ∧
       LiveFrame s.mem s'.mem L ([(zp, zp + 8 * zc)] ++ ExpHyp.stWs s.mem st) ∧ ResSep s.mem s'.mem st p c
 
 theorem cpostG_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {stk above zp zc st v cst : Nat} {s s' : State}
-    (h : NHyp.CPostR R b L stk above zp zc st v cst s s') : CPostG R b L stk above zp zc st v cst s s' := by
+    (hz : zp < 2 ^ 64) (h : NHyp.CPostR R b L stk above zp zc st v cst s s') :
+    CPostG R b L stk above zp zc st v cst s s' := by
   obtain ⟨p, l, c, q0, q1, q2, L', b', ⟨hval, hnorm, hlc, hc40, hlive, hof⟩, hrt, hsb, hF, hLF, hRS⟩ := h
-  exact ⟨p, l, c, q0, q1, q2, L', b', ⟨hval, hnorm, hlc, hc40, hlive,
+  have hp : p < 2 ^ 64 := by
+    rcases hof with ⟨rfl, -⟩ | ⟨h1, -⟩
+    · exact hz
+    · have := (hlive (by omega)).2.2.2; omega
+  exact ⟨p, l, c, q0, q1, q2, L', b', ⟨hval, hnorm, hlc, ⟨hc40, hp⟩, hlive,
     hof.imp id (fun h => ⟨h.2.1, h.2.2⟩)⟩, hrt, hsb, hF, hLF, hRS⟩
 
 set_option maxRecDepth 20000 in
@@ -103,7 +108,7 @@ theorem post_call {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {costF
     · have hpl : Outside p (8 * l) [(sp + 1232, sp + 1256)] := by
         have := hres (by omega); unfold Apart at this; simp only [outside_cons, outside_nil, and_true]; omega
       exact ⟨hfin.readLE _ _ hpl, ExpOdd.norm_fr hfin hpl hnorm⟩
-  refine ⟨p, l, c, e0.trans q0, e1.trans q1, e2.trans q2, ?_, hvn.2, hlc, by omega,
+  refine ⟨p, l, c, e0.trans q0, e1.trans q1, e2.trans q2, ?_, hvn.2, hlc, hc40,
     L', b', hx1.trans hx2, by omega, ?_, natLive_frame hlive (LiveExt.refl R L') hfin, ?_, ?_, ?_, ?_, ?_⟩
   · rw [← hv, ← hval]; exact hvn.1
   · rw [← h28]

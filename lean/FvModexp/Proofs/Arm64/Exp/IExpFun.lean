@@ -135,7 +135,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   simp only [List.pairwise_cons, List.mem_cons, List.not_mem_nil, or_false, forall_eq_or_imp, forall_eq,
     List.Pairwise.nil, and_true] at hpw
   obtain ⟨⟨-, ⟨hzmA, -, -, hzmArr⟩⟩, -⟩ := hpw
-  obtain ⟨⟨hz0, -, hz48, hzacc, hzH, hzL, -, -, hzap⟩, hzW, -, -, -⟩ := hoz
+  obtain ⟨⟨hz0, -, hz48, hzacc, hzH, hzL, -, -, hzap, -⟩, hzW, -, -, -⟩ := hoz
   obtain ⟨⟨hy0, -, hy48, hyacc, -, -, -, -, -⟩, hyW, -, -, -⟩ := hoy
   obtain ⟨⟨-, -, hm48, hmacc, -, hmL, -, -, -⟩, hmW, -, -, -⟩ := hom
   have hx' := hx

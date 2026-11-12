@@ -2,6 +2,8 @@ import FvModexp.Proofs.Arm64.Exp.ExpHyp
 import FvModexp.Proofs.Arm64.Exp.MulHyp
 import FvModexp.Proofs.Arm64.Nat.StackNatCall
 
+set_option autoImplicit false
+
 /-!
 # Callee premises of `nat.expNN` (arm64): `nat.rem` (asm), `nat.expNNSlow` / `nat.expNNPowerOfTwo` (infra)
 
@@ -73,14 +75,19 @@ open FvModexp.Arm64.ExpHyp
 
 def fnRem : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.nat.rem"
 
+/-- `¬alias(z, u)` (nat.go `alias`: the addresses of the last cap words differ, as 64-bit machine addresses) — `rem`'s
+extra pre conjunct (coordinator DECISIONS 2026-11-13 on "[asm s31] FINDING"; = asm's `NatRem.NoAlias`) -/
+@[reducible] def NoAlias (zp zc up uc : Nat) : Prop :=
+  0 < zc → 0 < uc → (zp + 8 * (zc - 1)) % 2 ^ 64 ≠ (up + 8 * (uc - 1)) % 2 ^ 64
+
 def RemHyp (impl : List Segment) (R : RtInv) (ns : List String) (stk above : Nat)
     (need : Nat → Nat → Nat) (cost : Nat → Nat → Nat → Nat) : Prop :=
   ∀ (b : Nat) (L : List (Nat × Nat)) (z zl zc st u ul uc v vl vc : BitVec 64),
     Ensures ((Extracted.program.onlySegments ns).link impl) (segAddr Extracted.program fnRem)
       [z, zl, zc, st, u, ul, uc, v, vl, vc]
-      (fun s => CPre R b L stk above z.toNat zl.toNat zc.toNat st.toNat [(u.toNat, ul.toNat), (v.toNat, vl.toNat)]
+      (fun s => (CPre R b L stk above z.toNat zl.toNat zc.toNat st.toNat [(u.toNat, ul.toNat), (v.toNat, vl.toNat)]
           (need ul.toNat vl.toNat) (cost (stLen s.mem st.toNat) ul.toNat vl.toNat) s ∧
-        0 < vl.toNat)
+        0 < vl.toNat) ∧ NoAlias z.toNat zc.toNat u.toNat uc.toNat)
       (fun s s' => CPostR R b L stk above z.toNat zc.toNat st.toNat
         (natVal s.mem u.toNat ul.toNat % natVal s.mem v.toNat vl.toNat)
         (cost (stLen s.mem st.toNat) ul.toNat vl.toNat) s s')
