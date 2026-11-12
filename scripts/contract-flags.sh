@@ -2,7 +2,7 @@
 # Runtime calls that are not extracted but covered by a pinned Janus contract (docs/RUNTIME-CONTRACTS.md of Janus v0.2.0).
 contract_flags() {
   case "$1" in
-    Run) echo "--contract runtime.gcWriteBarrier1 --contract runtime.gcWriteBarrier2 --contract runtime.gcWriteBarrier3 --contract runtime.gcWriteBarrier4 --contract runtime.gcWriteBarrier6 --contract runtime.growslice --contract runtime.makeslice --contract runtime.memclrNoHeapPointers --contract runtime.memmove --contract runtime.newobject --contract sync.(*Pool).Get --contract sync.(*Pool).Put";;
+    Run) echo "--contract runtime.gcWriteBarrier1 --contract runtime.gcWriteBarrier2 --contract runtime.gcWriteBarrier3 --contract runtime.gcWriteBarrier4 --contract runtime.gcWriteBarrier6 --contract runtime.growslice --contract runtime.makeslice --contract runtime.memclrNoHeapPointers --contract runtime.memmove --contract runtime.newobject --contract sync.(*Pool).Get --contract sync.(*Pool).Put --max-functions 100";;   # 84 functions arm64 / 82 amd64 > default 64
     *) echo "";;   # RequiredGas and its callees extract without contracts (runtime.memmove is extracted, not a contract)
   esac
 }
