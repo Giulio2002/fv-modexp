@@ -42,7 +42,6 @@ theorem h1 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl) 
   have hwS : Outside SetBytesStd.wordT 16 R.rt := RoOut.out' hro 1 (by decide) (by decide)
   janus_eval_nat h_t : SetBytesStd.wordT
   rw [h_t] at hwS hok
-  janus64_data hd
   have hLS1 : ∀ r ∈ L, r.fst + (r.snd - r.fst) ≤ BitVec.toNat (s.regs 4) - 616 - 4160 ∨
       BitVec.toNat (s.regs 4) - 616 + 48 ≤ r.fst := by
     intro r hr; have := hLs r hr; simp only [Outside, and_true] at this; omega

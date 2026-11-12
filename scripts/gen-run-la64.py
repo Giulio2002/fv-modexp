@@ -87,7 +87,7 @@ def body(zs):
         if TRACE and stops==TRACE:
             runs.append("trace_state"); runs.append("sorry"); return pre+runs
         runs.append(f"gen_reg {r} as y{i} with hY{i}")
-        runs.append(f"have hy{i} : (y{i}.toNat = 0) = False := by\n  rw [← hY{i}]; simp only [eq_iff_iff, iff_false]\n  repeat apply bv_or_ne_left\n  exact top_ne64 ht{i}")
+        runs.append(f"have hy{i} : (y{i}.toNat = 0) = False := by\n  rw [← hY{i}]; simp only [eq_iff_iff, iff_false]\n  repeat (with_reducible apply bv_or_ne_left)\n  exact top_ne64 ht{i}")
         cur=[x for x in cur if x not in ('hm1','hm2','hm3','hm4','hm5','hm6')]+[f'hy{i}']
     runs.append(f"janus64_run [{', '.join(cur)}] until [pcP1]")
     for i,r in [(0,2),(1,9),(2,11)]:
