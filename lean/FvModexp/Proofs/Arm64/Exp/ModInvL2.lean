@@ -17,18 +17,18 @@ open FvModexp.Arm64.EvenHyp
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 4000000 in
 /-- after `mul` returns (`0x1b6f20`): `S3` -/
-theorem postL2 {kc : Nat} (hkc : 4608 ≤ kc) {stkM aboveM : Nat} (hkM : stkM ≤ kc) (haM : aboveM ≤ 88)
+theorem postL2 {J : Nat} {kc : Nat} (hkc : 4608 ≤ kc) {stkM aboveM : Nat} (hkM : stkM ≤ kc) (haM : aboveM ≤ 88)
     {impl : List Segment} {R : RtInv} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
     (hmm : ∀ a a' c c', a ≤ a' → c ≤ c' → mulC a c ≤ mulC a' c')
-    (k3 : S3 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s 1797920 (ExL3 s n) eL kL)
+    (k3 : S3 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s 1797920 (ExL3 s n J) eL kL)
     (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) (hn : 64 < n) {j p l c q ql qc : Nat}
     {L1 : List (Nat × Nat)} {b1 Zv : Nat} {M : Memory}
     (hmid : Mid R kc L s zp zc st xp xl xc n M L1 b1 p l c q ql qc)
     (hj1 : 1 ≤ j) (hjn : 2 ^ (j - 1) < NW n) (hbud : spent sqrC mulC n j + roundCost sqrC mulC n ≤ b)
     (hcong : natVal s.mem xp xl * Zv % 2 ^ (2 ^ j * 32) = 1 % 2 ^ (2 ^ j * 32))
     (hi : M.readLE (s.sp.toNat - 80) 8 = 2 ^ (j + 1)) (hi64 : M.readLE (s.sp.toNat - 64) 8 = 2 ^ j * 64)
-    (hjlt : 2 ^ j < NW n) (hzs : ZS s M p l c) (hzv : natVal M p l = Zv) (hl0 : 0 < l) (hl : l ≤ NW n + 1)
+    (hjlt : LJ n J j) (hzs : ZS s M p l c) (hzv : natVal M p l = Zv) (hl0 : 0 < l) (hl : l ≤ NW n + 1)
     (hv : natVal M q ql = Zv * Zv % 2 ^ (2 ^ j * 64)) (hql : ql ≤ NW n)
     (hb : b - spent sqrC mulC n j - P2 sqrC n ≤ b1)
     {S' s' : State} (hsp : S'.sp = BitVec.ofNat 64 (s.sp.toNat - 240)) (h28 : S'.regs 28 = s.regs 28)
@@ -71,21 +71,21 @@ theorem postL2 {kc : Nat} (hkc : 4608 ≤ kc) {stkM aboveM : Nat} (hkM : stkM �
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 4000000 in
 /-- at `mul`'s entry (`0x1bae70`): the call -/
-theorem callL2 {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
+theorem callL2 {J : Nat} {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
     {stkM aboveM : Nat} {mlC : Nat → Nat → Nat → Nat} (hmu : MulHyp impl R ns stkM aboveM mlC) {kc : Nat}
     (hkc : 4608 ≤ kc) (hkM : stkM ≤ kc) (haM : aboveM ≤ 88) {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
     (hml : ∀ x y, mlC (stLen s.mem st) x y = mulC x y)
     (hmm : ∀ a a' c c', a ≤ a' → c ≤ c' → mulC a c ≤ mulC a' c')
-    (k3 : S3 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s 1797920 (ExL3 s n) eL kL)
+    (k3 : S3 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s 1797920 (ExL3 s n J) eL kL)
     (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) (hn : 64 < n) {j p l c q ql qc : Nat}
     {L1 : List (Nat × Nat)} {b1 Zv : Nat} {M : Memory}
     (hmid : Mid R kc L s zp zc st xp xl xc n M L1 b1 p l c q ql qc)
     (hj1 : 1 ≤ j) (hjn : 2 ^ (j - 1) < NW n) (hbud : spent sqrC mulC n j + roundCost sqrC mulC n ≤ b)
     (hcong : natVal s.mem xp xl * Zv % 2 ^ (2 ^ j * 32) = 1 % 2 ^ (2 ^ j * 32))
     (hi : M.readLE (s.sp.toNat - 80) 8 = 2 ^ j) (hi64 : M.readLE (s.sp.toNat - 64) 8 = 2 ^ j * 64)
-    (hjlt : 2 ^ j < NW n) (hzs : ZS s M p l c) (hzv : natVal M p l = Zv) (hl0 : 0 < l) (hl : l ≤ NW n + 1)
+    (hjlt : LJ n J j) (hzs : ZS s M p l c) (hzv : natVal M p l = Zv) (hl0 : 0 < l) (hl : l ≤ NW n + 1)
     (hv : natVal M q ql = Zv * Zv % 2 ^ (2 ^ j * 64)) (hql : ql ≤ NW n)
     (hb : b - spent sqrC mulC n j - P2 sqrC n ≤ b1)
     (S' : State) (hsp : S'.sp = BitVec.ofNat 64 (s.sp.toNat - 240)) (h28 : S'.regs 28 = s.regs 28)
@@ -132,18 +132,19 @@ theorem callL2 {impl : List Segment} (hap : ImplApart Extracted.program impl) {R
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem segL2 {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
+theorem segL2 {J : Nat} {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
     {stkM aboveM : Nat} {mlC : Nat → Nat → Nat → Nat} (hmu : MulHyp impl R ns stkM aboveM mlC) {kc : Nat}
     (hkc : 4608 ≤ kc) (hkM : stkM ≤ kc) (haM : aboveM ≤ 88) {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
     (hml : ∀ x y, mlC (stLen s.mem st) x y = mulC x y)
     (hmm : ∀ a a' c c', a ≤ a' → c ≤ c' → mulC a c ≤ mulC a' c')
-    (k3 : S3 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s 1797920 (ExL3 s n) eL kL) :
-    S2 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s 1797868 (ExL2 s n) eL kL := by
+    (k3 : S3 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s 1797920 (ExL3 s n J) eL kL) :
+    S2 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s 1797868 (ExL2 s n J) eL kL := by
   intro S j p l c q ql qc L1 b1 Zv hrc hpc hex hzs hzv hl0 hl h0 h1 h2 hv hnq hql hb
   obtain ⟨hpreB, hn, hsp, h28, h18, hmidB, hj1, hjn, hbud, hcong⟩ := hrc
   obtain ⟨hi, hi64, hjlt⟩ := hex
+  have hjlt1 := hjlt.1
   have hK : 240 + kc ≤ s.sp.toNat := sp_K hpreB.h
   obtain ⟨hal, hb', ha, hw⟩ := hpreB.h.1.2.1
   simp only [K, A] at hb' ha hw

@@ -156,7 +156,7 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem s2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv) {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
-    {stkT aboveT : Nat} (hkT : stkT ≤ 4464) (haT : aboveT ≤ 88) (htr : TruncHyp impl R ns stkT aboveT)
+    {stkT aboveT : Nat} (hkT : stkT ≤ 4464) (haT : aboveT ≤ 88) (htr : Trunc.Hyp2 impl R ns stkT aboveT)
     (b : Nat) (L : List (Nat × Nat)) (op zp zl zc yp yl yc n : Nat) (s : State)
     (k2 : J2 impl R b L op zp zl zc yp yl yc n s) : J1 impl R b L op zp zl zc yp yl yc n s := by
   intro S l1 L1 b1 hpre hpc hsp h28 h18 h0 h1 h2 h3 h4 h5 h6 h7 h8 h9 hfw hrt hv hnorm hlc
@@ -231,6 +231,8 @@ theorem s2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
         (by omega)
         (truncPre_of hpre (rt_stk hpre hrt ?_ ?_) (by omega) rfl ?_ ?_ hkT haT (Or.inr rfl) (Nat.le_refl _) (by omega) ?_
           hy48 (hrt.2.2.2.1.held hyh) (by omega) (by omega) (Or.inr fun h => absurd h (by omega)))
+        (Or.inr (by have := bitLen_le64 (s.mem.readLE (yp + 8 * (yl - 1)) 8) (Util.readLE8_lt _ _); omega))
+        (Or.inr (Or.inr ⟨by omega, by omega⟩))
         fun s' hpc' hsp' h28' h29' h18' hreg' hpost => ?qK
       case qK =>
         refine s2t impl k2 hpre hkT haT _ (rt_stk hpre hrt ?_ ?_) ?_ ?_ ?_ ?_ ?_ ?_ hlc (by omega) ?_ _ rfl ?_ ?_ s'

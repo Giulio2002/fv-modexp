@@ -119,7 +119,7 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem s4c (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv) {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
-    {stkT aboveT : Nat} (hkT : stkT ≤ 4464) (haT : aboveT ≤ 88) (htr : TruncHyp impl R ns stkT aboveT)
+    {stkT aboveT : Nat} (hkT : stkT ≤ 4464) (haT : aboveT ≤ 88) (htr : Trunc.Hyp2 impl R ns stkT aboveT)
     (hadd : AddHypR impl R) (b : Nat) (L : List (Nat × Nat)) (op zp zl zc yp yl yc n : Nat) (s : State) :
     J5 impl R b L op zp zl zc yp yl yc n s := by
   intro S L3 b3 hpre hpc hsp h28 h18 h0 h1 h2 h9 hfw hrt hlt hv
@@ -140,6 +140,7 @@ theorem s4c (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     (truncPre_of hpre hrt (by omega) ?_ ?_ ?_ hkT haT (Or.inl ⟨rfl, rfl⟩) (by simp only [W]; omega)
       (by simp only [W]; omega) ?_ (by simp only [W]; omega) (hzh.sub (Nat.le_refl _) (by simp only [W]; omega))
       (by omega) (by simp only [W]; omega) (Or.inl rfl))
+    (Or.inr (by simp only [W]; omega)) (Or.inl rfl)
     fun s' hpc' hsp' h28' h29' h18' hreg' hpost => ?qK
   case qK =>
     refine s4t impl hap hadd hpre hkT haT S.mem hrt hfw hlt hv _ ?_ ?_ ?_ s' hpc' hsp' h28' ?_ hreg' hpost

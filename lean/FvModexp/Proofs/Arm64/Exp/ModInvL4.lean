@@ -14,13 +14,13 @@ open FvModexp.Arm64.EvenHyp
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem segL4 {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
+theorem segL4 {J : Nat} {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
     {stkL aboveL : Nat} (hls : Lsh.Hyp2 impl R ns stkL aboveL) {kc : Nat} (hkc : 4608 ≤ kc)
     (hkL : stkL ≤ kc) (haL : aboveL ≤ 88) {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
-    (k5 : S5 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s 1797984 (ExL3 s n) eL kL) :
-    S4 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s 1797940 (ExL3 s n) eL kL := by
+    (k5 : S5 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s 1797984 (ExL3 s n J) eL kL) :
+    S4 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s 1797940 (ExL3 s n J) eL kL := by
   intro S j p l c q ql qc L1 b1 Zv hrc hpc hex hzs hzv hl0 hl h0 h1 h2 hv hnq hql hb
   obtain ⟨hpreB, hn, hsp, h28, h18, hmidB, hj1, hjn, hbud, hcong⟩ := hrc
   have hK : 240 + kc ≤ s.sp.toNat := sp_K hpreB.h

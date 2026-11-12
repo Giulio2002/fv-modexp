@@ -15,17 +15,17 @@ open FvModexp.Arm64.EvenHyp
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 4000000 in
 /-- after `trunc` returns (`0x1b6eec`): `S2` -/
-theorem postL1 {kc : Nat} (hkc : 4608 ≤ kc) {stkT aboveT : Nat} (hkT : stkT ≤ kc) (haT : aboveT ≤ 88)
+theorem postL1 {J : Nat} {kc : Nat} (hkc : 4608 ≤ kc) {stkT aboveT : Nat} (hkT : stkT ≤ kc) (haT : aboveT ≤ 88)
     {impl : List Segment} {R : RtInv} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
-    (k2 : S2 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s 1797868 (ExL2 s n) eL kL)
+    (k2 : S2 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s 1797868 (ExL2 s n J) eL kL)
     (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) (hn : 64 < n) {j p l c q ql qc : Nat}
     {L1 : List (Nat × Nat)} {b1 Zv : Nat} {M : Memory}
     (hmid : Mid R kc L s zp zc st xp xl xc n M L1 b1 p l c q ql qc)
     (hj1 : 1 ≤ j) (hjn : 2 ^ (j - 1) < NW n) (hbud : spent sqrC mulC n j + roundCost sqrC mulC n ≤ b)
     (hcong : natVal s.mem xp xl * Zv % 2 ^ (2 ^ j * 32) = 1 % 2 ^ (2 ^ j * 32))
     (hi : M.readLE (s.sp.toNat - 80) 8 = 2 ^ j) (hi64 : M.readLE (s.sp.toNat - 64) 8 = 2 ^ j * 64)
-    (hjlt : 2 ^ j < NW n) (hzs : ZS s M p l c) (hzv : natVal M p l = Zv) (hl0 : 0 < l) (hl : l ≤ NW n + 1)
+    (hjlt : LJ n J j) (hzs : ZS s M p l c) (hzv : natVal M p l = Zv) (hl0 : 0 < l) (hl : l ≤ NW n + 1)
     (hv : natVal M q ql = Zv * Zv) (hql : ql ≤ 2 * NW n + 2) (hb : b - spent sqrC mulC n j - P1 sqrC n ≤ b1)
     {S' s' : State} (hsp : S'.sp = BitVec.ofNat 64 (s.sp.toNat - 240)) (h28 : S'.regs 28 = s.regs 28)
     (h18 : S'.regs 18 = s.regs 18) (hm : S'.mem = M)
@@ -48,7 +48,7 @@ theorem postL1 {kc : Nat} (hkc : 4608 ≤ kc) {stkT aboveT : Nat} (hkT : stkT �
   have hnw : NW n ≤ 2 ^ 12 := by have := hpre.2.2.2.2.1; simp only [NW]; omega
   have hvl : natVal s'.mem q ql' < 2 ^ (64 * 2 ^ j) := by
     rw [hv', show 64 * 2 ^ j = 2 ^ j * 64 by omega]; exact Nat.mod_lt _ (Nat.two_pow_pos _)
-  have hlen : ql' ≤ NW n := Nat.le_trans (len_le hn' hvl) (Nat.le_of_lt hjlt)
+  have hlen : ql' ≤ NW n := Nat.le_trans (len_le hn' hvl) (Nat.le_of_lt hjlt.1)
   have hmc := makeCost_mono (a := truncNeed ql (2 ^ j * 64)) (b := 2 * NW n + 2)
     (by unfold truncNeed; exact Nat.le_trans (Nat.min_le_left _ _) hql) (by omega)
   clear hvl
@@ -59,16 +59,17 @@ theorem postL1 {kc : Nat} (hkc : 4608 ≤ kc) {stkT aboveT : Nat} (hkT : stkT �
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem segL1 {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
+theorem segL1 {J : Nat} {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
     {stkT aboveT : Nat} (htr : Trunc.Hyp2 impl R ns stkT aboveT) {kc : Nat} (hkc : 4608 ≤ kc)
     (hkT : stkT ≤ kc) (haT : aboveT ≤ 88) {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
-    (k2 : S2 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s 1797868 (ExL2 s n) eL kL) :
-    S1 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s 1797840 (ExL1 s n) eL kL := by
+    (k2 : S2 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s 1797868 (ExL2 s n J) eL kL) :
+    S1 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s 1797840 (ExL1 s n J) eL kL := by
   intro S j p l c q ql qc L1 b1 Zv hrc hpc hex hzs hzv hl0 hl h0 h1 h2 hv hnq hql hb
   obtain ⟨hpreB, hn, hsp, h28, h18, hmidB, hj1, hjn, hbud, hcong⟩ := hrc
   obtain ⟨hi, hjlt⟩ := hex
+  have hjlt1 := hjlt.1
   have hK : 240 + kc ≤ s.sp.toNat := sp_K hpreB.h
   obtain ⟨hal, hb', ha, hw⟩ := hpreB.h.1.2.1
   simp only [K, A] at hb' ha hw
