@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Arm64.Top.RunD3ZDefs
+import FvModexp.Proofs.Arm64.Top.RunBox
 
 /-! # `Run` (arm64): `D2` to `Z3`, modulus operand of more than 32 bytes longer than the input rest: the `makeslice`
 buffer of `RightPadBytes` (see `RunD3ZDefs`), with `nb` input bytes left to copy (`0` or more) -/
@@ -127,6 +128,8 @@ theorem d3zA (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
   janus_run [hm1, hm2, hm3, hm4, hm5, hm6, hs1, hs2, hs3, hs4, hs5, hs6, hk1a, hk1b, hk2a, hS1, hS1n, hadd, hmod, hc, hc32, hIe, hIa, hmask, hsub,
     hcsub, hsrc, hU2, hU3, toInt_ite, toNat_ite, toInt_small] until [segAddr Extracted.program fn + 0x6f8] calls [hmkP]
   rename_i ptr _ _ _ mk _ _ hLFk hMFk hapk hink hbk hack h8k h16k hzk hrk hapSk hinvk
+  have bxp := Box.mk (And.intro hpw (And.intro hcw (And.intro hga hut)))
+  clear hpw hcw hga hut
   have hdk := dataLoaded_win (lo := s.sp.toNat - 4800) (n := 4800 + 40) ?d0 (by rw [hrg1]; simp) hro hMFk ?wacc ?ws
   case d0 => janus_callpre
   case wacc => simpa only [Memory.accessible_writeLE] using hwS
@@ -186,13 +189,13 @@ theorem d3zA (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     intro hn
     obtain ⟨e1, e2, e3⟩ := nb_facts p.toNat hoffc hmN hndir hn
     refine ⟨e1, e2, e3, ?_⟩
-    clear hoffc hmN hpw hcw hpo hga hut hLS1
+    clear hoffc hmN hpo hLS1
     rcases hext.held (hheld.sub (a := p.toNat + off + mN) (n := (len.toNat - 96 - min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96))) (Nat.le_trans (Nat.le_add_right _ _) (Nat.le_add_right _ _)) (Nat.le_of_eq e2)) with h | h
     · have := hapk.apart_of_inRanges h; unfold Apart at this; omega
     · have := InRanges.apart hink h; unfold Apart at this; omega
   have hnbm : (len.toNat - 96 - min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96)) % 18446744073709551616 = (len.toNat - 96 - min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96)) :=
     Nat.mod_eq_of_lt (Nat.lt_of_le_of_lt (Nat.le_trans (Nat.sub_le _ _) (Nat.sub_le _ _)) len.isLt)
-  clear hoffc hmN hpw hcw hpo hga hut hLS1 hink hapk hzk
+  clear hoffc hmN hpo hLS1 hink hapk hzk
   have ho0 : OpDone R mk s p len L L1 0 := OpDone.transport (hop 0 (by omega)) (by janus_simp [opAt]) (by janus_simp [opAt])
     (by janus_simp [opAt]) (by janus_simp [opAt]) hLFS (fun _ _ h => h)
   have ho1 : OpDone R mk s p len L L1 1 := OpDone.transport (hop 1 (by omega)) (by janus_simp [opAt]) (by janus_simp [opAt])

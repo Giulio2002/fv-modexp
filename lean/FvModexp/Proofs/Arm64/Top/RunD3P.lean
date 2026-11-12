@@ -1,6 +1,7 @@
 import FvModexp.Proofs.Arm64.Top.RunD2Lem
 import FvModexp.Proofs.Arm64.Top.RunD3J
 import FvModexp.Proofs.Arm64.Top.RunArith
+import FvModexp.Proofs.Arm64.Top.RunBox
 
 /-! # `Run` (arm64): `D1` to `J2`, exponent operand longer than the input rest, at most 32 bytes: stack buffer, `memmove` -/
 
@@ -106,6 +107,17 @@ theorem d3p (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   have hsA : s.mem.accessible (p.toNat + off + mN) (len.toNat - 96 - min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96)) false
       = true := Memory.accessible_mono _ hpacc hr1 hr2
   have hne : (BitVec.toNat s.sp - 456 = p.toNat + off + mN) = False := stk_ne _ _ _ _ _ _ hpw hr3 hb' (by decide) (by decide)
+  have hpo' : Outside p.toNat len.toNat (winA s stk 40) := by
+    simp only [winA, stk, Janus.outside_cons, Janus.outside_nil, and_true]; omega
+  have hco' : Outside c.toNat 3 (winA s stk 40) := by
+    simp only [winA, stk, Janus.outside_cons, Janus.outside_nil, and_true]; omega
+  have hsw1 : p.toNat + off + mN + (len.toNat - 96 - min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96)) ≤ BitVec.toNat s.sp - 624 - 4096 ∨
+      BitVec.toNat s.sp - 624 - 8 ≤ p.toNat + off + mN := by omega
+  have hsw2 : p.toNat + off + mN + (len.toNat - 96 - min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96)) ≤ BitVec.toNat s.sp - 624 + 8 ∨
+      BitVec.toNat s.sp - 624 + 8 + 24 ≤ p.toNat + off + mN := by omega
+  have bxo := Box.mk (And.intro hpo' hco')
+  have bxp := Box.mk (And.intro hpw hcw)
+  clear hpo' hco' hpw hcw
   set_option janus.callRegions true in
   janus_run [hm1, hm2, hm3, hm4, hm5, hm6, hs1, hs2, hs3, hs4, hs5, hs6, hk1a, hk1b, hk2a, hS1, hS1n, hadd, hmod, hc, hc32, hIe, hIa, hmask, hsub,
     hcsub, hsrc, hne, toInt_ite, toNat_ite, toInt_small] until [segAddr Extracted.program fn + 0x728] calls [hmv']
@@ -135,10 +147,8 @@ theorem d3p (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     (LiveFrame.of_win (by simp only [win, stk]; janus_frame) hLsL1).trans (LiveFrame.drop hLFm hdst) (fun _ _ h => h)
   have hLF2 : LiveFrame s.mem m L [] := hLF.trans hLFS (fun _ _ h => hext.inRanges_old h)
   have hLx := LiveFrame.of_nil' hLF2 (winA s stk 40)
-  have hpo' : Outside p.toNat len.toNat (winA s stk 40) := by
-    simp only [winA, stk, Janus.outside_cons, Janus.outside_nil, and_true]; omega
-  have hco' : Outside c.toNat 3 (winA s stk 40) := by
-    simp only [winA, stk, Janus.outside_cons, Janus.outside_nil, and_true]; omega
+  have hpo' := bxo.h.1
+  have hco' := bxo.h.2
   refine d3join impl hap R hmk hokS b L c p len cp ret hret s henv0 hin0 Q hbudD hk _ L1 b1 (s.sp.toNat - 456)
     ?hj (by janus_simp)
   case hj =>
@@ -162,6 +172,7 @@ theorem d3p (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     unfold padByte
     split
     · rename_i hjl
+      have hpw := bxp.h.1
       have hn0 : 0 < len.toNat - 96 - min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96) := by omega
       obtain ⟨-, rfl⟩ : 96 < len.toNat ∧ off = 96 := by omega
       have hmE : mN = hdrV s p len 1 + hdrV s p len 0 := by omega

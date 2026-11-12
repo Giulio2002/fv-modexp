@@ -1012,3 +1012,10 @@ deterministic order janus_run produces them), P2W2Tail 24 s / 2.9 GB, P2W2Fin 3.
 P2W2R1b 8.5 s (before: > 9 min — applying `mkPost hP hw _ rfl … rfl` to the janus literal call state: `rfl`
 unification of `setReg` chains / `retStateX` against the contract post; fixed by the continuation-form wrappers
 `mkCall`/`noCall` whose state equations are left as goals for `janus_simp`), P2W2Ret1 1.2 s. All ≤ 2.9 GB.
+## agent top s17 (2026-11-12, dev builds, host load ~15, one fresh-cache verify-all running alongside)
+| module | before | after | fix |
+|---|---|---|---|
+| Arm64/Top/RunD1P | 254 s / 6.15 GB | 89 s / 3.8 GB | `Box` `hpw`/`hcw` (input/receiver window facts) right after the side facts `hs1..hs4` of the memmove call; unbox `hpw` only in the padded-byte branch |
+| Arm64/Top/RunD3ZA | 279 s / 6.38 GB | 119 s / 6.2 GB | `Box` `hpw`/`hcw`/`hga`/`hut` right after the makeslice run |
+| Arm64/Top/RunD3P | 186 s / 5.65 GB | 143 s / 6.1 GB | `hpo'`/`hco'` and the memmove source-vs-callee-window facts (`hsw1/2`) proved BEFORE the run, then `Box`ed with `hpw`/`hcw`; unbox locally |
+(`hga` must stay visible across a run that ends in a runtime call: the callee pre needs the g-struct slot apart from the callee window.)
