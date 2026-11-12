@@ -174,8 +174,8 @@ theorem setPath0 (impl : List Amd64.Segment) (R : RtInv)
   by_cases hz : xl.toNat ≤ zc.toNat
   · clear hok
     janus64_run [BitVec.msb_eq_decide] until [hSet]
-    refine setTail impl R hmv b L zp zc xp xl yp 0#64 s zp.toNat zc.toNat L b _
-      (setmid_of_reuse0 hpre hy0 hx0 hra hx15 hdf hz ?hF ?_ ?_) hy0 _ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl
+    refine ReachesRet.mono (setTail impl R hmv b L zp zc xp xl yp 0#64 s zp.toNat zc.toNat L b _
+      (setmid_of_reuse0 hpre hy0 hx0 hra hx15 hdf hz ?hF ?_ ?_) hy0 _ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl) (fun _ h => ⟨h.1, h.2.1⟩)
     case hF => simp only [win]; janus_frame
     all_goals janus64_simp
   · obtain ⟨hok1, hcost⟩ := hok (by omega)
@@ -201,11 +201,11 @@ theorem setPath0 (impl : List Amd64.Segment) (R : RtInv)
         rw [show makeCost (1#64 : BitVec 64).toNat = allocCost (8 * 1) by decide] at hcost; omega
       janus64_run [BitVec.msb_eq_decide] until [hSet] calls [hmk.pos]
       rename_i ptr _ _ _ _ m _ _ hLF hMF hAp hIn hle hacc h8 _ _ hrb _ hinv' _ _ _
-      refine setTail impl R hmv b L zp zc xp 1#64 yp 0#64 s ptr.toNat 1 _ _ m
+      refine ReachesRet.mono (setTail impl R hmv b L zp zc xp 1#64 yp 0#64 s ptr.toNat 1 _ _ m
         (setmid_of_alloc0 hpre hy0 hx0 hra hx15 hdf (by omega) ?hF ?_ ?_ hcs hLF hMF hAp hIn (by omega)
           (by rw [hMF.accessible]; simpa only [Janus.Arm64.Memory.accessible_writeLE] using hacc) h8 hinv'
           (by decide) (by decide) (by decide) (by decide))
-        hy0 _ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl
+        hy0 _ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl) (fun _ h => ⟨h.1, h.2.1⟩)
       case hF => simp only [win]; janus_frame
       all_goals janus64_simp
     · rw [show makeCap xl.toNat = xl.toNat + 4 by unfold makeCap; rw [if_neg h1x]] at hok1
@@ -215,11 +215,11 @@ theorem setPath0 (impl : List Amd64.Segment) (R : RtInv)
       have hbs : blockSize (8 * (xl.toNat + 4)) true ≤ b := by omega
       janus64_run [BitVec.msb_eq_decide, FvModexp.mod64_of_lt (xl.toNat + 4) (by omega)] until [hSet] calls [hmk.pos]
       rename_i ptr _ _ _ _ m _ _ hLF hMF hAp hIn hle hacc h8 _ _ hrb _ hinv' _ _ _
-      refine setTail impl R hmv b L zp zc xp xl yp 0#64 s ptr.toNat (xl.toNat + 4) _ _ m
+      refine ReachesRet.mono (setTail impl R hmv b L zp zc xp xl yp 0#64 s ptr.toNat (xl.toNat + 4) _ _ m
         (setmid_of_alloc0 hpre hy0 hx0 hra hx15 hdf (by omega) ?hF ?_ ?_ hcs hLF hMF hAp hIn hle
           (by rw [hMF.accessible]; simpa only [Janus.Arm64.Memory.accessible_writeLE] using hacc) (h8 (Or.inr (by omega)))
           hinv' (by omega) (by omega) hrb (by omega))
-        hy0 _ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl
+        hy0 _ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl) (fun _ h => ⟨h.1, h.2.1⟩)
       case hF => simp only [win]; janus_frame
       all_goals janus64_simp
 

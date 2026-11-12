@@ -30,7 +30,7 @@ theorem tail (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat ×
     (hsp : S.regs 4 = s.regs 4 - 144#64) (h14 : S.regs 14 = s.regs 14) (h5 : S.regs 5 = s.regs 4 - 8#64)
     (hx15 : S.xmm 15 = s.xmm 15) (hfs : S.fsBase = s.fsBase) (hdf : S.df = false) (hm : S.mem = M) :
     ReachesRet (LibNatAdd.program.link impl) (retAddrOf s) S fun s' =>
-      RegsOK s s' ∧ PostR 4288 R b L zp zc xp xl yp yl s s' := by
+      RegsOK s s' ∧ PostX 4288 R b L zp zc xp xl yp yl s s' := by
   have hsp0 := h.sp0; have hsp1 := h.sp1; have hcap := h.cap; have hc41 := h.c41; have hp48 := h.p48
   have hxl := h.xl40
   have r1 := h.sm1; have hsacc := h.sacc; have hal := h.al; have hpacc := h.pacc

@@ -27,6 +27,7 @@ structure AtCall (s S : State) (z x : Nat) : Prop where
   mf : MemFrame s.mem S.mem (win s 4536 32)
   reg : S.mem.regions = s.mem.regions
   mbp : S.mem.readLE ((s.regs 4).toNat - 8) 8 = (s.regs 5).toNat
+  ra : S.mem.readLE (s.regs 4).toNat 8 = s.mem.readLE (s.regs 4).toNat 8
   zs : S.mem.readLE ((s.regs 4).toNat + 8) 8 = z
   ng : S.mem.readLE ((s.regs 4).toNat - 9) 1 = s.mem.readLE x 1
 
@@ -40,7 +41,8 @@ theorem frames_after {R : RtInv} {L : List (Nat × Nat)} {s S S' : State} {zp zc
     (hLF : LiveFrame S.mem S'.mem L [(zp, zp + 8 * zc)]) (hzo : Outside zp (8 * zc) (win s 4536 32)) :
     MemFrame s.mem S'.mem (R.rt ++ win s 4536 32 ++ [(zp, zp + 8 * zc)]) ∧
       LiveFrame s.mem S'.mem L [(zp, zp + 8 * zc)] ∧
-      S'.mem.readLE ((s.regs 4).toNat - 8) 8 = (s.regs 5).toNat ∧ S'.mem.readLE ((s.regs 4).toNat + 8) 8 = z ∧
+      S'.mem.readLE ((s.regs 4).toNat - 8) 8 = (s.regs 5).toNat ∧
+      S'.mem.readLE (s.regs 4).toNat 8 = s.mem.readLE (s.regs 4).toNat 8 ∧ S'.mem.readLE ((s.regs 4).toNat + 8) 8 = z ∧
       S'.mem.readLE ((s.regs 4).toNat - 9) 1 = s.mem.readLE x 1 := by
   have hsp0 : 4536 ≤ (s.regs 4).toNat := hce.2.1.1
   have hout := hce.2.2.2.2.1
@@ -57,11 +59,13 @@ theorem frames_after {R : RtInv} {L : List (Nat × Nat)} {s S S' : State} {zp zc
       exact ⟨⟨hout.of_sub (by omega) (by omega), h3⟩, by omega⟩)
   have e1 : S'.mem.readLE ((s.regs 4).toNat - 8) 8 = (s.regs 5).toNat := by
     rw [rd _ _ (by omega) (by omega) (by omega)]; exact hA.mbp
+  have e2 : S'.mem.readLE (s.regs 4).toNat 8 = s.mem.readLE (s.regs 4).toNat 8 := by
+    rw [rd _ _ (by omega) (by omega) (by omega)]; exact hA.ra
   have e3 : S'.mem.readLE ((s.regs 4).toNat + 8) 8 = z := by
     rw [rd _ _ (by omega) (by omega) (by omega)]; exact hA.zs
   have e4 : S'.mem.readLE ((s.regs 4).toNat - 9) 1 = s.mem.readLE x 1 := by
     rw [rd _ _ (by omega) (by omega) (by omega)]; exact hA.ng
-  refine ⟨MemFrame.trans hA.mf hF fun a n ho => ?_, ⟨fun a n hin ho => ?_⟩, e1, e3, e4⟩
+  refine ⟨MemFrame.trans hA.mf hF fun a n ho => ?_, ⟨fun a n hin ho => ?_⟩, e1, e2, e3, e4⟩
   · simp only [win, outside_append, outside_cons, outside_nil, and_true] at ho ⊢
     obtain ⟨⟨o1, o2⟩, o4⟩ := ho
     refine ⟨o2, ⟨o1, ?_⟩, o4⟩; omega

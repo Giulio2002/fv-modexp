@@ -145,7 +145,7 @@ theorem alloc0 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.prog
       rw [show makeCost (1#64 : BitVec 64).toNat = allocCost (8 * 1) by decide] at hcost; omega
     janus64_run [BitVec.msb_eq_decide] until [hMid] calls [hmk.pos]
     rename_i ptr _ _ _ _ m _ _ hLF hMF hAp hIn hle hacc h8 _ _ hrb _ hinv' _ _ _
-    refine vv impl hap R hmv b L zp zc xp 1#64 xc yp yl yc s ptr.toNat 1 _ _ m
+    refine ReachesRet.mono (vv impl hap R hmv b L zp zc xp 1#64 xc yp yl yc s ptr.toNat 1 _ _ m
       (mid_of_alloc0 hpre hyx (by omega) hy0 hra hx15 hdf hz ?hF ?_ ?_ ?_ ?_ ?_ ?_ (fun r hr => by
           simp only [List.mem_cons, List.not_mem_nil, or_false] at hr
           rcases hr with rfl | rfl <;> simp only <;> omega) hLF hMF hAp hIn (by omega)
@@ -157,7 +157,7 @@ theorem alloc0 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.prog
       ((held_keep (hxh.sub (by omega) (by omega)) hLF hMF (hCo _ _ (by omega))).trans
         (natVal_frame ?hF (hWo _ _ (by omega))))
       ((held_keep hyh hLF hMF (hCo _ _ (by omega))).trans (natVal_frame ?hF (hWo _ _ (by omega)))) hge
-      _ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl
+      _ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl) (fun _ h => ⟨h.1, h.2.1⟩)
     case hF => simp only [win]; janus_frame
     all_goals janus64_simp
 
@@ -169,7 +169,7 @@ theorem alloc0 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.prog
     have hbs : blockSize (8 * (xl.toNat + 4)) true ≤ b := by omega
     janus64_run [BitVec.msb_eq_decide, FvModexp.mod64_of_lt (xl.toNat + 4) (by omega)] until [hMid] calls [hmk.pos]
     rename_i ptr _ _ _ _ m _ _ hLF hMF hAp hIn hle hacc h8 _ _ hrb _ hinv' _ _ _
-    refine vv impl hap R hmv b L zp zc xp xl xc yp yl yc s ptr.toNat (xl.toNat + 4) _ _ m
+    refine ReachesRet.mono (vv impl hap R hmv b L zp zc xp xl xc yp yl yc s ptr.toNat (xl.toNat + 4) _ _ m
       (mid_of_alloc0 hpre hyx (by omega) hy0 hra hx15 hdf hz ?hG ?_ ?_ ?_ ?_ ?_ ?_ (fun r hr => by
           simp only [List.mem_cons, List.not_mem_nil, or_false] at hr
           rcases hr with rfl | rfl <;> simp only <;> omega) hLF hMF hAp hIn hle
@@ -181,7 +181,7 @@ theorem alloc0 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.prog
       ((held_keep (hxh.sub (by omega) (by omega)) hLF hMF (hCo _ _ (by omega))).trans
         (natVal_frame ?hG (hWo _ _ (by omega))))
       ((held_keep hyh hLF hMF (hCo _ _ (by omega))).trans (natVal_frame ?hG (hWo _ _ (by omega)))) hge
-      _ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl
+      _ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl) (fun _ h => ⟨h.1, h.2.1⟩)
     case hG => simp only [win]; janus_frame
     all_goals janus64_simp
 

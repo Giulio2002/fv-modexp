@@ -16,7 +16,7 @@ theorem setPath (impl : List Amd64.Segment) (R : RtInv)
     (he : Entry s zp zl zc xp xl xc yp yl yc) (hy0 : yl.toNat = 0) (hx0 : 0 < xl.toNat)
     (hpre : PreS 4288 R b L zp zc xp xl xc yp yl yc s) :
     ReachesRet (LibNatAdd.program.link impl) (retAddrOf s) s fun s' =>
-      RegsOK s s' ∧ PostR 4288 R b L zp zc xp xl yp yl s s' := by
+      RegsOK s s' ∧ PostX 4288 R b L zp zc xp xl yp yl s s' := by
   obtain ⟨hpc, hra, hx15, hdf, h0, h3, h1, h7, h6, h8, h9, h10, h11⟩ := he
   obtain ⟨hg1, hg2, hg3, hb', ha, hw, hal, htg⟩ := preS_env hpre
   have hpre' := hpre

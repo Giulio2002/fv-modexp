@@ -33,7 +33,7 @@ theorem afterVV (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.pro
     (hsp : S.regs 4 = s.regs 4 - 144#64) (h5 : S.regs 5 = s.regs 4 - 8#64)
     (hfs : S.fsBase = s.fsBase) (hdf : S.df = false) (hm : S.mem = M) :
     ReachesRet (LibNatSub.program.link impl) (retAddrOf s) S fun s' =>
-      RegsOK s s' ∧ PostR 4288 R b L zp zc xp xl yp yl s s' := by
+      RegsOK s s' ∧ PostX 4288 R b L zp zc xp xl yp yl s s' := by
   have hc2 : CodeIn64 ((Extracted.program.onlySegments [SubVW.fn]).link impl) (LibNatSub.program.link impl) := by
     rw [LibNatSub.eq_only]; exact A64.codeIn_restrict_mono64 hap (sub_of_all (by decide))
   have hVW' := fun b L => Ensures.toSummaryRegs7 (fun zp zl zc xp xl xc y => SubVW.ens impl hap R hmv b L zp zl zc xp xl xc y)
@@ -109,7 +109,7 @@ theorem afterVV (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.pro
         and_true] at ho ⊢
       obtain ⟨hr, c1, c3⟩ := ho
       exact ⟨⟨hr, by omega⟩, c3⟩
-    have hws : WsOK s p c [((s.regs 4).toNat - 4288, (s.regs 4).toNat - 112),
+    have hws : WsOK s p xl.toNat [((s.regs 4).toNat - 4288, (s.regs 4).toNat - 112),
         (p + 8 * yl.toNat, p + 8 * yl.toNat + 8 * (xl.toNat - yl.toNat))] := by
       intro r hr; simp only [List.mem_cons, List.not_mem_nil, or_false] at hr
       rcases hr with rfl | rfl <;> simp only <;> omega
