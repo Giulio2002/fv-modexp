@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Top.RunCPDefs
+import FvModexp.Proofs.Amd64.Top.RunU8
 
 /-! # `Run` (amd64): `V` to the return (`len(v) ≥ modLen`) or to `P` (`makeslice` of the `LeftPadBytes` buffer)
 
@@ -61,15 +62,12 @@ theorem cp1 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
     janus_eval_nat h_u : uint8T
     have hokb : R.ok (cA "runtime.makeslice") [7231264, hdrV s p len 2, hdrV s p len 2] := by
       have := hokB _ hl2; rwa [h_u] at this
-    have hU2 : V.mem.readLE 7231264 8 = 1 := by
-      janus64_data hdS; rw [h_rodata _ _ (by decide)]; decide
-    have hU3 : V.mem.readLE 7231272 8 = 0 := by
-      janus64_data hdS; rw [h_rodata _ _ (by decide)]; decide
+    have hU2 : V.mem.readLE 7231264 8 = 1 := u8T_size hdS
+    have hU3 : V.mem.readLE 7231272 8 = 0 := u8T_ptr hdS
     have hut : Apart 7231264 16 ((s.regs 4).toNat - W) (W + 40) :=
       apart_of_data (x := 7231264) (l := 16) hd 0 (by decide) (by decide) hw
     unfold Apart at hut
-    have hU1 : V.mem.accessible 7231264 16 false = true := by
-      rw [hMF.accessible]; janus64_data hd; exact Janus.Arm64.Memory.accessible_mono _ h_data0 (by omega) (by omega)
+    have hU1 : V.mem.accessible 7231264 16 false = true := by rw [hMF.accessible]; exact u8T_acc hd
     have ⟨hBS, hbudk⟩ := bud_pad (n := hdrV s p len 2) hl2 hbB hbud
     have hLSm : ∀ r ∈ L1, Outside r.fst (r.snd - r.fst)
         ([((s.regs 4).toNat - 616 - 4096, (s.regs 4).toNat - 616),

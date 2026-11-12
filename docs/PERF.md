@@ -1364,3 +1364,6 @@ path ≈ 205 s (was: 117 own modules, row 815 s).
 | Arm64/Exp/P2W4Defs / EnA / EnG3 / EnG / EnJ | 2.9 / 22.2 / 28.6 / 9.5 / 5.4 s | ≤ 2.4 GB |
 | Arm64/Exp/P2W4Pre / Ent / Ctx / WC / PP / PC | 1.6 / 12.4 / 1.2 / 2.5 / 4.4 / 2.3 s | ≤ 2.6 GB |
 | Arm64/Exp/P2W4N (stk.nat + 6-round zero loop) / AT / EP / Tail | 14.5 / 1.4 / 3.5 / 19.2 s | ≤ 3.1 GB |
+* (5) RunErr rows at REAL load (fresh cache cache-top-freshG, `ROWS=1 scripts/verify-all.sh Top_RunErr`, 17:27-18:25,
+  1-min load 41-86, mean 60; other agents + top's own J=1 dev chain): warm-ups arm64 1753 s / amd64 146 s, **arm64 PASS
+  545 s / 2.5 GB, amd64 PASS 508 s / 1.3 GB** — both under the 600 s ROW MARGIN target at load ~50-60.

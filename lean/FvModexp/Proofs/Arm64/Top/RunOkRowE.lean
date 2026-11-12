@@ -26,7 +26,7 @@ STILL PREMISES (each a callee proof not yet on main, or a cost bound):
 conjuncts of `ExpSpec`'s pre / `IntOK`'s cap bound; its extra post conjunct is dropped).
 -/
 
-open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts Janus.Contracts.Pool
+open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts Janus.Contracts.Pool Janus.Contracts.EqHashModel
 open FvModexp.Spec EthLib.Execution.Evm.Precompiles.Modexp
 
 namespace FvModexp.Arm64.Run

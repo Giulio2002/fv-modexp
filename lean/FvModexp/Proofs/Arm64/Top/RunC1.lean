@@ -1,5 +1,6 @@
 import FvModexp.Proofs.Arm64.Top.RunCDefs
 import FvModexp.Proofs.Common.GenReg
+import FvModexp.Proofs.Arm64.Top.RunU8
 
 /-! # `Run` (arm64): `D3` to `C2` or the return — `mod.BitLen()`, the zero-modulus case `LeftPadBytes([]byte{}, modLen)` -/
 
@@ -63,10 +64,8 @@ theorem c1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
       janus_eval_nat h_u : uint8T
       have hokb : R.ok (cA "runtime.makeslice") [uint8T, hdrV s p len 2, hdrV s p len 2] := hokB _ hl2
       rw [h_u] at hokb
-      have hU2 : S.mem.readLE 2639168 8 = 1 := by
-        janus_data hdS; rw [h_rodata _ _ (by decide)]; decide
-      have hU3 : S.mem.readLE 2639176 8 = 0 := by
-        janus_data hdS; rw [h_rodata _ _ (by decide)]; decide
+      have hU2 : S.mem.readLE 2639168 8 = 1 := u8T_size hdS
+      have hU3 : S.mem.readLE 2639176 8 = 0 := u8T_ptr hdS
       have hut : Apart 2639168 16 (s.sp.toNat - 4800) (4800 + 40) :=
         apart_of_data (x := 2639168) (l := 16) hdS 0 (by decide) (by decide) hwS
       unfold Apart at hut
@@ -74,8 +73,7 @@ theorem c1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
         exact (bs_le hl2 hB hbB hbud).1
       have hIp := toInt_small (BitVec.ofNat 64 (hdrV s p len 2)) (by simp; omega)
       have hLsL1 : LiveSep L1 (win s 4800 40) := hLsS
-      have hU1 : s.mem.accessible 2639168 16 false = true := by
-        janus_data hd; exact Memory.accessible_mono _ h_data0 (by omega) (by omega)
+      have hU1 : s.mem.accessible 2639168 16 false = true := u8T_acc hd
       have hLSc : ∀ r ∈ L1, (r.fst + (r.snd - r.fst) ≤ s.sp.toNat - 624 - 4096 ∨ s.sp.toNat - 624 - 8 ≤ r.fst) ∧
           (r.fst + (r.snd - r.fst) ≤ s.sp.toNat - 624 + 8 ∨ s.sp.toNat - 624 + 8 + 24 ≤ r.fst) := by
         intro r hr; have := hLsL1 r hr
