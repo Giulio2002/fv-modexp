@@ -4,6 +4,8 @@ import FvModexp.Proofs.Amd64.Witness.StubsMvz
 import FvModexp.Proofs.Amd64.Witness.StubsMkz
 import FvModexp.Proofs.Amd64.Int.IntBytes
 
+set_option autoImplicit false
+
 /-!
 # Row 1, amd64, success path: `Run` on call data that passes EIP-7823 returns `(compute data (parseLengths data), nil)`
 
@@ -40,6 +42,7 @@ theorem correctness_ok (impl : List Amd64.Segment) (hap : ImplApart Extracted.pr
       (fun s => RunAmd64.EnvW R L s W ∧ RunAmd64.Input R L c p len cp s ∧ OsakaReceiver s.mem c.toNat ∧
         R.inv b L (s.regs 14).toNat (view R.rt L s.mem) ∧ RunAmd64.OkReqs R ∧
         RunAmd64.Globals R s.mem (RunAmd64.windowW s W) ∧ RunAmd64.NatOne R s.mem (RunAmd64.windowW s W) ∧
+        RunAmd64.StackPool R s.mem (RunAmd64.windowW s W) ∧
         RunAmd64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat)) ≤ b ∧
         LengthsPass (bytesAt s.mem p.toNat len.toNat))
       (fun s s' => RunAmd64.OkRet (bytesAt s.mem p.toNat len.toNat) s' ∧
@@ -140,9 +143,17 @@ theorem one1 : RunAmd64.NatOne R s1.mem (RunAmd64.windowW s1 WW) := by
     | (simp only [RunAmd64.windowW, outside_cons, outside_nil, and_true]; decide +kernel)
     | (rw [show s1.mem = wmem (toyBytes g) regs1 from rfl, acc_eq]; decide +kernel)
 
+theorem pool1 : RunAmd64.StackPool R s1.mem (RunAmd64.windowW s1 WW) := by
+  dsimp only [RunAmd64.StackPool]
+  refine ⟨?_, by decide +kernel, ?_, ?_⟩
+  · rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide
+  · rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide
+  · simp only [RunAmd64.windowW, outside_cons, outside_nil, and_true]; decide +kernel
+
 theorem pre : RunAmd64.EnvW R [] s1 WW ∧ RunAmd64.Input R [] c1 p1 99 99 s1 ∧ OsakaReceiver s1.mem c1.toNat ∧
     R.inv bW [] (s1.regs 14).toNat (view R.rt [] s1.mem) ∧ RunAmd64.OkReqs R ∧
     RunAmd64.Globals R s1.mem (RunAmd64.windowW s1 WW) ∧ RunAmd64.NatOne R s1.mem (RunAmd64.windowW s1 WW) ∧
+    RunAmd64.StackPool R s1.mem (RunAmd64.windowW s1 WW) ∧
     RunAmd64.okBudget (parseLengths (bytesAt s1.mem p1.toNat (99 : BitVec 64).toNat)) ≤ bW ∧
     LengthsPass (bytesAt s1.mem p1.toNat (99 : BitVec 64).toNat) := by
   refine ⟨⟨⟨⟨?_, ?_, ?_⟩, ⟨?_, ?_, ?_⟩, by decide, dataLoaded _ _, ?_, ?_, ?_, fun r hr => by simp at hr, roOut,
@@ -151,7 +162,7 @@ theorem pre : RunAmd64.EnvW R [] s1 WW ∧ RunAmd64.Input R [] c1 p1 99 99 s1 �
     ⟨by decide +kernel, by decide +kernel, by decide +kernel⟩, inv1 _,
     ⟨fun _ _ _ _ => trivial, fun _ _ _ _ => trivial, fun _ _ _ => trivial, fun _ _ _ _ _ _ => trivial,
       fun _ => trivial, fun _ => trivial, fun _ => trivial, fun _ => trivial, fun _ => trivial⟩,
-    globals1, one1, budget1, pass1⟩
+    globals1, one1, pool1, budget1, pass1⟩
   all_goals first
     | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
     | (simp only [RunAmd64.window, outside_cons, outside_nil, and_true]; decide +kernel)
@@ -242,6 +253,7 @@ theorem nonvacuous_of (stkM aboveM : Nat) (hM : RunIface.ModSpec WStubs.impl R s
     RunAmd64.EnvW R L s W ∧ RunAmd64.Input R L c p len cp s ∧ OsakaReceiver s.mem c.toNat ∧
     R.inv b L (s.regs 14).toNat (view R.rt L s.mem) ∧ RunAmd64.OkReqs R ∧
     RunAmd64.Globals R s.mem (RunAmd64.windowW s W) ∧ RunAmd64.NatOne R s.mem (RunAmd64.windowW s W) ∧
+        RunAmd64.StackPool R s.mem (RunAmd64.windowW s W) ∧
     RunAmd64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat)) ≤ b ∧
     LengthsPass (bytesAt s.mem p.toNat len.toNat) ∧
     compute (bytesAt s.mem p.toNat len.toNat) (parseLengths (bytesAt s.mem p.toNat len.toNat)) = ⟨#[5]⟩ ∧
@@ -268,7 +280,7 @@ theorem nonvacuous_of (stkM aboveM : Nat) (hM : RunIface.ModSpec WStubs.impl R s
     by rw [WStubs.addr_mv]; exact model_mv, by rw [WStubs.addr_mv]; exact model_mvz,
     by rw [WStubs.addr_no]; exact model_no, hW, by decide, hab, hk1, ha1, Witness.hret, setup,
     pre.1, pre.2.1, pre.2.2.1, pre.2.2.2.1, pre.2.2.2.2.1, pre.2.2.2.2.2.1, pre.2.2.2.2.2.2.1, pre.2.2.2.2.2.2.2.1,
-    pre.2.2.2.2.2.2.2.2,
+    pre.2.2.2.2.2.2.2.2.1, pre.2.2.2.2.2.2.2.2.2,
     compute1,
     ⟨[], 0x1000, callS WStubs.mkA Extracted.dataAddr.«type:big.Word#51b931e8» 1 1, by rw [WStubs.addr_mk]; rfl,
       by rw [WStubs.addr_mk]; exact site_mk _⟩,

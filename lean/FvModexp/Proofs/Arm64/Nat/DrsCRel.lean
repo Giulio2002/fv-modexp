@@ -53,7 +53,7 @@ structure Mc (R : RtInv) (c : Cx) (s : State) (Lk : List (Nat × Nat)) (bk : Nat
   bf : Asm.limbs M qv (3 * c.vl) = st.buf
   wk : Asm.limbs M (c.up + 8 * (j - c.vl / 2)) (c.u1 - (j - c.vl / 2)) = st.w
   lk : Asm.limbs M c.up (j - c.vl / 2) = (c.U2 s j U).take (j - c.vl / 2)
-  bud : (j / (c.vl / 2)) * c.K s ≤ bk
+  bud : c.lo s + (j / (c.vl / 2)) * c.K s ≤ bk
   qa : M.accessible qv (8 * (3 * c.vl)) true = true
   qloc : Loc R c s qv (8 * (3 * c.vl))
   qal : qv % 8 = 0

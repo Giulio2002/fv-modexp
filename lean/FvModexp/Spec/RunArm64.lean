@@ -3,6 +3,8 @@ import Extracted
 import FvModexp.Spec.Mem
 import FvModexp.Spec.Modexp
 
+set_option autoImplicit false
+
 /-! SPECIFICATION part (reviewed by a human, docs/HUMAN-REVIEW.md §1): the plain definitions the arm64 statements of row 1
 (`(*bigModExp).Run`) use for the call environment, the input slice, the runtime requests, and the return.
 
@@ -129,6 +131,15 @@ def NatOne (R : RtInv) (m : Memory) (w : List (Nat × Nat)) : Prop :=
   m.readLE (nA + 8) 8 = 1 ∧ m.readLE (nA + 16) 8 = 1 ∧ m.readLE op 8 = 1 ∧
   m.accessible nA 24 false = true ∧ Outside nA 24 R.rt ∧ Outside nA 24 w ∧
   m.accessible op 8 false = true ∧ op + 8 ≤ 2 ^ 48 ∧ Outside op 8 R.rt ∧ Outside op 8 w
+
+/-- `math/big`'s package global `stackPool` (`var stackPool sync.Pool`, in `.bss`, its `New` field never set) at its
+initial Go value: the `New` word (at `Janus.Spec.Pool.newOffset`) is 0, outside the runtime-owned ranges and outside the
+stack ranges `w`; and address 0 is not runtime memory (page 0 is unmapped: an allocated object is never nil). (`(*Int).exp` /
+`(*Int).Mod` take their scratch stack from it: `getStack()` = `stackPool.Get()`, nil → `new(stack)`; `nat.go`.) -/
+def StackPool (R : RtInv) (m : Memory) (w : List (Nat × Nat)) : Prop :=
+  let pA := Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.stackPool»
+  Outside 0 1 R.rt ∧ m.readLE (pA + Janus.Spec.Pool.newOffset) 8 = 0 ∧ Outside (pA + Janus.Spec.Pool.newOffset) 8 R.rt ∧
+    Outside (pA + Janus.Spec.Pool.newOffset) 8 w
 
 /-- The budget of the success path, from the three lengths (bytes): the three length headers (`nat.make(4)`), the three
 operand reads (a copy buffer and a `nat`), the `Mod` / `exp` call (per request at most `blockBound (1024 w + 1024)`

@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Top.RunIface
 
+set_option autoImplicit false
+
 /-! # `RunIface` (arm64): the three callee specs are monotone in the callee window
 
 A spec proved for a window `[SP - stk, SP + above)` holds for every larger window: the precondition at the larger window
@@ -54,9 +56,13 @@ theorem BytesSpec.mono {impl : List Segment} {R : RtInv} {k a k' a' : Nat} (h : 
     ⟨p, n, c, h0, h1, h2, h3, h4, h5, L', b', h6, h7, h8, h9,
       (memFrame_winA_mono (ws := []) hk ha (by simpa using h10)).mono fun _ _ hx => by simpa using hx, h11⟩
 
+theorem poolG_mono {R : RtInv} {m : Memory} {s : State} {k a k' a' : Nat} (hk : k ≤ k') (ha : a ≤ a')
+    (h : PoolG R m (win s k' a')) : PoolG R m (win s k a) :=
+  ⟨h.1, h.2.1, h.2.2.1, outside_win_mono hk ha h.2.2.2⟩
+
 theorem ModSpec.mono {impl : List Segment} {R : RtInv} {k a k' a' : Nat} (h : ModSpec impl R k a) (hk : k ≤ k')
     (ha : a ≤ a') : ModSpec impl R k' a' := fun b L z y =>
-  (h b L z y).mono (fun _ ⟨hp, h1, h2, h3⟩ => ⟨intPre_mono hk ha hp, h1, h2, h3⟩) fun _ _ _ ⟨h0, h1, h2⟩ =>
+  (h b L z y).mono (fun _ ⟨hp, h1, h2, h3, h4⟩ => ⟨intPre_mono hk ha hp, h1, h2, h3, poolG_mono hk ha h4⟩) fun _ _ _ ⟨h0, h1, h2⟩ =>
     ⟨h0, intPost_mono hk ha h1, h2⟩
 
 theorem oneG_mono {R : RtInv} {L : List (Nat × Nat)} {m : Memory} {xs : List Nat} {s : State} {k a k' a' : Nat}
@@ -66,7 +72,8 @@ theorem oneG_mono {R : RtInv} {L : List (Nat × Nat)} {m : Memory} {xs : List Na
 
 theorem ExpSpec.mono {impl : List Segment} {R : RtInv} {k a k' a' : Nat} (h : ExpSpec impl R k a) (hk : k ≤ k')
     (ha : a ≤ a') : ExpSpec impl R k' a' := fun b L z y mm =>
-  (h b L z y mm).mono (fun _ ⟨hp, h1, h2, h3, h4, h5⟩ => ⟨intPre_mono hk ha hp, h1, h2, h3, h4, oneG_mono hk ha h5⟩)
+  (h b L z y mm).mono (fun _ ⟨hp, h1, h2, h3, h4, h5, h6⟩ =>
+    ⟨intPre_mono hk ha hp, h1, h2, h3, h4, oneG_mono hk ha h5, poolG_mono hk ha h6⟩)
     fun _ _ _ ⟨h0, h1⟩ => ⟨h0, intPost_mono hk ha h1⟩
 
 end FvModexp.Arm64.RunIface

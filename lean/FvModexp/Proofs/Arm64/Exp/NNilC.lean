@@ -57,7 +57,7 @@ theorem contR (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     (h1182 : M1.readLE (sp + 1182) 1 = 1) (h1296 : M1.readLE (sp + 1296) 8 = sp + 1272)
     (h1272 : M1.readLE (sp + 1272) 8 = dwA) (h1280 : M1.readLE (sp + 1280) 8 = st)
     (hz : ZKeep0 R L g sp K zp zl zc xp xl yp yl mp n zp' zl' zc' s.mem)
-    (hy : yl = 1 ∧ s.mem.readLE yp 8 = 1)
+    (hy : yl = 1 ∧ s.mem.readLE yp 8 = 1) (hxl0 : xl ≠ 0)
     (S : State) (hpc : S.pc = BitVec.ofNat 64 remA) (hSsp : S.sp = BitVec.ofNat 64 (sp + 1056))
     (h0 : S.regs 0 = BitVec.ofNat 64 zp') (h1 : S.regs 1 = BitVec.ofNat 64 zl') (h2 : S.regs 2 = BitVec.ofNat 64 zc')
     (h3 : S.regs 3 = BitVec.ofNat 64 st) (h4 : S.regs 4 = BitVec.ofNat 64 xp) (h5 : S.regs 5 = BitVec.ofNat 64 xl)
@@ -68,14 +68,14 @@ theorem contR (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
       s''.regs 18 = S.regs 18 → s''.regs 28 = S.regs 28 →
       PostNil R b L K costF costR costS costP zp zc xp xl yp yl mp n s s'' → F s'') :
     Reaches ((LibN.program.link impl).withExit ret0) S (IsReturn F) := by
-  have hPV := npreV hP hN hF hLF hrg
-  have hyO : NE0 R L sp K yp (8 * yl) := hP.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hPV := npreV hP hN hF hLF hrg hxl0 (by omega)
+  have hyO : NE0 R L sp K yp (8 * yl) := hP.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1 (by omega)
   have hg28 : S.regs 28 = BitVec.ofNat 64 g := h28.trans hP.1.2.1
   subst hmem
   refine remPath impl hap R hRem hns hn11 ret0 hret F hPV hstk (MemFrame.refl _ _) rfl
     (zkeepV hz hN fun a k w => hF.accessible a k w)
     ⟨hy.1, by rw [rd0_v hyO (by omega) hLF hF]; exact hy.2⟩ hpc hSsp h0 h1 h2 h3 h4 h5 h6 h7 h8 h9 h28 h30 h29v h30v
-    (SlotEq.refl _ _) (epiK1 impl hap ret0 hret R hput F hP hN hF hLF h1182 h1296 h1272 h1280 f29 _ _ hg28 hK')
+    (SlotEq.refl _ _) (epiK1 impl hap ret0 hret R hput F hP hxl0 hN hF hLF h1182 h1296 h1272 h1280 f29 _ _ hg28 hK')
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
@@ -110,8 +110,8 @@ theorem contD (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
       s''.regs 18 = S.regs 18 → s''.regs 28 = S.regs 28 →
       PostNil R b L K costF costR costS costP zp zc xp xl yp yl mp n s s'' → F s'') :
     Reaches ((LibN.program.link impl).withExit ret0) S (IsReturn F) := by
-  have hPV := npreV hP hN hF hLF hrg
-  have hyO : NE0 R L sp K yp (8 * yl) := hP.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hPV := npreV hP hN hF hLF hrg hxl0 hyl0
+  have hyO : NE0 R L sp K yp (8 * yl) := hP.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1 (by omega)
   have hmO : NE0 R L sp K mp (8 * n) := hP.2.2.2.2.2.2.2.2.2.2.1
   have hn0 : 0 < n := hP.2.2.2.2.2.2.1
   have hmN : NatNorm s.mem mp n := hP.2.2.2.2.2.2.2.2.2.2.2.2.2.1
@@ -128,6 +128,6 @@ theorem contD (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
   refine fromJ5 impl hap R H ret0 hret F hPV hzJ hxl0 hyl0 (by show ¬(yl = 1 ∧ M1.readLE yp 8 = 1); rw [ey]; exact hy1)
     (by show ¬(n = 1 ∧ M1.readLE mp 8 = 1); rw [em]; exact hm1) (by show NoEvenB M1 mp n; unfold NoEvenB; rw [emv]; exact hev)
     S M1 hpc hSsp h0 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 h12 h13 h28 hmem (MemFrame.refl _ _) rfl hsp h29v h30v
-    (SlotEq.refl _ _) (epiK1 impl hap ret0 hret R hput F hP hN hF hLF h1182 h1296 h1272 h1280 f29 _ _ hg28 hK')
+    (SlotEq.refl _ _) (epiK1 impl hap ret0 hret R hput F hP hxl0 hN hF hLF h1182 h1296 h1272 h1280 f29 _ _ hg28 hK')
 
 end FvModexp.Arm64.ExpN

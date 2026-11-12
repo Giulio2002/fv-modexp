@@ -1223,3 +1223,22 @@ EvN3 32 s / 2.7 GB.
 KMulRel 9 s / 2.5 GB, KMulB 15 s / 2.9 GB, KMulI 35 s / 3.5 GB, KMulMath 2 s, KMulSub 21 s / 2.8 GB, KMulS1c 195 s / 7.7 GB →
 16 s / 2.5 GB (context cleared before janus_run + post lemma), KMulS1 8 s, KMulS2 47 s → 21 s / 2.9 GB (disjunctive hyps cleared
 before the tail), KMulAdd1 18 s, KMulAdd2 25 s, KMulEndP 10 s, KMulEnd 15 s. KMulS3: > 900 s (WIP, not committed; see NOTES).
+### infra s30 (2026-11-12, host load ~40, dev compile, arm64)
+EvJ2 10.2 s / 3.0 GB · EvE1 5.5 s / 2.6 GB · EvN4 5.5 s / 2.6 GB · EvJ3 1.4 s / 2.5 GB · EvE2 5.3 s / 2.6 GB ·
+EvAl 3.3 s / 2.1 GB · EvMv 2.5 s / 2.1 GB · EvLZ < 10 s · EvSetR 8.7 s / 2.6 GB (all ≤ 11 s).
+
+## asm s28 (2026-11-12, dev compile, host load ~35)
+drs final block (arm64): DrsFRel 2.4 s, DrsF1 4.8 s, DrsFRecP 10.6 s, DrsFRecQ 19.8 s / 2.8 GB, DrsF2 21.5 s / 2.9 GB,
+DrsFRel3 3.0 s, DrsF3 12.0 s / 2.7 GB. First DrsF2 draft never finished (> 12 min CPU, killed): a
+`repeat (first | rw [readLE_writeLE_self] | rw [readLE_writeLE_of_disjoint _ _ (by omega)])` closer retrying failing
+omegas; explicit per-goal rewrite chains → 17 s for f2x. Budget-invariant change (Cx.lo) rebuilt the drs chain to DrsLoop
+with no time change.
+### infra s31 (2026-11-12, dev compile, arm64)
+EvSetT 1.8 s / 2.5 GB · EvSetU 1.8 s / 2.5 GB · EvSetP 2.4 s / 2.5 GB · EvSet 1.9 s / 2.5 GB · SubMod2NG 1.0 s / 2.1 GB
+(all term-mode compositions; every `janus_run` lives in EvSetR).
+
+## asm s29 (2026-11-12) — divRecursiveStep arm64 final block (dev, load ~20-25)
+New modules DrsFRel4 3.6 s, DrsFMulQ 57.6 s / 4.2 GB (copy of DrsMulQ; trim candidate), DrsF4C 1.5 s, DrsF4R 2.1 s,
+DrsF4 4.0 s, DrsFCE 1.6 s, DrsFC1 3.9 s, DrsFC2 5.7 s, DrsFC6R 3.4 s, DrsFC2B 4.8 s, DrsFC3 2.9 s, DrsFC4R 6.2 s,
+DrsFC4 7.4 s, DrsFC5R 5.1 s, DrsFC5 3.9 s, DrsFC5S 2.2 s, DrsFC6 12.4 s, DrsFC6X 1.2 s, DrsFCL 1.1 s, DrsFV 5.0 s,
+DrsFD1 2.7 s, DrsFD2 2.9 s, DrsFD3 10.4 s, DrsFD4 7.3 s, DrsFD5R 4.8 s, DrsFD5 7.2 s (all ≤ 2.8 GB except FMulQ).

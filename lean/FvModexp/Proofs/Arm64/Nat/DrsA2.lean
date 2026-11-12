@@ -105,14 +105,14 @@ set_option maxHeartbeats 16000000 in
 theorem rec_post {R : RtInv} {c : Cx} {s X X' : State} {Lk : List (Nat × Nat)} {bk j : Nat} {Z U : List Nat}
     (hcr : Cr R c s) (hev : Ev R c s Lk bk X.mem) (hfp : Fp R c s Lk X.mem (c.l1 s)) (hbd : Bd c s X.mem j Z)
     (hbs : Bs c s X.mem j) (hj : c.vl / 2 < j) (hjm : j ≤ c.u1 - c.vl) (huk : Asm.limbs X.mem c.up c.u1 = U)
-    (hsp : X.sp.toNat = s.sp.toNat - 400) (h28 : X.regs 28 = s.regs 28) (hbud : (j / (c.vl / 2) + 1) * c.K s ≤ bk)
+    (hsp : X.sp.toNat = s.sp.toNat - 400) (h28 : X.regs 28 = s.regs 28) (hbud : c.lo s + (j / (c.vl / 2) + 1) * c.K s ≤ bk)
     (hpost : DrsPostW R bk Lk (drsC (stLen X.mem c.st) (c.vl + 1) (c.vl - c.vl / 2 + 1)) (c.W - 400) c.t0
       (c.vl / 2 + 1) c.st (c.up + 8 * (j - 1)) (c.vl + 1) (c.vp + 8 * (c.vl / 2 - 1)) (c.vl - c.vl / 2 + 1) X X')
     (hreg : X'.mem.regions = X.mem.regions) :
     ∃ L' b', Ev R c s L' b' X'.mem ∧ Fp R c s L' X'.mem (c.l1 s) ∧ Bd c s X'.mem j Z ∧ Bs c s X'.mem j ∧
       Asm.limbs X'.mem c.t0 (c.vl / 2 + 1) = (c.R s j U).1 ∧
       Asm.limbs X'.mem c.up c.u1 = Mdl.upd U (j - 1) (c.R s j U).2 ∧
-      (j / (c.vl / 2)) * c.K s + stackNatCost (c.l1 s) (3 * c.vl) +
+      c.lo s + (j / (c.vl / 2)) * c.K s + stackNatCost (c.l1 s) (3 * c.vl) +
         mulC (c.l1 s + StackNat.rnd (3 * c.vl)) (c.vl / 2 + 1) (c.vl / 2 - 1) ≤ b' := by
   have hW := hcr.hW; have hWg := drsW_ge c.vl; have h40 := hcr.h40
   have hu1 := hcr.u1ul; have hvu := hcr.vu1
@@ -211,7 +211,7 @@ structure A2 (R : RtInv) (c : Cx) (s : State) (Lk : List (Nat × Nat)) (bk : Nat
   li : c.LI s j Z U
   qk : Asm.limbs S.mem c.t0 (c.vl / 2 + 1) = (c.R s j U).1
   uk : Asm.limbs S.mem c.up c.u1 = Mdl.upd U (j - 1) (c.R s j U).2
-  bud : (j / (c.vl / 2)) * c.K s + stackNatCost (c.l1 s) (3 * c.vl) +
+  bud : c.lo s + (j / (c.vl / 2)) * c.K s + stackNatCost (c.l1 s) (3 * c.vl) +
     mulC (c.l1 s + StackNat.rnd (3 * c.vl)) (c.vl / 2 + 1) (c.vl / 2 - 1) ≤ bk
 
 end FvModexp.Arm64.DivRec
