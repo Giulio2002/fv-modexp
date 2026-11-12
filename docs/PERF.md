@@ -1005,3 +1005,12 @@ cost milliseconds. Never call `omega` after `obtain`ing a callee post; prove the
 | MulLoopEnv | 3 s | 2.4 GB |
 | MulLoopT (TOK, LB.mpreT) | 2 s | 2.3 GB |
 | MulLoopStep | 2 s | 2.3 GB |
+
+## asm s21 (2026-11-12) — drs big path, first modules (arm64 dev, LEAN_NUM_THREADS=4)
+| module | time | mem |
+|---|---|---|
+| Nat/DrsRel | 2.9 s | 2.3 GB |
+| Nat/DrsSNP | 3.1 s | 2.3 GB |
+| Nat/DrsSNI | 6.4 s | 2.5 GB |
+| Nat/DrsSN | 17.5 s | 2.6 GB (was > 6 min: implicit call state unified via `?X.mem =?= P.mem`; fixed by argument order) |
+| Common/DivRecIdeal | 0.4 s | 0.6 GB |
