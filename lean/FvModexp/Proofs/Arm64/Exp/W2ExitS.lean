@@ -27,7 +27,7 @@ before the final reduction -/
     (p l c : Nat) (M' : Memory) : Prop :=
   ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b - makeCost n ≤ b' ∧ R.inv b' L' g (view R.rt L' M') ∧
     M'.regions = M.regions ∧ MemFrame M M' (jw R sp zzp zzc) ∧ LiveFrame M M' L [(zzp, zzp + 8 * zzc)] ∧
-    natVal M' p l = V ∧ l ≤ c ∧ c < 2 ^ 64 ∧ NatLive M' R L' p c ∧
+    natVal M' p l = V ∧ l ≤ c ∧ (0 < c ∧ c < 2 ^ 40) ∧ NatLive M' R L' p c ∧
     ((p = zzp ∧ c = zzc) ∨ (InRanges p (8 * c) R.rt ∧ ApartAll p (8 * c) L)) ∧
     (l = 0 ∨ (p + 8 * l ≤ 2 ^ 48 ∧ M'.accessible p (8 * l) false = true))
 
@@ -186,7 +186,7 @@ theorem exSub (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
   obtain ⟨hal, hK, hA, hacc, hg1, hg2, hg3, hrt, hga, hgrt, hLs, hd, hro⟩ := hce
   have hce : CallW.CEnv R L g sp 4304 752 M := ⟨hal, hK, hA, hacc, hg1, hg2, hg3, hrt, hga, hgrt, hLs, hd, hro⟩
   have hns : ∀ x, NatSub.names.contains x = true → LibW.names.contains x = true := MontW.sub_of_all (by decide)
-  have hS0 := LibWC.hypSum hap hns (NatSub.ens impl hap R hmk hmv b L (BitVec.ofNat 64 zzp) (BitVec.ofNat 64 n)
+  have hS0 := LibWC.hypSum hap hns (NatSub.ensR impl hap R hmk hmv b L (BitVec.ofNat 64 zzp) (BitVec.ofNat 64 n)
     (BitVec.ofNat 64 zzc) (BitVec.ofNat 64 zzp) (BitVec.ofNat 64 n) (BitVec.ofNat 64 zzc) (BitVec.ofNat 64 mp)
     (BitVec.ofNat 64 n) (BitVec.ofNat 64 mc))
   rw [show segAddr Extracted.program NatSub.fn = subEntry by decide] at hS0
@@ -219,7 +219,10 @@ theorem exSub (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
       fun h => absurd h (by omega), fun d src k hk => hserv.2.1 d src k (by omega)⟩
     all_goals simp only [outside_cons, outside_nil, and_true]; omega
   -- after `nat.sub`
-  obtain ⟨p', l', c', hp0, hp1, hp2, hval, hnorm, hlc, hln, L', b', hLE, hb', hinv', hlive, hor, hF, hLF⟩ := hq
+  obtain ⟨⟨p', l', c', hp0, hp1, hp2, hval, hnorm, hlc, hln, L', b', hLE, hb', hinv', hlive, hor, hF, hLF⟩, hreu, -⟩ := hq
+  have hcz : c' = zzc := by
+    have := (hreu (by rw [tn, tzc]; exact hzn)).2
+    rw [hp2, tzc] at this; exact this
   simp only [tz, tn, tzc, tm, hmem, tsp, tg, winA] at hval hb' hinv' hor hF hLF
   have hl0 : l' = 0 := norm_zero (by rw [hval]; simp only [natVal] at heq ⊢; omega) hnorm
   subst hl0
@@ -263,7 +266,7 @@ theorem exSub (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     right
     rcases hr with rfl | rfl | rfl | rfl <;> exact hrt.of_sub (by dsimp only; omega) (by dsimp only; omega)
   refine KJ S4 p' 0 c' M4 a1 a2 a3 a4 a5 a6 a7 a8 a9 ⟨L', b', hLE, hb', FvModexp.Expmc.inv_frame hW2 hWR hinv',
-    by rw [hrg2, hrg, hmem], ?_, ?_, by simp [natVal], by omega, hc64, ?_, hor, Or.inl rfl⟩
+    by rw [hrg2, hrg, hmem], ?_, ?_, by simp [natVal], by omega, ⟨by omega, by omega⟩, ?_, hor, Or.inl rfl⟩
   · refine hF.trans hW2 (fun a k ho => ?_)
     simp only [jw, tw, winA, tz, tzc, tsp, outside_append, outside_cons, outside_nil, and_true] at ho ⊢
     exact ⟨⟨⟨ho.1.1, by omega⟩, by omega⟩, by omega⟩
