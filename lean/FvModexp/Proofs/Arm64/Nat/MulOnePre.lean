@@ -47,7 +47,7 @@ theorem pre_one {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W : Nat} {zp zc x
     have h2 : makeB (xl.toNat + 1) ≤ mulC (stLen s.mem st) xl.toNat 1 := makeB_le_mulC1 hx1
     omega
   refine ⟨callEnv_shift hce hLs hF1' hsp1 hg1 hreg (by omega) (by omega) (by omega) (by omega), hty,
-    by omega, hzc40, ?_, hsub _ _ hzw, ?_, by rw [hF1.accessible]; exact hxacc, by omega,
+    by omega, hzc40, ?_, hsub _ _ hzw, ?_, by rw [hF1.accessible]; exact hxacc (by omega), by omega,
     hxh'.sub (Nat.le_refl _) (by omega), hsub _ _ (hxw (by omega)).1, ?_, ?_⟩
   · intro hc; obtain ⟨a1, a2, a3, a4⟩ := hzl hc; exact ⟨a1, a2, by rw [hF1.accessible]; exact a3, a4⟩
   · intro hc

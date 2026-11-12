@@ -90,9 +90,9 @@ theorem kmPB2 (impl : List Segment) {R : RtInv} {b : Nat} {L : List (Nat × Nat)
     (h12 : S.regs 12 = BitVec.ofNat 64 (kh n))
     (h13 : S.regs 13 = BitVec.ofNat 64 (xc - kh n))
     (h14 : S.regs 14 = BitVec.ofNat 64 (xp + 8 * kh n))
-    (h18 : S.regs 18 = s.regs 18)
     (h28 : S.regs 28 = s.regs 28)
     (h29 : S.regs 29 = s.sp - 456#64)
+    (h18 : S.regs 18 = s.regs 18)
     {ret : BitVec 64} {Q : State → Prop}
     (hK : ∀ S2 : State, S2.pc = BitVec.ofNat 64 0x1bbf94 → S2.sp = s.sp - 448#64 →
       S2.regs 0 = BitVec.ofNat 64 st → S2.regs 1 = BitVec.ofNat 64 zp → S2.regs 2 = BitVec.ofNat 64 (2 * n) → S2.regs 3 = BitVec.ofNat 64 zc → S2.regs 4 = BitVec.ofNat 64 (kh n) → S2.regs 7 = BitVec.ofNat 64 yp → S2.regs 8 = BitVec.ofNat 64 n → S2.regs 9 = BitVec.ofNat 64 yc → S2.regs 10 = BitVec.ofNat 64 (n + 1) → S2.regs 12 = BitVec.ofNat 64 (kh n) → S2.regs 28 = s.regs 28 → S2.regs 29 = s.sp - 456#64 → S2.regs 18 = s.regs 18 →
@@ -116,13 +116,17 @@ theorem kmPB2 (impl : List Segment) {R : RtInv} {b : Nat} {L : List (Nat × Nat)
   have hx8 : xp + 8 * kh n < 2 ^ 64 := by
     have := hQ.pre.F.x48; omega
   janus_run until [0x1bbf94]
-  refine hK _ rfl rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ⟨hQ.pre, ?fr, ?reg, ?_, ?_, ?_, ?_, ?_⟩ ?_ ?_
+  refine hK _ rfl rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ⟨hQ.pre, ?fr, ?reg, ?lr, ?fp, ?s2, ?s5, ?s6⟩ ?_ ?_
   case fr => exact hQ.fr.trans (by janus_frame) fun a k h => ⟨h, h⟩
   case reg => simp only [Memory.regions_writeLE]; exact hQ.reg
+  case lr => janus_simp; exact hQ.lr
+  case fp => janus_simp; exact hQ.fp
+  case s2 => janus_simp; exact hQ.s2
+  case s5 => janus_simp; exact hQ.s5
+  case s6 => janus_simp; exact hQ.s6
   all_goals (try simp only [IntAt])
   all_goals janus_simp
-  all_goals first | exact hQ.lr | exact hQ.fp | exact hQ.s2 | exact hQ.s5 | exact hQ.s6 |
-    exact Nat.mod_eq_of_lt (by omega) | skip
+  all_goals first | exact Nat.mod_eq_of_lt (by omega) | skip
   all_goals (simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega)
 
 set_option maxRecDepth 20000 in
@@ -140,9 +144,9 @@ theorem kmPB3 (impl : List Segment) {R : RtInv} {b : Nat} {L : List (Nat × Nat)
     (h9 : S.regs 9 = BitVec.ofNat 64 yc)
     (h10 : S.regs 10 = BitVec.ofNat 64 (n + 1))
     (h12 : S.regs 12 = BitVec.ofNat 64 ly0)
-    (h18 : S.regs 18 = s.regs 18)
     (h28 : S.regs 28 = s.regs 28)
     (h29 : S.regs 29 = s.sp - 456#64)
+    (h18 : S.regs 18 = s.regs 18)
     {ret : BitVec 64} {Q : State → Prop}
     (hK : ∀ S2 : State, S2.pc = BitVec.ofNat 64 0x1bbfcc → S2.sp = s.sp - 448#64 →
       S2.regs 0 = BitVec.ofNat 64 st → S2.regs 1 = BitVec.ofNat 64 zp → S2.regs 2 = BitVec.ofNat 64 (2 * n) → S2.regs 3 = BitVec.ofNat 64 zc → S2.regs 4 = BitVec.ofNat 64 (kh n) → S2.regs 5 = BitVec.ofNat 64 (yc - kh n) → S2.regs 6 = BitVec.ofNat 64 (yp + 8 * kh n) → S2.regs 7 = BitVec.ofNat 64 yp → S2.regs 8 = BitVec.ofNat 64 (n - kh n) → S2.regs 9 = BitVec.ofNat 64 yc → S2.regs 10 = BitVec.ofNat 64 (n + 1) → S2.regs 12 = BitVec.ofNat 64 ly0 → S2.regs 28 = s.regs 28 → S2.regs 29 = s.sp - 456#64 → S2.regs 18 = s.regs 18 →

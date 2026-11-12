@@ -69,9 +69,9 @@ theorem kpre_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp xl 
   have hpx' : Apart p (8 * c) xp (8 * yl) := by unfold Apart at hpx ⊢; omega
   refine ⟨callEnv_shift hce hJ.lsep hFs hsp hg hreg (by omega) (by omega) (by omega) (by decide), hkw', hsv,
     globals_shift hgl hFs (fun a n h => winA_of_win' h) hsub, hwt, h40, rfl, rfl, by omega,
-    ⟨⟨by omega, hxc40, by omega, by rw [hFs.accessible]; exact Memory.accessible_mono _ hxacc (Nat.le_refl _) (by omega),
+    ⟨⟨by omega, hxc40, by omega, fun _ => by rw [hFs.accessible]; exact Memory.accessible_mono _ (hxacc (by omega)) (Nat.le_refl _) (by omega),
       fun _ => ⟨hJ.ext.held hxh', hx48⟩, fun _ => ⟨hsub _ _ hxw'', ?_⟩⟩,
-     ⟨hylc, hyc40, hyl12, by rw [hFs.accessible]; exact hyacc, fun _ => ⟨hJ.ext.held hyh', hy48⟩,
+     ⟨hylc, hyc40, hyl12, fun h0 => by rw [hFs.accessible]; exact hyacc h0, fun _ => ⟨hJ.ext.held hyh', hy48⟩,
       fun _ => ⟨hsub _ _ hyw', ?_⟩⟩,
      ⟨hc40, fun _ => ⟨hp8, hph, by rw [hF.accessible]; exact hpacc, hp48⟩, hsub _ _ hpw,
       fun _ => ⟨by rw [hg]; exact hpg, ?_⟩,
