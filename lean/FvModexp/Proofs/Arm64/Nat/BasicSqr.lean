@@ -15,7 +15,7 @@ namespace FvModexp.Arm64.BasicSqr
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem pro1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
-    (stkSN abSN : Nat) (hSN : ExpHyp.StackNatHyp impl R [ExpHyp.fnStackNat] stkSN abSN)
+    (stkSN abSN : Nat) (hSN : StackNat.HypL impl R [ExpHyp.fnStackNat] stkSN abSN)
     (hk1 : stkSN ≤ 4224) (hk2 : abSN ≤ 96)
     (hmc : MemclrNoHeapPointersLive (LibBasicSqr.program.link impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
     (hLsh : ∀ b L, Summary0 (LibBasicSqr.program.link impl) (segAddr Extracted.program lshVUfn) (LshLPre R b L)
@@ -64,7 +64,7 @@ theorem pro1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
 set_option maxRecDepth 20000 in
 theorem full (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hmc : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
-    (stkSN abSN : Nat) (hSN : ExpHyp.StackNatHyp impl R [ExpHyp.fnStackNat] stkSN abSN)
+    (stkSN abSN : Nat) (hSN : StackNat.HypL impl R [ExpHyp.fnStackNat] stkSN abSN)
     (hk1 : stkSN ≤ 4224) (hk2 : abSN ≤ 96)
     (b : Nat) (L : List (Nat × Nat)) (st zp zl zc xp xl xc : BitVec 64) :
     Summary (LibBasicSqr.program.link impl) (segAddr Extracted.program fn)
@@ -94,7 +94,7 @@ theorem full (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
 `z[0:2n]`, the stack header and its free part, and the window; no panic, no fault. -/
 theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hmc : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
-    (stkSN abSN : Nat) (hSN : ExpHyp.StackNatHyp impl R [ExpHyp.fnStackNat] stkSN abSN)
+    (stkSN abSN : Nat) (hSN : StackNat.HypL impl R [ExpHyp.fnStackNat] stkSN abSN)
     (hk1 : stkSN ≤ 4224) (hk2 : abSN ≤ 96)
     (b : Nat) (L : List (Nat × Nat)) (st zp zl zc xp xl xc : BitVec 64) :
     Ensures ((Extracted.program.onlySegments names).link impl) (segAddr Extracted.program fn)
@@ -115,7 +115,7 @@ set_option linter.defProp false in
 /-- `ens` as a callee summary in a caller whose program keeps the functions `ms ⊇ names` (CONVENTIONS §4). -/
 def sum (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hmc : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
-    (stkSN abSN : Nat) (hSN : ExpHyp.StackNatHyp impl R [ExpHyp.fnStackNat] stkSN abSN)
+    (stkSN abSN : Nat) (hSN : StackNat.HypL impl R [ExpHyp.fnStackNat] stkSN abSN)
     (hk1 : stkSN ≤ 4224) (hk2 : abSN ≤ 96)
     (b : Nat) (L : List (Nat × Nat)) (st zp zl zc xp xl xc : BitVec 64) (ms : List String)
     (hsub : ∀ x, names.contains x = true → ms.contains x = true) :=

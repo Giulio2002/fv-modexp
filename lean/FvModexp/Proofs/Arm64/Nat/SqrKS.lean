@@ -67,7 +67,7 @@ theorem ks2 (impl : List Segment) (R : RtInv)
           xp.toNat xl.toNat s1 s2 := hq
       rw [e1, e2] at hq'; exact hq')
   janus_run until [0x1bb644] calls [hBS]
-  rename_i hpc2 hsp2 h282 h292 h182 hval L2 b2 hext hbud k1 k2 k5 k6 k7 kl kor hF2 hLF2 hinv2 k3 k4
+  rename_i hpc2 hsp2 h282 h292 h182 hval L2 b2 hext hbud k1 k2 k5 k6 k7 kl kor kmem hF2 hLF2 hinv2 k3 k4
   simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte] at hpc2 hsp2 h282 h292 h182
   have e176 : (s.sp - 176#64).toNat = s.sp.toNat - 176 := by
     simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
@@ -109,8 +109,8 @@ theorem ks2 (impl : List Segment) (R : RtInv)
     rw [hval, natVal_frame hF (by
       obtain ⟨-, -, -, -, -, -, -, -, -, -, hxw, -⟩ := hJ.pre
       exact winA_of_win (hxw (by omega))), hxv]
-  have hsb : StackBack R L1 L2 st.toNat S.mem s'.mem :=
-    ⟨⟨k1, k2, by rw [hacc2]; exact k3, by omega, k5, k6, k7⟩, kl, kor⟩
+  have hsb : StackBackL R L1 L2 st.toNat S.mem s'.mem :=
+    ⟨⟨⟨k1, k2, by rw [hacc2]; exact k3, by omega, k5, k6, k7⟩, kl, kor⟩, kmem⟩
   have hkc : stackNatCost (stLen s.mem st.toNat) (2 * xl.toNat) ≤ ksqrC (stLen s.mem st.toNat) xl.toNat := by
     by_cases h : 80 ≤ xl.toNat
     · rw [ksqrC_big h]; omega

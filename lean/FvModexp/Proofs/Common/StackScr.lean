@@ -50,6 +50,30 @@ is an exact element of the final live set (needed by `sync.(*Pool).Put` of the `
 theorem StackBackL.toStackBack {R : RtInv} {L L1 : List (Nat × Nat)} {st : Nat} {m0 m : Memory}
     (h : StackBackL R L L1 st m0 m) : StackBack R L L1 st m0 m := h.1
 
+/-- the stack's array of `m` is that of `m0`, or an exact element of `L1` (`StackBackL`'s second half) -/
+@[reducible] def ArrIn (L1 : List (Nat × Nat)) (st : Nat) (m0 m : Memory) : Prop :=
+  ¬(stW m st = stW m0 st ∧ stCap m st = stCap m0 st) → (stW m st, stW m st + 8 * stCap m st) ∈ L1
+
+/-- `StackBack` with the array kept is `StackBackL` -/
+theorem StackBack.toL {R : RtInv} {L L1 : List (Nat × Nat)} {st : Nat} {m0 m : Memory}
+    (h : StackBack R L L1 st m0 m) (hs : stW m st = stW m0 st ∧ stCap m st = stCap m0 st) :
+    StackBackL R L L1 st m0 m := ⟨h, fun hn => absurd hs hn⟩
+
+/-- `ArrIn` composes along a callee that brought the stack back in the L form -/
+theorem ArrIn.trans {R : RtInv} {L L' : List (Nat × Nat)} {st : Nat} {m0 m m' : Memory}
+    (h : ArrIn L st m0 m) (hb : ¬(stW m' st = stW m st ∧ stCap m' st = stCap m st) →
+      (stW m' st, stW m' st + 8 * stCap m' st) ∈ L') (he : LiveExt R L L') : ArrIn L' st m0 m' := by
+  intro hn
+  by_cases hs : stW m' st = stW m st ∧ stCap m' st = stCap m st
+  · rw [hs.1, hs.2] at hn ⊢; exact he.mem_old (h hn)
+  · exact hb hs
+
+/-- `ArrIn` survives frames that keep the header -/
+theorem ArrIn.congr {L L' : List (Nat × Nat)} {st : Nat} {m0 m m' : Memory}
+    (h : ArrIn L st m0 m) (hw : stW m' st = stW m st) (hc : stCap m' st = stCap m st) (hL : ∀ r ∈ L, r ∈ L') :
+    ArrIn L' st m0 m' := by
+  intro hn; rw [hw, hc] at hn ⊢; exact hL _ (h hn)
+
 /-- a scratch nat of `k > 0` words at `t` (see the module doc) -/
 structure Scr (R : RtInv) (L L1 : List (Nat × Nat)) (m0 m : Memory) (st t k : Nat) : Prop where
   b48 : t + 8 * k ≤ 2 ^ 48

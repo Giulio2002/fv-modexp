@@ -30,7 +30,7 @@ theorem correctness (impl : List Segment) (hap : ImplApart Extracted.program imp
     Ensures (Extracted.program.link impl) (segAddr Extracted.program BasicSqr.fn) [st, zp, zl, zc, xp, xl, xc]
       (BasicSqr.Pre R b L st.toNat zp.toNat zl.toNat zc.toNat xp.toNat xl.toNat)
       (BasicSqr.Post R b L st.toNat zp.toNat zl.toNat xp.toNat xl.toNat) :=
-  Ensures.full hap (BasicSqr.ens impl hap R hmc 4208 24 (StackNat.hyp impl hap R hgr hmc hwb) (by decide) (by decide)
+  Ensures.full hap (BasicSqr.ens impl hap R hmc 4208 24 (StackNat.hypL impl hap R hgr hmc hwb) (by decide) (by decide)
     b L st zp zl zc xp xl xc)
 
 end FvModexp.Arm64.BasicSqrRow

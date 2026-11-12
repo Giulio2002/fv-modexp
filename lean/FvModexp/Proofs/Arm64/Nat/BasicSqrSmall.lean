@@ -117,8 +117,8 @@ theorem small2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     · intro r hr; have := hLs0 r hr; simp only [win, outside_cons, outside_nil, and_true] at this; omega
     · intro r hr; simp only [winA, List.mem_cons, List.not_mem_nil, or_false] at hr
       rcases hr with rfl | rfl <;> simp only <;> omega
-  refine ⟨?_, L', b', hext, by omega, hinv2, ⟨⟨hst8, hext.held hsth, ?_, hst48, ?_, ?_, ?_⟩, ?_, ?_⟩,
-    hFall, hLFall⟩
+  refine ⟨?_, L', b', hext, by omega, hinv2, ⟨⟨⟨hst8, hext.held hsth, ?_, hst48, ?_, ?_, ?_⟩, ?_, ?_⟩,
+    fun hn => absurd ⟨rW, rC⟩ hn⟩, hFall, hLFall⟩
   · show natVal s'.mem _ _ = _
     rw [show zl.toNat = xl.toNat + xl.toNat by omega]; exact hval
   · show s'.mem.accessible _ _ _ = _; rw [hacc2]; exact hstacc
