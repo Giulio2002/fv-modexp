@@ -20,6 +20,8 @@ inside `expNNOdd`'s own window `[sp - K, sp + 1168) = [SP - (K + 1056), SP + 112
 
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvModexp
 
+set_option autoImplicit false
+
 namespace FvModexp.Arm64.ExpOdd
 
 def fn : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.nat.expNNOdd"
@@ -94,7 +96,7 @@ def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K : Nat) (costF : Nat �
     (zp zc st xp xl yp ylen mp n : Nat) (s s' : State) : Prop :=
   ∃ p l c : Nat, s'.regs 0 = BitVec.ofNat 64 p ∧ s'.regs 1 = BitVec.ofNat 64 l ∧ s'.regs 2 = BitVec.ofNat 64 c ∧
     natVal s'.mem p l = natVal s.mem xp xl ^ natVal s.mem yp ylen % natVal s.mem mp n ∧ NatNorm s'.mem p l ∧
-    l ≤ c ∧ c < 2 ^ 64 ∧
+    l ≤ c ∧ (0 < c ∧ c < 2 ^ 40) ∧
     ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b - OCost costF n xl ylen (stLen s.mem st) ≤ b' ∧
       R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem) ∧ NatLive s'.mem R L' p c ∧
       ((p = zp ∧ c = zc) ∨ (InRanges p (8 * c) R.rt ∧ ApartAll p (8 * c) L)) ∧

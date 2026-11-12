@@ -68,7 +68,7 @@ def PostNil (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K : Nat) (costF : Nat
     (zp zc xp xl yp yl mp n : Nat) (s s' : State) : Prop :=
   ∃ p l c : Nat, s'.regs 0 = BitVec.ofNat 64 p ∧ s'.regs 1 = BitVec.ofNat 64 l ∧ s'.regs 2 = BitVec.ofNat 64 c ∧
     natVal s'.mem p l = natVal s.mem xp xl ^ natVal s.mem yp yl % natVal s.mem mp n ∧ NatNorm s'.mem p l ∧
-    l ≤ c ∧ c < 2 ^ 64 ∧
+    l ≤ c ∧ c < 2 ^ 40 ∧
     ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧
       b - (24 + NCost costF costR costS costP xl yl n 0 (Nat.log2 (natVal s.mem mp n))) ≤ b' ∧
       R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem) ∧ NatLive s'.mem R L' p c ∧
