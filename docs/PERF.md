@@ -1109,3 +1109,9 @@ Body segments are independent modules importing only BJ (ROW-TIME rule); composi
 | Arm64/Nat/DrsCRel | 2.6 s | 2.3 GB | corr-loop relations, `Mc.own3` |
 | Arm64/Nat/DrsMulQ | 76–102 s | 4.4 GB | `mul_post` — to trim (split value part / env part) |
 | Arm64/Nat/DrsB4 | > 8 GB (memcap kill) | — | WIP, not committed: v1 (post lemma applied with X pinned only by `X.mem = S.mem`) > 9 min / 9.6 GB; v2 (abstract call state `b4c`) still > 8 GB — profile next session |
+## infra s25 (2026-11-12) — LibW re-target + ModInv X-form (dev compile, host load ~40, J=2)
+* All P2Pre/P2W2/SubMod2N/ModInv modules rebuilt on `LibW.program`: no time change beyond noise (P2W2 modules ≤ 14 s).
+* ModInv X-form: max `ModInvMake` 81-87 s / 2.6 GB, `ModInvL1` 65 s / 3.7 GB, `ModInvEntry` 29 s; rest ≤ 15 s.
+* Lesson: a new reducible conjunct full of `Apart` disjunctions inside a reducible `Pre` made `omega` (which unfolds
+  reducible hypotheses) time out at 200k heartbeats in unrelated lemmas (ModInvKeep2) — make such bundles plain `def`s
+  (`ModInv.PX`, `ModInv.WA`) so omega treats them as atoms; destructure them explicitly where needed.
