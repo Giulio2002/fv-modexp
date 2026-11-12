@@ -2,6 +2,9 @@ import FvModexp.Proofs.Arm64.Nat.SqrCall
 import FvModexp.Proofs.Arm64.Nat.DivmcCall
 import FvModexp.Proofs.Arm64.Nat.StackNat
 import FvModexp.Proofs.Common.BitLemmas
+import FvModexp.Proofs.Common.WinLemmas
+
+set_option autoImplicit false
 
 /-!
 # `nat.sqr` (arm64), `12 ≤ n < 80`, `stk ≠ nil`: `basicSqr(stk, z, x); return z.norm()` (natmul.go:100-103)
@@ -121,7 +124,8 @@ theorem bs2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
       (k := stackNatCost (stLen s.mem st.toNat) (2 * xl.toNat)) (by rw [← eL]; exact hbud) (by omega) hinv2 hsb
       (hF2.mono fun a n h => by
         simp only [BasicSqr.ws, stkWs, winA, outside_append, outside_cons, outside_nil, and_true] at h ⊢
-        exact ⟨⟨h.1.1, by omega, by omega⟩, h.2⟩)
+        exact ⟨⟨h.1.1, (winA_in (c := 176) (k := 4432) (ab := 64) hb0 (Nat.le_trans (by decide) hW) (by decide) h.1.2.1).1,
+          (winA_in (c := 176) (k := 4432) (ab := 64) hb0 (Nat.le_trans (by decide) hW) (by decide) h.1.2.1).2⟩, h.2⟩)
       hLF2
       (hF3.mono fun a n h => by simp only [winA, outside_cons, outside_nil, and_true] at h ⊢; omega)
       q0 q1 q2 hn' (by rw [hv', hval']) hnn)
