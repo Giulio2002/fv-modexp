@@ -27,7 +27,7 @@ open FvModexp.Arm64.EvenHyp
   S.sp = BitVec.ofNat 64 (s.sp.toNat - 144) ∧ S.regs 28 = s.regs 28 ∧ S.regs 18 = s.regs 18 ∧
     S.regs 0 = BitVec.ofNat 64 p ∧ S.regs 1 = BitVec.ofNat 64 l ∧ S.regs 2 = BitVec.ofNat 64 c ∧
     S.regs 9 = BitVec.ofNat 64 n ∧ Fw s S.mem zp zl zc yp n ∧ Rt R (b - g * gA n) L s zp zc n 3 S.mem L3 b3 ∧
-    NatLive S.mem R L3 p c ∧ CurA R L zp zc p c ∧ c < 2 ^ 40 ∧ l ≤ c ∧ l ≤ W n ∧ g ≤ l ∧
+    NatLive S.mem R L3 p c ∧ CurA R L zp zc p c ∧ c < 2 ^ 40 ∧ p < 2 ^ 64 ∧ l ≤ c ∧ l ≤ W n ∧ g ≤ l ∧
     (W n ≤ zc → p = zp ∧ c = zc ∧ g = 0) ∧ natVal S.mem p l = dD s zp zl yp yl n
 
 set_option maxRecDepth 20000 in
@@ -42,7 +42,7 @@ theorem gstep (impl : List Segment) {R : RtInv}
     (h0 : (T.regs 0).toNat = p) (h1 : (T.regs 1).toNat = l + 1) (h2 : (T.regs 2).toNat = c)
     (h3 : (T.regs 3).toNat = 1) (h4 : (T.regs 4).toNat = wT) (h30 : T.regs 30 = BitVec.ofNat 64 1806228)
     (hfw : Fw s T.mem zp zl zc yp n) (hrt : Rt R (b - g * gA n) L s zp zc n 3 T.mem L3 b3)
-    (hlv : NatLive T.mem R L3 p c) (hcur : CurA R L zp zc p c) (hcl : c = l) (hlW : l + 1 ≤ W n) (hg : g ≤ l)
+    (hlv : NatLive T.mem R L3 p c) (hcur : CurA R L zp zc p c) (hp64 : p < 2 ^ 64) (hcl : c = l) (hlW : l + 1 ≤ W n) (hg : g ≤ l)
     (hgz : W n ≤ zc → p = zp ∧ c = zc ∧ g = 0) (hv : natVal T.mem p l = dD s zp zl yp yl n)
     (K : ∀ (S' : State) (p' c' : Nat) (L' : List (Nat × Nat)) (b' : Nat), S'.pc = BitVec.ofNat 64 1806192 →
       AI R b L zp zl zc yp yl n s S' p' (l + 1) c' (g + 1) L' b' → GoalG impl R b L zp zl zc yp yl n s S') :
@@ -91,7 +91,7 @@ theorem gstep (impl : List Segment) {R : RtInv}
   rw [h2] at *
   janus_run [r224, hS1, esp] until [1806192]
   refine K _ ptr.toNat (growCap8 (l + 1) c) (L3 ++ [(ptr.toNat, ptr.toNat + 8 * growCap8 (l + 1) c)])
-    (b3 - 8 * growCap8 (l + 1) c) ?_ ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+    (b3 - 8 * growCap8 (l + 1) c) ?_ ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, BitVec.isLt _, ?_, ?_, ?_, ?_, ?_⟩
   all_goals try janus_simp
   · exact fw_fstore hfw1 (by omega) hal
   · exact rt_cstore hrt1 hcurN hlvN (by omega) (by omega)
@@ -103,5 +103,104 @@ theorem gstep (impl : List Segment) {R : RtInv}
   · exact hg
   · exact fun h => by omega
   · rw [natVal_store_top _ _ _ _ (by decide), hval1, hv]; simp
+
+end FvModexp.Arm64.SubMod2N
+
+namespace FvModexp.Arm64.SubMod2N
+
+open FvModexp.Arm64.EvenHyp
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 64000000 in
+/-- one test of the append loop (at `+0x260`) -/
+theorem appIterG (impl : List Segment) {R : RtInv}
+    (hgr : GrowsliceLiveContract (LibW.program.link impl) (cA "runtime.growslice") 4096 R)
+    {b : Nat} {L : List (Nat × Nat)} {op zp zl zc yp yl yc n : Nat} {s : State}
+    (k4 : J4G impl R b L op zp zl zc yp yl yc n s) (hpre : PreG R b L op zp zl zc yp yl yc n s)
+    (hlt : natVal s.mem zp zl % 2 ^ n < natVal s.mem yp yl % 2 ^ n)
+    (S : State) (p l c g : Nat) (L3 : List (Nat × Nat)) (b3 : Nat) (hpc : S.pc = BitVec.ofNat 64 1806192)
+    (hI : AI R b L zp zl zc yp yl n s S p l c g L3 b3)
+    (KL : ∀ (S' : State) (p' c' g' : Nat) (L' : List (Nat × Nat)) (b' : Nat), l + 1 ≤ W n →
+      S'.pc = BitVec.ofNat 64 1806192 → AI R b L zp zl zc yp yl n s S' p' (l + 1) c' g' L' b' →
+      GoalG impl R b L zp zl zc yp yl n s S') :
+    GoalG impl R b L zp zl zc yp yl n s S := by
+  obtain ⟨hsp, h28, h18, h0, h1, h2, h9, hfw, hrt, hlv, hcur, hc40, hp64, hlc, hlW, hg, hgz, hv⟩ := hI
+  have hal : 4608 ≤ s.sp.toNat := hpre.1.2.1.2.1
+  have hn15 := hpre.2.2.2.2.2.2.2.1
+  have hz64 := hpre.2.2.2.2.2.2.2.2.2.1.1
+  simp only [W] at hlW
+  have hsh : (BitVec.ofNat 64 l <<< 6).toNat = 64 * l := by
+    rw [BitVec.toNat_shiftLeft, BitVec.toNat_ofNat, Nat.shiftLeft_eq]; omega
+  unfold GoalG
+  by_cases hc : n ≤ 64 * l
+  · have hlW' : l = (n + 63) / 64 := by omega
+    subst hlW'
+    janus_run [hc, hsh] until [1806236]
+    refine k4 _ p c g L3 b3 hpre ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ hfw hrt hlv hcur hc40 hp64 hlc hg hgz hlt hv
+    all_goals janus_simp
+  · have e : (BitVec.ofNat 64 l + 1#64 - 1#64) = BitVec.ofNat 64 l := BitVec.add_sub_cancel _ _
+    by_cases hcap : l + 1 ≤ c
+    · obtain ⟨hw1, -, -, -⟩ := curA_win hpre hcur
+      obtain ⟨-, -, hpacc, hp48⟩ := hlv (by omega)
+      janus_run [hc, hsh, e, hcap] until [1806192]
+      refine KL _ p c g L3 b3 (by simp only [W]; omega) ?_ ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, hp64, ?_, ?_,
+        ?_, hgz, ?_⟩
+      all_goals try janus_simp
+      · apply BitVec.eq_of_toNat_eq; rw [BitVec.toNat_add]; simp only [BitVec.toNat_ofNat]; omega
+      · exact fw_fstore hfw (by omega) hal
+      · exact rt_cstore hrt hcur hlv (by omega) (by omega)
+      · exact natLive_store hlv _ _ _
+      · exact hcur
+      · exact hc40
+      · exact hcap
+      · simp only [W]; omega
+      · omega
+      · rw [show p + l * 8 = p + 8 * l by omega, natVal_store_top _ _ _ _ (by decide), hv]; simp
+    · have hcl : c = l := by omega
+      janus_run [hc, hsh, e, hcap] until [cA "runtime.growslice"]
+      refine gstep impl hgr hpre _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ hfw hrt hlv hcur hp64 hcl (by simp only [W]; omega) hg hgz hv
+        fun S' p' c' L' b' hpc' hI' => KL S' p' c' (g + 1) L' b' (by simp only [W]; omega) hpc' hI'
+      all_goals try janus_simp
+
+theorem appG (impl : List Segment) {R : RtInv}
+    (hgr : GrowsliceLiveContract (LibW.program.link impl) (cA "runtime.growslice") 4096 R)
+    {b : Nat} {L : List (Nat × Nat)} {op zp zl zc yp yl yc n : Nat} {s : State}
+    (k4 : J4G impl R b L op zp zl zc yp yl yc n s) (hpre : PreG R b L op zp zl zc yp yl yc n s)
+    (hlt : natVal s.mem zp zl % 2 ^ n < natVal s.mem yp yl % 2 ^ n) :
+    ∀ (k : Nat) (S : State) (p l c g : Nat) (L3 : List (Nat × Nat)) (b3 : Nat), W n - l = k →
+      S.pc = BitVec.ofNat 64 1806192 → AI R b L zp zl zc yp yl n s S p l c g L3 b3 →
+      GoalG impl R b L zp zl zc yp yl n s S := by
+  intro k
+  induction k with
+  | zero =>
+    intro S p l c g L3 b3 hk hpc hI
+    exact appIterG impl hgr k4 hpre hlt S p l c g L3 b3 hpc hI fun _ _ _ _ _ _ h => absurd h (by omega)
+  | succ k ih =>
+    intro S p l c g L3 b3 hk hpc hI
+    exact appIterG impl hgr k4 hpre hlt S p l c g L3 b3 hpc hI
+      fun S' p' c' g' L' b' hl1 hpc' hI' => ih S' p' (l + 1) c' g' L' b' (by omega) hpc' hI'
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 64000000 in
+theorem s4aG (impl : List Segment) (R : RtInv)
+    (hgr : GrowsliceLiveContract (LibW.program.link impl) (cA "runtime.growslice") 4096 R)
+    (b : Nat) (L : List (Nat × Nat)) (op zp zl zc yp yl yc n : Nat)
+    (s : State) (k4 : J4G impl R b L op zp zl zc yp yl yc n s) : J3G impl R b L op zp zl zc yp yl yc n s := by
+  intro S p3 l3 c3 L3 b3 hpre hpc hsp h28 h18 h0 h1 h2 hfw hrt hlv hcur hc40 hp64 hlc hgz hlt hv hn hl3
+  rw [show (1805584 + 0x21c : Nat) = 1806124 from rfl] at hpc
+  have hs4 : 4608 ≤ s.sp.toNat := hpre.1.2.1.2.1
+  have hacc : S.mem.accessible (s.sp.toNat - 4608) (4608 + 88) true = true := by
+    rw [hrt.2.1.accessible]; exact hpre.1.2.1.2.2.2
+  have ha := hpre.1.2.1.2.2.1
+  have hal : s.sp.toNat % 16 = 0 := hpre.1.2.1.1
+  simp only [A] at ha
+  have r80 : S.mem.readLE (s.sp.toNat - 144 + 224) 8 = n := by
+    rw [show s.sp.toNat - 144 + 224 = s.sp.toNat + 80 by omega]; exact hfw.2.2.2.2.2.2
+  have hrt0 : Rt R (b - 0 * gA n) L s zp zc n 3 S.mem L3 b3 := by simpa only [Nat.zero_mul, Nat.sub_zero] using hrt
+  unfold GoalG
+  janus_run [r80] until [1806192]
+  refine appG impl hgr k4 hpre hlt _ _ p3 l3 c3 0 L3 b3 rfl ?_ ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, hfw, hrt0, hlv, hcur, hc40, hp64,
+    hlc, hl3, Nat.zero_le _, fun h => ⟨(hgz h).1, (hgz h).2, rfl⟩, hv⟩
+  all_goals janus_simp
 
 end FvModexp.Arm64.SubMod2N

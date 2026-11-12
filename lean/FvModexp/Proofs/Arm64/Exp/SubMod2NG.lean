@@ -159,7 +159,7 @@ def J3G (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (op 
     S.regs 28 = s.regs 28 → S.regs 18 = s.regs 18 →
     S.regs 0 = BitVec.ofNat 64 p3 → S.regs 1 = BitVec.ofNat 64 l3 → S.regs 2 = BitVec.ofNat 64 c3 →
     Fw s S.mem zp zl zc yp n → Rt R b L s zp zc n 3 S.mem L3 b3 →
-    NatLive S.mem R L3 p3 c3 → CurA R L zp zc p3 c3 → c3 < 2 ^ 40 → l3 ≤ c3 → (W n ≤ zc → p3 = zp ∧ c3 = zc) →
+    NatLive S.mem R L3 p3 c3 → CurA R L zp zc p3 c3 → c3 < 2 ^ 40 → p3 < 2 ^ 64 → l3 ≤ c3 → (W n ≤ zc → p3 = zp ∧ c3 = zc) →
     natVal s.mem zp zl % 2 ^ n < natVal s.mem yp yl % 2 ^ n →
     natVal S.mem p3 l3 = natVal s.mem yp yl % 2 ^ n - natVal s.mem zp zl % 2 ^ n → NatNorm S.mem p3 l3 → l3 ≤ W n →
     GoalG impl R b L zp zl zc yp yl n s S
@@ -175,7 +175,7 @@ def J4G (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (op 
     S.regs 0 = BitVec.ofNat 64 p → S.regs 1 = BitVec.ofNat 64 (W n) → S.regs 2 = BitVec.ofNat 64 c →
     S.regs 9 = BitVec.ofNat 64 n →
     Fw s S.mem zp zl zc yp n → Rt R (b - g * gA n) L s zp zc n 3 S.mem L3 b3 →
-    NatLive S.mem R L3 p c → CurA R L zp zc p c → c < 2 ^ 40 → W n ≤ c → g ≤ W n →
+    NatLive S.mem R L3 p c → CurA R L zp zc p c → c < 2 ^ 40 → p < 2 ^ 64 → W n ≤ c → g ≤ W n →
     (W n ≤ zc → p = zp ∧ c = zc ∧ g = 0) →
     natVal s.mem zp zl % 2 ^ n < natVal s.mem yp yl % 2 ^ n →
     natVal S.mem p (W n) = natVal s.mem yp yl % 2 ^ n - natVal s.mem zp zl % 2 ^ n →
@@ -191,7 +191,7 @@ def J5G (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (op 
     S.regs 0 = BitVec.ofNat 64 p → S.regs 1 = BitVec.ofNat 64 (W n) → S.regs 2 = BitVec.ofNat 64 c →
     S.regs 9 = BitVec.ofNat 64 n →
     Fw s S.mem zp zl zc yp n → Rt R (b - g * gA n) L s zp zc n 3 S.mem L3 b3 →
-    NatLive S.mem R L3 p c → CurA R L zp zc p c → c < 2 ^ 40 → W n ≤ c → g ≤ W n →
+    NatLive S.mem R L3 p c → CurA R L zp zc p c → c < 2 ^ 40 → p < 2 ^ 64 → W n ≤ c → g ≤ W n →
     (W n ≤ zc → p = zp ∧ c = zc ∧ g = 0) →
     natVal s.mem zp zl % 2 ^ n < natVal s.mem yp yl % 2 ^ n →
     natVal S.mem p (W n) =

@@ -158,13 +158,13 @@ theorem s3Gc (impl : List Segment) (hap : ImplApart Extracted.program impl) {R :
       (subPre0_of hpre hrt' (Nat.le_refl _) ?_ ?_ ?_ (by omega) (by rw [hv1', hv2']; rw [← hv1, ← hv2]; omega) hlc2
         hlc1 hc2 hzc hW2 hp2 hz64 (fun hz h => Or.inr ((hy2 h).2.2.2.2 hz)) (fun _ _ => Or.inl rfl) hx2 hn2' hx1 hn1')
       fun s'' p' n' c' L3 b3 hpc'' hsp'' h28'' h29'' h18'' hrg'' e0 e1 e2 hv hnorm hlc hln hLE hb3 hinv3 hlive3 hor3
-        hF3 hLF3 hreuse hc40 => ?qK
+        hF3 hLF3 hreuse hc40 hp64' => ?qK
     case qK =>
       refine k3 s'' p' n' c' L3 b3 hpre (hpc''.trans rfl) hsp'' ?_ ?_ e0 e1 e2
         (fw_call hs4 hout hzw (Or.inl rfl) (by omega) (by omega) ⟨f1, f2, f3, f4, f5, f6, f7⟩ hF3)
         (rt_call hrt' hs4 (by omega) (by omega) (Or.inl rfl) hrg'' hF3 hLF3 hLE hb3 (makeCost_le_w (by simp only [W]; omega)) hinv3
           (fun hc => ?_)) hlive3 (by rcases hor3 with h | ⟨h1, h2⟩; exact Or.inl h; exact Or.inr ⟨h1, fresh_of hrt'.2.2.2.1 h2⟩)
-        hc40 hlc (fun hW => hreuse (by simp only [W] at hW; omega))
+        hc40 hp64' hlc (fun hW => hreuse (by simp only [W] at hW; omega))
         (by rw [← hv1, ← hv2]; exact hlt) (by rw [hv, hv1', hv2']) hnorm (by simp only [W]; omega)
       · rw [h28'']; janus_simp
       · rw [h18'']; janus_simp
@@ -184,7 +184,7 @@ theorem s3Gc (impl : List Segment) (hap : ImplApart Extracted.program impl) {R :
       (subPre0_of hpre hrt' (Nat.le_refl _) ?_ ?_ ?_ (by omega) (by rw [hv1', hv2']; rw [← hv1, ← hv2]; omega) hlc1 hlc2
         hzc hc2 hW1 hz64 hp2 (fun _ _ => Or.inl rfl) (fun hz h => Or.inr ((hy2 h).2.2.2.2 hz)) hx1 hn1' hx2 hn2')
       fun s'' p' n' c' L3 b3 hpc'' hsp'' h28'' h29'' h18'' hrg'' e0 e1 e2 hv hnorm hlc hln hLE hb3 hinv3 hlive3 hor3
-        hF3 hLF3 hreuse hc40 => ?qK
+        hF3 hLF3 hreuse hc40 hp64' => ?qK
     case qK =>
       obtain ⟨rfl, rfl⟩ := hreuse hlc1
       have hl4 := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
