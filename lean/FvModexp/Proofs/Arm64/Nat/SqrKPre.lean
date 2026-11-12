@@ -38,7 +38,7 @@ theorem ks_pre {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp xl x
     -⟩ := hJ.pre
   have hW : 4880 ≤ W := by unfold sqrW ksqrW at hsw; omega
   have hce1 := hJ.callee (stk1 := W - 176) (above1 := 48) hsp hg hF hreg (by omega) (by omega)
-  obtain ⟨hst0, hstok, hstw, hstg, hsarr, hfg, hfw, hstf, hstwb, hfh⟩ := hstk
+  obtain ⟨hst0, hstok, hstw, hstg, hsarr, hfg, hfw, hstf, hstwb, hfh, hsgA, hfgA⟩ := hstk
   obtain ⟨-, ⟨hal0, hb0, ha0, hw0⟩, -, hout0, -, -, -, -⟩ := hce
   obtain ⟨eW, eL, eC⟩ := hJ.hdrS hF
   have hFs : MemFrame s.mem S1.mem (R.rt ++ winA s W 64) :=
@@ -72,18 +72,20 @@ theorem ks_pre {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp xl x
     hwt, hx80, hxlc, hxc40, hxl12, by rw [hacc]; exact hxacc, hJ.ext.held hxh', hx48, hwin _ _ (by omega), rfl, hcap,
     hc40, fun _ => ⟨hp8, hph, by rw [haccM]; exact hpacc, hp48⟩, hwin _ _ (by omega), by show Apart _ _ ((S1.regs 28).toNat + 16) 8; rw [hg]; exact hpg, ?_, hpx,
     hna, ?_, ?_, by rw [eL]; exact hlen, by rw [eL]; omega, ?_⟩
-  · show Apart st 24 p (8 * c) ∧ Apart p (8 * c) (BasicSqr.freeP S1.mem st) (BasicSqr.freeN S1.mem st)
-    rw [hfree.1, hfree.2]; exact ⟨by unfold Apart at hpst ⊢; omega, hpf⟩
+  · show Apart st 24 p (8 * c) ∧ Apart p (8 * c) (BasicSqr.freeP S1.mem st) (BasicSqr.freeN S1.mem st) ∧
+      Apart p (8 * c) RunIface.gA 32
+    rw [hfree.1, hfree.2]; exact ⟨by unfold Apart at hpst ⊢; omega, hpf, hJ.pgA (by omega)⟩
   · refine ⟨hst0, stkOK_frame hJ.stk hF (by simp only [winA, outside_cons, outside_nil, and_true]; omega),
       hwin _ _ (by omega), by show Apart _ _ ((S1.regs 28).toNat + 16) 8; rw [hg]; exact hstg, ?_,
       by show Apart _ _ ((S1.regs 28).toNat + 16) 8; rw [hfree.1, hfree.2, hg]; exact hfg,
       by rw [hfree.1, hfree.2]; exact hwin _ _ (by omega), by rw [hfree.1, hfree.2]; exact hstf, hstwb,
-      by rw [hfree.1, hfree.2]; exact hJ.ext.held hfh⟩
+      by rw [hfree.1, hfree.2]; exact hJ.ext.held hfh, hsgA, by rw [hfree.1, hfree.2]; exact hfgA⟩
     intro h; rw [eC] at h; obtain ⟨h1, h2⟩ := hsarr h
     simp only [win, outside_cons, outside_nil, and_true] at h1
     show _ ∧ Apart _ _ ((S1.regs 28).toNat + 16) 8
     rw [eW, eC, hg]; exact ⟨hwin _ _ (by omega), h2⟩
-  · show Apart st 24 xp (8 * xl) ∧ Apart xp (8 * xl) (BasicSqr.freeP S1.mem st) (BasicSqr.freeN S1.mem st)
+  · show Apart st 24 xp (8 * xl) ∧ Apart xp (8 * xl) (BasicSqr.freeP S1.mem st) (BasicSqr.freeN S1.mem st) ∧
+      Apart xp (8 * xl) RunIface.gA 32
     rw [hfree.1, hfree.2]; exact hxs
   · show R.inv _ _ (S1.regs 28).toNat _; rw [hg]; exact inv_frame_winA hF hout0 (by omega) (by decide) hJ.inv
 

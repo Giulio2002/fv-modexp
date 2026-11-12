@@ -50,10 +50,19 @@ theorem Core.pfree {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp 
     {p c : Nat} {L1 : List (Nat × Nat)} {b1 : Nat} {M : Memory}
     (hJ : Core R b L W zp zc st xp xl xc s p c L1 b1 M) (hc : 0 < c) :
     Apart p (8 * c) (BasicSqr.freeP s.mem st) (BasicSqr.freeN s.mem st) := by
-  obtain ⟨-, -, -, -, -, -, -, -, -, -, -, -, -, -, hzs, -, ⟨-, -, -, -, -, -, -, -, -, hfh⟩, -⟩ := hJ.pre
+  obtain ⟨-, -, -, -, -, -, -, -, -, -, -, -, -, -, hzs, -, ⟨-, -, -, -, -, -, -, -, -, hfh, -⟩, -⟩ := hJ.pre
   rcases hJ.kind with ⟨rfl, rfl⟩ | ⟨hin, hap, -⟩
-  · exact (hzs hc).2.2
+  · exact (hzs hc).2.2.1
   · exact apart_of_held hfh hin hap
+
+/-- the result is apart from the threshold globals -/
+theorem Core.pgA {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp xl xc : Nat} {s : State}
+    {p c : Nat} {L1 : List (Nat × Nat)} {b1 : Nat} {M : Memory}
+    (hJ : Core R b L W zp zc st xp xl xc s p c L1 b1 M) (hc : 0 < c) : Apart p (8 * c) RunIface.gA 32 := by
+  obtain ⟨-, -, -, ⟨-, -, -, -, -, -, -, -, hgrt, -⟩, -, -, -, -, -, -, -, -, -, -, hzs, -⟩ := hJ.pre
+  rcases hJ.kind with ⟨rfl, rfl⟩ | ⟨hin, -, -⟩
+  · exact (hzs hc).2.2.2
+  · have := NatAdd.outside_of_inRanges hgrt hin; unfold Apart; omega
 
 theorem Apart.subL {a n m b k : Nat} (h : Apart a n b k) (hm : m ≤ n) : Apart a m b k := by
   unfold Apart at h ⊢; omega
@@ -143,7 +152,7 @@ theorem bs_pre {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp xl x
   · rw [eL]; omega
   · unfold Apart at hpst ⊢; omega
   · exact hxs.1
-  · rw [hfree.1, hfree.2]; exact ⟨Apart.subL hpf (by omega), hxs.2⟩
+  · rw [hfree.1, hfree.2]; exact ⟨Apart.subL hpf (by omega), hxs.2.1⟩
   · rw [hfree.1, hfree.2]; exact hstf
   · rw [hfree.1, hfree.2]; exact hwin _ _ (by omega)
   · rw [eL]; show stackNatCost _ _ ≤ _; omega
