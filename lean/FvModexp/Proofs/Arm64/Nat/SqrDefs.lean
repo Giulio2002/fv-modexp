@@ -42,11 +42,13 @@ the window, and held (a fresh array is apart from it even when the stack is empt
     Apart (BasicSqr.freeP s.mem st) (BasicSqr.freeN s.mem st) (guard s) 8 ∧
     Outside (BasicSqr.freeP s.mem st) (BasicSqr.freeN s.mem st) (win s W above) ∧
     Apart st 24 (BasicSqr.freeP s.mem st) (BasicSqr.freeN s.mem st) ∧ Apart st 24 StackNat.wbA 4 ∧
-    Held R L (BasicSqr.freeP s.mem st) (BasicSqr.freeN s.mem st)
+    Held R L (BasicSqr.freeP s.mem st) (BasicSqr.freeN s.mem st) ∧
+    Apart st 24 RunIface.gA 32 ∧ Apart (BasicSqr.freeP s.mem st) (BasicSqr.freeN s.mem st) RunIface.gA 32
 
-/-- an array `[p, p + n)` apart from the stack's header and free part -/
+/-- an array `[p, p + n)` apart from the stack's header and free part, and from the threshold globals (which inner
+calls read after the stack and the result were written) -/
 @[reducible] def StkSep (m : Memory) (st p n : Nat) : Prop :=
-  Apart st 24 p n ∧ Apart p n (BasicSqr.freeP m st) (BasicSqr.freeN m st)
+  Apart st 24 p n ∧ Apart p n (BasicSqr.freeP m st) (BasicSqr.freeN m st) ∧ Apart p n RunIface.gA 32
 
 /-- **`z.sqr(stk, x)` precondition** (`len x = xl`, `cap x = xc`; `z = (zp, ·, zc)`): `z` is `x` itself (same array and
 capacity: Go's `alias` test then allocates) or apart from `x`; operands need not be normalised. -/

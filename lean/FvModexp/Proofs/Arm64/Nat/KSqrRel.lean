@@ -206,10 +206,10 @@ theorem KM.step {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n x
     · rw [e1, e2]; exact h.sarr
     · exact Or.inr ⟨hin, fun r hr => hap r (h.ext.mem_old hr)⟩
   have htsep : StkSep M' st t (8 * kT n) := by
-    refine ⟨h.tsep.1, ?_⟩
+    refine ⟨h.tsep.1, ?_, h.tsep.2.2⟩
     rcases harr' with ⟨e1, e2⟩ | ⟨hin, hap⟩
     · simp only [BasicSqr.freeP, BasicSqr.freeN] at h ⊢
-      have := h.tsep.2; simp only [BasicSqr.freeP, BasicSqr.freeN] at this
+      have := h.tsep.2.1; simp only [BasicSqr.freeP, BasicSqr.freeN] at this
       rw [e1, e2, hlen']; exact this
     · have hap' := apart_of_held h.scr.held hin hap
       have := h.sok.2.2.2.2.2.1
@@ -340,19 +340,22 @@ theorem KM.stk {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc
       Apart (stW M st) (8 * stCap M st) (guard s) 8) ∧
     Apart (BasicSqr.freeP M st) (BasicSqr.freeN M st) (guard s) 8 ∧
     Outside (BasicSqr.freeP M st) (BasicSqr.freeN M st) (win s W 48) ∧
-    Apart st 24 (BasicSqr.freeP M st) (BasicSqr.freeN M st) ∧ Held R Lk (BasicSqr.freeP M st) (BasicSqr.freeN M st) := by
+    Apart st 24 (BasicSqr.freeP M st) (BasicSqr.freeN M st) ∧ Held R Lk (BasicSqr.freeP M st) (BasicSqr.freeN M st) ∧
+    Apart (BasicSqr.freeP M st) (BasicSqr.freeN M st) RunIface.gA 32 := by
   obtain ⟨hW, hWs, -, -, -, -, -, -, -, -, hout, hgr, hga⟩ := h.lay
   have hsp : StkPre R L s W 48 st := h.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
-  obtain ⟨-, ⟨-, hsth, -, -, -, hlc0, -⟩, -, -, hsarr, hfg, hfw, hstf, -, hfh⟩ := hsp
+  have hgrt : Outside RunIface.gA 32 R.rt := h.pre.2.2.2.1.2.2.2.2.2.2.2.2.1
+  obtain ⟨-, ⟨-, hsth, -, -, -, hlc0, -⟩, -, -, hsarr, hfg, hfw, hstf, -, hfh, -, hfgA⟩ := hsp
   have hlc := h.sok.2.2.2.2.2.1
   have hnl := h.sok.2.2.2.2.1
-  simp only [guard, BasicSqr.freeP, BasicSqr.freeN] at hfg hfw hstf hfh hsarr ⊢
+  simp only [guard, BasicSqr.freeP, BasicSqr.freeN] at hfg hfw hstf hfh hsarr hfgA ⊢
   rcases h.free with ⟨e1, e2, e3⟩ | ⟨hin, hap⟩
   · rw [e1, e2] at hnl ⊢; rw [e2] at hlc
-    refine ⟨hsarr, ?_, ?_, ?_, h.ext.held (hfh.sub (by omega) (by omega))⟩
+    refine ⟨hsarr, ?_, ?_, ?_, h.ext.held (hfh.sub (by omega) (by omega)), ?_⟩
     · unfold Apart at hfg ⊢; omega
     · exact hfw.of_sub (by omega) (by omega)
     · unfold Apart at hstf ⊢; omega
+    · unfold Apart at hfgA ⊢; omega
   · have hgo := NatSub.outside_of_inRanges hgr hin
     have hst := apart_of_held hsth hin hap
     have hcap : 0 < stCap M st := by
@@ -363,7 +366,9 @@ theorem KM.stk {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc
       have := NatSub.outside_of_inRanges (hout.of_sub (a := s.sp.toNat - W) (n := W + 48) (by omega) (by omega)) hin
       simp only [win, outside_cons, outside_nil, and_true]; omega
     refine ⟨fun _ => ⟨hw _ _ (by omega) (by omega), by unfold Apart; omega⟩, by unfold Apart; omega,
-      hw _ _ (by omega) (by omega), by unfold Apart at hst ⊢; omega, hh.sub (by omega) (by omega)⟩
+      hw _ _ (by omega) (by omega), by unfold Apart at hst ⊢; omega, hh.sub (by omega) (by omega), ?_⟩
+    have := NatSub.outside_of_inRanges hgrt hin
+    unfold Apart; omega
 
 /-- **`StkPre` at an inner call** (`SP - 320`, window `W' + 320 ≤ W`, above `≤ 64`) -/
 theorem KM.stkPre {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State}
@@ -373,12 +378,129 @@ theorem KM.stkPre {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n
     (hk : 320 + W' ≤ W) (ha : a ≤ 64) : StkPre R Lk S1 W' a st := by
   obtain ⟨hW, hWs, -, -, -, -, -, -, -, -, hout, hgr, hga⟩ := h.lay
   have hsp' : StkPre R L s W 48 st := h.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
-  obtain ⟨hst0, -, hstw, hstg, -, -, -, -, hstwb, -⟩ := hsp'
-  obtain ⟨h1, h2, h3, h4, h5⟩ := h.stk
+  obtain ⟨hst0, -, hstw, hstg, -, -, -, -, hstwb, -, hsgA, -⟩ := hsp'
+  obtain ⟨h1, h2, h3, h4, h5, h6⟩ := h.stk
   have hwin : ∀ x k, Outside x k (win s W 48) → Outside x k (win S1 W' a) := by
     intro x k hx; simp only [win, outside_cons, outside_nil, and_true] at hx ⊢; rw [hsp]; omega
   subst hm
   simp only [StkPre, guard, hg] at h1 h2 hstg ⊢
-  exact ⟨hst0, h.sok, hwin _ _ hstw, hstg, fun hc => ⟨hwin _ _ (h1 hc).1, (h1 hc).2⟩, h2, hwin _ _ h3, h4, hstwb, h5⟩
+  exact ⟨hst0, h.sok, hwin _ _ hstw, hstg, fun hc => ⟨hwin _ _ (h1 hc).1, (h1 hc).2⟩, h2, hwin _ _ h3, h4, hstwb, h5, hsgA, h6⟩
+
+/-- a range outside our window is outside an inner window (`SP - 320`, `W' + 320 ≤ W`, above `≤ 64`) -/
+theorem KM.winIn {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State}
+    {lx0 lx1 t : Nat} {Lk : List (Nat × Nat)} {bk spent : Nat} {M : Memory}
+    (h : KM R b L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) {S1 : State} {W' a : Nat}
+    (hsp : S1.sp.toNat = s.sp.toNat - 320) (hk : 320 + W' ≤ W) (ha : a ≤ 64) {x k : Nat}
+    (hx : Outside x k (win s W 48)) : Outside x k (win S1 W' a) := by
+  obtain ⟨hW, hWs, -⟩ := h.lay
+  simp only [win, outside_cons, outside_nil, and_true] at hx ⊢; rw [hsp]; omega
+
+/-- the threshold globals at `M` -/
+theorem KM.glob {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State}
+    {lx0 lx1 t : Nat} {Lk : List (Nat × Nat)} {bk spent : Nat} {M : Memory}
+    (h : KM R b L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) {w' : List (Nat × Nat)}
+    (hw : ∀ x k, Outside x k (win s W 48) → Outside x k w') : RunIface.Globals R M w' := by
+  have hgl : RunIface.Globals R s.mem (win s W 48) := h.pre.2.2.2.1
+  have hzs : StkSep s.mem st zp (8 * zc) := h.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hsp : StkPre R L s W 48 st := h.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hzl : 2 * n ≤ zc := h.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  obtain ⟨-, -, -, -, -, -, -, -, -, -, hsgA, hfgA⟩ := hsp
+  have hgw : Outside RunIface.gA 32 (win s W 48) := hgl.2.2.2.2.2.2.2.2.2.1
+  have hfr : MemFrame s.mem M (R.rt ++ (winA s W 48 ++ kws s st zp n)) := by
+    rw [← List.append_assoc]; exact h.fr
+  refine globals_frame hgl hfr ?_ hw
+  have hz := hzs.2.2
+  simp only [BasicSqr.freeP, BasicSqr.freeN] at hfgA
+  simp only [win, outside_cons, outside_nil, and_true] at hgw
+  unfold Apart at hz hsgA hfgA
+  simp only [winA, kws, stkWs, outside_append, outside_cons, outside_nil, and_true]
+  omega
+
+/-- **`SPre` of an inner `nat.sqr`** (`SP - 320`, window `W - 320`): from `KM` and the facts about the operand
+`x' = (xp', xl', xc')` and the result `z' = (zp', ·, zc')` -/
+theorem KM.sqrPre {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State}
+    {lx0 lx1 t : Nat} {Lk : List (Nat × Nat)} {bk spent : Nat} {M : Memory}
+    (h : KM R b L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) {S1 : State}
+    (hsp : S1.sp.toNat = s.sp.toNat - 320) (hg : S1.regs 28 = s.regs 28) (hm : S1.mem = M)
+    {zp' zc' xp' xl' xc' : Nat} (hxl : xl' ≤ kn2 n) (hxc : xl' ≤ xc') (hxc40 : xc' < 2 ^ 40)
+    (hxacc : M.accessible xp' (8 * xl') false = true)
+    (hxh : 0 < xc' → Held R Lk xp' (8 * xc') ∧ xp' + 8 * xc' ≤ 2 ^ 48)
+    (hxw : 0 < xl' → Outside xp' (8 * xl') (win s W 48))
+    (hzc40 : zc' < 2 ^ 40) (hzl : NatLive M R Lk zp' zc') (hzw : Outside zp' (8 * zc') (win s W 48))
+    (hzg : 0 < zc' → Apart zp' (8 * zc') (guard s) 8 ∧ StkSep M st zp' (8 * zc'))
+    (hal : (zp' = xp' ∧ zc' = xc') ∨ (0 < zc' → 0 < xl' → Apart zp' (8 * zc') xp' (8 * xl')))
+    (hxs : 0 < xl' → StkSep M st xp' (8 * xl')) (hcost : sqrC (stLen M st) xl' ≤ bk) :
+    SPre R bk Lk (W - 320) zp' zc' st xp' xl' xc' S1 := by
+  obtain ⟨hW, hWs, -, -, h80, hx12, -⟩ := h.lay
+  have hsv : RunIface.Serves R := h.pre.2.2.1
+  have hwt : Outside NatAdd.wordT 16 R.rt := h.pre.2.2.2.2.1
+  have hlen0 : stLen s.mem st + 4 * (2 * n) + 64 ≤ 2 ^ 16 := h.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hsl := h.slen
+  have hi := sqrW_inner (n := n) (m := xl') h80 hxl
+  unfold ksqrW at hi
+  simp only [kn2] at hxl
+  have hwin : ∀ x k, Outside x k (win s W 48) → Outside x k (win S1 (W - 320) 64) :=
+    fun x k hx => h.winIn hsp (by omega) (by omega) hx
+  subst hm
+  refine ⟨h.callee hsp hg rfl (by omega) (by omega), by omega, hsv, h.glob hwin, hwt, hxc, hxc40,
+    by omega, hxacc, hxh, fun hx => hwin _ _ (hxw hx), hzc40, hzl, hwin _ _ hzw, ?_, hal,
+    h.stkPre hsp hg rfl (by omega) (by omega), hxs, ?_, hcost, by rw [hg]; exact h.inv⟩
+  · intro hc; obtain ⟨h1, h2⟩ := hzg hc; exact ⟨by simp only [guard] at h1 ⊢; rw [hg]; exact h1, h2⟩
+  · rw [hsl]; simp only [StackNat.rnd, kT, kn2]; omega
+
+/-- the facts about a read-only `*Int` operand's `abs` (`IntAS.OpR` without the header, which is in our frame) -/
+@[reducible] def IOp (R : RtInv) (Lk : List (Nat × Nat)) (s : State) (W : Nat) (M : Memory) (a : Nat) : Prop :=
+  IntAS.hNeg M a ≤ 1 ∧ IntAS.hL M a ≤ IntAS.hC M a ∧ IntAS.hC M a < 2 ^ 40 ∧ IntAS.hL M a ≤ 2 ^ 16 ∧
+    M.accessible (IntAS.hP M a) (8 * IntAS.hL M a) false = true ∧ IntAS.hP M a + 8 * IntAS.hL M a ≤ 2 ^ 48 ∧
+    Held R Lk (IntAS.hP M a) (8 * IntAS.hL M a) ∧ NatNorm M (IntAS.hP M a) (IntAS.hL M a) ∧
+    Outside (IntAS.hP M a) (8 * IntAS.hL M a) (win s W 48)
+
+/-- **`IntAS.Pre` of `(*Int).Add/Sub(z, x, y)` at `SP - 320`** with the three headers in our frame -/
+theorem KM.intPre {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State}
+    {lx0 lx1 t : Nat} {Lk : List (Nat × Nat)} {bk spent : Nat} {M : Memory}
+    (h : KM R b L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) {S1 : State}
+    (hsp : S1.sp.toNat = s.sp.toNat - 320) (hg : S1.regs 28 = s.regs 28) (hm : S1.mem = M)
+    {z x y : Nat} (hz1 : s.sp.toNat - 232 ≤ z) (hz2 : z + 32 ≤ s.sp.toNat - 16)
+    (hx1 : s.sp.toNat - 232 ≤ x) (hx2 : x + 32 ≤ s.sp.toNat - 16)
+    (hy1 : s.sp.toNat - 232 ≤ y) (hy2 : y + 32 ≤ s.sp.toNat - 16)
+    (hzx : z = x ∨ Apart z 32 x 32) (hzy : Apart z 32 y 32)
+    (hox : IOp R Lk s W M x) (hoy : IOp R Lk s W M y)
+    (hzc : IntAS.hC M z < 2 ^ 40) (hzl : NatLive M R Lk (IntAS.hP M z) (IntAS.hC M z))
+    (hzw : Outside (IntAS.hP M z) (8 * IntAS.hC M z) (win s W 48))
+    (hza : 0 < IntAS.hC M z → Apart (IntAS.hP M z) (8 * IntAS.hC M z) (guard s) 8 ∧
+      (IntAS.hP M z = IntAS.hP M x ∨ Apart (IntAS.hP M z) (8 * IntAS.hC M z) (IntAS.hP M x) (8 * IntAS.hL M x)) ∧
+      (IntAS.hP M z = IntAS.hP M y ∨ Apart (IntAS.hP M z) (8 * IntAS.hC M z) (IntAS.hP M y) (8 * IntAS.hL M y)))
+    (hcost : IntAS.asCost (IntAS.hL M x) (IntAS.hL M y) ≤ bk) :
+    IntAS.Pre R bk Lk z x y S1 := by
+  obtain ⟨hW, hWs, hal, ha48, -, -, -, -, -, -, hout, hgr, hga⟩ := h.lay
+  have hw0 : s.mem.accessible (s.sp.toNat - W) (W + 48) true = true := h.pre.1.2.1.2.2.2
+  have hgl : RunIface.Globals R M (win s W 48) := h.glob fun _ _ hx => hx
+  obtain ⟨-, -, -, -, -, -, -, -, -, -, hwbacc, -, hwbw⟩ := hgl
+  have hsv : RunIface.Serves R := h.pre.2.2.1
+  have hwt : Outside NatAdd.wordT 16 R.rt := h.pre.2.2.2.2.1
+  have hacc : ∀ a k v, M.accessible a k v = s.mem.accessible a k v := fun a k v => h.fr.accessible a k v
+  have hwin : ∀ q k, Outside q k (win s W 48) → Outside q k (win S1 4560 32) :=
+    fun q k hq => h.winIn hsp (by omega) (by omega) hq
+  have hfw : ∀ q, s.sp.toNat - 232 ≤ q → q + 32 ≤ s.sp.toNat - 16 → Outside q 32 (win S1 4560 32) := by
+    intro q h1 h2; simp only [win, outside_cons, outside_nil, and_true]; rw [hsp]; omega
+  have hrt : ∀ q, s.sp.toNat - 232 ≤ q → q + 32 ≤ s.sp.toNat - 16 → Outside q 32 R.rt :=
+    fun q h1 h2 => hout.of_sub (by omega) (by omega)
+  have hfacc : ∀ q v, s.sp.toNat - 232 ≤ q → q + 32 ≤ s.sp.toNat - 16 → M.accessible q 32 v = true := by
+    intro q v h1 h2; rw [hacc]
+    cases v
+    · exact Memory.accessible_sub _ hw0 (Or.inr rfl) (by omega) (by omega)
+    · exact Memory.accessible_mono _ hw0 (by omega) (by omega)
+  have hop : ∀ q, s.sp.toNat - 232 ≤ q → q + 32 ≤ s.sp.toNat - 16 → IOp R Lk s W M q → IntAS.OpR R Lk S1 q := by
+    intro q h1 h2 ⟨o1, o2, o3, o4, o5, o6, o7, o8, o9⟩
+    subst hm
+    exact ⟨o1, hfacc q false h1 h2, by omega, hfw q h1 h2, o2, o3, o4, o5, o6, o7, o8, hwin _ _ o9⟩
+  simp only [win, outside_cons, outside_nil, and_true] at hwbw
+  subst hm
+  refine ⟨h.callee hsp hg rfl (by omega) (by omega), hsv, hwt, hop x hx1 hx2 hox, hop y hy1 hy2 hoy,
+    hfacc z true hz1 hz2, by omega, hfw z hz1 hz2, Or.inr (hrt z hz1 hz2), by rw [hg]; unfold Apart at hga ⊢; omega,
+    by show Apart z 32 RunIface.wbA 4; unfold Apart; omega, hzx, hzy, hzc, hzl, hwin _ _ hzw, fun hc => ?_, hwbacc, hcost, by rw [hg]; exact h.inv⟩
+  obtain ⟨q1, q2, q3⟩ := hza hc
+  simp only [win, outside_cons, outside_nil, and_true] at hzw
+  refine ⟨by simp only [guard] at q1; rw [hg]; exact q1, by unfold Apart; omega, q2, q3⟩
 
 end FvModexp.Arm64.NatSqr
