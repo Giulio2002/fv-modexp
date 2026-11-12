@@ -1,5 +1,4 @@
 # files allowed to contain `sorry` while in progress: path<TAB>owner<TAB>note. MUST be empty at release (RELEASE=1 scripts/no-sorry.sh enforces it).
-lean/FvModexp/Proofs/Arm64/Top/RunC2E.lean	top	exp path C2 -> exp block: bitLen != 1 branch in progress
 lean/FvModexp/Proofs/Amd64/Nat/BasicSqrEnd.lean	divmc	basicSqr amd64 WIP
 lean/FvModexp/Proofs/Amd64/Nat/BasicSqrBody.lean	divmc	basicSqr amd64 WIP
 lean/FvModexp/Proofs/Amd64/Nat/BasicSqrLoop.lean	divmc	basicSqr amd64 WIP

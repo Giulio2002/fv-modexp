@@ -118,6 +118,26 @@ theorem in_byte_out {p l a e w : Nat} (he : 4800 ≤ e) (hw : 8 ≤ w) (hw2 : w 
 theorem in_rng {p l i h0 st : Nat} (hi : i < min h0 (l - 96 - st)) :
     p ≤ p + 96 + st + i ∧ p + 96 + st + i + 1 ≤ p + l := by omega
 
+theorem liveSep_of_apartAll {L : List (Nat × Nat)} {ptr round : Nat} (h : ApartAll ptr round L) :
+    LiveSep L [(ptr, ptr + round)] := by
+  intro r hr
+  have := h r hr
+  unfold Apart at this
+  simp only [Janus.outside_cons, Janus.outside_nil, and_true]
+  omega
+
+/-- A fresh runtime object is outside the frame window. -/
+theorem fresh_out_win {R : RtInv} {s : State} {ptr round : Nat} (he : 4800 ≤ (s.regs 4).toNat)
+    (hIn : InRanges ptr round R.rt) (hout : Outside ((s.regs 4).toNat - 4800) (4800 + 40) R.rt) :
+    Outside ptr round (win s stk 40) := by
+  have := InRanges.apart hIn hout
+  unfold Apart at this
+  simp only [win, stk, Janus.outside_cons, Janus.outside_nil, and_true]
+  omega
+
+theorem bud_alloc {b b1 c r A c' : Nat} (h : b - c ≤ b1) (hr : r ≤ A) (hA : c + A ≤ c') (hb : c' ≤ b) :
+    b - c' ≤ b1 - r := by omega
+
 theorem toNat_sub_k {x : BitVec 64} {k : Nat} (h : k ≤ x.toNat) (hk : k < 2 ^ 64) :
     (x - BitVec.ofNat 64 k).toNat = x.toNat - k := by
   rw [BitVec.toNat_sub, BitVec.toNat_ofNat, Nat.mod_eq_of_lt hk]; omega

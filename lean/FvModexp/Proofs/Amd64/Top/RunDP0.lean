@@ -64,12 +64,47 @@ theorem dP0 (impl : List Amd64.Segment) (R : RtInv)
   have hLsL : LiveSep (L1 ++ []) (win s 4800 40) := by rw [List.append_nil]; exact hLsS
   refine hk _ b1 ⟨RelD.mk' hin0 ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ hl0 hl1 hl2 hnz
     ⟨fun h => absurd h (by decide), fun h => absurd h (by decide)⟩ ?_ ?_ (by rw [List.append_nil]; exact hext) ?_ ?_
-    hLsL ?_ ?_ (fun j hj => absurd hj (by decide)) (fun _ _ _ h => absurd h (by decide)),
-    fun _ => ?sl, ?zb, hsrc.1, hsrc.2.1, hsrc.2.2, ?d48, ?dacc, fun _ h => absurd h List.not_mem_nil,
-    fun _ h => absurd h (by decide)⟩ (by janus64_simp) ?r6 (by janus64_simp [hr3]) ?r10 (by janus64_simp [hr1])
+    hLsL ?_ ?_ (fun j hj => absurd hj (Nat.not_lt_zero j)) (fun _ _ _ h => absurd h (Nat.not_lt_zero _)),
+    fun _ => ?sl, ?zb, hsrc.1, hsrc.2.1, hsrc.2.2, ?d48, ?dacc, fun _ _ => trivial,
+    fun i h => absurd h (Nat.not_lt_zero i)⟩ (by janus64_simp) ?r6 (by janus64_simp [hr3]) ?r10 (by janus64_simp [hr1])
     ?r2 (by janus64_simp [hr13])
   all_goals try (janus64_simp [hTm, hT4, hT14, hT5, hTx, hTfs, hTdf, hsp, h14, h5, hx15, hfs, hdf, hm1, hm2, hm3, hm4, hm5, hm6, hr1, hr13, hr0, hr3, hr7, hr9, hc]; done)
   all_goals try (first | (dsimp only; rw [hTfs]; exact hfs; done) | (dsimp only; rw [hTdf]; exact hdf; done))
-  sorry
+  case h.refine_19 =>
+    intro _
+    refine ⟨?_, ?_, ?_, ?_⟩
+    all_goals simp only [opAt]
+    all_goals first
+      | (janus64_simp; done)
+      | (simp (disch := omega) only [Janus.Arm64.Memory.readLE_writeLE_of_disjoint,
+          Janus.Arm64.Memory.readLE_writeLE_inside, Nat.zero_div, Nat.zero_mod, hx15, hTx, hx0]; done)
+      | janus64_simp [hTx, hx15, hx0]
+  case h.refine_20 => janus64_callpre
+  case h.refine_21 =>
+    exact Nat.le_trans (Nat.sub_le_sub_left (by unfold cstE; exact Nat.le_add_right_of_le (Nat.le_add_right _ _)) b) hbud1
+  case h.refine_22 =>
+    dsimp only
+    rw [List.append_nil]
+    repeat rw [view_writeLE_out (hout.of_sub (by omega) (by omega))]
+    exact hinv
+  case h.refine_23 => dsimp only; simp only [win, stk] at hMF ⊢; janus_frame
+  case h.refine_24 =>
+    dsimp only
+    exact hLF.trans (LiveFrame.of_win (by simp only [win, stk]; janus_frame) hLsS) (fun _ _ h => hext.inRanges_old h)
+  case sl =>
+    janus64_simp [hr9]
+    exact (Nat.min_eq_right (Nat.le_of_lt hndir)).symm
+  case zb =>
+    intro i hi
+    simp only [opLen, stkBuf, ↓reduceIte, Nat.mul_zero, Nat.sub_zero] at hi ⊢
+    rcases (Nat.lt_or_ge i 16) with h | h <;>
+    simp (disch := omega) only [Janus.Arm64.Memory.readLE_writeLE_of_disjoint, Janus.Arm64.Memory.readLE_writeLE_inside,
+      Nat.zero_div, Nat.zero_mod]
+  case d48 => simp only [opLen, stkBuf, ↓reduceIte]; omega
+  case dacc =>
+    simp only [opLen, stkBuf, ↓reduceIte]
+    exact Janus.Arm64.Memory.accessible_mono _ hw (by omega) (by omega)
+  case r10 => janus64_simp [hr9]; exact (Nat.min_eq_right (Nat.le_of_lt hndir)).symm
+  case r2 => janus64_simp [hr9]; exact (Nat.min_eq_right (Nat.le_of_lt hndir)).symm
 
 end FvModexp.Amd64.Run
