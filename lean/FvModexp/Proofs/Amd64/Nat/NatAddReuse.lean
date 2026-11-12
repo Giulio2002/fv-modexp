@@ -1,5 +1,7 @@
-import FvModexp.Proofs.Amd64.Nat.NatAddVV
+import FvModexp.Proofs.Amd64.Nat.NatAddCont
+import FvModexp.Proofs.Amd64.Nat.AddVW
 import FvModexp.Proofs.Common.DivmcBits
+import FvModexp.Proofs.Common.DivmcNat
 import FvModexp.Proofs.Common.BitLemmas
 
 /-! # `nat.add` (amd64): the entry → `+0xe6` on the reuse path (`0 < n ≤ m`, `zc ≥ m + 1`), then `vv` -/
@@ -9,16 +11,10 @@ open FvModexp.Amd64.Callees
 
 namespace FvModexp.Amd64.NatAdd
 
-/-- The entry facts of every path lemma (amd64): the registers and the ABI part of a call. -/
-@[reducible] def Entry (s : State) (zp zl zc xp xl xc yp yl yc : BitVec 64) : Prop :=
-  s.rip = BitVec.ofNat 64 (segAddr Extracted.program fn) ∧ s.mem.readLE (s.regs 4).toNat 8 < 2 ^ 47 ∧
-    s.xmm 15 = 0#128 ∧ s.df = false ∧ s.regs 0 = zp ∧ s.regs 3 = zl ∧ s.regs 1 = zc ∧ s.regs 7 = xp ∧
-    s.regs 6 = xl ∧ s.regs 8 = xc ∧ s.regs 9 = yp ∧ s.regs 10 = yl ∧ s.regs 11 = yc
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem reuse (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
-    (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
+theorem reuseH (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
+    (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R) (hV : VVStmt impl hap R hmv)
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc yp yl yc : BitVec 64) (s : State)
     (he : Entry s zp zl zc xp xl xc yp yl yc) (hyx : yl.toNat ≤ xl.toNat) (hy0 : 0 < yl.toNat)
     (hz : xl.toNat + 1 ≤ zc.toNat) (hpre : PreS 4288 R b L zp zc xp xl xc yp yl yc s) :
@@ -34,7 +30,7 @@ theorem reuse (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progr
     toInt_small (xl + 1#64) (by simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega)] until [hMid]
   have hWo : ∀ a n, (a + n ≤ (s.regs 4).toNat - 4288 ∨ (s.regs 4).toNat + 80 ≤ a) → Outside a n (win s 4288 80) := by
     intro a n h; simp only [win, outside_cons, outside_nil, and_true]; omega
-  refine vv impl hap R hmv b L zp zc xp xl xc yp yl yc s zp.toNat zc.toNat L b _
+  refine hV b L zp zc xp xl xc yp yl yc s zp.toNat zc.toNat L b _
     (mid_of_reuse hpre hyx hra hx15 hdf hz ?hF ?_ ?_ ?_ ?_ ?_ ?_ ?_) hyx hy0 hxc (by omega)
     (natVal_frame ?hF (hWo _ _ (by omega))) (natVal_frame ?hF (hWo _ _ (by omega)))
     (natVal_frame ?hF (hWo _ _ (by omega))) _ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl

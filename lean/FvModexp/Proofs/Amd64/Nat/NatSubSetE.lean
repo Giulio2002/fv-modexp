@@ -1,5 +1,6 @@
+import FvModexp.Proofs.Amd64.Nat.WordTData
 import FvModexp.Proofs.Amd64.Nat.NatSubSet
-import FvModexp.Proofs.Amd64.Nat.NatSubReuse
+import FvModexp.Proofs.Amd64.Nat.NatSubCont
 
 /-! # `nat.sub` (amd64): the entry → `+0x2a8` on the `z.set(x)` path (`n = 0 < m`), then `setTail` -/
 
@@ -35,7 +36,7 @@ theorem setPath (impl : List Amd64.Segment) (R : RtInv)
     clear hok
     have hwt : Apart wordT 16 ((s.regs 4).toNat - 4288) (4288 + 80) := apart_of_data hd 1 (by decide) (by decide) hw
     unfold Apart at hwt hga
-    janus64_data hd
+    obtain ⟨_hwa, _hws, _hwp⟩ := FvModexp.Amd64.wordT_data hd
     janus_eval_nat h_t : wordT
     rw [h_t] at hty hok1 hwt
     simp only [LiveSep, win] at hLs

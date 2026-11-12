@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Amd64.Nat.WordTData
 import FvModexp.Proofs.Amd64.Nat.MulAddWWMid
 
 /-!
@@ -142,7 +143,7 @@ theorem setAlloc (impl : List Amd64.Segment) (R : RtInv)
   have hinvM : R.inv b L (s.regs 14).toNat (view R.rt L M) := inv_win hF hout hb' hinv
   have hwt : Apart wordT 16 ((s.regs 4).toNat - 4208) (4208 + 72) := apart_of_data hd 1 (by decide) (by decide) hwM
   unfold Apart at hwt hga
-  janus64_data hd
+  obtain ⟨_hwa, _hws, _hwp⟩ := FvModexp.Amd64.wordT_data hd
   janus_eval_nat h_t : wordT
   rw [h_t] at hty hok1 hwt
   simp only [LiveSep, win] at hLs
@@ -152,7 +153,7 @@ theorem setAlloc (impl : List Amd64.Segment) (R : RtInv)
   clear hinv hw hg2
   have hpush : ∀ v, MemFrame M (M.writeLE ((s.regs 4).toNat - 112) 8 v) (win s 4208 72) := fun v => by
     simp only [win]; janus_frame
-  janus64_run [hm, r1, r2, r3, hr0, hgM, BitVec.msb_eq_decide] calls [hmk.pos]
+  janus64_run [hm, r1, r2, r3, hr0, hgM, _hws, _hwp, BitVec.msb_eq_decide] calls [hmk.pos]
   rename_i P _ _ _ _ m1 _ _ hLF hMF hApL hInR hle hacc h8 _ _ _ hrb hinv' hwa hga'
   have hF2 := hF.trans (hpush 6232709) (fun a n h => ⟨h, h⟩)  -- the return address `fn + 0x145`
   have hext : LiveExt R L (L ++ [(P.toNat, P.toNat + 8)]) := LiveExt.single (by simpa using hInR) (by simpa using hApL)

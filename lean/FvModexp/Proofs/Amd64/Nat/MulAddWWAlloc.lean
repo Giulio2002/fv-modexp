@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Amd64.Nat.WordTData
 import FvModexp.Proofs.Amd64.Nat.MulAddWWMid
 import FvModexp.Proofs.Common.BitLemmas
 
@@ -37,7 +38,7 @@ theorem alloc (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progr
   have hbs : blockSize (8 * (xl.toNat + 5)) true ≤ b := by omega
   have hwt : Apart wordT 16 ((s.regs 4).toNat - 4208) (4208 + 72) := apart_of_data hd 1 (by decide) (by decide) hw
   unfold Apart at hwt hga
-  janus64_data hd
+  obtain ⟨_hwa, _hws, _hwp⟩ := FvModexp.Amd64.wordT_data hd
   janus_eval_nat h_t : wordT
   rw [h_t] at hty hok1 hwt
   simp only [LiveSep, win] at hLs

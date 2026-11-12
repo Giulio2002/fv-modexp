@@ -19,7 +19,7 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 theorem pro2 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
-    (hSN : StackNat.Hyp impl R StackNat.names 4192 24)
+    (hSN : StackNat.HypL impl R StackNat.names 4192 24)
     (hmc : MemclrNoHeapPointersLive64 (LibBasicSqr.program.link impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
     (hLsh : ∀ b L, Summary0 (LibBasicSqr.program.link impl) (segAddr Extracted.program lshVUfn) (LshLPre R b L)
       (LshLQ R b L))
@@ -110,7 +110,7 @@ theorem pro2 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
       Outside (s.mem.readLE st.toNat 8) (8 * s.mem.readLE (st.toNat + 16) 8) R.rt := a2
     janus64_run [p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, hn2, hgP, htP', hfs] until [callNat + 5] calls [hSN' b L]
     rename_i hpc' hsp' h5' h14' hx15' hfs' hdf' hr3' hr1' L1 b1 hext hr0' hbud hinv2 k1 k2 k3 k4 k5 k6 k7 hlen2 hsame
-      hgrow hF2 hLF2
+      hgrow hF2 hLF2 hmem2
     simp only [win, Janus.Amd64.Tactic.setRegF_apply, ↓reduceIte, e200, hws] at hF2 hLF2
     exact pro3 impl R hmc hLsh hVV hMV' b L st zp zl zc xp xl xc s hpre hbig hra hx15s hdfs P hP s'
       (by rw [hpc']; try janus64_simp) (by rw [hsp']; try janus64_simp) (by rw [h5']; try janus64_simp)
@@ -119,10 +119,10 @@ theorem pro2 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
       (by rw [hr1']; try janus64_simp)
       L1 b1 hext hbud hinv2
       ⟨k1, k2, by rw [hF2.accessible, Janus.Arm64.Memory.accessible_writeLE, hPacc]; exact k3, by omega, k5, k6, k7⟩
-      hlen2 hsame hgrow hF2 hLF2
+      hlen2 hsame hgrow hmem2 hF2 hLF2
   · janus64_run [p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, hn2, hgP, htP', hfs] until [callNat + 5] calls [hSN' b L]
     rename_i hpc' hsp' h5' h14' hx15' hfs' hdf' hr3' hr1' L1 b1 hext hr0' hbud hinv2 k1 k2 k3 k4 k5 k6 k7 hlen2 hsame
-      hgrow hF2 hLF2
+      hgrow hF2 hLF2 hmem2
     simp only [win, Janus.Amd64.Tactic.setRegF_apply, ↓reduceIte, e200, hws] at hF2 hLF2
     exact pro3 impl R hmc hLsh hVV hMV' b L st zp zl zc xp xl xc s hpre hbig hra hx15s hdfs P hP s'
       (by rw [hpc']; try janus64_simp) (by rw [hsp']; try janus64_simp) (by rw [h5']; try janus64_simp)
@@ -131,7 +131,7 @@ theorem pro2 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
       (by rw [hr1']; try janus64_simp)
       L1 b1 hext hbud hinv2
       ⟨k1, k2, by rw [hF2.accessible, Janus.Arm64.Memory.accessible_writeLE, hPacc]; exact k3, by omega, k5, k6, k7⟩
-      hlen2 hsame hgrow hF2 hLF2
+      hlen2 hsame hgrow hmem2 hF2 hLF2
 
 
 end FvModexp.Amd64.BasicSqr

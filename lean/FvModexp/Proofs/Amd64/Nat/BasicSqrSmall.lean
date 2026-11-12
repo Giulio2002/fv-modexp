@@ -128,7 +128,7 @@ theorem small (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progr
     exact hkeep a n (Or.inl hin) (by simp only [win, outside_cons, outside_nil, and_true]; omega)
       (by unfold Apart; omega)
   refine ⟨⟨?r4, ?r5, ?r14, ?x15⟩, ?fs, ?df, ?val, L', b', hext, by omega, ?inv,
-    ⟨⟨hst8, hext.held hsth, ?sacc, hst48, ?snl, ?slc, ?sc40⟩, ?slen, ?sarr⟩, hFall, hLFall⟩
+    ⟨⟨⟨hst8, hext.held hsth, ?sacc, hst48, ?snl, ?slc, ?sc40⟩, ?slen, ?sarr⟩, fun hn => absurd ⟨rW, rC⟩ hn⟩, hFall, hLFall⟩
   case inv => janus_assumption
   case fs => show s'.fsBase = s.fsBase; rw [hfs2]
   case df => exact hdf.symm

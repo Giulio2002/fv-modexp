@@ -1,6 +1,6 @@
 import FvModexp.Proofs.Amd64.Int.LibIntAS
-import FvModexp.Proofs.Amd64.Nat.NatAdd
-import FvModexp.Proofs.Amd64.Nat.NatSub
+import FvModexp.Proofs.Amd64.Nat.NatAddDefs
+import FvModexp.Proofs.Amd64.Nat.NatSubDefs
 import FvModexp.Proofs.Amd64.Nat.DivmcCall
 import FvModexp.Proofs.Amd64.CmpSum
 import FvModexp.Proofs.Amd64.Top.RunIface

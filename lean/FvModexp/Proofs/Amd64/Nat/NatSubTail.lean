@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Amd64.Nat.NatSubMid
+import FvModexp.Proofs.Amd64.Nat.NatSubCont
 
 /-!
 # `nat.sub` (amd64): `if c != 0 { panic }; return z.norm()` (`+0x220` … return)
@@ -11,9 +11,6 @@ open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Spec Janus.Con
 namespace FvModexp.Amd64.NatSub
 
 abbrev hTail : Nat := segAddr Extracted.program fn + 0x220
-
-/-- The return site of `subVV.abi0`. -/
-abbrev hAfterVV : Nat := segAddr Extracted.program fn + 0x189
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in

@@ -1,4 +1,9 @@
-import FvModexp.Proofs.Amd64.Nat.NatSubReuse
+import FvModexp.Proofs.Amd64.Nat.WordTData
+import FvModexp.Proofs.Amd64.Nat.NatSubCont
+import FvModexp.Proofs.Amd64.Nat.SubVW
+import FvModexp.Proofs.Common.DivmcBits
+import FvModexp.Proofs.Common.DivmcNat
+import FvModexp.Proofs.Common.BitLemmas
 
 /-! # `nat.sub` (amd64): the entry → `makeslice(Word, m, makeCap m)` → `+0x13d` (`0 < n ≤ m`, `zc < m`), then `vv` -/
 
@@ -9,9 +14,9 @@ namespace FvModexp.Amd64.NatSub
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem alloc (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
+theorem allocH (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
     (hmk : MakesliceLiveContract64 (LibNatSub.program.link impl) (cA "runtime.makeslice") 4096 R)
-    (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
+    (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R) (hV : VVStmt impl hap R hmv)
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc yp yl yc : BitVec 64) (s : State)
     (he : Entry s zp zl zc xp xl xc yp yl yc) (hyx : yl.toNat ≤ xl.toNat) (hy0 : 0 < yl.toNat)
     (hz : zc.toNat < xl.toNat) (hpre : PreS 4288 R b L zp zc xp xl xc yp yl yc s) :
@@ -25,7 +30,7 @@ theorem alloc (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progr
   obtain ⟨hok1, hcost⟩ := hok hz
   have hwt : Apart wordT 16 ((s.regs 4).toNat - 4288) (4288 + 80) := apart_of_data hd 1 (by decide) (by decide) hw
   unfold Apart at hwt hga
-  janus64_data hd
+  obtain ⟨_hwa, _hws, _hwp⟩ := FvModexp.Amd64.wordT_data hd
   janus_eval_nat h_t : wordT
   rw [h_t] at hty hok1 hwt
   simp only [LiveSep, win] at hLs
@@ -45,7 +50,7 @@ theorem alloc (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progr
       rw [show makeCost (1#64 : BitVec 64).toNat = allocCost (8 * 1) by decide] at hcost; omega
     janus64_run [BitVec.msb_eq_decide] until [hMid] calls [hmk.pos]
     rename_i ptr _ _ _ _ m _ _ hLF hMF hAp hIn hle hacc h8 _ _ hrb _ hinv' _ _ _
-    refine vv impl hap R hmv b L zp zc xp 1#64 xc yp yl yc s ptr.toNat 1 _ _ m
+    refine hV b L zp zc xp 1#64 xc yp yl yc s ptr.toNat 1 _ _ m
       (mid_of_alloc hpre hyx hra hx15 hdf hz ?hF ?_ ?_ ?_ ?_ ?_ ?_ (fun r hr => by
           simp only [List.mem_cons, List.not_mem_nil, or_false] at hr
           rcases hr with rfl | rfl <;> simp only <;> omega) hLF hMF hAp hIn (by omega)
@@ -69,7 +74,7 @@ theorem alloc (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progr
     have hbs : blockSize (8 * (xl.toNat + 4)) true ≤ b := by omega
     janus64_run [BitVec.msb_eq_decide, FvModexp.mod64_of_lt (xl.toNat + 4) (by omega)] until [hMid] calls [hmk.pos]
     rename_i ptr _ _ _ _ m _ _ hLF hMF hAp hIn hle hacc h8 _ _ hrb _ hinv' _ _ _
-    refine vv impl hap R hmv b L zp zc xp xl xc yp yl yc s ptr.toNat (xl.toNat + 4) _ _ m
+    refine hV b L zp zc xp xl xc yp yl yc s ptr.toNat (xl.toNat + 4) _ _ m
       (mid_of_alloc hpre hyx hra hx15 hdf hz ?hG ?_ ?_ ?_ ?_ ?_ ?_ (fun r hr => by
           simp only [List.mem_cons, List.not_mem_nil, or_false] at hr
           rcases hr with rfl | rfl <;> simp only <;> omega) hLF hMF hAp hIn hle

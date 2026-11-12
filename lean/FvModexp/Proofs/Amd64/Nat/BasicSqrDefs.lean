@@ -17,7 +17,7 @@ Locals (offsets from the entry `RSP`): saved `RBP` at `-8`; `t` at `-48` (ptr), 
 scratch `16i, 2i, i` at `-72, -64, -56`; the defer record `{deferwrap1, stk, len(stk.w)}` at `-40, -32, -24`, its
 address at `-16`, the defer bit at `-89`; the ABI0 argument area `[RSP - 192, RSP - 96)`.
 
-The result: `z[0:2n] = x²`; the stack comes back with its `len` (`StackBack`).
+The result: `z[0:2n] = x²`; the stack comes back with its `len` (`StackBackL`: a grown array is in the live set).
 -/
 
 open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Contracts
@@ -155,7 +155,7 @@ theorem Pre.adx {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl
 @[reducible] def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (st zp zl xp xl : Nat) (s s' : State) : Prop :=
   s'.fsBase = s.fsBase ∧ s'.df = s.df ∧ natVal s'.mem zp zl = natVal s.mem xp xl * natVal s.mem xp xl ∧
     ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b - stackNatCost (stLen s.mem st) (2 * xl) ≤ b' ∧
-      R.inv b' L' (s.regs 14).toNat (view R.rt L' s'.mem) ∧ StackBack R L L' st s.mem s'.mem ∧
+      R.inv b' L' (s.regs 14).toNat (view R.rt L' s'.mem) ∧ StackBackL R L L' st s.mem s'.mem ∧
       MemFrame s.mem s'.mem (R.rt ++ win s 4424 64 ++ ws s.mem st zp zl) ∧
       LiveFrame s.mem s'.mem L (ws s.mem st zp zl)
 
@@ -178,6 +178,7 @@ structure Env (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (st zp zl zc xp xl :
   c1len : stLen s.mem st + (2 * xl + 3) / 4 * 4 ≤ c1
   c1b : c1 < 2 ^ 40
   w1live : NatLive s.mem R L1 w1 c1
+  amem : ¬(w1 = stW s.mem st ∧ c1 = stCap s.mem st) → (w1, w1 + 8 * c1) ∈ L1
   x15 : s.xmm 15 = 0#128
   df0 : s.df = false
   ra : s.mem.readLE (s.regs 4).toNat 8 < 2 ^ 47

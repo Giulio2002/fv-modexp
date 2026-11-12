@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Amd64.Nat.NatSubAlloc
+import FvModexp.Proofs.Amd64.Nat.NatSubComp
 import FvModexp.Proofs.Amd64.Nat.NatSubSetE
 
 /-! # `nat.sub` (amd64): the summary (see the arm64 twin `FvModexp.Arm64.NatSub`) -/
