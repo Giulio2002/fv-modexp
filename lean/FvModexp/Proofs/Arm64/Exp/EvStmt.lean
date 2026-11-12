@@ -51,7 +51,8 @@ def EvenSum (impl : List Segment) (R : RtInv) (stk above : Nat) (need : Nat → 
         s.regs 9 = BitVec.ofNat 64 yc ∧ s.regs 10 = BitVec.ofNat 64 mp ∧ s.regs 11 = BitVec.ofNat 64 ml ∧
         s.regs 12 = BitVec.ofNat 64 mc ∧
         Pre R b L stk above need cost zp zl zc st xp xl yp yl mp ml mc s ∧
-        zp < 2 ^ 64 ∧ xc < 2 ^ 64 ∧ yc < 2 ^ 64 ∧ (s.regs 30).toNat % 4 = 0 ∧ (s.regs 30).toNat < 2 ^ 48)
+        zp < 2 ^ 64 ∧ xc < 2 ^ 64 ∧ yc < 2 ^ 64 ∧ (s.regs 30).toNat % 4 = 0 ∧ (s.regs 30).toNat < 2 ^ 48 ∧
+        NHyp.XFacts R L xp xl xc)
       (fun s s' => Post R b L stk above cost zp zc st xp xl yp yl mp ml s s')
 
 end FvModexp.Arm64.ExpEven

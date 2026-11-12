@@ -65,7 +65,7 @@ theorem segE2 {impl : List Segment} (hap : ImplApart Extracted.program impl)
     (hE : EvenHyp.ExpNNHypNE1 impl R KN costF needR costR needS needP costS costP)
     (hKN : 4304 ≤ KN) (hKN1 : KN + 1312 ≤ K) (hKN2 : KN + 288 ≤ 2 ^ 20)
     (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) (hM : 0 < natVal s.mem mp ml)
-    (hev : natVal s.mem mp ml % 2 = 0)
+    (hev : natVal s.mem mp ml % 2 = 0) (hX : NHyp.XFacts R L xp xl xc)
     (hst : ∀ l1 l2, l1 ≤ ml → l2 ≤ ml → NStkE needR needS needP xl yl l2 (ℓ4 s st mp ml l1 l2) (lg2 s mp ml))
     {rk rk' : Nat}
     (hrk : ∀ l1 l2, l1 ≤ ml → l2 ≤ ml →
@@ -144,7 +144,8 @@ theorem segE2 {impl : List Segment} (hap : ImplApart Extracted.program impl)
   · rw [r30, LibCalls.tN (by simp only [exp2R]; omega)]; exact ra_ev hap libN_nf 105 (by decide)
   · simp only [ArgsFrom]
     exact ⟨r0.trans h.r0, r1.trans h.r1, r2.trans h.r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, trivial⟩
-  · refine ⟨by rw [hgN', hsN']; exact hnp, Or.inl (by rw [fm, hv2]; exact hodd)⟩
+  · refine ⟨by rw [hgN', hsN']; exact hnp, Or.inl (by rw [fm, hv2]; exact hodd),
+    NHyp.XFacts.ext h.jx.wc.le hX⟩
   · obtain ⟨⟨p, l, c, g0, g1, g2, hv, hN, hlc, hc64, L2, b2, hx, hb, hinv, hlv, hres, hsb, hF, hLF, hrs⟩, hc40, hel⟩ := hq
     have tc : (s'.regs 2).toNat = c := by rw [g2, BitVec.toNat_ofNat]; omega
     rw [tc] at hc40
