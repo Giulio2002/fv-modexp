@@ -837,3 +837,17 @@ pass the hypotheses as terms / use named `case`s after `janus_simp` (bs 189 s �
 lemma is handed to janus through `Summary.mono` with a register/sp/mem-equality pre' (no 30-conjunct unfolding).
 A summary from an SCC induction hypothesis must be ascribed with the literal entry (`Summary P 0x1bc2b0 _ _`), else
 janus runs into the callee's code.
+
+## expmc session 15 (2026-11-12) — window-4 row time (ROW-TIME LESSON applied)
+
+| change | before | after |
+|---|---|---|
+| W4 chain imports = exactly the modules whose constants each module uses (computed from the built environment, `scratchpad Dep.lean`; transitive reduction) | critical import path 875 s (light load) | 584 s (same proofs) |
+| W4ZcD: table-header address `congr 1; omega` (big context) → closed lemmas `e24`/`e24'` + `rw` | 114 s | 12 s |
+| W4OneRet (`afterOne`): 4 big-context omega blocks (hgo2 41 s, hbud2 26 s, hfe2 26 s, refine window side goal 61 s) → small lemmas `go2`/`sub2`/`fe15`/`win_sub` | 155 s / 5.2 GB | 25–30 s / 3.0 GB |
+| W4XnS (`xnAStep`): window/budget side goals of the final refine (4 × 15–29 s omega) → `Apart.sub` + `bud3` | 64 s | 10 s |
+| whole W4 closure (J=2 parallel dev build, load ≈ 30): `scripts/crit-path.py` | critical path 875 s, sum 1482 s | critical path 305 s, sum 884 s |
+
+Method: `lean -Dtrace.profiler=true -Dtrace.profiler.threshold=300` on the slow module; every hot spot was `omega` in a
+context of ~150 hypotheses (unfolded `Apart` disjunctions make it case-split). A side goal that depends on few facts
+goes into a top-level lemma taking exactly those facts.
