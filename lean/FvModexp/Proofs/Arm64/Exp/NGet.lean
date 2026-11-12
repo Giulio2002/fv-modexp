@@ -11,7 +11,7 @@ return point fn+0x234, in continuation form: `KN` (the pool was empty: `X0 = X1 
 apart from the callee window; invariant for `L ++ rs`).
 -/
 
-open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts Janus.Contracts.Pool FvModexp
+open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Spec.Pool Janus.Contracts Janus.Contracts.Pool FvModexp
 
 namespace FvModexp.Arm64.ExpN
 
@@ -85,6 +85,7 @@ theorem getCall (impl : List Segment) (R : RtInv)
   have e0 : (S.regs 0).toNat = Free.poolA := by rw [h0, BitVec.toNat_ofNat]; decide
   have hcs : calleeStack S 4096 1 = [(sp + 1056 - 4096, sp + 1048), (sp + 1064, sp + 1072)] := by
     simp only [calleeStack, esp]
+    rw [show sp + 1056 - 8 = sp + 1048 by omega, show sp + 1056 + 8 = sp + 1064 by omega]
   refine Reaches.call_regions (Summary.withExit (hget L b) hret) hpc
     (get_pre R b L K g sp M hal hK hKs hsp2 hwacc hg1 hg2 hg3 hwrt hgw hgrt hLs hok hnew0 hinv S hsp h0 h28 h30 hmem)
     fun s1 hpc1 hpost hrg => ?_
@@ -96,14 +97,15 @@ theorem getCall (impl : List Segment) (R : RtInv)
   have hrg' : m.regions = M.regions := by rw [← hmem, ← hrg, hs1]
   subst hs1
   rcases hcase with ⟨hr0, hr1, hinv1⟩ | ⟨rs, hr0, hSh, hfr, hin, hsep, hinv1⟩
-  · refine KN _ m (by simpa using hpc1) rfl ?_ ?_ (by simp [Map.keepABI]) (by simp [Map.keepABI])
+  · refine KN _ m (by simpa using h30) rfl ?_ ?_ (by simp [Map.keepABI]) (by simp [Map.keepABI])
       (by simp [Map.keepABI]) rfl hMF hLF hrg' hNew hinv1
     · simp only [Map.keepABI]; exact BitVec.eq_of_toNat_eq (by simpa using hr0)
     · simp only [Map.keepABI]; exact BitVec.eq_of_toNat_eq (by simpa using hr1)
   · rw [hcs] at hsep
-    refine KT _ m (r 1).toNat rs (by simpa using hpc1) rfl ?_ ?_ (by simp [Map.keepABI]) (by simp [Map.keepABI])
+    refine KT _ m (r 1).toNat rs (by simpa using h30) rfl ?_ ?_ (by simp [Map.keepABI]) (by simp [Map.keepABI])
       (by simp [Map.keepABI]) rfl hMF hLF hrg' hNew hSh hfr hin hsep hinv1
-    · simp only [Map.keepABI]; exact BitVec.eq_of_toNat_eq (by rw [hr0]; rfl)
+    · simp only [Map.keepABI, Nat.reduceEqDiff, or_self, ↓reduceIte]
+      exact BitVec.eq_of_toNat_eq (by rw [hr0]; rfl)
     · simp only [Map.keepABI]; simp
 
 end FvModexp.Arm64.ExpN
