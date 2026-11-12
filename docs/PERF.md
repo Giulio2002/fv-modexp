@@ -1233,3 +1233,14 @@ DrsFRel3 3.0 s, DrsF3 12.0 s / 2.7 GB. First DrsF2 draft never finished (> 12 mi
 `repeat (first | rw [readLE_writeLE_self] | rw [readLE_writeLE_of_disjoint _ _ (by omega)])` closer retrying failing
 omegas; explicit per-goal rewrite chains → 17 s for f2x. Budget-invariant change (Cx.lo) rebuilt the drs chain to DrsLoop
 with no time change.
+
+## expmc s34 (2026-11-12): `arrW`'s `if` and `readLE` atoms (arm64 (*Int).exp post layer)
+* `RunIface.arrW m z` = `if 0 < m.readLE (z + 24) 8 then … else []`. Unifying / whnf-ing an `Outside`/`MemFrame` list that
+  contains it can evaluate the condition (byte-by-byte `readLE`): a ONE-LINE term proof `outside_arrW h` took 24 s.
+  Fix: `@[irreducible] def ZArr := arrW` in statements (`IExpDefs.ZArr`, `zarr_eq` rewritten at the very end).
+  IExpAtN 88 s → 1.9 s, IExpPost 48 s → 6 s, IExpDefs 16 s → 1.9 s.
+* `omega` with `m.readLE a 8` atoms in hypotheses (`readLE … = op`, `readLE (g+16) 8 + K < sp`) is slow: generalize or `Box`
+  them before omega-heavy blocks. IExpP 47 s → 31 s (operand bundles boxed: 83 s of omega case splits on `0 < l → …`
+  implications removed earlier; natOne/pool reads boxed).
+* Frame composition at byte granularity (`Common/ByteFrame`: `MemFrame.of_bytes` + per-byte `MemFrame.byte`) with the
+  range arithmetic in tiny standalone lemmas (`IExpDefs.out_atN/out_slot/out_post/out_live`): no omega in big contexts.
