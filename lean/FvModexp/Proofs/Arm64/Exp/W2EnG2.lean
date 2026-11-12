@@ -19,7 +19,8 @@ theorem enG2 (impl : List Segment) (R : RtInv)
     (b : Nat) (L : List (Nat × Nat)) (g sp K st xp xl xc ylen mp n w0 len0 cap0 : Nat) (s : State)
     (he : EEnv R L g sp K s) (hk : cap0 < len0 + StackNat.rnd (11 * n)) (hn : n ≤ 128)
     (hl16 : len0 + 11 * n + 3 ≤ 2 ^ 16) (hw64 : w0 < 2 ^ 64)
-    (hold : 0 < cap0 → w0 + 8 * cap0 ≤ 2 ^ 48 ∧ s.mem.accessible w0 (8 * cap0) false = true)
+    (hold : 0 < cap0 → w0 + 8 * cap0 ≤ 2 ^ 48 ∧ s.mem.accessible w0 (8 * cap0) false = true ∧
+      Apart w0 (8 * cap0) (sp - K) (K + 752))
     (hcost : 8 * growCap8 (len0 + StackNat.rnd (11 * n)) cap0 ≤ b) (hinv : R.inv b L g (view R.rt L s.mem))
     (S : State) (M1 : Memory) (hpc : S.pc = BitVec.ofNat 64 grE) (hsp : S.sp = BitVec.ofNat 64 sp)
     (h0 : S.regs 0 = BitVec.ofNat 64 w0) (h1 : S.regs 1 = BitVec.ofNat 64 (len0 + StackNat.rnd (11 * n)))
@@ -83,7 +84,7 @@ theorem enG2 (impl : List Segment) (R : RtInv)
     (by rw [h28, BitVec.toNat_ofNat, Nat.mod_eq_of_lt (by omega)]; exact hinvS)
     (by simp only [growsliceRound, t1, t2]; exact hcost)
   refine Reaches.call_regions ((hgr L b).withExit hret) hpc
-    ⟨⟨⟨hc.1, ?ty1, ?ty2, ?ty3, by omega, by omega, by omega, by omega⟩, fun hp => ?old⟩, hc.2⟩ ?_
+    ⟨⟨⟨hc.1, ?ty1, ?ty2, ?ty3, by omega, by omega, by omega, by omega, ?ty4⟩, fun hp => ?old⟩, hc.2⟩ ?_
   case ty1 => rw [t4]; exact ⟨by omega, by rw [hFw.accessible]; exact ht3⟩
   case ty2 =>
     simp only [typSize, t4]; rw [hmem, hF.readLE _ _ (by simp only [outside_cons, outside_nil, and_true]; omega)]
@@ -95,8 +96,15 @@ theorem enG2 (impl : List Segment) (R : RtInv)
     unfold GrowsliceOld
     have e : (S.regs 1).toNat - (S.regs 3).toNat = cap0 := by rw [t1, t3]; omega
     rw [e] at hp ⊢
-    obtain ⟨a1, a2⟩ := hold hp
-    rw [t0, hmem, hF.accessible]; exact ⟨a1, a2⟩
+    obtain ⟨a1, a2, a3⟩ := hold hp
+    rw [t0, hmem, hF.accessible]
+    refine ⟨a1, a2, ?_⟩
+    -- v0.3.1: the old array is outside the callee's window (it is outside ours)
+    unfold Apart at a3
+    simp only [calleeStack, tsp, outside_cons, outside_nil, and_true]; omega
+  case ty4 =>
+    -- v0.3.1: the type descriptor (rodata) is outside the callee's window
+    rw [t4]; simp only [calleeStack, tsp, outside_cons, outside_nil, and_true]; omega
   intro S1 hpc1 ⟨ptr, junk, f1, v1, m1, ex1, ep1, hs1, hMF, hLF, ⟨hobj, hapL⟩, hapS, hinv1⟩ hrg
   subst hs1
   have hround : growsliceRound S = 8 * growCap8 (len0 + StackNat.rnd (11 * n)) cap0 := by
