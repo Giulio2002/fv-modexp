@@ -34,14 +34,15 @@ abbrev guard (s : State) : Nat := (s.regs 28).toNat + 16
 
 /-- the stack-object facts every scratch user needs (as `BasicSqr.Pre`): header and array outside the window and apart
 from the guard word, the free part apart from the guard word, the header and the `runtime.writeBarrier` flag, and outside
-the window -/
+the window, and held (a fresh array is apart from it even when the stack is empty) -/
 @[reducible] def StkPre (R : RtInv) (L : List (Nat × Nat)) (s : State) (W above st : Nat) : Prop :=
   st ≠ 0 ∧ StkOK s.mem R L st ∧ Outside st 24 (win s W above) ∧ Apart st 24 (guard s) 8 ∧
     (0 < stCap s.mem st → Outside (stW s.mem st) (8 * stCap s.mem st) (win s W above) ∧
       Apart (stW s.mem st) (8 * stCap s.mem st) (guard s) 8) ∧
     Apart (BasicSqr.freeP s.mem st) (BasicSqr.freeN s.mem st) (guard s) 8 ∧
     Outside (BasicSqr.freeP s.mem st) (BasicSqr.freeN s.mem st) (win s W above) ∧
-    Apart st 24 (BasicSqr.freeP s.mem st) (BasicSqr.freeN s.mem st) ∧ Apart st 24 StackNat.wbA 4
+    Apart st 24 (BasicSqr.freeP s.mem st) (BasicSqr.freeN s.mem st) ∧ Apart st 24 StackNat.wbA 4 ∧
+    Held R L (BasicSqr.freeP s.mem st) (BasicSqr.freeN s.mem st)
 
 /-- an array `[p, p + n)` apart from the stack's header and free part -/
 @[reducible] def StkSep (m : Memory) (st p n : Nat) : Prop :=
