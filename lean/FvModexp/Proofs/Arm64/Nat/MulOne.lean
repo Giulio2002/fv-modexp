@@ -43,6 +43,19 @@ theorem toSummaryRegs8 {p0 P : Program} {entry : Nat}
   exact Ensures.toSummaryIn (h (s.regs 0) (s.regs 1) (s.regs 2) (s.regs 3) (s.regs 4) (s.regs 5) (s.regs 6)
     (s.regs 7)) hx hc s hpc ⟨hret, by simp [ArgsFrom], hpre⟩
 
+/-- the caller's LR/FP slots survive the `mulAddWW` call (small context: the omegas here took 63 s inline) -/
+theorem one_kp {R : RtInv} {s s1 : State} {m2 : Memory} {W zp zc : Nat}
+    (hMF : MemFrame s1.mem m2 (R.rt ++ winA s1 4208 72 ++ [(zp, zp + 8 * zc)]))
+    (hsp1 : s1.sp.toNat = s.sp.toNat - 256) (hout0 : Outside (s.sp.toNat - W) (W + 88) R.rt)
+    (hW : 4608 ≤ W) (hb0 : W ≤ s.sp.toNat)
+    (hzw : zp + 8 * zc ≤ s.sp.toNat - W ∨ s.sp.toNat + 88 ≤ zp) :
+    ∀ a n, s.sp.toNat - 264 ≤ a → a + n ≤ s.sp.toNat - 248 → m2.readLE a n = s1.mem.readLE a n := by
+  intro a n h1 h2
+  refine hMF.readLE a n ?_
+  simp only [outside_append, winA, outside_cons, outside_nil, and_true]
+  rw [hsp1]
+  exact ⟨⟨hout0.of_sub (by omega) (by omega), by omega, by omega⟩, by omega⟩
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
@@ -93,11 +106,7 @@ theorem one2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
       have hMF : MemFrame s1.mem s2.mem (R.rt ++ winA s1 4208 72 ++ [(zp.toNat, zp.toNat + 8 * zc.toNat)]) := by
         obtain ⟨⟨_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, h, -⟩, -⟩ := hq; exact h
       have hsp1 : s1.sp.toNat = s.sp.toNat - 256 := by rw [hs]; exact hsp'
-      have hkp : ∀ a n, s.sp.toNat - 264 ≤ a → a + n ≤ s.sp.toNat - 248 → s2.mem.readLE a n = s1.mem.readLE a n :=
-        fun a n h1 h2 => hMF.readLE a n (by
-          simp only [outside_append, winA, outside_cons, outside_nil, and_true]
-          rw [hsp1]
-          exact ⟨⟨hout0.of_sub (by omega) (by omega), by omega, by omega⟩, by omega⟩)
+      have hkp := one_kp hMF hsp1 hout0 hW hb0 hzw
       have e1 : s2.mem.readLE (s.sp.toNat - 256) 8 = (s.regs 30).toNat := by
         rw [hkp _ _ (by omega) (by omega), hm]; exact mlr
       have e2 : s2.mem.readLE (s.sp.toNat - 264) 8 = (s.regs 29).toNat := by
