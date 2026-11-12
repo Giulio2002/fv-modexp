@@ -166,6 +166,8 @@ theorem d2l (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     · rw [hm]; exact Memory.accessible_mono _ hack (Nat.le_refl _)
         (by dsimp only; rw [Nat.add_sub_cancel_left]; exact Nat.add_le_add_left hlr _)
   janus_run [hm1, hm2, hm3, hm4, hm5, hm6, hs1, hs2, hs3, hs4, hs5, hs6, hk1a, hk1b] until [pcJ2]
+  have bxq := Box.mk (And.intro hnz (And.intro hoffc (And.intro hmN hga)))
+  clear hnz hoffc hmN hga
   have hstk : stk = 4800 := rfl
   have hLsL1 : LiveSep L1 (win s 4800 40) := hLs0
   have hext' : LiveExt R L1 (L1 ++ [(ptr.toNat, ptr.toNat + blockSize (hdrV s p len 1) true)]) :=
@@ -199,7 +201,7 @@ theorem d2l (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
      by janus_simp [hm1], by janus_simp [hm2], by janus_simp [hm3], by janus_simp [hm4], by janus_simp [hm5],
      by janus_simp [hm6], by janus_simp [hs1], by janus_simp [hs2], by janus_simp [hs3], by janus_simp [hs4],
      by janus_simp [hs5, hoffd], by janus_simp [hs6, hoffd], by janus_simp [hk1a], by janus_simp [hk1b],
-     by janus_simp, by janus_simp, by janus_simp, hl0, hl1, hl2, hnz,
+     by janus_simp, by janus_simp, by janus_simp, hl0, hl1, hl2, bxq.h.1,
      by janus_simp, by janus_simp, by janus_simp, (by janus_simp <;> omega), by omega,
      (Memory.accessible_read_of_write _ (Memory.accessible_mono _ hack (Nat.le_refl _) (by omega))), ?held, (by omega),
      ?bytes, hd2, fun a n h1 h2 => (hheld.sub h1 h2).readLE hMF2 hLx (hpo'.of_sub h1 (by omega)),
