@@ -1449,3 +1449,7 @@ Dev: SubMod2NRow 10 s / 2.4 GB.
 * Rows (Janus v0.3.1, JANUS_REPLAY_THREADS=1, cache-asm after the s34 warm-up, load ~55): DivWRow 409 s (first run,
   own modules compiled; audit rejected for the missing MemmoveZero site) → 57 s PASS; DivBasicRow 743 s / 4.3 GB PASS
   (78 modules rebuilt incl. ExpHyp/LibExp/StackNat/leaf sums owned by earlier rows in the release order).
+Run 2 (fresh cache, warm-up 1616 s): TruncRow PASS 439 s / 2.4 GB, expmc MontRow audit-FAIL (no Witness; modules compiled
+381 s), **SubMod2NRow PASS 646 s / 2.9 GB** (Mont* now charged to MontRow; remaining own: SubMod2NG*, divmc NatSub*/NatAdd*).
+Dev (arm64, v0.3.1, load ~60): SubMod2NRow 10 s / 2.4 GB, CalleeInst 37 s / 4.6 GB, ExpWit 6.5 s, P2Wit 10 s, P2W2Row 13 s,
+P2W4Row 13 s, P2DRow 84 s / 3.8 GB, ModInvRow 23 s / 3.0 GB.
