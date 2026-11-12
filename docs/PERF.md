@@ -1005,3 +1005,16 @@ cost milliseconds. Never call `omega` after `obtain`ing a callee post; prove the
 | MulLoopEnv | 3 s | 2.4 GB |
 | MulLoopT (TOK, LB.mpreT) | 2 s | 2.3 GB |
 | MulLoopStep | 2 s | 2.3 GB |
+
+## divmc session 20 (arm64, dev compile, LEAN_NUM_THREADS=4) — nat.mul chunk loop: head/call/addTo/induction
+| module | wall | peak RSS |
+|---|---|---|
+| MulLoopHead (lsp, LH, LM, LB.wk/hdrWin, TOK.winKeep, LB.winVal) | 1.5 s | 2.3 GB |
+| MulLoopLM (LB.calleeKeep, LB.xval/yval, lm_of) | 7.4 s | 2.7 GB |
+| MulLoopCall (lcall2 IH call, lcall head → call) | 8.0 s | 2.6 GB |
+| MulLoopAdd (addSum, mul_ra, addPre, add_val, ladd_call, ladd) | 11.6 s | 2.6 GB |
+| MulLoop (lloop induction) | 1.2 s | 2.3 GB |
+LESSON: after `janus_run … calls [hBS]` NEVER call `omega` for a sp fact (`(s.sp - 256#64).toNat = …`): 80 s / 4.9 GB
+(huge hypotheses in context); `rw [hs1, ← hsp]; exact hsp'` = ms (lcall2: 84 s → 2 s). Same for `janus_simp` closers:
+prefer `rw [hk]; simp only [setReg_apply]; exact h28`. A `rw` closing by `rfl` on memory terms can time out: state
+value equations as separate `have`s with explicit types (lm_of: timeout → 7 s).
