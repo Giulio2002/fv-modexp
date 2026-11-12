@@ -78,7 +78,7 @@ theorem wL2_le (ℓ0 ml : Nat) : wL2 ℓ0 ml ≤ wL4 ℓ0 ml := by simp only [wL
 theorem wL0_le (ℓ0 ml : Nat) : ℓ0 ≤ wL4 ℓ0 ml := by simp only [wL4, wL3, wL2]; omega
 
 theorem costE_eq (costF : Nat → Nat → Nat → Nat) (costR : Nat → Nat → Nat → Nat)
-    (costS costP : Nat → Nat → Nat → Nat → Nat) (sqC : Nat → Nat → Nat) (mlC mlG : Nat → Nat → Nat → Nat)
+    (costS costP : Nat → Nat → Nat → Nat → Nat) (bU cU : Nat → Nat → Nat → Nat → Nat → Nat) (sqC : Nat → Nat → Nat) (mlC mlG : Nat → Nat → Nat → Nat)
     (ℓ0 xl yl ml : Nat) :
     costE costF costR costS costP bU cU sqC mlC mlG ℓ0 xl yl ml =
       stackNatCost ℓ0 ml + makeB (ml + 1) + stackNatCost (ℓ0 + rnd ml) ml + makeB ml +
@@ -146,7 +146,7 @@ theorem body {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns 
   have hNW : ModInv.NW (nE s mp ml) ≤ ml := by simp only [ModInv.NW]; omega
   have ha11 : a1 (nE s mp ml) + 1 ≤ ml + 1 := Nat.succ_le_succ ha1
   have hml40 : ml < 2 ^ 40 := by have := hP.2.2.2.2.2.2.1; omega
-  have hC := costE_eq costF costR costS costP sqC mlC mlG (stLen s.mem st) xl yl ml
+  have hC := costE_eq costF costR costS costP bU cU sqC mlC mlG (stLen s.mem st) xl yl ml
   generalize costE costF costR costS costP bU cU sqC mlC mlG (stLen s.mem st) xl yl ml = cE at hC hcost ⊢
   obtain ⟨r15, e15⟩ : ∃ r, r = b - cE := ⟨_, rfl⟩
   obtain ⟨r14, e14⟩ : ∃ r, r = makeB (ml + 1) + r15 := ⟨_, rfl⟩
