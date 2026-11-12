@@ -1367,3 +1367,7 @@ path ≈ 205 s (was: 117 own modules, row 815 s).
 * (5) RunErr rows at REAL load (fresh cache cache-top-freshG, `ROWS=1 scripts/verify-all.sh Top_RunErr`, 17:27-18:25,
   1-min load 41-86, mean 60; other agents + top's own J=1 dev chain): warm-ups arm64 1753 s / amd64 146 s, **arm64 PASS
   545 s / 2.5 GB, amd64 PASS 508 s / 1.3 GB** — both under the 600 s ROW MARGIN target at load ~50-60.
+* Later s20: arm64 RunC1 33 → 24 s, RunCP1 22 → 16 s (RunU8); amd64 `Top/RunU8` (`janus64_data` ≈ 7 s each): RunC1
+  155 → 30 s, RunCP1 164 → 47 s, RunDM0 106 → 50 s; amd64 `Top/RunDSlot`: RunDM2 159 → 91 s, RunDP2 156 → 93 s,
+  RunDJS2 59 → 39 s, DE1/DE2/DJS1/DJZ*/DJF*/DM1/DP1 ≈ unchanged (1 operand: few janus_simps saved). Load fell 80 → 20
+  during these, so compare `u` times in build/dgen.log. Both RunOkRow chains rebuilt OK after all trims (19:01).

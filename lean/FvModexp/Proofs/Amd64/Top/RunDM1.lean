@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Top.RunDKDefs
+import FvModexp.Proofs.Amd64.Top.RunDSlot
 
 /-! # `Run` (amd64): `D1` to `J1` — exponent operand, padded, `expLen > 32`: a fresh `makeslice` buffer
 
@@ -160,18 +161,16 @@ theorem dM1 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
   case refine_26 =>
     intro j hj
     rcases (show j = 0 by omega) with rfl
-    refine OpDone.transport (hop 0 (by omega)) ?_ ?_ ?_ ?_ hLFS (fun _ _ h => hext'.inRanges_old h)
-    all_goals (simp only [opAt]; janus64_simp)
+    refine OpDone.transportS (hop 0 (by omega)) (k := 1) (by omega) ?_ hLFS (fun _ _ h => hext'.inRanges_old h)
+    intro a n h1 h2; simp only [opAt] at h1 h2; janus64_simp
   case refine_27 =>
-    refine OpsApart.transport hopA (fun i hi => ?_)
-    rcases (show i = 0 by omega) with rfl
-    simp only [opAt]
-    exact ⟨by janus64_simp, by janus64_simp⟩
+    refine OpsApart.transportS hopA ?_
+    intro a n h1 h2; simp only [opAt] at h1 h2; janus64_simp
   case op =>
     intro j hj
     rcases (show j = 0 by omega) with rfl
-    refine OpDone.transport (hop 0 (by omega)) ?_ ?_ ?_ ?_ hLFS (fun _ _ h => h)
-    all_goals (simp only [opAt]; janus64_simp)
+    refine OpDone.transportS (hop 0 (by omega)) (k := 1) (by omega) ?_ hLFS (fun _ _ h => h)
+    intro a n h1 h2; simp only [opAt] at h1 h2; janus64_simp
   case zb =>
     intro i hi
     rw [hoL] at hi
