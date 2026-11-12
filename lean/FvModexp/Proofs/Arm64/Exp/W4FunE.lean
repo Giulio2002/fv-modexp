@@ -1,14 +1,13 @@
 import FvModexp.Proofs.Arm64.Exp.W4Fun
 import FvModexp.Proofs.Arm64.Nat.StackNat
+import FvModexp.Proofs.Arm64.Nat.Lsh
 
 /-!
 # `nat.expNNOddMontgomeryWindowSize4` (arm64): `ens` / `sum` (CONVENTIONS §3)
 
 Premises: the live runtime contracts (memclr, memmove, makeslice, growslice, `gcWriteBarrier2`) and `nat.div`'s shape
-`ExpHyp.DivHyp` (until asm lands `nat.div`), and `nat.lsh` in asm's exact shape `Lsh.Hyp2 … Lsh.names 4256 64` (= the
-statement of asm's `Lsh.ens`; not instantiated here only because `Common/AsmShift` (imported by `Nat/Lsh`) and
-`Common/AsmCmp` (imported by the exp layer) both declare `FvModexp.Asm.lv_split` — asm to rename). `(*stack).nat` is
-discharged by divmc's `StackNat.hyp`.
+`ExpHyp.DivHyp` (until asm lands `nat.div`). `nat.lsh` is discharged by asm's `Lsh.ens`, `(*stack).nat` by divmc's
+`StackNat.hyp`.
 -/
 
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvModexp
@@ -29,7 +28,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     (hwb : WbLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 4096 R 2)
     (nsD : List String) (stkD costD : Nat) (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costD)
     (hnsD : ∀ x, nsD.contains x = true → LibExp.names.contains x = true)
-    (hnsW : nsD.contains Extracted.seg34.name = false) (hLsh : Lsh.Hyp2 impl R Lsh.names 4256 64)
+    (hnsW : nsD.contains Extracted.seg34.name = false)
     (b : Nat) (L : List (Nat × Nat)) (K : Nat) (hKD : stkD ≤ K) (hKL : 4256 ≤ K)
     (zp zl zc st xp xl xc yp ylen yc mp n mc : Nat) :
     Ensures ((Extracted.program.onlySegments names).link impl) (segAddr Extracted.program fn)
@@ -52,7 +51,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     rw [← wbE_eq]; exact WbLiveContract.of_codeIn hc hwb
   refine returns_of_reaches (W4Pro.reaches_mono (W4En.enStep impl hap R hclr hmv hmk
     (StackNat.hyp impl hap R hgr hclr hwb) hgr' hmc' hwb' nsD stkD costD hDiv hnsD hnsW Lsh.names 4256
-    hLsh (MontW.sub_of_all (by decide)) (by decide) ret hret b L K
+    (Lsh.ens impl hap R hmk hmv hclr) (MontW.sub_of_all (by decide)) (by decide) ret hret b L K
     (s.regs 28).toNat (s.sp.toNat - 928) st zp zc xp xl xc yp ylen mp n mc s hP hKD hKL hMo hM1 hslen hbC hbB hbA
     hbAC hbP h_pc h_x0 h_x2 h_x3 h_x4 h_x5 h_x6 h_x7 h_x8 h_x10 h_x11 h_x12 h_lr)
     (W4Pro.isReturn_mono fun s' h => ?_))
@@ -70,10 +69,10 @@ def sum (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtIn
     (hwb : WbLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 4096 R 2)
     (nsD : List String) (stkD costD : Nat) (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costD)
     (hnsD : ∀ x, nsD.contains x = true → LibExp.names.contains x = true)
-    (hnsW : nsD.contains Extracted.seg34.name = false) (hLsh : Lsh.Hyp2 impl R Lsh.names 4256 64)
+    (hnsW : nsD.contains Extracted.seg34.name = false)
     (b : Nat) (L : List (Nat × Nat)) (K : Nat) (hKD : stkD ≤ K) (hKL : 4256 ≤ K)
     (zp zl zc st xp xl xc yp ylen yc mp n mc : Nat) :=
-  CallW.hypSum hap (fun _ h => h) (ens impl hap R hclr hmv hmk hgr hwb nsD stkD costD hDiv hnsD hnsW hLsh b L K hKD hKL
+  CallW.hypSum hap (fun _ h => h) (ens impl hap R hclr hmv hmk hgr hwb nsD stkD costD hDiv hnsD hnsW b L K hKD hKL
     zp zl zc st xp xl xc yp ylen yc mp n mc)
 
 end FvModexp.Arm64.ExpW4
