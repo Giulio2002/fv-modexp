@@ -1098,3 +1098,10 @@ or not at all; (3) budget goals: one-line Nat lemmas, never `omega` in the post-
 | P2W2 (full) / P2W2E (ens/sum) | 2.2 / 5.7 s | ≤ 2.4 GB |
 | P2W2Cp2 after the UB.rs field (rebuild) | 81.7 s (s22: 41 s) | 2.4 GB |
 Body segments are independent modules importing only BJ (ROW-TIME rule); composition modules are trivial.
+
+## infra s25 (2026-11-12) — LibW re-target + ModInv X-form (dev compile, host load ~40, J=2)
+* All P2Pre/P2W2/SubMod2N/ModInv modules rebuilt on `LibW.program`: no time change beyond noise (P2W2 modules ≤ 14 s).
+* ModInv X-form: max `ModInvMake` 81-87 s / 2.6 GB, `ModInvL1` 65 s / 3.7 GB, `ModInvEntry` 29 s; rest ≤ 15 s.
+* Lesson: a new reducible conjunct full of `Apart` disjunctions inside a reducible `Pre` made `omega` (which unfolds
+  reducible hypotheses) time out at 200k heartbeats in unrelated lemmas (ModInvKeep2) — make such bundles plain `def`s
+  (`ModInv.PX`, `ModInv.WA`) so omega treats them as atoms; destructure them explicitly where needed.
