@@ -89,7 +89,7 @@ theorem segH (hap : ImplApart Extracted.program impl) {ns : List String}
     rw [hc.fr.accessible]; exact hw
   have hpw48 := hf.pw48
   have hpwa : S.mem.accessible pw (24 * pl) true = true := by rw [hc.fr.accessible]; exact hpre.2.2.2.2.2.2.2.2.2.1
-  obtain ⟨-, -, e2, -, e4, -, -, -, e8⟩ := hc.sl
+  obtain ⟨-, -, e2, -, e4, -, -, -, e8, -, -, -⟩ := hc.sl
   obtain ⟨t0, t1, t2⟩ := ht i (Nat.le_refl _) (by omega)
   obtain ⟨d0, d2, d1, -, -⟩ := hd (i / 2) (by omega)
   have f160 : S.mem.readLE (s.sp.toNat - 208 + 160) 8 = pl := by

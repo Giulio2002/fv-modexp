@@ -45,7 +45,7 @@ theorem segA (hap : ImplApart Extracted.program impl) {ns : List String}
   have hwbf : S.mem.accessible RunIface.wbA 4 false = true := hgl.2.2.2.2.2.2.2.2.2.2.1
   have hwbv : RunIface.wbA = 7616064 := rfl
   rw [hwbv] at hwbf
-  obtain ⟨-, -, -, e3, -, e5, -, -, -⟩ := hc.sl
+  obtain ⟨-, -, -, e3, -, e5, -, -, -, -, -, -⟩ := hc.sl
   obtain ⟨l0, l1, l2, l3⟩ := hrs.lo
   have f192 : S.mem.readLE (s.sp.toNat - 208 + 192) 8 = pw + 24 * i := by
     rw [show s.sp.toNat - 208 + 192 = s.sp.toNat - 16 by omega]; exact l3
