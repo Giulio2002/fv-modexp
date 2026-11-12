@@ -1,5 +1,2 @@
 # files allowed to contain `sorry` while in progress: path<TAB>owner<TAB>note. MUST be empty at release (RELEASE=1 scripts/no-sorry.sh enforces it).
-lean/FvModexp/Proofs/Amd64/Nat/BasicSqrEnd.lean	divmc	basicSqr amd64 WIP
-lean/FvModexp/Proofs/Amd64/Nat/BasicSqrBody.lean	divmc	basicSqr amd64 WIP
-lean/FvModexp/Proofs/Amd64/Nat/BasicSqrLoop.lean	divmc	basicSqr amd64 WIP
-lean/FvModexp/Proofs/Amd64/Nat/BasicSqrPro.lean	divmc	basicSqr amd64 pro2 (stk.nat call) WIP: trace_state/sorry after the call; pro3 not written
+lean/FvModexp/Proofs/Amd64/Int/IntASTail.lean	divmc	amd64 (*Int).Add/Sub tail WIP: janus64_run reaches RET/wb2 on all 12 paths; closers not written (s28 handover)
