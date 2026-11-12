@@ -1,8 +1,5 @@
 import FvModexp.Proofs.Arm64.Exp.MontW
 import FvModexp.Proofs.Common.ExpOdd
-import FvModexp.Proofs.Common.ExpWindow
-import FvModexp.Proofs.Common.ExpmcFrame
-import FvModexp.Proofs.Common.ExpmcWin
 
 /-!
 # `expNNOddMontgomeryWindowSize4` (arm64), main loop nat.go:1450-1475: shared definitions

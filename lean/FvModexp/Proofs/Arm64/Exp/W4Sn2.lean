@@ -1,4 +1,7 @@
+import FvModexp.Proofs.Arm64.Exp.W4DivS
+import FvModexp.Proofs.Arm64.Exp.W4Sn2K
 import FvModexp.Proofs.Arm64.Exp.W4Sn2R
+import FvModexp.Proofs.Arm64.Exp.W4SnK
 
 /-!
 # window-4 prologue (arm64): `sn2Step` — from the return of `nat.lsh` (`lshRet`, fn+0x3d8) to the function's `RET`

@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Arm64.Exp.W4Sn2K
+import FvModexp.Proofs.Arm64.Exp.W4DivR
 
 /-!
 # window-4 prologue (arm64): the spills of `zz` and the call setup of `stk.nat(2n)` #2, `lshRet → snE` (nat.go:1398-1399)

@@ -1,5 +1,5 @@
 import FvModexp.Proofs.Arm64.Exp.W4Exit
-import FvModexp.Proofs.Arm64.Exp.CmpW
+import FvModexp.Proofs.Arm64.Exp.W4Fin
 
 /-!
 # window-4 (arm64), after the first `zz.cmp(m)` (nat.go:1476): the two branches

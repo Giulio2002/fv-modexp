@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Arm64.Exp.W4Anc
+import FvModexp.Proofs.Arm64.Exp.W4RR
 
 /-!
 # window-4 (arm64): the written ranges of each segment of the post chain, as `Outside` facts

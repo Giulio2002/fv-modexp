@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Arm64.Exp.W4Defs
+import FvModexp.Proofs.Arm64.Exp.LibExp
 import FvModexp.Proofs.Common.ExpMont
 
 /-!

@@ -1,5 +1,5 @@
-import FvModexp.Proofs.Arm64.Exp.W4SnK
-import FvModexp.Proofs.Arm64.Exp.W4RRC
+import FvModexp.Proofs.Arm64.Exp.W4Ctx
+import FvModexp.Proofs.Arm64.Exp.W4RR
 
 /-!
 # window-4 prologue (arm64): the call `_, RR = nat(stk.nat(2n)).div(stk, RR, zz, m)` (nat.go:1399), `divE → divRet`

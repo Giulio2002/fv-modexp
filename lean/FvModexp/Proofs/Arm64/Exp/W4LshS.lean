@@ -1,4 +1,6 @@
 import FvModexp.Proofs.Arm64.Exp.W4LshK
+import FvModexp.Proofs.Arm64.Exp.W4LshR
+import FvModexp.Proofs.Arm64.Exp.W4Sn2
 
 /-!
 # window-4 prologue (arm64): `lshStep` — from the return of `stk.nat(2n)` #1 (`sn1Ret`, fn+0x394) to the function's `RET`
