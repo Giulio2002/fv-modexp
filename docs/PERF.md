@@ -811,3 +811,13 @@ Row amd64 RunErr (janus-provfix, warm cache-top): 491 s wall, peak 5.94 GB (cold
 | Arm64/Nat/LshShiftC | 59 s / 2.6 GB (was 113-161 s / 3.4 GB) | post-call run moved into `shiftT` (small context), as amd64 s13 |
 | Amd64/Nat/RshMainA/B → RshMainAC/AS/BC/BS | see rows log | one makeslice run per module (copy / shift), shr6 moved to RshDefs |
 | row TruncRow arm64 / amd64 | PASS 257 s / 3.2 GB; PASS 426 s / 4.2 GB | |
+
+## agent top s13 (2026-11-12) — amd64 Run operand 0 (padded paths)
+* ROOT CAUSE of 5–8 GB / >6 min modules: `by omega` in the MAIN context after destructuring Run's relations. Each
+  call case-splits over every disjunction in context (input/receiver/guard/TLS outside-window facts `hpw hcw hga hfsw`,
+  callee-window facts): single omegas took 10–80 s and the module OOMed at 8 GB. Fix: tiny arithmetic lemmas with
+  explicit arguments (RunDJDefs: `buf_in_win`, `win_len`, `frame_call_facts`, `src_call_facts`, `fresh_call_facts`,
+  `buf_byte`, `in_byte_out`, `fresh_slot`, `toNat_sub_k` …), `clear` the disjunctions before `janus64_run` (keep only
+  those the callee pre needs, clear them right after the run), and `Box` the rest (unbox after the run).
+  RunDJS0: prelude 115 s / 6.7 GB → 0.6 s; whole module OOM (>490 s) → 25 s / 2.4 GB.
+* Module times (dev, load ~40): RunDP0 19 s, RunDM0 94 s, RunDJS0 25 s, RunDJF0 48 s, RunDJZ0 11 s, RunD1 1 s.
