@@ -189,6 +189,9 @@ theorem site_mk (addr : Nat) : mkSite R addr [] 0x1000
   refine ⟨⟨cs_callOK _ _ _ _ 3 (by omega), ?_, ?_, ?_, ?_⟩, cs_room _ _ _ _ 3 (by omega),
     trivial, cs_inv _ _ _ _, ?_, fun r hr => absurd hr (by simp), cs_winR _ _ _ _ 3 (by omega)⟩
   all_goals try simp only [makesliceRound, TypeOK, cs_mem, cs_r0, cs_r1, cs_r2, BitVec.toNat_ofNat]
-  all_goals first | decide +kernel | exact ⟨by decide +kernel, by rw [memZ_acc]; decide +kernel⟩
+  all_goals first
+    | decide +kernel
+    | exact ⟨by decide +kernel, by rw [memZ_acc]; decide +kernel⟩
+    | (simp only [calleeStack, cs_sp, BitVec.toNat_ofNat, outside_cons, outside_nil, and_true]; decide +kernel)
 
 end FvModexp.Arm64.AsmWit
