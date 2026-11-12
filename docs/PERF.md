@@ -1330,3 +1330,6 @@ close sp / slot goals with tiny lemmas (`sp_ret`, `Nat.sub_sub`) instead of omeg
   dispatch then fails slowly: 44 s, worse); generalize the length (`nD`) at * (run gets stuck: a branch needs the relation).
   Left as is. RunD1L profile (125 s at load 40): 3 runs 13 + 32 + 20 s, final `refine` 26 s (many 1-3 s janus_simp side
   goals), no single hotspot.
+* (5) RunErr rows at REAL load (fresh cache cache-top-freshG, `ROWS=1 scripts/verify-all.sh Top_RunErr`, 17:27-18:25,
+  1-min load 41-86, mean 60; other agents + top's own J=1 dev chain): warm-ups arm64 1753 s / amd64 146 s, **arm64 PASS
+  545 s / 2.5 GB, amd64 PASS 508 s / 1.3 GB** — both under the 600 s ROW MARGIN target at load ~50-60.
