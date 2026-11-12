@@ -140,8 +140,9 @@ theorem post_fin {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp x
           ApartAll (s'.mem.readLE st 8) (8 * s'.mem.readLE (st + 16) 8) L)
       rw [hW, hC]; exact hE.arr
     · show ¬(s'.mem.readLE st 8 = stW s.mem st ∧ s'.mem.readLE (st + 16) 8 = stCap s.mem st) →
-        (s'.mem.readLE st 8, s'.mem.readLE st 8 + 8 * s'.mem.readLE (st + 16) 8) ∈ L1
-      rw [hW, hC]; exact hE.amem
+        (s'.mem.readLE st 8, s'.mem.readLE st 8 + 8 * s'.mem.readLE (st + 16) 8) ∈ L1 ∧
+          0 < s'.mem.readLE (st + 16) 8
+      rw [hW, hC]; exact fun hn => ⟨hE.amem hn, by have := hE.c1len; have := hE.big; omega⟩
   case mf =>
     refine hMF.mono fun a n ho => ?_
     simp only [winA, ws, stkWs, outside_append, outside_cons, outside_nil, and_true] at ho ⊢

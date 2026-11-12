@@ -1050,3 +1050,12 @@ Confirms: with the warm-up, a row pays only its own compile + own replay (s16 wi
 verify-all for this: the warm-up extraction did not pass its row's extract flags (Run needs the runtime contracts and
 `--max-functions 100`), so it failed in 0 s and filled nothing; now it uses `contract_flags` and reports a failed warm-up.
 amd64 RunErr has the smaller margin (802 s of 900): next trim target (the La/H3 chain modules).
+
+## asm s21 (2026-11-12) — drs big path, first modules (arm64 dev, LEAN_NUM_THREADS=4)
+| module | time | mem |
+|---|---|---|
+| Nat/DrsRel | 2.9 s | 2.3 GB |
+| Nat/DrsSNP | 3.1 s | 2.3 GB |
+| Nat/DrsSNI | 6.4 s | 2.5 GB |
+| Nat/DrsSN | 17.5 s | 2.6 GB (was > 6 min: implicit call state unified via `?X.mem =?= P.mem`; fixed by argument order) |
+| Common/DivRecIdeal | 0.4 s | 0.6 GB |

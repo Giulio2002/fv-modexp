@@ -30,9 +30,8 @@ theorem wc_rs (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {M : Memory}
     WC R L K g sp st zp zc s.mem M L1 b1 (stLen s.mem st + 8 * W lm) := by
   obtain ⟨k1, k2, k3, k4, -, k6, -⟩ := hP.stk0
   refine ⟨hF.mono fun a k ho => ?_, Expmc.liveFrame_widen hLF fun a k ho => ?_, hrg, hx, hinv,
-    ⟨k1, hx.held k2, by rw [hF.accessible]; exact k3, k4, hnl, hlc, hc40⟩, hlen, by omega, k6, hkf, fun hn => ⟨hmem hn, by
-      have : 1 ≤ W lm := by have := hP.2.2.2.2.2.1; simp only [W]; omega
-      omega⟩⟩
+    ⟨k1, hx.held k2, by rw [hF.accessible]; exact k3, k4, hnl, hlc, hc40⟩, hlen, by omega, k6, hkf,
+    fun hn => ⟨hmem hn, by have := hP.2.2.2.2.2.1; simp only [W] at hlen; omega⟩⟩
   · simp only [WN, ZS, stkWs, List.cons_append, List.nil_append, outside_append, outside_cons, outside_nil,
       and_true] at ho ⊢
     exact ⟨ho.1.1, ho.1.2.1, ho.1.2.2, ho.2.2.1⟩
@@ -72,10 +71,7 @@ theorem WC.stkNat (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s)
   · by_cases hc : ℓ + StackNat.rnd n ≤ stCap S1.mem st
     · exact Or.inl (hsame hc)
     · exact Or.inr (hgrow (by omega))
-  · intro hne
-    by_cases hc : ℓ + StackNat.rnd n ≤ stCap S1.mem st
-    · exact absurd (hsame hc) hne
-    · exact ⟨hmemb (by rw [h.len]; omega), by have := hok.2.2.2.2.2.1; omega⟩
+  · exact ArrIn.of_nat hok.2.2.2.2.2.1 hlen hsame (fun hc => hmemb (by rw [h.len]; omega))
 
 /-- `(*stack).nat(n)`'s precondition at `SP = sp` -/
 theorem snPre (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ)
