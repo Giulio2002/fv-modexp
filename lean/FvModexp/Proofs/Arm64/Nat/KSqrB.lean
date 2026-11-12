@@ -101,6 +101,25 @@ structure KB5 (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (W st zp zc xp n xc 
   zlo : natVal S.mem zp (2 * kn2 n) = kX0 s xp n * kX0 s xp n
   zhi : natVal S.mem (zp + 16 * kn2 n) (2 * n - 2 * kn2 n) = kX1 s xp n * kX1 s xp n
 
+/-- after `z1.Add(z1, z0)` (`0x1bc504`): `z1 = X0² - (X0-X1)²` (signed) in `t` -/
+structure KB6 (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (W st zp zc xp n xc : Nat) (s : State)
+    (lx0 lx1 t : Nat) (S : State) (Lk : List (Nat × Nat)) (bk ng l l2 : Nat) : Prop where
+  pos : KAt s S 0x1bc504
+  km : KM R b L W st zp zc xp n xc s lx0 lx1 t Lk bk (kc6 (stLen s.mem st) n) S.mem
+  z1h : IntAt S.mem (s.sp.toNat - 200) ng t l (kT n)
+  hng : ng ≤ 1
+  hcan : ng = 1 → 0 < l
+  hl : l ≤ 2 * kn2 n
+  z1v : (if ng = 0 then (natVal S.mem t l : Int) else -(natVal S.mem t l : Int)) =
+    -((kD s xp n * kD s xp n : Nat) : Int) + ((kX0 s xp n * kX0 s xp n : Nat) : Int)
+  z1n : NatNorm S.mem t l
+  z2h : IntAt S.mem (s.sp.toNat - 144) 0 (zp + 16 * kn2 n) l2 (zc - 2 * kn2 n)
+  hl2 : l2 ≤ 2 * (n - kn2 n)
+  z2v : natVal S.mem (zp + 16 * kn2 n) l2 = kX1 s xp n * kX1 s xp n
+  z2n : NatNorm S.mem (zp + 16 * kn2 n) l2
+  zlo : natVal S.mem zp (2 * kn2 n) = kX0 s xp n * kX0 s xp n
+  zhi : natVal S.mem (zp + 16 * kn2 n) (2 * n - 2 * kn2 n) = kX1 s xp n * kX1 s xp n
+
 structure KB7 (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (W st zp zc xp n xc : Nat) (s : State)
     (lx0 lx1 t : Nat) (S : State) (Lk : List (Nat × Nat)) (bk l : Nat) : Prop where
   pos : KAt s S 0x1bc514
@@ -480,5 +499,77 @@ theorem ks_sqcallR (impl : List Segment) (R : RtInv) {b : Nat} {L : List (Nat ×
     (by have hle : sqrC (stLen M st) xl' ≤ kcS (stLen s.mem st) n := by rw [h.slen]; exact sqrC_le_inner hxl
         omega) hinv hsb
   exact hK s2 L' b' l' hr hreg hk hkm e0 e1 e2 hval hnn hl2 hv2 hF hLF
+
+/-- the live set is apart from our window -/
+theorem KM.lsep {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State}
+    {lx0 lx1 t : Nat} {Lk : List (Nat × Nat)} {bk spent : Nat} {M : Memory}
+    (h : KM R b L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) :
+    ∀ r ∈ Lk, r.1 + (r.2 - r.1) ≤ s.sp.toNat - W ∨ s.sp.toNat + 48 ≤ r.1 := by
+  obtain ⟨⟨-, -, -, hout, -, -, hLs, -⟩, -⟩ := h.pre
+  obtain ⟨ns, hLk, hn, -⟩ := h.ext
+  intro r hr
+  rw [hLk] at hr
+  rcases List.mem_append.1 hr with hr | hr
+  · have := hLs r hr; simp only [win, outside_cons, outside_nil, and_true] at this; omega
+  · have := NatSub.outside_of_inRanges hout (hn r hr).1; omega
+
+/-- reads of `z` or `t` outside an inner `nat.sqr`'s writes `[q, q + 8w)` survive the call -/
+theorem KM.sqKeep {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State}
+    {lx0 lx1 t : Nat} {Lk : List (Nat × Nat)} {bk spent : Nat} {M : Memory}
+    (h : KM R b L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) {M' : Memory} {S1 : State}
+    (hsp : S1.sp.toNat = s.sp.toNat - 320) {q w : Nat}
+    (hF : MemFrame M M' (R.rt ++ winA S1 (W - 320) 64 ++ [(q, q + 8 * w)] ++ stkWs M st))
+    (hLF : LiveFrame M M' Lk ([(q, q + 8 * w)] ++ stkWs M st)) {a m : Nat}
+    (ha : (zp ≤ a ∧ a + m ≤ zp + 8 * zc) ∨ (t ≤ a ∧ a + m ≤ t + 8 * kT n)) (hq : a + m ≤ q ∨ q + 8 * w ≤ a) :
+    M'.readLE a m = M.readLE a m := by
+  obtain ⟨hW, hWs, -⟩ := h.lay
+  obtain ⟨-, -, hzw, -, hzs, -, -, -, hzh, -⟩ := h.zops
+  obtain ⟨-, htw, -, -, -, -⟩ := h.tops
+  have hts := h.tsep
+  simp only [win, outside_cons, outside_nil, and_true] at hzw htw
+  obtain ⟨z1, z2, -⟩ := hzs; obtain ⟨t1, t2, -⟩ := hts
+  simp only [BasicSqr.freeP, BasicSqr.freeN] at z2 t2
+  unfold Apart at z1 z2 t1 t2
+  have hH : Held R Lk a m := by
+    rcases ha with ⟨h1, h2⟩ | ⟨h1, h2⟩
+    · exact hzh.sub h1 h2
+    · exact h.scr.held.sub h1 h2
+  rw [List.append_assoc] at hF
+  refine Held.readLE2 hH hF hLF ?_ ?_
+  · simp only [winA, hsp, outside_cons, outside_nil, and_true]; omega
+  · simp only [stkWs, List.cons_append, List.nil_append, outside_cons, outside_nil, and_true]; omega
+
+/-- reads in our frame above an inner `nat.sqr`'s window survive the call (its array writes are outside our window) -/
+theorem KM.sqRd {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State}
+    {lx0 lx1 t : Nat} {Lk : List (Nat × Nat)} {bk spent : Nat} {M : Memory}
+    (h : KM R b L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) {M' : Memory} {S1 : State}
+    (hsp : S1.sp.toNat = s.sp.toNat - 320) {q w : Nat}
+    (hF : MemFrame M M' (R.rt ++ winA S1 (W - 320) 64 ++ [(q, q + 8 * w)] ++ stkWs M st))
+    (hq : q + 8 * w ≤ s.sp.toNat - W ∨ s.sp.toNat + 48 ≤ q) {x m : Nat}
+    (h1 : s.sp.toNat - 256 ≤ x) (h2 : x + m ≤ s.sp.toNat + 48) : M'.readLE x m = M.readLE x m := by
+  obtain ⟨hW, hWs, -⟩ := h.lay
+  have hstw : Outside st 24 (win s W 48) := h.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1.2.2.1
+  have hfw := h.stk.2.2.1
+  simp only [win, outside_cons, outside_nil, and_true, BasicSqr.freeP, BasicSqr.freeN] at hstw hfw
+  simp only [winA, hsp] at hF
+  rw [List.append_assoc] at hF
+  exact h.rdW (k := W - 320) (a := 64) (by omega) (Nat.le_refl _) hF h1 h2
+    (by simp only [stkWs, List.cons_append, List.nil_append, outside_cons, outside_nil, and_true]; omega)
+
+/-- an `IOp` from a header in our frame and the facts about its array -/
+theorem KM.iop {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State}
+    {lx0 lx1 t : Nat} {Lk : List (Nat × Nat)} {bk spent : Nat} {M : Memory}
+    (_h : KM R b L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) {a ng p l c : Nat} (hh : IntAt M a ng p l c)
+    (hng : ng ≤ 1) (hlc : l ≤ c) (hc : c < 2 ^ 40) (hl : l ≤ 2 ^ 16) (hacc : M.accessible p (8 * l) false = true)
+    (h48 : p + 8 * l ≤ 2 ^ 48) (hH : Held R Lk p (8 * l)) (hn : NatNorm M p l) (hw : Outside p (8 * l) (win s W 48)) :
+    IOp R Lk s W M a := by
+  obtain ⟨q1, q2, q3, q4⟩ := hh
+  simp only [IOp, IntAS.hNeg, IntAS.hP, IntAS.hL, IntAS.hC, q1, q2, q3, q4]
+  exact ⟨hng, hlc, hc, hl, hacc, h48, hH, hn, hw⟩
+
+theorem intZ_of {M : Memory} {a ng p l c : Nat} (hh : IntAt M a ng p l c) :
+    IntAS.intZ M a = if ng = 0 then (natVal M p l : Int) else -(natVal M p l : Int) := by
+  obtain ⟨q1, q2, q3, -⟩ := hh
+  simp only [IntAS.intZ, IntAS.hNeg, IntAS.hP, IntAS.hL, q1, q2, q3]
 
 end FvModexp.Arm64.NatSqr

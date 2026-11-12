@@ -893,3 +893,11 @@ goals with a tiny pure lemma (`bud_step`, `bud_room2`) instead.
   those the callee pre needs, clear them right after the run), and `Box` the rest (unbox after the run).
   RunDJS0: prelude 115 s / 6.7 GB → 0.6 s; whole module OOM (>490 s) → 25 s / 2.4 GB.
 * Module times (dev, load ~40): RunDP0 19 s, RunDM0 94 s, RunDJS0 25 s, RunDJF0 48 s, RunDJZ0 11 s, RunD1 1 s.
+## divmc session 14 (arm64, dev compile, LEAN_NUM_THREADS=4, host shared with other agents)
+* karatsubaSqr segments: KSqrB (boundaries + shared lemmas) 17 s / 3.1 GB, KSqrSub 13 s / 2.7 GB, KSqrS1c 62 s / 5.6 GB
+  (janus_run through the live memclr contract: perf candidate — stop at the memclr entry and use call_regions with a
+  small pre lemma, as ks_intcall), KSqrS1 6.5 s, KSqrS2 7 s, KSqrS3 10.6 s, KSqrAdd1 37 s / 3.1 GB.
+* LESSON: in `refine lemma … _ rfl …` after `janus_run`, an argument `rfl : S1.mem = M` / `h28 : S.regs 28 = …` lets the
+  unifier pick `S1 := S` (the pre-run state) before the goal fixes it — pass `?hm`/`?g` and close them after.
+* LESSON: memory-goal `janus_simp` after header stores (`natVal (writes) t l = …`) ran > 5 min (killed); take
+  `MemFrame Q S.mem [stores]` from `janus_frame` once and transport everything in a pure lemma (kS1mid): 6 s.
