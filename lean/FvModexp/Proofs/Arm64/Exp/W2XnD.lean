@@ -35,7 +35,8 @@ namespace FvModexp.Arm64.W2Pro
   (∀ p c, (p = qp ∧ c = qc) ∨ (p = z2p ∧ c = z2c) → 0 < c → Apart p (8 * c) up (8 * ul) ∧
     Apart p (8 * c) mp (8 * n) ∧ Apart p (8 * c) st 24 ∧
     Apart p (8 * c) (stW M st + 8 * stLen M st) (8 * (stCap M st - stLen M st))) ∧
-  Apart qp (8 * qc) RunIface.gA 32 ∧ Apart z2p (8 * z2c) RunIface.gA 32 ∧ (st ≠ 0 ∧ Apart st 24 RunIface.gA 32) ∧
+  Apart qp (8 * qc) RunIface.gA 32 ∧ Apart z2p (8 * z2c) RunIface.gA 32 ∧ (st ≠ 0 ∧ Apart st 24 RunIface.gA 32 ∧ (Apart st 24 (g + 16) 8 ∧ Apart st 24 StackNat.wbA 4 ∧
+    Apart st 24 (stW M st + 8 * stLen M st) (8 * (stCap M st - stLen M st)))) ∧
   Apart (stW M st + 8 * stLen M st) (8 * (stCap M st - stLen M st)) RunIface.gA 32 ∧
   costF (stLen M st) ul n ≤ cost ∧ cost ≤ b ∧ R.inv b L g (view R.rt L M)
 
@@ -117,7 +118,7 @@ theorem divCallG (impl : List Segment) (hap : ImplApart Extracted.program impl) 
       ⟨by omega, hua, hu48, huH, out_win hKD huW⟩, ⟨by omega, hma, hm48, hmH, out_win hKD hmW⟩, hul, hn, by omega,
       huN, hmN, hsok, out_win hKD hstW, fun hc => ⟨out_win hKD (harr hc).1, (harr hc).2⟩, hslen,
       fun h => absurd h (by omega), huSt, huFr, hvSt, hvFr,
-      hgst.1, fun _ => hgq, fun _ => hgz, hgst.2, hgfr,
+      hgst.1, hgst.2.2, fun _ => hgq, fun _ => hgz, hgst.2.1, hgfr,
       hqz, fun p c hpc' hc0 => ?_, Nat.le_trans hcF hcost, hinv⟩
     simp only [List.mem_cons, List.not_mem_nil, or_false, Prod.mk.injEq] at hpc'
     exact hpair p c hpc' hc0

@@ -116,7 +116,7 @@ theorem Pre.f {R : RtInv} {b : Nat} {dc : Nat → Nat → Nat → Nat} {L : List
     {zp zl zc st z2 z2l z2c u ul v vl : Nat} {s : State}
     (h : Pre R b dc L zp zl zc st z2 z2l z2c u ul v vl s) : PF R b dc L zp zl zc st z2 z2l z2c u ul v vl s := by
   obtain ⟨h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11, h12, h13, h14, h15, h16, h17, h18, h19, h20, h21, h22,
-    h23, h0, h24, h25, h26, h27, h28, h29, h30, h31⟩ := h
+    h23, h0, -, h24, h25, h26, h27, h28, h29, h30, h31⟩ := h
   exact ⟨h0, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11, h12, h13, h14, h15, h16, h17, h18, h19, h20, h21, h22,
     h23, h24, h25, h26, h27, h28, h29, h30, h31⟩
 

@@ -32,6 +32,20 @@ theorem CtxB.stnz {R : RtInv} {L : List (Nat × Nat)}
   exact FinEnv.stnz hfe
 
 set_option maxRecDepth 20000 in
+/-- the stack header's separation from the guard word, the write-barrier flag and the free part (asm s18, `DivPre`) -/
+theorem CtxB.hdr {R : RtInv} {L : List (Nat × Nat)}
+    {g sp K n mp mc Mv yp ylen Y yi zp zc st n0 l0 ret : Nat} {r29 : BitVec 64} {ex : List (Nat × Nat)} {M : Memory}
+    (h : CtxB R L g sp K n mp mc Mv yp ylen Y yi zp zc st n0 l0 ret r29 ex M) :
+    Apart st 24 (g + 16) 8 ∧ Apart st 24 StackNat.wbA 4 ∧
+      Apart st 24 (stW M st + 8 * stLen M st) (8 * (stCap M st - stLen M st)) := by
+  obtain ⟨-, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, hfe, -, -, hsok, -, hl0, -, -, -, -,
+    hsu, -, -, hwb, -⟩ := h
+  obtain ⟨-, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, hg, -⟩ := hfe
+  have hlc := hsok.2.2.2.2.2.1
+  refine ⟨hg, hwb, ?_⟩
+  simp only [stUp, Apart] at hsu ⊢; omega
+
+set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem CtxB.addEx {R : RtInv} {L : List (Nat × Nat)}
     {g sp K n mp mc Mv yp ylen Y yi zp zc st n0 l0 ret : Nat} {r29 : BitVec 64} {ex : List (Nat × Nat)}
@@ -206,7 +220,7 @@ theorem xnA2K (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
       by omega, hxa, hx48, o1, o2, hm.1, hm.2.1, hm.2.2.1, m2, hxN, hnm, hsok, hstw, harr, by omega,
       by omega, o3, by simp only [stUp, Apart] at o4 ⊢; omega, m3, by simp only [stUp, Apart] at m4 ⊢; omega,
       fun _ _ => hqz, fun p c hpc hc0 => ?_, (hga.2.2.2.2 _ (List.mem_cons_self ..)).symm,
-      by simp only [stUp, Apart] at hgu ⊢; omega, ⟨CtxB.stnz hB, hga.2.2.1.symm⟩, by simp only [stUp, Apart] at hgu ⊢; omega,
+      by simp only [stUp, Apart] at hgu ⊢; omega, ⟨CtxB.stnz hB, hga.2.2.1.symm, CtxB.hdr hB⟩, by simp only [stUp, Apart] at hgu ⊢; omega,
       cf_eq hcX (by omega), by unfold xjBud at hbC; omega, hinv⟩
     rcases hpc with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
     · refine ⟨ox.symm, om.symm, hqS, ?_⟩
