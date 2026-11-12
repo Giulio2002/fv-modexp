@@ -102,7 +102,8 @@ theorem rec_pre {R : RtInv} {c : Cx} {s X : State} {Lk : List (Nat × Nat)} {bk 
       hext.held (hvh.sub (by omega) (by omega)), hwin _ _ (hvo.of_sub (by omega) (by omega)),
       apL hvgA (by omega) (by omega), hext.held (hvch.sub (by omega) (by omega)), by omega⟩,
     apR t0u (by omega) (by omega), apR t0v (by omega) (by omega), apR (apL huv (by omega) (by omega)) (by omega) (by omega),
-    hstin, ⟨hlB, by rw [hlen] at hlc; simp only [Cx.l1, StackNat.rnd] at hlc; omega, apL hvcX (by omega) (by omega), hst0⟩, ⟨t0s, fq.symm⟩, ⟨apL hus (by omega) (by omega), apL fu.symm (by omega) (by omega)⟩,
+    hstin, ⟨hlB, by rw [hlen] at hlc; simp only [Cx.l1, StackNat.rnd] at hlc; omega, apL hvcX (by omega) (by omega),
+      ⟨hst0.1, by have := hst0.2.1; omega, hcr.t0al⟩⟩, ⟨t0s, fq.symm⟩, ⟨apL hus (by omega) (by omega), apL fu.symm (by omega) (by omega)⟩,
     ⟨apL hvs (by omega) (by omega), apL fv.symm (by omega) (by omega)⟩, hswb, fst,
     by rw [hlen]; exact hwin _ _ hfp.fw, ⟨t0gA, apL hugA (by omega) (by omega), hstgA, fgA⟩, ?_, by rw [h28]; exact hev.inv⟩
   rw [hlen]; exact Nat.le_trans (drsC_ul _ _ _ _ (by omega)) hbud
