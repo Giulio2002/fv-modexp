@@ -1180,3 +1180,9 @@ amd64 Top_RunErr in the same run: **FAIL (timeout) 901 s**, peak 1.4 GB — at l
 | DrsC6R (i++ → head) | 3 s | 2.3 GB |
 | DrsCL (loop induction) | 1.5 s | 2.3 GB |
 | AddTo (first dev build) | 127 s | 4.4 GB |
+### divmc session 23 (arm64, dev, LEAN_NUM_THREADS=4, host load ~30)
+| module | before | after | note |
+|---|---|---|---|
+| MulMakeA2 (alloc_call: makeslice call → join) | blanket closers >300 s | 6-7 s / 2.4 GB | `ReachesRet.call_regions` (regions fact), each JoinAt field closed by name (`rfl` only for `.pc`/`.sp` projections, `setReg_apply`/`callRegs_apply` simp for registers, `exact q…` for spills) |
+| MulMakeA (make_alloc = alloc_head ∘ alloc_call) | 286 s / 8.0 GB | 1.1 s | composition only |
+| MulMake total (R + A1 + AP + A2 + A) | 464 s / 8.1 GB | ≈ 70 s summed, max 35 s / 2.6 GB per module | |
