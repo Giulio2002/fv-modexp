@@ -1115,3 +1115,8 @@ Body segments are independent modules importing only BJ (ROW-TIME rule); composi
 * Lesson: a new reducible conjunct full of `Apart` disjunctions inside a reducible `Pre` made `omega` (which unfolds
   reducible hypotheses) time out at 200k heartbeats in unrelated lemmas (ModInvKeep2) — make such bundles plain `def`s
   (`ModInv.PX`, `ModInv.WA`) so omega treats them as atoms; destructure them explicitly where needed.
+
+## infra s26 (2026-11-12) — LibNE + expNNEven start (dev compile, host load ~42)
+* `LibNE` arm64 51 s / 3.0 GB, amd64 55 s / 3.0 GB (generated mask proofs, as LibN).
+* `Common/TzWord` 0.6 s, `Exp/EvDefs` 2.7 s, `Exp/EvTz` (trailingZeroBits loop, induction on `ml - i`) 4.1 s / 2.1 GB,
+  `Exp/EvStmt` 1.5 s.
