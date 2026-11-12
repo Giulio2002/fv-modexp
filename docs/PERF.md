@@ -1279,3 +1279,6 @@ closer did 30-60 s of `Nat.sub` literal unfolding per goal; KQm reads now closed
   replay 206 s, audit 7 s). Was 751 / 886 s (s18, load 35-60).
 * Next trim candidate (success chain): arm64 RunD3LB 81 s of which 48 s are 12 `janus_simp [opAt]` side goals of
   `OpDone.transport` (each ≈ 4 s incl. a failing `janus_disch` ≈ 3.4 s over the big context) — prove the slot-frame fact once.
+* RESULT (cache-top-freshF, verify-all with the replay/warm-up change, load 20-30): warm-ups 1020 s (arm64) + 128 s (amd64);
+  arm64 Top_RunErr PASS 376 s (own compile 306 s, replay 4-wide 59 s, audit 6 s); amd64 Top_RunErr PASS 412 s (own compile
+  303 s, replay 98 s, audit 7 s). At load ~50 expect ≈ ×1.3-1.5 on the compile part (≈ 500-560 s): inside 600 s, thin margin.
