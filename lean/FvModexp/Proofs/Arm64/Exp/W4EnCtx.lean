@@ -47,7 +47,7 @@ set_option maxHeartbeats 64000000 in
 /-- `CtxB` at `xnE` from the entry facts and the frames of the entry segment (entry memory `s.mem`, `xnE` memory `M`) -/
 theorem ctxB_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc yp ylen mp n mc : Nat}
     {s : State} {r29 : BitVec 64} {ret : Nat}
-    (hP : EPre R b L K g sp st zp zc xp xl xc yp ylen mp n mc s)
+    (hP : EPre R b L K g sp st zp zc xp xl xc yp ylen mp n mc s) (hstnz : st ≠ 0)
     {M : Memory} {L1 : List (Nat × Nat)} (hF : MemFrame s.mem M (R.rt ++ [(sp - K, sp + 1040), (st, st + 24)]))
     (hLF : LiveFrame s.mem M L [(st, st + 24)]) (hrg : M.regions = s.mem.regions) (hx : LiveExt R L L1)
     (hkf : ArrKF R L st s.mem M) (hlen : stLen M st = stLen s.mem st + StackNat.rnd (23 * n))
@@ -136,7 +136,7 @@ theorem ctxB_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc x
   case fin =>
     have e840 : segAddr LibW.program DeferW.fnW4 = 1801824 := by decide
     refine ⟨hal, by omega, hsp2, by rw [hacc']; exact Memory.accessible_mono _ hacc (by omega) (by omega), hg1,
-      by rw [hacc']; exact hg2, by rw [hgr]; omega, by unfold Apart; omega, q3, by rw [e840]; exact q4, q5, q6, k4,
+      by rw [hacc']; exact hg2, by rw [hgr]; omega, by unfold Apart; omega, q3, by rw [e840]; exact q4, q5, q6, ⟨k4, hstnz⟩,
       by rw [hacc']; exact k3, by simp only [stLen, stCap] at hcap hlen ⊢; omega, by unfold Apart; omega,
       by unfold Apart; omega, q1, q2⟩
   case ug => simp only [stUp, Apart]; omega

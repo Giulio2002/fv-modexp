@@ -29,7 +29,7 @@ theorem atXnE (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret)
     (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp ylen mp n mc : Nat) (s : State)
     (r18 r29 f29 : BitVec 64)
-    (hP : EPre R b L K g sp st zp zc xp xl xc yp ylen mp n mc s) (hKD : stkD ≤ K) (hKL : stkL ≤ K)
+    (hP : EPre R b L K g sp st zp zc xp xl xc yp ylen mp n mc s) (hstnz : st ≠ 0) (hKD : stkD ≤ K) (hKL : stkL ≤ K)
     (hMo : s.mem.readLE mp (8 * n) % 2 = 1) (hM1 : 1 < s.mem.readLE mp (8 * n))
     (hslen : stLen s.mem st + StackNat.rnd (11 * n) + StackNat.rnd (xl - n + 1) + StackNat.rnd n + 16 * xl +
       StackNat.rnd n + 2 * StackNat.rnd (2 * n) + 32 * n + 80 ≤ 2 ^ 16)
@@ -61,7 +61,7 @@ theorem atXnE (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
         XnPost R L1 K (b1 - W2Pro.xnPre n costD (stLen s.mem st + StackNat.rnd (11 * n)) (xl - n + 1)) M g sp n mp mc (s.mem.readLE mp (8 * n)) Xv' yp ylen (s.mem.readLE yp (8 * ylen))
           (s.mem.readLE (yp + 8 * (ylen - 1)) 8) zp zc st (stLen s.mem st) (stLen s.mem st + StackNat.rnd (11 * n))
           r18 r29 s')) := by
-  have hC := ctxB_of hP hF hLF hrg hx hkf hlen hcap hc40 hnl hsl
+  have hC := ctxB_of hP hstnz hF hLF hrg hx hkf hlen hcap hc40 hnl hsl
   rw [hlen] at hC
   have hP' := hP
   obtain ⟨he, -, -, -, -, -, hn128, -, -, -, -, -, -, -, -, -, -, -, -,

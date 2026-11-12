@@ -25,6 +25,12 @@ theorem CtxB.ga {R : RtInv} {L : List (Nat × Nat)}
   obtain ⟨-, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, hga, -⟩ := h
   exact hga
 
+theorem CtxB.stnz {R : RtInv} {L : List (Nat × Nat)}
+    {g sp K n mp mc Mv yp ylen Y yi zp zc st n0 l0 ret : Nat} {r29 : BitVec 64} {ex : List (Nat × Nat)} {M : Memory}
+    (h : CtxB R L g sp K n mp mc Mv yp ylen Y yi zp zc st n0 l0 ret r29 ex M) : st ≠ 0 := by
+  obtain ⟨-, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, hfe, -, -, -, -, -, -, -, -, -, -, -, -, -⟩ := h
+  exact FinEnv.stnz hfe
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem CtxB.addEx {R : RtInv} {L : List (Nat × Nat)}
@@ -200,7 +206,7 @@ theorem xnA2K (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
       by omega, hxa, hx48, o1, o2, hm.1, hm.2.1, hm.2.2.1, m2, hxN, hnm, hsok, hstw, harr, by omega,
       by omega, o3, by simp only [stUp, Apart] at o4 ⊢; omega, m3, by simp only [stUp, Apart] at m4 ⊢; omega,
       fun _ _ => hqz, fun p c hpc hc0 => ?_, (hga.2.2.2.2 _ (List.mem_cons_self ..)).symm,
-      by simp only [stUp, Apart] at hgu ⊢; omega, hga.2.2.1.symm, by simp only [stUp, Apart] at hgu ⊢; omega,
+      by simp only [stUp, Apart] at hgu ⊢; omega, ⟨CtxB.stnz hB, hga.2.2.1.symm⟩, by simp only [stUp, Apart] at hgu ⊢; omega,
       cf_eq hcX (by omega), by unfold xjBud at hbC; omega, hinv⟩
     rcases hpc with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
     · refine ⟨ox.symm, om.symm, hqS, ?_⟩

@@ -60,7 +60,7 @@ theorem enStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     (hnsWL : nsL.contains Extracted.seg35.name = false)
     (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret)
     (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp ylen mp n mc : Nat) (s : State)
-    (hP : EPre R b L K g sp st zp zc xp xl xc yp ylen mp n mc s) (hKD : stkD ≤ K) (hKL : stkL ≤ K)
+    (hP : EPre R b L K g sp st zp zc xp xl xc yp ylen mp n mc s) (hstnz : st ≠ 0) (hKD : stkD ≤ K) (hKL : stkL ≤ K)
     (hMo : s.mem.readLE mp (8 * n) % 2 = 1) (hM1 : 1 < s.mem.readLE mp (8 * n))
     (hslen : stLen s.mem st + StackNat.rnd (11 * n) + StackNat.rnd (xl - n + 1) + StackNat.rnd n + 16 * xl +
       StackNat.rnd n + 2 * StackNat.rnd (2 * n) + 32 * n + 80 ≤ 2 ^ 16)
@@ -137,7 +137,7 @@ theorem enStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     have hc3 : stCap M3 st < 2 ^ 40 := by simp only [stCap] at q3 ⊢; rw [q3]; exact k7
     refine reaches_mono (atXnE impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL ret
       hret b L K g sp
-      st zp zc xp xl xc yp ylen mp n mc s (s.regs 18) (s.regs 29) (BitVec.ofNat 64 (sp - 8)) hP hKD hKL hMo hM1 hslen hcs
+      st zp zc xp xl xc yp ylen mp n mc s (s.regs 18) (s.regs 29) (BitVec.ofNat 64 (sp - 8)) hP hstnz hKD hKL hMo hM1 hslen hcs
       hbC hbB hbA hbAC hbP M3 L b hF hLF (hrg3.trans hrg1) (LiveExt.refl R L) (Or.inl ⟨q1, q3⟩) q2 hcap3 hc3 ?_ hsl3
       (by omega) hinv3 S3 d1 d2 d3
       (d4.trans c4) (d5.trans c5) (d6.trans c6) (d7.trans c7) (d8.trans c8) (d9.trans c9) (d10.trans c14) d11
@@ -214,7 +214,7 @@ theorem enStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
       exact ⟨⟨ho.1, by omega, by omega⟩, ho.1, ho.2.2.2, by omega⟩
     refine reaches_mono (atXnE impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL ret
       hret b L K g sp
-      st zp zc xp xl xc yp ylen mp n mc s (s.regs 18) (s.regs 29) (BitVec.ofNat 64 (sp - 8)) hP hKD hKL hMo hM1 hslen hcs
+      st zp zc xp xl xc yp ylen mp n mc s (s.regs 18) (s.regs 29) (BitVec.ofNat 64 (sp - 8)) hP hstnz hKD hKL hMo hM1 hslen hcs
       hbC hbB hbA hbAC hbP M3 _ _ hF hLF (hrg3.trans (hrg2.trans hrg1)) hx hkfG q2 hcap3 hc3 ?_ hsl3
       (by omega) hinv3 S3 e1 e2 e3 (e4.trans d4) (e5.trans d5) (e6.trans d6) (e7.trans d7) (e8.trans d8) (e9.trans d9)
       ((e10.trans d14).trans c9) e11 ((e12.trans d16).trans c11) e13)
