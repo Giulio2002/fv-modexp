@@ -1,0 +1,85 @@
+import FvModexp.Proofs.Arm64.Exp.NNilN
+import FvModexp.Proofs.Arm64.Exp.NNilT
+
+/-!
+# `nat.expNN` (arm64), `stk == nil`, pool empty: `newobject`'s return fn+0x26c → defer record, reloads, join → rem | `J5`
+(the same code as `NNilT.getT` from fn+0x278 on)
+-/
+
+open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvModexp
+
+namespace FvModexp.Arm64.ExpN
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 64000000 in
+/-- fn+0x26c (`X0 = p`, the new stack) → the defer record, reloads, join → rem entry | `J5` (as `getT`) -/
+theorem joinN (impl : List Segment) (ret0 : Nat) (hret : RetAddr (LibN.program.link impl) ret0) (Q : Outcome → Prop)
+    (sp d z0 z1 z2 x4 x5 x6 yp yl x9 x10 n x12 b13 : Nat) (M : Memory)
+    (hal : sp % 16 = 0) (hsp1 : 8 ≤ sp) (hsp2 : sp + 1432 ≤ 2 ^ 48)
+    (hacc : M.accessible (sp + 1048) 384 true = true) (hd : d < 2 ^ 64)
+    (r208 : M.readLE (sp + 1056 + 208) 8 = z0) (r152 : M.readLE (sp + 1056 + 152) 8 = z1)
+    (r168 : M.readLE (sp + 1056 + 168) 8 = z2)
+    (r296 : M.readLE (sp + 1056 + 296) 8 = x4) (r304 : M.readLE (sp + 1056 + 304) 8 = x5)
+    (r312 : M.readLE (sp + 1056 + 312) 8 = x6) (r320 : M.readLE (sp + 1056 + 320) 8 = yp)
+    (r328 : M.readLE (sp + 1056 + 328) 8 = yl) (r336 : M.readLE (sp + 1056 + 336) 8 = x9)
+    (r344 : M.readLE (sp + 1056 + 344) 8 = x10) (r352 : M.readLE (sp + 1056 + 352) 8 = n)
+    (r360 : M.readLE (sp + 1056 + 360) 8 = x12) (r368 : M.readLE (sp + 1056 + 368) 1 = b13)
+    (hya : M.accessible yp 8 false = true) (hyo : yp + 8 ≤ sp + 1182 ∨ sp + 1425 ≤ yp) (hy0 : yl ≠ 0)
+    (S : State) (hpc : S.pc = BitVec.ofNat 64 noR) (hsp : S.sp = BitVec.ofNat 64 (sp + 1056))
+    (h0 : S.regs 0 = BitVec.ofNat 64 d) (hmem : S.mem = M)
+    (KR : yl = 1 → M.readLE yp 8 = 1 → ∀ (S' : State) (M' : Memory),
+      S'.pc = BitVec.ofNat 64 1806400 → S'.sp = S.sp →
+      S'.regs 0 = BitVec.ofNat 64 z0 → S'.regs 1 = BitVec.ofNat 64 z1 → S'.regs 2 = BitVec.ofNat 64 z2 →
+      S'.regs 3 = BitVec.ofNat 64 d → S'.regs 4 = BitVec.ofNat 64 x4 → S'.regs 5 = BitVec.ofNat 64 x5 →
+      S'.regs 6 = BitVec.ofNat 64 x6 → S'.regs 7 = BitVec.ofNat 64 x10 → S'.regs 8 = BitVec.ofNat 64 n →
+      S'.regs 9 = BitVec.ofNat 64 x12 → S'.regs 18 = S.regs 18 → S'.regs 28 = S.regs 28 →
+      S'.regs 30 = BitVec.ofNat 64 1787296 → S'.mem = M' →
+      MemFrame M M' [(sp + 1182, sp + 1184), (sp + 1272, sp + 1288), (sp + 1296, sp + 1304)] →
+      M'.regions = M.regions → M'.readLE (sp + 1182) 1 = 1 → M'.readLE (sp + 1183) 1 = 1 →
+      M'.readLE (sp + 1272) 8 = dwA → M'.readLE (sp + 1280) 8 = d → M'.readLE (sp + 1296) 8 = sp + 1272 →
+      Reaches ((LibN.program.link impl).withExit ret0) S' Q)
+    (KD : ¬(yl = 1 ∧ M.readLE yp 8 = 1) → ∀ (S' : State) (M' : Memory),
+      S'.pc = BitVec.ofNat 64 1787348 → S'.sp = S.sp →
+      S'.regs 0 = BitVec.ofNat 64 z0 → S'.regs 1 = BitVec.ofNat 64 z1 → S'.regs 2 = BitVec.ofNat 64 z2 →
+      S'.regs 3 = BitVec.ofNat 64 d → S'.regs 4 = BitVec.ofNat 64 x4 → S'.regs 5 = BitVec.ofNat 64 x5 →
+      S'.regs 6 = BitVec.ofNat 64 x6 → S'.regs 7 = BitVec.ofNat 64 yp → S'.regs 8 = BitVec.ofNat 64 yl →
+      S'.regs 9 = BitVec.ofNat 64 x9 → S'.regs 10 = BitVec.ofNat 64 x10 → S'.regs 11 = BitVec.ofNat 64 n →
+      S'.regs 12 = BitVec.ofNat 64 x12 → S'.regs 13 = BitVec.ofNat 64 b13 → S'.regs 14 = 1#64 →
+      S'.regs 18 = S.regs 18 → S'.regs 28 = S.regs 28 → S'.mem = M' →
+      MemFrame M M' [(sp + 1182, sp + 1184), (sp + 1272, sp + 1288), (sp + 1296, sp + 1304)] →
+      M'.regions = M.regions → M'.readLE (sp + 1182) 1 = 1 → M'.readLE (sp + 1183) 1 = 1 →
+      M'.readLE (sp + 1272) 8 = dwA → M'.readLE (sp + 1280) 8 = d → M'.readLE (sp + 1296) 8 = sp + 1272 →
+      Reaches ((LibN.program.link impl).withExit ret0) S' Q) :
+    Reaches ((LibN.program.link impl).withExit ret0) S Q := by
+  have hy8 : M.readLE yp 8 < 2 ^ 64 := Memory.readLE_lt _ _ _
+  have hz0 : z0 < 2 ^ 64 := r208 ▸ Memory.readLE_lt _ _ _
+  have hz1 : z1 < 2 ^ 64 := r152 ▸ Memory.readLE_lt _ _ _
+  have hz2 : z2 < 2 ^ 64 := r168 ▸ Memory.readLE_lt _ _ _
+  have hx4 : x4 < 2 ^ 64 := r296 ▸ Memory.readLE_lt _ _ _
+  have hx5 : x5 < 2 ^ 64 := r304 ▸ Memory.readLE_lt _ _ _
+  have hx6 : x6 < 2 ^ 64 := r312 ▸ Memory.readLE_lt _ _ _
+  have hyp : yp < 2 ^ 64 := r320 ▸ Memory.readLE_lt _ _ _
+  have hyl : yl < 2 ^ 64 := r328 ▸ Memory.readLE_lt _ _ _
+  have hx9 : x9 < 2 ^ 64 := r336 ▸ Memory.readLE_lt _ _ _
+  have hx10 : x10 < 2 ^ 64 := r344 ▸ Memory.readLE_lt _ _ _
+  have hn : n < 2 ^ 64 := r352 ▸ Memory.readLE_lt _ _ _
+  have hx12 : x12 < 2 ^ 64 := r360 ▸ Memory.readLE_lt _ _ _
+  janus_run [r208, r152, r168, r296, r304, r312, r320, r328, r336, r344, r352, r360, r368] until [1806400, 1787348]
+  all_goals (try simp (disch := omega) only [Memory.readLE_writeLE_of_disjoint] at *)
+  all_goals first
+    | (refine KR (by omega) (by janus_assumption) _ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_)
+    | (refine KD (by omega) _ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_)
+  all_goals first | (janus_simp; done) | skip
+  all_goals first
+    | (repeat (first
+        | refine MemFrame.writeLE ?_ _ (r := (sp + 1182, sp + 1184)) (by simp) (by simp only; omega) (by simp only; omega)
+        | refine MemFrame.writeLE ?_ _ (r := (sp + 1272, sp + 1288)) (by simp) (by simp only; omega) (by simp only; omega)
+        | refine MemFrame.writeLE ?_ _ (r := (sp + 1296, sp + 1304)) (by simp) (by simp only; omega) (by simp only; omega))
+       exact MemFrame.refl _ _)
+    | (simp (disch := omega) only [Memory.readLE_writeLE_of_disjoint, Memory.readLE_writeLE_self, Nat.add_assoc,
+        Nat.reduceAdd, BitVec.toNat_ofNat, Nat.reducePow, Nat.reduceMod]; done)
+    | (simp (disch := omega) only [Memory.readLE_writeLE_of_disjoint, Memory.readLE_writeLE_self, Nat.add_assoc,
+        Nat.reduceAdd, BitVec.toNat_ofNat, Nat.reducePow, Nat.reduceMod]; omega)
+    | rfl
+
+end FvModexp.Arm64.ExpN
