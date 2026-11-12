@@ -1,6 +1,8 @@
 import FvModexp.Proofs.Arm64.Conv
 import FvModexp.Proofs.Common.SetBytesMath
 
+set_option autoImplicit false
+
 /-!
 # `nat.setBytes` (go-bigmodexpfix copy, arm64): statement pieces
 
@@ -41,11 +43,15 @@ def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc bp bl : BitVec 64) 
     R.inv b L (s.regs 28).toNat (view R.rt L s.mem) ∧
     (zc.toNat < nW bl → R.ok (cA "runtime.makeslice") [wordT, nW bl, makeCap (nW bl)] ∧ makeCost (nW bl) ≤ b)
 
+/-- The result capacity is `z`'s (reused array) or below `2^40` (a fresh `nat.make`: `1` or `nW bl + 4`). A `def` so
+that `omega` in the loop contexts does not case-split on it. -/
+def CapB (zc c : Nat) : Prop := c = zc ∨ c < 2 ^ 40
+
 /-- The postcondition: `z.setBytes(buf)` returns a normalised nat `(p', n', c')` holding the big-endian value of
 `buf`, either `z`'s array or a fresh one, with the runtime invariant for the live set with it. -/
 @[reducible] def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc bp bl : BitVec 64) (s s' : State) : Prop :=
   ∃ p' n' c' : Nat, (s'.regs 0).toNat = p' ∧ (s'.regs 1).toNat = n' ∧ (s'.regs 2).toNat = c' ∧
-    natVal s'.mem p' n' = beVal s.mem bp.toNat bl.toNat ∧ NatNorm s'.mem p' n' ∧ n' ≤ c' ∧ n' ≤ nW bl ∧
+    natVal s'.mem p' n' = beVal s.mem bp.toNat bl.toNat ∧ NatNorm s'.mem p' n' ∧ (n' ≤ c' ∧ CapB zc.toNat c') ∧ n' ≤ nW bl ∧
     ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b - makeCost (nW bl) ≤ b' ∧
       R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem) ∧ NatLive s'.mem R L' p' c' ∧
       ((p' = zp.toNat ∧ c' = zc.toNat) ∨ (InRanges p' (8 * c') R.rt ∧ ApartAll p' (8 * c') L)) ∧

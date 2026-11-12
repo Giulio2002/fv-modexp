@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Amd64.Nat.SetBytesNorm
 
+set_option autoImplicit false
+
 /-! # `nat.setBytes` (amd64): the byte loop (`+0x133`) and the top limb store, then `normLoop` -/
 
 open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Spec Janus.Contracts
@@ -11,7 +13,7 @@ set_option maxHeartbeats 64000000 in
 theorem byteLoop (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc bp bl : BitVec 64)
     (ret : Nat) (hret : RetAddr ((Extracted.program.onlySegments [fn]).link impl) ret) (s : State)
     (p c : Nat) (L' : List (Nat × Nat)) (b' : Nat) (m : Janus.Arm64.Memory)
-    (hmid : Mid R b L zp zc bp bl s ret p c L' b' m) (hbl : bl.toNat < 2 ^ 40)
+    (hmid : Mid R b L zp zc bp bl s ret p c L' b' m) (hbl : bl.toNat < 2 ^ 40 ∧ CapB zc.toNat c)
     (hsp : 4160 ≤ (s.regs 4).toNat ∧ (s.regs 4).toNat + 48 ≤ 2 ^ 48 ∧ (s.regs 4).toNat % 8 = 0)
     (hw : s.mem.accessible ((s.regs 4).toNat - 4160) (4160 + 48) true = true)
     (hbacc : s.mem.accessible bp.toNat bl.toNat false = true) (hbp : bp.toNat + bl.toNat ≤ 2 ^ 48)

@@ -8,6 +8,8 @@ import FvModexp.Proofs.Arm64.Top.RunC2E
 import FvModexp.Proofs.Arm64.Top.RunCP1
 import FvModexp.Proofs.Arm64.Top.RunCP2
 
+set_option autoImplicit false
+
 /-!
 # `Run` (arm64): the success path, composed
 
@@ -61,6 +63,7 @@ theorem okReach (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (hrecv : s.mem.readLE c.toNat 3 = 65793)
     (hglob : RunIface.Globals R s.mem (win s W 40)) (hgL : ApartAll ((s.regs 28).toNat + 16) 8 L)
     (hbB : okB s p len ≤ b) (hone : FvModexp.Spec.RunArm64.NatOne R s.mem (win s W 40))
+    (hpool : FvModexp.Spec.RunArm64.StackPool R s.mem (win s W 40))
     (hpass : hdrV s p len 0 ≤ 1024 ∧ hdrV s p len 1 ≤ 1024 ∧ hdrV s p len 2 ≤ 1024)
     (Q : Outcome → Prop)
     (hOk : ∀ S' : State, ABIReturn s S' → OkRet S' (resV s p len) (hdrV s p len 2) →
@@ -105,9 +108,9 @@ theorem okReach (impl : List Segment) (hap : ImplApart Extracted.program impl) (
       fun U Lk' bk' vp vn buf hj hpcU => cp2 impl hap R hmv hmz hokM' b L p len ret hret s W hW1 henvW Q hOk U Lk' bk'
         vp vn buf hj hpcU
   by_cases hv0 : opV s p len 0 = 1
-  · exact c2m impl hap R stkM aboveM hM hBy hsv' b L c p len cp ret hret s Q W henvW hW hW1 hab hglob hgL hbB L4 b4 T
+  · exact c2m impl hap R stkM aboveM hM hBy hsv' b L c p len cp ret hret s Q W henvW hW hW1 hab hglob hgL hbB hpool L4 b4 T
       hrelT hTpc h7 hv0 hV hkV
-  · exact c2e impl hap R stkM aboveM hE hBy hsv' b L c p len cp ret hret s Q W henvW hW hW1 hab hglob hgL hbB hone L4 b4 T
+  · exact c2e impl hap R stkM aboveM hE hBy hsv' b L c p len cp ret hret s Q W henvW hW hW1 hab hglob hgL hbB hone hpool L4 b4 T
       hrelT hTpc h7 hv0 hV hkV
 
 end FvModexp.Arm64.Run

@@ -4,6 +4,8 @@ import FvModexp.Proofs.Arm64.Witness.StubsMvz
 import FvModexp.Proofs.Arm64.Witness.StubsMkz
 import FvModexp.Proofs.Arm64.Int.IntBytes
 
+set_option autoImplicit false
+
 /-!
 # Row 1, arm64, success path: `Run` on call data that passes EIP-7823 returns `(compute data (parseLengths data), nil)`
 
@@ -40,6 +42,7 @@ theorem correctness_ok (impl : List Segment) (hap : ImplApart Extracted.program 
       (fun s => RunArm64.EnvW R L s W ∧ RunArm64.Input R L c p len cp s ∧ OsakaReceiver s.mem c.toNat ∧
         R.inv b L (s.regs 28).toNat (view R.rt L s.mem) ∧ RunArm64.OkReqs R ∧
         RunArm64.Globals R s.mem (RunArm64.windowW s W) ∧ RunArm64.NatOne R s.mem (RunArm64.windowW s W) ∧
+        RunArm64.StackPool R s.mem (RunArm64.windowW s W) ∧
         RunArm64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat)) ≤ b ∧
         LengthsPass (bytesAt s.mem p.toNat len.toNat))
       (fun s s' => RunArm64.OkRet (bytesAt s.mem p.toNat len.toNat) s' ∧
@@ -165,9 +168,17 @@ theorem one1 : RunArm64.NatOne R s1.mem (RunArm64.windowW s1 WW) := by
   · rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide
   · simp only [RunArm64.windowW, outside_cons, outside_nil, and_true]; decide +kernel
 
+theorem pool1 : RunArm64.StackPool R s1.mem (RunArm64.windowW s1 WW) := by
+  dsimp only [RunArm64.StackPool]
+  refine ⟨?_, by decide +kernel, ?_, ?_⟩
+  · rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide
+  · rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide
+  · simp only [RunArm64.windowW, outside_cons, outside_nil, and_true]; decide +kernel
+
 theorem pre : RunArm64.EnvW R [] s1 WW ∧ RunArm64.Input R [] c1 p1 99 99 s1 ∧ OsakaReceiver s1.mem c1.toNat ∧
     R.inv bW [] (s1.regs 28).toNat (view R.rt [] s1.mem) ∧ RunArm64.OkReqs R ∧
     RunArm64.Globals R s1.mem (RunArm64.windowW s1 WW) ∧ RunArm64.NatOne R s1.mem (RunArm64.windowW s1 WW) ∧
+    RunArm64.StackPool R s1.mem (RunArm64.windowW s1 WW) ∧
     RunArm64.okBudget (parseLengths (bytesAt s1.mem p1.toNat (99 : BitVec 64).toNat)) ≤ bW ∧
     LengthsPass (bytesAt s1.mem p1.toNat (99 : BitVec 64).toNat) := by
   refine ⟨⟨⟨⟨by decide +kernel, by decide +kernel, by decide +kernel⟩,
@@ -178,7 +189,7 @@ theorem pre : RunArm64.EnvW R [] s1 WW ∧ RunArm64.Input R [] c1 p1 99 99 s1 �
     ⟨by decide +kernel, by decide +kernel, by decide +kernel⟩, inv1,
     ⟨fun _ _ _ _ => trivial, fun _ _ _ _ => trivial, fun _ _ _ => trivial, fun _ _ _ _ _ _ => trivial,
       fun _ => trivial, fun _ => trivial, fun _ => trivial, fun _ => trivial, fun _ => trivial⟩,
-    globals1, one1, budget1, pass1⟩
+    globals1, one1, pool1, budget1, pass1⟩
   · rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel
   · simp only [Apart]; decide +kernel
   · rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel
@@ -257,6 +268,7 @@ theorem nonvacuous_of (stkM aboveM : Nat) (hM : RunIface.ModSpec implAt R stkM a
     RunArm64.EnvW R L s W ∧ RunArm64.Input R L c p len cp s ∧ OsakaReceiver s.mem c.toNat ∧
     R.inv b L (s.regs 28).toNat (view R.rt L s.mem) ∧ RunArm64.OkReqs R ∧
     RunArm64.Globals R s.mem (RunArm64.windowW s W) ∧ RunArm64.NatOne R s.mem (RunArm64.windowW s W) ∧
+        RunArm64.StackPool R s.mem (RunArm64.windowW s W) ∧
     RunArm64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat)) ≤ b ∧
     LengthsPass (bytesAt s.mem p.toNat len.toNat) ∧
     compute (bytesAt s.mem p.toNat len.toNat) (parseLengths (bytesAt s.mem p.toNat len.toNat)) = ⟨#[5]⟩ ∧
