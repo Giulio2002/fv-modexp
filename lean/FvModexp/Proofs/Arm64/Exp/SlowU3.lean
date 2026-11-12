@@ -31,9 +31,6 @@ theorem wsU3_in (sp : Nat) : InSlots sp (wsU3 sp) := by
   simp only [wsU3, List.mem_cons, List.not_mem_nil, or_false] at hr
   rcases hr with rfl | rfl | rfl <;> simp only <;> omega
 
-theorem ofNat_succ (j : Nat) : BitVec.ofNat 64 j + 1#64 = BitVec.ofNat 64 (j + 1) := by
-  apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega
-
 set_option maxRecDepth 20000 in
 /-- `KT1` at a state `T` with the memory of a state `S` carrying the context (pure) -/
 theorem mkKT1 {S : State} {L1 : List (Nat × Nat)} {b1 j w : Nat} {v : BitVec 64}
