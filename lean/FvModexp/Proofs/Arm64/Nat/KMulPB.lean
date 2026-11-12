@@ -116,13 +116,17 @@ theorem kmPB2 (impl : List Segment) {R : RtInv} {b : Nat} {L : List (Nat × Nat)
   have hx8 : xp + 8 * kh n < 2 ^ 64 := by
     have := hQ.pre.F.x48; omega
   janus_run until [0x1bbf94]
-  refine hK _ rfl rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ⟨hQ.pre, ?fr, ?reg, ?_, ?_, ?_, ?_, ?_⟩ ?_ ?_
+  refine hK _ rfl rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ⟨hQ.pre, ?fr, ?reg, ?lr, ?fp, ?s2, ?s5, ?s6⟩ ?_ ?_
   case fr => exact hQ.fr.trans (by janus_frame) fun a k h => ⟨h, h⟩
   case reg => simp only [Memory.regions_writeLE]; exact hQ.reg
+  case lr => janus_simp; exact hQ.lr
+  case fp => janus_simp; exact hQ.fp
+  case s2 => janus_simp; exact hQ.s2
+  case s5 => janus_simp; exact hQ.s5
+  case s6 => janus_simp; exact hQ.s6
   all_goals (try simp only [IntAt])
   all_goals janus_simp
-  all_goals first | exact hQ.lr | exact hQ.fp | exact hQ.s2 | exact hQ.s5 | exact hQ.s6 |
-    exact Nat.mod_eq_of_lt (by omega) | skip
+  all_goals first | exact Nat.mod_eq_of_lt (by omega) | skip
   all_goals (simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega)
 
 set_option maxRecDepth 20000 in

@@ -45,6 +45,16 @@ theorem km_lsr1 (x : BitVec 64) :
   · simp [h]; rw [BitVec.getLsbD_eq_getElem (by omega)]
   · simp [h]; exact BitVec.getLsbD_of_ge x _ (by omega)
 
+/-- `AND $-2` (copied from this repo's `KSqrPA.kand2`) -/
+theorem km_and2 (x : BitVec 64) : x &&& 18446744073709551614#64 = (x >>> 1) <<< 1 := by
+  ext i hi
+  have c1 : ∀ i (h : i < 64), (18446744073709551614#64)[i] = decide (0 < i) := by decide
+  simp only [BitVec.getElem_and, BitVec.getElem_shiftLeft, BitVec.getElem_ushiftRight, c1 i hi]
+  by_cases h : i = 0
+  · subst h; simp
+  · simp [show 1 + (i - 1) = i by omega, show ¬ i < 1 by omega, BitVec.getLsbD_eq_getElem hi] <;>
+      (try (intro _; omega))
+
 /-- `LSR $1` of `n + 1` -/
 theorem kh_lsr (n : Nat) (h : n < 2 ^ 40) : BitVec.ofNat 64 (n + 1) >>> 1 = BitVec.ofNat 64 (kh n) := by
   apply BitVec.eq_of_toNat_eq
