@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Arm64.Top.RunDRel
+import FvModexp.Proofs.Arm64.Top.RunDPc
 import FvModexp.Proofs.Arm64.Top.RunL
 
 /-! # `Run` (arm64): `C0` to `D1` — the base operand (`getData(input, 0, baseLen)`, patched `setBytes`) -/
@@ -7,7 +7,6 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
 
 namespace FvModexp.Arm64.Run
 
-abbrev pcD1 : Nat := segAddr Extracted.program fn + 0x534
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
@@ -45,9 +44,7 @@ theorem d1x (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   have hI11 := toInt_small (T.regs 11) (by omega)
   have hI12 := toInt_small (T.regs 12) (by omega)
   have hgS : S.mem.readLE ((s.regs 28).toNat + 16) 8 = s.mem.readLE ((s.regs 28).toNat + 16) 8 :=
-    hMF.readLE _ _ (by
-      simp only [winA, Janus.outside_append, Janus.outside_cons, Janus.outside_nil, and_true]
-      unfold Apart at hga; exact ⟨hgr, by omega, by omega⟩)
+    gS_read hMF hga hgr
   have hwS : S.mem.accessible (s.sp.toNat - 4800) (4800 + 40) true = true := by rw [hMF.accessible]; exact hw
   have hspn : S.sp.toNat = s.sp.toNat - 624 := by rw [hsp, BitVec.toNat_sub]; simp; omega
   unfold Apart at hga
