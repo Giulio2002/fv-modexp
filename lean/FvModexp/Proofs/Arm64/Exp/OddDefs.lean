@@ -83,7 +83,7 @@ def OCost (costF : Nat → Nat → Nat → Nat) (n xl ylen l : Nat) : Nat :=
 /-- the precondition (entry state `s`, `sp = SP - 1056`) -/
 def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K : Nat) (costF : Nat → Nat → Nat → Nat)
     (zp zc st xp xl xc yp ylen mp n mc : Nat) (s : State) : Prop :=
-  OPre R b L K (s.regs 28).toNat (s.sp.toNat - 1056) st zp zc xp xl xc yp ylen mp n mc s ∧
+  OPre R b L K (s.regs 28).toNat (s.sp.toNat - 1056) st zp zc xp xl xc yp ylen mp n mc s ∧ st ≠ 0 ∧
   natVal s.mem mp n % 2 = 1 ∧ 1 < natVal s.mem mp n ∧
   stLen s.mem st + StackNat.rnd (23 * n) + StackNat.rnd (xl - n + 1) + StackNat.rnd n + 16 * xl + StackNat.rnd n +
     2 * StackNat.rnd (2 * n) + 32 * n + 80 ≤ 2 ^ 16 ∧

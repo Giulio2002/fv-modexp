@@ -114,7 +114,7 @@ theorem segT (hwb : WbLiveContract (LibExp.program.link impl) wbE 4096 R 2) (hkc
   rw [hwbv] at hwbf
   have hwbpw : 7616064 + 4 ≤ pw ∨ pw + 24 * pl ≤ 7616064 := by
     have := hpre.2.2.1.2.2.2.2.2.2.2.2.2.2.2.2
-    simp only [LW, winA, K, A, outside_append, outside_cons, outside_nil, and_true] at this
+    simp only [winA, K, A, outside_append, outside_cons, outside_nil, and_true] at this
     rw [hwbv] at this; omega
   obtain ⟨-, -, -, e3, -, -, -, -, -, -, -, -⟩ := hc.sl
   have f224 : S.mem.readLE (s.sp.toNat - 208 + 224) 8 = pw := by
