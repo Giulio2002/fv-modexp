@@ -44,7 +44,7 @@ structure G (R : RtInv) (c : Cx) (s : State) (Lk : List (Nat × Nat)) (bk : Nat)
   uk : Asm.limbs S.mem c.up c.u1 = (c.BS s j Z U).2
   li : c.LI s j Z U
   jB : c.vl / 2 < j
-  bud : (j / (c.vl / 2)) * c.K s ≤ bk
+  bud : c.lo s + (j / (c.vl / 2)) * c.K s ≤ bk
 
 theorem hdr_rd {M : Memory} {st v : Nat} (hv : v < 2 ^ 64) :
     stW (M.writeLE (st + 8) 8 v) st = stW M st ∧ stCap (M.writeLE (st + 8) 8 v) st = stCap M st ∧

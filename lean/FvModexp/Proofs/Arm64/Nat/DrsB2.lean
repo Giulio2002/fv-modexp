@@ -65,7 +65,9 @@ theorem b2c (impl : List Segment) (R : RtInv) (c : Cx) (ih : ∀ a, IH impl R c.
   have hq0 : X.mem.readLE c.t0 (8 * (c.vl / 2 + 1)) = 0 := by rw [rd7 _ _ hcr.t0w]; exact hA.q0
   have hKb : drsC (c.l1 s) c.ul (c.vl - c.vl / 2 + 1) ≤ bk := by
     have h1 : drsC (c.l1 s) c.ul (c.vl - c.vl / 2 + 1) ≤ c.K s := by simp only [Cx.K]; omega
-    exact Nat.le_trans h1 (Nat.le_trans (Nat.le_mul_of_pos_left (c.K s) (Nat.succ_pos (j / (c.vl / 2)))) hA.bud)
+    have h2 : c.K s ≤ (j / (c.vl / 2) + 1) * c.K s := Nat.le_mul_of_pos_left (c.K s) (Nat.succ_pos (j / (c.vl / 2)))
+    have h3 := hA.bud
+    omega
   have hpre := rec_pre hcr hEvX hFpX hBdX hj hjm hq0 hspn h28 hKb
   have tn : ∀ {r : BitVec 64} {v : Nat}, r = BitVec.ofNat 64 v → v < 2 ^ 64 → r.toNat = v := fun h hv => by
     rw [h, BitVec.toNat_ofNat, Nat.mod_eq_of_lt hv]

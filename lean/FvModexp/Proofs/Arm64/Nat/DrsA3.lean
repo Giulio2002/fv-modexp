@@ -244,7 +244,7 @@ structure N3 (R : RtInv) (c : Cx) (s : State) (Lk : List (Nat × Nat)) (bk : Nat
   qv : natVal X.mem c.t0 qn = natVal X.mem c.t0 (c.vl / 2 + 1)
   qN : NatNorm X.mem c.t0 qn
   q3 : Q3 c s X.mem qn
-  bud : (j / (c.vl / 2)) * c.K s + stackNatCost (c.l1 s) (3 * c.vl) +
+  bud : c.lo s + (j / (c.vl / 2)) * c.K s + stackNatCost (c.l1 s) (3 * c.vl) +
     mulC (c.l1 s + StackNat.rnd (3 * c.vl)) (c.vl / 2 + 1) (c.vl / 2 - 1) ≤ bk
 
 /-- the return address of `clear(qhatv)` -/
@@ -278,6 +278,6 @@ structure A3 (R : RtInv) (c : Cx) (s : State) (Lk : List (Nat × Nat)) (bk : Nat
   rg : Rg R c s Lk (c.qv s S.mem) (8 * (3 * c.vl))
   fl : FL R c s Lk S.mem
   z0 : S.mem.readLE (c.qv s S.mem) (8 * (3 * c.vl)) = 0
-  bud : (j / (c.vl / 2)) * c.K s + mulC (c.l1 s + StackNat.rnd (3 * c.vl)) (c.vl / 2 + 1) (c.vl / 2 - 1) ≤ bk
+  bud : c.lo s + (j / (c.vl / 2)) * c.K s + mulC (c.l1 s + StackNat.rnd (3 * c.vl)) (c.vl / 2 + 1) (c.vl / 2 - 1) ≤ bk
 
 end FvModexp.Arm64.DivRec

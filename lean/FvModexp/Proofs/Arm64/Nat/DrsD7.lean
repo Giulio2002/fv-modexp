@@ -16,7 +16,8 @@ set_option linter.janusRenameI false
 
 namespace FvModexp.Arm64.DivRec
 
-theorem bud_next {K bk j B : Nat} (hB : 0 < B) (hj : B < j) (h : (j / B) * K ≤ bk) : ((j - B) / B + 1) * K ≤ bk := by
+theorem bud_next {lo K bk j B : Nat} (hB : 0 < B) (hj : B < j) (h : lo + (j / B) * K ≤ bk) :
+    lo + ((j - B) / B + 1) * K ≤ bk := by
   have e : j / B = (j - B) / B + 1 := by rw [← Nat.add_div_right _ hB, Nat.sub_add_cancel (by omega)]
   rw [← e]; exact h
 
