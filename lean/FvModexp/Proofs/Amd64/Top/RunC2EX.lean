@@ -141,6 +141,7 @@ theorem c2eX (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl
       simp only [win] at h0 ⊢
       rw [← hMd]
       exact poolG_push h0 ⟨by rw [h4, hsp0]; omega, by rw [h4, hsp0]; omega⟩)
+    (expX_ops hb' hW1 hglob.2.2.2.2.2.2.2.2.2.2.2.2).1 (expX_ops hb' hW1 hglob.2.2.2.2.2.2.2.2.2.2.2.2).2
   have hz136 : (s.regs 4 - 608#64 + 472#64).toNat = (s.regs 4).toNat - 136 := by
     rw [BitVec.toNat_add, BitVec.toNat_sub]; simp; omega
   have hz168 : (s.regs 4 - 608#64 + 440#64).toNat = (s.regs 4).toNat - 168 := by
