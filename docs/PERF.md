@@ -1223,3 +1223,6 @@ EvN3 32 s / 2.7 GB.
 KMulRel 9 s / 2.5 GB, KMulB 15 s / 2.9 GB, KMulI 35 s / 3.5 GB, KMulMath 2 s, KMulSub 21 s / 2.8 GB, KMulS1c 195 s / 7.7 GB →
 16 s / 2.5 GB (context cleared before janus_run + post lemma), KMulS1 8 s, KMulS2 47 s → 21 s / 2.9 GB (disjunctive hyps cleared
 before the tail), KMulAdd1 18 s, KMulAdd2 25 s, KMulEndP 10 s, KMulEnd 15 s. KMulS3: > 900 s (WIP, not committed; see NOTES).
+### infra s30 (2026-11-12, host load ~40, dev compile, arm64)
+EvJ2 10.2 s / 3.0 GB · EvE1 5.5 s / 2.6 GB · EvN4 5.5 s / 2.6 GB · EvJ3 1.4 s / 2.5 GB · EvE2 5.3 s / 2.6 GB ·
+EvAl 3.3 s / 2.1 GB · EvMv 2.5 s / 2.1 GB · EvLZ < 10 s · EvSetR 8.7 s / 2.6 GB (all ≤ 11 s).

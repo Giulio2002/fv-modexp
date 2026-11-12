@@ -10,7 +10,7 @@ set_option autoImplicit false
   `LZ` = a live nat in such an array. `ZOK.ap`: held, apart from the window, the stack header and the stack's free
   part — so it survives every callee step (`LZ.step`, the `stepC` frame form) and every frame that writes only the
   runtime, the window and an apart range (`LZ.frm`; `LN.frm` for the local nats).
-* `J9` (`mvR`, after `set`): `J8`'s locals and `z = (pZ, lw, cZ)` of `z2`'s value in the slots `272/168/176`.
+* `J9` (`mvJ`, after `set`): `J8`'s locals and `z = (pZ, lw, cZ)` of `z2`'s value in the slots `272/168/176`.
 -/
 
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvModexp
@@ -134,12 +134,18 @@ theorem LZ.frm (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) {M
 
 end
 
-/-- the join point `mvR` (after `z = z.set(z2)`): `J8`'s locals, `z2` in the slots `256/136/144`, `z = (pZ, lw, cZ)`
+/-- the join after `copy` when `z` and `z2` share the pointer (the `BEQ` target; `memmove`'s return `mvR` falls into
+it after reloading `X0`, `X2`) -/
+abbrev mvJ : Nat := 1790424
+
+/-- the join point `mvJ` (after `z = z.set(z2)`; `X0`, `X2` = `z2`'s pointer and capacity): `J8`'s locals, `z2` in the slots `256/136/144`, `z = (pZ, lw, cZ)`
 of `z2`'s value in the slots `272/168/176`, apart from every local array -/
 structure J9 (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl yc mp ml mc ret : Nat) (s : State)
     (rk : Nat) (S : State) (L1 : List (Nat × Nat)) (b1 p1 l1 c1 q l2 pz lz cz pw lw cw pZ cZ : Nat) : Prop where
   jx : JX R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s S L1 b1 (ℓ4 s st mp ml l1 l2) rk
-  pc : S.pc = BitVec.ofNat 64 mvR
+  pc : S.pc = BitVec.ofNat 64 mvJ
+  r0 : S.regs 0 = BitVec.ofNat 64 pw
+  r2 : S.regs 2 = BitVec.ofNat 64 cw
   s288 : S.mem.readLE (sp + 288) 8 = p1
   s208 : S.mem.readLE (sp + 208) 8 = l1
   s216 : S.mem.readLE (sp + 216) 8 = c1
