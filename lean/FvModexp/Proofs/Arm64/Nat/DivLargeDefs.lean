@@ -64,9 +64,11 @@ def DrsPre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (cost : Nat) (qp ql qc 
     Outside vp (8 * vl) (win s 40960 96)) ∧
   Apart qp (8 * ql) up (8 * ul) ∧ Apart qp (8 * ql) vp (8 * vl) ∧ Apart up (8 * ul) vp (8 * vl) ∧
   EvenHyp.StkIn R L s 40960 96 st ∧ stLen s.mem st + 12 * vl + 64 ≤ 2 ^ 16 ∧
-  EvenHyp.StkApart s.mem st qp (8 * ql) ∧ EvenHyp.StkApart s.mem st up (8 * ul) ∧
-  EvenHyp.StkApart s.mem st vp (8 * vl) ∧ Apart st 24 StackNat.wbA 4 ∧
+  (Apart qp (8 * ql) st 24 ∧ Apart qp (8 * ql) (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st))) ∧
+  (Apart up (8 * ul) st 24 ∧ Apart up (8 * ul) (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st))) ∧
+  (Apart vp (8 * vl) st 24 ∧ Apart vp (8 * vl) (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st))) ∧ Apart st 24 StackNat.wbA 4 ∧
   Apart st 24 (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st)) ∧
+  Outside (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st)) (win s 40960 96) ∧
   cost ≤ b ∧ R.inv b L (s.regs 28).toNat (view R.rt L s.mem)
 
 /-- the postcondition of `divRecursiveStep` -/
@@ -108,9 +110,12 @@ def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (c : Nat) (zp zc st up uc 
   (0 < uc → Apart up (8 * uc) vp (8 * vl)) ∧
   (up = ip ∨ (0 < uc → Apart up (8 * uc) ip (8 * il))) ∧
   EvenHyp.StkIn R L s 41264 112 st ∧ stLen s.mem st + 16 * il + 64 ≤ 2 ^ 16 ∧
-  EvenHyp.StkApart s.mem st zp (8 * zc) ∧ EvenHyp.StkApart s.mem st up (8 * uc) ∧
-  EvenHyp.StkApart s.mem st ip (8 * il) ∧ EvenHyp.StkApart s.mem st vp (8 * vl) ∧ Apart st 24 StackNat.wbA 4 ∧
+  (0 < zc → Apart zp (8 * zc) st 24 ∧ Apart zp (8 * zc) (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st))) ∧
+  (0 < uc → Apart up (8 * uc) st 24 ∧ Apart up (8 * uc) (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st))) ∧
+  (Apart ip (8 * il) st 24 ∧ Apart ip (8 * il) (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st))) ∧
+  (Apart vp (8 * vl) st 24 ∧ Apart vp (8 * vl) (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st))) ∧ Apart st 24 StackNat.wbA 4 ∧
   Apart st 24 (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st)) ∧
+  Outside (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st)) (win s 41264 112) ∧
   c ≤ b ∧ R.inv b L (s.regs 28).toNat (view R.rt L s.mem)
 
 theorem Pre.ce {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st up uc ip il vp vl : Nat} {s : State}
@@ -148,21 +153,23 @@ theorem Pre.sti {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc s
 theorem Pre.stl {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st up uc ip il vp vl : Nat} {s : State}
     (h : Pre R b L c zp zc st up uc ip il vp vl s) : stLen s.mem st + 16 * il + 64 ≤ 2 ^ 16 := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
 theorem Pre.sz {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st up uc ip il vp vl : Nat} {s : State}
-    (h : Pre R b L c zp zc st up uc ip il vp vl s) : EvenHyp.StkApart s.mem st zp (8 * zc) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+    (h : Pre R b L c zp zc st up uc ip il vp vl s) : 0 < zc → Apart zp (8 * zc) st 24 ∧ Apart zp (8 * zc) (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st)) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
 theorem Pre.su {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st up uc ip il vp vl : Nat} {s : State}
-    (h : Pre R b L c zp zc st up uc ip il vp vl s) : EvenHyp.StkApart s.mem st up (8 * uc) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+    (h : Pre R b L c zp zc st up uc ip il vp vl s) : 0 < uc → Apart up (8 * uc) st 24 ∧ Apart up (8 * uc) (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st)) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
 theorem Pre.si {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st up uc ip il vp vl : Nat} {s : State}
-    (h : Pre R b L c zp zc st up uc ip il vp vl s) : EvenHyp.StkApart s.mem st ip (8 * il) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+    (h : Pre R b L c zp zc st up uc ip il vp vl s) : Apart ip (8 * il) st 24 ∧ Apart ip (8 * il) (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st)) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
 theorem Pre.svv {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st up uc ip il vp vl : Nat} {s : State}
-    (h : Pre R b L c zp zc st up uc ip il vp vl s) : EvenHyp.StkApart s.mem st vp (8 * vl) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+    (h : Pre R b L c zp zc st up uc ip il vp vl s) : Apart vp (8 * vl) st 24 ∧ Apart vp (8 * vl) (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st)) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
 theorem Pre.wbap {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st up uc ip il vp vl : Nat} {s : State}
     (h : Pre R b L c zp zc st up uc ip il vp vl s) : Apart st 24 StackNat.wbA 4 := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
 theorem Pre.hf {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st up uc ip il vp vl : Nat} {s : State}
     (h : Pre R b L c zp zc st up uc ip il vp vl s) : Apart st 24 (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st)) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem Pre.fw {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st up uc ip il vp vl : Nat} {s : State}
+    (h : Pre R b L c zp zc st up uc ip il vp vl s) : Outside (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st)) (win s 41264 112) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
 theorem Pre.cost {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st up uc ip il vp vl : Nat} {s : State}
-    (h : Pre R b L c zp zc st up uc ip il vp vl s) : c ≤ b := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+    (h : Pre R b L c zp zc st up uc ip il vp vl s) : c ≤ b := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
 theorem Pre.inv {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st up uc ip il vp vl : Nat} {s : State}
-    (h : Pre R b L c zp zc st up uc ip il vp vl s) : R.inv b L (s.regs 28).toNat (view R.rt L s.mem) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2
+    (h : Pre R b L c zp zc st up uc ip il vp vl s) : R.inv b L (s.regs 28).toNat (view R.rt L s.mem) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2
 
 
 /-- The postcondition: `q = U / V` (old `z` array or a fresh one), `r = U mod V` (old `u` array or a fresh one; a fresh
