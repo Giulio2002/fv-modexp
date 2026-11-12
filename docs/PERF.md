@@ -957,3 +957,16 @@ containing a 1-byte readLE fact in context -> hide them behind irreducible defs 
 * DivBigC first version: >9 GB / killed. Cause: `by omega` (slot-range side conditions) in a context holding divLarge's
   whole post (NatOF with `/`, `%`, RtPost, frames). Fix: side conditions proved BEFORE the call (`i1..i4`) and the slot
   frame reasoning moved to a pure lemma (`slots_keep`) with a minimal context → 9.9 s / 2.5 GB.
+## divmc session 17 (arm64, dev compile, LEAN_NUM_THREADS=4) — mul SCC, nat.mul member modules
+| module | wall | peak RSS |
+|---|---|---|
+| Common/MulCost | 1.8 s | 2.0 GB |
+| MulDefs / MulRel / MulCall / MulOps / MulLift / MulKPre | ≤ 7 s each | ≤ 2.6 GB |
+| MulMake (make_reuse / make_alloc) | ~40 s | 2.9 GB |
+| MulNorm (normA / normB / retB0) | 6 s | 2.3 GB |
+| MulBM (basicMul path) | 82 s | 4.3 GB (was 194 s / 8.3 GB: one omega 93 s with unfolded `Apart` disjunctions hpx/hpy/hpg/hga in context → `clear` them after the call: 18 s) |
+| MulZero | 10 s | 2.4 GB |
+| MulSwap (swap / swap2) | 45 s | 3.7 GB (a `Summary.mono` post-conversion lambda without type ascriptions ran > 10 min / > 10 GB: give every `have` inside it an explicit type, name implicit args of keep-lemmas) |
+| MulKar (karEq / karEq2) | 56 s | 4.3 GB |
+LESSON: inside `Summary.mono (ih …) (pre' := …) (post' := …) conv conv`, elaborate every intermediate fact with an explicit
+type (`have h : T := …`) — implicit-argument unification against the reducible `MPost` blew up memory.
