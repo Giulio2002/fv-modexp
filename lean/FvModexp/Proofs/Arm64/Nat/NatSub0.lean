@@ -1,0 +1,143 @@
+import FvModexp.Proofs.Arm64.Nat.NatSub
+import FvModexp.Proofs.Arm64.Nat.NatSub0Set
+import FvModexp.Proofs.Arm64.Nat.NatSub0Alloc
+
+set_option autoImplicit false
+
+/-!
+# `nat.sub` (arm64) with empty-tolerant operands: the derived summary (coordinator decision on "[infra s30] FINDING")
+
+`ensR0` / `ensX0` / `ens0`: `nat.sub` from `Pre0` (= infra's `SubMod2N.SubPre0`), same postconditions as
+`ensR` / `ensX` / `ens`. Old summaries unchanged (`Pre.to0` maps the old precondition).
+-/
+
+open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
+open FvModexp.Arm64.Callees Janus.Contracts.EqHashModel
+
+namespace FvModexp.Arm64.NatSub
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 64000000 in
+/-- `m = 0` (so `n = 0`): `return z[:0]` (under `PreS0`). -/
+theorem zeroPath0 (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat))
+    (zp zl zc xp xl xc yp yl yc : BitVec 64) (s : State)
+    (hpc : s.pc = BitVec.ofNat 64 (segAddr Extracted.program fn))
+    (hl4 : (s.regs 30).toNat % 4 = 0) (hl48 : (s.regs 30).toNat < 2 ^ 48) (h0 : s.regs 0 = zp) (h1 : s.regs 1 = zl)
+    (h2 : s.regs 2 = zc) (h3 : s.regs 3 = xp) (h4 : s.regs 4 = xl) (h5 : s.regs 5 = xc) (h6 : s.regs 6 = yp)
+    (h7 : s.regs 7 = yl) (h8 : s.regs 8 = yc) (hyx : yl.toNat ≤ xl.toNat) (hx0 : xl.toNat = 0)
+    (hpre : PreS0 4304 R b L zp zc xp xl xc yp yl yc s) :
+    ReachesRet (LibNatSub.program.link impl) (s.regs 30) s fun s' =>
+      (s'.sp = s.sp ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧ s'.regs 18 = s.regs 18) ∧
+        PostX 4304 R b L zp zc xp xl yp yl s s' := by
+  have hpre' := hpre
+  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, -, hout, hga, hgr, hLs, -⟩, -, -, -, -, -, -, -, hx40, hy40,
+    hz40, hzl, -, -, -, -, -, -, -, -, -, -, -, -, hinv, -, -⟩ := hpre'
+  have hxz : xl = 0#64 := BitVec.eq_of_toNat_eq (by simpa using hx0)
+  have hyz : yl = 0#64 := BitVec.eq_of_toNat_eq (by simp; omega)
+  subst hxz hyz
+  janus_run
+  refine ⟨⟨⟨zp.toNat, 0, zc.toNat, ?_, ?_, ?_, by simp, Or.inl rfl, by omega, by omega, L, b, LiveExt.refl R L,
+    Nat.sub_le _ _, inv_frame_winA ?hF hout hb' (by omega) hinv, fun hc => ?nl, Or.inl ⟨rfl, rfl⟩,
+    MemFrame.mono ?hF fun a n h => by simp only [outside_append] at h; exact h.1.2,
+    liveFrame_of_frame (rs := winA s 4304 80) (MemFrame.mono ?hF fun a n h => by
+        simp only [outside_append] at h; exact h.1)
+      (fun r hr => by
+        have := hLs r hr; simp only [win, outside_cons, outside_nil, and_true] at this; omega)
+      (fun r hr => by
+        simp only [winA, List.mem_cons, List.not_mem_nil, or_false] at hr
+        rcases hr with rfl | rfl <;> simp only <;> omega)⟩, fun _ => ⟨?_, ?_⟩, fun _ => ?_⟩,
+    MemFrame.mono ?hF fun a n h => by simp only [outside_append] at h; exact h.1.2,
+    liveFrame_of_frame (rs := winA s 4304 80) (MemFrame.mono ?hF fun a n h => by
+        simp only [outside_append] at h; exact h.1)
+      (fun r hr => by
+        have := hLs r hr; simp only [win, outside_cons, outside_nil, and_true] at this; omega)
+      (fun r hr => by
+        simp only [winA, List.mem_cons, List.not_mem_nil, or_false] at hr
+        rcases hr with rfl | rfl <;> simp only <;> omega)⟩
+  case hF => simp only [winA]; janus_frame
+  case nl =>
+    obtain ⟨hzal, hzh, hzacc, hz48⟩ := hzl hc
+    exact ⟨hzal, hzh, by janus_simp; exact hzacc, hz48⟩
+  all_goals janus_simp
+  all_goals first | exact hz40 | skip
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 64000000 in
+/-- the `Summary` at the entry under the empty-tolerant `PreS0`: `m = 0` (`zeroPath0`), `n = 0` (`setPath0`),
+`0 < n`, `0 < cap z` (`PreS0.toS`, then `reuse` / `alloc`), `0 < n`, `cap z = 0` (`alloc0`) -/
+theorem full0 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+    (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
+    (hmv : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
+    (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc yp yl yc : BitVec 64) :
+    Summary (LibNatSub.program.link impl) (segAddr Extracted.program fn)
+      (fun s => (s.regs 30).toNat % 4 = 0 ∧ (s.regs 30).toNat < 2 ^ 48 ∧ s.regs 0 = zp ∧ s.regs 1 = zl ∧
+        s.regs 2 = zc ∧ s.regs 3 = xp ∧ s.regs 4 = xl ∧ s.regs 5 = xc ∧ s.regs 6 = yp ∧ s.regs 7 = yl ∧
+        s.regs 8 = yc ∧ PreS0 4304 R b L zp zc xp xl xc yp yl yc s)
+      (fun s s' => (s'.sp = s.sp ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧ s'.regs 18 = s.regs 18) ∧
+        PostX 4304 R b L zp zc xp xl yp yl s s') := by
+  intro s hpc ⟨hl4, hl48, h0, h1, h2, h3, h4, h5, h6, h7, h8, hpre⟩
+  have hyx : yl.toNat ≤ xl.toNat := hpre.2.2.1
+  have hc3 : CodeIn (Extracted.program.ofImpl impl) (LibNatSub.program.link impl) := by
+    rw [LibNatSub.eq_only]; exact codeIn_ofImpl_restrict_of_apart hap LibNatSub.names
+  have hmk' := MakesliceLiveContract.of_codeIn hc3 hmk
+  have hmv' := MemmoveLive.of_codeIn hc3 hmv
+  by_cases hx0 : xl.toNat = 0
+  · exact zeroPath0 impl R b L zp zl zc xp xl xc yp yl yc s hpc hl4 hl48 h0 h1 h2 h3 h4 h5 h6 h7 h8 hyx hx0 hpre
+  by_cases hy0 : yl.toNat = 0
+  · exact setPath0 impl R hmk' hmv' b L zp zl zc xp xl xc yp yl yc s hpc hl4 hl48 h0 h1 h2 h3 h4 h5 h6 h7 h8 hy0
+      (by omega) hpre
+  by_cases hc0 : zc.toNat = 0
+  · exact alloc0 impl hap R hmk' hmv b L zp zl zc xp xl xc yp yl yc s hpc hl4 hl48 h0 h1 h2 h3 h4 h5 h6 h7 h8 hyx
+      (by omega) (by omega) hpre
+  have hpS := hpre.toS (by omega) (by omega) (by omega)
+  by_cases hz : xl.toNat ≤ zc.toNat
+  · exact reuse impl hap R hmv b L zp zl zc xp xl xc yp yl yc s hpc hl4 hl48 h0 h1 h2 h3 h4 h5 h6 h7 h8 hyx
+      (by omega) hz hpS
+  · exact alloc impl hap R hmk' hmv b L zp zl zc xp xl xc yp yl yc s hpc hl4 hl48 h0 h1 h2 h3 h4 h5 h6 h7 h8 hyx
+      (by omega) (by omega) hpS
+
+/-- **`nat.sub`** (arm64, empty-tolerant operands, exact write set `PostX`): as `ensX`, from `Pre0` (= infra's
+`SubMod2N.SubPre0`: no location facts for an empty `x` / `y`, no window fact for an empty `z`). -/
+theorem ensX0 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+    (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
+    (hmv : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
+    (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc yp yl yc : BitVec 64) :
+    Ensures ((Extracted.program.onlySegments names).link impl) (segAddr Extracted.program fn)
+      [zp, zl, zc, xp, xl, xc, yp, yl, yc]
+      (Pre0 R b L zp zc xp xl xc yp yl yc)
+      (PostX 4304 R b L zp zc xp xl yp yl) := by
+  rw [show names = LibNatSub.names from rfl, ← LibNatSub.eq_only]
+  intro ret hret s hs hpre
+  janus_intro hs
+  have hr48 := hret.user
+  have hr4 := hret.aligned
+  refine Summary.returns (full0 impl hap R hmk hmv b L zp zl zc xp xl xc yp yl yc) hret h_pc h_lr
+    ⟨?_, ?_, h_x0, h_x1, h_x2, h_x3, h_x4, h_x5, h_x6, h_x7, h_x8, hpre.toS0⟩
+    fun s' ⟨⟨a, b, c, d⟩, hq⟩ => ⟨⟨a, b, c, d⟩, hq⟩
+  · rw [h_lr, BitVec.toNat_ofNat, Nat.mod_eq_of_lt (show ret < 2 ^ 64 by omega)]; exact hr4
+  · rw [h_lr, BitVec.toNat_ofNat, Nat.mod_eq_of_lt (show ret < 2 ^ 64 by omega)]; exact hr48
+
+/-- **`nat.sub`** (arm64, empty-tolerant operands): the type of infra's `SubMod2N.SubHypR0` -/
+theorem ensR0 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+    (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
+    (hmv : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
+    (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc yp yl yc : BitVec 64) :
+    Ensures ((Extracted.program.onlySegments names).link impl) (segAddr Extracted.program fn)
+      [zp, zl, zc, xp, xl, xc, yp, yl, yc]
+      (Pre0 R b L zp zc xp xl xc yp yl yc)
+      (fun s s' => Post R b L zp zc xp xl yp yl s s' ∧
+        (xl.toNat ≤ zc.toNat → (s'.regs 0).toNat = zp.toNat ∧ (s'.regs 2).toNat = zc.toNat) ∧
+        (xl.toNat < 2 ^ 39 → (s'.regs 2).toNat < 2 ^ 40)) :=
+  Ensures.mono (ensX0 impl hap R hmk hmv b L zp zl zc xp xl xc yp yl yc) (fun _ h => h) (fun _ _ _ h => h.1)
+
+/-- (`ensR0` without the extra conjuncts.) -/
+theorem ens0 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+    (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
+    (hmv : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
+    (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc yp yl yc : BitVec 64) :
+    Ensures ((Extracted.program.onlySegments names).link impl) (segAddr Extracted.program fn)
+      [zp, zl, zc, xp, xl, xc, yp, yl, yc]
+      (Pre0 R b L zp zc xp xl xc yp yl yc) (Post R b L zp zc xp xl yp yl) :=
+  Ensures.mono (ensR0 impl hap R hmk hmv b L zp zl zc xp xl xc yp yl yc) (fun _ h => h) (fun _ _ _ h => h.1)
+
+end FvModexp.Arm64.NatSub
