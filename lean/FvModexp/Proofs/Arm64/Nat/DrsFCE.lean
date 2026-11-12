@@ -34,7 +34,7 @@ structure EF (R : RtInv) (c : Cx) (s : State) (Lk : List (Nat × Nat)) (bk : Nat
   r1 : S.regs 1 = BitVec.ofNat 64 (c.PF s U).length
   r2 : S.regs 2 = BitVec.ofNat 64 (3 * c.vl)
   mc : McF R c s Lk bk S.mem j Z U qv (c.sFF s U)
-  v4 : V3F c s S.mem qv (c.PF s U).length
+  v3 : V3F c s S.mem qv (c.PF s U).length
 
 /-- **inside a correction** (`i < 2`, comparison `> 0` at the base state `stb`), memory at model state `st` -/
 structure BxF (R : RtInv) (c : Cx) (s : State) (Lk : List (Nat × Nat)) (bk : Nat) (S : State) (j : Nat)
@@ -44,7 +44,7 @@ structure BxF (R : RtInv) (c : Cx) (s : State) (Lk : List (Nat × Nat)) (bk : Na
   r29 : S.regs 29 = s.sp - 408#64
   r18 : S.regs 18 = s.regs 18
   mc : McF R c s Lk bk S.mem j Z U qv st
-  v4 : V3F c s S.mem qv (c.PF s U).length
+  v3 : V3F c s S.mem qv (c.PF s U).length
   si : S.mem.readLE (s.sp.toNat - 168) 8 = i
   hi : i < 2
   pos : 0 < Mdl.cmpQ (c.PF s U).length stb
