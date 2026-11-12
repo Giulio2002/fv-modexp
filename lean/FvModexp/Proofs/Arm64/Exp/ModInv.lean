@@ -94,4 +94,25 @@ theorem ens {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : 
     hsub hadd hsm hmm ℓ b L zp zl zc st xp xl xc n) hret h_pc h_lr
     ⟨h_x0, h_x1, h_x2, h_x3, h_x4, h_x5, h_x6, h_x7, hpre⟩ fun s' ⟨⟨a, b, c, d⟩, hq⟩ => ⟨⟨a, b, c, d⟩, hq⟩
 
+set_option linter.defProp false in
+/-- `ens` as a callee summary in a caller whose program keeps `LibExp.names` -/
+def sum {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
+    (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
+    (hnfS : ns.contains SubMod2N.fn = false)
+    (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
+    {kc : Nat} (hkc : 4608 ≤ kc)
+    {stkS aboveS : Nat} {sqC : Nat → Nat → Nat} (hsq : SqrHyp impl R ns stkS aboveS sqC)
+    (hkS : stkS ≤ kc) (haS : aboveS ≤ 88)
+    {stkT aboveT : Nat} (htr : Trunc.Hyp2 impl R ns stkT aboveT) (hkT : stkT ≤ kc) (haT : aboveT ≤ 88)
+    {stkM aboveM : Nat} {mlC : Nat → Nat → Nat → Nat} (hmu : MulHyp impl R ns stkM aboveM mlC)
+    (hkM : stkM ≤ kc) (haM : aboveM ≤ 88)
+    {stkL aboveL : Nat} (hls : Lsh.Hyp2 impl R ns stkL aboveL) (hkL : stkL ≤ kc) (haL : aboveL ≤ 88)
+    (hkT4 : stkT ≤ 4464)
+    (hsub : SubMod2N.SubHypR impl R) (hadd : SubMod2N.AddHypR impl R)
+    (hsm : ∀ ℓ a a', a ≤ a' → sqC ℓ a ≤ sqC ℓ a')
+    (hmm : ∀ ℓ a a' c c', a ≤ a' → c ≤ c' → mlC ℓ a c ≤ mlC ℓ a' c')
+    (ℓ b : Nat) (L : List (Nat × Nat)) (zp zl zc st xp xl xc n : Nat)  :=
+  CallW.hypSum hap (fun _ h => h) (ens hap hns hnf hnfS hmk hkc hsq hkS haS htr hkT haT hmu hkM haM hls hkL haL hkT4
+    hsub hadd hsm hmm ℓ b L zp zl zc st xp xl xc n)
+
 end FvModexp.Arm64.ModInv
