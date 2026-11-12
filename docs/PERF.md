@@ -1242,3 +1242,8 @@ New modules DrsFRel4 3.6 s, DrsFMulQ 57.6 s / 4.2 GB (copy of DrsMulQ; trim cand
 DrsF4 4.0 s, DrsFCE 1.6 s, DrsFC1 3.9 s, DrsFC2 5.7 s, DrsFC6R 3.4 s, DrsFC2B 4.8 s, DrsFC3 2.9 s, DrsFC4R 6.2 s,
 DrsFC4 7.4 s, DrsFC5R 5.1 s, DrsFC5 3.9 s, DrsFC5S 2.2 s, DrsFC6 12.4 s, DrsFC6X 1.2 s, DrsFCL 1.1 s, DrsFV 5.0 s,
 DrsFD1 2.7 s, DrsFD2 2.9 s, DrsFD3 10.4 s, DrsFD4 7.3 s, DrsFD5R 4.8 s, DrsFD5 7.2 s (all ≤ 2.8 GB except FMulQ).
+
+## asm s30 (2026-11-12) — drs final block end + drs summary + RdIn0 (dev, load ~25)
+DrsFD6R 3.0 s, DrsFG 10.5 s, DrsFD6 6.7 s, DrsFD7 5.5 s, DrsFDL 1.0 s, DrsFL 0.9 s, DrsStep 1.0 s (all ≤ 2.6 GB);
+TruncE0 7.3 s / 2.4 GB, Arm64/Exp/CmpRd0 1.0 s, Amd64/Exp/CmpRd0 < 2 s. Full drs chain dev rebuild after main's RunIface
+change: 125 modules serial ≈ 40 min (max module 103 s / 5.0 GB, DrsC6-class).
