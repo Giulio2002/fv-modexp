@@ -36,7 +36,7 @@ theorem make_reuse (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat ×
   obtain ⟨-, hx48⟩ := hxh (by omega)
   janus_run [toInt_small zc (by omega), toInt_small xl (by omega)] until [0x1bb524]
   refine hK zp.toNat zc.toNat L b _ (core_reuse hpre hz ?hF) ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_,
-    ?_, ?_, ?_, hpx⟩
+    ?_, ?_, ?_, hpx, hna⟩
   case hF => simp only [winA]; janus_frame
   all_goals try janus_simp
   all_goals first | omega | (apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega)
@@ -84,7 +84,11 @@ theorem make_alloc (impl : List Segment) (R : RtInv)
         hAp hIn hle ?qacc (h8 (Or.inr (by omega))) hinv' ?q1 ?q2 ?q3 ?q4 ?q5 hz) ?hF2)
       ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_,
         apart_of_held (hxh'.sub (Nat.le_refl _) (by omega)) (hIn.sub (Nat.le_refl _) ?qs1)
-          (ApartAll.sub' hAp (Nat.le_refl _) ?qs2)⟩
+          (ApartAll.sub' hAp (Nat.le_refl _) ?qs2), ?qna⟩
+    case qna =>
+      have := apart_of_held hxh' (hIn.sub (Nat.le_refl _) (n := 8 * (2 * xl.toNat + 4)) (by omega))
+        (ApartAll.sub' hAp (Nat.le_refl _) (by omega))
+      unfold Apart at this; omega
     case qs1 => omega
     case qs2 => omega
     case hF => simp only [winA]; janus_frame
