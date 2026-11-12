@@ -90,9 +90,9 @@ theorem d1l (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   janus_run [hm1, hm2, hm3, hm4, hm5, hm6, hgS, hr7, hr8', hr11, hr12, hI7, hI8, hI11, hI12, hc, hc32, hU2, hU3,
     natLive_zero, toInt_ite, toNat_ite] until [segAddr Extracted.program fn + 0x4a0] calls [hmkP]
   rename_i ptr _ _ _ mk _ _ hLFk hMFk hapk hink hbk hack h8k h16k hzk hrk hapSk hinvk
-  clear hut hcw
-  have bxp := Box.mk hpw
-  clear hpw
+  clear hut
+  have bxp := Box.mk (And.intro hpw hcw)
+  clear hpw hcw
   have hdk := dataLoaded_win (lo := s.sp.toNat - 4800) (n := 4800 + 40) ?d0 (by rw [hrg1]; simp) hro hMFk ?wacc ?ws
   case d0 => janus_callpre
   case wacc => simpa only [Memory.accessible_writeLE] using hwS
@@ -113,9 +113,9 @@ theorem d1l (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   have hs2 : s.mem.accessible (T.regs 1).toNat (len.toNat - 96) false = true := by
     rw [hr1n]; exact Memory.accessible_mono _ hpacc (by omega) (by omega)
   have hs3 : (T.regs 1).toNat + (len.toNat - 96) ≤ BitVec.toNat s.sp - 624 - 4096 ∨
-      BitVec.toNat s.sp - 624 - 8 ≤ (T.regs 1).toNat := by have hpw := bxp.h; rw [hr1n]; omega
+      BitVec.toNat s.sp - 624 - 8 ≤ (T.regs 1).toNat := by have hpw := bxp.h.1; rw [hr1n]; omega
   have hs4 : (T.regs 1).toNat + (len.toNat - 96) ≤ BitVec.toNat s.sp - 624 + 8 ∨
-      BitVec.toNat s.sp - 624 + 8 + 24 ≤ (T.regs 1).toNat := by have hpw := bxp.h; rw [hr1n]; omega
+      BitVec.toNat s.sp - 624 + 8 + 24 ≤ (T.regs 1).toNat := by have hpw := bxp.h.1; rw [hr1n]; omega
   have hpo : ptr.toNat + blockSize (hdrV s p len 0) true ≤ s.sp.toNat - 4800 ∨ s.sp.toNat + 40 ≤ ptr.toNat := by
     have := InRanges.apart hink hout; unfold Apart at this; omega
   have hpI : (T.regs 1).toNat + (len.toNat - 96) ≤ ptr.toNat ∨ ptr.toNat + blockSize (hdrV s p len 0) true ≤ (T.regs 1).toNat := by
@@ -177,8 +177,10 @@ theorem d1l (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
       (LiveFrame.drop (L := L1) ⟨fun a n h hw => hLFm.readLE a n (h.append_left _) hw⟩ hdst) (fun _ _ h => hext.inRanges_old h))
   have hLx := LiveFrame.of_nil' hLF2 (winA s stk 40)
   have hpo' : Outside p.toNat len.toNat (winA s stk 40) := by
+    have hpw := bxp.h.1
     simp only [winA, stk, Janus.outside_cons, Janus.outside_nil, and_true]; omega
   have hco' : Outside c.toNat 3 (winA s stk 40) := by
+    have hcw := bxp.h.2
     simp only [winA, stk, Janus.outside_cons, Janus.outside_nil, and_true]; omega
   have hIn : ∀ a n, p.toNat ≤ a → a + n ≤ p.toNat + len.toNat → m2.readLE a n = s.mem.readLE a n :=
     fun a n h1 h2 => (hheld.sub h1 h2).readLE hMF2 hLx (hpo'.of_sub h1 (by omega))

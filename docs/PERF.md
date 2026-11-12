@@ -934,3 +934,12 @@ unified against `growCap8 (len0 + 8n)` by defeq; fixed by rewriting the fact to 
 P2W2Pre ~1 s, P2W2EnA 30 s (finer frame, under J=2 load), P2W2Ent 13.6 s / 2.5 GB, P2W2Ctx ~2 s, P2W2N 8.5 s / 2.3 GB.
 P2Pre closure rebuilt after the `Pre` Globals-list change: every module unchanged in time (P2PreX 53 s, P2PreD 22 s,
 P2Pre 7.7 s; all ≤ 4.4 GB).
+
+## agent top s16 (2026-11-12, dev builds, host load ~19)
+| module | before | after | fix |
+|---|---|---|---|
+| Amd64/Top/RunDM1 | 170 s / 3.6 GB | 102 s / 3.2 GB | profile (`profiler.threshold 1500`): 69 `omega` calls = 281 s of 353 s in DM2 — every post-run `janus64_simp` closer runs omega over a context with 4 disjunctions (`hpw`, `lnz`, `hut`, `hcf3/4`). `Box` `hpw`+`lnz` right after their last use, `clear hut hcf1..4` after the makeslice run |
+| Amd64/Top/RunDM2 (generated from DM1) | 301-353 s / 4.2 GB | 133 s / 3.3 GB | same |
+| Amd64/Top/RunC2Sum | 31 s / 6.9 GB | 54 s / 3.4 GB | `namesMod`/`namesExp` ⊆ `LibRun.names` decided in 12-name chunks (`all_split`), one declaration per chunk |
+| Amd64/Top/RunCP2 (new) | — | ~25 s / 2.5 GB | frame-slot facts as small lemmas (`slot_out_call`, `outW_cs2/csd2`) |
+| Amd64/Top/RunOk, RunOkLib, RunOkRow (new) | — | 1 s / 1 s / 8 s | |

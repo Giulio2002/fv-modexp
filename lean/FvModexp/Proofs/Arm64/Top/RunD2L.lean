@@ -1,6 +1,7 @@
 import FvModexp.Proofs.Arm64.Top.RunD2Lem
 import FvModexp.Proofs.Arm64.Top.RunD2J
 import FvModexp.Proofs.Arm64.Top.RunArith
+import FvModexp.Proofs.Arm64.Top.RunBox
 
 /-! # `Run` (arm64): `D1` to `J2`, exponent operand longer than the input rest, more than 32 bytes: `makeslice` buffer,
 `memmove` (at least one input byte to copy) -/
@@ -114,6 +115,9 @@ theorem d2l (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   janus_run [hm1, hm2, hm3, hm4, hm5, hm6, hs1, hs2, hs3, hs4, hs5, hs6, hk1a, hk1b, hc, hc32, hIe, hIa, hmask, hsub,
     hcsub, hsrc, hU2, hU3, toInt_ite, toNat_ite, toInt_small] until [segAddr Extracted.program fn + 0x5cc] calls [hmkP]
   rename_i ptr _ _ _ mk _ _ hLFk hMFk hapk hink hbk hack h8k h16k hzk hrk hapSk hinvk
+  clear hut
+  have bxc := Box.mk hcw
+  clear hcw
   have hdk := dataLoaded_win (lo := s.sp.toNat - 4800) (n := 4800 + 40) ?d0 (by rw [hrg1]; simp) hro hMFk ?wacc ?ws
   case d0 => janus_callpre
   case wacc => simpa only [Memory.accessible_writeLE] using hwS
@@ -142,6 +146,8 @@ theorem d2l (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   janus_run [hm1, hm2, hm3, hm4, hm5, hm6, hs1, hs2, hs3, hs4, hs5, hs6, hk1a, hk1b, hc, hc32, hIe, hIa, hne, hne',
     toInt_ite, toNat_ite, toInt_small] until [segAddr Extracted.program fn + 0x608] calls [hmv']
   rename_i m2 _ _ hMFm hLFm hinvm hcp
+  have bxp := Box.mk hpw
+  clear hpw
   have hlr : len.toNat - 96 - min (hdrV s p len 0) (len.toNat - 96) ≤ blockSize (hdrV s p len 1) true := by omega
   have hink' : InRanges ptr.toNat (len.toNat - 96 - min (hdrV s p len 0) (len.toNat - 96)) R.rt :=
     hink.sub (Nat.le_refl _) (by omega)
@@ -181,8 +187,10 @@ theorem d2l (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   have hLF2 : LiveFrame s.mem m2 L [] := hLF.trans hLFS (fun _ _ h => hext.inRanges_old h)
   have hLx := LiveFrame.of_nil' hLF2 (winA s stk 40)
   have hpo' : Outside p.toNat len.toNat (winA s stk 40) := by
+    have hpw := bxp.h
     simp only [winA, stk, Janus.outside_cons, Janus.outside_nil, and_true]; omega
   have hco' : Outside c.toNat 3 (winA s stk 40) := by
+    have hcw := bxc.h
     simp only [winA, stk, Janus.outside_cons, Janus.outside_nil, and_true]; omega
   refine d2join impl hap R hmk hokS b L c p len cp ret hret s henv0 hin0 Q hbudD hk _
     (L1 ++ [(ptr.toNat, ptr.toNat + blockSize (hdrV s p len 1) true)]) (b1 - blockSize (hdrV s p len 1) true) ptr.toNat
@@ -226,6 +234,7 @@ theorem d2l (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
       have hH : Held R (L1 ++ [(ptr.toNat, ptr.toNat + blockSize (hdrV s p len 1) true)])
           (p.toNat + 96 + hdrV s p len 0 + j) 1 :=
         (hext.trans hext').held (hheld.sub (by omega) (by omega))
+      have hpw := bxp.h
       rw [← hH.readLE hMFm' hLFw (by
         simp only [Janus.outside_append, Janus.outside_cons, Janus.outside_nil, and_true]
         refine ⟨⟨by omega, by omega⟩, ?_⟩
