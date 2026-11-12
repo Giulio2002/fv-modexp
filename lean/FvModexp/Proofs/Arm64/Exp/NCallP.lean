@@ -12,6 +12,8 @@ memory before the call changed only in the runtime ranges and the window (`R.rt 
 
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvModexp
 
+set_option autoImplicit false
+
 namespace FvModexp.Arm64.ExpN
 
 /-- the `z` argument of a callee: empty, the entry's `z` (apart from the window), or a fresh runtime block -/
@@ -34,7 +36,7 @@ theorem mf_byte {m m' : Memory} {ws ws' : List (Nat × Nat)} (h : MemFrame m m' 
 @[reducible] def CPostG (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (stk above zp zc st v cst : Nat) (s s' : State) :
     Prop :=
   ∃ p l c : Nat, s'.regs 0 = BitVec.ofNat 64 p ∧ s'.regs 1 = BitVec.ofNat 64 l ∧ s'.regs 2 = BitVec.ofNat 64 c ∧
-    ∃ (L' : List (Nat × Nat)) (b' : Nat), (natVal s'.mem p l = v ∧ NatNorm s'.mem p l ∧ l ≤ c ∧ c < 2 ^ 64 ∧
+    ∃ (L' : List (Nat × Nat)) (b' : Nat), (natVal s'.mem p l = v ∧ NatNorm s'.mem p l ∧ l ≤ c ∧ c < 2 ^ 40 ∧
       NatLive s'.mem R L' p c ∧ ((p = zp ∧ c = zc) ∨ (InRanges p (8 * c) R.rt ∧ ApartAll p (8 * c) L))) ∧
       ExpHyp.RtPost R b cst L L' b' s s' ∧ StackBackL R L L' st s.mem s'.mem ∧
       MemFrame s.mem s'.mem (R.rt ++ winA s stk above ++ [(zp, zp + 8 * zc)] ++ ExpHyp.stWs s.mem st) ∧
@@ -43,7 +45,7 @@ theorem mf_byte {m m' : Memory} {ws ws' : List (Nat × Nat)} (h : MemFrame m m' 
 theorem cpostG_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {stk above zp zc st v cst : Nat} {s s' : State}
     (h : NHyp.CPostR R b L stk above zp zc st v cst s s') : CPostG R b L stk above zp zc st v cst s s' := by
   obtain ⟨p, l, c, q0, q1, q2, L', b', ⟨hval, hnorm, hlc, hc40, hlive, hof⟩, hrt, hsb, hF, hLF, hRS⟩ := h
-  exact ⟨p, l, c, q0, q1, q2, L', b', ⟨hval, hnorm, hlc, by omega, hlive,
+  exact ⟨p, l, c, q0, q1, q2, L', b', ⟨hval, hnorm, hlc, hc40, hlive,
     hof.imp id (fun h => ⟨h.2.1, h.2.2⟩)⟩, hrt, hsb, hF, hLF, hRS⟩
 
 set_option maxRecDepth 20000 in

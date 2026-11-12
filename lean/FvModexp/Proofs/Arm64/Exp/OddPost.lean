@@ -10,6 +10,8 @@ state `s''` give `ExpOdd.Post` at the entry state `s`.
 
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvModexp
 
+set_option autoImplicit false
+
 namespace FvModexp.Arm64.ExpOdd
 
 theorem ap_sub1 {a k lo n a' k' : Nat} (h : Apart a k lo n) (h1 : a ≤ a') (h2 : a' + k' ≤ a + k) :
@@ -59,7 +61,7 @@ theorem post_gen {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {costF 
     (hq : ∃ p l c : Nat, s'.regs 0 = BitVec.ofNat 64 p ∧ s'.regs 1 = BitVec.ofNat 64 l ∧
       s'.regs 2 = BitVec.ofNat 64 c ∧
       natVal s'.mem p l = natVal S.mem xp xl ^ natVal S.mem yp ylen % natVal S.mem mp n ∧ NatNorm s'.mem p l ∧
-      l ≤ c ∧ c < 2 ^ 64 ∧
+      l ≤ c ∧ (0 < c ∧ c < 2 ^ 40) ∧
       ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b - C ≤ b' ∧
         R.inv b' L' (S.regs 28).toNat (view R.rt L' s'.mem) ∧ NatLive s'.mem R L' p c ∧
         ((p = zp ∧ c = zc) ∨ (InRanges p (8 * c) R.rt ∧ ApartAll p (8 * c) L)) ∧

@@ -15,6 +15,8 @@ part. Composed from `W4En.enStep` (entry → `RET`) and the posts of the chain (
 
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvModexp
 
+set_option autoImplicit false
+
 namespace FvModexp.Arm64.ExpW4
 
 open FvModexp.Arm64.W4Pro (xjBud xnBudA xnBudAC xnPre Zw rd_step ap_fresh arr_ap akf_trans out_S0 out_S1 out_S2 out_S3 out_S4 out_S5 out_S6 out_S7 out_S8 out_S9 apartAll_ext)
@@ -52,7 +54,7 @@ def PostD (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K costD : Nat) (zp zc s
     (s s' : State) : Prop :=
   ∃ p l c : Nat, s'.regs 0 = BitVec.ofNat 64 p ∧ s'.regs 1 = BitVec.ofNat 64 l ∧ s'.regs 2 = BitVec.ofNat 64 c ∧
     natVal s'.mem p l = natVal s.mem xp xl ^ natVal s.mem yp ylen % natVal s.mem mp n ∧ NatNorm s'.mem p l ∧
-    l ≤ c ∧ c < 2 ^ 64 ∧
+    l ≤ c ∧ (0 < c ∧ c < 2 ^ 40) ∧
     ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b - W4Cost n xl costD (stLen s.mem st) ≤ b' ∧
       R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem) ∧ NatLive s'.mem R L' p c ∧
       ((p = zp ∧ c = zc) ∨ (InRanges p (8 * c) R.rt ∧ ApartAll p (8 * c) L)) ∧
