@@ -21,6 +21,10 @@ open FvModexp.Amd64.Callees Janus.Contracts.EqHashModel
 
 namespace FvModexp.Amd64.DivBasic
 
+/-- hides a fact from `janus64_run`'s context splitting / omega calls -/
+structure Hide (P : Prop) : Prop where
+  get : P
+
 /-- `qhl` (natdiv.go:705-708) -/
 @[reducible] def qhlOf (j vl ul c : Nat) : Nat := if ul < j + (vl + 1) ∧ c = 0 then vl else vl + 1
 
@@ -80,7 +84,7 @@ theorem subRun (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.prog
     (hpc : S.rip = BitVec.ofNat 64 subPt) (hsp : (S.regs 4).toNat + 224 = sp) (hsp0 : 4424 ≤ sp)
     (hsp1 : sp + 88 ≤ 2 ^ 48) (hwacc : S.mem.accessible (sp - 4424) (4424 + 88) true = true)
     (hvb : vl + 4 ≤ 2 ^ 16) (hq1 : 2 ≤ q) (hq2 : q ≤ vl + 1) (hjq : j + q ≤ uc) (huc : uc < 2 ^ 40)
-    (ht64 : t < 2 ^ 64) (hup : up + 8 * uc ≤ 2 ^ 48)
+    (ht64 : t < 2 ^ 64) (hup : up < 2 ^ 48)
     (h2 : S.regs 2 = BitVec.ofNat 64 q) (h6 : S.regs 6 = BitVec.ofNat 64 j) (h3 : S.regs 3 = BitVec.ofNat 64 t)
     (m80 : S.mem.readLE (sp + 80) 8 = uc) (m64 : S.mem.readLE (sp + 64) 8 = up)
     (m64' : S.mem.readLE (sp - 64) 8 = vl + 1)
@@ -119,10 +123,18 @@ theorem subRun (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.prog
   have hfa := htl.addr
   obtain ⟨⟨hfb1, hfb2⟩, hfacc, hfg⟩ := htl
   have ez : up + 8 * j = j * 8 + up := by omega
-  rw [ez] at hzt' hzH hzx hzacc hzacc' k
-  unfold Apart at hzt hgw hzg hlw hzl
+  rw [ez] at hzt' hzH hzx hzacc hzacc' hzg hzl k
+  have hzf : Apart (j * 8 + up) (8 * q) ((S.regs 4).toNat - 8) 88 := by unfold Apart; omega
+  have hgc : Apart ((S.regs 4).toNat - 8 + 80) 8 ((S.regs 14).toNat + 16) 8 := by unfold Apart at hgw ⊢; omega
+  have hlc : Apart ((S.regs 4).toNat - 8 + 80) 8 (S.fsBase.toNat - 8) 8 := by unfold Apart at hlw ⊢; omega
+  have hH : Hide ((j * 8 + up + 8 * q ≤ sp - 4424 ∨ sp + 88 ≤ j * 8 + up) ∧
+      (t + 8 * q ≤ sp - 4424 ∨ sp + 88 ≤ t)) := ⟨by rw [← ez]; exact hzw, htw⟩
+  clear hzw htw hzt
+  unfold Apart at hlw
   janus64_run [h2, h6, h3, e80, e64, e64', hmask, hupm, hvw', hfa] until [afterSub] calls [subvv impl hap R b1 L1]
   rename_i _ _ _ _ _ m _ _ hv hc hfr _ _ _
+  obtain ⟨hzw, htw⟩ := hH.get
+  simp (disch := omega) only [Janus.Arm64.Memory.readLE_writeLE_of_disjoint] at hv hc
   have rd : ∀ a, (a + 8 ≤ j * 8 + up ∨ j * 8 + up + 8 * q ≤ a) → (a + 8 ≤ sp - 152 ∨ sp - 144 ≤ a) →
       m.readLE a 8 = _ := fun a h1 h2 => hfr.readLE a 8 (by simp only [outside_cons, outside_nil, and_true]; omega)
   have hfr' : MemFrame S.mem m [(sp - 232, sp - 144), (sp - 128, sp - 120), (sp - 80, sp - 72), (sp - 48, sp - 40),
