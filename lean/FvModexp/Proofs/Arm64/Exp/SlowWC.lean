@@ -208,7 +208,7 @@ variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc
 
 /-- the callee environment at `SP = sp` -/
 theorem WC.cenv (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s)
-    (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ) : CallW.CEnv R L1 g sp K 88 M := by
+    (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ) : CallW.CEnv R L1 g sp K 120 M := by
   have hgM : M.readLE (g + 16) 8 = s.mem.readLE (g + 16) 8 := MemFrame.bytewise h.fr hP.g_out
   have hws := hP.ws_acc
   have hout := hP.win_rt
@@ -277,7 +277,7 @@ theorem free_apart' (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ) {a k : Nat} (
 /-- the stack object as a callee at `SP = sp` needs it -/
 theorem WC.stkIn (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ)
     {S' : State} (hsp : S'.sp.toNat = sp) (h28 : (S'.regs 28).toNat = g) (hm : S'.mem = M) {stk above : Nat}
-    (hstk : stk ≤ K) (habove : above ≤ 88) : EvenHyp.StkIn R L1 S' stk above st := by
+    (hstk : stk ≤ K) (habove : above ≤ 120) : EvenHyp.StkIn R L1 S' stk above st := by
   have hout := hP.win_rt
   obtain ⟨⟨-, -, -, -, -, hgo, -, -, hK, -⟩, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -,
     -, hstw, hstg, harr, -⟩ := hP
