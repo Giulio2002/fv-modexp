@@ -28,8 +28,8 @@ theorem hypSumN {impl : List Segment} (hap : ImplApart Extracted.program impl) {
   rw [← LibN.eq_only] at hS
   exact hS
 
-/-- the callee return points inside `nat.expNN` (`seg11`) -/
 set_option maxRecDepth 20000 in
+/-- the callee return points inside `nat.expNN` (`seg11`) -/
 theorem raN (impl : List Segment) (hap : ImplApart Extracted.program impl) {ns : List String}
     (hn : ns.contains Extracted.seg11.name = false) {r : Nat} (hr : RetPt r) :
     RetAddr ((Extracted.program.onlySegments ns).link impl) r := by
