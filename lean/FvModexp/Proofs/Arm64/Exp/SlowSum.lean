@@ -58,7 +58,7 @@ theorem hyp {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : 
       (cost sqC mlC dvC (stLen s.mem st.toNat) xl.toNat yl.toNat ml.toNat) s s') ?_ ?_ ?_
   · intro s hpc ⟨⟨⟨hPre, hX⟩, h0, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11, h12⟩, hr4, hr48⟩
     have hP := epre_of hPre mc.isLt hk1 hk2 z.isLt xc.isLt yc.isLt
-    have hcst := hPre.1.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+    have hcst := hPre.1.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
     exact body hap hns hnf hsq hmu hdv hkS haS hkM haM hkD haD hmk' hmv' hP hX hPre.2.1 hPre.2.2.2.1 hcst zl.isLt
       hr4 hr48 hpc (by rw [h0, BitVec.ofNat_toNat, BitVec.setWidth_eq]) (by rw [h1, BitVec.ofNat_toNat, BitVec.setWidth_eq])
       (by rw [h2, BitVec.ofNat_toNat, BitVec.setWidth_eq]) (by rw [h3, BitVec.ofNat_toNat, BitVec.setWidth_eq])
@@ -73,15 +73,15 @@ theorem hyp {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : 
       have := congrArg BitVec.toNat hlr
       simp only [Program.withExit, BitVec.toNat_ofNat] at this
       rw [this]; exact Nat.mod_eq_of_lt (by have := hret.user; omega)
-    refine ⟨⟨hpre, hsu.args 0 (by decide), hsu.args 1 (by decide), hsu.args 2 (by decide), hsu.args 3 (by decide),
-      hsu.args 4 (by decide), hsu.args 5 (by decide), hsu.args 6 (by decide), hsu.args 7 (by decide),
-      hsu.args 8 (by decide), hsu.args 9 (by decide), hsu.args 10 (by decide), hsu.args 11 (by decide),
-      hsu.args 12 (by decide)⟩, by rw [hr]; exact hret.aligned, by rw [hr]; exact hret.user⟩
+    refine ⟨⟨hpre, hsu.args 0 (by simp), hsu.args 1 (by simp), hsu.args 2 (by simp), hsu.args 3 (by simp),
+      hsu.args 4 (by simp), hsu.args 5 (by simp), hsu.args 6 (by simp), hsu.args 7 (by simp),
+      hsu.args 8 (by simp), hsu.args 9 (by simp), hsu.args 10 (by simp), hsu.args 11 (by simp),
+      hsu.args 12 (by simp)⟩, by rw [hr]; exact hret.aligned, by rw [hr]; exact hret.user⟩
   · intro ret hret s hsu hpre s' ⟨q1, q2, q3, q4, q5⟩
     refine ⟨⟨q1, q3, q4, q2⟩, ?_⟩
     obtain ⟨⟨-, -, hY, hM, -⟩, -⟩ := hpre
     rw [Nat.sub_add_cancel (by omega : 432 ≤ stk), Exp.expNNSlow_correct _ _ _ hY,
-      if_neg (by omega : ¬ natVal s.mem m.toNat ml.toNat = 0)] at q5
+      ite_eq_right (by omega : ¬ natVal s.mem m.toNat ml.toNat = 0)] at q5
     exact q5
 
 end FvModexp.Arm64.ExpSlow

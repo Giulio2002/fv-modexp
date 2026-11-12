@@ -121,7 +121,7 @@ theorem body {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns 
   · rw [hi] at hv4
     exact segFin hP rfl h29 hr4 hr48 hke (by rw [← hv4]; rfl) (Nat.le_trans (Nat.le_add_right _ _) hb4)
   · refine lower hap hns hnf hsq hmu hdv hkS haS hkM haM hkD haD hP hX hxl0 hM rfl h29 hr4 hr48 (B0 := b - cst)
-      (le_refl _) i S5 L4 b4 v5 z4 zl4 zc4 Zv4 zz4 zzl4 zzc4 r4 rl4 rc4 q4 ql4 qc4 hk5 ?_ ?_
+      (Nat.le_refl _) i S5 L4 b4 v5 z4 zl4 zc4 Zv4 zz4 zzl4 zzc4 r4 rl4 rc4 q4 ql4 qc4 hk5 ?_ ?_
     · rw [hPB, ← hi]; exact hb4
     · rw [hi] at hv4; rw [← hv4, hv5]; rfl
 
