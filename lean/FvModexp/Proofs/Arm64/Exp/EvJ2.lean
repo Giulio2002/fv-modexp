@@ -75,10 +75,10 @@ theorem LN.of_expN (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s
     {L1 : List (Nat × Nat)} {b1 ℓ : Nat} (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ) {r k : Nat}
     (hd : DL R L s.mem st M L1 r k) {M' : Memory} {L2 : List (Nat × Nat)} {p l c v : Nat}
     (hv : natVal M' p l = v) (hn : NatNorm M' p l) (hlc : l ≤ c) (hc40 : c < 2 ^ 40) (hlv : NatLive M' R L2 p c)
-    (hres : c = 0 ∨ (p = r ∧ c = k) ∨ (InRanges p (8 * c) R.rt ∧ ApartAll p (8 * c) L1)) (hx : LiveExt R L1 L2)
+    (hres : (c = 0 ∧ p = 0) ∨ (p = r ∧ c = k) ∨ (InRanges p (8 * c) R.rt ∧ ApartAll p (8 * c) L1)) (hx : LiveExt R L1 L2)
     (hsb : StackBackL R L1 L2 st M M') (hrs : ResSep M M' st p c) : LN R L s.mem st M' L2 p l c v := by
   refine ⟨⟨hc40, hlv, fun hc => ?_⟩, hlc, hv, hn⟩
-  rcases hres with h0 | ⟨rfl, rfl⟩ | ⟨hin, hap⟩
+  rcases hres with ⟨h0, -⟩ | ⟨rfl, rfl⟩ | ⟨hin, hap⟩
   · omega
   · obtain ⟨l1, o1⟩ := hd.2.2 hc
     exact ⟨l1, o1.back hx hsb.1⟩

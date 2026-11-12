@@ -199,7 +199,7 @@ theorem segE1 {impl : List Segment} (hap : ImplApart Extracted.program impl)
     · have ha2 : 0 < a2 ml (nE s mp ml) := by simp only [a2]; omega
       have hza : ∀ (t n : Nat), Held R L1 t n → Apart r (8 * (2 * max l1 l2)) t n → Apart p (8 * c) t n := by
         intro t n hh ht
-        rcases hres with e | ⟨rfl, rfl⟩ | ⟨hin, hap'⟩
+        rcases hres with ⟨e, -⟩ | ⟨rfl, rfl⟩ | ⟨hin, hap'⟩
         · omega
         · exact ht
         · exact hfresh hh hap' hin
