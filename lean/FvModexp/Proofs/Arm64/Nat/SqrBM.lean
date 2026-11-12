@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Arm64.Nat.SqrNorm
+import FvModexp.Proofs.Arm64.Nat.SqrCall
 import FvModexp.Proofs.Arm64.Nat.DivmcCall
 import FvModexp.Proofs.Common.BitLemmas
 
@@ -13,31 +13,6 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
 open FvModexp.Arm64.Callees Janus.Contracts.EqHashModel
 
 namespace FvModexp.Arm64.NatSqr
-
-/-- the thresholds `basicSqrThreshold` (`= 12`) and `karatsubaSqrThreshold` (`= 80`) at `M` -/
-theorem Core.thr {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp xl xc : Nat} {s : State}
-    {p c : Nat} {L1 : List (Nat × Nat)} {b1 : Nat} {M : Memory}
-    (hJ : Core R b L W zp zc st xp xl xc s p c L1 b1 M) :
-    M.readLE 7147152 8 = 12 ∧ M.readLE 7147160 8 = 80 ∧ M.accessible 7147152 16 false = true := by
-  obtain ⟨-, -, -, ⟨-, h12, h80, -, -, e12, e80, hacc, hrt, hw, -⟩, -⟩ := hJ.pre
-  have eg : RunIface.gA = 7147136 := rfl
-  rw [eg] at e12 e80 hacc hrt hw
-  rw [e12] at h12; rw [e80] at h80
-  simp only [win, outside_cons, outside_nil, and_true] at hw
-  refine ⟨?_, ?_, ?_⟩
-  · rw [hJ.rd (Or.inr (hrt.of_sub (by omega) (by omega)))
-      (by simp only [win, outside_cons, outside_nil, and_true]; omega)]; exact h12
-  · rw [hJ.rd (Or.inr (hrt.of_sub (by omega) (by omega)))
-      (by simp only [win, outside_cons, outside_nil, and_true]; omega)]; exact h80
-  · rw [hJ.F.accessible]; exact Memory.accessible_mono _ hacc (by omega) (by omega)
-
-/-- `x` keeps its bytes from the entry to `M` -/
-theorem Core.xv {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp xl xc : Nat} {s : State}
-    {p c : Nat} {L1 : List (Nat × Nat)} {b1 : Nat} {M : Memory}
-    (hJ : Core R b L W zp zc st xp xl xc s p c L1 b1 M) (hx : 0 < xl) :
-    natVal M xp xl = natVal s.mem xp xl := by
-  obtain ⟨-, -, -, -, -, hxlc, -, -, -, hxh, hxw, -⟩ := hJ.pre
-  exact hJ.rd ((hxh (by omega)).1.sub (Nat.le_refl _) (by omega)) (hxw hx)
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
