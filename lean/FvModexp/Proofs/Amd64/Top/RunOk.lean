@@ -57,7 +57,7 @@ theorem okReach (impl : List Amd64.Segment) (hap : ImplApart Extracted.program i
     (hrecv : s.mem.readLE c.toNat 3 = 65793)
     (hglob : RunIface.Globals R s.mem (win s W 40)) (hgL : ApartAll ((s.regs 14).toNat + 16) 8 L)
     (hfL : ApartAll (s.fsBase.toNat - 8) 8 L)
-    (hbB : okB s p len ≤ b)
+    (hbB : okB s p len ≤ b) (hone : FvModexp.Spec.RunAmd64.NatOne R s.mem (win s W 40))
     (hpass : hdrV s p len 0 ≤ 1024 ∧ hdrV s p len 1 ≤ 1024 ∧ hdrV s p len 2 ≤ 1024)
     (Q : Janus.Amd64.Outcome → Prop)
     (hOk : ∀ S' : State, ABIReturn s S' → OkRet S' (resV s p len) (hdrV s p len 2) →
@@ -106,6 +106,6 @@ theorem okReach (impl : List Amd64.Segment) (hap : ImplApart Extracted.program i
   · exact c2m impl hap R stkM aboveM hM hBy hsv' b L c p len cp ret hret s hx0 hdf0 Q W henvW hW hW1 hab ha8 hglob
       hgL hfL hbB L4 b4 T hrelT hTpc hv0 hV hkV
   · exact c2e impl hap R stkM aboveM hE hBy hsv' b L c p len cp ret hret s hx0 hdf0 Q W henvW hW hW1 hab ha8 hglob
-      hgL hfL hbB L4 b4 T hrelT hTpc hv0 hV hkV
+      hgL hfL hbB hone L4 b4 T hrelT hTpc hv0 hV hkV
 
 end FvModexp.Amd64.Run

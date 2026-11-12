@@ -289,7 +289,7 @@ theorem c2eX (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
       hop hopA hxs hpw
   have hExp := expW impl hap R stkM aboveM hE b1 L1 T.sp (s.regs 28) T.mem (s.sp.toNat - 136) (s.sp.toNat - 168)
     (s.sp.toNat - 200) hIP hy0 hzl hyl hml
-    (fun t h1 => oneG_ops _ (by rw [h1]; exact hspn) rfl hW hab hb' hone hMF hW1 hop hxs)
+    (fun t h1 => oneG_ops _ (by rw [h1]; exact hspn) hW hab hb' hone hMF hW1 hop hxs)
   have hRA := raExp impl hap
   janus_run until [segAddr Extracted.program fn + 0x87c] calls [hP := hExp]
   obtain ⟨⟨⟨hsp1, h281, h291, h181⟩, hr01, hpost⟩, hrg1⟩ := hP

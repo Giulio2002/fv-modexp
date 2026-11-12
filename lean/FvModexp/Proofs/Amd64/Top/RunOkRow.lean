@@ -39,7 +39,7 @@ theorem correctness_ok (impl : List Amd64.Segment) (hap : ImplApart Extracted.pr
     Ensures (Extracted.program.link impl) (segAddr Extracted.program RunAmd64.fn) [c, p, len, cp]
       (fun s => RunAmd64.EnvW R L s W ∧ RunAmd64.Input R L c p len cp s ∧ OsakaReceiver s.mem c.toNat ∧
         R.inv b L (s.regs 14).toNat (view R.rt L s.mem) ∧ RunAmd64.OkReqs R ∧
-        RunAmd64.Globals R s.mem (RunAmd64.windowW s W) ∧
+        RunAmd64.Globals R s.mem (RunAmd64.windowW s W) ∧ RunAmd64.NatOne R s.mem (RunAmd64.windowW s W) ∧
         RunAmd64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat)) ≤ b ∧
         LengthsPass (bytesAt s.mem p.toNat len.toNat))
       (fun s s' => RunAmd64.OkRet (bytesAt s.mem p.toNat len.toNat) s' ∧
@@ -62,9 +62,13 @@ def WW : Nat := 0x20000
 def bW : Nat := 0x300000
 def gAw : Nat := 0xb4ae88
 def wbAw : Nat := 0xbb7040
+/-- `natOne`'s header (`.data`) and the witness's choice of its backing word. -/
+def nAw : Nat := 12050400
+def opw : Nat := 0xb4af00
 
 theorem gA_eq : RunIface.gA = gAw := by decide
 theorem wbA_eq : RunIface.wbA = wbAw := by decide
+theorem nA_eq : RunIface.natOneA = nAw := by decide
 
 /-- The receiver's three flags (at `OA`) are 1; the call data (at `OB`): lengths `1, 1, 1` (bytes 31, 63, 95), base `3`,
 exponent `5`, modulus `7`; the four `math/big` thresholds `40, 40, 12, 80` at `gA`; all other witness bytes 0. -/
@@ -72,12 +76,14 @@ def g (a : Nat) : Byte :=
   if a = OA ∨ a = OA + 1 ∨ a = OA + 2 then 1 else
   if a = OB + 31 then 1 else if a = OB + 63 then 1 else if a = OB + 95 then 1 else
   if a = OB + 96 then 3 else if a = OB + 97 then 5 else if a = OB + 98 then 7 else
-  if a = gAw then 40 else if a = gAw + 8 then 40 else if a = gAw + 16 then 12 else if a = gAw + 24 then 80 else 0
+  if a = gAw then 40 else if a = gAw + 8 then 40 else if a = gAw + 16 then 12 else if a = gAw + 24 then 80 else
+  if a = nAw + 1 then 0xaf else if a = nAw + 2 then 0xb4 else if a = nAw + 8 then 1 else if a = nAw + 16 then 1 else
+  if a = opw then 1 else 0
 
 /-- `stdRegs` with the stack region grown to the window `WW` and the globals' regions. -/
 def regs1 : List Janus.Arm64.Region :=
   [⟨SP0 - WW, WW + 0x100, true⟩, ⟨G0, 0x100, false⟩, ⟨T0, 8, false⟩, ⟨OA, 0x1000, true⟩, ⟨OB, 0x1000, true⟩,
-    ⟨BUMP, 0x200, true⟩, ⟨HEAP, HSIZE, true⟩, ⟨gAw, 32, true⟩, ⟨wbAw, 16, true⟩]
+    ⟨BUMP, 0x200, true⟩, ⟨HEAP, HSIZE, true⟩, ⟨gAw, 32, true⟩, ⟨wbAw, 16, true⟩, ⟨nAw, 24, true⟩, ⟨opw, 8, true⟩]
 
 abbrev mem1 : Janus.Arm64.Memory := wmem (toyBytes g) regs1
 
@@ -122,9 +128,21 @@ theorem globals1 : RunAmd64.Globals R s1.mem (RunAmd64.windowW s1 WW) := by
     | (simp only [RunAmd64.windowW, outside_cons, outside_nil, and_true]; decide +kernel)
     | (rw [show s1.mem = wmem (toyBytes g) regs1 from rfl, acc_eq]; decide +kernel)
 
+theorem op1 : s1.mem.readLE RunIface.natOneA 8 = opw := by rw [nA_eq]; decide +kernel
+
+theorem one1 : RunAmd64.NatOne R s1.mem (RunAmd64.windowW s1 WW) := by
+  dsimp only [RunAmd64.NatOne]
+  rw [show Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.natOne» = RunIface.natOneA from rfl, op1,
+    nA_eq]
+  refine ⟨by decide +kernel, by decide +kernel, by decide +kernel, ?_, ?_, ?_, ?_, by decide, ?_, ?_⟩
+  all_goals first
+    | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
+    | (simp only [RunAmd64.windowW, outside_cons, outside_nil, and_true]; decide +kernel)
+    | (rw [show s1.mem = wmem (toyBytes g) regs1 from rfl, acc_eq]; decide +kernel)
+
 theorem pre : RunAmd64.EnvW R [] s1 WW ∧ RunAmd64.Input R [] c1 p1 99 99 s1 ∧ OsakaReceiver s1.mem c1.toNat ∧
     R.inv bW [] (s1.regs 14).toNat (view R.rt [] s1.mem) ∧ RunAmd64.OkReqs R ∧
-    RunAmd64.Globals R s1.mem (RunAmd64.windowW s1 WW) ∧
+    RunAmd64.Globals R s1.mem (RunAmd64.windowW s1 WW) ∧ RunAmd64.NatOne R s1.mem (RunAmd64.windowW s1 WW) ∧
     RunAmd64.okBudget (parseLengths (bytesAt s1.mem p1.toNat (99 : BitVec 64).toNat)) ≤ bW ∧
     LengthsPass (bytesAt s1.mem p1.toNat (99 : BitVec 64).toNat) := by
   refine ⟨⟨⟨⟨?_, ?_, ?_⟩, ⟨?_, ?_, ?_⟩, by decide, dataLoaded _ _, ?_, ?_, ?_, fun r hr => by simp at hr, roOut,
@@ -133,7 +151,7 @@ theorem pre : RunAmd64.EnvW R [] s1 WW ∧ RunAmd64.Input R [] c1 p1 99 99 s1 �
     ⟨by decide +kernel, by decide +kernel, by decide +kernel⟩, inv1 _,
     ⟨fun _ _ _ _ => trivial, fun _ _ _ _ => trivial, fun _ _ _ => trivial, fun _ _ _ _ _ _ => trivial,
       fun _ => trivial, fun _ => trivial, fun _ => trivial, fun _ => trivial, fun _ => trivial⟩,
-    globals1, budget1, pass1⟩
+    globals1, one1, budget1, pass1⟩
   all_goals first
     | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
     | (simp only [RunAmd64.window, outside_cons, outside_nil, and_true]; decide +kernel)
@@ -223,7 +241,7 @@ theorem nonvacuous_of (stkM aboveM : Nat) (hM : RunIface.ModSpec WStubs.impl R s
     CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program RunAmd64.fn) [c, p, len, cp] s ∧
     RunAmd64.EnvW R L s W ∧ RunAmd64.Input R L c p len cp s ∧ OsakaReceiver s.mem c.toNat ∧
     R.inv b L (s.regs 14).toNat (view R.rt L s.mem) ∧ RunAmd64.OkReqs R ∧
-    RunAmd64.Globals R s.mem (RunAmd64.windowW s W) ∧
+    RunAmd64.Globals R s.mem (RunAmd64.windowW s W) ∧ RunAmd64.NatOne R s.mem (RunAmd64.windowW s W) ∧
     RunAmd64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat)) ≤ b ∧
     LengthsPass (bytesAt s.mem p.toNat len.toNat) ∧
     compute (bytesAt s.mem p.toNat len.toNat) (parseLengths (bytesAt s.mem p.toNat len.toNat)) = ⟨#[5]⟩ ∧
@@ -249,7 +267,8 @@ theorem nonvacuous_of (stkM aboveM : Nat) (hM : RunIface.ModSpec WStubs.impl R s
     by rw [WStubs.addr_mk]; exact model_mk, by rw [WStubs.addr_mk]; exact model_mkz,
     by rw [WStubs.addr_mv]; exact model_mv, by rw [WStubs.addr_mv]; exact model_mvz,
     by rw [WStubs.addr_no]; exact model_no, hW, by decide, hab, hk1, ha1, Witness.hret, setup,
-    pre.1, pre.2.1, pre.2.2.1, pre.2.2.2.1, pre.2.2.2.2.1, pre.2.2.2.2.2.1, pre.2.2.2.2.2.2.1, pre.2.2.2.2.2.2.2,
+    pre.1, pre.2.1, pre.2.2.1, pre.2.2.2.1, pre.2.2.2.2.1, pre.2.2.2.2.2.1, pre.2.2.2.2.2.2.1, pre.2.2.2.2.2.2.2.1,
+    pre.2.2.2.2.2.2.2.2,
     compute1,
     ⟨[], 0x1000, callS WStubs.mkA Extracted.dataAddr.«type:big.Word#51b931e8» 1 1, by rw [WStubs.addr_mk]; rfl,
       by rw [WStubs.addr_mk]; exact site_mk _⟩,

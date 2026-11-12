@@ -101,6 +101,7 @@ theorem expW (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl
       IntPre R b1 (ExpBudget (max (max (lenW M zA) (lenW M yA)) (lenW M mA)) (lenW M yA)) L1 stkM aboveM
         [zA, yA, mA] t)
     (hm0 : 0 < IntV M mA) (hzl : IntLenLe M zA maxW) (hyl : IntLenLe M yA maxW) (hml : IntLenLe M mA maxW)
+    (hOne : ∀ t : State, t.regs 4 = sp0 → OneG R L1 M (win t stkM aboveM) [zA, yA, mA])
     (z y mm : BitVec 64) :
     Summary (LibRun.program.link impl)
       (segAddr Extracted.program "github.com/ethereum/go-bigmodexpfix/src/math/big.(*Int).exp")
@@ -116,7 +117,7 @@ theorem expW (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl
   · rintro t ⟨hx, ha, hdf, hsp, hm, h14, hfs, hz, hy, hmm⟩
     subst hz hy hmm
     refine ⟨by rw [hm, hsp]; exact hRA, hx, ha, hdf, by rw [hm]; exact hIP t hsp hm h14 hfs, by rw [hm]; exact hm0,
-      by rw [hm]; exact hzl, by rw [hm]; exact hyl, by rw [hm]; exact hml⟩
+      by rw [hm]; exact hzl, by rw [hm]; exact hyl, by rw [hm]; exact hml, by rw [hm]; exact hOne t hsp⟩
   · rintro t t' ⟨-, -, -, -, hm, -, -, hz, hy, hmm⟩ ⟨⟨hcs, hfs, hdf, h0, hpost⟩, hreg⟩
     subst hz hy hmm
     rw [hm] at hpost

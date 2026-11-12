@@ -13,13 +13,14 @@ namespace FvModexp.Arm64.Run
 
 theorem oneG_ops {R : RtInv} {L L1 : List (Nat × Nat)} {p len : BitVec 64} {s T : State} {M : Memory}
     {W stkM aboveM : Nat} (xs : List Nat)
-    (hT : T.sp.toNat = s.sp.toNat - 624) (hTm : T.mem = M) (hW : 624 + stkM ≤ W) (hab : aboveM ≤ 160)
+    (hT : T.sp.toNat = s.sp.toNat - 624) (hW : 624 + stkM ≤ W) (hab : aboveM ≤ 160)
     (hsW : W ≤ s.sp.toNat) (hone : FvModexp.Spec.RunArm64.NatOne R s.mem (win s W 40))
     (hMF : MemFrame s.mem M (R.rt ++ winA s 4800 40)) (hW1 : 4800 ≤ W)
     (hop : ∀ j, j < 3 → OpDone R M s p len L L1 j)
     (hxs : ∀ a ∈ xs, ∃ j, j < 3 ∧ a = opAt s j) :
     RunIface.OneG R L1 M (win T stkM aboveM) xs := by
-  unfold FvModexp.Spec.RunArm64.NatOne at hone
+  dsimp only [FvModexp.Spec.RunArm64.NatOne] at hone
+  rw [show Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.natOne» = RunIface.natOneA from rfl] at hone
   obtain ⟨h8, h16, hw1, hacc, hrt, hwin, hacco, h48, hort, howin⟩ := hone
   generalize hop0 : s.mem.readLE RunIface.natOneA 8 = op at h8 h16 hw1 hacc hrt hwin hacco h48 hort howin
   simp only [win, Janus.outside_cons, Janus.outside_nil, and_true] at hwin howin
@@ -40,7 +41,7 @@ theorem oneG_ops {R : RtInv} {L L1 : List (Nat × Nat)} {p len : BitVec 64} {s T
   · obtain ⟨j, hj, rfl⟩ := hxs a ha
     obtain ⟨-, -, -, -, -, hlive⟩ := hop j hj
     refine ⟨by unfold Apart; simp only [opAt]; omega, by unfold Apart; simp only [opAt]; omega, fun hc => ⟨?_, ?_⟩⟩
-    · exact InRanges.apart (hlive hc).2.2.2.2.1 hrt
-    · exact InRanges.apart (hlive hc).2.2.2.2.1 hort
+    · exact (InRanges.apart (hlive hc).2.2.2.2.1 hrt).symm
+    · exact (InRanges.apart (hlive hc).2.2.2.2.1 hort).symm
 
 end FvModexp.Arm64.Run
