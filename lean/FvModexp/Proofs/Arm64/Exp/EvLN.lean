@@ -183,7 +183,8 @@ theorem nonStk {R : RtInv} {L1 L2 : List (Nat × Nat)} {st : Nat} {M M' : Memory
     (hF : MemFrame M M' (R.rt ++ cw ++ [(pd, pd + 8 * cd)])) (hLF : LiveFrame M M' L1 [(pd, pd + 8 * cd)])
     (h1 : Outside st 24 cw) (h2 : Outside st 24 [(pd, pd + 8 * cd)]) :
     MemFrame M M' (R.rt ++ cw ++ [(pd, pd + 8 * cd)] ++ stkWs M st) ∧
-      LiveFrame M M' L1 ([(pd, pd + 8 * cd)] ++ stkWs M st) ∧ StackBackL R L1 L2 st M M' := by
+      LiveFrame M M' L1 ([(pd, pd + 8 * cd)] ++ stkWs M st) ∧ StackBackL R L1 L2 st M M' ∧
+      (stW M' st = stW M st ∧ stCap M' st = stCap M st) := by
   have hF0 : MemFrame M M' (R.rt ++ cw ++ [(pd, pd + 8 * cd)] ++ []) := by simpa only [List.append_nil] using hF
   have hL0 : LiveFrame M M' L1 ([(pd, pd + 8 * cd)] ++ []) := by simpa only [List.append_nil] using hLF
   have hhd : ∀ j, j + 8 ≤ 24 → M'.readLE (st + j) 8 = M.readLE (st + j) 8 := fun j hj =>
@@ -194,7 +195,7 @@ theorem nonStk {R : RtInv} {L1 L2 : List (Nat × Nat)} {st : Nat} {M M' : Memory
   have e2 : stCap M' st = stCap M st := hhd 16 (by omega)
   refine ⟨hF.mono fun a k ho => by rw [outside_append] at ho; exact ho.1,
     Expmc.liveFrame_widen hLF fun a k ho => by rw [outside_append] at ho; exact ho.1,
-    ⟨stkOK_hdr hok hF e0 e1 e2 hx, e1, Or.inl ⟨e0, e2⟩⟩, fun hn => absurd ⟨e0, e2⟩ hn⟩
+    ⟨⟨stkOK_hdr hok hF e0 e1 e2 hx, e1, Or.inl ⟨e0, e2⟩⟩, fun hn => absurd ⟨e0, e2⟩ hn⟩, e0, e2⟩
 
 section
 variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc yp yl yc mp ml mc : Nat} {s : State}
