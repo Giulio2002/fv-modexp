@@ -883,3 +883,13 @@ goals with a tiny pure lemma (`bud_step`, `bud_room2`) instead.
 * Squaring member (after SPre/StkSep/SPost changes): SqrMake 119 s / 4.7 GB (trim pending), SqrBM 83 s / 4.9 GB,
   SqrBS 40 s, SqrKS 33 s, SqrOne 32 s, others ≤ 10 s.
 * KSqrRel 15 s / 2.9 GB (pure relation lemmas; KM.step is generic over the callee's write list), KSqrCall 1.4 s.
+
+## agent top s13 (2026-11-12) — amd64 Run operand 0 (padded paths)
+* ROOT CAUSE of 5–8 GB / >6 min modules: `by omega` in the MAIN context after destructuring Run's relations. Each
+  call case-splits over every disjunction in context (input/receiver/guard/TLS outside-window facts `hpw hcw hga hfsw`,
+  callee-window facts): single omegas took 10–80 s and the module OOMed at 8 GB. Fix: tiny arithmetic lemmas with
+  explicit arguments (RunDJDefs: `buf_in_win`, `win_len`, `frame_call_facts`, `src_call_facts`, `fresh_call_facts`,
+  `buf_byte`, `in_byte_out`, `fresh_slot`, `toNat_sub_k` …), `clear` the disjunctions before `janus64_run` (keep only
+  those the callee pre needs, clear them right after the run), and `Box` the rest (unbox after the run).
+  RunDJS0: prelude 115 s / 6.7 GB → 0.6 s; whole module OOM (>490 s) → 25 s / 2.4 GB.
+* Module times (dev, load ~40): RunDP0 19 s, RunDM0 94 s, RunDJS0 25 s, RunDJF0 48 s, RunDJZ0 11 s, RunD1 1 s.

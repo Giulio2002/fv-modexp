@@ -13,8 +13,6 @@ namespace FvModexp.Amd64.Run
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-set_option trace.profiler true in
-set_option trace.profiler.threshold 500 in
 theorem dJS0 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
     (hokM : ∀ d sr n, n ≤ 2 ^ 20 → R.ok (cA "runtime.memmove") [d, sr, n])
@@ -33,7 +31,7 @@ theorem dJS0 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl
   obtain ⟨hg, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, hLs, hro, htls⟩ := henv
   have hin0 := hin
   obtain ⟨hcacc, hc48, hcheld, hcw, hp, hlcp, hcp48, hpacc, hheld, hpw⟩ := hin
-  obtain ⟨hrel, hsl0, hzb, hsrc0, hsrc1, hsrc2, hd48, hdacc, -, -⟩ := hj
+  obtain ⟨hrel, hsl0, hzb, hsrc0, hsrc1, hsrc2, hd48, hdacc, -, -, -⟩ := hj
   rw [List.append_nil] at hrel
   obtain ⟨hsp, h14, h5, hx15, hfs, hdf, hm1, hm2, hm3, hm4, hm5, hm6, s1, s2, s3, s4, s5, s6, l0, l1, l2, lnz, -, hz,
     hdS, hinS, hcS, hext, hbk, hinv, hLsS, hMF, hLF, -, -⟩ := hrel

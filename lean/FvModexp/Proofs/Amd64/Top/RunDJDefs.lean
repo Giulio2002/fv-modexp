@@ -43,7 +43,7 @@ def JoinE (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64)
   p.toNat ≤ src ∧ src + opAvail s p len j ≤ p.toNat + len.toNat ∧
   (0 < opAvail s p len j → src = p.toNat + 96 + opStart s p len j) ∧
   dst + opLen s p len j ≤ 2 ^ 48 ∧ s.mem.accessible dst (opLen s p len j) true = true ∧
-  LiveSep L0 Lb ∧ (∀ i, i < j → OpDone R S.mem s p len L L0 i)
+  LiveExt R L L0 ∧ LiveSep L0 Lb ∧ (∀ i, i < j → OpDone R S.mem s p len L L0 i)
 
 /-- The state at operand `j`'s `setBytes` call: what `dE j` needs. -/
 def AtE (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64) (s : State) (ret j pc : Nat)
@@ -137,6 +137,45 @@ theorem fresh_out_win {R : RtInv} {s : State} {ptr round : Nat} (he : 4800 ≤ (
 
 theorem bud_alloc {b b1 c r A c' : Nat} (h : b - c ≤ b1) (hr : r ≤ A) (hA : c + A ≤ c') (hb : c' ≤ b) :
     b - c' ≤ b1 - r := by omega
+
+/-- A fresh buffer `[dst, dst + n)` (outside the frame window): apart from the callee stack of a call from `Run`'s
+frame and from the spill slots. -/
+theorem fresh_call_facts {e dst n : Nat} (he : 4800 ≤ e) (h : dst + n ≤ e - 4800 ∨ e + 40 ≤ dst) :
+    (dst + n ≤ e - 616 - 4096 ∨ e - 616 ≤ dst) ∧ (dst + n ≤ e - 616 + 8 ∨ e - 616 + 8 + 24 ≤ dst) ∧
+    (dst + n ≤ e - 616 ∨ e - 616 + 8 ≤ dst) ∧ (dst + n ≤ e - 616 - 4160 ∨ e - 616 + 48 ≤ dst) := by omega
+
+/-- Byte `i` of a fresh buffer outside the window is apart from an 8-byte frame slot `e - w`. -/
+theorem fresh_byte_out {e dst i w x : Nat} (he : 4800 ≤ e) (hw : 8 ≤ w) (hw2 : w ≤ 4800)
+    (h : dst + x ≤ e - 4800 ∨ e + 40 ≤ dst) (hi : i < x) : dst + i + 1 ≤ e - w ∨ e - w + 8 ≤ dst + i := by omega
+
+theorem liveSep_single_sub {L : List (Nat × Nat)} {a e n : Nat} (h : LiveSep L [(a, e)]) (hn : a + n ≤ e) :
+    LiveSep L [(a, a + n)] := by
+  intro r hr
+  have := h r hr
+  simp only [Janus.outside_cons, Janus.outside_nil, and_true] at this ⊢
+  omega
+
+theorem fresh_slot {e dst x n w : Nat} (he : 4800 ≤ e) (hw : 8 ≤ w) (hw2 : w ≤ 4800)
+    (h : dst + x ≤ e - 4800 ∨ e + 40 ≤ dst) (hn : n ≤ x) : dst + n ≤ e - w ∨ e - w + 8 ≤ dst := by omega
+
+theorem lt_sub_of_add {i h dst e : Nat} (h2 : i < h) (hfe : dst + h ≤ e) : i < e - dst := by omega
+
+/-- A fresh buffer at the copy source: nothing is copied (the source would be an input byte inside the new object). -/
+theorem n0_of_eq {R : RtInv} {L L0 : List (Nat × Nat)} {dst src e h0 n p l : Nat} (heq : dst = src)
+    (hfe : dst + h0 ≤ e) (hfrt : InRanges dst (e - dst) R.rt) (hheld : Held R L p l) (hext : LiveExt R L L0)
+    (hsep : LiveSep L0 [(dst, e)]) (hsrc : 0 < n → src = p + 96 + 0) (hs : src + n ≤ p + l) (hn : n ≤ h0) :
+    n = 0 := by
+  rcases Nat.eq_zero_or_pos n with h | h
+  · exact h
+  · exfalso
+    have hs' := hsrc h
+    rcases hheld with ⟨r, hr, h1, h2⟩ | hout
+    · have := hsep r (hext.mem_old hr)
+      simp only [Janus.outside_cons, Janus.outside_nil, and_true] at this
+      omega
+    · obtain ⟨r, hr, h1, h2⟩ := hfrt
+      have := MemFrame.outside_mem hout hr
+      omega
 
 theorem toNat_sub_k {x : BitVec 64} {k : Nat} (h : k ≤ x.toNat) (hk : k < 2 ^ 64) :
     (x - BitVec.ofNat 64 k).toNat = x.toNat - k := by
