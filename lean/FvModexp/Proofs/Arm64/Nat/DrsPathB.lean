@@ -293,4 +293,34 @@ theorem db_postS {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c W qp ql qc st 
     simp only [win, fw, winA, outside_cons, outside_nil, and_true] at this ⊢
     omega
 
+set_option maxHeartbeats 8000000 in
+/-- the caller's saved `FP`/`LR` slots (and accessibility) survive the `divBasic` call -/
+theorem db_slot {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c W qp ql qc st up ul uc vp vl vc : Nat}
+    {s X T : State} {ul' : Nat} (hpre : DrsPreW R b L c W qp ql qc st up ul uc vp vl vc s) (hW : 4864 ≤ W)
+    (hF : MemFrame s.mem X.mem (fw s)) (hsp : X.sp = s.sp - 400#64) (hle : ul' ≤ ul)
+    (hpost : DivBasic.Post R b L qp ql st up ul' vp vl X T) {a n : Nat} (h1 : s.sp.toNat - 408 ≤ a)
+    (h2 : a + n ≤ s.sp.toNat - 392) :
+    T.mem.readLE a n = X.mem.readLE a n ∧ ∀ a n w, T.mem.accessible a n w = s.mem.accessible a n w := by
+  obtain ⟨hce, -, -, -, -, -, -, -, -, -, -, -, -, -, ⟨-, -, -, hqo, -⟩, ⟨-, -, -, huo, -⟩, -, -, -, -,
+    ⟨-, hstw, -, -⟩, -, -, -, -, -, -, hfo, -, -, -⟩ := hpre
+  obtain ⟨-, ⟨hal, hb', ha, hw⟩, -, hout, -, -, -, -⟩ := hce
+  have hspn : X.sp.toNat = s.sp.toNat - 400 := by
+    rw [hsp, BitVec.toNat_sub_of_le (by simp only [BitVec.le_def, BitVec.toNat_ofNat]; omega)]; rfl
+  have rdX : ∀ a n, Outside a n (win s W 96) → X.mem.readLE a n = s.mem.readLE a n :=
+    fun a n h => hF.readLE a n (fw_out (by omega) h)
+  have hsw : Outside st 24 (win s W 96) := hstw
+  have eW : stW X.mem st = stW s.mem st := rdX _ _ (hsw.of_sub (Nat.le_refl _) (by omega))
+  have eL : stLen X.mem st = stLen s.mem st := rdX _ _ (hsw.of_sub (by omega) (by omega))
+  have eC : stCap X.mem st = stCap s.mem st := rdX _ _ (hsw.of_sub (by omega) (by omega))
+  obtain ⟨-, -, L2, b2, -, -, -, -, hMF, -⟩ := hpost
+  have hqn := qn_le ql ul' vl
+  simp only [DivBasic.ws, stkWs, eW, eL, eC] at hMF
+  generalize DivBasic.qn ql ul' vl = k at hMF hqn
+  simp only [win, outside_cons, outside_nil, and_true] at hqo huo hsw hfo
+  refine ⟨hMF.readLE a n ?_, fun a n w => by rw [hMF.accessible, hF.accessible]⟩
+  rw [outside_append, outside_append]
+  refine ⟨⟨hout.of_sub (by omega) (by omega), ?_⟩, ?_⟩
+  · simp only [winA, outside_cons, outside_nil, and_true]; rw [hspn]; omega
+  · simp only [outside_cons, outside_nil, and_true]; omega
+
 end FvModexp.Arm64.DivRec
