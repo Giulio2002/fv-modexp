@@ -30,15 +30,15 @@ namespace FvModexp.Arm64.P2W2
     ∀ S : State, S.pc = BitVec.ofNat 64 rsE → S.sp = BitVec.ofNat 64 sp → S.regs 3 = BitVec.ofNat 64 st →
       S.regs 11 = BitVec.ofNat 64 (W lm) → S.regs 18 = s.regs 18 → S.regs 28 = BitVec.ofNat 64 g →
       S.regs 29 = BitVec.ofNat 64 (sp - 8) → S.mem = M →
-      ReachesRet (LibExp.program.link impl) ret0 S Q
+      ReachesRet (LibW.program.link impl) ret0 S Q
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- **from the entry to `rsE`** -/
 theorem ent (impl : List Segment) (R : RtInv)
-    (hgr : GrowsliceLiveContract (LibExp.program.link impl) grE 4096 R)
-    (hmc : MemclrNoHeapPointersLive (LibExp.program.link impl) mcE 4096 R)
-    (hwb : WbLiveContract (LibExp.program.link impl) wbE 4096 R 2)
+    (hgr : GrowsliceLiveContract (LibW.program.link impl) grE 4096 R)
+    (hmc : MemclrNoHeapPointersLive (LibW.program.link impl) mcE 4096 R)
+    (hwb : WbLiveContract (LibW.program.link impl) wbE 4096 R 2)
     (ret0 : BitVec 64) (Q : State → Prop)
     (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl lm ret : Nat) (s : State)
     (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s)
@@ -49,7 +49,7 @@ theorem ent (impl : List Segment) (R : RtInv)
     (h6 : s.regs 6 = BitVec.ofNat 64 xc) (h7 : s.regs 7 = BitVec.ofNat 64 yp) (h8 : s.regs 8 = BitVec.ofNat 64 yl)
     (h10 : s.regs 10 = BitVec.ofNat 64 lm) (h30 : s.regs 30 = BitVec.ofNat 64 ret)
     (KR : RsK impl R b L K g sp st zp zc xp xl xc yp yl lm ret s ret0 Q) :
-    ReachesRet (LibExp.program.link impl) ret0 s Q := by
+    ReachesRet (LibW.program.link impl) ret0 s Q := by
   have hP' := hP
   obtain ⟨he, hK20, hgl, hro, hty, hlm2, hlm, hyO, hya, hy48, hyN, hyl, hyl', hxO, hxa, hx48, hxN, hxl, hxp, hxc,
     hzp, hzc, hz, hgO, hsok, hstw, hstg, harr, hwbf, hwbA, hstf, hstnz, hl16, hone, hinv⟩ := hP'

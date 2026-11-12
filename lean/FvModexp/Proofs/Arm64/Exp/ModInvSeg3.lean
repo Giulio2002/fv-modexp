@@ -118,7 +118,7 @@ theorem rtM_stk {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat 
   · refine Expmc.inv_frame hF (fun r hr => Or.inr ?_) a5
     simp only [winA, List.mem_cons, List.not_mem_nil, or_false] at hr
     rcases hr with rfl | rfl <;> (dsimp only; simp only [K, A]; exact hout.of_sub (by omega) (by omega))
-  · rw [e0, e2]; exact a8
+  · exact ⟨by rw [e0, e2]; exact a8.1, ArrIn.congr a8.2 e0 e2 fun _ h => h⟩
 
 theorem outside_of_apartAll {p n a k : Nat} {L : List (Nat × Nat)} (h : ApartAll p n L) (h1 : p ≤ a)
     (h2 : a + k ≤ p + n) : Outside a k L := by
@@ -136,11 +136,12 @@ theorem own_mono {R : RtInv} {kc : Nat} {L L1 L2 : List (Nat × Nat)} {s : State
     (hacc : ∀ a k w, M'.accessible a k w = M.accessible a k w)
     (e0 : stW M' st = stW M st) (e1 : stLen M' st = stLen M st) (e2 : stCap M' st = stCap M st) :
     Own R kc L L2 s zp zc st xp xl M' p c := by
-  obtain ⟨a1, a2, a3, a4, a5, a6, a7, a8⟩ := h
-  refine ⟨a1, a2, fun hc => ?_, a4, a5, a6, a7, ?_⟩
+  obtain ⟨a1, a2, a3, a4, a5, a6, a7, a8, a9⟩ := h
+  refine ⟨a1, a2, fun hc => ?_, a4, a5, a6, a7, ?_, ?_⟩
   · obtain ⟨c1, c2, c3, c4⟩ := a3 hc
     exact ⟨c1, hLE.held c2, by rw [hacc]; exact c3, c4⟩
   · unfold StkApart; rw [e0, e1, e2]; exact a8
+  · unfold WA; rw [e0, e2]; exact a9
 
 set_option maxRecDepth 20000 in
 /-- a word store into an owned array keeps the runtime facts -/
@@ -148,8 +149,8 @@ theorem rtM_store {R : RtInv} {kc : Nat} {L : List (Nat × Nat)} {s : State} {zp
     {L1 : List (Nat × Nat)} {b1 p c : Nat} (hrt : RtM R kc L s zp zc st M L1 b1)
     (hown : Own R kc L L1 s zp zc st xp xl M p c) {a v : Nat} (h1 : p ≤ a) (h2 : a + 8 ≤ p + 8 * c) :
     RtM R kc L s zp zc st (M.writeLE a 8 v) L1 b1 := by
-  obtain ⟨r0, F0, LF0, LE0, inv0, stk0, len0, arr0⟩ := hrt
-  obtain ⟨-, -, live, own, -, -, -, sa⟩ := hown
+  obtain ⟨r0, F0, LF0, LE0, inv0, stk0, len0, arr0, ain0⟩ := hrt
+  obtain ⟨-, -, live, own, -, -, -, sa, -⟩ := hown
   obtain ⟨-, hheld, -, -⟩ := live (by omega)
   obtain ⟨sa1, -⟩ := sa (by omega)
   unfold Apart at sa1
@@ -159,7 +160,7 @@ theorem rtM_store {R : RtInv} {kc : Nat} {L : List (Nat × Nat)} {s : State} {zp
   obtain ⟨hstk, e0, e1, e2⟩ := stkOK_frame stk0 hF1 hst (LiveExt.refl R L1)
   have hlen : stLen (M.writeLE a 8 v) st = stLen M st := e1
   refine ⟨by rw [Memory.regions_writeLE]; exact r0, ?_, ?_, LE0, inv_store_held inv0 (hheld.sub h1 h2), hstk,
-    hlen.trans len0, by rw [e0, e2]; exact arr0⟩
+    hlen.trans len0, by rw [e0, e2]; exact arr0, ArrIn.congr ain0 e0 e2 fun _ h => h⟩
   · refine F0.writeLE_inRanges v ?_
     rcases own with ⟨rfl, rfl⟩ | ⟨hIn, -⟩
     · exact ⟨(p, p + 8 * c), List.mem_append_left _ (List.mem_append_right _ (List.mem_singleton_self _)),

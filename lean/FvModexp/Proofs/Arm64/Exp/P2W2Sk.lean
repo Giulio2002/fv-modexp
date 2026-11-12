@@ -29,14 +29,14 @@ abbrev r1E : Nat := 1795700
     S'.regs 28 = BitVec.ofNat 64 g → S'.regs 29 = r29 → S'.regs 18 = r18 → S'.mem = M →
     S'.regs 2 = BitVec.ofNat 64 lm → S'.regs 10 = BitVec.ofNat 64 yl → S'.regs 11 = BitVec.ofNat 64 i →
     S'.regs 12 = BitVec.ofNat 64 yp → S'.regs 13 = BitVec.ofNat 64 yi → i < yl → 0 < yi → yi < 2 ^ 64 →
-    v = some (i, yi) → ReachesRet (LibExp.program.link impl) ret0 S' Q
+    v = some (i, yi) → ReachesRet (LibW.program.link impl) ret0 S' Q
 
 /-- the continuation at `return 1` -/
 @[reducible] def KR1 (impl : List Segment) (ret0 : BitVec 64) (Q : State → Prop) (sp g : Nat) (M : Memory)
     (r18 r29 : BitVec 64) (v : Option (Nat × Nat)) : Prop :=
   ∀ (S' : State), S'.pc = BitVec.ofNat 64 r1E → S'.sp = BitVec.ofNat 64 sp →
     S'.regs 28 = BitVec.ofNat 64 g → S'.regs 29 = r29 → S'.regs 18 = r18 → S'.mem = M →
-    S'.regs 7 = 1#64 → v = none → ReachesRet (LibExp.program.link impl) ret0 S' Q
+    S'.regs 7 = 1#64 → v = none → ReachesRet (LibW.program.link impl) ret0 S' Q
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
@@ -51,7 +51,7 @@ theorem skipLoop {impl : List Segment} (ret0 : BitVec 64) (Q : State → Prop) (
       S.regs 28 = BitVec.ofNat 64 g → S.regs 29 = r29 → S.regs 18 = r18 → S.mem = M →
       S.regs 2 = BitVec.ofNat 64 lm → S.regs 10 = BitVec.ofNat 64 yl → S.regs 11 = BitVec.ofNat 64 i →
       S.regs 12 = BitVec.ofNat 64 yp → S.regs 13 = BitVec.ofNat 64 yi → S.regs 7 = 1#64 → i < yl → yi < 2 ^ 64 →
-      Exp.skipZero Y i yi = v → ReachesRet (LibExp.program.link impl) ret0 S Q := by
+      Exp.skipZero Y i yi = v → ReachesRet (LibW.program.link impl) ret0 S Q := by
   intro i
   induction i with
   | zero =>
@@ -130,7 +130,7 @@ theorem skipHead {impl : List Segment} (ret0 : BitVec 64) (Q : State → Prop) (
     (KR : KR1 impl ret0 Q sp g M r18 r29 (Exp.skipZero Y (i0 lm yl) (yi0 lm yl Y)))
     (S : State) (hpc : S.pc = BitVec.ofNat 64 1795572) (hspS : S.sp = BitVec.ofNat 64 sp)
     (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = r29) (h18 : S.regs 18 = r18) (hm : S.mem = M) :
-    ReachesRet (LibExp.program.link impl) ret0 S Q := by
+    ReachesRet (LibW.program.link impl) ret0 S Q := by
   have e1 : BitVec.ofNat 64 lm - 2#64 = BitVec.ofNat 64 (lm - 2) := by
     apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
   have e2 : BitVec.ofNat 64 yl - 1#64 = BitVec.ofNat 64 (yl - 1) := by

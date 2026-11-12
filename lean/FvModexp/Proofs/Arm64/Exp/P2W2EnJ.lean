@@ -15,7 +15,7 @@ namespace FvModexp.Arm64.P2W2
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem enJn (impl : List Segment) (R : RtInv)
-    (hwb : WbLiveContract (LibExp.program.link impl) wbE 4096 R 2)
+    (hwb : WbLiveContract (LibW.program.link impl) wbE 4096 R 2)
     (ret0 : BitVec 64) (Q : State → Prop)
     (b1 : Nat) (L1 : List (Nat × Nat)) (g sp st w1 len0 c1 n : Nat) (M : Memory)
     (hal : sp % 16 = 0) (hsp1 : 4304 ≤ sp) (hsp2 : sp + 560 ≤ 2 ^ 48)
@@ -38,8 +38,8 @@ theorem enJn (impl : List Segment) (R : RtInv)
       MemFrame M M' (R.rt ++ [(st, st + 24), (sp - 4096, sp - 8)]) → LiveFrame M M' L1 [(st, st + 24)] →
       M'.regions = M.regions → R.inv b1 L1 g (view R.rt L1 M') →
       M'.readLE st 8 = w1 → M'.readLE (st + 8) 8 = len0 + 8 * n → M'.readLE (st + 16) 8 = c1 →
-      ReachesRet (LibExp.program.link impl) ret0 S' Q) :
-    ReachesRet (LibExp.program.link impl) ret0 S Q := by
+      ReachesRet (LibW.program.link impl) ret0 S' Q) :
+    ReachesRet (LibW.program.link impl) ret0 S Q := by
   have hrn : 8 * n ≤ 8 * n + 3 := by omega
   have hacc16 : M.accessible (st + 8) 16 true = true := Memory.accessible_mono _ hsta (by omega) (by omega)
   have hacc8 : M.accessible st 8 true = true := Memory.accessible_mono _ hsta (by omega) (by omega)

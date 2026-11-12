@@ -30,7 +30,7 @@ variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
 theorem trB {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns : List String}
-    (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
+    (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
     {stkT aboveT : Nat} (htr : Trunc.Hyp2 impl R ns stkT aboveT) (hkT : stkT ≤ K) (haT : aboveT ≤ 88)
     (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {M : Memory} {L1 : List (Nat × Nat)}
     {b1 zzp bp : Nat} (hB : BF R L K g sp st zp zc xp xl xc yp yl lm ret s M L1 b1 zzp bp)
@@ -51,8 +51,8 @@ theorem trB {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns :
       (∀ (w : Bool) (q d : Nat), BC R L K g sp st zp zc M L1 zzp bp lm w q d → 0 < d →
         Apart q (8 * d) p (8 * c) → BC R L K g sp st zp zc s'.mem L2 zzp bp lm w q d ∧
           ∀ a k, q ≤ a → a + k ≤ q + 8 * d → s'.mem.readLE a k = M.readLE a k) →
-      b1 - P2Pre.tC lm ≤ b2 → ReachesRet (LibExp.program.link impl) ret0 s' Q) :
-    ReachesRet (LibExp.program.link impl) ret0 T Q := by
+      b1 - P2Pre.tC lm ≤ b2 → ReachesRet (LibW.program.link impl) ret0 s' Q) :
+    ReachesRet (LibW.program.link impl) ret0 T Q := by
   obtain ⟨xlc, xv, xN, xo⟩ := hxv
   have hl0 : 0 < l := len_pos xv xo
   have hc : 0 < c := by omega

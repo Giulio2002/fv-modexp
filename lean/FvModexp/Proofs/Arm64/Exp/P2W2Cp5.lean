@@ -28,9 +28,9 @@ variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
 theorem afterT {impl : List Segment} (hap : ImplApart Extracted.program impl)
-    (hmk : MakesliceLiveContract (LibExp.program.link impl) mkE 4096 R)
-    (hno : NewobjectLiveContract (LibExp.program.link impl) noE 4096 R)
-    (hmv : MemmoveLive (LibExp.program.link impl) P2Pre.mvE 4096 R)
+    (hmk : MakesliceLiveContract (LibW.program.link impl) mkE 4096 R)
+    (hno : NewobjectLiveContract (LibW.program.link impl) noE 4096 R)
+    (hmv : MemmoveLive (LibW.program.link impl) P2Pre.mvE 4096 R)
     (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {M : Memory} {L3 : List (Nat × Nat)} {b3 zzp bp : Nat}
     (hAT : AT R L K g sp st zp zc xp xl xc yp yl lm (s.regs 30).toNat s M L3 b3 zzp bp)
     {sqC : Nat → Nat → Nat} {mlC : Nat → Nat → Nat → Nat} {c0 cst : Nat}
@@ -43,7 +43,7 @@ theorem afterT {impl : List Segment} (hap : ImplApart Extracted.program impl)
       (natVal s.mem xp xl ^ natVal s.mem yp yl % 2 ^ lm))
     (S : State) (hpc : S.pc = BitVec.ofNat 64 1795572) (hsp : S.sp = BitVec.ofNat 64 sp)
     (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = r29) (h18 : S.regs 18 = s.regs 18) (hm : S.mem = M) :
-    ReachesRet (LibExp.program.link impl) (s.regs 30) S
+    ReachesRet (LibW.program.link impl) (s.regs 30) S
       (FQ R b L K zp zc st (natVal s.mem xp xl ^ natVal s.mem yp yl % 2 ^ lm) cst s) := by
   have hlm2 : 2 ≤ lm := hP.2.2.2.2.2.1
   have hyN : NatNorm s.mem yp yl := hP.2.2.2.2.2.2.2.2.2.2.1

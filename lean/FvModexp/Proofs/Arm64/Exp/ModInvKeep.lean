@@ -73,20 +73,20 @@ theorem keep_rt {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat 
     (ht : Own R kc L L1 s zp zc st xp xl M t tc) (hreg : M'.regions = M.regions)
     (hF : MemFrame M M' (R.rt ++ winA S' stk above ++ [(t, t + 8 * tc)] ++ stWs M st))
     (hLF : LiveFrame M M' L1 ([(t, t + 8 * tc)] ++ stWs M st)) (hLE : LiveExt R L1 L2)
-    (hinv : R.inv b2 L2 (s.regs 28).toNat (view R.rt L2 M')) (hsb : StackBack R L1 L2 st M M') :
-    RtM R kc L s zp zc st M' L2 b2 := by
+    (hinv : R.inv b2 L2 (s.regs 28).toNat (view R.rt L2 M')) (hsb : StackBack R L1 L2 st M M')
+    (hain : ArrIn L2 st M M') : RtM R kc L s zp zc st M' L2 b2 := by
   have hsp : 240 + kc ≤ s.sp.toNat := by
     have := hpre.1.2.1.2.1; simp only [K] at this; omega
   have hLs := hpre.1.2.2.2.2.2.2.1
   simp only [win, K, A] at hLs
   have hrt' := hrt
-  obtain ⟨-, -, -, LE0, -, hstk0, len0, arr0⟩ := hrt'
+  obtain ⟨-, -, -, LE0, -, hstk0, len0, arr0, -⟩ := hrt'
   have hlc : stLen M st ≤ stCap M st := hstk0.2.2.2.2.2.1
   have t4 := ht.2.2.2.1
   refine rtM_call hrt hreg (ws := winA S' stk above ++ ([(t, t + 8 * tc)] ++ stWs M st))
     (by simpa only [List.append_assoc] using hF) (fun a k h => ?_)
     ⟨fun a k h ho => hLF.readLE a k h (by simp only [outside_append] at ho ⊢; exact ho.2)⟩ (fun a k hin h => ?_)
-    hLE hinv hsb
+    hLE hinv hsb hain
   · simp only [winA, stWs, stkWs, hS', K, A] at h ⊢
     exact keep_ws rfl hkc hstk habove hsp (t4.imp id fun h => h.1) hlc
       (arr0.imp (fun ⟨e0, e2⟩ => ⟨e0, e2, len0⟩) fun h => h.1) h

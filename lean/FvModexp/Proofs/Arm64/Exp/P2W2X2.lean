@@ -106,7 +106,7 @@ theorem xm (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {M : Memory} {L
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- **from the exit's join to the post** -/
-theorem xJ (hap : ImplApart Extracted.program impl) (hmv : MemmoveLive (LibExp.program.link impl) P2Pre.mvE 4096 R)
+theorem xJ (hap : ImplApart Extracted.program impl) (hmv : MemmoveLive (LibW.program.link impl) P2Pre.mvE 4096 R)
     (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {M : Memory} {L1 : List (Nat × Nat)} {b1 ℓ : Nat}
     (hw : WC R L K g sp st zp zc s.mem M L1 b1 ℓ)
     (hsl : ESl M sp st (s.regs 29) (s.regs 30).toNat zp zc xp xl xc yp yl lm (stLen s.mem st))
@@ -118,7 +118,7 @@ theorem xJ (hap : ImplApart Extracted.program impl) (hmv : MemmoveLive (LibExp.p
     (h28 : S.regs 28 = BitVec.ofNat 64 g) (h18 : S.regs 18 = s.regs 18) (hm : S.mem = M)
     (h0 : S.regs 0 = BitVec.ofNat 64 dp) (h1 : S.regs 1 = BitVec.ofNat 64 n) (h15 : S.regs 15 = BitVec.ofNat 64 dc)
     (h2 : S.regs 2 = BitVec.ofNat 64 n) (h3 : S.regs 3 = BitVec.ofNat 64 zzp) :
-    ReachesRet (LibExp.program.link impl) (s.regs 30) S (FQ R b L K zp zc st Z cst s) := by
+    ReachesRet (LibW.program.link impl) (s.regs 30) S (FQ R b L K zp zc st Z cst s) := by
   have hK := hP.1.2.2.2.2.2.2.2.1
   have hK1 := hP.1.2.2.2.2.2.2.2.2.1
   have hsp2 := hP.1.2.2.2.2.2.2.2.2.2.1

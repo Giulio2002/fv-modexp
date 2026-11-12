@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.CallWW
 import FvModexp.Proofs.Arm64.Exp.SubMod2NDefs
 import FvModexp.Proofs.Arm64.Nat.TruncDefs
 import FvModexp.Proofs.Common.BitLenA64
@@ -37,7 +38,7 @@ theorem truncNeed_le_w (xl n : Nat) : makeCost (truncNeed xl n) ≤ wCost n :=
 /-- what the function promises, from a state `S` inside its frame (entry state `s`) -/
 @[reducible] def Goal (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zl zc yp yl n : Nat)
     (s S : State) : Prop :=
-  ReachesRet (LibExp.program.link impl) (s.regs 30) S (fun s' =>
+  ReachesRet (LibW.program.link impl) (s.regs 30) S (fun s' =>
     (s'.sp = s.sp ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧ s'.regs 18 = s.regs 18) ∧
       Post R b L zp zl zc yp yl n s s')
 
@@ -290,7 +291,7 @@ theorem ra_of {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns
 set_option maxRecDepth 20000 in
 /-- a call of `nat.trunc` (asm's `Trunc.Hyp2`) at its entry, continuation form, Nat-level arguments -/
 theorem truncCall {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
-    (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) {stk above : Nat}
+    (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) {stk above : Nat}
     (htr : Trunc.Hyp2 impl R ns stk above) {b : Nat} {L : List (Nat × Nat)} {zp zl zc x xl xc n : Nat}
     {S : State} {ret : BitVec 64} {Q : State → Prop} {ra : Nat}
     (hra : RetAddr ((Extracted.program.onlySegments ns).link impl) ra)
@@ -303,9 +304,9 @@ theorem truncCall {impl : List Segment} (hap : ImplApart Extracted.program impl)
     (hcp : zp = x ∨ 0 < zc ∨ (0 < xl ∧ 0 < n))
     (K : ∀ s', s'.pc = BitVec.ofNat 64 ra → s'.sp = S.sp → s'.regs 28 = S.regs 28 → s'.regs 29 = S.regs 29 →
       s'.regs 18 = S.regs 18 → s'.mem.regions = S.mem.regions → TruncPost R b L stk above zp zc x xl n S s' →
-      ReachesRet (LibExp.program.link impl) ret s' Q) :
-    ReachesRet (LibExp.program.link impl) ret S Q := by
-  have hS := CallW.hypSum hap hns (htr b L (BitVec.ofNat 64 zp) (BitVec.ofNat 64 zl) (BitVec.ofNat 64 zc)
+      ReachesRet (LibW.program.link impl) ret s' Q) :
+    ReachesRet (LibW.program.link impl) ret S Q := by
+  have hS := CallWW.hypSum hap hns (htr b L (BitVec.ofNat 64 zp) (BitVec.ofNat 64 zl) (BitVec.ofNat 64 zc)
     (BitVec.ofNat 64 x) (BitVec.ofNat 64 xl) (BitVec.ofNat 64 xc) (BitVec.ofNat 64 n))
   rw [show segAddr Extracted.program Trunc.fn = 1786000 by decide] at hS
   have hzl : zl < 2 ^ 64 := by have := hpre.2.2.1; omega

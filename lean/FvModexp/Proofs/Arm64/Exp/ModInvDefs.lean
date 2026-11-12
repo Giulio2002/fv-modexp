@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Arm64.Exp.MulHyp
+import FvModexp.Proofs.Arm64.Nat.SqrMulX
 import FvModexp.Proofs.Arm64.Exp.SubMod2N
 import FvModexp.Proofs.Common.ModInvMath
 
@@ -27,7 +28,7 @@ open FvModexp.Arm64.ExpHyp (RdIn WrOut NatRes NatOF RtPost StackOK' stWs)
 
 def fn : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.nat.modularInverseModPowerOfTwo"
 
-theorem fnBase : segAddr LibExp.program fn = 1797104 := by decide
+theorem fnBase : segAddr LibW.program fn = 1797104 := by decide
 
 /-- bytes above `SP` (the 8 argument spill words + the caller's saved-LR slot) -/
 abbrev A : Nat := 72
@@ -56,6 +57,14 @@ from the stack object's header and free part -/
   ∃ op, NatOne R L s.mem op (win s (K kc) A) ∧ Apart zp (8 * zc) natOneA 24 ∧ Apart zp (8 * zc) op 8 ∧
     StkApart s.mem st op 8 ∧ StkApart s.mem st natOneA 24
 
+/-- (s25) divmc's extra `sqr` / `mul` facts at the entry (`StkX` / `OpX` / `CapIn`, Nat/SqrMulX): a non-nil stack whose
+header is apart from `runtime.writeBarrier`, the threshold globals `gA` and the free part, the free part apart from `gA`,
+`cap = 0 → ptr = 0`, `x`'s whole capacity held, `z` and `x` apart from the free part and `gA` -/
+def PX (R : RtInv) (L : List (Nat × Nat)) (s : State) (zp zc st xp xl xc : Nat) : Prop :=
+  st ≠ 0 ∧ Apart st 24 StackNat.wbA 4 ∧ Apart st 24 RunIface.gA 32 ∧ Apart st 24 (frP s.mem st) (frN s.mem st) ∧
+    Apart (frP s.mem st) (frN s.mem st) RunIface.gA 32 ∧ (stCap s.mem st = 0 → stW s.mem st = 0) ∧
+    CapIn R L xp xl xc ∧ OpX s.mem st zp (8 * zc) ∧ OpX s.mem st xp (8 * xl)
+
 @[reducible] def Pre (R : RtInv) (kc : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
     (L : List (Nat × Nat)) (zp zl zc st xp xl xc n : Nat) (s : State) : Prop :=
   CallEnv R L s (K kc) A ∧ Serves R ∧
@@ -66,7 +75,8 @@ from the stack object's header and free part -/
     StkIn R L s (K kc) A st ∧ stLen s.mem st + 8 * NW n + 72 ≤ 2 ^ 16 ∧
     StkApart s.mem st zp (8 * zc) ∧ StkApart s.mem st xp (8 * xl) ∧
     cost sqrC mulC n ≤ b ∧ R.inv b L (s.regs 28).toNat (view R.rt L s.mem) ∧
-    (s.regs 30).toNat % 4 = 0 ∧ (s.regs 30).toNat < 2 ^ 48 ∧ Outside NatAdd.wordT 16 R.rt ∧ OneIn R L s kc zp zc st
+    (s.regs 30).toNat % 4 = 0 ∧ (s.regs 30).toNat < 2 ^ 48 ∧ Outside NatAdd.wordT 16 R.rt ∧
+    (OneIn R L s kc zp zc st ∧ PX R L s zp zc st xp xl xc)
 
 @[reducible] def Post (R : RtInv) (kc : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
     (L : List (Nat × Nat)) (zp zc st xp xl n : Nat) (s s' : State) : Prop :=
@@ -75,8 +85,8 @@ from the stack object's header and free part -/
     ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b - cost sqrC mulC n ≤ b' ∧
       R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem) ∧ NatLive s'.mem R L' p' c' ∧
       ((p' = zp ∧ c' = zc) ∨ (InRanges p' (8 * c') R.rt ∧ ApartAll p' (8 * c') L)) ∧
-      StackBack R L L' st s.mem s'.mem ∧
+      StackBackL R L L' st s.mem s'.mem ∧
       MemFrame s.mem s'.mem (R.rt ++ winA s (K kc) A ++ [(zp, zp + 8 * zc)] ++ stWs s.mem st) ∧
-      LiveFrame s.mem s'.mem L ([(zp, zp + 8 * zc)] ++ stWs s.mem st)
+      LiveFrame s.mem s'.mem L ([(zp, zp + 8 * zc)] ++ stWs s.mem st) ∧ ResSep s.mem s'.mem st p' c'
 
 end FvModexp.Arm64.ModInv

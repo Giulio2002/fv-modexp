@@ -24,7 +24,7 @@ theorem keep_fp {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat 
     (h2 : a + 1 ≤ s.sp.toNat + 72) : Outside a 1 [(stW M st + 8 * stLen M st, stW M st + 8 * stCap M st)] := by
   have hout := hpre.1.2.2.2.1
   have hsta := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1.2.2.2
-  obtain ⟨-, -, -, -, -, hstk0, len0, arr0⟩ := hrt
+  obtain ⟨-, -, -, -, -, hstk0, len0, arr0, -⟩ := hrt
   have hlc : stLen M st ≤ stCap M st := hstk0.2.2.2.2.2.1
   simp only [K, A] at hout
   rcases arr0 with ⟨e0, e2⟩ | ⟨hIn, -⟩
@@ -80,7 +80,7 @@ theorem keep_own {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat
   have hsp : 240 + kc ≤ s.sp.toNat := by
     have := hpre.1.2.1.2.1; simp only [K] at this; omega
   have ho' := ho
-  obtain ⟨-, -, o3, -, o5, -, -, o8⟩ := ho'
+  obtain ⟨-, -, o3, -, o5, -, -, o8, -⟩ := ho'
   simp only [win, K, A, outside_cons, outside_nil, and_true] at o5
   unfold Apart at hot
   have hlive : NatLive M' R L2 o oc := fun hc => by

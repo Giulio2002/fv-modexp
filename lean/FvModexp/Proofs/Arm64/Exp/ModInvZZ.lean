@@ -23,7 +23,7 @@ set_option janus.callRegions true in
 set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 theorem zzalloc (impl : List Segment) (R : RtInv)
-    (hmk : MakesliceLiveContract (LibExp.program.link impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
+    (hmk : MakesliceLiveContract (LibW.program.link impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
     (ra : BitVec 64) (Q : State → Prop) (b : Nat) (L : List (Nat × Nat)) (g sp kc nw : Nat) (M : Memory)
     (r18 r29 : BitVec 64) (he : Env R L g sp kc M) (hkc : 4608 ≤ kc) (hnw : 0 < nw) (hnw2 : nw ≤ 2 ^ 12)
     (ht8 : M.readLE wT 8 = 8) (ht0 : M.readLE (wT + 8) 8 = 0) (hta : M.accessible wT 16 false = true)
@@ -46,8 +46,8 @@ theorem zzalloc (impl : List Segment) (R : RtInv)
       S'.regs 6 = BitVec.ofNat 64 v6 → S'.regs 7 = BitVec.ofNat 64 v7 → S'.regs 8 = BitVec.ofNat 64 v8 →
       S'.regs 9 = BitVec.ofNat 64 v9 → S'.regs 10 = BitVec.ofNat 64 v10 →
       S'.regs 18 = r18 → S'.regs 28 = BitVec.ofNat 64 g → S'.regs 29 = r29 → S'.mem = m →
-      AllocPostZ R L b g sp nw M m p r → ReachesRet (LibExp.program.link impl) ra S' Q) :
-    ReachesRet (LibExp.program.link impl) ra S Q := by
+      AllocPostZ R L b g sp nw M m p r → ReachesRet (LibW.program.link impl) ra S' Q) :
+    ReachesRet (LibW.program.link impl) ra S Q := by
   obtain ⟨hal, hsp1, hsp2, hwacc, hg1, hg2, hg3, hwrt, hgw, hgrt, hLs⟩ := he
   have hwTv : wT = 2641088 := rfl
   rw [hwTv] at ht8 ht0 hta hwt hty hok
@@ -95,8 +95,8 @@ theorem setw (impl : List Segment) (ra : BitVec 64) (Q : State → Prop) (p c k 
     (KS : ∀ S' : State, S'.pc = BitVec.ofNat 64 1798064 → S'.sp = BitVec.ofNat 64 sp →
       S'.regs 0 = BitVec.ofNat 64 2 → S'.regs 14 = BitVec.ofNat 64 p →
       (∀ i, i ≠ 0 → i ≠ 14 → i < 31 → S'.regs i = S.regs i) → S'.mem = M.writeLE p 8 k →
-      ReachesRet (LibExp.program.link impl) ra S' Q) :
-    ReachesRet (LibExp.program.link impl) ra S Q := by
+      ReachesRet (LibW.program.link impl) ra S' Q) :
+    ReachesRet (LibW.program.link impl) ra S Q := by
   have hk' : BitVec.ofNat 64 k ≠ 0#64 := by
     intro h; have := congrArg BitVec.toNat h; simp only [BitVec.toNat_ofNat] at this; omega
   have hc' : BitVec.ofNat 64 c ≠ 0#64 := by

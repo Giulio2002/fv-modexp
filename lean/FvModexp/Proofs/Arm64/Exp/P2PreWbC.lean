@@ -63,7 +63,7 @@ theorem rdr_held (hpre : Pre R kc sqC mlC b L st pw pl ws lm x xl s) (hkc : 4608
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 4000000 in
 /-- **`gcWriteBarrier2`** called at `S` (`SP' = SP - 208`, return address in `X30`) -/
-theorem wbCall (hwb : WbLiveContract (LibExp.program.link impl) wbE 4096 R 2)
+theorem wbCall (hwb : WbLiveContract (LibW.program.link impl) wbE 4096 R 2)
     (hpre : Pre R kc sqC mlC b L st pw pl ws lm x xl s) (hkc : 4608 ≤ kc) {bp : Nat} {M : Memory}
     {L1 : List (Nat × Nat)} {b1 : Nat} (hc : Ctx R kc L st pw pl lm s bp M L1 b1) {r : W64} {Q : State → Prop}
     {S : State} (hpc : S.pc = BitVec.ofNat 64 wbE) (hsp : S.sp = BitVec.ofNat 64 (s.sp.toNat - 208))
@@ -74,8 +74,8 @@ theorem wbCall (hwb : WbLiveContract (LibExp.program.link impl) wbE 4096 R 2)
       buf.toNat + 16 ≤ 2 ^ 48 → buf.toNat % 8 = 0 → m'.accessible buf.toNat 16 true = true →
       (∀ v1 v2, Ctx R kc L st pw pl lm s bp (W2 m' buf.toNat v1 v2) L1 b1) →
       (∀ v1 v2 a n, 0 < n → RdR s pw pl lm bp a n → (W2 m' buf.toNat v1 v2).readLE a n = M.readLE a n) →
-      ReachesRet (LibExp.program.link impl) r (wbRetX S junk buf f v m' ex ep) Q) :
-    ReachesRet (LibExp.program.link impl) r S Q := by
+      ReachesRet (LibW.program.link impl) r (wbRetX S junk buf f v m' ex ep) Q) :
+    ReachesRet (LibW.program.link impl) r S Q := by
   have hf := pf_of hpre (by omega)
   have hspN : S.sp.toNat = s.sp.toNat - 208 := by
     rw [hsp, BitVec.toNat_ofNat]; exact Nat.mod_eq_of_lt (by have := s.sp.isLt; omega)

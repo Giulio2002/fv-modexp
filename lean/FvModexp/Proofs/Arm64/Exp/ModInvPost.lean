@@ -56,8 +56,8 @@ theorem postT1 (hkc : 4608 ≤ kc) {stkT aboveT : Nat} (hkT : stkT ≤ kc) (haT 
   have hS' := sp'_eq hsp
   rw [hm] at hF' hLF' hreg hv'
   rw [h28] at hinv'
-  obtain ⟨hF2, hLF2, hsb, -, -⟩ := nostk hpre hmid.2.1 hS' hkT haT hmid.2.2.2.1 hF' hLF' hLE
-  obtain ⟨mid2, hzv2, hsl⟩ := after_zz hpre hkc hmid hS' hkT haT hreg hF2 hLF2 hLE hinv' hsb hlive' hc40'
+  obtain ⟨hF2, hLF2, hsb, se0, se2⟩ := nostk hpre hmid.2.1 hS' hkT haT hmid.2.2.2.1 hF' hLF' hLE
+  obtain ⟨mid2, hzv2, hsl⟩ := after_zz hpre hkc hmid hS' hkT haT hreg hF2 hLF2 hLE hinv' hsb (ain_keep se0 se2) hlive' hc40'
     hmid.2.2.2.1.2.1 (Or.inl ⟨rfl, rfl⟩) (fun h => absurd ⟨rfl, rfl⟩ h) hlc' hmid.2.2.2.2.2.2.2.2
   have hsp0 : 240 ≤ s.sp.toNat := by have := sp_K hpre; omega
   have hvl : natVal s'.mem q ql' < 2 ^ (64 * NW n) := by
@@ -73,7 +73,7 @@ theorem postT1 (hkc : 4608 ≤ kc) {stkT aboveT : Nat} (hkT : stkT ≤ kc) (haT 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 4000000 in
 theorem callT1 (hap : ImplApart Extracted.program impl) {ns : List String}
-    (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
+    (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
     {stkT aboveT : Nat} (htr : Trunc.Hyp2 impl R ns stkT aboveT) (hkc : 4608 ≤ kc) (hkT : stkT ≤ kc)
     (haT : aboveT ≤ 88) (i : Nat) (hi300 : i < 300) (hpcv : pcv = 1797104 + 4 * i)
     (k2 : S2 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s pcv Ex E Kx)
@@ -91,7 +91,7 @@ theorem callT1 (hap : ImplApart Extracted.program impl) {ns : List String}
     (h0 : S'.regs 0 = BitVec.ofNat 64 q) (h1 : S'.regs 1 = BitVec.ofNat 64 ql) (h2 : S'.regs 2 = BitVec.ofNat 64 qc)
     (h3 : S'.regs 3 = BitVec.ofNat 64 q) (h4 : S'.regs 4 = BitVec.ofNat 64 ql) (h5 : S'.regs 5 = BitVec.ofNat 64 qc)
     (h6 : S'.regs 6 = BitVec.ofNat 64 (E j)) :
-    ReachesRet (LibExp.program.link impl) (s.regs 30) S' (GoalQ R kc sqrC mulC b L zp zc st xp xl n s) := by
+    ReachesRet (LibW.program.link impl) (s.regs 30) S' (GoalQ R kc sqrC mulC b L zp zc st xp xl n s) := by
   subst hpcv
   have hnw : NW n ≤ 2 ^ 12 := by have := hpre.2.2.2.2.1; simp only [NW]; omega
   have hq64 : q < 2 ^ 64 := hmid.2.2.2.1.2.1
@@ -135,8 +135,8 @@ theorem postT2 (hkc : 4608 ≤ kc) {stkT aboveT : Nat} (hkT : stkT ≤ kc) (haT 
   have hS' := sp'_eq hsp
   rw [hm] at hF' hLF' hreg hv'
   rw [h28] at hinv'
-  obtain ⟨hF2, hLF2, hsb, -, -⟩ := nostk hpre hmid.2.1 hS' hkT haT hmid.2.2.2.1 hF' hLF' hLE
-  obtain ⟨mid2, hzv2, hsl⟩ := after_zz hpre hkc hmid hS' hkT haT hreg hF2 hLF2 hLE hinv' hsb hlive' hc40'
+  obtain ⟨hF2, hLF2, hsb, se0, se2⟩ := nostk hpre hmid.2.1 hS' hkT haT hmid.2.2.2.1 hF' hLF' hLE
+  obtain ⟨mid2, hzv2, hsl⟩ := after_zz hpre hkc hmid hS' hkT haT hreg hF2 hLF2 hLE hinv' hsb (ain_keep se0 se2) hlive' hc40'
     hmid.2.2.2.1.2.1 (Or.inl ⟨rfl, rfl⟩) (fun h => absurd ⟨rfl, rfl⟩ h) hlc' hmid.2.2.2.2.2.2.2.2
   have hsp0 : 240 ≤ s.sp.toNat := by have := sp_K hpre; omega
   have hvl : natVal s'.mem q ql' < 2 ^ (64 * NW n) := by
@@ -152,7 +152,7 @@ theorem postT2 (hkc : 4608 ≤ kc) {stkT aboveT : Nat} (hkT : stkT ≤ kc) (haT 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 4000000 in
 theorem callT2 (hap : ImplApart Extracted.program impl) {ns : List String}
-    (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
+    (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
     {stkT aboveT : Nat} (htr : Trunc.Hyp2 impl R ns stkT aboveT) (hkc : 4608 ≤ kc) (hkT : stkT ≤ kc)
     (haT : aboveT ≤ 88) (i : Nat) (hi300 : i < 300) (hpcv : pcv = 1797104 + 4 * i)
     (k2 : S4 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s pcv Ex E Kx)
@@ -170,7 +170,7 @@ theorem callT2 (hap : ImplApart Extracted.program impl) {ns : List String}
     (h0 : S'.regs 0 = BitVec.ofNat 64 q) (h1 : S'.regs 1 = BitVec.ofNat 64 ql) (h2 : S'.regs 2 = BitVec.ofNat 64 qc)
     (h3 : S'.regs 3 = BitVec.ofNat 64 q) (h4 : S'.regs 4 = BitVec.ofNat 64 ql) (h5 : S'.regs 5 = BitVec.ofNat 64 qc)
     (h6 : S'.regs 6 = BitVec.ofNat 64 (E j)) :
-    ReachesRet (LibExp.program.link impl) (s.regs 30) S' (GoalQ R kc sqrC mulC b L zp zc st xp xl n s) := by
+    ReachesRet (LibW.program.link impl) (s.regs 30) S' (GoalQ R kc sqrC mulC b L zp zc st xp xl n s) := by
   subst hpcv
   have hnw : NW n ≤ 2 ^ 12 := by have := hpre.2.2.2.2.1; simp only [NW]; omega
   have hq64 : q < 2 ^ 64 := hmid.2.2.2.1.2.1

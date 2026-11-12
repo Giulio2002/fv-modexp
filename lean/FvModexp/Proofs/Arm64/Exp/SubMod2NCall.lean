@@ -1,3 +1,5 @@
+import FvModexp.Proofs.Arm64.Exp.LibWC
+import FvModexp.Proofs.Arm64.Exp.CallWW
 import FvModexp.Proofs.Arm64.Exp.SubMod2NSeg
 import FvModexp.Proofs.Arm64.Exp.CmpW
 
@@ -18,10 +20,10 @@ theorem sub_of_all {ns ms : List String} (h : ns.all ms.contains = true) :
   rw [List.all_eq_true] at h
   exact h x (by simpa using hx)
 
-theorem sub_names : ∀ x, NatSub.names.contains x = true → LibExp.names.contains x = true :=
+theorem sub_names : ∀ x, NatSub.names.contains x = true → LibW.names.contains x = true :=
   sub_of_all (by decide)
 
-theorem add_names : ∀ x, NatAdd.names.contains x = true → LibExp.names.contains x = true :=
+theorem add_names : ∀ x, NatAdd.names.contains x = true → LibW.names.contains x = true :=
   sub_of_all (by decide)
 
 set_option maxRecDepth 20000 in
@@ -49,9 +51,9 @@ theorem subCall {impl : List Segment} (hap : ImplApart Extracted.program impl) {
       ((p' = zp ∧ c' = zc) ∨ (InRanges p' (8 * c') R.rt ∧ ApartAll p' (8 * c') L)) →
       MemFrame M s'.mem (R.rt ++ [(sp' - 4304, sp' - 8), (sp' + 8, sp' + 80)] ++ [(zp, zp + 8 * zc)]) →
       LiveFrame M s'.mem L [(zp, zp + 8 * zc)] → (xl ≤ zc → p' = zp ∧ c' = zc) → c' < 2 ^ 40 →
-      ReachesRet (LibExp.program.link impl) ret s' Q) :
-    ReachesRet (LibExp.program.link impl) ret S Q := by
-  have hS' := CallW.hypSum hap sub_names (hsub b L (BitVec.ofNat 64 zp) (BitVec.ofNat 64 zl) (BitVec.ofNat 64 zc)
+      ReachesRet (LibW.program.link impl) ret s' Q) :
+    ReachesRet (LibW.program.link impl) ret S Q := by
+  have hS' := CallWW.hypSum hap sub_names (hsub b L (BitVec.ofNat 64 zp) (BitVec.ofNat 64 zl) (BitVec.ofNat 64 zc)
     (BitVec.ofNat 64 xp) (BitVec.ofNat 64 xl) (BitVec.ofNat 64 xc) (BitVec.ofNat 64 yp) (BitVec.ofNat 64 yl)
     (BitVec.ofNat 64 yc))
   rw [show segAddr Extracted.program NatSub.fn = 1781872 by decide] at hS'
@@ -97,9 +99,9 @@ theorem addCall {impl : List Segment} (hap : ImplApart Extracted.program impl) {
       LiveFrame M s'.mem L [(zp, zp + 8 * zc)] →
       ((if min xl yl = 0 then max xl yl else max xl yl + 1) ≤ zc → p' = zp ∧ c' = zc) → c' < 2 ^ 40 →
       p' < 2 ^ 64 ∧ n' < 2 ^ 64 →
-      ReachesRet (LibExp.program.link impl) ret s' Q) :
-    ReachesRet (LibExp.program.link impl) ret S Q := by
-  have hS' := CallW.hypSum hap add_names (hadd b L (BitVec.ofNat 64 zp) (BitVec.ofNat 64 zl) (BitVec.ofNat 64 zc)
+      ReachesRet (LibW.program.link impl) ret s' Q) :
+    ReachesRet (LibW.program.link impl) ret S Q := by
+  have hS' := CallWW.hypSum hap add_names (hadd b L (BitVec.ofNat 64 zp) (BitVec.ofNat 64 zl) (BitVec.ofNat 64 zc)
     (BitVec.ofNat 64 xp) (BitVec.ofNat 64 xl) (BitVec.ofNat 64 xc) (BitVec.ofNat 64 yp) (BitVec.ofNat 64 yl)
     (BitVec.ofNat 64 yc))
   rw [show segAddr Extracted.program NatAdd.fn = 1781184 by decide] at hS'
@@ -127,9 +129,9 @@ theorem cmpCall {impl : List Segment} {S : State} {ret : BitVec 64} {Q : State �
       S'.regs 18 = S.regs 18 → S'.regs 28 = S.regs 28 → S'.regs 29 = S.regs 29 →
       MemFrame S.mem S'.mem [(S.sp.toNat - 24, S.sp.toNat - 8), (S.sp.toNat + 8, S.sp.toNat + 16),
         (S.sp.toNat + 32, S.sp.toNat + 40)] → S'.mem.regions = S.mem.regions →
-      ReachesRet (LibExp.program.link impl) ret S' Q) :
-    ReachesRet (LibExp.program.link impl) ret S Q := by
-  refine ReachesRet.call_regions (CmpW.sum impl) hpc hpre fun s' hr hq hrg => ?_
+      ReachesRet (LibW.program.link impl) ret S' Q) :
+    ReachesRet (LibW.program.link impl) ret S Q := by
+  refine ReachesRet.call_regions (LibWC.cmpSum impl) hpc hpre fun s' hr hq hrg => ?_
   obtain ⟨v1, v2, v4, v5, v16, f, m, rfl, hf⟩ := hq
   exact K _ hr rfl (by simp [setReg]; rfl) (by simp [setReg]) (by simp [setReg]) (by simp [setReg]) hf hrg
 

@@ -30,13 +30,13 @@ namespace FvModexp.Arm64.P2W2
     S2.mem.regions = s'.mem.regions →
     S2.mem.readLE (sp + 280) 8 = (s'.regs 0).toNat → S2.mem.readLE (sp + 112) 8 = 2 * W lm →
     S2.mem.readLE (sp + 120) 8 = 2 * W lm →
-    ReachesRet (LibExp.program.link impl) ret0 S2 Q
+    ReachesRet (LibW.program.link impl) ret0 S2 Q
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- from the `(*stack).nat` entry (`R30 = 1795496`) -/
 theorem segN1 {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
-    (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
+    (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
     {stkN aboveN : Nat} (hsn : StackNat.HypL impl R ns stkN aboveN) (haN : aboveN ≤ 88)
     (ret0 : BitVec 64) (Q : State → Prop)
     (b1 : Nat) (L1 : List (Nat × Nat)) (g sp st lm xp xl xc : Nat) (M : Memory) (r18 r29 : BitVec 64)
@@ -51,7 +51,7 @@ theorem segN1 {impl : List Segment} (hap : ImplApart Extracted.program impl) {R 
     (h28 : S1.regs 28 = BitVec.ofNat 64 g) (h18 : S1.regs 18 = r18) (h29 : S1.regs 29 = r29) (hmem : S1.mem = M)
     (hpre : StackNat.Pre R b1 L1 stkN aboveN st (2 * W lm) S1)
     (KP : KPs impl R stkN aboveN b1 L1 g sp st lm xp xl xc M r18 r29 ret0 Q) :
-    ReachesRet (LibExp.program.link impl) ret0 S1 Q := by
+    ReachesRet (LibW.program.link impl) ret0 S1 Q := by
   have hW : W lm ≤ 128 := by simp only [W]; omega
   have hspN : S1.sp.toNat = sp := by rw [hsp, BitVec.toNat_ofNat]; omega
   refine LibCalls.stkNatCallL hap hns hsn (b := b1) (L := L1) (ra_w2 hap hnf 102 (by decide)) (by rw [hpc]; decide)
@@ -102,7 +102,7 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- **from `rsE`** (after the reserve): `zz := stk.nat(2w)` → the table's entry -/
 theorem segN {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
-    (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
+    (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
     {stkN aboveN : Nat} (hsn : StackNat.HypL impl R ns stkN aboveN) (haN : aboveN ≤ 88)
     (ret0 : BitVec 64) (Q : State → Prop)
     (b1 : Nat) (L1 : List (Nat × Nat)) (g sp st lm xp xl xc : Nat) (M : Memory)
@@ -118,7 +118,7 @@ theorem segN {impl : List Segment} (hap : ImplApart Extracted.program impl) {R :
     (hpre : ∀ S1 : State, S1.sp = BitVec.ofNat 64 sp → S1.regs 28 = BitVec.ofNat 64 g → S1.mem = M →
       StackNat.Pre R b1 L1 stkN aboveN st (2 * W lm) S1)
     (KP : KPs impl R stkN aboveN b1 L1 g sp st lm xp xl xc M (S.regs 18) (S.regs 29) ret0 Q) :
-    ReachesRet (LibExp.program.link impl) ret0 S Q := by
+    ReachesRet (LibW.program.link impl) ret0 S Q := by
   have hW : W lm ≤ 128 := by simp only [W]; omega
   have e2w : BitVec.ofNat 64 (W lm) + BitVec.ofNat 64 (W lm) = BitVec.ofNat 64 (2 * W lm) := by
     apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega

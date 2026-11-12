@@ -28,12 +28,12 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
 /-- **from the entry to the table's return** -/
 theorem entP {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
-    (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
+    (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
     (hnfP : ns.contains P2Pre.fn = false)
-    (hgr : GrowsliceLiveContract (LibExp.program.link impl) grE 4096 R)
-    (hmc : MemclrNoHeapPointersLive (LibExp.program.link impl) mcE 4096 R)
-    (hmv : MemmoveLive (LibExp.program.link impl) (cA "runtime.memmove") 4096 R)
-    (hwb : WbLiveContract (LibExp.program.link impl) wbE 4096 R 2)
+    (hgr : GrowsliceLiveContract (LibW.program.link impl) grE 4096 R)
+    (hmc : MemclrNoHeapPointersLive (LibW.program.link impl) mcE 4096 R)
+    (hmv : MemmoveLive (LibW.program.link impl) (cA "runtime.memmove") 4096 R)
+    (hwb : WbLiveContract (LibW.program.link impl) wbE 4096 R 2)
     {kcP : Nat} (hkc : 4608 ≤ kcP)
     {stkN aboveN : Nat} (hsn : StackNat.HypL impl R ns stkN aboveN) (hkN : stkN ≤ kcP) (haN : aboveN ≤ 88)
     {stkS aboveS : Nat} {sqC : Nat → Nat → Nat} (hsq : SqrHypX impl R ns stkS aboveS sqC)
@@ -53,8 +53,8 @@ theorem entP {impl : List Segment} (hap : ImplApart Extracted.program impl) {R :
     (KA : ∀ (s' : State) (L3 : List (Nat × Nat)) (b3 zzp bp : Nat), s'.pc = BitVec.ofNat 64 1795572 →
       s'.sp = BitVec.ofNat 64 sp → s'.regs 28 = BitVec.ofNat 64 g → s'.regs 29 = BitVec.ofNat 64 (sp - 8) →
       s'.regs 18 = s.regs 18 → AT R L K g sp st zp zc xp xl xc yp yl lm ret s s'.mem L3 b3 zzp bp →
-      b - cost0 sqC mlC (stLen s.mem st) lm ≤ b3 → ReachesRet (LibExp.program.link impl) ret0 s' Q) :
-    ReachesRet (LibExp.program.link impl) ret0 s Q := by
+      b - cost0 sqC mlC (stLen s.mem st) lm ≤ b3 → ReachesRet (LibW.program.link impl) ret0 s' Q) :
+    ReachesRet (LibW.program.link impl) ret0 s Q := by
   have hK := hP.1.2.2.2.2.2.2.2.2.1
   have hK0 := hP.1.2.2.2.2.2.2.2.1
   have hal := hP.1.2.2.2.2.2.2.1

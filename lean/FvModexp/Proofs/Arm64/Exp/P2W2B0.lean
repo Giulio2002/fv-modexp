@@ -26,7 +26,7 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
 /-- the first `sqr` call from the stores' memory (pure; `T` = the call state) -/
 theorem callB0 (hap : ImplApart Extracted.program impl) {ns : List String}
-    (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
+    (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
     {stkS aboveS : Nat} (hsq : SqrHypX impl R ns stkS aboveS sqC) (hkS : stkS ≤ K) (haS : aboveS ≤ 88)
     (hsm : ∀ ℓ a a', a ≤ a' → sqC ℓ a ≤ sqC ℓ a') (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s)
     (hcb : cst ≤ b) {i c yi Z : Nat} {u : Bool}
@@ -44,7 +44,7 @@ theorem callB0 (hap : ImplApart Extracted.program impl) {ns : List String}
     (h0 : T.regs 0 = BitVec.ofNat 64 pB) (h1 : T.regs 1 = BitVec.ofNat 64 lB) (h2 : T.regs 2 = BitVec.ofNat 64 cB)
     (h3 : T.regs 3 = BitVec.ofNat 64 st) (h4 : T.regs 4 = BitVec.ofNat 64 pA) (h5 : T.regs 5 = BitVec.ofNat 64 lA)
     (h6 : T.regs 6 = BitVec.ofNat 64 cA) :
-    ReachesRet (LibExp.program.link impl) ret0 T Q := by
+    ReachesRet (LibW.program.link impl) ret0 T Q := by
   have li := h.li
   have hBF : BF R L K g sp st zp zc xp xl xc yp yl lm ret s M0 L1 b1 zzp bp := ⟨li.wc, li.esl, li.tz⟩
   obtain ⟨hB, hrd, hkeep⟩ := BF.win hP hBF hF hrg (fun r hr => by
@@ -79,7 +79,7 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
 /-- **B0**: the body premise's first segment, from `KS` at the loop test with `c + 1` windows left -/
 theorem segB0 (hap : ImplApart Extracted.program impl) {ns : List String}
-    (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
+    (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
     {stkS aboveS : Nat} (hsq : SqrHypX impl R ns stkS aboveS sqC) (hkS : stkS ≤ K) (haS : aboveS ≤ 88)
     (hsm : ∀ ℓ a a', a ≤ a' → sqC ℓ a ≤ sqC ℓ a') (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s)
     (hcb : cst ≤ b) {i c yi Z : Nat} {u : Bool}
@@ -87,7 +87,7 @@ theorem segB0 (hap : ImplApart Extracted.program impl) {ns : List String}
     (S : State) (M : Memory) (L1 : List (Nat × Nat)) (b1 pA lA cA pB lB cB : Nat)
     (h : KS R b L K g sp st zp zc xp xl xc yp yl lm ret s r29 sqC mlC zzp bp kk cst FV S M L1 b1 i (c + 1) yi Z pA lA
       cA pB lB cB u) :
-    ReachesRet (LibExp.program.link impl) ret0 S Q := by
+    ReachesRet (LibW.program.link impl) ret0 S Q := by
   have hK := hP.1.2.2.2.2.2.2.2.1
   have hK1 := hP.1.2.2.2.2.2.2.2.2.1
   have hsp2 := hP.1.2.2.2.2.2.2.2.2.2.1

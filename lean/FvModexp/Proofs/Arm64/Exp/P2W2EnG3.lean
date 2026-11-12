@@ -34,7 +34,7 @@ theorem EEnv.g {R : RtInv} {L : List (Nat × Nat)} {g sp K : Nat} {s : State} (h
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem enG3 (impl : List Segment) (R : RtInv)
-    (hmc : MemclrNoHeapPointersLive (LibExp.program.link impl) mcE 4096 R)
+    (hmc : MemclrNoHeapPointersLive (LibW.program.link impl) mcE 4096 R)
     (ret0 : BitVec 64) (Q : State → Prop)
     (b : Nat) (L : List (Nat × Nat)) (g sp K st n len0 cap0 p gc : Nat) (s : State)
     (he : EEnv R L g sp K s) (hk : cap0 < len0 + (8 * n)) (hgc : len0 + (8 * n) ≤ gc)
@@ -60,8 +60,8 @@ theorem enG3 (impl : List Segment) (R : RtInv)
       LiveFrame M M' (L ++ [(p, p + 8 * gc)]) [(p + 8 * cap0, p + 8 * (len0 + (8 * n)))] →
       M'.regions = M.regions →
       R.inv (b - 8 * gc) (L ++ [(p, p + 8 * gc)]) g (view R.rt (L ++ [(p, p + 8 * gc)]) M') →
-      ReachesRet (LibExp.program.link impl) ret0 S' Q) :
-    ReachesRet (LibExp.program.link impl) ret0 S Q := by
+      ReachesRet (LibW.program.link impl) ret0 S' Q) :
+    ReachesRet (LibW.program.link impl) ret0 S Q := by
   have he' := he
   obtain ⟨hs1, hs28, hg1, hg2, hg3, hgo, hal, hK, hK', hsp2, hacc, hwrt, hLs, hd, hsv⟩ := he'
   have esp := he.sp

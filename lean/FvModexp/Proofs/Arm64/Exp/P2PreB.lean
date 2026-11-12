@@ -21,7 +21,7 @@ variable {impl : List Segment} {R : RtInv} {kc : Nat} {sqC : Nat → Nat → Nat
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem jB2 (hap : ImplApart Extracted.program impl) {ns : List String}
-    (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
+    (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
     {stkM aboveM : Nat} (hmu : MulHypX impl R ns stkM aboveM mlC) (hkM : stkM ≤ kc) (haM : aboveM ≤ 88)
     (hmm : ∀ ℓ a a' c c', a ≤ a' → c ≤ c' → mlC ℓ a c ≤ mlC ℓ a' c') (hkc : 4608 ≤ kc)
     (hpre : Pre R kc sqC mlC b L st pw pl ws lm x xl s) {i : Nat}
@@ -37,7 +37,7 @@ theorem jB2 (hap : ImplApart Extracted.program impl) {ns : List String}
     (hi2 : i % 2 = 0) (hi : 2 ≤ i) (hip : i + 2 ≤ pl)
     (hb : b - (c0 (stLen s.mem st) pl lm + (i / 2 - 1) * rc sqC mlC (stLen s.mem st) pl lm +
       (sqC (ℓ1 (stLen s.mem st) pl lm) (W lm) + tC lm)) ≤ b1) :
-    ReachesRet (LibExp.program.link impl) (s.regs 30) S (GoalQ R kc sqC mlC b L st pw pl lm x xl s) := by
+    ReachesRet (LibW.program.link impl) (s.regs 30) S (GoalQ R kc sqC mlC b L st pw pl lm x xl s) := by
   have hsl := s.sp.isLt
   have hf := pf_of hpre (by omega)
   obtain ⟨hw1, hw128⟩ := w_facts hpre
@@ -122,10 +122,10 @@ theorem jB2 (hap : ImplApart Extracted.program impl) {ns : List String}
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem segB (hap : ImplApart Extracted.program impl) {ns : List String}
-    (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
+    (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
     {stkM aboveM : Nat} (hmu : MulHypX impl R ns stkM aboveM mlC) (hkM : stkM ≤ kc) (haM : aboveM ≤ 88)
     (hmm : ∀ ℓ a a' c c', a ≤ a' → c ≤ c' → mlC ℓ a c ≤ mlC ℓ a' c')
-    (hwb : WbLiveContract (LibExp.program.link impl) wbE 4096 R 2) (hkc : 4608 ≤ kc)
+    (hwb : WbLiveContract (LibW.program.link impl) wbE 4096 R 2) (hkc : 4608 ≤ kc)
     (hpre : Pre R kc sqC mlC b L st pw pl ws lm x xl s) {i : Nat}
     (kC : JC impl R kc sqC mlC b L st pw pl lm x xl s i) :
     JB impl R kc sqC mlC b L st pw pl lm x xl s i := by

@@ -17,7 +17,7 @@ variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc
 set_option maxRecDepth 20000 in
 /-- **`memmove(dst, src, n)` from `SP = sp`**: the continuation gets the return state, the frame (the runtime, the
 window below the saved FP, `dst`), the live frame, the invariant and the copy -/
-theorem mvCallW {impl : List Segment} (hmv : MemmoveLive (LibExp.program.link impl) P2Pre.mvE 4096 R)
+theorem mvCallW {impl : List Segment} (hmv : MemmoveLive (LibW.program.link impl) P2Pre.mvE 4096 R)
     (ret0 : BitVec 64) (Q : State → Prop)
     (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ)
     {dst src n ra : Nat} (hra4 : ra % 4 = 0) (hra : ra < 2 ^ 48) (hn : n ≤ 2 ^ 20)
@@ -30,8 +30,8 @@ theorem mvCallW {impl : List Segment} (hmv : MemmoveLive (LibExp.program.link im
     (KC : ∀ (junk : Nat → W64) (f : Flags) (v : Nat → BitVec 128) (m : Memory) (ex : Option (Nat × Nat))
       (ep : Nat → Bool), MemFrame M m (R.rt ++ [(sp - 4096, sp - 8), (sp + 8, sp + 32)] ++ [(dst, dst + n)]) →
       LiveFrame M m L1 [(dst, dst + n)] → R.inv b1 L1 g (view R.rt L1 m) → Mem.Copied M m dst src n →
-      m.regions = M.regions → ReachesRet (LibExp.program.link impl) ret0 (retStateX T junk [] f v m ex ep) Q) :
-    ReachesRet (LibExp.program.link impl) ret0 T Q := by
+      m.regions = M.regions → ReachesRet (LibW.program.link impl) ret0 (retStateX T junk [] f v m ex ep) Q) :
+    ReachesRet (LibW.program.link impl) ret0 T Q := by
   have hK := hP.1.2.2.2.2.2.2.2.1
   have hK1 := hP.1.2.2.2.2.2.2.2.2.1
   have hsp2 := hP.1.2.2.2.2.2.2.2.2.2.1

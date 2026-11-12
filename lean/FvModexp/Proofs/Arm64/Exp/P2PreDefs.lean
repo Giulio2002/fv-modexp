@@ -35,7 +35,7 @@ open FvModexp.Arm64.ExpHyp (RdIn WrOut RtPost StackOK' stWs)
 
 def fn : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.buildPrecomputationWindowModPower2"
 
-theorem fnBase : segAddr LibExp.program fn = 1790928 := by decide
+theorem fnBase : segAddr LibW.program fn = 1790928 := by decide
 
 /-- bytes above `SP` (the 8 argument spill words + the caller's saved-LR slot) -/
 abbrev A : Nat := 80
@@ -127,7 +127,7 @@ abbrev A : Nat := 80
 
 @[reducible] def Goal (impl : List Segment) (R : RtInv) (kc : Nat) (sqC : Nat → Nat → Nat)
     (mlC : Nat → Nat → Nat → Nat) (b : Nat) (L : List (Nat × Nat)) (st pw pl lm x xl : Nat) (s S : State) : Prop :=
-  ReachesRet (LibExp.program.link impl) (s.regs 30) S (GoalQ R kc sqC mlC b L st pw pl lm x xl s)
+  ReachesRet (LibW.program.link impl) (s.regs 30) S (GoalQ R kc sqC mlC b L st pw pl lm x xl s)
 
 /-- the frame slots of the function (from the entry `sp`; `+56 … +72`: the spilled `x` header, entry `X6 … X8`) -/
 @[reducible] def Sl (s : State) (st pw pl lm : Nat) (M : Memory) : Prop :=

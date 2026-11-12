@@ -44,14 +44,14 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
 /-- the whole function from its entry, as a `Summary` on the exp layer's program -/
 theorem full {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
-    (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
+    (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
     (hnfP : ns.contains P2Pre.fn = false)
-    (hgr : GrowsliceLiveContract (LibExp.program.link impl) grE 4096 R)
-    (hmc : MemclrNoHeapPointersLive (LibExp.program.link impl) mcE 4096 R)
-    (hmv : MemmoveLive (LibExp.program.link impl) (cA "runtime.memmove") 4096 R)
-    (hmk : MakesliceLiveContract (LibExp.program.link impl) mkE 4096 R)
-    (hno : NewobjectLiveContract (LibExp.program.link impl) noE 4096 R)
-    (hwb : WbLiveContract (LibExp.program.link impl) wbE 4096 R 2)
+    (hgr : GrowsliceLiveContract (LibW.program.link impl) grE 4096 R)
+    (hmc : MemclrNoHeapPointersLive (LibW.program.link impl) mcE 4096 R)
+    (hmv : MemmoveLive (LibW.program.link impl) (cA "runtime.memmove") 4096 R)
+    (hmk : MakesliceLiveContract (LibW.program.link impl) mkE 4096 R)
+    (hno : NewobjectLiveContract (LibW.program.link impl) noE 4096 R)
+    (hwb : WbLiveContract (LibW.program.link impl) wbE 4096 R 2)
     {kcP : Nat} (hkc : 4608 ≤ kcP)
     {stkN aboveN : Nat} (hsn : StackNat.HypL impl R ns stkN aboveN) (hkN : stkN ≤ kcP) (haN : aboveN ≤ 88)
     {stkS aboveS : Nat} {sqC : Nat → Nat → Nat} (hsq : SqrHypX impl R ns stkS aboveS sqC)
@@ -61,7 +61,7 @@ theorem full {impl : List Segment} (hap : ImplApart Extracted.program impl) {R :
     {stkT aboveT : Nat} (htr : Trunc.Hyp2 impl R ns stkT aboveT) (hkT : stkT ≤ kcP) (haT : aboveT ≤ 88)
     (b : Nat) (L : List (Nat × Nat)) (K : Nat) (hKk : 208 + kcP ≤ K)
     (zp zl zc st xp xl xc yp yl yc lm : Nat) :
-    Summary (LibExp.program.link impl) fnE
+    Summary (LibW.program.link impl) fnE
       (fun s => s.regs 0 = BitVec.ofNat 64 zp ∧ s.regs 1 = BitVec.ofNat 64 zl ∧ s.regs 2 = BitVec.ofNat 64 zc ∧
         s.regs 3 = BitVec.ofNat 64 st ∧ s.regs 4 = BitVec.ofNat 64 xp ∧ s.regs 5 = BitVec.ofNat 64 xl ∧
         s.regs 6 = BitVec.ofNat 64 xc ∧ s.regs 7 = BitVec.ofNat 64 yp ∧ s.regs 8 = BitVec.ofNat 64 yl ∧
@@ -71,7 +71,7 @@ theorem full {impl : List Segment} (hap : ImplApart Extracted.program impl) {R :
         (cost sqC mlC (stLen s.mem st) lm) s s') := by
   intro s hpc hs
   obtain ⟨h0, -, h2, h3, h4, h5, h6, h7, h8, -, h10, ⟨hP, hX, hY, hbud⟩, hr4, hr48⟩ := hs
-  have hmv' : MemmoveLive (LibExp.program.link impl) P2Pre.mvE 4096 R := by rw [← P2Pre.mvE_eq]; exact hmv
+  have hmv' : MemmoveLive (LibW.program.link impl) P2Pre.mvE 4096 R := by rw [← P2Pre.mvE_eq]; exact hmv
   have hcb : cost sqC mlC (stLen s.mem st) lm ≤ b := hbud
   have h30 : s.regs 30 = BitVec.ofNat 64 (s.regs 30).toNat := by rw [BitVec.ofNat_toNat, BitVec.setWidth_eq]
   refine entP hap hns hnf hnfP hgr hmc hmv hwb hkc hsn hkN haN hsq hkS haS hsm hmu hkM haM hmm htr hkT haT

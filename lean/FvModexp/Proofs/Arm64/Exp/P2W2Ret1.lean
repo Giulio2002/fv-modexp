@@ -42,8 +42,8 @@ theorem y_words (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R 
 set_option maxRecDepth 20000 in
 /-- **after the table**: skip loop; `return 1` closed, `bitLen` exit = `KB` -/
 theorem afterTable {impl : List Segment} (hap : ImplApart Extracted.program impl)
-    (hmk : MakesliceLiveContract (LibExp.program.link impl) mkE 4096 R)
-    (hno : NewobjectLiveContract (LibExp.program.link impl) noE 4096 R)
+    (hmk : MakesliceLiveContract (LibW.program.link impl) mkE 4096 R)
+    (hno : NewobjectLiveContract (LibW.program.link impl) noE 4096 R)
     (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {L3 : List (Nat × Nat)} {b3 zzp bp : Nat}
     (hAT : AT R L K g sp st zp zc xp xl xc yp yl lm (s.regs 30).toNat s M L3 b3 zzp bp) {c0 cst : Nat}
     (hb3 : b - c0 ≤ b3) (hcst : c0 + allocCost 8 ≤ cst) (hcb : cst ≤ b)
@@ -54,7 +54,7 @@ theorem afterTable {impl : List Segment} (hap : ImplApart Extracted.program impl
     (KB : KBl impl (s.regs 30)
       (FQ R b L K zp zc st (natVal s.mem xp xl ^ natVal s.mem yp yl % 2 ^ lm) cst s) sp g lm yp yl M (s.regs 18) r29
       (Exp.skipZero (natVal s.mem yp yl) (i0 lm yl) (yi0 lm yl (natVal s.mem yp yl)))) :
-    ReachesRet (LibExp.program.link impl) (s.regs 30) S
+    ReachesRet (LibW.program.link impl) (s.regs 30) S
       (FQ R b L K zp zc st (natVal s.mem xp xl ^ natVal s.mem yp yl % 2 ^ lm) cst s) := by
   have hw := hAT.wc
   have hsl := hAT.esl

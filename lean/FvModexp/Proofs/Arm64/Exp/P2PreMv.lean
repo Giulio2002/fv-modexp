@@ -26,7 +26,7 @@ variable {impl : List Segment} {R : RtInv} {kc : Nat} {sqC : Nat → Nat → Nat
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 4000000 in
-theorem mvCall (hmv : MemmoveLive (LibExp.program.link impl) mvE 4096 R)
+theorem mvCall (hmv : MemmoveLive (LibW.program.link impl) mvE 4096 R)
     (hpre : Pre R kc sqC mlC b L st pw pl ws lm x xl s) (hkc : 4608 ≤ kc) {bp : Nat} {M : Memory}
     {L1 : List (Nat × Nat)} {b1 : Nat} (hc : Ctx R kc L st pw pl lm s bp M L1 b1) {r : W64} {Q : State → Prop}
     {S : State} (hpc : S.pc = BitVec.ofNat 64 mvE) (hsp : S.sp = BitVec.ofNat 64 (s.sp.toNat - 208))
@@ -41,8 +41,8 @@ theorem mvCall (hmv : MemmoveLive (LibExp.program.link impl) mvE 4096 R)
       (∀ a n, 0 < n → ((pw ≤ a ∧ a + n ≤ pw + 24 * pl) ∨ (bp ≤ a ∧ a + n ≤ bp + 8 * NB pl lm) ∨
         (s.sp.toNat - 176 ≤ a ∧ a + n ≤ s.sp.toNat + 80)) → (a + n ≤ d ∨ d + 8 ≤ a) → m.readLE a n = M.readLE a n) →
       m.readLE d 8 = M.readLE src 8 →
-      ReachesRet (LibExp.program.link impl) r (retStateX S junk [] f v m ex ep) Q) :
-    ReachesRet (LibExp.program.link impl) r S Q := by
+      ReachesRet (LibW.program.link impl) r (retStateX S junk [] f v m ex ep) Q) :
+    ReachesRet (LibW.program.link impl) r S Q := by
   have hf := pf_of hpre (by omega)
   have hK := hf.w.sp
   simp only [K] at hK

@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Arm64.Exp.LibExp
+import FvModexp.Proofs.Arm64.Exp.LibW
 import FvModexp.Proofs.Arm64.Nat.StackNatN
 import FvModexp.Proofs.Common.DivmcBits
 import FvModexp.Proofs.Common.DivmcLsl
@@ -38,7 +38,7 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvMod
 namespace FvModexp.Arm64.P2W2
 
 def fn : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.nat.expNNPowerOfTwoWindowSize2"
-theorem fnBase : segAddr LibExp.program fn = 1795088 := by decide
+theorem fnBase : segAddr LibW.program fn = 1795088 := by decide
 
 /-- the function's entry -/
 abbrev fnE : Nat := 1795088

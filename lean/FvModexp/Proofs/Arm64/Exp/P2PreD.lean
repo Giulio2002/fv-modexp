@@ -40,7 +40,7 @@ theorem jD2 (hkc : 4608 ≤ kc) (hpre : Pre R kc sqC mlC b L st pw pl ws lm x xl
     (hi2 : i % 2 = 0) (hi : 2 ≤ i) (hip : i + 2 ≤ pl)
     (hb : b - (c0 (stLen s.mem st) pl lm + (i / 2 - 1) * rc sqC mlC (stLen s.mem st) pl lm +
       rc sqC mlC (stLen s.mem st) pl lm) ≤ b1) :
-    ReachesRet (LibExp.program.link impl) (s.regs 30) S (GoalQ R kc sqC mlC b L st pw pl lm x xl s) := by
+    ReachesRet (LibW.program.link impl) (s.regs 30) S (GoalQ R kc sqC mlC b L st pw pl lm x xl s) := by
   have hsl := s.sp.isLt
   have hf := pf_of hpre (by omega)
   obtain ⟨hw1, hw128⟩ := w_facts hpre
@@ -102,7 +102,7 @@ theorem jD2 (hkc : 4608 ≤ kc) (hpre : Pre R kc sqC mlC b L st pw pl ws lm x xl
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem segD (hwb : WbLiveContract (LibExp.program.link impl) wbE 4096 R 2) (hkc : 4608 ≤ kc)
+theorem segD (hwb : WbLiveContract (LibW.program.link impl) wbE 4096 R 2) (hkc : 4608 ≤ kc)
     (hpre : Pre R kc sqC mlC b L st pw pl ws lm x xl s) {i : Nat}
     (kH : HeadJ impl R kc sqC mlC b L st pw pl lm x xl s (i + 2)) :
     JD impl R kc sqC mlC b L st pw pl lm x xl s i := by

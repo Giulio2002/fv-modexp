@@ -103,7 +103,7 @@ theorem zz_j2 {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat �
   have e2 : stCap m st = stCap M st := hhdr 16 (by omega)
   have hsb : StackBack R L1 (L1 ++ [(q, q + r)]) st M m := stackBack_hdr hstk hMF e0 e1 e2 hLE
   have hrt1 : RtM R kc L s zp zc st m (L1 ++ [(q, q + r)]) (b1 - r) := by
-    refine rtM_call hrt hrg hMF ?_ hLF' ?_ hLE hinv hsb
+    refine rtM_call hrt hrg hMF ?_ hLF' ?_ hLE hinv hsb (ain_keep e0 e2)
     · intro a k h; simp only [outside_append] at h ⊢; exact ⟨h.1.1.1, hws a k h.1.1.2⟩
     · intro a k hin _
       obtain ⟨q', hq, h1, h2⟩ := hin
@@ -122,16 +122,19 @@ theorem zz_j2 {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat �
   have hown2 : Own R kc L (L1 ++ [(q, q + r)]) s zp zc st xp xl m q (2 * NW n + 4) := by
     refine ⟨by simp only [NW]; omega, by omega, fun _ => ⟨h8, Or.inl ⟨(q, q + r), by simp, by omega, by simp only; omega⟩,
       hacc, by omega⟩, Or.inr ⟨hIn', hAp'⟩, by simp only [win, K, A, outside_cons, outside_nil, and_true]; omega,
-      fresh_out hIn' hgrt, fresh_apart hIn' hAp1 (LE0.held hxh), fun _ => ⟨fresh_apart hIn' hAp1 hstk.2.1, ?_⟩⟩
-    rw [e0, e1, e2]
-    intro hlt
-    obtain ⟨-, hh, -, -⟩ := hstk.2.2.2.2.1 (by omega)
-    exact fresh_apart hIn' hAp1 (hh.sub (by omega) (by rw [Nat.mul_sub]; omega))
+      fresh_out hIn' hgrt, fresh_apart hIn' hAp1 (LE0.held hxh), fun _ => ⟨fresh_apart hIn' hAp1 hstk.2.1, ?_⟩, ?_⟩
+    · rw [e0, e1, e2]
+      intro hlt
+      obtain ⟨-, hh, -, -⟩ := hstk.2.2.2.2.1 (by omega)
+      exact fresh_apart hIn' hAp1 (hh.sub (by omega) (by rw [Nat.mul_sub]; omega))
+    · intro _ _ hcap
+      rw [e2] at hcap; rw [e0, e2]
+      exact fresh_apart hIn' hAp1 (hstk.2.2.2.2.1 hcap).2.1
   -- `z[0] = k0`
   have hzc0 : 0 < zc' := by omega
   obtain ⟨-, hzh, -, -⟩ := hown.2.2.1 hzc0
   have hzq : Apart zp' (8 * zc') q (8 * (2 * NW n + 4)) := (fresh_apart hIn' hAp1 hzh).symm
-  obtain ⟨hzs, -⟩ := hown1.2.2.2.2.2.2.2 (by omega)
+  obtain ⟨hzs, -⟩ := hown1.2.2.2.2.2.2.2.1 (by omega)
   have hzo := hown1.2.2.2.2.1
   simp only [win, K, A, outside_cons, outside_nil, and_true] at hzo
   unfold Apart at hzs

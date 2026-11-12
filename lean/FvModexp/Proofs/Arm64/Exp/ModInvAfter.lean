@@ -36,7 +36,7 @@ theorem nostk (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M M' : M
   simp only [win, K, A, outside_cons, outside_nil, and_true] at hstw
   have hok := hrt.2.2.2.2.2.1
   have hsh : Held R L1 st 24 := hok.2.1
-  have ht8 := ht.2.2.2.2.2.2.2
+  have ht8 := ht.2.2.2.2.2.2.2.1
   have hrd : ∀ j, j + 8 ≤ 24 → M'.readLE (st + j) 8 = M.readLE (st + j) 8 := by
     intro j hj
     refine held_bytes (hsh.sub (by omega) (by omega)) hF hLF fun i hi => ⟨?_, ?_⟩
@@ -62,6 +62,7 @@ theorem after_core (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) (hkc
     (hF : MemFrame M M' (R.rt ++ winA S' stk above ++ [(t, t + 8 * tc)] ++ stWs M st))
     (hLF : LiveFrame M M' L1 ([(t, t + 8 * tc)] ++ stWs M st)) (hLE : LiveExt R L1 L2)
     (hinv : R.inv b2 L2 (s.regs 28).toNat (view R.rt L2 M')) (hsb : StackBack R L1 L2 st M M')
+    (hain : ArrIn L2 st M M')
     {o oc : Nat} (ho : Own R kc L L1 s zp zc st xp xl M o oc) (hoc : 0 < oc) (hot : Apart o (8 * oc) t (8 * tc))
     {t' tc' : Nat} (hlive : NatLive M' R L2 t' tc') (hc40 : tc' < 2 ^ 40) (hp : t' < 2 ^ 64)
     (hof : (t' = t ∧ tc' = tc) ∨ (InRanges t' (8 * tc') R.rt ∧ ApartAll t' (8 * tc') L1))
@@ -73,7 +74,7 @@ theorem after_core (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) (hkc
       Own R kc L L2 s zp zc st xp xl M' o oc ∧ (∀ k, k ≤ oc → M'.readLE o (8 * k) = M.readLE o (8 * k)) ∧
       Own R kc L L2 s zp zc st xp xl M' t' tc' ∧ Apart o (8 * oc) t' (8 * tc') := by
   obtain ⟨h1, h2⟩ := keep_own hpre hrt hS' hstk habove hF hLF hLE hsb ho hot
-  refine ⟨keep_rt hpre hrt hS' hkc hstk habove ht hreg hF hLF hLE hinv hsb,
+  refine ⟨keep_rt hpre hrt hS' hkc hstk habove ht hreg hF hLF hLE hinv hsb hain,
     keep_slots hpre hrt hS' hkc hstk habove ht hF, h1, h2,
     own_new hpre hrt hsb ht hlive hc40 hp hof hstkA, ?_⟩
   rcases hof with ⟨rfl, rfl⟩ | ⟨hIn, hAp⟩
@@ -99,6 +100,7 @@ theorem after_zz (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) (hkc :
     (hF : MemFrame M M' (R.rt ++ winA S' stk above ++ [(q, q + 8 * qc)] ++ stWs M st))
     (hLF : LiveFrame M M' L1 ([(q, q + 8 * qc)] ++ stWs M st)) (hLE : LiveExt R L1 L2)
     (hinv : R.inv b2 L2 (s.regs 28).toNat (view R.rt L2 M')) (hsb : StackBack R L1 L2 st M M')
+    (hain : ArrIn L2 st M M')
     {q' ql' qc' : Nat} (hlive : NatLive M' R L2 q' qc') (hc40 : qc' < 2 ^ 40) (hq : q' < 2 ^ 64)
     (hof : (q' = q ∧ qc' = qc) ∨ (InRanges q' (8 * qc') R.rt ∧ ApartAll q' (8 * qc') L1))
     (hstkA : ¬ (q' = q ∧ qc' = qc) → 0 < qc' → 0 < stCap M' st →
@@ -108,7 +110,7 @@ theorem after_zz (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) (hkc :
       (∀ a, s.sp.toNat - 152 ≤ a → a + 8 ≤ s.sp.toNat + 72 → M'.readLE a 8 = M.readLE a 8) := by
   obtain ⟨hfw, hrt, hz, hzz, hap, hlc, -, hnc, -⟩ := hmid
   have hsp : 240 ≤ s.sp.toNat := by have := hpre.1.2.1.2.1; simp only [K] at this; omega
-  obtain ⟨r1, r2, r3, r4, r5, r6⟩ := after_core hpre hkc hrt hS' hstk habove hzz hreg hF hLF hLE hinv hsb hz
+  obtain ⟨r1, r2, r3, r4, r5, r6⟩ := after_core hpre hkc hrt hS' hstk habove hzz hreg hF hLF hLE hinv hsb hain hz
     (by omega) hap hlive hc40 hq hof hstkA
   exact ⟨⟨fw2_keep r2 hsp hfw, r1, r3, r5, r6, hlc, hql, hnc, hqc⟩, r4 l hlc,
     fun a h1 h2 => r2 a (Or.inr ⟨h1, h2⟩)⟩
@@ -123,6 +125,7 @@ theorem after_z (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) (hkc : 
     (hF : MemFrame M M' (R.rt ++ winA S' stk above ++ [(p, p + 8 * c)] ++ stWs M st))
     (hLF : LiveFrame M M' L1 ([(p, p + 8 * c)] ++ stWs M st)) (hLE : LiveExt R L1 L2)
     (hinv : R.inv b2 L2 (s.regs 28).toNat (view R.rt L2 M')) (hsb : StackBack R L1 L2 st M M')
+    (hain : ArrIn L2 st M M')
     {p' l' c' : Nat} (hlive : NatLive M' R L2 p' c') (hc40 : c' < 2 ^ 40) (hp : p' < 2 ^ 64)
     (hof : (p' = p ∧ c' = c) ∨ (InRanges p' (8 * c') R.rt ∧ ApartAll p' (8 * c') L1))
     (hstkA : ¬ (p' = p ∧ c' = c) → 0 < c' → 0 < stCap M' st →
@@ -134,7 +137,7 @@ theorem after_z (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) (hkc : 
   obtain ⟨hfw, hrt, hz, hzz, hap, -, hqlc, hnc, hqc⟩ := hmid
   have hsp : 240 ≤ s.sp.toNat := by have := hpre.1.2.1.2.1; simp only [K] at this; omega
   have hap' : Apart q (8 * qc) p (8 * c) := by unfold Apart at hap ⊢; omega
-  obtain ⟨r1, r2, r3, r4, r5, r6⟩ := after_core hpre hkc hrt hS' hstk habove hz hreg hF hLF hLE hinv hsb hzz
+  obtain ⟨r1, r2, r3, r4, r5, r6⟩ := after_core hpre hkc hrt hS' hstk habove hz hreg hF hLF hLE hinv hsb hain hzz
     hqc hap' hlive hc40 hp hof hstkA
   exact ⟨⟨fw2_keep r2 hsp hfw, r1, r5, r3, by unfold Apart at r6 ⊢; omega, hl, hqlc, hc, hqc⟩, r4,
     fun a h1 h2 => r2 a (Or.inr ⟨h1, h2⟩)⟩

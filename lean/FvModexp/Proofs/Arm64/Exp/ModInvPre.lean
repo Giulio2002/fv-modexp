@@ -107,7 +107,7 @@ theorem stkIn_at (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M : M
     (hstk : stk ≤ kc) (habove : above ≤ 88) : StkIn R L1 S' stk above st := by
   obtain ⟨⟨-, ⟨-, hb', -, -⟩, -, hout, -, hgrt, -⟩, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -,
     ⟨-, hstw, hstg, hsta⟩, -⟩ := hpre
-  obtain ⟨-, -, -, -, -, hstk0, -, arr0⟩ := hrt
+  obtain ⟨-, -, -, -, -, hstk0, -, arr0, -⟩ := hrt
   simp only [K, A] at hout hb'
   simp only [win, K, A, outside_cons, outside_nil, and_true] at hstw hsta
   simp only [StkIn]
@@ -126,7 +126,7 @@ theorem stkApart_rt {M : Memory} {L1 : List (Nat × Nat)} {b1 : Nat} (hrt : RtM 
     {a k : Nat} (h : StkApart s.mem st a k) (hh : Held R L a k) : StkApart M st a k := by
   intro hk
   obtain ⟨h1, h2⟩ := h hk
-  obtain ⟨-, -, -, -, -, -, hlen, hor⟩ := hrt
+  obtain ⟨-, -, -, -, -, -, hlen, hor, -⟩ := hrt
   refine ⟨h1, fun hlt => ?_⟩
   rcases hor with ⟨e0, e2⟩ | ⟨hIn, hAp⟩
   · rw [e2, hlen] at hlt; rw [e0, e2, hlen]; exact h2 hlt

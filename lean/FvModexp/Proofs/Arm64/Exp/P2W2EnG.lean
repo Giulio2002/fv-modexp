@@ -12,8 +12,8 @@ namespace FvModexp.Arm64.P2W2
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem enG2 (impl : List Segment) (R : RtInv)
-    (hgr : GrowsliceLiveContract (LibExp.program.link impl) grE 4096 R)
-    (hmc : MemclrNoHeapPointersLive (LibExp.program.link impl) mcE 4096 R)
+    (hgr : GrowsliceLiveContract (LibW.program.link impl) grE 4096 R)
+    (hmc : MemclrNoHeapPointersLive (LibW.program.link impl) mcE 4096 R)
     (ret0 : BitVec 64) (Q : State → Prop)
     (b : Nat) (L : List (Nat × Nat)) (g sp K st n w0 len0 cap0 : Nat) (s : State)
     (he : EEnv R L g sp K s) (hk : cap0 < len0 + (8 * n)) (hn : n ≤ 128)
@@ -42,8 +42,8 @@ theorem enG2 (impl : List Segment) (R : RtInv)
       LiveFrame M1 M' L [] →
       M'.regions = M1.regions →
       R.inv (b - 8 * gc) (L ++ [(p, p + 8 * gc)]) g (view R.rt (L ++ [(p, p + 8 * gc)]) M') →
-      ReachesRet (LibExp.program.link impl) ret0 S' Q) :
-    ReachesRet (LibExp.program.link impl) ret0 S Q := by
+      ReachesRet (LibW.program.link impl) ret0 S' Q) :
+    ReachesRet (LibW.program.link impl) ret0 S Q := by
   have he' := he
   obtain ⟨hs1, hs28, hg1, hg2, hg3, hgo, hal, hK, hK', hsp2, hacc, hwrt, hLs, hd, hsv⟩ := he'
   have esp := he.sp

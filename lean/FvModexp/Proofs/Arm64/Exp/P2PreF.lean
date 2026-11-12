@@ -66,7 +66,7 @@ theorem fillP (hkc : 4608 ≤ kc) (hpre : Pre R kc sqC mlC b L st pw pl ws lm x 
     (hc : Ctx R kc L st pw pl lm s bp M L1 b1) (hd : ∀ j, j < i → PwT M pw bp lm j)
     (hh1 : M.readLE (pw + 24 * i + 8) 8 = W lm) (hh2 : M.readLE (pw + 24 * i + 16) 8 = 2 * W lm)
     (hb : b - stackNatCost (stLen s.mem st) (NB pl lm) ≤ b1) :
-    ReachesRet (LibExp.program.link impl) (s.regs 30) S (GoalQ R kc sqC mlC b L st pw pl lm x xl s) := by
+    ReachesRet (LibW.program.link impl) (s.regs 30) S (GoalQ R kc sqC mlC b L st pw pl lm x xl s) := by
   have hsl := s.sp.isLt
   have hf := pf_of hpre (by omega)
   obtain ⟨hw1, hw128⟩ := w_facts hpre
@@ -101,7 +101,7 @@ theorem fillP (hkc : 4608 ≤ kc) (hpre : Pre R kc sqC mlC b L st pw pl ws lm x 
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem fillB (hwb : WbLiveContract (LibExp.program.link impl) wbE 4096 R 2) (hkc : 4608 ≤ kc)
+theorem fillB (hwb : WbLiveContract (LibW.program.link impl) wbE 4096 R 2) (hkc : 4608 ≤ kc)
     (hpre : Pre R kc sqC mlC b L st pw pl ws lm x xl s) {i : Nat}
     (k : FillJ impl R kc sqC mlC b L st pw pl lm x xl s (i + 1)) (hi : i < pl) :
     FillJ impl R kc sqC mlC b L st pw pl lm x xl s i := by
@@ -182,7 +182,7 @@ theorem fillB (hwb : WbLiveContract (LibExp.program.link impl) wbE 4096 R 2) (hk
       ((hr _ 8 (by omega) (Or.inl ⟨by omega, by omega⟩)).trans hh1)
       ((hr _ 8 (by omega) (Or.inl ⟨by omega, by omega⟩)).trans hh2) hb
     all_goals janus_simp
-theorem fill_all (hwb : WbLiveContract (LibExp.program.link impl) wbE 4096 R 2) (hkc : 4608 ≤ kc)
+theorem fill_all (hwb : WbLiveContract (LibW.program.link impl) wbE 4096 R 2) (hkc : 4608 ≤ kc)
     (hpre : Pre R kc sqC mlC b L st pw pl ws lm x xl s) (kE : FillJ impl R kc sqC mlC b L st pw pl lm x xl s pl) :
     ∀ n i, i + n = pl → FillJ impl R kc sqC mlC b L st pw pl lm x xl s i := by
   intro n

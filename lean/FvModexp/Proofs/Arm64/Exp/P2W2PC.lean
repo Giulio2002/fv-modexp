@@ -30,7 +30,7 @@ open FvModexp.Arm64.EvenHyp
     Scr R L L3 m0 s'.mem st bp (P2Pre.NB 4 lm) → P2Pre.BU s'.mem st bp (8 * P2Pre.NB 4 lm) →
     ArrKF R L2 st M s'.mem → LiveExt R L2 L3 → Scr R L2 L3 M s'.mem st bp (P2Pre.NB 4 lm) →
     MemFrame M s'.mem (R.rt ++ [(sp - (208 + kcP), sp - 8), (sp + 8, sp + 80), (sp + 320, sp + 416)] ++ stkWs M st) →
-    ReachesRet (LibExp.program.link impl) ret0 s' Q
+    ReachesRet (LibW.program.link impl) ret0 s' Q
 
 section
 variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc yp yl lm : Nat} {s : State}
@@ -39,9 +39,9 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 4000000 in
 /-- **the table call** -/
 theorem segPC {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns : List String}
-    (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains P2Pre.fn = false)
-    (hmv : MemmoveLive (LibExp.program.link impl) (cA "runtime.memmove") 4096 R)
-    (hwb : WbLiveContract (LibExp.program.link impl) wbE 4096 R 2)
+    (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains P2Pre.fn = false)
+    (hmv : MemmoveLive (LibW.program.link impl) (cA "runtime.memmove") 4096 R)
+    (hwb : WbLiveContract (LibW.program.link impl) wbE 4096 R 2)
     {kcP : Nat} (hkc : 4608 ≤ kcP)
     {stkN aboveN : Nat} (hsn : StackNat.HypL impl R ns stkN aboveN) (hkN : stkN ≤ kcP) (haN : aboveN ≤ 88)
     {stkS aboveS : Nat} {sqC : Nat → Nat → Nat} (hsq : SqrHypX impl R ns stkS aboveS sqC)
@@ -61,7 +61,7 @@ theorem segPC {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns
     (h30 : S2.regs 30 = BitVec.ofNat 64 1795572)
     (KT' : KT impl R L K g sp st zp zc s.mem M L2 kcP sqC mlC b2 ℓ lm (natVal s.mem xp xl) (S2.regs 18) (S2.regs 29)
       ret0 Q) :
-    ReachesRet (LibExp.program.link impl) ret0 S2 Q := by
+    ReachesRet (LibW.program.link impl) ret0 S2 Q := by
   have hpre := ppre hP h (kcP := kcP) (sqC := sqC) (mlC := mlC) hkK hℓ hsp h28 hm h30 hcost
   have hce := h.cenv hP
   have hsN : S2.sp.toNat = sp := by rw [hsp, BitVec.toNat_ofNat]; have := hce.2.2.1; omega

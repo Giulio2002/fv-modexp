@@ -1,4 +1,6 @@
 import FvModexp.Proofs.Arm64.Exp.ModInvPost
+import FvModexp.Proofs.Arm64.Exp.ModInvX
+import FvModexp.Proofs.Arm64.Exp.LibCallsX
 
 /-!
 # `nat.modularInverseModPowerOfTwo` (arm64): `zz = zz.mul(stk, zz, x[:k])` and the second `zz.trunc` (agent infra)
@@ -34,7 +36,7 @@ theorem postMul (hkc : 4608 ≤ kc) {stkM aboveM : Nat} (hkM : stkM ≤ kc) (haM
     (h18 : S'.regs 18 = s.regs 18) (hm : S'.mem = M)
     (hpc' : s'.pc = BitVec.ofNat 64 pcv) (hsp' : s'.sp = S'.sp) (h28' : s'.regs 28 = S'.regs 28)
     (h18' : s'.regs 18 = S'.regs 18) (hreg : s'.mem.regions = S'.mem.regions)
-    (hpost : MulPost R b1 (mulC ql (min (Kx j) xl)) L1 stkM aboveM q qc st q ql xp (min (Kx j) xl) S' s') :
+    (hpost : MulPostL R b1 (mulC ql (min (Kx j) xl)) L1 stkM aboveM q qc st q ql xp (min (Kx j) xl) S' s') :
     Goal impl R kc sqrC mulC b L zp zc st xp xl n s s' := by
   obtain ⟨q', ql', qc', e0, e1, e2, L', b', ⟨hv', hn', hlc', hc40', hlive', hof⟩, ⟨hLE, hbud', hinv'⟩, hsb, hstkA,
     hF', hLF'⟩ := hpost
@@ -51,7 +53,7 @@ theorem postMul (hkc : 4608 ≤ kc) {stkM aboveM : Nat} (hkM : stkM ≤ kc) (haM
     rcases hof with ⟨rfl, -⟩ | -
     · exact hmid.2.2.2.1.2.1
     · have := (hlive' hqc').2.2.2; omega
-  obtain ⟨mid2, hzv2, hsl⟩ := after_zz hpre hkc hmid hS' hkM haM hreg hF' hLF' hLE hinv' hsb hlive' hc40' hq'
+  obtain ⟨mid2, hzv2, hsl⟩ := after_zz hpre hkc hmid hS' hkM haM hreg hF' hLF' hLE hinv' hsb.1 hsb.2 hlive' hc40' hq'
     (hof.imp id fun h => h.2) (fun h1 h2 h3 _ => hstkA h1 h2 h3) hlc' hqc'
   have hsp0 : 240 ≤ s.sp.toNat := by have := sp_K hpre; omega
   have hxv : natVal M xp (min (Kx j) xl) = natVal s.mem xp (min (Kx j) xl) :=
@@ -69,8 +71,8 @@ theorem postMul (hkc : 4608 ≤ kc) {stkM aboveM : Nat} (hkM : stkM ≤ kc) (haM
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 4000000 in
 theorem callMul (hap : ImplApart Extracted.program impl) {ns : List String}
-    (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
-    {stkM aboveM : Nat} {mlC : Nat → Nat → Nat → Nat} (hmu : MulHyp impl R ns stkM aboveM mlC)
+    (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
+    {stkM aboveM : Nat} {mlC : Nat → Nat → Nat → Nat} (hmu : MulHypX impl R ns stkM aboveM mlC)
     (hkc : 4608 ≤ kc) (hkM : stkM ≤ kc) (haM : aboveM ≤ 88)
     (hml : ∀ x y, mlC (stLen s.mem st) x y = mulC x y)
     (hmm : ∀ a a' c c', a ≤ a' → c ≤ c' → mulC a c ≤ mulC a' c')
@@ -91,7 +93,7 @@ theorem callMul (hap : ImplApart Extracted.program impl) {ns : List String}
     (h3 : S'.regs 3 = BitVec.ofNat 64 st) (h4 : S'.regs 4 = BitVec.ofNat 64 q) (h5 : S'.regs 5 = BitVec.ofNat 64 ql)
     (h6 : S'.regs 6 = BitVec.ofNat 64 qc) (h7 : S'.regs 7 = BitVec.ofNat 64 xp)
     (h8 : S'.regs 8 = BitVec.ofNat 64 (min (Kx j) xl)) (h9 : S'.regs 9 = BitVec.ofNat 64 xc) :
-    ReachesRet (LibExp.program.link impl) (s.regs 30) S' (GoalQ R kc sqrC mulC b L zp zc st xp xl n s) := by
+    ReachesRet (LibW.program.link impl) (s.regs 30) S' (GoalQ R kc sqrC mulC b L zp zc st xp xl n s) := by
   subst hpcv
   have hK := sp_K hpre
   have hnw : NW n ≤ 2 ^ 12 := by have := hpre.2.2.2.2.1; simp only [NW]; omega
@@ -102,11 +104,13 @@ theorem callMul (hap : ImplApart Extracted.program impl) {ns : List String}
   have hxl : xl ≤ 2 ^ 12 := hpre.2.2.2.2.2.2.2.2.2.2.2.2.1
   have hlen : stLen S'.mem st = stLen s.mem st := by rw [hm]; exact stLen_M hmid.2.1
   have hmc : mulC ql (min (Kx j) xl) ≤ mulC (2 * NW n + 2) (NW n) := hmm _ _ _ _ (by omega) (by omega)
-  refine mulCall hap hns hmu (b := b1) (L := L1) (zp := q) (zl := ql) (zc := qc) (st := st) (x := q) (xl := ql)
-    (xc := qc) (y := xp) (yl := min (Kx j) xl) (yc := xc) (ra_mi hap hnf i hi300) (by rw [hpc, mul_addr]) h30 h0 h1
-    h2 h3 h4 h5 h6 h7 h8 h9 hmid.2.2.2.1.2.1 (by have := hmid.2.2.2.1.1; omega) (by have := hmid.2.2.2.1.1; omega)
-    hst hmid.2.2.2.1.2.1 (by have := hmid.2.2.2.1.1; omega) hxp (by omega) (by omega) ?_
-    fun s' hpc' hsp' h28' h29' h18' hreg' hpost => ?_
+  obtain ⟨hcx, hcy, hX⟩ := mulX_at hpre hmid hsp h28 hm hkM haM (Nat.min_le_right (Kx j) xl)
+  refine LibCalls.mulCallX hap hns hmu (b := b1) (L := L1) (zp := q) (zl := ql) (zc := qc) (st := st) (x := q)
+    (xl := ql) (xc := qc) (y := xp) (yl := min (Kx j) xl) (yc := xc) (ra_mi hap hnf i hi300) (by rw [hpc, mul_addr])
+    h30 h0 h1 h2 h3 h4 h5 h6 h7 h8 h9 hmid.2.2.2.1.2.1 (by have := hmid.2.2.2.1.1; omega)
+    (by have := hmid.2.2.2.1.1; omega) hst hmid.2.2.2.1.2.1 (by have := hmid.2.2.2.1.1; omega)
+    (by have := hmid.2.2.2.1.1; omega) hxp (by omega) (by omega) (by omega) ?_ hcx hcy hX
+    fun s' hpc' hsp' h28' h29' h18' hreg' hpost _ => ?_
   · rw [hlen, hml]
     exact mulPre_at hpre hmid hsp h28 hm hkM haM (Nat.min_le_right _ _) (by omega)
       (bud_ok hb hbud (m := mulC (2 * NW n + 2) (NW n)) (by simp only [roundCost, P2, P1]; omega) hmc)

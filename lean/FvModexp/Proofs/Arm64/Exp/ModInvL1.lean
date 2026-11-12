@@ -41,8 +41,8 @@ theorem postL1 {J : Nat} {kc : Nat} (hkc : 4608 ≤ kc) {stkT aboveT : Nat} (hkT
   have hS' := sp'_eq hsp
   rw [hm] at hF' hLF' hreg hv'
   rw [h28] at hinv'
-  obtain ⟨hF2, hLF2, hsb, -, -⟩ := nostk hpre hmid.2.1 hS' hkT haT hmid.2.2.2.1 hF' hLF' hLE
-  obtain ⟨mid2, hzv2, hsl⟩ := after_zz hpre hkc hmid hS' hkT haT hreg hF2 hLF2 hLE hinv' hsb hlive' hc40'
+  obtain ⟨hF2, hLF2, hsb, se0, se2⟩ := nostk hpre hmid.2.1 hS' hkT haT hmid.2.2.2.1 hF' hLF' hLE
+  obtain ⟨mid2, hzv2, hsl⟩ := after_zz hpre hkc hmid hS' hkT haT hreg hF2 hLF2 hLE hinv' hsb (ain_keep se0 se2) hlive' hc40'
     hmid.2.2.2.1.2.1 (Or.inl ⟨rfl, rfl⟩) (fun h => absurd ⟨rfl, rfl⟩ h) hlc' hmid.2.2.2.2.2.2.2.2
   have hsp0 : 240 ≤ s.sp.toNat := by have := sp_K hpre; omega
   have hnw : NW n ≤ 2 ^ 12 := by have := hpre.2.2.2.2.1; simp only [NW]; omega
@@ -60,7 +60,7 @@ theorem postL1 {J : Nat} {kc : Nat} (hkc : 4608 ≤ kc) {stkT aboveT : Nat} (hkT
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem segL1 {J : Nat} {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
-    (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
+    (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
     {stkT aboveT : Nat} (htr : Trunc.Hyp2 impl R ns stkT aboveT) {kc : Nat} (hkc : 4608 ≤ kc)
     (hkT : stkT ≤ kc) (haT : aboveT ≤ 88) {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}

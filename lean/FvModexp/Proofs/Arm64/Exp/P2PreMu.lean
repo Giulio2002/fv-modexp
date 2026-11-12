@@ -24,7 +24,7 @@ variable {impl : List Segment} {R : RtInv} {kc : Nat} {sqC : Nat → Nat → Nat
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 4000000 in
 theorem callMulH (hap : ImplApart Extracted.program impl) {ns : List String}
-    (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
+    (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
     {stkM aboveM : Nat} (hmu : MulHypX impl R ns stkM aboveM mlC) (hkM : stkM ≤ kc) (haM : aboveM ≤ 88)
     (hmm : ∀ ℓ a a' c c', a ≤ a' → c ≤ c' → mlC ℓ a c ≤ mlC ℓ a' c') (hkc : 4608 ≤ kc)
     (hpre : Pre R kc sqC mlC b L st pw pl ws lm x xl s) {i : Nat}
@@ -42,7 +42,7 @@ theorem callMulH (hap : ImplApart Extracted.program impl) {ns : List String}
     {xl' : Nat} (hxl : M.readLE (pw + 24 * i + 8) 8 = xl') (h5 : S'.regs 5 = BitVec.ofNat 64 xl') (h6 : S'.regs 6 = BitVec.ofNat 64 (W lm))
     (h7 : S'.regs 7 = BitVec.ofNat 64 (bp + 8 * (1 * W lm)))
     {yl' : Nat} (hyl : M.readLE (pw + 24 * 1 + 8) 8 = yl') (h8 : S'.regs 8 = BitVec.ofNat 64 yl') (h9 : S'.regs 9 = BitVec.ofNat 64 (W lm)) :
-    ReachesRet (LibExp.program.link impl) (s.regs 30) S' (GoalQ R kc sqC mlC b L st pw pl lm x xl s) := by
+    ReachesRet (LibW.program.link impl) (s.regs 30) S' (GoalQ R kc sqC mlC b L st pw pl lm x xl s) := by
   subst hxl hyl
   have hf := pf_of hpre (by omega)
   have hspN : S'.sp.toNat = s.sp.toNat - 208 := by
