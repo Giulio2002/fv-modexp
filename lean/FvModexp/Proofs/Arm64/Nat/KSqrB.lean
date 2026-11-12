@@ -430,4 +430,55 @@ theorem KM.x1op {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n x
     rw [h.fr.accessible]; exact Memory.accessible_sub _ hxacc (Or.inl rfl) (by omega) (by simp only [kn2]; omega)
   · simp only [IntAS.intZ, IntAS.hNeg, IntAS.hP, IntAS.hL, q1, q2, q3, if_true, hv, h.v1]
 
+/-- **An inner `nat.sqr` whose result array is reused** (`2·xl' ≤ zc'`, cap ends differ; the written part
+`[zp', zp' + 16·xl')` inside `z[0:2n]` or `t`): the continuation gets `KM` (charged `kcS`), the result registers, the
+value and the exact frames of the call. -/
+theorem ks_sqcallR (impl : List Segment) (R : RtInv) {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat}
+    {s : State} {lx0 lx1 t : Nat} {Lk : List (Nat × Nat)} {bk spent : Nat} {M : Memory}
+    (h : KM R b L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) (ih : ∀ a, IH impl R (2 * n) (false, a))
+    (S1 : State) (hpc : S1.pc = BitVec.ofNat 64 0x1bb420) (hsp : S1.sp.toNat = s.sp.toNat - 320)
+    (hg : S1.regs 28 = s.regs 28) (hm : S1.mem = M)
+    (hl4 : (S1.regs 30).toNat % 4 = 0) (hl48 : (S1.regs 30).toNat < 2 ^ 48)
+    {zp' zl' zc' xp' xl' xc' : Nat} (b0 : zp' < 2 ^ 64) (b1 : zl' < 2 ^ 64) (b2 : zc' < 2 ^ 64) (b3 : st < 2 ^ 64)
+    (b4 : xp' < 2 ^ 64) (b5 : xl' < 2 ^ 64) (b6 : xc' < 2 ^ 64)
+    (r0 : S1.regs 0 = BitVec.ofNat 64 zp') (r1 : S1.regs 1 = BitVec.ofNat 64 zl')
+    (r2 : S1.regs 2 = BitVec.ofNat 64 zc') (r3 : S1.regs 3 = BitVec.ofNat 64 st)
+    (r4 : S1.regs 4 = BitVec.ofNat 64 xp') (r5 : S1.regs 5 = BitVec.ofNat 64 xl')
+    (r6 : S1.regs 6 = BitVec.ofNat 64 xc')
+    (hxl : xl' ≤ kn2 n) (hxc : xl' ≤ xc') (hxc40 : xc' < 2 ^ 40)
+    (hxacc : M.accessible xp' (8 * xl') false = true)
+    (hxh : 0 < xc' → Held R Lk xp' (8 * xc') ∧ xp' + 8 * xc' ≤ 2 ^ 48)
+    (hxw : 0 < xl' → Outside xp' (8 * xl') (win s W 48))
+    (hzc40 : zc' < 2 ^ 40) (hzl : NatLive M R Lk zp' zc') (hzw : Outside zp' (8 * zc') (win s W 48))
+    (hzg : 0 < zc' → Apart zp' (8 * zc') (guard s) 8 ∧ StkSep M st zp' (8 * zc'))
+    (hal : 0 < zc' → 0 < xl' → Apart zp' (8 * zc') xp' (8 * xl'))
+    (hxs : 0 < xl' → StkSep M st xp' (8 * xl'))
+    (hru : 2 * xl' ≤ zc') (hne : zp' + 8 * zc' ≠ xp' + 8 * xc')
+    (hq : (zp ≤ zp' ∧ zp' + 8 * (2 * xl') ≤ zp + 8 * (2 * n)) ∨ (t ≤ zp' ∧ zp' + 8 * (2 * xl') ≤ t + 8 * kT n))
+    (hsc : spent + kcS (stLen s.mem st) n ≤ ksqrC (stLen s.mem st) n)
+    {ret : BitVec 64} {Q : State → Prop}
+    (hK : ∀ (s2 : State) (Lk' : List (Nat × Nat)) (bk' l' : Nat), s2.pc = S1.regs 30 → s2.mem.regions = M.regions →
+      Kept S1 s2 → KM R b L W st zp zc xp n xc s lx0 lx1 t Lk' bk' (spent + kcS (stLen s.mem st) n) s2.mem →
+      s2.regs 0 = BitVec.ofNat 64 zp' → s2.regs 1 = BitVec.ofNat 64 l' → s2.regs 2 = BitVec.ofNat 64 zc' →
+      natVal s2.mem zp' l' = natVal M xp' xl' * natVal M xp' xl' → NatNorm s2.mem zp' l' → l' ≤ 2 * xl' →
+      natVal s2.mem zp' (2 * xl') = natVal M xp' xl' * natVal M xp' xl' →
+      MemFrame M s2.mem (R.rt ++ winA S1 (W - 320) 64 ++ [(zp', zp' + 8 * (2 * xl'))] ++ stkWs M st) →
+      LiveFrame M s2.mem Lk ([(zp', zp' + 8 * (2 * xl'))] ++ stkWs M st) →
+      ReachesRet (LibSqr.program.link impl) ret s2 Q) :
+    ReachesRet (LibSqr.program.link impl) ret S1 Q := by
+  have hcost : sqrC (stLen M st) xl' ≤ bk := by
+    refine Nat.le_trans ?_ (h.cost (c := kcS (stLen s.mem st) n) hsc)
+    rw [h.slen]; exact sqrC_le_inner hxl
+  refine ks_sqcall impl R h ih S1 hpc hsp hg hm hl4 hl48 b0 b1 b2 b3 b4 b5 b6 r0 r1 r2 r3 r4 r5 r6 hxl hxc hxc40
+    hxacc hxh hxw hzc40 hzl hzw hzg (Or.inr hal) hxs hcost fun s2 hr hreg hk hP => ?_
+  obtain ⟨p', l', c', e0, e1, e2, hval, hnn, -, hl2, -, L', b', hext, hbud, hinv, -, -, -, hreu, hsb, -, -⟩ := hP
+  obtain ⟨ep, ec, hv2, hF, hLF⟩ := hreu hru hne
+  subst ep ec
+  rw [hm] at hval hv2 hF hLF hsb hbud
+  rw [hg] at hinv
+  have hkm := h.sqStep hsp hq hF hLF hreg hext (c := kcS (stLen s.mem st) n)
+    (by have hle : sqrC (stLen M st) xl' ≤ kcS (stLen s.mem st) n := by rw [h.slen]; exact sqrC_le_inner hxl
+        omega) hinv hsb
+  exact hK s2 L' b' l' hr hreg hk hkm e0 e1 e2 hval hnn hl2 hv2 hF hLF
+
 end FvModexp.Arm64.NatSqr
