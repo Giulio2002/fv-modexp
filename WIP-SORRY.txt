@@ -1,8 +1,7 @@
 # files allowed to contain `sorry` while in progress: path<TAB>owner<TAB>note. MUST be empty at release (RELEASE=1 scripts/no-sorry.sh enforces it).
-lean/FvModexp/Proofs/Arm64/Top/RunC2E.lean	top	exp path C2 -> exp block: bitLen != 1 branch in progress
 lean/FvModexp/Proofs/Amd64/Nat/BasicSqrEnd.lean	divmc	basicSqr amd64 WIP
 lean/FvModexp/Proofs/Amd64/Nat/BasicSqrBody.lean	divmc	basicSqr amd64 WIP
 lean/FvModexp/Proofs/Amd64/Nat/BasicSqrLoop.lean	divmc	basicSqr amd64 WIP
 lean/FvModexp/Proofs/Amd64/Nat/BasicSqrPro.lean	divmc	basicSqr amd64 pro2 (stk.nat call) WIP: trace_state/sorry after the call; pro3 not written
-lean/FvModexp/Proofs/Amd64/Top/RunCP2.lean (top s15 WIP: amd64 LeftPadBytes copy)
-lean/FvModexp/Proofs/Amd64/Top/RunC2M.lean (top s15 WIP: amd64 Mod path)
+lean/FvModexp/Proofs/Amd64/Top/RunCP2.lean	top	amd64 LeftPadBytes copy (P -> return) in progress
+lean/FvModexp/Proofs/Amd64/Top/RunC2M.lean	top	amd64 Mod path C2 -> V in progress
