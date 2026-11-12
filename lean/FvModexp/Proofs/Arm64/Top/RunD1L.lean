@@ -1,7 +1,7 @@
 import FvModexp.Proofs.Arm64.Top.RunDRel
 import FvModexp.Proofs.Arm64.Top.RunGS
 import FvModexp.Proofs.Arm64.Top.RunL
-import FvModexp.Proofs.Arm64.Top.RunD1
+import FvModexp.Proofs.Arm64.Top.RunDPc
 import FvModexp.Proofs.Arm64.Top.RunD1J
 import FvModexp.Proofs.Arm64.Top.RunBox
 
@@ -138,6 +138,8 @@ theorem d1l (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   rename_i m2 _ _ hMFm hLFm hinvm hcp
   janus_run [hm1, hm2, hm3, hm4, hm5, hm6, hr7, hr8', hr11, hr12, hI7, hI8, hI11, hI12, hc, hc32,
     toInt_ite, toNat_ite] until [pcJ1]
+  have bxq := Box.mk (And.intro hnz (And.intro hoffc hga))
+  clear hnz hoffc hga
   have hstk : stk = 4800 := rfl
   have hLsL1 : LiveSep L1 (win s 4800 40) := hLs0
   have hwrt : ∀ r ∈ win s 4800 40, Outside r.1 (r.2 - r.1) R.rt := fun r hr => by
@@ -191,7 +193,7 @@ theorem d1l (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   refine ⟨by janus_simp [hsp], by janus_simp [h28, hT28], by janus_simp [h29, hT29], by janus_simp [h18, hT18],
      by janus_simp [hm1], by janus_simp [hm2], by janus_simp [hm3], by janus_simp [hm4], by janus_simp [hm5],
      by janus_simp [hm6], by janus_simp [hr8], by janus_simp [hr11], by janus_simp [hr12], by janus_simp [hr7],
-     by janus_simp [hr3], by janus_simp [hr1], ?spill, by janus_simp, by janus_simp, by janus_simp, hl0, hl1, hl2, hnz,
+     by janus_simp [hr3], by janus_simp [hr1], ?spill, by janus_simp, by janus_simp, by janus_simp, hl0, hl1, hl2, bxq.h.1,
      by janus_simp, by janus_simp, (by janus_simp <;> omega), ?r6, by janus_simp [hr11], by omega,
      (Memory.accessible_read_of_write _ (Memory.accessible_mono _ hack (Nat.le_refl _) (by omega))), ?held, (by omega),
      ?bytes, ?dl, hIn, hCc,

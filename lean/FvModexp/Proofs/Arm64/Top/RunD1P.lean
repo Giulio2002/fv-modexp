@@ -1,7 +1,7 @@
 import FvModexp.Proofs.Arm64.Top.RunDRel
 import FvModexp.Proofs.Arm64.Top.RunGS
 import FvModexp.Proofs.Arm64.Top.RunL
-import FvModexp.Proofs.Arm64.Top.RunD1
+import FvModexp.Proofs.Arm64.Top.RunDPc
 import FvModexp.Proofs.Arm64.Top.RunBox
 
 /-! # `Run` (arm64): `C0` to `D1`, base operand shorter than the input rest: padded buffer (stack or `makeslice`), `memmove` -/
@@ -111,6 +111,8 @@ theorem d1p (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
       toInt_ite, toNat_ite] until [pcD1] calls [hP := hS]
     obtain ⟨⟨-, p2, n2, c2, hp2, hn2, hc2, hv2, hnorm2, hnc2, hnw2, L2, b2, hext2, hb2, hinv2, hlive2, hor2, hMF2, hLF2⟩,
       hd2⟩ := hP
+    have bxq := Box.mk (And.intro hnz (And.intro hga hor2))
+    clear hnz hga hor2
     have hspn' : (s.sp - 624#64).toNat = s.sp.toNat - 624 := by rw [BitVec.toNat_sub]; simp; omega
     simp only [winA, hspn', hspn] at hMF2
     have hLsL1 : LiveSep L1 (win s 4800 40) := hLs0
@@ -128,7 +130,7 @@ theorem d1p (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     refine hk _ L2 b2 (RelD.mk' hin0 (by janus_simp [hsp]) (by janus_simp [h28, hT28]) (by janus_simp [h29, hT29])
       (by janus_simp [h18, hT18]) (by janus_simp [hm1]) (by janus_simp [hm2]) (by janus_simp [hm3]) (by janus_simp [hm4])
       (by janus_simp [hm5]) (by janus_simp [hm6]) (by janus_simp [hr8]) (by janus_simp [hr11]) (by janus_simp [hr12])
-      (by janus_simp [hr7]) (by janus_simp [hr3]) (by janus_simp [hr1]) hl0 hl1 hl2 hnz ?_ (fun h => absurd h (by decide)) ?_ (hext.trans hext2) ?_ ?_
+      (by janus_simp [hr7]) (by janus_simp [hr3]) (by janus_simp [hr1]) hl0 hl1 hl2 bxq.h.1 ?_ (fun h => absurd h (by decide)) ?_ (hext.trans hext2) ?_ ?_
       (hext2.liveSep hLsL1 hwrt) ?_ ?_ ?_ (opsApart_one _ _)) (by janus_simp)
     · intro _
       have hmin : min (hdrV s p len 0) (len.toNat - 96) = len.toNat - 96 := by omega
@@ -159,7 +161,7 @@ theorem d1p (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
           Memory.readLE_writeLE_of_disjoint _ _ (by omega), Memory.readLE_writeLE_of_disjoint _ _ (by omega)]
       case fr =>
         intro hc
-        rcases hor2 with ⟨-, h⟩ | ⟨h, h'⟩
+        rcases bxq.h.2.2 with ⟨-, h⟩ | ⟨h, h'⟩
         · simp at h; omega
         · exact ⟨h, h'⟩
       case v =>

@@ -112,6 +112,8 @@ theorem d2p (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     rcases hr with (rfl | rfl) | rfl <;> refine ⟨?_, ?_, ?_⟩ <;> dsimp only <;> omega
   clear hdS
   janus_run [hm1, hm2, hm3, hm4, hm5, hm6, hs1, hs2, hs3, hs4, hs5, hs6, hk1a, hk1b] until [pcJ2]
+  have bxq := Box.mk (And.intro hnz (And.intro hoffc (And.intro hmN hga)))
+  clear hnz hoffc hmN hga
   have hstk : stk = 4800 := rfl
   have hLsL1 : LiveSep L1 (win s 4800 40) := hLs0
   have hMF2 : MemFrame s.mem m (R.rt ++ winA s stk 40) := by
@@ -137,7 +139,7 @@ theorem d2p (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
      by janus_simp [hm1], by janus_simp [hm2], by janus_simp [hm3], by janus_simp [hm4], by janus_simp [hm5],
      by janus_simp [hm6], by janus_simp [hs1], by janus_simp [hs2], by janus_simp [hs3], by janus_simp [hs4],
      by janus_simp [hs5, hoffd], by janus_simp [hs6, hoffd], by janus_simp [hk1a], by janus_simp [hk1b],
-     by janus_simp, by janus_simp, by janus_simp, hl0, hl1, hl2, hnz,
+     by janus_simp, by janus_simp, by janus_simp, hl0, hl1, hl2, bxq.h.1,
      by janus_simp, by janus_simp, by janus_simp, (by janus_simp <;> omega), by omega,
      (Memory.accessible_read_of_write _ (Memory.accessible_mono _ hw (by omega) (by omega))),
      Or.inr (hout.of_sub (by omega) (by omega)), (by omega), ?bytes, hd1,
