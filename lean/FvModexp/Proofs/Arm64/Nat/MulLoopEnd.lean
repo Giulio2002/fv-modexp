@@ -82,7 +82,8 @@ theorem lend_fin {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp xl
     (hF : MemFrame A F [(s.sp.toNat - 162, s.sp.toNat - 160), (s.sp.toNat - 104, s.sp.toNat - 80),
       (s.sp.toNat - 280, s.sp.toNat - 264), (st + 8, st + 16)])
     (hlen : F.readLE (st + 8) 8 = stLen M st) :
-    natVal F p (xl + yl) = natVal A p (xl + yl) ∧ R.inv bk Lk (s.regs 28).toNat (view R.rt Lk F) ∧
+    Outside p (8 * (xl + yl)) [(s.sp.toNat - 162, s.sp.toNat - 160), (s.sp.toNat - 104, s.sp.toNat - 80),
+      (s.sp.toNat - 280, s.sp.toNat - 264), (st + 8, st + 16)] ∧ R.inv bk Lk (s.regs 28).toNat (view R.rt Lk F) ∧
       StackBackL R L1 Lk st M F ∧ MemFrame M F (R.rt ++ winA s W 88 ++ (p, p + 8 * (xl + yl)) :: stkWs M st) ∧
       LiveFrame M F L1 ((p, p + 8 * (xl + yl)) :: stkWs M st) := by
   obtain ⟨hW, hWs, hal, ha48, hout, hgr, hga, hcap, hc40, hpw, -⟩ := h.lay
@@ -102,7 +103,7 @@ theorem lend_fin {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp xl
   have eC : stCap F st = stCap A st := hrd _ _ (by simp only [outside_cons, outside_nil, and_true]; omega)
   have hacc : ∀ a k w, F.accessible a k w = A.accessible a k w := fun a k w => hF.accessible a k w
   have hlenF : stLen F st = stLen M st := hlen
-  refine ⟨hrd _ _ (by simp only [outside_cons, outside_nil, and_true]; omega), ?_, ?_, ?_, ?_⟩
+  refine ⟨by simp only [outside_cons, outside_nil, and_true]; omega, ?_, ?_, ?_, ?_⟩
   · refine RtInv.inv_frame' hF (fun r hr => ?_) h.inv
     simp only [List.mem_cons, List.not_mem_nil, or_false] at hr
     rcases hr with rfl | rfl | rfl | rfl
