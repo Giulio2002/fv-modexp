@@ -14,32 +14,6 @@ open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Contracts Janu
 
 namespace FvModexp.Amd64.IntAS
 
-set_option hygiene false in
-/-- the end of the prologue at the `nat.add` entry: `pathA` (local to `full`) -/
-local macro "as_pa" : tactic => `(tactic| (
-  refine pathA impl hap R hmk hmv hwb' _ b L z.toNat x.toNat y.toNat s hpreB.h hx15 hdf hra (by
-      have e1 : hNeg s.mem x.toNat = 0 ∨ hNeg s.mem x.toNat = 1 := by omega
-      have e2 : hNeg s.mem y.toNat = 0 ∨ hNeg s.mem y.toNat = 1 := by omega
-      simp only [hNeg] at e1 e2 ⊢
-      rcases e1 with h1 | h1 <;> rcases e2 with h2 | h2 <;> rw [h1, h2] at hbr ⊢ <;> revert hbr <;> decide) _ rfl
-    (by simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte, hsp96, Arm64.Memory.readLE_writeLE_self] <;> decide) ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
-    ⟨?_, ?_, rfl, (by first | rfl | exact hdf.symm | simp only [hdf]), rfl, ?_, (by simp only [win]; janus_frame), (by simp only [Arm64.Memory.regions_writeLE]), ?_, ?_, ?_, ?_⟩
-  all_goals simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]
-  all_goals janus64_simp))
-
-set_option hygiene false in
-/-- the end of the prologue at the `nat.cmp` entry: `pathBC` (local to `full`) -/
-local macro "as_pbc" : tactic => `(tactic| (
-  refine pathBC impl hap R hmk hmv hwb' _ b L z.toNat x.toNat y.toNat s hpreB.h hx15 hdf hra (by
-      have e1 : hNeg s.mem x.toNat = 0 ∨ hNeg s.mem x.toNat = 1 := by omega
-      have e2 : hNeg s.mem y.toNat = 0 ∨ hNeg s.mem y.toNat = 1 := by omega
-      simp only [hNeg] at e1 e2 ⊢
-      rcases e1 with h1 | h1 <;> rcases e2 with h2 | h2 <;> rw [h1, h2] at hbr ⊢ <;> revert hbr <;> decide) _ rfl
-    (by simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte, hsp96, Arm64.Memory.readLE_writeLE_self] <;> decide) ?_ ?_ ?_ ?_
-    ⟨?_, ?_, rfl, (by first | rfl | exact hdf.symm | simp only [hdf]), rfl, ?_, (by simp only [win]; janus_frame), (by simp only [Arm64.Memory.regions_writeLE]), ?_, ?_, ?_, ?_⟩ ?_ ?_
-  all_goals simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]
-  all_goals janus64_simp))
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem full (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
@@ -68,10 +42,46 @@ theorem full (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
   have hb1 : s.mem.readLE x.toNat 1 < 256 := by have := Arm64.Memory.readLE_lt s.mem x.toNat 1; simpa using this
   cases sub <;> simp only [entry, Bool.false_eq_true, ↓reduceIte] at hpc <;>
     janus64_run until [6182240, 6184128]
-  · as_pa
-  · as_pbc
-  · as_pbc
-  · as_pa
+  · (
+      refine pathA impl hap R hmk hmv hwb' _ b L z.toNat x.toNat y.toNat s hpreB.h hx15 hdf hra (by
+          have e1 : hNeg s.mem x.toNat = 0 ∨ hNeg s.mem x.toNat = 1 := by omega
+          have e2 : hNeg s.mem y.toNat = 0 ∨ hNeg s.mem y.toNat = 1 := by omega
+          simp only [hNeg] at e1 e2 ⊢
+          rcases e1 with h1 | h1 <;> rcases e2 with h2 | h2 <;> rw [h1, h2] at hbr ⊢ <;> revert hbr <;> decide) _ rfl
+        (by simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte, hsp96, Arm64.Memory.readLE_writeLE_self] <;> decide) ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
+        ⟨?_, ?_, rfl, (by first | rfl | exact hdf.symm | simp only [hdf]), rfl, ?_, (by simp only [win]; janus_frame), (by simp only [Arm64.Memory.regions_writeLE]), ?_, ?_, ?_, ?_⟩
+      all_goals simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]
+      all_goals janus64_simp)
+  · (
+      refine pathBC impl hap R hmk hmv hwb' _ b L z.toNat x.toNat y.toNat s hpreB.h hx15 hdf hra (by
+          have e1 : hNeg s.mem x.toNat = 0 ∨ hNeg s.mem x.toNat = 1 := by omega
+          have e2 : hNeg s.mem y.toNat = 0 ∨ hNeg s.mem y.toNat = 1 := by omega
+          simp only [hNeg] at e1 e2 ⊢
+          rcases e1 with h1 | h1 <;> rcases e2 with h2 | h2 <;> rw [h1, h2] at hbr ⊢ <;> revert hbr <;> decide) _ rfl
+        (by simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte, hsp96, Arm64.Memory.readLE_writeLE_self] <;> decide) ?_ ?_ ?_ ?_
+        ⟨?_, ?_, rfl, (by first | rfl | exact hdf.symm | simp only [hdf]), rfl, ?_, (by simp only [win]; janus_frame), (by simp only [Arm64.Memory.regions_writeLE]), ?_, ?_, ?_, ?_⟩ ?_ ?_
+      all_goals simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]
+      all_goals janus64_simp)
+  · (
+      refine pathBC impl hap R hmk hmv hwb' _ b L z.toNat x.toNat y.toNat s hpreB.h hx15 hdf hra (by
+          have e1 : hNeg s.mem x.toNat = 0 ∨ hNeg s.mem x.toNat = 1 := by omega
+          have e2 : hNeg s.mem y.toNat = 0 ∨ hNeg s.mem y.toNat = 1 := by omega
+          simp only [hNeg] at e1 e2 ⊢
+          rcases e1 with h1 | h1 <;> rcases e2 with h2 | h2 <;> rw [h1, h2] at hbr ⊢ <;> revert hbr <;> decide) _ rfl
+        (by simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte, hsp96, Arm64.Memory.readLE_writeLE_self] <;> decide) ?_ ?_ ?_ ?_
+        ⟨?_, ?_, rfl, (by first | rfl | exact hdf.symm | simp only [hdf]), rfl, ?_, (by simp only [win]; janus_frame), (by simp only [Arm64.Memory.regions_writeLE]), ?_, ?_, ?_, ?_⟩ ?_ ?_
+      all_goals simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]
+      all_goals janus64_simp)
+  · (
+      refine pathA impl hap R hmk hmv hwb' _ b L z.toNat x.toNat y.toNat s hpreB.h hx15 hdf hra (by
+          have e1 : hNeg s.mem x.toNat = 0 ∨ hNeg s.mem x.toNat = 1 := by omega
+          have e2 : hNeg s.mem y.toNat = 0 ∨ hNeg s.mem y.toNat = 1 := by omega
+          simp only [hNeg] at e1 e2 ⊢
+          rcases e1 with h1 | h1 <;> rcases e2 with h2 | h2 <;> rw [h1, h2] at hbr ⊢ <;> revert hbr <;> decide) _ rfl
+        (by simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte, hsp96, Arm64.Memory.readLE_writeLE_self] <;> decide) ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
+        ⟨?_, ?_, rfl, (by first | rfl | exact hdf.symm | simp only [hdf]), rfl, ?_, (by simp only [win]; janus_frame), (by simp only [Arm64.Memory.regions_writeLE]), ?_, ?_, ?_, ?_⟩
+      all_goals simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]
+      all_goals janus64_simp)
 
 /-- **`(*Int).Add` (`sub = false`) / `(*Int).Sub` (`sub = true`)** (amd64): `z.Add(x, y)` / `z.Sub(x, y)` returns `z`
 holding `x + y` / `x - y` (signed, canonical sign, normalised `abs` in `z`'s array or a fresh one, `z`'s array written

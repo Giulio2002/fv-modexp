@@ -58,40 +58,6 @@ theorem cmp_msb (m n X Y : Nat) :
         · rw [if_neg h1, if_neg h2, if_neg h3, if_neg h4]
           exact ⟨fun h => absurd h (by decide), fun h => by omega⟩
 
-set_option hygiene false in
-/-- path C (`x < y`: `z.abs = y.abs - x.abs`, sign flipped) after the comparison (local to `pathBC`) -/
-local macro "as_c" : tactic => `(tactic| (
-  have hlt := (SubMod2N.cmp_lt_iff s.mem _ _ _ _ hXn hYn).1
-     (by rw [← hlvx, ← hlvy]; exact (cmp_msb _ _ _ _).1 hbr)
-  have hxy : hL s.mem x ≤ hL s.mem y := by rcases (cmp_msb _ _ _ _).1 hbr with h | ⟨h, -⟩ <;> omega
-  refine pathSub impl hap R hmk hmv hwb _ b L z x y s hpreB.h hx15 hdf hra47 y x 0x15d (1 - hNeg s.mem x)
-    hyB.h hxB.h (fun h => (hzc0 h).2) (fun h => (hzc0 h).1) hxy (by omega) (by omega) (Or.inr rfl) (by simp)
-    (by omega) ?_ _ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
-    (atCall_cmp hpreB.h hAB.h hfB.h _ ?_ ?_ ?_ ?_ ?_ ?_ rfl hrg)
-  · rw [intZ_eq, intZ_eq]; exact resC _ hnx hny (by simpa [entry] using hc) hlt
-  · (simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte, hsp96, Arm64.Memory.readLE_writeLE_self, entry]) <;> decide
-  all_goals simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]
-  all_goals first | exact hAB.h.g | exact hAB.h.fs | exact hAB.h.df | exact hAB.h.x15 | exact hAB.h.bp))
-
-set_option hygiene false in
-/-- path B (`x ≥ y`: `z.abs = x.abs - y.abs`) after the comparison (local to `pathBC`) -/
-local macro "as_b" : tactic => `(tactic| (
-  have hge : ¬ (hL s.mem x < hL s.mem y ∨ (hL s.mem x = hL s.mem y ∧
-      natVal s.mem (hP s.mem x) (hL s.mem x) < natVal s.mem (hP s.mem y) (hL s.mem y))) := by
-    rw [← hlvx, ← hlvy, ← cmp_msb]; simpa using hbr
-  have hle := fun h => hge ((SubMod2N.cmp_lt_iff s.mem _ _ _ _ hXn hYn).2 h)
-  have hyx : hL s.mem y ≤ hL s.mem x := Nat.le_of_not_lt fun h => hge (Or.inl h)
-  have hYX : natVal s.mem (hP s.mem y) (hL s.mem y) ≤ natVal s.mem (hP s.mem x) (hL s.mem x) :=
-    Nat.le_of_not_lt fun h => hle h
-  refine pathSub impl hap R hmk hmv hwb _ b L z x y s hpreB.h hx15 hdf hra47 x y 0xf4 (hNeg s.mem x)
-    hxB.h hyB.h (fun h => (hzc0 h).1) (fun h => (hzc0 h).2) hyx hYX (by omega) (Or.inl rfl) (by simp) hnx ?_ _ rfl
-    ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
-    (atCall_cmp hpreB.h hAB.h hfB.h _ ?_ ?_ ?_ ?_ ?_ ?_ rfl hrg)
-  · rw [intZ_eq, intZ_eq]; exact resB _ hnx hny (by simpa [entry] using hc) hYX
-  · (simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte, hsp96, Arm64.Memory.readLE_writeLE_self, entry]) <;> decide
-  all_goals simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]
-  all_goals first | exact hAB.h.g | exact hAB.h.fs | exact hAB.h.df | exact hAB.h.x15 | exact hAB.h.bp))
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- the comparison and paths B / C, from the entry of `nat.cmp` to `RET` -/
@@ -171,12 +137,64 @@ theorem pathBC (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.prog
   · simp only [entry, Bool.false_eq_true, ↓reduceIte] at hr hrd ⊢
     janus64_run [hrd, hmx, hmy, hmz, hsp, hsp96, hmw, hmzA, hmxA, hmyA, hz8, hz16, hz24, hx8, hx16, hx24, hy8, hy16, hy24]
       until [6183136]
-    · as_c
-    · as_b
+    · (
+        have hlt := (SubMod2N.cmp_lt_iff s.mem _ _ _ _ hXn hYn).1
+           (by rw [← hlvx, ← hlvy]; exact (cmp_msb _ _ _ _).1 hbr)
+        have hxy : hL s.mem x ≤ hL s.mem y := by rcases (cmp_msb _ _ _ _).1 hbr with h | ⟨h, -⟩ <;> omega
+        refine pathSub impl hap R hmk hmv hwb _ b L z x y s hpreB.h hx15 hdf hra47 y x 0x15d (1 - hNeg s.mem x)
+          hyB.h hxB.h (fun h => (hzc0 h).2) (fun h => (hzc0 h).1) hxy (by omega) (by omega) (Or.inr rfl) (by simp)
+          (by omega) ?_ _ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
+          (atCall_cmp hpreB.h hAB.h hfB.h _ ?_ ?_ ?_ ?_ ?_ ?_ rfl hrg)
+        · rw [intZ_eq, intZ_eq]; exact resC _ hnx hny (by simpa [entry] using hc) hlt
+        · (simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte, hsp96, Arm64.Memory.readLE_writeLE_self, entry]) <;> decide
+        all_goals simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]
+        all_goals first | exact hAB.h.g | exact hAB.h.fs | exact hAB.h.df | exact hAB.h.x15 | exact hAB.h.bp)
+    · (
+        have hge : ¬ (hL s.mem x < hL s.mem y ∨ (hL s.mem x = hL s.mem y ∧
+            natVal s.mem (hP s.mem x) (hL s.mem x) < natVal s.mem (hP s.mem y) (hL s.mem y))) := by
+          rw [← hlvx, ← hlvy, ← cmp_msb]; simpa using hbr
+        have hle := fun h => hge ((SubMod2N.cmp_lt_iff s.mem _ _ _ _ hXn hYn).2 h)
+        have hyx : hL s.mem y ≤ hL s.mem x := Nat.le_of_not_lt fun h => hge (Or.inl h)
+        have hYX : natVal s.mem (hP s.mem y) (hL s.mem y) ≤ natVal s.mem (hP s.mem x) (hL s.mem x) :=
+          Nat.le_of_not_lt fun h => hle h
+        refine pathSub impl hap R hmk hmv hwb _ b L z x y s hpreB.h hx15 hdf hra47 x y 0xf4 (hNeg s.mem x)
+          hxB.h hyB.h (fun h => (hzc0 h).1) (fun h => (hzc0 h).2) hyx hYX (by omega) (Or.inl rfl) (by simp) hnx ?_ _ rfl
+          ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
+          (atCall_cmp hpreB.h hAB.h hfB.h _ ?_ ?_ ?_ ?_ ?_ ?_ rfl hrg)
+        · rw [intZ_eq, intZ_eq]; exact resB _ hnx hny (by simpa [entry] using hc) hYX
+        · (simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte, hsp96, Arm64.Memory.readLE_writeLE_self, entry]) <;> decide
+        all_goals simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]
+        all_goals first | exact hAB.h.g | exact hAB.h.fs | exact hAB.h.df | exact hAB.h.x15 | exact hAB.h.bp)
   · simp only [entry, Bool.false_eq_true, ↓reduceIte] at hr hrd ⊢
     janus64_run [hrd, hmx, hmy, hmz, hsp, hsp96, hmw, hmzA, hmxA, hmyA, hz8, hz16, hz24, hx8, hx16, hx24, hy8, hy16, hy24]
       until [6183136]
-    · as_c
-    · as_b
+    · (
+        have hlt := (SubMod2N.cmp_lt_iff s.mem _ _ _ _ hXn hYn).1
+           (by rw [← hlvx, ← hlvy]; exact (cmp_msb _ _ _ _).1 hbr)
+        have hxy : hL s.mem x ≤ hL s.mem y := by rcases (cmp_msb _ _ _ _).1 hbr with h | ⟨h, -⟩ <;> omega
+        refine pathSub impl hap R hmk hmv hwb _ b L z x y s hpreB.h hx15 hdf hra47 y x 0x15d (1 - hNeg s.mem x)
+          hyB.h hxB.h (fun h => (hzc0 h).2) (fun h => (hzc0 h).1) hxy (by omega) (by omega) (Or.inr rfl) (by simp)
+          (by omega) ?_ _ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
+          (atCall_cmp hpreB.h hAB.h hfB.h _ ?_ ?_ ?_ ?_ ?_ ?_ rfl hrg)
+        · rw [intZ_eq, intZ_eq]; exact resC _ hnx hny (by simpa [entry] using hc) hlt
+        · (simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte, hsp96, Arm64.Memory.readLE_writeLE_self, entry]) <;> decide
+        all_goals simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]
+        all_goals first | exact hAB.h.g | exact hAB.h.fs | exact hAB.h.df | exact hAB.h.x15 | exact hAB.h.bp)
+    · (
+        have hge : ¬ (hL s.mem x < hL s.mem y ∨ (hL s.mem x = hL s.mem y ∧
+            natVal s.mem (hP s.mem x) (hL s.mem x) < natVal s.mem (hP s.mem y) (hL s.mem y))) := by
+          rw [← hlvx, ← hlvy, ← cmp_msb]; simpa using hbr
+        have hle := fun h => hge ((SubMod2N.cmp_lt_iff s.mem _ _ _ _ hXn hYn).2 h)
+        have hyx : hL s.mem y ≤ hL s.mem x := Nat.le_of_not_lt fun h => hge (Or.inl h)
+        have hYX : natVal s.mem (hP s.mem y) (hL s.mem y) ≤ natVal s.mem (hP s.mem x) (hL s.mem x) :=
+          Nat.le_of_not_lt fun h => hle h
+        refine pathSub impl hap R hmk hmv hwb _ b L z x y s hpreB.h hx15 hdf hra47 x y 0xf4 (hNeg s.mem x)
+          hxB.h hyB.h (fun h => (hzc0 h).1) (fun h => (hzc0 h).2) hyx hYX (by omega) (Or.inl rfl) (by simp) hnx ?_ _ rfl
+          ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
+          (atCall_cmp hpreB.h hAB.h hfB.h _ ?_ ?_ ?_ ?_ ?_ ?_ rfl hrg)
+        · rw [intZ_eq, intZ_eq]; exact resB _ hnx hny (by simpa [entry] using hc) hYX
+        · (simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte, hsp96, Arm64.Memory.readLE_writeLE_self, entry]) <;> decide
+        all_goals simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]
+        all_goals first | exact hAB.h.g | exact hAB.h.fs | exact hAB.h.df | exact hAB.h.x15 | exact hAB.h.bp)
 
 end FvModexp.Amd64.IntAS
