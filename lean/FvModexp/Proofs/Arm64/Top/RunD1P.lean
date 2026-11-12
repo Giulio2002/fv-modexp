@@ -1,6 +1,7 @@
 import FvModexp.Proofs.Arm64.Top.RunDRel
 import FvModexp.Proofs.Arm64.Top.RunL
 import FvModexp.Proofs.Arm64.Top.RunD1
+import FvModexp.Proofs.Arm64.Top.RunBox
 
 /-! # `Run` (arm64): `C0` to `D1`, base operand shorter than the input rest: padded buffer (stack or `makeslice`), `memmove` -/
 
@@ -79,6 +80,8 @@ theorem d1p (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
         BitVec.toNat s.sp - 624 - 8 ≤ (T.regs 1).toNat := by rw [hr1]; split <;> omega
     have hs4 : (T.regs 1).toNat + (len.toNat - 96) ≤ BitVec.toNat s.sp - 624 + 8 ∨
         BitVec.toNat s.sp - 624 + 8 + 24 ≤ (T.regs 1).toNat := by rw [hr1]; split <;> omega
+    have bxp := Box.mk (And.intro hpw hcw)
+    clear hpw hcw
     set_option janus.callRegions true in
     janus_run [hm1, hm2, hm3, hm4, hm5, hm6, hgS, hr7, hr8', hr11, hr12, hI7, hI8, hI11, hI12, hc, hc32, hne, hne',
       natLive_zero, toInt_ite, toNat_ite] until [segAddr Extracted.program fn + 0x4dc] calls [hmv']
@@ -170,6 +173,7 @@ theorem d1p (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
         unfold padByte
         split
         · rename_i hjl
+          have hpw := bxp.h.1
           have hcj := hcp j (by omega)
           rw [Memory.readLE_one, hcj, ← Memory.readLE_one, hr1, if_pos (by omega)]
           repeat rw [Memory.readLE_writeLE_of_disjoint _ _ (by omega)]

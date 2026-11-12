@@ -997,3 +997,11 @@ rest unchanged (all ≤ 4.4 GB).
 LESSON (MulOneP): two `omega` calls (a window-inclusion `wsub` and `max/min` side goals of `mulC`) inside a context holding a
 callee's whole destructured post took 190 s + 106 s; moved into 3-line standalone lemmas (`wsub_one`, `makeB_le_mulC1`) they
 cost milliseconds. Never call `omega` after `obtain`ing a callee post; prove the arithmetic in a separate lemma first.
+
+## agent top s17 (2026-11-12, dev builds, host load ~15, one fresh-cache verify-all running alongside)
+| module | before | after | fix |
+|---|---|---|---|
+| Arm64/Top/RunD1P | 254 s / 6.15 GB | 89 s / 3.8 GB | `Box` `hpw`/`hcw` (input/receiver window facts) right after the side facts `hs1..hs4` of the memmove call; unbox `hpw` only in the padded-byte branch |
+| Arm64/Top/RunD3ZA | 279 s / 6.38 GB | 119 s / 6.2 GB | `Box` `hpw`/`hcw`/`hga`/`hut` right after the makeslice run |
+| Arm64/Top/RunD3P | 186 s / 5.65 GB | 143 s / 6.1 GB | `hpo'`/`hco'` and the memmove source-vs-callee-window facts (`hsw1/2`) proved BEFORE the run, then `Box`ed with `hpw`/`hcw`; unbox locally |
+(`hga` must stay visible across a run that ends in a runtime call: the callee pre needs the g-struct slot apart from the callee window.)
