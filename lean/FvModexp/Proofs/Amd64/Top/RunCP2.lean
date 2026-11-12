@@ -39,7 +39,7 @@ theorem cp2 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
   have hs3' : U.mem.readLE ((s.regs 4).toNat - 472) 8 = (BitVec.ofNat 64 (hdrV s p len 2)).toNat := by rw [hs3, hn5]
   have hsn' : U.mem.readLE ((s.regs 4).toNat - 560) 8 = (BitVec.ofNat 64 vn).toNat := by rw [hsn, hn1]
   have hI4 := toInt_small (BitVec.ofNat 64 vn) (by simp; omega)
-  have hmask := padMask64 (hdrV s p len 2) vn hlt hl2
+  have hmask := padMask64' (hdrV s p len 2) vn hlt hl2
   have hlenv := padLen64 (hdrV s p len 2) vn hlt hl2
   obtain ⟨d, hdd⟩ : ∃ d, (if vn = 0 then 0 else hdrV s p len 2 - vn) = d := ⟨_, rfl⟩
   rw [hdd] at hmask
@@ -52,7 +52,9 @@ theorem cp2 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
   janus64_run [hsp, hm1, hm2, hs3', hsn', hsv', hr0', hI4, hmask, hlenv, hda, BitVec.msb_eq_decide] until
     [segAddr Extracted.program fn + 0xc56, segAddr Extracted.program fn + 0xc33]
   · -- `memmove` skipped: source = destination, only possible for `len(v) = 0`
+    trace_state
     sorry
-  · sorry
+  · trace_state
+    sorry
 
 end FvModexp.Amd64.Run
