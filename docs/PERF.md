@@ -1120,3 +1120,12 @@ Body segments are independent modules importing only BJ (ROW-TIME rule); composi
 * `LibNE` arm64 51 s / 3.0 GB, amd64 55 s / 3.0 GB (generated mask proofs, as LibN).
 * `Common/TzWord` 0.6 s, `Exp/EvDefs` 2.7 s, `Exp/EvTz` (trailingZeroBits loop, induction on `ml - i`) 4.1 s / 2.1 GB,
   `Exp/EvStmt` 1.5 s.
+
+## asm s25 (2026-11-12) — drs segment 4 unblocked + correction loop head/cmp/break (arm64, dev compile, LEAN_NUM_THREADS=4)
+* DrsB4 (A3 → nat.mul → C): v1 one module > 8 GB (memcap kill). Split: DrsB4D (defs, 1.5 s) / DrsB4C (call + mul_post,
+  continuation over the return state, 2.2 s) / DrsB4R (stores → C, Mc Boxed, 3.3 s) / DrsB4 (loads + composition, 6 s, 2.5 GB).
+* DrsMulQ after adding `Mc.qa`: 79 s / 4.4 GB (unchanged; still a split candidate).
+* New: DrsCN (Mc.callN) 3.5 s; DrsCE 2.7 s; DrsC1 (head, norm4 → cmp call) 4 s; DrsC2 (cmp call) 10 s; DrsC2B (break test) 5 s.
+* LESSON: c1x first took > 4 min (killed) — a failing closer chain (`rw [readLE_writeLE_self, h3, toNat_ofNat]; omega` +
+  `janus_frame` after `rw ← hm`) in the post-run goals; closing each goal separately (`unfold is1; janus_frame`, `simp`,
+  `rw [readLE_writeLE_self]; exact Nat.mod_eq_of_lt …`) → 2.8 s. Probe with `all_goals trace_state; all_goals sorry` first.
