@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Arm64.Exp.SubMod2NCall
+import FvModexp.Proofs.Arm64.Exp.SubMod2NBase
 
 set_option autoImplicit false
 

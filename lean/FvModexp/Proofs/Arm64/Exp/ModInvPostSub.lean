@@ -19,7 +19,8 @@ set_option maxHeartbeats 4000000 in
 theorem callSub {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains SubMod2N.fn = false)
     {stkT aboveT : Nat} (hkT : stkT ≤ 4464) (haT : aboveT ≤ 88) (htr : Trunc.Hyp2 impl R ns stkT aboveT)
-    (hsub : SubMod2N.SubHypR impl R) (hadd : SubMod2N.AddHypR impl R) {kc : Nat} (hkc : 4608 ≤ kc)
+    (hsub : SubMod2N.SubHypR0 impl R) (hadd : SubMod2N.AddHypR impl R)
+    (hgr : GrowsliceLiveContract (LibW.program.link impl) (Extracted.program.contractAddr "runtime.growslice") 4096 R) {kc : Nat} (hkc : 4608 ≤ kc)
     {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat} {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat}
     {s : State} (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {p l c q ql qc : Nat}
     {L1 : List (Nat × Nat)} {b1 : Nat} {M : Memory}
@@ -52,7 +53,7 @@ theorem callSub {impl : List Segment} (hap : ImplApart Extracted.program impl) {
   have hqc40 : qc < 2 ^ 40 := hmid.2.2.2.1.1
   have hW : SubMod2N.W e + 1 ≤ c := by simp only [SubMod2N.W, NW] at hnc ⊢; omega
   obtain ⟨op, hone⟩ := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
-  refine ReachesRet.call_regions (SubMod2N.full impl hap R hns hnf hkT haT htr hsub hadd b1 L1 op p l c q ql qc e)
+  refine ReachesRet.call_regions (SubMod2N.full impl hap R hns hnf hkT haT htr hsub hadd hgr b1 L1 op p l c q ql qc e)
     hpc ⟨h0, h1, h2, h3, h4, h5, h6, h7, h8, h9, ?_⟩ fun s' hr ⟨⟨e1, e2, e3, e4⟩, hpost⟩ hreg => ?_
   · refine subPre_at hpre hkc hmid hone hsp h28 hm he1 (by omega) (by omega) (by simp only [NW] at hl; omega)
       (by simp only [NW] at hql; omega) hnz hnq hb ?_

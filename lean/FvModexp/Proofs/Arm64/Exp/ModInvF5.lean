@@ -112,7 +112,8 @@ set_option maxHeartbeats 64000000 in
 theorem segF5 {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains SubMod2N.fn = false)
     {stkT aboveT : Nat} (hkT : stkT ≤ 4464) (haT : aboveT ≤ 88) (htr : Trunc.Hyp2 impl R ns stkT aboveT)
-    (hsub : SubMod2N.SubHypR impl R) (hadd : SubMod2N.AddHypR impl R) {kc : Nat} (hkc : 4608 ≤ kc)
+    (hsub : SubMod2N.SubHypR0 impl R) (hadd : SubMod2N.AddHypR impl R)
+    (hgr : GrowsliceLiveContract (LibW.program.link impl) (Extracted.program.contractAddr "runtime.growslice") 4096 R) {kc : Nat} (hkc : 4608 ≤ kc)
     {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat} {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat}
     {s : State} :
     S5 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s 1798244 (ExF n) (eF n) (kF n) := by
@@ -138,7 +139,7 @@ theorem segF5 {impl : List Segment} (hap : ImplApart Extracted.program impl) {R 
   clear hcong hv hvq hbud hjn hex
   unfold Goal
   janus_run [r216, r112, r120, r304] until [1805584]
-  refine callSub hap hns hnf hkT haT htr hsub hadd hkc hpre hmidB.h (e := n) (by omega) (Nat.le_refl _) hl hql hnz hnq
+  refine callSub hap hns hnf hkT haT htr hsub hadd hgr hkc hpre hmidB.h (e := n) (by omega) (Nat.le_refl _) hl hql hnz hnq
     hbo (pcv := 1798276) ⟨by decide, by decide⟩ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
     (fun s' l' L' b' f0 f1 f2 f4 g0 g1 g2 mid2 hv' hn' _ _ hbud' _ =>
       hK' s' l' L' b' f0 f1 f2 f4 g0 g1 g2 mid2 hv' hn' hbud')

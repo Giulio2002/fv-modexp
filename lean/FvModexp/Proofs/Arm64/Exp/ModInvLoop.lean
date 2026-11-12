@@ -66,7 +66,8 @@ theorem loop {impl : List Segment} (hap : ImplApart Extracted.program impl) {R :
     (hkM : stkM ≤ kc) (haM : aboveM ≤ 88)
     {stkL aboveL : Nat} (hls : Lsh.Hyp2 impl R ns stkL aboveL) (hkL : stkL ≤ kc) (haL : aboveL ≤ 88)
     (hkT4 : stkT ≤ 4464)
-    (hsub : SubMod2N.SubHypR impl R) (hadd : SubMod2N.AddHypR impl R)
+    (hsub : SubMod2N.SubHypR0 impl R) (hadd : SubMod2N.AddHypR impl R)
+    (hgr : GrowsliceLiveContract (LibW.program.link impl) (Extracted.program.contractAddr "runtime.growslice") 4096 R)
     {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat} {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat}
     {s : State} (hsc : ∀ x, sqC (stLen s.mem st) x = sqrC x) (hsm : ∀ a a', a ≤ a' → sqrC a ≤ sqrC a')
     (hml : ∀ x y, mlC (stLen s.mem st) x y = mulC x y)
@@ -75,10 +76,10 @@ theorem loop {impl : List Segment} (hap : ImplApart Extracted.program impl) {R :
   have fin : S1 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s 1798112 (ExF n) (eF n) (kF n) :=
     segF1 hap hns hnf htr hkc hkT haT (segF2 hap hns hnf hmu hkc hkM haM hml hmm
       (segF3 hap hns hnf htr hkc hkT haT (segF4 hap hns hnf hls hkc hkL haL
-        (segF5 hap hns hnfS hkT4 haT htr hsub hadd hkc))))
+        (segF5 hap hns hnfS hkT4 haT htr hsub hadd hgr hkc))))
   refine j2_all fun J _ ih => segL0 hap hns hnf hsq hkc hkS haS hsc hsm J ?_ fin
   exact segL1 hap hns hnf htr hkc hkT haT (segL2 hap hns hnf hmu hkc hkM haM hml hmm
     (segL3 hap hns hnf htr hkc hkT haT (segL4 hap hns hnf hls hkc hkL haL
-      (segL5 hap hns hnfS hkT4 haT htr hsub hadd hkc ih))))
+      (segL5 hap hns hnfS hkT4 haT htr hsub hadd hgr hkc ih))))
 
 end FvModexp.Arm64.ModInv

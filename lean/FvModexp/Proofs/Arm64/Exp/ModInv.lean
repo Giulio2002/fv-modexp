@@ -12,7 +12,7 @@ import FvModexp.Proofs.Arm64.Exp.ModInvLoop
 returns a normalised nat holding `Exp.modularInverseModPowerOfTwo X n` (`x⁻¹ mod 2^n`), in `z`'s array or a fresh one.
 Paths: `n ≤ 64` (`ModInvSmall`), else `z.make`/`zz.make` (`make`, `mkzz`) and the Hensel loop (`loop`).
 Callee premises: `nat.sqr` / `nat.mul` (`SqrHyp` / `MulHyp`, divmc), asm's `nat.trunc` / `nat.lsh` (`Trunc.Hyp2`,
-`Lsh.Hyp2`), `nat.subMod2N` (verified; `Trunc.Hyp2` / `SubHypR` / `AddHypR` premises), the live
+`Lsh.Hyp2`), `nat.subMod2N` (verified; `Trunc.Hyp2` / `SubHypR0` / `AddHypR` / growslice premises), the live
 `runtime.makeslice` contract. The budgets of `sqr` / `mul` depend on the stack length `ℓ` at entry (`stLen s.mem st = ℓ`).
 -/
 
@@ -41,7 +41,8 @@ theorem full {impl : List Segment} (hap : ImplApart Extracted.program impl) {R :
     (hkM : stkM ≤ kc) (haM : aboveM ≤ 88)
     {stkL aboveL : Nat} (hls : Lsh.Hyp2 impl R ns stkL aboveL) (hkL : stkL ≤ kc) (haL : aboveL ≤ 88)
     (hkT4 : stkT ≤ 4464)
-    (hsub : SubMod2N.SubHypR impl R) (hadd : SubMod2N.AddHypR impl R)
+    (hsub : SubMod2N.SubHypR0 impl R) (hadd : SubMod2N.AddHypR impl R)
+    (hgr : GrowsliceLiveContract (LibW.program.link impl) (Extracted.program.contractAddr "runtime.growslice") 4096 R)
     (hsm : ∀ ℓ a a', a ≤ a' → sqC ℓ a ≤ sqC ℓ a')
     (hmm : ∀ ℓ a a' c c', a ≤ a' → c ≤ c' → mlC ℓ a c ≤ mlC ℓ a' c')
     (ℓ b : Nat) (L : List (Nat × Nat)) (zp zl zc st xp xl xc n : Nat) :
@@ -53,7 +54,7 @@ theorem full {impl : List Segment} (hap : ImplApart Extracted.program impl) {R :
       (fun s s' => (s'.sp = s.sp ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧ s'.regs 18 = s.regs 18) ∧
         Post R kc (sqC ℓ) (mlC ℓ) b L zp zc st xp xl n s s') := by
   intro s hpc ⟨h0, h1, h2, h3, h4, h5, h6, h7, hpre, hℓ⟩
-  have kL : J2 impl R kc (sqC ℓ) (mlC ℓ) b L zp zl zc st xp xl xc n s := loop hap hns hnf hnfS hkc hsq hkS haS htr hkT haT hmu hkM haM hls hkL haL hkT4 hsub hadd
+  have kL : J2 impl R kc (sqC ℓ) (mlC ℓ) b L zp zl zc st xp xl xc n s := loop hap hns hnf hnfS hkc hsq hkS haS htr hkT haT hmu hkM haM hls hkL haL hkT4 hsub hadd hgr
     (fun x => by rw [hℓ]) (hsm ℓ) (fun x y => by rw [hℓ]) (hmm ℓ)
   exact entry impl R kc (sqC ℓ) (mlC ℓ) b L zp zl zc st xp xl xc n s hkc hpc h0 h1 h2 h3 h4 h5 h6 h7 hpre
     (small impl R hmk kc _ _ b L zp zl zc st xp xl xc n s hkc)
@@ -77,7 +78,8 @@ theorem ens {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : 
     (hkM : stkM ≤ kc) (haM : aboveM ≤ 88)
     {stkL aboveL : Nat} (hls : Lsh.Hyp2 impl R ns stkL aboveL) (hkL : stkL ≤ kc) (haL : aboveL ≤ 88)
     (hkT4 : stkT ≤ 4464)
-    (hsub : SubMod2N.SubHypR impl R) (hadd : SubMod2N.AddHypR impl R)
+    (hsub : SubMod2N.SubHypR0 impl R) (hadd : SubMod2N.AddHypR impl R)
+    (hgr : GrowsliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.growslice") 4096 R)
     (hsm : ∀ ℓ a a', a ≤ a' → sqC ℓ a ≤ sqC ℓ a')
     (hmm : ∀ ℓ a a' c c', a ≤ a' → c ≤ c' → mlC ℓ a c ≤ mlC ℓ a' c')
     (ℓ b : Nat) (L : List (Nat × Nat)) (zp zl zc st xp xl xc n : Nat) :
@@ -88,11 +90,13 @@ theorem ens {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : 
   have hc := codeIn_ofImpl_restrict_of_apart hap LibW.names
   rw [← LibW.eq_only] at hc
   have hmkL := MakesliceLiveContract.of_codeIn hc hmk
+  have hgrL : GrowsliceLiveContract (LibW.program.link impl) (Extracted.program.contractAddr "runtime.growslice") 4096 R :=
+    fun L b => Janus.Contracts.EqHashModel.Summary.of_codeIn hc (hgr L b)
   rw [show names = LibW.names from rfl, ← LibW.eq_only, show segAddr Extracted.program fn = 1797104 by decide]
   intro ret hret s hs hpre
   janus_intro hs
   refine Summary.returns (full hap hns hnf hnfS hmkL hkc hsq hkS haS htr hkT haT hmu hkM haM hls hkL haL hkT4
-    hsub hadd hsm hmm ℓ b L zp zl zc st xp xl xc n) hret h_pc h_lr
+    hsub hadd hgrL hsm hmm ℓ b L zp zl zc st xp xl xc n) hret h_pc h_lr
     ⟨h_x0, h_x1, h_x2, h_x3, h_x4, h_x5, h_x6, h_x7, hpre⟩ fun s' ⟨⟨a, b, c, d⟩, hq⟩ => ⟨⟨a, b, c, d⟩, hq⟩
 
 set_option linter.defProp false in
@@ -109,11 +113,12 @@ def sum {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtIn
     (hkM : stkM ≤ kc) (haM : aboveM ≤ 88)
     {stkL aboveL : Nat} (hls : Lsh.Hyp2 impl R ns stkL aboveL) (hkL : stkL ≤ kc) (haL : aboveL ≤ 88)
     (hkT4 : stkT ≤ 4464)
-    (hsub : SubMod2N.SubHypR impl R) (hadd : SubMod2N.AddHypR impl R)
+    (hsub : SubMod2N.SubHypR0 impl R) (hadd : SubMod2N.AddHypR impl R)
+    (hgr : GrowsliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.growslice") 4096 R)
     (hsm : ∀ ℓ a a', a ≤ a' → sqC ℓ a ≤ sqC ℓ a')
     (hmm : ∀ ℓ a a' c c', a ≤ a' → c ≤ c' → mlC ℓ a c ≤ mlC ℓ a' c')
     (ℓ b : Nat) (L : List (Nat × Nat)) (zp zl zc st xp xl xc n : Nat)  :=
   CallWW.hypSum hap (fun _ h => h) (ens hap hns hnf hnfS hmk hkc hsq hkS haS htr hkT haT hmu hkM haM hls hkL haL hkT4
-    hsub hadd hsm hmm ℓ b L zp zl zc st xp xl xc n)
+    hsub hadd hgr hsm hmm ℓ b L zp zl zc st xp xl xc n)
 
 end FvModexp.Arm64.ModInv

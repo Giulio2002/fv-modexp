@@ -99,7 +99,8 @@ set_option maxHeartbeats 64000000 in
 theorem segL5 {J : Nat} {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains SubMod2N.fn = false)
     {stkT aboveT : Nat} (hkT : stkT ≤ 4464) (haT : aboveT ≤ 88) (htr : Trunc.Hyp2 impl R ns stkT aboveT)
-    (hsub : SubMod2N.SubHypR impl R) (hadd : SubMod2N.AddHypR impl R) {kc : Nat} (hkc : 4608 ≤ kc)
+    (hsub : SubMod2N.SubHypR0 impl R) (hadd : SubMod2N.AddHypR impl R)
+    (hgr : GrowsliceLiveContract (LibW.program.link impl) (Extracted.program.contractAddr "runtime.growslice") 4096 R) {kc : Nat} (hkc : 4608 ≤ kc)
     {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat} {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat}
     {s : State} (kJ : J2j impl R kc sqrC mulC b L zp zl zc st xp xl xc n s (J + 1)) :
     S5 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s 1797984 (ExL3 s n J) eL kL := by
@@ -127,7 +128,7 @@ theorem segL5 {J : Nat} {impl : List Segment} (hap : ImplApart Extracted.program
   clear hcong hv hvq hbud hcm hjn
   unfold Goal
   janus_run [r216, r112, r120, r176] until [1805584]
-  refine callSub hap hns hnf hkT haT htr hsub hadd hkc hpre hmidB.h (e := 2 ^ j * 64)
+  refine callSub hap hns hnf hkT haT htr hsub hadd hgr hkc hpre hmidB.h (e := 2 ^ j * 64)
     (by have := Nat.one_le_two_pow (n := j); omega) hen hl hql hnz hnq hbo
     (pcv := 1798016) ⟨by decide, by decide⟩ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
     (fun s' l' L' b' f0 f1 f2 f4 g0 g1 g2 mid2 hv' hn' _ _ hbud' hsl => hK' s' l' L' b' f0 f1 f2 f4 g0 g1 g2 mid2 hv' hn' hbud' hsl)
