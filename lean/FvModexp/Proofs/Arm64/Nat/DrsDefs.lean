@@ -161,7 +161,7 @@ def postOf (R : RtInv) (a : Args) (s s' : State) : Prop :=
 def μ (a : Args) (_ : State) : Nat := a.vl.toNat
 
 /-- the program of the summary -/
-abbrev P (impl : List Segment) : Program := (Extracted.program.onlySegments names).link impl
+abbrev P (impl : List Segment) : Program := LibDrs.program.link impl
 
 /-- the induction hypothesis below measure `n` -/
 @[reducible] def IH (impl : List Segment) (R : RtInv) (n : Nat) (a : Args) : Prop :=
