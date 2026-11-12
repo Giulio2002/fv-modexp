@@ -1032,3 +1032,10 @@ LESSON: after `janus_run … calls [hBS]` NEVER call `omega` for a sp fact (`(s.
 (huge hypotheses in context); `rw [hs1, ← hsp]; exact hsp'` = ms (lcall2: 84 s → 2 s). Same for `janus_simp` closers:
 prefer `rw [hk]; simp only [setReg_apply]; exact h28`. A `rw` closing by `rfl` on memory terms can time out: state
 value equations as separate `have`s with explicit types (lm_of: timeout → 7 s).
+
+### infra s22 (arm64 P2W2: loop invariant layer, first window copy, table → loop test; dev compile)
+P2W2LI 1.5 s, P2W2UB 1.4 s, P2W2Mv 1.8 s, P2W2Cp1 (`li_first`) 7.4 s / 2.4 GB, P2W2Cp2 (`cpM`: memmove + run to
+LT) 41 s / 2.4 GB, P2W2Cp3 (`CPF`, `cpC`) 4.6 s, P2W2Cp4 (`blH`: bitLen + three make paths) 23 s / 2.5 GB,
+P2W2Cp5 (`afterT`) 1.2 s; P2W2Al (+`rdH`/`macc`) unchanged 4.5 s. LESSON: after a `janus_run` that stores into
+the frame, `generalize hM : <literal write chain> = M1` (copy the chain from `trace_state`) and prove the transport
+facts about `M1` once — every later lemma then takes an abstract memory (no `(M := _)` unification tricks).

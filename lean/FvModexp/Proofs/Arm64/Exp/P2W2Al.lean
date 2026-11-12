@@ -155,6 +155,7 @@ structure AllocR (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc : Nat) (m0
   rc : r ≤ allocCost n
   keep : ∀ a k, (sp - 8 ≤ a ∧ a + k ≤ sp + 8 ∨ sp + 32 ≤ a ∧ a + k ≤ sp + 560) → m.readLE a k = M.readLE a k
   rdH : ∀ a k, Held R L1 a k → Apart a k (sp - K) (K + 560) → m.readLE a k = M.readLE a k
+  macc : ∀ a k w, m.accessible a k w = M.accessible a k w
 
 set_option maxRecDepth 20000 in
 /-- `makeslice(Word, _, c)`'s post as `AllocR` -/
@@ -201,7 +202,7 @@ theorem mkPost (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R L
   rw [hgg] at hinv
   refine ⟨ptr, junk, f, v, m, ex, ep, hs1, h.alloc hP hMF hcs hLF ?rg hin hap hinv, hin, hap, h48, hacc,
     hal (Or.inr (by omega)), hle, blockSize_le_allocCost _ _, fun a k ha => hMF.readLE a k ?_,
-    fun a k hh hap => alloc_rd hMF hcs hLF hh hap⟩
+    fun a k hh hap => alloc_rd hMF hcs hLF hh hap, hMF.accessible⟩
   case rg => subst hs1; rw [← hm]; exact hrg
   · rw [outside_append]
     refine ⟨?_, ?_⟩
@@ -252,7 +253,7 @@ theorem noPost (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R L
   rw [hgg] at hinv
   refine ⟨ptr, junk, f, v, m, ex, ep, hs1, h.alloc hP hMF hcs hLF ?rg hin hap hinv, hin, hap, h48, hacc,
     hal (Or.inr (by decide)), hle, blockSize_le_allocCost _ _, fun a k ha => hMF.readLE a k ?_,
-    fun a k hh hap => alloc_rd hMF hcs hLF hh hap⟩
+    fun a k hh hap => alloc_rd hMF hcs hLF hh hap, hMF.accessible⟩
   case rg => subst hs1; rw [← hm]; exact hrg
   · rw [outside_append]
     refine ⟨?_, ?_⟩
