@@ -1198,3 +1198,10 @@ amd64 Top_RunErr in the same run: **FAIL (timeout) 901 s**, peak 1.4 GB — at l
   arithmetic proved in a 3-hypothesis lemma). RULE for every segment: no `omega` after the callee post is in scope
   except on goals whose context was cleared; close budget/bounds goals with the EvJ lemmas.
 * `EvN2` 3.4 s, `EvN3` 22.8 s / 2.6 GB (the `CSEL GT` max run: `by_cases` + simp per goal).
+
+### infra s29 (expNNEven arm64, dev compile, LEAN_NUM_THREADS=4)
+EvNP 5.7 s / 2.6 GB (first version: one monolithic `npre_of` with ~40 destructured Apart/Outside disjunctions in
+context — every `omega` case-split them: > 6 min, killed; split into `nenv_of`/`nstk_of` + omega-free assembly → 5.7 s);
+EvJ2 9.1 s / 3.0 GB (`libN_sub` by `List.all … contains` decide +kernel: 26.6 s / 7.0 GB → `Sublist` decide 9.1 s / 3.0 GB);
+EvE1 5.7 s / 2.5 GB; EvN4 6.0 s / 2.5 GB; EvenNHyp 1.1 s; re-checked EvN1 7.9 s, EvN2 4.7 s, EvLsh 7.0 s, EvRsh 5.7 s,
+EvN3 32 s / 2.7 GB.

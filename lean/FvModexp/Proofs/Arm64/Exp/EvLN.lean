@@ -134,13 +134,13 @@ theorem stepC (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) {M 
     (hds : ∀ a k, Outside a k R.rt → Outside a k (ZS zp zc st s.mem) → Outside a k [(pd, pd + 8 * cd)])
     (hdl : ∀ a k, InRanges a k L → Outside a k (ZS zp zc st s.mem) → Outside a k [(pd, pd + 8 * cd)])
     (hcd : 0 < cd) (hdw : Apart pd (8 * cd) (sp - K) (K + 448))
-    {stk above : Nat} (hstk : stk ≤ K) (habove : above ≤ 88)
+    {stk above : Nat} (hstk : stk ≤ K) (habove : above ≤ 128)
     {M' : Memory} {L2 : List (Nat × Nat)} {b2 : Nat}
     (hF : MemFrame M M' (R.rt ++ [(sp - stk, sp - 8), (sp + 8, sp + above)] ++ [(pd, pd + 8 * cd)] ++ stkWs M st))
     (hLF : LiveFrame M M' L1 ([(pd, pd + 8 * cd)] ++ stkWs M st)) (hrg : M'.regions = M.regions)
     (hx : LiveExt R L1 L2) (hinv : R.inv b2 L2 g (view R.rt L2 M')) (hsb : StackBackL R L1 L2 st M M') :
     WC R L K g sp st zp zc s.mem M' L2 b2 ℓ ∧
-    (∀ a k, (sp - 8 ≤ a ∧ a + k ≤ sp + 8 ∨ sp + 88 ≤ a ∧ a + k ≤ sp + 448) → M'.readLE a k = M.readLE a k) ∧
+    (∀ a k, (sp - 8 ≤ a ∧ a + k ≤ sp + 8 ∨ sp + 128 ≤ a ∧ a + k ≤ sp + 448) → M'.readLE a k = M.readLE a k) ∧
     (∀ q l c v, LN R L s.mem st M L1 q l c v → (0 < c → Apart q (8 * c) pd (8 * cd)) →
       LN R L s.mem st M' L2 q l c v) := by
   have hK := hP.1.2.2.2.2.2.2.2.2.1
@@ -243,7 +243,7 @@ variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc
 set_option maxRecDepth 20000 in
 /-- a live local through `stk.nat` (no destination; level up; array kept or fresh) -/
 theorem LN.stkN (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) {M M' : Memory}
-    {L1 L2 : List (Nat × Nat)} {stk above : Nat} (hstk : stk ≤ K) (habove : above ≤ 88)
+    {L1 L2 : List (Nat × Nat)} {stk above : Nat} (hstk : stk ≤ K) (habove : above ≤ 128)
     (hF : MemFrame M M' (R.rt ++ [(sp - stk, sp - 8), (sp + 8, sp + above)] ++ stkWs M st))
     (hLF : LiveFrame M M' L1 (stkWs M st)) (hx : LiveExt R L1 L2) (hlc : stLen M st ≤ stCap M st)
     (hl : stLen M st ≤ stLen M' st)

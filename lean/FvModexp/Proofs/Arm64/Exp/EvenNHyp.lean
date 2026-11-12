@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.NDefs
 
+set_option autoImplicit false
+
 /-!
 # `nat.expNNEven`'s premise on the two recursive `nat.expNN` calls (arm64; agent infra)
 
@@ -24,5 +26,24 @@ def ExpNNHypNE (impl : List Segment) (R : RtInv) (K : Nat) (costF : Nat → Nat 
         BitVec.ofNat 64 mp, BitVec.ofNat 64 n, BitVec.ofNat 64 mc, BitVec.ofNat 64 slow]
       (ExpN.Pre R b L K costF needR costR needS needP costS costP zp zl zc st xp xl xc yp yl yc mp n mc slow)
       (ExpN.Post R b L K costF costR costS costP zp zc st xp xl yp yl mp n)
+
+/-- `ExpNNHypNE` with two facts `ExpN.Post` does not state (true of the code, nat.go:639-722): the result capacity is
+below `2^40`, and an empty result (`c = 0`, only from `z.setWord(0)` = `z[:0]`) is `z`'s own array unless the alias test
+(`alias(z, x) || alias(z, y)`: same last capacity word) set `z = nil`.
+LOCAL WRAPPER (infra s29) until expmc answers NOTES-conventions "[infra s28] REQUEST": the caller passes the result as
+an input (`RdIn` needs an accessible pointer even for length 0). -/
+def ExpNNHypNE0 (impl : List Segment) (R : RtInv) (K : Nat) (costF : Nat → Nat → Nat → Nat)
+    (needR : Nat → Nat → Nat) (costR : Nat → Nat → Nat → Nat) (needS needP : Nat → Nat → Nat → Nat)
+    (costS costP : Nat → Nat → Nat → Nat → Nat) : Prop :=
+  ∀ (b : Nat) (L : List (Nat × Nat)) (zp zl zc st xp xl xc yp yl yc mp n mc slow : Nat),
+    Ensures ((Extracted.program.onlySegments ExpN.names).link impl) (segAddr Extracted.program ExpN.fn)
+      [BitVec.ofNat 64 zp, BitVec.ofNat 64 zl, BitVec.ofNat 64 zc, BitVec.ofNat 64 st, BitVec.ofNat 64 xp,
+        BitVec.ofNat 64 xl, BitVec.ofNat 64 xc, BitVec.ofNat 64 yp, BitVec.ofNat 64 yl, BitVec.ofNat 64 yc,
+        BitVec.ofNat 64 mp, BitVec.ofNat 64 n, BitVec.ofNat 64 mc, BitVec.ofNat 64 slow]
+      (ExpN.Pre R b L K costF needR costR needS needP costS costP zp zl zc st xp xl xc yp yl yc mp n mc slow)
+      (fun s s' => ExpN.Post R b L K costF costR costS costP zp zc st xp xl yp yl mp n s s' ∧
+        (s'.regs 2).toNat < 2 ^ 40 ∧
+        ((s'.regs 2).toNat = 0 → (s'.regs 0).toNat = zp ∨
+          (0 < zc ∧ ((0 < xc ∧ zp + 8 * zc = xp + 8 * xc) ∨ (0 < yc ∧ zp + 8 * zc = yp + 8 * yc)))))
 
 end FvModexp.Arm64.EvenHyp

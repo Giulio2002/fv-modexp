@@ -112,15 +112,15 @@ theorem segR {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns 
     exact ⟨r0.trans h.r0, r1.trans h.r1, r2.trans h.r2, r3, r4, r5, r6, trivial⟩
   · rw [tq, ta, tm, tl, tc, tn]
     refine ⟨⟨CallW.callEnv_of (hw.cenv hP) (fsp.trans h.jx.esp) (r28.trans h.jx.e28) fm hkR haR, hsv,
-      Nat.le_refl _, hd.wr hP hsN' hgN' fm hkR haR, xR, by omega, fun _ => hdm, by rw [fm]; exact xN, hml0,
+      Nat.le_refl _, hd.wr hP hsN' hgN' fm hkR (by omega), xR, by omega, fun _ => hdm, by rw [fm]; exact xN, hml0,
       Or.inl hn0, bud_pre hb1 hrk, by rw [hgN', fm]; exact hw.inv⟩, hmlc, hmc40⟩
   · rw [tq, ta, tm, tl, tn] at hq
     obtain ⟨p', l', c', g0, g1, g2, L2, b2, hres, -, ⟨hx, hb, hinv⟩, hF, hLF⟩ := hq
     simp only [winA, hsN'] at hF
     rw [fm] at hF hLF hres hrg
     rw [hgN'] at hinv
-    obtain ⟨hF', hLF', hsb, ehd⟩ := nonStk hw.sok hx hF hLF (hP.st_cw hkR haR) (out1_of_apart dh)
-    obtain ⟨hw', hk, hkeep⟩ := stepC hP hw (Loc.sub hdl) (Loc.subL hdl) ha2.1 dw hkR haR hF' hLF' hrg hx hinv hsb
+    obtain ⟨hF', hLF', hsb, ehd⟩ := nonStk hw.sok hx hF hLF (hP.st_cw hkR (by omega)) (out1_of_apart dh)
+    obtain ⟨hw', hk, hkeep⟩ := stepC hP hw (Loc.sub hdl) (Loc.subL hdl) ha2.1 dw hkR (by omega) hF' hLF' hrg hx hinv hsb
     obtain ⟨rfl, rfl⟩ := hres.2.2.2.2.2.1 (Nat.le_refl _)
     have hm2 := LN.of_res hP hw hd hres hx hsb (fun _ hne => absurd ehd hne)
     rw [xv] at hm2
