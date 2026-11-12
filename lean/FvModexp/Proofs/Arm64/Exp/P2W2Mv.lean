@@ -30,7 +30,7 @@ theorem mvCallW {impl : List Segment} (hmv : MemmoveLive (LibExp.program.link im
     (KC : ∀ (junk : Nat → W64) (f : Flags) (v : Nat → BitVec 128) (m : Memory) (ex : Option (Nat × Nat))
       (ep : Nat → Bool), MemFrame M m (R.rt ++ [(sp - 4096, sp - 8), (sp + 8, sp + 32)] ++ [(dst, dst + n)]) →
       LiveFrame M m L1 [(dst, dst + n)] → R.inv b1 L1 g (view R.rt L1 m) → Mem.Copied M m dst src n →
-      ReachesRet (LibExp.program.link impl) ret0 (retStateX T junk [] f v m ex ep) Q) :
+      m.regions = M.regions → ReachesRet (LibExp.program.link impl) ret0 (retStateX T junk [] f v m ex ep) Q) :
     ReachesRet (LibExp.program.link impl) ret0 T Q := by
   have hK := hP.1.2.2.2.2.2.2.2.1
   have hK1 := hP.1.2.2.2.2.2.2.2.2.1
@@ -61,7 +61,7 @@ theorem mvCallW {impl : List Segment} (hmv : MemmoveLive (LibExp.program.link im
   simp only [t0, t1, t2, hm] at hfr2 hlf2 hcp
   rw [eg] at hinv2
   simp only [calleeStack, esp] at hfr2
-  exact KC junk f2 v2 m' ex2 ep2 hfr2 hlf2 hinv2 hcp
+  exact KC junk f2 v2 m' ex2 ep2 hfr2 hlf2 hinv2 hcp (by rw [← hm]; exact hrg0)
 
 /-- an entry-relative scratch nat is apart from the window -/
 theorem scr_win (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {L1 : List (Nat × Nat)} {M : Memory} {t k : Nat}
