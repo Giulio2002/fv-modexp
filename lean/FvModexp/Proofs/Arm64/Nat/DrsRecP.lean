@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Arm64.Nat.DrsEnv
+import FvModexp.Proofs.Arm64.Nat.DrsCallS
 
 /-!
 # `divRecursiveStep` (arm64), loop body: the precondition of the recursive call (pure)
@@ -34,7 +35,7 @@ theorem rec_pre {R : RtInv} {c : Cx} {s X : State} {Lk : List (Nat × Nat)} {bk 
   have hext : LiveExt R c.L Lk := hcr.ext1.trans hev.ext
   obtain ⟨hce, hsv, hgl, -, -, hulc, huc, hvlc, hvc, -, ⟨hvl9, -⟩, htop, -, -,
     ⟨-, -, -, -, -⟩, ⟨hua, hu48, huh, huo, hug⟩, ⟨hva, hv48, hvh, hvo, hvgA, hvch, hvc48⟩, -, -, huv,
-    ⟨-, hstw, hstg, harr⟩, ⟨hstl, -⟩, -, ⟨hus, -⟩, ⟨hvs, -⟩, hswb, -, -, ⟨hq, hugA, hstgA, hfg⟩, -, -⟩ := hcr.pre
+    ⟨-, hstw, hstg, harr⟩, ⟨hstl, -, hvcf, hst0⟩, -, ⟨hus, -⟩, ⟨hvs, -⟩, hswb, -, -, ⟨hq, hugA, hstgA, hfg⟩, -, -⟩ := hcr.pre
   have hce' := hce
   obtain ⟨-, ⟨hal, hb', -, hw⟩, -, hout, hga, hgr, -, -⟩ := hce'
   have hlen := hfp.len
@@ -83,6 +84,12 @@ theorem rec_pre {R : RtInv} {c : Cx} {s X : State} {Lk : List (Nat × Nat)} {bk 
   have t0s := hcr.t0st; have t0u := hcr.t0u; have t0v := hcr.t0v; have t0g := hcr.t0g; have t0gA := hcr.t0gA
   have fq := hfp.ft0; have fu := hfp.fu; have fv := hfp.fv; have fst := hfp.fst; have fgA := hfp.fgA
   rw [← hlen] at fq fu fv fst fgA
+  have hvcX : Apart c.vp (8 * c.vc) (stW X.mem c.st + 8 * stLen X.mem c.st)
+      (8 * (stCap X.mem c.st - stLen X.mem c.st)) := by
+    have hl : stLen s.mem c.st ≤ stLen X.mem c.st := by rw [hlen]; simp only [Cx.l1]; omega
+    rcases free_loc hev hl with ⟨h1, h2⟩ | ⟨hin, hap⟩
+    · unfold Apart at hvcf ⊢; omega
+    · exact fresh_apart hvch hin hap
   have hlB : stLen X.mem c.st + 12 * (c.vl - c.vl / 2 + 1) + 64 ≤ 2 ^ 16 := by
     rw [hlen]; simp only [Cx.l1, StackNat.rnd]; omega
   refine ⟨Ev.callEnv hcr hev hsp h28 (by omega) (by omega), hsv, hglX, by omega, by omega, by omega, by omega,
@@ -95,7 +102,7 @@ theorem rec_pre {R : RtInv} {c : Cx} {s X : State} {Lk : List (Nat × Nat)} {bk 
       hext.held (hvh.sub (by omega) (by omega)), hwin _ _ (hvo.of_sub (by omega) (by omega)),
       apL hvgA (by omega) (by omega), hext.held (hvch.sub (by omega) (by omega)), by omega⟩,
     apR t0u (by omega) (by omega), apR t0v (by omega) (by omega), apR (apL huv (by omega) (by omega)) (by omega) (by omega),
-    hstin, ⟨hlB, by rw [hlen] at hlc; simp only [Cx.l1, StackNat.rnd] at hlc; omega⟩, ⟨t0s, fq.symm⟩, ⟨apL hus (by omega) (by omega), apL fu.symm (by omega) (by omega)⟩,
+    hstin, ⟨hlB, by rw [hlen] at hlc; simp only [Cx.l1, StackNat.rnd] at hlc; omega, apL hvcX (by omega) (by omega), hst0⟩, ⟨t0s, fq.symm⟩, ⟨apL hus (by omega) (by omega), apL fu.symm (by omega) (by omega)⟩,
     ⟨apL hvs (by omega) (by omega), apL fv.symm (by omega) (by omega)⟩, hswb, fst,
     by rw [hlen]; exact hwin _ _ hfp.fw, ⟨t0gA, apL hugA (by omega) (by omega), hstgA, fgA⟩, ?_, by rw [h28]; exact hev.inv⟩
   rw [hlen]; exact Nat.le_trans (drsC_ul _ _ _ _ (by omega)) hbud

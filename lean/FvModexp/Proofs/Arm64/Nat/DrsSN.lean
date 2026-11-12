@@ -99,7 +99,7 @@ theorem head_mk {R : RtInv} {c : Cx} {s P S : State} {T : Memory} {rs : List (Na
   have hW := hcr.hW; have := drsW_ge c.vl
   have hpre := hcr.pre
   obtain ⟨hce, -, -, -, -, -, -, -, -, hv2, -, htop, hq0, -, ⟨-, -, hqh, hqw, -⟩, ⟨-, -, huh, huw, -⟩,
-    ⟨-, -, hvh, hvw, -, -, -⟩, -, -, -, -, ⟨-, hc0⟩, ⟨hqs, hqf⟩, ⟨hus, huf⟩, ⟨hvs, hvf⟩, -, -, -, -, hcb, -⟩ := hpre
+    ⟨-, -, hvh, hvw, -, -, -⟩, -, -, -, -, ⟨-, hc0, -⟩, ⟨hqs, hqf⟩, ⟨hus, huf⟩, ⟨hvs, hvf⟩, -, -, -, -, hcb, -⟩ := hpre
   obtain ⟨-, ⟨-, hb', -, -⟩, -⟩ := hce
   have hfw : MemFrame T S.mem (fw s) := hM2.mono fun x k ho => by
     simp only [fw, winA, outside_cons, outside_nil, and_true] at ho ⊢; omega

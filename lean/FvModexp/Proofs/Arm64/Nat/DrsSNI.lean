@@ -39,7 +39,7 @@ theorem hd_mem {R : RtInv} {c : Cx} {s X : State} {T : Memory} {bk : Nat}
         T.readLE x k = s.mem.readLE x k) := by
   have hpre' := hpre
   obtain ⟨hce, -, hgl, -, -, -, -, -, -, -, -, -, -, -, ⟨-, -, hqh, hqw, -⟩, ⟨-, -, huh, huw, -⟩,
-    ⟨-, -, hvh, hvw, -, -, -⟩, -, -, -, hsti, ⟨-, hc0⟩, ⟨hqs, hqf⟩, ⟨hus, huf⟩, ⟨hvs, hvf⟩, -, hstf, hfw, -, -, -⟩ := hpre'
+    ⟨-, -, hvh, hvw, -, -, -⟩, -, -, -, hsti, ⟨-, hc0, -⟩, ⟨hqs, hqf⟩, ⟨hus, huf⟩, ⟨hvs, hvf⟩, -, hstf, hfw, -, -, -⟩ := hpre'
   have hce' := hce
   obtain ⟨-, ⟨hal, hb', -, -⟩, -, hout, -, hgr, hLs, -⟩ := hce'
   have hsti' := hsti

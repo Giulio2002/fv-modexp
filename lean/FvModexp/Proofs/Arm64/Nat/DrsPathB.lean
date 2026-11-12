@@ -123,7 +123,7 @@ theorem db_preS {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c W qp ql qc st u
     DivBasic.Pre R b L qp ql st up ul' uc vp vl X := by
   obtain ⟨hce, hsv, hgl, hqlc, hqc, hulc, huc, hvlc, hvc, hv2, ⟨hvl9, hql9⟩, htop, -, hU2,
     ⟨hqa, hq48, hqh, hqo, hqg⟩, ⟨hua, hu48, huh, huo, hug⟩, ⟨hva, hv48, hvh, hvo, -, -, -⟩, hqu, hqv, huv,
-    hsti, ⟨hstl, hcap0⟩, ⟨hqs, hqf⟩, ⟨hus, huf⟩, ⟨hvs, hvf⟩, hswb, hsf, hfo, -, -, hinv⟩ := hpre
+    hsti, ⟨hstl, hcap0, -⟩, ⟨hqs, hqf⟩, ⟨hus, huf⟩, ⟨hvs, hvf⟩, hswb, hsf, hfo, -, -, hinv⟩ := hpre
   have hce' := hce
   obtain ⟨-, ⟨hal, hb', ha, hw⟩, -, hout, hga, hgr, hLs, -⟩ := hce'
   have hspn : X.sp.toNat = s.sp.toNat - 400 := by

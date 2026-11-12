@@ -81,7 +81,7 @@ theorem l_pre {R : RtInv} {b : Nat} {dc : Nat → Nat → Nat → Nat} {L : List
     hv2, hvl, hp.ul9, ?vn, hp.zz2, fun hc => ⟨(hz hc).1, (hz hc).2.1⟩, fun hc => (hz2 hc).2.1,
     Or.inr fun hc => (hz2 hc).1, ⟨?sok, hwin _ _ hp.sw, by rw [h28]; exact hsep.1, ?sarr⟩,
     hp.sl, fun hc => ⟨(hz hc).2.2.1, (hz hc).2.2.2⟩, fun hc => ⟨(hz2 hc).2.2.1, (hz2 hc).2.2.2⟩,
-    ⟨hp.us, hp.uf⟩, ⟨hp.vs, hp.vf⟩, hsep.2.1, hsep.2.2, hp.w0, ⟨hp.zg, hp.z2g, hp.sg, hp.fg⟩, ?cost, ?inv⟩
+    ⟨hp.us, hp.uf⟩, ⟨hp.vs, hp.vf⟩, hsep.2.1, hsep.2.2, ⟨hp.w0, hp.st0⟩, ⟨hp.zg, hp.z2g, hp.sg, hp.fg⟩, ?cost, ?inv⟩
   case gw =>
     have := hp.gl.2.2.2.2.2.2.2.2.2.1
     simp only [win, winA, outside_cons, outside_nil, and_true] at this ⊢; omega
