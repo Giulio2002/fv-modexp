@@ -197,6 +197,23 @@ theorem one_facts {R : RtInv} {L L1 L2 : List (Nat × Nat)} {b1 b2 g sp n st one
       (zjVal n Mv ((2 ^ 64 - t) % 2 ^ 64) (Exp.montPow n Mv ((2 ^ 64 - t) % 2 ^ 64) xv rv) Y ylen yi)
       st n0 onep r18 r29 M' s'
 
+/-- small-context arithmetic for `afterOne` (omega in its ~150-hypothesis context cost > 2 min) -/
+theorem sub2 {b b1 b2 x y : Nat} (h1 : b - x ≤ b1) (h2 : b1 - y ≤ b2) : b - (x + y) ≤ b2 := by omega
+
+theorem fe15 {n0 a b c d r : Nat} (hn0 : n0 ≤ a) (e2 : b = a) (hlen : c = b + r) (hc : c ≤ d) : n0 ≤ d := by omega
+
+set_option maxRecDepth 20000 in
+theorem win_sub {a k sp : Nat} (hsp : 4304 ≤ sp) (h : Apart a k (sp - 4304) (4304 + 1040)) :
+    Apart a k (sp - 4288) (4288 + 1040) := by unfold Apart at h ⊢; omega
+
+set_option maxRecDepth 20000 in
+theorem go2 {g sp st : Nat} {M : Memory} (hsp : 4304 ≤ sp) (hga4 : Apart (g + 16) 8 (sp - 4304) (4304 + 1040))
+    (hstg : Apart st 24 (g + 16) 8) (hfg : Apart (stFree M st).1 (stFree M st).2 (g + 16) 8)
+    (hlc : stLen M st ≤ stCap M st) :
+    Outside (g + 16) 8 (ow sp ++ [(sp - 4208, sp - 8), (sp + 8, sp + 24)] ++ stkWs M st) := by
+  unfold Apart at hga4 hstg hfg; simp only at hfg
+  simp only [ow, stkWs, List.cons_append, List.nil_append, outside_cons, outside_nil, and_true]; omega
+
 /-- the stack/runtime chain `oneJ → p01` -/
 @[reducible] def OneChain (R : RtInv) (b : Nat) (L L2 : List (Nat × Nat)) (b2 sp n st : Nat) (M0 M2 : Memory) : Prop :=
   MemFrame M0 M2 (R.rt ++ ow sp ++ [(sp - 4208, sp - 8), (sp + 8, sp + 24)] ++ stkWs M0 st) ∧
@@ -335,11 +352,10 @@ theorem afterOne (impl : List Segment) (hap : ImplApart Extracted.program impl) 
   have hrg2 : M2.regions = M.regions := hrgS.trans hrgO
   have acc2 : ∀ a k w, M2.accessible a k w = M.accessible a k w := fun a k w => by
     rw [hFS.accessible, hFO.accessible]
+  have hgo2 : Outside (g + 16) 8 (ow sp ++ [(sp - 4208, sp - 8), (sp + 8, sp + 24)] ++ stkWs M st) :=
+    go2 hK4 hga4 hfe.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1 hfg hlc
   have hfw' := hfw; have hfg' := hfg; have hstw' := hstw4; have hstg := hfe.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
   unfold Apart at hfw' hfg' hstw' hstg; simp only at hfw' hfg'
-  have hgo2 : Outside (g + 16) 8 (ow sp ++ [(sp - 4208, sp - 8), (sp + 8, sp + 24)] ++ stkWs M st) := by
-    unfold Apart at hga4
-    simp only [ow, stkWs, List.cons_append, List.nil_append, outside_cons, outside_nil, and_true]; omega
   have hws2 : ∀ r ∈ ow sp ++ [(sp - 4208, sp - 8), (sp + 8, sp + 24)] ++ stkWs M st, r.1 < r.2 →
       M.accessible r.1 (r.2 - r.1) true = true := by
     intro r hr hlt
@@ -414,8 +430,7 @@ theorem afterOne (impl : List Segment) (hap : ImplApart Extracted.program impl) 
         · exact Or.inl (h1.sub (by omega) (by omega))
         · exact Or.inr (h1.of_sub (by omega) (by omega))
   have hbud2 : b - ((if 4 < n then blockSize (8 * n) true else 0) + stackNatCost (stLen M st) (17 * n)) ≤ b2 := by
-    rw [e2] at hbS
-    by_cases h4 : 4 < n <;> simp only [h4, ite_true, ite_false] at hbO ⊢ <;> omega
+    rw [e2] at hbS; exact sub2 hbO hbS
   have hfe2 : FinEnv sp g st n0 r29 ret M2 := by
     obtain ⟨f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19⟩ := hfe
     have hrd : ∀ a, a = sp - 8 ∨ a = sp → M2.readLE a 8 = M.readLE a 8 := by
@@ -431,8 +446,7 @@ theorem afterOne (impl : List Segment) (hap : ImplApart Extracted.program impl) 
       by rw [rs 912 (by omega)]; exact f9, by rw [rs 840 (by omega)]; exact f10, by rw [rs 848 (by omega)]; exact f11,
       by rw [rs 856 (by omega)]; exact f12, f13, by rw [acc2]; exact f14, ?_, f16, f17,
       by rw [hrd _ (Or.inl rfl)]; exact f18, by rw [hrd _ (Or.inr rfl)]; exact f19⟩
-    simp only [stLen, stCap] at hc2 hlen2 e2 hn0 ⊢
-    omega
+    exact fe15 hn0 e2 hlen2 hc2
   have hz2 : 2 * n ≤ zc → Buf R L2 g sp n M2 zp zc ∧ zp % 8 = 0 := fun h => ⟨buf_ext hx2 (hz h).1 fr2, (hz h).2⟩
   have hold2 : 2 * n ≤ zc → Apart zp (8 * zc) zzp (8 * zzc) ∧ Apart zp (8 * zc) mp (8 * n) ∧
       Apart zp (8 * zc) yp (8 * ylen) ∧ Apart zp (8 * zc) (stW M2 st + 8 * stLen M st) (8 * (17 * n)) ∧
@@ -443,7 +457,7 @@ theorem afterOne (impl : List Segment) (hap : ImplApart Extracted.program impl) 
     exact ⟨a1, a2, a3, bapL _ _ hb.2.2.2.2.1 a6, a4, hoA _ _ hb.2.2.2.2.1 hb.2.2.2.2.2.1, a5⟩
   refine reaches_mono (p01Ret impl hap R hclr hmv hmk hserv ret hret b2 L2 g sp n mp mc t (stW M2 st + 8 * stLen M st)
     onep rrp rrc xp xc yp ylen Y yi zp zc zzp zzc st n0 M2 r18 r29 f29 he2 hce2 hn (by omega) hmc hmc' ht (inpT _ _ hm)
-    hba hbb hbh (by unfold Apart at hbw ⊢; omega) hbg (flip _ _ _ _ (bapL _ _ hm.2.2.1 hmF)) hone2 hbo hone12
+    hba hbb hbh (win_sub hK4 hbw) hbg (flip _ _ _ _ (bapL _ _ hm.2.2.1 hmF)) hone2 hbo hone12
     (inpT _ _ hrr) (flip _ _ _ _ (bapL _ _ hrr.2.2.1 hrF)) (inpT _ _ hx) (flip _ _ _ _ (bapL _ _ hx.2.2.1 hxF))
     (by rw [rs 1016 (by omega)]; exact r1016) (by rw [rs 1024 (by omega)]; exact r1024)
     (by rw [rs 1032 (by omega)]; exact r1032) (by rw [rs 224 (by omega)]; exact r224)

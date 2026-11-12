@@ -17,6 +17,9 @@ open FvModexp.Arm64.W4Loop (Env Inp Buf)
 /-- the `CLZ` of the smeared top word (fn+0x7f4) -/
 abbrev zclz : Nat := 1800548
 
+theorem e24 (d : Nat) : 8 * d + 2 * (8 * d) = 24 * d := by omega
+theorem e24' (sp d : Nat) : sp + 432 + 24 * d + 8 = sp + 440 + 24 * d := by omega
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
@@ -85,9 +88,9 @@ theorem zcD (impl : List Segment) (R : RtInv)
   generalize hdd : yi / 2 ^ (kTop yi * 4) = d at hd16 hdm KT ⊢
   obtain ⟨eE1, eE2, eE3, eE4⟩ := hent d hd16
   have eh1 : M.readLE (sp + 432 + (8 * d + 2 * (8 * d))) 8 = bp + 8 * (d * n) := by
-    rw [← eE2]; congr 1; omega
+    rw [e24]; exact eE2
   have eh2 : M.readLE (sp + 432 + (8 * d + 2 * (8 * d)) + 8) 8 = n := by
-    rw [← eE3]; congr 1; omega
+    rw [e24, e24']; exact eE3
   have hlt : ((n : Int) < (n : Int)) = False := by simp
   have hpd := hbuf d hd16
   have hzd' := hzb d hd16
