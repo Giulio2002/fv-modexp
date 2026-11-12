@@ -70,7 +70,7 @@ theorem r1a {impl : List Segment} (hap : ImplApart Extracted.program impl)
   rw [show s.regs 30 = BitVec.ofNat 64 (s.regs 30).toNat by simp]
   refine tailB hap _ _ sp g st (stLen s.mem st) zp 1 zc (s.regs 30).toNat (s.regs 18) (s.regs 29)
     (S.mem.writeLE zp 8 1) rfl rfl ?_ ?_ ?_ ?_ ?_ rfl (by omega) (by omega) (by omega) (tenv_of hP hw' hsl' hr4 hr48)
-    (fun s' ht => finQ hP hw' hres hb ht)
+    (fun s' ht => finQ hP hw' hres (rs_z hP hw') hb ht)
   all_goals janus_simp
 
 end

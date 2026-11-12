@@ -79,7 +79,7 @@ theorem laFTT (impl : List Amd64.Segment) (hap : ImplApart Extracted.program imp
   gen_reg 2 as y0 with hY0
   have hy0 : (y0.toNat = 0) = False := by
     rw [← hY0]; simp only [eq_iff_iff, iff_false]
-    repeat apply bv_or_ne_left
+    repeat (with_reducible apply bv_or_ne_left)
     exact top_ne64 ht0
   janus64_run [hr0', hr3', hsp, hq0, hz1, msb_m1, msb_m1', msb_allones, hz2, hy0] until [pcP1]
   gen_reg 2 as bl0 with hB0

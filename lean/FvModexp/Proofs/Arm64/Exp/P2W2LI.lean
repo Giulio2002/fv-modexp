@@ -31,6 +31,8 @@ structure UB (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc : Nat) (M : Me
   ap : 0 < c → Apart p (8 * c) (sp - K) (K + 560) ∧ Apart p (8 * c) st 24 ∧ Apart p (8 * c) RunIface.gA 32 ∧
     Apart p (8 * c) (g + 16) 8 ∧ Apart p (8 * c) (free M st).1 (free M st).2 ∧
     Apart p (8 * c) zzp (8 * (2 * W lm)) ∧ Apart p (8 * c) bp (8 * P2Pre.NB 4 lm)
+  /-- (`ResSep`) a buffer other than the entry `z` is apart from the stack's current array -/
+  rs : 0 < c → 0 < stCap M st → (p = zp ∧ c = zc) ∨ Apart p (8 * c) (stW M st) (8 * stCap M st)
 
 /-- the buffer class: U (`true`) or exactly `zz`'s stack buffer (`false`) -/
 @[reducible] def BC (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc : Nat) (M : Memory) (L1 : List (Nat × Nat))
@@ -99,6 +101,8 @@ structure LI (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl
   na : NatNorm M pA lA
   ca : BC R L K g sp st zp zc M L1 zzp bp lm u pA cA
   cb : BC R L K g sp st zp zc M L1 zzp bp lm (!u) pB cB
+  zo : Z % 2 = 1
+  cb0 : 0 < cB
 
 /-- the continuation at the loop test: every state there with `LI`, the register layout, the parity, the budget
 `b + (c + 32 i)·bc + tC ≤ b1 + cst` and the model `outerLoop … i yi c Z = FV` reaches `Q` -/

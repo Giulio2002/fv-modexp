@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Arm64.Top.RunD1
+import FvModexp.Proofs.Arm64.Top.RunGS
 
 /-!
 # `Run` (arm64): the base operand from the join point `J1` (`setBytes` of the padded buffer) to `D1`
@@ -71,9 +72,7 @@ theorem d1join (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
   simp only [stk] at hg3 hb' ha hw hout hga hLs hpw hcw hLsS hMF
   simp only [win, Outside, and_true] at hpw hcw
   have hgS : U.mem.readLE ((s.regs 28).toNat + 16) 8 = s.mem.readLE ((s.regs 28).toNat + 16) 8 :=
-    hMF.readLE _ _ (by
-      simp only [winA, Janus.outside_append, Janus.outside_cons, Janus.outside_nil, and_true]
-      unfold Apart at hga; exact ⟨hgr, by omega, by omega⟩)
+    gS_read hMF hga hgr
   have hwS : U.mem.accessible (s.sp.toNat - 4800) (4800 + 40) true = true := by rw [hMF.accessible]; exact hw
   have hspn : U.sp.toNat = s.sp.toNat - 624 := by rw [hsp, BitVec.toNat_sub]; simp; omega
   unfold Apart at hga
@@ -93,7 +92,6 @@ theorem d1join (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     simp only [makeCost, allocCost]; omega
   have hMC : makeCost (SetBytes.nW (BitVec.ofNat 64 (hdrV s p len 0))) ≤ bk := by
     simp only [dCost, allocCost] at hbudD hMC0 hbud ⊢; omega
-  janus_data hdS
   have hRA := raSB impl hap 0x2035e8 (by decide)
   janus_run [hm1, hm2, hm3, hm4, hm5, hm6, hgS, hr2', hz1, hz2, hz3, natLive_zero] until [pcD1] calls [hP := hS]
   obtain ⟨⟨-, p2, n2, c2, hp2, hn2, hc2, hv2, hnorm2, hnc2, hnw2, L2, b2, hext2, hb2, hinv2, hlive2, hor2, hMF2, hLF2⟩,

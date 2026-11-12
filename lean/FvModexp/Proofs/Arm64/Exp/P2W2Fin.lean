@@ -19,7 +19,7 @@ open FvModexp.Arm64.ExpHyp
 /-- the function's post -/
 @[reducible] def FQ (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K zp zc st v cst : Nat) (s s' : State) : Prop :=
   s'.sp = s.sp ∧ s'.regs 18 = s.regs 18 ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧
-    NHyp.CPost R b L (K + 464) 96 zp zc st v cst s s'
+    NHyp.CPostR R b L (K + 464) 96 zp zc st v cst s s'
 
 /-- the tail's writes -/
 @[reducible] def TW (sp st : Nat) : List (Nat × Nat) :=
@@ -54,7 +54,8 @@ theorem res_bytes (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {p c : N
 set_option maxRecDepth 20000 in
 /-- **the function's post** from the tail -/
 theorem finQ (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (hw : WC R L K g sp st zp zc s.mem M L1 b1 ℓ)
-    {p l c v cst : Nat} (hres : NatOF R L L1 M zp zc 1 p l c v) (hb : b - cst ≤ b1) {s' : State}
+    {p l c v cst : Nat} (hres : NatOF R L L1 M zp zc 1 p l c v) (hrs : ResSep s.mem M st p c) (hb : b - cst ≤ b1)
+    {s' : State}
     (ht : TPost sp g st (stLen s.mem st) p l c (s.regs 18) (s.regs 29) M s') :
     FQ R b L K zp zc st v cst s s' := by
   obtain ⟨t1, t2, t3, t4, t5, t6, t7, t8, tF⟩ := ht
@@ -80,7 +81,8 @@ theorem finQ (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (hw : WC R L 
   have hlen := hw.len
   have hlo := hw.lo
   refine ⟨t1.trans hP.1.1.symm, t2, t3.trans hP.1.2.1.symm, t4, p, l, c, t5, t6, t7, L1, b1, ?nat,
-    ⟨hw.le, hb, ?inv⟩, ⟨⟨?sok, t8, ?kf⟩, hw.ain.congr e0 e2 fun _ hr => hr⟩, ?fr, ?lf⟩
+    ⟨hw.le, hb, ?inv⟩, ⟨⟨?sok, t8, ?kf⟩, hw.ain.congr e0 e2 fun _ hr => hr⟩, ?fr, ?lf,
+    fun hc hn => by rw [e0, e2] at hn ⊢; exact hrs hc hn⟩
   case nat =>
     refine ⟨?_, ?_, v3, v4, fun hc => ?_, v6⟩
     · rw [← v1]; exact hrd _ _ fun i hi => hby i (by omega)
@@ -129,6 +131,25 @@ theorem finQ (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (hw : WC R L 
     simp only [stkWs, outside_append, outside_cons, outside_nil, and_true] at this ho
     simp only [TW, outside_cons, outside_nil, and_true]
     omega
+
+/-- `ResSep` for the entry `z` (a fresh array is apart from everything held at the entry) -/
+theorem rs_z (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (hw : WC R L K g sp st zp zc s.mem M L1 b1 ℓ) :
+    ResSep s.mem M st zp zc := by
+  intro hc hn
+  rcases hw.kf with h | ⟨hin, hap⟩
+  · exact absurd h hn
+  · obtain ⟨⟨hzO1, -, -, -⟩, -⟩ := hP.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1 hc
+    rcases hzO1 with hL | hO
+    · have := hap.apart_of_inRanges hL; unfold Apart at this ⊢; omega
+    · exact (hin.apart hO)
+
+/-- `ResSep` for a result apart from every element of the live set `L1` of `WC` (e.g. allocated at `M`) -/
+theorem rs_live (hw : WC R L K g sp st zp zc s.mem M L1 b1 ℓ) {p c : Nat} (hap : ApartAll p (8 * c) L1) :
+    ResSep s.mem M st p c := by
+  intro hc hn
+  have := hap _ (hw.ain hn).1
+  simp only at this
+  rwa [show stW M st + 8 * stCap M st - stW M st = 8 * stCap M st by omega] at this
 
 set_option maxRecDepth 20000 in
 /-- the tail's environment from `WC` and the slots -/

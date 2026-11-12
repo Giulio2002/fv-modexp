@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Arm64.Top.RunRel
+import FvModexp.Proofs.Arm64.Top.RunSmall
 
 /-! # `Run` (arm64): entry to the first boundary `B1` (prologue, header 0 = `baseLen`: `getData`, std `setBytes`) -/
 
@@ -34,7 +35,6 @@ theorem h1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
   simp only [LiveSep, win] at hLs
   simp only [win, Outside, and_true] at hpw hcw
   unfold Apart at hga
-  janus_data hd
   have hS := RunCallees.sbStdD impl hap R hmk b L
   have hwS : Outside SetBytesStd.wordT 16 R.rt := RoOut.out' hro 1 (by decide) (by decide)
   janus_eval_nat h_t : SetBytesStd.wordT

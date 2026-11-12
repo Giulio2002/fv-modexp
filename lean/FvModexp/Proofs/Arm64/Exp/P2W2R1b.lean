@@ -22,6 +22,27 @@ section
 variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc yp yl lm : Nat} {s : State}
     {M : Memory} {L1 : List (Nat × Nat)} {b1 ℓ : Nat}
 
+/-- `ResSep` for the fresh one-word result of `return 1` -/
+theorem rs_fresh1 (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (hw : WC R L K g sp st zp zc s.mem M L1 b1 ℓ)
+    {m : Memory} {p r : Nat} (hA : AllocR R L K g sp st zp zc s.mem M L1 b1 ℓ m p r 8) :
+    ResSep s.mem (m.writeLE p 8 1) st p 1 := by
+  have hK := hP.1.2.2.2.2.2.2.2.1
+  have hK1 := hP.1.2.2.2.2.2.2.2.2.1
+  have hstw : Apart st 24 (sp - K) (K + 560) := hP.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hsz := hA.sz
+  have hsok := hw.sok
+  have hst : Apart p r st 24 := by
+    rcases hsok.2.1 with hL | hO
+    · have := hA.rap.apart_of_inRanges hL; unfold Apart; omega
+    · exact (hA.rin.apart hO).symm
+  unfold Apart at hstw hst
+  have hh : ∀ j, j + 8 ≤ 24 → (m.writeLE p 8 1).readLE (st + j) 8 = M.readLE (st + j) 8 := fun j hj => by
+    rw [Memory.readLE_writeLE_of_disjoint _ _ (by omega)]
+    exact hA.rdH _ _ (hsok.2.1.sub (by omega) (by omega)) (by unfold Apart; omega)
+  have e0 : stW (m.writeLE p 8 1) st = stW M st := by have := hh 0 (by omega); simpa using this
+  have e2 : stCap (m.writeLE p 8 1) st = stCap M st := hh 16 (by omega)
+  exact (rs_live hw (p := p) (c := 1) (ApartAll.sub' hA.rap (Nat.le_refl _) (by omega))).congr e0 e2
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- `z ≠ nil`, `cap z = 0`: `makeslice(Word, 1, 1)`, `[0] = 1` -/
@@ -51,6 +72,7 @@ theorem r1b {impl : List Segment} (hap : ImplApart Extracted.program impl)
     (by decide) (Nat.le_trans hrd hbc) _ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ (fun ptr junk f1 v1 m1 ex1 ep1 hA => ?_)
   all_goals first | (janus_simp; done) | skip
   obtain ⟨hw', hsl', hres⟩ := fresh1 hP hA hw.le hsl0
+  have hrs := rs_fresh1 hP hw hA
   have hacc1 : m1.accessible ptr.toNat 8 true = true := Memory.accessible_mono _ hA.acc (Nat.le_refl _) (by have := hA.sz; omega)
   have hb48 := hA.b48
   have hsz := hA.sz
@@ -60,7 +82,7 @@ theorem r1b {impl : List Segment} (hap : ImplApart Extracted.program impl)
   rw [show s.regs 30 = BitVec.ofNat 64 (s.regs 30).toNat by simp]
   refine tailB hap _ _ sp g st (stLen s.mem st) ptr.toNat 1 1 (s.regs 30).toNat (s.regs 18) (s.regs 29)
     (m1.writeLE ptr.toNat 8 1) rfl rfl ?_ ?_ ?_ ?_ ?_ rfl ptr.isLt (by decide) (by decide)
-    (tenv_of hP hw' hsl' hr4 hr48) (fun s' ht => finQ hP hw' hres (by omega) ht)
+    (tenv_of hP hw' hsl' hr4 hr48) (fun s' ht => finQ hP hw' hres hrs (by omega) ht)
   all_goals janus_simp
 
 set_option maxRecDepth 20000 in
@@ -92,6 +114,7 @@ theorem r1c {impl : List Segment} (hap : ImplApart Extracted.program impl)
     (Nat.le_trans hrd hbc) _ rfl ?_ ?_ ?_ ?_ ?_ (fun ptr junk f1 v1 m1 ex1 ep1 hA => ?_)
   all_goals first | (janus_simp; done) | skip
   obtain ⟨hw', hsl', hres⟩ := fresh1 hP hA hw.le hsl0
+  have hrs := rs_fresh1 hP hw hA
   have hacc1 : m1.accessible ptr.toNat 8 true = true := Memory.accessible_mono _ hA.acc (Nat.le_refl _) (by have := hA.sz; omega)
   have hb48 := hA.b48
   have hsz := hA.sz
@@ -101,7 +124,7 @@ theorem r1c {impl : List Segment} (hap : ImplApart Extracted.program impl)
   rw [show s.regs 30 = BitVec.ofNat 64 (s.regs 30).toNat by simp]
   refine tailN hap _ _ sp g st (stLen s.mem st) ptr.toNat (s.regs 30).toNat (s.regs 18) (s.regs 29)
     (m1.writeLE ptr.toNat 8 1) rfl rfl ?_ ?_ ?_ rfl ptr.isLt
-    (tenv_of hP hw' hsl' hr4 hr48) (fun s' ht => finQ hP hw' hres (by omega) ht)
+    (tenv_of hP hw' hsl' hr4 hr48) (fun s' ht => finQ hP hw' hres hrs (by omega) ht)
   all_goals janus_simp
 
 /-- **`return 1`** from `r1E` (all three shapes) -/

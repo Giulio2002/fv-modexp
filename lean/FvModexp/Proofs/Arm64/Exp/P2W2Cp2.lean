@@ -45,7 +45,7 @@ theorem cpM {impl : List Segment} (hmv : MemmoveLive (LibExp.program.link impl) 
     (htz : TZ R L s.mem M L1 st sp zzp bp lm (natVal s.mem xp xl))
     (z280 : M.readLE (sp + 280) 8 = zzp) (z112 : M.readLE (sp + 112) 8 = 2 * W lm)
     (z120 : M.readLE (sp + 120) 8 = 2 * W lm) {dp dc n d i yi : Nat}
-    (hub : UB R L K g sp st zp zc M L1 zzp bp lm dp dc) (hnd : n ≤ dc) (hn1 : 0 < n) (hd : d < 4)
+    (hub : UB R L K g sp st zp zc M L1 zzp bp lm dp dc) (hnd : n ≤ dc) (hn1 : 0 < n) (hd : d < 4) (hZo : Exp.p2Pow lm (natVal s.mem xp xl) d % 2 = 1)
     (hlen : M.readLE (sp + 320 + 24 * d + 8) 8 = n)
     (s160 : M.readLE (sp + 160) 8 = yi) (s200 : M.readLE (sp + 200) 8 = kk) (s240 : M.readLE (sp + 240) 8 = kk - 1)
     (s208 : M.readLE (sp + 208) 8 = i) (hkk1 : 1 ≤ kk) (hkk : kk ≤ 32) (hi : i < yl) (hyi : yi < 2 ^ 64)
@@ -123,7 +123,7 @@ theorem cpM {impl : List Segment} (hmv : MemmoveLive (LibExp.program.link impl) 
     e23 _ hk, e64, h63b, hmacc] until [LT]
   refine KL _ _ L1 b1 i (kk - 1) (yi * 2 ^ (64 - (kk - 1) * 2) % 2 ^ 64) _ dp n dc zzp (2 * W lm) (2 * W lm) true
     ?_ ?_ ?_ ?_ ?_ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
-    (li_first hP hw hsl htz hub hnd hn1 hd hlen hF1 hrg1 hF2 hLF2 hinv2 hcp hrg2 ?F3 ?rg3 ?r200 ?r208)
+    (li_first hP hw hsl htz hub hnd hn1 hd hZo hlen hF1 hrg1 hF2 hLF2 hinv2 hcp hrg2 ?F3 ?rg3 ?r200 ?r208)
     hi (Nat.mod_lt _ (by decide)) (by omega) (by simp only [true_iff]; omega) hbud hFV
   case F3 => janus_frame
   case rg3 => simp only [Memory.regions_writeLE]

@@ -79,7 +79,7 @@ theorem laTTF (impl : List Amd64.Segment) (hap : ImplApart Extracted.program imp
   gen_reg 12 as y2 with hY2
   have hy2 : (y2.toNat = 0) = False := by
     rw [← hY2]; simp only [eq_iff_iff, iff_false]
-    repeat apply bv_or_ne_left
+    repeat (with_reducible apply bv_or_ne_left)
     exact top_ne64 ht2
   janus64_run [hr0', hr3', hsp, hz0, msb_m1, msb_m1', msb_allones, hz1, hq2, hy2] until [pcP1]
   gen_reg 11 as bl2 with hB2

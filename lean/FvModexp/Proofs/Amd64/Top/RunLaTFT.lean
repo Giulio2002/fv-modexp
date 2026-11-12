@@ -79,7 +79,7 @@ theorem laTFT (impl : List Amd64.Segment) (hap : ImplApart Extracted.program imp
   gen_reg 11 as y1 with hY1
   have hy1 : (y1.toNat = 0) = False := by
     rw [← hY1]; simp only [eq_iff_iff, iff_false]
-    repeat apply bv_or_ne_left
+    repeat (with_reducible apply bv_or_ne_left)
     exact top_ne64 ht1
   janus64_run [hr0', hr3', hsp, hz0, msb_m1, msb_m1', msb_allones, hq1, hz2, hy1] until [pcP1]
   gen_reg 9 as bl1 with hB1

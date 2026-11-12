@@ -1,5 +1,7 @@
-import FvModexp.Proofs.Arm64.Top.RunD1
+import FvModexp.Proofs.Arm64.Top.RunDPc
+import FvModexp.Proofs.Arm64.Top.RunL
 import FvModexp.Proofs.Arm64.Top.RunD2Lem
+import FvModexp.Proofs.Arm64.Top.RunBox
 
 /-! # `Run` (arm64): `D1` to `D2` — the exponent operand (`getData(input, baseLen, expLen)`, patched `setBytes`) -/
 
@@ -7,7 +9,6 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
 
 namespace FvModexp.Arm64.Run
 
-abbrev pcD2 : Nat := segAddr Extracted.program fn + 0x65c
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
@@ -36,9 +37,7 @@ theorem d2x (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   simp only [stk] at hg3 hb' ha hw hout hga hLs hpw hcw hLsS hMF
   simp only [win, Outside, and_true] at hpw hcw
   have hgS : S.mem.readLE ((s.regs 28).toNat + 16) 8 = s.mem.readLE ((s.regs 28).toNat + 16) 8 :=
-    hMF.readLE _ _ (by
-      simp only [winA, Janus.outside_append, Janus.outside_cons, Janus.outside_nil, and_true]
-      unfold Apart at hga; exact ⟨hgr, by omega, by omega⟩)
+    gS_read hMF hga hgr
   have hwS : S.mem.accessible (s.sp.toNat - 4800) (4800 + 40) true = true := by rw [hMF.accessible]; exact hw
   have hspn : S.sp.toNat = s.sp.toNat - 624 := by rw [hsp, BitVec.toNat_sub]; simp; omega
   unfold Apart at hga
@@ -91,20 +90,24 @@ theorem d2x (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
         Nat.mod_eq_of_lt (a := p.toNat + off + mN) (by omega)]; omega
     janus_run [hm1, hm2, hm3, hm4, hm5, hm6, hs1, hs2, hs3, hs4, hs5, hs6, hk1a, hk1b, hc, hIe, hmask, hsub, hcsub, hsrc,
       toInt_ite, toNat_ite, toInt_small] until [segAddr Extracted.program fn + 0x64c]
-    have hsrcL : p.toNat + off + mN + hdrV s p len 1 ≤ p.toNat + len.toNat := by omega
+    have hsrcL : p.toNat + off + mN + hdrV s p len 1 ≤ p.toNat + len.toNat := by
+      have := hmN.1; clear hpw hcw hga hnz hmN; omega
     have hH : InRanges (p.toNat + off + mN) (hdrV s p len 1) L1 ∨ Outside (p.toNat + off + mN) (hdrV s p len 1) R.rt :=
       hext.held (hheld.sub (by omega) hsrcL)
-    have hB48 : p.toNat + off + mN + hdrV s p len 1 ≤ 2 ^ 48 := by omega
+    have hB48 : p.toNat + off + mN + hdrV s p len 1 ≤ 2 ^ 48 := by clear hpw hcw hga hnz hmN hoffc; omega
     have hAcc : s.mem.accessible (p.toNat + off + mN) (hdrV s p len 1) false = true :=
       Memory.accessible_mono _ hpacc (by omega) hsrcL
     have hW : p.toNat + off + mN + hdrV s p len 1 ≤ BitVec.toNat s.sp - 624 - 4160 ∨
         BitVec.toNat s.sp - 624 + 48 ≤ p.toNat + off + mN := by omega
-    janus_data hdS
     have hRA := raSB impl hap 0x203710 (by decide)
     janus_run [hm1, hm2, hm3, hm4, hm5, hm6, hgS, natLive_zero] until [pcD2] calls [hP := hS]
     obtain ⟨⟨-, p2, n2, c2, hp2, hn2, hc2, hv2, hnorm2, hnc2, hnw2, L2, b2, hext2, hb2, hinv2, hlive2, hor2, hMF2, hLF2⟩,
       hd2⟩ := hP
-    have hspn' : (s.sp - 624#64).toNat = s.sp.toNat - 624 := by rw [BitVec.toNat_sub]; simp; omega
+    have bxpw := Box.mk hpw; have bxcw := Box.mk hcw; have bxga := Box.mk hga; have bxW := Box.mk hW
+    have bxH := Box.mk hH; have bxnz := Box.mk hnz; have bxoff := Box.mk hoffc; have bxmN := Box.mk hmN
+    have bxor := Box.mk hor2
+    clear hpw hcw hga hW hH hnz hoffc hmN hor2
+    have hspn' : (s.sp - 624#64).toNat = s.sp.toNat - 624 := by rw [← hsp]; exact hspn
     simp only [winA, hspn'] at hMF2
     have hLsL1 : LiveSep L1 (win s 4800 40) := hLs0
     have hwrt : ∀ r ∈ win s 4800 40, Outside r.1 (r.2 - r.1) R.rt := fun r hr => by
@@ -116,7 +119,7 @@ theorem d2x (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     refine hk _ L2 b2 (RelD.mk' hin0 (by janus_simp [hsp]) (by janus_simp [h28]) (by janus_simp [h29])
       (by janus_simp [h18]) (by janus_simp [hm1]) (by janus_simp [hm2]) (by janus_simp [hm3]) (by janus_simp [hm4])
       (by janus_simp [hm5]) (by janus_simp [hm6]) (by janus_simp [hs1]) (by janus_simp [hs2]) (by janus_simp [hs3])
-      (by janus_simp [hs4]) (by janus_simp [hs5, hoffd]) (by janus_simp [hs6, hoffd]) hl0 hl1 hl2 hnz
+      (by janus_simp [hs4]) (by janus_simp [hs5, hoffd]) (by janus_simp [hs6, hoffd]) hl0 hl1 hl2 bxnz.h
       (fun _ => ⟨by janus_simp [hk1a], by janus_simp [hk1b]⟩) (fun _ => by janus_simp) ?_ (hext.trans hext2) ?_ ?_
       (hext2.liveSep hLsL1 hwrt) ?_ ?_ ?_ ?opsA) (by janus_simp)
     case opsA =>
@@ -124,11 +127,11 @@ theorem d2x (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
         (by janus_simp [hp2, opAt]) (by janus_simp [hc2, opAt]) (fun hc => ?_)
       · obtain rfl : i = 0 := by omega
         exact ⟨by janus_simp [opAt], by janus_simp [opAt]⟩
-      · rcases hor2 with ⟨-, h⟩ | ⟨-, h⟩
+      · rcases bxor.h with ⟨-, h⟩ | ⟨-, h⟩
         · simp at h; omega
         · exact h
     · janus_callpre
-    · simp only [dCost, allocCost] at hbudD hbud hMC0 ⊢; omega
+    · exact bud_dk 1 hbud hMC0 hb2
     · dsimp only
       rw [view_writeLE_out (hout.of_sub (by omega) (by omega)), view_writeLE_out (hout.of_sub (by omega) (by omega)),
         view_writeLE_out (hout.of_sub (by omega) (by omega)), view_writeLE_out (hout.of_sub (by omega) (by omega))]
@@ -155,7 +158,7 @@ theorem d2x (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
           Memory.readLE_writeLE_of_disjoint _ _ (by omega), Memory.readLE_writeLE_of_disjoint _ _ (by omega)]
       case fr =>
         intro hc
-        rcases hor2 with ⟨-, h⟩ | ⟨h, h'⟩
+        rcases bxor.h with ⟨-, h⟩ | ⟨h, h'⟩
         · simp at h; omega
         · exact ⟨h, h'⟩
       case v =>
@@ -164,7 +167,8 @@ theorem d2x (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
         rw [BitVec.toNat_ofNat, Nat.mod_eq_of_lt (by omega), BitVec.toNat_ofNat, Nat.mod_eq_of_lt (by omega)]
         by_cases h0 : hdrV s p len 1 = 0
         · rw [h0]; rfl
-        · have hmE : mN = min (hdrV s p len 0) (len.toNat - 96) := by omega
+        · have hmN := bxmN.h; have hoffc := bxoff.h; have hpw := bxpw.h; have hW := bxW.h
+          have hmE : mN = min (hdrV s p len 0) (len.toNat - 96) := by omega
           have h96 : 96 < len.toNat := by omega
           have hoff : off = 96 := by omega
           have hmin : min (hdrV s p len 0) (len.toNat - 96) = hdrV s p len 0 := by omega

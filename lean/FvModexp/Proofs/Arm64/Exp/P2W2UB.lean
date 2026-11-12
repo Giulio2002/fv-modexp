@@ -35,7 +35,7 @@ theorem ub_z (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R L K
     {zzp bp X : Nat} (htz : TZ R L s.mem M L1 st sp zzp bp lm X) :
     UB R L K g sp st zp zc M L1 zzp bp lm zp zc := by
   have hzc40 : zc < 2 ^ 40 := hP.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
-  refine ⟨hzc40, fun hzc => ?_, Or.inl ⟨rfl, rfl⟩, fun hzc => ?_⟩
+  refine ⟨hzc40, fun hzc => ?_, Or.inl ⟨rfl, rfl⟩, fun hzc => ?_, fun _ _ => Or.inl ⟨rfl, rfl⟩⟩
   · obtain ⟨⟨hzO1, -, -, -⟩, hzacc, hz48, hz8, -⟩ := hP.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1 hzc
     exact ⟨hz8, h.le.held hzO1, by rw [h.fr.accessible]; exact hzacc, hz48⟩
   · obtain ⟨⟨hzO1, hzO2, hzO3, hzO4⟩, -, -, -, hzg, -, -, hzA⟩ :=
@@ -68,7 +68,8 @@ theorem ub_fresh (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R
     Memory.accessible_mono _ hA.acc (Nat.le_refl _) (by omega), by have := hA.b48; omega⟩,
     Or.inr ⟨hc0, hin, fun q hq => hap q (h.le.mem_old hq)⟩, fun _ => ⟨(hin.apart hP.win_rt).symm,
     fresh_held_apart hin hap hsok.2.1, fresh_held_apart hin hap (h.le.held hgA.1), (hin.apart hgrt).symm, ?_,
-    fresh_held_apart hin hap htz.zscr.held, fresh_held_apart hin hap htz.bscr.held⟩⟩
+    fresh_held_apart hin hap htz.zscr.held, fresh_held_apart hin hap htz.bscr.held⟩,
+    fun _ _ => Or.inr (by simp only [e0, e2]; exact harr)⟩
   simp only [free, e0, e1, e2]
   unfold Apart at harr ⊢; omega
 
@@ -77,7 +78,7 @@ theorem UB.keep {L2 : List (Nat × Nat)} {M' : Memory} {zzp bp p c : Nat}
     (hu : UB R L K g sp st zp zc M L1 zzp bp lm p c) (hacc : ∀ a n w, M'.accessible a n w = M.accessible a n w)
     (hx : LiveExt R L1 L2) (e0 : stW M' st = stW M st) (e1 : stLen M' st = stLen M st)
     (e2 : stCap M' st = stCap M st) : UB R L K g sp st zp zc M' L2 zzp bp lm p c := by
-  refine ⟨hu.c40, fun hc => ?_, hu.org, fun hc => ?_⟩
+  refine ⟨hu.c40, fun hc => ?_, hu.org, fun hc => ?_, fun hc => by rw [e0, e2]; exact hu.rs hc⟩
   · obtain ⟨a1, a2, a3, a4⟩ := hu.live hc
     exact ⟨a1, hx.held a2, by rw [hacc]; exact a3, a4⟩
   · obtain ⟨a1, a2, a3, a4, a5, a6, a7⟩ := hu.ap hc
