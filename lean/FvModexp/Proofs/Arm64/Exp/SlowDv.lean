@@ -108,7 +108,7 @@ theorem divS {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns 
     rw [hrp c1, hqp c2]
     exact (hqr c2 c1).symm
   exact KC s' L2 b2 pq' lq cq pr' lr cr hpc' ⟨hw', rfl, hsp'.trans hj.esp, h28'.trans hj.e28, h29'.trans hj.e29,
-    h18'.trans hj.e18, hj.sf.keep hk⟩ hk (e0.trans hpq'.symm) e1 e2 (e3.trans hpr'.symm) e4 e5
+    h18'.trans hj.e18, hj.sf.keep fun a k ha => hk a k (by omega)⟩ hk (e0.trans hpq'.symm) e1 e2 (e3.trans hpr'.symm) e4 e5
     ⟨⟨hresR.1, hresR.2.1, hval, hresR.2.2.2⟩, hkD _ _ hB.bq, hB.lq, hkD _ _ hB.bz.1, hzlc, hresQ.1, hresQ.2.1,
       pw_res hofR' hB.bq hB.p6, pw_res hofR' hB.bz.1 hB.p2.symm, hp3, hB.p3.symm, (pw_res hofQ' hB.bq hB.p5).symm,
       (pw_res hofQ' hB.bz.1 hB.p1.symm).symm⟩ hlr hbud'

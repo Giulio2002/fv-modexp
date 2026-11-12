@@ -93,7 +93,7 @@ theorem sqrS {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns 
     calc natVal M z zl * natVal M z zl < 2 ^ (64 * zl) * 2 ^ (64 * zl) := Nat.mul_lt_mul'' this this
       _ = 2 ^ (64 * (2 * zl)) := by rw [← Nat.pow_add]; congr 1; omega
   refine KC s' L2 b2 p'' l' c' hpc' ⟨hw', rfl, hsp'.trans hj.esp, h28'.trans hj.e28, h29'.trans hj.e29,
-    h18'.trans hj.e18, hj.sf.keep hk⟩ hk (e0.trans hp''.symm) e1 e2
+    h18'.trans hj.e18, hj.sf.keep fun a k ha => hk a k (by omega)⟩ hk (e0.trans hp''.symm) e1 e2
     ⟨⟨hres.1, hres.2.1, hval, hres.2.2.2⟩, hkD _ _ hB.bz.1, hzlc, hkD _ _ hB.br, hB.lr, hkD _ _ hB.bq, hB.lq,
       pw_res hof'' hB.bz.1 hB.p1.symm, pw_res hof'' hB.br hB.p4, pw_res hof'' hB.bq hB.p5, hB.p2, hB.p3, hB.p6⟩
     hl2 hbud'
