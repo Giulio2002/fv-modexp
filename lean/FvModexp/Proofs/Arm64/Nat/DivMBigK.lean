@@ -65,6 +65,48 @@ theorem slots_keepM {R : RtInv} {L L1 : List (Nat × Nat)} {b b1 g : Nat} {st u 
   simp only [outside_append, stkWs, winA, outside_cons, outside_nil, and_true, x1, x2, x3, x4]
   exact ⟨⟨⟨hrt, by omega, by omega⟩, outside_ar (fun h => absurd h (by decide)), outside_ar hu'⟩, by omega, h2⟩
 
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 16000000 in
+/-- `slots_keepM` at the six slots `nat.div`'s epilogue reads (saved LR/FP, defer bit, closure record) -/
+theorem slots6 {R : RtInv} {L L1 : List (Nat × Nat)} {b b1 g : Nat} {st u uc : Nat} {s X T : State}
+    (hN : NewStk R L L1 b b1 g X.mem st) (hb' : 41504 ≤ s.sp.toNat)
+    (hwout : Outside (s.sp.toNat - 41504) (41504 + 112) R.rt)
+    (hu : 0 < uc → Outside u (8 * uc) (win s 41504 112)) (hsp : X.sp = s.sp - 240#64)
+    (hmf : MemFrame X.mem T.mem (R.rt ++ winA X 41264 112 ++ (ar 0 0 ++ ar u uc) ++ stkWs X.mem st))
+    {lr fp : Nat}
+    (mlr : X.mem.readLE (s.sp.toNat - 240) 8 = lr) (mfp : X.mem.readLE (s.sp.toNat - 248) 8 = fp)
+    (mfl : X.mem.readLE (s.sp.toNat - 122) 1 = 1) (mdw : X.mem.readLE (s.sp.toNat - 32) 8 = dwD)
+    (mst : X.mem.readLE (s.sp.toNat - 24) 8 = st) (mrc : X.mem.readLE (s.sp.toNat - 16) 8 = s.sp.toNat - 32) :
+    T.mem.readLE (s.sp.toNat - 240) 8 = lr ∧ T.mem.readLE (s.sp.toNat - 248) 8 = fp ∧
+      T.mem.readLE (s.sp.toNat - 122) 1 = 1 ∧ T.mem.readLE (s.sp.toNat - 32) 8 = dwD ∧
+      T.mem.readLE (s.sp.toNat - 24) 8 = st ∧ T.mem.readLE (s.sp.toNat - 16) 8 = s.sp.toNat - 32 := by
+  have hk := slots_keepM hN hb' hwout hu hsp hmf
+  exact ⟨(hk _ _ (Or.inl ⟨by omega, by omega⟩)).trans mlr, (hk _ _ (Or.inl ⟨by omega, by omega⟩)).trans mfp,
+    (hk _ _ (Or.inr ⟨by omega, by omega⟩)).trans mfl, (hk _ _ (Or.inr ⟨by omega, by omega⟩)).trans mdw,
+    (hk _ _ (Or.inr ⟨by omega, by omega⟩)).trans mst, (hk _ _ (Or.inr ⟨by omega, by omega⟩)).trans mrc⟩
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 16000000 in
+/-- the stack-guard word survives `divLarge` and the epilogue's slot writes -/
+theorem guardS {R : RtInv} {L L1 : List (Nat × Nat)} {b b1 : Nat} {st u uc : Nat} {s X : State} {mT m2 : Memory}
+    (hN : NewStk R L L1 b b1 (s.regs 28).toNat X.mem st) (hb' : 41504 ≤ s.sp.toNat)
+    (hga : Apart ((s.regs 28).toNat + 16) 8 (s.sp.toNat - 41504) (41504 + 112))
+    (hgr : Outside ((s.regs 28).toNat + 16) 8 R.rt)
+    (hgu : 0 < uc → Apart u (8 * uc) ((s.regs 28).toNat + 16) 8) (hsp : X.sp = s.sp - 240#64)
+    (hF : MemFrame s.mem X.mem (R.rt ++ winA s 41504 112))
+    (hmf : MemFrame X.mem mT (R.rt ++ winA X 41264 112 ++ (ar 0 0 ++ ar u uc) ++ stkWs X.mem st))
+    (hF2 : MemFrame mT m2 [(s.sp.toNat - 80, s.sp.toNat - 32), (s.sp.toNat - 121, s.sp.toNat - 120)]) :
+    m2.readLE ((s.regs 28).toNat + 16) 8 = s.mem.readLE ((s.regs 28).toNat + 16) 8 := by
+  unfold Apart at hga
+  have hws := hN.outWs hgr
+  obtain ⟨x1, x2, x3, x4, -⟩ := spX hsp hb'
+  rw [hF2.readLE _ 8 (by simp only [outside_cons, outside_nil, and_true]; omega), hmf.readLE _ 8 ?_, hF.readLE _ 8 ?_]
+  · simp only [outside_append, winA, outside_cons, outside_nil, and_true]; exact ⟨hgr, by omega, by omega⟩
+  · simp only [outside_append]
+    refine ⟨⟨⟨hgr, ?_⟩, outside_ar (fun h => absurd h (by decide)), outside_ar fun hc => ?_⟩, hws⟩
+    · simp only [winA, outside_cons, outside_nil, and_true, x1, x2, x3, x4]; omega
+    · have := hgu hc; unfold Apart at this; omega
+
 /-- `deferwrap1` (`DivFree.sum`, `StkSh` pool shape) as a callee of `LibDiv` -/
 theorem dsumD (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hput : PoolPutLive (LibDivFree.program.link impl) (cA "sync.(*Pool).Put") 4096 R Free.stkT StkSh)
