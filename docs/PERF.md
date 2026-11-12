@@ -1165,3 +1165,18 @@ amd64 Top_RunErr in the same run: **FAIL (timeout) 901 s**, peak 1.4 GB — at l
 | MulMakeA1 (alloc_head: entry → makeslice entry) | — | 35 s / 2.6 GB | |
 | MulMakeAP (mcall_pre / mfacts) | — | 4 s / 2.3 GB | makeslice pre in a standalone lemma |
 | MulMakeA2 (alloc_call) WIP | — | run + refine 6 s; blanket closers hang | rewrite `typNoscan` in the Fresh facts (else unification evaluates memory); close goals by name |
+
+## asm s26 (2026-11-12) — drs correction loop COMPLETE (arm64, dev compile, LEAN_NUM_THREADS=4, host load ~40)
+| module | time | mem |
+|---|---|---|
+| Common/DrsCorrVal | 1.9 s | 2.0 GB |
+| DrsC3 (subVW qhat call) | 5 s | 2.4 GB |
+| DrsC4R (run to subVV.abi0) | 8–9 s | 2.5 GB |
+| DrsC4 (subVV.abi0 call) | 10–14 s | 2.8 GB |
+| DrsC5R (len(qhatv) > s test) | 15 s | 2.6 GB |
+| DrsC5 (subVW qhatv[s:] call) | 7 s | 2.5 GB |
+| DrsC5S (run to addTo) | 5 s | 2.3 GB |
+| DrsC6 (addTo call) | 91 s (load 40) | 3.4 GB |
+| DrsC6R (i++ → head) | 3 s | 2.3 GB |
+| DrsCL (loop induction) | 1.5 s | 2.3 GB |
+| AddTo (first dev build) | 127 s | 4.4 GB |

@@ -102,7 +102,7 @@ theorem mul_pre {R : RtInv} {c : Cx} {s X : State} {Lk : List (Nat × Nat)} {bk 
     fun _ => ⟨apL' hvs (Nat.le_refl _) (by omega), fun _ => apL' fv.symm (Nat.le_refl _) (by omega)⟩,
     ?cost, (by rw [h28]; exact hev.inv)⟩,
     ⟨hqle, by omega, hev.ext.held hcr.t0h, hcr.t048⟩, ⟨by omega, hvc, hext.held hvch, hvc48⟩,
-    ⟨hst0, hswb, fh, hwin _ _ ffw, (by rw [h28]; exact ffg), fst, hstgA, fgA⟩, hwin _ _ hrg.w,
+    ⟨hst0.1, hswb, fh, hwin _ _ ffw, (by rw [h28]; exact ffg), fst, hstgA, fgA⟩, hwin _ _ hrg.w,
     fun e => (by unfold Apart at rg8; simp only [Cx.qv] at e rg8; omega),
     fun e => (by unfold Apart at rgv; simp only [Cx.qv] at e rgv; omega),
     fun _ => ⟨(by unfold Apart; simp only [EvenHyp.frP, EvenHyp.frN]; omega), hrg.gA⟩,
