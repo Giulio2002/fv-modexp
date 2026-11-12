@@ -3,6 +3,8 @@ import FvModexp.Proofs.Arm64.Nat.SqrDefs
 import FvModexp.Proofs.Arm64.Nat.MulAddWW
 import FvModexp.Proofs.Common.MulCost
 
+set_option autoImplicit false
+
 /-!
 # The multiplication SCC `{nat.mul, karatsuba, (*Int).mul}` (go-bigmodexpfix natmul.go:16 / :164, int.go:191), arm64 —
 statements
@@ -136,7 +138,8 @@ def IPre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (W z st x y : Nat) (s : S
     R.inv b L (s.regs 28).toNat (view R.rt L s.mem)
 
 /-- **`z.mul(stk, x, y)` (`*Int`) postcondition**: `z = x·y` (signed, canonical sign), `z.abs` normalised in its old
-array (always when large enough and not an alias: `Exact`, with `z`'s header) or a fresh one; the stack is back -/
+array (always when large enough and not an alias: `Exact`, with `z`'s header) or a fresh one (stated for a non-empty
+array: `z.abs.ptr` is the 64-bit register value, `MPost`'s pointer only up to `2^64`); the stack is back -/
 @[reducible] def IPost (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (W z st x y : Nat) (s s' : State) : Prop :=
   intZ s'.mem z = intZ s.mem x * intZ s.mem y ∧ hNeg s'.mem z ≤ 1 ∧ (hNeg s'.mem z = 1 → 0 < hL s'.mem z) ∧
     NatNorm s'.mem (hP s'.mem z) (hL s'.mem z) ∧ hL s'.mem z ≤ hC s'.mem z ∧
@@ -145,7 +148,7 @@ array (always when large enough and not an alias: `Exact`, with `z`'s header) or
       b - mulC (stLen s.mem st) (hL s.mem x) (hL s.mem y) ≤ b' ∧
       R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem) ∧ NatLive s'.mem R L' (hP s'.mem z) (hC s'.mem z) ∧
       ((hP s'.mem z = hP s.mem z ∧ hC s'.mem z = hC s.mem z) ∨
-        (hL s.mem x + hL s.mem y ≤ hC s'.mem z ∧ InRanges (hP s'.mem z) (8 * hC s'.mem z) R.rt ∧
+        (0 < hC s'.mem z → hL s.mem x + hL s.mem y ≤ hC s'.mem z ∧ InRanges (hP s'.mem z) (8 * hC s'.mem z) R.rt ∧
           ApartAll (hP s'.mem z) (8 * hC s'.mem z) L)) ∧
       (¬ (hP s'.mem z = hP s.mem z ∧ hC s'.mem z = hC s.mem z) → 0 < hC s'.mem z → 0 < stCap s'.mem st →
         Apart (hP s'.mem z) (8 * hC s'.mem z) (stW s'.mem st) (8 * stCap s'.mem st)) ∧
