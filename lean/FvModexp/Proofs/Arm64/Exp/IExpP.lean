@@ -107,6 +107,12 @@ theorem preNF_of {R : RtInv} {b B : Nat} {L : List (Nat × Nat)} {stk above K : 
     hpre
   obtain ⟨op, ⟨hn1, hn2, hn3, hn4, hn5, hn6, hn7, hn8, hn9, hn10, hn11⟩, hoA⟩ := hone
   obtain ⟨⟨h0rt, hpool, hpoolR, hpoolW⟩, hzc40, hyc40, hmc40, hmA0, -⟩ := hx
+  have hnB := BoxI.mk (And.intro hn1 (And.intro hn2 (And.intro hn3 hn4)))
+  have hpB := BoxI.mk hpool
+  generalize hgw0 : s.mem.readLE ((s.regs 28).toNat + 16) 8 = gw at hg3
+  have hgw := BoxI.mk hgw0
+  clear hgw0
+  clear hn1 hn2 hn3 hn4 hpool
   have hoz := hops zA (by simp)
   have hoy := hops yA (by simp)
   have hom := hops mA (by simp)
@@ -168,7 +174,7 @@ theorem preNF_of {R : RtInv} {b B : Nat} {L : List (Nat × Nat)} {stk above K : 
     hzp, ⟨hzlc, rfl, rfl, rfl⟩, hzc40, ⟨fun h => (hzG h).symm, fun h => ?_⟩, fun h => Or.inl ⟨h, rfl⟩, ?_,
     fun h => ?_, rfl, ?_, ?_, hnR, hnS, ?_, ?_, ?_, ?_, ?_⟩
   · -- the guard word
-    rw [hrd _ _ (by unfold Apart at hgap; omega)]; omega
+    rw [hrd _ _ (by unfold Apart at hgap; omega), hgw.unbox]; omega
   · simp only [outside_cons]; exact ⟨by unfold Apart at hgap; omega, hgrt⟩
   · intro r hr; simp only [List.mem_singleton] at hr; subst hr
     simp only; rw [show t - 1632 + 1432 - (t - 1632 - K) = K + 1432 by omega]; exact hwout
@@ -194,6 +200,7 @@ theorem preNF_of {R : RtInv} {b B : Nat} {L : List (Nat × Nat)} {stk above K : 
     obtain ⟨a1, a2, a3⟩ := hAz
     obtain ⟨a5, a6⟩ := a3 h
     have hrdO : ∀ a k, (a + k ≤ t - stk ∨ t + above ≤ a) → S3.mem.readLE a k = s.mem.readLE a k := hrd
+    obtain ⟨hn1, hn2, hn3, hn4⟩ := hnB.unbox
     have eO : EvenHyp.natOneA = RunIface.natOneA := rfl
     have h7 := hn7; simp only [outside_cons, outside_nil, and_true] at h7
     have h11 := hn11; simp only [outside_cons, outside_nil, and_true] at h11
@@ -212,7 +219,7 @@ theorem preNF_of {R : RtInv} {b B : Nat} {L : List (Nat × Nat)} {stk above K : 
   · rw [hmP.unbox.2.2.2.2]; exact hnP
   · rw [hmP.unbox.2.2.2.2]; omega
   · have := hpoolW; simp only [outside_cons, outside_nil, and_true] at this
-    rw [hrd _ _ (by omega)]; exact hpool
+    rw [hrd _ _ (by omega)]; exact hpB.unbox
   · have := hpoolW; simp only [outside_cons, outside_nil, and_true] at this ⊢; omega
   · exact Expmc.inv_frame hF (fun r hr => by
       simp only [List.mem_singleton] at hr; subst hr; simp only
