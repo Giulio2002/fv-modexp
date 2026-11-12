@@ -45,10 +45,13 @@ theorem cs5_inv (a x y z w v : Nat) :
 
 /-- a `newobject(Word)` call satisfies it -/
 theorem site_no (addr : Nat) : noSite R addr [] 0x1000 (callS addr Extracted.dataAddr.«type:big.Word#51b931e8» 0 0) := by
-  refine ⟨⟨cs_callOK _ _ _ _ 1 (by omega), ?_, ?_⟩, cs_room _ _ _ _ 1 (by omega),
+  refine ⟨⟨cs_callOK _ _ _ _ 1 (by omega), ?_, ?_, ?_⟩, cs_room _ _ _ _ 1 (by omega),
     trivial, cs_inv _ _ _ _, ?_, fun r hr => absurd hr (by simp), cs_winR _ _ _ _ 1 (by omega)⟩
   all_goals try simp only [newobjectRound64, TypeOK, cs_mem, cs_r0, BitVec.toNat_ofNat]
-  all_goals first | decide +kernel | exact ⟨by decide +kernel, by rw [memZ_acc]; decide +kernel⟩
+  all_goals first
+    | decide +kernel
+    | exact ⟨by decide +kernel, by rw [memZ_acc]; decide +kernel⟩
+    | (simp only [calleeStack64, cs_sp, BitVec.toNat_ofNat, outside_cons, outside_nil, and_true]; decide +kernel)
 
 /-- the premise of `WbLiveContract64 … n` at a call -/
 @[reducible] def wbSite (R : RtInv) (addr n : Nat) (L : List (Nat × Nat)) (b : Nat) (s : State) : Prop :=
@@ -83,7 +86,7 @@ theorem site_get (addr : Nat) : getSite R addr [] 0x1000 (callS addr OA 0 0) := 
 /-- a `growslice(OA, 2, 1, 1, Word)` call (append one word to a one-word slice) satisfies it -/
 theorem site_gr (addr : Nat) :
     grSite R addr [] 0x1000 (callS5 addr OA 2 1 1 Extracted.dataAddr.«type:big.Word#51b931e8») := by
-  refine ⟨⟨⟨cs5_callOK _ _ _ _ _ _ 5 (by omega), ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩, fun _ => ⟨?_, ?_⟩⟩,
+  refine ⟨⟨⟨cs5_callOK _ _ _ _ _ _ 5 (by omega), ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩, fun _ => ⟨?_, ?_, ?_⟩⟩,
     cs5_room _ _ _ _ _ _ 5 (by omega), trivial, cs5_inv _ _ _ _ _ _, ?_, fun r hr => absurd hr (by simp),
     cs5_winR _ _ _ _ _ _ 5 (by omega)⟩
   all_goals try simp only [growsliceRound64, TypeOK, typPtrBytes, cs5_mem, cs5_r0, cs5_r1, cs5_r3, cs5_r6, cs5_r7,
@@ -92,5 +95,6 @@ theorem site_gr (addr : Nat) :
     | decide +kernel
     | exact ⟨by decide +kernel, by rw [memZ_acc]; decide +kernel⟩
     | (rw [memZ_acc]; decide +kernel)
+    | (simp only [calleeStack64, cs5_sp, BitVec.toNat_ofNat, outside_cons, outside_nil, and_true]; decide +kernel)
 
 end FvModexp.Amd64.AsmWit

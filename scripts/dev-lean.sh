@@ -6,7 +6,8 @@ set -e
 WS=${WS:-$(ls -d /srv/fv-modexp-ops/cache-asm/v1/consumer/*/* | grep -v lock | head -1)}
 OUT=${OUT:-/srv/fv-modexp-ops/cache-asm/dev/oleans}
 pkg=$(cd "$(dirname "${BASH_SOURCE[0]}")/../lean" && pwd)
-LP="$OUT:$WS/janus/.lake/build/lib/lean:$WS/deps/ethlibspec/.lake/build/lib/lean:/root/.elan/toolchains/leanprover--lean4---v4.34.1/lib/lean"
+EL=$WS/deps/ethlibspec/.lake/build/lib/lean; [ -d "$WS/own/lib/deps/ethlibspec" ] && EL=$WS/own/lib/deps/ethlibspec  # v0.3.1 layout
+LP="$OUT:$WS/janus/.lake/build/lib/lean:$EL:/root/.elan/toolchains/leanprover--lean4---v4.34.1/lib/lean"
 LEAN=/root/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean
 for f in "$@"; do
   f=$(realpath "$f")
