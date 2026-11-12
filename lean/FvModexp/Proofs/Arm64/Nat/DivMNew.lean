@@ -58,8 +58,11 @@ theorem noPreD (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (g sp : Nat) (M : M
       simp only [List.mem_singleton] at hr; subst hr; simp only
       rw [show sp + 112 - (sp - 41504) = 41504 + 112 by omega]; exact hwrt) hLs (hsv.2.2.2.2.1 _)
     (by rw [eg]; exact hinv) (by rw [hround]; exact hb)
-  refine ⟨⟨h.1, ⟨by rw [e0, stkTyD_v]; decide, by rw [e0]; exact ht3⟩, ?_⟩, h.2.1, h.2.2⟩
-  simp only [typSize, e0, ht1, maxAlloc]; omega
+  have hwT : Apart stkTyD 16 (sp - 41504) (41504 + 112) := apart_of_data hd 4 (by decide) (by decide) hwacc
+  rw [stkTyD_v] at hwT; unfold Apart at hwT
+  refine ⟨⟨h.1, ⟨by rw [e0, stkTyD_v]; decide, by rw [e0]; exact ht3⟩, ?_, ?_⟩, h.2.1, h.2.2⟩
+  · simp only [typSize, e0, ht1, maxAlloc]; omega
+  · rw [e0, stkTyD_v]; simp only [calleeStack, esp, outside_cons, outside_nil, and_true]; omega
 
 /-- what `newobject(type:big.stack)` gives (`p` the object) -/
 structure NewND (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (g sp : Nat) (M m : Memory) (p : Nat) : Prop where
