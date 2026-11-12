@@ -1,5 +1,6 @@
 import FvModexp.Proofs.Arm64.Top.RunD2J
 import FvModexp.Proofs.Arm64.Top.RunD2ZDefs
+import FvModexp.Proofs.Arm64.Top.RunDSlot
 
 /-! # `Run` (arm64): `Z2` to `J2` when the `copy` source differs from the fresh buffer: `memmove` of 0 bytes -/
 
@@ -111,8 +112,7 @@ theorem d2zN (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
      Memory.accessible_read_of_write _ hBacc, hBH, (by rcases hBW with h | h; exact Or.inl h; exact Or.inr (Or.inr h)),
      ?bytes, hd2, fun a n h1 h2 => (hheld.sub h1 h2).readLE hMF2 hLx (hpo'.of_sub h1 (by omega)),
      hcheld.readLE hMF2 hLx hco', hext, hbud, hinvm, hLsS, hMF2, hLF2,
-     OpDone.transport hop0 (by janus_simp [opAt]) (by janus_simp [opAt]) (by janus_simp [opAt])
-       (by janus_simp [opAt]) hLFS (fun _ _ h => h)⟩
+     OpDone.transportS hop0 (k := 1) (by omega) (by intro a n h1 h2; simp only [opAt] at h1 h2; janus_simp) hLFS (fun _ _ h => h)⟩
   case bytes =>
     intro j hj
     dsimp only

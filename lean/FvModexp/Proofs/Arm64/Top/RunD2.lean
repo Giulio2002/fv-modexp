@@ -2,6 +2,7 @@ import FvModexp.Proofs.Arm64.Top.RunDPc
 import FvModexp.Proofs.Arm64.Top.RunL
 import FvModexp.Proofs.Arm64.Top.RunD2Lem
 import FvModexp.Proofs.Arm64.Top.RunBox
+import FvModexp.Proofs.Arm64.Top.RunDSlot
 
 /-! # `Run` (arm64): `D1` to `D2` — the exponent operand (`getData(input, baseLen, expLen)`, patched `setBytes`) -/
 
@@ -144,8 +145,7 @@ theorem d2x (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     · intro j hj
       dsimp only
       rcases (show j = 0 ∨ j = 1 by omega) with rfl | rfl
-      · exact OpDone.transport (hop 0 (by omega)) (by janus_simp [opAt]) (by janus_simp [opAt]) (by janus_simp [opAt])
-          (by janus_simp [opAt]) (hLFS.trans (LiveFrame.of_win (by simp only [win, stk]; janus_frame)
+      · exact OpDone.transportS (hop 0 (by omega)) (k := 1) (by omega) (by intro a n h1 h2; simp only [opAt] at h1 h2; janus_simp) (hLFS.trans (LiveFrame.of_win (by simp only [win, stk]; janus_frame)
             (hext2.liveSep hLsL1 hwrt)) (fun _ _ h => hext2.inRanges_old h)) (fun _ _ h => hext2.inRanges_old h)
       refine opDone_of (m := s'.mem) (hLc := hext) ?rd (hacc := fun a n w => by
           simp only [Memory.accessible_writeLE, hMF2.accessible, hMF.accessible])

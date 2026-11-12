@@ -1,5 +1,6 @@
 import FvModexp.Proofs.Arm64.Top.RunD2ZDefs
 import FvModexp.Proofs.Arm64.Top.RunGS
+import FvModexp.Proofs.Arm64.Top.RunDSlot
 
 /-! # `Run` (arm64): `D1` to `Z2`, exponent operand of more than 32 bytes with no input byte left: the `makeslice`
 buffer of `RightPadBytes` (see `RunD2ZDefs`) -/
@@ -169,7 +170,6 @@ theorem d2zA (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
      by janus_simp, by janus_simp, by janus_simp, hl0, hl1, hl2, hnz, hlg,
      by janus_simp, (by janus_simp [hz0]), (by janus_simp [hsrc]), hsrcb.1, hsrcb.2, hB48, hacc', hheld', hBloc,
      hrt', hsep, hbytes, hdk, hinp, hcc, hext.trans hext', hbudk, hinvk, hls, hMF2, hLF2,
-     OpDone.transport (hop 0 (by omega)) (by janus_simp [opAt]) (by janus_simp [opAt]) (by janus_simp [opAt])
-       (by janus_simp [opAt]) hLFS (fun _ _ h => hext'.inRanges_old h)⟩ (by janus_simp)
+     OpDone.transportS (hop 0 (by omega)) (k := 1) (by omega) (by intro a n h1 h2; simp only [opAt] at h1 h2; janus_simp) hLFS (fun _ _ h => hext'.inRanges_old h)⟩ (by janus_simp)
 
 end FvModexp.Arm64.Run

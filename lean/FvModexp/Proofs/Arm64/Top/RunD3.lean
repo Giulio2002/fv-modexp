@@ -2,6 +2,7 @@ import FvModexp.Proofs.Arm64.Top.RunDPc
 import FvModexp.Proofs.Arm64.Top.RunL
 import FvModexp.Proofs.Arm64.Top.RunD2Lem
 import FvModexp.Proofs.Arm64.Top.RunBox
+import FvModexp.Proofs.Arm64.Top.RunDSlot
 
 /-! # `Run` (arm64): `D1` to `D2` — the exponent operand (`getData(input, baseLen, expLen)`, patched `setBytes`) -/
 
@@ -157,12 +158,10 @@ theorem d3x (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
       dsimp only
       rcases (show j = 0 ∨ j = 1 ∨ j = 2 by omega) with rfl | rfl | rfl
       · clear hcap hdir hdir0 hsrcL hB48 hS1n hmod hk1a hk2a hS1 hadd hmask hsub hcsub hsrc hAcc
-        exact OpDone.transport (hop 0 (by omega)) (by janus_simp [opAt]) (by janus_simp [opAt]) (by janus_simp [opAt])
-          (by janus_simp [opAt]) (hLFS.trans (LiveFrame.of_win (by simp only [win, stk]; janus_frame)
+        exact OpDone.transportS (hop 0 (by omega)) (k := 2) (by omega) (by intro a n h1 h2; simp only [opAt] at h1 h2; janus_simp) (hLFS.trans (LiveFrame.of_win (by simp only [win, stk]; janus_frame)
             (hext2.liveSep hLsL1 hwrt)) (fun _ _ h => hext2.inRanges_old h)) (fun _ _ h => hext2.inRanges_old h)
       · clear hcap hdir hdir0 hsrcL hB48 hS1n hmod hk1a hk2a hS1 hadd hmask hsub hcsub hsrc hAcc
-        exact OpDone.transport (hop 1 (by omega)) (by janus_simp [opAt]) (by janus_simp [opAt]) (by janus_simp [opAt])
-          (by janus_simp [opAt]) (hLFS.trans (LiveFrame.of_win (by simp only [win, stk]; janus_frame)
+        exact OpDone.transportS (hop 1 (by omega)) (k := 2) (by omega) (by intro a n h1 h2; simp only [opAt] at h1 h2; janus_simp) (hLFS.trans (LiveFrame.of_win (by simp only [win, stk]; janus_frame)
             (hext2.liveSep hLsL1 hwrt)) (fun _ _ h => hext2.inRanges_old h)) (fun _ _ h => hext2.inRanges_old h)
       clear hcap hdir0 hS1n hmod hk1a hk2a hS1 hadd hmask hsub hcsub hsrc hAcc
       refine opDone_of (m := s'.mem) (hLc := hext) ?rd (hacc := fun a n w => by

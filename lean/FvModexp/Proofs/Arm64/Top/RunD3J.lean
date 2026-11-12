@@ -2,6 +2,7 @@ import FvModexp.Proofs.Arm64.Top.RunDPc
 import FvModexp.Proofs.Arm64.Top.RunD2Lem
 import FvModexp.Proofs.Arm64.Top.RunL
 import FvModexp.Proofs.Arm64.Top.RunBox
+import FvModexp.Proofs.Arm64.Top.RunDSlot
 
 /-!
 # `Run` (arm64): the modulus operand from the join point `J3` (`setBytes` of the padded buffer) to `D3`
@@ -111,11 +112,9 @@ theorem d3join (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
   · intro j hj
     dsimp only
     rcases (show j = 0 ∨ j = 1 ∨ j = 2 by omega) with rfl | rfl | rfl
-    · exact OpDone.transport hop0 (by janus_simp [opAt]) (by janus_simp [opAt]) (by janus_simp [opAt])
-        (by janus_simp [opAt]) (hLFS.trans (LiveFrame.of_win (by simp only [win, stk]; janus_frame)
+    · exact OpDone.transportS hop0 (k := 2) (by omega) (by intro a n h1 h2; simp only [opAt] at h1 h2; janus_simp) (hLFS.trans (LiveFrame.of_win (by simp only [win, stk]; janus_frame)
           (hext2.liveSep hLsL1 hwrt)) (fun _ _ h => hext2.inRanges_old h)) (fun _ _ h => hext2.inRanges_old h)
-    · exact OpDone.transport hop1 (by janus_simp [opAt]) (by janus_simp [opAt]) (by janus_simp [opAt])
-        (by janus_simp [opAt]) (hLFS.trans (LiveFrame.of_win (by simp only [win, stk]; janus_frame)
+    · exact OpDone.transportS hop1 (k := 2) (by omega) (by intro a n h1 h2; simp only [opAt] at h1 h2; janus_simp) (hLFS.trans (LiveFrame.of_win (by simp only [win, stk]; janus_frame)
           (hext2.liveSep hLsL1 hwrt)) (fun _ _ h => hext2.inRanges_old h)) (fun _ _ h => hext2.inRanges_old h)
     refine opDone_of (m := s'.mem) (hLc := hext) ?rd (hacc := fun a n w => by
         simp only [Memory.accessible_writeLE, hMF2.accessible, hMF.accessible])

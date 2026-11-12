@@ -1,6 +1,7 @@
 import FvModexp.Proofs.Arm64.Top.RunD2Lem
 import FvModexp.Proofs.Arm64.Top.RunGS
 import FvModexp.Proofs.Arm64.Top.RunD2J
+import FvModexp.Proofs.Arm64.Top.RunDSlot
 
 /-! # `Run` (arm64): `D1` to `J2`, exponent operand longer than the input rest, at most 32 bytes: stack buffer, `memmove` -/
 
@@ -145,8 +146,7 @@ theorem d2p (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
      Or.inr (hout.of_sub (by omega) (by omega)), (by omega), ?bytes, hd1,
      fun a n h1 h2 => (hheld.sub h1 h2).readLE hMF2 hLx (hpo'.of_sub h1 (by omega)),
      hcheld.readLE hMF2 hLx hco', hext, (by simp only [dCost, allocCost] at hbud ⊢; omega), hinvm, hLsL1, hMF2, hLF2,
-     OpDone.transport (hop 0 (by omega)) (by janus_simp [opAt]) (by janus_simp [opAt]) (by janus_simp [opAt])
-       (by janus_simp [opAt]) hLFS (fun _ _ h => h)⟩
+     OpDone.transportS (hop 0 (by omega)) (k := 1) (by omega) (by intro a n h1 h2; simp only [opAt] at h1 h2; janus_simp) hLFS (fun _ _ h => h)⟩
   case bytes =>
     intro j hj
     unfold padByte

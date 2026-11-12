@@ -3,6 +3,7 @@ import FvModexp.Proofs.Arm64.Top.RunGS
 import FvModexp.Proofs.Arm64.Top.RunD3J
 import FvModexp.Proofs.Arm64.Top.RunArith
 import FvModexp.Proofs.Arm64.Top.RunBox
+import FvModexp.Proofs.Arm64.Top.RunDSlot
 
 /-! # `Run` (arm64): `D1` to `J2`, exponent operand longer than the input rest, at most 32 bytes: stack buffer, `memmove` -/
 
@@ -164,11 +165,8 @@ theorem d3p (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
      Or.inr (hout.of_sub (by omega) (by omega)), (by omega), ?bytes, hd1,
      fun a n h1 h2 => (hheld.sub h1 h2).readLE hMF2 hLx (hpo'.of_sub h1 (by omega)),
      hcheld.readLE hMF2 hLx hco', hext, (by simp only [dCost, allocCost] at hbud ⊢; omega), hinvm, hLsL1, hMF2, hLF2,
-     OpDone.transport (hop 0 (by omega)) (by janus_simp [opAt]) (by janus_simp [opAt]) (by janus_simp [opAt])
-       (by janus_simp [opAt]) hLFS (fun _ _ h => h),
-     OpDone.transport (hop 1 (by omega)) (by janus_simp [opAt]) (by janus_simp [opAt]) (by janus_simp [opAt])
-       (by janus_simp [opAt]) hLFS (fun _ _ h => h), OpsApart.transport hopA (fun i hi => by
-       rcases (show i = 0 ∨ i = 1 by omega) with rfl | rfl <;> exact ⟨by janus_simp [opAt], by janus_simp [opAt]⟩)⟩
+     OpDone.transportS (hop 0 (by omega)) (k := 2) (by omega) (by intro a n h1 h2; simp only [opAt] at h1 h2; janus_simp) hLFS (fun _ _ h => h),
+     OpDone.transportS (hop 1 (by omega)) (k := 2) (by omega) (by intro a n h1 h2; simp only [opAt] at h1 h2; janus_simp) hLFS (fun _ _ h => h), OpsApart.transportS hopA (by intro a n h1 h2; simp only [opAt] at h1 h2; janus_simp)⟩
   case bytes =>
     intro j hj
     unfold padByte
