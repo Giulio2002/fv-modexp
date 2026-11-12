@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Nat.KSqrB
 
+set_option autoImplicit false
+
 /-!
 # `karatsubaSqr` (arm64): `z1.abs = z1.abs.sqr(stk, tx.abs); z1.neg = true; clear(z)` (natmul.go:297-299), `KB2 → KB3`
 
@@ -62,11 +64,15 @@ theorem kS1clr (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
   have q344 : S.mem.readLE (s.sp.toNat + 24) 8 = 2 * n := hkm.s3
   have q336 : S.mem.readLE (s.sp.toNat + 16) 8 = zp := hkm.s2
   unfold KGoal
-  have htops := hkm.tops
   have hstw : Outside st 24 (win s W 48) := hkm.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1.2.2.1
   have hsz : Apart st 24 zp (8 * zc) := (hkm.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1).1
+  -- hide what only the continuation needs and clear the call-irrelevant disjunctive facts before the run: the
+  -- memclr call's `LiveSep` side goal is one `omega` over the whole context (profile s27: 121 s; KMulS1c twin)
+  have bxT := IntAS.Box.mk (And.intro hkm.tops (And.intro hstw hsz))
+  clear hstw hsz hzlive hzw hzg hzh hsv hgQ hga hgr
   janus_run [q344, q336] until [0x1bc4ac] calls [hmc' Lk bk]
   rename_i jk fl vv w ex ep hFc hLFc hinvw hz
+  obtain ⟨htops, hstw, hsz⟩ := bxT.h
   have hreg : w.regions = S.mem.regions := by janus_assumption
   obtain ⟨hlive, htw, -, htz, -, ht48⟩ := htops
   simp only [win, outside_cons, outside_nil, and_true] at htw hstw

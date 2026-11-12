@@ -1,6 +1,7 @@
 import FvModexp.Proofs.Arm64.Nat.SqrKPre
 import FvModexp.Proofs.Arm64.Nat.DivmcCall
 import FvModexp.Proofs.Common.BitLemmas
+import FvModexp.Proofs.Common.WinLemmas
 
 /-!
 # `nat.sqr` (arm64), `80 ≤ n`, `stk ≠ nil`: `karatsubaSqr(stk, z, x); return z.norm()` (natmul.go:105-106)
@@ -123,7 +124,8 @@ theorem ks2 (impl : List Segment) (R : RtInv)
       (k := ksqrC (stLen s.mem st.toNat) xl.toNat) (by rw [← eL]; exact hbud) (by omega) hinv2 hsb
       (hF2.mono fun a n h => by
         simp only [stkWs, winA, outside_append, outside_cons, outside_nil, and_true] at h ⊢
-        exact ⟨⟨h.1.1, by omega, by omega⟩, h.2⟩)
+        have hk := Nat.le_of_eq (Nat.add_sub_cancel' (Nat.le_trans (show 176 ≤ 4880 by decide) hW))
+        exact ⟨⟨h.1.1, (winA_in (c := 176) (k := (W - 176)) (ab := 48) hb0 hk (by decide) h.1.2.1).1, (winA_in (c := 176) (k := (W - 176)) (ab := 48) hb0 hk (by decide) h.1.2.1).2⟩, h.2⟩)
       hLF2
       (hF3.mono fun a n h => by simp only [winA, outside_cons, outside_nil, and_true] at h ⊢; omega)
       q0 q1 q2 hn' (by rw [hv', hval']) hnn)
