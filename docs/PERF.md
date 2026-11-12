@@ -1088,3 +1088,13 @@ hypotheses before ~40 omega calls; per-goal `apL`/`apR` sub-range lemmas instead
 LESSONS: (1) never `repeat apply` on big terms without `with_reducible` (the last, failing iteration is the expensive one);
 (2) `janus64_data`/`janus_data` costs ~15 s per call — call it in a small lemma (`RunSmall.errT_word`, `RunDKDefs.uint8_words`)
 or not at all; (3) budget goals: one-line Nat lemmas, never `omega` in the post-run context.
+### infra s24 (arm64 P2W2: loop body B0..B6, exit, full/ens/sum + ResSep; dev compile, LEAN_NUM_THREADS=4)
+| module | time | mem |
+|---|---|---|
+| P2W2BJ (join defs J1..J6, JC, BF.win) | 4.1 s | 2.1 GB |
+| P2W2B0 / B1 / B2 / B3 / B4 / B5 / B6 | 9.3 / 4.5 / 8.3 / 4.6 / 15.0 / 4.5 / 12.5 s | ≤ 2.3 GB |
+| P2W2Bd (bodyKI composition) | 1.8 s | 2.1 GB |
+| P2W2X1 (norm+tail) / X2 (set copy) / X3 (make) / X4 (exitKI) | 6.0 / 18.4 / 7.9 / 11.7 s | ≤ 2.4 GB |
+| P2W2 (full) / P2W2E (ens/sum) | 2.2 / 5.7 s | ≤ 2.4 GB |
+| P2W2Cp2 after the UB.rs field (rebuild) | 81.7 s (s22: 41 s) | 2.4 GB |
+Body segments are independent modules importing only BJ (ROW-TIME rule); composition modules are trivial.

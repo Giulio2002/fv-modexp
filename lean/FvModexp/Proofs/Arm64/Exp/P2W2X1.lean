@@ -48,13 +48,17 @@ theorem nmT (hap : ImplApart Extracted.program impl) (hP : EPre R b L K g sp st 
   have hsub : BitVec.ofNat 64 l - 1#64 = BitVec.ofNat 64 (l - 1) := by
     apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
   have he := tenv_of hP hw hsl hr4 hr48
+  have hrs : RSepL s.mem M st p c := fun hc hn => by
+    rcases hub.rs hc (hw.ain hn).2 with ⟨rfl, rfl⟩ | h
+    · exact rs_z hP hw hc hn
+    · exact h
   have hret : BitVec.ofNat 64 (s.regs 30).toNat = s.regs 30 := by rw [BitVec.ofNat_toNat, BitVec.setWidth_eq]
   subst hm
   janus_run [hz, hacc1, hsub] until [tA]
   rw [← hret]
   refine tailA hap _ _ sp g st (stLen s.mem st) p l c (s.regs 30).toNat (s.regs 18) (s.regs 29) S.mem rfl ?_ ?_ ?_
     ?_ ?_ ?_ rfl (by omega) (by omega) (by omega) he fun s' ht =>
-      finQ hP hw ⟨hval, hN, hlc, hc40, hub.live, hub.org.imp id fun h => ⟨by omega, h.2⟩⟩ hbud ht
+      finQ hP hw ⟨hval, hN, hlc, hc40, hub.live, hub.org.imp id fun h => ⟨by omega, h.2⟩⟩ hrs hbud ht
   all_goals (janus_simp <;> omega)
 
 end
