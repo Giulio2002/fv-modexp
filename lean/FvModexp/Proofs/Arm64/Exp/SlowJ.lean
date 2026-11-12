@@ -110,7 +110,7 @@ theorem res_norm {R : RtInv} {L : List (Nat × Nat)} {st zp zc : Nat} {M M' : Me
     (hr : ExpHyp.NatOF R L1 L2 M' pd cd need p' l' c' v)
     (hE : c' = 0 → ¬ (p' = pd ∧ c' = cd) → BitVec.ofNat 64 p' = BitVec.ofNat 64 pd ∧ c' = cd) :
     ∃ p'', BitVec.ofNat 64 p'' = BitVec.ofNat 64 p' ∧ ExpHyp.NatOF R L1 L2 M' pd cd need p'' l' c' v ∧
-      (c' = 0 → p'' = 0) ∧ (¬ (p'' = pd ∧ c' = cd) → p'' = p') := by
+      (c' = 0 → p'' = 0) ∧ (¬ (p'' = pd ∧ c' = cd) → p'' = p') ∧ (0 < c' → p'' = p') := by
   obtain ⟨hv, hn, hlc, hc40, hlv, hof⟩ := hr
   rcases Nat.eq_zero_or_pos c' with c0 | c0
   · subst c0
@@ -118,11 +118,12 @@ theorem res_norm {R : RtInv} {L : List (Nat × Nat)} {st zp zc : Nat} {M M' : Me
     subst hl0
     by_cases ho : p' = pd ∧ 0 = cd
     · obtain ⟨rfl, rfl⟩ := ho
-      exact ⟨p', rfl, ⟨hv, hn, hlc, hc40, hlv, hof⟩, fun _ => hd.2.2.2.2 rfl, fun hn' => absurd ⟨rfl, rfl⟩ hn'⟩
+      exact ⟨p', rfl, ⟨hv, hn, hlc, hc40, hlv, hof⟩, fun _ => hd.2.2.2.2 rfl, fun hn' => absurd ⟨rfl, rfl⟩ hn',
+        fun h => absurd h (Nat.lt_irrefl 0)⟩
     · obtain ⟨e1, e2⟩ := hE rfl ho
       subst e2
       exact ⟨pd, e1.symm, ⟨by rw [← hv]; rfl, Or.inl rfl, Nat.le_refl _, hc40, by simp, Or.inl ⟨rfl, rfl⟩⟩,
-        fun _ => hd.2.2.2.2 rfl, fun hn' => absurd ⟨rfl, rfl⟩ hn'⟩
-  · exact ⟨p', rfl, ⟨hv, hn, hlc, hc40, hlv, hof⟩, fun h => absurd h (by omega), fun _ => rfl⟩
+        fun _ => hd.2.2.2.2 rfl, fun hn' => absurd ⟨rfl, rfl⟩ hn', fun h => absurd h (Nat.lt_irrefl 0)⟩
+  · exact ⟨p', rfl, ⟨hv, hn, hlc, hc40, hlv, hof⟩, fun h => absurd h (by omega), fun _ => rfl, fun _ => rfl⟩
 
 end FvModexp.Arm64.ExpSlow

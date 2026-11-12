@@ -75,7 +75,7 @@ theorem mulS {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns 
   have hE' : c' = 0 → ¬ (p' = zz ∧ c' = zzc) → BitVec.ofNat 64 p' = BitVec.ofNat 64 zz ∧ c' = zzc := by
     intro c0 hn
     have := (hof.2.2.2.2.2.resolve_left hn).1; omega
-  obtain ⟨p'', hp'', hof'', h00, hpp⟩ := res_norm hB.bzz hof hE'
+  obtain ⟨p'', hp'', hof'', h00, hpp, -⟩ := res_norm hB.bzz hof hE'
   have hLL : ∀ r ∈ L, r ∈ L1 := fun r hr => hw.le.mem_old hr
   have hrs : ¬ (p'' = zz ∧ c' = zzc) → ResSep M s'.mem st p'' c' := by
     intro hn

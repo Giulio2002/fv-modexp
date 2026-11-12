@@ -77,7 +77,7 @@ theorem sqrS {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns 
     have hz0 : zl = 0 := by have := (hof.2.2.2.2.2.resolve_left hn).1; omega
     obtain ⟨r0, r2⟩ := hE hz0
     exact ⟨e0.symm.trans r0, ofNat_inj (by omega) bzzc (e2.symm.trans r2)⟩
-  obtain ⟨p'', hp'', hof'', h00, hpp⟩ := res_norm hB.bzz hof hE'
+  obtain ⟨p'', hp'', hof'', h00, hpp, -⟩ := res_norm hB.bzz hof hE'
   have hLL : ∀ r ∈ L, r ∈ L1 := fun r hr => hw.le.mem_old hr
   have hrs : ¬ (p'' = zz ∧ c' = zzc) → ResSep M s'.mem st p'' c' := by
     intro hn
