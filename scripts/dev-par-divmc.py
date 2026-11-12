@@ -5,7 +5,7 @@ import sys, os, re, subprocess, time, tempfile
 isa, targets = sys.argv[1], [os.path.realpath(t) for t in sys.argv[2:]]
 J = int(os.environ.get('J', '2'))
 root = os.path.realpath(os.path.join(os.path.dirname(__file__), '..', 'lean'))
-out = os.environ.get("OUT", f"/srv/fv-modexp-ops/cache-divmc/dev/oleans-{isa}")
+out = os.environ.get("OUT", os.environ.get("DEV", "/srv/fv-modexp-ops/cache-divmc/dev031") + f"/oleans-{isa}")
 order, seen, deps = [], set(), {}
 def path(mod): return os.path.join(root, *mod.split('.')) + '.lean'
 def visit(f):

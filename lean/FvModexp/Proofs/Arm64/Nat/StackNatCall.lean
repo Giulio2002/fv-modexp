@@ -53,17 +53,23 @@ theorem gcall_pre {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st n : Nat} {s 
     (by rw [h28]; exact RtInv.inv_frame hF (fun r hr => by
       simp only [List.mem_singleton] at hr; subst hr; simp only; rw [show s.sp.toNat + 24 - (s.sp.toNat - 4208) = 4208 + 24 by omega]; exact hout) hinv0)
     (by rw [hround]; exact Nat.le_trans (growRound_le_cost _ _ _ hk) hcost)
-  refine ⟨⟨⟨hc.1, ?_, ?_, ?_, by omega, by omega, by omega, by omega⟩, fun hp => ?_⟩, hc.2⟩
+  refine ⟨⟨⟨hc.1, ?_, ?_, ?_, by omega, by omega, by omega, by omega, ?_⟩, fun hp => ?_⟩, hc.2⟩
   · rw [h4]; exact ⟨by omega, by rw [hF.accessible]; exact ht3⟩
   · simp only [typSize, h4]; rw [hF.readLE _ _ (by simp only [outside_cons, outside_nil, and_true]; omega)]; exact ht1
   · simp only [typPtrBytes, h4]; rw [hF.readLE _ _ (by simp only [outside_cons, outside_nil, and_true]; omega)]
     exact ht2
+  · -- v0.3.1: the type descriptor (rodata) is outside the callee's window
+    rw [h4]; simp only [calleeStack, outside_cons, outside_nil, and_true]; omega
   · have e : (S.regs 1).toNat - (S.regs 3).toNat = stCap s.mem st := by omega
     unfold GrowsliceOld
     rw [e] at hp ⊢
     obtain ⟨-, -, a3, a4⟩ := hnl hp
+    have ha5 := (harr hp).1
+    simp only [win, outside_cons, outside_nil, and_true, stW, stCap] at ha5
     rw [h0]
-    exact ⟨a4, by rw [hF.accessible]; exact Memory.accessible_weaken _ a3⟩
+    refine ⟨a4, by rw [hF.accessible]; exact Memory.accessible_weaken _ a3, ?_⟩
+    -- v0.3.1: the old array is outside the callee's window (it is outside the caller's window)
+    simp only [stW, stCap, calleeStack, outside_cons, outside_nil, and_true]; omega
 
 /-- the `memclrNoHeapPointers(p + 8·cap, 8·(len + nr - cap))` call after `growslice` returned the block `(p, 8·gc)` -/
 theorem mcall_pre {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st n : Nat} {s : State}

@@ -1,5 +1,4 @@
 import FvModexp.Proofs.Arm64.Exp.EvAl
-import FvModexp.Proofs.Arm64.MemmoveZero
 
 set_option autoImplicit false
 

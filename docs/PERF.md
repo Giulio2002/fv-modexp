@@ -1384,6 +1384,12 @@ path ≈ 205 s (was: 117 own modules, row 815 s).
   RunDJS2 59 → 39 s, DE1/DE2/DJS1/DJZ*/DJF*/DM1/DP1 ≈ unchanged (1 operand: few janus_simps saved). Load fell 80 → 20
   during these, so compare `u` times in build/dgen.log. Both RunOkRow chains rebuilt OK after all trims (19:01).
 
+## divmc s30 (2026-11-14): amd64 rows (janus-provfix v0.2.0, fresh store, JANUS_REPLAY_THREADS=1, host load ~40-45)
+* warm-up (framework build + replay) 1486 s outside the caps; AddVWRow PASS 122 s / 1.1 GB, SubVWRow PASS 118 s / 1.1 GB,
+  **IntASRow PASS 766 s / 1.3 GB** (> 600 s margin; own modules IntASTail 21-40 s dev are not the issue alone — profile the
+  row's own critical path NatAdd/NatSub amd64 chain + IntAS* at the next row run on v0.3.1).
+* amd64 sqr port dev times (load ~45): SqrDefs 5.9 s, SqrRel 4.6 s, SqrNorm ~30 s, SqrZero 14 s, SqrOne 16 s, SqrCall ~12 s,
+  SqrMakeR 24 s, SqrBMP 2.7 s.
 ## agent top s21 (2026-11-12, dev compile, LEAN_NUM_THREADS=4, host load ~10-13)
 * Re-measured the arm64 success-row trim targets (FORCE rebuild): RunD3P 77 s / 4.7 GB, RunD1L 81 s / 4.3 GB,
   RunD3 78 s / 3.6 GB, RunD3ZA 45 s / 3.2 GB — all ≤ 5 min / 8 GB with margin at low load.
@@ -1395,3 +1401,13 @@ path ≈ 205 s (was: 117 own modules, row 815 s).
   RunC2EX 19 s; amd64 RunC2Sum 51 s, RunC2B 83 s / 5.1 GB, RunC2M 15 s, RunC2EX 18 s.
 ## infra s38 (dev compile arm64, load ~15): P2DDefs 2.3 s, P2DT 3.0 s/2.2 GB, P2DEnt 12 s/2.1 GB, P2DPost 1.6 s, P2DOneR 5.4 s,
 P2DMk 1.9 s, P2DOne 11.9 s/2.6 GB, P2DZero 2.6 s, P2DWinR 2.9 s, P2DWin 29-32 s/3.4 GB, P2DTz 4.4 s; EvInst 34 s/5.0 GB (rebuilt).
+
+### infra s39 (2026-11-14, arm64 dev compiles, host load ~4–10)
+| module | wall | peak RSS |
+|---|---|---|
+| Exp/P2DEntP | 1.8 s | 2.0 GB |
+| Exp/P2DSumO | 1.7 s | 2.3 GB |
+| Exp/P2DStmt | 1.0 s | 2.0 GB |
+| Exp/P2DRDefs | 1.8 s | 2.1 GB |
+| Exp/P2DRsh | 3.5 s | 2.3 GB |
+| Exp/P2DRec | 66 s | 3.8 GB (before: >10 min / 10 GB with subtraction-heavy budget facts ahead of `omega`s — moved after; see NOTES-infra s39) |

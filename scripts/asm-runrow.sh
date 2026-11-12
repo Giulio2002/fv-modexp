@@ -4,12 +4,13 @@
 # (`(*bigModExp).Run` of the pinned harness with the Run contract flags; the summaries are proved about that
 # extraction), under the project caps (memcap 16G, timeout 900 s), with the provenance-fixed janus binary.
 # Appends "isa row verdict wall_s peak_MB" to build/asm-rows.tsv (peak = max(driver scope, verified.json memGuard)).
+# JANUS_REPLAY_THREADS=1 (BRIEF 2026-11-13); on a fresh cache run the Warmup row (scripts/verify-all.sh) first.
 set -uo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"; cd "$root"
 isa=$1 row=$2
 JANUS=${JANUS:-/srv/fv-modexp-ops/janus-provfix}
 HB=${HARNESS_DIR:-/srv/fv-modexp/build}
-export JANUS_CACHE_DIR=${JANUS_CACHE_DIR:-/srv/fv-modexp-ops/cache-asm} LEAN_NUM_THREADS=${LEAN_NUM_THREADS:-4} JANUS_MEM_MAX=16G
+export JANUS_CACHE_DIR=${JANUS_CACHE_DIR:-/srv/fv-modexp-ops/cache-asm} LEAN_NUM_THREADS=${LEAN_NUM_THREADS:-4} JANUS_MEM_MAX=16G JANUS_REPLAY_THREADS=${JANUS_REPLAY_THREADS:-1}
 case $isa in arm64) dir=Arm64;; amd64) dir=Amd64;; esac
 . scripts/contract-flags.sh
 base=build/ex-$isa-Run-base; out=build/ex-$isa-$row; mkdir -p build

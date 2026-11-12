@@ -1,5 +1,4 @@
 import FvModexp.Proofs.Amd64.Int.IntBytesLoop
-import FvModexp.Proofs.Amd64.MakesliceZero
 import FvModexp.Proofs.Amd64.Int.IntBytesMid
 import FvModexp.Proofs.Amd64.Top.RunIfaceMono
 

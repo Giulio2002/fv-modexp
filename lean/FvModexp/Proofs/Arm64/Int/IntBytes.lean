@@ -1,6 +1,5 @@
 import FvModexp.Proofs.Arm64.Int.IntBytesLoop
 import FvModexp.Proofs.Arm64.Int.IntBytesMid
-import FvModexp.Proofs.Arm64.MakesliceZero
 import FvModexp.Proofs.Arm64.Top.RunIfaceMono
 import FvModexp.Proofs.Common.DivmcLsl
 

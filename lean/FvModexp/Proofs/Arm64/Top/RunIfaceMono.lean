@@ -62,7 +62,7 @@ theorem poolG_mono {R : RtInv} {m : Memory} {s : State} {k a k' a' : Nat} (hk : 
 
 theorem ModSpec.mono {impl : List Segment} {R : RtInv} {k a k' a' : Nat} (h : ModSpec impl R k a) (hk : k ≤ k')
     (ha : a ≤ a') : ModSpec impl R k' a' := fun b L z y =>
-  (h b L z y).mono (fun _ ⟨hp, h1, h2, h3, h4⟩ => ⟨intPre_mono hk ha hp, h1, h2, h3, poolG_mono hk ha h4⟩) fun _ _ _ ⟨h0, h1, h2⟩ =>
+  (h b L z y).mono (fun _ ⟨hp, h1, h2, h3, h4, h5⟩ => ⟨intPre_mono hk ha hp, h1, h2, h3, poolG_mono hk ha h4, h5⟩) fun _ _ _ ⟨h0, h1, h2⟩ =>
     ⟨h0, intPost_mono hk ha h1, h2⟩
 
 theorem oneG_mono {R : RtInv} {L : List (Nat × Nat)} {m : Memory} {xs : List Nat} {s : State} {k a k' a' : Nat}
