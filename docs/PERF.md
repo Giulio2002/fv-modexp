@@ -1411,3 +1411,12 @@ P2DMk 1.9 s, P2DOne 11.9 s/2.6 GB, P2DZero 2.6 s, P2DWinR 2.9 s, P2DWin 29-32 s/
 | Exp/P2DRDefs | 1.8 s | 2.1 GB |
 | Exp/P2DRsh | 3.5 s | 2.3 GB |
 | Exp/P2DRec | 66 s | 3.8 GB (before: >10 min / 10 GB with subtraction-heavy budget facts ahead of `omega`s — moved after; see NOTES-infra s39) |
+
+### infra s40 (2026-11-14, arm64 dev compiles, host load ~80)
+| module | time | peak RSS |
+|---|---|---|
+| Exp/P2DRet (v0.2.0) | 35 s | 3.1 GB |
+| Exp/P2DLsh (v0.2.0) | 76 s | 3.8 GB |
+| Exp/P2DFull (v0.3.1) | 39 s | 3.0 GB (budget arithmetic in the small lemma `bud3`, out of the big context) |
+| Exp/P2DE (v0.3.1) | 2 s | 2.4 GB |
+| Exp/SubMod2NGAlloc (v0.3.1 sweep) | 8 s | 2.4 GB |
