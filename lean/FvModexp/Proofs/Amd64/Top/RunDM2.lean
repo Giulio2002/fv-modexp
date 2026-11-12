@@ -45,6 +45,8 @@ theorem dM2 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
     Janus.Amd64.GoABI.stackguard0] at hgl hg3 hg1 hg2 hb' ha hw hout hal hga hgr
   simp only [stk] at hg3 hb' ha hw hout hpw hMF
   simp only [win, Outside, and_true] at hpw
+  have bxw := Box.mk (And.intro hpw lnz)
+  clear hpw lnz
   have hspn : (S.regs 4).toNat = (s.regs 4).toNat - 608 := by rw [hsp, BitVec.toNat_sub]; simp; omega
   clear hcw hcacc hc48 hcheld
   have hst : min (hdrV s p len 0 + hdrV s p len 1) (len.toNat - 96) ≤ len.toNat - 96 := Nat.min_le_right _ _
@@ -106,14 +108,15 @@ theorem dM2 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
     omega
   obtain ⟨hcf1, hcf2, hcf3, hcf4⟩ := frame_call_facts hal hg3 hga
   rw [hx0] at hx15
-  have bx := Box.mk <| And.intro hpw <| And.intro hinS <| And.intro hheld <| And.intro hpacc <| And.intro hp <|
+  have bx := Box.mk <| And.intro hinS <| And.intro hheld <| And.intro hpacc <| And.intro hp <|
     And.intro hlcp <| And.intro hcp48 <| And.intro hstv <| And.intro hsrc <| And.intro hop hopA
-  clear hpw hinS hheld hpacc hp hlcp hcp48 hstv hsrc hop hopA
+  clear hinS hheld hpacc hp hlcp hcp48 hstv hsrc hop hopA
   set_option janus.callRegions true in
   janus64_run [hsp, hm1, hm2, hm3, hm4, hm5, hm6, s1, s2, s4, s5, s6, s3, hsl1, hsl2, hsl3, hz1', hz2', hz3', hR9, hadd, hcb, hsubB, hJG, hmB,
     hc32, hx15, hU2, hU3, toInt_ite, toNat_ite, toInt_small, BitVec.msb_eq_decide] until [pcJ2] calls [hmkP]
   rename_i ptr _ _ _ _ m _ _ hLFk hMFk hAp hIn hle hacc h8 _ hzk hsz hapW hinvk
-  obtain ⟨hpw, hinS, hheld, hpacc, hp, hlcp, hcp48, hstv, hsrc, hop, hopA⟩ := bx.h
+  obtain ⟨hinS, hheld, hpacc, hp, hlcp, hcp48, hstv, hsrc, hop, hopA⟩ := bx.h
+  clear hut hcf1 hcf2 hcf3 hcf4
   have hwrt : ∀ r ∈ win s 4800 40, Outside r.1 (r.2 - r.1) R.rt := fun r hr => by
     simp only [win, List.mem_cons, List.not_mem_nil, or_false] at hr; subst hr
     exact hout.of_sub (Nat.le_refl _) (win_len hb')
@@ -133,7 +136,7 @@ theorem dM2 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
     unfold inOff; split <;> split <;> omega
   refine hk _ (bk - blockSize (hdrV s p len 2) true) ptr.toNat (ptr.toNat + blockSize (hdrV s p len 2) true)
     (p.toNat + inOff len + (if st < cp.toNat - inOff len then st else 0))
-    ⟨RelD.mk' hin0 ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ l0 l1 l2 lnz ?_ ?_ ?_ (hext.trans hext') ?_ ?_
+    ⟨RelD.mk' hin0 ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ l0 l1 l2 bxw.h.2 ?_ ?_ ?_ (hext.trans hext') ?_ ?_
     (hext'.liveSep hLsS hwrt) ?_ ?_ ?_ ?_,
     fun h => absurd h (by decide), ?zb, hsrc.1, hsrc.2.1, hsrc.2.2.1, ?d48, by rw [hoL]; exact hacc', hext,
     liveSep_of_apartAll hAp, ?op⟩ ⟨Nat.add_le_add_left hsz _, by simpa using hIn, by simpa using fresh_out_win hb' hIn hout⟩

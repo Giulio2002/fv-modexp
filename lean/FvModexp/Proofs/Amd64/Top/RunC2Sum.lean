@@ -20,13 +20,43 @@ theorem sub_of_all {ns ms : List String} (h : ns.all (fun x => ms.contains x) = 
   rw [List.all_eq_true] at h
   exact h y (List.contains_iff_mem.1 hy)
 
-set_option maxRecDepth 20000 in
-theorem subMod : ∀ y, RunIface.namesMod.contains y = true → LibRun.names.contains y = true :=
-  sub_of_all (by decide +kernel)
+/-- `ns.all P` from its first `k` entries and the rest (kernel decisions split into small declarations: one
+`decide` over the whole list peaked at 6.9 GB). -/
+theorem all_split {ns : List String} {P : String → Bool} (k : Nat) (h1 : (ns.take k).all P = true)
+    (h2 : (ns.drop k).all P = true) : ns.all P = true := by
+  rw [← List.take_append_drop k ns, List.all_append, h1, h2]; rfl
 
 set_option maxRecDepth 20000 in
+theorem namesMod_c0 : (RunIface.namesMod.take 12).all (fun x => LibRun.names.contains x) = true := by decide +kernel
+set_option maxRecDepth 20000 in
+theorem namesMod_c1 : ((RunIface.namesMod.drop 12).take 12).all (fun x => LibRun.names.contains x) = true := by decide +kernel
+set_option maxRecDepth 20000 in
+theorem namesMod_c2 : (((RunIface.namesMod.drop 12).drop 12).take 12).all (fun x => LibRun.names.contains x) = true := by decide +kernel
+set_option maxRecDepth 20000 in
+theorem namesMod_c3 : ((((RunIface.namesMod.drop 12).drop 12).drop 12).take 12).all (fun x => LibRun.names.contains x) = true := by decide +kernel
+theorem namesMod_nil : ((((RunIface.namesMod.drop 12).drop 12).drop 12).drop 12).all (fun x => LibRun.names.contains x) = true := by decide +kernel
+
+theorem subMod : ∀ y, RunIface.namesMod.contains y = true → LibRun.names.contains y = true :=
+  sub_of_all (all_split 12 namesMod_c0 (all_split 12 namesMod_c1 (all_split 12 namesMod_c2 (all_split 12 namesMod_c3 namesMod_nil))))
+
+set_option maxRecDepth 20000 in
+theorem namesExp_c0 : (RunIface.namesExp.take 12).all (fun x => LibRun.names.contains x) = true := by decide +kernel
+set_option maxRecDepth 20000 in
+theorem namesExp_c1 : ((RunIface.namesExp.drop 12).take 12).all (fun x => LibRun.names.contains x) = true := by decide +kernel
+set_option maxRecDepth 20000 in
+theorem namesExp_c2 : (((RunIface.namesExp.drop 12).drop 12).take 12).all (fun x => LibRun.names.contains x) = true := by decide +kernel
+set_option maxRecDepth 20000 in
+theorem namesExp_c3 : ((((RunIface.namesExp.drop 12).drop 12).drop 12).take 12).all (fun x => LibRun.names.contains x) = true := by decide +kernel
+set_option maxRecDepth 20000 in
+theorem namesExp_c4 : (((((RunIface.namesExp.drop 12).drop 12).drop 12).drop 12).take 12).all (fun x => LibRun.names.contains x) = true := by decide +kernel
+set_option maxRecDepth 20000 in
+theorem namesExp_c5 : ((((((RunIface.namesExp.drop 12).drop 12).drop 12).drop 12).drop 12).take 12).all (fun x => LibRun.names.contains x) = true := by decide +kernel
+set_option maxRecDepth 20000 in
+theorem namesExp_c6 : (((((((RunIface.namesExp.drop 12).drop 12).drop 12).drop 12).drop 12).drop 12).take 12).all (fun x => LibRun.names.contains x) = true := by decide +kernel
+theorem namesExp_nil : (((((((RunIface.namesExp.drop 12).drop 12).drop 12).drop 12).drop 12).drop 12).drop 12).all (fun x => LibRun.names.contains x) = true := by decide +kernel
+
 theorem subExp : ∀ y, RunIface.namesExp.contains y = true → LibRun.names.contains y = true :=
-  sub_of_all (by decide +kernel)
+  sub_of_all (all_split 12 namesExp_c0 (all_split 12 namesExp_c1 (all_split 12 namesExp_c2 (all_split 12 namesExp_c3 (all_split 12 namesExp_c4 (all_split 12 namesExp_c5 (all_split 12 namesExp_c6 namesExp_nil)))))))
 
 set_option maxRecDepth 20000 in
 theorem subBytes : ∀ y, [RunIface.fnBytes].contains y = true → LibRun.names.contains y = true :=
