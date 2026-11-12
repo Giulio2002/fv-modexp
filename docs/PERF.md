@@ -795,3 +795,17 @@ Function-level frame plumbing: W4Anc 2.6 s / 2.2 GB, W4FunV 1.3 s, W4FunO 3.3 s 
 EnCtx 14 s, En 23 s / 2.7 GB (others unchanged ±20%). LESSON: a single `by omega` in a chain lemma's context (dozens
 of unfolded Apart/stack disjunctions) made W4DivS run > 5 min (4.5 s before): every arithmetic side goal of the new
 anchor plumbing goes through tiny lemmas (`ble1/ble2/ble3/le_cap_of/cap8/le_drop/bP`, W4Anc) — no omega in big contexts.
+
+## expmc session 15 (2026-11-12) — window-4 row time (ROW-TIME LESSON applied)
+
+| change | before | after |
+|---|---|---|
+| W4 chain imports = exactly the modules whose constants each module uses (computed from the built environment, `scratchpad Dep.lean`; transitive reduction) | critical import path 875 s (light load) | 584 s (same proofs) |
+| W4ZcD: table-header address `congr 1; omega` (big context) → closed lemmas `e24`/`e24'` + `rw` | 114 s | 12 s |
+| W4OneRet (`afterOne`): 4 big-context omega blocks (hgo2 41 s, hbud2 26 s, hfe2 26 s, refine window side goal 61 s) → small lemmas `go2`/`sub2`/`fe15`/`win_sub` | 155 s / 5.2 GB | 25–30 s / 3.0 GB |
+| W4XnS (`xnAStep`): window/budget side goals of the final refine (4 × 15–29 s omega) → `Apart.sub` + `bud3` | 64 s | 10 s |
+| whole W4 closure (J=2 parallel dev build, load ≈ 30): `scripts/crit-path.py` | critical path 875 s, sum 1482 s | critical path 305 s, sum 884 s |
+
+Method: `lean -Dtrace.profiler=true -Dtrace.profiler.threshold=300` on the slow module; every hot spot was `omega` in a
+context of ~150 hypotheses (unfolded `Apart` disjunctions make it case-split). A side goal that depends on few facts
+goes into a top-level lemma taking exactly those facts.
