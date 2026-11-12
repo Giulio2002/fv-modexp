@@ -19,6 +19,11 @@ set_option linter.janusRenameI false
 
 namespace FvModexp.Arm64.DivRec
 
+/-- a fact hidden from `janus_run` (which destructures every conjunction in the context) -/
+structure Box (P : Prop) : Prop where
+  h : P
+
+
 /-- the stack is kept by a callee that only writes `ws` (not the stack) -/
 theorem stackBack_keep {R : RtInv} {c : Cx} {s : State} {Lk L' : List (Nat × Nat)} {bk : Nat} {M M' : Memory}
     {wsS ws : List (Nat × Nat)} (hcr : Cr R c s) (h : Ev R c s Lk bk M)
