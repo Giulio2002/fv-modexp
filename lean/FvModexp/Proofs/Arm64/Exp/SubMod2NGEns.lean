@@ -4,6 +4,7 @@ import FvModexp.Proofs.Arm64.Exp.SubMod2NGS3b
 import FvModexp.Proofs.Arm64.Exp.SubMod2NGS4A
 import FvModexp.Proofs.Arm64.Exp.SubMod2NGS4B
 import FvModexp.Proofs.Arm64.Exp.SubMod2NGS4Cb
+import Janus.Contracts.InternalCall
 
 set_option autoImplicit false
 
@@ -20,7 +21,7 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvMod
 
 namespace FvModexp.Arm64.SubMod2N
 
-open FvModexp.Arm64.EvenHyp
+open FvModexp.Arm64.EvenHyp Janus.Contracts.EqHashModel
 
 /-- the whole function from its entry (general form), as a `Summary` on the exp layer's program -/
 theorem fullG (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv) {ns : List String}
@@ -57,11 +58,11 @@ theorem ensG (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
   have hc : CodeIn (Extracted.program.ofImpl impl) (LibW.program.link impl) := by
     rw [LibW.eq_only]; exact codeIn_ofImpl_restrict_of_apart hap LibW.names
   have hgr' : GrowsliceLiveContract (LibW.program.link impl) (cA "runtime.growslice") 4096 R :=
-    fun L b => Summary.of_codeIn hc (hgr L b)
+    fun L b => EqHashModel.Summary.of_codeIn hc (hgr L b)
   rw [← LibW.eq_only, show segAddr Extracted.program fn = 1805584 by decide]
   intro ret hret s hs hpre
   janus_intro hs
-  refine Summary.returns (fullG impl hap R hns hnf hkT haT htr hsub (addHypR_of impl hap R hmk hmv) hgr' b L op zp zl
+  refine Summary.returns (fullG impl hap R hns hnf hkT haT htr hsub (fun b L zp zl zc xp xl xc yp yl yc => NatAdd.ensR impl hap R hmk hmv b L zp zl zc xp xl xc yp yl yc) hgr' b L op zp zl
     zc yp yl yc n) hret h_pc h_lr
     ⟨h_x0, h_x1, h_x2, h_x3, h_x4, h_x5, h_x6, h_x7, h_x8, h_x9, hpre⟩ fun s' ⟨⟨a, b, c, d⟩, hq⟩ => ⟨⟨a, b, c, d⟩, hq⟩
 
@@ -86,6 +87,6 @@ theorem ens_of_G {impl : List Segment} {R : RtInv} (h : EnsG impl R)
         BitVec.ofNat 64 zc, BitVec.ofNat 64 yp, BitVec.ofNat 64 yl, BitVec.ofNat 64 yc, BitVec.ofNat 64 n]
       (Pre R b L op zp zl zc yp yl yc n) (Post R b L zp zl zc yp yl n) :=
   (h b L op zp zl zc yp yl yc n).mono (fun _ hp => hp.toG)
-    (fun s _ s' hq => PostG.toPost hq.1.2.2.2.2.2.2.2.2.2.1 hq.2)
+    (fun _ _ hp hq => PostG.toPost hp.2.2.2.2.2.2.2.2.2.1 hq)
 
 end FvModexp.Arm64.SubMod2N
