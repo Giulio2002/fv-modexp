@@ -129,15 +129,14 @@ theorem lpost {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st 
         · have := outside_of_inRanges ho hin; unfold Apart; omega
   case fr =>
     refine (mfTrans hM.fr hW).mono fun a n ho => ?_
-    obtain ⟨hw, hz, hu, hst⟩ := out3_parts' ho
-    rw [outside_append] at hw
-    obtain ⟨hrt, hwa⟩ := hw
+    simp only [outside_append] at ho
+    obtain ⟨⟨⟨hrt, hwa⟩, hz, hu⟩, hst⟩ := ho
     have hst' := hst
     simp only [stkWs, outside_cons, outside_nil, and_true] at hst'
     rw [outside_append]
     refine ⟨?_, ?_⟩
     · rw [outside_append, outside_append, outside_append]
-      refine ⟨⟨⟨hrt, hwa⟩, outside_wsL ?_ (fun _ => hz) (fun _ => hu)⟩, hst⟩
+      refine ⟨⟨⟨hrt, hwa⟩, outside_wsL ?_ (ar_out hz) (ar_out hu)⟩, hst⟩
       rcases hE.scr.loc with ⟨-, i1, i2⟩ | ⟨hin, -⟩
       · omega
       · exact outside_of_inRanges hrt hin
@@ -150,14 +149,14 @@ theorem lpost {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st 
     have hst' := ho.2
     simp only [stkWs, outside_cons, outside_nil, and_true] at hst'
     have hz := ho.1
-    simp only [outside_cons, outside_nil, and_true] at hz
+    rw [outside_append] at hz
     have hLs := hl.lsep
     obtain ⟨r, hr, i1, i2⟩ := hin
     have hrr := hLs r (hE.ext.mem_old hr)
     rw [hW.readLE a n (by simp only [finW, outside_cons, outside_nil, and_true]; omega)]
     refine hM.lf.readLE a n ⟨r, hr, i1, i2⟩ ?_
     rw [outside_append]
-    refine ⟨outside_wsL ?_ (fun h => by omega) (fun h => by omega), ho.2⟩
+    refine ⟨outside_wsL ?_ (ar_out hz.1) (ar_out hz.2), ho.2⟩
     rcases hE.scr.loc with ⟨-, j1, j2⟩ | ⟨-, hap⟩
     · omega
     · have := hap r hr; unfold Apart at this; omega

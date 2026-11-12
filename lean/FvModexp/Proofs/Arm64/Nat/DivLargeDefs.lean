@@ -195,6 +195,9 @@ theorem Pre.inv {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc s
     (h : Pre R b L c zp zc st up uc ip il vp vl s) : R.inv b L (s.regs 28).toNat (view R.rt L s.mem) := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2
 
 
+/-- an array's range, empty when `c = 0` (the pointer of a `cap = 0` nat is arbitrary) -/
+@[reducible] def ar (p c : Nat) : List (Nat × Nat) := if 0 < c then [(p, p + 8 * c)] else []
+
 /-- The postcondition: `q = U / V` (old `z` array or a fresh one), `r = U mod V` (old `u` array or a fresh one; a fresh
 one is apart from the stack's final array), both normalised; the stack's `len` restored. -/
 @[reducible] def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (c : Nat) (zp zc st up uc ip il vp vl : Nat)
@@ -208,8 +211,8 @@ one is apart from the stack's final array), both normalised; the stack's `len` r
       ExpHyp.RtPost R b c L L' b' s s' ∧ StackBack R L L' st s.mem s'.mem ∧
       (¬ (r = up ∧ rc = uc) → 0 < rc → 0 < stCap s'.mem st →
         Apart r (8 * rc) (stW s'.mem st) (8 * stCap s'.mem st)) ∧
-      MemFrame s.mem s'.mem (R.rt ++ winA s 41264 112 ++ [(zp, zp + 8 * zc), (up, up + 8 * uc)] ++ stkWs s.mem st) ∧
-      LiveFrame s.mem s'.mem L ([(zp, zp + 8 * zc), (up, up + 8 * uc)] ++ stkWs s.mem st)
+      MemFrame s.mem s'.mem (R.rt ++ winA s 41264 112 ++ (ar zp zc ++ ar up uc) ++ stkWs s.mem st) ∧
+      LiveFrame s.mem s'.mem L ((ar zp zc ++ ar up uc) ++ stkWs s.mem st)
 
 /-- `divLarge`'s `Ensures` with budget bound `cost dc` -/
 def Hyp (impl : List Segment) (R : RtInv) (dc : Nat → Nat → Nat → Nat) : Prop :=

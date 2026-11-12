@@ -43,10 +43,16 @@ def wordT : Nat := Extracted.dataAddr.«type:big.Word#51b931e8»
 @[reducible] def cost (dc : Nat → Nat → Nat → Nat) (l ul vl : Nat) : Nat :=
   makeCost ul + makeCost 1 + DivLarge.cost dc l ul vl
 
-/-- the precondition: expmc's `DivPre` and a non-nil stack -/
+/-- the precondition: expmc's `DivPre` (FINAL text, NOTES-conventions "[expmc s20]"; includes `st ≠ 0`) -/
 @[reducible] def Pre (R : RtInv) (b : Nat) (dc : Nat → Nat → Nat → Nat) (L : List (Nat × Nat))
     (zp zl zc st z2 z2l z2c u ul v vl : Nat) (s : State) : Prop :=
-  st ≠ 0 ∧ ExpHyp.DivPre R b (cost dc) L 41504 112 zp zl zc st z2 z2l z2c u ul v vl s
+  ExpHyp.DivPre R b (cost dc) L 41504 112 zp zl zc st z2 z2l z2c u ul v vl s
+
+/-- the stack header's separation from the guard word, the write-barrier flag and the free part (asm s18 REQUEST to
+add to `ExpHyp.DivPre`; an explicit premise of the `divLarge` path until then) -/
+@[reducible] def HdrSep (s : State) (st : Nat) : Prop :=
+  Apart st 24 ((s.regs 28).toNat + 16) 8 ∧ Apart st 24 StackNat.wbA 4 ∧
+    Apart st 24 (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st))
 
 @[reducible] def Post (R : RtInv) (b : Nat) (dc : Nat → Nat → Nat → Nat) (L : List (Nat × Nat))
     (zp zc st z2 z2c u ul v vl : Nat) (s s' : State) : Prop :=
@@ -58,7 +64,7 @@ def wordT : Nat := Extracted.dataAddr.«type:big.Word#51b931e8»
   (s'.sp = s.sp ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧ s'.regs 18 = s.regs 18) ∧
     Post R b dc L zp zc st z2 z2c u ul v vl s s'
 
-/-- `nat.div`'s `Ensures` = `ExpHyp.DivHyp impl R names 41504 112 (cost dc)` with `st ≠ 0` -/
+/-- `nat.div`'s `Ensures` = `ExpHyp.DivHyp impl R names 41504 112 (cost dc)` (definitionally) -/
 def Hyp (impl : List Segment) (R : RtInv) (dc : Nat → Nat → Nat → Nat) : Prop :=
   ∀ (b : Nat) (L : List (Nat × Nat)) (z zl zc st z2 z2l z2c u ul uc v vl vc : BitVec 64),
     Ensures ((Extracted.program.onlySegments names).link impl) (segAddr Extracted.program fn)
@@ -109,8 +115,8 @@ structure PF (R : RtInv) (b : Nat) (dc : Nat → Nat → Nat → Nat) (L : List 
 theorem Pre.f {R : RtInv} {b : Nat} {dc : Nat → Nat → Nat → Nat} {L : List (Nat × Nat)}
     {zp zl zc st z2 z2l z2c u ul v vl : Nat} {s : State}
     (h : Pre R b dc L zp zl zc st z2 z2l z2c u ul v vl s) : PF R b dc L zp zl zc st z2 z2l z2c u ul v vl s := by
-  obtain ⟨h0, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11, h12, h13, h14, h15, h16, h17, h18, h19, h20, h21, h22,
-    h23, h24, h25, h26, h27, h28, h29, h30, h31⟩ := h
+  obtain ⟨h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11, h12, h13, h14, h15, h16, h17, h18, h19, h20, h21, h22,
+    h23, h0, h24, h25, h26, h27, h28, h29, h30, h31⟩ := h
   exact ⟨h0, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11, h12, h13, h14, h15, h16, h17, h18, h19, h20, h21, h22,
     h23, h24, h25, h26, h27, h28, h29, h30, h31⟩
 

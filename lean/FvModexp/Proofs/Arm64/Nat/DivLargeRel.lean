@@ -51,9 +51,6 @@ structure Env (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (c : Nat) (zp zc st 
   c1b : c1 < 2 ^ 40
   w1live : NatLive s.mem R L1 w1 c1
 
-/-- a nat's array as a written range (none when `cap = 0`: the pointer of an empty nat is arbitrary) -/
-@[reducible] def ar (p c : Nat) : List (Nat × Nat) := if 0 < c then [(p, p + 8 * c)] else []
-
 /-- the ranges written after the `stk.nat` call: the scratch `v`, `z`'s and `u`'s arrays -/
 @[reducible] def wsL (zp zc up uc vl t : Nat) : List (Nat × Nat) :=
   (t, t + 8 * vl) :: (ar zp zc ++ ar up uc)

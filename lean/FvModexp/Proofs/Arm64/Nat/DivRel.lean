@@ -105,6 +105,14 @@ structure AtS (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc z2 z2c u ul :
   q2 : S.mem.readLE (s.sp.toNat - 40) 8 = zc
   s8 : S.mem.readLE (s.sp.toNat + 64) 8 = u
 
+/-- `divLarge`'s window bounds in the entry's terms (standalone: `omega` chokes on nested subtractions in big contexts) -/
+theorem spX {s X : State} (hsp : X.sp = s.sp - 240#64) (h : 41504 ≤ s.sp.toNat) :
+    X.sp.toNat - 41264 = s.sp.toNat - 41504 ∧ X.sp.toNat - 8 = s.sp.toNat - 248 ∧ X.sp.toNat + 8 = s.sp.toNat - 232 ∧
+      X.sp.toNat + 112 = s.sp.toNat - 128 ∧ X.sp.toNat = s.sp.toNat - 240 := by
+  have : X.sp.toNat = s.sp.toNat - 240 := by
+    rw [hsp, BitVec.toNat_sub]; simp only [BitVec.toNat_ofNat]; omega
+  omega
+
 /-! ## The comparison `u.cmp(v)` for normalised nats -/
 
 theorem natVal_ge1 (m : Memory) (p n : Nat) (hn : 1 ≤ n) (ht : m.readLE (p + 8 * (n - 1)) 8 ≠ 0) :
