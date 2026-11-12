@@ -51,6 +51,22 @@ theorem padMask64 (L vn : Nat) (hvn : vn < L) (hL : L ≤ 1024) :
       (by simp only [BitVec.toNat_ofNat]; omega) (by omega)]
     simp only [h0, if_false, BitVec.toNat_ofNat]; omega
 
+/-- `padMask64` in the form `janus64_run` normalises the mask operand to (`L - (vn + L)`). -/
+theorem padMask64' (L vn : Nat) (hvn : vn < L) (hL : L ≤ 1024) :
+    (BitVec.ofNat 64 L - BitVec.ofNat 64 vn &&&
+      (BitVec.ofNat 64 L - BitVec.ofNat 64 (vn + L)).sshiftRight 63) =
+      BitVec.ofNat 64 (if vn = 0 then 0 else L - vn) := by
+  by_cases h0 : vn = 0
+  · subst h0; simp
+  · apply BitVec.eq_of_toNat_eq
+    rw [BitVec.toNat_and]
+    have e1 : (BitVec.ofNat 64 L - BitVec.ofNat 64 vn).toNat = L - vn := by
+      rw [BitVec.toNat_sub]; simp only [BitVec.toNat_ofNat]
+      rw [Nat.mod_eq_of_lt (a := L) (by omega), Nat.mod_eq_of_lt (a := vn) (by omega)]; omega
+    rw [e1, sliceMask_lt (L - vn) (BitVec.ofNat 64 L) (BitVec.ofNat 64 (vn + L))
+      (by simp only [BitVec.toNat_ofNat]; omega) (by simp only [BitVec.toNat_ofNat]; omega) (by omega)]
+    simp only [h0, if_false, BitVec.toNat_ofNat]; omega
+
 /-- The copy length `L - (L - vn)` is `len(v)`. -/
 theorem padLen64 (L vn : Nat) (hvn : vn < L) (hL : L ≤ 1024) :
     BitVec.ofNat 64 L - (BitVec.ofNat 64 L - BitVec.ofNat 64 vn) = BitVec.ofNat 64 vn := by
