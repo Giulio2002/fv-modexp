@@ -130,6 +130,18 @@ theorem noPre (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R L 
   refine ⟨⟨hc.1, ⟨by omega, by rw [t0, hm]; exact ht3⟩, ?_⟩, hc.2⟩
   simp only [typSize, t0, hm, ht1, maxAlloc]; omega
 
+/-- a held range apart from the window keeps its bytes through a call writing the runtime and `cs` (in the window) -/
+theorem alloc_rd {M m : Memory} {cs : List (Nat × Nat)} (hMF : MemFrame M m (R.rt ++ cs))
+    (hcs : ∀ q ∈ cs, sp - K ≤ q.1 ∧ q.2 ≤ sp + 456) (hLF : LiveFrame M m L1 []) {a k : Nat}
+    (hh : Held R L1 a k) (hap : Apart a k (sp - K) (K + 560)) : m.readLE a k = M.readLE a k := by
+  rcases hh with hL | hO
+  · exact hLF.readLE a k hL trivial
+  · refine hMF.readLE a k ?_
+    rw [outside_append]
+    unfold Apart at hap
+    refine ⟨hO, outside_of_forall fun q hq => ?_⟩
+    have := hcs q hq; omega
+
 /-- the facts after a live allocation of `[p, p + r)` (`n` bytes asked) at a call from `SP = sp`, memory `M → m` -/
 structure AllocR (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc : Nat) (m0 M : Memory) (L1 : List (Nat × Nat))
     (b1 ℓ : Nat) (m : Memory) (p r n : Nat) : Prop where
@@ -142,6 +154,7 @@ structure AllocR (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc : Nat) (m0
   sz : n ≤ r
   rc : r ≤ allocCost n
   keep : ∀ a k, (sp - 8 ≤ a ∧ a + k ≤ sp + 8 ∨ sp + 32 ≤ a ∧ a + k ≤ sp + 560) → m.readLE a k = M.readLE a k
+  rdH : ∀ a k, Held R L1 a k → Apart a k (sp - K) (K + 560) → m.readLE a k = M.readLE a k
 
 set_option maxRecDepth 20000 in
 /-- `makeslice(Word, _, c)`'s post as `AllocR` -/
@@ -187,7 +200,8 @@ theorem mkPost (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R L
   have hgg : (T.regs 28).toNat = g := by rw [h28, BitVec.toNat_ofNat]; omega
   rw [hgg] at hinv
   refine ⟨ptr, junk, f, v, m, ex, ep, hs1, h.alloc hP hMF hcs hLF ?rg hin hap hinv, hin, hap, h48, hacc,
-    hal (Or.inr (by omega)), hle, blockSize_le_allocCost _ _, fun a k ha => hMF.readLE a k ?_⟩
+    hal (Or.inr (by omega)), hle, blockSize_le_allocCost _ _, fun a k ha => hMF.readLE a k ?_,
+    fun a k hh hap => alloc_rd hMF hcs hLF hh hap⟩
   case rg => subst hs1; rw [← hm]; exact hrg
   · rw [outside_append]
     refine ⟨?_, ?_⟩
@@ -237,7 +251,8 @@ theorem noPost (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R L
   have hgg : (T.regs 28).toNat = g := by rw [h28, BitVec.toNat_ofNat]; omega
   rw [hgg] at hinv
   refine ⟨ptr, junk, f, v, m, ex, ep, hs1, h.alloc hP hMF hcs hLF ?rg hin hap hinv, hin, hap, h48, hacc,
-    hal (Or.inr (by decide)), hle, blockSize_le_allocCost _ _, fun a k ha => hMF.readLE a k ?_⟩
+    hal (Or.inr (by decide)), hle, blockSize_le_allocCost _ _, fun a k ha => hMF.readLE a k ?_,
+    fun a k hh hap => alloc_rd hMF hcs hLF hh hap⟩
   case rg => subst hs1; rw [← hm]; exact hrg
   · rw [outside_append]
     refine ⟨?_, ?_⟩
