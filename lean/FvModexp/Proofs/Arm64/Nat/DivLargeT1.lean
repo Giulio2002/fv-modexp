@@ -239,4 +239,38 @@ theorem t1c (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
       simp (disch := omega) only [FvModexp.Expmc.readLE_writeLE_same, Memory.readLE_writeLE_of_disjoint, Nat.reducePow]
       omega
 
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 64000000 in
+/-- **the tail, part 1**: `AtD` → `q = q.norm()` → `q` stored → `rshVU` (if `shift ≠ 0`) → `AtR` -/
+theorem t1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+    {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st up uc ip il ic vp vl vc : Nat} {s : State}
+    {t w1 c1 : Nat} {L1 : List (Nat × Nat)} {b1 : Nat} {Lq : List (Nat × Nat)} {P C sh qp qc : Nat}
+    {L2 : List (Nat × Nat)} {b2 w2 c2 : Nat}
+    (hE : Env R b L c zp zc st up uc ip il vp vl s t L1 b1 w1 c1) (S : State)
+    (hS : AtD R b L c zp zc st up uc ip il ic vp vl vc s t w1 c1 L1 Lq P C sh qp qc L2 b2 w2 c2 S) (Q : State → Prop)
+    (k : ∀ ql T, AtR R b L c zp zc st up uc ip il ic vp vl vc s t w1 c1 L1 Lq P C sh qp qc L2 b2 w2 c2 ql T →
+      ReachesRet (LibDivL.program.link impl) (s.regs 30) T Q) :
+    ReachesRet (LibDivL.program.link impl) (s.regs 30) S Q := by
+  have hl := hE.lay
+  have hsp0 := hl.sp0; have hsp1 := hl.sp1; have hil9 := hl.il9; have hvil := hl.vil
+  have hQ := hS.qa
+  have hqcap := hQ.cap; have hq40 := hQ.c40; have hq48 := hQ.p48
+  have m0 := hS.sq0; have m1 := hS.sq1
+  obtain ⟨hal, hb', ha, hw⟩ := hE.pre.ce.2.1
+  have hwacc : S.mem.accessible (s.sp.toNat - 41264) (41264 + 112) true = true := by
+    rw [hS.mem.mem.fr.accessible]; exact hw
+  have hpc := hS.pc; have hsp := hS.sp; have h28 := hS.r28; have h29 := hS.r29; have h18 := hS.r18
+  janus_run [m0, m1] until [qHead]
+  refine qnorm impl (s.regs 30) S.mem qp (il - vl + 1) (natVal s.mem ip il / natVal s.mem vp vl) (s.sp - 304#64)
+    (s.regs 28) (s.sp - 312#64) (s.regs 18) Q
+    (fun s' n' hpc' hm' h0' h1' hsp' h28' h29' h18' hle hv hn =>
+      t1c impl hap R hE hS hle hv hn s' hpc' hm' h0' h1' hsp' h28' h29' h18' Q (k n'))
+    (by omega) (by omega) (Memory.accessible_read_of_write _ (Memory.accessible_mono _ hQ.pacc (Nat.le_refl _) (by omega)))
+    (il - vl + 1) _ (Nat.le_refl _) rfl ?_ ?_ rfl ?_ ?_ ?_ rfl hS.qval
+  · simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte]
+  · simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte]
+  · simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, h28]
+  · simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, h29]
+  · simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, h18]
+
 end FvModexp.Arm64.DivLarge
