@@ -271,6 +271,21 @@ def ModSpec (impl : List Segment) (R : RtInv) (stk above : Nat) : Prop :=
           L stk above z.toNat (IntV s.mem z.toNat % IntV s.mem y.toNat) s s' ∧
         IntV s'.mem y.toNat = IntV s.mem y.toNat)
 
+/-- The address of `math/big`'s package global `natOne` (`nat.go:30`, `.data`). -/
+@[reducible] def natOneA : Nat := Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.natOne»
+
+/-- `natOne` as `(*Int).exp` reads it (NOTES-conventions "[top s18]"): header `(op, 1, 1)` at `natOneA`, `op[0] = 1`,
+readable, outside the runtime-owned ranges and the stack ranges `w`, the word held (the conjuncts before `∀` are
+`EvenHyp.NatOne R L m op w` verbatim), and apart from the operand `*Int`s `xs` (headers and arrays), which the call
+writes. -/
+def OneG (R : RtInv) (L : List (Nat × Nat)) (m : Memory) (w : List (Nat × Nat)) (xs : List Nat) : Prop :=
+  ∃ op, (m.readLE natOneA 8 = op ∧ m.readLE (natOneA + 8) 8 = 1 ∧ m.readLE (natOneA + 16) 8 = 1 ∧ m.readLE op 8 = 1 ∧
+    m.accessible natOneA 24 false = true ∧ Outside natOneA 24 R.rt ∧ Outside natOneA 24 w ∧
+    m.accessible op 8 false = true ∧ op + 8 ≤ 2 ^ 48 ∧ Held R L op 8 ∧ Outside op 8 w) ∧
+    ∀ a ∈ xs, Apart a 32 natOneA 24 ∧ Apart a 32 op 8 ∧
+      (0 < m.readLE (a + 24) 8 → Apart (m.readLE (a + 8) 8) (8 * m.readLE (a + 24) 8) natOneA 24 ∧
+        Apart (m.readLE (a + 8) 8) (8 * m.readLE (a + 24) 8) op 8)
+
 /-- **`z.exp(z, y, m, false)`** as Run calls it (`int.go:575`; `X0 = z`, `X1 = x = z`, `X2 = y`, `X3 = m`, `X4 = slow = 0`):
 returns `z` with `z = x ^ y mod m` (`m > 0`; `y ≥ 0`, so the `ModInverse` path is not taken). -/
 def ExpSpec (impl : List Segment) (R : RtInv) (stk above : Nat) : Prop :=
@@ -279,7 +294,8 @@ def ExpSpec (impl : List Segment) (R : RtInv) (stk above : Nat) : Prop :=
       [z, z, y, mm, 0#64]
       (fun s => IntPre R b (ExpBudget (max (max (lenW s.mem z.toNat) (lenW s.mem y.toNat)) (lenW s.mem mm.toNat)) (lenW s.mem y.toNat))
         L stk above [z.toNat, y.toNat, mm.toNat] s ∧ 0 < IntV s.mem mm.toNat ∧
-        IntLenLe s.mem z.toNat maxW ∧ IntLenLe s.mem y.toNat maxW ∧ IntLenLe s.mem mm.toNat maxW)
+        IntLenLe s.mem z.toNat maxW ∧ IntLenLe s.mem y.toNat maxW ∧ IntLenLe s.mem mm.toNat maxW ∧
+        OneG R L s.mem (win s stk above) [z.toNat, y.toNat, mm.toNat])
       (fun s s' => s'.regs 0 = z ∧
         IntPost R b (ExpBudget (max (max (lenW s.mem z.toNat) (lenW s.mem y.toNat)) (lenW s.mem mm.toNat)) (lenW s.mem y.toNat))
           L stk above z.toNat (IntV s.mem z.toNat ^ IntV s.mem y.toNat % IntV s.mem mm.toNat) s s')

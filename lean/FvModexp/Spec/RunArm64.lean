@@ -119,6 +119,17 @@ def Globals (R : RtInv) (m : Memory) (w : List (Nat × Nat)) : Prop :=
   m.accessible gA 32 false = true ∧ Outside gA 32 R.rt ∧ Outside gA 32 w ∧
   m.accessible wbA 4 false = true ∧ Outside wbA 4 R.rt ∧ Outside wbA 4 w
 
+/-- `math/big`'s package global `natOne` (`nat.go:30`, `var natOne = nat{1}`, in `.data`) at its initial Go value: the
+slice header `(op, 1, 1)` at its address and the word `op[0] = 1` of its (statically allocated) backing array, both
+readable, outside the runtime-owned ranges and outside the stack ranges `w`. (`(*Int).exp` reads it: `nat.go` `set(natOne)`
+/ `lsh(natOne, n)` / `add(z, natOne)` on the power-of-two and even-modulus paths.) -/
+def NatOne (R : RtInv) (m : Memory) (w : List (Nat × Nat)) : Prop :=
+  let nA := Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.natOne»
+  let op := m.readLE nA 8
+  m.readLE (nA + 8) 8 = 1 ∧ m.readLE (nA + 16) 8 = 1 ∧ m.readLE op 8 = 1 ∧
+  m.accessible nA 24 false = true ∧ Outside nA 24 R.rt ∧ Outside nA 24 w ∧
+  m.accessible op 8 false = true ∧ op + 8 ≤ 2 ^ 48 ∧ Outside op 8 R.rt ∧ Outside op 8 w
+
 /-- The budget of the success path, from the three lengths (bytes): the three length headers (`nat.make(4)`), the three
 operand reads (a copy buffer and a `nat`), the `Mod` / `exp` call (per request at most `blockBound (1024 w + 1024)`
 for operands of at most `w` words: `Mod` ≤ 64 requests, `exp` ≤ `8 · 64 · ⌈expLen/8⌉ + 128`), `Bytes` and the
