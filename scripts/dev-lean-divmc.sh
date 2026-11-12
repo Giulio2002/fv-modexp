@@ -3,7 +3,7 @@
 # of package modules in dependency order against a private copy of the Janus v0.2.0 framework oleans.
 # -x ISA: use the pinned Run extraction of ISA (oleans in $OUT/<ISA>). Prints wall + peak RSS. Development only.
 set -e
-DEV=/srv/fv-modexp-ops/cache-divmc/dev
+DEV=${DEV:-/srv/fv-modexp-ops/cache-divmc/dev031}
 isa=arm64
 if [ "$1" = "-x" ]; then isa=$2; shift 2; fi
 OUT=${OUT:-$DEV/oleans-$isa}

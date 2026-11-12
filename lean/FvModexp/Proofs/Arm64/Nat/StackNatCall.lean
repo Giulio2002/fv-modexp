@@ -69,7 +69,7 @@ theorem gcall_pre {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st n : Nat} {s 
     rw [h0]
     refine ⟨a4, by rw [hF.accessible]; exact Memory.accessible_weaken _ a3, ?_⟩
     -- v0.3.1: the old array is outside the callee's window (it is outside the caller's window)
-    simp only [stW, calleeStack, outside_cons, outside_nil, and_true]; omega
+    simp only [stW, stCap, calleeStack, outside_cons, outside_nil, and_true]; omega
 
 /-- the `memclrNoHeapPointers(p + 8·cap, 8·(len + nr - cap))` call after `growslice` returned the block `(p, 8·gc)` -/
 theorem mcall_pre {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st n : Nat} {s : State}

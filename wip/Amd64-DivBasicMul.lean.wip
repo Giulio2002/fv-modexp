@@ -1,0 +1,55 @@
+import FvModexp.Proofs.Amd64.Nat.DivBasicMemF
+
+set_option autoImplicit false
+
+/-!
+# `divBasic` (amd64): `qhatv[n] = mulAddVWW(qhatv[0:n], v, qhat, 0)` (natdiv.go:703), `mulPt = +0x26c → +0x2bf`
+
+`qhat` spilled at `RSP-112`; the ABI0 frame `[RSP-224, RSP-160)` = `(t, n, n+1, vp, n, vc, qhat, 0)`; the carry comes
+back at `RSP-160`; then `XORPS X15, X15; MOVQ FS:-8, R14`. The twin of `Arm64/Nat/DivBasicMul.lean`.
+-/
+
+open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.GoABI0 Janus.Amd64.Tactic Janus.Spec Janus.Contracts
+open FvModexp.Amd64.Callees Janus.Contracts.EqHashModel
+
+namespace FvModexp.Amd64.DivBasic
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 64000000 in
+set_option linter.janusRenameI false in
+theorem mul1 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
+    (b : Nat) (L : List (Nat × Nat)) (qp ql st up ul uc vp vl vc : Nat) (s : State)
+    (t : Nat) (L1 : List (Nat × Nat)) (b1 w1 c1 : Nat) (hE : Env R b L qp ql st up ul uc vp vl s t L1 b1 w1 c1)
+    (S0 S : State) (j qhat rec vn1 : Nat) (hM0 : Mem R L qp ql st up ul uc vp vl vc s t L1 b1 w1 c1 S0.mem)
+    (hA : AtMul s S0 S vp vl t rec vn1 j qhat) (hq : qhat < 2 ^ 64) (Q : State → Prop)
+    (k : ∀ S', Bd R b L qp ql st up ul uc vp vl vc s t L1 b1 w1 c1 S' afterVww j →
+      S'.mem.readLE ((s.regs 4).toNat - 112) 8 = qhat →
+      natVal S'.mem t vl = natVal s.mem vp vl * qhat % 2 ^ (64 * vl) →
+      S'.mem.readLE ((s.regs 4).toNat - 160) 8 = natVal s.mem vp vl * qhat / 2 ^ (64 * vl) →
+      MemFrame S.mem S'.mem (scr s ++ [(t, t + 8 * vl)]) →
+      ReachesRet (LibDivBasic.program.link impl) (retAddrOf s) S' Q) :
+    ReachesRet (LibDivBasic.program.link impl) (retAddrOf s) S Q := by
+  obtain ⟨hpc, hsp, h5, h14, hfs, hx15, hdf, hr0, hr1, hr2, hr3, hr6, hr7, hr8, hr10, hr11, hfr0, hj⟩ := hA
+  have hl := hE.lay
+  have hsp0 := hl.sp0; have hsp1 := hl.sp1; have hv2 := hl.v2; have hvb := hl.vb; have hv48 := hl.v48
+  have ht48 := hl.t48
+  have hM : Mem R L qp ql st up ul uc vp vl vc s t L1 b1 w1 c1 S.mem := Mem.frame hE hM0 (hfr0.mono fun a n ho => by
+    simp only [scr, wsL, outside_append, outside_cons, outside_nil, and_true, and_assoc] at ho ⊢
+    exact ⟨by omega, by omega⟩)
+  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, -, -, hout, hga, hgr, -, -, ⟨-, -, htg⟩, htrt, htw⟩ := hE.pre.ce
+  simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw htg
+  have hMacc : ∀ a n v, S.mem.accessible a n v = s.mem.accessible a n v := fun a n v => hM.fr.accessible a n v
+  have hwacc : S.mem.accessible ((s.regs 4).toNat - 4424) (4424 + 88) true = true := by rw [hMacc]; exact hw
+  have htacc : S.mem.accessible t (8 * vl) true = true := by
+    rw [hMacc]; exact Janus.Arm64.Memory.accessible_mono _ hE.scr.acc (by omega) (by omega)
+  have hvacc : S.mem.accessible vp (8 * vl) false = true := by rw [hMacc]; exact hE.pre.vacc
+  have hty : t = vp ∨ Apart t (8 * vl) vp (8 * vl) := by right; unfold Apart; have := hl.tv; omega
+  have htH : Held R L1 t (8 * vl) := hl.theld.sub (by omega) (by omega)
+  have hro : Outside ((s.regs 4).toNat - 160) 8 R.rt := hout.of_sub (by omega) (by omega)
+  have hinv := hM.inv
+  have s9 := hM.s9; have mtl := hM.tls
+  have hvw := view_win hout L1
+  janus64_run [hr0, hr1, hr2, hr3, hr6, hr7, hr8, hr10, hr11, s9, mtl, hvw] until [afterVww] calls [vww impl hap R b1 L1]
+  all_goals done
+
+end FvModexp.Amd64.DivBasic
