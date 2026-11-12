@@ -130,6 +130,26 @@ theorem finQ (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (hw : WC R L 
     simp only [TW, outside_cons, outside_nil, and_true]
     omega
 
+set_option maxRecDepth 20000 in
+/-- the tail's environment from `WC` and the slots -/
+theorem tenv_of (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (hw : WC R L K g sp st zp zc s.mem M L1 b1 ℓ)
+    {ret : Nat} (hsl : ESl M sp st (s.regs 29) ret zp zc xp xl xc yp yl lm (stLen s.mem st)) (hr4 : ret % 4 = 0)
+    (hr48 : ret < 2 ^ 48) : TEnv sp g st (stLen s.mem st) (s.regs 29) ret M := by
+  have hgM : M.readLE (g + 16) 8 = s.mem.readLE (g + 16) 8 := MemFrame.bytewise hw.fr hP.g_out
+  have hstw : Apart st 24 (sp - K) (K + 560) := hP.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hstg : Apart st 24 (g + 16) 8 := hP.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  obtain ⟨a1, a2, a3, a4, a5, a6, -, -, -, -, -, -, -, -, -, -, -, -, -⟩ := hsl
+  obtain ⟨h8, hh, hacc, h48, hlive, hlc, hc40⟩ := hw.sok
+  have hlen := hw.len
+  have hlo := hw.lo
+  obtain ⟨⟨-, -, hg1, hg2, hg3, hgo, hal, hK, hK', hsp2, hacc0, -, -, -, -⟩, -⟩ := hP
+  simp only [outside_cons] at hgo
+  unfold Apart at hstw hstg
+  refine ⟨hal, by omega, hsp2, by rw [hw.fr.accessible]; exact Memory.accessible_mono _ hacc0 (by omega) (by omega),
+    hg1, by rw [hw.fr.accessible]; exact hg2, by rw [hgM]; omega, by unfold Apart; omega, a3, a4, a5, a6, h48, hacc,
+    by show stLen s.mem st ≤ stCap M st; omega,
+    by unfold Apart; omega, by unfold Apart; omega, a1, a2, hr4, hr48⟩
+
 end
 
 end FvModexp.Arm64.P2W2
