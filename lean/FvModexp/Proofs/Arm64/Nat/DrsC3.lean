@@ -17,9 +17,6 @@ set_option linter.janusRenameI false
 
 namespace FvModexp.Arm64.DivRec
 
-/-- the model after `qhat--` -/
-@[reducible] def stQ (st : Mdl.St) : Mdl.St := { st with qhat := (Mdl.subVW st.qhat 1).1 }
-
 theorem tN {n : Nat} (h : n < 2 ^ 64) : (BitVec.ofNat 64 n).toNat = n := by
   rw [BitVec.toNat_ofNat]; exact Nat.mod_eq_of_lt h
 

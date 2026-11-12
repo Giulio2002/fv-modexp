@@ -16,6 +16,9 @@ set_option linter.janusRenameI false
 
 namespace FvModexp.Arm64.DivRec
 
+/-- the model after `qhat--` -/
+@[reducible] def stQ (st : Mdl.St) : Mdl.St := { st with qhat := (Mdl.subVW st.qhat 1).1 }
+
 /-- the exit of the correction loop -/
 abbrev cExit : Nat := 0x1ba80c
 
