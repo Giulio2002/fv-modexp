@@ -1156,3 +1156,12 @@ amd64 Top_RunErr in the same run: **FAIL (timeout) 901 s**, peak 1.4 GB — at l
 ## infra s27 (2026-11-12) — expNNEven arm64 entry layer (dev compile)
 * `Exp/EvPre` 2.5 s, `EvEP` 5.5 s / 2.2 GB, `EvCtx` 1.5 s, `EvWC` 3.4 s, `EvPP` ~5 s, `EvCalls` 1.6 s, `EvEnt` 13.3 s
   / 2.3 GB (two janus_run segments), `EvRel` 2.0 s, `EvN1` 5.2–7.9 s / 2.2 GB.
+### divmc session 22 (arm64, dev, LEAN_NUM_THREADS=4, host load ~50)
+| module | before | after | note |
+|---|---|---|---|
+| MulMake (reuse + alloc, one module) | 464 s / 8.1 GB | split | over cap |
+| MulMakeR (make_reuse) | — | 22-27 s / 2.4 GB | |
+| MulMakeA (make_alloc, old monolith) | — | 286 s / 8.0 GB | profile: janus_run 234 s (4 alias paths + makeslice via `calls`), closers 56 s; being replaced |
+| MulMakeA1 (alloc_head: entry → makeslice entry) | — | 35 s / 2.6 GB | |
+| MulMakeAP (mcall_pre / mfacts) | — | 4 s / 2.3 GB | makeslice pre in a standalone lemma |
+| MulMakeA2 (alloc_call) WIP | — | run + refine 6 s; blanket closers hang | rewrite `typNoscan` in the Fresh facts (else unification evaluates memory); close goals by name |

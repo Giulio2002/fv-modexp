@@ -120,14 +120,14 @@ and free part) -/
     Apart a 32 st 24 ∧ Apart a 32 (BasicSqr.freeP m st) (BasicSqr.freeN m st)
 
 /-- **`z.mul(stk, x, y)` (`*Int`) precondition** (`x ≠ y`; window `W ≥ imW`, `above = 40`): headers as `HdrR` (and
-`z`'s writable, apart from both operands' headers and arrays), the `abs` triples satisfy `Ops` -/
+`z`'s writable, apart from both operands' headers and arrays and from the stack header), the `abs` triples satisfy `Ops` -/
 def IPre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (W z st x y : Nat) (s : State) : Prop :=
   CallEnv R L s W 40 ∧ imW (hL s.mem x) (hL s.mem y) ≤ W ∧ Serves R ∧ Globals R s.mem (win s W 40) ∧
     Outside NatAdd.wordT 16 R.rt ∧ x ≠ y ∧
     HdrR R L s.mem (win s W 40) st x ∧ HdrR R L s.mem (win s W 40) st y ∧
     s.mem.accessible z 32 true = true ∧ z + 32 ≤ 2 ^ 48 ∧ Outside z 32 (win s W 40) ∧ Held R L z 32 ∧
     Apart z 32 ((s.regs 28).toNat + 16) 8 ∧ Apart z 32 wbA 4 ∧ Apart z 32 x 32 ∧ Apart z 32 y 32 ∧
-    s.mem.accessible wbA 4 false = true ∧
+    Apart z 32 st 24 ∧ s.mem.accessible wbA 4 false = true ∧
     (0 < hC s.mem z → Apart (hP s.mem z) (8 * hC s.mem z) x 32 ∧ Apart (hP s.mem z) (8 * hC s.mem z) y 32 ∧
       Apart (hP s.mem z) (8 * hC s.mem z) z 32) ∧
     Ops R L s.mem (s.regs 28).toNat (win s W 40) st (hP s.mem z) (hC s.mem z) (hP s.mem x) (hL s.mem x) (hC s.mem x)

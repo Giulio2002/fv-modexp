@@ -1,6 +1,8 @@
 import FvModexp.Proofs.Arm64.Nat.MulRel
 import FvModexp.Proofs.Common.BitLemmas
 
+set_option autoImplicit false
+
 /-!
 # `nat.mul` (arm64), `m ≥ n ≥ 2`: `if alias(z, x) || alias(z, y) { z = nil }; z = z.make(m + n)` (natmul.go:31-35)
 → the join `0x1baf70`
