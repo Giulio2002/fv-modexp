@@ -51,15 +51,8 @@ theorem byteLoop (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Na
     intro S P N C I SH D hI hk hP hN hC hSH hD hpc hsp hr0 hr1 hr2 hr3 hr4 hr5 hr6 hr7 hr14 hx15 hfs hdf hm
     janus64_run [BitVec.msb_eq_decide] until [hByte]
     all_goals first
-      | refine ih _ P N C (I - 1#64) (SH + 8#64)
-          (D ||| (BitVec.setWidth 64 (BitVec.setWidth 32 (BitVec.ofNat 8 (s.mem.readLE (I.toNat + bp.toNat - 1) 1))) <<<
-            (SH.toNat % 64) &&& if SH.toNat < 64 then 18446744073709551615#64 else 0#64))
-          ?_ (by omega) hP hN hC ?_ ?v1 ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
-        case v1 =>
-          rw [hI, show k + 1 + bp.toNat - 1 = bp.toNat + k by omega]
-          rw [byte_or_step64 s.mem (bp.toNat + k) (i0 - (k + 1)) (by omega) D SH (by omega) (by rw [hD]; congr 1)]
-          congr 1; omega
-      | refine ih _ P N C (I - 1#64) (SH + 8#64)
+      | guard_hyp hbr : SH.toNat % 64 = 0
+        refine ih _ P N C (I - 1#64) (SH + 8#64)
           (D ||| (BitVec.setWidth 64 (BitVec.setWidth 32 (BitVec.ofNat 8 (s.mem.readLE (I.toNat + bp.toNat - 1) 1))) &&&
             if SH.toNat < 64 then 18446744073709551615#64 else 0#64))
           ?_ (by omega) hP hN hC ?_ ?v0 ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
@@ -67,6 +60,14 @@ theorem byteLoop (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Na
           rw [hI, show k + 1 + bp.toNat - 1 = bp.toNat + k by omega]
           rw [byte_or_step64_zero s.mem (bp.toNat + k) (i0 - (k + 1)) D SH (by omega) (by janus_assumption) (by omega)
             (by rw [hD]; congr 1)]
+          congr 1; omega
+      | refine ih _ P N C (I - 1#64) (SH + 8#64)
+          (D ||| (BitVec.setWidth 64 (BitVec.setWidth 32 (BitVec.ofNat 8 (s.mem.readLE (I.toNat + bp.toNat - 1) 1))) <<<
+            (SH.toNat % 64) &&& if SH.toNat < 64 then 18446744073709551615#64 else 0#64))
+          ?_ (by omega) hP hN hC ?_ ?v1 ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
+        case v1 =>
+          rw [hI, show k + 1 + bp.toNat - 1 = bp.toNat + k by omega]
+          rw [byte_or_step64 s.mem (bp.toNat + k) (i0 - (k + 1)) (by omega) D SH (by omega) (by rw [hD]; congr 1)]
           congr 1; omega
     all_goals try (janus64_simp; done)
     all_goals try exact hdf
