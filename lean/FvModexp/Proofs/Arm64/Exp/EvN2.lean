@@ -110,8 +110,8 @@ theorem segN2 {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns
   obtain ⟨L2, b2, hb2, hw3, hscE, hz0, hz1, hz2, hFn, hscC, hLFn, hx, harr⟩ :=
     WC.stkNat hP hw2 hkN haN hsN hgN fm (g6.trans (by rw [fm])) ha2.1 hpost
   have hlc := hw2.sok.2.2.2.2.2.1
-  have hm1'' := LN.stkN hP hkN haN hFn hLFn hx hlc (by rw [hw2.len, hw3.len]; omega) harr hm1'
-  have hk := keepC hP hw2 (zs := []) (by simpa only [List.append_nil] using hFn) hkN haN
+  have hm1'' := LN.stkN hP hkN (by omega) hFn hLFn hx hlc (by rw [hw2.len, hw3.len]; omega) harr hm1'
+  have hk := keepC hP hw2 (zs := []) (by simpa only [List.append_nil] using hFn) hkN (by omega)
     (fun _ _ _ _ => by simp only [outside_nil])
   refine K3 s' L2 b2 p1 l1 c1 _ ⟨⟨g2.trans hS2, g3.trans h28, g4.trans (f29.trans h.jx.e29),
       g5.trans (f18.trans h.jx.e18), hw3, hesl.keep (fun a k ha => hk a k (by simp only [SlotR] at ha; omega))

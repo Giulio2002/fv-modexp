@@ -136,9 +136,9 @@ theorem segN3 {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns
     WC.stkNat hP hw2 hkN haN hsN hgN fm (g6.trans (by rw [fm])) hmx0 hpost
   have hlc := hw2.sok.2.2.2.2.2.1
   have hl := (by rw [hw2.len, hw3.len]; omega : stLen M2 st ≤ stLen s'.mem st)
-  have hm1'' := LN.stkN hP hkN haN hFn hLFn hx hlc hl harr hm1'
-  have hm2'' := LN.stkN hP hkN haN hFn hLFn hx hlc hl harr hm2'
-  have hk := keepC hP hw2 (zs := []) (by simpa only [List.append_nil] using hFn) hkN haN
+  have hm1'' := LN.stkN hP hkN (by omega) hFn hLFn hx hlc hl harr hm1'
+  have hm2'' := LN.stkN hP hkN (by omega) hFn hLFn hx hlc hl harr hm2'
+  have hk := keepC hP hw2 (zs := []) (by simpa only [List.append_nil] using hFn) hkN (by omega)
     (fun _ _ _ _ => by simp only [outside_nil])
   refine K5 s' L2 b2 p1 l1 c1 q l2 _ ⟨⟨g2.trans hS2, g3.trans h28, g4.trans (f29.trans h.jx.e29),
       g5.trans (f18.trans h.jx.e18), hw3, hesl.keep (fun a k ha => hk a k (by simp only [SlotR] at ha; omega))

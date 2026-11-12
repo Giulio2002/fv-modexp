@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Arm64.Nat.KMulB
+import FvModexp.Proofs.Arm64.Nat.KMulMath
 
 set_option autoImplicit false
 
@@ -68,17 +68,6 @@ theorem KN.hyop (h : KN R b L W st zp zc xp n xc yp yc s lx0 lx1 ly0 ly1 t Lk bk
   · simp only [KIOp, IntAS.hNeg, IntAS.hP, IntAS.hL, IntAS.hC, q1, q2, q3, q4]
     refine ⟨by omega, by omega, by have := F.yc40; omega, hl, hacc, h48, hyh.sub (by omega) (by omega), hn hnn, hw⟩
   · simp only [IntAS.intZ, IntAS.hNeg, IntAS.hP, IntAS.hL, q1, q2, q3, if_true, hv]
-
-/-- reads of held memory outside a callee's writes survive the call -/
-theorem KN.keepH (h : KN R b L W st zp zc xp n xc yp yc s lx0 lx1 ly0 ly1 t Lk bk spent M) {M' : Memory}
-    {S1 : State} (hsp : S1.sp.toNat = s.sp.toNat - 448) {k a : Nat} (hk : 448 + k ≤ W) (ha : a ≤ 80)
-    {ws : List (Nat × Nat)} (hF : MemFrame M M' (R.rt ++ winA S1 k a ++ ws)) (hLF : LiveFrame M M' Lk ws)
-    {p m : Nat} (hH : Held R Lk p m) (hw : Outside p m (win s W 72)) (hws : Outside p m ws) :
-    M'.readLE p m = M.readLE p m := by
-  obtain ⟨hW, hWs, -⟩ := h.lay
-  simp only [win, outside_cons, outside_nil, and_true] at hw
-  refine Held.readLE2 hH hF hLF ?_ hws
-  simp only [winA, hsp, outside_cons, outside_nil, and_true]; omega
 
 end
 
