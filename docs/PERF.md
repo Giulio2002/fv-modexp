@@ -1236,3 +1236,9 @@ with no time change.
 ### infra s31 (2026-11-12, dev compile, arm64)
 EvSetT 1.8 s / 2.5 GB · EvSetU 1.8 s / 2.5 GB · EvSetP 2.4 s / 2.5 GB · EvSet 1.9 s / 2.5 GB · SubMod2NG 1.0 s / 2.1 GB
 (all term-mode compositions; every `janus_run` lives in EvSetR).
+
+## asm s29 (2026-11-12) — divRecursiveStep arm64 final block (dev, load ~20-25)
+New modules DrsFRel4 3.6 s, DrsFMulQ 57.6 s / 4.2 GB (copy of DrsMulQ; trim candidate), DrsF4C 1.5 s, DrsF4R 2.1 s,
+DrsF4 4.0 s, DrsFCE 1.6 s, DrsFC1 3.9 s, DrsFC2 5.7 s, DrsFC6R 3.4 s, DrsFC2B 4.8 s, DrsFC3 2.9 s, DrsFC4R 6.2 s,
+DrsFC4 7.4 s, DrsFC5R 5.1 s, DrsFC5 3.9 s, DrsFC5S 2.2 s, DrsFC6 12.4 s, DrsFC6X 1.2 s, DrsFCL 1.1 s, DrsFV 5.0 s,
+DrsFD1 2.7 s, DrsFD2 2.9 s, DrsFD3 10.4 s, DrsFD4 7.3 s, DrsFD5R 4.8 s, DrsFD5 7.2 s (all ≤ 2.8 GB except FMulQ).
