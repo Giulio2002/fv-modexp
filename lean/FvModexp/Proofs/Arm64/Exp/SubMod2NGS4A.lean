@@ -60,7 +60,7 @@ theorem gstep (impl : List Segment) {R : RtInv}
   have hspT : T.sp.toNat = s.sp.toNat - 144 := by rw [hsp, BitVec.toNat_ofNat]; omega
   unfold GoalG
   refine ReachesRet.call_regions (hgr L3 b3) hpc
-    (gcallG hpre hrt hlv hcl hlW hbr T rfl hsp h28 h0 h1 h2 h3 h4 h30) fun S1 hpc1 hpost hrg1 => ?_
+    (gcallG hpre hrt hlv hcur hcl hlW hbr T rfl hsp h28 h0 h1 h2 h3 h4 h30) fun S1 hpc1 hpost hrg1 => ?_
   obtain ⟨ptr, junk, f1, v1, m1, ex1, ep1, hs1, hMF, hLF, ⟨hobj, hapL⟩, hapS, hinv1⟩ := hpost
   subst hs1
   rw [hround] at hapL hinv1
