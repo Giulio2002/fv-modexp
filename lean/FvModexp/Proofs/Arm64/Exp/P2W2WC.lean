@@ -124,7 +124,7 @@ theorem WC.call (h : WC R L K g sp st zp zc m0 M L1 b1 ℓ) {M' : Memory} {ws ws
     (hlen : stLen M' st = ℓ') (hle : ℓ ≤ ℓ')
     (harr : (stW M' st = stW M st ∧ stCap M' st = stCap M st) ∨
       (InRanges (stW M' st) (8 * stCap M' st) R.rt ∧ ApartAll (stW M' st) (8 * stCap M' st) L1))
-    (hmem : ¬(stW M' st = stW M st ∧ stCap M' st = stCap M st) → (stW M' st, stW M' st + 8 * stCap M' st) ∈ L2) :
+    (hmem : ArrIn L2 st M M') :
     WC R L K g sp st zp zc m0 M' L2 b2 ℓ' := by
   have hLL : ∀ r ∈ L, r ∈ L1 := fun r hr => h.le.mem_old hr
   refine ⟨h.fr.trans hF fun a k ho => ⟨ho, ?_⟩, ⟨fun a k hin ho => ?_⟩, hrg.trans h.rg, h.le.trans hx, hinv, hok,
