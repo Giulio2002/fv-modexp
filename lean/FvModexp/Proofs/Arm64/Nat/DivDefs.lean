@@ -48,8 +48,8 @@ def wordT : Nat := Extracted.dataAddr.«type:big.Word#51b931e8»
     (zp zl zc st z2 z2l z2c u ul v vl : Nat) (s : State) : Prop :=
   ExpHyp.DivPre R b (cost dc) L 41504 112 zp zl zc st z2 z2l z2c u ul v vl s
 
-/-- the stack header's separation from the guard word, the write-barrier flag and the free part (asm s18 REQUEST to
-add to `ExpHyp.DivPre`; an explicit premise of the `divLarge` path until then) -/
+/-- the stack header's separation from the guard word, the write-barrier flag and the free part (a conjunct of
+`ExpHyp.DivPre` since expmc s24, "DivHyp FINAL v2") -/
 @[reducible] def HdrSep (s : State) (st : Nat) : Prop :=
   Apart st 24 ((s.regs 28).toNat + 16) 8 ∧ Apart st 24 StackNat.wbA 4 ∧
     Apart st 24 (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st))
@@ -111,14 +111,15 @@ structure PF (R : RtInv) (b : Nat) (dc : Nat → Nat → Nat → Nat) (L : List 
       Apart p (8 * c) (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st))
   cost : cost dc (stLen s.mem st) ul vl ≤ b
   inv : R.inv b L (s.regs 28).toNat (view R.rt L s.mem)
+  hdr : HdrSep s st
 
 theorem Pre.f {R : RtInv} {b : Nat} {dc : Nat → Nat → Nat → Nat} {L : List (Nat × Nat)}
     {zp zl zc st z2 z2l z2c u ul v vl : Nat} {s : State}
     (h : Pre R b dc L zp zl zc st z2 z2l z2c u ul v vl s) : PF R b dc L zp zl zc st z2 z2l z2c u ul v vl s := by
   obtain ⟨h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11, h12, h13, h14, h15, h16, h17, h18, h19, h20, h21, h22,
-    h23, h0, -, h24, h25, h26, h27, h28, h29, h30, h31⟩ := h
+    h23, h0, hH, h24, h25, h26, h27, h28, h29, h30, h31⟩ := h
   exact ⟨h0, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11, h12, h13, h14, h15, h16, h17, h18, h19, h20, h21, h22,
-    h23, h24, h25, h26, h27, h28, h29, h30, h31⟩
+    h23, h24, h25, h26, h27, h28, h29, h30, h31, hH⟩
 
 /-! ## Return addresses inside `nat.div`'s segment -/
 
