@@ -40,7 +40,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   rw [show names = LibW.names from rfl, ← LibW.eq_only, show segAddr Extracted.program fn = fnE by decide]
   intro ret hret s hs hpre
   janus_intro hs
-  obtain ⟨hP, hMo, hM1, hslen, hbud⟩ := hpre
+  obtain ⟨hP, hstnz, hMo, hM1, hslen, hbud⟩ := hpre
   have hcs := divCosts_of costF n xl (stLen s.mem st)
   obtain ⟨hbC, hbB, hbA, hbAC, hbP⟩ := buds hbud
   have hc := codeIn_ofImpl_restrict_of_apart hap LibW.names
@@ -54,7 +54,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   refine returns_of_reaches (W4Pro.reaches_mono (W4En.enStep impl hap R hclr hmv hmk
     (StackNat.hyp impl hap R hgr hclr hwb) hgr' hmc' hwb' nsD stkD (divCost costF n xl (stLen s.mem st)) costF hDiv hnsD hnsW Lsh.names 4256
     (Lsh.ens impl hap R hmk hmv hclr) (MontW.sub_of_all (by decide)) (by decide) ret hret b L K
-    (s.regs 28).toNat (s.sp.toNat - 928) st zp zc xp xl xc yp ylen mp n mc s hP hKD hKL hMo hM1 hslen hcs hbC hbB hbA
+    (s.regs 28).toNat (s.sp.toNat - 928) st zp zc xp xl xc yp ylen mp n mc s hP hstnz hKD hKL hMo hM1 hslen hcs hbC hbB hbA
     hbAC hbP h_pc h_x0 h_x2 h_x3 h_x4 h_x5 h_x6 h_x7 h_x8 h_x10 h_x11 h_x12 h_lr)
     (W4Pro.isReturn_mono fun s' h => ?_))
   obtain ⟨⟨e1, e2, e3, e4⟩, hq⟩ := post_of hP hMo h

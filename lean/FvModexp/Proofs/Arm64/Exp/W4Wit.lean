@@ -103,8 +103,9 @@ theorem pre (K : Nat) (costF : Nat → Nat → Nat → Nat) (hK : 4304 ≤ K) (h
   rw [stl]
   unfold PreD W4En.EPre W4En.EEnv
   rw [g0, sp0]
-  refine ⟨?_, ?_, ?_, ?_, bud _ hc⟩
+  refine ⟨?_, ?_, ?_, ?_, ?_, bud _ hc⟩
   rotate_left
+  · decide
   · simp only [natVal, hm]; decide +kernel
   · simp only [natVal, hm]; decide +kernel
   · simp only [stLen, hm, StackNat.rnd]; decide +kernel

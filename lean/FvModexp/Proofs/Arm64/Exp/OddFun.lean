@@ -70,7 +70,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   rw [show names = LibOdd.names from rfl, ← LibOdd.eq_only, show segAddr Extracted.program fn = fnO by decide]
   intro ret hret s hs hpre
   janus_intro hs
-  obtain ⟨hP, hMo, hM1, hslen, hbud⟩ := hpre
+  obtain ⟨hP, hstnz, hMo, hM1, hslen, hbud⟩ := hpre
   have hP' := hP
   obtain ⟨⟨hs1, hs28, hg1, hg2, hg3, -, hal, hK, hK', hsp2, hacc, -, -, -, -⟩, -, -, -, -, -, -, -, -, hmO, -, -, -, hyO,
     -, -, -, -, hyl', -, -, -, -, -, -, -, -, -, -, -, -, -, -, hstw, -⟩ := hP'
@@ -106,7 +106,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     case pre =>
       unfold ExpW4.Pre ExpW4.PreD
       rw [hSsp, hSg, show sp + 928 - 928 = sp by omega, el, show natVal S.mem mp n = natVal s.mem mp n from rd hmO.2.1]
-      refine ⟨hE, hMo, hM1, hslen, ?_⟩
+      refine ⟨hE, hstnz, hMo, hM1, hslen, ?_⟩
       unfold OBud at hbud; rw [if_pos hy] at hbud; exact hbud
     unfold ExpW4.Post ExpW4.PostD at hq
     have hq' := hq
@@ -149,7 +149,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     case pre =>
       unfold ExpW2.Pre ExpW2.PreD
       rw [hSsp, hSg, show sp + 928 - 640 = sp + 288 by omega, el, show natVal S.mem mp n = natVal s.mem mp n from rd hmO.2.1]
-      refine ⟨hE, hMo, hM1, by simp only [StackNat.rnd] at hslen ⊢; omega, ?_⟩
+      refine ⟨hE, hstnz, hMo, hM1, by simp only [StackNat.rnd] at hslen ⊢; omega, ?_⟩
       unfold OBud at hbud; rw [if_neg (by omega)] at hbud; exact hbud
     unfold ExpW2.Post ExpW2.PostD at hq
     have hq' := hq

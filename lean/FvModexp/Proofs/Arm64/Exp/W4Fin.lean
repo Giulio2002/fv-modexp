@@ -33,9 +33,14 @@ abbrev tailPc : Nat := segAddr LibW.program fn + 0xbc8
     Apart (g + 16) 8 (sp - 4288) (4288 + 1040) ∧
     M.readLE (sp + 912) 8 = sp + 840 ∧ M.readLE (sp + 840) 8 = segAddr LibW.program DeferW.fnW4 ∧
     M.readLE (sp + 848) 8 = st ∧ M.readLE (sp + 856) 8 = n0 ∧
-    st + 24 ≤ 2 ^ 48 ∧ M.accessible st 24 true = true ∧ n0 ≤ M.readLE (st + 16) 8 ∧
+    (st + 24 ≤ 2 ^ 48 ∧ st ≠ 0) ∧ M.accessible st 24 true = true ∧ n0 ≤ M.readLE (st + 16) 8 ∧
     Apart st 24 (sp - 4288) (4288 + 1040) ∧ Apart st 24 (g + 16) 8 ∧
     M.readLE (sp - 8) 8 = r29.toNat ∧ M.readLE sp 8 = ret
+
+theorem FinEnv.stnz {sp g st n0 : Nat} {r29 : BitVec 64} {ret : Nat} {M : Memory} (h : FinEnv sp g st n0 r29 ret M) :
+    st ≠ 0 := by
+  obtain ⟨-, -, -, -, -, -, -, -, -, -, -, -, ⟨-, h⟩, -⟩ := h
+  exact h
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
