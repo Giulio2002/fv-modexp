@@ -101,7 +101,9 @@ theorem enG2 (impl : List Segment) (R : RtInv)
   rw [hround] at hapL hinv1
   obtain ⟨⟨hpin, hp48, hpacc, hal8, -, -, -⟩, -, -⟩ := hobj
   have hgcl := le_growCap8 (len0 + (8 * n)) cap0
-  have hgcb := growCap_lt len0 (8 * n) cap0 (by omega) (by omega)
+  have hgcb : growCap8 (len0 + 8 * n) cap0 < 2 ^ 40 := by
+    have := growCap_lt len0 (8 * n) cap0 (by omega) (by omega)
+    rwa [show (8 * n + 3) / 4 * 4 = 8 * n by omega] at this
   have egc : growCap8 (len0 + (8 * n)) cap0 = growCap8 (len0 + (8 * n)) cap0 := rfl
   have hpw := hpin.apart hout
   unfold Apart at hpw
@@ -125,7 +127,7 @@ theorem enG2 (impl : List Segment) (R : RtInv)
   generalize e29 : S.regs 29 = x29 at K'
   janus_run [q240, q176, q192, q232, h30', h1, esub, hl3, hl3c, tsp] until [mcE]
   have hst2 : MemFrame m1 ((m1.writeLE (sp + 312) 8 ptr.toNat).writeLE (sp + 184) 8 (growCap8 (len0 + (8 * n)) cap0))
-      [(sp + 184, sp + 208), (sp + 312, sp + 424)] := by janus_frame
+      [(sp + 184, sp + 192), (sp + 312, sp + 320)] := by janus_frame
   have hF1 : MemFrame s.mem ((m1.writeLE (sp + 312) 8 ptr.toNat).writeLE (sp + 184) 8 (growCap8 (len0 + (8 * n)) cap0))
       (R.rt ++ [(sp - K, sp + 560)]) := by
     refine MemFrame.trans (rs'' := R.rt ++ [(sp - K, sp + 560)]) (MemFrame.trans (rs'' := R.rt ++ [(sp - K, sp + 560)])
@@ -153,7 +155,7 @@ theorem enG2 (impl : List Segment) (R : RtInv)
   · rw [hk2 _ (by omega) (by omega) (by omega) (by omega)]; exact r496
   · rw [hk2 _ (by omega) (by omega) (by omega) (by omega)]; exact r248
   · intro S' M' a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 hMF' hLF' hrg' hinv'
-    have hLw2 : LiveSep L [(sp + 184, sp + 208), (sp + 312, sp + 424)] := fun r hr => by
+    have hLw2 : LiveSep L [(sp + 184, sp + 192), (sp + 312, sp + 320)] := fun r hr => by
       have := hLs r hr; simp only [outside_cons, outside_nil, and_true] at this ⊢; omega
     have hdsep : LiveSep L [(ptr.toNat + 8 * cap0, ptr.toNat + 8 * (len0 + (8 * n)))] := fun r hr => by
       have := hapL r hr; unfold Apart at this; simp only [outside_cons, outside_nil, and_true]; omega
