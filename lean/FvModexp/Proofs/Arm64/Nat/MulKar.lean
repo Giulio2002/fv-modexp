@@ -1,6 +1,7 @@
 import FvModexp.Proofs.Arm64.Nat.MulKPre
 import FvModexp.Proofs.Arm64.Nat.MulNorm
 import FvModexp.Proofs.Common.BitLemmas
+import FvModexp.Proofs.Common.WinLemmas
 
 /-!
 # `nat.mul` (arm64), `40 ≤ n = m`: `karatsuba(stk, z[:2n], x[:n], y); return z.norm()` (natmul.go:43-55)
@@ -143,7 +144,8 @@ theorem karEq2 (impl : List Segment) (R : RtInv) (n0 : Nat) (ih : ∀ a, IH impl
     have hs1' : S1.sp.toNat = s.sp.toNat - 256 := by rw [hs1]; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
     simp only [winA, outside_append, outside_cons, outside_nil, and_true] at h ⊢
     rw [hs1', show 2 * yl.toNat = xl.toNat + yl.toNat by omega]
-    exact ⟨⟨h.1.1, by omega, by omega⟩, h.2⟩
+    have hk := Nat.le_of_eq (Nat.add_sub_cancel' (Nat.le_trans (show 256 ≤ 4608 by decide) hW))
+    exact ⟨⟨h.1.1, (winA_in (c := 256) (k := (W - 256)) (ab := 72) hb0 hk (by decide) h.1.2.1).1, (winA_in (c := 256) (k := (W - 256)) (ab := 72) hb0 hk (by decide) h.1.2.1).2⟩, h.2⟩
   have hLF' : LiveFrame S.mem s'.mem L1 ((p, p + 8 * (xl.toNat + yl.toNat)) :: stkWs S.mem st.toNat) := by
     rw [show xl.toNat + yl.toNat = 2 * yl.toNat by omega]; exact hLF
   refine normB impl s s'.mem p c (xl.toNat + yl.toNat) (natVal s'.mem p (xl.toNat + yl.toNat)) 0
