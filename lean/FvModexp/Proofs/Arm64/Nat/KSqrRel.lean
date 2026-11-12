@@ -332,4 +332,53 @@ theorem KM.callee {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n
     · have := hLs r hr; simp only [win, outside_cons, outside_nil, and_true] at this; omega
     · have := NatSub.outside_of_inRanges hout (hn r hr).1; omega
 
+/-- the stack's current array and free part: outside the window, apart from the guard word and the header, held -/
+theorem KM.stk {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State}
+    {lx0 lx1 t : Nat} {Lk : List (Nat × Nat)} {bk spent : Nat} {M : Memory}
+    (h : KM R b L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) :
+    (0 < stCap M st → Outside (stW M st) (8 * stCap M st) (win s W 48) ∧
+      Apart (stW M st) (8 * stCap M st) (guard s) 8) ∧
+    Apart (BasicSqr.freeP M st) (BasicSqr.freeN M st) (guard s) 8 ∧
+    Outside (BasicSqr.freeP M st) (BasicSqr.freeN M st) (win s W 48) ∧
+    Apart st 24 (BasicSqr.freeP M st) (BasicSqr.freeN M st) ∧ Held R Lk (BasicSqr.freeP M st) (BasicSqr.freeN M st) := by
+  obtain ⟨hW, hWs, -, -, -, -, -, -, -, -, hout, hgr, hga⟩ := h.lay
+  have hsp : StkPre R L s W 48 st := h.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  obtain ⟨-, ⟨-, hsth, -, -, -, hlc0, -⟩, -, -, hsarr, hfg, hfw, hstf, -, hfh⟩ := hsp
+  have hlc := h.sok.2.2.2.2.2.1
+  have hnl := h.sok.2.2.2.2.1
+  simp only [guard, BasicSqr.freeP, BasicSqr.freeN] at hfg hfw hstf hfh hsarr ⊢
+  rcases h.free with ⟨e1, e2, e3⟩ | ⟨hin, hap⟩
+  · rw [e1, e2] at hnl ⊢; rw [e2] at hlc
+    refine ⟨hsarr, ?_, ?_, ?_, h.ext.held (hfh.sub (by omega) (by omega))⟩
+    · unfold Apart at hfg ⊢; omega
+    · exact hfw.of_sub (by omega) (by omega)
+    · unfold Apart at hstf ⊢; omega
+  · have hgo := NatSub.outside_of_inRanges hgr hin
+    have hst := apart_of_held hsth hin hap
+    have hcap : 0 < stCap M st := by
+      have := h.slen; simp only [StackNat.rnd, kT, kn2] at this; omega
+    obtain ⟨-, hh, -, -⟩ := hnl hcap
+    have hw : ∀ a k, stW M st ≤ a → a + k ≤ stW M st + 8 * stCap M st → Outside a k (win s W 48) := by
+      intro a k h1 h2
+      have := NatSub.outside_of_inRanges (hout.of_sub (a := s.sp.toNat - W) (n := W + 48) (by omega) (by omega)) hin
+      simp only [win, outside_cons, outside_nil, and_true]; omega
+    refine ⟨fun _ => ⟨hw _ _ (by omega) (by omega), by unfold Apart; omega⟩, by unfold Apart; omega,
+      hw _ _ (by omega) (by omega), by unfold Apart at hst ⊢; omega, hh.sub (by omega) (by omega)⟩
+
+/-- **`StkPre` at an inner call** (`SP - 320`, window `W' + 320 ≤ W`, above `≤ 64`) -/
+theorem KM.stkPre {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State}
+    {lx0 lx1 t : Nat} {Lk : List (Nat × Nat)} {bk spent : Nat} {M : Memory}
+    (h : KM R b L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) {S1 : State} {W' a : Nat}
+    (hsp : S1.sp.toNat = s.sp.toNat - 320) (hg : S1.regs 28 = s.regs 28) (hm : S1.mem = M)
+    (hk : 320 + W' ≤ W) (ha : a ≤ 64) : StkPre R Lk S1 W' a st := by
+  obtain ⟨hW, hWs, -, -, -, -, -, -, -, -, hout, hgr, hga⟩ := h.lay
+  have hsp' : StkPre R L s W 48 st := h.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  obtain ⟨hst0, -, hstw, hstg, -, -, -, -, hstwb, -⟩ := hsp'
+  obtain ⟨h1, h2, h3, h4, h5⟩ := h.stk
+  have hwin : ∀ x k, Outside x k (win s W 48) → Outside x k (win S1 W' a) := by
+    intro x k hx; simp only [win, outside_cons, outside_nil, and_true] at hx ⊢; rw [hsp]; omega
+  subst hm
+  simp only [StkPre, guard, hg] at h1 h2 hstg ⊢
+  exact ⟨hst0, h.sok, hwin _ _ hstw, hstg, fun hc => ⟨hwin _ _ (h1 hc).1, (h1 hc).2⟩, h2, hwin _ _ h3, h4, hstwb, h5⟩
+
 end FvModexp.Arm64.NatSqr
