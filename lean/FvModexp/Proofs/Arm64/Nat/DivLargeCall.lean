@@ -100,4 +100,29 @@ theorem mc_pre {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st
   refine ⟨⟨(guardOK_iff _ _).1 hgk, hco, hgout⟩, ⟨hok', hinv', hs1, hs2⟩, ⟨hd48, hdacc, ?_, hdh⟩⟩
   simp only [calleeStack, outside_cons, outside_nil, and_true]; rw [hspn]; omega
 
+/-- the stack guard word is unchanged after `stk.nat` (pure) -/
+theorem Mem.grd {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st up uc ip il ic vp vl vc : Nat}
+    {s : State} {t : Nat} {L1 : List (Nat × Nat)} {b1 w1 c1 : Nat}
+    (hE : Env R b L c zp zc st up uc ip il vp vl s t L1 b1 w1 c1) {Lk : List (Nat × Nat)} {bk : Nat} {M : Memory}
+    (hM : Mem R L zp zc st up uc ip il ic vp vl vc s t w1 c1 Lk bk M) :
+    M.readLE ((s.regs 28).toNat + 16) 8 = s.mem.readLE ((s.regs 28).toNat + 16) 8 := by
+  have hga := hE.pre.ce.2.2.2.2.1; have hgr : Outside ((s.regs 28).toNat + 16) 8 R.rt := hE.pre.ce.2.2.2.2.2.1
+  unfold Apart at hga
+  have hk : Outside ((s.regs 28).toNat + 16) 8 (stkWs s.mem st) :=
+    outside_stkWs hE.pre (hE.pre.sti.2.2.1.symm) fun hc => (hE.pre.sti.2.2.2 hc).2.symm
+  refine hM.fr.readLE _ _ ?_
+  simp only [outside_append]
+  refine ⟨⟨⟨hgr, ?_⟩, g_wsL hE⟩, hk⟩
+  simp only [winA, outside_cons, outside_nil, and_true]; omega
+
+/-- the top word of a nat from its value -/
+theorem top_of_natVal (m : Memory) (p n : Nat) (hn : 1 ≤ n) :
+    m.readLE (p + 8 * (n - 1)) 8 = natVal m p n / 2 ^ (64 * (n - 1)) := by
+  obtain ⟨k, rfl⟩ : ∃ k, n = k + 1 := ⟨n - 1, by omega⟩
+  simp only [Nat.add_sub_cancel]
+  rw [natVal_succ]
+  have hlo : natVal m p k < 2 ^ (64 * k) := by
+    unfold natVal; have := Memory.readLE_lt m p (8 * k); rw [show (256 : Nat) ^ (8 * k) = 2 ^ (64 * k) by rw [show (256 : Nat) = 2 ^ 8 by rfl, ← Nat.pow_mul]; congr 1; omega] at this; exact this
+  rw [Nat.add_mul_div_left _ _ (Nat.two_pow_pos _), Nat.div_eq_of_lt hlo, Nat.zero_add]
+
 end FvModexp.Arm64.DivLarge
