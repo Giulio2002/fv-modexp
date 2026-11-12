@@ -39,7 +39,7 @@ theorem pro (impl : List Segment) (ret0 : Nat) (hret : RetAddr (LibN.program.lin
       S'.regs 4 = S.regs 4 → S'.regs 5 = S.regs 5 → S'.regs 6 = S.regs 6 → S'.regs 7 = S.regs 7 →
       S'.regs 8 = S.regs 8 → S'.regs 9 = S.regs 9 → S'.regs 10 = S.regs 10 → S'.regs 11 = S.regs 11 →
       S'.regs 12 = S.regs 12 → S'.regs 13 = S.regs 13 → S'.regs 18 = S.regs 18 → S'.regs 28 = S.regs 28 →
-      S'.mem = M' → MemFrame M M' [(sp + 1048, sp + 1312), (sp + 1320, sp + 1408)] → M'.regions = M.regions →
+      S'.mem = M' → MemFrame M M' [(sp + 1048, sp + 1304), (sp + 1320, sp + 1408)] → M'.regions = M.regions →
       M'.readLE (sp + 1048) 8 = r29.toNat → M'.readLE (sp + 1056) 8 = ret →
       M'.readLE (sp + 1296) 8 = 0 → M'.readLE (sp + 1183) 1 = 0 →
       Reaches ((LibN.program.link impl).withExit ret0) S' Q)
@@ -50,7 +50,7 @@ theorem pro (impl : List Segment) (ret0 : Nat) (hret : RetAddr (LibN.program.lin
       S'.regs 4 = S.regs 4 → S'.regs 5 = S.regs 5 → S'.regs 6 = S.regs 6 → S'.regs 7 = S.regs 7 →
       S'.regs 8 = S.regs 8 → S'.regs 9 = S.regs 9 → S'.regs 10 = S.regs 10 → S'.regs 11 = S.regs 11 →
       S'.regs 12 = S.regs 12 → S'.regs 13 = S.regs 13 → S'.regs 18 = S.regs 18 → S'.regs 28 = S.regs 28 →
-      S'.mem = M' → MemFrame M M' [(sp + 1048, sp + 1312), (sp + 1320, sp + 1408)] → M'.regions = M.regions →
+      S'.mem = M' → MemFrame M M' [(sp + 1048, sp + 1304), (sp + 1320, sp + 1408)] → M'.regions = M.regions →
       M'.readLE (sp + 1048) 8 = r29.toNat → M'.readLE (sp + 1056) 8 = ret →
       M'.readLE (sp + 1296) 8 = 0 → M'.readLE (sp + 1183) 1 = 0 →
       Reaches ((LibN.program.link impl).withExit ret0) S' Q) :
@@ -70,7 +70,7 @@ theorem pro (impl : List Segment) (ret0 : Nat) (hret : RetAddr (LibN.program.lin
        case mf =>
          dsimp only
          repeat (first
-           | refine MemFrame.writeLE ?_ _ (r := (sp + 1048, sp + 1312)) (by simp) (by simp only; omega) (by simp only; omega)
+           | refine MemFrame.writeLE ?_ _ (r := (sp + 1048, sp + 1304)) (by simp) (by simp only; omega) (by simp only; omega)
            | refine MemFrame.writeLE ?_ _ (r := (sp + 1320, sp + 1408)) (by simp) (by simp only; omega) (by simp only; omega))
          exact MemFrame.refl _ _
        all_goals first | (janus_simp; done) | skip
@@ -82,7 +82,7 @@ theorem pro (impl : List Segment) (ret0 : Nat) (hret : RetAddr (LibN.program.lin
        case mf =>
          dsimp only
          repeat (first
-           | refine MemFrame.writeLE ?_ _ (r := (sp + 1048, sp + 1312)) (by simp) (by simp only; omega) (by simp only; omega)
+           | refine MemFrame.writeLE ?_ _ (r := (sp + 1048, sp + 1304)) (by simp) (by simp only; omega) (by simp only; omega)
            | refine MemFrame.writeLE ?_ _ (r := (sp + 1320, sp + 1408)) (by simp) (by simp only; omega) (by simp only; omega))
          exact MemFrame.refl _ _
        all_goals first | (janus_simp; done) | skip
