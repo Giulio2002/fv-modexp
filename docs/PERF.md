@@ -795,3 +795,9 @@ Function-level frame plumbing: W4Anc 2.6 s / 2.2 GB, W4FunV 1.3 s, W4FunO 3.3 s 
 EnCtx 14 s, En 23 s / 2.7 GB (others unchanged ±20%). LESSON: a single `by omega` in a chain lemma's context (dozens
 of unfolded Apart/stack disjunctions) made W4DivS run > 5 min (4.5 s before): every arithmetic side goal of the new
 anchor plumbing goes through tiny lemmas (`ble1/ble2/ble3/le_cap_of/cap8/le_drop/bP`, W4Anc) — no omega in big contexts.
+## agent top s11 (amd64 Run header/length phase; dev builds under load, memcap 8G)
+RunH2S 178 s / 2.8 GB, RunH2M 173 s / 3.3 GB, RunH2 721 s → 119 s / 2.6 GB (normalise the callee post's buffer address
+`p + if 32 < cp then 32#64 else 0#64` before `apply beVal_of_reads`; the defeq check of the unnormalised address was the
+cost), RunH3S 189 s, RunH3M 235 s / 3.4 GB, RunH3 142 s; RunLa single module > 900 s → 4 modules (FF 358 s) → 8 case
+modules 14–213 s / ≤ 2.3 GB; RunL single 205 s for the run alone → RunLLo/RunLHi 182 s / 3.7 GB each.
+Row amd64 RunErr (janus-provfix, warm cache-top): 491 s wall, peak 5.94 GB (cold run: timeout while compiling deps).
