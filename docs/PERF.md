@@ -1153,3 +1153,6 @@ warm-up 1017 s (s17: 702 s at load ~15); arm64 Top_RunErr **PASS 751 s / 6.5 GB*
 amd64 Top_RunErr in the same run: **FAIL (timeout) 901 s**, peak 1.4 GB — at load 35-60 the 51 amd64 own modules (dev sum
 ≈ 1270 s, critical path SetBytes chain → H3M → H3) plus their replay do not fit 900 s; at load ~15 (s17) it was 802 s.
 → amd64 RunErr-row modules are being trimmed (LLo/LHi/H2M/H3M/H2S/H3S/H1, SetBytes chain); re-measure after.
+## infra s27 (2026-11-12) — expNNEven arm64 entry layer (dev compile)
+* `Exp/EvPre` 2.5 s, `EvEP` 5.5 s / 2.2 GB, `EvCtx` 1.5 s, `EvWC` 3.4 s, `EvPP` ~5 s, `EvCalls` 1.6 s, `EvEnt` 13.3 s
+  / 2.3 GB (two janus_run segments), `EvRel` 2.0 s, `EvN1` 5.2–7.9 s / 2.2 GB.
