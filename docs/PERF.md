@@ -1129,3 +1129,24 @@ Body segments are independent modules importing only BJ (ROW-TIME rule); composi
 * LESSON: c1x first took > 4 min (killed) — a failing closer chain (`rw [readLE_writeLE_self, h3, toNat_ofNat]; omega` +
   `janus_frame` after `rw ← hm`) in the post-run goals; closing each goal separately (`unfold is1; janus_frame`, `simp`,
   `rw [readLE_writeLE_self]; exact Nat.mod_eq_of_lt …`) → 2.8 s. Probe with `all_goals trace_state; all_goals sorry` first.
+### agent top s18: arm64 success-row (D chain) restructure + trims (dev builds, host load 25-60: coordinator gate + one verify alongside)
+Structure (ROW-TIME lesson): the operand segments formed a sequential import chain `RunD1 → RunD2 → RunD2J → RunD2L…` and
+`RunD2 → RunD3 → RunD3J → RunD3ZA` (dev critical path 1137 s). New `Top/RunDPc.lean` holds the program points `pcD1..pcD3`,
+`pcJ2/pcJ3` and the join relations `JoinD2`/`JoinD3` (+ budget lemmas `bud_dk`, `bud_d2join`, `bud_d3join`); `RunD1`, `RunD1J`,
+`RunD2`, `RunD2J`, `RunD3`, `RunD3J` now import only `RunDPc`/`RunD2Lem`/`RunL` (independent); the `…All` compositions import
+the segment theorems. Dev critical path of the arm64 RunOkRow closure (Top modules, RunErr row cached): 1137 s → ≈ 280 s;
+own-module sum 3653 s → 2540 s (incl. the 665 s of RunErr-row modules).
+New `Top/RunGS.lean` `gS_read` (stackguard slot survives the frame; was an inline `omega` in 17 segment modules, up to 38 s each).
+| module (arm64) | before (load ≥ 40) | after | fix |
+|---|---|---|---|
+| RunD2J | 274 s / 4.5 GB | 66 s / 2.6 GB | `gS_read` (38 s), Box `hBW hpw hcw hnz hor2 hga` after the setBytes run (13 post-run `janus_simp [hmX]` 5-6 s → <1 s each), `bud_d2join` |
+| RunD3J | 181 s | 62 s / 2.5 GB | same |
+| RunD2 | 303 s / 6.0 GB | 116 s / 3.6 GB | Box after the setBytes run (unbox `hmN hoffc hpw hW` in the `v` case), small-context `omega`s (`clear …; omega`) for `hsrcL`/`hB48`, `bud_dk 1`, `hspn'` from `hspn` |
+| RunD3 | 216-231 s / 6.0 GB | 142 s / 3.6 GB | same, `bud_dk 2` |
+| RunD3ZA | 231 s / 6.2 GB | 75 s / 3.2 GB | Box `hpw hcw hoffc hmN hnz` BEFORE the makeslice run (its call-pre discharge was 70 s), `clear`ed `hcap`/`hsrcb` omegas (12 + 36 s) |
+| RunD3P | 231 s / 6.0 GB | 95 s / 4.8 GB | Box `hoffc hmN hsw1 hsw2 hnz hga` after the memmove run |
+| RunD1 | 137 s | 84 s / 3.0 GB | Box after the setBytes run |
+| RunD2ZA / D2ZN / D3ZN / D3LB | 137 / 91 / 109 / 135 s | 74 / 83 / 74 / 116 s | `gS_read` / rebuilt against RunDPc |
+| RunD1L / D1P / D2L / D2P | 212 / 103 / 184 / 163 s | 128 / 142 / 131 / 111 s (load 40) | Box `hnz hoffc (hmN) hga` after the last run |
+Fresh-cache re-measure of the RunErr rows (cache-top-freshC, load 35-60 — the coordinator's v0.3.1 gate ran alongside):
+warm-up 1017 s (s17: 702 s at load ~15); arm64 Top_RunErr **PASS 751 s / 6.5 GB** (s17: 535 s at load ~15) — see the amd64 line below.
