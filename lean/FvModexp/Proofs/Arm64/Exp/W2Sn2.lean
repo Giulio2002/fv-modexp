@@ -24,8 +24,8 @@ theorem sn2Step (impl : List Segment) (hap : ImplApart Extracted.program impl) (
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
-    (hSN : StackNat.Hyp impl R StackNat.names 4208 24)
-    (nsD : List String) (stkD costD : Nat) (costF : Nat → Nat → Nat → Nat) (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costF)
+    (hSN : StackNat.HypL impl R StackNat.names 4208 24)
+    (nsD : List String) (stkD costD : Nat) (costF : Nat → Nat → Nat → Nat) (hDiv : ExpHyp.DivHypL impl R nsD stkD 112 costF)
     (hnsD : ∀ x, nsD.contains x = true → LibW.names.contains x = true)
     (hnsW : nsD.contains Extracted.seg35.name = false)
     (hserv : RunIface.Serves R)
@@ -141,7 +141,7 @@ theorem sn2Step (impl : List Segment) (hap : ImplApart Extracted.program impl) (
   obtain ⟨hrB2, hqr0⟩ := below_sn hS hrH hrB1
   have hrL2 : NatLive M2 R L2 rrp (2 * n) := fun _ =>
     ⟨hr8, hx2.held hrH, by rw [hF2.accessible, hmf.accessible]; exact hracc, hr48⟩
-  have hcap2 : 0 < stCap M2 st := hk2.2.2.2.2.2.2.2.2.2.2.2 hcap1
+  have hcap2 : 0 < stCap M2 st := hk2.2.2.2.2.2.2.2.2.2.2.2.1 hcap1
   obtain ⟨a8, aH, aacc, a48⟩ := hsok2.2.2.2.2.1 hcap2
   have hqin : stW M2 st + 8 * l0 ≤ stW M2 st + 8 * stLen M1 st ∧
       stW M2 st + 8 * stLen M1 st + 8 * (2 * n) ≤ stW M2 st + 8 * stLen M2 st := by

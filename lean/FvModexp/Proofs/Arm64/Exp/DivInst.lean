@@ -30,7 +30,7 @@ theorem hyp (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     ExpHyp.DivHyp impl R LibDiv.names 41504 112 (NatDiv.cost dc) := by
   intro b L z zl zc st z2 z2l z2c u ul uc v vl vc ret hret s hs hpre
   exact NatDiv.ens impl hap R hmk0 hmv0 hmz0 dc hL b L z zl zc st z2 z2l z2c u ul uc v vl vc ret hret s hs
-    ⟨hpre, hdr hpre⟩
+    hpre
 
 /-- `nat.div` with `divLarge` discharged: premise `DrsHyp` (`divRecursiveStep`) -/
 theorem hypD (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
@@ -44,7 +44,7 @@ theorem hypD (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     ExpHyp.DivHyp impl R LibDiv.names 41504 112 (NatDiv.cost dc) := by
   intro b L z zl zc st z2 z2l z2c u ul uc v vl vc ret hret s hs hpre
   exact NatDiv.ensD impl hap R hgr hmc hwb hmk0 hmv0 hmz0 dc hD b L z zl zc st z2 z2l z2c u ul uc v vl vc ret hret s hs
-    ⟨hpre, hdr hpre⟩
+    hpre
 
 set_option maxHeartbeats 64000000 in
 theorem ns_sub : ∀ x, LibDiv.names.contains x = true → LibW.names.contains x = true := MontW.sub_of_all (by decide)

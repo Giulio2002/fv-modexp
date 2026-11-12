@@ -25,7 +25,8 @@ theorem keeps_snB {R : RtInv} {L L' : List (Nat × Nat)}
   obtain ⟨he, hce, hK, hK20, hn, hn128, hmc, hmc', hm, hmO, hmV, hnm, hy, hyO, hY, hyi, hyi0, hyl, hyl',
     hzc, hz, hfe, hsth, hstw, hsok, hn0, hl0, hcap, harr, hug, huw, hsu, hgl, hgO, hstwb, hro, hty,
     r728, r736, r744, r664, r648, r712, r704, r672⟩ := hC
-  obtain ⟨hxS, hbS, hinvS, hsok2, hlen2, hkept, hfresh, hFS, hLS, hrgS⟩ := hS
+  have hai := hS.arrIn
+  obtain ⟨hxS, hbS, hinvS, hsok2, hlen2, hkept, hfresh, hFS, hLS, hrgS, -⟩ := hS
   have hce0 := hce
   obtain ⟨hal, hK0, hA, hacc, hg1, hg2, hg3, hrt, hga, hgrt, hLs, hd, hro'⟩ := hce0
   have hsok0 := hsok
@@ -36,7 +37,7 @@ theorem keeps_snB {R : RtInv} {L L' : List (Nat × Nat)}
   simp only [AW, Apart, stUp] at hstw huw hug hsu hga hstg
   clear hLs hd hro' hfe hm hmO hy hyO hz hgl hgO
   refine keeps_ofB hce hK hxS (by simpa only [List.append_assoc] using hFS) hLS hrgS ?_ ?_ ?_ ?_ ?_ ?_ hsok2
-    (by omega) ?_ ?_
+    (by omega) ?_ ?_ hai
   · clear hstw huw hug hsu hga hstg
     intro r hr' hlt
     simp only [stkWs, List.cons_append, List.nil_append, List.mem_cons, List.not_mem_nil, or_false] at hr'

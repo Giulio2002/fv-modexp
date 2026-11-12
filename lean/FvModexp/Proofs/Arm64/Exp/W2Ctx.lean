@@ -60,7 +60,11 @@ def Keeps (R : RtInv) (L L' : List (Nat × Nat)) (g sp K st l0 : Nat) (ex : List
   StkOK M' R L' st ∧ stLen M st ≤ stLen M' st ∧
   ((stW M' st = stW M st ∧ stCap M' st = stCap M st) ∨
     (InRanges (stW M' st) (8 * stCap M' st) R.rt ∧ ApartAll (stW M' st) (8 * stCap M' st) L)) ∧
-  (0 < stCap M st → 0 < stCap M' st)
+  (0 < stCap M st → 0 < stCap M' st) ∧ ArrIn L' st M M'
+
+/-- a step that keeps the stack's array keeps `ArrIn` -/
+theorem arrIn_kept {L : List (Nat × Nat)} {st : Nat} {M M' : Memory}
+    (h : stW M' st = stW M st ∧ stCap M' st = stCap M st) : ArrIn L st M M' := fun hn => absurd h hn
 
 theorem held_sub {R : RtInv} {L : List (Nat × Nat)} {a n b k : Nat} (h : InRanges b k L ∨ Outside b k R.rt)
     (h1 : b ≤ a) (h2 : a + n ≤ b + k) : InRanges a n L ∨ Outside a n R.rt :=
@@ -109,7 +113,7 @@ theorem Ctx.keep {R : RtInv} {L L' : List (Nat × Nat)}
     hzc, hz, hfe, hsth, hstw, hsok, hn0, hl0, hcap, harr, hug, huw, hsu, hgl, hgO, hstwb, hro, hty,
     r728, r736, r744, r664, r648, r712, r704, r672, r616, r328, r320⟩ := h
   have hk0 := hk
-  obtain ⟨hx', hacc, hce', hrd, hsl, hsl8, hsl0, hgr, hsok', hlen, hst, hcp⟩ := hk0
+  obtain ⟨hx', hacc, hce', hrd, hsl, hsl8, hsl0, hgr, hsok', hlen, hst, hcp, -⟩ := hk0
   have rs : ∀ j, (128 ≤ j ∧ j + 8 ≤ 136 ∨ 224 ≤ j ∧ j + 8 ≤ 232 ∨ 320 ≤ j ∧ j + 8 ≤ 336 ∨ 536 ≤ j ∧ j + 8 ≤ 752) → M'.readLE (sp + j) 8 = M.readLE (sp + j) 8 := hsl
   have hcap' : 0 < stCap M' st := hcp hcap
   have hl0' : l0 ≤ stCap M' st := Nat.le_trans hl0 (Nat.le_trans hlen hsok'.2.2.2.2.2.1)
@@ -210,7 +214,7 @@ theorem keeps_of {R : RtInv} {L L' : List (Nat × Nat)} {g sp K st l0 : Nat} {ex
     (hsok : StkOK M' R L' st) (hlen : stLen M st ≤ stLen M' st)
     (hst : (stW M' st = stW M st ∧ stCap M' st = stCap M st) ∨
       (InRanges (stW M' st) (8 * stCap M' st) R.rt ∧ ApartAll (stW M' st) (8 * stCap M' st) L))
-    (hcp : 0 < stCap M st → 0 < stCap M' st) :
+    (hcp : 0 < stCap M st → 0 < stCap M' st) (hai : ArrIn L' st M M') :
     Keeps R L L' g sp K st l0 ex M M' := by
   have hce0 := hce
   obtain ⟨hal, hK, hA, hacc, hg1, hg2, hg3, hrt, hga, hgrt, hLs, hd, hro⟩ := hce0
@@ -218,7 +222,7 @@ theorem keeps_of {R : RtInv} {L L' : List (Nat × Nat)} {g sp K st l0 : Nat} {ex
   obtain ⟨c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13⟩ := hce1
   have hwin : ∀ j, sp - K ≤ j → j + 8 ≤ sp + 752 → Outside j 8 R.rt := fun j h1 h2 => hrt.of_sub h1 (by omega)
   refine ⟨hx, fun a k w => hF.accessible a k w, ⟨c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, hx.liveSep c11 ?_, c12, c13⟩,
-    fun a k ho => ?_, fun j hj => ?_, ?_, ?_, ?_, hsok, hlen, hst, hcp⟩
+    fun a k ho => ?_, fun j hj => ?_, ?_, ?_, ?_, hsok, hlen, hst, hcp, hai⟩
   · intro r hr; simp only [List.mem_cons, List.not_mem_nil, or_false] at hr
     subst hr; simp only; rw [show sp + 752 - (sp - K) = K + 752 by omega]; exact hrt
   · obtain ⟨o1, o2⟩ := hobj a k ho

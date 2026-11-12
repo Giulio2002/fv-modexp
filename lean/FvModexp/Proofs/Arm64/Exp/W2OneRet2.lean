@@ -18,7 +18,7 @@ theorem oneRet (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
-    (hSN : StackNat.Hyp impl R StackNat.names 4208 24)
+    (hSN : StackNat.HypL impl R StackNat.names 4208 24)
     (hserv : RunIface.Serves R)
     (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret)
     (b : Nat) (L : List (Nat × Nat)) (g sp n mp mc t rrp rrc xp xc yp ylen Y yi zp zc zzp zzc st n0 : Nat)

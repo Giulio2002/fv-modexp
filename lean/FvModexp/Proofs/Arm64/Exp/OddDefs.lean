@@ -98,7 +98,7 @@ def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K : Nat) (costF : Nat �
     ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b - OCost costF n xl ylen (stLen s.mem st) ≤ b' ∧
       R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem) ∧ NatLive s'.mem R L' p c ∧
       ((p = zp ∧ c = zc) ∨ (InRanges p (8 * c) R.rt ∧ ApartAll p (8 * c) L)) ∧
-      StackBack R L L' st s.mem s'.mem ∧
+      StackBackL R L L' st s.mem s'.mem ∧
       MemFrame s.mem s'.mem (R.rt ++ winA s (K + 1056) 112 ++ [(zp, zp + 8 * zc)] ++ stkWs s.mem st) ∧
       LiveFrame s.mem s'.mem L ([(zp, zp + 8 * zc)] ++ stkWs s.mem st)
 

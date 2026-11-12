@@ -56,7 +56,7 @@ def PostD (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K costD : Nat) (zp zc s
     ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b - W2Cost n xl costD (stLen s.mem st) ≤ b' ∧
       R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem) ∧ NatLive s'.mem R L' p c ∧
       ((p = zp ∧ c = zc) ∨ (InRanges p (8 * c) R.rt ∧ ApartAll p (8 * c) L)) ∧
-      StackBack R L L' st s.mem s'.mem ∧
+      StackBackL R L L' st s.mem s'.mem ∧
       MemFrame s.mem s'.mem (R.rt ++ winA s (K + 640) 112 ++ [(zp, zp + 8 * zc)] ++ stkWs s.mem st) ∧
       LiveFrame s.mem s'.mem L ([(zp, zp + 8 * zc)] ++ stkWs s.mem st)
 
@@ -321,12 +321,12 @@ theorem post_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K costD g sp st z
   have hspE := he.sp
   have hgE := he.g
   obtain ⟨hs1, hs28, -, -, -, -, -, hK, hKs, -, -, hLrt, hLs, -, -⟩ := he
-  obtain ⟨Xv', hXm, hXB, M, L1, b1, hF0, hLF0, hx0, hb1, hkf0, hlen0, hcapM, l1, zzp, zzc, -, hl1b,
-    ⟨hzzl, hzzin, hzzap⟩, Md, Ld, bd, rp, rl, rc, M1, rrp, rrc, onep, M2, L2, b2, ⟨hxd, hFd, hLFd, hlend, hkfd⟩, hbd,
+  obtain ⟨Xv', hXm, hXB, M, L1, b1, hF0, hLF0, hx0, hb1, hkf0, hai0, hlen0, hcapM, l1, zzp, zzc, -, hl1b,
+    ⟨hzzl, hzzin, hzzap⟩, Md, Ld, bd, rp, rl, rc, M1, rrp, rrc, onep, M2, L2, b2, ⟨hxd, hFd, hLFd, hlend, hkfd, haid⟩, hbd,
     hlenD, -, hRR, hOC, hRet⟩ := hE
   have hF2 := hRR.1
   have hLF2 := hRR.2.1
-  obtain ⟨hF3, hLF3, hx3, hb3, hsok3, hlen3, hkept3, hfresh3, -⟩ := hOC
+  obtain ⟨hF3, hLF3, hx3, hb3, hsok3, hlen3, hkept3, hfresh3, -, hmem3⟩ := hOC
   obtain ⟨Mj, M', zp', zc', L', b', hF4, hLF4, -, -, hZP, hZj⟩ := hRet
   obtain ⟨-, hzb', -, hx5, hb5, hF5, hLF5, -, -, hzo⟩ := hZP
   obtain ⟨M0z, zp'', zc'', zzp'', zzc'', Mx, hPz, hF6, hLF6, -, hBufs, -, hvx, hT⟩ := hZj
@@ -426,7 +426,8 @@ theorem post_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K costD g sp st z
     rw [hlenM1] at hb3
     exact bud_fin hb1 hbd hb3 hb5 hb8 (if_le n) (snc_mono (lvl_le hl1b))
   · rw [hgE]; exact inv_fin hF9 hLrt (x8.held hsok.2.1) hK4 hKs hinv8
-  · refine ⟨⟨hsok.1, x8.held hsok.2.1, by rw [hacc]; exact hsok.2.2.1, hsok.2.2.2.1, ?_, ?_, ?_⟩, eL, ?_⟩
+  · refine ⟨⟨⟨hsok.1, x8.held hsok.2.1, by rw [hacc]; exact hsok.2.2.1, hsok.2.2.2.1, ?_, ?_, ?_⟩, eL, ?_⟩,
+      W2Pro.arrIn_chain hai0 haid hxd ⟨hd1.1, hd1.2.2⟩ (W2Pro.arrIn_split hkept3 hmem3) hx3 ⟨eW, eC⟩ (hx5.trans hx8)⟩
     · rw [eW, eC]; exact natLive_tr hsok3.2.2.2.2.1 (hx5.trans hx8) hacc2
     · rw [eL, eC]; exact Nat.le_trans hl0L (Nat.le_trans (Nat.le_add_right _ _) hcM2)
     · rw [eC]; exact hsok3.2.2.2.2.2.2

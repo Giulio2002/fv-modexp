@@ -6,7 +6,7 @@ import FvModexp.Proofs.Arm64.Exp.NPro
 
 `z.expNN(stk, x, y, m, false)` returns `x^y mod m` (see `ExpN.Pre`/`Post`): the prologue and alias test (`pro`), then
 `fromJ1` (`z[:0]` / `setWord(1)` / `rem` / `make` → `expNNSlow` | `expNNOdd` | `expNNPowerOfTwo`).
-Premises: the callee shapes (`DHyps`: live runtime contracts, `nat.div`'s `DivHyp`, `SlowHyp`, `P2Hyp`; `RemHyp`).
+Premises: the callee shapes (`DHyps`: live runtime contracts, `nat.div`'s `DivHypL`, `SlowHyp`, `P2Hyp`; `RemHyp`).
 -/
 
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvModexp

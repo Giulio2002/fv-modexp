@@ -44,7 +44,7 @@ namespace FvModexp.Arm64.W2Pro
 @[reducible] def DvPostG (R : RtInv) (b cost : Nat) (L L' : List (Nat × Nat)) (b' g sp stkD st qp qc z2p z2c up ul mp n : Nat)
     (M M' : Memory) (r rl rc : Nat) : Prop :=
   ExpHyp.NatOF R L L' M' z2p z2c 1 r rl rc (natVal M up ul % natVal M mp n) ∧
-  LiveExt R L L' ∧ b - cost ≤ b' ∧ R.inv b' L' g (view R.rt L' M') ∧ StackBack R L L' st M M' ∧
+  LiveExt R L L' ∧ b - cost ≤ b' ∧ R.inv b' L' g (view R.rt L' M') ∧ StackBackL R L L' st M M' ∧
   (¬ (r = z2p ∧ rc = z2c) → 0 < rc → 0 < stCap M' st → Apart r (8 * rc) (stW M' st) (8 * stCap M' st)) ∧
   MemFrame M M' (R.rt ++ [(sp - stkD, sp - 8), (sp + 8, sp + 112)] ++ [(qp, qp + 8 * qc), (z2p, z2p + 8 * z2c)] ++
     stkWs M st) ∧
@@ -56,7 +56,7 @@ set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 /-- `nat.div` from its entry (return address `ra`, word `i` of window-2) to `ra` -/
 theorem divCallG (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
-    (nsD : List String) (stkD costD : Nat) (costF : Nat → Nat → Nat → Nat) (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costF)
+    (nsD : List String) (stkD costD : Nat) (costF : Nat → Nat → Nat → Nat) (hDiv : ExpHyp.DivHypL impl R nsD stkD 112 costF)
     (hnsD : ∀ x, nsD.contains x = true → LibW.names.contains x = true)
     (hnsW : nsD.contains Extracted.seg35.name = false)
     (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret) (Q : Outcome → Prop)
@@ -144,7 +144,7 @@ theorem keeps_divB {R : RtInv} {L L' : List (Nat × Nat)}
   obtain ⟨-, hce, hK, -, hn, -, -, -, -, -, -, -, -, -, -, -, -, -, -,
     -, -, hfe, -, hstw, hsok, -, hl0, hcap, -, hug, huw, hsu, -, -, -, -, -,
     -, -, -, -, -, -, -, -⟩ := hC
-  obtain ⟨-, hxD, -, -, ⟨hsok', hlen', hst'⟩, -, hF, hL, hrg⟩ := hD
+  obtain ⟨-, hxD, -, -, ⟨⟨hsok', hlen', hst'⟩, hai⟩, -, hF, hL, hrg⟩ := hD
   have hce0 := hce
   obtain ⟨hal, hK0, hA, hacc, hg1, hg2, hg3, hrt, hga, hgrt, hLs, hd, hro'⟩ := hce0
   have hsok0 := hsok
@@ -154,7 +154,7 @@ theorem keeps_divB {R : RtInv} {L L' : List (Nat × Nat)}
   clear hfe hLs hd hro'
   simp only [AW, Apart, stUp] at hstw huw hug hsu hga hstg hqW hqG
   refine keeps_ofB hce hK hxD (by simpa only [List.append_assoc] using hF) hL hrg ?_ ?_ ?_ ?_ ?_ ?_ hsok'
-    (by omega) hst' ?_
+    (by omega) hst' ?_ hai
   · clear hstw huw hug hsu hga hstg hqW hqG
     intro r' hr' hlt
     simp only [stkWs, List.cons_append, List.nil_append, List.mem_cons, List.not_mem_nil, or_false] at hr'

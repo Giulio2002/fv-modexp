@@ -95,7 +95,7 @@ theorem keeps_div {R : RtInv} {L L' : List (Nat × Nat)}
   obtain ⟨-, hce, hK, -, hn, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -,
     -, -, hfe, -, hstw, hsok, -, hl0, hcap, -, hug, huw, hsu, -, -, -, -, -,
     -, -, -, -, -, -, -, -, -, -, -⟩ := hC
-  obtain ⟨-, hxD, -, -, ⟨hsok', hlen', hst'⟩, -, hF, hL, hrg⟩ := hD
+  obtain ⟨-, hxD, -, -, ⟨⟨hsok', hlen', hst'⟩, hai⟩, -, hF, hL, hrg⟩ := hD
   have hce0 := hce
   obtain ⟨hal, hK0, hA, hacc, hg1, hg2, hg3, hrt, hga, hgrt, hLs, hd, hro'⟩ := hce0
   have hsok0 := hsok
@@ -106,7 +106,7 @@ theorem keeps_div {R : RtInv} {L L' : List (Nat × Nat)}
   clear hfe hLs hd hro'
   simp only [AW, Apart, stUp] at hstw huw hug hsu hga hstg hrW hrG
   refine keeps_of hce hK hxD (by simpa only [List.append_assoc] using hF) hL hrg ?_ ?_ ?_ ?_ ?_ ?_ hsok'
-    (by omega) hst' ?_
+    (by omega) hst' ?_ hai
   · clear hstw huw hug hsu hga hstg hrW hrG
     intro r' hr' hlt
     simp only [stkWs, List.cons_append, List.nil_append, List.mem_cons, List.not_mem_nil, or_false] at hr'

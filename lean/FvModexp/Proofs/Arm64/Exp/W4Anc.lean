@@ -55,7 +55,8 @@ theorem xnPre_ge4 (n costD l k : Nat) : xnBudAA n costD l k ≤ xnPre n costD l 
   LiveExt R L0 L ∧ MemFrame M0 M (R.rt ++ aw sp K st M0) ∧ LiveFrame M0 M L0 [(st, st + 24), frA st M0] ∧
   stLen M0 st ≤ stLen M st ∧
   ((stW M st = stW M0 st ∧ stCap M st = stCap M0 st) ∨
-    (InRanges (stW M st) (8 * stCap M st) R.rt ∧ ApartAll (stW M st) (8 * stCap M st) L0))
+    (InRanges (stW M st) (8 * stCap M st) R.rt ∧ ApartAll (stW M st) (8 * stCap M st) L0)) ∧
+  ArrIn L st M0 M
 
 /-- a range the anchor relation allows a step to use as scratch (`ex` of `Obj`) -/
 @[reducible] def ALoc (R : RtInv) (L0 : List (Nat × Nat)) (st : Nat) (M0 : Memory) (e : Nat × Nat) : Prop :=
@@ -76,7 +77,7 @@ theorem bP {s P Q b b1 : Nat} (hQ : Q ≤ P) (hbP : s + P ≤ b) (hb1 : b - s �
 
 theorem Anc.refl (R : RtInv) (L0 : List (Nat × Nat)) (sp K st : Nat) (M0 : Memory) : Anc R L0 sp K st M0 L0 M0 :=
   ⟨LiveExt.refl R L0, ⟨fun _ _ _ => rfl, fun _ _ _ => rfl⟩, LiveFrame.refl _ _ _, Nat.le_refl _,
-    Or.inl ⟨rfl, rfl⟩⟩
+    Or.inl ⟨rfl, rfl⟩, fun h => absurd ⟨rfl, rfl⟩ h⟩
 
 theorem bytes_of_readLE {m m' : Memory} : ∀ {b k : Nat}, m'.readLE b k = m.readLE b k →
     ∀ i, i < k → m'.bytes (b + i) = m.bytes (b + i)
@@ -120,10 +121,10 @@ theorem Anc.step {R : RtInv} {L0 L L' : List (Nat × Nat)} {sp K st l0 : Nat} {e
     (hlen : stLen M st ≤ stLen M' st)
     (hst : (stW M' st = stW M st ∧ stCap M' st = stCap M st) ∨
       (InRanges (stW M' st) (8 * stCap M' st) R.rt ∧ ApartAll (stW M' st) (8 * stCap M' st) L))
-    (hl0 : stLen M0 st ≤ l0) (hl0' : l0 ≤ stCap M st) (hex : ∀ e ∈ ex, ALoc R L0 st M0 e)
+    (hai : ArrIn L' st M M') (hl0 : stLen M0 st ≤ l0) (hl0' : l0 ≤ stCap M st) (hex : ∀ e ∈ ex, ALoc R L0 st M0 e)
     (hLs : LiveSep L [(sp - K, sp + 1040)]) (hK : K ≤ sp) :
     Anc R L0 sp K st M0 L' M' := by
-  obtain ⟨hx0, hF, hLF, hl, hkf⟩ := hA
+  obtain ⟨hx0, hF, hLF, hl, hkf, hai0⟩ := hA
   -- `stUp M st l0` is inside the anchor's free part or a fresh array
   have hup : ∀ a k, (Outside a k R.rt ∨ InRanges a k L0) → Apart a k (stFree M0 st).1 (stFree M0 st).2 →
       Apart a k (stUp M st l0).1 (stUp M st l0).2 := by
@@ -139,7 +140,7 @@ theorem Anc.step {R : RtInv} {L0 L L' : List (Nat × Nat)} {sp K st l0 : Nat} {e
     rcases hex e he with ⟨e1, e2⟩ | ⟨hin, hap⟩
     · simp only [stFree] at ha; unfold Apart at ha ⊢; omega
     · exact apart_held' hin hap hh.symm
-  refine ⟨hx0.trans hx, ?_, ?_, Nat.le_trans hl hlen, ?_⟩
+  refine ⟨hx0.trans hx, ?_, ?_, Nat.le_trans hl hlen, ?_, ArrIn.trans hai0 hai hx⟩
   · refine MemFrame.trans hF ⟨fun a k ho => ?_, hacc⟩ fun _ _ h => ⟨h, h⟩
     simp only [aw, frA, outside_append, outside_cons, outside_nil, and_true] at ho
     obtain ⟨hrt, w1, w2, w3, w4⟩ := ho
@@ -169,7 +170,7 @@ theorem Anc.step {R : RtInv} {L0 L L' : List (Nat × Nat)} {sp K st l0 : Nat} {e
 theorem aloc_of_anc {R : RtInv} {L0 L : List (Nat × Nat)} {sp K st l k : Nat} {M0 M : Memory}
     (hA : Anc R L0 sp K st M0 L M) (hl : stLen M0 st ≤ l) (hk : 8 * l + k ≤ 8 * stCap M st) :
     ALoc R L0 st M0 (stW M st + 8 * l, k) := by
-  rcases hA.2.2.2.2 with ⟨e1, e2⟩ | ⟨hin, hap⟩
+  rcases hA.2.2.2.2.1 with ⟨e1, e2⟩ | ⟨hin, hap⟩
   · left; simp only [stW, stCap, stLen] at e1 e2 hl hk ⊢; rw [e1] at ⊢; rw [e2] at hk; omega
   · right
     refine ⟨hin.sub (by omega) (by omega), fun r hr => ?_⟩
@@ -181,6 +182,6 @@ theorem Anc.keep {R : RtInv} {L0 L L' : List (Nat × Nat)} {g sp K st l0 : Nat} 
     (hl0 : stLen M0 st ≤ l0) (hl0' : l0 ≤ stCap M st) (hex : ∀ e ∈ ex, ALoc R L0 st M0 e)
     (hLs : LiveSep L [(sp - K, sp + 1040)]) (hK : K ≤ sp) : Anc R L0 sp K st M0 L' M' :=
   Anc.step hA hk.1 hk.2.1 hk.2.2.2.1 (hk.2.2.2.2.1 920 (by omega)) (hk.2.2.2.2.1 928 (by omega))
-    hk.2.2.2.2.2.2.2.2.2.1 hk.2.2.2.2.2.2.2.2.2.2.1 hl0 hl0' hex hLs hK
+    hk.2.2.2.2.2.2.2.2.2.1 hk.2.2.2.2.2.2.2.2.2.2.1 hk.2.2.2.2.2.2.2.2.2.2.2.2 hl0 hl0' hex hLs hK
 
 end FvModexp.Arm64.W4Pro

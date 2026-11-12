@@ -34,7 +34,8 @@ theorem ESl.keep {M1 M3 : Memory} {sp st : Nat} {r29 : BitVec 64} {ret zp zc xp 
   ∃ (M : Memory) (L1 : List (Nat × Nat)) (b1 : Nat),
     MemFrame s.mem M (R.rt ++ [(sp - K, sp + 920), (sp + 936, sp + 1040), (st, st + 24)]) ∧
     LiveFrame s.mem M L [(st, st + 24)] ∧ LiveExt R L L1 ∧ b - stackNatCost (stLen s.mem st) (23 * n) ≤ b1 ∧
-    ArrKF R L st s.mem M ∧ stLen M st = stLen s.mem st + StackNat.rnd (23 * n) ∧ stLen M st ≤ stCap M st ∧
+    ArrKF R L st s.mem M ∧ ArrIn L1 st s.mem M ∧ stLen M st = stLen s.mem st + StackNat.rnd (23 * n) ∧
+    stLen M st ≤ stCap M st ∧
     XnPost R L1 K (b1 - W4Pro.xnPre n costD (stLen s.mem st + StackNat.rnd (23 * n)) (xl - n + 1)) M g sp n mp mc
       (s.mem.readLE mp (8 * n)) Xv' yp ylen (s.mem.readLE yp (8 * ylen)) (s.mem.readLE (yp + 8 * (ylen - 1)) 8) zp zc
       st (stLen s.mem st) (stLen s.mem st + StackNat.rnd (23 * n)) (s.regs 18) (s.regs 29) s'
@@ -48,11 +49,11 @@ theorem enStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
-    (hSN : StackNat.Hyp impl R StackNat.names 4208 24)
+    (hSN : StackNat.HypL impl R StackNat.names 4208 24)
     (hgr : GrowsliceLiveContract (LibW.program.link impl) grE 4096 R)
     (hmc : MemclrNoHeapPointersLive (LibW.program.link impl) mcE 4096 R)
     (hwb : WbLiveContract (LibW.program.link impl) wbE 4096 R 2)
-    (nsD : List String) (stkD costD : Nat) (costF : Nat → Nat → Nat → Nat) (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costF)
+    (nsD : List String) (stkD costD : Nat) (costF : Nat → Nat → Nat → Nat) (hDiv : ExpHyp.DivHypL impl R nsD stkD 112 costF)
     (hnsD : ∀ x, nsD.contains x = true → LibW.names.contains x = true)
     (hnsW : nsD.contains Extracted.seg34.name = false)
     (nsL : List String) (stkL : Nat) (hLsh : Lsh.Hyp2 impl R nsL stkL 64)
@@ -143,7 +144,7 @@ theorem enStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
       (d4.trans c4) (d5.trans c5) (d6.trans c6) (d7.trans c7) (d8.trans c8) (d9.trans c9) (d10.trans c14) d11
       (d12.trans c16) d13)
       (isReturn_mono fun s' ⟨Xv', h1, h1', h2⟩ => ⟨Xv', h1, h1', M3, L, b, hFp, hLF, LiveExt.refl R L, Nat.sub_le _ _,
-        Or.inl ⟨q1, q3⟩, q2, hcap3, h2⟩)
+        Or.inl ⟨q1, q3⟩, W4Pro.arrIn_kept ⟨q1, q3⟩, q2, hcap3, h2⟩)
     intro hc
     simp only [stW, stCap] at q1 q3 hc ⊢
     rw [q3] at hc; rw [q1, q3]
@@ -208,6 +209,8 @@ theorem enStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     have hcap3 : stLen M3 st ≤ stCap M3 st := by simp only [stLen, stCap] at q2 q3 hgcl ⊢; omega
     have hc3 : stCap M3 st < 2 ^ 40 := by simp only [stCap] at q3 ⊢; rw [q3]; exact hgcb
     have hkfG : ArrKF R L st s.mem M3 := Or.inr (by simp only [stW, stCap] at q1 q3 ⊢; rw [q1, q3]; exact ⟨hpin, hapL⟩)
+    have haiG : ArrIn (L ++ [(p, p + 8 * growCap8 (stLen s.mem st + StackNat.rnd (23 * n)) (stCap s.mem st))]) st s.mem M3 :=
+      fun _ => by simp only [stW, stCap] at q1 q3 ⊢; rw [q1, q3]; exact List.mem_append_right _ (List.mem_singleton_self _)
     have hFp : MemFrame s.mem M3 (R.rt ++ [(sp - K, sp + 920), (sp + 936, sp + 1040), (st, st + 24)]) := by
       refine MemFrame.trans hF12p hF3 fun a k ho => ?_
       simp only [outside_append, outside_cons, outside_nil, and_true] at ho ⊢
@@ -218,7 +221,7 @@ theorem enStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
       hbC hbB hbA hbAC hbP M3 _ _ hF hLF (hrg3.trans (hrg2.trans hrg1)) hx hkfG q2 hcap3 hc3 ?_ hsl3
       (by omega) hinv3 S3 e1 e2 e3 (e4.trans d4) (e5.trans d5) (e6.trans d6) (e7.trans d7) (e8.trans d8) (e9.trans d9)
       ((e10.trans d14).trans c9) e11 ((e12.trans d16).trans c11) e13)
-      (isReturn_mono fun s' ⟨Xv', h1, h1', h2⟩ => ⟨Xv', h1, h1', M3, _, _, hFp, hLF, hx, Nat.sub_le_sub_left hcostG _, hkfG, q2, hcap3, h2⟩)
+      (isReturn_mono fun s' ⟨Xv', h1, h1', h2⟩ => ⟨Xv', h1, h1', M3, _, _, hFp, hLF, hx, Nat.sub_le_sub_left hcostG _, hkfG, haiG, q2, hcap3, h2⟩)
     · intro hc
       simp only [stW, stCap] at q1 q3 hc ⊢
       rw [q1, q3]

@@ -35,7 +35,7 @@ theorem rem_div {R : RtInv} {L L' : List (Nat × Nat)}
     -, -, -, hsth, -, hsok, -, hl0, hcap, -, -, huw, -, -, -, -, -, -,
     -, -, -, -, -, -, -, -, -, -, -⟩ := hC
   obtain ⟨⟨hzb1, hzb2, hzb3, hzb4, hzH, hzb6, hzb7⟩, -, -, -, -, -, hzS, hzU, -⟩ := hZ
-  obtain ⟨⟨hv, hN, hlc, hc40, hlive, hor⟩, -, -, -, ⟨hsok', hlen', hst'⟩, hfr, hF, hL, -⟩ := hD
+  obtain ⟨⟨hv, hN, hlc, hc40, hlive, hor⟩, -, -, -, ⟨⟨hsok', hlen', hst'⟩, -⟩, hfr, hF, hL, -⟩ := hD
   have hrt : Outside (sp - K) (K + 752) R.rt := hce.2.2.2.2.2.2.2.1
   -- zz is unchanged
   have hlc0 := hsok.2.2.2.2.2.1

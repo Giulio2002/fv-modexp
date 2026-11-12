@@ -5,7 +5,7 @@ import FvModexp.Proofs.Arm64.Exp.W4One
 /-!
 # window-4 prologue (arm64): the call `buf := stk.nat(17n)` (nat.go:1412), `snE → p01`
 
-`(*stack).nat` is a premise in divmc's proved shape (`StackNat.Hyp impl R StackNat.names 4208 24`, discharged by
+`(*stack).nat` is a premise in divmc's proved shape (`StackNat.HypL impl R StackNat.names 4208 24`, discharged by
 `StackNat.hyp`); the call is made by hand (`Reaches.call_regions` + `LibWC.hypSum`). The continuation gets the callee's
 post in memory form.
 -/
@@ -39,7 +39,16 @@ theorem toNat_lt' {v : Nat} (h : v < 2 ^ 64) : (BitVec.ofNat 64 v).toNat = v := 
   (stCap M st < stLen M st + StackNat.rnd k → InRanges (stW M' st) (8 * stCap M' st) R.rt ∧
     ApartAll (stW M' st) (8 * stCap M' st) L) ∧
   MemFrame M M' (R.rt ++ [(sp - 4208, sp - 8), (sp + 8, sp + 24)] ++ stkWs M st) ∧ LiveFrame M M' L (stkWs M st) ∧
-  M'.regions = M.regions
+  M'.regions = M.regions ∧
+  (stCap M st < stLen M st + StackNat.rnd k → (stW M' st, stW M' st + 8 * stCap M' st) ∈ L')
+
+/-- the stack array after a stack-nat call: kept, or the callee's fresh element of `L'` -/
+theorem SnPost.arrIn {R : RtInv} {b : Nat} {L L' : List (Nat × Nat)} {b' g sp st k : Nat} {M M' : Memory}
+    (hS : SnPost R b L L' b' g sp st k M M') : ArrIn L' st M M' := by
+  intro hn
+  by_cases hc : stLen M st + StackNat.rnd k ≤ stCap M st
+  · exact absurd (hS.2.2.2.2.2.1 hc) hn
+  · exact hS.2.2.2.2.2.2.2.2.2.2 (by omega)
 
 set_option maxRecDepth 20000 in
 set_option janus.callRegions true in
@@ -47,7 +56,7 @@ set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 /-- `buf := stk.nat(17n)`: from the entry of `(*stack).nat` (return address `p01`) to `p01` -/
 theorem snCall (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
-    (hSN : StackNat.Hyp impl R StackNat.names 4208 24)
+    (hSN : StackNat.HypL impl R StackNat.names 4208 24)
     (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret) (Q : Outcome → Prop)
     (b : Nat) (L : List (Nat × Nat)) (g sp n st : Nat) (M : Memory) (r18 r29 : BitVec 64)
     (hpre : SnPre R b L g sp st (17 * n) M) (hst : st < 2 ^ 64) (hn : 0 < n)
@@ -93,9 +102,9 @@ theorem snCall (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     obtain ⟨a1, a2⟩ := harr hc
     unfold Apart at a1
     exact ⟨by simp only [outside_cons, outside_nil, and_true]; omega, a2⟩
-  obtain ⟨hX0, hX1, hX2, L', b', ⟨hLE, hb', hinv'⟩, hsok', hlen', hkept, hfresh, hF, hLF⟩ := hq
-  simp only [tst, tk, hmem, tsp, tg, winA] at hX0 hX1 hX2 hb' hinv' hsok' hlen' hkept hfresh hF hLF
+  obtain ⟨hX0, hX1, hX2, L', b', ⟨hLE, hb', hinv'⟩, hsok', hlen', hkept, hfresh, hF, hLF, hmS⟩ := hq
+  simp only [tst, tk, hmem, tsp, tg, winA] at hX0 hX1 hX2 hb' hinv' hsok' hlen' hkept hfresh hF hLF hmS
   refine KB s' s'.mem L' b' (hr.trans h30) (e1.trans hsp) (hX0 (by omega)) hX1 hX2 (e4.trans h18) (e2.trans h28) (e3.trans h29)
-    rfl ⟨hLE, hb', hinv', hsok', hlen', hkept, hfresh, hF, hLF, by rw [hrg, hmem]⟩
+    rfl ⟨hLE, hb', hinv', hsok', hlen', hkept, hfresh, hF, hLF, by rw [hrg, hmem], hmS⟩
 
 end FvModexp.Arm64.W4Pro

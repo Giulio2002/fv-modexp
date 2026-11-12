@@ -7,7 +7,7 @@ import FvModexp.Proofs.Arm64.Nat.Lsh
 # `nat.expNNOddMontgomeryWindowSize2` (arm64): `ens` / `sum` (CONVENTIONS §3)
 
 Premises: the live runtime contracts (memclr, memmove, makeslice, growslice, `gcWriteBarrier2`) and `nat.div`'s shape
-`ExpHyp.DivHyp` (until asm lands `nat.div`). `nat.lsh` is discharged by asm's `Lsh.ens`, `(*stack).nat` by divmc's
+`ExpHyp.DivHypL` (until asm exports `nat.div` in that form). `nat.lsh` is discharged by asm's `Lsh.ens`, `(*stack).nat` by divmc's
 `StackNat.hyp`.
 -/
 
@@ -27,7 +27,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
     (hgr : GrowsliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.growslice") 4096 R)
     (hwb : WbLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 4096 R 2)
-    (nsD : List String) (stkD : Nat) (costF : Nat → Nat → Nat → Nat) (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costF)
+    (nsD : List String) (stkD : Nat) (costF : Nat → Nat → Nat → Nat) (hDiv : ExpHyp.DivHypL impl R nsD stkD 112 costF)
     (hnsD : ∀ x, nsD.contains x = true → LibW.names.contains x = true)
     (hnsW : nsD.contains Extracted.seg35.name = false)
     (b : Nat) (L : List (Nat × Nat)) (K : Nat) (hKD : stkD ≤ K) (hKL : 4256 ≤ K)
@@ -52,7 +52,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   have hwb' : WbLiveContract (LibW.program.link impl) wbE 4096 R 2 := by
     rw [← wbE_eq]; exact WbLiveContract.of_codeIn hc hwb
   refine returns_of_reaches (W2Pro.reaches_mono (W2En.enStep impl hap R hclr hmv hmk
-    (StackNat.hyp impl hap R hgr hclr hwb) hgr' hmc' hwb' nsD stkD (divCost costF n xl (stLen s.mem st)) costF hDiv hnsD hnsW Lsh.names 4256
+    (StackNat.hypL impl hap R hgr hclr hwb) hgr' hmc' hwb' nsD stkD (divCost costF n xl (stLen s.mem st)) costF hDiv hnsD hnsW Lsh.names 4256
     (Lsh.ens impl hap R hmk hmv hclr) (MontW.sub_of_all (by decide)) (by decide) ret hret b L K
     (s.regs 28).toNat (s.sp.toNat - 640) st zp zc xp xl xc yp ylen mp n mc s hP hstnz hKD hKL hMo hM1 hslen hcs hbC hbB hbA
     hbAC hbP h_pc h_x0 h_x2 h_x3 h_x4 h_x5 h_x6 h_x7 h_x8 h_x10 h_x11 h_x12 h_lr)
@@ -69,7 +69,7 @@ def sum (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtIn
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
     (hgr : GrowsliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.growslice") 4096 R)
     (hwb : WbLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 4096 R 2)
-    (nsD : List String) (stkD : Nat) (costF : Nat → Nat → Nat → Nat) (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costF)
+    (nsD : List String) (stkD : Nat) (costF : Nat → Nat → Nat → Nat) (hDiv : ExpHyp.DivHypL impl R nsD stkD 112 costF)
     (hnsD : ∀ x, nsD.contains x = true → LibW.names.contains x = true)
     (hnsW : nsD.contains Extracted.seg35.name = false)
     (b : Nat) (L : List (Nat × Nat)) (K : Nat) (hKD : stkD ≤ K) (hKL : 4256 ≤ K)
