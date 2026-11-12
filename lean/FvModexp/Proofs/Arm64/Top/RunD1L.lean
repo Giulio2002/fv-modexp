@@ -222,6 +222,7 @@ theorem d1l (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     unfold padByte
     split
     · rename_i hjl
+      have hoffc := bxq.h.2.1
       obtain ⟨-, rfl⟩ : 96 < len.toNat ∧ off = 96 := by omega
       have hcj := hcp j (by omega)
       rw [hcj, ← Memory.readLE_one, hr1n]

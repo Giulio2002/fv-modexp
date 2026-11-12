@@ -152,6 +152,7 @@ theorem d2p (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     unfold padByte
     split
     · rename_i hjl
+      have hoffc := bxq.h.2.1; have hmN := bxq.h.2.2.1
       have hn0 : 0 < len.toNat - 96 - min (hdrV s p len 0) (len.toNat - 96) := by omega
       obtain ⟨-, rfl⟩ : 96 < len.toNat ∧ off = 96 := by omega
       have hmE : mN = hdrV s p len 0 := by omega
