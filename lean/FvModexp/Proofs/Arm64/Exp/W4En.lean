@@ -54,7 +54,7 @@ theorem enStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     (nsD : List String) (stkD costD : Nat) (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costD)
     (hnsD : ∀ x, nsD.contains x = true → LibExp.names.contains x = true)
     (hnsW : nsD.contains Extracted.seg34.name = false)
-    (nsL : List String) (stkL : Nat) (hLsh : ExpHyp.LshHyp impl R nsL stkL 64)
+    (nsL : List String) (stkL : Nat) (hLsh : Lsh.Hyp2 impl R nsL stkL 64)
     (hnsL : ∀ x, nsL.contains x = true → LibExp.names.contains x = true)
     (hnsWL : nsL.contains Extracted.seg34.name = false)
     (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret)

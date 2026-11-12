@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Arm64.Exp.W4Sn2
+import FvModexp.Proofs.Arm64.Nat.LshDefs
 
 /-!
 # window-4 prologue (arm64): the call `zz := nat(nil).lsh(RR, 2·n·_W)` (nat.go:1398), `lshE → lshRet`
@@ -40,7 +41,7 @@ set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 /-- `nat.lsh` from its entry (return address `lshRet`) to `lshRet` -/
 theorem lshCallK (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
-    (nsL : List String) (stkL : Nat) (hLsh : ExpHyp.LshHyp impl R nsL stkL 64)
+    (nsL : List String) (stkL : Nat) (hLsh : Lsh.Hyp2 impl R nsL stkL 64)
     (hnsL : ∀ x, nsL.contains x = true → LibExp.names.contains x = true)
     (hnsW : nsL.contains Extracted.seg34.name = false)
     (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret) (Q : Outcome → Prop)
@@ -63,7 +64,7 @@ theorem lshCallK (impl : List Segment) (hap : ImplApart Extracted.program impl) 
   obtain ⟨hal, hK, hA, hacc, hg1, hg2, hg3, hrt, hga, hgrt, hLs, hd, hro⟩ := hce0
   have hS0 := CallW.hypSum hap hnsL (hLsh b L (BitVec.ofNat 64 0) (BitVec.ofNat 64 0) (BitVec.ofNat 64 0)
     (BitVec.ofNat 64 rrp) (BitVec.ofNat 64 1) (BitVec.ofNat 64 (2 * n)) (BitVec.ofNat 64 (128 * n)))
-  rw [show segAddr Extracted.program ExpHyp.fnLsh = lshE by decide] at hS0
+  rw [show segAddr Extracted.program Lsh.fn = lshE by decide] at hS0
   have t0 : (BitVec.ofNat 64 0).toNat = 0 := rfl
   have t1 : (BitVec.ofNat 64 1).toNat = 1 := rfl
   have t3 := toNat_lt' hrrp
@@ -80,12 +81,13 @@ theorem lshCallK (impl : List Segment) (hap : ImplApart Extracted.program impl) 
     simp only [ArgsFrom]
     exact ⟨h0, h1, h2, h3, h4, h5, h6, trivial⟩
   case pre =>
-    simp only [ExpHyp.LshPre, ExpHyp.WrOut, ExpHyp.RdIn]
+    simp only [EvenHyp.LshPreA, ExpHyp.WrOut, ExpHyp.RdIn]
     rw [t0, t1, t3, t6, hmem]
     have hce' := CallW.callEnv_of hce hsp h28 hmem (stk := stkL) (above := 64) hKL (by omega)
     simp only [win, tsp, tg]
-    refine ⟨hce', hserv, Nat.le_refl _, ⟨by decide, by simp, fun h => absurd h (by decide)⟩,
-      ⟨by decide, hra, hr48, hrH, out_win' hKL hrW⟩, by omega, fun h => absurd h (by decide), hcost, hinv⟩
+    refine ⟨⟨hce', hserv, Nat.le_refl _, ⟨by decide, by simp, fun h => absurd h (by decide)⟩,
+      ⟨by decide, hra, hr48, hrH, out_win' hKL hrW⟩, by omega, Or.inr fun h => absurd h (by decide), hcost, hinv⟩,
+      by omega, by decide⟩
   obtain ⟨p, l, c, hX0, hX1, hX2, L', b', hres, hcap, ⟨hLE, hb', hinv'⟩, hF, hLF⟩ := hq
   simp only [t0, t1, t3, t6, hmem, tsp, tg, winA] at hres hcap hb' hinv' hF hLF
   refine KB s' s'.mem L' b' p l c (hr.trans h30) (e1.trans hsp) hX0 hX1 hX2 (e4.trans h18) (e2.trans h28)
