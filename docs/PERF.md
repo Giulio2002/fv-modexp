@@ -1122,3 +1122,6 @@ warm-up 1017 s (s17: 702 s at load ~15); arm64 Top_RunErr **PASS 751 s / 6.5 GB*
 amd64 Top_RunErr in the same run: **FAIL (timeout) 901 s**, peak 1.4 GB — at load 35-60 the 51 amd64 own modules (dev sum
 ≈ 1270 s, critical path SetBytes chain → H3M → H3) plus their replay do not fit 900 s; at load ~15 (s17) it was 802 s.
 → amd64 RunErr-row modules are being trimmed (LLo/LHi/H2M/H3M/H2S/H3S/H1, SetBytes chain); re-measure after.
+amd64-only re-measure after the trims (cache-top-freshD, `ONLY_ISA=amd64`, load 45-55): warm-up 1110 s, amd64 Top_RunErr
+**PASS 886 s / 4.9 GB** (was TIMEOUT 901 s / at similar load; 802 s at load ~15 in s17). Margin is thin under load:
+remaining trim candidates RunLLo/RunLHi (janus64_data 28 s + failing `first` alternatives 15 s each), RunH1, RunH2M/H3M.
