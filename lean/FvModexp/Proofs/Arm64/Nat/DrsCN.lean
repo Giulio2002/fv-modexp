@@ -100,6 +100,7 @@ theorem Mc.callN {R : RtInv} {c : Cx} {s X : State} {Lk L' : List (Nat × Nat)} 
   have hhi : HiOut s (R.rt ++ winA X k a ++ [(p, p + n)]) :=
     hiOut_callee hout (by omega) (by omega) hX (by omega) (hiOut_win hw (by omega) (by omega))
   exact ⟨hcr, hEv, hFp, h.bd.frame hF hfo hio kv kt kq, h.bs.frame hF hbo, h.jB, h.li, h.q3.frame hF hhi h0',
-    h.rg.ext hx, hqk, hbf, hwk, by rw [limbs_congr kl]; exact h.lk, Nat.le_trans h.bud hb⟩
+    h.rg.ext hx, hqk, hbf, hwk, by rw [limbs_congr kl]; exact h.lk, Nat.le_trans h.bud hb,
+    by rw [hF.accessible]; exact h.qa⟩
 
 end FvModexp.Arm64.DivRec

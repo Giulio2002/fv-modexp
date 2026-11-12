@@ -54,6 +54,7 @@ structure Mc (R : RtInv) (c : Cx) (s : State) (Lk : List (Nat × Nat)) (bk : Nat
   wk : Asm.limbs M (c.up + 8 * (j - c.vl / 2)) (c.u1 - (j - c.vl / 2)) = st.w
   lk : Asm.limbs M c.up (j - c.vl / 2) = (c.U2 s j U).take (j - c.vl / 2)
   bud : (j / (c.vl / 2)) * c.K s ≤ bk
+  qa : M.accessible qv (8 * (3 * c.vl)) true = true
 
 /-- `qhatv`'s slots -/
 structure V4 (c : Cx) (s : State) (M : Memory) (qv ql : Nat) : Prop where
@@ -105,7 +106,8 @@ theorem Mc.own3 {R : RtInv} {c : Cx} {s : State} {Lk : List (Nat × Nat)} {bk : 
     h.rg, by rw [limbs_congr (rt _ _ (Nat.le_refl _) (by omega))]; exact h.qk,
     by rw [limbs_congr (rd _ _ hrw)]; exact h.bf,
     by rw [limbs_congr (ru _ _ (by omega) (by omega))]; exact h.wk,
-    by rw [limbs_congr (ru _ _ (Nat.le_refl _) (by omega))]; exact h.lk, h.bud⟩
+    by rw [limbs_congr (ru _ _ (Nat.le_refl _) (by omega))]; exact h.lk, h.bud,
+    by rw [hF3.accessible]; exact h.qa⟩
 
 /-- the head of the correction loop -/
 abbrev cHead : Nat := 0x1ba700

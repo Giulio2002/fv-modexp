@@ -74,7 +74,7 @@ theorem mul_post {R : RtInv} {c : Cx} {s S X T : State} {Lk : List (Nat × Nat)}
   have hqin : c.qv s S.mem + 8 * (3 * c.vl) ≤ stW S.mem c.st + 8 * stCap S.mem c.st := by
     simp only [Cx.qv]; omega
   have hn : 0 < stCap S.mem c.st := by omega
-  obtain ⟨-, -, -, harr48⟩ := hev.sok.2.2.2.2.1 hn
+  obtain ⟨-, -, hacA, harr48⟩ := hev.sok.2.2.2.2.1 hn
   have hloc : Loc R c s (c.qv s S.mem) (8 * (3 * c.vl)) :=
     arr_loc (l := c.l1 s) hev (by simp only [Cx.l1]; omega) (Nat.le_refl _) hqin
   have hvc : Apart c.vp (8 * c.vc) (c.qv s S.mem) (8 * (3 * c.vl)) := by
@@ -172,7 +172,7 @@ theorem mul_post {R : RtInv} {c : Cx} {s S X T : State} {Lk : List (Nat × Nat)}
   refine ⟨by rw [e0], by rw [hr1, hl'], e2, L', b', hcr, hEv, hFp, hBd, hBs, hA.jB, hA.li,
     by rw [hqn]; exact hA.q3.frame hMF' hhi h0,
     ⟨hx.held hrg.h, hrg.w, hrg.g, hrg.st, hrg.gA, hrg.q, hrg.u, hrg.v, hrg.t0⟩,
-    by rw [hqn, limbs_congr (rd_sub kt0 (Nat.le_refl _) (by omega))]; exact hqk0, ?_, ?_, ?_, ?_⟩
+    by rw [hqn, limbs_congr (rd_sub kt0 (Nat.le_refl _) (by omega))]; exact hqk0, ?_, ?_, ?_, ?_, ?_⟩
   · show Asm.limbs T.mem (c.qv s S.mem) (3 * c.vl) = c.P s j U ++ List.replicate (3 * c.vl - (c.P s j U).length) 0
     rw [hP]; exact Asm.buf_mul (by omega) hvT hzT
   · show _ = (c.U2 s j U).drop (j - c.vl / 2)
@@ -184,5 +184,7 @@ theorem mul_post {R : RtInv} {c : Cx} {s S X T : State} {Lk : List (Nat × Nat)}
       rw [hlen]; exact mulC_mono (Nat.le_refl _) hqle (Nat.le_refl _)
     have := hA.bud
     omega
+  · rw [hMF.accessible]
+    exact Memory.accessible_mono _ hacA (by simp only [Cx.qv]; omega) hqin
 
 end FvModexp.Arm64.DivRec
