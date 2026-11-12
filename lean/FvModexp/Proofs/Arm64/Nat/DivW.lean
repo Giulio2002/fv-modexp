@@ -20,6 +20,7 @@ set_option maxHeartbeats 64000000 in
 theorem full (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
+    (hmz : MemmoveZeroLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc y : BitVec 64) :
     Summary (LibDivW.program.link impl) (segAddr Extracted.program fn)
       (fun s => (s.regs 30).toNat % 4 = 0 ∧ (s.regs 30).toNat < 2 ^ 48 ∧ s.regs 0 = zp ∧ s.regs 1 = zl ∧
@@ -39,7 +40,8 @@ theorem full (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     by_cases hx0 : xl.toNat = 0
     · have hx : xl = 0#64 := BitVec.eq_of_toNat_eq (by simpa using hx0)
       subst hx
-      exact setZero impl R hmv' b L zp zl zc xp xc s hpc hl4 hl48 h0 h1 h2 h3 h4 h5 h6 hpre
+      exact setZero impl R (MemmoveZeroLive.of_codeIn hc3 hmz) b L zp zl zc xp xc s hpc hl4 hl48 h0 h1 h2 h3 h4 h5 h6
+        hpre.toPre2
     · exact setPath impl R hmk' hmv' b L zp zl zc xp xl xc s hpc hl4 hl48 h0 h1 h2 h3 h4 h5 h6 (by omega) hpre
   by_cases hx0 : xl.toNat = 0
   · have hx : xl = 0#64 := BitVec.eq_of_toNat_eq (by simpa using hx0)
@@ -55,6 +57,7 @@ theorem full (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
 theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
+    (hmz : MemmoveZeroLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc y : BitVec 64) :
     Ensures ((Extracted.program.onlySegments names).link impl) (segAddr Extracted.program fn)
       [zp, zl, zc, xp, xl, xc, y]
@@ -64,7 +67,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   janus_intro hs
   have hr48 := hret.user
   have hr4 := hret.aligned
-  refine Summary.returns (full impl hap R hmk hmv b L zp zl zc xp xl xc y) hret h_pc h_lr
+  refine Summary.returns (full impl hap R hmk hmv hmz b L zp zl zc xp xl xc y) hret h_pc h_lr
     ⟨?_, ?_, h_x0, h_x1, h_x2, h_x3, h_x4, h_x5, h_x6, hpre⟩ fun s' ⟨⟨a, b, c, d⟩, hq⟩ => ⟨⟨a, b, c, d⟩, hq⟩
   · rw [h_lr, BitVec.toNat_ofNat, Nat.mod_eq_of_lt (show ret < 2 ^ 64 by omega)]; exact hr4
   · rw [h_lr, BitVec.toNat_ofNat, Nat.mod_eq_of_lt (show ret < 2 ^ 64 by omega)]; exact hr48
@@ -74,9 +77,10 @@ set_option linter.defProp false in
 def sum (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
+    (hmz : MemmoveZeroLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc y : BitVec 64) (ms : List String)
     (hsub : ∀ x, names.contains x = true → ms.contains x = true) :=
-  Ensures.toSummaryIn (ens impl hap R hmk hmv b L zp zl zc xp xl xc y) (noExit_restrict hap names)
+  Ensures.toSummaryIn (ens impl hap R hmk hmv hmz b L zp zl zc xp xl xc y) (noExit_restrict hap names)
     (codeIn_restrict_mono hap hsub)
 
 end FvModexp.Arm64.DivW

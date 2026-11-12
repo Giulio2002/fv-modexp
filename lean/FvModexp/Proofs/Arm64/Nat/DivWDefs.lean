@@ -37,6 +37,23 @@ def fn : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.nat.divW"
 def names : List String := LibDivW.names
 def wordT : Nat := Extracted.dataAddr.«type:big.Word#51b931e8»
 
+/-- `z`'s array as a written range: empty when `cap z = 0` (the pointer of a `cap = 0` nat is arbitrary) -/
+@[reducible] def zr (zp zc : BitVec 64) : List (Nat × Nat) :=
+  if 0 < zc.toNat then [(zp.toNat, zp.toNat + 8 * zc.toNat)] else []
+
+theorem outside_zr {a n : Nat} {zp zc : BitVec 64} (h : 0 < zc.toNat → a + n ≤ zp.toNat ∨ zp.toNat + 8 * zc.toNat ≤ a) :
+    Outside a n (zr zp zc) := by
+  unfold zr; split
+  · simp only [outside_cons, outside_nil, and_true]; next hc => exact h hc
+  · trivial
+
+theorem zr_out {a n : Nat} {zp zc : BitVec 64} (h : Outside a n (zr zp zc)) (hc : 0 < zc.toNat) :
+    a + n ≤ zp.toNat ∨ zp.toNat + 8 * zc.toNat ≤ a := by
+  unfold zr at h; rw [if_pos hc] at h; simpa only [outside_cons, outside_nil, and_true] using h
+
+theorem zr_pos {zp zc : BitVec 64} (hc : 0 < zc.toNat) : zr zp zc = [(zp.toNat, zp.toNat + 8 * zc.toNat)] := by
+  unfold zr; rw [if_pos hc]
+
 /-- The precondition: `y ≠ 0`, `x` normalised, the `makeslice` request of `z.make(m)` when `z` is too small and the
 `memmove` requests of `z.set(x)`. The last conjunct is for `z.set(x)` with `m = 0`: Go's `copy` still calls
 `memmove(zp, xp, 0)` when `zp ≠ xp`, and Janus' `memmove` contract asks for the (empty) ranges to be accessible and
@@ -44,7 +61,7 @@ held even for `n = 0` (JANUS-ISSUES.md, asm s6); a nil `z` with a nil `x` takes 
 def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl y : BitVec 64) (s : State) : Prop :=
   CallEnv R L s 4240 64 ∧ Outside wordT 16 R.rt ∧ y.toNat ≠ 0 ∧ xl.toNat < 2 ^ 40 ∧ zc.toNat < 2 ^ 40 ∧
     NatLive s.mem R L zp.toNat zc.toNat ∧
-    Outside zp.toNat (8 * zc.toNat) (win s 4240 64) ∧
+    (0 < zc.toNat → Outside zp.toNat (8 * zc.toNat) (win s 4240 64)) ∧
     (0 < zc.toNat → Apart zp.toNat (8 * zc.toNat) ((s.regs 28).toNat + 16) 8 ∧
       (zp = xp ∨ Apart zp.toNat (8 * zc.toNat) xp.toNat (8 * xl.toNat))) ∧
     s.mem.accessible xp.toNat (8 * xl.toNat) false = true ∧ xp.toNat + 8 * xl.toNat ≤ 2 ^ 48 ∧
@@ -55,7 +72,8 @@ def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl y : BitVec 64
       makeCost xl.toNat ≤ b) ∧
     (∀ d src k, k ≤ 8 * xl.toNat → R.ok (cA "runtime.memmove") [d, src, k]) ∧
     (xl.toNat = 0 → y.toNat = 1 → zp = xp ∨
-      (s.mem.accessible zp.toNat 0 true = true ∧ zp.toNat ≤ 2 ^ 48 ∧ Held R L zp.toNat 0))
+      (s.mem.accessible zp.toNat 0 true = true ∧ zp.toNat ≤ 2 ^ 48 ∧ Held R L zp.toNat 0 ∧
+        Outside zp.toNat 0 (win s 4240 64)))
 
 /-- The postcondition: a normalised nat `(p', n', c')` holding `X / y` (in `z`'s array or a fresh one) and `R3 = X % y`. -/
 @[reducible] def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl y : BitVec 64) (s s' : State) :
@@ -66,9 +84,9 @@ def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl y : BitVec 64
     NatNorm s'.mem p' n' ∧ n' ≤ c' ∧ n' ≤ xl.toNat ∧
     ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b - makeCost xl.toNat ≤ b' ∧
       R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem) ∧ NatLive s'.mem R L' p' c' ∧
-      ((p' = zp.toNat ∧ c' = zc.toNat) ∨ (InRanges p' (8 * c') R.rt ∧ ApartAll p' (8 * c') L)) ∧
-      MemFrame s.mem s'.mem (R.rt ++ winA s 4240 64 ++ [(zp.toNat, zp.toNat + 8 * zc.toNat)]) ∧
-      LiveFrame s.mem s'.mem L [(zp.toNat, zp.toNat + 8 * zc.toNat)]
+      ((p' = zp.toNat ∧ c' = zc.toNat) ∨ (0 < xl.toNat ∧ xl.toNat ≤ c' ∧ c' ≤ xl.toNat + 4 ∧ InRanges p' (8 * c') R.rt ∧ ApartAll p' (8 * c') L)) ∧
+      MemFrame s.mem s'.mem (R.rt ++ winA s 4240 64 ++ zr zp zc) ∧
+      LiveFrame s.mem s'.mem L (zr zp zc)
 
 /-! ## The callee `divWVW`, moved into the restricted program -/
 
@@ -136,9 +154,9 @@ structure Mid (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl : BitVe
   bud : b - makeCost xl.toNat ≤ b'
   inv : R.inv b' L' (s.regs 28).toNat (view R.rt L' M)
   lsep : LiveSep L' (win s 4240 64)
-  ror : (p = zp.toNat ∧ c = zc.toNat) ∨ (InRanges p (8 * c) R.rt ∧ ApartAll p (8 * c) L)
-  mf : MemFrame s.mem M (R.rt ++ winA s 4240 64 ++ [(zp.toNat, zp.toNat + 8 * zc.toNat)])
-  lf : LiveFrame s.mem M L [(zp.toNat, zp.toNat + 8 * zc.toNat)]
+  ror : (p = zp.toNat ∧ c = zc.toNat) ∨ (0 < xl.toNat ∧ xl.toNat ≤ c ∧ c ≤ xl.toNat + 4 ∧ InRanges p (8 * c) R.rt ∧ ApartAll p (8 * c) L)
+  mf : MemFrame s.mem M (R.rt ++ winA s 4240 64 ++ zr zp zc)
+  lf : LiveFrame s.mem M L (zr zp zc)
   mv : ∀ d src k, k ≤ 8 * xl.toNat → R.ok (cA "runtime.memmove") [d, src, k]
 
 /-- The stack ranges and array parts the code after `Mid` (and its callees) may write: the window except the saved
@@ -205,8 +223,8 @@ theorem Mid.frame {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl : B
     · omega
     · omega
     · omega
-    · rcases h.ror with ⟨rfl, rfl⟩ | ⟨hin, -⟩
-      · omega
+    · rcases h.ror with ⟨rfl, rfl⟩ | ⟨-, -, -, hin, -⟩
+      · have := zr_out hz (by have := h.cap; have := h.x0; omega); omega
       · have := outside_of_inRanges hrt hin; omega
   · refine ⟨fun a n hin hz => ?_⟩
     rw [hl.readLE a n (h.ext.inRanges_old hin) (outside_of_forall fun r hr => ?_)]
@@ -218,8 +236,8 @@ theorem Mid.frame {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl : B
       · omega
       · omega
       · omega
-      · rcases h.ror with ⟨rfl, rfl⟩ | ⟨-, hap⟩
-        · omega
+      · rcases h.ror with ⟨rfl, rfl⟩ | ⟨-, -, -, -, hap⟩
+        · have := zr_out hz (by have := h.cap; have := h.x0; omega); omega
         · have := hap q hq; unfold Apart at this; omega
 
 /-- **A frame without allocation keeps `Mid`** (stack stores). -/

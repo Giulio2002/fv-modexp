@@ -27,6 +27,7 @@ theorem genReuse (impl : List Segment) (hap : ImplApart Extracted.program impl) 
   have hpre' := hpre
   obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, -, hout, hga, -, -, -⟩, -, -, hx40, hz40, -, hzw', -, hxacc,
     hx48, -, -, hxw, -, -, -⟩ := hpre'
+  replace hzw' := hzw' (by omega)
   simp only [win, outside_cons, outside_nil, and_true] at hzw' hxw
   have hx0' : (xl = 0#64) = False := by simp only [eq_iff_iff, iff_false]; intro e; rw [e] at hx0; simp at hx0
   have hy0' : (y = 0#64) = False := by simp only [eq_iff_iff, iff_false]; intro e; apply hy0; rw [e]; rfl
