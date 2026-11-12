@@ -6,9 +6,13 @@ d = os.path.dirname(os.path.abspath(__file__))
 t = open(f"{d}/RunDE64.tmpl").read()
 RET = {0: "0x654a65", 1: "0x654bf9", 2: "0x654d5b"}
 ZERO = """    intro _
-    refine ⟨?_, ?_, ?_, ?_⟩ <;> (simp only [opAt]; first | (janus64_simp; done) |
-      (simp (disch := omega) only [Janus.Arm64.Memory.readLE_writeLE_of_disjoint, Janus.Arm64.Memory.readLE_writeLE_inside,
-        Nat.zero_div, Nat.zero_mod, hx15]; done) | (janus64_simp [hx15]))"""
+    refine ⟨?_, ?_, ?_, ?_⟩
+    all_goals simp only [opAt]
+    all_goals first
+      | (janus64_simp; done)
+      | (simp (disch := omega) only [Janus.Arm64.Memory.readLE_writeLE_of_disjoint,
+          Janus.Arm64.Memory.readLE_writeLE_inside, Nat.zero_div, Nat.zero_mod, hx15]; done)
+      | janus64_simp [hx15]"""
 NOZERO = "    exact fun h => absurd h (by decide)"
 TRANS = """    · refine OpDone.transport (hop {i} (by omega)) ?_ ?_ ?_ ?_
         ((hLFS.trans (LiveFrame.of_win (by simp only [win, stk]; janus_frame) (hext2.liveSep hLsL1 hwrt))

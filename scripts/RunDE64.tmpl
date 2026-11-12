@@ -75,8 +75,12 @@ theorem dE@J@ (impl : List Amd64.Segment) (hap : ImplApart Extracted.program imp
     rw [hbl]; simp only [opLen]; split
     · omega
     · split <;> omega
-  have hokm : R.ok (cA "runtime.makeslice") [2641088, SetBytes.nW (S.regs 6), makeCap (SetBytes.nW (S.regs 6))] :=
+  have hokm : R.ok (cA "runtime.makeslice") [7233184, SetBytes.nW (S.regs 6), makeCap (SetBytes.nW (S.regs 6))] :=
     hokS _ (by simp only [SetBytes.nW]; omega)
+  have hMC0 : makeCost (SetBytes.nW (S.regs 6)) ≤ allocCost (8 * 132) := by
+    have h1 : SetBytes.nW (S.regs 6) ≤ 128 := by simp only [SetBytes.nW]; omega
+    have h3 : makeCap (SetBytes.nW (S.regs 6)) ≤ 132 := by unfold makeCap; split <;> omega
+    simp only [makeCost, allocCost]; omega
   have hMC : makeCost (SetBytes.nW (S.regs 6)) ≤ bk := by
     have h1 : SetBytes.nW (S.regs 6) ≤ 128 := by simp only [SetBytes.nW]; omega
     have h3 : makeCap (SetBytes.nW (S.regs 6)) ≤ 132 := by unfold makeCap; split <;> omega
@@ -90,28 +94,30 @@ theorem dE@J@ (impl : List Amd64.Segment) (hap : ImplApart Extracted.program imp
   simp only [win, setRegF, hspn', ↓reduceIte, Nat.reduceEqDiff] at hMF2 hLF2 hfs1 hdf1
   have hLFS : LiveFrame S.mem s'.mem Lk [] :=
     (LiveFrame.of_win (by simp only [win, stk]; janus_frame) hLsL1).trans (LiveFrame.of_empty hLF2 []) (fun _ _ h => h)
-  have hLF3 : LiveFrame S.mem _ Lk [] := hLFS.trans
-      (LiveFrame.of_win (by simp only [win, stk]; janus_frame) (hext2.liveSep hLsL1 hwrt)) (fun _ _ h => hext2.inRanges_old h)
-  refine hk _ L2 b2 (RelD.mk' hin0 ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ l0 l1 l2 lnz ?_ ?_ ?_ (hext.trans hext2)
+  refine hk _ L2 b2 (RelD.mk' hin0 ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ l0 l1 l2 lnz ?_ ?_ ?_ (hext.trans hext2)
     ?_ ?_ (hext2.liveSep hLsL1 hwrt) ?_ ?_ ?_ ?_) (by janus64_simp) (by janus64_simp [hp1, opAt]) (by janus64_simp [hn1, opAt])
   all_goals try (janus64_simp; done)
   all_goals try (first | (dsimp only; rw [hfs1]; exact hfs; done) | (dsimp only; rw [hdf1]; exact hdf.trans hdf0.symm; done) | (simp only [hfs1, hfs]; done) | (simp only [hdf1, hdf, hdf0]; done))
-  case refine_17 =>
+  case refine_19 =>
     obtain ⟨hsl1, hsl2⟩ := hsl
     refine ⟨fun h => ?_, fun h => ?_⟩
     · obtain ⟨a1, a2⟩ := hsl1 h; constructor <;> (janus64_simp [a1, a2])
     · janus64_simp [hsl2 h]
-  case refine_18 =>
+  case refine_20 =>
 @ZEROPROOF@
-  case refine_19 => janus64_callpre
-  case refine_20 => simp only [cstD, cstE, dCost, SetBytes.nW] at hbud hbk hb2 ⊢; omega
-  case refine_21 =>
+  case refine_21 => janus64_callpre
+  case refine_22 => simp only [cstD, cstE, dCost] at hbud hbk hb2 hMC0 ⊢; omega
+  case refine_23 =>
     dsimp only
     repeat rw [view_writeLE_out (hout.of_sub (by omega) (by omega))]
     first | exact hinv2 | exact RtInv.inv_congr hinv2 rfl (by janus64_simp) rfl
-  case refine_22 => dsimp only; simp only [win, stk] at hMF ⊢; janus_frame
-  case refine_23 => dsimp only; exact (hLF.trans hLF3 (fun _ _ h => hext.inRanges_old h))
-  case refine_24 =>
+  case refine_24 => dsimp only; simp only [win, stk] at hMF ⊢; janus_frame
+  case refine_25 =>
+    dsimp only
+    exact (hLF.trans hLFS (fun _ _ h => hext.inRanges_old h)).trans
+      (LiveFrame.of_win (by simp only [win, stk]; janus_frame) (hext2.liveSep hLsL1 hwrt))
+      (fun _ _ h => (hext.trans hext2).inRanges_old h)
+  case refine_26 =>
     intro j hj
     dsimp only
     rcases (show @JCASES@ by omega) with @JPATS@
@@ -134,7 +140,7 @@ theorem dE@J@ (impl : List Amd64.Segment) (hap : ImplApart Extracted.program imp
         apply beVal_of_reads
         intro i hi
         repeat rw [Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega)]
-  case refine_25 =>
+  case refine_27 =>
 @APARTPROOF@
 
 end FvModexp.Amd64.Run
