@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Arm64.Top.RunH2S
+import FvModexp.Proofs.Arm64.Top.RunGS
 import FvModexp.Proofs.Arm64.Top.RunSmall
 
 /-! # `Run` (arm64): `B1` to `B2` (header 1 = `expLen`: `getData(input, 32, 32)`, std `setBytes`) -/
@@ -39,9 +40,7 @@ theorem h2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
   simp only [LiveSep, win] at hLsS
   simp only [win, Outside, and_true] at hpw hcw
   have hgS : S.mem.readLE ((s.regs 28).toNat + 16) 8 = s.mem.readLE ((s.regs 28).toNat + 16) 8 :=
-    hMF.readLE _ _ (by
-      simp only [winA, Janus.outside_append, Janus.outside_cons, Janus.outside_nil, and_true]
-      unfold Apart at hga; exact ⟨hgr, by omega, by omega⟩)
+    gS_read hMF hga hgr
   have hwS : S.mem.accessible (s.sp.toNat - 4800) (4800 + 40) true = true := by rw [hMF.accessible]; exact hw
   have hspn : S.sp.toNat = s.sp.toNat - 624 := by rw [hsp, BitVec.toNat_sub]; simp; omega
   unfold Apart at hga
