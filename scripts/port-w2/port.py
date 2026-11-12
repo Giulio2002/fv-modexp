@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """port.py SRC.lean DST.lean: mechanical first pass of a window-4 (arm64) proof module to window-2 (dev tool, expmc).
 Rules: W4 -> W2 names, WindowSize4 -> WindowSize2, pc literals of the function mapped through align.json (unmapped:
-marked PORT?), the deferwrap closure address, every integer literal in [816, 1040] (frame slots above the powers table,
+marked PORT?), the deferwrap closure address, every integer literal in [816, 1100] (frame slots above the powers table,
 the frame size 928, the window top 1040) shifted by -288. Window constants (23n, 17n, d < 16, k = 15, LSR 60, iter 4,
 ...) are NOT touched: review the diff."""
 import re, sys, json, os
@@ -27,7 +27,12 @@ def hexoff(m):
 s = re.sub(r'segAddr LibExp\.program fn \+ (0x[0-9a-f]+)', hexoff, s)
 def slot(m):
     v = int(m.group(2))
-    return m.group(1) + (str(v - 288) if 816 <= v <= 1040 else m.group(2))
+    return m.group(1) + (str(v - 288) if 816 <= v <= 1100 else m.group(2))
 s = re.sub(r'(^|[^\w.])(\d{3,4})(?![\w.])', slot, s, flags=re.M)
-s = re.sub(r'\b([rqh]|rs|sl|rk)(\d{3,4})\b', lambda m: m.group(1) + (str(int(m.group(2)) - 288) if 816 <= int(m.group(2)) <= 1040 else m.group(2)), s)
+s = re.sub(r'\b([rqh]|rs|sl|rk)(\d{3,4})\b', lambda m: m.group(1) + (str(int(m.group(2)) - 288) if 816 <= int(m.group(2)) <= 1100 else m.group(2)), s)
+s = s.replace('Extracted.seg34', 'Extracted.seg35')
+def word(m):
+    o = 4 * int(m.group(2))
+    return m.group(1) + (str(pairs[o] // 4) if o in pairs else m.group(2) + ' /-PORT?-/') + m.group(3)
+s = re.sub(r'(\(by decide\) )(\d{2,3})( \(by decide\))', word, s)
 open(dst, 'w').write(s)
