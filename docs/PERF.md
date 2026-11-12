@@ -1017,3 +1017,16 @@ Confirms: with the warm-up, a row pays only its own compile + own replay (s16 wi
 verify-all for this: the warm-up extraction did not pass its row's extract flags (Run needs the runtime contracts and
 `--max-functions 100`), so it failed in 0 s and filled nothing; now it uses `contract_flags` and reports a failed warm-up.
 amd64 RunErr has the smaller margin (802 s of 900): next trim target (the La/H3 chain modules).
+
+### agent top s17: trims of the RunErr row modules (dev builds, load ~18; `trace.profiler` findings)
+| module | before | after | fix |
+|---|---|---|---|
+| Amd64/Top/RunLaFFF (+ FFT/FTF/TFF/FTT/TTF/TFT, generated) | 103 s (40-77 s the others) | 24.5 s (12-17 s) | profile: each `repeat apply bv_or_ne_left` = 34 s, all in the FAILING last `apply` (`isDefEq` unfolds the leaf `BitVec.ofNat (readLE …)` trying to see an `|||`) → `repeat (with_reducible apply …)` |
+| Arm64/Top/RunLa | 76-103 s | 50 s | same (`or_pos_left'`) |
+| Amd64/Top/RunH1 | 102 s | 57 s | `janus64_data hd` (16 s per call: evaluates every data segment) not needed → removed |
+| Amd64/Top/RunH2S / H2M / H2 / H3S / H3M / H3 | 109 / 114 / 76 / 98 / 136 / 78 s | 67 / 86 / 45 / 72 / 84 / 45 s | drop `janus64_data hdS` (unused) + the budget `omega` (12 s in the post-run context) → `RunSmall.bud_step` |
+| Amd64/Top/RunLLo / RunLHi | 135 / 135 s, 3.7 GB | 116 / 106 s, 2.5 GB | budget `omega` (24 + 10 s) → `RunSmall.bud_err`; `janus64_data` IS needed here (the `newobject` run reads rodata) |
+| Arm64/Top/RunH2S / H3S / H2 / H3 / H1 | 124 / 152 / 56 / 57 / 64 s | 108 / 126 / 42 / 51 / 56 s | same (`janus_data` dropped, `bud_step`) |
+LESSONS: (1) never `repeat apply` on big terms without `with_reducible` (the last, failing iteration is the expensive one);
+(2) `janus64_data`/`janus_data` costs ~15 s per call — call it in a small lemma (`RunSmall.errT_word`, `RunDKDefs.uint8_words`)
+or not at all; (3) budget goals: one-line Nat lemmas, never `omega` in the post-run context.
