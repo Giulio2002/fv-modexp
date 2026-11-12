@@ -53,7 +53,7 @@ set_option maxRecDepth 20000 in
 theorem gcallG {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {op zp zl zc yp yl yc n : Nat} {s : State}
     (hpre : PreG R b L op zp zl zc yp yl yc n s) {bb : Nat} {M : Memory} {L1 : List (Nat × Nat)} {b1 k : Nat}
     (hrt : Rt R bb L s zp zc n k M L1 b1) {p l c : Nat} (hlv : NatLive M R L1 p c) (hcl : c = l)
-    (hlW : l + 1 ≤ W n) (hcost : gA n ≤ b1)
+    (hlW : l + 1 ≤ W n) (hcost : 8 * growCap8 (l + 1) c ≤ b1)
     (T : State) (hm : T.mem = M) (hsp : T.sp = BitVec.ofNat 64 (s.sp.toNat - 144)) (h28 : T.regs 28 = s.regs 28)
     (h0 : (T.regs 0).toNat = p) (h1 : (T.regs 1).toNat = l + 1) (h2 : (T.regs 2).toNat = c)
     (h3 : (T.regs 3).toNat = 1) (h4 : (T.regs 4).toNat = wT) (h30 : T.regs 30 = BitVec.ofNat 64 1806228) :
@@ -88,7 +88,7 @@ theorem gcallG {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {op zp zl zc yp yl 
       simp only [List.mem_singleton] at hr; subst hr; simp only
       rw [show s.sp.toNat - 144 + 88 - (s.sp.toNat - 144 - 4464) = 4464 + 88 by omega]; exact hrtw) hLs
     (by simp only [growsliceArgs, h0, h1, h2, h3, h4]; exact hsv.2.2.2.1 _ _ _ _ _ (by omega))
-    (by rw [eg]; exact hinv) (by rw [hround]; omega)
+    (by rw [eg]; exact hinv) (by rw [hround]; exact hcost)
   refine ⟨⟨⟨hc.1, ?_, ?_, ?_, by omega, by omega, by omega, by omega⟩, fun hp => ?_⟩, hc.2⟩
   · rw [h4]; exact ⟨by omega, ht3⟩
   · simp only [typSize, h4]; exact ht1
