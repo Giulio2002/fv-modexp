@@ -14,6 +14,7 @@ module elaboration profiles: `docs/PERF.md`.
 | Symbol | Owner | arm64 | amd64 | Notes |
 |---|---|---|---|---|
 | `github.com/ethereum/go-ethereum/core/vm.(*bigModExp).Run` | top | todo | todo | row 1: Osaka receiver; lengths fail -> (nil, error), else (compute data (parseLengths data), nil); contracts: see `scripts/contract-flags.sh` |
+| `github.com/ethereum/go-ethereum/core/vm.(*bigModExp).Run` | top | partial (row 1 error path) | partial (row 1 error path) | row 1, error half: `checkLengths (parseLengths data)` fails -> returns (nil, non-nil error), no panic/fault, frame; module: `Top/RunErr`; success half = `Top/RunOkRow` (after the Janus v0.3.1 re-pin) |
 | `github.com/ethereum/go-ethereum/core/vm.(*bigModExp).RequiredGas` | infra | verified (janus-provfix 57c1094c, fresh cache, correctness + Witness.nonvacuous, olean provenance checked: da06a30 row 748 s / 3.9 GiB per job; split tree ee8a255 via verify-all: warm-up 807 s, row 824 s / 4.9 GiB per job, host load ~40) | verified (janus-provfix 859eaa2a, correctness + Witness.nonvacuous, audit + olean provenance + kernel replay passed: row 423 s / 5.7 GiB with the amd64 modules compiled in-row (warm framework cache), 193 s re-run; ISA=amd64 verify-all) | row 2: lengths pass -> `requiredGas fork data (parseLengths data)` for `.fusaka ≤ fork` (receiver = Osaka flags) |
 
 Pure-Lean row 3 (no machine code): `FvModexp.Proofs.Compose.composition` in `lean/FvModexp/Proofs/Common/Compose.lean`, checked by `make build`.

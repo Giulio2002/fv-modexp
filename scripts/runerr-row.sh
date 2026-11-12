@@ -6,7 +6,7 @@ export JANUS_CACHE_DIR=${CACHE:-/srv/fv-modexp-ops/cache-top} LEAN_NUM_THREADS=4
 out=build/rows/ex-arm64-RunErr${TAG};  rm -rf $out
 log=build/rows/log-arm64-RunErr${TAG}
 t0=$(date +%s)
-$JANUS extract build/harness-arm64 'github.com/ethereum/go-ethereum/core/vm.(*bigModExp).Run' $out $(. scripts/contract-flags.sh; contract_flags Run) --max-functions 100 > $log 2>&1 || { echo extract-failed >> $log; exit 1; }
+$JANUS extract build/harness-arm64 'github.com/ethereum/go-ethereum/core/vm.(*bigModExp).Run' $out $(. scripts/contract-flags.sh; contract_flags Run) > $log 2>&1 || { echo extract-failed >> $log; exit 1; }
 timeout 900 memcap -m 16G $JANUS verify $out --proof lean/FvModexp/Proofs/Arm64/Top/RunErr.lean --proof-root lean \
   --theorem FvModexp.Arm64.Run.correctness --theorem FvModexp.Arm64.Run.Witness.nonvacuous >> $log 2>&1
 echo "rc=$? wall=$(( $(date +%s) - t0 ))" >> $log

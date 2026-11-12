@@ -43,7 +43,7 @@ done < "$root/scripts/harness.sha256"
 
 # ---- row jobs: one per (ISA, function); results in build/res/<isa>-<fn> as "VERDICT seconds peakRSS_MB witnesses" ----
 rm -rf build/res; mkdir -p build/res
-declare -a jobs_isa jobs_fn jobs_sym
+declare -a jobs_isa jobs_fn jobs_sym jobs_mod
 # rows: | `full.go.Symbol` | owner | arm64 status | amd64 status | ...   ; `todo`/`in progress` is reported MISSING and fails the run (never skipped silently)
 mapfile -t rows < <(grep -E '^\| `' docs/COVERAGE.md)
 fail=0
@@ -52,16 +52,18 @@ for row in "${rows[@]}"; do
   st_arm=$(echo "$row" | cut -d'|' -f4 | tr -d ' '); st_amd=$(echo "$row" | cut -d'|' -f5 | tr -d ' ')
   # proof-module name: `module: Name` in the Notes cell, else the last symbol component (without .abi0/.abiinternal), first letter upper-cased
   notes=$(echo "$row" | cut -d'|' -f6-)
-  fn=$(echo "$notes" | grep -oE 'module: *`?[A-Za-z0-9_]+' | head -1 | sed -E 's/module: *`?//')
-  if [ -z "$fn" ]; then fn="${sym%.abi0}"; fn="${fn%.abiinternal}"; fn="${fn##*.}"; fn="${fn^}"; fi
+  # a module may sit in a subdirectory (`module: Top/RunErr` = lean/FvModexp/Proofs/<Isa>/Top/RunErr.lean); the row id (FN, file names) is its path with `/` -> `_`
+  mod=$(echo "$notes" | grep -oE 'module: *`?[A-Za-z0-9_/]+' | head -1 | sed -E 's/module: *`?//')
+  if [ -z "$mod" ]; then mod="${sym%.abi0}"; mod="${mod%.abiinternal}"; mod="${mod##*.}"; mod="${mod^}"; fi
+  fn="${mod//\//_}"
   [ $# -gt 0 ] && { case " $* " in *" $fn "*) ;; *) continue;; esac; }
   for pair in "arm64:$st_arm" "amd64:$st_amd"; do
     IFS=: read -r isa st <<<"$pair"
     [ -z "${ONLY_ISA:-}" ] || [ "$ONLY_ISA" = "$isa" ] || continue
     case "$st" in
-      verified*|partial*) jobs_isa+=("$isa"); jobs_fn+=("$fn"); jobs_sym+=("$sym");;
+      verified*|partial*) jobs_isa+=("$isa"); jobs_fn+=("$fn"); jobs_sym+=("$sym"); jobs_mod+=("$mod");;
       todo*|inprogress*|in-progress*) echo "MISSING ($st)" >"build/res/$isa-$fn.pre"; echo "MISSING 0 0 0" >"build/res/$isa-$fn"; fail=1
-         jobs_isa+=("$isa"); jobs_fn+=("$fn"); jobs_sym+=("-");;
+         jobs_isa+=("$isa"); jobs_fn+=("$fn"); jobs_sym+=("-"); jobs_mod+=("$mod");;
       *) ;;   # n/a, out of scope
     esac
   done
@@ -72,17 +74,18 @@ pf_of() {   # pf_of isa fn: the proof module (FnMain.lean, when it exists and ho
   local dir; dir="$(isa_dir "$1")"
   if [ -f "lean/FvModexp/Proofs/$dir/${2}Main.lean" ] && grep -q "theorem correctness" "lean/FvModexp/Proofs/$dir/${2}Main.lean"; then echo "${2}Main"; else echo "$2"; fi
 }
-run_job() {   # run_job isa fn sym
-  local isa="$1" fn="$2" sym="$3" dir out cflags pf wt mt w r t0 rss tf; export JANUS_MEM_MAX="$ROW_MEMCAP"
+run_job() {   # run_job isa fn sym mod   (fn = row id; mod = proof-module path below Proofs/<Isa>; contract flags are keyed by the symbol's function name)
+  local isa="$1" fn="$2" sym="$3" mod="$4" cname dir out cflags pf wt mt w r t0 rss tf; export JANUS_MEM_MAX="$ROW_MEMCAP"
   t0=$(date +%s); tf="build/time-$isa-$fn"; rm -f "$tf"; out="build/ex-$isa-$fn"
   dir="$(isa_dir "$isa")"
-  cflags="$(contract_flags "$fn")"
-  if ! contract_known "$fn"; then echo "no contract-flags case for $fn: add it to scripts/contract-flags.sh (or scripts/noflags.txt)" >"build/log-$isa-$fn"; echo "FAIL(no-flags-case) 0 0 0" >"build/res/$isa-$fn"; return; fi
-  pf="$(pf_of "$isa" "$fn")"
+  cname="${sym%.abi0}"; cname="${cname%.abiinternal}"; cname="${cname##*.}"; cname="${cname^}"
+  cflags="$(contract_flags "$cname")"
+  if ! contract_known "$cname"; then echo "no contract-flags case for $fn: add it to scripts/contract-flags.sh (or scripts/noflags.txt)" >"build/log-$isa-$fn"; echo "FAIL(no-flags-case) 0 0 0" >"build/res/$isa-$fn"; return; fi
+  pf="$(pf_of "$isa" "$mod")"
   if [ ! -f "lean/FvModexp/Proofs/$dir/$pf.lean" ]; then echo "missing proof module lean/FvModexp/Proofs/$dir/$pf.lean" >"build/log-$isa-$fn"; echo "FAIL(no-module) 0 0 0" >"build/res/$isa-$fn"; return; fi
   # every main theorem (`correctness`, `correctness_<x>`) and every existential witness (`Witness.nonvacuous*`, paired by name by Janus)
   mt=(); while IFS= read -r w; do [ -n "$w" ] && mt+=(--theorem "$w"); done < <(python3 "$root/scripts/witness-theorems.py" --mains "lean/FvModexp/Proofs/$dir/$pf.lean")
-  [ ${#mt[@]} -gt 0 ] || mt=(--theorem "FvModexp.$dir.$pf.correctness")
+  [ ${#mt[@]} -gt 0 ] || mt=(--theorem "FvModexp.$dir.${pf##*/}.correctness")
   wt=(); if [ "$WITNESS" != 0 ]; then while IFS= read -r w; do [ -n "$w" ] && wt+=(--theorem "$w"); done < <(python3 "$root/scripts/witness-theorems.py" "lean/FvModexp/Proofs/$dir/$pf.lean"); fi
   r=FAIL
   if $JANUS extract "build/harness-$isa" "$sym" "$out" $cflags >"build/log-$isa-$fn" 2>&1; then
@@ -137,7 +140,7 @@ order=(); declare -A deps_of
 while read -r i d; do order+=("$i"); deps_of[$i]="$d"; done < <(
   for i in "${!jobs_fn[@]}"; do
     [ "${jobs_sym[$i]}" = "-" ] && continue
-    echo "$i FvModexp/Proofs/$(isa_dir "${jobs_isa[$i]}")/$(pf_of "${jobs_isa[$i]}" "${jobs_fn[$i]}").lean"
+    echo "$i FvModexp/Proofs/$(isa_dir "${jobs_isa[$i]}")/$(pf_of "${jobs_isa[$i]}" "${jobs_mod[$i]}").lean"
   done | python3 "$root/scripts/row-order.py")
 deps_done() { local d; [ "${deps_of[$1]}" = "-" ] && return 0
   for d in ${deps_of[$1]//,/ }; do [ -s "build/res/${jobs_isa[$d]}-${jobs_fn[$d]}" ] || return 1; done; }
@@ -147,7 +150,7 @@ for i in "${order[@]}"; do
     [ "$(jobs -rp | wc -l)" -lt "$NPAR" ] && deps_done "$i" && admit && break
     sleep 3
   done
-  run_job "${jobs_isa[$i]}" "${jobs_fn[$i]}" "${jobs_sym[$i]}" &
+  run_job "${jobs_isa[$i]}" "${jobs_fn[$i]}" "${jobs_sym[$i]}" "${jobs_mod[$i]}" &
   sleep 1
 done
 wait
