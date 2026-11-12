@@ -12,6 +12,15 @@ open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Spec Janus.Con
 namespace FvModexp.Amd64.SetBytesStd
 
 set_option maxRecDepth 20000 in
+/-- The `big.Word` (std `math/big`) type descriptor `makeslice` reads (size word `8`, pointer-data word `0`), proved
+once outside the big context (docs/PERF.md "agent top s18"). -/
+theorem wordT_data {m : Janus.Arm64.Memory} (hd : Extracted.program.DataLoaded m) :
+    m.accessible 7232928 16 false = true ∧ m.readLE 7232928 8 = 8 ∧ m.readLE 7232936 8 = 0 := by
+  janus64_data hd
+  exact ⟨Janus.Arm64.Memory.accessible_mono _ h_data1 (by omega) (by omega), by rw [h_rodata _ _ (by decide)]; decide,
+    by rw [h_rodata _ _ (by decide)]; decide⟩
+
+set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem ens (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hmk : MakesliceLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
@@ -31,7 +40,7 @@ theorem ens (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
   janus64_intro hs
   have hwt : Apart wordT 16 ((s.regs 4).toNat - 4160) (4160 + 48) := apart_of_data hd 1 (by decide) (by decide) hw
   unfold Apart at hwt hga
-  janus64_data hd
+  obtain ⟨hwa, hws, hwp⟩ := wordT_data hd
   janus_eval_nat h_t : wordT
   rw [h_t] at hty hok hwt
   simp only [LiveSep, win] at hLs
@@ -66,7 +75,7 @@ theorem ens (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
         simp only [nW] at h1 hz
         have hz' : ((zc.toNat : Int) < (((bl.toNat + 7) / 8 : Nat) : Int)) := by omega
         janus64_run [asr_small_bv, asr63_small, sshiftRight_small, toInt_small, asr_small_toNat, BitVec.toNat_ushiftRight,
-      Nat.shiftRight_eq_div_pow, toInt_ushiftRight, BitVec.msb_eq_decide, hsa, hsb, hsc, BitVec.add_zero] until [hWord] calls [hmk'.pos]
+      Nat.shiftRight_eq_div_pow, toInt_ushiftRight, BitVec.msb_eq_decide, hsa, hsb, hsc, BitVec.add_zero, hws, hwp] until [hWord] calls [hmk'.pos]
         rename_i ptr _ _ _ _ m _ _ hLF hMF hAp hIn hle hacc h8 _ _ _ _ hinv' _ _
         refine wordLoop impl R b L zp zc bp bl ret hret s ptr.toNat 1 _ _ hbl (by omega) ⟨hb', ha, hal⟩ hw hbacc hbp
           (bl.toNat / 8) _ m ptr 1#64 1#64 bl 0#64 (by omega) (by simp) rfl (by simp [nW]; omega) (by simp)
@@ -85,7 +94,7 @@ theorem ens (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
         simp only [nW] at h1 hz hok1 hbs
         have hz' : ((zc.toNat : Int) < (((bl.toNat + 7) / 8 : Nat) : Int)) := by omega
         janus64_run [asr_small_bv, asr63_small, sshiftRight_small, toInt_small, asr_small_toNat, BitVec.toNat_ushiftRight,
-      Nat.shiftRight_eq_div_pow, toInt_ushiftRight, BitVec.msb_eq_decide, hsa, hsb, hsc, BitVec.add_zero] until [hWord] calls [hmk'.pos]
+      Nat.shiftRight_eq_div_pow, toInt_ushiftRight, BitVec.msb_eq_decide, hsa, hsb, hsc, BitVec.add_zero, hws, hwp] until [hWord] calls [hmk'.pos]
         rename_i ptr _ _ _ _ m _ _ hLF hMF hAp hIn hle hacc h8 _ _ _ _ hinv' _ _
         have hsz := (by janus_assumption : 8 * ((bl.toNat + 7) / 8 + 4) ≤ blockSize (8 * ((bl.toNat + 7) / 8 + 4)) true)
         refine wordLoop impl R b L zp zc bp bl ret hret s ptr.toNat ((bl.toNat + 7) / 8 + 4) _ _ hbl (by omega)

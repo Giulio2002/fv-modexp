@@ -83,12 +83,13 @@ theorem lbHi (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl
   have hwS : S.mem.accessible ((s.regs 4).toNat - 4800) (4800 + 40) true = true := by rw [hMF.accessible]; exact hw
   have hEw : Apart errT 16 ((s.regs 4).toNat - 4800) (4800 + 40) :=
     apart_of_data hdS 3 (by decide) ⟨by decide, by decide⟩ hwS
-  janus64_data hdS
+  have hEacc := errT_acc hdS
+  have hEword := errT_word hdS
   janus_eval_nat h_e : errT
   rw [h_e] at hokn hEw
   unfold Apart at hEw
   have hT2 : ∀ v, (S.mem.writeLE ((s.regs 4).toNat - 616) 8 v).readLE 7355552 8 = 16 := fun v => by
-    rw [Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega), h_rodata _ _ (by decide)]; decide
+    rw [Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega)]; exact hEword
   have hT3' : ∀ v, (S.mem.writeLE ((s.regs 4).toNat - 616) 8 v).readLE 7355560 8 = S.mem.readLE 7355560 8 := fun v => by
     rw [Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega)]
   have hT3 : blockSize 16 (S.mem.readLE 7355560 8 == 0) ≤ b1 := by
