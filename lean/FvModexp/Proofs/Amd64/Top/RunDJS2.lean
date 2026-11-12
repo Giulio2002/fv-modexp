@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Top.RunDJDefs
+import FvModexp.Proofs.Amd64.Top.RunDSlot
 
 /-! # `Run` (amd64): operand 2, stack buffer — the join `J1` to the `setBytes` call `pcE2`
 
@@ -166,15 +167,12 @@ theorem dJS2 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl
       (LiveFrame.of_win (by simp only [win, stk]; janus_frame) hLsL1) (fun _ _ h => hext.inRanges_old h)
   case refine_26 =>
     intro j hj
-    rcases (show j = 0 ∨ j = 1 by omega) with rfl | rfl <;>
-    refine OpDone.transport (hop _ (by omega)) ?_ ?_ ?_ ?_
+    refine OpDone.transportS (hop _ (by omega)) (k := 2) (by omega) ?_
       (hLFS.trans (LiveFrame.of_win (by simp only [win, stk]; janus_frame) hLsL1) (fun _ _ h => h)) (fun _ _ h => h)
-    all_goals (simp only [opAt]; janus64_simp)
+    intro a n h1 h2; simp only [opAt] at h1 h2; janus64_simp
   case refine_27 =>
-    refine OpsApart.transport hopA (fun i hi => ?_)
-    rcases (show i = 0 ∨ i = 1 by omega) with rfl | rfl <;>
-    simp only [opAt] <;>
-    exact ⟨by janus64_simp, by janus64_simp⟩
+    refine OpsApart.transportS hopA ?_
+    intro a n h1 h2; simp only [opAt] at h1 h2; janus64_simp
   case buf =>
     refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
     all_goals try janus64_simp

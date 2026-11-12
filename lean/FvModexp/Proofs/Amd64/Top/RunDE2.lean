@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Top.RunDEDefs
+import FvModexp.Proofs.Amd64.Top.RunDSlot
 
 /-! # `Run` (amd64): operand 2 — the patched `nat.setBytes` call `pcE2` to `pcD3`
 
@@ -121,14 +122,14 @@ theorem dE2 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
     intro j hj
     dsimp only
     rcases (show j = 0 ∨ j = 1 ∨ j = 2 by omega) with rfl | rfl | rfl
-    · refine OpDone.transport (hop 0 (by omega)) ?_ ?_ ?_ ?_
+    · refine OpDone.transportS (hop 0 (by omega)) (k := 2) (by omega) ?_
         ((hLFS.trans (LiveFrame.of_win (by simp only [win, stk]; janus_frame) (hext2.liveSep hLsL1 hwrt))
           (fun _ _ h => hext2.inRanges_old h))) (fun _ _ h => hext2.inRanges_old h)
-      all_goals (simp only [opAt]; janus64_simp)
-    · refine OpDone.transport (hop 1 (by omega)) ?_ ?_ ?_ ?_
+      intro a n h1 h2; simp only [opAt] at h1 h2; janus64_simp
+    · refine OpDone.transportS (hop 1 (by omega)) (k := 2) (by omega) ?_
         ((hLFS.trans (LiveFrame.of_win (by simp only [win, stk]; janus_frame) (hext2.liveSep hLsL1 hwrt))
           (fun _ _ h => hext2.inRanges_old h))) (fun _ _ h => hext2.inRanges_old h)
-      all_goals (simp only [opAt]; janus64_simp)
+      intro a n h1 h2; simp only [opAt] at h1 h2; janus64_simp
     · refine opDone_of (m := s'.mem) (hLc := hext) ?rd
         (hacc := fun a n w => by simp only [Janus.Arm64.Memory.accessible_writeLE, hMF2.accessible, hMF.accessible])
         (by janus64_simp [opAt]) (by janus64_simp [hp1, opAt]) (by janus64_simp [hn1, opAt]) (by janus64_simp [hc1, opAt])
