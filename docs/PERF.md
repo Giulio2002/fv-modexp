@@ -1383,3 +1383,10 @@ path ≈ 205 s (was: 117 own modules, row 815 s).
   155 → 30 s, RunCP1 164 → 47 s, RunDM0 106 → 50 s; amd64 `Top/RunDSlot`: RunDM2 159 → 91 s, RunDP2 156 → 93 s,
   RunDJS2 59 → 39 s, DE1/DE2/DJS1/DJZ*/DJF*/DM1/DP1 ≈ unchanged (1 operand: few janus_simps saved). Load fell 80 → 20
   during these, so compare `u` times in build/dgen.log. Both RunOkRow chains rebuilt OK after all trims (19:01).
+
+## divmc s30 (2026-11-14): amd64 rows (janus-provfix v0.2.0, fresh store, JANUS_REPLAY_THREADS=1, host load ~40-45)
+* warm-up (framework build + replay) 1486 s outside the caps; AddVWRow PASS 122 s / 1.1 GB, SubVWRow PASS 118 s / 1.1 GB,
+  **IntASRow PASS 766 s / 1.3 GB** (> 600 s margin; own modules IntASTail 21-40 s dev are not the issue alone — profile the
+  row's own critical path NatAdd/NatSub amd64 chain + IntAS* at the next row run on v0.3.1).
+* amd64 sqr port dev times (load ~45): SqrDefs 5.9 s, SqrRel 4.6 s, SqrNorm ~30 s, SqrZero 14 s, SqrOne 16 s, SqrCall ~12 s,
+  SqrMakeR 24 s, SqrBMP 2.7 s.
