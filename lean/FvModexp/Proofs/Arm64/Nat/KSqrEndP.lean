@@ -208,9 +208,7 @@ theorem kEndFin {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n x
         (InRanges (s'.mem.readLE st 8) (8 * s'.mem.readLE (st + 16) 8) R.rt ∧
           ApartAll (s'.mem.readLE st 8) (8 * s'.mem.readLE (st + 16) 8) L)
       rw [eW, eC]; exact h.sarr
-    · show ¬(s'.mem.readLE st 8 = stW s.mem st ∧ s'.mem.readLE (st + 16) 8 = stCap s.mem st) →
-        (s'.mem.readLE st 8, s'.mem.readLE st 8 + 8 * s'.mem.readLE (st + 16) 8) ∈ Lk
-      rw [eW, eC]; exact h.smem
+    · exact ArrIn.congr h.smem eW eC (fun _ h => h)
   case mf =>
     refine h.fr.trans hF fun x m ho => ⟨ho, ?_⟩
     simp only [winA, stkWs, outside_append, outside_cons, outside_nil, and_true] at ho ⊢

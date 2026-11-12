@@ -11,7 +11,7 @@ return point fn+0x234, in continuation form: `KN` (the pool was empty: `X0 = X1 
 apart from the callee window; invariant for `L ++ rs`).
 -/
 
-open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts Janus.Contracts.Pool FvModexp
+open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Spec.Pool Janus.Contracts Janus.Contracts.Pool FvModexp
 
 namespace FvModexp.Arm64.ExpN
 

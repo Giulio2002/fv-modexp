@@ -94,7 +94,9 @@ theorem hd_mem {R : RtInv} {c : Cx} {s X : State} {T : Memory} {bk : Nat}
     intro hn
     by_cases hc : stLen s.mem c.st + StackNat.rnd (c.vl / 2 + 1) ≤ stCap s.mem c.st
     · exact absurd (hsame hc) hn
-    · exact hmem (by omega)
+    · refine ⟨hmem (by omega), ?_⟩
+      have h1 := hok.2.2.2.2.2.1
+      simp only [stLen, stCap, StackNat.rnd] at hlen h1 ⊢; omega
   have hacc : ∀ x k w, T.accessible x k w = s.mem.accessible x k w := fun x k w => by
     rw [hMF.accessible, hF0.accessible]
   -- the free part at l1

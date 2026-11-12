@@ -126,7 +126,10 @@ theorem lbOf {P S : State} (h : LP R b L W zp zc st xp xl xc yp yl yc s p c L1 b
         refine ArrIn.trans hmemP (fun hn => ?_) hext
         by_cases hc : stLen M st + StackNat.rnd (2 * yl) ≤ stCap P.mem st
         · exact absurd (hsame (by rw [hlenP]; exact hc)) hn
-        · rw [hlenP] at hmem; exact hmem (by omega),
+        · rw [hlenP] at hmem
+          refine ⟨hmem (by omega), ?_⟩
+          have h1 := hok.2.2.2.2.2.1
+          simp only [stLen, stCap, StackNat.rnd] at hlen h1 hc ⊢; omega,
       lr := (hrd _ _ (by omega) (by omega) (by omega)).trans hq0.lr,
       fp := (hrd _ _ (by omega) (by omega) (by omega)).trans hq0.fp,
       b94 := (hrd _ _ (by omega) (by omega) (by omega)).trans h.b94,
