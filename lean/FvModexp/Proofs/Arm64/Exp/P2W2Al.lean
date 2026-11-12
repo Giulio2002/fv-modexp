@@ -245,6 +245,53 @@ theorem noPost (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R L
       exact this.of_sub (by omega) (by omega)
     · simp only [calleeStack, esp, outside_cons, outside_nil, and_true]; omega
 
+set_option maxRecDepth 20000 in
+/-- `[p] = 1` into a fresh one-word object: `WC`, the slots and the result `nat{1}` -/
+theorem fresh1 (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {m : Memory} {p r : Nat}
+    (hA : AllocR R L K g sp st zp zc s.mem M L1 b1 ℓ m p r 8) (hle : LiveExt R L L1) {r29 : BitVec 64} {ret : Nat}
+    (hsl : ESl M sp st r29 ret zp zc xp xl xc yp yl lm (stLen s.mem st)) :
+    WC R L K g sp st zp zc s.mem (m.writeLE p 8 1) (L1 ++ [(p, p + r)]) (b1 - r) ℓ ∧
+      ESl (m.writeLE p 8 1) sp st r29 ret zp zc xp xl xc yp yl lm (stLen s.mem st) ∧
+      ExpHyp.NatOF R L (L1 ++ [(p, p + r)]) (m.writeLE p 8 1) zp zc 1 p 1 1 1 := by
+  have hK := hP.1.2.2.2.2.2.2.2.1
+  have hK1 := hP.1.2.2.2.2.2.2.2.2.1
+  have hout := hP.win_rt
+  have hstw : Apart st 24 (sp - K) (K + 560) := hP.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hpw := hA.rin.apart hout
+  have hsz := hA.sz
+  unfold Apart at hpw hstw
+  have hF1 : MemFrame m (m.writeLE p 8 1) [(p, p + 8)] :=
+    (MemFrame.refl _ _).writeLE_inRanges _ ⟨(p, p + 8), by simp, by simp only; omega, by simp only; omega⟩
+  have hin2 : InRanges p 8 (L1 ++ [(p, p + r)]) :=
+    ⟨(p, p + r), by simp, by simp only; omega, by simp only; omega⟩
+  have hapL : ApartAll p r L := fun q hq => hA.rap q (hle.mem_old hq)
+  have hsok0 := hP.stk0
+  have hhdA : Apart p r st 24 := by
+    rcases hsok0.2.1 with hL0 | hO0
+    · have := hapL.apart_of_inRanges hL0; unfold Apart; omega
+    · exact (hA.rin.apart hO0).symm
+  unfold Apart at hhdA
+  have hws : InRanges p 8 R.rt := hA.rin.sub (Nat.le_refl _) (by omega)
+  refine ⟨hA.wc.frame hF1 (by simp only [Memory.regions_writeLE]) (fun a k ho => ?_) (fun a k hin _ => ?_) ?_ ?_,
+    ESl.keep hsl (fun a k ha => by
+      rw [Memory.readLE_writeLE_of_disjoint _ _ (by omega)]; exact hA.keep a k (by omega)) (by omega), ?_⟩
+  · rw [outside_append, outside_append] at ho
+    have := hA.rin.apart ho.1.1
+    unfold Apart at this
+    simp only [outside_cons, outside_nil, and_true]; omega
+  · have := hapL.apart_of_inRanges hin
+    simp only [outside_cons, outside_nil, and_true]; omega
+  · simp only [outside_cons, outside_nil, and_true]; omega
+  · intro q hq; simp only [List.mem_singleton] at hq; subst hq; simp only
+    rw [show p + 8 - p = 8 by omega]; exact Or.inl hin2
+  · refine ⟨?_, Or.inr ?_, Nat.le_refl _, by decide, fun _ => ⟨hA.al, Or.inl hin2, ?_, by have := hA.b48; omega⟩,
+      Or.inr ⟨Nat.le_refl _, hws, fun q hq => ?_⟩⟩
+    · show (m.writeLE p 8 1).readLE p (8 * 1) = 1
+      rw [Memory.readLE_writeLE_self]
+    · rw [Nat.sub_self, Nat.mul_zero, Nat.add_zero, Memory.readLE_writeLE_self]; decide
+    · simp only [Memory.accessible_writeLE]; exact Memory.accessible_mono _ hA.acc (Nat.le_refl _) (by omega)
+    · have := hapL q hq; unfold Apart at this ⊢; omega
+
 end
 
 end FvModexp.Arm64.P2W2
