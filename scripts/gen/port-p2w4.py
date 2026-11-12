@@ -6,7 +6,7 @@ import sys, re
 src, dst = sys.argv[1], sys.argv[2]
 s = open(src).read()
 # imports of P2W2 modules -> P2W4 modules (except P2W2Defs which P2W4Defs imports)
-s = re.sub(r'import FvModexp\.Proofs\.Arm64\.Exp\.P2W2(\w+)', r'import FvModexp.Proofs.Arm64.Exp.P2W4\1', s)
+s = re.sub(r'import FvModexp\.Proofs\.Arm64\.Exp\.P2W2(\w*)', r'import FvModexp.Proofs.Arm64.Exp.P2W4\1', s)
 lines = s.split('\n')
 last_imp = max(i for i, l in enumerate(lines) if l.startswith('import '))
 if 'autoImplicit' not in s:

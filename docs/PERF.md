@@ -1364,6 +1364,18 @@ path ≈ 205 s (was: 117 own modules, row 815 s).
 | Arm64/Exp/P2W4Defs / EnA / EnG3 / EnG / EnJ | 2.9 / 22.2 / 28.6 / 9.5 / 5.4 s | ≤ 2.4 GB |
 | Arm64/Exp/P2W4Pre / Ent / Ctx / WC / PP / PC | 1.6 / 12.4 / 1.2 / 2.5 / 4.4 / 2.3 s | ≤ 2.6 GB |
 | Arm64/Exp/P2W4N (stk.nat + 6-round zero loop) / AT / EP / Tail | 14.5 / 1.4 / 3.5 / 19.2 s | ≤ 3.1 GB |
+### infra s37 (2026-11-13, dev compile, LEAN_NUM_THREADS=4, host load ~20-30) — P2W4 complete
+| module | wall | peak RSS |
+|---|---|---|
+| Arm64/Exp/P2W4Sk / Al / Fin / R1 / R1b / Ret1 | 9.3 / 4.1 / 4.2 / 5.3 / 8.5 / 1.3 s | ≤ 2.2 GB |
+| Arm64/Exp/P2W4LI / UB / Mv / Cp1 / Cp2 / Cp3 / Cp4 / Cp5 | 2.4 / 2.0 / 2.4 / 8.8 / 41.3 / 4.1 / 17.8 / 1.1 s | ≤ 2.5 GB |
+| Arm64/Exp/P2W4LK / LO / BC / BA / BSq / BTr / BMu | 1.6 / 3.2 / 2.7 / 2.4 / 3.9 / 3.8 / 7.1 s | ≤ 2.4 GB |
+| Arm64/Exp/P2W4BJ / BGT / BGS / B0 / B1..B7, B9 (generated) / B8 / B10 / Bd | 1.9 / 1.5 / 2.0 / 4.2 / 2.0-3.6 / 7.4 / 6.1 / 1.2 s | ≤ 2.3 GB |
+| Arm64/Exp/P2W4X1 / X2 / X3 / X4 / P2W4 / P2W4E | 2.5 / 9.0 / 3.4 / 5.2 / 1.3 / 3.0 s | ≤ 2.5 GB |
+| Arm64/Exp/P2W2EC / P2W2C / P2W4EC / P2W4C | 2.8 / 1.1 / 2.6 / 1.1 s | ≤ 2.3 GB |
+* Body: one generic join point `JX` + generic `callT`/`callS` steps; the ten body segments are thin `janus_run`
+  wrappers (2-7 s each) — the window-2 body's per-call structures (J1..J6) are not needed for new windows.
+
 * (5) RunErr rows at REAL load (fresh cache cache-top-freshG, `ROWS=1 scripts/verify-all.sh Top_RunErr`, 17:27-18:25,
   1-min load 41-86, mean 60; other agents + top's own J=1 dev chain): warm-ups arm64 1753 s / amd64 146 s, **arm64 PASS
   545 s / 2.5 GB, amd64 PASS 508 s / 1.3 GB** — both under the 600 s ROW MARGIN target at load ~50-60.
