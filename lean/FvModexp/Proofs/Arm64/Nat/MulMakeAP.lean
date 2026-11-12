@@ -65,8 +65,9 @@ theorem mcall_pre {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp x
     (by rw [e0, e1, e2]; rw [← hwTv, ← wordT_eq]; exact hsv.1 _ _ _ (by omega))
     (by rw [hg]; exact inv_frame_winA hF0 hout (by omega) (by decide) hinv)
     (by rw [hround]; omega)
-  refine ⟨⟨⟨hc.1, ⟨by rw [e0]; omega, by rw [e0, hF0.accessible]; exact ht3⟩, by omega, by omega, ?_⟩, hc.2⟩, ?_⟩
+  refine ⟨⟨⟨hc.1, ⟨by rw [e0]; omega, by rw [e0, hF0.accessible]; exact ht3⟩, by omega, by omega, ?_, ?_⟩, hc.2⟩, ?_⟩
   · rw [hts, e2]; unfold maxAlloc; omega
+  · rw [e0]; simp only [calleeStack, outside_cons, outside_nil, and_true]; omega
   · rw [hts, e2]; omega
 
 set_option maxRecDepth 20000 in
