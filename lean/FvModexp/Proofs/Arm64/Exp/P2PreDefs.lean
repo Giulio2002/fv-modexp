@@ -19,7 +19,9 @@ The function: `buf = stk.nat((len+1)·w)`, `powers[i] = buf[i w : (i+1) w : (i+2
 `buf + 8 j w` and the `cap ≥ w` reslice checks never panic. Values: `Exp.p2Pow logM X j` (`= X^j mod 2^logM`).
 
 Statement restrictions (callers `expNNPowerOfTwoWindowSize{2,4}`): `windowSize ∈ {2, 4}`, `len = 2^windowSize`,
-`2 ≤ logM ≤ 2^13`, `x` normalised, a non-nil `stk`, `powers` a caller-frame array outside the runtime.
+`2 ≤ logM ≤ 2^13`, `x` normalised, a non-nil `stk`, `powers` a caller-frame array outside the runtime. The last two
+conjuncts of `Pre` (the stack header and free part apart from the threshold globals `gA`) are what `nat.sqr`'s
+`StkPre` needs (divmc s13); they are carried for the `sqr` call sites once `SqrHypR` is instantiated with divmc's `ens`.
 -/
 
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvModexp
@@ -80,7 +82,9 @@ abbrev A : Nat := 80
     Apart st 24 (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st)) ∧
     (∃ op, NatOne R L s.mem op (winA s (K kc) A ++ LW s pw pl st) ∧ StkApart s.mem st op 8) ∧
     cost sqC mlC (stLen s.mem st) pl lm ≤ b ∧ R.inv b L (s.regs 28).toNat (view R.rt L s.mem) ∧
-    (s.regs 30).toNat % 4 = 0 ∧ (s.regs 30).toNat < 2 ^ 48
+    (s.regs 30).toNat % 4 = 0 ∧ (s.regs 30).toNat < 2 ^ 48 ∧
+    Apart st 24 RunIface.gA 32 ∧
+    Apart (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st)) RunIface.gA 32
 
 /-- a computed `powers[j]` at memory `M`: header `(bp + 8 j w, l, w)`, `l ≤ w`, value `p2Pow`, normalised -/
 @[reducible] def PwD (M : Memory) (pw bp lm X j : Nat) : Prop :=
