@@ -65,7 +65,7 @@ theorem bs2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     (fun _ _ _ h => h)
   clear hc hP
   janus_run until [0x1bb618] calls [hBS]
-  rename_i hpc2 hsp2 h282 h292 h182 L2 b2 hext hval hbud hinv2 k1 k2 k3 k4 k5 k6 k7 kl kor kmem hF2 hLF2
+  rename_i hpc2 hsp2 h282 h292 h182 L2 b2 hext hval hbud hinv2 kmem k1 k2 k3 k4 k5 k6 k7 kl kor hF2 hLF2
   simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte] at hpc2 hsp2 h282 h292 h182
   have e176 : (s.sp - 176#64).toNat = s.sp.toNat - 176 := by
     simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
