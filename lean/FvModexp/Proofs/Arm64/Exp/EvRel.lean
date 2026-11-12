@@ -9,7 +9,7 @@ module directly) (agent infra)
 
 * `wc_init` (the context `WC` after the function's own frame writes `FW sp`), `win_out0` (`WC.win_out` without
   `0 < ℓ`, from `stCap = 0 → stW = 0`), `keepC` (a callee frame keeps the slots `[sp - 8, sp + 8)` and
-  `[sp + 88, sp + 448)`), `tz_lt`;
+  `[sp + 128, sp + 448)`), `tz_lt`;
 * `Ob R L1 st M t k`: a nat array `[t, t + 8k)` the function keeps using (scratch nats of `stk.nat`, fresh results of
   callees): held in the live set, and either inside the USED part of the stack's current array or apart from the
   whole current array. It survives every callee with `StackBack` (`Ob.back`) and the function's own `stk.nat`
@@ -102,13 +102,13 @@ theorem win_out0 (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s)
   · exact h.win_out hP h0 a k h1 h2
 
 /-- a callee frame (runtime, the callee window `[sp - stk, sp - 8) ∪ [sp + 8, sp + above)`, extra ranges `zs`
-apart from the window, the stack's writable ranges) keeps the slots `[sp - 8, sp + 8)` and `[sp + 88, sp + 448)` -/
+apart from the window, the stack's writable ranges) keeps the slots `[sp - 8, sp + 8)` and `[sp + 128, sp + 448)` -/
 theorem keepC (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s)
     (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ) {M' : Memory} {stk above : Nat} {zs : List (Nat × Nat)}
     (hF : MemFrame M M' (R.rt ++ [(sp - stk, sp - 8), (sp + 8, sp + above)] ++ zs ++ stkWs M st))
-    (hstk : stk ≤ K) (habove : above ≤ 88)
+    (hstk : stk ≤ K) (habove : above ≤ 128)
     (hzs : ∀ a k, sp - K ≤ a → a + k ≤ sp + 448 → Outside a k zs) :
-    ∀ a k, (sp - 8 ≤ a ∧ a + k ≤ sp + 8 ∨ sp + 88 ≤ a ∧ a + k ≤ sp + 448) → M'.readLE a k = M.readLE a k := by
+    ∀ a k, (sp - 8 ≤ a ∧ a + k ≤ sp + 8 ∨ sp + 128 ≤ a ∧ a + k ≤ sp + 448) → M'.readLE a k = M.readLE a k := by
   have hK := hP.1.2.2.2.2.2.2.2.2.1
   have hK0 := hP.1.2.2.2.2.2.2.2.1
   intro a k ha

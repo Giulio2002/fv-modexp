@@ -35,7 +35,7 @@ variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc
 /-- a live local (`0 < c`) as a callee input at `SP = sp` -/
 theorem LN.rd (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) {M : Memory} {L1 : List (Nat × Nat)}
     {p l c v : Nat} (h : LN R L s.mem st M L1 p l c v) (hc : 0 < c) {S : State} (hsp : S.sp.toNat = sp)
-    (hm : S.mem = M) {stk above : Nat} (hstk : stk ≤ K) (habove : above ≤ 88) :
+    (hm : S.mem = M) {stk above : Nat} (hstk : stk ≤ K) (habove : above ≤ 128) :
     ExpHyp.RdIn R L1 S stk above p l := by
   have hK := hP.1.2.2.2.2.2.2.2.2.1
   obtain ⟨⟨c40, hlv, hlo⟩, hlc, -, -⟩ := h
@@ -50,7 +50,7 @@ theorem LN.rd (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) {M 
 /-- a destination as a callee's output array at `SP = sp` -/
 theorem DL.wr (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) {M : Memory} {L1 : List (Nat × Nat)}
     {p c : Nat} (h : DL R L s.mem st M L1 p c) {S : State} (hsp : S.sp.toNat = sp) (h28 : (S.regs 28).toNat = g)
-    (hm : S.mem = M) {stk above : Nat} (hstk : stk ≤ K) (habove : above ≤ 88) :
+    (hm : S.mem = M) {stk above : Nat} (hstk : stk ≤ K) (habove : above ≤ 128) :
     ExpHyp.WrOut R L1 S stk above p c := by
   have hK := hP.1.2.2.2.2.2.2.2.2.1
   obtain ⟨c40, hlv, hlo⟩ := h
@@ -79,7 +79,7 @@ theorem JX.call {R : RtInv} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc yp
     {L2 : List (Nat × Nat)} {b2 rk' : Nat}
     (esp : S'.sp = S.sp) (e28 : S'.regs 28 = S.regs 28) (e29 : S'.regs 29 = S.regs 29) (e18 : S'.regs 18 = S.regs 18)
     (hw : WC R L K g sp st zp zc s.mem S'.mem L2 b2 ℓ)
-    (hk : ∀ a k, (sp - 8 ≤ a ∧ a + k ≤ sp + 8 ∨ sp + 88 ≤ a ∧ a + k ≤ sp + 448) → S'.mem.readLE a k = S.mem.readLE a k)
+    (hk : ∀ a k, (sp - 8 ≤ a ∧ a + k ≤ sp + 8 ∨ sp + 128 ≤ a ∧ a + k ≤ sp + 448) → S'.mem.readLE a k = S.mem.readLE a k)
     (hsp8 : 8 ≤ sp) (hb : rk' ≤ b2) : JX R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s S' L2 b2 ℓ rk' :=
   ⟨esp.trans h.esp, e28.trans h.e28, e29.trans h.e29, e18.trans h.e18, hw,
     h.esl.keep (fun a k ha => hk a k (by simp only [SlotR] at ha; omega)) hsp8, hb⟩
@@ -91,7 +91,7 @@ theorem out1_of_apart {a n b k : Nat} (h : Apart b k a n) : Outside a n [(b, b +
 /-- the stack header is outside a callee window at `SP = sp` -/
 theorem EPre.st_cw {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc yp yl yc mp ml mc : Nat}
     {s : State} (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) {stk above : Nat} (hstk : stk ≤ K)
-    (habove : above ≤ 88) : Outside st 24 [(sp - stk, sp - 8), (sp + 8, sp + above)] := by
+    (habove : above ≤ 128) : Outside st 24 [(sp - stk, sp - 8), (sp + 8, sp + above)] := by
   have hK := hP.1.2.2.2.2.2.2.2.2.1
   have hstw := hP.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
   unfold Apart at hstw

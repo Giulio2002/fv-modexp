@@ -1212,3 +1212,9 @@ remaining trim candidates RunLLo/RunLHi (janus64_data 28 s + failing `first` alt
 DrsDV 3.7 s, DrsDG 1.6 s, DrsD1 4.0 s, DrsD2 6.6 s, DrsD3 16 s, DrsD4 32 s / 3.4 GB, DrsD5R 8.8 s, DrsD5 27 s / 3.3 GB,
 DrsD6R 5.7 s, DrsD6 44 s / 3.1 GB, DrsD7 6.4 s (was 449 s killed: store/read disjointness not in omega form → symbolic
 reads + rfl over memory; fixed by `simp … at hsto'` before janus_run), DrsDL 1.8 s, DrsLoop 1.3 s. DrsMulQ 68 s / 4.4 GB.
+### infra s29 (expNNEven arm64, dev compile, LEAN_NUM_THREADS=4)
+EvNP 5.7 s / 2.6 GB (first version: one monolithic `npre_of` with ~40 destructured Apart/Outside disjunctions in
+context — every `omega` case-split them: > 6 min, killed; split into `nenv_of`/`nstk_of` + omega-free assembly → 5.7 s);
+EvJ2 9.1 s / 3.0 GB (`libN_sub` by `List.all … contains` decide +kernel: 26.6 s / 7.0 GB → `Sublist` decide 9.1 s / 3.0 GB);
+EvE1 5.7 s / 2.5 GB; EvN4 6.0 s / 2.5 GB; EvenNHyp 1.1 s; re-checked EvN1 7.9 s, EvN2 4.7 s, EvLsh 7.0 s, EvRsh 5.7 s,
+EvN3 32 s / 2.7 GB.

@@ -107,7 +107,7 @@ theorem segL {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns 
   · rw [LibCalls.tN hp48, LibCalls.tN (by simp only [a1]; omega), LibCalls.tN (by omega),
       LibCalls.tN (by decide), LibCalls.tN (by omega)]
     refine ⟨⟨CallW.callEnv_of (hw.cenv hP) (fsp.trans h.jx.esp) (r28.trans h.jx.e28) fm hkL haL, hsv,
-      Nat.le_refl _, hd.wr hP hsN' hgN' fm hkL haL, ⟨by omega, by rw [fm]; exact oa, o48, oh, ?_⟩, by omega,
+      Nat.le_refl _, hd.wr hP hsN' hgN' fm hkL (by omega), ⟨by omega, by rw [fm]; exact oa, o48, oh, ?_⟩, by omega,
       Or.inr fun _ _ => hdo, ?_, by rw [hgN', fm]; exact hw.inv⟩, hn0, by omega⟩
     · simp only [winA, win, hsN', List.cons_append, List.nil_append, outside_append, outside_cons, outside_nil,
         and_true] at ow ⊢
@@ -121,9 +121,9 @@ theorem segL {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns 
     simp only [winA, hsN'] at hF
     rw [fm] at hF hLF hres hrg
     rw [hgN'] at hinv
-    obtain ⟨hF', hLF', hsb, ehd⟩ := nonStk hw.sok hx hF hLF (hP.st_cw hkL haL) (out1_of_apart dh)
+    obtain ⟨hF', hLF', hsb, ehd⟩ := nonStk hw.sok hx hF hLF (hP.st_cw hkL (by omega)) (out1_of_apart dh)
     obtain ⟨hw', hk, -⟩ := stepC hP hw (Loc.sub (hd.2.2 (by simp only [a1]; omega)).1)
-      (Loc.subL (hd.2.2 (by simp only [a1]; omega)).1) (by simp only [a1]; omega) dw hkL haL hF' hLF' hrg hx hinv hsb
+      (Loc.subL (hd.2.2 (by simp only [a1]; omega)).1) (by simp only [a1]; omega) dw hkL (by omega) hF' hLF' hrg hx hinv hsb
     have hm1 := LN.of_res hP hw hd hres hx hsb (fun _ hne => absurd ehd hne)
     have hv1 : natVal S.mem op 1 = 1 := by simpa only [natVal, Nat.mul_one] using o1
     rw [hv1, Nat.one_mul] at hm1
