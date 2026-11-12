@@ -82,4 +82,18 @@ theorem intPre_push {R : RtInv} {b B : Nat} {L : List (Nat × Nat)} {stk above :
   · simp only [win, List.mem_cons, List.not_mem_nil, or_false] at hr; subst hr
     exact Janus.Arm64.Memory.accessible_mono _ hw (Nat.le_refl _) (by dsimp only; omega)
 
+/-- A callee frame after a `CALL` push: the push and the callee's frame together stay inside the callee window. -/
+theorem frame_push_call {m1 m2 : Janus.Arm64.Memory} {rt : List (Nat × Nat)} {t : State} {q stk above v : Nat}
+    (ht : (t.regs 4).toNat = q) (h8 : 8 ≤ above) (hq : stk ≤ q)
+    (h : MemFrame (m1.writeLE q 8 v) m2 (rt ++ win t stk above)) : MemFrame m1 m2 (rt ++ [(q - stk, q + above)]) := by
+  have h1 : MemFrame m1 (m1.writeLE q 8 v) (rt ++ [(q - stk, q + above)]) := by janus_frame
+  refine h1.trans h fun a n hh => ⟨hh, ?_⟩
+  simp only [win, ht, Janus.outside_append, Janus.outside_cons, Janus.outside_nil, and_true] at hh ⊢
+  exact hh
+
+/-- The caller's live objects across a `CALL` push (the pushed slot is apart from them) and the callee. -/
+theorem liveFrame_push_call {m1 m2 : Janus.Arm64.Memory} {L : List (Nat × Nat)} {q v : Nat}
+    (hs : LiveSep L [(q, q + 8)]) (h : LiveFrame (m1.writeLE q 8 v) m2 L []) : LiveFrame m1 m2 L [] :=
+  (LiveFrame.of_win (by janus_frame) hs).trans h fun _ _ h => h
+
 end FvModexp.Amd64.Run
