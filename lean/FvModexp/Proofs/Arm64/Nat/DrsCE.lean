@@ -85,7 +85,8 @@ theorem Mc.own1 {R : RtInv} {c : Cx} {s : State} {Lk : List (Nat × Nat)} {bk : 
     h.rg, by rw [limbs_congr (rt _ _ (Nat.le_refl _) (by omega))]; exact h.qk,
     by rw [limbs_congr (rd _ _ hrw)]; exact h.bf,
     by rw [limbs_congr (ru _ _ (by omega) (by omega))]; exact h.wk,
-    by rw [limbs_congr (ru _ _ (Nat.le_refl _) (by omega))]; exact h.lk, h.bud⟩
+    by rw [limbs_congr (ru _ _ (Nat.le_refl _) (by omega))]; exact h.lk, h.bud,
+    by rw [hF3.accessible]; exact h.qa⟩
 
 theorem V4.own1 {c : Cx} {s : State} {M M' : Memory} {qv ql : Nat} (h : V4 c s M qv ql)
     (hF : MemFrame M M' (is1 s)) (h0 : 408 ≤ s.sp.toNat) : V4 c s M' qv ql :=

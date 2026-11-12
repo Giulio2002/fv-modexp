@@ -1,5 +1,6 @@
 import FvModexp.Proofs.Arm64.Nat.DrsMulQ
 import FvModexp.Proofs.Arm64.Nat.DrsSN
+import FvModexp.Proofs.Arm64.Nat.DrsCN
 
 /-!
 # `divRecursiveStep` (arm64), loop body segment 4 (shared defs): `qhatv = qhatv.mul(stk, qhat, v[:s])` (natdiv.go:831)
@@ -28,10 +29,6 @@ def mulSum (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
 
 /-- the return address of the product -/
 abbrev r4 : Nat := 0x1ba6b0
-
-/-- a fact hidden from `janus_run` (which destructures every conjunction in the context) -/
-structure Box (P : Prop) : Prop where
-  h : P
 
 /-- the three stores of `qhatv`'s slots (`SP'+328/152/168`) read back -/
 theorem rd3 (M : Memory) (p a b c : Nat) (hp : 248 ≤ p) (ha : a < 2 ^ 64) (hb : b < 2 ^ 64) (hc : c < 2 ^ 64) :

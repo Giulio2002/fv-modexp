@@ -19,6 +19,11 @@ set_option linter.janusRenameI false
 
 namespace FvModexp.Arm64.DivRec
 
+/-- a fact hidden from `janus_run` (which destructures every conjunction in the context) -/
+structure Box (P : Prop) : Prop where
+  h : P
+
+
 /-- the stack is kept by a callee that only writes `ws` (not the stack) -/
 theorem stackBack_keep {R : RtInv} {c : Cx} {s : State} {Lk L' : List (Nat × Nat)} {bk : Nat} {M M' : Memory}
     {wsS ws : List (Nat × Nat)} (hcr : Cr R c s) (h : Ev R c s Lk bk M)
@@ -95,6 +100,7 @@ theorem Mc.callN {R : RtInv} {c : Cx} {s X : State} {Lk L' : List (Nat × Nat)} 
   have hhi : HiOut s (R.rt ++ winA X k a ++ [(p, p + n)]) :=
     hiOut_callee hout (by omega) (by omega) hX (by omega) (hiOut_win hw (by omega) (by omega))
   exact ⟨hcr, hEv, hFp, h.bd.frame hF hfo hio kv kt kq, h.bs.frame hF hbo, h.jB, h.li, h.q3.frame hF hhi h0',
-    h.rg.ext hx, hqk, hbf, hwk, by rw [limbs_congr kl]; exact h.lk, Nat.le_trans h.bud hb⟩
+    h.rg.ext hx, hqk, hbf, hwk, by rw [limbs_congr kl]; exact h.lk, Nat.le_trans h.bud hb,
+    by rw [hF.accessible]; exact h.qa⟩
 
 end FvModexp.Arm64.DivRec
