@@ -165,6 +165,9 @@ def fnDiv : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.nat.div"
     -- the inputs are apart from the stack header and its free part (asm s15: read after `stk.nat` writes there)
     Apart u (8 * ul) st 24 ∧ Apart u (8 * ul) (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st)) ∧
     Apart v (8 * vl) st 24 ∧ Apart v (8 * vl) (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st)) ∧
+    -- the written ranges are apart from the threshold globals (asm s16: thresholds are read after writes there)
+    (0 < zc → Apart zp (8 * zc) RunIface.gA 32) ∧ (0 < z2c → Apart z2 (8 * z2c) RunIface.gA 32) ∧ Apart st 24 RunIface.gA 32 ∧
+    Apart (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st)) RunIface.gA 32 ∧
     -- pairwise: the outputs are apart from each other, from the inputs and from the stack's free part / header
     (0 < zc → 0 < z2c → Apart zp (8 * zc) z2 (8 * z2c)) ∧
     (∀ p c, (p, c) ∈ [(zp, zc), (z2, z2c)] → 0 < c →

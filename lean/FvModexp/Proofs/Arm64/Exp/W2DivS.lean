@@ -28,6 +28,14 @@ open FvModexp.Arm64.W2Loop (Env Inp Buf FinEnv)
     RetPost R b2 L2 g sp n mp mc t (stW M2 st + 8 * lenM) yp ylen Y yi zp zc zzp zzc st n0 onep r18 r29 Mv Xv
       (2 ^ (128 * n) % Mv) M2 s'
 
+set_option maxRecDepth 20000 in
+/-- the threshold globals as an object of the context (asm s16 DivHyp addendum) -/
+theorem Ctx.ga {R : RtInv} {L : List (Nat × Nat)}
+    {g sp K n mp mc Mv xp xc Xv yp ylen Y yi zp zc st n0 l0 ret : Nat} {r29 : BitVec 64} {ex : List (Nat × Nat)} {M : Memory}
+    (h : Ctx R L g sp K n mp mc Mv xp xc Xv yp ylen Y yi zp zc st n0 l0 ret r29 ex M) : Obj R L sp K st l0 ex M RunIface.gA 32 := by
+  obtain ⟨-, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, hga, -⟩ := h
+  exact hga
+
 /-- a range inside the stack above `l0` is apart from everything apart from that part -/
 theorem free_of_up {a k st l0 : Nat} {M : Memory} (h : Apart a k (stUp M st l0).1 (stUp M st l0).2)
     (h1 : l0 ≤ stLen M st) (h2 : stLen M st ≤ stCap M st) :
@@ -99,6 +107,7 @@ theorem divStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     S hpc hsp hmem (fun S1 e1 e2 e3 e4 e5 e6 e7 e8 e9 e10 e11 e12 e13 e14 e15 e16 e17 e18 e19 em => ?_)
   -- the division
   have hpre : DvPre R b costF costD L g sp K stkD st qp rrp n zzp (2 * n + 1) mp M := by
+    have hga := Ctx.ga hC
     refine ⟨hce, hKD, hserv, hgl, hn128, hn, hqL, (in_stUp huw.symm hqa hqb).symm,
       (in_stUp hug.symm hqa hqb).symm, hrL, hrW, hrG, by omega,
       M.accessible_sub hzacc (Or.inl rfl) (by omega) (by omega), by omega,
@@ -106,7 +115,9 @@ theorem divStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
       Apart.mono hzzK (by omega) (by omega), hm.1, hm.2.1, hm.2.2.1, hmO.2.1, hzN, hnm, hsok, hstw, harr,
       by omega, by omega, Apart.mono hzS (by omega) (Nat.le_refl _),
       free_of_up (Apart.mono hzU (by omega) (Nat.le_refl _)) hl0 hlc, hmO.2.2.1, free_of_up hmO.2.2.2.1 hl0 hlc,
-      hqr, fun p hp => ?_, hcF, by omega, hinv⟩
+      hqr, fun p hp => ?_, (in_stUp hga.2.2.2.1 hqa hqb).symm,
+      (hga.2.2.2.2 _ (List.mem_singleton_self _)).symm, hga.2.2.1.symm, (free_of_up hga.2.2.2.1 hl0 hlc).symm,
+      hcF, by omega, hinv⟩
     rcases hp with rfl | rfl
     · refine ⟨((in_stUp hzU hqa hqb).symm).mono (Nat.le_refl _) (by omega), (in_stUp hmO.2.2.2.1 hqa hqb).symm,
         (in_stUp hsu hqa hqb).symm, by unfold Apart; omega⟩
