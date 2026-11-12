@@ -1150,3 +1150,18 @@ New `Top/RunGS.lean` `gS_read` (stackguard slot survives the frame; was an inlin
 | RunD1L / D1P / D2L / D2P | 212 / 103 / 184 / 163 s | 128 / 142 / 131 / 111 s (load 40) | Box `hnz hoffc (hmN) hga` after the last run |
 Fresh-cache re-measure of the RunErr rows (cache-top-freshC, load 35-60 — the coordinator's v0.3.1 gate ran alongside):
 warm-up 1017 s (s17: 702 s at load ~15); arm64 Top_RunErr **PASS 751 s / 6.5 GB** (s17: 535 s at load ~15) — see the amd64 line below.
+
+## asm s26 (2026-11-12) — drs correction loop COMPLETE (arm64, dev compile, LEAN_NUM_THREADS=4, host load ~40)
+| module | time | mem |
+|---|---|---|
+| Common/DrsCorrVal | 1.9 s | 2.0 GB |
+| DrsC3 (subVW qhat call) | 5 s | 2.4 GB |
+| DrsC4R (run to subVV.abi0) | 8–9 s | 2.5 GB |
+| DrsC4 (subVV.abi0 call) | 10–14 s | 2.8 GB |
+| DrsC5R (len(qhatv) > s test) | 15 s | 2.6 GB |
+| DrsC5 (subVW qhatv[s:] call) | 7 s | 2.5 GB |
+| DrsC5S (run to addTo) | 5 s | 2.3 GB |
+| DrsC6 (addTo call) | 91 s (load 40) | 3.4 GB |
+| DrsC6R (i++ → head) | 3 s | 2.3 GB |
+| DrsCL (loop induction) | 1.5 s | 2.3 GB |
+| AddTo (first dev build) | 127 s | 4.4 GB |
