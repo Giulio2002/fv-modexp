@@ -9,7 +9,8 @@ import FvModexp.Proofs.Arm64.Exp.NGet
 
 * `NE0` / `ZOK0`: `NDefs.NE` / `ZOK` without the stack conjuncts (there is no stack at the entry).
 * `PreNil`: `NDefs.NPre` with `st = 0` and without the stack block; the stack-size bounds and the budget at
-  `stLen = 0`, the budget also pays the 24-byte `newobject`; the pool's `New` word is `0` (the `Get` pre) and lies
+  `stLen = 0`, the budget also pays the 24-byte `newobject`; `z`'s array (when non-empty) is held and apart from the
+  window even when the alias test drops it (at `(*Int).exp`'s call it is the receiver's live array); the pool's `New` word is `0` (the `Get` pre) and lies
   outside the window.
 * `PostNil`: `NDefs.Post` without the stack conjuncts: value, normalised, `LiveExt` (the stack's ranges, given back to
   the pool, are NOT in the final live set), budget `24 + NCost` at `stLen = 0`, frame `R.rt ++ winA ++ [z]`.
@@ -46,7 +47,7 @@ def PreNil (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K : Nat) (costF : Nat 
     NatNorm s.mem yp yl ∧ yl ≤ 2 ^ 9 ∧ yc < 2 ^ 64 ∧
   NE0 R L sp K xp (8 * xl) ∧ s.mem.accessible xp (8 * xl) false = true ∧ xp + 8 * xl ≤ 2 ^ 48 ∧
     NatNorm s.mem xp xl ∧ xl ≤ 128 ∧ xp < 2 ^ 64 ∧ xc < 2 ^ 64 ∧
-  zp < 2 ^ 64 ∧ zl ≤ zc ∧ zc < 2 ^ 40 ∧
+  zp < 2 ^ 64 ∧ zl ≤ zc ∧ zc < 2 ^ 40 ∧ (0 < zc → NE0 R L sp K zp (8 * zc)) ∧
   (0 < zc → (0 < xc ∧ zp + 8 * zc = xp + 8 * xc) ∨ (0 < yc ∧ zp + 8 * zc = yp + 8 * yc) ∨
     ZOK0 R L g sp K zp zc xp xl yp yl mp n s.mem) ∧
   NE0 R L sp K RunIface.gA 32 ∧

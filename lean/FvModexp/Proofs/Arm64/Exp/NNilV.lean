@@ -128,7 +128,7 @@ theorem npreV {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {costF : N
       { s with mem := M1 } := by
   obtain ⟨⟨hs1, hs28, hg1, hg2, hg3, hgo, hal, hK4, hKs, hsp2, hacc, hwrt, hLs, hd, hsv⟩, hK20, hG, hro, hwT, hslow,
     hn, hn128, hnmc, hmc, hmO, hma, hm48, hmN, hyO, hya, hy48, hyN, hyl, hyc, hxO, hxa, hx48, hxN, hxl, hxp, hxc,
-    hzp, hzlc, hzc, hali, hgAO, ⟨op, hone⟩, -, hwb, hb1, hb2, hb3, hb4, hbud, -, -, -⟩ := hP
+    hzp, hzlc, hzc, -, hali, hgAO, ⟨op, hone⟩, -, hwb, hb1, hb2, hb3, hb4, hbud, -, -, -⟩ := hP
   have hN' := hN
   obtain ⟨-, -, hst0, hst8, hst48, hstacc, hlen, hcap40, hc0, hw8, hw48, hwacc, hdis, hbb, -, hinv⟩ := hN'
   have hacM : ∀ a k w, M1.accessible a k w = s.mem.accessible a k w := fun a k w => hF.accessible a k w
