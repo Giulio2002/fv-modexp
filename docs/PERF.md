@@ -1317,3 +1317,15 @@ close sp / slot goals with tiny lemmas (`sp_ret`, `Nat.sub_sub`) instead of omeg
   implications removed earlier; natOne/pool reads boxed).
 * Frame composition at byte granularity (`Common/ByteFrame`: `MemFrame.of_bytes` + per-byte `MemFrame.byte`) with the
   range arithmetic in tiny standalone lemmas (`IExpDefs.out_atN/out_slot/out_post/out_live`): no omega in big contexts.
+
+## divmc s27 (2026-11-12): SqrRow trim (arm64; dev compile, LEAN_NUM_THREADS=4, host load 25-40)
+| module | before | after | fix |
+|---|---|---|---|
+| Nat/SqrMake (make_reuse + make_alloc) | 114-194 s / 4.7 GB | split: SqrMakeR 12.5 s, SqrMakeAD 1.6 s, SqrMakeAP 3.1 s, SqrMakeA1 18.8 s, SqrMakeA2 8.3 s, SqrMakeA/SqrMake < 2 s | as MulMake (s23): `AA` state at the makeslice entry; head (alias tests) and call run separately; makeslice pre in `mk_pre`/`mk_facts`; JoinAt fields by name (`bx` Box for lr/fp/96) |
+| Nat/KSqrPA (kPA + kPB + kPC) | 114-176 s / 3.1 GB | KSqrPQ (defs) 1.6 s, KSqrPA 6.8 s, KSqrPB 2.3 s, KSqrPC 127 s → 46 s | split into independent segments; `kPC`: profile showed `first \| exact hQ.lr \| exact hQ.fp \| …` failing alternatives unfolding `Nat.sub` literals (63 s + 45 s) → `case lr/fp/s5` by name |
+| Nat/KSqrS1c (`kS1clr`) | 112-175 s / 6.0 GB | 35 s / 3.5 GB | profile: the memclr call's `LiveSep` side goal = ONE `omega` over the whole context (121 s); Box the continuation-only facts (`tops`, `hstw`, `hsz`) and clear `hzlive hzw hzg hzh hsv hgQ hga hgr` before `janus_run` (KMulS1c twin) |
+| Nat/SqrBS (`bs2`) | 66-137 s / 5.9 GB | 32 s / 4.0 GB | profile: `exact ⟨⟨h.1.1, by omega, by omega⟩, h.2⟩` (callee window ⊆ caller window) = 85 s of context omega → `Common/WinLemmas.winA_in` (closed once, empty context) |
+| Nat/SqrKS, Nat/SqrBM | 59 s, 70 s | 23 s, 46 s | same `winA_in` |
+| Nat/MulBM, Nat/MulKar | 90 s, 77 s | 77 s, 51 s | same `winA_in` (MulBM's remaining cost: the `janus_run … calls [hBM]` with unfolded Apart hyps, see s26) |
+SqrRow's own modules (after the bottom-up rows StackNat, MulAddWW, BasicMul, BasicSqr, IntAS): dev sum ≈ 630 s, critical
+path ≈ 205 s (was: 117 own modules, row 815 s).
