@@ -1306,3 +1306,14 @@ GS4A 10 s / 2.5 GB, GS4B 5 s, GS4C 39 s / 2.9 GB, GS4Cb 3 s, GEns 3 s.
 LESSON: `obtain ⟨rfl, rfl⟩ := …` (subst of a theorem variable) followed by `omega`s in a post-`janus_run` context was
 pathological (> 10 min / 8 GB OOM, twice: s3Gc ge-branch, s4tG). Fix: no subst — use the equations (`h.trans e`), and
 close sp / slot goals with tiny lemmas (`sp_ret`, `Nat.sub_sub`) instead of omega: 42 s / 39 s.
+
+## expmc s34 (2026-11-12): `arrW`'s `if` and `readLE` atoms (arm64 (*Int).exp post layer)
+* `RunIface.arrW m z` = `if 0 < m.readLE (z + 24) 8 then … else []`. Unifying / whnf-ing an `Outside`/`MemFrame` list that
+  contains it can evaluate the condition (byte-by-byte `readLE`): a ONE-LINE term proof `outside_arrW h` took 24 s.
+  Fix: `@[irreducible] def ZArr := arrW` in statements (`IExpDefs.ZArr`, `zarr_eq` rewritten at the very end).
+  IExpAtN 88 s → 1.9 s, IExpPost 48 s → 6 s, IExpDefs 16 s → 1.9 s.
+* `omega` with `m.readLE a 8` atoms in hypotheses (`readLE … = op`, `readLE (g+16) 8 + K < sp`) is slow: generalize or `Box`
+  them before omega-heavy blocks. IExpP 47 s → 31 s (operand bundles boxed: 83 s of omega case splits on `0 < l → …`
+  implications removed earlier; natOne/pool reads boxed).
+* Frame composition at byte granularity (`Common/ByteFrame`: `MemFrame.of_bytes` + per-byte `MemFrame.byte`) with the
+  range arithmetic in tiny standalone lemmas (`IExpDefs.out_atN/out_slot/out_post/out_live`): no omega in big contexts.
