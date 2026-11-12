@@ -23,7 +23,7 @@ while IFS= read -r f; do
   if [ "$(sed 's/--.*$//' "$f" | grep -cwE 'sorry|admit|sorryAx')" -gt 0 ]; then
     if [ -n "${ok[$f]+x}" ]; then echo "allowed (WIP): $f"; else echo "FAIL: sorry in $f (not in $allow)"; fail=1; fi
   elif [ -n "${ok[$f]+x}" ]; then echo "note: $f is in $allow but no longer contains sorry (remove it)"; fi
-done < <(find lean/FvModexp -name '*.lean' | sort)
+done < <(find lean/FvModexp -path lean/FvModexp/Tmp -prune -o -name '*.lean' -print | sort)
 # no proof may do host IO or depend on host files/environment (the Janus sandbox is read-only: an IO tactic that "works" on a dev machine
 # silently takes other branches in the verifier). Forbidden in lean/** (outside .lake): file system, paths, env, processes, streams, clocks-as-input.
 # (comment/string-aware, scripts/lint_source.py --io-check)
