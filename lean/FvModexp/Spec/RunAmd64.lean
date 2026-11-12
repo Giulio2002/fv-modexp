@@ -80,4 +80,80 @@ def Frame (R : RtInv) (b B : Nat) (L : List (Nat × Nat)) (s s' : State) : Prop 
 word). -/
 def ErrRet (s' : State) : Prop := s'.regs 0 = 0#64 ∧ s'.regs 3 = 0#64 ∧ s'.regs 7 ≠ 0#64
 
+/-! ### Success path (`LengthsPass`): environment with a window `W`, requests, globals, budget, return, frame -/
+
+/-- The stack window of a successful call: `W` bytes below `RSP` (`Run`'s 616-byte frame plus the deepest frame of the
+big-number callees `Mod`/`exp`/`Bytes`) and 40 bytes above (the return address and the four argument words). -/
+def windowW (s : State) (W : Nat) : List (Nat × Nat) := [((s.regs 4).toNat - W, (s.regs 4).toNat + 40)]
+
+/-- The call environment of a successful call: `Env` with window `W`, and neither the goroutine's `stackguard0` word nor
+the TLS slot `FS:-8` is inside a live object of the caller. -/
+def EnvW (R : RtInv) (L : List (Nat × Nat)) (s : State) (W : Nat) : Prop :=
+  (StackGuardOK s W ∧ StackWritable s W 40 ∧ (s.regs 4).toNat % 8 = 0 ∧
+    Extracted.program.DataLoaded s.mem ∧
+    Outside ((s.regs 4).toNat - W) (W + 40) R.rt ∧
+    Apart ((s.regs 14).toNat + 16) 8 ((s.regs 4).toNat - W) (W + 40) ∧
+    Outside ((s.regs 14).toNat + 16) 8 R.rt ∧
+    LiveSep L (windowW s W) ∧ (∀ d ∈ Extracted.program.data, Outside d.base d.bytes.length R.rt) ∧
+    (TlsG s ∧ Outside (s.fsBase.toNat - 8) 8 R.rt ∧ Apart (s.fsBase.toNat - 8) 8 ((s.regs 4).toNat - W) (W + 40))) ∧
+  (∀ r ∈ L, Apart ((s.regs 14).toNat + 16) 8 r.1 (r.2 - r.1)) ∧
+  (∀ r ∈ L, Apart (s.fsBase.toNat - 8) 8 r.1 (r.2 - r.1))
+
+/-- The runtime serves every request of the success path up to these sizes (operands of at most 1024 bytes need at
+most `2^17`-element slices and `2^20`-byte copies/clears; pointer arguments are unconstrained). -/
+def OkReqs (R : RtInv) : Prop :=
+  (∀ t n c, c ≤ 2 ^ 17 → R.ok (Extracted.program.contractAddr "runtime.makeslice") [t, n, c]) ∧
+  (∀ d sr n, n ≤ 2 ^ 20 → R.ok (Extracted.program.contractAddr "runtime.memmove") [d, sr, n]) ∧
+  (∀ d n, n ≤ 2 ^ 20 → R.ok (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") [d, n]) ∧
+  (∀ o n c k t, n ≤ 2 ^ 17 → R.ok (Extracted.program.contractAddr "runtime.growslice") [o, n, c, k, t]) ∧
+  (∀ args, R.ok (Extracted.program.contractAddr "runtime.newobject") args) ∧
+  (∀ args, R.ok (Extracted.program.contractAddr "runtime.gcWriteBarrier2") args) ∧
+  (∀ args, R.ok (Extracted.program.contractAddr "runtime.gcWriteBarrier4") args) ∧
+  (∀ args, R.ok (Extracted.program.contractAddr "sync.(*Pool).Get") args) ∧
+  (∀ args, R.ok (Extracted.program.contractAddr "sync.(*Pool).Put") args)
+
+/-- `math/big`'s writable globals at their initial Go values (`natmul.go:12,68,69`, `natdiv.go:733`:
+`divRecursiveThreshold = 40` first, then `karatsubaThreshold = 40`, `basicSqrThreshold = 12`, `karatsubaSqrThreshold = 80`,
+32 contiguous bytes), and `runtime.writeBarrier`'s flag word (any value): readable, outside the runtime-owned ranges and
+outside the stack ranges `w`. -/
+def Globals (R : RtInv) (m : Memory) (w : List (Nat × Nat)) : Prop :=
+  let gA := Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.divRecursiveThreshold»
+  let wbA := Extracted.dataAddr.«runtime.writeBarrier»
+  m.readLE (Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.karatsubaThreshold») 8 = 40 ∧
+  m.readLE (Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.basicSqrThreshold») 8 = 12 ∧
+  m.readLE (Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.karatsubaSqrThreshold») 8 = 80 ∧
+  m.readLE gA 8 = 40 ∧
+  Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.karatsubaThreshold» = gA + 8 ∧
+  Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.basicSqrThreshold» = gA + 16 ∧
+  Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.karatsubaSqrThreshold» = gA + 24 ∧
+  m.accessible gA 32 false = true ∧ Outside gA 32 R.rt ∧ Outside gA 32 w ∧
+  m.accessible wbA 4 false = true ∧ Outside wbA 4 R.rt ∧ Outside wbA 4 w
+
+/-- The budget of the success path, from the three lengths (bytes): the three length headers (`nat.make(4)`), the three
+operand reads (a copy buffer and a `nat`), the `Mod` / `exp` call (per request at most `blockBound (1024 w + 1024)`
+for operands of at most `w` words: `Mod` ≤ 64 requests, `exp` ≤ `8 · 64 · ⌈expLen/8⌉ + 128`), `Bytes` and the
+`LeftPadBytes` buffer. Derivation: docs/HUMAN-REVIEW.md ("Operand bound and budgets"). Same formula as arm64. -/
+def okBudget (l : EthLib.Execution.Evm.Precompiles.Modexp.Lengths) : Nat :=
+  let w := max (max ((l.base + 7) / 8) ((l.exponent + 7) / 8)) ((l.modulus + 7) / 8)
+  let op := blockBound (1024 * w + 1024)
+  3 * blockBound 64 + 3 * (blockBound 1024 + blockBound (8 * 132)) +
+    (64 * op + (8 * (64 * ((l.exponent + 7) / 8)) + 128) * op + blockBound (8 * 128)) + blockBound 1024
+
+/-- `Run` returned `(out, nil)`: the nil `error` (type word `RDI = 0`) and `out = (RAX, RBX)` holds exactly the bytes
+`compute data (parseLengths data)` of the EthLib specification (`data` = the input bytes in the entry memory `m`). -/
+def OkRet (data : ByteArray) (s' : State) : Prop :=
+  s'.regs 7 = 0#64 ∧
+    bytesAt s'.mem (s'.regs 0).toNat (s'.regs 3).toNat =
+      EthLib.Execution.Evm.Precompiles.Modexp.compute data (EthLib.Execution.Evm.Precompiles.Modexp.parseLengths data)
+
+/-- The frame of a successful return with window `W`: `FS` base and direction flag unchanged, the live set grows, the
+budget drops by at most `B`, the runtime invariant holds, the output bytes `(RAX, RBX)` are the program's, only the
+runtime-owned ranges and the window changed, and the caller's live objects are intact. -/
+def FrameW (R : RtInv) (b B : Nat) (L : List (Nat × Nat)) (W : Nat) (s s' : State) : Prop :=
+  s'.fsBase = s.fsBase ∧ s'.df = s.df ∧
+  ∃ (L' : List (Nat × Nat)) (b' : Nat), Grows R L L' ∧ b - B ≤ b' ∧
+    R.inv b' L' (s.regs 14).toNat (view R.rt L' s'.mem) ∧
+    (0 < (s'.regs 3).toNat → Held R L' (s'.regs 0).toNat (s'.regs 3).toNat) ∧
+    MemFrame s.mem s'.mem (R.rt ++ windowW s W) ∧ LiveFrame s.mem s'.mem L []
+
 end FvModexp.Spec.RunAmd64
