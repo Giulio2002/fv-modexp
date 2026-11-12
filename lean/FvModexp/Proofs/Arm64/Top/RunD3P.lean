@@ -121,6 +121,9 @@ theorem d3p (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   janus_run [hm1, hm2, hm3, hm4, hm5, hm6, hs1, hs2, hs3, hs4, hs5, hs6, hk1a, hk1b, hk2a, hS1, hS1n, hadd, hmod, hc, hc32, hIe, hIa, hmask, hsub,
     hcsub, hsrc, hne, toInt_ite, toNat_ite, toInt_small] until [segAddr Extracted.program fn + 0x728] calls [hmv']
   rename_i m _ _ hMFm hLFm hinvm hcp
+  have bxq := Box.mk (And.intro hoffc (And.intro hmN (And.intro hsw1 hsw2))); have bxnz := Box.mk hnz
+  have bxga := Box.mk hga
+  clear hoffc hmN hsw1 hsw2 hnz hga
   have hMFm' := hMFm
   rw [List.append_assoc] at hMFm'
   have hd1 := dataLoaded_win (lo := s.sp.toNat - 4800) (n := 4800 + 40) ?d0 (by rw [hrg1]; simp) hro hMFm' ?wacc ?ws
@@ -155,7 +158,7 @@ theorem d3p (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
      by janus_simp [hm1], by janus_simp [hm2], by janus_simp [hm3], by janus_simp [hm4], by janus_simp [hm5],
      by janus_simp [hm6], by janus_simp [hs1], by janus_simp [hs2], by janus_simp [hs3], by janus_simp [hs4],
      by janus_simp [hs5, hoffd], by janus_simp [hs6, hoffd], by janus_simp [hk1a], by janus_simp [hk1b], by janus_simp [hk2a],
-     by janus_simp, by janus_simp, by janus_simp, hl0, hl1, hl2, hnz,
+     by janus_simp, by janus_simp, by janus_simp, hl0, hl1, hl2, bxnz.h,
      by janus_simp, (by janus_simp [hs3] <;> omega), by omega,
      (Memory.accessible_read_of_write _ (Memory.accessible_mono _ hw (by omega) (by omega))),
      Or.inr (hout.of_sub (by omega) (by omega)), (by omega), ?bytes, hd1,
@@ -171,7 +174,7 @@ theorem d3p (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     unfold padByte
     split
     · rename_i hjl
-      have hpw := bxp.h.1
+      have hpw := bxp.h.1; have hoffc := bxq.h.1; have hmN := bxq.h.2.1
       have hn0 : 0 < len.toNat - 96 - min (hdrV s p len 1 + hdrV s p len 0) (len.toNat - 96) := by omega
       obtain ⟨-, rfl⟩ : 96 < len.toNat ∧ off = 96 := by omega
       have hmE : mN = hdrV s p len 1 + hdrV s p len 0 := by omega
