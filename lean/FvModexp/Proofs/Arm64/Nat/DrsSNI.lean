@@ -90,11 +90,6 @@ theorem hd_mem {R : RtInv} {c : Cx} {s X : State} {T : Memory} {bk : Nat}
     by_cases hc : stLen s.mem c.st + StackNat.rnd (c.vl / 2 + 1) ≤ stCap s.mem c.st
     · exact Or.inl (hsame hc)
     · exact Or.inr (hgrow (by omega))
-  have hsin : ArrIn c.L1 c.st s.mem T := by
-    intro hn
-    by_cases hc : stLen s.mem c.st + StackNat.rnd (c.vl / 2 + 1) ≤ stCap s.mem c.st
-    · exact absurd (hsame hc) hn
-    · exact hmem (by omega)
   have hacc : ∀ x k w, T.accessible x k w = s.mem.accessible x k w := fun x k w => by
     rw [hMF.accessible, hF0.accessible]
   -- the free part at l1
@@ -122,7 +117,7 @@ theorem hd_mem {R : RtInv} {c : Cx} {s X : State} {T : Memory} {bk : Nat}
     rw [h1]; exact hF0.readLE x k (fw_out (by omega) hw)
   refine ⟨⟨hpre, ra4, ra48, hW, h40, hvu, hu1, hU, hN, hext, hscr.al, hscr.b48, hscr.held, ?_, hloc, hsep.w, hsep.g,
     hsep.gA, (hsep.st).symm, hsep.q, hsep.u, hsep.v⟩,
-    ⟨LiveExt.refl R c.L1, hreg, hinv, hfr, hlf, hok, hsarr, hsin⟩,
+    ⟨LiveExt.refl R c.L1, hreg, hinv, hfr, hlf, hok, hsarr⟩,
     ⟨by rw [hlen], harrh.sub (by simp only [Cx.l1]; omega) (by simp only [Cx.l1]; omega), hfsep.w, hfsep.g, hfsep.st,
       hfsep.gA, hfsep.q, hfsep.u, hfsep.v, by unfold Apart; omega⟩,
     hkeep⟩
