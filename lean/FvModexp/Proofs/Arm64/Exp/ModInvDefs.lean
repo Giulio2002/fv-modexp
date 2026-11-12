@@ -1,6 +1,6 @@
 import FvModexp.Proofs.Arm64.Exp.MulHyp
 import FvModexp.Proofs.Arm64.Nat.SqrMulX
-import FvModexp.Proofs.Arm64.Exp.SubMod2N
+import FvModexp.Proofs.Arm64.Exp.SubMod2NDefs
 import FvModexp.Proofs.Common.ModInvMath
 
 /-!

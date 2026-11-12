@@ -74,6 +74,7 @@ theorem tailE {impl : List Segment} (hap : ImplApart Extracted.program impl) (Q 
   · simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte]; rw [e2]; janus_simp
   · simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte]; rw [e3]; janus_simp
   all_goals first | (simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte]; done) | skip
+  unfold TW
   janus_frame
 
 end FvModexp.Arm64.ExpEven

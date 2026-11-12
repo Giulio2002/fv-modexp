@@ -21,7 +21,7 @@ section
 variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc yp yl yc mp ml mc : Nat} {s : State}
 
 /-- a non-empty `ZOK` array is apart from the `stackguard0` word -/
-theorem ZOK.g (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) {M : Memory} {L1 : List (Nat × Nat)}
+theorem ZOK.gw (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) {M : Memory} {L1 : List (Nat × Nat)}
     {p c : Nat} (hc : 0 < c) (hz : ZOK R L st zp zc M L1 p c) : Apart p (8 * c) (g + 16) 8 := by
   have hgo : Outside (g + 16) 8 ((sp - K, sp + 448) :: R.rt) := hP.1.2.2.2.2.2.1
   rcases hz with ⟨rfl, rfl⟩ | ⟨hin, -, -⟩
@@ -94,20 +94,17 @@ theorem addPre0 (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) {
   have hx : 0 < lw → M.accessible pZ (8 * lw) false = true ∧ pZ + 8 * lw ≤ 2 ^ 48 ∧ Held R L1 pZ (8 * lw) ∧
       Outside pZ (8 * lw) (win S' 4464 80) := fun hl => by
     have h := LZ.rd hP hw hz (by omega) hsN fm (stk := 4464) (above := 80) hK4 (by omega)
-    rw [fm] at h
-    exact ⟨h.2.1, h.2.2.1, h.2.2.2.1, h.2.2.2.2⟩
+    exact ⟨by rw [← fm]; exact h.2.1, h.2.2.1, h.2.2.2.1, h.2.2.2.2⟩
   have hy : 0 < lu → M.accessible pu (8 * lu) false = true ∧ pu + 8 * lu ≤ 2 ^ 48 ∧ Held R L1 pu (8 * lu) ∧
       Outside pu (8 * lu) (win S' 4464 80) := fun hl => by
     have h := LN.rd hP hu (by omega) hsN fm (stk := 4464) (above := 80) hK4 (by omega)
-    rw [fm] at h
-    exact ⟨h.2.1, h.2.2.1, h.2.2.2.1, h.2.2.2.2⟩
+    exact ⟨by rw [← fm]; exact h.2.1, h.2.2.1, h.2.2.2.1, h.2.2.2.2⟩
   unfold NatAdd.Pre0
   simp only [NatAdd.need, NatAdd.mx]
   rw [LibCalls.tN hZ64, LibCalls.tN (show cZ < 2 ^ 64 by omega), LibCalls.tN (show lw < 2 ^ 64 by omega),
     LibCalls.tN hu64, LibCalls.tN (show lu < 2 ^ 64 by omega), LibCalls.tN (show cu < 2 ^ 64 by omega), hgN, fm]
-  rw [fm] at hzwin hx hy
   refine ⟨hce, hwt, hlwc, hluc, hcZ, hcu, by omega, by omega, hcZ, hz.2.1, hzwin,
-    fun hc => ⟨ZOK.g hP hc (hz.2.2.1 hc), fun _ => Or.inl rfl, fun hl => Or.inr (huz (by omega) hc).symm⟩, hx,
+    fun hc => ⟨ZOK.gw hP hc (hz.2.2.1 hc), fun _ => by simp, fun hl => Or.inr (apart_shrink (huz (by omega) hc).symm (Nat.mul_le_mul_left 8 hluc))⟩, hx,
     hz.2.2.2.2.2, hu.2.2.2, hy, hw.inv,
     fun _ => ⟨hsv.1 _ _ _ (by unfold makeCap; split <;> split <;> omega), hb⟩,
     fun d src k hk => hsv.2.1 d src k (by omega)⟩

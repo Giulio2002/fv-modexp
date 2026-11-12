@@ -69,6 +69,11 @@ theorem norm_zeroE {m : Memory} {p l : Nat} (hv : natVal m p l = 0) (hn : NatNor
   · exact absurd h3 (Nat.pos_iff_ne_zero.1 (Nat.pow_pos (by decide)))
   · exact h3
 
+theorem natVal_lt64E (m : Memory) (p l : Nat) : natVal m p l < 2 ^ (64 * l) := by
+  have := Memory.readLE_lt m p (8 * l)
+  rw [show (256 : Nat) = 2 ^ 8 from rfl, ← Nat.pow_mul, show 8 * (8 * l) = 64 * l by omega] at this
+  exact this
+
 theorem natVal_zero_len (m : Memory) (p : Nat) : natVal m p 0 = 0 := by
   unfold natVal; simp [Memory.readLE]
 
@@ -83,7 +88,7 @@ theorem vU_lt (s : State) (xp xl yp yl mp ml : Nat) (hM : 0 < natVal s.mem mp ml
     · exact e
   have h1 := Nat.mul_lt_mul_of_pos_right (Nat.mod_lt (vT s xp xl yp yl mp ml) (Nat.two_pow_pos (nE s mp ml))) hq
   have h2 := Nat.mul_div_le (natVal s.mem mp ml) (2 ^ nE s mp ml)
-  rw [Nat.mul_comm] at h2
+  have h3 := Nat.mul_comm (2 ^ nE s mp ml) (natVal s.mem mp ml / 2 ^ nE s mp ml)
   omega
 
 theorem vZ2_lt (s : State) (xp xl yp yl mp ml : Nat) (hM : 0 < natVal s.mem mp ml) :
@@ -146,7 +151,7 @@ theorem segAdd {impl : List Segment} (hap : ImplApart Extracted.program impl) (h
   have hacc : S.mem.accessible (sp + 128) 320 false = true := by
     rw [hw.fr.accessible]
     exact Memory.accessible_weaken _ (Memory.accessible_mono _ hacc0 (by omega) (by omega))
-  have hMl : natVal s.mem mp ml < 2 ^ (64 * ml) := natVal_lt64 _ _ _
+  have hMl : natVal s.mem mp ml < 2 ^ (64 * ml) := natVal_lt64E _ _ _
   have hlw : lw ≤ ml := nlen_bd' h.zs.2.2.2.2.2 (by rw [h.zs.2.2.2.2.1]; exact Nat.lt_trans (vZ2_lt s xp xl yp yl mp ml hM) hMl)
   have hlu : lu ≤ ml := nlen_bd' h.u.2.2.2 (by rw [h.u.2.2.1]; exact Nat.lt_trans (vU_lt s xp xl yp yl mp ml hM) hMl)
   have hneed : (if min lw lu = 0 then max lw lu else max lw lu + 1) ≤ ml + 1 := by split <;> omega
@@ -172,7 +177,7 @@ theorem segAdd {impl : List Segment} (hap : ImplApart Extracted.program impl) (h
     exact ra_ev hap natAdd_nf 214 (by decide)
   · simp only [ArgsFrom]
     exact ⟨r0, r1, r2, r3, r4, r5, r6.trans h.r0, r7.trans h.r1, r8.trans h.r2, trivial⟩
-  · simp only [NatAdd.need, NatAdd.mx, t1, t2, t3, t4, t5, t6] at hq hreu hc40
+  · simp only [NatAdd.Post, NatAdd.PostS, NatAdd.need, NatAdd.mx, t1, t2, t3, t4, t5] at hq hreu hc40
     obtain ⟨p', n', c', g0, g1, g2, hv, hN, hlc, -, L2, b2, hx, hb, hinv, hlv, hor, hF, hLF⟩ := hq
     simp only [winA, hsN'] at hF
     rw [fm] at hF hLF hrg hv
