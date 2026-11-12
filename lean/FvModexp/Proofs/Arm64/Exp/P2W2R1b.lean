@@ -22,10 +22,10 @@ section
 variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc yp yl lm : Nat} {s : State}
     {M : Memory} {L1 : List (Nat × Nat)} {b1 ℓ : Nat}
 
-/-- `RSepL` for the fresh one-word result of `return 1` -/
+/-- `ResSep` for the fresh one-word result of `return 1` -/
 theorem rs_fresh1 (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (hw : WC R L K g sp st zp zc s.mem M L1 b1 ℓ)
     {m : Memory} {p r : Nat} (hA : AllocR R L K g sp st zp zc s.mem M L1 b1 ℓ m p r 8) :
-    RSepL s.mem (m.writeLE p 8 1) st p 1 := by
+    ResSep s.mem (m.writeLE p 8 1) st p 1 := by
   have hK := hP.1.2.2.2.2.2.2.2.1
   have hK1 := hP.1.2.2.2.2.2.2.2.2.1
   have hstw : Apart st 24 (sp - K) (K + 560) := hP.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1

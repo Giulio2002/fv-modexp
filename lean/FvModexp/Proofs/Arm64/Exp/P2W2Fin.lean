@@ -16,25 +16,10 @@ namespace FvModexp.Arm64.P2W2
 
 open FvModexp.Arm64.ExpHyp
 
-/-- (local copy, body identical to agent expmc's `ResSep` in Common/StackScr.lean on agent/expmc 93e4fa0, not yet on
-main; replace by it at the merge — definitional) a non-empty result is apart from the stack's final array when that
-array is not the entry one -/
-@[reducible] def RSepL (m0 m : Memory) (st p c : Nat) : Prop :=
-  0 < c → ¬(stW m st = stW m0 st ∧ stCap m st = stCap m0 st) → Apart p (8 * c) (stW m st) (8 * stCap m st)
-
-/-- (local copy, body identical to agent expmc's `NHyp.CPostR` on agent/expmc 93e4fa0, with `RSepL`) `CPost ∧ ResSep` -/
-@[reducible] def CPostRL (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (stk above zp zc st v cst : Nat) (s s' : State) :
-    Prop :=
-  ∃ p l c : Nat, s'.regs 0 = BitVec.ofNat 64 p ∧ s'.regs 1 = BitVec.ofNat 64 l ∧ s'.regs 2 = BitVec.ofNat 64 c ∧
-    ∃ (L' : List (Nat × Nat)) (b' : Nat), NatOF R L L' s'.mem zp zc 1 p l c v ∧ RtPost R b cst L L' b' s s' ∧
-      StackBackL R L L' st s.mem s'.mem ∧
-      MemFrame s.mem s'.mem (R.rt ++ winA s stk above ++ [(zp, zp + 8 * zc)] ++ stWs s.mem st) ∧
-      LiveFrame s.mem s'.mem L ([(zp, zp + 8 * zc)] ++ stWs s.mem st) ∧ RSepL s.mem s'.mem st p c
-
 /-- the function's post -/
 @[reducible] def FQ (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K zp zc st v cst : Nat) (s s' : State) : Prop :=
   s'.sp = s.sp ∧ s'.regs 18 = s.regs 18 ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧
-    CPostRL R b L (K + 464) 96 zp zc st v cst s s'
+    NHyp.CPostR R b L (K + 464) 96 zp zc st v cst s s'
 
 /-- the tail's writes -/
 @[reducible] def TW (sp st : Nat) : List (Nat × Nat) :=
@@ -69,7 +54,7 @@ theorem res_bytes (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {p c : N
 set_option maxRecDepth 20000 in
 /-- **the function's post** from the tail -/
 theorem finQ (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (hw : WC R L K g sp st zp zc s.mem M L1 b1 ℓ)
-    {p l c v cst : Nat} (hres : NatOF R L L1 M zp zc 1 p l c v) (hrs : RSepL s.mem M st p c) (hb : b - cst ≤ b1)
+    {p l c v cst : Nat} (hres : NatOF R L L1 M zp zc 1 p l c v) (hrs : ResSep s.mem M st p c) (hb : b - cst ≤ b1)
     {s' : State}
     (ht : TPost sp g st (stLen s.mem st) p l c (s.regs 18) (s.regs 29) M s') :
     FQ R b L K zp zc st v cst s s' := by
@@ -147,9 +132,9 @@ theorem finQ (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (hw : WC R L 
     simp only [TW, outside_cons, outside_nil, and_true]
     omega
 
-/-- `RSepL` for the entry `z` (a fresh array is apart from everything held at the entry) -/
+/-- `ResSep` for the entry `z` (a fresh array is apart from everything held at the entry) -/
 theorem rs_z (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (hw : WC R L K g sp st zp zc s.mem M L1 b1 ℓ) :
-    RSepL s.mem M st zp zc := by
+    ResSep s.mem M st zp zc := by
   intro hc hn
   rcases hw.kf with h | ⟨hin, hap⟩
   · exact absurd h hn
@@ -158,18 +143,13 @@ theorem rs_z (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (hw : WC R L 
     · have := hap.apart_of_inRanges hL; unfold Apart at this ⊢; omega
     · exact (hin.apart hO)
 
-/-- `RSepL` for a result apart from every element of the live set `L1` of `WC` (e.g. allocated at `M`) -/
+/-- `ResSep` for a result apart from every element of the live set `L1` of `WC` (e.g. allocated at `M`) -/
 theorem rs_live (hw : WC R L K g sp st zp zc s.mem M L1 b1 ℓ) {p c : Nat} (hap : ApartAll p (8 * c) L1) :
-    RSepL s.mem M st p c := by
+    ResSep s.mem M st p c := by
   intro hc hn
   have := hap _ (hw.ain hn).1
   simp only at this
   rwa [show stW M st + 8 * stCap M st - stW M st = 8 * stCap M st by omega] at this
-
-/-- `RSepL` through a step keeping the stack header -/
-theorem RSepL.congr {m0 M M' : Memory} {st p c : Nat} (h : RSepL m0 M st p c) (e0 : stW M' st = stW M st)
-    (e2 : stCap M' st = stCap M st) : RSepL m0 M' st p c := fun hc hn => by
-  rw [e0, e2] at hn ⊢; exact h hc hn
 
 set_option maxRecDepth 20000 in
 /-- the tail's environment from `WC` and the slots -/
