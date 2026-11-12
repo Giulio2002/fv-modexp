@@ -23,7 +23,8 @@ theorem epi1s (impl : List Segment) (ret0 : Nat) (hret : RetAddr (LibN.program.l
     (hal : sp % 16 = 0) (hsp1 : 8 ≤ sp) (hsp2 : sp + 1432 ≤ 2 ^ 48)
     (S : State) (hpc : S.pc = BitVec.ofNat 64 r) (hsp : S.sp = BitVec.ofNat 64 (sp + 1056))
     (hacc : S.mem.accessible (sp + 1048) 256 true = true)
-    (K : ∀ S1 : State, S1.pc = BitVec.ofNat 64 (r + 8) → S1.sp = S.sp → S1.regs 18 = S.regs 18 →
+    (K : ∀ S1 : State, S1.pc = BitVec.ofNat 64 (r + 8) → S1.sp = S.sp → S1.regs 0 = S.regs 0 →
+      S1.regs 1 = S.regs 1 → S1.regs 2 = S.regs 2 → S1.regs 18 = S.regs 18 →
       S1.regs 28 = S.regs 28 → S1.regs 29 = S.regs 29 →
       MemFrame S.mem S1.mem [(sp + 1232, sp + 1256)] → S1.mem.regions = S.mem.regions →
       S1.mem.readLE (sp + 1232) 8 = (S.regs 0).toNat → S1.mem.readLE (sp + 1240) 8 = (S.regs 1).toNat →
@@ -33,7 +34,7 @@ theorem epi1s (impl : List Segment) (ret0 : Nat) (hret : RetAddr (LibN.program.l
   rcases hr with rfl | rfl | rfl | rfl
   all_goals
     janus_run [] until [1787304, 1787604, 1787688, 1788040]
-    refine K _ rfl hsp.symm rfl rfl rfl ?_ ?_ ?_ ?_ ?_
+    refine K _ rfl hsp.symm rfl rfl rfl rfl rfl rfl ?_ ?_ ?_ ?_ ?_
     all_goals first | (janus_simp; done) | skip
     all_goals first
       | (repeat (first
