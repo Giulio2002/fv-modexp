@@ -943,3 +943,17 @@ NMkP 3 s / 2.5 GB; NSlowP 5 s / 2.6 GB; NP2P 22 s / 2.7 GB (powAll induction + P
 NMid 8 s / 2.7 GB. Post-merge rebuild of the N* closure clean (NPro 20 s, others <= 15 s).
 Pitfall: omega proof reconstruction fails ("Application type mismatch") with an `∃` hypothesis or a reducible bundle
 containing a 1-byte readLE fact in context -> hide them behind irreducible defs (NMid.SpillsB / NoEvenB).
+## asm s18 — nat.div arm64 (dev compile, run-a64 oleans, LEAN_NUM_THREADS=4, machine shared/loaded)
+| module | time | peak RSS |
+|---|---|---|
+| DivWZ | 3.1 s | 2.2 GB |
+| DivDefs (raD `decide +kernel`) | 12.6 s | 3.5 GB |
+| DivRel / DivPostK / DivOneF / DivLessF / DivBigP / Div | ≤ 3 s | ≤ 2.4 GB |
+| DivOneA / DivOneB / DivCmp / DivCmpB / DivBig / DivBigC | 6–12 s | ≤ 2.6 GB |
+| DivOneT (3 setWord tails) | 26 s | 2.7 GB |
+| DivLess (z2.make 3 variants) | 34 s | 2.6 GB |
+| DivBigF (bigFin + slots_keep) | 25 s | 4.0 GB |
+| DivLessC (copy tails) | 57–69 s | 4.4 GB — perf candidate (omega in large post-call contexts) |
+* DivBigC first version: >9 GB / killed. Cause: `by omega` (slot-range side conditions) in a context holding divLarge's
+  whole post (NatOF with `/`, `%`, RtPost, frames). Fix: side conditions proved BEFORE the call (`i1..i4`) and the slot
+  frame reasoning moved to a pure lemma (`slots_keep`) with a minimal context → 9.9 s / 2.5 GB.
