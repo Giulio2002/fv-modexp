@@ -21,7 +21,7 @@ abbrev loopWs (zp n sp : Nat) : List (Nat × Nat) :=
 abbrev LoopPost (R : RtInv) (L : List (Nat × Nat)) (b : Nat) (s : State) (sp zp cap n X Y Mv k : Nat) (M0 : Memory)
     (s' : State) : Prop :=
   s'.regs 4 = s.regs 4 + 8 ∧ s'.regs 5 = s.regs 5 ∧ s'.regs 14 = s.regs 14 ∧ s'.xmm 15 = s.xmm 15 ∧
-  s'.regs 0 = BitVec.ofNat 64 zp ∧ s'.regs 3 = BitVec.ofNat 64 n ∧ s'.regs 1 = BitVec.ofNat 64 cap ∧
+  s'.df = false ∧ s'.fsBase = s.fsBase ∧ s'.regs 0 = BitVec.ofNat 64 zp ∧ s'.regs 3 = BitVec.ofNat 64 n ∧ s'.regs 1 = BitVec.ofNat 64 cap ∧
   s'.mem.readLE zp (8 * n) = montgomery n X Y Mv k ∧
   R.inv b L (s.regs 14).toNat (view R.rt L s'.mem) ∧
   MemFrame M0 s'.mem (R.rt ++ [(sp - 4104, sp + 288), (zp, zp + 16 * n)]) ∧
@@ -129,8 +129,8 @@ theorem loop (impl : List Amd64.Segment) (R : RtInv)
     | stub _ _ _ => exact ho.elim
     | returned s' =>
       simp only [isReturn_returned] at ho ⊢
-      obtain ⟨e1, e2, e3, e4, e5, e6, e7, ev, ei, ef, el⟩ := ho
-      refine ⟨e1, e2, e3, e4, e5, e6, e7, ?_, ei, ?_, ?_⟩
+      obtain ⟨e1, e2, e3, e4, ed, efs, e5, e6, e7, ev, ei, ef, el⟩ := ho
+      refine ⟨e1, e2, e3, e4, ed, by rw [efs, hfs], e5, e6, e7, ?_, ei, ?_, ?_⟩
       · rw [ev, hcv, hF.readLE _ _ (hfo _ _ (hzm.symm) hms),
           FvModexp.Expmc.readLE_win M zp n n (2 * n) (by omega), hval]
         unfold montgomery

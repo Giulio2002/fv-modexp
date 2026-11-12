@@ -56,7 +56,7 @@ theorem exit (impl : List Amd64.Segment) (R : RtInv)
     (hok : R.ok (Extracted.program.contractAddr "runtime.memmove") [zp, zp + n * 8, n * 8]) :
     Reaches ((LibMont.program.link impl).withExit ret) S (IsReturn fun s' =>
       s'.regs 4 = s.regs 4 + 8 ∧ s'.regs 5 = s.regs 5 ∧ s'.regs 14 = s.regs 14 ∧ s'.xmm 15 = s.xmm 15 ∧
-      s'.regs 0 = BitVec.ofNat 64 zp ∧ s'.regs 3 = BitVec.ofNat 64 n ∧ s'.regs 1 = BitVec.ofNat 64 cap ∧
+      s'.df = false ∧ s'.fsBase = S.fsBase ∧ s'.regs 0 = BitVec.ofNat 64 zp ∧ s'.regs 3 = BitVec.ofNat 64 n ∧ s'.regs 1 = BitVec.ofNat 64 cap ∧
       s'.mem.readLE zp (8 * n) = (if c ≠ 0 then (M.readLE (zp + 8 * n) (8 * n) + 2 ^ (64 * n) - M.readLE mp (8 * n)) % 2 ^ (64 * n)
         else M.readLE (zp + 8 * n) (8 * n)) ∧
       R.inv b L (s.regs 14).toNat (view R.rt L s'.mem) ∧
