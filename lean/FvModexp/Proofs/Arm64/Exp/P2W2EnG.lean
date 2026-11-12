@@ -38,7 +38,8 @@ theorem enG2 (impl : List Segment) (R : RtInv)
       S'.regs 18 = S.regs 18 → S'.regs 28 = BitVec.ofNat 64 g → S'.regs 29 = S.regs 29 → S'.mem = M' →
       gc = growCap8 (len0 + (8 * n)) cap0 → InRanges p (8 * gc) R.rt → ApartAll p (8 * gc) L →
       p % 8 = 0 → p + 8 * gc ≤ 2 ^ 48 → M'.accessible p (8 * gc) true = true →
-      MemFrame M1 M' (R.rt ++ [(sp - 4096, sp - 8), (sp + 8, sp + 320)]) → LiveFrame M1 M' L [] →
+      MemFrame M1 M' (R.rt ++ [(sp - 4096, sp - 8), (sp + 8, sp + 48), (sp + 184, sp + 192), (sp + 312, sp + 320)]) →
+      LiveFrame M1 M' L [] →
       M'.regions = M1.regions →
       R.inv (b - 8 * gc) (L ++ [(p, p + 8 * gc)]) g (view R.rt (L ++ [(p, p + 8 * gc)]) M') →
       ReachesRet (LibExp.program.link impl) ret0 S' Q) :
@@ -164,13 +165,14 @@ theorem enG2 (impl : List Segment) (R : RtInv)
     · exact a9.trans (by simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, callRegs_apply]; exact e18)
     · exact a11.trans (by simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, callRegs_apply]; exact e29)
     · rw [hMF'.accessible]; simp only [Memory.accessible_writeLE]; exact hpacc
-    · refine MemFrame.trans (rs'' := R.rt ++ [(sp - 4096, sp - 8), (sp + 8, sp + 320)])
-        (MemFrame.trans (rs'' := R.rt ++ [(sp - 4096, sp - 8), (sp + 8, sp + 320)]) hMF hst2 fun a k ho => ?_)
-        hMF' fun a k ho => ?_
+    · refine MemFrame.trans (rs'' := R.rt ++ [(sp - 4096, sp - 8), (sp + 8, sp + 48), (sp + 184, sp + 192),
+          (sp + 312, sp + 320)])
+        (MemFrame.trans (rs'' := R.rt ++ [(sp - 4096, sp - 8), (sp + 8, sp + 48), (sp + 184, sp + 192),
+          (sp + 312, sp + 320)]) hMF hst2 fun a k ho => ?_) hMF' fun a k ho => ?_
       · simp only [outside_append, outside_cons, outside_nil, and_true] at ho ⊢
-        exact ⟨⟨ho.1, by omega, by omega⟩, by omega, by omega⟩
+        exact ⟨⟨ho.1, by omega⟩, by omega⟩
       · refine ⟨ho, ?_⟩
-        simp only [outside_append, outside_cons, outside_nil, and_true] at ho ⊢; exact ⟨ho.1, by omega, by omega⟩
+        simp only [outside_append, outside_cons, outside_nil, and_true] at ho ⊢; exact ⟨ho.1, by omega⟩
     · exact (hLF.trans (LiveFrame.of_win hst2 hLw2) fun a n h => h).trans
         (LiveFrame.of_sep hLF' hdsep fun r hr => List.mem_append_left _ hr) fun a n h => h
     · rw [hrg', Memory.regions_writeLE, Memory.regions_writeLE]; exact hrg

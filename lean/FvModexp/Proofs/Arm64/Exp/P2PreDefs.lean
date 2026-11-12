@@ -72,7 +72,7 @@ abbrev A : Nat := 80
 
 @[reducible] def Pre (R : RtInv) (kc : Nat) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat) (b : Nat)
     (L : List (Nat × Nat)) (st pw pl ws lm x xl : Nat) (s : State) : Prop :=
-  CallEnv R L s (K kc) A ∧ Serves R ∧ RunIface.Globals R s.mem (winA s (K kc) A ++ LW s pw pl st) ∧
+  CallEnv R L s (K kc) A ∧ Serves R ∧ RunIface.Globals R s.mem (winA s (K kc) A ++ [(pw, pw + 24 * pl), (st, st + 24)]) ∧
     (ws = 2 ∨ ws = 4) ∧ pl = 2 ^ ws ∧ 2 ≤ lm ∧ lm ≤ 2 ^ 13 ∧
     pw % 8 = 0 ∧ pw + 24 * pl ≤ 2 ^ 48 ∧ s.mem.accessible pw (24 * pl) true = true ∧ Outside pw (24 * pl) R.rt ∧
     Outside pw (24 * pl) (win s (K kc) A) ∧ Apart pw (24 * pl) ((s.regs 28).toNat + 16) 8 ∧

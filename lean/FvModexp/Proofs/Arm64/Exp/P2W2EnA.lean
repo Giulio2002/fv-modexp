@@ -37,7 +37,7 @@ theorem enA (impl : List Segment) (ret0 : BitVec 64) (Q : State → Prop)
       S'.regs 13 = BitVec.ofNat 64 w0 → S'.regs 14 = BitVec.ofNat 64 len0 →
       S'.regs 12 = BitVec.ofNat 64 cap0 → S'.regs 9 = BitVec.ofNat 64 (len0 + 8 * W lm) →
       S'.regs 18 = S.regs 18 → S'.regs 28 = BitVec.ofNat 64 g → S'.regs 29 = BitVec.ofNat 64 (sp - 8) →
-      S'.mem = M' → MemFrame M M' [(sp - 8, sp + 464), (sp + 472, sp + 560)] → M'.regions = M.regions →
+      S'.mem = M' → MemFrame M M' [(sp - 8, sp + 456), (sp + 472, sp + 560)] → M'.regions = M.regions →
       ESl M' sp st r29 ret zp zc xp xl xc yp yl lm len0 →
       ReachesRet (LibExp.program.link impl) ret0 S' Q)
     (KG : cap0 < len0 + 8 * W lm → ∀ (S' : State) (M' : Memory),
@@ -46,7 +46,7 @@ theorem enA (impl : List Segment) (ret0 : BitVec 64) (Q : State → Prop)
       S'.regs 2 = BitVec.ofNat 64 cap0 → S'.regs 3 = BitVec.ofNat 64 (len0 + 8 * W lm - cap0) →
       S'.regs 4 = BitVec.ofNat 64 wTy → S'.regs 30 = BitVec.ofNat 64 grRet →
       S'.regs 18 = S.regs 18 → S'.regs 28 = BitVec.ofNat 64 g → S'.regs 29 = BitVec.ofNat 64 (sp - 8) →
-      S'.mem = M' → MemFrame M M' [(sp - 8, sp + 464), (sp + 472, sp + 560)] → M'.regions = M.regions →
+      S'.mem = M' → MemFrame M M' [(sp - 8, sp + 456), (sp + 472, sp + 560)] → M'.regions = M.regions →
       ESl M' sp st r29 ret zp zc xp xl xc yp yl lm len0 →
       M'.readLE (sp + 240) 8 = len0 + 8 * W lm → M'.readLE (sp + 176) 8 = len0 →
       M'.readLE (sp + 192) 8 = len0 + 8 * W lm - cap0 → M'.readLE (sp + 232) 8 = cap0 →
@@ -75,7 +75,7 @@ theorem enA (impl : List Segment) (ret0 : BitVec 64) (Q : State → Prop)
     refine KJ hk _ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?mf ?rg ?sl
     case mf =>
       repeat (first
-        | refine MemFrame.writeLE ?_ _ (r := (sp - 8, sp + 464)) (by simp) (by simp only; omega) (by simp only; omega)
+        | refine MemFrame.writeLE ?_ _ (r := (sp - 8, sp + 456)) (by simp) (by simp only; omega) (by simp only; omega)
         | refine MemFrame.writeLE ?_ _ (r := (sp + 472, sp + 560)) (by simp) (by simp only; omega) (by simp only; omega))
       exact MemFrame.refl _ _
     case sl =>
@@ -94,7 +94,7 @@ theorem enA (impl : List Segment) (ret0 : BitVec 64) (Q : State → Prop)
     refine KG (by omega) _ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?mf ?rg ?sl ?q1 ?q2 ?q3 ?q4 ?q5
     case mf =>
       repeat (first
-        | refine MemFrame.writeLE ?_ _ (r := (sp - 8, sp + 464)) (by simp) (by simp only; omega) (by simp only; omega)
+        | refine MemFrame.writeLE ?_ _ (r := (sp - 8, sp + 456)) (by simp) (by simp only; omega) (by simp only; omega)
         | refine MemFrame.writeLE ?_ _ (r := (sp + 472, sp + 560)) (by simp) (by simp only; omega) (by simp only; omega))
       exact MemFrame.refl _ _
     case sl =>

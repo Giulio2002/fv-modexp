@@ -95,24 +95,31 @@ theorem globals_ctx (hpre : Pre R kc sqC mlC b L st pw pl ws lm x xl s) {bp : Na
     (hsp : S'.sp.toNat = s.sp.toNat - 208) {stk above : Nat} (hstk : stk ≤ kc) (habove : above ≤ 88) :
     RunIface.Globals R M (win S' stk above) := by
   have hK : 208 + kc ≤ s.sp.toNat := by have := hpre.1.2.1.2.1; simp only [K] at this; omega
-  obtain ⟨-, -, ⟨g1, g2, g3, g4, g5, g6, g7, g8, g9, g10, g11, g12, g13⟩, -⟩ := hpre
+  obtain ⟨-, -, ⟨g1, g2, g3, g4, g5, g6, g7, g8, g9, g10, g11, g12, g13⟩, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -,
+    -, -, -, -, -, -, -, -, -, -, hgf⟩ := hpre
   have hrd : ∀ a n, Outside a n (AW R kc s pw pl st) → M.readLE a n = s.mem.readLE a n := fun a n h =>
     hc.fr.readLE a n h
-  have hA : ∀ a n, Outside a n R.rt → Outside a n (winA s (K kc) A ++ LW s pw pl st) →
-      Outside a n (AW R kc s pw pl st) := fun a n h1 h2 => by
-    simp only [AW, List.append_assoc, outside_append] at h2 ⊢; exact ⟨h1, h2⟩
-  have hwin : ∀ a n, Outside a n (winA s (K kc) A ++ LW s pw pl st) → Outside a n (win S' stk above) := by
+  have hA : ∀ a n, RunIface.gA ≤ a → a + n ≤ RunIface.gA + 32 → Outside a n (AW R kc s pw pl st) := by
+    intro a n h1 h2
+    have o1 := g9.of_sub h1 h2
+    have o2 := g10.of_sub h1 h2
+    unfold Apart at hgf
+    simp only [AW, LW, stWs, stkWs, winA, K, A, List.append_assoc, List.cons_append, List.nil_append, outside_append,
+      outside_cons, outside_nil, and_true] at o2 ⊢
+    exact ⟨o1, by omega⟩
+  have hwin : ∀ a n, Outside a n (winA s (K kc) A ++ [(pw, pw + 24 * pl), (st, st + 24)]) →
+      Outside a n (win S' stk above) := by
     intro a n h
     simp only [winA, win, K, A, List.cons_append, outside_cons, outside_append, outside_nil, and_true] at h ⊢
     rw [hsp]; omega
   refine ⟨?_, ?_, ?_, ?_, g5, g6, g7, by rw [hc.fr.accessible]; exact g8, g9, hwin _ _ g10,
     by rw [hc.fr.accessible]; exact g11, g12, hwin _ _ g13⟩
-  · rw [g5, hrd _ _ (hA _ _ (g9.of_sub (by omega) (by omega)) (g10.of_sub (by omega) (by omega))), ← g5]; exact g1
-  · rw [g6, hrd _ _ (hA _ _ (g9.of_sub (by omega) (by omega)) (g10.of_sub (by omega) (by omega))), ← g6]; exact g2
-  · rw [g7, hrd _ _ (hA _ _ (g9.of_sub (by omega) (by omega)) (g10.of_sub (by omega) (by omega))), ← g7]; exact g3
+  · rw [g5, hrd _ _ (hA _ _ (by omega) (by omega)), ← g5]; exact g1
+  · rw [g6, hrd _ _ (hA _ _ (by omega) (by omega)), ← g6]; exact g2
+  · rw [g7, hrd _ _ (hA _ _ (by omega) (by omega)), ← g7]; exact g3
   · have e : Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.divRecursiveThreshold» =
         RunIface.gA := by decide
-    rw [e, hrd _ _ (hA _ _ (g9.of_sub (by omega) (by omega)) (g10.of_sub (by omega) (by omega))), ← e]; exact g4
+    rw [e, hrd _ _ (hA _ _ (by omega) (by omega)), ← e]; exact g4
 
 set_option maxRecDepth 20000 in
 /-- a range of `buf` -/
