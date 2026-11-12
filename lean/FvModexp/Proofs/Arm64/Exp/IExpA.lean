@@ -56,7 +56,7 @@ theorem runA (impl : List Segment) (ret0 : Nat) (hret : RetAddr (LibExp.program.
       S'.regs 14 = BitVec.ofNat 64 zp → S'.regs 15 = BitVec.ofNat 64 zl → S'.regs 16 = BitVec.ofNat 64 zc →
       S'.regs 18 = S.regs 18 → S'.regs 28 = S.regs 28 →
       S'.regs 29 = BitVec.ofNat 64 (t - 328) → S'.regs 30 = BitVec.ofNat 64 ret → S'.mem = M' →
-      MemFrame M M' [(t - 328, t + 48)] → M'.regions = M.regions →
+      MemFrame M M' [(t - 328, t - 8), (t + 8, t + 48)] → M'.regions = M.regions →
       M'.readLE (t - 328) 8 = r29.toNat → M'.readLE (t - 320) 8 = ret →
       M'.readLE (t + 8) 8 = zA → M'.readLE (t + 16) 8 = zA → M'.readLE (t + 32) 8 = mA →
       M'.readLE (t + 40) 1 = 0 → M'.readLE (t - 168) 8 = yl → M'.readLE (t - 104) 8 = yp →
@@ -86,7 +86,8 @@ theorem runA (impl : List Segment) (ret0 : Nat) (hret : RetAddr (LibExp.program.
   case mf =>
     dsimp only
     repeat (first
-      | refine MemFrame.writeLE ?_ _ (r := (t - 328, t + 48)) (by simp) (by simp only; omega) (by simp only; omega))
+      | refine MemFrame.writeLE ?_ _ (r := (t - 328, t - 8)) (by simp) (by simp only; omega) (by simp only; omega)
+      | refine MemFrame.writeLE ?_ _ (r := (t + 8, t + 48)) (by simp) (by simp only; omega) (by simp only; omega))
     exact MemFrame.refl _ _
   all_goals first | (janus_simp; done) | skip
   all_goals first | (simp (disch := omega) only [Memory.readLE_writeLE_of_disjoint, Memory.readLE_writeLE_self,
