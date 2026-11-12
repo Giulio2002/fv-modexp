@@ -985,3 +985,15 @@ rest unchanged (all ≤ 4.4 GB).
 | Amd64/Top/RunC2Sum | 31 s / 6.9 GB | 54 s / 3.4 GB | `namesMod`/`namesExp` ⊆ `LibRun.names` decided in 12-name chunks (`all_split`), one declaration per chunk |
 | Amd64/Top/RunCP2 (new) | — | ~25 s / 2.5 GB | frame-slot facts as small lemmas (`slot_out_call`, `outW_cs2/csd2`) |
 | Amd64/Top/RunOk, RunOkLib, RunOkRow (new) | — | 1 s / 1 s / 8 s | |
+
+## divmc session 18 (arm64, dev compile, LEAN_NUM_THREADS=4) — mulAddWW exact-write variant, nat.mul n = 1 path
+| module | time | peak |
+|---|---|---|
+| MulAddWWXA (XM, frame0X, vwwX, tailX) | 39 s | 2.7 GB |
+| MulAddWWX (reuseX, allocX, setZeroX, ensX) | 25 s | 2.6 GB |
+| MulOnePre (pre_one, wsub_one, makeB_le_mulC1) | 3 s | 2.3 GB |
+| MulOneP (mpost_one) | 325 s / 8.2 GB → **13 s / 2.6 GB** | |
+| MulOne (one / one2) | 107 s | 6.5 GB |
+LESSON (MulOneP): two `omega` calls (a window-inclusion `wsub` and `max/min` side goals of `mulC`) inside a context holding a
+callee's whole destructured post took 190 s + 106 s; moved into 3-line standalone lemmas (`wsub_one`, `makeB_le_mulC1`) they
+cost milliseconds. Never call `omega` after `obtain`ing a callee post; prove the arithmetic in a separate lemma first.
