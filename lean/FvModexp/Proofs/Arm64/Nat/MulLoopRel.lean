@@ -42,8 +42,8 @@ theorem fnD2_entry : segAddr Extracted.program fnD2 = mDfn := by decide
 /-- the writes of the loop relative to `M`: `p[0:m+n]` and `M`'s stack header / free part -/
 @[reducible] def lws (M : Memory) (st p N : Nat) : List (Nat × Nat) := (p, p + 8 * N) :: stkWs M st
 
-/-- see the module doc -/
-structure LB (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (W zp zc st xp xl xc yp yl yc : Nat) (s : State)
+/-- the part of `LB` shared with the prologue relations (before `t := stk.nat(2n)`; see `MulLoopPA`) -/
+structure LB0 (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (W zp zc st xp xl xc yp yl yc : Nat) (s : State)
     (p c : Nat) (L1 : List (Nat × Nat)) (b1 : Nat) (M : Memory) (Lk : List (Nat × Nat)) (bk spent : Nat)
     (Mi : Memory) : Prop where
   core : Core R b L W zp zc st xp xl xc yp yl yc s p c L1 b1 M
@@ -56,6 +56,11 @@ structure LB (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (W zp zc st xp xl xc 
   fr : MemFrame M Mi (R.rt ++ winA s W 88 ++ lws M st p (xl + yl))
   lf : LiveFrame M Mi L1 (lws M st p (xl + yl))
   sok : StkOK Mi R Lk st
+
+/-- see the module doc -/
+structure LB (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (W zp zc st xp xl xc yp yl yc : Nat) (s : State)
+    (p c : Nat) (L1 : List (Nat × Nat)) (b1 : Nat) (M : Memory) (Lk : List (Nat × Nat)) (bk spent : Nat)
+    (Mi : Memory) : Prop extends LB0 R b L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk bk spent Mi where
   slen : stLen Mi st = stLen M st + rnd (2 * yl)
   sarr : (stW Mi st = stW M st ∧ stCap Mi st = stCap M st) ∨
     (InRanges (stW Mi st) (8 * stCap Mi st) R.rt ∧ ApartAll (stW Mi st) (8 * stCap Mi st) L1)
@@ -97,7 +102,7 @@ variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp xl xc yp y
   {Mi : Memory}
 
 /-- the window / layout facts -/
-theorem LB.lay (h : LB R b L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk bk spent Mi) :
+theorem LB0.lay (h : LB0 R b L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk bk spent Mi) :
     4608 ≤ W ∧ W ≤ s.sp.toNat ∧ s.sp.toNat % 16 = 0 ∧ s.sp.toNat + 88 ≤ 2 ^ 48 ∧
       Outside (s.sp.toNat - W) (W + 88) R.rt ∧ Outside ((s.regs 28).toNat + 16) 8 R.rt ∧
       Apart ((s.regs 28).toNat + 16) 8 (s.sp.toNat - W) (W + 88) ∧ xl + yl ≤ c ∧ c < 2 ^ 40 ∧
@@ -108,7 +113,7 @@ theorem LB.lay (h : LB R b L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk bk sp
     hx12, hy12, hxlc, hylc, hxc40, hyc40⟩
 
 /-- the stack header at `M` is the entry's -/
-theorem LB.hdrM (h : LB R b L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk bk spent Mi) :
+theorem LB0.hdrM (h : LB0 R b L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk bk spent Mi) :
     stW M st = stW s.mem st ∧ stLen M st = stLen s.mem st ∧ stCap M st = stCap s.mem st := by
   have e0 := h.core.hdr 0 (by omega); have e1 := h.core.hdr 8 (by omega); have e2 := h.core.hdr 16 (by omega)
   simp only [Nat.add_zero] at e0
@@ -123,7 +128,7 @@ theorem LB.free (h : LB R b L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk bk s
   · exact Or.inr h2
 
 /-- the ranges of `lws` are outside the window -/
-theorem LB.lwsOut (h : LB R b L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk bk spent Mi) :
+theorem LB0.lwsOut (h : LB0 R b L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk bk spent Mi) :
     ∀ q ∈ lws M st p (xl + yl), q.2 ≤ s.sp.toNat - W ∨ s.sp.toNat + 88 ≤ q.1 := by
   obtain ⟨-, -, -, -, -, -, -, hcap, -, hpw, -⟩ := h.lay
   obtain ⟨eW, eL, eC⟩ := h.hdrM
@@ -137,7 +142,7 @@ theorem LB.lwsOut (h : LB R b L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk bk
   rcases hq with rfl | rfl | rfl <;> simp only <;> omega
 
 /-- every classified write range is inside a range of `lws` or fresh -/
-theorem LB.cls (h : LB R b L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk bk spent Mi) {ws : List (Nat × Nat)}
+theorem LB0.cls (h : LB0 R b L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk bk spent Mi) {ws : List (Nat × Nat)}
     (hws : LCls R L1 M st p (xl + yl) ws) :
     ∀ r ∈ ws, r.1 ≤ r.2 ∧ ((∃ q ∈ lws M st p (xl + yl), q.1 ≤ r.1 ∧ r.2 ≤ q.2) ∨
       (InRanges r.1 (r.2 - r.1) R.rt ∧ ApartAll r.1 (r.2 - r.1) L1)) := by
@@ -150,7 +155,7 @@ theorem LB.cls (h : LB R b L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk bk sp
   · exact Or.inl ⟨_, List.mem_cons_of_mem _ (List.mem_cons_of_mem _ List.mem_cons_self), hc.1, hc.2⟩
   · exact Or.inr hc
 
-theorem LB.wsep (h : LB R b L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk bk spent Mi) :
+theorem LB0.wsep (h : LB0 R b L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk bk spent Mi) :
     LiveSep L1 (win s W 88) := h.core.lsep
 
 set_option maxRecDepth 20000 in

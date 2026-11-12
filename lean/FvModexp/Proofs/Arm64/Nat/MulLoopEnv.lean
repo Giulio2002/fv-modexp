@@ -19,7 +19,7 @@ variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp xl xc yp y
   {Mi : Memory}
 
 /-- the frame from the entry to `Mi` (the result range dropped when it is fresh, i.e. inside `R.rt`) -/
-theorem LB.frE (h : LB R b L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk bk spent Mi) :
+theorem LB0.frE (h : LB0 R b L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk bk spent Mi) :
     MemFrame s.mem Mi (R.rt ++ winA s W 88 ++ lws s.mem st p (xl + yl)) := by
   obtain ⟨eW, eL, eC⟩ := h.hdrM
   have e : lws M st p (xl + yl) = lws s.mem st p (xl + yl) := by simp only [lws, stkWs]; rw [eW, eL, eC]
@@ -27,7 +27,7 @@ theorem LB.frE (h : LB R b L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk bk sp
   exact h.core.F.trans h.fr fun a n ho => ⟨by simp only [outside_append] at ho ⊢; exact ⟨ho.1.1, ho.1.2⟩, ho⟩
 
 /-- the read-only data stays loaded -/
-theorem LB.dl (h : LB R b L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk bk spent Mi) :
+theorem LB0.dl (h : LB0 R b L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk bk spent Mi) :
     Extracted.program.DataLoaded Mi := by
   obtain ⟨⟨-, ⟨hal, hb, ha', hw⟩, hdl, -, -, -, -, hro⟩, -⟩ := h.core.pre
   have hzlive : NatLive s.mem R L zp zc := h.core.pre.2.2.2.2.2.1.2.2.1.2.1
@@ -64,7 +64,7 @@ theorem LB.dl (h : LB R b L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk bk spe
       exact Memory.accessible_mono _ hacc (by simp only; omega) (by simp only; omega)
 
 /-- the stack-NatSqr.guard word keeps its value -/
-theorem LB.grd (h : LB R b L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk bk spent Mi) :
+theorem LB0.grd (h : LB0 R b L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk bk spent Mi) :
     Mi.readLE ((s.regs 28).toNat + 16) 8 = s.mem.readLE ((s.regs 28).toNat + 16) 8 := by
   obtain ⟨hW, hWs, -, -, hout, hgr, hga, hcap, -⟩ := h.lay
   have h40 := h.h40
@@ -78,7 +78,7 @@ theorem LB.grd (h : LB R b L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk bk sp
   refine ⟨⟨hgr, by omega, by omega⟩, by omega, by omega, by omega⟩
 
 /-- the call environment of a callee at `SP - 256` (window inside ours, `above ≤ 88`) -/
-theorem LB.callee (h : LB R b L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk bk spent Mi) {S1 : State}
+theorem LB0.callee (h : LB0 R b L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk bk spent Mi) {S1 : State}
     {stk1 above1 : Nat} (hsp : S1.sp.toNat = s.sp.toNat - 256) (hg : S1.regs 28 = s.regs 28) (hm : S1.mem = Mi)
     (hk : 256 + stk1 ≤ W) (ha : above1 ≤ 88) : CallEnv R Lk S1 stk1 above1 := by
   obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb, ha', hw⟩, hdl, hout, hga, hgr, hLs, hro⟩, -⟩ := h.core.pre
@@ -152,7 +152,7 @@ theorem LB.stkPre (h : LB R b L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk bk
     hsgA, h6⟩
 
 /-- the threshold globals at `Mi` -/
-theorem LB.glob (h : LB R b L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk bk spent Mi) {w' : List (Nat × Nat)}
+theorem LB0.glob (h : LB0 R b L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk bk spent Mi) {w' : List (Nat × Nat)}
     (hw : ∀ x k, Outside x k (win s W 88) → Outside x k w') : RunIface.Globals R Mi w' := by
   have hgl : RunIface.Globals R s.mem (win s W 88) := h.core.pre.2.2.2.1
   have hsp : StkPre R L s W 88 st := h.core.pre.2.2.2.2.2.2.1
@@ -183,7 +183,7 @@ theorem LB.sep (h : LB R b L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk bk sp
     unfold Apart at this ⊢; omega
 
 /-- an operand range held in `L` and outside the window keeps its bytes from the entry to `Mi` -/
-theorem LB.rd (h : LB R b L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk bk spent Mi) {a n : Nat}
+theorem LB0.rd (h : LB0 R b L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk bk spent Mi) {a n : Nat}
     (hh : Held R L a n) (ho : Outside a n (win s W 88)) (hs : StkSep s.mem st a n) (hp : Apart a n p (8 * (xl + yl))) :
     Mi.readLE a n = s.mem.readLE a n := by
   rw [← h.core.rd hh ho]
