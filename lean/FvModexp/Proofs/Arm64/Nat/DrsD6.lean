@@ -25,6 +25,7 @@ theorem uk_step {R : RtInv} {c : Cx} {s : State} {j : Nat} {Z U : List Nat} {M :
     (hwk : Asm.limbs M (c.up + 8 * (j - c.vl / 2)) (c.u1 - (j - c.vl / 2)) = (c.sT s j U).1) :
     Asm.limbs M c.up c.u1 = (c.BS s j Z U).2 := by
   have hul := hli.2.2.2.1
+  have := hcr.h40
   have hjm : j ≤ c.u1 - c.vl := by have := hli.2.2.2.2.2.2.2; omega
   have hvu := hcr.vu1
   rw [(bs_eq hcr hli hjB).2, ← List.take_append_drop (j - c.vl / 2) (Asm.limbs M c.up c.u1),
@@ -77,7 +78,7 @@ theorem d6 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
   have tz := tN (by omega : c.qp + 8 * (j - c.vl / 2) < 2 ^ 64)
   have tl := tN (by omega : c.ql - (j - c.vl / 2) < 2 ^ 64)
   have tc := tN (by omega : c.qc - (j - c.vl / 2) < 2 ^ 64)
-  have tx := tN (by omega : c.t0 < 2 ^ 64)
+  have tx := tN (by have := hcr.t048; omega : c.t0 < 2 ^ 64)
   have tn := tN (by omega : (c.q0 s j U).length < 2 ^ 64)
   refine ReachesRet.call_regions (atSum impl hap R hmv bk Lk (X.regs 0) (X.regs 1) (X.regs 2) (X.regs 3)
     (X.regs 4) (X.regs 5)) hpc
@@ -133,7 +134,7 @@ theorem d6 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
       (by unfold Apart at hqu; simp only [outside_cons, outside_nil, and_true]; omega)
   have hwl : FixOut s [(c.qp + 8 * (j - c.vl / 2), c.qp + 8 * (j - c.vl / 2) + 8 * (c.ql - (j - c.vl / 2)))] := by
     simp only [FixOut, outside_cons, outside_nil, and_true]; omega
-  have hfo := fixOut_callee hout (by omega) (by omega) hspn (by omega) hwl
+  have hfo := fixOut_callee (k := 4240) (a := 48) hout (by omega) (by omega) hspn (by omega) hwl
   have hhi : HiOut s (R.rt ++ winA X 4240 48 ++
       [(c.qp + 8 * (j - c.vl / 2), c.qp + 8 * (j - c.vl / 2) + 8 * (c.ql - (j - c.vl / 2)))]) :=
     hiOut_callee hout (by omega) (by omega) hspn (by omega) (hiOut_win (W := c.W)
