@@ -125,7 +125,7 @@ theorem mpost_up {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp xl
       rcases sbor with ⟨h1, h2⟩ | h
       · exact Or.inl ⟨by rw [h1, eW], by rw [h2, eC]⟩
       · exact Or.inr h
-    · rw [eW3, eC3]; intro hn'; apply sbm; rw [eW, eC]; exact hn'
+    · unfold ArrIn; rw [eW3, eC3]; intro hn'; apply sbm; rw [eW, eC]; exact hn'
 
 set_option maxRecDepth 20000 in
 /-- a callee called at `SP - f` with a frame `R.rt ++ winA S1 W1 88 ++ [z] ++ stkWs` (an inner `nat.mul`) keeps the
