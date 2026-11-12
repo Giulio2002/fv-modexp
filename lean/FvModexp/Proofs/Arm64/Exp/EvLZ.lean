@@ -138,7 +138,7 @@ end
 it after reloading `X0`, `X2`) -/
 abbrev mvJ : Nat := 1790424
 
-/-- the join point `mvJ` (after `z = z.set(z2)`; `X0`, `X2` = `z2`'s pointer and capacity): `J8`'s locals, `z2` in the slots `256/136/144`, `z = (pZ, lw, cZ)`
+/-- the join point `mvJ` (after `z = z.set(z2)`; `X0`, `X2`, `X4` = `z2`'s pointer, capacity, length): `J8`'s locals, `z2` in the slots `256/136/144`, `z = (pZ, lw, cZ)`
 of `z2`'s value in the slots `272/168/176`, apart from every local array -/
 structure J9 (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl yc mp ml mc ret : Nat) (s : State)
     (rk : Nat) (S : State) (L1 : List (Nat × Nat)) (b1 p1 l1 c1 q l2 pz lz cz pw lw cw pZ cZ : Nat) : Prop where
@@ -146,6 +146,7 @@ structure J9 (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl
   pc : S.pc = BitVec.ofNat 64 mvJ
   r0 : S.regs 0 = BitVec.ofNat 64 pw
   r2 : S.regs 2 = BitVec.ofNat 64 cw
+  r4 : S.regs 4 = BitVec.ofNat 64 lw
   s288 : S.mem.readLE (sp + 288) 8 = p1
   s208 : S.mem.readLE (sp + 208) 8 = l1
   s216 : S.mem.readLE (sp + 216) 8 = c1
@@ -167,6 +168,7 @@ structure J9 (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl
   ap : Apart q (8 * a2 ml (nE s mp ml)) p1 (8 * c1)
   z1 : LN R L s.mem st S.mem L1 pz lz cz (natVal s.mem xp xl ^ natVal s.mem yp yl % 2 ^ nE s mp ml)
   pz64 : pz < 2 ^ 64
+  z1e : EL R L pz cz
   za1 : 0 < cz → Apart pz (8 * cz) p1 (8 * c1)
   za2 : 0 < cz → Apart pz (8 * cz) q (8 * a2 ml (nE s mp ml))
   z2 : LN R L s.mem st S.mem L1 pw lw cw

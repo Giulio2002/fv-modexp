@@ -128,12 +128,13 @@ section
 variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc yp yl yc mp ml mc : Nat} {s : State}
 
 set_option maxRecDepth 20000 in
-/-- **the generic callee step** (see the module doc): the destination `(pd, cd)` is a located array or `z`'s -/
-theorem stepC (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) {M : Memory}
+/-- **the generic callee step** (see the module doc): the destination `(pd, cd)` is a located array or `z`'s, or an
+EMPTY range (`cd = 0`: then `hds`/`hdl`/`hdw` say only that `pd` is not strictly inside those ranges) -/
+theorem stepC0 (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) {M : Memory}
     {L1 : List (Nat × Nat)} {b1 ℓ : Nat} (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ) {pd cd : Nat}
     (hds : ∀ a k, Outside a k R.rt → Outside a k (ZS zp zc st s.mem) → Outside a k [(pd, pd + 8 * cd)])
     (hdl : ∀ a k, InRanges a k L → Outside a k (ZS zp zc st s.mem) → Outside a k [(pd, pd + 8 * cd)])
-    (hcd : 0 < cd) (hdw : Apart pd (8 * cd) (sp - K) (K + 448))
+    (hdw : Apart pd (8 * cd) (sp - K) (K + 448))
     {stk above : Nat} (hstk : stk ≤ K) (habove : above ≤ 128)
     {M' : Memory} {L2 : List (Nat × Nat)} {b2 : Nat}
     (hF : MemFrame M M' (R.rt ++ [(sp - stk, sp - 8), (sp + 8, sp + above)] ++ [(pd, pd + 8 * cd)] ++ stkWs M st))
@@ -173,6 +174,25 @@ theorem stepC (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) {M 
   · simp only [outside_cons, outside_nil, and_true]
     have := hqd c0; unfold Apart at this; omega
   · simp only [stkWs, outside_cons, outside_nil, and_true]; omega
+
+
+set_option maxRecDepth 20000 in
+/-- `stepC0` for a non-empty destination (the original form) -/
+theorem stepC (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) {M : Memory}
+    {L1 : List (Nat × Nat)} {b1 ℓ : Nat} (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ) {pd cd : Nat}
+    (hds : ∀ a k, Outside a k R.rt → Outside a k (ZS zp zc st s.mem) → Outside a k [(pd, pd + 8 * cd)])
+    (hdl : ∀ a k, InRanges a k L → Outside a k (ZS zp zc st s.mem) → Outside a k [(pd, pd + 8 * cd)])
+    (_hcd : 0 < cd) (hdw : Apart pd (8 * cd) (sp - K) (K + 448))
+    {stk above : Nat} (hstk : stk ≤ K) (habove : above ≤ 128)
+    {M' : Memory} {L2 : List (Nat × Nat)} {b2 : Nat}
+    (hF : MemFrame M M' (R.rt ++ [(sp - stk, sp - 8), (sp + 8, sp + above)] ++ [(pd, pd + 8 * cd)] ++ stkWs M st))
+    (hLF : LiveFrame M M' L1 ([(pd, pd + 8 * cd)] ++ stkWs M st)) (hrg : M'.regions = M.regions)
+    (hx : LiveExt R L1 L2) (hinv : R.inv b2 L2 g (view R.rt L2 M')) (hsb : StackBackL R L1 L2 st M M') :
+    WC R L K g sp st zp zc s.mem M' L2 b2 ℓ ∧
+    (∀ a k, (sp - 8 ≤ a ∧ a + k ≤ sp + 8 ∨ sp + 128 ≤ a ∧ a + k ≤ sp + 448) → M'.readLE a k = M.readLE a k) ∧
+    (∀ q l c v, LN R L s.mem st M L1 q l c v → (0 < c → Apart q (8 * c) pd (8 * cd)) →
+      LN R L s.mem st M' L2 q l c v) :=
+  stepC0 hP h hds hdl hdw hstk habove hF hLF hrg hx hinv hsb
 
 end
 

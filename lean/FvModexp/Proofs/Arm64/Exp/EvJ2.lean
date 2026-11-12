@@ -14,6 +14,12 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvMod
 
 namespace FvModexp.Arm64.ExpEven
 
+/-- an EMPTY local nat's pointer (`nat.expNN` may return `nil` or an empty fresh slice, FINDING "[infra s30]"): `0` or
+a runtime pointer apart from the entry live set `L` — so it is "not strictly inside" any range held at the entry,
+the window, the stack header, the guard word (what `subMod2N`'s `PreG` asks of an empty `z`) -/
+@[reducible] def EL (R : RtInv) (L : List (Nat × Nat)) (p c : Nat) : Prop :=
+  c = 0 → p = 0 ∨ (InRanges p 0 R.rt ∧ ApartAll p 0 L)
+
 /-- the join point `exp1R` (return of `z1 = z1.expNN(stk, x, y, m1, false)`): `m1`, `m2` in their slots, slot 224 =
 `2·max`, `z1 = (pz, lz, cz)` of value `x^y mod 2^n`; its array apart from `m1`, `m2` -/
 structure J6 (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl yc mp ml mc ret : Nat) (s : State)
@@ -36,6 +42,7 @@ structure J6 (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl
   ap : Apart q (8 * a2 ml (nE s mp ml)) p1 (8 * c1)
   z1 : LN R L s.mem st S.mem L1 pz lz cz (natVal s.mem xp xl ^ natVal s.mem yp yl % 2 ^ nE s mp ml)
   pz64 : pz < 2 ^ 64
+  z1e : EL R L pz cz
   za1 : 0 < cz → Apart pz (8 * cz) p1 (8 * c1)
   za2 : 0 < cz → Apart pz (8 * cz) q (8 * a2 ml (nE s mp ml))
 
@@ -112,6 +119,7 @@ structure J7 (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl
   ap : Apart q (8 * a2 ml (nE s mp ml)) p1 (8 * c1)
   z1 : LN R L s.mem st S.mem L1 pz lz cz (natVal s.mem xp xl ^ natVal s.mem yp yl % 2 ^ nE s mp ml)
   pz64 : pz < 2 ^ 64
+  z1e : EL R L pz cz
   za1 : 0 < cz → Apart pz (8 * cz) p1 (8 * c1)
   za2 : 0 < cz → Apart pz (8 * cz) q (8 * a2 ml (nE s mp ml))
   d4 : DL R L s.mem st S.mem L1 t (2 * max l1 l2)

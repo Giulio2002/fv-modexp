@@ -148,7 +148,7 @@ theorem runJ {impl : List Segment} (ret0 : BitVec 64) (Q : State → Prop) (sp p
     (h0 : S.regs 0 = BitVec.ofNat 64 pw) (h1 : S.regs 1 = BitVec.ofNat 64 lw) (h3 : S.regs 3 = BitVec.ofNat 64 cZ)
     (h4 : S.regs 4 = BitVec.ofNat 64 lw) (h5 : S.regs 5 = BitVec.ofNat 64 pZ) (h2 : S.regs 2 = BitVec.ofNat 64 cw)
     (KE : ∀ (S' : State) (M' : Memory), S'.pc = BitVec.ofNat 64 mvJ → S'.sp = S.sp → pZ = pw →
-      S'.regs 0 = BitVec.ofNat 64 pw → S'.regs 2 = BitVec.ofNat 64 cw →
+      S'.regs 0 = BitVec.ofNat 64 pw → S'.regs 2 = BitVec.ofNat 64 cw → S'.regs 4 = BitVec.ofNat 64 lw →
       S'.regs 18 = S.regs 18 → S'.regs 28 = S.regs 28 → S'.regs 29 = S.regs 29 → S'.mem = M' →
       MemFrame M M' [(sp + 168, sp + 184), (sp + 272, sp + 280)] → M'.regions = M.regions →
       M'.readLE (sp + 272) 8 = pZ → M'.readLE (sp + 168) 8 = lw → M'.readLE (sp + 176) 8 = cZ →
@@ -167,7 +167,7 @@ theorem runJ {impl : List Segment} (ret0 : BitVec 64) (Q : State → Prop) (sp p
   generalize eS : S.sp = xsp at KE KM
   subst hmem
   janus_run [hal, hacc] until [mvJ, mvE]
-  · refine KE _ _ rfl ?_ hbr.symm ?_ ?_ ?_ ?_ ?_ rfl ?mf ?rg ?_ ?_ ?_
+  · refine KE _ _ rfl ?_ hbr.symm ?_ ?_ ?_ ?_ ?_ ?_ rfl ?mf ?rg ?_ ?_ ?_
     case mf =>
       repeat (first
         | refine MemFrame.writeLE ?_ _ (r := (sp + 168, sp + 184)) (by simp) (by simp only; omega) (by simp only; omega)
@@ -200,12 +200,12 @@ theorem runJ {impl : List Segment} (ret0 : BitVec 64) (Q : State → Prop) (sp p
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
 /-- the run `mvR` (return of `memmove`) → `mvJ` -/
-theorem runMv {impl : List Segment} (ret0 : BitVec 64) (Q : State → Prop) (sp pw cw : Nat) (M : Memory)
+theorem runMv {impl : List Segment} (ret0 : BitVec 64) (Q : State → Prop) (sp pw lw cw : Nat) (M : Memory)
     (hal : sp % 16 = 0) (hsp2 : sp + 448 ≤ 2 ^ 48) (hacc : M.accessible (sp + 128) 320 true = true)
-    (h256 : M.readLE (sp + 256) 8 = pw) (h144 : M.readLE (sp + 144) 8 = cw)
+    (h256 : M.readLE (sp + 256) 8 = pw) (h144 : M.readLE (sp + 144) 8 = cw) (h136 : M.readLE (sp + 136) 8 = lw)
     (S : State) (hpc : S.pc = BitVec.ofNat 64 mvR) (hsp : S.sp = BitVec.ofNat 64 sp) (hmem : S.mem = M)
     (K : ∀ S' : State, S'.pc = BitVec.ofNat 64 mvJ → S'.sp = S.sp → S'.mem = M →
-      S'.regs 0 = BitVec.ofNat 64 pw → S'.regs 2 = BitVec.ofNat 64 cw →
+      S'.regs 0 = BitVec.ofNat 64 pw → S'.regs 2 = BitVec.ofNat 64 cw → S'.regs 4 = BitVec.ofNat 64 lw →
       S'.regs 18 = S.regs 18 → S'.regs 28 = S.regs 28 → S'.regs 29 = S.regs 29 →
       ReachesRet (LibNE.program.link impl) ret0 S' Q) :
     ReachesRet (LibNE.program.link impl) ret0 S Q := by
@@ -214,8 +214,8 @@ theorem runMv {impl : List Segment} (ret0 : BitVec 64) (Q : State → Prop) (sp 
   generalize e29 : S.regs 29 = x29 at K
   generalize eS : S.sp = xsp at K
   subst hmem
-  janus_run [hal, hacc, h256, h144] until [mvJ]
-  refine K _ rfl ?_ rfl ?_ ?_ ?_ ?_ ?_
+  janus_run [hal, hacc, h256, h144, h136] until [mvJ]
+  refine K _ rfl ?_ rfl ?_ ?_ ?_ ?_ ?_ ?_
   all_goals first | (janus_simp; done) | skip
   all_goals first | (rw [← eS, hsp]; done) | skip
 

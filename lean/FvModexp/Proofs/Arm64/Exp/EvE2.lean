@@ -8,7 +8,7 @@ set_option autoImplicit false
 # `nat.expNNEven` (arm64): `nat4R` → `z2 = z2.expNN(stk, x, y, m2, false)` → `exp2R` (agent infra)
 
 `runE2`: as `runE1` with `R10..R12 = m2` (slots `280/192/200`). `segE2` (`J7 → J8`): the premise
-`EvenHyp.ExpNNHypNE0` (`m2 = M / 2^n` is odd: the odd disjunct, `Exp.tz_spec`), `ExpN.NPre` from `npre_of`; `m1`,
+`EvenHyp.ExpNNHypNE1` (`m2 = M / 2^n` is odd: the odd disjunct, `Exp.tz_spec`), `ExpN.NPre` from `npre_of`; `m1`,
 `m2`, `z1` survive (`stepC`, apart from the scratch `t`); the result is located (`LN.of_expN`); an empty result
 (possibly `nil`) is kept as `(X0, 0, 0)`.
 -/
@@ -62,7 +62,7 @@ set_option maxHeartbeats 32000000 in
 theorem segE2 {impl : List Segment} (hap : ImplApart Extracted.program impl)
     {KN : Nat} {costF : Nat → Nat → Nat → Nat} {needR : Nat → Nat → Nat} {costR : Nat → Nat → Nat → Nat}
     {needS needP : Nat → Nat → Nat → Nat} {costS costP : Nat → Nat → Nat → Nat → Nat}
-    (hE : EvenHyp.ExpNNHypNE0 impl R KN costF needR costR needS needP costS costP)
+    (hE : EvenHyp.ExpNNHypNE1 impl R KN costF needR costR needS needP costS costP)
     (hKN : 4304 ≤ KN) (hKN1 : KN + 1312 ≤ K) (hKN2 : KN + 288 ≤ 2 ^ 20)
     (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) (hM : 0 < natVal s.mem mp ml)
     (hev : natVal s.mem mp ml % 2 = 0)
@@ -145,7 +145,7 @@ theorem segE2 {impl : List Segment} (hap : ImplApart Extracted.program impl)
   · simp only [ArgsFrom]
     exact ⟨r0.trans h.r0, r1.trans h.r1, r2.trans h.r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, trivial⟩
   · refine ⟨by rw [hgN', hsN']; exact hnp, Or.inl (by rw [fm, hv2]; exact hodd)⟩
-  · obtain ⟨⟨p, l, c, g0, g1, g2, hv, hN, hlc, hc64, L2, b2, hx, hb, hinv, hlv, hres, hsb, hF, hLF, hrs⟩, hc40⟩ := hq
+  · obtain ⟨⟨p, l, c, g0, g1, g2, hv, hN, hlc, hc64, L2, b2, hx, hb, hinv, hlv, hres, hsb, hF, hLF, hrs⟩, hc40, hel⟩ := hq
     have tc : (s'.regs 2).toNat = c := by rw [g2, BitVec.toNat_ofNat]; omega
     rw [tc] at hc40
     simp only [winA, hsN'] at hF
@@ -185,7 +185,7 @@ theorem segE2 {impl : List Segment} (hap : ImplApart Extracted.program impl)
         by rw [k288]; exact h.s288, by rw [k208]; exact h.s208, by rw [k216]; exact h.s216,
         by rw [k280]; exact h.s280, by rw [k192]; exact h.s192, by rw [k200]; exact h.s200,
         by rw [k224]; exact h.s224, by rw [k264]; exact h.s264, by rw [k152]; exact h.s152,
-        by rw [k160]; exact h.s160, hm1', h.c1p, hm2', h.ap, hz1', h.pz64, h.za1, h.za2, hz0, BitVec.isLt _,
+        by rw [k160]; exact h.s160, hm1', h.c1p, hm2', h.ap, hz1', h.pz64, h.z1e, h.za1, h.za2, hz0, BitVec.isLt _,
         fun h0 => absurd h0 (Nat.lt_irrefl 0), fun h0 => absurd h0 (Nat.lt_irrefl 0),
         fun h0 => absurd h0 (Nat.lt_irrefl 0)⟩
     · have ha2 : 0 < a2 ml (nE s mp ml) := by simp only [a2]; omega
@@ -199,7 +199,7 @@ theorem segE2 {impl : List Segment} (hap : ImplApart Extracted.program impl)
         by rw [k288]; exact h.s288, by rw [k208]; exact h.s208, by rw [k216]; exact h.s216,
         by rw [k280]; exact h.s280, by rw [k192]; exact h.s192, by rw [k200]; exact h.s200,
         by rw [k224]; exact h.s224, by rw [k264]; exact h.s264, by rw [k152]; exact h.s152,
-        by rw [k160]; exact h.s160, hm1', h.c1p, hm2', h.ap, hz1', h.pz64, h.za1, h.za2, hz,
+        by rw [k160]; exact h.s160, hm1', h.c1p, hm2', h.ap, hz1', h.pz64, h.z1e, h.za1, h.za2, hz,
         by have := (hlv c0).2.2.2; omega,
         fun _ => hza _ _ (hm1.1.2.1 h.c1p).2.1 h.tm1, fun _ => hza _ _ (hm2.1.2.1 ha2).2.1 h.tm2,
         fun _ c1 => hza _ _ (hz1.1.2.1 c1).2.1 (h.tz1 c1)⟩

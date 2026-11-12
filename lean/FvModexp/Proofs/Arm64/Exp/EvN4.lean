@@ -125,7 +125,7 @@ theorem segN4 {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns
   refine K7 s' L2 b2 p1 l1 c1 q l2 pz lz cz _ ⟨⟨g2.trans hS2, g3.trans h28, g4.trans (f29.trans h.jx.e29),
       g5.trans (f18.trans h.jx.e18), hw3, hesl.keep (fun a k ha => hk a k (by simp only [SlotR] at ha; omega))
         (by omega), bud_step hb1 (hrk l1 l2 hl1 hl2) hb2⟩, g1, hz0, hz1, hz2, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_,
-    kN hm1, h.c1p, kN hm2, h.ap, kN hz, h.pz64, h.za1, h.za2,
+    kN hm1, h.c1p, kN hm2, h.ap, kN hz, h.pz64, h.z1e, h.za1, h.za2,
     DL.of_scr hw3 hscE rfl (by have := rnd_ge (2 * max l1 l2); omega) (by omega),
     Scr.apartLN hscC hlc hm1 h.c1p, Scr.apartLN hscC hlc hm2 ha2, fun c0 => Scr.apartLN hscC hlc hz c0⟩
   all_goals rw [hk _ _ (Or.inr ⟨by omega, by omega⟩)]

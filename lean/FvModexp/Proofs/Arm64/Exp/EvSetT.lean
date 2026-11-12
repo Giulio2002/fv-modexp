@@ -62,6 +62,7 @@ structure JS (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl
   ap : Apart q (8 * a2 ml (nE s mp ml)) p1 (8 * c1)
   z1 : LN R L s.mem st S.mem L1 pz lz cz (natVal s.mem xp xl ^ natVal s.mem yp yl % 2 ^ nE s mp ml)
   pz64 : pz < 2 ^ 64
+  z1e : EL R L pz cz
   za1 : 0 < cz → Apart pz (8 * cz) p1 (8 * c1)
   za2 : 0 < cz → Apart pz (8 * cz) q (8 * a2 ml (nE s mp ml))
   z2 : LN R L s.mem st S.mem L1 pw lw cw
@@ -103,6 +104,7 @@ structure JO (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl
   ap : Apart q (8 * a2 ml (nE s mp ml)) p1 (8 * c1)
   z1 : LN R L s.mem st S.mem L1 pz lz cz (natVal s.mem xp xl ^ natVal s.mem yp yl % 2 ^ nE s mp ml)
   pz64 : pz < 2 ^ 64
+  z1e : EL R L pz cz
   za1 : 0 < cz → Apart pz (8 * cz) p1 (8 * c1)
   za2 : 0 < cz → Apart pz (8 * cz) q (8 * a2 ml (nE s mp ml))
   z2 : LN R L s.mem st S.mem L1 pw lw cw
@@ -126,11 +128,11 @@ variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc
 theorem JO.toJ9 {rk : Nat} {S : State} {L1 : List (Nat × Nat)} {b1 p1 l1 c1 q l2 pz lz cz pw lw cw pZ cZ : Nat}
     (h : JO R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s rk S L1 b1 p1 l1 c1 q l2 pz lz cz pw lw cw pZ cZ)
     (hpc : S.pc = BitVec.ofNat 64 mvJ) (h0 : S.regs 0 = BitVec.ofNat 64 pw) (h2 : S.regs 2 = BitVec.ofNat 64 cw)
-    (hv : natVal S.mem pZ lw = natVal s.mem xp xl ^ natVal s.mem yp yl % (natVal s.mem mp ml / 2 ^ nE s mp ml))
+    (h4 : S.regs 4 = BitVec.ofNat 64 lw) (hv : natVal S.mem pZ lw = natVal s.mem xp xl ^ natVal s.mem yp yl % (natVal s.mem mp ml / 2 ^ nE s mp ml))
     (hn : NatNorm S.mem pZ lw) :
     J9 R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s rk S L1 b1 p1 l1 c1 q l2 pz lz cz pw lw cw pZ cZ :=
-  ⟨h.jx, hpc, h0, h2, h.s288, h.s208, h.s216, h.s280, h.s192, h.s200, h.s264, h.s152, h.s160, h.s256, h.s136,
-    h.s144, h.s272, h.s168, h.s176, h.m1, h.c1p, h.m2, h.ap, h.z1, h.pz64, h.za1, h.za2, h.z2, h.pw64, h.wa1, h.wa2,
+  ⟨h.jx, hpc, h0, h2, h4, h.s288, h.s208, h.s216, h.s280, h.s192, h.s200, h.s264, h.s152, h.s160, h.s256, h.s136,
+    h.s144, h.s272, h.s168, h.s176, h.m1, h.c1p, h.m2, h.ap, h.z1, h.pz64, h.z1e, h.za1, h.za2, h.z2, h.pw64, h.wa1, h.wa2,
     h.wz, ⟨h.dz.1, h.dz.2.1, h.dz.2.2.1, h.dz.2.2.2, hv, hn⟩, h.pZ64, h.Za1, h.Za2, h.Zz1, h.Zz2⟩
 
 /-- an apartness from `[p, p + 8c)` gives one from a destination inside it (or an empty one at `0`) -/
@@ -210,7 +212,7 @@ theorem JO.mv (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) {rk
     (k8 _ (by omega) (by omega)).trans h.s176,
     kN h.m1 (fun _ c0 => (h.Za1 c0).symm), h.c1p,
     kN h.m2 (fun _ c0 => (h.Za2 c0).symm), h.ap,
-    kN h.z1 (fun c0 cZ0 => (h.Zz1 cZ0 c0).symm), h.pz64, h.za1, h.za2,
+    kN h.z1 (fun c0 cZ0 => (h.Zz1 cZ0 c0).symm), h.pz64, h.z1e, h.za1, h.za2,
     kN h.z2 (fun c0 cZ0 => (h.Zz2 cZ0 c0).symm), h.pw64, h.wa1, h.wa2, h.wz,
     DZ.frm (LiveExt.refl R L1) hF.accessible hhd h.dz, h.pZ64, h.Za1, h.Za2, h.Zz1, h.Zz2⟩
 

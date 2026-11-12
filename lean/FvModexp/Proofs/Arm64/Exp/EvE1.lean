@@ -7,7 +7,7 @@ set_option autoImplicit false
 # `nat.expNNEven` (arm64): `nat3R` → `z1 = z1.expNN(stk, x, y, m1, false)` → `exp1R` (agent infra)
 
 `runE1`: `R3 = stk`, `R4..R9 = x, y` (spills), `R10..R12 = m1` (slots `288/208/216`), `R13 = 0`, `CALL nat.expNN`
-(`R0..R2` = the scratch `z1` from `stk.nat`). `segE1` (`J5 → J6`): the premise `EvenHyp.ExpNNHypNE0` (`m1 = 2^n`: the
+(`R0..R2` = the scratch `z1` from `stk.nat`). `segE1` (`J5 → J6`): the premise `EvenHyp.ExpNNHypNE1` (`m1 = 2^n`: the
 power-of-two disjunct), `ExpN.NPre` from `npre_of`; `m1`, `m2` and the scratch survive (`stepC`, apart from `z1`'s
 array); the result is located (`LN.of_expN`); an empty result (possibly `nil`) is kept as `(X0, 0, 0)`.
 -/
@@ -69,7 +69,7 @@ set_option maxHeartbeats 32000000 in
 theorem segE1 {impl : List Segment} (hap : ImplApart Extracted.program impl)
     {KN : Nat} {costF : Nat → Nat → Nat → Nat} {needR : Nat → Nat → Nat} {costR : Nat → Nat → Nat → Nat}
     {needS needP : Nat → Nat → Nat → Nat} {costS costP : Nat → Nat → Nat → Nat → Nat}
-    (hE : EvenHyp.ExpNNHypNE0 impl R KN costF needR costR needS needP costS costP)
+    (hE : EvenHyp.ExpNNHypNE1 impl R KN costF needR costR needS needP costS costP)
     (hKN : 4304 ≤ KN) (hKN1 : KN + 1312 ≤ K) (hKN2 : KN + 288 ≤ 2 ^ 20)
     (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) (hM : 0 < natVal s.mem mp ml)
     (hev : natVal s.mem mp ml % 2 = 0)
@@ -150,7 +150,7 @@ theorem segE1 {impl : List Segment} (hap : ImplApart Extracted.program impl)
   · simp only [ArgsFrom]
     exact ⟨r0.trans h.r0, r1.trans h.r1, r2.trans h.r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, trivial⟩
   · refine ⟨by rw [hgN', hsN']; exact hnp, Or.inr ⟨nE s mp ml, by rw [fm]; exact hv1⟩⟩
-  · obtain ⟨⟨p, l, c, g0, g1, g2, hv, hN, hlc, hc64, L2, b2, hx, hb, hinv, hlv, hres, hsb, hF, hLF, hrs⟩, hc40⟩ := hq
+  · obtain ⟨⟨p, l, c, g0, g1, g2, hv, hN, hlc, hc64, L2, b2, hx, hb, hinv, hlv, hres, hsb, hF, hLF, hrs⟩, hc40, hel⟩ := hq
     have tc : (s'.regs 2).toNat = c := by rw [g2, BitVec.toNat_ofNat]; omega
     rw [tc] at hc40
     simp only [winA, hsN'] at hF
@@ -178,6 +178,10 @@ theorem segE1 {impl : List Segment} (hap : ImplApart Extracted.program impl)
       subst c0
       have hl0 : l = 0 := by omega
       subst hl0
+      have el0 : EL R L (s'.regs 0).toNat 0 := fun _ => by
+        rcases hel tc hk0 with e | ⟨hin, hap'⟩
+        · exact Or.inl e
+        · exact Or.inr ⟨hin, fun r hr => hap' r (hw.le.mem_old hr)⟩
       have hz0 : LN R L s.mem st s'.mem L2 (s'.regs 0).toNat 0 0
           (natVal s.mem xp xl ^ natVal s.mem yp yl % 2 ^ nE s mp ml) :=
         ⟨⟨by decide, fun h0 => absurd h0 (Nat.lt_irrefl 0), fun h0 => absurd h0 (Nat.lt_irrefl 0)⟩, Nat.le_refl _,
@@ -185,7 +189,7 @@ theorem segE1 {impl : List Segment} (hap : ImplApart Extracted.program impl)
       exact K6 s' L2 b2 p1 l1 c1 q l2 (s'.regs 0).toNat 0 0 ⟨hjx, hr.trans r30, (BitVec.eq_of_toNat_eq (by rw [BitVec.toNat_ofNat, Nat.mod_eq_of_lt (BitVec.isLt _)])), g1, g2,
         by rw [k288]; exact h.s288, by rw [k208]; exact h.s208, by rw [k216]; exact h.s216,
         by rw [k280]; exact h.s280, by rw [k192]; exact h.s192, by rw [k200]; exact h.s200,
-        by rw [k224]; exact h.s224, hm1', h.c1p, hm2', h.ap, hz0, BitVec.isLt _,
+        by rw [k224]; exact h.s224, hm1', h.c1p, hm2', h.ap, hz0, BitVec.isLt _, el0,
         fun h0 => absurd h0 (Nat.lt_irrefl 0), fun h0 => absurd h0 (Nat.lt_irrefl 0)⟩
     · have ha2 : 0 < a2 ml (nE s mp ml) := by simp only [a2]; omega
       have hza : ∀ (t n : Nat), Held R L1 t n → Apart r (8 * (2 * max l1 l2)) t n → Apart p (8 * c) t n := by
@@ -198,6 +202,7 @@ theorem segE1 {impl : List Segment} (hap : ImplApart Extracted.program impl)
         by rw [k288]; exact h.s288, by rw [k208]; exact h.s208, by rw [k216]; exact h.s216,
         by rw [k280]; exact h.s280, by rw [k192]; exact h.s192, by rw [k200]; exact h.s200,
         by rw [k224]; exact h.s224, hm1', h.c1p, hm2', h.ap, hz, by have := (hlv c0).2.2.2; omega,
+        fun e => absurd e (by omega),
         fun _ => hza _ _ (hm1.1.2.1 h.c1p).2.1 h.ap1, fun _ => hza _ _ (hm2.1.2.1 ha2).2.1 h.ap2⟩
 
 end

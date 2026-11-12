@@ -43,4 +43,36 @@ def ExpNNHypNE0 (impl : List Segment) (R : RtInv) (K : Nat) (costF : Nat → Nat
       (fun s s' => ExpN.Post R b L K costF costR costS costP zp zc st xp xl yp yl mp n s s' ∧
         (s'.regs 2).toNat < 2 ^ 40)
 
+/-- `ExpNNHypNE0` + the LOCATION of an empty result (as a register value): `0`, or a runtime pointer apart from the
+call's live set. `ExpN.Post`'s disjunct `(c = 0 ∧ p = 0) ∨ (p = zp ∧ c = zc) ∨ (fresh)` gives it for `p` once `ExpN.Post`
+bounds `p < 2^64` (always true of the code: `p` is `X0`); REQUEST to expmc "[infra s33]". LOCAL WRAPPER until then. -/
+def ExpNNHypNE1 (impl : List Segment) (R : RtInv) (K : Nat) (costF : Nat → Nat → Nat → Nat)
+    (needR : Nat → Nat → Nat) (costR : Nat → Nat → Nat → Nat) (needS needP : Nat → Nat → Nat → Nat)
+    (costS costP : Nat → Nat → Nat → Nat → Nat) : Prop :=
+  ∀ (b : Nat) (L : List (Nat × Nat)) (zp zl zc st xp xl xc yp yl yc mp n mc slow : Nat),
+    Ensures ((Extracted.program.onlySegments ExpN.names).link impl) (segAddr Extracted.program ExpN.fn)
+      [BitVec.ofNat 64 zp, BitVec.ofNat 64 zl, BitVec.ofNat 64 zc, BitVec.ofNat 64 st, BitVec.ofNat 64 xp,
+        BitVec.ofNat 64 xl, BitVec.ofNat 64 xc, BitVec.ofNat 64 yp, BitVec.ofNat 64 yl, BitVec.ofNat 64 yc,
+        BitVec.ofNat 64 mp, BitVec.ofNat 64 n, BitVec.ofNat 64 mc, BitVec.ofNat 64 slow]
+      (ExpN.Pre R b L K costF needR costR needS needP costS costP zp zl zc st xp xl xc yp yl yc mp n mc slow)
+      (fun s s' => ExpN.Post R b L K costF costR costS costP zp zc st xp xl yp yl mp n s s' ∧
+        (s'.regs 2).toNat < 2 ^ 40 ∧
+        ((s'.regs 2).toNat = 0 → 0 < zc → (s'.regs 0).toNat = 0 ∨
+          (InRanges (s'.regs 0).toNat 0 R.rt ∧ ApartAll (s'.regs 0).toNat 0 L)))
+
+/-- the empty-result location from `ExpN.Post` when its pointer is a register value (`p < 2^64`) -/
+theorem ExpNNHypNE1.loc_of {R : RtInv} {L : List (Nat × Nat)} {zp zc p c : Nat} {s' : State}
+    (h0 : s'.regs 0 = BitVec.ofNat 64 p) (h2 : s'.regs 2 = BitVec.ofNat 64 c) (hp : p < 2 ^ 64) (hc : c < 2 ^ 40)
+    (hres : (c = 0 ∧ p = 0) ∨ (p = zp ∧ c = zc) ∨ (InRanges p (8 * c) R.rt ∧ ApartAll p (8 * c) L)) :
+    (s'.regs 2).toNat = 0 → 0 < zc → (s'.regs 0).toNat = 0 ∨
+      (InRanges (s'.regs 0).toNat 0 R.rt ∧ ApartAll (s'.regs 0).toNat 0 L) := by
+  intro e2 hz
+  rw [h2, BitVec.toNat_ofNat, Nat.mod_eq_of_lt (by omega)] at e2
+  subst e2
+  rw [h0, BitVec.toNat_ofNat, Nat.mod_eq_of_lt hp]
+  rcases hres with ⟨-, e⟩ | ⟨-, e⟩ | h
+  · exact Or.inl e
+  · omega
+  · exact Or.inr h
+
 end FvModexp.Arm64.EvenHyp

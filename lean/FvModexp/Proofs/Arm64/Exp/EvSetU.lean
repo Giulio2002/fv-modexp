@@ -66,7 +66,7 @@ theorem jo_own (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) {r
     (kF _ (by omega) (by omega)).trans h.s264, (kF _ (by omega) (by omega)).trans h.s152,
     (kF _ (by omega) (by omega)).trans h.s160, (kF _ (by omega) (by omega)).trans h.s256,
     (kF _ (by omega) (by omega)).trans h.s136, (kF _ (by omega) (by omega)).trans h.s144, r272, r168, r176,
-    hown _ _ _ _ h.m1, h.c1p, hown _ _ _ _ h.m2, h.ap, hown _ _ _ _ h.z1, h.pz64, h.za1, h.za2,
+    hown _ _ _ _ h.m1, h.c1p, hown _ _ _ _ h.m2, h.ap, hown _ _ _ _ h.z1, h.pz64, h.z1e, h.za1, h.za2,
     hown _ _ _ _ h.z2, h.pw64, h.wa1, h.wa2, h.wz, DZ.frm (LiveExt.refl R L1) hF.accessible hhd h.dz, h.pZ64,
     h.Za1, h.Za2, h.Zz1, h.Zz2⟩
 
@@ -96,10 +96,10 @@ theorem setT {impl : List Segment} (hmv : MemmoveLive (LibNE.program.link impl) 
   have hlm := h.lwm
   refine runJ ret0 Q sp pw lw cw pZ cZ S.mem hal hsp2 hacc h.pw64 (by omega) h.pZ64 (by omega) S h.pc h.jx.esp rfl
     h.r0 h.r1 h.r3 h.r4 h.r5 h.r2 ?_ ?_
-  · intro S2 M2 fpc fsp hEq f0 f2 f18 f28 f29 fm hF hrg r272 r168 r176
+  · intro S2 M2 fpc fsp hEq f0 f2 f4 f18 f28 f29 fm hF hrg r272 r168 r176
     have hO := jo_own hP h hF hrg fm fsp f18 f28 f29 r272 r168 r176
     subst hEq
-    exact K9 S2 (hO.toJ9 fpc f0 f2 hO.z2.2.2.1 hO.z2.2.2.2)
+    exact K9 S2 (hO.toJ9 fpc f0 f2 f4 hO.z2.2.2.1 hO.z2.2.2.2)
   · intro S2 M2 fpc fsp hne f0 f1 f2 f30 f18 f28 f29 fm hF hrg r272 r168 r176
     have hO := jo_own hP h hF hrg fm fsp f18 f28 f29 r272 r168 r176
     have hw2 := hO.jx.wc
@@ -115,11 +115,11 @@ theorem setT {impl : List Segment} (hmv : MemmoveLive (LibNE.program.link impl) 
         hF2.mono fun a n hh => by rw [outside_append] at hh; exact hh.1
       have hLF2' : LiveFrame S2.mem m L1 [(0, 0 + 0)] := ⟨fun a n hin _ => hLF2.readLE a n hin trivial⟩
       have hO2 := hO.mv hP (d := 0) (n := 0) (Or.inl ⟨rfl, rfl⟩) hF2' hLF2' hrg2 hinv2 _ t1 t28 t29 t18 tm
-      refine runMv ret0 Q sp pw cw m hal hsp2 (hacc2 m hF2.accessible) hO2.s256 hO2.s144 _
-        (by rw [tpc, f30]) hO2.jx.esp tm (fun S3 g1 g2 g3 g4 g5 g18 g28 g29 => ?_)
+      refine runMv ret0 Q sp pw 0 cw m hal hsp2 (hacc2 m hF2.accessible) hO2.s256 hO2.s144 hO2.s136 _
+        (by rw [tpc, f30]) hO2.jx.esp tm (fun S3 g1 g2 g3 g4 g5 g6 g18 g28 g29 => ?_)
       have hO3 := hO.mv hP (d := 0) (n := 0) (Or.inl ⟨rfl, rfl⟩) hF2' hLF2' hrg2 hinv2 S3 (g2.trans t1)
         (g28.trans t28) (g29.trans t29) (g18.trans t18) g3
-      exact K9 S3 (hO3.toJ9 g1 g4 g5 ((nv0 _ _ _ _).trans hO.z2.2.2.1) (Or.inl rfl))
+      exact K9 S3 (hO3.toJ9 g1 g4 g5 g6 ((nv0 _ _ _ _).trans hO.z2.2.2.1) (Or.inl rfl))
     · have hz := h.dz
       have c0 : 0 < cZ := by omega
       have hz2 := hO.z2
@@ -139,11 +139,11 @@ theorem setT {impl : List Segment} (hmv : MemmoveLive (LibNE.program.link impl) 
       obtain ⟨t1, t28, t29, t18, tpc, tm⟩ := @rs_regs S2 junk f v m ex ep
       have hd : (pZ = 0 ∧ 8 * lw = 0) ∨ (pZ = pZ ∧ 8 * lw ≤ 8 * cZ ∧ 0 < cZ) := Or.inr ⟨rfl, by omega, c0⟩
       have hO2 := hO.mv hP hd hF2 hLF2 hrg2 hinv2 _ t1 t28 t29 t18 tm
-      refine runMv ret0 Q sp pw cw m hal hsp2 (hacc2 m hF2.accessible) hO2.s256 hO2.s144 _
-        (by rw [tpc, f30]) hO2.jx.esp tm (fun S3 g1 g2 g3 g4 g5 g18 g28 g29 => ?_)
+      refine runMv ret0 Q sp pw lw cw m hal hsp2 (hacc2 m hF2.accessible) hO2.s256 hO2.s144 hO2.s136 _
+        (by rw [tpc, f30]) hO2.jx.esp tm (fun S3 g1 g2 g3 g4 g5 g6 g18 g28 g29 => ?_)
       have hO3 := hO.mv hP hd hF2 hLF2 hrg2 hinv2 S3 (g2.trans t1) (g28.trans t28) (g29.trans t29)
         (g18.trans t18) g3
-      refine K9 S3 (hO3.toJ9 g1 g4 g5 ?_ ?_)
+      refine K9 S3 (hO3.toJ9 g1 g4 g5 g6 ?_ ?_)
       · rw [← hz2.2.2.1]; show S3.mem.readLE pZ (8 * lw) = S2.mem.readLE pw (8 * lw)
         rw [g3]; exact FvModexp.Expmc.readLE_of_copied hcp
       · rcases hz2.2.2.2 with e | hne0
