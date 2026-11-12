@@ -42,7 +42,7 @@ theorem qR (impl : List Segment) (R : RtInv)
   have hb2 := hS.bud2
   refine k _ ⟨rfl, rfl, ?g28, ?g29, ?g18, ?g0, ?g1, ?g2, ?g3, ?g4, ?g5, rfl, ?g12, rfl, he1, hS.mem, hS.ua,
     qarr_reuse hE hS.ua hS.ext2 (fun a n w => hM.fr.accessible a n w) hz, hS.ext2, by omega, hS.sh63, hS.vval,
-    hS.vtop, hS.uval⟩
+    hS.vtop, hS.uval, hS.reg⟩
   case g28 => simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte]; exact hS.r28
   case g29 => simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte]; exact hS.r29
   case g18 => simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte]; exact hS.r18

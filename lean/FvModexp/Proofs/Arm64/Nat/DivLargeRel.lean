@@ -35,6 +35,7 @@ structure AfterNat (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (st vl : Nat) (
   F2 : MemFrame P.mem S2.mem (R.rt ++ [(s.sp.toNat - 304 - stkSN, s.sp.toNat - 312),
     (s.sp.toNat - 296, s.sp.toNat - 304 + abSN)] ++ stkWs s.mem st)
   LF2 : LiveFrame P.mem S2.mem L (stkWs s.mem st)
+  reg : S2.mem.regions = s.mem.regions
 
 /-- the facts fixed from the `stk.nat` call on: the scratch `v` at `t` (`n` words), the live set `L1`, the budget `b1`,
 the stack array `(w1, c1)` -/
@@ -136,6 +137,7 @@ structure AtU (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc st up uc ip i
   ext2 : LiveExt R L1 Lk
   bud2 : b1 - makeCost (il + 1) ≤ bk
   is : ∀ a n, ip ≤ a → a + n ≤ ip + 8 * il → S.mem.readLE a n = s.mem.readLE a n
+  reg : S.mem.regions = s.mem.regions
 
 /-- `Env` from `stk.nat`'s post (pure) -/
 theorem env_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st up uc ip il vp vl : Nat} {s : State}

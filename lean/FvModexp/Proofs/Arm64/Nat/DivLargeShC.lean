@@ -58,7 +58,7 @@ theorem shC (impl : List Segment) (R : RtInv)
     (hinv4 : R.inv bk Lk (s.regs 28).toNat (view R.rt Lk m4))
     (T : State) (hpc : T.pc = BitVec.ofNat 64 (segAddr Extracted.program fn + 0x268)) (hsp : T.sp = s.sp - 304#64)
     (h28 : T.regs 28 = s.regs 28) (h29 : T.regs 29 = s.sp - 312#64) (h18 : T.regs 18 = s.regs 18) (hm : T.mem = m4)
-    (Q : State → Prop)
+    (hreg4 : m4.regions = s.mem.regions) (Q : State → Prop)
     (k : ∀ S', AtA R b L zp zc st up uc ip il ic vp vl vc s t w1 c1 L1 b1 Lk bk P C sh S' →
       ReachesRet (LibDiv.program.link impl) (s.regs 30) S' Q) :
     ReachesRet (LibDiv.program.link impl) (s.regs 30) T Q := by
@@ -88,7 +88,7 @@ theorem shC (impl : List Segment) (R : RtInv)
   janus_run [hm, r1, r2, r3, r4, r5, r6, r7, r8, r9, hPa] until [aliasPt]
   rw [show P + il * 8 = P + 8 * il by omega]
   refine k _ ⟨rfl, rfl, ?g28, ?g29, ?g18, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, hmU, hUA, hS.ext2, hS.bud2, ?gs,
-    hvv, hvt, huv⟩
+    hvv, hvt, huv, by simp only [Memory.regions_writeLE]; exact hreg4⟩
   case gs => have := (AsmDiv.clz_norm64 _ (by
       rcases hE.pre.vn with h | h
       · have := hl.v2; omega

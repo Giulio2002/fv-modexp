@@ -19,6 +19,7 @@ namespace FvModexp.Arm64.DivLarge
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
+set_option janus.callRegions true in
 /-- the allocation path (`cap u < len uIn + 1`): `makeslice(Word, len uIn + 1, len uIn + 5)` -/
 theorem mkA (impl : List Segment) (R : RtInv) (stkSN abSN : Nat) (hk1 : stkSN ≤ 4224) (hk2 : abSN ≤ 96)
     (hmk : MakesliceLiveContract (LibDiv.program.link impl) (cA "runtime.makeslice") 4096 R)
@@ -143,7 +144,8 @@ theorem mkA (impl : List Segment) (R : RtInv) (stkSN abSN : Nat) (hk1 : stkSN �
   have hblk : blockSize (8 * (il + 5)) true ≤ makeCost (il + 1) := by rw [hmcost]; exact hbl
   refine k _ (L1 ++ [(ptr.toNat, ptr.toNat + blockSize (8 * (il + 5)) true)]) (b1 - blockSize (8 * (il + 5)) true)
     ptr.toNat (il + 1 + 4) ⟨?qpc, rfl, ?q28, ?q29, ?q18, ?q0, ?q1, ?q2, ?q3, ?q4, ?q5, ?qmem, ?qC, ?qL, ?qP, ?qua,
-    LiveExt.single (by simpa using hIn) (by simpa using hAp), by omega, ?qis⟩
+    LiveExt.single (by simpa using hIn) (by simpa using hAp), by omega, ?qis, ?qreg⟩
+  case qreg => simp only [Memory.regions_writeLE] at hrg1 ⊢; rw [hrg1]; exact hA.reg
   case qpc => janus_simp
   case q28 => janus_simp
   case q29 => janus_simp

@@ -19,6 +19,7 @@ abbrev allocQ : Nat := segAddr Extracted.program fn + 0x2fc
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
+set_option janus.callRegions true in
 theorem qAm (impl : List Segment) (R : RtInv)
     (hmk : MakesliceLiveContract (LibDiv.program.link impl) (cA "runtime.makeslice") 4096 R)
     (b : Nat) (L : List (Nat × Nat)) (c : Nat) (zp zc st up uc ip il ic vp vl vc : Nat) (s : State)
@@ -120,7 +121,7 @@ theorem qAm (impl : List Segment) (R : RtInv)
     (qarr_alloc hE hU hS.ext2 hz hAp hIn hle hacc h8' (by omega) (by omega) (by omega)
       hw1h).frame hacc2,
     LiveExt.trans hS.ext2 hx1, by omega, hS.sh63, by rw [htv]; exact hS.vval, by rw [htt]; exact hS.vtop,
-    by rw [hpv]; exact hS.uval⟩
+    by rw [hpv]; exact hS.uval, by simp only [Memory.regions_writeLE] at hrg1 ⊢; first | (rw [hrg1]; exact hS.reg) | (rw [hrg1, hm]; exact hS.reg)⟩
   case g28 => simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, callRegs_apply, true_or, or_true, if_true, h28]
   case g29 => simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, callRegs_apply, true_or, or_true, if_true, h29]
   case g18 => simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, callRegs_apply, true_or, or_true, if_true, h18]

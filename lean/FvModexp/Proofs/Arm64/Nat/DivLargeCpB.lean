@@ -64,7 +64,7 @@ theorem cpC (impl : List Segment) (R : RtInv)
     (hval : natVal m4 P il = natVal s.mem ip il)
     (T : State) (hpc : T.pc = BitVec.ofNat 64 (segAddr Extracted.program fn + 0x1e0)) (hsp : T.sp = s.sp - 304#64)
     (h28 : T.regs 28 = s.regs 28) (h29 : T.regs 29 = s.sp - 312#64) (h18 : T.regs 18 = s.regs 18) (hm : T.mem = m4)
-    (Q : State → Prop)
+    (hreg4 : m4.regions = s.mem.regions) (Q : State → Prop)
     (k : ∀ S', AtA R b L zp zc st up uc ip il ic vp vl vc s t w1 c1 L1 b1 Lk bk P C 0 S' →
       ReachesRet (LibDiv.program.link impl) (s.regs 30) S' Q) :
     ReachesRet (LibDiv.program.link impl) (s.regs 30) T Q := by
@@ -88,7 +88,7 @@ theorem cpC (impl : List Segment) (R : RtInv)
     rw [hMF2.accessible, hMF1.accessible, Memory.accessible_writeLE, hS.mem.fr.accessible]; exact hw
   janus_run [hm, q1, q2, q3, q4, q5, q6, q7, q8, q9] until [segAddr Extracted.program fn + 0x204]
   refine cpE impl R b L c zp zc st up uc ip il ic vp vl vc s t w1 c1 L1 b1 Lk bk P C hE S hS hclz m3 m4 hMF1 hLF1 hcp1
-    hMF2 hLF2 hinv4 hval _ rfl rfl ?g28 ?g29 ?g18 rfl rfl rfl rfl rfl rfl rfl rfl rfl rfl Q k
+    hMF2 hLF2 hinv4 hval _ rfl rfl ?g28 ?g29 ?g18 rfl rfl rfl rfl rfl rfl rfl rfl rfl rfl hreg4 Q k
   all_goals simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, h28, h29, h18]
 
 set_option maxRecDepth 20000 in
@@ -105,7 +105,7 @@ theorem cpB (impl : List Segment) (R : RtInv)
       ReachesRet (LibDiv.program.link impl) (s.regs 30) S' Q)
     (m : Memory) (T : State) (hpc : T.pc = BitVec.ofNat 64 (segAddr Extracted.program fn + 0x198))
     (hsp : T.sp = s.sp - 304#64) (h28 : T.regs 28 = s.regs 28) (h29 : T.regs 29 = s.sp - 312#64)
-    (h18 : T.regs 18 = s.regs 18) (hm : T.mem = m)
+    (h18 : T.regs 18 = s.regs 18) (hm : T.mem = m) (hreg : m.regions = s.mem.regions)
     (hMF1 : MemFrame (S.mem.writeLE (s.sp.toNat - 120) 8 0) m (R.rt ++ csW s ++ [(t, t + 8 * vl)]))
     (hLF1 : LiveFrame (S.mem.writeLE (s.sp.toNat - 120) 8 0) m Lk [(t, t + 8 * vl)])
     (hinv : R.inv bk Lk (s.regs 28).toNat (view R.rt Lk m))
@@ -140,7 +140,7 @@ theorem cpB (impl : List Segment) (R : RtInv)
     janus_run [hm, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10] until [segAddr Extracted.program fn + 0x204]
     refine cpE impl R b L c zp zc st up uc P il ic vp vl vc s t w1 c1 L1 b1 Lk bk P C hE S hS hclz m m hMF1 hLF1 hcp1
       ⟨fun _ _ _ => rfl, fun _ _ _ => rfl⟩ ⟨fun _ _ _ _ => rfl⟩ hinv hI _ rfl rfl ?g28 ?g29 ?g18 rfl rfl rfl rfl rfl rfl
-      rfl rfl rfl ?gm Q k
+      rfl rfl rfl ?gm hreg Q k
     case gm => first | rfl | exact hm
     all_goals simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, h28, h29, h18]
   · have hPi' : P ≠ ip := hPi
@@ -163,7 +163,7 @@ theorem cpB (impl : List Segment) (R : RtInv)
     janus_run [hm, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, hl3] until [cA "runtime.memmove"]
     have e304 : (s.sp - 304#64).toNat = s.sp.toNat - 304 := by
       rw [BitVec.toNat_sub_of_le (by simp only [BitVec.le_def, BitVec.toNat_ofNat]; omega)]; rfl
-    refine ReachesRet.call (hmv Lk bk) rfl (mv_pre (dst := P) (src := ip) (n := 8 * il) hE hS.ext2 _ rfl ?q28 hgrd
+    refine ReachesRet.call_regions (hmv Lk bk) rfl (mv_pre (dst := P) (src := ip) (n := 8 * il) hE hS.ext2 _ rfl ?q28 hgrd
       hMacc ?l1 ?l2 hinv ?q0 ?q1 ?q2 (hsv.2.1 _ _ _ (by omega)) (by omega) ?dacc (hU.pheld.sub (by omega) (by omega))
       (by omega) (by have := hl.i48; omega) ?sacc (by omega)) ?qk
     case q28 => simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, h28]
@@ -175,7 +175,7 @@ theorem cpB (impl : List Segment) (R : RtInv)
     case dacc => rw [hMacc]; exact Memory.accessible_mono _ (by rw [← hS.mem.fr.accessible]; exact hU.pacc) (by omega) (by omega)
     case sacc => rw [hMacc]; exact hE.pre.io.2.1
     case qk =>
-      intro T2 hT ⟨junk, f, v, m4, ex, ep, hs, hMF, hLF, hinv4, hcp⟩
+      intro T2 hT ⟨junk, f, v, m4, ex, ep, hs, hMF, hLF, hinv4, hcp⟩ hrg
       subst hs
       simp only [calleeStack, setReg_apply, Nat.reduceEqDiff, ↓reduceIte, BitVec.toNat_ofNat, e304, h28] at hMF hLF hcp hinv4
       rw [Nat.mod_eq_of_lt (show P < 2 ^ 64 by omega), Nat.mod_eq_of_lt (show ip < 2 ^ 64 by omega),
@@ -188,6 +188,6 @@ theorem cpB (impl : List Segment) (R : RtInv)
         (by simp only [retStateX, callRegs_apply, setReg_apply, Nat.reduceEqDiff, ↓reduceIte, h28, true_or, or_true, if_true])
         (by simp only [retStateX, callRegs_apply, setReg_apply, Nat.reduceEqDiff, ↓reduceIte, h29, true_or, or_true, if_true])
         (by simp only [retStateX, callRegs_apply, setReg_apply, Nat.reduceEqDiff, ↓reduceIte, h18, true_or, or_true, if_true])
-        rfl Q k
+        rfl (by simp only [retStateX, Memory.regions_writeLE] at hrg; rw [hrg]; exact hreg) Q k
 
 end FvModexp.Arm64.DivLarge

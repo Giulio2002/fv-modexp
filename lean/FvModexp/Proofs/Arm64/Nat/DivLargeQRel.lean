@@ -67,6 +67,7 @@ structure AtJ (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc st up uc ip i
   vval : natVal S.mem t vl = natVal s.mem vp vl * 2 ^ sh
   vtop : 2 ^ 63 ≤ S.mem.readLE (t + 8 * (vl - 1)) 8
   uval : natVal S.mem P (il + 1) = natVal s.mem ip il * 2 ^ sh
+  reg : S.mem.regions = s.mem.regions
 
 set_option maxHeartbeats 4000000 in
 /-- `QArr` on the reuse path (`m + 1 ≤ cap z`): `q = z` -/
