@@ -106,3 +106,44 @@ theorem entry (impl : List Segment) (R : RtInv) (a : Args) (s : State) (hpc : s.
       · right; rw [← hrd _ _ (by omega)]; exact h
 
 end FvModexp.Arm64.DivRec
+
+namespace FvModexp.Arm64.DivRec
+
+open FvModexp.Arm64.DivLarge (DrsPreW DrsPostW)
+
+/-- `U < V` when the normalised `len u` is below `len v` (whose top word is not zero) -/
+theorem u_lt_v {M : Memory} {up ul ul' vp vl : Nat} (hv1 : 1 ≤ vl) (htop : 2 ^ 63 ≤ M.readLE (vp + 8 * (vl - 1)) 8)
+    (hlt : ul' < vl) (hU : natVal M up ul' = natVal M up ul) : natVal M up ul < natVal M vp vl := by
+  have h1 := natVal_lt M up ul'
+  have h3 := natVal_ge M vp vl hv1 (by omega)
+  have h4 : 2 ^ (64 * ul') ≤ 2 ^ (64 * (vl - 1)) := Nat.pow_le_pow_right (by decide) (by omega)
+  omega
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 4000000 in
+/-- **`len u < n`**: nothing to do (`fn + 0x11c`) -/
+theorem pathC (impl : List Segment) (R : RtInv) (a : Args) (s : State) (hE : Entry a s) {c : Nat}
+    (hpre : DrsPreW R a.b a.L c a.W a.qp.toNat a.ql.toNat a.qc.toNat a.st.toNat a.up.toNat a.ul.toNat a.uc.toNat
+      a.vp.toNat a.vl.toNat a.vc.toNat s) (hW : 30608 ≤ a.W) (P : State) (ul' : Nat)
+    (hA : AtE2 s P a.qp.toNat a.ql.toNat a.qc.toNat a.st.toNat a.up.toNat ul' a.uc.toNat a.vp.toNat a.vl.toNat a.vc.toNat
+      a.d.toNat)
+    (hU : natVal s.mem a.up.toNat ul' = natVal s.mem a.up.toNat a.ul.toNat) (h0 : 0 < ul') (h40 : 40 ≤ a.vl.toNat)
+    (hlt : ul' < a.vl.toNat) :
+    ReachesRet (LibDrs.program.link impl) (s.regs 30) P (fun s' => Kept s s' ∧
+      DrsPostW R a.b a.L c a.W a.qp.toNat a.ql.toNat a.st.toNat a.up.toNat a.ul.toNat a.vp.toNat a.vl.toNat s s') := by
+  have hpre' := hpre
+  obtain ⟨hce, -, -, -, -, -, -, -, -, hv2, -, htop, hq0, -, -, -, ⟨hva, -⟩, -⟩ := hpre'
+  obtain ⟨-, ⟨hal, hb', ha, hw⟩, -⟩ := hce
+  have hlt' := u_lt_v (by omega) htop hlt hU
+  refine pro2c impl (s.regs 30) hA h0 h40 hlt _ fun T hpc hm hsp h28 h29 h18 => ?_
+  have hFT : Fr s T := by
+    have hF := hA.fr
+    exact ⟨by rw [hsp]; exact hF.sp, by rw [h28]; exact hF.r28, by rw [h29]; exact hF.r29, by rw [h18]; exact hF.r18,
+      by rw [hm]; exact hF.reg, by rw [hm]; exact hF.fr, by rw [hm]; exact hF.lr, by rw [hm]; exact hF.fp⟩
+  refine epiC impl s T hpc hFT (by omega) (by omega) hal ?_ hE.1 hE.2.1 _ fun s' ⟨e1, e2, e3, e4, e5⟩ => ⟨⟨e1, e2, e3, e4⟩, ?_⟩
+  · rw [hFT.fr.accessible]; exact Memory.accessible_mono _ (Memory.accessible_read_of_write _ hw) (by omega) (by omega)
+  · refine post_frame hpre (by omega) (by rw [e5]; exact hFT.fr) ?_ ?_
+    · rw [hq0, Nat.div_eq_of_lt hlt']
+    · rw [Nat.mod_eq_of_lt hlt']
+
+end FvModexp.Arm64.DivRec
