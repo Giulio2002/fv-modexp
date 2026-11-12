@@ -1186,3 +1186,8 @@ amd64 Top_RunErr in the same run: **FAIL (timeout) 901 s**, peak 1.4 GB — at l
 | MulMakeA2 (alloc_call: makeslice call → join) | blanket closers >300 s | 6-7 s / 2.4 GB | `ReachesRet.call_regions` (regions fact), each JoinAt field closed by name (`rfl` only for `.pc`/`.sp` projections, `setReg_apply`/`callRegs_apply` simp for registers, `exact q…` for spills) |
 | MulMakeA (make_alloc = alloc_head ∘ alloc_call) | 286 s / 8.0 GB | 1.1 s | composition only |
 | MulMake total (R + A1 + AP + A2 + A) | 464 s / 8.1 GB | ≈ 70 s summed, max 35 s / 2.6 GB per module | |
+
+## asm s27 (2026-11-12, dev compile, host load 20–40)
+DrsDV 3.7 s, DrsDG 1.6 s, DrsD1 4.0 s, DrsD2 6.6 s, DrsD3 16 s, DrsD4 32 s / 3.4 GB, DrsD5R 8.8 s, DrsD5 27 s / 3.3 GB,
+DrsD6R 5.7 s, DrsD6 44 s / 3.1 GB, DrsD7 6.4 s (was 449 s killed: store/read disjointness not in omega form → symbolic
+reads + rfl over memory; fixed by `simp … at hsto'` before janus_run), DrsDL 1.8 s, DrsLoop 1.3 s. DrsMulQ 68 s / 4.4 GB.
