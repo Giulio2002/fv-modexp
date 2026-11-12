@@ -24,4 +24,9 @@ theorem ZArg.out {R : RtInv} {L : List (Nat × Nat)} {sp K zp zc zq zcq : Nat} (
   · have := out_inR2 hwrt hin
     simp only [outside_cons, outside_nil, and_true]; omega
 
+/-- the even callee's window `win S stk 112` (`S.sp = sp + 1056`, `stk ≤ K + 1056`) lies in expNN's -/
+theorem out_win_even {S : State} {sp K stk a k : Nat} (h : Outside a k [(sp - K, sp + 1432)])
+    (hS : S.sp.toNat = sp + 1056) (hstk : stk ≤ K + 1056) (hK : K ≤ sp) : Outside a k (win S stk 112) := by
+  simp only [win, hS, outside_cons, outside_nil, and_true] at h ⊢; omega
+
 end FvModexp.Arm64.ExpN
