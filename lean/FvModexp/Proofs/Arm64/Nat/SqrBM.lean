@@ -1,6 +1,7 @@
 import FvModexp.Proofs.Arm64.Nat.SqrCall
 import FvModexp.Proofs.Arm64.Nat.DivmcCall
 import FvModexp.Proofs.Common.BitLemmas
+import FvModexp.Proofs.Common.WinLemmas
 
 /-!
 # `nat.sqr` (arm64), `2 ≤ n < 12`: `basicMul(z, x, x); return z.norm()` (natmul.go:90-93)
@@ -124,7 +125,9 @@ theorem bm2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
         (by simp only [outside_append, outside_cons, outside_nil, and_true]; omega) hext)
       (hF2.mono fun a n h => by
         simp only [stkWs, winA, outside_append, outside_cons, outside_nil, and_true] at h ⊢
-        exact ⟨⟨h.1.1, by omega, by omega⟩, by omega⟩)
+        have hk := Nat.le_trans (show 176 + 4224 ≤ 4880 by decide) hW
+        exact ⟨⟨h.1.1, (winA_in (c := 176) (k := 4224) (ab := 72) hb0 hk (by decide) h.1.2.1).1, (winA_in (c := 176) (k := 4224) (ab := 72) hb0 hk (by decide) h.1.2.1).2⟩,
+          by have := h.2.1; first | exact this | (rwa [Nat.two_mul] at this)⟩)
       (FvModexp.LiveFrame.mono_ws hLF2 fun a n h => by
         simp only [outside_cons, outside_nil, and_true] at h ⊢; omega)
       (hF3.mono fun a n h => by simp only [winA, outside_cons, outside_nil, and_true] at h ⊢; omega)
