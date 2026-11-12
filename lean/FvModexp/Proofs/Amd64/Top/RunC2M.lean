@@ -74,9 +74,9 @@ theorem c2m (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
     simp only [List.mem_singleton] at ha'; subst ha'
     exact ⟨0, 2, by omega, by omega, by simp only [opAt]; omega, by simp only [opAt]; omega⟩
   have l0 : RunIface.lenW T.mem ((s.regs 4).toNat - 136) ≤ wMax s p len :=
-    Nat.le_trans (lenW_op (hop 0 (by omega)) (by omega)) (Nat.le_trans (Nat.le_max_left _ _) (Nat.le_max_left _ _))
+    Nat.le_trans (lenW_op0 (hop 0 (by omega))) (Nat.le_trans (Nat.le_max_left _ _) (Nat.le_max_left _ _))
   have l2 : RunIface.lenW T.mem ((s.regs 4).toNat - 200) ≤ wMax s p len :=
-    Nat.le_trans (lenW_op (hop 2 (by omega)) (by omega)) (Nat.le_max_right _ _)
+    Nat.le_trans (lenW_op2 (hop 2 (by omega))) (Nat.le_max_right _ _)
   -- the memory at `Mod`'s entry: the return address pushed at `e - 616`
   generalize hMd : T.mem.writeLE ((s.regs 4).toNat - 616) 8 6639316 = M
   have hMr : ∀ j, j < 3 → ∀ o, o + 8 ≤ 32 → M.readLE (opAt s j + o) 8 = T.mem.readLE (opAt s j + o) 8 := by

@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Amd64.Top.RunCDefs
 
+set_option autoImplicit false
+
 /-!
 # `Run` (amd64): the compute calls — `IntPre` of `Bytes` on the result of `Mod`/`exp`, frames, budgets, values
 (pure lemmas; twin of the arm64 `RunC2Lem2`/`RunC2Lem3`)
@@ -219,6 +221,24 @@ theorem lenW_op {R : RtInv} {M : Janus.Arm64.Memory} {s : State} {p len : BitVec
   have hlt' : natVal M (M.readLE (opAt s j + 8) 8) (M.readLE (opAt s j + 16) 8) < 2 ^ (8 * hdrV s p len j) := by
     rw [hv, ← h256, ← hol]; exact hlt
   exact len_le_of_lt M _ _ _ hn hlt'
+
+/-- `lenW_op` at operand 0's literal address (unifying `opAt s ?j` with a literal costs ≈ 16 s per use). -/
+theorem lenW_op0 {R : RtInv} {M : Janus.Arm64.Memory} {s : State} {p len : BitVec 64} {L L1 : List (Nat × Nat)}
+    (h : OpDone R M s p len L L1 0) : RunIface.lenW M ((s.regs 4).toNat - 136) ≤ opW s p len 0 := by
+  have := lenW_op h (by omega)
+  rwa [show opAt s 0 = (s.regs 4).toNat - 136 by simp only [opAt]; omega] at this
+
+/-- `lenW_op` at operand 1's literal address (unifying `opAt s ?j` with a literal costs ≈ 16 s per use). -/
+theorem lenW_op1 {R : RtInv} {M : Janus.Arm64.Memory} {s : State} {p len : BitVec 64} {L L1 : List (Nat × Nat)}
+    (h : OpDone R M s p len L L1 1) : RunIface.lenW M ((s.regs 4).toNat - 168) ≤ opW s p len 1 := by
+  have := lenW_op h (by omega)
+  rwa [show opAt s 1 = (s.regs 4).toNat - 168 by simp only [opAt]; omega] at this
+
+/-- `lenW_op` at operand 2's literal address (unifying `opAt s ?j` with a literal costs ≈ 16 s per use). -/
+theorem lenW_op2 {R : RtInv} {M : Janus.Arm64.Memory} {s : State} {p len : BitVec 64} {L L1 : List (Nat × Nat)}
+    (h : OpDone R M s p len L L1 2) : RunIface.lenW M ((s.regs 4).toNat - 200) ≤ opW s p len 2 := by
+  have := lenW_op h (by omega)
+  rwa [show opAt s 2 = (s.regs 4).toNat - 200 by simp only [opAt]; omega] at this
 
 open RunIface in
 theorem budget_mod {b b1 X w lw0 lw2 lb E A : Nat} (h0 : lw0 ≤ w) (h2 : lw2 ≤ w) (hl : lb ≤ maxW)
