@@ -51,4 +51,20 @@ theorem n0_of_eq' {R : RtInv} {L L0 : List (Nat × Nat)} {dst src e h0 n p l a :
       have := MemFrame.outside_mem hout hr
       omega
 
+/-- `x - y` of two small `ofNat`s. -/
+theorem ofNat_sub64 {a b : Nat} (h : b ≤ a) (ha : a < 2 ^ 64) :
+    BitVec.ofNat 64 a - BitVec.ofNat 64 b = BitVec.ofNat 64 (a - b) := by
+  apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
+
+open Janus Janus.Amd64 in
+/-- The `type:uint8` descriptor words read by `makeslice` (size 1, ptrdata 0), from the loaded rodata. -/
+theorem uint8_words {m : Janus.Arm64.Memory} (hd : Extracted.program.DataLoaded m) :
+    m.readLE 7231264 8 = 1 ∧ m.readLE 7231272 8 = 0 := by
+  janus64_data hd
+  exact ⟨by rw [h_rodata _ _ (by decide)]; decide, by rw [h_rodata _ _ (by decide)]; decide⟩
+
+open Janus Janus.Amd64 in
+theorem uint8_acc {m : Janus.Arm64.Memory} (hd : Extracted.program.DataLoaded m) : m.accessible 7231264 16 false = true := by
+  janus64_data hd; exact Janus.Arm64.Memory.accessible_mono _ h_data0 (by omega) (by omega)
+
 end FvModexp.Amd64.Run

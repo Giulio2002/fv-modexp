@@ -63,8 +63,8 @@ theorem dP2 (impl : List Amd64.Segment) (R : RtInv)
     apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega
   have hst63 : (BitVec.ofNat 64 st).toNat < 2 ^ 63 := by rw [BitVec.toNat_ofNat, Nat.mod_eq_of_lt (by omega)]; omega
   have hcb : (len.toNat - 96 < st + hdrV s p len 2) = True := eq_true hndir
-  have hsubB : BitVec.ofNat 64 (len.toNat - 96) - BitVec.ofNat 64 st = BitVec.ofNat 64 (len.toNat - 96 - st) := by
-    apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
+  have hsubB : BitVec.ofNat 64 (len.toNat - 96) - BitVec.ofNat 64 st = BitVec.ofNat 64 (len.toNat - 96 - st) :=
+    ofNat_sub64 hst (by omega)
   have hJG : ((BitVec.ofNat 64 (len.toNat - 96 - st)).toInt < ↑(hdrV s p len 2)) = True := by
     rw [toInt_small _ (by rw [BitVec.toNat_ofNat]; omega), BitVec.toNat_ofNat, Nat.mod_eq_of_lt (by omega)]; simp; omega
   have hc32 : (32 < hdrV s p len 2) = False := eq_false (Nat.not_lt.mpr hsm)
