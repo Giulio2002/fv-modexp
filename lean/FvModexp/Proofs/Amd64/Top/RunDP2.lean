@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Top.RunDKDefs
+import FvModexp.Proofs.Amd64.Top.RunDSlot
 
 /-! # `Run` (amd64): `D1` to `J1` — modulus operand, padded, `expLen ≤ 32`: the zeroed stack buffer
 
@@ -122,21 +123,17 @@ theorem dP2 (impl : List Amd64.Segment) (R : RtInv)
       (fun _ _ h => by first | (rw [List.append_nil]; exact hext.inRanges_old h) | exact hext.inRanges_old h)
   case refine_26 =>
     intro j hj
-    rcases (show j = 0 ∨ j = 1 by omega) with rfl | rfl <;>
-    refine OpDone.transport (hop _ (by omega)) ?_ ?_ ?_ ?_
+    refine OpDone.transportS (hop _ (by omega)) (k := 2) hj ?_
       (LiveFrame.of_win (by simp only [win, stk]; janus_frame) hLsL1) (fun _ _ h => by first | (rw [List.append_nil]; exact h) | exact h)
-    all_goals (simp only [opAt]; janus64_simp)
+    intro a n h1 h2; simp only [opAt] at h1 h2; janus64_simp
   case refine_27 =>
-    refine OpsApart.transport hopA (fun i hi => ?_)
-    rcases (show i = 0 ∨ i = 1 by omega) with rfl | rfl <;>
-    simp only [opAt] <;>
-    exact ⟨by janus64_simp, by janus64_simp⟩
+    refine OpsApart.transportS hopA ?_
+    intro a n h1 h2; simp only [opAt] at h1 h2; janus64_simp
   case op =>
     intro j hj
-    rcases (show j = 0 ∨ j = 1 by omega) with rfl | rfl <;>
-    refine OpDone.transport (hop _ (by omega)) ?_ ?_ ?_ ?_
+    refine OpDone.transportS (hop _ (by omega)) (k := 2) hj ?_
       (LiveFrame.of_win (by simp only [win, stk]; janus_frame) hLsL1) (fun _ _ h => h)
-    all_goals (simp only [opAt]; janus64_simp)
+    intro a n h1 h2; simp only [opAt] at h1 h2; janus64_simp
   case zb =>
     intro i hi
     rw [hoL] at hi
