@@ -1212,3 +1212,10 @@ remaining trim candidates RunLLo/RunLHi (janus64_data 28 s + failing `first` alt
 DrsDV 3.7 s, DrsDG 1.6 s, DrsD1 4.0 s, DrsD2 6.6 s, DrsD3 16 s, DrsD4 32 s / 3.4 GB, DrsD5R 8.8 s, DrsD5 27 s / 3.3 GB,
 DrsD6R 5.7 s, DrsD6 44 s / 3.1 GB, DrsD7 6.4 s (was 449 s killed: store/read disjointness not in omega form → symbolic
 reads + rfl over memory; fixed by `simp … at hsto'` before janus_run), DrsDL 1.8 s, DrsLoop 1.3 s. DrsMulQ 68 s / 4.4 GB.
+
+## asm s28 (2026-11-12, dev compile, host load ~35)
+drs final block (arm64): DrsFRel 2.4 s, DrsF1 4.8 s, DrsFRecP 10.6 s, DrsFRecQ 19.8 s / 2.8 GB, DrsF2 21.5 s / 2.9 GB,
+DrsFRel3 3.0 s, DrsF3 12.0 s / 2.7 GB. First DrsF2 draft never finished (> 12 min CPU, killed): a
+`repeat (first | rw [readLE_writeLE_self] | rw [readLE_writeLE_of_disjoint _ _ (by omega)])` closer retrying failing
+omegas; explicit per-goal rewrite chains → 17 s for f2x. Budget-invariant change (Cx.lo) rebuilt the drs chain to DrsLoop
+with no time change.
