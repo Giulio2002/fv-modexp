@@ -1,5 +1,6 @@
 import FvModexp.Proofs.Arm64.Nat.MulLoopLM
 import FvModexp.Proofs.Arm64.Nat.MulKar
+import FvModexp.Proofs.Common.BitArith
 
 /-!
 # `nat.mul` (arm64), chunk loop: the chunk product `t = t.mul(stk, x[i:i+cc], y)` (natmul.go:57)
@@ -113,5 +114,86 @@ theorem lcall2 (impl : List Segment) (R : RtInv) (n0 : Nat) (ih : ∀ a, IH impl
   obtain ⟨Lk', bk', tp', tl', tc', hlm⟩ := lm_of h ht hpx hpy hilt hv m128 m136 hcc hs1' (by rw [hg1]) hm1 hq hrg1
     q1 q2 q3 q4 q5
   exact hK _ _ _ _ _ _ hlm
+
+theorem toIntN {a : Nat} (h : a < 2 ^ 63) : (BitVec.ofNat 64 a).toInt = (a : Int) := by
+  rw [BitVec.toInt_eq_toNat_of_lt (by rw [BitVec.toNat_ofNat, Nat.mod_eq_of_lt (by omega)]; omega),
+    BitVec.toNat_ofNat, Nat.mod_eq_of_lt (by omega)]
+
+/-- the slice mask `i & ((i - c) >> 63)` for `i < c` -/
+theorem maskN {i c : Nat} (h : i < c) (hc : c < 2 ^ 63) :
+    (BitVec.ofNat 64 i &&& (BitVec.ofNat 64 i - BitVec.ofNat 64 c).sshiftRight 63) = BitVec.ofNat 64 i := by
+  apply BitVec.eq_of_toNat_eq
+  rw [BitVec.toNat_and]
+  have := BitArith.and_asr63 (BitVec.ofNat 64 i) (BitVec.ofNat 64 c) (by simp only [BitVec.toNat_ofNat]; omega)
+    (by simp only [BitVec.toNat_ofNat]; omega)
+  rw [this]; simp only [BitVec.toNat_ofNat]
+  rw [if_pos (by rw [Nat.mod_eq_of_lt (by omega), Nat.mod_eq_of_lt (by omega)]; exact h)]
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 64000000 in
+set_option linter.janusRenameI false in
+/-- **one chunk product**: the head (`i < m`) → the call → `LM` -/
+theorem lcall (impl : List Segment) (R : RtInv) (n0 : Nat) (ih : ∀ a, IH impl R n0 (.mul, a))
+    {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp xl xc yp yl yc : Nat} {s : State}
+    {p c : Nat} {L1 : List (Nat × Nat)} {b1 : Nat} {M : Memory} {Lk : List (Nat × Nat)} {bk k tp tl tc : Nat}
+    (hμ : μl xl yl + 3 ≤ n0) (S : State)
+    (hH : LH R b L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk bk k tp tl tc S) (hilt : (k + 1) * yl < xl)
+    {ret : BitVec 64} {Q : State → Prop}
+    (hK : ∀ (Lk' : List (Nat × Nat)) (bk' tp' tl' tc' : Nat) (S' : State),
+      LM R b L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk' bk' k tp' tl' tc' S' →
+      ReachesRet (LibMul.program.link impl) ret S' Q) :
+    ReachesRet (LibMul.program.link impl) ret S Q := by
+  have h := hH.lb
+  obtain ⟨hW, hWs, hal, -, -, -, -, hcap, -, -, hx12, hy12, hxlc, hylc, hxc40, hyc40⟩ := h.lay
+  have h40 := h.h40
+  have hpc := hH.pc; have hsp := hH.sp; have h28 := hH.g; have h29 := hH.fp; have h18 := hH.x18
+  have r0 := hH.r0; have r1 := hH.r1; have r2 := hH.r2; have r3 := hH.r3
+  have a296 := h.a296; have a304 := h.a304; have a312 := h.a312; have a320 := h.a320; have a328 := h.a328
+  have a336 := h.a336; have s184 := h.s184
+  have hyx : yl < xl := Nat.lt_of_le_of_lt (Nat.le_mul_of_pos_left yl (by omega)) hilt
+  obtain ⟨⟨-, ⟨-, -, ha0, hw0⟩, -⟩, -⟩ := h.core.pre
+  have hsacc : S.mem.accessible (s.sp.toNat - 264) 352 true = true := by
+    rw [h.frE.accessible]; exact Memory.accessible_mono _ hw0 (by omega) (by omega)
+  have i1 := toIntN (a := (k + 1) * yl) (by omega)
+  have i2 := toIntN (a := xl) (by omega)
+  have hm := maskN (i := (k + 1) * yl) (c := xc) (by omega) (by omega)
+  have i3 := toIntN (a := (k + 1) * yl + yl) (by omega)
+  have hadd : BitVec.ofNat 64 yl + BitVec.ofNat 64 ((k + 1) * yl) = BitVec.ofNat 64 ((k + 1) * yl + yl) := by
+    rw [← BitVec.ofNat_add, Nat.add_comm]
+  by_cases hlast : xl < (k + 1) * yl + yl
+  · have hI : ((xl : Nat) : Int) < (((k + 1) * yl + yl : Nat) : Int) := by omega
+    janus_run [a296, a304, a312, a320, a328, a336, s184, i1, i2, i3, hadd, hm, hI] until [0x1bb260]
+    refine lcall2 impl R n0 ih hμ _ (h.local ?fr0 ?reg) (hH.tok.winKeep h ?frW) hH.px hH.py hilt (cc := xl - (k + 1) * yl) ?hcc
+      ?hv ?m128 ?m136 ?pc ?sp ?g ?fp ?x18 ?r0 ?r2 ?r3 ?r4 ?r5 ?r6 ?r7 ?r8 ?r9 hK
+    case fr0 => janus_frame
+    case frW => simp only [winA]; janus_frame
+    case reg => janus_simp
+    case hcc => omega
+    case hv =>
+      rw [(h.winVal hH.tok (tl := 0) (Nat.zero_le _) (by simp only [winA]; janus_frame)).1, hH.val,
+        Nat.min_eq_left (by omega)]
+    case m128 => janus_simp
+    case m136 => janus_simp
+    case r0 => janus_simp
+    case r2 => janus_simp
+    all_goals try janus_simp
+    all_goals (apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_add, BitVec.toNat_sub, BitVec.toNat_ofNat]; omega)
+  · have hI : ¬ (((xl : Nat) : Int) < (((k + 1) * yl + yl : Nat) : Int)) := by omega
+    janus_run [a296, a304, a312, a320, a328, a336, s184, i1, i2, i3, hadd, hm, hI] until [0x1bb260]
+    refine lcall2 impl R n0 ih hμ _ (h.local ?fr0B ?regB) (hH.tok.winKeep h ?frWB) hH.px hH.py hilt (cc := yl) ?hccB
+      ?hvB ?m128B ?m136B ?pcB ?spB ?gB ?fpB ?x18B ?r0B ?r2B ?r3B ?r4B ?r5B ?r6B ?r7B ?r8B ?r9B hK
+    case fr0B => janus_frame
+    case frWB => simp only [winA]; janus_frame
+    case regB => janus_simp
+    case hccB => omega
+    case hvB =>
+      rw [(h.winVal hH.tok (tl := 0) (Nat.zero_le _) (by simp only [winA]; janus_frame)).1, hH.val,
+        Nat.min_eq_left (by omega)]
+    case m128B => janus_simp
+    case m136B => janus_simp
+    case r0B => janus_simp
+    case r2B => janus_simp
+    all_goals try janus_simp
+    all_goals (apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_add, BitVec.toNat_sub, BitVec.toNat_ofNat]; omega)
 
 end FvModexp.Arm64.NatMul
