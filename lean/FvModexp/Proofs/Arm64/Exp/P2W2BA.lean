@@ -176,7 +176,8 @@ theorem ub_res (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s)
   have hcl := hb.1.2.2.2.2.2.1
   refine ⟨hc40, hlv, Or.inr ⟨hc, hin, fun r hr => hap r (hB.wc.le.mem_old hr)⟩, fun _ => ⟨(hin.apart hP.win_rt).symm,
     fresh_held_apart hin hap hB.wc.sok.2.1, fresh_held_apart hin hap (hB.wc.le.held hgA.1), (hin.apart hgrt).symm,
-    ?_, fresh_held_apart hin hap hB.tz.zscr.held, fresh_held_apart hin hap hB.tz.bscr.held⟩⟩
+    ?_, fresh_held_apart hin hap hB.tz.zscr.held, fresh_held_apart hin hap hB.tz.bscr.held⟩,
+    fun _ hcm => Or.inr (hnew hcm)⟩
   show Apart p (8 * c) (stW M' st + 8 * stLen M' st) (8 * (stCap M' st - stLen M' st))
   rcases Nat.eq_zero_or_pos (stCap M' st) with h0 | h0
   · have := hb.2.1; have := hB.wc.len
