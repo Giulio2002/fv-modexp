@@ -1383,3 +1383,6 @@ path ≈ 205 s (was: 117 own modules, row 815 s).
   155 → 30 s, RunCP1 164 → 47 s, RunDM0 106 → 50 s; amd64 `Top/RunDSlot`: RunDM2 159 → 91 s, RunDP2 156 → 93 s,
   RunDJS2 59 → 39 s, DE1/DE2/DJS1/DJZ*/DJF*/DM1/DP1 ≈ unchanged (1 operand: few janus_simps saved). Load fell 80 → 20
   during these, so compare `u` times in build/dgen.log. Both RunOkRow chains rebuilt OK after all trims (19:01).
+
+## infra s38 (dev compile arm64, load ~15): P2DDefs 2.3 s, P2DT 3.0 s/2.2 GB, P2DEnt 12 s/2.1 GB, P2DPost 1.6 s, P2DOneR 5.4 s,
+P2DMk 1.9 s, P2DOne 11.9 s/2.6 GB, P2DZero 2.6 s, P2DWinR 2.9 s, P2DWin 29-32 s/3.4 GB, P2DTz 4.4 s; EvInst 34 s/5.0 GB (rebuilt).
