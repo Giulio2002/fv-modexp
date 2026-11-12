@@ -111,14 +111,6 @@ namespace FvModexp.Arm64.DivRec
 
 open FvModexp.Arm64.DivLarge (DrsPreW DrsPostW)
 
-/-- `U < V` when the normalised `len u` is below `len v` (whose top word is not zero) -/
-theorem u_lt_v {M : Memory} {up ul ul' vp vl : Nat} (hv1 : 1 ≤ vl) (htop : 2 ^ 63 ≤ M.readLE (vp + 8 * (vl - 1)) 8)
-    (hlt : ul' < vl) (hU : natVal M up ul' = natVal M up ul) : natVal M up ul < natVal M vp vl := by
-  have h1 := natVal_lt M up ul'
-  have h3 := natVal_ge M vp vl hv1 (by omega)
-  have h4 : 2 ^ (64 * ul') ≤ 2 ^ (64 * (vl - 1)) := Nat.pow_le_pow_right (by decide) (by omega)
-  omega
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 4000000 in
 /-- **`len u < n`**: nothing to do (`fn + 0x11c`) -/
@@ -233,6 +225,38 @@ theorem pathA (impl : List Segment) (R : RtInv)
     case qk =>
       intro T hT ⟨junk, f, v, m, ex, ep, hs, hMF, hLF, hinv', hzr⟩ hrg
       subst hs
-      sorry
+      have e400 : (s.sp - 400#64).toNat = s.sp.toNat - 400 := by
+        rw [BitVec.toNat_sub_of_le (by simp only [BitVec.le_def, BitVec.toNat_ofNat]; omega)]; rfl
+      have e3 := hl3; rw [bv_ofNat_toNat] at e3
+      simp only [calleeStack, setReg_apply, Nat.reduceEqDiff, ↓reduceIte, BitVec.toNat_ofNat, hF.sp, e400, h28', h0,
+        bv_ofNat_toNat, e3] at hMF hLF hzr hinv'
+      rw [Nat.mod_eq_of_lt (show 8 * a.ql.toNat < 2 ^ 64 by omega)] at hMF hLF hzr
+      refine epiZ impl s _ ?zpc ?zsp ?z28 ?z18 ?zlr ?zfp (by omega) (by omega) hal ?zacc hE.1 hE.2.1 _
+        fun s' ⟨e1, e2, e3, e4, e5⟩ => ⟨⟨e1, e2, e3, e4⟩, ?zpost⟩
+      case zpc => rw [hT]; simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte]
+      case zsp => exact hF.sp
+      case z28 =>
+        simp only [retStateX, callRegs_apply, setReg_apply, Nat.reduceEqDiff, ↓reduceIte, h28', true_or, or_true, ite_true]
+      case z18 =>
+        simp only [retStateX, callRegs_apply, setReg_apply, Nat.reduceEqDiff, ↓reduceIte, h18', true_or, or_true, ite_true]
+      case zlr =>
+        simp only [retStateX]
+        rw [hMF.readLE _ _ (by
+          simp only [outside_append, outside_cons, outside_nil, and_true]
+          exact ⟨⟨hout.of_sub (by omega) (by omega), by omega⟩, by omega⟩)]; exact hF.lr
+      case zfp =>
+        simp only [retStateX]
+        rw [hMF.readLE _ _ (by
+          simp only [outside_append, outside_cons, outside_nil, and_true]
+          exact ⟨⟨hout.of_sub (by omega) (by omega), by omega⟩, by omega⟩)]; exact hF.fp
+      case zacc => simp only [retStateX]; rw [hMF.accessible]; exact hm0 ▸ hacc8
+      case zpost =>
+        have e5' : s'.mem = m := by rw [e5]; rfl
+        rw [← e5'] at hMF hLF hinv' hzr
+        refine post_clr hpre (by omega) hF.fr hMF hLF ?_ hinv' ?_ ?_
+        · intro a' n ho; simp only [winA, outside_cons, outside_nil, and_true] at ho ⊢; omega
+        · have : natVal s'.mem a.qp.toNat a.ql.toNat = 0 := FvModexp.Expmc.readLE_zeroed hzr
+          rw [this, hU0]; simp
+        · rw [hU0]; simp
 
 end FvModexp.Arm64.DivRec
