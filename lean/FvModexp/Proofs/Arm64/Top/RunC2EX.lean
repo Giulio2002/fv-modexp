@@ -295,6 +295,7 @@ theorem c2eX (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     (fun t h1 => oneG_ops _ (by rw [h1]; exact hspn) hW hab hb' hone hMF hW1 hop hxs)
     (fun t h1 => poolG_ops (by rw [h1]; exact hspn) hW hab hb' hpool hMF hW1)
     (expX_ops hb' hW1 hglob.2.2.2.2.2.2.2.2.2.2.2.2).1 (expX_ops hb' hW1 hglob.2.2.2.2.2.2.2.2.2.2.2.2).2
+    (by unfold RunIface.ModX; intro hc; exact (InRanges.apart (hlive0 hc).2.2.2.2.1 hglob.2.2.2.2.2.2.2.2.1).symm)
   have hRA := raExp impl hap
   janus_run until [segAddr Extracted.program fn + 0x87c] calls [hP := hExp]
   obtain ⟨⟨⟨hsp1, h281, h291, h181⟩, hr01, hpost⟩, hrg1⟩ := hP

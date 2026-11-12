@@ -307,7 +307,9 @@ def OneG (R : RtInv) (L : List (Nat × Nat)) (m : Memory) (w : List (Nat × Nat)
 /-- **`z.exp(z, y, m, false)`** as Run calls it (`int.go:575`; `RAX = z`, `RBX = x = z`, `RCX = y`, `RDI = m`, `RSI = slow = 0`):
 returns `z` with `z = x ^ y mod m` (`m > 0`; `y ≥ 0`, so the `ModInverse` path is not taken). The last two pre conjuncts
 (NOTES-conventions "[expmc s34]", coordinator decision 2026-11-13): `m ≠ nil` (the code tests `m != nil`, int.go:589) and
-`z`'s header apart from the write-barrier flag `wbA` (the epilogue stores into the header, then reads the flag). -/
+`z`'s header apart from the write-barrier flag `wbA` (the epilogue stores into the header, then reads the flag); LAST:
+`ModX s.mem z` (`z`'s array apart from the threshold globals `gA`: `x = z.abs` is `expNNSlow`'s `mul` operand; expmc s41
+batch, folded here so expmc's `IExp.ExpSpecM` IS this text). -/
 def ExpSpec (impl : List Janus.Amd64.Segment) (R : RtInv) (stk above : Nat) : Prop :=
   ∀ (b : Nat) (L : List (Nat × Nat)) (z y mm : BitVec 64),
     Ensures ((Extracted.program.onlySegments namesExp).link impl) (segAddr Extracted.program (P ++ "(*Int).exp"))
@@ -316,7 +318,7 @@ def ExpSpec (impl : List Janus.Amd64.Segment) (R : RtInv) (stk above : Nat) : Pr
         L stk above [z.toNat, y.toNat, mm.toNat] s ∧ 0 < IntV s.mem mm.toNat ∧
         IntLenLe s.mem z.toNat maxW ∧ IntLenLe s.mem y.toNat maxW ∧ IntLenLe s.mem mm.toNat maxW ∧
         OneG R L s.mem (win s stk above) [z.toNat, y.toNat, mm.toNat] ∧
-        PoolG R s.mem (win s stk above) ∧ mm.toNat ≠ 0 ∧ Apart z.toNat 32 wbA 4)
+        PoolG R s.mem (win s stk above) ∧ mm.toNat ≠ 0 ∧ Apart z.toNat 32 wbA 4 ∧ ModX s.mem z.toNat)
       (fun s s' => s'.fsBase = s.fsBase ∧ s'.df = s.df ∧ s'.regs 0 = z ∧
         IntPost R b (ExpBudget (max (max (lenW s.mem z.toNat) (lenW s.mem y.toNat)) (lenW s.mem mm.toNat)) (lenW s.mem y.toNat))
           L stk above z.toNat (IntV s.mem z.toNat ^ IntV s.mem y.toNat % IntV s.mem mm.toNat) s s')
