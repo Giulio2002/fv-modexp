@@ -135,7 +135,7 @@ theorem d3x (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
       (fun _ => ⟨by janus_simp [hk1a], by janus_simp [hk1b]⟩) (fun _ => by janus_simp [hk2a]) ?_ (hext.trans hext2) ?_ ?_
       (hext2.liveSep hLsL1 hwrt) ?_ ?_ ?_ ?opsA) (by janus_simp [hp2]) (by janus_simp [hn2]) (by janus_simp)
     case opsA =>
-      clear hoffc hmN hcap hdir hdir0 hpw hcw hga hW hsrcL hB48 hS1n hmod hk1a hk2a hS1 hadd hmask hsub hcsub hsrc hH hAcc
+      clear hcap hdir hdir0 hsrcL hB48 hS1n hmod hk1a hk2a hS1 hadd hmask hsub hcsub hsrc hAcc
       refine OpsApart.step' (p2 := p2) (c2 := c2) hopA (fun i hi => ?_) (fun i hi hc => opDone_inRanges (hop i (by omega)) hc)
         (by janus_simp [hp2, opAt]) (by janus_simp [hc2, opAt]) (fun hc => ?_)
       · rcases (show i = 0 ∨ i = 1 by omega) with rfl | rfl <;> exact ⟨by janus_simp [opAt], by janus_simp [opAt]⟩
@@ -156,15 +156,15 @@ theorem d3x (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     · intro j hj
       dsimp only
       rcases (show j = 0 ∨ j = 1 ∨ j = 2 by omega) with rfl | rfl | rfl
-      · clear hoffc hmN hcap hdir hdir0 hpw hcw hga hW hsrcL hB48 hS1n hmod hk1a hk2a hS1 hadd hmask hsub hcsub hsrc hH hAcc
+      · clear hcap hdir hdir0 hsrcL hB48 hS1n hmod hk1a hk2a hS1 hadd hmask hsub hcsub hsrc hAcc
         exact OpDone.transport (hop 0 (by omega)) (by janus_simp [opAt]) (by janus_simp [opAt]) (by janus_simp [opAt])
           (by janus_simp [opAt]) (hLFS.trans (LiveFrame.of_win (by simp only [win, stk]; janus_frame)
             (hext2.liveSep hLsL1 hwrt)) (fun _ _ h => hext2.inRanges_old h)) (fun _ _ h => hext2.inRanges_old h)
-      · clear hoffc hmN hcap hdir hdir0 hpw hcw hga hW hsrcL hB48 hS1n hmod hk1a hk2a hS1 hadd hmask hsub hcsub hsrc hH hAcc
+      · clear hcap hdir hdir0 hsrcL hB48 hS1n hmod hk1a hk2a hS1 hadd hmask hsub hcsub hsrc hAcc
         exact OpDone.transport (hop 1 (by omega)) (by janus_simp [opAt]) (by janus_simp [opAt]) (by janus_simp [opAt])
           (by janus_simp [opAt]) (hLFS.trans (LiveFrame.of_win (by simp only [win, stk]; janus_frame)
             (hext2.liveSep hLsL1 hwrt)) (fun _ _ h => hext2.inRanges_old h)) (fun _ _ h => hext2.inRanges_old h)
-      clear hcap hdir0 hga hW hS1n hmod hk1a hk2a hS1 hadd hmask hsub hcsub hsrc hH hAcc
+      clear hcap hdir0 hS1n hmod hk1a hk2a hS1 hadd hmask hsub hcsub hsrc hAcc
       refine opDone_of (m := s'.mem) (hLc := hext) ?rd (hacc := fun a n w => by
           simp only [Memory.accessible_writeLE, hMF2.accessible, hMF.accessible])
         (by janus_simp [opAt]) (by janus_simp [hp2, opAt]) (by janus_simp [hn2, opAt]) (by janus_simp [hc2, opAt]) ?v hnorm2
