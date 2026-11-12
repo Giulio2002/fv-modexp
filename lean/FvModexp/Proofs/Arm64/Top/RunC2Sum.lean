@@ -1,5 +1,6 @@
 import FvModexp.Proofs.Arm64.Top.RunC2Lem
 import FvModexp.Proofs.Arm64.Top.RunCallees2
+import FvModexp.Proofs.Arm64.Top.RunModX
 
 set_option autoImplicit false
 
@@ -18,11 +19,11 @@ namespace FvModexp.Arm64.Run
 open RunIface in
 /-- `z.Mod(z, y)` at a call state with `SP = sp0`, memory `M`, `X28 = g`. -/
 theorem modW (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv) (stkM aboveM : Nat)
-    (hM : ModSpec impl R stkM aboveM) (b1 : Nat) (L1 : List (Nat × Nat)) (sp0 g : BitVec 64) (M : Memory) (zA yA : Nat)
+    (hM : ModSpecM impl R stkM aboveM) (b1 : Nat) (L1 : List (Nat × Nat)) (sp0 g : BitVec 64) (M : Memory) (zA yA : Nat)
     (hIP : ∀ t : State, t.sp = sp0 → t.mem = M → t.regs 28 = g →
       IntPre R b1 (ModBudget (max (lenW M zA) (lenW M yA))) L1 stkM aboveM [zA, yA] t)
     (hy0 : 0 < IntV M yA) (hzl : IntLenLe M zA maxW) (hyl : IntLenLe M yA maxW)
-    (hPool : ∀ t : State, t.sp = sp0 → PoolG R M (win t stkM aboveM)) (z y : BitVec 64) :
+    (hPool : ∀ t : State, t.sp = sp0 → PoolG R M (win t stkM aboveM)) (hX : ModX M zA) (z y : BitVec 64) :
     Summary (LibRun.program.link impl)
       (segAddr Extracted.program "github.com/ethereum/go-bigmodexpfix/src/math/big.(*Int).Mod")
       (fun t => RetAddr ((Extracted.program.onlySegments namesMod).link impl) (t.regs 30).toNat ∧
@@ -30,11 +31,11 @@ theorem modW (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
       (fun t t' => ((t'.sp = t.sp ∧ t'.regs 28 = t.regs 28 ∧ t'.regs 29 = t.regs 29 ∧ t'.regs 18 = t.regs 18) ∧
         t'.regs 0 = z ∧ IntPost R b1 (ModBudget (max (lenW M zA) (lenW M yA))) L1 stkM aboveM zA
           (IntV M zA % IntV M yA) t t' ∧ IntV t'.mem yA = IntV M yA) ∧ t'.mem.regions = t.mem.regions) := by
-  refine Summary.mono (RunCallees.modSum impl hap R stkM aboveM hM b1 L1 z y).regions ?_ ?_
+  refine Summary.mono (RunCallees.modSumM impl hap R stkM aboveM hM b1 L1 z y).regions ?_ ?_
   · rintro t ⟨hr, ha, hsp, hm, h28, hz, hy⟩
     subst hz hy
     exact ⟨hr, ha, by rw [hm]; exact hIP t hsp hm h28, by rw [hm]; exact hy0, by rw [hm]; exact hzl,
-      by rw [hm]; exact hyl, by rw [hm]; exact hPool t hsp⟩
+      by rw [hm]; exact hyl, by rw [hm]; exact hPool t hsp, by rw [hm]; exact hX⟩
   · rintro t t' ⟨-, -, -, hm, -, hz, hy⟩ ⟨⟨hcs, h0, hpost, hyv⟩, hreg⟩
     subst hz hy
     rw [hm] at hpost hyv

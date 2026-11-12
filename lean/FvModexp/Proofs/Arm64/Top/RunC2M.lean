@@ -15,7 +15,7 @@ theorem clz_one : clzNat 64 1 = 63 := by decide
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem c2m (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv) (stkM aboveM : Nat)
-    (hM : RunIface.ModSpec impl R stkM aboveM) (hBy : RunIface.BytesSpec impl R stkM aboveM) (hsv : RunIface.Serves R)
+    (hM : RunIface.ModSpecM impl R stkM aboveM) (hBy : RunIface.BytesSpec impl R stkM aboveM) (hsv : RunIface.Serves R)
     (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64) (ret : Nat)
     (hret : RetAddr (LibRun.program.link impl) ret) (s : State) (Q : Outcome → Prop)
     (W : Nat) (henvW : CallEnv R L s W 40) (hW : 624 + stkM ≤ W) (hW1 : 4800 ≤ W) (hab : aboveM ≤ 160)
@@ -82,7 +82,11 @@ theorem c2m (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     fun t h1 h2 h3 => intPre_ops _ (by rw [h1]; exact hspn) h2 h3 henvW0 hW hW1 hab hglob hgL hsv hBm hdS hext hinv hMF
       hop hopA hxs hpw
   have hMod := modW impl hap R stkM aboveM hM b1 L1 T.sp (s.regs 28) T.mem (s.sp.toNat - 136) (s.sp.toNat - 200) hIP
-    hy0 hzl hyl (fun t h1 => poolG_ops (by rw [h1]; exact hspn) hW hab hb' hpool hMF hW1)
+    hy0 hzl hyl (fun t h1 => poolG_ops (by rw [h1]; exact hspn) hW hab hb' hpool hMF hW1) (by
+      unfold RunIface.ModX
+      rw [show s.sp.toNat - 136 + 24 = s.sp.toNat - 112 by omega, show s.sp.toNat - 136 + 8 = s.sp.toNat - 128 by omega]
+      intro hc
+      exact (InRanges.apart (hlive0 hc).2.2.2.2.1 hglob.2.2.2.2.2.2.2.2.1).symm)
   have hRA := raMod impl hap
   janus_run [hn1, hx1, h7, clz_one, hb0'] until [segAddr Extracted.program fn + 0x85c, segAddr Extracted.program fn + 0x864] calls [hP := hMod]
   obtain ⟨⟨⟨hsp1, h281, h291, h181⟩, hr01, hpost, hyv⟩, hrg1⟩ := hP

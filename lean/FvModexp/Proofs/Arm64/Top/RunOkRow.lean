@@ -35,7 +35,7 @@ theorem correctness_ok (impl : List Segment) (hap : ImplApart Extracted.program 
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
     (hmz : MemmoveZeroLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
     (hno : NewobjectLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.newobject") 4096 R)
-    (stkM aboveM : Nat) (hM : RunIface.ModSpec impl R stkM aboveM) (hE : RunIface.ExpSpec impl R stkM aboveM)
+    (stkM aboveM : Nat) (hM : RunIface.ModSpecM impl R stkM aboveM) (hE : RunIface.ExpSpec impl R stkM aboveM)
     (W : Nat) (hW : 624 + stkM ≤ W) (hW1 : 4800 ≤ W) (hab : aboveM ≤ 160) (hk1 : 4160 ≤ stkM) (ha1 : 16 ≤ aboveM)
     (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64) :
     Ensures (Extracted.program.link impl) (segAddr Extracted.program RunArm64.fn) [c, p, len, cp]
@@ -231,7 +231,7 @@ theorem site_mz : (sMz.regs 2).toNat = 0 ∧ Mem.EqPre 4096 3 sMz ∧
     ⟨trivial, Witness.inv_cs _ _ _ _, fun r hr => by simp at hr, Witness.cs_winR _ _ _ _ 3 (by omega)⟩⟩
 
 /-- The returning run at the witness, from `correctness_ok` (given the callee specs). -/
-theorem returnsF (stkM aboveM : Nat) (hM : RunIface.ModSpec implAt R stkM aboveM)
+theorem returnsF (stkM aboveM : Nat) (hM : RunIface.ModSpecM implAt R stkM aboveM)
     (hE : RunIface.ExpSpec implAt R stkM aboveM)
     (hW : 624 + stkM ≤ WW) (hab : aboveM ≤ 160) (hk1 : 4160 ≤ stkM) (ha1 : 16 ≤ aboveM) :
     Returns ((Extracted.program.link implAt).withExit ret) s1 fun s' =>
@@ -251,7 +251,7 @@ theorem compute1 : compute (bytesAt s1.mem p1.toNat (99 : BitVec 64).toNat)
 /-- All hypotheses of `correctness_ok` except the three callee specs (premises until their proofs land) hold together,
 with every conjunct of its precondition, and the call returns: the toy runtime, an empty live set, budget `bW`, window
 `WW`, and the call `Run(c, p, 99, 99)` computing `3 ^ 5 mod 7`. -/
-theorem nonvacuous_of (stkM aboveM : Nat) (hM : RunIface.ModSpec implAt R stkM aboveM)
+theorem nonvacuous_of (stkM aboveM : Nat) (hM : RunIface.ModSpecM implAt R stkM aboveM)
     (hE : RunIface.ExpSpec implAt R stkM aboveM)
     (hW : 624 + stkM ≤ WW) (hab : aboveM ≤ 160) (hk1 : 4160 ≤ stkM) (ha1 : 16 ≤ aboveM) :
     ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64)
