@@ -1,6 +1,8 @@
 import FvModexp.Proofs.Arm64.Nat.DivLargeDBP
 import FvModexp.Proofs.Arm64.Nat.DivLargeDRel
 
+set_option autoImplicit false
+
 /-!
 # `divLarge` (arm64): `n < divRecursiveThreshold` → `q.divBasic(stk, u, v)` (natdiv.go:626-627), `joinQ` → `joinD`
 
@@ -66,7 +68,7 @@ theorem divPost {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {dc : Nat → Nat 
     (hrv : natVal T.mem P (il + 1) = natVal X.mem P (il + 1) % natVal X.mem t vl)
     {L' : List (Nat × Nat)} {b' : Nat} (hx : LiveExt R Lq L')
     (hbud : b - cost dc (stLen s.mem st) il vl ≤ b')
-    (hinv : R.inv b' L' (s.regs 28).toNat (view R.rt L' T.mem)) (hSB : StackBack R Lq L' st X.mem T.mem)
+    (hinv : R.inv b' L' (s.regs 28).toNat (view R.rt L' T.mem)) (hSB : StackBackL R Lq L' st X.mem T.mem)
     (hMF : MemFrame X.mem T.mem (R.rt ++ winA X K A ++ [(qp, qp + 8 * (il - vl + 1)), (P, P + 8 * (il + 1))] ++
       stkWs X.mem st))
     (hLF : LiveFrame X.mem T.mem Lq ([(qp, qp + 8 * (il - vl + 1)), (P, P + 8 * (il + 1))] ++ stkWs X.mem st)) :
@@ -107,7 +109,7 @@ theorem divPost {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {dc : Nat → Nat 
   have hAL' : LiveFrame S.mem X.mem L [(qp, qp + 8 * qc)] :=
     ⟨fun a n hin ho => hAL.readLE a n (hS.ext3.inRanges_old (hE.ext.inRanges_old hin)) ho⟩
   obtain ⟨hf, hlf⟩ := frameX hE hS hspn hA hAL' (K := K) (A := A) (qn := il - vl + 1) hK hAb (by omega) hMF hLF
-  obtain ⟨hok, hlen, harr⟩ := hSB
+  obtain ⟨⟨hok, hlen, harr⟩, harrL⟩ := hSB
   have hcb := hok.2.2.2.2.2.2
   -- reads above the callee's window
   have rdT : ∀ a, s.sp.toNat - 200 ≤ a → a + 8 ≤ s.sp.toNat - 40 → T.mem.readLE a 8 = X.mem.readLE a 8 := by
@@ -148,7 +150,11 @@ theorem divPost {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {dc : Nat → Nat 
       rw [hqv, huv, hvv, Nat.mul_div_mul_right _ _ (Nat.two_pow_pos _)],
     rval := by
       rw [hrv, huv, hvv, Nat.mul_mod_mul_right],
-    reg := by rw [hTreg, hreg] }
+    reg := by rw [hTreg, hreg],
+    arrL2 := by
+      have h2 : ¬(stW T.mem st = stW X.mem st ∧ stCap T.mem st = stCap X.mem st) →
+          (stW T.mem st, stW T.mem st + 8 * stCap T.mem st) ∈ L' ∧ 0 < stCap T.mem st := harrL
+      rw [hW, hCp] at h2; exact h2 }
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
@@ -167,7 +173,7 @@ theorem dbPost {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {dc : Nat → Nat �
     (hrv : natVal T.mem P (il + 1) = natVal X.mem P (il + 1) % natVal X.mem t vl)
     {L' : List (Nat × Nat)} {b' : Nat} (hx : LiveExt R Lq L')
     (hb : bq - stackNatCost (stLen X.mem st) (vl + 1) ≤ b')
-    (hinv : R.inv b' L' (s.regs 28).toNat (view R.rt L' T.mem)) (hSB : StackBack R Lq L' st X.mem T.mem)
+    (hinv : R.inv b' L' (s.regs 28).toNat (view R.rt L' T.mem)) (hSB : StackBackL R Lq L' st X.mem T.mem)
     (hMF : MemFrame X.mem T.mem (R.rt ++ winA X 4464 88 ++ [(qp, qp + 8 * (il - vl + 1)), (P, P + 8 * (il + 1))] ++
       stkWs X.mem st))
     (hLF : LiveFrame X.mem T.mem Lq ([(qp, qp + 8 * (il - vl + 1)), (P, P + 8 * (il + 1))] ++ stkWs X.mem st)) :

@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Nat.DrsSNP
 
+set_option autoImplicit false
+
 /-!
 # `divRecursiveStep` (arm64), big path: the facts after `qhat0 := stk.nat(B + 1)` (pure)
 
@@ -117,7 +119,7 @@ theorem hd_mem {R : RtInv} {c : Cx} {s X : State} {T : Memory} {bk : Nat}
     rw [h1]; exact hF0.readLE x k (fw_out (by omega) hw)
   refine ⟨⟨hpre, ra4, ra48, hW, h40, hvu, hu1, hU, hN, hext, hscr.al, hscr.b48, hscr.held, ?_, hloc, hsep.w, hsep.g,
     hsep.gA, (hsep.st).symm, hsep.q, hsep.u, hsep.v⟩,
-    ⟨LiveExt.refl R c.L1, hreg, hinv, hfr, hlf, hok, hsarr⟩,
+    ⟨LiveExt.refl R c.L1, hreg, hinv, hfr, hlf, hok, hsarr, ArrIn.of_nat (L1 := c.L1) (m0 := s.mem) (m := T) hlc hlen hsame hmem⟩,
     ⟨by rw [hlen], harrh.sub (by simp only [Cx.l1]; omega) (by simp only [Cx.l1]; omega), hfsep.w, hfsep.g, hfsep.st,
       hfsep.gA, hfsep.q, hfsep.u, hfsep.v, by unfold Apart; omega⟩,
     hkeep⟩

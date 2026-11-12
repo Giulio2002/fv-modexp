@@ -9,6 +9,8 @@ import FvModexp.Proofs.Arm64.Nat.DivBig
 import FvModexp.Proofs.Arm64.Nat.DivBigC
 import FvModexp.Proofs.Arm64.Nat.DivLarge
 
+set_option autoImplicit false
+
 /-!
 # `(z nat) div(stk, z2, u, v)` (go-bigmodexpfix natdiv.go:518), arm64 — the composition
 
@@ -93,7 +95,7 @@ theorem full (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
 returns `q = U / V`, `r = U mod V`, both normalised (in `z` / `z2`'s array or fresh ones), the stack restored; writes
 only `z`, `z2`, the stack, the runtime's memory and the window; no panic, no fault. The precondition is
 `ExpHyp.DivPre` (= `ExpHyp.DivHyp`). Premises: `DivLarge.Hyp` and the live runtime contracts. -/
-theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+theorem ensL (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hmk0 : MakesliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
     (hmv0 : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
     (hmz0 : MemmoveZeroLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
@@ -103,7 +105,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
       [z, zl, zc, st, z2, z2l, z2c, u, ul, uc, v, vl, vc]
       (fun s => Pre R b dc L z.toNat zl.toNat zc.toNat st.toNat z2.toNat z2l.toNat z2c.toNat u.toNat ul.toNat
         v.toNat vl.toNat s)
-      (fun s s' => Post R b dc L z.toNat zc.toNat st.toNat z2.toNat z2c.toNat u.toNat ul.toNat v.toNat vl.toNat s s') := by
+      (fun s s' => PostL R b dc L z.toNat zc.toNat st.toNat z2.toNat z2c.toNat u.toNat ul.toNat v.toNat vl.toNat s s') := by
   rw [show names = LibDiv.names from rfl, ← LibDiv.eq_only]
   intro ret hret s hs hpre
   janus_intro hs
@@ -114,12 +116,46 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   · rw [h_lr, BitVec.toNat_ofNat, Nat.mod_eq_of_lt (show ret < 2 ^ 64 by omega)]; exact hr4
   · rw [h_lr, BitVec.toNat_ofNat, Nat.mod_eq_of_lt (show ret < 2 ^ 64 by omega)]; exact hr48
 
+/-- `ensL` in the `StackBack` form (`ExpHyp.DivPost`) -/
+theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+    (hmk0 : MakesliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
+    (hmv0 : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
+    (hmz0 : MemmoveZeroLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
+    (dc : Nat → Nat → Nat → Nat) (hL : DivLarge.Hyp impl R dc)
+    (b : Nat) (L : List (Nat × Nat)) (z zl zc st z2 z2l z2c u ul uc v vl vc : BitVec 64) :
+    Ensures ((Extracted.program.onlySegments names).link impl) (segAddr Extracted.program fn)
+      [z, zl, zc, st, z2, z2l, z2c, u, ul, uc, v, vl, vc]
+      (fun s => Pre R b dc L z.toNat zl.toNat zc.toNat st.toNat z2.toNat z2l.toNat z2c.toNat u.toNat ul.toNat
+        v.toNat vl.toNat s)
+      (fun s s' => Post R b dc L z.toNat zc.toNat st.toNat z2.toNat z2c.toNat u.toNat ul.toNat v.toNat vl.toNat s s') :=
+  (ensL impl hap R hmk0 hmv0 hmz0 dc hL b L z zl zc st z2 z2l z2c u ul uc v vl vc).mono (fun _ h => h)
+    (fun _ _ _ h => h.toDivPost)
+
 end FvModexp.Arm64.NatDiv
 
 namespace FvModexp.Arm64.NatDiv
 
 /-- **`nat.div`** (arm64) with `divLarge` discharged (`DivLarge.ens`): premise `DrsHyp` (`divRecursiveStep`) and the
 live runtime contracts. -/
+theorem ensDL (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+    (hgr : GrowsliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.growslice") 4096 R)
+    (hmc : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
+    (hwb : WbLiveContract (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2)
+    (hmk0 : MakesliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
+    (hmv0 : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
+    (hmz0 : MemmoveZeroLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
+    (dc : Nat → Nat → Nat → Nat) (hD : DivLarge.DrsHyp impl R dc)
+    (b : Nat) (L : List (Nat × Nat)) (z zl zc st z2 z2l z2c u ul uc v vl vc : BitVec 64) :
+    Ensures ((Extracted.program.onlySegments names).link impl) (segAddr Extracted.program fn)
+      [z, zl, zc, st, z2, z2l, z2c, u, ul, uc, v, vl, vc]
+      (fun s => Pre R b dc L z.toNat zl.toNat zc.toNat st.toNat z2.toNat z2l.toNat z2c.toNat u.toNat ul.toNat
+        v.toNat vl.toNat s)
+      (fun s s' => PostL R b dc L z.toNat zc.toNat st.toNat z2.toNat z2c.toNat u.toNat ul.toNat v.toNat vl.toNat s s') :=
+  ensL impl hap R hmk0 hmv0 hmz0 dc (DivLarge.ens impl hap R hgr hmc hwb hmk0 hmv0 dc hD) b L z zl zc st z2 z2l z2c u ul
+    uc v vl vc
+
+
+/-- `ensDL` in the `StackBack` form -/
 theorem ensD (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hgr : GrowsliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.growslice") 4096 R)
     (hmc : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
@@ -134,7 +170,7 @@ theorem ensD (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
       (fun s => Pre R b dc L z.toNat zl.toNat zc.toNat st.toNat z2.toNat z2l.toNat z2c.toNat u.toNat ul.toNat
         v.toNat vl.toNat s)
       (fun s s' => Post R b dc L z.toNat zc.toNat st.toNat z2.toNat z2c.toNat u.toNat ul.toNat v.toNat vl.toNat s s') :=
-  ens impl hap R hmk0 hmv0 hmz0 dc (DivLarge.ens impl hap R hgr hmc hwb hmk0 hmv0 dc hD) b L z zl zc st z2 z2l z2c u ul
-    uc v vl vc
+  (ensDL impl hap R hgr hmc hwb hmk0 hmv0 hmz0 dc hD b L z zl zc st z2 z2l z2c u ul uc v vl vc).mono (fun _ h => h)
+    (fun _ _ _ h => h.toDivPost)
 
 end FvModexp.Arm64.NatDiv

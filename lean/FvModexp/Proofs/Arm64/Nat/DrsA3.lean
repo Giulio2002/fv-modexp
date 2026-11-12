@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Nat.DrsSN3
 
+set_option autoImplicit false
+
 /-!
 # `divRecursiveStep` (arm64), loop body segment 3: relations (pure)
 
@@ -70,7 +72,7 @@ theorem Ev.callG {R : RtInv} {c : Cx} {s : State} {Lk L' : List (Nat × Nat)} {b
     (hx : LiveExt R Lk L') (hinv : R.inv b' L' (s.regs 28).toNat (view R.rt L' M')) (hok : StkOK M' R L' c.st)
     (hsar : (stW M' c.st = stW M c.st ∧ stCap M' c.st = stCap M c.st) ∨
       (InRanges (stW M' c.st) (8 * stCap M' c.st) R.rt ∧ ApartAll (stW M' c.st) (8 * stCap M' c.st) Lk))
-    (hreg : M'.regions = M.regions) :
+    (hreg : M'.regions = M.regions) (harr : ArrIn L' c.st M M') :
     Ev R c s L' b' M' := by
   have hloc := (free_loc h hl).out
   have hfr : MemFrame M M' (R.rt ++ winA s c.W 96 ++ c.ws s) := hF.mono fun x k ho => by
@@ -84,7 +86,7 @@ theorem Ev.callG {R : RtInv} {c : Cx} {s : State} {Lk L' : List (Nat × Nat)} {b
     refine ⟨⟨⟨hr, hS x k hw⟩, h1⟩, ?_⟩
     simp only [Cx.ws, stkWs, outside_append, outside_cons, outside_nil, and_true] at ho2 h2 ⊢
     exact ⟨by omega, by omega⟩
-  refine ⟨h.ext.trans hx, by rw [hreg]; exact h.reg, hinv, mf_trans h.fr hfr, ?_, hok, ?_⟩
+  refine ⟨h.ext.trans hx, by rw [hreg]; exact h.reg, hinv, mf_trans h.fr hfr, ?_, hok, ?_, h.sarrL.trans harr hx⟩
   · refine ⟨fun x k hin ho => ?_⟩
     rw [hL.readLE x k ((hcr.ext1.trans h.ext).inRanges_old hin) ?_]
     · exact h.lf.readLE x k hin ho
@@ -144,8 +146,8 @@ theorem Fp.grow {R : RtInv} {c : Cx} {s : State} {Lk L' : List (Nat × Nat)} {bk
 /-- `FL` (the array from `l1` on) survives a callee that keeps the stack length (it may grow the array) -/
 theorem FL.callS {R : RtInv} {c : Cx} {s : State} {Lk L' : List (Nat × Nat)} {bk : Nat} {M M' : Memory}
     (hcr : Cr R c s) (hev : Ev R c s Lk bk M) (h : FL R c s Lk M) (hl0 : 0 < stLen M c.st) (hl1 : c.l1 s ≤ stLen M c.st) (hx : LiveExt R Lk L')
-    (hsb : StackBack R Lk L' c.st M M') : FL R c s L' M' := by
-  obtain ⟨hok, hlen, hsar⟩ := hsb
+    (hsb : StackBackL R Lk L' c.st M M') : FL R c s L' M' := by
+  obtain ⟨⟨hok, hlen, hsar⟩, -⟩ := hsb
   rcases hsar with ⟨e1, e2⟩ | ⟨hin, hap⟩
   · have h' := h.hdr e1 e2
     exact ⟨hx.held h'.h, h'.w, h'.g, h'.st, h'.gA, h'.q, h'.u, h'.v, h'.t0⟩

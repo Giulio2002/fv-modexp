@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Nat.DivLargeMem
 
+set_option autoImplicit false
+
 /-!
 # `divLarge` (arm64): `u = u.make(len(uIn) + 1)` (natdiv.go:608), allocation path (`cap u < len uIn + 1`)
 
@@ -32,7 +34,7 @@ theorem mkA (impl : List Segment) (R : RtInv) (stkSN abSN : Nat) (hk1 : stkSN â‰
       (stW S2.mem st) (stCap S2.mem st) L1 b1 Lk bk P' C' S â†’ ReachesRet (LibDivL.program.link impl) (s.regs 30) S Q) :
     ReachesRet (LibDivL.program.link impl) (s.regs 30) S2 Q := by
   have hE := env_of (S2 := S2.mem) hpre hA.ext hA.bud hA.ok hA.len hA.same hA.grow
-    (fun a n v => by rw [hA.F2.accessible, hP.fr.accessible])
+    (fun a n v => by rw [hA.F2.accessible, hP.fr.accessible]) hA.mem
   have hl := hE.lay
   have hsp0 := hl.sp0; have hsp1 := hl.sp1; have hil9 := hl.il9; have hv2 := hl.v2; have hvil := hl.vil
   have hu40 := hpre.uo.1

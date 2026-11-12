@@ -10,6 +10,8 @@ import FvModexp.Proofs.Arm64.Nat.DivLargeDRM
 import FvModexp.Proofs.Arm64.Nat.DivLargeT1
 import FvModexp.Proofs.Arm64.Nat.DivLargeT2
 
+set_option autoImplicit false
+
 /-!
 # `(z nat) divLarge(stk, u, uIn, vIn)` (go-bigmodexpfix natdiv.go:597), arm64 — the composition
 
@@ -101,10 +103,10 @@ theorem full (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
   have hcost : stackNatCost (stLen s.mem st.toNat) vl.toNat ≤ cost dc (stLen s.mem st.toNat) il.toNat vl.toNat := by
     simp only [cost]; omega
   refine pro1 impl R b L _ zp zl zc st up ul uc ip il ic vp vl vc s hpc h0 h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 h12 hpre _
-    fun P hP hinvP => pro2 impl hap R 4208 24 (StackNat.hyp impl hap R hgr hmc0 hwb) (by decide) (by decide) b L _
+    fun P hP hinvP => pro2 impl hap R 4208 24 (StackNat.hypL impl hap R hgr hmc0 hwb) (by decide) (by decide) b L _
       zp zc st up uc ip il ic vp vl vc s hpre hcost P hP hinvP _ fun S2 L1 b1 hA => ?_
   have hE := env_of (S2 := S2.mem) hpre hA.ext hA.bud hA.ok hA.len hA.same hA.grow
-    (fun a n v => by rw [hA.F2.accessible, hP.fr.accessible])
+    (fun a n v => by rw [hA.F2.accessible, hP.fr.accessible]) hA.mem
   by_cases hz : il.toNat + 1 ≤ uc.toNat
   · exact mkR impl R 4208 24 (by decide) (by decide) b L _ _ _ _ _ _ _ _ _ _ _ _ s hpre P hP S2 L1 b1 hA hz _
       fun S hU => afterU impl hap R hgr hmc0 hwb hmk hmv hmc dc hD hE S hU hl4 hl48

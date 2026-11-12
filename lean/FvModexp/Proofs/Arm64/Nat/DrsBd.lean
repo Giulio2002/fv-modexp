@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Nat.DrsSNP
 
+set_option autoImplicit false
+
 /-!
 # `divRecursiveStep` (arm64), big path: the relations of one loop iteration (no janus runs)
 
@@ -129,7 +131,7 @@ theorem Ev.callN {R : RtInv} {c : Cx} {s : State} {Lk : List (Nat × Nat)} {bk b
     exact ⟨⟨ho.1.1, hS x k ho.1.2⟩, h1⟩
   have hext := h.ext
   refine ⟨h.ext, by rw [hreg]; exact h.reg, hinv, mf_trans h.fr hfr, ?_,
-    stkOK_moveS h.sok eW eL eC hF.accessible, by rw [eW, eC]; exact h.sarr⟩
+    stkOK_moveS h.sok eW eL eC hF.accessible, by rw [eW, eC]; exact h.sarr, h.sarrL.congr eW eC fun _ h => h⟩
   refine ⟨fun x k hin ho => ?_⟩
   rw [hL.readLE x k ?_ (hW2 x k hin ho)]
   · exact h.lf.readLE x k hin ho

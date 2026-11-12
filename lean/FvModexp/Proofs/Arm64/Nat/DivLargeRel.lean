@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Nat.DivLargePro
 
+set_option autoImplicit false
+
 /-!
 # `divLarge` (arm64): the segment relations after `v := stk.nat(n)`
 
@@ -36,6 +38,8 @@ structure AfterNat (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (st vl : Nat) (
     (s.sp.toNat - 296, s.sp.toNat - 304 + abSN)] ++ stkWs s.mem st)
   LF2 : LiveFrame P.mem S2.mem L (stkWs s.mem st)
   reg : S2.mem.regions = s.mem.regions
+  mem : stCap s.mem st < stLen s.mem st + StackNat.rnd vl →
+    (stW S2.mem st, stW S2.mem st + 8 * stCap S2.mem st) ∈ L1
 
 /-- the facts fixed from the `stk.nat` call on: the scratch `v` at `t` (`n` words), the live set `L1`, the budget `b1`,
 the stack array `(w1, c1)` -/
@@ -50,6 +54,7 @@ structure Env (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (c : Nat) (zp zc st 
   c1len : stLen s.mem st + StackNat.rnd vl ≤ c1
   c1b : c1 < 2 ^ 40
   w1live : NatLive s.mem R L1 w1 c1
+  arrL : ¬(w1 = stW s.mem st ∧ c1 = stCap s.mem st) → (w1, w1 + 8 * c1) ∈ L1 ∧ 0 < c1
 
 /-- the ranges written after the `stk.nat` call: the scratch `v`, `z`'s and `u`'s arrays -/
 @[reducible] def wsL (zp zc up uc vl t : Nat) : List (Nat × Nat) :=
@@ -144,13 +149,14 @@ theorem env_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st
     (hsame : stLen s.mem st + StackNat.rnd vl ≤ stCap s.mem st → stW S2 st = stW s.mem st ∧ stCap S2 st = stCap s.mem st)
     (hgrow : stCap s.mem st < stLen s.mem st + StackNat.rnd vl → InRanges (stW S2 st) (8 * stCap S2 st) R.rt ∧
       ApartAll (stW S2 st) (8 * stCap S2 st) L)
-    (hacc2 : ∀ a n v, S2.accessible a n v = s.mem.accessible a n v) :
+    (hacc2 : ∀ a n v, S2.accessible a n v = s.mem.accessible a n v)
+    (hmem : stCap s.mem st < stLen s.mem st + StackNat.rnd vl → (stW S2 st, stW S2 st + 8 * stCap S2 st) ∈ L1) :
     Env R b L c zp zc st up uc ip il vp vl s (stW S2 st + 8 * stLen s.mem st) L1 b1 (stW S2 st) (stCap S2 st) := by
   have hv2 := hpre.v2
   have hscr := Scr.of_post (m0 := s.mem) (k := vl) hok hlen (by omega) hsame hgrow rfl
   have hok' := hok
   obtain ⟨-, -, -, -, hnl, hlc, hcb⟩ := hok'
-  refine ⟨hpre, rfl, ⟨hscr.b48, ?_, hscr.al, hscr.held, hscr.loc⟩, hext, hbud, ?_, ?_, hcb, ?_⟩
+  refine ⟨hpre, rfl, ⟨hscr.b48, ?_, hscr.al, hscr.held, hscr.loc⟩, hext, hbud, ?_, ?_, hcb, ?_, ?_⟩
   · rw [← hacc2]; exact hscr.acc
   · by_cases hc : stLen s.mem st + StackNat.rnd vl ≤ stCap s.mem st
     · left; exact hsame hc
@@ -159,5 +165,6 @@ theorem env_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st
   · intro h0
     obtain ⟨a1, a2, a3, a4⟩ := hnl h0
     exact ⟨a1, a2, by rw [← hacc2]; exact a3, a4⟩
+  · exact (ArrIn.of_nat (L1 := L1) (m0 := s.mem) (m := S2) hlc hlen hsame hmem :)
 
 end FvModexp.Arm64.DivLarge

@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Nat.DivLargeDRel
 
+set_option autoImplicit false
+
 /-!
 # `divLarge` (arm64): the two inlined `norm()` loops of the tail (pattern of `Rsh.norm`)
 
@@ -113,5 +115,6 @@ structure AtR (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (c : Nat) (zp zc st 
   qnrm : NatNorm S.mem qp ql
   rval : natVal S.mem P (il + 1) = natVal s.mem ip il % natVal s.mem vp vl
   reg : S.mem.regions = s.mem.regions
+  arrL2 : ¬(w2 = w1 ∧ c2 = c1) → (w2, w2 + 8 * c2) ∈ L2 ∧ 0 < c2
 
 end FvModexp.Arm64.DivLarge

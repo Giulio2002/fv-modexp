@@ -3,6 +3,8 @@ import FvModexp.Proofs.Arm64.Nat.LibDrs
 import FvModexp.Proofs.Arm64.Nat.DivBasic
 import FvModexp.Proofs.Arm64.Exp.MulHyp
 
+set_option autoImplicit false
+
 /-!
 # `(z nat) divLarge(stk *stack, u, uIn, vIn nat) (q, r nat)` (go-bigmodexpfix natdiv.go:597), arm64 — statements
 
@@ -88,7 +90,7 @@ abbrev DrsPre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (cost : Nat) (qp ql 
     (s s' : State) : Prop :=
   natVal s'.mem qp ql = natVal s.mem up ul / natVal s.mem vp vl ∧
   natVal s'.mem up ul = natVal s.mem up ul % natVal s.mem vp vl ∧
-  ∃ (L' : List (Nat × Nat)) (b' : Nat), ExpHyp.RtPost R b cost L L' b' s s' ∧ StackBack R L L' st s.mem s'.mem ∧
+  ∃ (L' : List (Nat × Nat)) (b' : Nat), ExpHyp.RtPost R b cost L L' b' s s' ∧ StackBackL R L L' st s.mem s'.mem ∧
     MemFrame s.mem s'.mem (R.rt ++ winA s W 96 ++ [(qp, qp + 8 * ql), (up, up + 8 * ul)] ++ stkWs s.mem st) ∧
     LiveFrame s.mem s'.mem L ([(qp, qp + 8 * ql), (up, up + 8 * ul)] ++ stkWs s.mem st)
 
@@ -222,7 +224,7 @@ one is apart from the stack's final array), both normalised; the stack's `len` r
     ∃ (L' : List (Nat × Nat)) (b' : Nat),
       ExpHyp.NatOF R L L' s'.mem zp zc 1 q ql qc (natVal s.mem ip il / natVal s.mem vp vl) ∧
       ExpHyp.NatOF R L L' s'.mem up uc 1 r rl rc (natVal s.mem ip il % natVal s.mem vp vl) ∧
-      ExpHyp.RtPost R b c L L' b' s s' ∧ StackBack R L L' st s.mem s'.mem ∧
+      ExpHyp.RtPost R b c L L' b' s s' ∧ StackBackL R L L' st s.mem s'.mem ∧
       (¬ (r = up ∧ rc = uc) → 0 < rc → 0 < stCap s'.mem st →
         Apart r (8 * rc) (stW s'.mem st) (8 * stCap s'.mem st)) ∧
       MemFrame s.mem s'.mem (R.rt ++ winA s 41264 112 ++ (ar zp zc ++ ar up uc) ++ stkWs s.mem st) ∧

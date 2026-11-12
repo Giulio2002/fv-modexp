@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Nat.DrsBd
 
+set_option autoImplicit false
+
 /-!
 # `divRecursiveStep` (arm64), loop body: the environment after a stack-using callee (pure)
 
@@ -39,10 +41,10 @@ theorem Ev.callS {R : RtInv} {c : Cx} {s : State} {Lk L' : List (Nat × Nat)} {b
     (hS : ∀ x k, Outside x k (winA s c.W 96) → Outside x k wsS)
     (hW1 : ∀ x k, Outside x k (R.rt ++ winA s c.W 96 ++ c.ws s) → Outside x k ws)
     (hW2 : ∀ x k, InRanges x k c.L → Outside x k (c.ws s) → Outside x k ws)
-    (hx : LiveExt R Lk L') (hinv : R.inv b' L' (s.regs 28).toNat (view R.rt L' M')) (hsb : StackBack R Lk L' c.st M M')
+    (hx : LiveExt R Lk L') (hinv : R.inv b' L' (s.regs 28).toNat (view R.rt L' M')) (hsb : StackBackL R Lk L' c.st M M')
     (hreg : M'.regions = M.regions) :
     Ev R c s L' b' M' := by
-  obtain ⟨hok, -, hsar⟩ := hsb
+  obtain ⟨⟨hok, -, hsar⟩, harr⟩ := hsb
   have hloc := (free_loc h hl).out
   have hlc : stLen M c.st ≤ stCap M c.st := h.sok.2.2.2.2.2.1
   have hfr : MemFrame M M' (R.rt ++ winA s c.W 96 ++ c.ws s) := hF.mono fun x k ho => by
@@ -56,7 +58,7 @@ theorem Ev.callS {R : RtInv} {c : Cx} {s : State} {Lk L' : List (Nat × Nat)} {b
     refine ⟨⟨⟨hr, hS x k hw⟩, h1⟩, ?_⟩
     simp only [Cx.ws, stkWs, outside_append, outside_cons, outside_nil, and_true] at ho2 h2 ⊢
     exact ⟨by omega, by omega⟩
-  refine ⟨h.ext.trans hx, by rw [hreg]; exact h.reg, hinv, mf_trans h.fr hfr, ?_, hok, ?_⟩
+  refine ⟨h.ext.trans hx, by rw [hreg]; exact h.reg, hinv, mf_trans h.fr hfr, ?_, hok, ?_, h.sarrL.trans harr hx⟩
   · refine ⟨fun x k hin ho => ?_⟩
     rw [hL.readLE x k ((hcr.ext1.trans h.ext).inRanges_old hin) ?_]
     · exact h.lf.readLE x k hin ho
@@ -74,8 +76,8 @@ set_option maxHeartbeats 8000000 in
 /-- **the free part after a stack-using callee** (same length) -/
 theorem Fp.callS {R : RtInv} {c : Cx} {s : State} {Lk L' : List (Nat × Nat)} {bk : Nat} {M M' : Memory} {lM : Nat}
     (hcr : Cr R c s) (hev : Ev R c s Lk bk M) (h : Fp R c s Lk M lM) (hl0 : 0 < lM) (hx : LiveExt R Lk L')
-    (hsb : StackBack R Lk L' c.st M M') : Fp R c s L' M' lM := by
-  obtain ⟨hok, hlen, hsar⟩ := hsb
+    (hsb : StackBackL R Lk L' c.st M M') : Fp R c s L' M' lM := by
+  obtain ⟨⟨hok, hlen, hsar⟩, -⟩ := hsb
   rcases hsar with ⟨e1, e2⟩ | ⟨hin, hap⟩
   · obtain ⟨h1, h2, h3, h4, h5, h6, h7, h8, h9, h10⟩ := h
     rw [← e1, ← e2] at h2 h3 h4 h5 h6 h7 h8 h9 h10

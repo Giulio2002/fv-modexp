@@ -63,7 +63,7 @@ theorem Ev.restore {R : RtInv} {c : Cx} {s : State} {Lk : List (Nat × Nat)} {bk
   have hheld : Held R Lk (c.st + 8) 8 := h2.sub (by omega) (by omega)
   refine ⟨h.ext, by rw [Memory.regions_writeLE]; exact h.reg, by rw [view_writeLE_held hheld]; exact h.inv,
     h.fr.writeLE v (r := (c.st, c.st + 24)) (by simp [Cx.ws, stkWs]) (by show c.st ≤ c.st + 8; omega) (by show c.st + 8 + 8 ≤ c.st + 24; omega), ?_, ?_,
-    by rw [eW, eC]; exact h.sarr⟩
+    by rw [eW, eC]; exact h.sarr, h.sarrL.congr eW eC fun _ h => h⟩
   · refine ⟨fun x k hin ho => ?_⟩
     simp only [Cx.ws, stkWs, outside_append, outside_cons, outside_nil, and_true] at ho
     rw [Memory.readLE_writeLE_of_disjoint _ _ (by omega)]

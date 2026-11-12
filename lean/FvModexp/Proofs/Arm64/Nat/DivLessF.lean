@@ -1,6 +1,8 @@
 import FvModexp.Proofs.Arm64.Nat.DivPostK
 import FvModexp.Proofs.Arm64.Nat.DivRel
 
+set_option autoImplicit false
+
 /-!
 # `nat.div` (arm64), `u < v`: the postcondition from `AtS` and the copy's facts (pure)
 -/
@@ -23,7 +25,7 @@ theorem lessFin {R : RtInv} {b : Nat} {dc : Nat → Nat → Nat → Nat} {L : Li
     (hinv : R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem))
     (hval : s'.mem.readLE p (8 * ul) = S.mem.readLE u (8 * ul))
     (htop : 0 < ul → s'.mem.readLE (p + 8 * (ul - 1)) 8 = S.mem.readLE (u + 8 * (ul - 1)) 8) :
-    Post R b dc L zp zc st z2 z2c u ul v vl s s' := by
+    PostL R b dc L zp zc st z2 z2c u ul v vl s s' := by
   have hp := hpre.f
   have hout := hp.ce.2.2.2.1
   have hb' := hp.ce.2.1.2.1
