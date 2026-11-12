@@ -1292,3 +1292,8 @@ closer did 30-60 s of `Nat.sub` literal unfolding per goal; KQm reads now closed
   GUARDED operand facts `0 < n → s.mem.accessible … = true` …): > 200k heartbeats / killed at the 8 GB cap → 4.3 s with a
   named-hole `refine` and `case ce => clear <guarded facts>` before the omegas. amd64 `preS0_mono`: 200k-heartbeat timeout
   → 1.7 s (same fix). The weakened-in-place copies (`PreS0` with the same conjunct positions) compiled with no other change.
+* Rows (divmc s26, janus-provfix, ONE fresh store (`v1` wiped: JANUS-ISSUES "[divmc s26]"), warm-up `Warmup.lean` 471 s outside
+  the caps, `JANUS_REPLAY_THREADS=1 JANUS_JOBS=2 LEAN_NUM_THREADS=4`, load 8-12): StackNatRow PASS 17 s / 0.5 GB, MulAddWWRow
+  PASS 160 s / 0.9 GB, SqrRow PASS 815 s / 4.2 GB (over the 600 s margin — trim), **MulRow PASS 370 s / 2.5 GB** (with MulOne
+  trimmed 94 → 42.5 s). Earlier attempts without JANUS_REPLAY_THREADS (one replay worker) / with the warm-up inside the cap:
+  SqrRow 901 s timeout, StackNatRow 901 s timeout (empty logs: janus prints at the end only).
