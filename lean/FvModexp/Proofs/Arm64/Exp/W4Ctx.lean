@@ -73,6 +73,11 @@ theorem held_sub {R : RtInv} {L : List (Nat × Nat)} {a n b k : Nat} (h : InRang
 theorem apart_fresh {R : RtInv} {L : List (Nat × Nat)} {p k a n : Nat} (hin : InRanges p k R.rt)
     (hap : ApartAll p k L) (hh : InRanges a n L ∨ Outside a n R.rt) : Apart a n p k := apart_held' hin hap hh
 
+/-- apartness from the whole stack array gives apartness from the part above `l0` (s27) -/
+theorem up_of_arr {a k st l0 : Nat} {M : Memory} (h : Apart a k (stW M st) (8 * stCap M st)) (hl : l0 ≤ stCap M st) :
+    Apart a k (stUp M st l0).1 (stUp M st l0).2 := by
+  simp only [stUp]; unfold Apart at h ⊢; omega
+
 set_option maxRecDepth 20000 in
 /-- the stack above `l0` after a step: same array, or a fresh one apart from every held object -/
 theorem stUp_keep {R : RtInv} {L : List (Nat × Nat)} {st l0 a k : Nat} {M M' : Memory}

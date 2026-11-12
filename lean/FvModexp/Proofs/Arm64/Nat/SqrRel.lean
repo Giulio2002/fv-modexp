@@ -365,6 +365,6 @@ theorem post_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp xl 
       rcases sbor with ⟨h1, h2⟩ | ⟨h1, h2⟩
       · exact Or.inl ⟨by rw [h1, eW], by rw [h2, eC]⟩
       · exact Or.inr ⟨h1, fun r hr => h2 r (hJ.ext.mem_old hr)⟩
-    · rw [eW', eC']; intro hn; apply sbm; rw [eW, eC]; exact hn
+    · simp only [ArrIn]; rw [eW', eC']; intro hn; apply sbm; rw [eW, eC]; exact hn
 
 end FvModexp.Arm64.NatSqr

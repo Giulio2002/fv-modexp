@@ -117,8 +117,8 @@ theorem cpostG_odd {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {cost
     (h : ExpOdd.Post R b L K costF zp zc st xp xl yp yl mp n S s') :
     CPostG R b L (K + 1056) 112 zp zc st (natVal S.mem xp xl ^ natVal S.mem yp yl % natVal S.mem mp n)
       (ExpOdd.OCost costF n xl yl (stLen S.mem st)) S s' := by
-  obtain ⟨p, l, c, q0, q1, q2, hv, hN, hlc, hc, L', b', hx, hb, hinv, hlive, hof, hsb, hF, hLF⟩ := h
-  exact ⟨p, l, c, q0, q1, q2, L', b', ⟨hv, hN, hlc, hc, hlive, hof⟩, ⟨hx, hb, hinv⟩, hsb, hF, hLF⟩
+  obtain ⟨p, l, c, q0, q1, q2, hv, hN, hlc, hc, L', b', hx, hb, hinv, hlive, hof, hsb, hF, hLF, hRS⟩ := h
+  exact ⟨p, l, c, q0, q1, q2, L', b', ⟨hv, hN, hlc, hc, hlive, hof⟩, ⟨hx, hb, hinv⟩, hsb, hF, hLF, hRS⟩
 
 theorem odd_sub : ∀ x, ExpOdd.names.contains x = true → LibN.names.contains x = true := by
   have h : ExpOdd.names.Sublist LibN.names := by decide +kernel

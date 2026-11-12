@@ -23,6 +23,7 @@ open FvModexp.Arm64.W2Loop (Env Inp Buf FinEnv)
   ∃ (M' : Memory) (L' : List (Nat × Nat)) (b' rp rl rc : Nat) (M1 : Memory) (rrp rrc onep : Nat) (M2 : Memory)
     (L2 : List (Nat × Nat)) (b2 : Nat),
     Anc R L0 sp K st M0 L' M' ∧ bA ≤ b' ∧ stLen M' st = lenM ∧
+    (Apart zzp (8 * zzc) (stW M' st) (8 * stCap M' st) ∧ Held R L' zzp (8 * zzc)) ∧
     M'.readLE rp (8 * rl) = 2 ^ (128 * n) % Mv ∧ RRPost R b' L' g sp n rp rl rc zzp zzc M' M1 rrp rrc ∧
     OneChain R b' L' L2 b2 sp n st M1 M2 ∧
     RetPost R b2 L2 g sp n mp mc t (stW M2 st + 8 * lenM) yp ylen Y yi zp zc zzp zzc st n0 onep r18 r29 Mv Xv
@@ -117,6 +118,7 @@ theorem divStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
   have hZ0 := hZ
   obtain ⟨⟨-, hzc40, hzacc, hz48, hzH, -, -⟩, -, -, -, -, -, hzS, hzU, -⟩ := hZ0
   have hlc := hsok.2.2.2.2.2.1
+  have hzU := up_of_arr hzU (Nat.le_trans hl0 hlc)
   have hst48 := hsok.2.2.2.1
   obtain ⟨hq8, -, -, hq48⟩ := hqL (by omega)
   obtain ⟨hr8, -, -, hr48⟩ := hrL (by omega)
@@ -168,6 +170,7 @@ theorem divStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     hr48' hrh hrw hrS' hrF hzr (zz_mid M' hzz' hrln) S2 f1 f2 f3 f4 f5 f6 f7 f8 f9) (isReturn_mono fun s' h => ?_)
   obtain ⟨M1, rrp', rrc, onep, M2, L2, b2, p1, p2, p3⟩ := h
   rw [hval, hlen'] at p3
-  exact ⟨M', L', b', r, rl, rc, M1, rrp', rrc, onep, M2, L2, b2, hAn', ble1 hbA hb', hlen', hval, p1, p2, p3⟩
+  exact ⟨M', L', b', r, rl, rc, M1, rrp', rrc, onep, M2, L2, b2, hAn', ble1 hbA hb', hlen',
+    ⟨hZ'.2.2.2.2.2.2.2.1, hZ'.1.2.2.2.2.1⟩, hval, p1, p2, p3⟩
 
 end FvModexp.Arm64.W2Pro

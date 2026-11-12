@@ -12,12 +12,12 @@ namespace FvModexp.Arm64.W4Pro
 
 open FvModexp.Arm64.W4Loop (Env Inp Buf FinEnv)
 
-/-- the facts about `zz` (the `lsh` result) at `divRet` -/
+/-- the facts about `zz` (the `lsh` result) at `divRet` (s27: apart from the WHOLE stack array, for `ResSep`) -/
 @[reducible] def ZZ (R : RtInv) (L : List (Nat × Nat)) (g sp n mp xp yp ylen zp zc st l0 zzp zzc : Nat) (M : Memory) :
     Prop :=
   Buf R L g sp n M zzp zzc ∧ zzp % 8 = 0 ∧ Apart zzp (8 * zzc) mp (8 * n) ∧ Apart zzp (8 * zzc) yp (8 * ylen) ∧
   Apart zzp (8 * zzc) xp (8 * n) ∧ Apart zzp (8 * zzc) (sp - 4304) 16 ∧ Apart zzp (8 * zzc) st 24 ∧
-  Apart zzp (8 * zzc) (stUp M st l0).1 (stUp M st l0).2 ∧ (2 * n ≤ zc → Apart zp (8 * zc) zzp (8 * zzc))
+  Apart zzp (8 * zzc) (stW M st) (8 * stCap M st) ∧ (2 * n ≤ zc → Apart zp (8 * zc) zzp (8 * zzc))
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
@@ -77,7 +77,7 @@ theorem rrRetC (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     zp zc zzp zzc st n0 M r18 r29 f29 he (CallW.CEnv.mono hce hK (Nat.le_refl _)) hn hn128 hmc hmc' ht hm hx r1016 r1024
     r1032 r224 r128 r904 r328 r320
     (fun p => ⟨hserv.2.2.1 _ _ (by omega), hserv.2.1 _ _ _ (by omega)⟩) hyl hyl' hy hY hyi hyi0 hzc
-    (fun h => ⟨(hz h).1, (hz h).2.1⟩) hsv hzz hzz8 hzzm hzzy hzz4 hzzs (fr _ _ hzzU) hro hty r952 r936 r168 r400 r1000 r992
+    (fun h => ⟨(hz h).1, (hz h).2.1⟩) hsv hzz hzz8 hzzm hzzy hzz4 hzzs (fr _ _ (up_of_arr hzzU (Nat.le_trans hl0 hlc))) hro hty r952 r936 r168 r400 r1000 r992
     (fun _ => hserv.1 _ _ _ (by omega)) (fun p d => hserv.2.1 _ _ _ (by omega)) (w16 _ _ hmO.2.1) hnm
     (by rw [hmV]; exact hkk) (by rw [hmV]; exact hmB) hfe hsth (w4 _ _ hstw) hsok (by omega) hcap (frl _ _ hug)
     (fun h => ⟨w4 _ _ (harr h).1, (harr h).2⟩) (frl _ _ (w4 _ _ huw)) hslen hwba hstwb (fr _ _ hsu)

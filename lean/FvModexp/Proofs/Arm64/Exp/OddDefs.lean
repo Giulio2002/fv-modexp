@@ -100,7 +100,7 @@ def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K : Nat) (costF : Nat �
       ((p = zp ∧ c = zc) ∨ (InRanges p (8 * c) R.rt ∧ ApartAll p (8 * c) L)) ∧
       StackBackL R L L' st s.mem s'.mem ∧
       MemFrame s.mem s'.mem (R.rt ++ winA s (K + 1056) 112 ++ [(zp, zp + 8 * zc)] ++ stkWs s.mem st) ∧
-      LiveFrame s.mem s'.mem L ([(zp, zp + 8 * zc)] ++ stkWs s.mem st)
+      LiveFrame s.mem s'.mem L ([(zp, zp + 8 * zc)] ++ stkWs s.mem st) ∧ ResSep s.mem s'.mem st p c
 
 /-! ### Frame transfer of the entry facts -/
 

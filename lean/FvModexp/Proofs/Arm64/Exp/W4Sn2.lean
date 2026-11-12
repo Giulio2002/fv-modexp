@@ -133,6 +133,7 @@ theorem sn2Step (impl : List Segment) (hap : ImplApart Extracted.program impl) (
   have hZ2 := ZZ.keep hZ1 hx2 (fun a k w => hF2.accessible a k w) hst2 hl02
   have hZ1' := hZ1
   obtain ⟨⟨-, -, -, -, hzH1, -, -⟩, -, -, -, -, -, hzS1, hzU1, -⟩ := hZ1'
+  have hzU1 := up_of_arr hzU1 hl01
   have hzv2 : M2.readLE zzp (8 * (2 * n + 1)) = 2 ^ (128 * n) := by
     refine (held_sn hS (hzH1.imp (fun h => h.sub (by omega) (by omega)) (fun h => h.of_sub (by omega) (by omega)))
       (Apart.sub hzzK (Nat.le_refl _) (by omega) (by omega) (by omega)) (hzS1.mono (by omega) (Nat.le_refl _))

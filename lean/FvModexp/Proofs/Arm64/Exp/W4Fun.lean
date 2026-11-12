@@ -58,7 +58,7 @@ def PostD (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K costD : Nat) (zp zc s
       ((p = zp ∧ c = zc) ∨ (InRanges p (8 * c) R.rt ∧ ApartAll p (8 * c) L)) ∧
       StackBackL R L L' st s.mem s'.mem ∧
       MemFrame s.mem s'.mem (R.rt ++ winA s (K + 928) 112 ++ [(zp, zp + 8 * zc)] ++ stkWs s.mem st) ∧
-      LiveFrame s.mem s'.mem L ([(zp, zp + 8 * zc)] ++ stkWs s.mem st)
+      LiveFrame s.mem s'.mem L ([(zp, zp + 8 * zc)] ++ stkWs s.mem st) ∧ ResSep s.mem s'.mem st p c
 
 theorem buds {n xl costD l b : Nat} (h : W4Bud n xl costD l ≤ b) :
     stackNatCost l (23 * n) + xjBud n costD (l + StackNat.rnd (23 * n)) ≤ b ∧
@@ -323,7 +323,7 @@ theorem post_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K costD g sp st z
   obtain ⟨hs1, hs28, -, -, -, -, -, hK, hKs, -, -, hLrt, hLs, -, -⟩ := he
   obtain ⟨Xv', hXm, hXB, M, L1, b1, hF0, hLF0, hx0, hb1, hkf0, hai0, hlen0, hcapM, l1, zzp, zzc, -, hl1b,
     ⟨hzzl, hzzin, hzzap⟩, Md, Ld, bd, rp, rl, rc, M1, rrp, rrc, onep, M2, L2, b2, ⟨hxd, hFd, hLFd, hlend, hkfd, haid⟩, hbd,
-    hlenD, -, hRR, hOC, hRet⟩ := hE
+    hlenD, ⟨hzzA, hzzH⟩, -, hRR, hOC, hRet⟩ := hE
   have hF2 := hRR.1
   have hLF2 := hRR.2.1
   obtain ⟨hF3, hLF3, hx3, hb3, hsok3, hlen3, hkept3, hfresh3, -, hmem3⟩ := hOC
@@ -420,7 +420,7 @@ theorem post_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K costD g sp st z
   refine ⟨⟨by rw [hsp', hs1], by rw [h28', hs28], h29', h18'⟩, p, Expmc.normL Mj2 p l, c, h0', h1', h2', hval,
     norm_tr (Expmc.normL_norm Mj2 p l) (Nat.le_trans hl' hlc) hrp, Nat.le_trans hl' hlc, hc64, L'', b'', x8, ?_,
     ?_, natLive_tr hnl8 (LiveExt.refl R L'') (fun a k w => hF9.accessible a k w),
-    res_of hor8 hPz hzo ⟨hzzin, hzzap⟩ hx0 x2 x5, ?_, ?_, ?_⟩
+    res_of hor8 hPz hzo ⟨hzzin, hzzap⟩ hx0 x2 x5, ?_, ?_, ?_, ?_⟩
   · show b - W4Cost n xl costD (stLen s.mem st) ≤ b''
     unfold W4Cost
     rw [hlenM1] at hb3
@@ -438,6 +438,17 @@ theorem post_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K costD g sp st z
   · refine ⟨fun a k hin ho => ?_⟩
     obtain ⟨hd, hf, hzc⟩ := final_outL ho
     exact (zone a k (Or.inr hin) (zw_of_sep hLs hin hKs) hd hf (fun _ => hzc)).2
+  · -- `ResSep` (s27): the result vs the final array (= that of `M2`)
+    have hcap2 : 0 < stCap M2 st := by omega
+    have hA2 : Held R L2 (stW M2 st) (8 * stCap M2 st) := (hsok3.2.2.2.2.1 hcap2).2.1
+    refine ResSep.congr ?_ eW eC
+    rcases hor8 with ⟨rfl, rfl⟩ | ⟨hin, hap⟩
+    · rcases hPz with ⟨-, -, rfl, rfl⟩ | ⟨-, -, rfl, rfl⟩
+      · exact ResSep.of_apart (apart_arr_step (by rw [hd1.1, hd1.2.2]; exact hzzA) kM12 hzzH)
+      · rcases hzo with ⟨rfl, rfl⟩ | ⟨hin, hap⟩
+        · exact ResSep.of_held kM2 (hz hzb'.1).1.1
+        · exact ResSep.of_apart (apart_arr_of_fresh hap hA2 hin)
+    · exact ResSep.of_apart (apart_arr_of_fresh hap (hx5.held hA2) hin)
 
 /-- the division cost the window charges, from `nat.div`'s level-dependent cost `costF` (`l` = the stack length at
 entry): `x mod m` (when `len x > n`) and the `RR` division on its four possible stack levels -/
