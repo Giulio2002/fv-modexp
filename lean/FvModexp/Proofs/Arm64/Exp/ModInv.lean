@@ -52,8 +52,7 @@ theorem full {impl : List Segment} (hap : ImplApart Extracted.program impl) {R :
       (fun s s' => (s'.sp = s.sp ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧ s'.regs 18 = s.regs 18) ∧
         Post R kc (sqC ℓ) (mlC ℓ) b L zp zc st xp xl n s s') := by
   intro s hpc ⟨h0, h1, h2, h3, h4, h5, h6, h7, hpre, hℓ⟩
-  have kL := loop hap hns hnf hnfS hkc hsq hkS haS htr hkT haT hmu hkM haM hls hkL haL hkT4 hsub hadd
-    (sqrC := sqC ℓ) (mulC := mlC ℓ) (b := b) (L := L) (zp := zp) (zl := zl) (zc := zc) (xc := xc) (s := s)
+  have kL : J2 impl R kc (sqC ℓ) (mlC ℓ) b L zp zl zc st xp xl xc n s := loop hap hns hnf hnfS hkc hsq hkS haS htr hkT haT hmu hkM haM hls hkL haL hkT4 hsub hadd
     (fun x => by rw [hℓ]) (hsm ℓ) (fun x y => by rw [hℓ]) (hmm ℓ)
   exact entry impl R kc (sqC ℓ) (mlC ℓ) b L zp zl zc st xp xl xc n s hkc hpc h0 h1 h2 h3 h4 h5 h6 h7 hpre
     (small impl R hmk kc _ _ b L zp zl zc st xp xl xc n s hkc)

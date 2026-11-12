@@ -44,7 +44,7 @@ end
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 4000000 in
 /-- after `subMod2N` returns (`0x1b7084`): restore FP / LR, return -/
-theorem retF5 {impl : List Segment} {R : RtInv} {kc : Nat} {sqrC : Nat → Nat}
+theorem retF5 {impl : List Segment} {R : RtInv} {kc : Nat} (hkc : 4608 ≤ kc) {sqrC : Nat → Nat}
     {mulC : Nat → Nat → Nat} {b : Nat} {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
     (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {p l c q ql qc : Nat}
     {L1 : List (Nat × Nat)} {b1 : Nat} (s' : State)
@@ -56,6 +56,11 @@ theorem retF5 {impl : List Segment} {R : RtInv} {kc : Nat} {sqrC : Nat → Nat}
     (h0 : s'.regs 0 = BitVec.ofNat 64 p) (h1 : s'.regs 1 = BitVec.ofNat 64 l) (h2 : s'.regs 2 = BitVec.ofNat 64 c) :
     Goal impl R kc sqrC mulC b L zp zc st xp xl n s s' := by
   have hK := sp_K hpre
+  have hsl := s.sp.isLt
+  obtain ⟨hal, hb', ha, hw⟩ := hpre.1.2.1
+  simp only [K, A] at hb' ha hw
+  have hwS : s'.mem.accessible (s.sp.toNat - (240 + kc)) (240 + kc + 72) true = true := by
+    rw [hmid.2.1.2.1.accessible]; exact hw
   have hp64 : p < 2 ^ 64 := hmid.2.2.1.2.1
   have hc40 : c < 2 ^ 40 := hmid.2.2.1.1
   have hlc : l ≤ c := hmid.2.2.2.2.2.1
@@ -64,7 +69,7 @@ theorem retF5 {impl : List Segment} {R : RtInv} {kc : Nat} {sqrC : Nat → Nat}
     rw [show s.sp.toNat - 240 - 8 = s.sp.toNat - 248 by omega]; exact hmid.1.1.2
   unfold Goal
   janus_run [f1, f2]
-  refine ⟨⟨?_, ?_, ?_, ?_⟩, post_mid _ hmid ?_ ?_ ?_ hv hn hb⟩
+  refine ⟨?_, post_mid _ hmid ?_ ?_ ?_ hv hn hb⟩
   · have hsl := s.sp.isLt
     apply BitVec.eq_of_toNat_eq
     simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega
@@ -73,7 +78,7 @@ theorem retF5 {impl : List Segment} {R : RtInv} {kc : Nat} {sqrC : Nat → Nat}
 
 set_option maxHeartbeats 4000000 in
 /-- the continuation after `subMod2N` (small context): value and budget, then `retF5` -/
-theorem contF5 {impl : List Segment} {R : RtInv} {kc : Nat} {sqrC : Nat → Nat}
+theorem contF5 {impl : List Segment} {R : RtInv} {kc : Nat} (hkc : 4608 ≤ kc) {sqrC : Nat → Nat}
     {mulC : Nat → Nat → Nat} {b : Nat} {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State} {j : Nat}
     (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) (hn : 64 < n) {M : Memory} {p l c q ql Zv b1 : Nat}
     (hj1 : 1 ≤ j) (hjn : 2 ^ (j - 1) < NW n) (hex : ExF n j M)
@@ -92,7 +97,7 @@ theorem contF5 {impl : List Segment} {R : RtInv} {kc : Nat} {sqrC : Nat → Nat}
   have hval : natVal s'.mem p l' = val (natVal s.mem xp xl) n := by
     rw [hv', hv, hvq]
     exact final_step hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1 hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1 hn hex hcong
-  exact retF5 hpre s' mid2 hval hn' (bud_final hj1 hjn hb hbud') f0 f1 f2 f4 g0 g1 g2
+  exact retF5 hkc hpre s' mid2 hval hn' (bud_final hj1 hjn hb hbud') f0 f1 f2 f4 g0 g1 g2
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
@@ -121,7 +126,7 @@ theorem segF5 {impl : List Segment} (hap : ImplApart Extracted.program impl) {R 
   have hbo : SubMod2N.cost n ≤ b1 :=
     bud_ok hb hbud (m := SubMod2N.cost n) (by simp only [roundCost, P5, P4, P3, P2, P1]; omega) (Nat.le_refl _)
   have hpre := hpreB.h
-  have hK' := contF5 (impl := impl) (qc := qc) hpre hn hj1 hjn hex hcong hv hvq hb
+  have hK' := contF5 (impl := impl) (c := c) (qc := qc) hkc hpre hn hj1 hjn hex hcong hv hvq hb
   clear hcong hv hvq hbud hjn hex
   unfold Goal
   janus_run [r216, r112, r120, r304] until [1805584]
