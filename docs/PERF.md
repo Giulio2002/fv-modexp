@@ -1300,3 +1300,9 @@ closer did 30-60 s of `Nat.sub` literal unfolding per goal; KQm reads now closed
   PASS 160 s / 0.9 GB, SqrRow PASS 815 s / 4.2 GB (over the 600 s margin — trim), **MulRow PASS 370 s / 2.5 GB** (with MulOne
   trimmed 94 → 42.5 s). Earlier attempts without JANUS_REPLAY_THREADS (one replay worker) / with the warm-up inside the cap:
   SqrRow 901 s timeout, StackNatRow 901 s timeout (empty logs: janus prints at the end only).
+## infra s32 (2026-11-12): nat.subMod2N GENERAL form (`ensG`), arm64 dev compile (host load ~20-40)
+SubMod2NG 2 s, GL 4 s, GC 8 s, GS1 39 s / 2.6 GB, GS2 48 s / 4.3 GB, GS3 42 s / 4.2 GB, GS3b 7 s, GAlloc 3 s,
+GS4A 10 s / 2.5 GB, GS4B 5 s, GS4C 39 s / 2.9 GB, GS4Cb 3 s, GEns 3 s.
+LESSON: `obtain ⟨rfl, rfl⟩ := …` (subst of a theorem variable) followed by `omega`s in a post-`janus_run` context was
+pathological (> 10 min / 8 GB OOM, twice: s3Gc ge-branch, s4tG). Fix: no subst — use the equations (`h.trans e`), and
+close sp / slot goals with tiny lemmas (`sp_ret`, `Nat.sub_sub`) instead of omega: 42 s / 39 s.
