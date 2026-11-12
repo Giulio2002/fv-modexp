@@ -1426,3 +1426,10 @@ P2DMk 1.9 s, P2DOne 11.9 s/2.6 GB, P2DZero 2.6 s, P2DWinR 2.9 s, P2DWin 29-32 s/
 | Exp/P2DFull (v0.3.1) | 39 s | 3.0 GB (budget arithmetic in the small lemma `bud3`, out of the big context) |
 | Exp/P2DE (v0.3.1) | 2 s | 2.4 GB |
 | Exp/SubMod2NGAlloc (v0.3.1 sweep) | 8 s | 2.4 GB |
+### infra s41 (2026-11-14, arm64 rows on Janus v0.3.1 `/srv/janus-ops/v031/bin/janus`, JANUS_REPLAY_THREADS=1, load ~55-70)
+One fresh cache (`cache-infra`, v1 wiped), warm-up 1726 s (framework build; not a row), then bottom-up:
+| row | verdict | wall | peak | own modules |
+|---|---|---|---|---|
+| Nat/TruncRow (asm's, lower row) | PASS | 383 s | 2.4 GB | |
+| Exp/SubMod2NRow | PASS | 691 s | 2.9 GB | 84 (incl. expmc's Mont* via LibWC, divmc's NatSub*/NatAdd*: run MontRow first to charge Mont* there) |
+Dev: SubMod2NRow 10 s / 2.4 GB.
