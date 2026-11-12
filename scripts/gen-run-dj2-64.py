@@ -30,6 +30,7 @@ def conv(kind):
         ("    rcases (show i = 0 by omega) with rfl\n    simp only [opAt]\n    exact",
          "    rcases (show i = 0 ∨ i = 1 by omega) with rfl | rfl <;>\n    simp only [opAt] <;>\n    exact"),
         ("p.toNat + 96 + @A@ + i = p.toNat + (96 + @A@ + i)", "p.toNat + 96 + (@A@) + i = p.toNat + (96 + (@A@) + i)"),
+        ("all_goals (simp only [opAt]; janus64_simp)", "all_goals (simp only [opAt]; try janus64_simp)"),
         ("@H2@", H2), ("@A@", f"{H0} + {H1}"),
     ]
     for x, y in R:

@@ -115,7 +115,7 @@ theorem dJZ2 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl
     intro j hj
     rcases (show j = 0 ∨ j = 1 by omega) with rfl | rfl <;>
     refine OpDone.transport (hop0 _ (by omega)) ?_ ?_ ?_ ?_ (LiveFrame.of_win (by simp only [win, stk]; janus_frame) hLsL0) (fun _ _ h => h.append_left _)
-    all_goals (simp only [opAt]; janus64_simp)
+    all_goals (simp only [opAt]; try janus64_simp)
   case refine_27 =>
     refine OpsApart.transport hopA (fun i hi => ?_)
     rcases (show i = 0 ∨ i = 1 by omega) with rfl | rfl <;>
