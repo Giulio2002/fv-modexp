@@ -51,11 +51,11 @@ theorem dA1 (impl : List Amd64.Segment) (R : RtInv)
   have hJG : ((BitVec.ofNat 64 (hdrV s p len 1)).toInt < ↑(hdrV s p len 1)) = False := by
     rw [toInt_small _ (by rw [BitVec.toNat_ofNat]; omega), BitVec.toNat_ofNat, Nat.mod_eq_of_lt (by omega)]; simp
   have hz1' : Arm64.Memory.readLE S.mem ((s.regs 4).toNat - 160) 8 = 0 := by
-    rw [← hz1]; congr 1; omega
+    rw [show (s.regs 4).toNat - 160 = (s.regs 4).toNat - 136 - 32 * 1 + 8 by omega]; exact hz1
   have hz2' : Arm64.Memory.readLE S.mem ((s.regs 4).toNat - 152) 8 = 0 := by
-    rw [← hz2]; congr 1; omega
+    rw [show (s.regs 4).toNat - 152 = (s.regs 4).toNat - 136 - 32 * 1 + 16 by omega]; exact hz2
   have hz3' : Arm64.Memory.readLE S.mem ((s.regs 4).toNat - 144) 8 = 0 := by
-    rw [← hz3]; congr 1; omega
+    rw [show (s.regs 4).toNat - 144 = (s.regs 4).toNat - 136 - 32 * 1 + 24 by omega]; exact hz3
   generalize hstv : min (hdrV s p len 0) (len.toNat - 96) = st at hsl1 hsl2 hdir hst hst0 hsteq
   have hst63 : (BitVec.ofNat 64 st).toNat < 2 ^ 63 := by rw [BitVec.toNat_ofNat, Nat.mod_eq_of_lt (by omega)]; omega
   have hcb : (len.toNat - 96 < st + hdrV s p len 1) = False := by simp only [eq_iff_iff, iff_false]; omega
