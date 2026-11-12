@@ -83,7 +83,7 @@ theorem remPath (impl : List Segment) (hap : ImplApart Extracted.program impl) (
   have hP' := hP
   obtain ⟨⟨hs1, hs28, hg1, -, -, -, hal, hK4, hKs, hsp2, hacc, hwrt, hLs, -, -⟩, -, -, -, -, -,
     hn, hn128, -, hmc, hmO, -, hm48, -, -, -, -, -, hyl, -, hxO, -, -, -, hxl, hxp, hxc, hzp, hzlc, hzc, -,
-    -, -, -, hst48, hsok, hstw, -, harr, hc0, -, -, -, -, -, hnR, -, -, hbud, hinv⟩ := hP'
+    -, -, hst0, hst48, hsok, hstw, -, harr, hc0, -, -, -, -, -, hnR, -, -, hbud, hinv⟩ := hP'
   have hs : s.sp.toNat = sp + 1312 := by rw [hs1, BitVec.toNat_ofNat]; omega
   have hg : (s.regs 28).toNat = g := by rw [hs28, BitVec.toNat_ofNat]; omega
   have hLF0 : LiveFrame s.mem S.mem L [] := LiveFrame.of_win hF (liveSep_wN hLs)
@@ -112,7 +112,7 @@ theorem remPath (impl : List Segment) (hap : ImplApart Extracted.program impl) (
   have hacc2 : S.mem.accessible (sp + 1048) 256 true = true := by
     rw [hF.accessible]; exact Memory.accessible_mono _ hacc (by omega) (by omega)
   refine callC impl hap hns hn11 ret0 hret F hs hal hKs (by omega) hsp2 hLs hwrt hsok hstw hF0 hLF0 (LiveExt.refl R L)
-    (mk := 0) (Nat.sub_le _ _) hZA hstk h28 ?_ ?_ (Or.inl rfl) hE hpc hSsp h30 ?_ ⟨⟨?_, by omega⟩, hna⟩ (fun s' h => cpostG_of hzp' h)
+    (mk := 0) (Nat.sub_le _ _) hZA hstk h28 ?_ ?_ (Or.inl rfl) hE hpc hSsp h30 ?_ ⟨⟨?_, by omega⟩, hna, hst0⟩ (fun s' h => cpostG_of hzp' h)
     (by rw [ec, ew]; intro hc; exact (harr hc).1) (by rw [ec, ew]; exact hc0)
     (by rw [el, ec]; exact hsok.2.2.2.2.2.1) hacc2 h29v h30v hsl hEk
   · rw [hrdx, hrdm]

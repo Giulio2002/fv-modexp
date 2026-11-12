@@ -26,13 +26,19 @@ theorem CPostR.mono {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {stk above zp 
   obtain ⟨p, l, c, q0, q1, q2, L', b', hof, ⟨hx, hb, hinv⟩, rest⟩ := h
   exact ⟨p, l, c, q0, q1, q2, L', b', hof, ⟨hx, by omega, hinv⟩, rest⟩
 
+theorem CPostR0.mono {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {stk above zp zc st v cst cst' : Nat}
+    {s s' : State} (hc : cst ≤ cst') (h : CPostR0 R b L stk above zp zc st v cst s s') :
+    CPostR0 R b L stk above zp zc st v cst' s s' := by
+  obtain ⟨p, l, c, q0, q1, q2, L', b', hof, ⟨hx, hb, hinv⟩, rest⟩ := h
+  exact ⟨p, l, c, q0, q1, q2, L', b', hof, ⟨hx, by omega, hinv⟩, rest⟩
+
 theorem SlowHyp.mono {impl : List Segment} {R : RtInv} {ns : List String} {stk above : Nat}
     {need need' : Nat → Nat → Nat → Nat} {cost cost' : Nat → Nat → Nat → Nat → Nat}
     (h : SlowHyp impl R ns stk above need cost) (hn : ∀ a b c, need a b c ≤ need' a b c)
     (hc : ∀ l a b c, cost l a b c ≤ cost' l a b c) : SlowHyp impl R ns stk above need' cost' := by
   intro b L z zl zc st x xl xc y yl yc m ml mc
-  refine (h b L z zl zc st x xl xc y yl yc m ml mc).mono (fun s hs => ?_) (fun s s' _ hq => CPostR.mono (hc _ _ _ _) hq)
-  obtain ⟨h1, h2⟩ := hs
-  exact ⟨CPre.mono (hn _ _ _) (hc _ _ _ _) h1, h2⟩
+  refine (h b L z zl zc st x xl xc y yl yc m ml mc).mono (fun s hs => ?_) (fun s s' _ hq => CPostR0.mono (hc _ _ _ _) hq)
+  obtain ⟨⟨h1, h2⟩, h3⟩ := hs
+  exact ⟨⟨CPre.mono (hn _ _ _) (hc _ _ _ _) h1, h2⟩, h3⟩
 
 end FvModexp.Arm64.NHyp

@@ -71,7 +71,7 @@ theorem p2Path (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     {g sp zp zl zc st xp xl xc yp yl yc mp n mc slow f29 : Nat} {s S : State}
     {L1 : List (Nat × Nat)} {b1 zq zcq mk : Nat}
     (hP : NPre R b L K costF needR costR needS needP costS costP g sp zp zl zc st xp xl xc yp yl yc mp n mc slow s)
-    (hstk : stk ≤ K + 1056)
+    (hX : NHyp.XFacts R L xp xl xc) (hstk : stk ≤ K + 1056)
     (hZ : ZM R b L g sp K zp zc st xp xl yp yl mp n s.mem S.mem L1 b1 zq zcq mk)
     (hxl0 : xl ≠ 0) (hyl0 : yl ≠ 0) (hpow : ∃ k, natVal s.mem mp n = 2 ^ k) (hm0 : s.mem.readLE mp 8 % 2 = 0)
     (hpc : S.pc = BitVec.ofNat 64 powH) (hSsp : S.sp = BitVec.ofNat 64 (sp + 1056))
@@ -121,7 +121,7 @@ theorem p2Path (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
   have hE := hP2 b1 L1 (BitVec.ofNat 64 zq) (BitVec.ofNat 64 n) (BitVec.ofNat 64 zcq) (BitVec.ofNat 64 st)
     (BitVec.ofNat 64 xp) (BitVec.ofNat 64 xl) (BitVec.ofNat 64 xc) (BitVec.ofNat 64 yp) (BitVec.ofNat 64 yl)
     (BitVec.ofNat 64 yc) (BitVec.ofNat 64 k)
-  rw [tN' hzq, tN' (by omega : n < 2 ^ 64), tN' (by omega : zcq < 2 ^ 64), tN' (by omega : st < 2 ^ 64), tN' hxp,
+  rw [tN' hzq, tN' (by omega : n < 2 ^ 64), tN' (by omega : zcq < 2 ^ 64), tN' (by omega : st < 2 ^ 64), tN' hxp, tN' hxc,
     tN' (by omega : xl < 2 ^ 64), tN' (by omega : yp < 2 ^ 64), tN' (by omega : yl < 2 ^ 64),
     tN' (by omega : k < 2 ^ 64), show segAddr Extracted.program NHyp.fnP2 = p2A by decide] at hE
   have hacc2 : S'.mem.accessible (sp + 1048) 256 true = true := by
@@ -131,7 +131,8 @@ theorem p2Path (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
   rw [← e7] at hF0 hLF0 hrg hinv1 hZQ ew el ec h29v h30v hsl hrdx hrdy
   refine callC impl hap hns hn11 ret0 hret F hs hal hKs (by omega) hsp2 hLs hwrt hsok hstw hF0 hLF0 hx1
     hb1 hZA hstk ((r 28 (by decide) (by decide) (by decide) (by decide) (by decide) (by decide)).trans h28) ?_ ?_
-    (Or.inr (Or.inr (Or.inr (Or.inl rfl)))) hE e1 hS'sp e6 ?_ ⟨?_, ?_, ?_, by omega, by omega, hst0, ?_⟩ (fun s' h => cpostG_of hzq h)
+    (Or.inr (Or.inr (Or.inr (Or.inl rfl)))) hE e1 hS'sp e6 ?_ ⟨⟨?_, ?_, ?_, by omega, by omega, hst0, ?_⟩,
+      hX.1.1, hX.1.2.1⟩ (fun s' h => cpostG_of hzq h)
     (by rw [ec, ew]; intro hc; exact (harr hc).1) (by rw [ec, ew]; exact hc0)
     (by rw [el, ec]; exact hsok.2.2.2.2.2.1) hacc2 h29v h30v hsl
     (by rw [r 18 (by decide) (by decide) (by decide) (by decide) (by decide) (by decide),

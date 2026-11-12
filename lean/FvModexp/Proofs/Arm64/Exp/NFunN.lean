@@ -22,7 +22,7 @@ def PreN (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K : Nat) (costF : Nat �
     (zp zl zc st xp xl xc yp yl yc mp n mc slow : Nat) (s : State) : Prop :=
   PreNil R b L K costF needR costR needS needP costS costP (s.regs 28).toNat (s.sp.toNat - 1312) zp zl zc st xp xl xc
     yp yl yc mp n mc slow s ∧
-  (natVal s.mem mp n % 2 = 1 ∨ ∃ k, natVal s.mem mp n = 2 ^ k)
+  (natVal s.mem mp n % 2 = 1 ∨ ∃ k, natVal s.mem mp n = 2 ^ k) ∧ NHyp.XFacts R L xp xl xc
 
 /-- the postcondition, `stk == nil` (results `X0..X2`): ABI return and `PostNil` -/
 def PostN (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K : Nat) (costF : Nat → Nat → Nat → Nat)
@@ -56,7 +56,7 @@ theorem ensNil (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
   rw [show names = LibN.names from rfl, ← LibN.eq_only, show segAddr Extracted.program fn = fnN by decide]
   intro ret hret s hs hpre
   janus_intro hs
-  obtain ⟨hP, hev⟩ := hpre
+  obtain ⟨hP, hev, hX⟩ := hpre
   have hevB : NoEvenB s.mem mp n := hev
   clear hev
   have hP' := hP
@@ -70,7 +70,7 @@ theorem ensNil (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     (by omega) hyc.1 s h_pc hs1 h_x0 h_x2 h_x4 h_x6 h_x7 h_x9 hs28 rfl h_lr rfl ?Kk ?K0)
   case Kk =>
     intro hk S M c1 c2 d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d18 d28 cm hF hrg q29 q30 _ _
-    refine fromJ1N impl hap R H hget hno hput hRem hnsR hn11R hKR ret hret (fun s' => ABIReturn s s' ∧ PostNil R b L K costF costR costS costP zp zc xp xl yp yl mp n s s') hP hevB (zp' := zp) (zl' := zl) (zc' := zc)
+    refine fromJ1N impl hap R H hget hno hput hRem hnsR hn11R hKR ret hret (fun s' => ABIReturn s s' ∧ PostNil R b L K costF costR costS costP zp zc xp xl yp yl mp n s s') hP hX hevB (zp' := zp) (zl' := zl) (zc' := zc)
       (Or.inl ⟨rfl, rfl, rfl, zok_of_keep hali hk⟩) (noAlias_keep hk) S M c1 c2 (d0.trans h_x0) (d1.trans h_x1) (d2.trans h_x2)
       (d3.trans h_x3) (d4.trans h_x4) (d5.trans h_x5) (d6.trans h_x6) (d7.trans h_x7) (d8.trans h_x8)
       (d9.trans h_x9) (d10.trans h_x10) (d11.trans h_x11) (d12.trans h_x12) (d13.trans h_x13) d28 cm hF hrg q29 q30
@@ -78,7 +78,7 @@ theorem ensNil (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
         a3.trans d18⟩, hq⟩
   case K0 =>
     intro hz0 hk S M c1 c2 d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d18 d28 cm hF hrg q29 q30 _ _
-    refine fromJ1N impl hap R H hget hno hput hRem hnsR hn11R hKR ret hret (fun s' => ABIReturn s s' ∧ PostNil R b L K costF costR costS costP zp zc xp xl yp yl mp n s s') hP hevB (zp' := 0) (zl' := 0) (zc' := 0)
+    refine fromJ1N impl hap R H hget hno hput hRem hnsR hn11R hKR ret hret (fun s' => ABIReturn s s' ∧ PostNil R b L K costF costR costS costP zp zc xp xl yp yl mp n s s') hP hX hevB (zp' := 0) (zl' := 0) (zc' := 0)
       (Or.inr ⟨rfl, rfl, rfl⟩) (noAlias_nil _ _) S M c1 c2 d0 d1 d2 (d3.trans h_x3) (d4.trans h_x4) (d5.trans h_x5) (d6.trans h_x6)
       (d7.trans h_x7) (d8.trans h_x8) (d9.trans h_x9) (d10.trans h_x10) (d11.trans h_x11) (d12.trans h_x12)
       (d13.trans h_x13) d28 cm hF hrg q29 q30

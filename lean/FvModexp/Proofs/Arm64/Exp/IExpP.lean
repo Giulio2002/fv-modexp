@@ -31,7 +31,7 @@ def PoolG (R : RtInv) (m : Memory) (w : List (Nat × Nat)) : Prop :=
 /-- the extra precondition facts of `(*Int).exp` beyond today's `RunIface.ExpSpec` (local; see the module doc) -/
 def ExpX (R : RtInv) (m : Memory) (w : List (Nat × Nat)) (z y mm : Nat) : Prop :=
   PoolG R m w ∧ m.readLE (z + 24) 8 < 2 ^ 40 ∧ m.readLE (y + 24) 8 < 2 ^ 40 ∧ m.readLE (mm + 24) 8 < 2 ^ 40 ∧
-    mm ≠ 0 ∧ Apart z 32 RunIface.wbA 4
+    mm ≠ 0 ∧ Apart z 32 RunIface.wbA 4 ∧ RunIface.ModX m z
 
 /-- the threshold globals and the write-barrier flag survive a frame that keeps them (adapted from divmc's
 `NatSqr.globals_frame`, Arm64/Nat/SqrKPre.lean) -/
@@ -106,7 +106,8 @@ theorem preNF_of {R : RtInv} {b B : Nat} {L : List (Nat × Nat)} {stk above K : 
   obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hstk, hab48, hacc⟩, hd, hrt, hgap, hgrt, hLs, hro⟩, hsv, hG, hBb, hinv, hops, hpw⟩ :=
     hpre
   obtain ⟨op, ⟨hn1, hn2, hn3, hn4, hn5, hn6, hn7, hn8, hn9, hn10, hn11⟩, hoA⟩ := hone
-  obtain ⟨⟨h0rt, hpool, hpoolR, hpoolW⟩, hzc40, hyc40, hmc40, hmA0, -⟩ := hx
+  obtain ⟨⟨h0rt, hpool, hpoolR, hpoolW⟩, hzc40, hyc40, hmc40, hmA0, -, hzX⟩ := hx
+  unfold RunIface.ModX at hzX
   have hnB := BoxI.mk (And.intro hn1 (And.intro hn2 (And.intro hn3 hn4)))
   have hpB := BoxI.mk hpool
   generalize hgw0 : s.mem.readLE ((s.regs 28).toNat + 16) 8 = gw at hg3
@@ -124,7 +125,7 @@ theorem preNF_of {R : RtInv} {b B : Nat} {L : List (Nat × Nat)} {stk above K : 
   obtain ⟨⟨-, -, hz48, hzacc, -, hzL, hzlc, hzN, -⟩, -, hzO, -, hzG⟩ := hoz
   obtain ⟨⟨-, -, -, -, -, hyL, hylc, hyN, -⟩, -, hyO, -, -⟩ := hoy
   obtain ⟨⟨-, -, -, -, -, hmL, hmlc, hmN, -⟩, -, hmO, -, -⟩ := hom
-  simp only [IntLenLe, maxW, ez8, ez16, ez24] at hzL hzlc hzN hzO hzG hAz hlz hzc40
+  simp only [IntLenLe, maxW, ez8, ez16, ez24] at hzL hzlc hzN hzO hzG hAz hlz hzc40 hzX
   simp only [IntLenLe, maxW, ey8, ey16, ey24] at hyL hylc hyN hyO hly hyc40
   simp only [RunIface.IntV, IntLenLe, maxW, em8, em16, em24] at hmL hmlc hmN hmO hlm hmc40 hm0
   have hn0 : 0 < n := by
@@ -162,8 +163,13 @@ theorem preNF_of {R : RtInv} {b B : Nat} {L : List (Nat × Nat)} {stk above K : 
       simp only [outside_cons, outside_nil, and_true] at h ⊢; omega)
   clear hF' hFw
   have hwout : Outside (t - 1632 - K) (K + 1432) R.rt := hrt.of_sub (by omega) (by omega)
+  -- `x = z`'s operand facts (`XFacts`: `IntOK`, `NatLive`, `ModX`)
+  have hXF : NHyp.XFacts R L zp zl zc :=
+    ⟨⟨hzlc, hzc40, fun h => ⟨(hzL h).2.1, (hzL h).2.2.2⟩⟩, fun h => by
+      have := hzX (by omega); unfold Apart at this ⊢; omega⟩
   unfold ExpN.PreNF
   rw [e1, e2]
+  refine ⟨?_, hXF⟩
   refine ⟨⟨hsp.trans (by congr 1; omega), h28.trans (by rw [← hg, Expmc.bv_ofNat_toNat]), hg1, by rw [hac]; exact hg2,
     ?_, ?_, by omega, hK4, by omega, by omega,
     by rw [hac]; exact Memory.accessible_mono _ hacc (by omega) (by omega), ?_, ?_, ?_, hsv⟩,

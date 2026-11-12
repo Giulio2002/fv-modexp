@@ -78,6 +78,7 @@ theorem evPath (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     {g sp zp zl zc st xp xl xc yp yl yc mp n mc slow f29 : Nat} {s S : State}
     {L1 : List (Nat × Nat)} {b1 zq zcq mk : Nat}
     (hP : NPre R b L K costF needR costR needS needP costS costP g sp zp zl zc st xp xl xc yp yl yc mp n mc slow s)
+    (hX : NHyp.XFacts R L xp xl xc)
     (hstk : stkE ≤ K + 1056) (hnE : needE xl yl n ≤ needS xl yl n) (hcE : ∀ l, costE l xl yl n ≤ costS l xl yl n)
     (hZ : ZM R b L g sp K zp zc st xp xl yp yl mp n s.mem S.mem L1 b1 zq zcq mk)
     (hxl0 : xl ≠ 0) (hyl0 : yl ≠ 0) (hy1 : ¬(yl = 1 ∧ s.mem.readLE yp 8 = 1))

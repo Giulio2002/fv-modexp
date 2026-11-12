@@ -29,6 +29,7 @@ theorem fromJ1NE (impl : List Segment) (hap : ImplApart Extracted.program impl) 
     {b : Nat} {L : List (Nat × Nat)} {g sp zp zl zc st xp xl xc yp yl yc mp n mc slow f29 zp' zl' zc' : Nat}
     {s : State}
     (hP : PreNil R b L K costF needR costR needS needP costS costP g sp zp zl zc st xp xl xc yp yl yc mp n mc slow s)
+    (hX : NHyp.XFacts R L xp xl xc)
     (hev : EvH impl R K needS costS xl yl n)
     (hz : ZKeep0 R L g sp K zp zl zc xp xl yp yl mp n zp' zl' zc' s.mem)
     (hna : NHyp.NoAlias zp' zc' xp xc)
@@ -131,7 +132,7 @@ theorem fromJ1NE (impl : List Segment) (hap : ImplApart Extracted.program impl) 
   case K2 =>
     intro hm1 hy0 hx0 _ T tpc tsp t0 t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t18 t28 tm
     rw [hm0M] at hm1
-    exact k2NilE impl hap R hget hno hput hRem hnsR hn11R hKR H ret0 hret F hP hz hna hm1 hev hx0 hy0 M hF hrg h29v h30v T
+    exact k2NilE impl hap R hget hno hput hRem hnsR hn11R hKR H ret0 hret F hP hX hz hna hm1 hev hx0 hy0 M hF hrg h29v h30v T
       tpc (tsp.trans hsp) (t0.trans h0) (t1.trans h1) (t2.trans h2) (t3.trans h3) (t4.trans h4) (t5.trans h5)
       (t6.trans h6) (t7.trans h7) (t8.trans h8) (t9.trans h9) (t10.trans h10) (t11.trans h11) (t12.trans h12)
       (t13.trans h13) (t28.trans h28) tm

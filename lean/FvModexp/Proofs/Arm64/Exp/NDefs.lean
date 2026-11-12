@@ -103,7 +103,7 @@ def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K : Nat) (costF : Nat →
     (zp zl zc st xp xl xc yp yl yc mp n mc slow : Nat) (s : State) : Prop :=
   NPre R b L K costF needR costR needS needP costS costP (s.regs 28).toNat (s.sp.toNat - 1312) zp zl zc st xp xl xc yp
     yl yc mp n mc slow s ∧
-  (natVal s.mem mp n % 2 = 1 ∨ ∃ k, natVal s.mem mp n = 2 ^ k)
+  (natVal s.mem mp n % 2 = 1 ∨ ∃ k, natVal s.mem mp n = 2 ^ k) ∧ NHyp.XFacts R L xp xl xc
 
 /-- the postcondition (results `X0..X2`): `x^y mod m`, normalised, empty, in `z`'s array or in a fresh one -/
 def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K : Nat) (costF : Nat → Nat → Nat → Nat)

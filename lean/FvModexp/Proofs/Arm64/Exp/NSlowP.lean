@@ -4,8 +4,9 @@ import FvModexp.Proofs.Arm64.Exp.NDisp
 /-!
 # `nat.expNN` (arm64): the `expNNSlow` path — `z.expNNSlow(stk, x, y, m)` (nat.go:700-702) to expNN's return
 
-From `expNNSlow`'s entry (`NDisp.disp`'s `KS`, after the make: context `ZM`): `callC` with infra's `NHyp.SlowHyp`
-(`0 < X` from `len x ≠ 0`, `2 ≤ Y` from `len y ≠ 0` and `y ≠ 1`, `0 < M` from `len m ≠ 0`, all normalised).
+From `expNNSlow`'s entry (`NDisp.disp`'s `KS`, after the make: context `ZM`): `callC` with `NHyp.SlowHyp`
+(`0 < X` from `len x ≠ 0`, `2 ≤ Y` from `len y ≠ 0` and `y ≠ 1`, `0 < M` from `len m ≠ 0`, all normalised; `x`'s
+`XFacts` given (`hX`, lifted to the call's live set); the post `CPostR0` as `CPostG` by `cpostG_of0`).
 -/
 
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvModexp
@@ -25,7 +26,7 @@ theorem slowPath (impl : List Segment) (hap : ImplApart Extracted.program impl) 
     {g sp zp zl zc st xp xl xc yp yl yc mp n mc slow f29 : Nat} {s S : State}
     {L1 : List (Nat × Nat)} {b1 zq zcq mk : Nat}
     (hP : NPre R b L K costF needR costR needS needP costS costP g sp zp zl zc st xp xl xc yp yl yc mp n mc slow s)
-    (hstk : stk ≤ K + 1056)
+    (hX : NHyp.XFacts R L xp xl xc) (hstk : stk ≤ K + 1056)
     (hZ : ZM R b L g sp K zp zc st xp xl yp yl mp n s.mem S.mem L1 b1 zq zcq mk)
     (hxl0 : xl ≠ 0) (hyl0 : yl ≠ 0) (hy1 : ¬(yl = 1 ∧ s.mem.readLE yp 8 = 1))
     (hpc : S.pc = BitVec.ofNat 64 slowA) (hSsp : S.sp = BitVec.ofNat 64 (sp + 1056))
@@ -56,14 +57,15 @@ theorem slowPath (impl : List Segment) (hap : ImplApart Extracted.program impl) 
   have hE := hSl b1 L1 (BitVec.ofNat 64 zq) (BitVec.ofNat 64 n) (BitVec.ofNat 64 zcq) (BitVec.ofNat 64 st)
     (BitVec.ofNat 64 xp) (BitVec.ofNat 64 xl) (BitVec.ofNat 64 xc) (BitVec.ofNat 64 yp) (BitVec.ofNat 64 yl)
     (BitVec.ofNat 64 yc) (BitVec.ofNat 64 mp) (BitVec.ofNat 64 n) (BitVec.ofNat 64 mc)
-  rw [tN' hzq, tN' (by omega : n < 2 ^ 64), tN' (by omega : zcq < 2 ^ 64), tN' (by omega : st < 2 ^ 64), tN' hxp,
+  rw [tN' hzq, tN' (by omega : n < 2 ^ 64), tN' (by omega : zcq < 2 ^ 64), tN' (by omega : st < 2 ^ 64), tN' hxp, tN' hxc,
     tN' (by omega : xl < 2 ^ 64), tN' (by omega : yp < 2 ^ 64), tN' (by omega : yl < 2 ^ 64),
     tN' (by omega : mp < 2 ^ 64),
     show segAddr Extracted.program NHyp.fnSlow = slowA by decide] at hE
   have hacc2 : S.mem.accessible (sp + 1048) 256 true = true := by
     rw [hF0.accessible]; exact Memory.accessible_mono _ hacc (by omega) (by omega)
   refine callC impl hap hns hn11 ret0 hret F hs hal hKs (by omega) hsp2 hLs hwrt hsok hstw hF0 hLF0 hx1
-    hb1 hZA hstk h28 ?_ ?_ (Or.inr (Or.inl rfl)) hE hpc hSsp h30 ?_ ⟨?_, ?_, ?_, ?_, hst0⟩ (fun s' h => cpostG_of hzq h)
+    hb1 hZA hstk h28 ?_ ?_ (Or.inr (Or.inl rfl)) hE hpc hSsp h30 ?_ ⟨⟨?_, ?_, ?_, ?_, hst0⟩, hX.ext hx1⟩
+    (fun s' h => cpostG_of0 hzq h)
     (by rw [ec, ew]; intro hc; exact (harr hc).1) (by rw [ec, ew]; exact hc0)
     (by rw [el, ec]; exact hsok.2.2.2.2.2.1) hacc2 h29v h30v hsl hEk
   · rw [hrdx, hrdy, hrdm]

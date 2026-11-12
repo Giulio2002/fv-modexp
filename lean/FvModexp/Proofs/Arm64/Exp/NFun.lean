@@ -37,7 +37,7 @@ theorem ens_noEven (impl : List Segment) (hap : ImplApart Extracted.program impl
   rw [show names = LibN.names from rfl, ← LibN.eq_only, show segAddr Extracted.program fn = fnN by decide]
   intro ret hret s hs hpre
   janus_intro hs
-  obtain ⟨hP, hev⟩ := hpre
+  obtain ⟨hP, hev, hX⟩ := hpre
   have hevB : NoEvenB s.mem mp n := hev
   clear hev
   have hP' := hP
@@ -51,7 +51,7 @@ theorem ens_noEven (impl : List Segment) (hap : ImplApart Extracted.program impl
     (by omega) hyc s h_pc hs1 h_x0 h_x2 h_x4 h_x6 h_x7 h_x9 hs28 rfl h_lr rfl ?Kk ?K0)
   case Kk =>
     intro hk S M c1 c2 d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d18 d28 cm hF hrg q29 q30 _ _
-    refine fromJ1 impl hap R H hRem hnsR hn11R hKR ret hret (fun s' => ABIReturn s s' ∧ Post R b L K costF costR costS costP zp zc st xp xl yp yl mp n s s') hP hevB (zp' := zp) (zl' := zl) (zc' := zc)
+    refine fromJ1 impl hap R H hRem hnsR hn11R hKR ret hret (fun s' => ABIReturn s s' ∧ Post R b L K costF costR costS costP zp zc st xp xl yp yl mp n s s') hP hX hevB (zp' := zp) (zl' := zl) (zc' := zc)
       (Or.inl ⟨rfl, rfl, rfl, zok_of_keep hali hk⟩) (noAlias_keep hk) S M c1 c2 (d0.trans h_x0) (d1.trans h_x1) (d2.trans h_x2)
       (d3.trans h_x3) (d4.trans h_x4) (d5.trans h_x5) (d6.trans h_x6) (d7.trans h_x7) (d8.trans h_x8)
       (d9.trans h_x9) (d10.trans h_x10) (d11.trans h_x11) (d12.trans h_x12) (d13.trans h_x13) d28 cm hF hrg q29 q30
@@ -59,7 +59,7 @@ theorem ens_noEven (impl : List Segment) (hap : ImplApart Extracted.program impl
         a3.trans d18⟩, hq⟩
   case K0 =>
     intro hz0 hk S M c1 c2 d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d18 d28 cm hF hrg q29 q30 _ _
-    refine fromJ1 impl hap R H hRem hnsR hn11R hKR ret hret (fun s' => ABIReturn s s' ∧ Post R b L K costF costR costS costP zp zc st xp xl yp yl mp n s s') hP hevB (zp' := 0) (zl' := 0) (zc' := 0)
+    refine fromJ1 impl hap R H hRem hnsR hn11R hKR ret hret (fun s' => ABIReturn s s' ∧ Post R b L K costF costR costS costP zp zc st xp xl yp yl mp n s s') hP hX hevB (zp' := 0) (zl' := 0) (zc' := 0)
       (Or.inr ⟨rfl, rfl, rfl⟩) (noAlias_nil _ _) S M c1 c2 d0 d1 d2 (d3.trans h_x3) (d4.trans h_x4) (d5.trans h_x5) (d6.trans h_x6)
       (d7.trans h_x7) (d8.trans h_x8) (d9.trans h_x9) (d10.trans h_x10) (d11.trans h_x11) (d12.trans h_x12)
       (d13.trans h_x13) d28 cm hF hrg q29 q30
