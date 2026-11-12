@@ -56,18 +56,18 @@ abbrev dfnA : Nat := 0x1b91b0
 @[reducible] def NoAlias (zp zc up uc : Nat) : Prop :=
   0 < zc → 0 < uc → (zp + 8 * (zc - 1)) % 2 ^ 64 ≠ (up + 8 * (uc - 1)) % 2 ^ 64
 
-/-- the precondition (`NHyp.RemHyp`'s + `NoAlias`) -/
+/-- the precondition (`NHyp.RemHyp`'s: `CPre`, `0 < len v`, `NoAlias`; + `0 < st`) -/
 @[reducible] def Pre (R : RtInv) (b : Nat) (cd : Nat → Nat → Nat → Nat) (L : List (Nat × Nat))
     (zp zl zc st up ul uc vp vl : Nat) (s : State) : Prop :=
   (CPre R b L 41712 112 zp zl zc st [(up, ul), (vp, vl)] (need ul vl) (cost cd (stLen s.mem st) ul vl) s ∧
-    0 < vl) ∧ NoAlias zp zc up uc
+    0 < vl) ∧ NoAlias zp zc up uc ∧ 0 < st
 
 /-- the postcondition (`NHyp.CPostR`, value `U mod V`) -/
 @[reducible] def Post (R : RtInv) (b : Nat) (cd : Nat → Nat → Nat → Nat) (L : List (Nat × Nat))
     (zp zc st up ul vp vl : Nat) (s s' : State) : Prop :=
   CPostR R b L 41712 112 zp zc st (natVal s.mem up ul % natVal s.mem vp vl) (cost cd (stLen s.mem st) ul vl) s s'
 
-/-- `NHyp.RemHyp` with the `NoAlias` pre conjunct (the form asm proves) -/
+/-- `NHyp.RemHyp` with the stack non-nil (`0 < st`, NOTES-conventions "[asm s34] FINDING"; the form asm proves) -/
 def RemHypNA (impl : List Segment) (R : RtInv) (ns : List String) (stk above : Nat)
     (need : Nat → Nat → Nat) (cost : Nat → Nat → Nat → Nat) : Prop :=
   ∀ (b : Nat) (L : List (Nat × Nat)) (z zl zc st u ul uc v vl vc : BitVec 64),
@@ -75,7 +75,7 @@ def RemHypNA (impl : List Segment) (R : RtInv) (ns : List String) (stk above : N
       [z, zl, zc, st, u, ul, uc, v, vl, vc]
       (fun s => (CPre R b L stk above z.toNat zl.toNat zc.toNat st.toNat [(u.toNat, ul.toNat), (v.toNat, vl.toNat)]
           (need ul.toNat vl.toNat) (cost (stLen s.mem st.toNat) ul.toNat vl.toNat) s ∧
-        0 < vl.toNat) ∧ NoAlias z.toNat zc.toNat u.toNat uc.toNat)
+        0 < vl.toNat) ∧ NoAlias z.toNat zc.toNat u.toNat uc.toNat ∧ 0 < st.toNat)
       (fun s s' => CPostR R b L stk above z.toNat zc.toNat st.toNat
         (natVal s.mem u.toNat ul.toNat % natVal s.mem v.toNat vl.toNat)
         (cost (stLen s.mem st.toNat) ul.toNat vl.toNat) s s')
