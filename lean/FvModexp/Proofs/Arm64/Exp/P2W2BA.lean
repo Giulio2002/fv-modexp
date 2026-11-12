@@ -15,6 +15,14 @@ namespace FvModexp.Arm64.P2W2
 open FvModexp.Arm64.EvenHyp
 open FvModexp.Arm64.ExpHyp (RdIn WrOut)
 
+theorem lL_bd (ℓ0 lm : Nat) : ℓL ℓ0 lm ≤ ℓ0 + 15 * W lm + 6 := by
+  simp only [ℓL, ℓZ, ℓR, StackNat.rnd, P2Pre.NB, P2Pre.W, W]; omega
+
+theorem ofNat_inj' {a b : Nat} (ha : a < 2 ^ 64) (hb : b < 2 ^ 64) (h : BitVec.ofNat 64 a = BitVec.ofNat 64 b) :
+    a = b := by
+  have := congrArg BitVec.toNat h
+  rwa [BitVec.toNat_ofNat, BitVec.toNat_ofNat, Nat.mod_eq_of_lt ha, Nat.mod_eq_of_lt hb] at this
+
 section
 variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc yp yl lm : Nat} {s : State}
     {ret : Nat} {M : Memory} {L1 : List (Nat × Nat)} {b1 zzp bp : Nat}
