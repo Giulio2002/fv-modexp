@@ -18,9 +18,9 @@ namespace FvModexp.Arm64.W4Pro
 abbrev divE : Nat := 1806848
 
 /-- the facts at the `div` call (memory form; the callee window is `[sp - stkD, sp + 112)`, inside the frame's) -/
-@[reducible] def DvPre (R : RtInv) (b cost : Nat) (L : List (Nat × Nat)) (g sp K stkD st qp rrp n zzp zzl mp : Nat)
+@[reducible] def DvPre (R : RtInv) (b : Nat) (costF : Nat → Nat → Nat → Nat) (cost : Nat) (L : List (Nat × Nat)) (g sp K stkD st qp rrp n zzp zzl mp : Nat)
     (M : Memory) : Prop :=
-  CallW.CEnv R L g sp K 1040 M ∧ stkD ≤ K ∧ RunIface.Serves R ∧ RunIface.Globals R M ∧ n ≤ 128 ∧ 0 < n ∧
+  CallW.CEnv R L g sp K 1040 M ∧ stkD ≤ K ∧ RunIface.Serves R ∧ RunIface.Globals R M [(sp - K, sp + 1040)] ∧ n ≤ 128 ∧ 0 < n ∧
   NatLive M R L qp (2 * n) ∧ AW sp K qp (8 * (2 * n)) ∧ Apart qp (8 * (2 * n)) (g + 16) 8 ∧
   NatLive M R L rrp (2 * n) ∧ AW sp K rrp (8 * (2 * n)) ∧ Apart rrp (8 * (2 * n)) (g + 16) 8 ∧
   zzl ≤ 2 ^ 9 ∧ M.accessible zzp (8 * zzl) false = true ∧ zzp + 8 * zzl ≤ 2 ^ 48 ∧ Held R L zzp (8 * zzl) ∧
@@ -29,12 +29,14 @@ abbrev divE : Nat := 1806848
   NatNorm M zzp zzl ∧ NatNorm M mp n ∧
   StkOK M R L st ∧ AW sp K st 24 ∧
   (0 < stCap M st → AW sp K (stW M st) (8 * stCap M st) ∧ Apart (stW M st) (8 * stCap M st) (g + 16) 8) ∧
-  stLen M st + 4 * zzl + 64 ≤ 2 ^ 16 ∧
+  stLen M st + 16 * zzl + 64 ≤ 2 ^ 16 ∧ 0 < stCap M st ∧
+  Apart zzp (8 * zzl) st 24 ∧ Apart zzp (8 * zzl) (stW M st + 8 * stLen M st) (8 * (stCap M st - stLen M st)) ∧
+  Apart mp (8 * n) st 24 ∧ Apart mp (8 * n) (stW M st + 8 * stLen M st) (8 * (stCap M st - stLen M st)) ∧
   Apart qp (8 * (2 * n)) rrp (8 * (2 * n)) ∧
   (∀ p, p = qp ∨ p = rrp → Apart p (8 * (2 * n)) zzp (8 * zzl) ∧ Apart p (8 * (2 * n)) mp (8 * n) ∧
     Apart p (8 * (2 * n)) st 24 ∧
     Apart p (8 * (2 * n)) (stW M st + 8 * stLen M st) (8 * (stCap M st - stLen M st))) ∧
-  cost ≤ b ∧ R.inv b L g (view R.rt L M)
+  costF (stLen M st) zzl n ≤ cost ∧ cost ≤ b ∧ R.inv b L g (view R.rt L M)
 
 theorem out_win {sp K stkD a k : Nat} (hKD : stkD ≤ K) (h : AW sp K a k) :
     Outside a k [(sp - stkD, sp + 112)] := by
@@ -50,6 +52,16 @@ theorem out_win {sp K stkD a k : Nat} (hKD : stkD ≤ K) (h : AW sp K a k) :
     stkWs M st) ∧
   LiveFrame M M' L ([(qp, qp + 8 * (2 * n)), (rrp, rrp + 8 * (2 * n))] ++ stkWs M st) ∧ M'.regions = M.regions
 
+/-- move a division-cost bound to an equal stack level -/
+theorem cf_eq {f : Nat → Nat → Nat → Nat} {a b u v c : Nat} (h : f a u v ≤ c) (e : b = a) : f b u v ≤ c := e ▸ h
+
+theorem globals_win {R : RtInv} {M : Memory} {sp K stkD : Nat} (h : RunIface.Globals R M [(sp - K, sp + 1040)])
+    (hKD : stkD ≤ K) : RunIface.Globals R M [(sp - stkD, sp + 112)] := by
+  obtain ⟨g1, g2, g3, g4, g5, g6, g7, g8, g9, g10, g11, g12, g13⟩ := h
+  simp only [outside_cons, outside_nil, and_true] at g10 g13
+  exact ⟨g1, g2, g3, g4, g5, g6, g7, g8, g9, by simp only [outside_cons, outside_nil, and_true]; omega, g11, g12,
+    by simp only [outside_cons, outside_nil, and_true]; omega⟩
+
 theorem globals_nil {R : RtInv} {M : Memory} {w : List (Nat × Nat)} (h : RunIface.Globals R M w) :
     RunIface.Globals R M := by
   obtain ⟨g1, g2, g3, g4, g5, g6, g7, g8, g9, -, g11, g12, -⟩ := h
@@ -61,12 +73,12 @@ set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 /-- `nat.div` from its entry (return address `divRet`) to `divRet` -/
 theorem divCallK (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
-    (nsD : List String) (stkD costD : Nat) (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costD)
+    (nsD : List String) (stkD costD : Nat) (costF : Nat → Nat → Nat → Nat) (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costF)
     (hnsD : ∀ x, nsD.contains x = true → LibExp.names.contains x = true)
     (hnsW : nsD.contains Extracted.seg34.name = false)
     (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret) (Q : Outcome → Prop)
     (b : Nat) (L : List (Nat × Nat)) (g sp K st qp rrp n zzp zzl zzc mp mc : Nat) (M : Memory) (r18 r29 : BitVec 64)
-    (hpre : DvPre R b costD L g sp K stkD st qp rrp n zzp zzl mp M)
+    (hpre : DvPre R b costF costD L g sp K stkD st qp rrp n zzp zzl mp M)
     (hst : st < 2 ^ 64) (hqp : qp < 2 ^ 64) (hrrp : rrp < 2 ^ 64) (hzzp : zzp < 2 ^ 64) (hzzc : zzc < 2 ^ 64)
     (hmp : mp < 2 ^ 64) (hmc : mc < 2 ^ 64)
     (S : State) (hpc : S.pc = BitVec.ofNat 64 divE) (hsp : S.sp = BitVec.ofNat 64 sp)
@@ -85,7 +97,7 @@ theorem divCallK (impl : List Segment) (hap : ImplApart Extracted.program impl) 
       Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
     Reaches ((LibExp.program.link impl).withExit ret) S Q := by
   obtain ⟨hce, hKD, hserv, hgl, hn128, hn, hqL, hqW, hqG, hrL, hrW, hrG, hzl, hza, hz48, hzH, hzW, hma, hm48, hmH, hmW,
-    hzN, hmN, hsok, hstW, harr, hslen, hqr, hpair, hcost, hinv⟩ := hpre
+    hzN, hmN, hsok, hstW, harr, hslen, hcap, huH, huF, hvH, hvF, hqr, hpair, hcF, hcost, hinv⟩ := hpre
   have hce0 := hce
   obtain ⟨hal, hK, hA, hacc, hg1, hg2, hg3, hrt, hga, hgrt, hLs, hd, hro⟩ := hce0
   have hS0 := CallW.hypSum hap hnsD (hDiv b L (BitVec.ofNat 64 qp) (BitVec.ofNat 64 (2 * n)) (BitVec.ofNat 64 (2 * n))
@@ -117,11 +129,12 @@ theorem divCallK (impl : List Segment) (hap : ImplApart Extracted.program impl) 
     rw [t0, t1, t3, t4, t5, t7, t8, t10, t11, hmem]
     have hce' := CallW.callEnv_of hce hsp h28 hmem (stk := stkD) (above := 112) hKD (by omega)
     simp only [win, tsp, tg]
-    refine ⟨hce', hserv, globals_nil hgl, Nat.le_refl _, by omega,
+    refine ⟨hce', hserv, globals_win hgl hKD, Nat.le_refl _, by omega,
       ⟨by omega, hqL, fun _ => ⟨out_win hKD hqW, hqG⟩⟩, ⟨by omega, hrL, fun _ => ⟨out_win hKD hrW, hrG⟩⟩,
       ⟨by omega, hza, hz48, hzH, out_win hKD hzW⟩, ⟨by omega, hma, hm48, hmH, out_win hKD hmW⟩, hzl, hn, by omega,
       hzN, hmN, hsok, out_win hKD hstW, fun hc => ⟨out_win hKD (harr hc).1, (harr hc).2⟩, hslen,
-      fun _ _ => hqr, fun p c hpc' _ => ?_, hcost, hinv⟩
+      fun h => absurd h (by omega), huH, huF, hvH, hvF,
+      fun _ _ => hqr, fun p c hpc' _ => ?_, Nat.le_trans hcF hcost, hinv⟩
     simp only [List.mem_cons, List.not_mem_nil, or_false, Prod.mk.injEq] at hpc'
     rcases hpc' with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
     · exact hpair _ (Or.inl rfl)
@@ -130,6 +143,6 @@ theorem divCallK (impl : List Segment) (hap : ImplApart Extracted.program impl) 
     hq
   simp only [t0, t1, t3, t4, t7, t8, t10, t11, hmem, tsp, tg, winA] at hqOF hrOF hb' hinv' hsb hfr hF hLF
   refine KB s' s'.mem L' b' r rl rc (hr.trans h30) (e1.trans hsp) hX3 hX4 hX5 (e4.trans h18) (e2.trans h28)
-    (e3.trans h29) rfl ⟨hrOF, hLE, hb', hinv', hsb, hfr, hF, hLF, by rw [hrg, hmem]⟩
+    (e3.trans h29) rfl ⟨hrOF, hLE, by omega, hinv', hsb, hfr, hF, hLF, by rw [hrg, hmem]⟩
 
 end FvModexp.Arm64.W4Pro

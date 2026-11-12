@@ -7,7 +7,7 @@ import FvModexp.Proofs.Arm64.Witness.AsmWit
 `z = nil`, `stk` = header `{w: OA + 0x200, len: 0, cap: 4}` at `ST = OA + 0x100`, `x = [3]` at `XP`, `y = [5]` at `YP`,
 `m = [7]` at `MP` (the call `3^5 mod 7`). The stack region is widened to `[SP0 - 0x10000, SP0 + 0x100)` so the window
 `[sp - K, sp + 1040)` (`sp = SP0 - 928`) fits for every `4304 ≤ K ≤ KMAX` (`nat.div`'s stack depth `stkD ≤ K` is not
-known yet). `pre` holds for every `costD ≤ CD`. The row (`correctness` + `nonvacuous`) is completed when asm's `nat.div`
+known yet). `pre` holds for every `nat.div` cost function `costF` with `divCost costF 1 1 0 ≤ CD`. The row (`correctness` + `nonvacuous`) is completed when asm's `nat.div`
 summary lands (it replaces the `ExpHyp.DivHyp` premise of `ExpW4.ens`).
 -/
 
@@ -75,6 +75,8 @@ theorem sp0 : s0.sp.toNat - 928 = SP0 - 928 := by decide
 theorem g0 : (s0.regs 28).toNat = G0 := by decide
 
 /-- the witness bound on the window-4 budget (`W4Bud` is monotone in `costD`) -/
+theorem stl : stLen s0.mem ST = 0 := by simp only [stLen, show s0.mem = mem0 from rfl]; decide +kernel
+
 theorem bud (costD : Nat) (h : costD ≤ CD) : W4Bud 1 1 costD (stLen s0.mem ST) ≤ BW := by
   have hl : stLen s0.mem ST = 0 := by simp only [stLen, show s0.mem = mem0 from rfl]; decide +kernel
   have e : W4Bud 1 1 costD 0 = W4Bud 1 1 0 0 + 12 * costD := by
@@ -92,13 +94,16 @@ theorem accWin (K : Nat) (hK : 4304 ≤ K) (hK' : K ≤ KMAX) :
 
 set_option maxHeartbeats 64000000 in
 /-- the witness state satisfies window-4's precondition (`3^5 mod 7`), for every window depth `4304 ≤ K ≤ KMAX` and
-every `nat.div` cost `costD ≤ CD` -/
-theorem pre (K costD : Nat) (hK : 4304 ≤ K) (hK' : K ≤ KMAX) (hc : costD ≤ CD) :
-    Pre R BW [] K costD 0 0 ST XP 1 1 YP 1 MP 1 1 s0 := by
+every `nat.div` cost function with `divCost costF 1 1 0 ≤ CD` -/
+theorem pre (K : Nat) (costF : Nat → Nat → Nat → Nat) (hK : 4304 ≤ K) (hK' : K ≤ KMAX)
+    (hc : divCost costF 1 1 0 ≤ CD) :
+    Pre R BW [] K costF 0 0 ST XP 1 1 YP 1 MP 1 1 s0 := by
   have hm : s0.mem = mem0 := rfl
-  unfold Pre W4En.EPre W4En.EEnv
+  unfold Pre
+  rw [stl]
+  unfold PreD W4En.EPre W4En.EEnv
   rw [g0, sp0]
-  refine ⟨?_, ?_, ?_, ?_, bud costD hc⟩
+  refine ⟨?_, ?_, ?_, ?_, bud _ hc⟩
   rotate_left
   · simp only [natVal, hm]; decide +kernel
   · simp only [natVal, hm]; decide +kernel

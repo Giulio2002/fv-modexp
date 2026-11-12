@@ -152,24 +152,27 @@ results q X0..X2 = `u / v`, r X3..X5 = `u % v` (both normalised). `u`, `v` norma
 def fnDiv : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.nat.div"
 
 /-- closed budget bound of one `div` with operands of at most `ul` words (divmc fixes it; a parameter here) -/
-@[reducible] def DivPre (R : RtInv) (b cost : Nat) (L : List (Nat × Nat)) (stk above zp zl zc st z2 z2l z2c u ul v vl : Nat)
+@[reducible] def DivPre (R : RtInv) (b : Nat) (cost : Nat → Nat → Nat → Nat) (L : List (Nat × Nat)) (stk above zp zl zc st z2 z2l z2c u ul v vl : Nat)
     (s : State) : Prop :=
-  CallEnv R L s stk above ∧ Serves R ∧ RunIface.Globals R s.mem ∧ zl ≤ zc ∧ z2l ≤ z2c ∧
+  CallEnv R L s stk above ∧ Serves R ∧ RunIface.Globals R s.mem (win s stk above) ∧ zl ≤ zc ∧ z2l ≤ z2c ∧
     WrOut R L s stk above zp zc ∧ WrOut R L s stk above z2 z2c ∧
     RdIn R L s stk above u ul ∧ RdIn R L s stk above v vl ∧ ul ≤ 2 ^ 9 ∧ 0 < vl ∧ vl ≤ 2 ^ 9 ∧
     NatNorm s.mem u ul ∧ NatNorm s.mem v vl ∧
     StackOK' s.mem R L st ∧ Outside st 24 (win s stk above) ∧
     (0 < stCap s.mem st → Outside (stW s.mem st) (8 * stCap s.mem st) (win s stk above) ∧
       Apart (stW s.mem st) (8 * stCap s.mem st) ((s.regs 28).toNat + 16) 8) ∧
-    stLen s.mem st + 4 * ul + 64 ≤ 2 ^ 16 ∧
+    stLen s.mem st + 16 * ul + 64 ≤ 2 ^ 16 ∧ (stCap s.mem st = 0 → stW s.mem st = 0) ∧
+    -- the inputs are apart from the stack header and its free part (asm s15: read after `stk.nat` writes there)
+    Apart u (8 * ul) st 24 ∧ Apart u (8 * ul) (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st)) ∧
+    Apart v (8 * vl) st 24 ∧ Apart v (8 * vl) (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st)) ∧
     -- pairwise: the outputs are apart from each other, from the inputs and from the stack's free part / header
     (0 < zc → 0 < z2c → Apart zp (8 * zc) z2 (8 * z2c)) ∧
     (∀ p c, (p, c) ∈ [(zp, zc), (z2, z2c)] → 0 < c →
       Apart p (8 * c) u (8 * ul) ∧ Apart p (8 * c) v (8 * vl) ∧ Apart p (8 * c) st 24 ∧
       Apart p (8 * c) (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st))) ∧
-    cost ≤ b ∧ R.inv b L (s.regs 28).toNat (view R.rt L s.mem)
+    cost (stLen s.mem st) ul vl ≤ b ∧ R.inv b L (s.regs 28).toNat (view R.rt L s.mem)
 
-@[reducible] def DivPost (R : RtInv) (b cost : Nat) (L : List (Nat × Nat)) (stk above zp zc st z2 z2c u ul v vl : Nat)
+@[reducible] def DivPost (R : RtInv) (b : Nat) (cost : Nat → Nat → Nat → Nat) (L : List (Nat × Nat)) (stk above zp zc st z2 z2c u ul v vl : Nat)
     (s s' : State) : Prop :=
   ∃ (q ql qc r rl rc : Nat), s'.regs 0 = BitVec.ofNat 64 q ∧ s'.regs 1 = BitVec.ofNat 64 ql ∧
     s'.regs 2 = BitVec.ofNat 64 qc ∧ s'.regs 3 = BitVec.ofNat 64 r ∧ s'.regs 4 = BitVec.ofNat 64 rl ∧
@@ -177,14 +180,14 @@ def fnDiv : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.nat.div"
     ∃ (L' : List (Nat × Nat)) (b' : Nat),
       NatOF R L L' s'.mem zp zc 1 q ql qc (natVal s.mem u ul / natVal s.mem v vl) ∧
       NatOF R L L' s'.mem z2 z2c 1 r rl rc (natVal s.mem u ul % natVal s.mem v vl) ∧
-      RtPost R b cost L L' b' s s' ∧ StackBack R L L' st s.mem s'.mem ∧
+      RtPost R b (cost (stLen s.mem st) ul vl) L L' b' s s' ∧ StackBack R L L' st s.mem s'.mem ∧
       -- a fresh remainder is apart from the stack's final array (expmc s11: both may be allocated inside `div`)
       (¬ (r = z2 ∧ rc = z2c) → 0 < rc → 0 < stCap s'.mem st →
         Apart r (8 * rc) (stW s'.mem st) (8 * stCap s'.mem st)) ∧
       MemFrame s.mem s'.mem (R.rt ++ winA s stk above ++ [(zp, zp + 8 * zc), (z2, z2 + 8 * z2c)] ++ stWs s.mem st) ∧
       LiveFrame s.mem s'.mem L ([(zp, zp + 8 * zc), (z2, z2 + 8 * z2c)] ++ stWs s.mem st)
 
-def DivHyp (impl : List Segment) (R : RtInv) (ns : List String) (stk above : Nat) (cost : Nat) : Prop :=
+def DivHyp (impl : List Segment) (R : RtInv) (ns : List String) (stk above : Nat) (cost : Nat → Nat → Nat → Nat) : Prop :=
   ∀ (b : Nat) (L : List (Nat × Nat)) (z zl zc st z2 z2l z2c u ul uc v vl vc : BitVec 64),
     Ensures ((Extracted.program.onlySegments ns).link impl) (segAddr Extracted.program fnDiv)
       [z, zl, zc, st, z2, z2l, z2c, u, ul, uc, v, vl, vc]

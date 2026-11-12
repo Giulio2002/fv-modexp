@@ -24,6 +24,15 @@ open FvModexp.Arm64.W4Loop (Env Inp Buf FinEnv)
   stackNatCost l0 k + (stackNatCost (l0 + StackNat.rnd k) n + (costD +
     xjBud n costD (l0 + StackNat.rnd k + StackNat.rnd n)))
 
+/-- the division-cost bounds of the x-normalisation + RR section at entry level `l0` (`k = len x - n + 1`): `x mod m`
+(path A) and the `RR` division on paths A/B, A/C, B, C -/
+@[reducible] def DivCosts (costF : Nat → Nat → Nat → Nat) (costD n xl l0 : Nat) : Prop :=
+  costF (l0 + StackNat.rnd (xl - n + 1) + StackNat.rnd n) xl n ≤ costD ∧
+  costF (l0 + StackNat.rnd (xl - n + 1) + StackNat.rnd n + StackNat.rnd n + 2 * StackNat.rnd (2 * n)) (2 * n + 1) n ≤ costD ∧
+  costF (l0 + StackNat.rnd (xl - n + 1) + StackNat.rnd n + 2 * StackNat.rnd (2 * n)) (2 * n + 1) n ≤ costD ∧
+  costF (l0 + StackNat.rnd n + 2 * StackNat.rnd (2 * n)) (2 * n + 1) n ≤ costD ∧
+  costF (l0 + 2 * StackNat.rnd (2 * n)) (2 * n + 1) n ≤ costD
+
 /-- budget step for `xnAStep` (small context; omega in the step's context cost 15 s each) -/
 theorem bud3 {b b2 b4 x y z : Nat} (h : x + (y + z) ≤ b) (h2 : b - x ≤ b2) (h4 : b2 - y ≤ b4) : z ≤ b4 := by omega
 
@@ -35,7 +44,7 @@ theorem xnAStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
     (hSN : StackNat.Hyp impl R StackNat.names 4208 24)
-    (nsD : List String) (stkD costD : Nat) (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costD)
+    (nsD : List String) (stkD costD : Nat) (costF : Nat → Nat → Nat → Nat) (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costF)
     (hnsD : ∀ x, nsD.contains x = true → LibExp.names.contains x = true)
     (hnsW : nsD.contains Extracted.seg34.name = false)
     (nsL : List String) (stkL : Nat) (hLsh : Lsh.Hyp2 impl R nsL stkL 64)
@@ -50,8 +59,9 @@ theorem xnAStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (hx48 : xp + 8 * xl ≤ 2 ^ 48) (hxN : NatNorm M xp xl) (hxl : n < xl) (hxl' : xl ≤ 128) (hxc : xc < 2 ^ 64)
     (hxv : M.readLE xp (8 * xl) = Xv)
     (hmB : Mv < Exp.B ^ n) (hMo : Mv % 2 = 1) (hM1 : 1 < Mv)
-    (hslen : l0 + StackNat.rnd (xl - n + 1) + StackNat.rnd n + 4 * xl + StackNat.rnd n + 2 * StackNat.rnd (2 * n) +
-      17 * n + 68 ≤ 2 ^ 16)
+    (hslen : l0 + StackNat.rnd (xl - n + 1) + StackNat.rnd n + 16 * xl + StackNat.rnd n + 2 * StackNat.rnd (2 * n) +
+      32 * n + 80 ≤ 2 ^ 16)
+    (hcs : DivCosts costF costD n xl l0)
     (hbA : xnBudA n costD l0 (xl - n + 1) ≤ b) (hbAC : xnBudAC n costD l0 (xl - n + 1) ≤ b)
     (hinv : R.inv b L g (view R.rt L M))
     (r968 : M.readLE (sp + 968) 8 = xp) (r976 : M.readLE (sp + 976) 8 = xl) (r984 : M.readLE (sp + 984) 8 = xc)
@@ -181,7 +191,7 @@ theorem xnAStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     rcases hxN with h | h
     · exact Or.inl h
     · exact Or.inr (by rw [rdx _ _ (by omega) (by omega)]; exact h)
-  refine reaches_mono (xnA2K impl hap R hclr hmv hmk hSN nsD stkD costD hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL
+  refine reaches_mono (xnA2K impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL
     hserv ret hret b4 L4 g sp K n mp mc Mv Xv yp ylen Y yi zp zc st n0 l0 xp xl xc (stW M2 st + 8 * l0) k M4 r18 r29 f29
     hKD hKL hB4 (by rw [hlen4]) hk0 (by omega) (by omega) (hx4.held hqH3)
     (by rw [hk4.2.1, hk3.2.1]; exact M2.accessible_sub qacc (Or.inr rfl) (by omega) (by omega)) (by omega)
@@ -189,7 +199,7 @@ theorem xnAStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (Apart.sub a2 (Nat.le_add_right _ _) hqin.2 (Nat.le_refl _) (Nat.le_refl _))
     (by have := hsu2; simp only [stUp, Apart] at this ⊢; omega) hqB hqz hxO4
     (by rw [hk4.2.1, hk3.2.1, hk2.2.1]; exact hxa) hx48 hxN4 hxl hxl' hxc
-    (by rw [rdx _ _ (Nat.le_refl _) (Nat.le_refl _)]; exact hxv) hmB hMo hM1 (by omega)
+    (by rw [rdx _ _ (Nat.le_refl _) (Nat.le_refl _)]; exact hxv) hmB hMo hM1 (by omega) (by rw [hkdef]; exact hcs.1) (by rw [hkdef]; exact hcs.2.1) (by rw [hkdef]; exact hcs.2.2.1)
     (bud3 hbAC hb2 hb4) (bud3 hbA hb2 hb4) hinv4
     (by rw [sl 904 (by omega) (by omega)]; exact q904) (by rw [sl 328 (by omega) (by omega)]; exact q328)
     (by rw [sl 320 (by omega) (by omega)]; exact q320) (by rw [rk 968 (by omega) (by omega)]; exact r968)
@@ -206,7 +216,7 @@ theorem xnStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
     (hSN : StackNat.Hyp impl R StackNat.names 4208 24)
-    (nsD : List String) (stkD costD : Nat) (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costD)
+    (nsD : List String) (stkD costD : Nat) (costF : Nat → Nat → Nat → Nat) (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costF)
     (hnsD : ∀ x, nsD.contains x = true → LibExp.names.contains x = true)
     (hnsW : nsD.contains Extracted.seg34.name = false)
     (nsL : List String) (stkL : Nat) (hLsh : Lsh.Hyp2 impl R nsL stkL 64)
@@ -221,8 +231,9 @@ theorem xnStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     (hx48 : xp + 8 * xl ≤ 2 ^ 48) (hxN : NatNorm M xp xl) (hxl0 : 0 < xl) (hxl' : xl ≤ 128) (hxc : xc < 2 ^ 64)
     (hxv : M.readLE xp (8 * xl) = Xv)
     (hmB : Mv < Exp.B ^ n) (hMo : Mv % 2 = 1) (hM1 : 1 < Mv)
-    (hslen : l0 + StackNat.rnd (xl - n + 1) + StackNat.rnd n + 4 * xl + StackNat.rnd n + 2 * StackNat.rnd (2 * n) +
-      17 * n + 68 ≤ 2 ^ 16)
+    (hslen : l0 + StackNat.rnd (xl - n + 1) + StackNat.rnd n + 16 * xl + StackNat.rnd n + 2 * StackNat.rnd (2 * n) +
+      32 * n + 80 ≤ 2 ^ 16)
+    (hcs : DivCosts costF costD n xl l0)
     (hbC : xjBud n costD l0 ≤ b) (hbB : stackNatCost l0 n + xjBud n costD (l0 + StackNat.rnd n) ≤ b)
     (hbA : xnBudA n costD l0 (xl - n + 1) ≤ b) (hbAC : xnBudAC n costD l0 (xl - n + 1) ≤ b)
     (hinv : R.inv b L g (view R.rt L M))
@@ -245,18 +256,18 @@ theorem xnStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
   · intro hc S' c1 c2 c3 c4
     have hxO' := hxO
     obtain ⟨-, o2, -, -, -⟩ := hxO'
-    refine reaches_mono (xnJStep impl hap R hclr hmv hmk hSN nsD stkD costD hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL
+    refine reaches_mono (xnJStep impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL
       hserv ret hret b L g sp K n mp mc Mv Xv yp ylen Y yi zp zc st n0 l0 xp xl xl xc M r18 r29 f29 hKD hKL hB hl0e
-      ⟨Nat.le_refl _, hxl0, by omega, hxa, hx48, hxO⟩ hxv hc hxc hmB hMo hM1 (by omega) hbC hbB hinv
+      ⟨Nat.le_refl _, hxl0, by omega, hxa, hx48, hxO⟩ hxv hc hxc hmB hMo hM1 (by omega) hcs.2.2.2.1 hcs.2.2.2.2 hbC hbB hinv
       L0 bA M0 hAn hbAC' hbAB' hl0A S' c1
       (by rw [c2, hsp]) (by rw [c4, h3]) (by rw [c4, h4]) (by rw [c4, h5]) (by rw [c4, h6]) (by rw [c4, h8])
       (by rw [c4, h10]) (by rw [c4, h11]) (by rw [c4, h18]) (by rw [c4, h28]) (by rw [c4, h29]) (by rw [c3, hmem]))
       (isReturn_mono fun s' h => ⟨Xv, rfl, by
         rw [← hxv]; exact Nat.lt_of_lt_of_le (FvModexp.Expmc.readLE_lt_B _ _ _) (Nat.pow_le_pow_right Exp.B_pos hc), h⟩)
   · intro hc S' c1 c2 c3 c4 c5 c6 c7 c8 c9
-    refine reaches_mono (xnAStep impl hap R hclr hmv hmk hSN nsD stkD costD hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL
+    refine reaches_mono (xnAStep impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL
       hserv ret hret b L g sp K n mp mc Mv Xv yp ylen Y yi zp zc st n0 l0 xp xl xc M r18 r29 f29 hKD hKL hB hl0e hxO hxa
-      hx48 hxN hc hxl' hxc hxv hmB hMo hM1 hslen hbA hbAC hinv r968 r976 r984 L0 bA M0 hAn hbAAB hbAAA hl0A S' c1 (by rw [c2, hsp]) c4 c5 c6
+      hx48 hxN hc hxl' hxc hxv hmB hMo hM1 hslen hcs hbA hbAC hinv r968 r976 r984 L0 bA M0 hAn hbAAB hbAAA hl0A S' c1 (by rw [c2, hsp]) c4 c5 c6
       (by rw [c7, h18]) (by rw [c8, h28]) (by rw [c9, h29]) (by rw [c3, hmem]))
       (isReturn_mono fun s' h => ⟨Xv % Mv, Nat.mod_mod _ _, Nat.lt_trans (Nat.mod_lt _ (Nat.lt_trans Nat.zero_lt_one hM1)) hmB, h⟩)
 

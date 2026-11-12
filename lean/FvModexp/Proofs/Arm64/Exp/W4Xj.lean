@@ -96,7 +96,7 @@ theorem xjStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
     (hSN : StackNat.Hyp impl R StackNat.names 4208 24)
-    (nsD : List String) (stkD costD : Nat) (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costD)
+    (nsD : List String) (stkD costD : Nat) (costF : Nat → Nat → Nat → Nat) (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costF)
     (hnsD : ∀ x, nsD.contains x = true → LibExp.names.contains x = true)
     (hnsW : nsD.contains Extracted.seg34.name = false)
     (nsL : List String) (stkL : Nat) (hLsh : Lsh.Hyp2 impl R nsL stkL 64)
@@ -110,7 +110,8 @@ theorem xjStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     (hx : Inp R L sp n M xp) (hxO : Obj R L sp K st l0 [] M xp (8 * n)) (hxv : M.readLE xp (8 * n) = Xv)
     (hxc : xc < 2 ^ 64)
     (hmB : Mv < Exp.B ^ n) (hMo : Mv % 2 = 1) (hM1 : 1 < Mv)
-    (hslen : l0 + 2 * StackNat.rnd (2 * n) + 17 * n + 68 ≤ 2 ^ 16)
+    (hslen : l0 + 2 * StackNat.rnd (2 * n) + 32 * n + 80 ≤ 2 ^ 16)
+    (hcF : costF (l0 + 2 * StackNat.rnd (2 * n)) (2 * n + 1) n ≤ costD)
     (hbud : stackNatCost l0 (2 * n) + (makeCost (1 + 128 * n / 64 + 1) + (stackNatCost (l0 + StackNat.rnd (2 * n)) (2 * n) +
       (costD + (blockSize (8 * n) true + stackNatCost (l0 + 2 * StackNat.rnd (2 * n)) (17 * n) +
         blockSize (8 * (2 * n + 4)) true)))) ≤ b)
@@ -184,9 +185,9 @@ theorem xjStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     rw [← hl0e]; exact hmf.readLE _ _ (by
       have := hB.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
       simp only [AW, Apart] at this; simp only [outside_cons, outside_nil, and_true]; omega)
-  exact sn1Step impl hap R hclr hmv hmk hSN nsD stkD costD hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL hserv ret hret b L
+  exact sn1Step impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL hserv ret hret b L
     g sp K n mp mc Mv xp xc Xv yp ylen Y yi zp zc st n0 l0 (Exp.newton 64 (Mv % Exp.B)) M1 r18 r29 f29 hKD hKL hC hlen1 htl
-    q224 q128 (hkk_of hMo) hmB hMo hM1 hslen hbud (FvModexp.Expmc.inv_frame hmf (fun r hr => Or.inr (by
+    q224 q128 (hkk_of hMo) hmB hMo hM1 hslen hcF hbud (FvModexp.Expmc.inv_frame hmf (fun r hr => Or.inr (by
       have := ws_in r hr
       simp only [List.mem_cons, List.not_mem_nil, or_false] at hr
       rcases hr with rfl | rfl | rfl | rfl <;> exact hrt.of_sub (by omega) (by omega))) hinv)
