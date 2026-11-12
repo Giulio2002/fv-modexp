@@ -1,5 +1,5 @@
 Development tool (agent expmc): rewrite a module family's imports to exactly the modules whose constants it uses.
-1. Edit Dep.lean's `import` to the top module of the family (all modules built), run it with the dev LEAN_PATH
+1. Copy Dep.lean.in to a scratch Dep.lean (not linted: keep .lean files out of the repo outside lean/), edit its `import` to the top module of the family (all modules built), run it with the dev LEAN_PATH
    (`lean Dep.lean > dep.out`): prints, for every module under `pfx`, the modules its declarations' types/values use.
 2. `python3 reimport.py` (dry run; reads dep.out in the cwd; ROOT/P constants at the top select the family), then
    `python3 reimport.py apply`. Non-family imports are kept; `open X (names)` lines may need an extra import

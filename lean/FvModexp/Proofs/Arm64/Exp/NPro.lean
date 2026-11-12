@@ -17,21 +17,6 @@ namespace FvModexp.Arm64.ExpN
 /-- the last-element address `p + 8 (c - 1)` (mod `2^64`) of a nat of capacity `c`, as the code computes it -/
 @[reducible] def lastA (p c : Nat) : Nat := (p + 8 * (c - 1)) % 2 ^ 64
 
-set_option hygiene false in
-/-- the prologue's memory frame -/
-local macro "pmf" : tactic => `(tactic| (
-  dsimp only
-  repeat (first
-    | refine MemFrame.writeLE ?_ _ (r := (sp + 1048, sp + 1312)) (by simp) (by simp only; omega) (by simp only; omega)
-    | refine MemFrame.writeLE ?_ _ (r := (sp + 1320, sp + 1408)) (by simp) (by simp only; omega) (by simp only; omega))
-  exact MemFrame.refl _ _))
-
-local macro "pfin" : tactic => `(tactic| (
-  first | (janus_simp; done) | skip
-  first | (simp (disch := omega) only [Memory.readLE_writeLE_of_disjoint, Memory.readLE_writeLE_self,
-    BitVec.toNat_ofNat, Nat.reducePow, Nat.reduceMod]; done) | skip
-  first | omega | skip))
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem pro (impl : List Segment) (ret0 : Nat) (hret : RetAddr (LibN.program.link impl) ret0)
@@ -82,11 +67,27 @@ theorem pro (impl : List Segment) (ret0 : Nat) (hret : RetAddr (LibN.program.lin
   all_goals first
     | (refine Kk (by (try simp only [lastA] at *); omega) _ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?mf ?rg ?r1 ?r2
           ?r3 ?r4
-       case mf => pmf
-       all_goals pfin)
+       case mf =>
+         dsimp only
+         repeat (first
+           | refine MemFrame.writeLE ?_ _ (r := (sp + 1048, sp + 1312)) (by simp) (by simp only; omega) (by simp only; omega)
+           | refine MemFrame.writeLE ?_ _ (r := (sp + 1320, sp + 1408)) (by simp) (by simp only; omega) (by simp only; omega))
+         exact MemFrame.refl _ _
+       all_goals first | (janus_simp; done) | skip
+       all_goals first | (simp (disch := omega) only [Memory.readLE_writeLE_of_disjoint, Memory.readLE_writeLE_self,
+         BitVec.toNat_ofNat, Nat.reducePow, Nat.reduceMod]; done) | skip
+       all_goals first | omega | skip)
     | (refine K0 (by (try simp only [lastA] at *); omega) (by (try simp only [lastA] at *); omega) _ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
           ?_ ?_ ?_ ?_ ?_ rfl ?mf ?rg ?r1 ?r2 ?r3 ?r4
-       case mf => pmf
-       all_goals pfin)
+       case mf =>
+         dsimp only
+         repeat (first
+           | refine MemFrame.writeLE ?_ _ (r := (sp + 1048, sp + 1312)) (by simp) (by simp only; omega) (by simp only; omega)
+           | refine MemFrame.writeLE ?_ _ (r := (sp + 1320, sp + 1408)) (by simp) (by simp only; omega) (by simp only; omega))
+         exact MemFrame.refl _ _
+       all_goals first | (janus_simp; done) | skip
+       all_goals first | (simp (disch := omega) only [Memory.readLE_writeLE_of_disjoint, Memory.readLE_writeLE_self,
+         BitVec.toNat_ofNat, Nat.reducePow, Nat.reduceMod]; done) | skip
+       all_goals first | omega | skip)
 
 end FvModexp.Arm64.ExpN
