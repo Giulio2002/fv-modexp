@@ -158,7 +158,7 @@ theorem Pre.stwb {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp x
 @[reducible] def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (st zp zl xp xl : Nat) (s s' : State) : Prop :=
   natVal s'.mem zp zl = natVal s.mem xp xl * natVal s.mem xp xl ∧
     ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b - ExpHyp.stackNatCost (stLen s.mem st) (2 * xl) ≤ b' ∧
-      R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem) ∧ StackBack R L L' st s.mem s'.mem ∧
+      R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem) ∧ StackBackL R L L' st s.mem s'.mem ∧
       MemFrame s.mem s'.mem (R.rt ++ winA s 4432 64 ++ ws s.mem st zp zl) ∧
       LiveFrame s.mem s'.mem L (ws s.mem st zp zl)
 
@@ -178,6 +178,7 @@ structure Env (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (st zp zl zc xp xl :
   c1len : stLen s.mem st + (2 * xl + 3) / 4 * 4 ≤ c1
   c1b : c1 < 2 ^ 40
   w1live : NatLive s.mem R L1 w1 c1
+  amem : ¬(w1 = stW s.mem st ∧ c1 = stCap s.mem st) → (w1, w1 + 8 * c1) ∈ L1
 
 /-- the memory facts at every point after the `stk.nat` call (memory `M`, the stack's `len` `l1`) -/
 structure Mem (R : RtInv) (L : List (Nat × Nat)) (st zp zl zc xp xl xc : Nat) (s : State)

@@ -76,7 +76,7 @@ theorem kS1clr (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     hFc.mono fun a k ho => by
       simp only [outside_append, outside_cons, outside_nil, and_true] at ho ⊢
       exact ⟨⟨ho.1.1, ho.1.2.1, by omega⟩, ho.2⟩
-  have hsb : StackBack R Lk Lk st S.mem w := by
+  have hsb : StackBackL R Lk Lk st S.mem w := by
     refine stackBack_keep' hkm.sok (ws := [(s.sp.toNat - 320 - 4096, s.sp.toNat - 320 - 8),
       (s.sp.toNat - 320 + 8, s.sp.toNat - 320 + 8 + 16)] ++ [(zp, zp + 8 * (2 * n))]) ?_
       (FvModexp.LiveFrame.mono_ws hLFc fun a k ho => by rw [outside_append] at ho; exact ho.2) ?_ (LiveExt.refl R Lk)

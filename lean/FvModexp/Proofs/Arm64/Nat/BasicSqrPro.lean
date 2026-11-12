@@ -70,6 +70,8 @@ theorem pro3 (impl : List Segment) (R : RtInv) (stkSN abSN : Nat) (hk1 : stkSN �
     (hgrow : stCap s.mem st.toNat < stLen s.mem st.toNat + (2 * xl.toNat + 3) / 4 * 4 →
       InRanges (stW S2.mem st.toNat) (8 * stCap S2.mem st.toNat) R.rt ∧
         ApartAll (stW S2.mem st.toNat) (8 * stCap S2.mem st.toNat) L)
+    (hmem : stCap s.mem st.toNat < stLen s.mem st.toNat + (2 * xl.toNat + 3) / 4 * 4 →
+      (stW S2.mem st.toNat, stW S2.mem st.toNat + 8 * stCap S2.mem st.toNat) ∈ L1)
     (hF2 : MemFrame P.mem S2.mem (R.rt ++ [(s.sp.toNat - 208 - stkSN, s.sp.toNat - 216),
       (s.sp.toNat - 200, s.sp.toNat - 208 + abSN)] ++ stkWs s.mem st.toNat))
     (hLF2 : LiveFrame P.mem S2.mem L (stkWs s.mem st.toNat)) :
@@ -92,6 +94,8 @@ theorem pro3 (impl : List Segment) (R : RtInv) (stkSN abSN : Nat) (hk1 : stkSN �
         rw [hPs (st.toNat + 8) _ (by omega), hPs (st.toNat + 16) _ (by omega), hPs st.toNat _ (by omega)]; exact hsame)
     (by simp only [stLen, stW, stCap] at hgrow ⊢
         rw [hPs (st.toNat + 8) _ (by omega), hPs (st.toNat + 16) _ (by omega)]; exact hgrow) (fun a n v => hF2.accessible a n v)
+    (by simp only [stLen, stW, stCap] at hmem ⊢
+        rw [hPs (st.toNat + 8) _ (by omega), hPs (st.toNat + 16) _ (by omega)]; exact hmem)
   have hl := hE.lay
   have hsp0 := hl.sp0; have hsp1 := hl.sp1; have hx0 := hl.x0
   -- reads of `S2.mem` in the frame record
@@ -175,7 +179,7 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 theorem pro2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
-    (stkSN abSN : Nat) (hSN : ExpHyp.StackNatHyp impl R [ExpHyp.fnStackNat] stkSN abSN)
+    (stkSN abSN : Nat) (hSN : StackNat.HypL impl R [ExpHyp.fnStackNat] stkSN abSN)
     (hk1 : stkSN ≤ 4224) (hk2 : abSN ≤ 96)
     (hmc : MemclrNoHeapPointersLive (LibBasicSqr.program.link impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
     (hLsh : ∀ b L, Summary0 (LibBasicSqr.program.link impl) (segAddr Extracted.program lshVUfn) (LshLPre R b L)
@@ -247,11 +251,11 @@ theorem pro2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     have a2' : InRanges (s.mem.readLE st.toNat 8) (8 * s.mem.readLE (st.toNat + 16) 8) L ∨
       Outside (s.mem.readLE st.toNat 8) (8 * s.mem.readLE (st.toNat + 16) 8) R.rt := a2
     janus_run [p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, hn2] until [callNat + 4] calls [hSN' b L]
-    rename_i hpc' hsp' h28' h29' h18' hr1 hr2 L1 b1 hext hr0 hbud hinv2 k1 k2 k3 k4 k5 k6 k7 hlen2 hsame hgrow hF2 hLF2
+    rename_i hpc' hsp' h28' h29' h18' hr1 hr2 L1 b1 hext hr0 hbud hinv2 k1 k2 k3 k4 k5 k6 k7 hlen2 hsame hgrow hF2 hLF2 hmem2
     refine pro3 impl R stkSN abSN hk1 hk2 hmc hLsh hVV hMV' b L st zp zl zc xp xl xc s hpre hbig hl4 hl48 P
       ⟨hpc, hsp, h28, h29, h18, r0, r1, hF, hreg, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13⟩ s'
       ?qpc ?qsp ?q28 ?q29 ?q18 ?q0 ?q1 ?q2 L1 b1 hext hbud hinv2
-      ⟨k1, k2, by rw [hF2.accessible, hF.accessible]; exact k3, by omega, k5, k6, k7⟩ hlen2 hsame hgrow ?F2 ?LF2
+      ⟨k1, k2, by rw [hF2.accessible, hF.accessible]; exact k3, by omega, k5, k6, k7⟩ hlen2 hsame hgrow hmem2 ?F2 ?LF2
     case F2 =>
       simp only [winA, stkWs, e208, eW, eL, eC, show s.sp.toNat - 208 - 8 = s.sp.toNat - 216 by omega,
         show s.sp.toNat - 208 + 8 = s.sp.toNat - 200 by omega] at hF2
@@ -268,11 +272,11 @@ theorem pro2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     case qsp => rw [hsp']
     case qpc => rw [hpc']; janus_simp
   · janus_run [p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, hn2] until [callNat + 4] calls [hSN' b L]
-    rename_i hpc' hsp' h28' h29' h18' hr1 hr2 L1 b1 hext hr0 hbud hinv2 k1 k2 k3 k4 k5 k6 k7 hlen2 hsame hgrow hF2 hLF2
+    rename_i hpc' hsp' h28' h29' h18' hr1 hr2 L1 b1 hext hr0 hbud hinv2 k1 k2 k3 k4 k5 k6 k7 hlen2 hsame hgrow hF2 hLF2 hmem2
     refine pro3 impl R stkSN abSN hk1 hk2 hmc hLsh hVV hMV' b L st zp zl zc xp xl xc s hpre hbig hl4 hl48 P
       ⟨hpc, hsp, h28, h29, h18, r0, r1, hF, hreg, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13⟩ s'
       ?qpc ?qsp ?q28 ?q29 ?q18 ?q0 ?q1 ?q2 L1 b1 hext hbud hinv2
-      ⟨k1, k2, by rw [hF2.accessible, hF.accessible]; exact k3, by omega, k5, k6, k7⟩ hlen2 hsame hgrow ?F2 ?LF2
+      ⟨k1, k2, by rw [hF2.accessible, hF.accessible]; exact k3, by omega, k5, k6, k7⟩ hlen2 hsame hgrow hmem2 ?F2 ?LF2
     case F2 =>
       simp only [winA, stkWs, e208, eW, eL, eC, show s.sp.toNat - 208 - 8 = s.sp.toNat - 216 by omega,
         show s.sp.toNat - 208 + 8 = s.sp.toNat - 200 by omega] at hF2
