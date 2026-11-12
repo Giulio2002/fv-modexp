@@ -11,6 +11,12 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
 
 namespace FvModexp.Arm64.NatSqr
 
+theorem sp_sub (x : BitVec 64) {k : Nat} (h : k ≤ x.toNat) :
+    x - BitVec.ofNat 64 k = BitVec.ofNat 64 (x.toNat - k) := by
+  apply BitVec.eq_of_toNat_eq
+  have := x.isLt
+  simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
+
 theorem natAbs_sub_lt {a b B : Nat} (ha : a < B) (hb : b < B) : ((a : Int) - (b : Int)).natAbs < B := by
   omega
 
@@ -97,5 +103,49 @@ theorem kSubCall (impl : List Segment) (hap : ImplApart Extracted.program impl) 
     (hB.z0h.keep fun x m h1 h2 => hk0 x m (by omega) (by omega)).keep fun x m h1 h2 => hk1 x m (by omega) (by omega),
     (hB.z2h.keep fun x m h1 h2 => hk0 x m (by omega) (by omega)).keep fun x m h1 h2 => hk1 x m (by omega) (by omega),
     ⟨rfl, hre.1, rfl, hre.2⟩, hng, natNorm_le hnn (by rw [hvN]; exact natAbs_sub_lt hX0 (Nat.lt_of_lt_of_le hX1 hpw)), hvN, hnn⟩
+
+end FvModexp.Arm64.NatSqr
+
+namespace FvModexp.Arm64.NatSqr
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 64000000 in
+/-- **`KB1 → KB2`**: the header stores and the `CALL (*Int).Sub` (`0x1bc428 … 0x1bc46c`), then `kSubCall` -/
+theorem kSub (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+    (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
+    (hmv : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
+    (hwb : WbLiveContract (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2)
+    {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State} {lx0 lx1 t : Nat}
+    {Lk : List (Nat × Nat)} {bk : Nat} (S : State) (hB : KB1 R b L W st zp zc xp n xc s lx0 lx1 t S Lk bk)
+    (hK : ∀ (S' : State) (Lk' : List (Nat × Nat)) (bk' tng ltx : Nat),
+      KB2 R b L W st zp zc xp n xc s lx0 lx1 t S' Lk' bk' tng ltx → KGoal impl R b L W st zp xp n s S') :
+    KGoal impl R b L W st zp xp n s S := by
+  have hkm := hB.km
+  obtain ⟨hW, hWs, hal, ha48, h80, hn12, hxc, hxc40, hzl, hzc40, -, -, -⟩ := hkm.lay
+  obtain ⟨hpc, hsp, h28, h29, h18⟩ := hB.pos
+  have r0 := hB.r0; have r1 := hB.r1; have r2 := hB.r2
+  have q352 : S.mem.readLE (s.sp.toNat + 32) 8 = zc := hkm.s4
+  have q80 : S.mem.readLE (s.sp.toNat - 240) 8 = n + 1 := hkm.n1s
+  have q72 : S.mem.readLE (s.sp.toNat - 248) 8 = kn2 n := hkm.n2s
+  have q336 : S.mem.readLE (s.sp.toNat + 16) 8 = zp := hkm.s2
+  have hw0 : s.mem.accessible (s.sp.toNat - W) (W + 48) true = true := hkm.pre.1.2.1.2.2.2
+  have hsacc : S.mem.accessible (s.sp.toNat - 328) 376 true = true := by
+    rw [hkm.fr.accessible]; exact Memory.accessible_mono _ hw0 (by omega) (by omega)
+  have hsacc' : S.mem.accessible (s.sp.toNat - 328) 376 false = true :=
+    Memory.accessible_sub _ hsacc (Or.inl rfl) (Nat.le_refl _) (Nat.le_refl _)
+  clear hw0
+  have hsh : BitVec.ofNat 64 (n + 1) >>> 1 = BitVec.ofNat 64 (kn2 n) := by
+    apply BitVec.eq_of_toNat_eq
+    simp only [BitVec.toNat_ushiftRight, BitVec.toNat_ofNat, Nat.shiftRight_eq_div_pow, kn2]; omega
+  have hzc2 : kn2 n ≤ zc := by simp only [kn2]; omega
+  have hzp48 : zp + 8 * zc ≤ 2 ^ 48 := hkm.zops.2.2.2.2.2.2.2.2.2
+  have ht48 : t + 8 * kT n ≤ 2 ^ 48 := hkm.tops.2.2.2.2.2
+  unfold KGoal
+  janus_run [q352, q80, q72, q336, hsh] until [0x1b0ab0]
+  refine kSubCall impl hap R hmk hmv hwb hB _ (by rfl) rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?fr ?reg ?_ ?_ hK
+  case fr => janus_frame
+  all_goals (try simp only [IntAt])
+  all_goals janus_simp
+  all_goals exact sp_sub _ (by omega)
 
 end FvModexp.Arm64.NatSqr
