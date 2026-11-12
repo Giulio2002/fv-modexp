@@ -57,8 +57,10 @@ theorem callSqrH (hap : ImplApart Extracted.program impl) {ns : List String}
     (h0 : S'.regs 0 = BitVec.ofNat 64 (bp + 8 * (i * W lm))) (h1 : S'.regs 1 = BitVec.ofNat 64 (W lm))
     (h2 : S'.regs 2 = BitVec.ofNat 64 (2 * W lm)) (h3 : S'.regs 3 = BitVec.ofNat 64 st)
     (h4 : S'.regs 4 = BitVec.ofNat 64 (bp + 8 * (i / 2 * W lm)))
-    (h5 : S'.regs 5 = BitVec.ofNat 64 (M.readLE (pw + 24 * (i / 2) + 8) 8)) (h6 : S'.regs 6 = BitVec.ofNat 64 (W lm)) :
+    {xl' : Nat} (hxl : M.readLE (pw + 24 * (i / 2) + 8) 8 = xl') (h5 : S'.regs 5 = BitVec.ofNat 64 xl')
+    (h6 : S'.regs 6 = BitVec.ofNat 64 (W lm)) :
     ReachesRet (LibExp.program.link impl) (s.regs 30) S' (GoalQ R kc sqC mlC b L st pw pl lm x xl s) := by
+  subst hxl
   have hf := pf_of hpre (by omega)
   have hspN : S'.sp.toNat = s.sp.toNat - 208 := by
     rw [hsp, BitVec.toNat_ofNat]; exact Nat.mod_eq_of_lt (by have := s.sp.isLt; omega)
