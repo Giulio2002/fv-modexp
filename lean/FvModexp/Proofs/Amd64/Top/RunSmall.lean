@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Amd64.Top.RunDefs
 
+set_option autoImplicit false
+
 /-! # Small lemmas of the amd64 `Run` proof, proved once outside the big contexts (docs/PERF.md "agent top s17")
 
 * budget steps: `omega` over a post-run context costs 10-25 s; these close the same goals in milliseconds.
@@ -30,5 +32,12 @@ theorem errT_word {m : Janus.Arm64.Memory} (hd : Extracted.program.DataLoaded m)
 theorem errT_acc {m : Janus.Arm64.Memory} (hd : Extracted.program.DataLoaded m) :
     m.accessible 7355552 16 false = true :=
   (errT_data hd).2
+
+/-- The `Extracted` program restricted to its data segment 3 (the `errT` descriptor): `janus64_data` on it installs ONE
+segment (the full program's 49 segments cost ≈ 29 s per call and slow every literal-address read of the run). -/
+def errProg : Janus.Amd64.Program := { Extracted.program with data := (Extracted.program.data.drop 3).take 1 }
+
+theorem errProg_loaded {m : Janus.Arm64.Memory} (hd : Extracted.program.DataLoaded m) : errProg.DataLoaded m :=
+  fun d h => hd d (List.mem_of_mem_drop (List.mem_of_mem_take h))
 
 end FvModexp.Amd64.Run

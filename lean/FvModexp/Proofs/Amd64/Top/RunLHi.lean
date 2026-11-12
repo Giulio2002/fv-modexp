@@ -1,6 +1,8 @@
 import FvModexp.Proofs.Amd64.Top.RunLDefs
 import FvModexp.Proofs.Amd64.Top.RunSmall
 
+set_option autoImplicit false
+
 /-! # `Run` (amd64): `P1` to `C0`, `96 < len` — — EIP-7823 (`max BitLen > 64` or `max Uint64 > 1024`: `errors.New`), the empty case,
 the input slice
 
@@ -83,7 +85,8 @@ theorem lbHi (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl
   have hwS : S.mem.accessible ((s.regs 4).toNat - 4800) (4800 + 40) true = true := by rw [hMF.accessible]; exact hw
   have hEw : Apart errT 16 ((s.regs 4).toNat - 4800) (4800 + 40) :=
     apart_of_data hdS 3 (by decide) ⟨by decide, by decide⟩ hwS
-  janus64_data hdS
+  have hdE := errProg_loaded hdS
+  janus64_data hdE
   janus_eval_nat h_e : errT
   rw [h_e] at hokn hEw
   unfold Apart at hEw
@@ -116,39 +119,12 @@ theorem lbHi (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl
   janus64_run [hTm, hT4, hT14, hT5, hTx, hTfs, hTdf, hsp, hm1, hm2, hm3, hm4, hm5, hm6, hc1, hgS, htS, hfs, hdf, hx15, hT2, hT3', hT3, hI2, hI9, hI11, hIl, toInt_ite, toNat_ite,
     ite3_int_gt, ite3_nat_le, BitVec.msb_eq_decide] until [pcC0, segAddr Extracted.program fn + 0x575] calls [hnoP]
   all_goals first
-  | ((try simp (disch := omega) only [cmova_max] at *)
-     have hx0 : (T.regs 2).toNat ≤ 64 := by omega
-     have hx1 : (T.regs 9).toNat ≤ 64 := by omega
-     have hx2 : (T.regs 11).toNat ≤ 64 := by omega
-     have hv0 := hU0 hx0
-     have hv1 := hU1 hx1
-     have hv2 := hU2 hx2
-     refine hk _ (by janus64_simp) (by janus64_simp [hTm]) (by janus64_simp [hT4]) (by janus64_simp [hT14])
-       (by janus64_simp [hT5]) (by janus64_simp [hTx]) (by janus64_simp [hTfs, hfs]) (by janus64_simp [hTdf, hdf])
-       (by omega) (by omega) (by omega) (by first | omega | bv_omega) (by janus64_simp; omega) (by janus64_simp; omega)
-       (by janus64_simp; omega) ?_ ?_ ?_ <;>
-     (janus64_simp <;> (try simp only [BitVec.toNat_add, BitVec.toNat_sub, BitVec.toNat_ofNat]) <;> (try split) <;> omega))
-  | ((try simp (disch := omega) only [cmova_max] at *)
-     have hx0 : (T.regs 2).toNat ≤ 64 := by omega
-     have hx1 : (T.regs 9).toNat ≤ 64 := by omega
-     have hx2 : (T.regs 11).toNat ≤ 64 := by omega
-     have hv0 := hU0 hx0
-     have hv1 := hU1 hx1
-     have hv2 := hU2 hx2
-     refine hZero _ (by first | omega | bv_omega) (by omega) (by first | omega | bv_omega)
-       ⟨by janus64_simp [hsp, hT4], by janus64_simp [hm2, regFP], by janus64_simp [h14, hT14, regG],
-        by janus64_simp [hx15, hTx]⟩
-       (by janus64_simp) (by janus64_simp) ⟨by janus64_simp [hTfs, hfs], by janus64_simp [hTdf, hdf, hdf0], L1, b1, hext,
-        by omega, ?_, ?_, ?_⟩
-     · dsimp only; (try rw [hTm]); first | exact hinv | exact RtInv.inv_congr hinv rfl (by janus64_simp) rfl
-     · dsimp only; (try rw [hTm]); exact hMF
-     · dsimp only; (try rw [hTm]); exact hLF)
-  | ((try simp (disch := omega) only [cmova_max] at *)
+  | (rename_i ptr _ _ _ _ m _ _ hLFn hMFn hapL hinR hb48 hacc h8 h16 hz _ hapS hinvn
+     (try simp (disch := omega) only [cmova_max] at *)
      have hcond : 1024 < hdrV s p len 0 ∨ 1024 < hdrV s p len 1 ∨ 1024 < hdrV s p len 2 := by
        first
        | exact err_of_big hL0' hL1' hL2' (by omega)
        | exact err_of_u hL0' hL1' hL2' (by omega) (by omega)
-     rename_i ptr _ _ _ _ m _ _ hLFn hMFn hapL hinR hb48 hacc h8 h16 hz _ hapS hinvn
      have hpo : ptr.toNat + 16 ≤ (s.regs 4).toNat - 4800 ∨ (s.regs 4).toNat + 40 ≤ ptr.toNat := by
        have := InRanges.apart hinR hout; unfold Apart at this; omega
      janus64_run [hm1, hm2]
@@ -183,4 +159,32 @@ theorem lbHi (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl
        refine hLF.trans ((((LiveFrame.of_win (by simp only [win, stk]; janus_frame) hLsL1).trans hLFn (fun _ _ h => h)).writeLE _
          (ho.of_sub (by omega) (by omega))).writeLE _ (ho.of_sub (Nat.le_refl _) (by omega))) (fun _ _ h => hext.inRanges_old h))
 
+  | (guard_target =~ Q _
+     (try simp (disch := omega) only [cmova_max] at *)
+     have hx0 : (T.regs 2).toNat ≤ 64 := by omega
+     have hx1 : (T.regs 9).toNat ≤ 64 := by omega
+     have hx2 : (T.regs 11).toNat ≤ 64 := by omega
+     have hv0 := hU0 hx0
+     have hv1 := hU1 hx1
+     have hv2 := hU2 hx2
+     refine hZero _ (by first | omega | bv_omega) (by omega) (by first | omega | bv_omega)
+       ⟨by janus64_simp [hsp, hT4], by janus64_simp [hm2, regFP], by janus64_simp [h14, hT14, regG],
+        by janus64_simp [hx15, hTx]⟩
+       (by janus64_simp) (by janus64_simp) ⟨by janus64_simp [hTfs, hfs], by janus64_simp [hTdf, hdf, hdf0], L1, b1, hext,
+        by omega, ?_, ?_, ?_⟩
+     · dsimp only; (try rw [hTm]); first | exact hinv | exact RtInv.inv_congr hinv rfl (by janus64_simp) rfl
+     · dsimp only; (try rw [hTm]); exact hMF
+     · dsimp only; (try rw [hTm]); exact hLF)
+  | ((try simp (disch := omega) only [cmova_max] at *)
+     have hx0 : (T.regs 2).toNat ≤ 64 := by omega
+     have hx1 : (T.regs 9).toNat ≤ 64 := by omega
+     have hx2 : (T.regs 11).toNat ≤ 64 := by omega
+     have hv0 := hU0 hx0
+     have hv1 := hU1 hx1
+     have hv2 := hU2 hx2
+     refine hk _ (by janus64_simp) (by janus64_simp [hTm]) (by janus64_simp [hT4]) (by janus64_simp [hT14])
+       (by janus64_simp [hT5]) (by janus64_simp [hTx]) (by janus64_simp [hTfs, hfs]) (by janus64_simp [hTdf, hdf])
+       (by omega) (by omega) (by omega) (by first | omega | bv_omega) (by janus64_simp; omega) (by janus64_simp; omega)
+       (by janus64_simp; omega) ?_ ?_ ?_ <;>
+     (janus64_simp <;> (try simp only [BitVec.toNat_add, BitVec.toNat_sub, BitVec.toNat_ofNat]) <;> (try split) <;> omega))
 end FvModexp.Amd64.Run
