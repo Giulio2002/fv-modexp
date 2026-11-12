@@ -20,7 +20,7 @@ theorem headRet {impl : List Segment} {R : RtInv} {kc : Nat} {sqC : Nat → Nat 
   simp only [K, A] at hb' ha hw
   have hwS : S.mem.accessible (s.sp.toNat - (208 + kc)) (208 + kc + 80) true = true := by
     rw [hc.fr.accessible]; exact hw
-  obtain ⟨e0, e1, -, -, -, -, -, -, e8⟩ := hc.sl
+  obtain ⟨e0, e1, -, -, -, -, -, -, e8, -, -, -⟩ := hc.sl
   have f48 : S.mem.readLE (s.sp.toNat - 208 + 160) 8 = pl := by
     rw [show s.sp.toNat - 208 + 160 = s.sp.toNat - 48 by omega]; exact e8
   have f1 : S.mem.readLE (s.sp.toNat - 208) 8 = (s.regs 30).toNat := e0

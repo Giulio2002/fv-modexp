@@ -51,7 +51,7 @@ theorem jB2 (hap : ImplApart Extracted.program impl) {ns : List String}
   have hpwa : M.accessible pw (24 * pl) true = true := by rw [hc.fr.accessible]; exact hpre.2.2.2.2.2.2.2.2.2.1
   have hpww := hf.pww
   simp only [K, A, win, outside_cons, outside_nil, and_true] at hpww
-  obtain ⟨-, -, e2, e3, -, -, e6, e7, -⟩ := hc.sl
+  obtain ⟨-, -, e2, e3, -, -, e6, e7, -, -, -, -⟩ := hc.sl
   obtain ⟨-, -, l2, -⟩ := hrs.lo
   have f128 : M.readLE (s.sp.toNat - 208 + 128) 8 = 24 * i + 24 := by
     rw [show s.sp.toNat - 208 + 128 = s.sp.toNat - 80 by omega]; exact l2
@@ -152,7 +152,7 @@ theorem segB (hap : ImplApart Extracted.program impl) {ns : List String}
   have hwbf : S.mem.accessible RunIface.wbA 4 false = true := hgl.2.2.2.2.2.2.2.2.2.2.1
   have hwbv : RunIface.wbA = 7616064 := rfl
   rw [hwbv] at hwbf
-  obtain ⟨-, -, -, e3, -, -, -, -, -⟩ := hc.sl
+  obtain ⟨-, -, -, e3, -, -, -, -, -, -, -, -⟩ := hc.sl
   obtain ⟨-, l1, -, l3⟩ := hrs.lo
   have f192 : S.mem.readLE (s.sp.toNat - 208 + 192) 8 = pw + 24 * i := by
     rw [show s.sp.toNat - 208 + 192 = s.sp.toNat - 16 by omega]; exact l3

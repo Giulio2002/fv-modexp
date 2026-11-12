@@ -54,7 +54,7 @@ theorem jD2 (hkc : 4608 ≤ kc) (hpre : Pre R kc sqC mlC b L st pw pl ws lm x xl
   have hpwa : M.accessible pw (24 * pl) true = true := by rw [hc.fr.accessible]; exact hpre.2.2.2.2.2.2.2.2.2.1
   have hpww := hf.pww
   simp only [K, A, win, outside_cons, outside_nil, and_true] at hpww
-  obtain ⟨-, -, -, -, -, -, e6, e7, -⟩ := hc.sl
+  obtain ⟨-, -, -, -, -, -, e6, e7, -, -, -, -⟩ := hc.sl
   obtain ⟨l0, -, -, -⟩ := hrs.lo
   have f120 : M.readLE (s.sp.toNat - 208 + 120) 8 = i := by
     rw [show s.sp.toNat - 208 + 120 = s.sp.toNat - 88 by omega]; exact l0
@@ -130,7 +130,7 @@ theorem segD (hwb : WbLiveContract (LibExp.program.link impl) wbE 4096 R 2) (hkc
   have hwbf : S.mem.accessible RunIface.wbA 4 false = true := hgl.2.2.2.2.2.2.2.2.2.2.1
   have hwbv : RunIface.wbA = 7616064 := rfl
   rw [hwbv] at hwbf
-  obtain ⟨-, -, -, e3, -, -, -, -, -⟩ := hc.sl
+  obtain ⟨-, -, -, e3, -, -, -, -, -, -, -, -⟩ := hc.sl
   obtain ⟨-, -, l2, -⟩ := hrs.lo
   have f184 : S.mem.readLE (s.sp.toNat - 208 + 184) 8 = pw + 24 * i + 24 := by
     rw [show s.sp.toNat - 208 + 184 = s.sp.toNat - 24 by omega]; exact hlo2

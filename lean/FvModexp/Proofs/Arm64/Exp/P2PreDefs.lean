@@ -119,12 +119,14 @@ abbrev A : Nat := 80
     (mlC : Nat → Nat → Nat → Nat) (b : Nat) (L : List (Nat × Nat)) (st pw pl lm x xl : Nat) (s S : State) : Prop :=
   ReachesRet (LibExp.program.link impl) (s.regs 30) S (GoalQ R kc sqC mlC b L st pw pl lm x xl s)
 
-/-- the frame slots of the function (from the entry `sp`) -/
+/-- the frame slots of the function (from the entry `sp`; `+56 … +72`: the spilled `x` header, entry `X6 … X8`) -/
 @[reducible] def Sl (s : State) (st pw pl lm : Nat) (M : Memory) : Prop :=
   M.readLE (s.sp.toNat - 208) 8 = (s.regs 30).toNat ∧ M.readLE (s.sp.toNat - 216) 8 = (s.regs 29).toNat ∧
     M.readLE (s.sp.toNat + 8) 8 = st ∧ M.readLE (s.sp.toNat + 16) 8 = pw ∧ M.readLE (s.sp.toNat + 24) 8 = pl ∧
     M.readLE (s.sp.toNat + 48) 8 = lm ∧ M.readLE (s.sp.toNat - 64) 8 = W lm ∧
-    M.readLE (s.sp.toNat - 56) 8 = lm + 63 ∧ M.readLE (s.sp.toNat - 48) 8 = pl
+    M.readLE (s.sp.toNat - 56) 8 = lm + 63 ∧ M.readLE (s.sp.toNat - 48) 8 = pl ∧
+    M.readLE (s.sp.toNat + 56) 8 = (s.regs 6).toNat ∧ M.readLE (s.sp.toNat + 64) 8 = (s.regs 7).toNat ∧
+    M.readLE (s.sp.toNat + 72) 8 = (s.regs 8).toNat
 
 /-- the facts that hold at every point after `stk.nat` (memory `M`, live set `L1`, budget `b1`) -/
 structure Ctx (R : RtInv) (kc : Nat) (L : List (Nat × Nat)) (st pw pl lm : Nat) (s : State) (bp : Nat)

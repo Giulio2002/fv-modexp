@@ -81,7 +81,7 @@ theorem ctx_own {R : RtInv} {kc : Nat} {L : List (Nat × Nat)} {st pw pl lm : Na
     simp only [win, K, A, outside_cons, outside_nil, and_true] at hs
     rcases ho with h | h | h <;> omega
   · -- the slots
-    obtain ⟨e0, e1, e2, e3, e4, e5, e6, e7, e8⟩ := hc.sl
+    obtain ⟨e0, e1, e2, e3, e4, e5, e6, e7, e8, e9, e10, e11⟩ := hc.sl
     have hpwa : pw + 24 * pl ≤ s.sp.toNat - (208 + kc) ∨ s.sp.toNat + 80 ≤ pw := hpw
     have hk : ∀ b, s.sp.toNat - 216 ≤ b → b + 8 ≤ s.sp.toNat + 80 →
         (b + 8 ≤ s.sp.toNat - 200 ∨ (s.sp.toNat - 64 ≤ b ∧ b + 8 ≤ s.sp.toNat - 40) ∨ s.sp.toNat ≤ b) →
@@ -91,7 +91,8 @@ theorem ctx_own {R : RtInv} {kc : Nat} {L : List (Nat × Nat)} {st pw pl lm : Na
       (hk _ (by omega) (by omega) (by omega)).trans e2, (hk _ (by omega) (by omega) (by omega)).trans e3,
       (hk _ (by omega) (by omega) (by omega)).trans e4, (hk _ (by omega) (by omega) (by omega)).trans e5,
       (hk _ (by omega) (by omega) (by omega)).trans e6, (hk _ (by omega) (by omega) (by omega)).trans e7,
-      (hk _ (by omega) (by omega) (by omega)).trans e8⟩
+      (hk _ (by omega) (by omega) (by omega)).trans e8, (hk _ (by omega) (by omega) (by omega)).trans e9,
+      (hk _ (by omega) (by omega) (by omega)).trans e10, (hk _ (by omega) (by omega) (by omega)).trans e11⟩
 
 /-- the stack facts survive a step that keeps the header bytes and the accessibility -/
 theorem sa_hdr {R : RtInv} {L L1 L2 : List (Nat × Nat)} {st ℓ pl lm bp : Nat} {m0 M M' : Memory}
@@ -137,7 +138,7 @@ theorem ctx_rtw {R : RtInv} {kc : Nat} {L : List (Nat × Nat)} {st pw pl lm : Na
     rw [← hc.lf.readLE b n hb hout]
     have := hap.apart_of_inRanges (hc.le.inRanges_old hb); unfold Apart at this
     exact Memory.readLE_writeLE_of_disjoint _ _ (by omega)
-  · obtain ⟨e0, e1, e2, e3, e4, e5, e6, e7, e8⟩ := hc.sl
+  · obtain ⟨e0, e1, e2, e3, e4, e5, e6, e7, e8, e9, e10, e11⟩ := hc.sl
     have hk' : ∀ b, s.sp.toNat - 216 ≤ b → b + 8 ≤ s.sp.toNat + 80 →
         (M.writeLE a k v).readLE b 8 = M.readLE b 8 := fun b h1 h2 =>
       Memory.readLE_writeLE_of_disjoint _ _ (by omega)
@@ -145,7 +146,8 @@ theorem ctx_rtw {R : RtInv} {kc : Nat} {L : List (Nat × Nat)} {st pw pl lm : Na
       (hk' _ (by omega) (by omega)).trans e2, (hk' _ (by omega) (by omega)).trans e3,
       (hk' _ (by omega) (by omega)).trans e4, (hk' _ (by omega) (by omega)).trans e5,
       (hk' _ (by omega) (by omega)).trans e6, (hk' _ (by omega) (by omega)).trans e7,
-      (hk' _ (by omega) (by omega)).trans e8⟩
+      (hk' _ (by omega) (by omega)).trans e8, (hk' _ (by omega) (by omega)).trans e9,
+      (hk' _ (by omega) (by omega)).trans e10, (hk' _ (by omega) (by omega)).trans e11⟩
 
 set_option maxRecDepth 20000 in
 /-- **the write barrier**: the context after `gcWriteBarrier2` (called at `S'`, `SP' = SP - 208`) and the caller's two

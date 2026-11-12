@@ -137,12 +137,13 @@ theorem sl_keep {R : RtInv} {L L1 : List (Nat × Nat)} {s S' : State} {kc st pw 
     · omega
     · omega
     · have := wok_win (hws _ hr) hw hr'; simp only [K, A] at this; omega
-  obtain ⟨e0, e1, e2, e3, e4, e5, e6, e7, e8⟩ := h
+  obtain ⟨e0, e1, e2, e3, e4, e5, e6, e7, e8, e9, e10, e11⟩ := h
   exact ⟨(key _ (by omega) (by omega) (by omega)).trans e0, (key _ (by omega) (by omega) (by omega)).trans e1,
     (key _ (by omega) (by omega) (by omega)).trans e2, (key _ (by omega) (by omega) (by omega)).trans e3,
     (key _ (by omega) (by omega) (by omega)).trans e4, (key _ (by omega) (by omega) (by omega)).trans e5,
     (key _ (by omega) (by omega) (by omega)).trans e6, (key _ (by omega) (by omega) (by omega)).trans e7,
-    (key _ (by omega) (by omega) (by omega)).trans e8⟩
+    (key _ (by omega) (by omega) (by omega)).trans e8, (key _ (by omega) (by omega) (by omega)).trans e9,
+    (key _ (by omega) (by omega) (by omega)).trans e10, (key _ (by omega) (by omega) (by omega)).trans e11⟩
 
 theorem apartAll_of_ext {R : RtInv} {L L1 : List (Nat × Nat)} (h : LiveExt R L L1) {a n : Nat}
     (ha : ApartAll a n L1) : ApartAll a n L := fun r hr => ha r (h.mem_old hr)
