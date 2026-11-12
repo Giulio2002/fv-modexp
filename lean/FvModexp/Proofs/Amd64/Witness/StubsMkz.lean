@@ -1,5 +1,4 @@
 import FvModexp.Proofs.Amd64.Witness.Stubs
-import FvModexp.Proofs.Amd64.MakesliceZero
 
 /-! # Witness stub: zero-byte `makeslice` (amd64)
 

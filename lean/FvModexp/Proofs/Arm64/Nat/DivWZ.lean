@@ -6,7 +6,7 @@ import FvModexp.Proofs.Arm64.Nat.DivW
 `DivW.Pre`'s last conjunct (`len x = 0 → y = 1 → zp = xp ∨ z's empty range held`) is only there for `z.set(x)` with
 `len x = 0`, where Go's `copy` calls `memmove(zp, xp, 0)` and Janus v0.2.0's `MemmoveLive` asks for the (empty)
 destination to be held. With the zero-length contract `MemmoveZeroLive` (Janus PR #2, local copy
-`FvModexp.Arm64.MemmoveZeroLive`) as an extra premise the conjunct is dropped: `Pre2` = `Pre` without it, `ens2`/`sum2`.
+`Janus.Contracts.MemmoveZeroLive`) as an extra premise the conjunct is dropped: `Pre2` = `Pre` without it, `ens2`/`sum2`.
 `nat.div` (whose `z` may be an arbitrary `nil` slice) uses this form.
 -/
 
