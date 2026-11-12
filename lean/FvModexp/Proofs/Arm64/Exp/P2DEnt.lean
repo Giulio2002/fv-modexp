@@ -111,16 +111,16 @@ theorem ent (impl : List Segment) (ret0 : BitVec 64) (Q : State → Prop)
     janus_run [es1, es2, rx, ry, hti] until [oneE, oddE, zeroE, tzH]
     · refine K1 hbr _ rfl ?_ rfl
       refine ⟨rfl, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;> janus_simp
-    · refine K2 ‹_› ((bit0_iff _).1 hbr) _ rfl ?_ rfl
+    · refine K2 (by janus_assumption) ((bit0_iff _).1 hbr) _ rfl ?_ rfl
       refine ⟨rfl, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;> janus_simp
-    · refine K4 ‹_› ((bit0_iff' _).1 hbr) rfl _ rfl ?_ (by janus_simp) rfl
+    · refine K4 (by janus_assumption) ((bit0_iff' _).1 hbr) rfl _ rfl ?_ (by janus_simp) rfl
       refine ⟨rfl, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;> janus_simp
   · janus_run [es1, es2, rx, ry, hti] until [oneE, oddE, zeroE, tzH]
     · refine K1 hbr _ rfl ?_ rfl
       refine ⟨rfl, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;> janus_simp
-    · refine K2 ‹_› ((bit0_iff _).1 hbr) _ rfl ?_ rfl
+    · refine K2 (by janus_assumption) ((bit0_iff _).1 hbr) _ rfl ?_ rfl
       refine ⟨rfl, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;> janus_simp
-    · refine K3 ‹_› ((bit0_iff' _).1 ‹_›) (by omega) _ rfl ?_ rfl
+    · refine K3 (by janus_assumption) ((bit0_iff' _).1 (by janus_assumption)) (by omega) _ rfl ?_ rfl
       refine ⟨rfl, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;> janus_simp
 
 end FvModexp.Arm64.P2D

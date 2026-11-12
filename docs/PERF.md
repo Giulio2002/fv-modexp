@@ -1393,3 +1393,5 @@ path ≈ 205 s (was: 117 own modules, row 815 s).
   form that `janus_callpre` still finds); ≤ 13 % of the module.
 * New modules: Arm64/Top/RunModX 1.0 s, RunModI 1.0 s; Amd64/Top/RunModX 1.1 s. Rebuilt with ModSpecM: arm64 RunC2M 17 s,
   RunC2EX 19 s; amd64 RunC2Sum 51 s, RunC2B 83 s / 5.1 GB, RunC2M 15 s, RunC2EX 18 s.
+## infra s38 (dev compile arm64, load ~15): P2DDefs 2.3 s, P2DT 3.0 s/2.2 GB, P2DEnt 12 s/2.1 GB, P2DPost 1.6 s, P2DOneR 5.4 s,
+P2DMk 1.9 s, P2DOne 11.9 s/2.6 GB, P2DZero 2.6 s, P2DWinR 2.9 s, P2DWin 29-32 s/3.4 GB, P2DTz 4.4 s; EvInst 34 s/5.0 GB (rebuilt).
