@@ -26,6 +26,7 @@ theorem mid_of_reuse {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl 
     hx48, hxh, hxn, hxw, hinv, _, hmv, -⟩ := hpre
   obtain ⟨hzal, hzh, hzacc, hz48⟩ := hzl (by omega)
   obtain ⟨hzg, hzx⟩ := hzw (by omega)
+  replace hzw' := hzw' (by omega)
   simp only [win, outside_cons, outside_nil, and_true] at hzw' hxw
   unfold Apart at hga
   have hFo : ∀ a n, (a + n ≤ s.sp.toNat - 4240 ∨ s.sp.toNat + 64 ≤ a) → Outside a n (winA s 4240 64) := by
@@ -94,7 +95,7 @@ theorem mid_of_alloc {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl 
   have hxk : ∀ a n, xp.toNat ≤ a → a + n ≤ xp.toNat + 8 * xl.toNat → m.readLE a n = s.mem.readLE a n := by
     intro a n h1 h2
     rw [held_keep (hxh.sub h1 h2) hLF hMF (hCo _ _ (by omega)), hF.readLE _ _ (hFo _ _ (by omega))]
-  have hmo : ∀ a n, Outside a n (R.rt ++ winA s 4240 64 ++ [(zp.toNat, zp.toNat + 8 * zc.toNat)]) →
+  have hmo : ∀ a n, Outside a n (R.rt ++ winA s 4240 64 ++ zr zp zc) →
       Outside a n (R.rt ++ [(s.sp.toNat - 144 - 4096, s.sp.toNat - 144 - 8),
         (s.sp.toNat - 144 + 8, s.sp.toNat - 144 + 8 + 24)]) := by
     intro a n h
@@ -122,7 +123,7 @@ theorem mid_of_alloc {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl 
       · exact hLs r hr
       · simp only [List.mem_singleton] at hr; subst hr
         simp only [win, outside_cons, outside_nil, and_true]; omega,
-    ror := Or.inr ⟨hIn.sub (Nat.le_refl _) (by omega), fun r hr => (hAp r hr).mono hsz (Nat.le_refl _)⟩,
+    ror := Or.inr ⟨hx0, by omega, by omega, hIn.sub (Nat.le_refl _) (by omega), fun r hr => (hAp r hr).mono hsz (Nat.le_refl _)⟩,
     mf := (hF.mono fun a n h => by simp only [outside_append] at h; exact h.1.2).trans hMF fun a n h => ⟨h, hmo a n h⟩,
     lf := by
       refine ⟨fun a n hin hz => ?_⟩

@@ -48,16 +48,16 @@ theorem Mid.setPost {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl :
     simp only [outside_append, winA, outside_cons, outside_nil, and_true] at ho ⊢
     obtain ⟨⟨hrt, hw1, hw2⟩, hz⟩ := ho
     refine ⟨hrt, by omega, ?_⟩
-    rcases h.ror with ⟨rfl, rfl⟩ | ⟨hin, -⟩
-    · omega
+    rcases h.ror with ⟨rfl, rfl⟩ | ⟨-, -, -, hin, -⟩
+    · have := zr_out hz (by have := h.cap; have := h.x0; omega); omega
     · have := outside_of_inRanges hrt hin; omega
   · refine ⟨fun a n hin hz => ?_⟩
     rw [hLF.readLE a n (h.ext.inRanges_old hin) ?_]
     · exact h.lf.readLE a n hin hz
     · obtain ⟨q, hq, hq1, hq2⟩ := hin
       simp only [outside_cons, outside_nil, and_true] at hz ⊢
-      rcases h.ror with ⟨rfl, rfl⟩ | ⟨-, hap⟩
-      · omega
+      rcases h.ror with ⟨rfl, rfl⟩ | ⟨-, -, -, -, hap⟩
+      · have := zr_out hz (by have := h.cap; have := h.x0; omega); omega
       · have := hap q hq; unfold Apart at this; omega
 
 set_option maxRecDepth 20000 in
