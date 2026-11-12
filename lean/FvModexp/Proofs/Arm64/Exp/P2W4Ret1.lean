@@ -23,9 +23,9 @@ open FvModexp.Arm64.ExpHyp
 
 /-- `p2win` with `len y = yl` unfolds to the skip loop of `i0`/`yi0` -/
 theorem p2win_eq (lm yl X Y : Nat) (hn : Exp.nlen Y = yl) :
-    Exp.p2win 2 lm X Y = match Exp.skipZero Y (i0 lm yl) (yi0 lm yl Y) with
+    Exp.p2win 4 lm X Y = match Exp.skipZero Y (i0 lm yl) (yi0 lm yl Y) with
       | none => 1
-      | some (i, yi) => Exp.winRun 2 (fun z d => Exp.iter (fun z => z * z % 2 ^ lm) 2 z * Exp.p2Pow lm X d % 2 ^ lm)
+      | some (i, yi) => Exp.winRun 4 (fun z d => Exp.iter (fun z => z * z % 2 ^ lm) 4 z * Exp.p2Pow lm X d % 2 ^ lm)
           (Exp.p2Pow lm X) Y i yi := by
   unfold Exp.p2win; simp only [hn, i0, yi0]; rfl
 
@@ -80,7 +80,7 @@ theorem afterTable {impl : List Segment} (hap : ImplApart Extracted.program impl
       (show sp + 816 + 32 ≤ sp - K + (K + 848) by omega)) r816 r824 r840 KB ?_ S hpc hsp h28 h29 h18 hm
   intro S' e1 e2 e3 e4 e5 e6 e7 hv
   have hval : natVal s.mem xp xl ^ natVal s.mem yp yl % 2 ^ lm = 1 := by
-    rw [← Exp.p2win_correct 2 lm _ _ (Or.inl rfl) hX hY hlm2, p2win_eq lm yl _ _ (SubMod2N.norm_nlen _ _ _ hyN), hv]
+    rw [← Exp.p2win_correct 4 lm _ _ (Or.inr rfl) hX hY hlm2, p2win_eq lm yl _ _ (SubMod2N.norm_nlen _ _ _ hyN), hv]
   rw [hval]
   exact r1all hap hmk hno hP hw hAT.esl hr4 hr48 (by omega) (by omega) S' e1 e2 e5 e3 e7 e6
 
