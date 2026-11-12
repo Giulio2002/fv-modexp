@@ -6,7 +6,7 @@ set_option autoImplicit false
 # `karatsuba` (arm64): small value lemmas for the products written into the cleared `z`
 -/
 
-open Janus Janus.Arm64
+open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
 
 namespace FvModexp.Arm64.NatMul
 
@@ -41,5 +41,22 @@ theorem sgn_nonneg {m : Memory} {p ng l : Nat} {v : Nat} (hv : sgnV ng (natVal m
     have := SubMod2N.natVal_lower m p l hn (hcan (by omega))
     have : 0 < 2 ^ (64 * (l - 1)) := Nat.pow_pos (by decide)
     omega
+
+section
+variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc yp yc : Nat} {s : State}
+  {lx0 lx1 ly0 ly1 t : Nat} {Lk : List (Nat × Nat)} {bk spent : Nat} {M : Memory}
+
+/-- reads of held memory outside a callee's writes survive the call -/
+theorem KN.keepH (h : KN R b L W st zp zc xp n xc yp yc s lx0 lx1 ly0 ly1 t Lk bk spent M) {M' : Memory}
+    {S1 : State} (hsp : S1.sp.toNat = s.sp.toNat - 448) {k a : Nat} (hk : 448 + k ≤ W) (ha : a ≤ 80)
+    {ws : List (Nat × Nat)} (hF : MemFrame M M' (R.rt ++ winA S1 k a ++ ws)) (hLF : LiveFrame M M' Lk ws)
+    {p m : Nat} (hH : Held R Lk p m) (hw : Outside p m (win s W 72)) (hws : Outside p m ws) :
+    M'.readLE p m = M.readLE p m := by
+  obtain ⟨hW, hWs, -⟩ := h.lay
+  simp only [win, outside_cons, outside_nil, and_true] at hw
+  refine Held.readLE2 hH hF hLF ?_ hws
+  simp only [winA, hsp, outside_cons, outside_nil, and_true]; omega
+
+end
 
 end FvModexp.Arm64.NatMul
