@@ -254,4 +254,5 @@ Shapes: NOTES-conventions "[asm s11]", "[asm s12]".
 * Rows (one module per function, segAddr names as string literals): `FvModexp.<Isa>.{Trunc,Lsh,Rsh}Row.correctness`
   + `Witness.nonvacuous` (witness: `z` empty, `x = 5 + 9·B`, `n = 70` / `s = 3`; sites mk + mv (+ cl for lsh)).
   LshRow's main theorem is `Lsh.ens` (Hyp2); `Lsh.ensZ` (nat.go:955 shape) has no row of its own yet.
-  Verdicts: build/asm-rows.tsv (TruncRow arm64 PASS 257 s / 3.2 GB, amd64 PASS 426 s / 4.2 GB).
+  Verdicts (build/asm-rows.tsv), all PASS: TruncRow arm64 257 s / 3.2 GB, amd64 426 s / 4.2 GB; LshRow arm64 244 s /
+  3.9 GB, amd64 249 s / 4.5 GB; RshRow arm64 155 s / 3.5 GB, amd64 253 s / 4.7 GB.

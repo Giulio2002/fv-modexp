@@ -819,3 +819,5 @@ Row amd64 RunErr (janus-provfix, warm cache-top): 491 s wall, peak 5.94 GB (cold
 | Arm64/Exp/ModInvL0 (segL0, store_zs, store_i) | new | 18 s / 2.5 GB | `CMP R8->6` operand needs `toNat_sshiftRight_of_msb_false` run lemma (`hss`) |
 | Arm64/Exp/ModInvLoop / ModInv | new | 2 s / 5 s | induction on `numWords - 2^(j-1)` (`j2_all`) |
 | Arm64/Exp/SubMod2NS1 / S2 / S4C (Trunc.Hyp2) | 54 / 58 / ~80 s | 64 / 73 / 77 s | unchanged structure (load differences) |
+| Amd64/Nat/RshMainA/B → RshMainAC/AS/BC/BS | 65 / 86 / 81 / 74 s / ≤ 2.6 GB (load ~35, was 131 / 110 s) | one makeslice run per module (copy / shift), shr6 moved to RshDefs |
+| rows (arm64 / amd64), all PASS | Trunc 257 s / 3.2 GB, 426 s / 4.2 GB; Lsh 244 s / 3.9 GB, 249 s / 4.5 GB; Rsh 155 s / 3.5 GB, 253 s / 4.7 GB | shared cache-asm, own modules only |
