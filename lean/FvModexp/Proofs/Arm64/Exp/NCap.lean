@@ -54,21 +54,12 @@ theorem ExpNNHypNE.toNE0 {impl : List Segment} {R : RtInv} {K : Nat} {costF : Na
       (fun _ _ _ hq => ⟨hq, ExpN.cap_of_post hq⟩)
 
 /-- [infra s33]: `ExpNNHypNE` → infra's `ExpNNHypNE1` (its body spelled out: `ExpNNHypNE0`'s post + the empty-result
-location, `ExpN.loc_of_post`); usable wherever `EvenHyp.ExpNNHypNE1 …` is expected (definitional) -/
+location, `ExpN.loc_of_post`) -/
 theorem ExpNNHypNE.toNE1 {impl : List Segment} {R : RtInv} {K : Nat} {costF : Nat → Nat → Nat → Nat}
     {needR : Nat → Nat → Nat} {costR : Nat → Nat → Nat → Nat} {needS needP : Nat → Nat → Nat → Nat}
     {costS costP : Nat → Nat → Nat → Nat → Nat}
     (h : ExpNNHypNE impl R K costF needR costR needS needP costS costP) :
-    ∀ (b : Nat) (L : List (Nat × Nat)) (zp zl zc st xp xl xc yp yl yc mp n mc slow : Nat),
-    Ensures ((Extracted.program.onlySegments ExpN.names).link impl) (segAddr Extracted.program ExpN.fn)
-      [BitVec.ofNat 64 zp, BitVec.ofNat 64 zl, BitVec.ofNat 64 zc, BitVec.ofNat 64 st, BitVec.ofNat 64 xp,
-        BitVec.ofNat 64 xl, BitVec.ofNat 64 xc, BitVec.ofNat 64 yp, BitVec.ofNat 64 yl, BitVec.ofNat 64 yc,
-        BitVec.ofNat 64 mp, BitVec.ofNat 64 n, BitVec.ofNat 64 mc, BitVec.ofNat 64 slow]
-      (ExpN.Pre R b L K costF needR costR needS needP costS costP zp zl zc st xp xl xc yp yl yc mp n mc slow)
-      (fun s s' => ExpN.Post R b L K costF costR costS costP zp zc st xp xl yp yl mp n s s' ∧
-        (s'.regs 2).toNat < 2 ^ 40 ∧
-        ((s'.regs 2).toNat = 0 → 0 < zc → (s'.regs 0).toNat = 0 ∨
-          (InRanges (s'.regs 0).toNat 0 R.rt ∧ ApartAll (s'.regs 0).toNat 0 L))) :=
+    ExpNNHypNE1 impl R K costF needR costR needS needP costS costP :=
   fun b L zp zl zc st xp xl xc yp yl yc mp n mc slow =>
     (h b L zp zl zc st xp xl xc yp yl yc mp n mc slow).mono (fun _ hp => hp)
       (fun _ _ _ hq => ⟨hq, ExpN.cap_of_post hq, ExpN.loc_of_post hq⟩)

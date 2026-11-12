@@ -2,6 +2,7 @@ import FvModexp.Proofs.Arm64.Top.RunOkRowE
 import FvModexp.Proofs.Arm64.Exp.EvInst
 import FvModexp.Proofs.Arm64.Exp.NFun
 import FvModexp.Proofs.Arm64.Exp.NCap
+import FvModexp.Proofs.Arm64.Top.RunModI
 
 set_option autoImplicit false
 
@@ -16,7 +17,10 @@ instance at `KN` (division = asm's `NatDiv.ensCL`, the same slow / power-of-two 
 The inner window `KN` sits below the outer `K` (`KN + 1648 ≤ stkE ≤ K + 1056`), so the stack-depth premises of the
 slow / power-of-two / rem callees are stated once, at `KN`, and give the ones at `K`.
 
-STILL PREMISES (see NOTES-conventions "[top s21] arm64 success-row premise list"): `ModSpec`, `SlowHyp`, `P2Hyp`,
+`(*Int).Mod` (`hM : RunIface.ModSpecM`) is discharged by divmc's `IMod.ens` (its `ModSpecX` IS `ModSpecM`), whose
+`nat.div` premise `IMod.DivHypM` (nil stack, in-place remainder; asm s32) stays a premise.
+
+STILL PREMISES (see NOTES-conventions "[top s21] arm64 success-row premise list"): `DivHypM`, `SlowHyp`, `P2Hyp`,
 `RemHyp`, the cost bounds `hneed`/`hbud`, the monotonicity facts of `fullI` (`hRm hSm hPm hNB hNC`), and the Janus
 runtime contracts (two of them local PR #2 copies until the v0.3.1 re-pin).
 -/
@@ -39,6 +43,7 @@ theorem correctness_okEv (impl : List Segment) (hap : ImplApart Extracted.progra
     (hwb : WbLiveContract (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2)
     (hget : PoolGetLive (Extracted.program.ofImpl impl) (cA "sync.(*Pool).Get") 4096 R Free.stkT StkSh)
     (hput : PoolPutLive (Extracted.program.ofImpl impl) (cA "sync.(*Pool).Put") 4096 R Free.stkT StkSh)
+    (hwb4 : WbLiveContract (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier4") 4096 R 4)
     {K KN : Nat} {needR : Nat → Nat → Nat} {costR : Nat → Nat → Nat → Nat}
     {needS needP : Nat → Nat → Nat → Nat} {costS costP : Nat → Nat → Nat → Nat → Nat}
     {nsS : List String} {stkS : Nat} {nsP : List String} {stkP : Nat}
@@ -72,7 +77,12 @@ theorem correctness_okEv (impl : List Segment) (hap : ImplApart Extracted.progra
       24 + ExpN.NCost (NatDiv.cost DivRec.drsC) costR
         (ExpN.addC costS (ExpEven.costE (NatDiv.cost DivRec.drsC) costR costS costP sqrC mulC mulC)) costP xl yl n 0 lm ≤
         RunIface.ExpBudget (max (max xl yl) n) yl)
-    (stkM aboveM : Nat) (hM : RunIface.ModSpecM impl R stkM aboveM)
+    {nsD : List String} {stkD aboveD : Nat} {costM : Nat → Nat → Nat}
+    (hDM : IMod.DivHypM impl R nsD stkD aboveD costM)
+    (hnsD : ∀ x, nsD.contains x = true → LibMod.names.contains x = true)
+    (hnsQ : nsD.contains Extracted.seg6.name = false) (habD : aboveD ≤ 120)
+    (hbudM : ∀ ul vl, ul ≤ 128 → vl ≤ 128 → costM ul vl ≤ RunIface.ModBudget (max ul vl))
+    (stkM aboveM : Nat) (hstkD : stkD + 304 ≤ stkM) (h4448 : 4448 ≤ stkM)
     (hKs : K + 1632 ≤ stkM) (W : Nat) (hW : 624 + stkM ≤ W) (hab : aboveM ≤ 160) (ha1 : 48 ≤ aboveM)
     (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64) :
     Ensures (Extracted.program.link impl) (segAddr Extracted.program RunArm64.fn) [c, p, len, cp]
@@ -84,6 +94,8 @@ theorem correctness_okEv (impl : List Segment) (hap : ImplApart Extracted.progra
         LengthsPass (bytesAt s.mem p.toNat len.toNat))
       (fun s s' => RunArm64.OkRet (bytesAt s.mem p.toNat len.toNat) s' ∧
         RunArm64.FrameW R b (RunArm64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat))) L W s s') := by
+  have hM : RunIface.ModSpecM impl R stkM aboveM :=
+    modSpecM_ens impl hap R hwb4 hDM hnsD hnsQ habD hbudM hstkD h4448 (by omega)
   have hDN : ExpN.DHyps impl R KN (NatDiv.cost DivRec.drsC) needS needP costS costP NatDiv.names 41504 nsS stkS nsP
       stkP :=
     { mkN := MakesliceLiveContract.of_codeIn (libN_code impl hap) hmk, clr := hmc, mv := hmv, mkO := hmk, gr := hgr,
