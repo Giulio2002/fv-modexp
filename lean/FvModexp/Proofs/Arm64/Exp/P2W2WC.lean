@@ -326,4 +326,30 @@ theorem WC.globals (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC
 
 end
 
+section
+variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc yp yl lm : Nat} {s : State}
+    {M : Memory} {L1 : List (Nat × Nat)} {b1 ℓ : Nat}
+
+set_option maxRecDepth 20000 in
+/-- the window is outside the runtime ranges and the stack's writable ranges (non-empty stack) -/
+theorem WC.win_out (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ)
+    (hl : 0 < ℓ) : ∀ a k, sp - K ≤ a → a + k ≤ sp + 560 → Outside a k (R.rt ++ stkWs M st) := by
+  have hout := hP.win_rt
+  have hstw := hP.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have harr := hP.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hlc := h.sok.2.2.2.2.2.1
+  have hlen := h.len
+  intro a k h1 h2
+  rw [outside_append]
+  refine ⟨hout.of_sub (by omega) (by omega), ?_⟩
+  simp only [stkWs, outside_cons, outside_nil, and_true]
+  unfold Apart at hstw
+  refine ⟨by omega, ?_⟩
+  rcases h.kf with ⟨e1, e2⟩ | ⟨hin, -⟩
+  · have := (harr (by rw [← e2]; omega)).1
+    rw [← e1, ← e2] at this; unfold Apart at this; omega
+  · have := hin.apart (hout.of_sub (a := a) (n := k) (by omega) (by omega)); unfold Apart at this; omega
+
+end
+
 end FvModexp.Arm64.P2W2

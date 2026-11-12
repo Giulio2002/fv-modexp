@@ -228,4 +228,29 @@ theorem ppre (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R L K
   · exact (free_apart h hgO.1 hgO.2.2.2).symm
 end
 
+/-- `BU` of a held object through a step that keeps the stack array (level not lower) or makes a fresh one -/
+theorem bu_after {R : RtInv} {L1 : List (Nat × Nat)} {st t n : Nat} {M M' : Memory} (h : P2Pre.BU M st t n)
+    (hh : Held R L1 t n) (hkf : ArrKF R L1 st M M') (hl : stLen M st ≤ stLen M' st) : P2Pre.BU M' st t n := by
+  rcases hkf with ⟨e1, e2⟩ | ⟨hin, hap⟩
+  · simp only [P2Pre.BU, stW, stLen, stCap] at h e1 e2 hl ⊢
+    rw [e1, e2]; rcases h with ⟨h1, h2⟩ | h
+    · left; omega
+    · right; exact h
+  · right
+    rcases hh with hL | hO
+    · have := hap.apart_of_inRanges hL; unfold Apart; omega
+    · have := hin.apart hO; unfold Apart at this ⊢; omega
+
+/-- a scratch nat made by a callee at `M` (relative to `M`) is apart from an object held before with `BU` -/
+theorem scr_apart_bu {R : RtInv} {L1 L2 : List (Nat × Nat)} {st t n bp k : Nat} {M M' : Memory}
+    (hs : Scr R L1 L2 M M' st bp k) (h : P2Pre.BU M st t n) (hh : Held R L1 t n) (hlc : stLen M st ≤ stCap M st) :
+    Apart t n bp (8 * k) := by
+  rcases hs.loc with ⟨-, l1, l2⟩ | ⟨hin, hap⟩
+  · rcases h with ⟨h1, h2⟩ | h
+    · unfold Apart; omega
+    · unfold Apart at h ⊢; omega
+  · rcases hh with hL | hO
+    · have := hap.apart_of_inRanges hL; unfold Apart; omega
+    · exact hin.apart hO
+
 end FvModexp.Arm64.P2W2

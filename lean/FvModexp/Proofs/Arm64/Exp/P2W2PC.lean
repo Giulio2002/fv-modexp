@@ -28,7 +28,7 @@ open FvModexp.Arm64.EvenHyp
     b2 - P2Pre.cost sqC mlC ℓ 4 lm ≤ b3 →
     (∀ j, j < 4 → P2Pre.PwD s'.mem (sp + 320) bp lm X j) →
     Scr R L L3 m0 s'.mem st bp (P2Pre.NB 4 lm) → P2Pre.BU s'.mem st bp (8 * P2Pre.NB 4 lm) →
-    ArrKF R L2 st M s'.mem →
+    ArrKF R L2 st M s'.mem → LiveExt R L2 L3 → Scr R L2 L3 M s'.mem st bp (P2Pre.NB 4 lm) →
     MemFrame M s'.mem (R.rt ++ [(sp - (208 + kcP), sp - 8), (sp + 8, sp + 80), (sp + 320, sp + 416)] ++ stkWs M st) →
     ReachesRet (LibExp.program.link impl) ret0 s' Q
 
@@ -100,7 +100,7 @@ theorem segPC {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns
       simp only [outside_cons, outside_nil, and_true] at this ⊢
       omega
   refine KT' s' L3 b3 bp (hr.trans h30) (e1.trans hsp) (e2.trans h28) e3 e4 hw hb (fun j hj => ?_)
-    (Scr.rebase h hscr) hbu hsa.2.2 (hF'.mono fun a k ho => ?_)
+    (Scr.rebase h hscr) hbu hsa.2.2 hx hscr (hF'.mono fun a k ho => ?_)
   · have := hd j hj; rwa [hxv] at this
   · rw [outside_append, outside_append] at ho
     rw [outside_append, outside_append, outside_append]
