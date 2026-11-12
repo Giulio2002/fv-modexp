@@ -9,13 +9,6 @@ open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Spec Janus.Con
 
 namespace FvModexp.Amd64.Run
 
-/-- Window facts of a call from `Run`'s frame (window `W ≥ 4800`): alignment, the callee's stack check, the guard word
-apart from the callee stack. -/
-theorem frame_call_factsW {e g gv W : Nat} (hW : 4800 ≤ W) (hal : e % 8 = 0) (hg3 : gv + W < e)
-    (hga : g + 16 + 8 ≤ e - W ∨ e - W + (W + 40) ≤ g + 16) :
-    (e - 616) % 8 = 0 ∧ gv + 4096 < e - 616 ∧ (g + 16 + 8 ≤ e - 616 - 4096 ∨ e - 616 ≤ g + 16) ∧
-    (g + 16 ≤ e - 616 ∨ e - 616 + 16 ≤ g) := by omega
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem cp1 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)

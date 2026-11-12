@@ -91,4 +91,41 @@ theorem outW_csd {rt : List (Nat × Nat)} {s : State} {W a n d k : Nat} (hW : 48
   unfold Apart at this
   exact ⟨h1, by omega⟩
 
+/-- The stack-guard and alignment facts of a runtime call from `Run`'s frame, window `W`. -/
+theorem frame_call_factsW {e g gv W : Nat} (hW : 4800 ≤ W) (hal : e % 8 = 0) (hg3 : gv + W < e)
+    (hga : g + 16 + 8 ≤ e - W ∨ e - W + (W + 40) ≤ g + 16) :
+    (e - 616) % 8 = 0 ∧ gv + 4096 < e - 616 ∧ (g + 16 + 8 ≤ e - 616 - 4096 ∨ e - 616 ≤ g + 16) ∧
+    (g + 16 ≤ e - 616 ∨ e - 616 + 16 ≤ g) := by omega
+
+/-- A range outside a window `W ≥ 4800` is outside the 4800-byte window. -/
+theorem win_mono_out {e a n W : Nat} (hW : 4800 ≤ W) (h : e - W + (W + 40) ≤ a ∨ a + n ≤ e - W) :
+    a + n ≤ e - 4800 ∨ e + 40 ≤ a := by omega
+
+/-- A frame slot `e - k` of `Run` (above the callee's stack) survives a runtime call from `Run`'s frame. -/
+theorem slot_out_call {rt : List (Nat × Nat)} {e W k : Nat} (hW : 4800 ≤ W) (hb : W ≤ e) (hk1 : 40 ≤ k) (hk2 : k ≤ 584)
+    (hout : Outside (e - W) (W + 40) rt) :
+    Outside (e - k) 8 (rt ++ [(e - 616 - 4096, e - 616), (e - 616 + 8, e - 616 + 8 + 24)]) ∧
+    (e - k + 8 ≤ e - 616 ∨ e - 616 + 8 ≤ e - k) := by
+  simp only [Janus.outside_append, Janus.outside_cons, Janus.outside_nil, and_true]
+  exact ⟨⟨hout.of_sub (by omega) (by omega), by omega, by omega⟩, by omega⟩
+
+/-- `outW_cs` without the return slot (the frame of a runtime copy's post). -/
+theorem outW_cs2 {rt : List (Nat × Nat)} {s : State} {W a n : Nat} (hW : 4800 ≤ W)
+    (h : Outside a n (rt ++ win s W 40)) :
+    Outside a n (rt ++ [((s.regs 4).toNat - 616 - 4096, (s.regs 4).toNat - 616),
+      ((s.regs 4).toNat - 616 + 8, (s.regs 4).toNat - 616 + 8 + 24)]) := by
+  simp only [win, Janus.outside_append, Janus.outside_cons, Janus.outside_nil, and_true] at h ⊢
+  refine ⟨h.1, ?_⟩; omega
+
+/-- `outW_cs2` with a runtime object `[d, d + k)` appended. -/
+theorem outW_csd2 {rt : List (Nat × Nat)} {s : State} {W a n d k : Nat} (hW : 4800 ≤ W) (hd : InRanges d k rt)
+    (h : Outside a n (rt ++ win s W 40)) :
+    Outside a n (rt ++ [((s.regs 4).toNat - 616 - 4096, (s.regs 4).toNat - 616),
+      ((s.regs 4).toNat - 616 + 8, (s.regs 4).toNat - 616 + 8 + 24)] ++ [(d, d + k)]) := by
+  have h1 := outW_cs2 hW h
+  simp only [win, Janus.outside_append, Janus.outside_cons, Janus.outside_nil, and_true] at h h1 ⊢
+  have := InRanges.apart hd h.1
+  unfold Apart at this
+  exact ⟨h1, by omega⟩
+
 end FvModexp.Amd64.Run
