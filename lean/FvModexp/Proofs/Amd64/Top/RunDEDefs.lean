@@ -32,6 +32,11 @@ def BufOK (R : RtInv) (Lk : List (Nat × Nat)) (s : State) (m : Janus.Arm64.Memo
   bl = opLen s p len j ∧ beVal m bp bl = opV s p len j ∧ s.mem.accessible bp bl false = true ∧ bp + bl ≤ 2 ^ 48 ∧
     Held R Lk bp bl ∧ Outside bp bl [((s.regs 4).toNat - 616 - 4160, (s.regs 4).toNat - 616 + 48)]
 
+/-- `beVal_of_reads` up to equal addresses/lengths. -/
+theorem beVal_of_reads' {m m' : Janus.Arm64.Memory} {a a' n n' : Nat} (ha : a = a') (hn : n = n')
+    (h : ∀ i, i < n → m.readLE (a + i) 1 = m'.readLE (a + i) 1) : beVal m a n = beVal m' a' n' := by
+  subst ha hn; exact beVal_of_reads h
+
 set_option maxRecDepth 20000 in
 /-- The return sites of the three operand `setBytes` calls (go-bigmodexpfix). -/
 theorem raSB (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl) (ret : Nat)
