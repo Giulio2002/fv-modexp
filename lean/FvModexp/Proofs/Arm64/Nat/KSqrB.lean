@@ -302,4 +302,132 @@ theorem KM.sqStep {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n
   · exact ⟨by simp only; omega, Or.inr (Or.inr (Or.inr (Or.inr (Or.inl ⟨Nat.le_refl _, Nat.le_refl _⟩))))⟩
   · exact ⟨by simp only; omega, Or.inr (Or.inr (Or.inr (Or.inr (Or.inr ⟨Nat.le_refl _, Nat.le_refl _⟩))))⟩
 
+/-- the operand facts of `x0 = x[:len x0]` -/
+theorem KM.x0ops {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State}
+    {lx0 lx1 t : Nat} {Lk : List (Nat × Nat)} {bk spent : Nat} {M : Memory}
+    (h : KM R b L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) :
+    lx0 ≤ xc ∧ xc < 2 ^ 40 ∧ M.accessible xp (8 * lx0) false = true ∧
+      (0 < xc → Held R Lk xp (8 * xc) ∧ xp + 8 * xc ≤ 2 ^ 48) ∧ (0 < lx0 → Outside xp (8 * lx0) (win s W 48)) ∧
+      (0 < lx0 → StkSep M st xp (8 * lx0)) ∧ Apart zp (8 * zc) xp (8 * lx0) := by
+  have hxc : n ≤ xc := h.pre.2.2.2.2.2.2.1
+  have hxc40 : xc < 2 ^ 40 := h.pre.2.2.2.2.2.2.2.1
+  have hxacc : s.mem.accessible xp (8 * n) false = true := h.pre.2.2.2.2.2.2.2.2.2.1
+  have hxh : Held R L xp (8 * xc) := h.pre.2.2.2.2.2.2.2.2.2.2.1
+  have hx48 : xp + 8 * xc ≤ 2 ^ 48 := h.pre.2.2.2.2.2.2.2.2.2.2.2.1
+  have hxw : Outside xp (8 * n) (win s W 48) := h.pre.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hzx : Apart zp (8 * zc) xp (8 * n) := h.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hxs : StkSep s.mem st xp (8 * n) := h.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hl0 := h.l0
+  simp only [kn2] at hl0
+  have hacc : M.accessible xp (8 * lx0) false = true := by
+    rw [h.fr.accessible]; exact Memory.accessible_sub _ hxacc (Or.inl rfl) (by omega) (by omega)
+  refine ⟨by omega, hxc40, hacc, fun _ => ⟨h.ext.held hxh, hx48⟩, fun _ => hxw.of_sub (by omega) (by omega),
+    fun _ => h.sepOf (hxs.sub (by omega)) (hxh.sub (by omega) (by omega)), by unfold Apart at hzx ⊢; omega⟩
+
+/-- `z`'s array facts at `M` -/
+theorem KM.zops {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State}
+    {lx0 lx1 t : Nat} {Lk : List (Nat × Nat)} {bk spent : Nat} {M : Memory}
+    (h : KM R b L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) :
+    zc < 2 ^ 40 ∧ NatLive M R Lk zp zc ∧ Outside zp (8 * zc) (win s W 48) ∧
+      Apart zp (8 * zc) (guard s) 8 ∧ StkSep M st zp (8 * zc) ∧ zp + 8 * zc ≠ xp + 8 * xc ∧ 2 * n ≤ zc ∧
+      zp % 8 = 0 ∧ Held R Lk zp (8 * zc) ∧ zp + 8 * zc ≤ 2 ^ 48 := by
+  have hzl : 2 * n ≤ zc := h.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hzc40 : zc < 2 ^ 40 := h.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hzlive : NatLive s.mem R L zp zc := h.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hzw : Outside zp (8 * zc) (win s W 48) := h.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hzg : Apart zp (8 * zc) (guard s) 8 := h.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hzs : StkSep s.mem st zp (8 * zc) := h.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hne : zp + 8 * zc ≠ xp + 8 * xc := h.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have h80 := h.lay.2.2.2.2.1
+  obtain ⟨hal, hh, hacc, h48⟩ := hzlive (by omega)
+  exact ⟨hzc40, fun _ => ⟨hal, h.ext.held hh, by rw [h.fr.accessible]; exact hacc, h48⟩, hzw, hzg,
+    h.sepOf hzs hh, hne, hzl, hal, h.ext.held hh, h48⟩
+
+/-! ## Small facts -/
+
+theorem KM.weaken {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State}
+    {lx0 lx1 t : Nat} {Lk : List (Nat × Nat)} {bk spent : Nat} {M : Memory}
+    (h : KM R b L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) {spent' : Nat} (hs : spent ≤ spent') :
+    KM R b L W st zp zc xp n xc s lx0 lx1 t Lk bk spent' M :=
+  { h with bud := by have := h.bud; omega }
+
+theorem asCost_le_asB {a b k : Nat} (h1 : a ≤ k) (h2 : b ≤ k) : IntAS.asCost a b ≤ asB k := by
+  have e1 := makeCost_le_makeB (if min a b = 0 then max a b else max a b + 1)
+  have e2 := makeCost_le_makeB (max a b)
+  unfold IntAS.asCost
+  unfold makeB asB allocCost at *
+  by_cases hm : min a b = 0
+  · rw [if_pos hm] at e1 ⊢; omega
+  · rw [if_neg hm] at e1 ⊢; omega
+
+theorem natNorm_le {m : Memory} {p l k : Nat} (hn : NatNorm m p l) (hv : natVal m p l < 2 ^ (64 * k)) : l ≤ k := by
+  rcases Nat.lt_or_ge k l with hc | hc
+  · exfalso
+    have h1 := SubMod2N.natVal_lower m p l hn (by omega)
+    have h2 : 2 ^ (64 * k) ≤ 2 ^ (64 * (l - 1)) := Nat.pow_le_pow_right (by decide) (by omega)
+    omega
+  · exact hc
+
+theorem natAbs_of_signed {ng v : Nat} {d : Int} (h : (if ng = 0 then (v : Int) else -(v : Int)) = d) :
+    v = d.natAbs := by
+  by_cases hg : ng = 0
+  · rw [if_pos hg] at h; subst h; simp
+  · rw [if_neg hg] at h; subst h; simp
+
+/-- `x0`'s header and value (frame `SP - 48`) -/
+theorem KM.x0op {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State}
+    {lx0 lx1 t : Nat} {Lk : List (Nat × Nat)} {bk spent : Nat} {M : Memory}
+    (h : KM R b L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) :
+    IOp R Lk s W M (s.sp.toNat - 48) ∧ IntAS.intZ M (s.sp.toNat - 48) = (kX0 s xp n : Int) ∧
+      IntAS.hP M (s.sp.toNat - 48) = xp ∧ IntAS.hL M (s.sp.toNat - 48) = lx0 := by
+  obtain ⟨q1, q2, q3, q4⟩ := h.x0h
+  obtain ⟨hl0, hxc40, hacc, hxh, hxw, -, -⟩ := h.x0ops
+  have h80 := h.lay.2.2.2.2.1
+  have hl := h.l0; simp only [kn2] at hl
+  have hxc : n ≤ xc := h.pre.2.2.2.2.2.2.1
+  have hxs : Held R Lk xp (8 * xc) ∧ xp + 8 * xc ≤ 2 ^ 48 := hxh (by omega)
+  have hv : natVal M xp lx0 = natVal s.mem xp lx0 := by
+    unfold natVal; exact h.xrd (Nat.le_refl _) (by omega)
+  have hnn : NatNorm M xp lx0 := by
+    rcases h.nn0 with h0 | h0
+    · exact Or.inl h0
+    · right; rwa [h.xrd (by omega) (by omega)]
+  have hn12 := h.lay.2.2.2.2.2.1
+  refine ⟨?_, ?_, q2, q3⟩
+  · simp only [IOp, IntAS.hNeg, IntAS.hP, IntAS.hL, IntAS.hC, q1, q2, q3, q4]
+    refine ⟨by omega, by omega, hxc40, by omega, hacc, by omega, hxs.1.sub (by omega) (by omega), hnn, ?_⟩
+    have hxw' : Outside xp (8 * n) (win s W 48) := h.pre.2.2.2.2.2.2.2.2.2.2.2.2.1
+    exact hxw'.of_sub (by omega) (by omega)
+  · simp only [IntAS.intZ, IntAS.hNeg, IntAS.hP, IntAS.hL, q1, q2, q3, if_true, hv, h.v0]
+
+/-- `x1`'s header and value (frame `SP - 80`) -/
+theorem KM.x1op {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State}
+    {lx0 lx1 t : Nat} {Lk : List (Nat × Nat)} {bk spent : Nat} {M : Memory}
+    (h : KM R b L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) :
+    IOp R Lk s W M (s.sp.toNat - 80) ∧ IntAS.intZ M (s.sp.toNat - 80) = (kX1 s xp n : Int) ∧
+      IntAS.hP M (s.sp.toNat - 80) = xp + 8 * kn2 n ∧ IntAS.hL M (s.sp.toNat - 80) = lx1 := by
+  obtain ⟨q1, q2, q3, q4⟩ := h.x1h
+  have h80 := h.lay.2.2.2.2.1
+  have hn12 := h.lay.2.2.2.2.2.1
+  have hl := h.l1; simp only [kn2] at hl
+  have hxc : n ≤ xc := h.pre.2.2.2.2.2.2.1
+  have hxc40 : xc < 2 ^ 40 := h.pre.2.2.2.2.2.2.2.1
+  have hxacc : s.mem.accessible xp (8 * n) false = true := h.pre.2.2.2.2.2.2.2.2.2.1
+  have hxh : Held R L xp (8 * xc) := h.pre.2.2.2.2.2.2.2.2.2.2.1
+  have hx48 : xp + 8 * xc ≤ 2 ^ 48 := h.pre.2.2.2.2.2.2.2.2.2.2.2.1
+  have hxw : Outside xp (8 * n) (win s W 48) := h.pre.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hv : natVal M (xp + 8 * kn2 n) lx1 = natVal s.mem (xp + 8 * kn2 n) lx1 := by
+    unfold natVal; exact h.xrd (by omega) (by simp only [kn2]; omega)
+  have hnn : NatNorm M (xp + 8 * kn2 n) lx1 := by
+    rcases h.nn1 with h0 | h0
+    · exact Or.inl h0
+    · right; rwa [h.xrd (by omega) (by simp only [kn2]; omega)]
+  refine ⟨?_, ?_, q2, q3⟩
+  · simp only [IOp, IntAS.hNeg, IntAS.hP, IntAS.hL, IntAS.hC, q1, q2, q3, q4]
+    refine ⟨by omega, by simp only [kn2]; omega, by omega, by omega, ?_, by simp only [kn2]; omega,
+      (h.ext.held hxh).sub (by omega) (by simp only [kn2]; omega), hnn,
+      hxw.of_sub (by omega) (by simp only [kn2]; omega)⟩
+    rw [h.fr.accessible]; exact Memory.accessible_sub _ hxacc (Or.inl rfl) (by omega) (by simp only [kn2]; omega)
+  · simp only [IntAS.intZ, IntAS.hNeg, IntAS.hP, IntAS.hL, q1, q2, q3, if_true, hv, h.v1]
+
 end FvModexp.Arm64.NatSqr
