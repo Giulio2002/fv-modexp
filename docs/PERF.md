@@ -801,3 +801,12 @@ RunH2S 178 s / 2.8 GB, RunH2M 173 s / 3.3 GB, RunH2 721 s → 119 s / 2.6 GB (no
 cost), RunH3S 189 s, RunH3M 235 s / 3.4 GB, RunH3 142 s; RunLa single module > 900 s → 4 modules (FF 358 s) → 8 case
 modules 14–213 s / ≤ 2.3 GB; RunL single 205 s for the run alone → RunLLo/RunLHi 182 s / 3.7 GB each.
 Row amd64 RunErr (janus-provfix, warm cache-top): 491 s wall, peak 5.94 GB (cold run: timeout while compiling deps).
+
+### infra s13 (2026-11-12) — modInv arm64 completion (dev compile, load ~25-30, LEAN_NUM_THREADS=4)
+| module | before | after | fix |
+|---|---|---|---|
+| Arm64/Exp/ModInvL5 (segL5) | 370 s / 9.2 GB (over caps) | 18 s / 2.5 GB | continuation after `subMod2N` moved into `contL5` (own small context, pure facts) and passed as a term; `callSub`'s continuation gets `sp`/`x28`/`x18` against the entry `s` (no post-run state literals in it); only register goals go to `janus_simp` |
+| Arm64/Exp/ModInvF5 (segF5, retF5, contF5) | new | 10 s / 2.3 GB | same pattern; `post_mid` (pure) builds `Post` from the round facts |
+| Arm64/Exp/ModInvL0 (segL0, store_zs, store_i) | new | 18 s / 2.5 GB | `CMP R8->6` operand needs `toNat_sshiftRight_of_msb_false` run lemma (`hss`) |
+| Arm64/Exp/ModInvLoop / ModInv | new | 2 s / 5 s | induction on `numWords - 2^(j-1)` (`j2_all`) |
+| Arm64/Exp/SubMod2NS1 / S2 / S4C (Trunc.Hyp2) | 54 / 58 / ~80 s | 64 / 73 / 77 s | unchanged structure (load differences) |
