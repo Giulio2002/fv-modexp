@@ -258,4 +258,25 @@ theorem post_oneB {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {costF
     simp only [wN, outside_cons, outside_nil, and_true] at hq1 ⊢
     omega
 
+/-- `z` kept by the alias test (`pro`'s `Kk`; `lastA p c = (p + 8 (c - 1)) % 2^64`) ⇒ the third disjunct of
+`NPre`'s alias clause (`ZOK`) -/
+theorem zok_of_keep {P : Prop} {zp zc xp xc yp yc : Nat}
+    (hal : 0 < zc → (0 < xc ∧ zp + 8 * zc = xp + 8 * xc) ∨ (0 < yc ∧ zp + 8 * zc = yp + 8 * yc) ∨ P)
+    (hk : zc = 0 ∨ ((xc = 0 ∨ (xp + 8 * (xc - 1)) % 2 ^ 64 ≠ (zp + 8 * (zc - 1)) % 2 ^ 64) ∧
+      (yc = 0 ∨ (yp + 8 * (yc - 1)) % 2 ^ 64 ≠ (zp + 8 * (zc - 1)) % 2 ^ 64))) :
+    0 < zc → P := by
+  intro hz
+  rcases hal hz with ⟨h1, h2⟩ | ⟨h1, h2⟩ | h
+  · exfalso
+    rcases hk with h | ⟨h3 | h3, -⟩
+    · omega
+    · omega
+    · exact h3 (by congr 1; omega)
+  · exfalso
+    rcases hk with h | ⟨-, h3 | h3⟩
+    · omega
+    · omega
+    · exact h3 (by congr 1; omega)
+  · exact h
+
 end FvModexp.Arm64.ExpN
