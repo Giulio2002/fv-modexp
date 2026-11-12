@@ -1279,3 +1279,16 @@ closer did 30-60 s of `Nat.sub` literal unfolding per goal; KQm reads now closed
   replay 206 s, audit 7 s). Was 751 / 886 s (s18, load 35-60).
 * Next trim candidate (success chain): arm64 RunD3LB 81 s of which 48 s are 12 `janus_simp [opAt]` side goals of
   `OpDone.transport` (each ≈ 4 s incl. a failing `janus_disch` ≈ 3.4 s over the big context) — prove the slot-frame fact once.
+
+## divmc s26 (2026-11-12) — empty-tolerant nat.sub / nat.add (both ISAs), amd64 Lib seeds (dev, LEAN_NUM_THREADS=4, load ~20-30)
+| module | wall | peak RSS |
+|---|---|---|
+| Arm64 NatSub0Defs / NatSub0Set / NatSub0Alloc / NatSub0 / Exp.SubHyp0 | 1.2 / 28.5 / 40.1 / 4.3 / 0.9 s | ≤ 2.6 GB |
+| Arm64 NatAdd0Defs / NatAdd0Set / NatAdd0Swap / NatAdd0 | 1.2 / 28.8 / 4.3 / 6.3 s | ≤ 2.5 GB |
+| Amd64 NatSub0Defs / NatSub0Set / NatSub0Alloc / NatSub0 | 1.3 / 53.4 / 53.0 / 5.4 s | ≤ 2.8 GB |
+| Amd64 NatAdd0Defs / NatAdd0Set / NatAdd0Swap / NatAdd0 | 1.7 / 53.5 / 4.9 / 11.9 s | ≤ 2.7 GB |
+| Amd64 LibSqr / LibMul / Int.LibIntAS (generated) | 16.3 / 17.5 / 11.1 s | ≤ 2.4 GB |
+* before/after: `preS0_swap` (arm64) first draft (anonymous constructor with the CallEnv omegas in a context holding the
+  GUARDED operand facts `0 < n → s.mem.accessible … = true` …): > 200k heartbeats / killed at the 8 GB cap → 4.3 s with a
+  named-hole `refine` and `case ce => clear <guarded facts>` before the omegas. amd64 `preS0_mono`: 200k-heartbeat timeout
+  → 1.7 s (same fix). The weakened-in-place copies (`PreS0` with the same conjunct positions) compiled with no other change.
