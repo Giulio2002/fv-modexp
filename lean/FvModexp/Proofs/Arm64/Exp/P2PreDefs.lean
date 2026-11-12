@@ -77,6 +77,7 @@ abbrev A : Nat := 80
     StkApart s.mem st pw (24 * pl) ∧ (0 < xl → Apart pw (24 * pl) x (8 * xl)) ∧
     RdIn R L s (K kc) A x xl ∧ NatNorm s.mem x xl ∧ xl ≤ 2 ^ 12 ∧ StkApart s.mem st x (8 * xl) ∧
     StkIn R L s (K kc) A st ∧ stLen s.mem st + 2 ^ 12 ≤ 2 ^ 16 ∧
+    Apart st 24 (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st)) ∧
     (∃ op, NatOne R L s.mem op (winA s (K kc) A ++ LW s pw pl st) ∧ StkApart s.mem st op 8) ∧
     cost sqC mlC (stLen s.mem st) pl lm ≤ b ∧ R.inv b L (s.regs 28).toNat (view R.rt L s.mem) ∧
     (s.regs 30).toNat % 4 = 0 ∧ (s.regs 30).toNat < 2 ^ 48
@@ -135,6 +136,7 @@ structure Ctx (R : RtInv) (kc : Nat) (L : List (Nat × Nat)) (st pw pl lm : Nat)
   inv : R.inv b1 L1 (s.regs 28).toNat (view R.rt L1 M)
   scr : Scr R L L1 s.mem M st bp (NB pl lm)
   sa : StkAfter R L L1 st (stLen s.mem st) pl lm s.mem M
+  sap : StkApart M st bp (8 * NB pl lm)
   sl : Sl s st pw pl lm M
 
 end FvModexp.Arm64.P2Pre
