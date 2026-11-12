@@ -86,7 +86,7 @@ theorem pre : ModInv.PreL R NatSqr.sqrWX sqrC mulC 0 BW [] ZP 0 2 ST XP 1 1 64 s
   rw [hm, stLen0, hW]
   simp only [CallEnv, winA, win, WrOut, RdIn, StkIn, StkApart, OneIn, PX, OpX, CapIn, frP, frN, StackOK', stWs, stkWs,
     g0, mkS_sp, stW0, stLen0, stCap0, K, A]
-  refine ⟨?_, rfl⟩
+  refine ⟨?_, trivial⟩
   repeat' apply And.intro
   all_goals first
     | decide
