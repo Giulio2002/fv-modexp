@@ -1354,3 +1354,13 @@ path ≈ 205 s (was: 117 own modules, row 815 s).
   dispatch then fails slowly: 44 s, worse); generalize the length (`nD`) at * (run gets stuck: a branch needs the relation).
   Left as is. RunD1L profile (125 s at load 40): 3 runs 13 + 32 + 20 s, final `refine` 26 s (many 1-3 s janus_simp side
   goals), no single hotspot.
+
+### infra s36 (2026-11-13, dev compile, LEAN_NUM_THREADS=4, host load ~35-60)
+| module | wall | peak RSS |
+|---|---|---|
+| Arm64/Exp/EnsWiden | 1.7 s | 2.0 GB |
+| Arm64/Exp/EvInst (`fullI`; string-list `decide`s) | 35.0 s | 5.0 GB |
+| Arm64/Exp/EvNP (re-check after expmc's NPre slot) | 9.4 s | 2.8 GB |
+| Arm64/Exp/P2W4Defs / EnA / EnG3 / EnG / EnJ | 2.9 / 22.2 / 28.6 / 9.5 / 5.4 s | ≤ 2.4 GB |
+| Arm64/Exp/P2W4Pre / Ent / Ctx / WC / PP / PC | 1.6 / 12.4 / 1.2 / 2.5 / 4.4 / 2.3 s | ≤ 2.6 GB |
+| Arm64/Exp/P2W4N (stk.nat + 6-round zero loop) / AT / EP / Tail | 14.5 / 1.4 / 3.5 / 19.2 s | ≤ 3.1 GB |
