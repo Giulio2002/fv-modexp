@@ -37,7 +37,7 @@ structure SF (sp st xp xl xc yp yl mp ml mc r29 ret : Nat) (M : Memory) : Prop w
 
 theorem SF.keep {sp st xp xl xc yp yl mp ml mc r29 ret : Nat} {M M' : Memory}
     (h : SF sp st xp xl xc yp yl mp ml mc r29 ret M)
-    (hk : ∀ a k, (sp - 8 ≤ a ∧ a + k ≤ sp + 8 ∨ sp + 120 ≤ a ∧ a + k ≤ sp + 544) → M'.readLE a k = M.readLE a k) :
+    (hk : ∀ a k, (sp - 8 ≤ a ∧ a + k ≤ sp + 8 ∨ sp + 424 ≤ a ∧ a + k ≤ sp + 544) → M'.readLE a k = M.readLE a k) :
     SF sp st xp xl xc yp yl mp ml mc r29 ret M' := by
   obtain ⟨a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11⟩ := h
   refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
