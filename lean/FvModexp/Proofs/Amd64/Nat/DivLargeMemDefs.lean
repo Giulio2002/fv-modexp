@@ -6,8 +6,8 @@ set_option autoImplicit false
 # `divLarge` (amd64): the memory relation after `v := stk.nat(n)` and the join after `u.make(len uIn + 1)`
 
 The twin of the second half of `Arm64/Nat/DivLargeRel.lean` (`Mem`, `UArr`, `AtU`), with the amd64 frame slots
-(offsets from the entry `RSP`, see `DivLargeDefs`): `v` ptr/len/cap at `-96/-160/-152` (stored right after the call),
-`u` ptr/len/cap at `-104/-200/-184` (stored at `joinU`), the stack args `uIn`/`vIn` at `+8 … +48`.
+(offsets from the entry `RSP`, see `DivLargeDefs`): `v` ptr/len/cap at `-96, -160, -152` (stored right after the call),
+`u` ptr/len/cap at `-104, -200, -184` (stored at `joinU`), the stack args `uIn`, `vIn` at `+8 … +48`.
 -/
 
 open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.GoABI0 Janus.Amd64.Tactic Janus.Spec Janus.Contracts
