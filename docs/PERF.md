@@ -970,3 +970,10 @@ containing a 1-byte readLE fact in context -> hide them behind irreducible defs 
 | MulKar (karEq / karEq2) | 56 s | 4.3 GB |
 LESSON: inside `Summary.mono (ih …) (pre' := …) (post' := …) conv conv`, elaborate every intermediate fact with an explicit
 type (`have h : T := …`) — implicit-argument unification against the reducible `MPost` blew up memory.
+### infra s20 (arm64 P2Pre swap to SqrHypX/MulHypX + P2W2 entry→table composition, dev compile)
+P2W2WC 2.8 s, P2W2PP 4.6 s, P2W2PC 2.4 s, P2W2AT 1.4 s, P2W2EP 3.8 s / 2.2 GB (before: 127-226 s / 7.1 GB — two
+`omega`s in the big continuation context took 60-216 s each: Nat-subtraction budget facts `b - c ≤ b1` and a globally
+unfolded `Apart` (disjunction) made every omega case-split; fixed by hiding the budget facts in `P2Pre.Hide`, never
+unfolding `Apart` at top level, and moving window arithmetic into tiny lemmas `nseg_ws`/`hdr_nseg`/`slot_*`).
+P2Pre closure after the swap: LibCallsX 1.2 s, P2PreXc 3.8 s, P2PreSq 14.5 s, P2PreMu 5.0 s, P2PreE1 8.3 s, P2PreX 49 s,
+rest unchanged (all ≤ 4.4 GB).
