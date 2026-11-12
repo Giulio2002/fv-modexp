@@ -104,6 +104,75 @@ theorem ArrIn.congr {L L' : List (Nat × Nat)} {st : Nat} {m0 m m' : Memory}
     ArrIn L' st m0 m' := by
   intro hn; rw [hw, hc] at hn ⊢; exact ⟨hL _ (h hn).1, (h hn).2⟩
 
+/-! ## `ResSep` (coordinator decision on "[expmc s26] ResSep")
+
+`ResSep m0 m st p c`: a non-empty result `(p, c)` of a stack-taking function is apart from the stack's FINAL array
+(of `m`) when that array is not the entry one (of `m0`). Needed by every `stk == nil` path: the deferred
+`stk.free()` (`sync.(*Pool).Put`) drops the stack's ranges from the live set, and the result must stay held. -/
+
+@[reducible] def ResSep (m0 m : Memory) (st p c : Nat) : Prop :=
+  0 < c → ¬(stW m st = stW m0 st ∧ stCap m st = stCap m0 st) → Apart p (8 * c) (stW m st) (8 * stCap m st)
+
+/-- a result apart from the final array (e.g. fresh after the last growth, or allocated while the array was held) -/
+theorem ResSep.of_apart {m0 m : Memory} {st p c : Nat} (h : Apart p (8 * c) (stW m st) (8 * stCap m st)) :
+    ResSep m0 m st p c := fun _ _ => h
+
+/-- a result held at entry (`Held R L`): the final array, when not the entry one, is fresh wrt `L` (`StackBack`) -/
+theorem ResSep.of_held {R : RtInv} {L : List (Nat × Nat)} {m0 m : Memory} {st p c : Nat}
+    (hkf : (stW m st = stW m0 st ∧ stCap m st = stCap m0 st) ∨
+      (InRanges (stW m st) (8 * stCap m st) R.rt ∧ ApartAll (stW m st) (8 * stCap m st) L))
+    (hp : Held R L p (8 * c)) : ResSep m0 m st p c := by
+  intro _ hn
+  rcases hkf with h | ⟨hin, hap⟩
+  · exact absurd h hn
+  · rcases hp with hpL | hpO
+    · exact (hap.apart_of_inRanges hpL).symm
+    · exact hin.apart hpO
+
+/-- a fresh object `(p, 8c)` (apart from all of `L1`) is apart from a stack array held in `L1` -/
+theorem apart_arr_of_fresh {R : RtInv} {L1 : List (Nat × Nat)} {m : Memory} {st p c : Nat}
+    (hap : ApartAll p (8 * c) L1) (harr : Held R L1 (stW m st) (8 * stCap m st)) (hin : InRanges p (8 * c) R.rt) :
+    Apart p (8 * c) (stW m st) (8 * stCap m st) := by
+  rcases harr with hL | hO
+  · exact hap.apart_of_inRanges hL
+  · exact (hin.apart hO).symm
+
+/-- an apartness from the current array survives a step whose array is kept or fresh wrt a live set holding `p` -/
+theorem apart_arr_step {R : RtInv} {L1 : List (Nat × Nat)} {m m' : Memory} {st p k : Nat}
+    (h : Apart p k (stW m st) (8 * stCap m st))
+    (hkf : (stW m' st = stW m st ∧ stCap m' st = stCap m st) ∨
+      (InRanges (stW m' st) (8 * stCap m' st) R.rt ∧ ApartAll (stW m' st) (8 * stCap m' st) L1))
+    (hp : Held R L1 p k) : Apart p k (stW m' st) (8 * stCap m' st) := by
+  rcases hkf with ⟨e1, e2⟩ | ⟨hin, hap⟩
+  · rw [e1, e2]; exact h
+  · rcases hp with hpL | hpO
+    · exact (hap.apart_of_inRanges hpL).symm
+    · exact hin.apart hpO
+
+/-- `ResSep` through a later step (kept array, or fresh wrt a live set holding the result) -/
+theorem ResSep.step {R : RtInv} {L1 : List (Nat × Nat)} {m0 m m' : Memory} {st p c : Nat}
+    (h : ResSep m0 m st p c)
+    (hkf : (stW m' st = stW m st ∧ stCap m' st = stCap m st) ∨
+      (InRanges (stW m' st) (8 * stCap m' st) R.rt ∧ ApartAll (stW m' st) (8 * stCap m' st) L1))
+    (hp : Held R L1 p (8 * c)) : ResSep m0 m' st p c := by
+  intro hc hn
+  rcases hkf with ⟨e1, e2⟩ | ⟨hin, hap⟩
+  · rw [e1, e2] at hn ⊢; exact h hc hn
+  · rcases hp with hpL | hpO
+    · exact (hap.apart_of_inRanges hpL).symm
+    · exact hin.apart hpO
+
+/-- `ResSep` survives frames that keep the header -/
+theorem ResSep.congr {m0 m m' : Memory} {st p c : Nat} (h : ResSep m0 m st p c)
+    (hw : stW m' st = stW m st) (hc : stCap m' st = stCap m st) : ResSep m0 m' st p c := by
+  intro h0 hn; rw [hw, hc] at hn ⊢; exact h h0 hn
+
+/-- `ResSep` along a caller: entry-to-call array kept (the caller's own steps before the call keep it), callee's
+`ResSep` -/
+theorem ResSep.pre {m0 m1 m : Memory} {st p c : Nat} (h : ResSep m1 m st p c)
+    (hw : stW m1 st = stW m0 st) (hc : stCap m1 st = stCap m0 st) : ResSep m0 m st p c := by
+  intro h0 hn; refine h h0 ?_; rw [hw, hc]; exact hn
+
 /-- a scratch nat of `k > 0` words at `t` (see the module doc) -/
 structure Scr (R : RtInv) (L L1 : List (Nat × Nat)) (m0 m : Memory) (st t k : Nat) : Prop where
   b48 : t + 8 * k ≤ 2 ^ 48
