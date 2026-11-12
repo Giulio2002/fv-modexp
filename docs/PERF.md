@@ -1395,3 +1395,13 @@ path ≈ 205 s (was: 117 own modules, row 815 s).
   RunC2EX 19 s; amd64 RunC2Sum 51 s, RunC2B 83 s / 5.1 GB, RunC2M 15 s, RunC2EX 18 s.
 ## infra s38 (dev compile arm64, load ~15): P2DDefs 2.3 s, P2DT 3.0 s/2.2 GB, P2DEnt 12 s/2.1 GB, P2DPost 1.6 s, P2DOneR 5.4 s,
 P2DMk 1.9 s, P2DOne 11.9 s/2.6 GB, P2DZero 2.6 s, P2DWinR 2.9 s, P2DWin 29-32 s/3.4 GB, P2DTz 4.4 s; EvInst 34 s/5.0 GB (rebuilt).
+
+### infra s39 (2026-11-14, arm64 dev compiles, host load ~4–10)
+| module | wall | peak RSS |
+|---|---|---|
+| Exp/P2DEntP | 1.8 s | 2.0 GB |
+| Exp/P2DSumO | 1.7 s | 2.3 GB |
+| Exp/P2DStmt | 1.0 s | 2.0 GB |
+| Exp/P2DRDefs | 1.8 s | 2.1 GB |
+| Exp/P2DRsh | 3.5 s | 2.3 GB |
+| Exp/P2DRec | 66 s | 3.8 GB (before: >10 min / 10 GB with subtraction-heavy budget facts ahead of `omega`s — moved after; see NOTES-infra s39) |
