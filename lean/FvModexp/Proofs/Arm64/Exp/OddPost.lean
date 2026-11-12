@@ -65,7 +65,7 @@ theorem post_gen {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {costF 
         ((p = zp ∧ c = zc) ∨ (InRanges p (8 * c) R.rt ∧ ApartAll p (8 * c) L)) ∧
         StackBackL R L L' st S.mem s'.mem ∧
         MemFrame S.mem s'.mem (R.rt ++ winA S stk 112 ++ [(zp, zp + 8 * zc)] ++ stkWs S.mem st) ∧
-        LiveFrame S.mem s'.mem L ([(zp, zp + 8 * zc)] ++ stkWs S.mem st))
+        LiveFrame S.mem s'.mem L ([(zp, zp + 8 * zc)] ++ stkWs S.mem st) ∧ ResSep S.mem s'.mem st p c)
     (e0 : s''.regs 0 = s'.regs 0) (e1 : s''.regs 1 = s'.regs 1) (e2 : s''.regs 2 = s'.regs 2)
     (em : s''.mem = s'.mem) :
     Post R b L K costF zp zc st xp xl yp ylen mp n s s'' := by
@@ -78,12 +78,12 @@ theorem post_gen {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {costF 
   have el : stLen S.mem st = stLen s.mem st := rd (ap_sub1 hstw (by omega) (by omega))
   have ec : stCap S.mem st = stCap s.mem st := rd (ap_sub1 hstw (by omega) (by omega))
   have hws : stkWs S.mem st = stkWs s.mem st := by simp only [stkWs, ew, el, ec]
-  obtain ⟨p, l, c, q0, q1, q2, hv, hn, hlc, hc, L', b', hx, hb, hinv, hlive, hof, hsb, hF, hLF⟩ := hq
+  obtain ⟨p, l, c, q0, q1, q2, hv, hn, hlc, hc, L', b', hx, hb, hinv, hlive, hof, hsb, hF, hLF, hRS⟩ := hq
   have hrt : Outside (sp - K) (K + 1168) R.rt := by
     have := hwrt _ (List.mem_singleton_self _)
     exact Outside.of_sub this (by simp only; omega) (by simp only; omega)
   refine ⟨p, l, c, e0.trans q0, e1.trans q1, e2.trans q2, ?_, by rw [em]; exact hn, hlc, hc, L', b', hx, ?_,
-    by rw [em, ← h28]; exact hinv, by rw [em]; exact hlive, hof, ?_, ?_, ?_⟩
+    by rw [em, ← h28]; exact hinv, by rw [em]; exact hlive, hof, ?_, ?_, ?_, ?_⟩
   · rw [em, hv]; simp only [natVal]; rw [rd hxO.2.1, rd hyO.2.1, rd hmO.2.1]
   · rcases hC with rfl | rfl
     · exact hb
@@ -105,5 +105,6 @@ theorem post_gen {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {costF 
     refine (LiveFrame.of_win (hFs.mono fun a k ho => ?_) (LiveSep.sub_win hLs (Nat.le_refl (sp - K))
       (show sp + 1168 ≤ sp + 1168 from Nat.le_refl _))).trans hLF fun _ _ h => h
     simp only [outside_cons, outside_nil, and_true] at ho ⊢; omega
+  · rw [em]; exact ResSep.pre hRS ew ec
 
 end FvModexp.Arm64.ExpOdd

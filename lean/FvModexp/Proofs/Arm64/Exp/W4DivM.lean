@@ -39,6 +39,7 @@ theorem rem_div {R : RtInv} {L L' : List (Nat × Nat)}
   have hrt : Outside (sp - K) (K + 1040) R.rt := hce.2.2.2.2.2.2.2.1
   -- zz is unchanged
   have hlc0 := hsok.2.2.2.2.2.1
+  have hzU := up_of_arr hzU (Nat.le_trans hl0 hlc0)
   have hzz' : M'.readLE zzp (8 * (2 * n + 1)) = M.readLE zzp (8 * (2 * n + 1)) := by
     have hF' : MemFrame M M' (R.rt ++ [(sp - stkD, sp - 8), (sp + 8, sp + 112)] ++
         ([(qp, qp + 8 * (2 * n)), (rrp, rrp + 8 * (2 * n))] ++ stkWs M st)) := by

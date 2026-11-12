@@ -54,6 +54,12 @@ theorem stackBack_keep {R : RtInv} {L L' ws : List (Nat × Nat)} {st : Nat} {m m
   obtain ⟨a1, a2, a3, a4⟩ := h5 hc
   exact ⟨a1, a2.elim (fun h => Or.inl (hx.inRanges_old h)) Or.inr, by rw [hF.accessible]; exact a3, a4⟩
 
+/-- a header-preserving frame keeps `ResSep` (the array is the entry one) -/
+theorem resSep_keep {ws : List (Nat × Nat)} {st p c : Nat} {m m' : Memory} (hF : MemFrame m m' ws)
+    (ho : Outside st 24 ws) : ResSep m m' st p c := by
+  intro _ hn
+  exact absurd ⟨hF.readLE _ _ (ho.of_sub (Nat.le_refl _) (by omega)), hF.readLE _ _ (ho.of_sub (by omega) (by omega))⟩ hn
+
 theorem natLive_frame {R : RtInv} {L L' ws : List (Nat × Nat)} {p c : Nat} {m m' : Memory}
     (h : NatLive m R L p c) (hx : LiveExt R L L') (hF : MemFrame m m' ws) : NatLive m' R L' p c := by
   intro hc
@@ -103,7 +109,7 @@ theorem post_triv {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {costF
     simp only [wN, outside_cons, outside_nil, and_true]; unfold Apart at hstw; omega
   refine ⟨zp', 0, zc', h0, h1, h2, by rw [hv]; rfl, Or.inl rfl, Nat.zero_le _, ?_, L, b, hx, Nat.sub_le _ _,
     Expmc.inv_frame hF (fun r hr => Or.inr (out_rt_wN hrw r hr)) hinv, ?_, ?_, stackBack_keep hsok hx hF hso,
-    frame_post (ws := []) hs hF (fun _ _ _ => trivial), LiveFrame.of_win hF (liveSep_wN hLs)⟩
+    frame_post (ws := []) hs hF (fun _ _ _ => trivial), LiveFrame.of_win hF (liveSep_wN hLs), resSep_keep hF hso⟩
   · rcases hz with ⟨-, rfl, -⟩ | ⟨-, rfl⟩ <;> omega
   · rcases hz with ⟨rfl, rfl, h⟩ | ⟨rfl, rfl⟩
     · exact natLive_frame h hx hF
@@ -143,7 +149,8 @@ theorem post_oneA {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {costF
     hzH.elim (fun h => Or.inl (h.sub (Nat.le_refl _) (by omega))) (fun h => Or.inr (h.of_sub (Nat.le_refl _) (by omega)))
   refine ⟨zp, 1, zc, h0, h1, h2, by rw [hv]; exact hv1, Or.inr (by simp only [Nat.sub_self, Nat.mul_zero, Nat.add_zero]; rw [hv1]; decide),
     hzc0, by omega, L, b, hx, Nat.sub_le _ _, Expmc.inv_frame hF ?_ hinv, natLive_frame hzL hx hF,
-    Or.inr (Or.inl ⟨rfl, rfl⟩), stackBack_keep hsok hx hF hso, frame_post hs hF ?_, ⟨fun a k hin hout => hF.readLE a k ?_⟩⟩
+    Or.inr (Or.inl ⟨rfl, rfl⟩), stackBack_keep hsok hx hF hso, frame_post hs hF ?_, ⟨fun a k hin hout => hF.readLE a k ?_⟩,
+    resSep_keep hF hso⟩
   · intro r hr
     rcases List.mem_cons.mp hr with rfl | hr
     · simp only [Nat.add_sub_cancel_left]; exact hz8
@@ -231,7 +238,8 @@ theorem post_oneB {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {costF
   refine ⟨p, 1, 1, h0, h1, h2, by rw [hv]; exact hv1,
     Or.inr (by simp only [Nat.sub_self, Nat.mul_zero, Nat.add_zero]; rw [hv1]; decide), Nat.le_refl _, by decide,
     L ++ [(p, p + r)], b - r, hx, by unfold NCost; omega, Expmc.inv_frame hF2 ?_ hinv, ?_, ?_, ?_,
-    frame_post (ws := R.rt) hs hS (fun a k ho => by rw [outside_append] at ho; exact ho.1), ?_⟩
+    frame_post (ws := R.rt) hs hS (fun a k ho => by rw [outside_append] at ho; exact ho.1), ?_,
+    fun _ hn => absurd ⟨ew, ec⟩ hn⟩
   · intro q hq
     rcases List.mem_cons.mp hq with rfl | hq
     · left; simpa using hin8

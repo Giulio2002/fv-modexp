@@ -76,9 +76,9 @@ theorem ZZ.keep {R : RtInv} {L L' : List (Nat × Nat)} {g sp n mp xp yp ylen zp 
     (hacc : ∀ a k w, M'.accessible a k w = M.accessible a k w)
     (hs : (stW M' st = stW M st ∧ stCap M' st = stCap M st) ∨
       (InRanges (stW M' st) (8 * stCap M' st) R.rt ∧ ApartAll (stW M' st) (8 * stCap M' st) L))
-    (hl : l0 ≤ stCap M' st) : ZZ R L' g sp n mp xp yp ylen zp zc st l0 zzp zzc M' := by
+    (_hl : l0 ≤ stCap M' st) : ZZ R L' g sp n mp xp yp ylen zp zc st l0 zzp zzc M' := by
   obtain ⟨⟨c1, c2, c3, c4, c5, c6, c7⟩, b2, b3, b4, b5, b6, b7, b8, b9⟩ := h
-  exact ⟨⟨c1, c2, by rw [hacc]; exact c3, c4, hx.held c5, c6, c7⟩, b2, b3, b4, b5, b6, b7, stUp_keep hs c5 b8 hl, b9⟩
+  exact ⟨⟨c1, c2, by rw [hacc]; exact c3, c4, hx.held c5, c6, c7⟩, b2, b3, b4, b5, b6, b7, apart_arr_step b8 hs c5, b9⟩
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in

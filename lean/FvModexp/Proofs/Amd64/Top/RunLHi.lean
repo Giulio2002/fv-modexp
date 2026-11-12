@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Top.RunLDefs
+import FvModexp.Proofs.Amd64.Top.RunSmall
 
 /-! # `Run` (amd64): `P1` to `C0`, `96 < len` — — EIP-7823 (`max BitLen > 64` or `max Uint64 > 1024`: `errors.New`), the empty case,
 the input slice
@@ -155,7 +156,7 @@ theorem lbHi (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl
          by janus64_simp [hx15, hTx]⟩ ⟨by janus64_simp, by janus64_simp, by janus64_simp⟩
        ⟨by janus64_simp [hTfs, hfs], by janus64_simp [hTdf, hdf, hdf0], L1 ++ [(ptr.toNat, ptr.toNat + 16)], b1 - 16, ?_, ?_, ?_, ?_, ?_⟩
      · exact hext.trans (LiveExt.single (by simpa using hinR) (by simpa using hapL))
-     · simp only [makeCost, allocCost, makeCap] at hbud hcostE ⊢; omega
+     · exact bud_err hbud
      · dsimp only
        have hI : ∀ a, ptr.toNat ≤ a → a + 8 ≤ ptr.toNat + 16 → InRanges a 8 (L1 ++ [(ptr.toNat, ptr.toNat + 16)]) :=
          fun a h1 h2 => ⟨_, List.mem_append_right _ (List.mem_singleton_self _), by dsimp only; omega, by dsimp only; omega⟩

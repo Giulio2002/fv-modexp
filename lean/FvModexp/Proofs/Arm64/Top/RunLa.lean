@@ -92,7 +92,7 @@ theorem la (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
         gen_reg 12 as u2 with hU2
         have k2 : 64 * (S.mem.readLE (s.sp.toNat - 88) 8 - 1) < bl2.toNat ∧ bl2.toNat ≤ 64 * S.mem.readLE (s.sp.toNat - 88) 8 := by
           rw [← hB2]; refine blr_val _ _ ?_ ?_ (Nat.pos_of_ne_zero hz2) hl2
-          · repeat apply or_pos_left'
+          · repeat (with_reducible apply or_pos_left')
             rw [← hx2]; exact toNat_ofNat_readLE_pos _ _ ht2
           · repeat (first | apply Nat.or_lt_two_pow | exact BitVec.isLt _)
         have hL2 : LenRegs (hdrV s p len 2) bl2 u2 := lenRegs_nz hV2 hN2 (Nat.pos_of_ne_zero hz2) hl2 k2 hU2
@@ -115,7 +115,7 @@ theorem la (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
         gen_reg 11 as u1 with hU1
         have k1 : 64 * (S.mem.readLE (s.sp.toNat - 56) 8 - 1) < bl1.toNat ∧ bl1.toNat ≤ 64 * S.mem.readLE (s.sp.toNat - 56) 8 := by
           rw [← hB1]; refine blr_val _ _ ?_ ?_ (Nat.pos_of_ne_zero hz1) hl1
-          · repeat apply or_pos_left'
+          · repeat (with_reducible apply or_pos_left')
             rw [← hx1]; exact toNat_ofNat_readLE_pos _ _ ht1
           · repeat (first | apply Nat.or_lt_two_pow | exact BitVec.isLt _)
         have hL1 : LenRegs (hdrV s p len 1) bl1 u1 := lenRegs_nz hV1 hN1 (Nat.pos_of_ne_zero hz1) hl1 k1 hU1
@@ -147,13 +147,13 @@ theorem la (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
         gen_reg 12 as u2 with hU2
         have k1 : 64 * (S.mem.readLE (s.sp.toNat - 56) 8 - 1) < bl1.toNat ∧ bl1.toNat ≤ 64 * S.mem.readLE (s.sp.toNat - 56) 8 := by
           rw [← hB1]; refine blr_val _ _ ?_ ?_ (Nat.pos_of_ne_zero hz1) hl1
-          · repeat apply or_pos_left'
+          · repeat (with_reducible apply or_pos_left')
             rw [← hx1]; exact toNat_ofNat_readLE_pos _ _ ht1
           · repeat (first | apply Nat.or_lt_two_pow | exact BitVec.isLt _)
         have hL1 : LenRegs (hdrV s p len 1) bl1 u1 := lenRegs_nz hV1 hN1 (Nat.pos_of_ne_zero hz1) hl1 k1 hU1
         have k2 : 64 * (S.mem.readLE (s.sp.toNat - 88) 8 - 1) < bl2.toNat ∧ bl2.toNat ≤ 64 * S.mem.readLE (s.sp.toNat - 88) 8 := by
           rw [← hB2]; refine blr_val _ _ ?_ ?_ (Nat.pos_of_ne_zero hz2) hl2
-          · repeat apply or_pos_left'
+          · repeat (with_reducible apply or_pos_left')
             rw [← hx2]; exact toNat_ofNat_readLE_pos _ _ ht2
           · repeat (first | apply Nat.or_lt_two_pow | exact BitVec.isLt _)
         have hL2 : LenRegs (hdrV s p len 2) bl2 u2 := lenRegs_nz hV2 hN2 (Nat.pos_of_ne_zero hz2) hl2 k2 hU2
@@ -177,7 +177,7 @@ theorem la (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
         gen_reg 8 as u0 with hU0
         have k0 : 64 * (S.mem.readLE (s.sp.toNat - 24) 8 - 1) < bl0.toNat ∧ bl0.toNat ≤ 64 * S.mem.readLE (s.sp.toNat - 24) 8 := by
           rw [← hB0]; refine blr_val _ _ ?_ ?_ (Nat.pos_of_ne_zero hz0) hl0
-          · repeat apply or_pos_left'
+          · repeat (with_reducible apply or_pos_left')
             rw [← hx0]; exact toNat_ofNat_readLE_pos _ _ ht0
           · repeat (first | apply Nat.or_lt_two_pow | exact BitVec.isLt _)
         have hL0 : LenRegs (hdrV s p len 0) bl0 u0 := lenRegs_nz hV0 hN0 (Nat.pos_of_ne_zero hz0) hl0 k0 hU0
@@ -209,13 +209,13 @@ theorem la (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
         gen_reg 12 as u2 with hU2
         have k0 : 64 * (S.mem.readLE (s.sp.toNat - 24) 8 - 1) < bl0.toNat ∧ bl0.toNat ≤ 64 * S.mem.readLE (s.sp.toNat - 24) 8 := by
           rw [← hB0]; refine blr_val _ _ ?_ ?_ (Nat.pos_of_ne_zero hz0) hl0
-          · repeat apply or_pos_left'
+          · repeat (with_reducible apply or_pos_left')
             rw [← hx0]; exact toNat_ofNat_readLE_pos _ _ ht0
           · repeat (first | apply Nat.or_lt_two_pow | exact BitVec.isLt _)
         have hL0 : LenRegs (hdrV s p len 0) bl0 u0 := lenRegs_nz hV0 hN0 (Nat.pos_of_ne_zero hz0) hl0 k0 hU0
         have k2 : 64 * (S.mem.readLE (s.sp.toNat - 88) 8 - 1) < bl2.toNat ∧ bl2.toNat ≤ 64 * S.mem.readLE (s.sp.toNat - 88) 8 := by
           rw [← hB2]; refine blr_val _ _ ?_ ?_ (Nat.pos_of_ne_zero hz2) hl2
-          · repeat apply or_pos_left'
+          · repeat (with_reducible apply or_pos_left')
             rw [← hx2]; exact toNat_ofNat_readLE_pos _ _ ht2
           · repeat (first | apply Nat.or_lt_two_pow | exact BitVec.isLt _)
         have hL2 : LenRegs (hdrV s p len 2) bl2 u2 := lenRegs_nz hV2 hN2 (Nat.pos_of_ne_zero hz2) hl2 k2 hU2
@@ -248,13 +248,13 @@ theorem la (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
         gen_reg 11 as u1 with hU1
         have k0 : 64 * (S.mem.readLE (s.sp.toNat - 24) 8 - 1) < bl0.toNat ∧ bl0.toNat ≤ 64 * S.mem.readLE (s.sp.toNat - 24) 8 := by
           rw [← hB0]; refine blr_val _ _ ?_ ?_ (Nat.pos_of_ne_zero hz0) hl0
-          · repeat apply or_pos_left'
+          · repeat (with_reducible apply or_pos_left')
             rw [← hx0]; exact toNat_ofNat_readLE_pos _ _ ht0
           · repeat (first | apply Nat.or_lt_two_pow | exact BitVec.isLt _)
         have hL0 : LenRegs (hdrV s p len 0) bl0 u0 := lenRegs_nz hV0 hN0 (Nat.pos_of_ne_zero hz0) hl0 k0 hU0
         have k1 : 64 * (S.mem.readLE (s.sp.toNat - 56) 8 - 1) < bl1.toNat ∧ bl1.toNat ≤ 64 * S.mem.readLE (s.sp.toNat - 56) 8 := by
           rw [← hB1]; refine blr_val _ _ ?_ ?_ (Nat.pos_of_ne_zero hz1) hl1
-          · repeat apply or_pos_left'
+          · repeat (with_reducible apply or_pos_left')
             rw [← hx1]; exact toNat_ofNat_readLE_pos _ _ ht1
           · repeat (first | apply Nat.or_lt_two_pow | exact BitVec.isLt _)
         have hL1 : LenRegs (hdrV s p len 1) bl1 u1 := lenRegs_nz hV1 hN1 (Nat.pos_of_ne_zero hz1) hl1 k1 hU1
@@ -296,19 +296,19 @@ theorem la (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
         gen_reg 12 as u2 with hU2
         have k0 : 64 * (S.mem.readLE (s.sp.toNat - 24) 8 - 1) < bl0.toNat ∧ bl0.toNat ≤ 64 * S.mem.readLE (s.sp.toNat - 24) 8 := by
           rw [← hB0]; refine blr_val _ _ ?_ ?_ (Nat.pos_of_ne_zero hz0) hl0
-          · repeat apply or_pos_left'
+          · repeat (with_reducible apply or_pos_left')
             rw [← hx0]; exact toNat_ofNat_readLE_pos _ _ ht0
           · repeat (first | apply Nat.or_lt_two_pow | exact BitVec.isLt _)
         have hL0 : LenRegs (hdrV s p len 0) bl0 u0 := lenRegs_nz hV0 hN0 (Nat.pos_of_ne_zero hz0) hl0 k0 hU0
         have k1 : 64 * (S.mem.readLE (s.sp.toNat - 56) 8 - 1) < bl1.toNat ∧ bl1.toNat ≤ 64 * S.mem.readLE (s.sp.toNat - 56) 8 := by
           rw [← hB1]; refine blr_val _ _ ?_ ?_ (Nat.pos_of_ne_zero hz1) hl1
-          · repeat apply or_pos_left'
+          · repeat (with_reducible apply or_pos_left')
             rw [← hx1]; exact toNat_ofNat_readLE_pos _ _ ht1
           · repeat (first | apply Nat.or_lt_two_pow | exact BitVec.isLt _)
         have hL1 : LenRegs (hdrV s p len 1) bl1 u1 := lenRegs_nz hV1 hN1 (Nat.pos_of_ne_zero hz1) hl1 k1 hU1
         have k2 : 64 * (S.mem.readLE (s.sp.toNat - 88) 8 - 1) < bl2.toNat ∧ bl2.toNat ≤ 64 * S.mem.readLE (s.sp.toNat - 88) 8 := by
           rw [← hB2]; refine blr_val _ _ ?_ ?_ (Nat.pos_of_ne_zero hz2) hl2
-          · repeat apply or_pos_left'
+          · repeat (with_reducible apply or_pos_left')
             rw [← hx2]; exact toNat_ofNat_readLE_pos _ _ ht2
           · repeat (first | apply Nat.or_lt_two_pow | exact BitVec.isLt _)
         have hL2 : LenRegs (hdrV s p len 2) bl2 u2 := lenRegs_nz hV2 hN2 (Nat.pos_of_ne_zero hz2) hl2 k2 hU2

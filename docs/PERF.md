@@ -1059,3 +1059,42 @@ amd64 RunErr has the smaller margin (802 s of 900): next trim target (the La/H3 
 | Nat/DrsSNI | 6.4 s | 2.5 GB |
 | Nat/DrsSN | 17.5 s | 2.6 GB (was > 6 min: implicit call state unified via `?X.mem =?= P.mem`; fixed by argument order) |
 | Common/DivRecIdeal | 0.4 s | 0.6 GB |
+
+## asm s22 (2026-11-12) — drs loop body modules (arm64 dev, LEAN_NUM_THREADS=4)
+DrsBd 3.5 s / 2.3 GB, DrsEnv 1.8 s, DrsCallS 1.3 s (was 292 s with `simp … at ho` over un-split `Outside` of appended
+lists; split `outside_append` by hand → 1.3 s), DrsRecQ 1.1 s, DrsRecP 9 s / 2.5 GB (was > 6 min: `unfold Apart at` 15
+hypotheses before ~40 omega calls; per-goal `apL`/`apR` sub-range lemmas instead), DrsB1 10 s / 2.6 GB, DrsB2 (WIP) 20 s.
+
+## asm s23 (2026-11-12) — drs loop body segments 2–3 (arm64 dev, LEAN_NUM_THREADS=4, loaded host)
+| module | time | peak RSS | note |
+|---|---|---|---|
+| DrsA2 (rec_post, A2) | 17 s | 2.6 GB | pure |
+| DrsB2 (b2c + b2) | 42 s | 3.1 GB | was > 6 min with blanket `try omega`/`dsimp only`/`repeat rw` closers; explicit per-slot `rw` chains |
+| DrsSN3 (sn3_pre) | 3 s | 2.2 GB | pure |
+| DrsA3 (relations) | 3.4 s | 2.2 GB | pure |
+| DrsB3N (b3n) | 11 s | 2.5 GB | |
+| DrsB3S (b3m) | 10 s | 2.4 GB | |
+* `trace_state` on janus goals: always `set_option pp.deepTerms false in set_option pp.deepTerms.threshold 8` (without the
+  threshold, printing took > 4 min).
+### agent top s17: trims of the RunErr row modules (dev builds, load ~18; `trace.profiler` findings)
+| module | before | after | fix |
+|---|---|---|---|
+| Amd64/Top/RunLaFFF (+ FFT/FTF/TFF/FTT/TTF/TFT, generated) | 103 s (40-77 s the others) | 24.5 s (12-17 s) | profile: each `repeat apply bv_or_ne_left` = 34 s, all in the FAILING last `apply` (`isDefEq` unfolds the leaf `BitVec.ofNat (readLE …)` trying to see an `|||`) → `repeat (with_reducible apply …)` |
+| Arm64/Top/RunLa | 76-103 s | 50 s | same (`or_pos_left'`) |
+| Amd64/Top/RunH1 | 102 s | 57 s | `janus64_data hd` (16 s per call: evaluates every data segment) not needed → removed |
+| Amd64/Top/RunH2S / H2M / H2 / H3S / H3M / H3 | 109 / 114 / 76 / 98 / 136 / 78 s | 67 / 86 / 45 / 72 / 84 / 45 s | drop `janus64_data hdS` (unused) + the budget `omega` (12 s in the post-run context) → `RunSmall.bud_step` |
+| Amd64/Top/RunLLo / RunLHi | 135 / 135 s, 3.7 GB | 116 / 106 s, 2.5 GB | budget `omega` (24 + 10 s) → `RunSmall.bud_err`; `janus64_data` IS needed here (the `newobject` run reads rodata) |
+| Arm64/Top/RunH2S / H3S / H2 / H3 / H1 | 124 / 152 / 56 / 57 / 64 s | 108 / 126 / 42 / 51 / 56 s | same (`janus_data` dropped, `bud_step`) |
+LESSONS: (1) never `repeat apply` on big terms without `with_reducible` (the last, failing iteration is the expensive one);
+(2) `janus64_data`/`janus_data` costs ~15 s per call — call it in a small lemma (`RunSmall.errT_word`, `RunDKDefs.uint8_words`)
+or not at all; (3) budget goals: one-line Nat lemmas, never `omega` in the post-run context.
+### infra s24 (arm64 P2W2: loop body B0..B6, exit, full/ens/sum + ResSep; dev compile, LEAN_NUM_THREADS=4)
+| module | time | mem |
+|---|---|---|
+| P2W2BJ (join defs J1..J6, JC, BF.win) | 4.1 s | 2.1 GB |
+| P2W2B0 / B1 / B2 / B3 / B4 / B5 / B6 | 9.3 / 4.5 / 8.3 / 4.6 / 15.0 / 4.5 / 12.5 s | ≤ 2.3 GB |
+| P2W2Bd (bodyKI composition) | 1.8 s | 2.1 GB |
+| P2W2X1 (norm+tail) / X2 (set copy) / X3 (make) / X4 (exitKI) | 6.0 / 18.4 / 7.9 / 11.7 s | ≤ 2.4 GB |
+| P2W2 (full) / P2W2E (ens/sum) | 2.2 / 5.7 s | ≤ 2.4 GB |
+| P2W2Cp2 after the UB.rs field (rebuild) | 81.7 s (s22: 41 s) | 2.4 GB |
+Body segments are independent modules importing only BJ (ROW-TIME rule); composition modules are trivial.

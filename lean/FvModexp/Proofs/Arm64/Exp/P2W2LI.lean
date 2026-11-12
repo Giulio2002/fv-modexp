@@ -31,6 +31,8 @@ structure UB (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc : Nat) (M : Me
   ap : 0 < c → Apart p (8 * c) (sp - K) (K + 560) ∧ Apart p (8 * c) st 24 ∧ Apart p (8 * c) RunIface.gA 32 ∧
     Apart p (8 * c) (g + 16) 8 ∧ Apart p (8 * c) (free M st).1 (free M st).2 ∧
     Apart p (8 * c) zzp (8 * (2 * W lm)) ∧ Apart p (8 * c) bp (8 * P2Pre.NB 4 lm)
+  /-- (`ResSep`) a buffer other than the entry `z` is apart from the stack's current array -/
+  rs : 0 < c → 0 < stCap M st → (p = zp ∧ c = zc) ∨ Apart p (8 * c) (stW M st) (8 * stCap M st)
 
 /-- the buffer class: U (`true`) or exactly `zz`'s stack buffer (`false`) -/
 @[reducible] def BC (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc : Nat) (M : Memory) (L1 : List (Nat × Nat))

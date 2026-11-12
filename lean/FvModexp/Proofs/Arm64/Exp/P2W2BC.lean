@@ -47,7 +47,11 @@ theorem scr_hdr (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {L1 : List
 theorem UB.call {M M' : Memory} {L1 L2 : List (Nat × Nat)} {zzp bp p c : Nat}
     (hu : UB R L K g sp st zp zc M L1 zzp bp lm p c) (hacc : ∀ a n w, M'.accessible a n w = M.accessible a n w)
     (hx : LiveExt R L1 L2) (hb : StackBack R L1 L2 st M M') : UB R L K g sp st zp zc M' L2 zzp bp lm p c := by
-  refine ⟨hu.c40, fun hc => ?_, hu.org, fun hc => ?_⟩
+  refine ⟨hu.c40, fun hc => ?_, hu.org, fun hc => ?_, fun hc => ?_⟩
+  rotate_left 2
+  · rcases hb.2.2 with ⟨e0, e2⟩ | ⟨hin, hap⟩
+    · rw [e0, e2]; exact hu.rs hc
+    · exact fun _ => Or.inr (fresh_held_apart hin hap (hu.live hc).2.1).symm
   · obtain ⟨a1, a2, a3, a4⟩ := hu.live hc
     exact ⟨a1, hx.held a2, by rw [hacc]; exact a3, a4⟩
   · obtain ⟨a1, a2, a3, a4, a5, a6, a7⟩ := hu.ap hc

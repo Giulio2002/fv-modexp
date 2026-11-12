@@ -169,9 +169,6 @@ theorem zz_of_lsh {R : RtInv} {L L' : List (Nat × Nat)}
   refine ⟨hl, ⟨⟨by omega, hc40, pacc, p48, pH, by unfold Apart; omega, by unfold Apart; omega⟩, p8, hmA.symm, hyA.symm,
     hxA.symm, by unfold Apart; omega, hstA.symm, ?_, fun h2 => ap _ _ (hz h2).1.2.2.2.2.1⟩, by simp only [AW, Apart]; omega,
     by omega, by rw [← hl]; exact hval, hrA.symm, hc40⟩
-  simp only [stUp]; rw [e0, e2]
-  unfold Apart at hsA ⊢
-  have := hsok.2.2.2.2.2.1
-  omega
+  rw [e0, e2]; exact hsA.symm
 
 end FvModexp.Arm64.W2Pro
