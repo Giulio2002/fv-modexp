@@ -56,6 +56,7 @@ theorem ofNat_sub64 {a b : Nat} (h : b ≤ a) (ha : a < 2 ^ 64) :
     BitVec.ofNat 64 a - BitVec.ofNat 64 b = BitVec.ofNat 64 (a - b) := by
   apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
 
+set_option maxRecDepth 20000 in
 open Janus Janus.Amd64 in
 /-- The `type:uint8` descriptor words read by `makeslice` (size 1, ptrdata 0), from the loaded rodata. -/
 theorem uint8_words {m : Janus.Arm64.Memory} (hd : Extracted.program.DataLoaded m) :
@@ -63,6 +64,7 @@ theorem uint8_words {m : Janus.Arm64.Memory} (hd : Extracted.program.DataLoaded 
   janus64_data hd
   exact ⟨by rw [h_rodata _ _ (by decide)]; decide, by rw [h_rodata _ _ (by decide)]; decide⟩
 
+set_option maxRecDepth 20000 in
 open Janus Janus.Amd64 in
 theorem uint8_acc {m : Janus.Arm64.Memory} (hd : Extracted.program.DataLoaded m) : m.accessible 7231264 16 false = true := by
   janus64_data hd; exact Janus.Arm64.Memory.accessible_mono _ h_data0 (by omega) (by omega)
