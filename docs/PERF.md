@@ -1064,3 +1064,15 @@ amd64 RunErr has the smaller margin (802 s of 900): next trim target (the La/H3 
 DrsBd 3.5 s / 2.3 GB, DrsEnv 1.8 s, DrsCallS 1.3 s (was 292 s with `simp … at ho` over un-split `Outside` of appended
 lists; split `outside_append` by hand → 1.3 s), DrsRecQ 1.1 s, DrsRecP 9 s / 2.5 GB (was > 6 min: `unfold Apart at` 15
 hypotheses before ~40 omega calls; per-goal `apL`/`apR` sub-range lemmas instead), DrsB1 10 s / 2.6 GB, DrsB2 (WIP) 20 s.
+
+## asm s23 (2026-11-12) — drs loop body segments 2–3 (arm64 dev, LEAN_NUM_THREADS=4, loaded host)
+| module | time | peak RSS | note |
+|---|---|---|---|
+| DrsA2 (rec_post, A2) | 17 s | 2.6 GB | pure |
+| DrsB2 (b2c + b2) | 42 s | 3.1 GB | was > 6 min with blanket `try omega`/`dsimp only`/`repeat rw` closers; explicit per-slot `rw` chains |
+| DrsSN3 (sn3_pre) | 3 s | 2.2 GB | pure |
+| DrsA3 (relations) | 3.4 s | 2.2 GB | pure |
+| DrsB3N (b3n) | 11 s | 2.5 GB | |
+| DrsB3S (b3m) | 10 s | 2.4 GB | |
+* `trace_state` on janus goals: always `set_option pp.deepTerms false in set_option pp.deepTerms.threshold 8` (without the
+  threshold, printing took > 4 min).
