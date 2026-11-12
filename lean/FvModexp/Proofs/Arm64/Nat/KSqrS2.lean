@@ -16,6 +16,7 @@ theorem KM.x0val {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n 
     {lx0 lx1 t : Nat} {Lk : List (Nat × Nat)} {bk spent : Nat} {M : Memory}
     (h : KM R b L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) : natVal M xp lx0 = kX0 s xp n := by
   have hl := h.l0; simp only [kn2] at hl
+  show natVal M xp lx0 = natVal s.mem xp (kn2 n)
   rw [← h.v0]; unfold natVal; exact h.xrd (Nat.le_refl _) (by omega)
 
 /-- **`KB4`** at the state after the header stores (`0x1bc4d0`), from `KB3` (memory `S3.mem`), the inner square's
