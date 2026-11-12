@@ -132,27 +132,36 @@ theorem kS2 (impl : List Segment) (R : RtInv)
         · exact hzh'.sub q1 q2
         · exact hkm.scr.held.sub q1 q2
       refine hkm.keepH (hF := hF0) (hLF := hLF) (hsp := by exact hspN) (by omega) (by omega) hH ?_ ?_
-      · simp only [win, outside_cons, outside_nil, and_true]; omega
-      · simp only [stkWs, List.cons_append, List.nil_append, outside_cons, outside_nil, and_true]; omega
+      · simp only [win, outside_cons, outside_nil, and_true]
+        rcases ha with ⟨q1, q2⟩ | ⟨q1, q2⟩
+        · clear u1 u2 htw htz s1 s2' hstw hfrw hq; omega
+        · clear u1 u2 hzw' htz s1 s2' hstw hfrw hq; omega
+      · simp only [stkWs, List.cons_append, List.nil_append, outside_cons, outside_nil, and_true]
+        rcases ha with ⟨q1, q2⟩ | ⟨q1, q2⟩
+        · clear u1 u2 htw htz hfrw hstw; omega
+        · clear s1 s2' hzw' hq hfrw hstw; omega
     have hzz := hB.zz
     have h0 : natVal S.mem zp (2 * kh n) = 0 := by
       have := natVal_zero_part (i := 0) (k := 2 * kh n) hzz (by omega); simpa using this
     have hhi : natVal S.mem (zp + 16 * kh n) (2 * n - 2 * kh n) = 0 := by
       have := natVal_zero_part (i := 2 * kh n) (k := 2 * n - 2 * kh n) hzz (by omega)
       rw [show zp + 8 * (2 * kh n) = zp + 16 * kh n by omega] at this; exact this
+    have hkzT : ∀ a m, t ≤ a → a + m ≤ t + 8 * kT n → s2.mem.readLE a m = S.mem.readLE a m :=
+      fun a m q1 q2 => hkz a m (Or.inr ⟨q1, q2⟩) (by omega)
+    clear hzw' hstw hfrw htw s1 s2' u1 u2 hF hF0 hLF hzx hzy hxw hyw hzw htz
     have hl1 := hB.hl1
     refine hK s2 Lk' bk' l' ⟨⟨by rw [hr]; rfl, by rw [hk.1], by rw [hk.2.1]; exact h28, by rw [hk.2.2.1]; exact h29,
       by rw [hk.2.2.2]; exact h18⟩, hkm2, NatSqr.IntAt.keep hB.z1h fun x m q1 q2 => hrd x m (by omega) (by omega)
       (Or.inl (by omega)), hB.hng, hB.hcan, hl1, ?_, ?_, hz, by omega, hv0, hnn,
       NatSqr.IntAt.keep hB.z2h fun x m q1 q2 => hrd x m (by omega) (by omega) (Or.inl (by omega)), ?_, ?_⟩
     · have e : natVal s2.mem t l1 = natVal S.mem t l1 := by
-        unfold natVal; exact hkz _ _ (Or.inr ⟨Nat.le_refl _, by omega⟩) (by omega)
+        unfold natVal; exact hkzT _ _ (Nat.le_refl _) (by omega)
       rw [e]; exact hB.z1v
     · rcases hB.z1n with q | q
       · exact Or.inl q
       · by_cases hq0 : l1 = 0
         · exact Or.inl hq0
-        · right; rwa [hkz _ _ (Or.inr ⟨by omega, by omega⟩) (by omega)]
+        · right; rwa [hkzT _ _ (by omega) (by omega)]
     · refine fill_val (by omega) h0 hv2 ?_
       unfold natVal; exact hkz _ _ (Or.inl ⟨by omega, by omega⟩) (Or.inr (by omega))
     · rw [← hhi]; unfold natVal; exact hkz _ _ (Or.inl ⟨by omega, by omega⟩) (Or.inr (by omega))
