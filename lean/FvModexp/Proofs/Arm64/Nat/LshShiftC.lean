@@ -8,6 +8,44 @@ open FvModexp.Arm64.Callees
 set_option linter.janusRenameI false
 
 namespace FvModexp.Arm64.Lsh
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 64000000 in
+/-- after `lshVU` (return state `T`, memory `w`): reloads, `z[n] = carry`, to `hClr`, then `fromClr` (small context) -/
+theorem shiftT (impl : List Segment) (R : RtInv)
+    (hmc : MemclrNoHeapPointersLive (LibLsh.program.link impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
+    (b : Nat) (L : List (Nat × Nat)) (zp zc x xl sh : Nat)
+    (s : State) (p c : Nat) (L' : List (Nat × Nat)) (b' : Nat) (M : Memory)
+    (h : Mid R b L zp zc x xl sh s p c L' b' M) (w : Memory) (cy : Nat)
+    (hF1 : MemFrame M (w.writeLE (p + 8 * (xl + sh / 64)) 8 cy) (R.rt ++ ws s p c))
+    (hLF1 : LiveFrame M (w.writeLE (p + 8 * (xl + sh / 64)) 8 cy) L' [(p, p + 8 * c)])
+    (hinv2 : R.inv b' L' (s.regs 28).toNat (view R.rt L' (w.writeLE (p + 8 * (xl + sh / 64)) 8 cy)))
+    (hval : natVal (w.writeLE (p + 8 * (xl + sh / 64)) 8 cy) (p + 8 * (sh / 64)) (xl + 1) =
+      natVal s.mem x xl * 2 ^ (sh % 64))
+    (w5 : w.readLE (s.sp.toNat - 24) 8 = p) (w6 : w.readLE (s.sp.toNat - 80) 8 = c)
+    (w7 : w.readLE (s.sp.toNat - 32) 8 = sh / 64) (w8 : w.readLE (s.sp.toNat - 40) 8 = xl + sh / 64)
+    (w9 : w.readLE (s.sp.toNat - 48) 8 = xl + sh / 64 + 1) (w10 : w.readLE (s.sp.toNat + 56) 8 = sh)
+    (hwacc : w.accessible (p + 8 * (xl + sh / 64)) 8 true = true)
+    (hsacc' : w.accessible (s.sp.toNat - 4256) (4256 + 64) true = true)
+    (T : State) (hpc : T.pc = BitVec.ofNat 64 (callLsh + 4)) (hsp : T.sp = s.sp - 160#64)
+    (h28 : T.regs 28 = s.regs 28) (h29 : T.regs 29 = s.sp - 168#64) (h18 : T.regs 18 = s.regs 18) (hm : T.mem = w)
+    (hcy : w.readLE (s.sp.toNat - 96) 8 = cy) :
+    ReachesRet (LibLsh.program.link impl) (s.regs 30) T fun s' =>
+      (s'.sp = s.sp ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧ s'.regs 18 = s.regs 18) ∧
+        Post R b L zp zc x xl sh s s' := by
+  have hsp0 := h.sp0; have hsp1 := h.sp1; have hcap := h.cap; have hc40 := h.c40; have hp48 := h.p48
+  have hn16 := h.n16; have hal := h.al; have hpw := h.pw
+  simp only [need] at hcap hn16
+  unfold Apart at hpw
+  janus_run [hm, w5, w6, w7, w8, w9, w10, hcy, mod64_of_lt (p + 8 * (xl + sh / 64)) (by omega)] until [hClr]
+  refine fromClr impl R hmc b L zp zc x xl sh s p c L' b' M h _ hF1 hLF1 hinv2 hval ?_ ?_ ?_ _ ?_ ?_ ?_ ?_ ?_ ?_
+    ?_ ?_ ?_ ?_ ?_
+  · exact (Memory.readLE_writeLE_of_disjoint (m := w) _ (by omega)).trans w5
+  · exact (Memory.readLE_writeLE_of_disjoint (m := w) _ (by omega)).trans w9
+  · exact (Memory.readLE_writeLE_of_disjoint (m := w) _ (by omega)).trans w6
+  all_goals try janus_simp
+  all_goals (congr 1; omega)
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- from `CALL lshVU.abi0` (state `C`) to the clear point, then `fromClr` -/
@@ -89,14 +127,8 @@ theorem shiftC (impl : List Segment) (R : RtInv)
   have hsacc' : w.accessible (s.sp.toNat - 4256) (4256 + 64) true = true := by rw [q3.accessible]; exact hsacc
   have q2' : w.readLE (s.sp.toNat - 96) 8 = natVal C.mem x xl * 2 ^ (sh % 64) / 2 ^ (64 * xl) := q2
   rw [← q2'] at hF1 hLF1 hinv2 hval
-  janus_run [w5, w6, w7, w8, w9, w10, mod64_of_lt (p + 8 * (xl + sh / 64)) (by omega)] until [hClr]
-  refine fromClr impl R hmc b L zp zc x xl sh s p c L' b' M h _ hF1 hLF1 hinv2 hval ?_ ?_ ?_ _ ?_ ?_ ?_ ?_ ?_ ?_
-    ?_ ?_ ?_ ?_ ?_
-  · exact (Memory.readLE_writeLE_of_disjoint (m := w) _ (by omega)).trans w5
-  · exact (Memory.readLE_writeLE_of_disjoint (m := w) _ (by omega)).trans w9
-  · exact (Memory.readLE_writeLE_of_disjoint (m := w) _ (by omega)).trans w6
-  all_goals try janus_simp
-  all_goals (congr 1; omega)
-
+  refine shiftT impl R hmc b L zp zc x xl sh s p c L' b' M h w (w.readLE (s.sp.toNat - 96) 8) hF1 hLF1 hinv2 hval
+    w5 w6 w7 w8 w9 w10 hwacc hsacc' _ ?_ ?_ ?_ ?_ ?_ rfl rfl
+  all_goals janus_simp
 
 end FvModexp.Arm64.Lsh

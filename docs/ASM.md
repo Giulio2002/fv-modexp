@@ -243,3 +243,15 @@ Shapes: NOTES-conventions "[asm s11]", "[asm s12]".
   `Rsh.Hyp` (pre `Rsh.RshPre … ∧ xl ≤ xc ∧ xc < 2^40`, post `Rsh.RshPost` = fsBase ∧ DF ∧ NatRes need `len x - s/64`).
   Premises: live makeslice/memmove; rshVU via the new `Amd64/Nat/RshCallee.lean` (`Callees.rshVUHyp`, `RshLPre/RshLQ`,
   `RshVUHyp.live`, Run segment 47).
+
+## asm s14 (2026-11-12): nat.trunc amd64 PROVED; rows Trunc/Lsh/Rsh (both ISAs)
+* `FvModexp.Amd64.Trunc.ens impl hap R hmk hmv : Trunc.Hyp2 impl R Trunc.names 4192 64` (Proofs/Amd64/Nat/Trunc*.lean;
+  premises `MakesliceLiveContract64`, `MemmoveLive64`). Pre = infra's amd64 `EvenHyp.TruncPre` (window 4192/64 = frame
+  0x58 + CALL push 8 + 4096) ∧ `NatNorm x ∨ ⌈n/64⌉ ≤ len x` ∧ `z = x ∨ 0 < cap z ∨ (0 < len x ∧ 0 < n)` (the arm64 Hyp2
+  shape, weak NatNorm pre from the start); post exactly `EvenHyp.TruncPost` (fsBase ∧ DF first). Module DAG:
+  Defs ← {Mid, Norm (mask + norm loop + fromTst), SetC (set-path copy), Zero}; Norm ← Copy (copyM stops at the memmove
+  return `+0xe8`, copyT continues); {Copy, Mid} ← {Main (reuse), MainA (alloc)}; {SetC, Mid} ← {Set, SetA} ← Trunc.
+* Rows (one module per function, segAddr names as string literals): `FvModexp.<Isa>.{Trunc,Lsh,Rsh}Row.correctness`
+  + `Witness.nonvacuous` (witness: `z` empty, `x = 5 + 9·B`, `n = 70` / `s = 3`; sites mk + mv (+ cl for lsh)).
+  LshRow's main theorem is `Lsh.ens` (Hyp2); `Lsh.ensZ` (nat.go:955 shape) has no row of its own yet.
+  Verdicts: build/asm-rows.tsv (TruncRow arm64 PASS 257 s / 3.2 GB, amd64 PASS 426 s / 4.2 GB).

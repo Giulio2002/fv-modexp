@@ -17,10 +17,6 @@ set_option linter.janusRenameI false
 
 namespace FvModexp.Amd64.Rsh
 
-theorem shr6 (sh : Nat) (h : sh < 2 ^ 64) : BitVec.ofNat 64 sh >>> 6 = BitVec.ofNat 64 (sh / 64) := by
-  apply BitVec.eq_of_toNat_eq
-  simp only [BitVec.toNat_ushiftRight, BitVec.toNat_ofNat, Nat.shiftRight_eq_div_pow]; omega
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem mainReuse (impl : List Amd64.Segment) (R : RtInv)

@@ -1,5 +1,8 @@
-import FvModexp.Proofs.Amd64.Nat.RshMainA
-import FvModexp.Proofs.Amd64.Nat.RshMainB
+import FvModexp.Proofs.Amd64.Nat.RshMain
+import FvModexp.Proofs.Amd64.Nat.RshMainAC
+import FvModexp.Proofs.Amd64.Nat.RshMainAS
+import FvModexp.Proofs.Amd64.Nat.RshMainBC
+import FvModexp.Proofs.Amd64.Nat.RshMainBS
 import FvModexp.Proofs.Amd64.Nat.RshZero
 import FvModexp.Proofs.Amd64.Nat.RshSetA
 
@@ -48,10 +51,16 @@ theorem full (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
   by_cases hz : need xl sh ≤ zc
   · exact mainReuse impl R hRsh hmv' b L zp zl zc x xl xc sh s he hxc hxc' hsh (by omega) hn0 hz hpre
   · by_cases hn1 : need xl sh = 1
-    · exact mainAlloc1 impl R hRsh hmk' hmv' b L zp zl zc x xl xc sh s he hxc hxc' hsh (by omega) hn0 (by omega)
-        hn1 hpre
-    · exact mainAlloc4 impl R hRsh hmk' hmv' b L zp zl zc x xl xc sh s he hxc hxc' hsh (by omega) hn0 (by omega)
-        hn1 hpre
+    · by_cases hr0 : sh % 64 = 0
+      · exact mainAlloc1C impl R hRsh hmk' hmv' b L zp zl zc x xl xc sh s he hxc hxc' hsh (by omega) hn0 (by omega)
+          hn1 hr0 hpre
+      · exact mainAlloc1S impl R hRsh hmk' hmv' b L zp zl zc x xl xc sh s he hxc hxc' hsh (by omega) hn0 (by omega)
+          hn1 hr0 hpre
+    · by_cases hr0 : sh % 64 = 0
+      · exact mainAlloc4C impl R hRsh hmk' hmv' b L zp zl zc x xl xc sh s he hxc hxc' hsh (by omega) hn0 (by omega)
+          hn1 hr0 hpre
+      · exact mainAlloc4S impl R hRsh hmk' hmv' b L zp zl zc x xl xc sh s he hxc hxc' hsh (by omega) hn0 (by omega)
+          hn1 hr0 hpre
 
 /-- **`nat.rsh`** (amd64): `z.rsh(x, s)` (`z` apart from `x`, `x` normalised and non-empty, `s = 0` only with
 `cap z = 0`) returns a normalised nat holding `X / 2^s`, in `z`'s array (`cap z ≥ len x - s/64`) or a fresh one of

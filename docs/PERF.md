@@ -801,3 +801,13 @@ RunH2S 178 s / 2.8 GB, RunH2M 173 s / 3.3 GB, RunH2 721 s → 119 s / 2.6 GB (no
 cost), RunH3S 189 s, RunH3M 235 s / 3.4 GB, RunH3 142 s; RunLa single module > 900 s → 4 modules (FF 358 s) → 8 case
 modules 14–213 s / ≤ 2.3 GB; RunL single 205 s for the run alone → RunLLo/RunLHi 182 s / 3.7 GB each.
 Row amd64 RunErr (janus-provfix, warm cache-top): 491 s wall, peak 5.94 GB (cold run: timeout while compiling deps).
+
+### asm s14: nat.trunc amd64, speed-ups (dev `mkp.py`, host load ~35, wall / peak RSS)
+| module | time | note |
+|---|---|---|
+| Amd64/Nat/TruncDefs, Mid, Zero, Trunc | 1.7, 10.3, 15.3, 6.4 s / ≤ 2.6 GB | |
+| Amd64/Nat/TruncNorm (mask + norm + fromTst), TruncCopy, TruncSetC | 24, 22, 18 s / ≤ 2.6 GB | copyM stops at the memmove return, copyT continues (small context) |
+| Amd64/Nat/TruncMain / TruncMainA / TruncSet / TruncSetA | 13 / 91 / 12 / 88 s / ≤ 2.6 GB | MainA/SetA hold two makeslice runs (`w = 1` / `make(w, w+4)`): split if a row needs it |
+| Arm64/Nat/LshShiftC | 59 s / 2.6 GB (was 113-161 s / 3.4 GB) | post-call run moved into `shiftT` (small context), as amd64 s13 |
+| Amd64/Nat/RshMainA/B → RshMainAC/AS/BC/BS | see rows log | one makeslice run per module (copy / shift), shr6 moved to RshDefs |
+| row TruncRow arm64 / amd64 | PASS 257 s / 3.2 GB; PASS 426 s / 4.2 GB | |

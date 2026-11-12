@@ -95,6 +95,10 @@ theorem add_c (v k : Nat) (h : v + k < 2 ^ 64) :
     BitVec.ofNat 64 v + BitVec.ofNat 64 k = BitVec.ofNat 64 (v + k) := by
   apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega
 
+theorem shr6 (sh : Nat) (h : sh < 2 ^ 64) : BitVec.ofNat 64 sh >>> 6 = BitVec.ofNat 64 (sh / 64) := by
+  apply BitVec.eq_of_toNat_eq
+  simp only [BitVec.toNat_ushiftRight, BitVec.toNat_ofNat, Nat.shiftRight_eq_div_pow]; omega
+
 /-- the entry facts shared by both paths -/
 theorem ofNat_ne0 (v : Nat) (h0 : 0 < v) (h : v < 2 ^ 64) : (BitVec.ofNat 64 v = 0#64) = False := by
   simp only [eq_iff_iff, iff_false]; intro e

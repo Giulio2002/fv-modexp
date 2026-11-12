@@ -1,4 +1,6 @@
-import FvModexp.Proofs.Amd64.Nat.RshMain
+import FvModexp.Proofs.Amd64.Nat.RshCopy
+import FvModexp.Proofs.Amd64.Nat.RshCallee
+import FvModexp.Proofs.Amd64.Nat.RshMid
 
 /-!
 # `nat.rsh` (amd64): entry to the join of `z.make(n)` on the allocation path (`cap z < n`), `n ≠ 1` (`make(nat, n, n + 4)`), then
@@ -16,14 +18,15 @@ namespace FvModexp.Amd64.Rsh
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem mainAlloc4 (impl : List Amd64.Segment) (R : RtInv)
+theorem mainAlloc4C (impl : List Amd64.Segment) (R : RtInv)
     (hRsh : ∀ b L, Summary0 (LibRsh.program.link impl) (segAddr Extracted.program rshVUfn) (RshLPre R b L)
       (RshLQ R b L))
     (hmk : MakesliceLiveContract64 (LibRsh.program.link impl) (cA "runtime.makeslice") 4096 R)
     (hmv : MemmoveLive64 (LibRsh.program.link impl) (cA "runtime.memmove") 4096 R)
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc x xl xc sh : Nat) (s : State)
     (he : Entry s zp zl zc x xl xc sh) (hxc : xl ≤ xc) (hxc' : xc < 2 ^ 40) (hsh : sh < 2 ^ 64) (hs0 : 0 < sh)
-    (hn0 : 0 < need xl sh) (hz : zc < need xl sh) (hn1 : need xl sh ≠ 1) (hpre : Pre R b L zp zl zc x xl sh s) :
+    (hn0 : 0 < need xl sh) (hz : zc < need xl sh) (hn1 : need xl sh ≠ 1) (hr0 : sh % 64 = 0)
+    (hpre : Pre R b L zp zl zc x xl sh s) :
     ReachesRet (LibRsh.program.link impl) (retAddrOf s) s fun s' => RegsOK s s' ∧ PostI R b L zp zc x xl sh s s' := by
   obtain ⟨hpc, hra, hx15, hdf, h0, h3, h1, h7, h6, h8, h9⟩ := he
   obtain ⟨hg1, hg2, hg3, hb', ha, hw, hal, htg⟩ := pre_env hpre
@@ -63,28 +66,16 @@ theorem mainAlloc4 (impl : List Amd64.Segment) (R : RtInv)
       (s.regs 4).toNat - 4248 ≤ r.1 ∧ r.2 ≤ (s.regs 4).toNat - 56 := by
     intro r hr; simp only [List.mem_cons, List.not_mem_nil, or_false] at hr
     rcases hr with rfl | rfl <;> simp only <;> omega
-  by_cases hr0 : sh % 64 = 0
-  · janus64_run [hq, hxn, hs0', hmz, hmn, hn1v, hn4, hm4, BitVec.msb_eq_decide] until [hJoin] calls [hmk.pos]
-    rename_i ptr _ _ _ _ m _ _ hLF hMF hAp hIn hle hacc h8 _ _ hrb _ hinv' _ _ _
-    have hmid := fun hF r1 r2 => mid_of_alloc (round := _) hpre hz hra hx15 hdf hF r1 r2 hn0 hcs hLF
-      hMF hAp hIn hle (by rw [hMF.accessible]; simpa only [Janus.Arm64.Memory.accessible_writeLE] using hacc)
-      (h8 (Or.inr (by omega))) hinv' (c := xl - sh / 64 + 4) (by simp only [need]; omega) (by omega) hrb (by rw [hmcost]; omega)
-    refine copyM impl R hmv b L zp zc x xl xc sh s ptr.toNat _ _ _ m
-      (hmid ?hF ?_ ?_) hr0 hxc hxc' _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl
-    case hF => simp only [win]; janus_frame
-    all_goals try janus64_simp
-    all_goals first | exact hx15 | exact hdf | skip
-    all_goals (apply BitVec.eq_of_toNat_eq; simp)
-  · janus64_run [hq, hxn, hs0', hmz, hmn, hn1v, hn4, hm4, BitVec.msb_eq_decide] until [hJoin] calls [hmk.pos]
-    rename_i ptr _ _ _ _ m _ _ hLF hMF hAp hIn hle hacc h8 _ _ hrb _ hinv' _ _ _
-    have hmid := fun hF r1 r2 => mid_of_alloc (round := _) hpre hz hra hx15 hdf hF r1 r2 hn0 hcs hLF
-      hMF hAp hIn hle (by rw [hMF.accessible]; simpa only [Janus.Arm64.Memory.accessible_writeLE] using hacc)
-      (h8 (Or.inr (by omega))) hinv' (c := xl - sh / 64 + 4) (by simp only [need]; omega) (by omega) hrb (by rw [hmcost]; omega)
-    refine shiftA impl R hRsh b L zp zc x xl xc sh s ptr.toNat _ _ _ m
-      (hmid ?hF ?_ ?_) hr0 hxc hxc' _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl
-    case hF => simp only [win]; janus_frame
-    all_goals try janus64_simp
-    all_goals first | exact hx15 | exact hdf | skip
-    all_goals (apply BitVec.eq_of_toNat_eq; simp)
+  janus64_run [hq, hxn, hs0', hmz, hmn, hn1v, hn4, hm4, BitVec.msb_eq_decide] until [hJoin] calls [hmk.pos]
+  rename_i ptr _ _ _ _ m _ _ hLF hMF hAp hIn hle hacc h8 _ _ hrb _ hinv' _ _ _
+  have hmid := fun hF r1 r2 => mid_of_alloc (round := _) hpre hz hra hx15 hdf hF r1 r2 hn0 hcs hLF
+    hMF hAp hIn hle (by rw [hMF.accessible]; simpa only [Janus.Arm64.Memory.accessible_writeLE] using hacc)
+    (h8 (Or.inr (by omega))) hinv' (c := xl - sh / 64 + 4) (by simp only [need]; omega) (by omega) hrb (by rw [hmcost]; omega)
+  refine copyM impl R hmv b L zp zc x xl xc sh s ptr.toNat _ _ _ m
+    (hmid ?hF ?_ ?_) hr0 hxc hxc' _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl
+  case hF => simp only [win]; janus_frame
+  all_goals try janus64_simp
+  all_goals first | exact hx15 | exact hdf | skip
+  all_goals (apply BitVec.eq_of_toNat_eq; simp)
 
 end FvModexp.Amd64.Rsh
