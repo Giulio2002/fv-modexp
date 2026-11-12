@@ -126,7 +126,7 @@ theorem seg1 {impl : List Segment} (hap : ImplApart Extracted.program impl) {R :
   intro s' g1 g2 g3 g4 g5 g6 hpost
   have hS3 : S3.sp.toNat = sp := by rw [f2, BitVec.toNat_ofNat]; omega
   have hg3' : (S3.regs 28).toNat = g := by rw [f7, BitVec.toNat_ofNat]; omega
-  obtain ⟨L2, b2, hb2, hw2, hsc, hz0, hz1, hz2, hF⟩ :=
+  obtain ⟨L2, b2, hb2, hw2, hsc, hz0, hz1, hz2, hF, -⟩ :=
     WC.stkNat hP hw0 hkN haN hS3 hg3' f9 (g6.trans (by rw [f9])) (by simp only [a1]; omega) hpost
   have hk := keepC hP hw0 (zs := []) (by simpa only [List.append_nil] using hF) hkN haN
     (fun _ _ _ _ => by simp only [outside_nil])

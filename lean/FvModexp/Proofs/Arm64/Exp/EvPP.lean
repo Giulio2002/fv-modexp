@@ -31,7 +31,8 @@ theorem WC.stkNat (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s)
       WC R L K g sp st zp zc s.mem s'.mem L2 b2 (ℓ + StackNat.rnd n) ∧
       Scr R L L2 s.mem s'.mem st (stW s'.mem st + 8 * ℓ) n ∧
       s'.regs 0 = BitVec.ofNat 64 (stW s'.mem st + 8 * ℓ) ∧ s'.regs 1 = BitVec.ofNat 64 n ∧
-      s'.regs 2 = BitVec.ofNat 64 n ∧ MemFrame M s'.mem (R.rt ++ [(sp - stk, sp - 8), (sp + 8, sp + above)] ++ stkWs M st) := by
+      s'.regs 2 = BitVec.ofNat 64 n ∧ MemFrame M s'.mem (R.rt ++ [(sp - stk, sp - 8), (sp + 8, sp + above)] ++ stkWs M st) ∧
+      Scr R L1 L2 M s'.mem st (stW s'.mem st + 8 * ℓ) n := by
   have hK := hP.1.2.2.2.2.2.2.2.2.1
   obtain ⟨h0, h1, h2, L2, b2, ⟨hx, hb, hinv⟩, hok, hlen, hsame, hgrow, hF, hLF, hmemb⟩ := hpost
   subst hm
@@ -41,7 +42,7 @@ theorem WC.stkNat (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s)
     simpa only [winA, hsp] using hF
   have hsc : Scr R L1 L2 S1.mem s'.mem st (stW s'.mem st + 8 * ℓ) n :=
     Scr.of_post hok hlen hn hsame hgrow h.len.symm
-  refine ⟨L2, b2, hb, ?_, Scr.rebase h hsc, h0 hn, h1, h2, hF'⟩
+  refine ⟨L2, b2, hb, ?_, Scr.rebase h hsc, h0 hn, h1, h2, hF', hsc⟩
   refine h.call (ws := [(sp - stk, sp - 8), (sp + 8, sp + above)] ++ stkWs S1.mem st) (by rwa [List.append_assoc] at hF')
     hLF hrg ?_ (fun a k hin ho => stk_out h (Or.inl hin) ho) hx hinv hok hlen (by omega) ?_ ?_
   · intro a k o1 o2 o3 o4
