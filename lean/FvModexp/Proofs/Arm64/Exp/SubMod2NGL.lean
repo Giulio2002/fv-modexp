@@ -196,4 +196,39 @@ theorem curA_win {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {op zp zl zc yp y
   · exact ⟨by omega, hzg, hz1, hz2⟩
   · exact ⟨fresh_win hout hin, (hin.apart hgrt).symm, (hin.apart ort).symm, (apart_fresh oph hAp hin).symm⟩
 
+
+/-! ## Empty ranges in a frame (adapted from agent divmc's `NatMul.memFrame_drop_empty` / `liveFrame_drop_empty`,
+Arm64/Nat/MulOneP.lean; copied to keep this module off the `nat.mul` import chain) -/
+
+theorem memFrame_drop_empty {m m' : Memory} {rs : List (Nat × Nat)} {p e : Nat} (he : e ≤ p)
+    (h : MemFrame m m' (rs ++ [(p, e)])) : MemFrame m m' rs :=
+  ⟨fun a n ho => Memory.readLE_congr (fun i hi => by
+      have := h.readLE (a + i) 1 (by
+        simp only [outside_append, outside_cons, outside_nil, and_true]
+        exact ⟨ho.of_sub (by omega) (by omega), by omega⟩)
+      have h2 : (m.bytes (a + i)).toNat = (m'.bytes (a + i)).toNat := by simpa using this.symm
+      exact (BitVec.eq_of_toNat_eq h2).symm), h.accessible⟩
+
+theorem liveFrame_drop_empty {m m' : Memory} {L ws : List (Nat × Nat)} {p e : Nat} (he : e ≤ p)
+    (h : LiveFrame m m' L (ws ++ [(p, e)])) : LiveFrame m m' L ws :=
+  ⟨fun a n hin ho => Memory.readLE_congr (fun i hi => by
+      obtain ⟨r, hr, h1, h2⟩ := hin
+      have := h.readLE (a + i) 1 ⟨r, hr, by omega, by omega⟩ (by
+        simp only [outside_append, outside_cons, outside_nil, and_true]
+        exact ⟨ho.of_sub (by omega) (by omega), by omega⟩)
+      have h2 : (m.bytes (a + i)).toNat = (m'.bytes (a + i)).toNat := by simpa using this.symm
+      exact (BitVec.eq_of_toNat_eq h2).symm)⟩
+
+/-- a range held by the entry live set and outside the window keeps its bytes; apartness from `z`'s array only
+needed when `cap z > 0` -/
+theorem rd_heldG {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {s : State} {zp zc n k : Nat} {M : Memory}
+    {L1 : List (Nat × Nat)} {b1 : Nat} (h : Rt R b L s zp zc n k M L1 b1) {a m : Nat} (hh : Held R L a m)
+    (hw : Outside a m (winA s K A)) (hz : 0 < zc → Apart a m zp (8 * zc)) : M.readLE a m = s.mem.readLE a m := by
+  rcases Nat.eq_zero_or_pos zc with h0 | h0
+  · subst h0
+    have hF := memFrame_drop_empty (show zp + 8 * 0 ≤ zp by omega) h.2.1
+    have hLF := liveFrame_drop_empty (ws := []) (show zp + 8 * 0 ≤ zp by omega) h.2.2.1
+    exact Expmc.held_readLE (ws2 := []) hh (by simpa only [List.append_nil] using hF) hLF hw trivial
+  · exact rd_held h hh hw (hz h0)
+
 end FvModexp.Arm64.SubMod2N

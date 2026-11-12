@@ -47,6 +47,43 @@ theorem truncPreG_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {op zp zl zc 
     have h2 : wCost n * k ≤ wCost n * 4 := Nat.mul_le_mul_left _ hk
     omega
 
+
+theorem PreG.costB {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {op zp zl zc yp yl yc n : Nat} {s : State}
+    (hpre : PreG R b L op zp zl zc yp yl yc n s) : cost n ≤ b :=
+  hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1.1
+
+theorem PreG.zwin {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {op zp zl zc yp yl yc n : Nat} {s : State}
+    (hpre : PreG R b L op zp zl zc yp yl yc n s) :
+    (zp + 8 * zc ≤ s.sp.toNat - 4608 ∨ s.sp.toNat + 88 ≤ zp) ∧ Apart zp (8 * zc) ((s.regs 28).toNat + 16) 8 := by
+  have hzw := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  simp only [win, K, A, outside_cons, outside_nil, and_true] at hzw
+  exact ⟨hzw, hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1⟩
+
+/-- `truncPreG_of` with `z` itself as the destination -/
+theorem truncPreG_self {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {op zp zl zc yp yl yc n : Nat} {s : State}
+    (hpre : PreG R b L op zp zl zc yp yl yc n s) {bb : Nat} (hbb : cost n ≤ bb) {M : Memory}
+    {L1 : List (Nat × Nat)} {b1 k : Nat} (hrt : Rt R bb L s zp zc n k M L1 b1) (hk : k ≤ 4) {S : State}
+    (hS : S.mem = M) (hsp : S.sp = BitVec.ofNat 64 (s.sp.toNat - 144)) (h28 : S.regs 28 = s.regs 28)
+    {stk above : Nat} (hkT : stk ≤ 4464) (haT : above ≤ 88) {zl' : Nat} (hzl' : zl' ≤ zc)
+    {x xl : Nat} (hx40 : xl < 2 ^ 40) (hxa : M.accessible x (8 * xl) false = true) (hx48 : x + 8 * xl ≤ 2 ^ 48)
+    (hxh : Held R L1 x (8 * xl)) (hxw : x + 8 * xl ≤ s.sp.toNat - 4608 ∨ s.sp.toNat - 56 ≤ x) (hxl : xl ≤ 2 ^ 16)
+    (halias : zp = x ∨ (0 < zc → 0 < xl → Apart zp (8 * zc) x (8 * xl))) :
+    TruncPre R b1 L1 stk above zp zl' zc x xl n S :=
+  truncPreG_of hpre hbb hrt hk hS hsp h28 hkT haT hzl' hpre.2.2.2.2.2.2.2.2.2.2.1 hrt.2.2.2.2.2.2
+    (fun _ => hpre.zwin) hx40 hxa hx48 hxh hxw hxl halias
+
+/-- `truncPreG_of` with a `nil` destination -/
+theorem truncPreG_nil {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {op zp zl zc yp yl yc n : Nat} {s : State}
+    (hpre : PreG R b L op zp zl zc yp yl yc n s) {bb : Nat} (hbb : cost n ≤ bb) {M : Memory}
+    {L1 : List (Nat × Nat)} {b1 k : Nat} (hrt : Rt R bb L s zp zc n k M L1 b1) (hk : k ≤ 4) {S : State}
+    (hS : S.mem = M) (hsp : S.sp = BitVec.ofNat 64 (s.sp.toNat - 144)) (h28 : S.regs 28 = s.regs 28)
+    {stk above : Nat} (hkT : stk ≤ 4464) (haT : above ≤ 88)
+    {x xl : Nat} (hx40 : xl < 2 ^ 40) (hxa : M.accessible x (8 * xl) false = true) (hx48 : x + 8 * xl ≤ 2 ^ 48)
+    (hxh : Held R L1 x (8 * xl)) (hxw : x + 8 * xl ≤ s.sp.toNat - 4608 ∨ s.sp.toNat - 56 ≤ x) (hxl : xl ≤ 2 ^ 16) :
+    TruncPre R b1 L1 stk above 0 0 0 x xl n S :=
+  truncPreG_of hpre hbb hrt hk hS hsp h28 hkT haT (Nat.le_refl _) (by decide) (by simp)
+    (fun h => absurd h (by decide)) hx40 hxa hx48 hxh hxw hxl (Or.inr fun h => absurd h (by decide))
+
 set_option maxRecDepth 20000 in
 /-- the precondition of `z.sub(x, y)` at `SP - 144` (empty-tolerant operands; `z` = the entry `z`, at most two
 budgeted calls before) -/
