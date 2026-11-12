@@ -140,10 +140,99 @@ theorem pathC (impl : List Segment) (R : RtInv) (a : Args) (s : State) (hE : Ent
     have hF := hA.fr
     exact ⟨by rw [hsp]; exact hF.sp, by rw [h28]; exact hF.r28, by rw [h29]; exact hF.r29, by rw [h18]; exact hF.r18,
       by rw [hm]; exact hF.reg, by rw [hm]; exact hF.fr, by rw [hm]; exact hF.lr, by rw [hm]; exact hF.fp⟩
-  refine epiC impl s T hpc hFT (by omega) (by omega) hal ?_ hE.1 hE.2.1 _ fun s' ⟨e1, e2, e3, e4, e5⟩ => ⟨⟨e1, e2, e3, e4⟩, ?_⟩
+  refine epiC impl s T hpc hFT.sp hFT.r28 hFT.r18 hFT.lr hFT.fp (by omega) (by omega) hal ?_ hE.1 hE.2.1 _ fun s' ⟨e1, e2, e3, e4, e5⟩ => ⟨⟨e1, e2, e3, e4⟩, ?_⟩
   · rw [hFT.fr.accessible]; exact Memory.accessible_mono _ (Memory.accessible_read_of_write _ hw) (by omega) (by omega)
   · refine post_frame hpre (by omega) (by rw [e5]; exact hFT.fr) ?_ ?_
     · rw [hq0, Nat.div_eq_of_lt hlt']
     · rw [Nat.mod_eq_of_lt hlt']
+
+end FvModexp.Arm64.DivRec
+
+namespace FvModexp.Arm64.DivRec
+
+open FvModexp.Arm64.DivLarge (DrsPreW DrsPostW)
+open FvModexp.Arm64.NatAdd (outside_of_inRanges)
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 8000000 in
+/-- **`len u == 0`**: `clear(z)` (`memclrNoHeapPointers(z, 8·len z)` when `len z > 0`) and return -/
+theorem pathA (impl : List Segment) (R : RtInv)
+    (hmc : MemclrNoHeapPointersLive (LibDrs.program.link impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
+    (a : Args) (s : State) (hE : Entry a s) {c : Nat}
+    (hpre : DrsPreW R a.b a.L c a.W a.qp.toNat a.ql.toNat a.qc.toNat a.st.toNat a.up.toNat a.ul.toNat a.uc.toNat
+      a.vp.toNat a.vl.toNat a.vc.toNat s) (hW : 30608 ≤ a.W) (P : State)
+    (hA : AtE2 s P a.qp.toNat a.ql.toNat a.qc.toNat a.st.toNat a.up.toNat 0 a.uc.toNat a.vp.toNat a.vl.toNat a.vc.toNat
+      a.d.toNat)
+    (hU : natVal s.mem a.up.toNat 0 = natVal s.mem a.up.toNat a.ul.toNat) :
+    ReachesRet (LibDrs.program.link impl) (s.regs 30) P (fun s' => Kept s s' ∧
+      DrsPostW R a.b a.L c a.W a.qp.toNat a.ql.toNat a.st.toNat a.up.toNat a.ul.toNat a.vp.toNat a.vl.toNat s s') := by
+  have hpre' := hpre
+  obtain ⟨hce, hsv, -, hqlc, hqc, -, -, -, -, hv2, ⟨-, hql9⟩, htop, hq0, -, ⟨hqa, hq48, hqh, hqo, hqg⟩, -, -, -, -, -,
+    hsti, -, ⟨hqs, -⟩, -, -, -, -, -, -, -, hinv⟩ := hpre'
+  have hce' := hce
+  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, -, hout, hga, hgr, hLs, -⟩ := hce'
+  have hU0 : natVal s.mem a.up.toNat a.ul.toNat = 0 := by rw [← hU]; rfl
+  have hqo' := hqo
+  simp only [win, outside_cons, outside_nil, and_true] at hqo'
+  unfold Apart at hga
+  have hpost : ∀ M : Memory, natVal M a.qp.toNat a.ql.toNat = 0 → natVal M a.up.toNat a.ul.toNat = 0 →
+      natVal M a.qp.toNat a.ql.toNat = natVal s.mem a.up.toNat a.ul.toNat / natVal s.mem a.vp.toNat a.vl.toNat ∧
+      natVal M a.up.toNat a.ul.toNat = natVal s.mem a.up.toNat a.ul.toNat % natVal s.mem a.vp.toNat a.vl.toNat := by
+    intro M h1 h2; rw [h1, h2, hU0]; simp
+  refine pro2a impl (s.regs 30) hA rfl _ fun T0 hpc0 hm0 hsp0 h0 h1 h28 h29 h18 => ?_
+  have hF := hA.fr
+  have hspT : T0.sp = s.sp - 400#64 := by rw [hsp0]; exact hF.sp
+  have h28' : T0.regs 28 = s.regs 28 := by rw [h28]; exact hF.r28
+  have h29' : T0.regs 29 = s.sp - 408#64 := by rw [h29]; exact hF.r29
+  have h18' : T0.regs 18 = s.regs 18 := by rw [h18]; exact hF.r18
+  have hFT0 : Fr s T0 := ⟨hspT, h28', h29', h18', by rw [hm0]; exact hF.reg, by rw [hm0]; exact hF.fr,
+      by rw [hm0]; exact hF.lr, by rw [hm0]; exact hF.fp⟩
+  have hacc8 : T0.mem.accessible (s.sp.toNat - 408) 16 false = true := by
+    rw [hFT0.fr.accessible]; exact Memory.accessible_mono _ (Memory.accessible_read_of_write _ hw) (by omega) (by omega)
+  rcases Nat.eq_zero_or_pos a.ql.toNat with hz | hz
+  · -- `len z == 0`: nothing to clear
+    rw [hz] at h1
+    janus_run until [0x1ba4e4]
+    refine epiZ impl s _ rfl ?esp ?e28 ?e18 ?elr ?efp (by omega) (by omega) hal ?eacc hE.1 hE.2.1 _
+      fun s' ⟨e1, e2, e3, e4, e5⟩ => ⟨⟨e1, e2, e3, e4⟩, ?epost⟩
+    case esp => exact hF.sp
+    case e28 => exact h28'
+    case e18 => exact h18'
+    case elr => exact hF.lr
+    case efp => exact hF.fp
+    case eacc => exact hm0 ▸ hacc8
+    case epost =>
+      refine post_frame hpre (by omega) (by rw [e5]; exact hF.fr) ?_ ?_
+      · rw [hq0, hU0]; simp
+      · rw [hU0]; simp
+  · -- `clear(z)`
+    have hl3 := lsl3_ofNat a.ql.toNat (by omega)
+    have hne : (BitVec.ofNat 64 a.ql.toNat = 0#64) = False := by
+      simp only [eq_iff_iff, iff_false]; intro e
+      have := congrArg BitVec.toNat e; simp only [BitVec.toNat_ofNat] at this; omega
+    janus_run [hl3, hne] until [cA "runtime.memclrNoHeapPointers"]
+    refine ReachesRet.call_regions (hmc a.L a.b) rfl (mc_pre (dst := a.qp.toNat) (n := 8 * a.ql.toNat) hce (by omega)
+      (LiveExt.refl R a.L) _ ?msp ?q28 ?qg ?qa ?l1 ?l2 ?qi ?q0 ?q1 (hsv.2.2.1 _ _ (by omega)) (by omega) ?dacc ?dh ?dw) ?qk
+    case msp => exact hF.sp
+    case q28 => simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, h28']
+    case qg => exact hF.fr.readLE _ _ (by simp only [fw, winA, outside_cons, outside_nil, and_true]; omega)
+    case qa => intro a' n w; exact hF.fr.accessible a' n w
+    case l1 => simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte]; decide
+    case l2 => simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte]; decide
+    case qi =>
+      refine RtInv.inv_frame' hF.fr (fun r hr => ?_) hinv
+      simp only [fw, winA, List.mem_cons, List.not_mem_nil, or_false] at hr
+      rcases hr with rfl | rfl <;> (left; exact hout.of_sub (by simp only; omega) (by simp only; omega))
+    case q0 => simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, h0, BitVec.toNat_ofNat]; omega
+    case q1 =>
+      simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte]
+      have e := hl3; rw [bv_ofNat_toNat] at e; rw [e, BitVec.toNat_ofNat]; omega
+    case dacc => rw [hF.fr.accessible]; exact hqa
+    case dh => exact hqh
+    case dw => omega
+    case qk =>
+      intro T hT ⟨junk, f, v, m, ex, ep, hs, hMF, hLF, hinv', hzr⟩ hrg
+      subst hs
+      sorry
 
 end FvModexp.Arm64.DivRec

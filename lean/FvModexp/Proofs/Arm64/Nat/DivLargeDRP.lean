@@ -227,7 +227,7 @@ theorem dr_pre {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st
     · have := outside_of_inRanges hgaw.2.1 hin; unfold Apart; omega
   unfold DrsPre DrsPreW
   simp only [hW, hLn, hCp]
-  refine ⟨?ce, hpre.sv, ?gl, by omega, hq40, by omega, hc40, Nat.le_refl _, hvo.1, hv2, by omega, hvt, hz, hroom,
+  refine ⟨?ce, hpre.sv, ?gl, by omega, hq40, by omega, hc40, Nat.le_refl _, hvo.1, hv2, ⟨by omega, by omega⟩, hvt, hz, hroom,
     ⟨?qacc, by omega, hQ.pheld.sub (Nat.le_refl _) (by omega), ?qw, ?qg⟩,
     ⟨?pacc, by omega, hU.pheld.sub (Nat.le_refl _) (by omega), ?pw, ?pg⟩,
     ⟨?tacc, ht48, hx3.held hl.theld, ?tw, ?tg, hx3.held hl.theld, ht48⟩, ?qp, ?qt, ?pt, ?stk, ?stlen,

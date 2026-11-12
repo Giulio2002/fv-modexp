@@ -63,12 +63,13 @@ theorem post_frame {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c W qp ql qc s
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 4000000 in
 /-- the epilogue at `fn + 0x11c` -/
-theorem epiC (impl : List Segment) (s T : State) (hpc : T.pc = BitVec.ofNat 64 0x1ba4bc) (hF : Fr s T)
+theorem epiC (impl : List Segment) (s T : State) (hpc : T.pc = BitVec.ofNat 64 0x1ba4bc) (hsp : T.sp = s.sp - 400#64) (h28 : T.regs 28 = s.regs 28)
+    (h18 : T.regs 18 = s.regs 18) (hlr : T.mem.readLE (s.sp.toNat - 400) 8 = (s.regs 30).toNat)
+    (hfp : T.mem.readLE (s.sp.toNat - 408) 8 = (s.regs 29).toNat)
     (h0 : 408 ≤ s.sp.toNat) (h48 : s.sp.toNat ≤ 2 ^ 48) (hal : s.sp.toNat % 16 = 0)
     (hacc : T.mem.accessible (s.sp.toNat - 408) 16 false = true)
     (h30a : (s.regs 30).toNat % 4 = 0) (h30b : (s.regs 30).toNat < 2 ^ 48) (Q : State → Prop) (k : ∀ s', Ret s T.mem s' → Q s') :
     ReachesRet (LibDrs.program.link impl) (s.regs 30) T Q := by
-  have hsp := hF.sp; have hlr := hF.lr; have hfp := hF.fp; have h28 := hF.r28; have h18 := hF.r18
   have hal' : (s.sp - 400#64).toNat % 16 = 0 := by rw [BitVec.toNat_sub]; simp only [BitVec.toNat_ofNat]; omega
   have hlr' : BitVec.ofNat 64 (T.mem.readLE (s.sp.toNat - 400) 8) = s.regs 30 := by
     rw [hlr]; apply BitVec.eq_of_toNat_eq; simp
@@ -81,12 +82,13 @@ theorem epiC (impl : List Segment) (s T : State) (hpc : T.pc = BitVec.ofNat 64 0
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 4000000 in
 /-- the epilogue at `fn + 0x12c (after `divBasic`)` -/
-theorem epiB (impl : List Segment) (s T : State) (hpc : T.pc = BitVec.ofNat 64 0x1ba4cc) (hF : Fr s T)
+theorem epiB (impl : List Segment) (s T : State) (hpc : T.pc = BitVec.ofNat 64 0x1ba4cc) (hsp : T.sp = s.sp - 400#64) (h28 : T.regs 28 = s.regs 28)
+    (h18 : T.regs 18 = s.regs 18) (hlr : T.mem.readLE (s.sp.toNat - 400) 8 = (s.regs 30).toNat)
+    (hfp : T.mem.readLE (s.sp.toNat - 408) 8 = (s.regs 29).toNat)
     (h0 : 408 ≤ s.sp.toNat) (h48 : s.sp.toNat ≤ 2 ^ 48) (hal : s.sp.toNat % 16 = 0)
     (hacc : T.mem.accessible (s.sp.toNat - 408) 16 false = true)
     (h30a : (s.regs 30).toNat % 4 = 0) (h30b : (s.regs 30).toNat < 2 ^ 48) (Q : State → Prop) (k : ∀ s', Ret s T.mem s' → Q s') :
     ReachesRet (LibDrs.program.link impl) (s.regs 30) T Q := by
-  have hsp := hF.sp; have hlr := hF.lr; have hfp := hF.fp; have h28 := hF.r28; have h18 := hF.r18
   have hal' : (s.sp - 400#64).toNat % 16 = 0 := by rw [BitVec.toNat_sub]; simp only [BitVec.toNat_ofNat]; omega
   have hlr' : BitVec.ofNat 64 (T.mem.readLE (s.sp.toNat - 400) 8) = s.regs 30 := by
     rw [hlr]; apply BitVec.eq_of_toNat_eq; simp
@@ -99,12 +101,13 @@ theorem epiB (impl : List Segment) (s T : State) (hpc : T.pc = BitVec.ofNat 64 0
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 4000000 in
 /-- the epilogue at `fn + 0x144 (after `clear(z)`)` -/
-theorem epiZ (impl : List Segment) (s T : State) (hpc : T.pc = BitVec.ofNat 64 0x1ba4e4) (hF : Fr s T)
+theorem epiZ (impl : List Segment) (s T : State) (hpc : T.pc = BitVec.ofNat 64 0x1ba4e4) (hsp : T.sp = s.sp - 400#64) (h28 : T.regs 28 = s.regs 28)
+    (h18 : T.regs 18 = s.regs 18) (hlr : T.mem.readLE (s.sp.toNat - 400) 8 = (s.regs 30).toNat)
+    (hfp : T.mem.readLE (s.sp.toNat - 408) 8 = (s.regs 29).toNat)
     (h0 : 408 ≤ s.sp.toNat) (h48 : s.sp.toNat ≤ 2 ^ 48) (hal : s.sp.toNat % 16 = 0)
     (hacc : T.mem.accessible (s.sp.toNat - 408) 16 false = true)
     (h30a : (s.regs 30).toNat % 4 = 0) (h30b : (s.regs 30).toNat < 2 ^ 48) (Q : State → Prop) (k : ∀ s', Ret s T.mem s' → Q s') :
     ReachesRet (LibDrs.program.link impl) (s.regs 30) T Q := by
-  have hsp := hF.sp; have hlr := hF.lr; have hfp := hF.fp; have h28 := hF.r28; have h18 := hF.r18
   have hal' : (s.sp - 400#64).toNat % 16 = 0 := by rw [BitVec.toNat_sub]; simp only [BitVec.toNat_ofNat]; omega
   have hlr' : BitVec.ofNat 64 (T.mem.readLE (s.sp.toNat - 400) 8) = s.regs 30 := by
     rw [hlr]; apply BitVec.eq_of_toNat_eq; simp
@@ -117,12 +120,13 @@ theorem epiZ (impl : List Segment) (s T : State) (hpc : T.pc = BitVec.ofNat 64 0
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 4000000 in
 /-- the epilogue at `fn + 0x94c (after the deferred call)` -/
-theorem epiF (impl : List Segment) (s T : State) (hpc : T.pc = BitVec.ofNat 64 0x1bacec) (hF : Fr s T)
+theorem epiF (impl : List Segment) (s T : State) (hpc : T.pc = BitVec.ofNat 64 0x1bacec) (hsp : T.sp = s.sp - 400#64) (h28 : T.regs 28 = s.regs 28)
+    (h18 : T.regs 18 = s.regs 18) (hlr : T.mem.readLE (s.sp.toNat - 400) 8 = (s.regs 30).toNat)
+    (hfp : T.mem.readLE (s.sp.toNat - 408) 8 = (s.regs 29).toNat)
     (h0 : 408 ≤ s.sp.toNat) (h48 : s.sp.toNat ≤ 2 ^ 48) (hal : s.sp.toNat % 16 = 0)
     (hacc : T.mem.accessible (s.sp.toNat - 408) 16 false = true)
     (h30a : (s.regs 30).toNat % 4 = 0) (h30b : (s.regs 30).toNat < 2 ^ 48) (Q : State → Prop) (k : ∀ s', Ret s T.mem s' → Q s') :
     ReachesRet (LibDrs.program.link impl) (s.regs 30) T Q := by
-  have hsp := hF.sp; have hlr := hF.lr; have hfp := hF.fp; have h28 := hF.r28; have h18 := hF.r18
   have hal' : (s.sp - 400#64).toNat % 16 = 0 := by rw [BitVec.toNat_sub]; simp only [BitVec.toNat_ofNat]; omega
   have hlr' : BitVec.ofNat 64 (T.mem.readLE (s.sp.toNat - 400) 8) = s.regs 30 := by
     rw [hlr]; apply BitVec.eq_of_toNat_eq; simp
