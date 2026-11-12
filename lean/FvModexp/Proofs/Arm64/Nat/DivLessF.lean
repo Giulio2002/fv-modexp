@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Arm64.Nat.DivPostK
+import FvModexp.Proofs.Arm64.Nat.DivG
 import FvModexp.Proofs.Arm64.Nat.DivRel
 
 set_option autoImplicit false
@@ -16,7 +16,7 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
 theorem lessFin {R : RtInv} {b : Nat} {dc : Nat → Nat → Nat → Nat} {L : List (Nat × Nat)}
     {zp zl zc st z2 z2l z2c u ul v vl : Nat} {s : State}
-    (hpre : Pre R b dc L zp zl zc st z2 z2l z2c u ul v vl s) {p c : Nat} {L' : List (Nat × Nat)} {b' : Nat}
+    (hpre : PreG R b dc L zp zl zc st z2 z2l z2c u ul v vl s) {p c : Nat} {L' : List (Nat × Nat)} {b' : Nat}
     {S : State} (hS : AtS R b L zp zc z2 z2c u ul s p c L' b' S) (hU : natVal s.mem u ul < natVal s.mem v vl)
     (s' : State)
     (h0 : s'.regs 0 = BitVec.ofNat 64 zp) (h1 : s'.regs 1 = BitVec.ofNat 64 0) (h2 : s'.regs 2 = BitVec.ofNat 64 zc)
@@ -25,16 +25,16 @@ theorem lessFin {R : RtInv} {b : Nat} {dc : Nat → Nat → Nat → Nat} {L : Li
     (hinv : R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem))
     (hval : s'.mem.readLE p (8 * ul) = S.mem.readLE u (8 * ul))
     (htop : 0 < ul → s'.mem.readLE (p + 8 * (ul - 1)) 8 = S.mem.readLE (u + 8 * (ul - 1)) 8) :
-    PostL R b dc L zp zc st z2 z2c u ul v vl s s' := by
+    PostLG R b dc L zp zc st z2 z2c u ul v vl s s' := by
   have hp := hpre.f
   have hout := hp.ce.2.2.2.1
   have hb' := hp.ce.2.1.2.1
   have hLs := hp.ce.2.2.2.2.2.2.1
-  obtain ⟨hu40, huacc, hu48, huh, huw⟩ := hp.uo
-  simp only [win, outside_cons, outside_nil, and_true] at huw
-  -- `u`'s words at `S.mem` are the entry's
-  have hku : ∀ a n, u ≤ a → a + n ≤ u + 8 * ul → 0 < n → S.mem.readLE a n = s.mem.readLE a n := by
-    intro a n h1 h2 hn
+  -- `u`'s words at `S.mem` are the entry's (`u` non-empty)
+  have hku : 0 < ul → ∀ a n, u ≤ a → a + n ≤ u + 8 * ul → 0 < n → S.mem.readLE a n = s.mem.readLE a n := by
+    intro hu0 a n h1 h2 hn
+    obtain ⟨hu40, huacc, hu48, huh, huw⟩ := hp.ui.2 hu0
+    simp only [win, outside_cons, outside_nil, and_true] at huw
     rcases huh.sub h1 h2 with hin | ho
     · exact hS.lf.readLE a n hin trivial
     · exact hS.mf.readLE a n (by
@@ -43,7 +43,7 @@ theorem lessFin {R : RtInv} {b : Nat} {dc : Nat → Nat → Nat → Nat} {L : Li
     by_cases h0 : ul = 0
     · simp [natVal, h0]
     · show s'.mem.readLE p (8 * ul) = s.mem.readLE u (8 * ul)
-      rw [hval, hku _ _ (Nat.le_refl _) (Nat.le_refl _) (by omega)]
+      rw [hval, hku (by omega) _ _ (Nat.le_refl _) (Nat.le_refl _) (by omega)]
   have harr := hS.arr
   -- `p`'s array (first `ul` words) is `z2`'s (reused) or fresh
   have hpo : ∀ a n, Outside a n (R.rt ++ winA s 41504 112 ++ ar zp zc ++ ar z2 z2c) → Outside a n (ar p ul) := by
@@ -53,9 +53,9 @@ theorem lessFin {R : RtInv} {b : Nat} {dc : Nat → Nat → Nat → Nat} {L : Li
     rcases harr with ⟨rfl, rfl, hz⟩ | ⟨-, hc1, -, -, -, hin, -, -, -⟩
     · have := ar_out h.2 (by omega); omega
     · have := outside_of_inRanges h.1.1.1 hin; omega
-  refine post_kept hpre s' h0 h1 h2 h3 h4 h5 ?q ?r hS.ext (by have := hS.bud; have := hp.cost; simp only [cost] at *; omega)
+  refine post_keptG hpre s' h0 h1 h2 h3 h4 h5 ?q ?r hS.ext (by have := hS.bud; have := hp.cost; simp only [cost] at *; omega)
     hinv (hS.mf.trans hM fun a n h => ⟨?mf1, ?mf⟩)
-    ⟨fun a n hin ho => ?lf⟩
+    ⟨fun a n hin ho => ?lf⟩ (fun h _ _ _ => absurd ⟨rfl, rfl⟩ h)
   case q =>
     refine ⟨?_, Or.inl rfl, Nat.zero_le _, hp.zo.1, ?_, Or.inl ⟨rfl, rfl⟩⟩
     · simp only [natVal, Nat.mul_zero, Memory.readLE_zero]; exact (Nat.div_eq_of_lt hU).symm
@@ -69,7 +69,7 @@ theorem lessFin {R : RtInv} {b : Nat} {dc : Nat → Nat → Nat → Nat} {L : Li
       · rcases hp.un with h | h
         · exact absurd h h0
         · refine Or.inr ?_
-          rw [htop (by omega), hku _ _ (by omega) (by omega) (by omega)]; exact h
+          rw [htop (by omega), hku (by omega) _ _ (by omega) (by omega) (by omega)]; exact h
     · rcases harr with ⟨rfl, rfl, hz⟩ | ⟨-, hc1, -⟩ <;> omega
     · rcases harr with ⟨rfl, rfl, hz⟩ | ⟨-, hc1, hc2, -⟩
       · exact hp.z2o.1

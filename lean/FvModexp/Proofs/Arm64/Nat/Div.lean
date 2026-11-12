@@ -30,7 +30,7 @@ theorem full (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     (hmk0 : MakesliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
     (hmv0 : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
     (hmz0 : MemmoveZeroLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
-    (dc : Nat → Nat → Nat → Nat) (hL : DivLarge.Hyp impl R dc)
+    (dc : Nat → Nat → Nat → Nat) (hL : DivLarge.HypG impl R dc)
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc st z2 z2l z2c up ul uc vp vl vc : BitVec 64) :
     Summary (LibDiv.program.link impl) (segAddr Extracted.program fn)
       (fun s => (s.regs 30).toNat % 4 = 0 ∧ (s.regs 30).toNat < 2 ^ 48 ∧ s.regs 0 = zp ∧ s.regs 1 = zl ∧
@@ -38,7 +38,7 @@ theorem full (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
         s.regs 8 = ul ∧ s.regs 9 = uc ∧ s.regs 10 = vp ∧ s.regs 11 = vl ∧ s.regs 12 = vc ∧
         Pre R b dc L zp.toNat zl.toNat zc.toNat st.toNat z2.toNat z2l.toNat z2c.toNat up.toNat ul.toNat vp.toNat
           vl.toNat s)
-      (fun s s' => RQ R b dc L zp.toNat zc.toNat st.toNat z2.toNat z2c.toNat up.toNat ul.toNat vp.toNat vl.toNat s s') := by
+      (fun s s' => RQG R b dc L zp.toNat zc.toNat st.toNat z2.toNat z2c.toNat up.toNat ul.toNat vp.toNat vl.toNat s s') := by
   intro s hpc ⟨hl4, hl48, h0, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11, h12, hpre⟩
   have hsep : HdrSep s st.toNat := hpre.f.hdr
   have hc3 := codeIn_lib impl hap
@@ -56,11 +56,11 @@ theorem full (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
         b dc L zp zl zc st z2 z2l z2c up ul uc vp s hpre X x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18
         x19 _ fun q ql qc L' b' T hW => ?_
     by_cases hr0 : natVal s.mem up.toNat ul.toNat % natVal s.mem vp.toNat 1 = 0
-    · exact oneA impl R hpre hW hr0 hl4 hl48
+    · exact oneA impl R hpre.toG hW hr0 hl4 hl48
     · rcases Nat.eq_zero_or_pos z2c.toNat with hz | hz
       · rw [hz] at hpre hW ⊢
-        exact oneC impl R hmk hpre hW hr0 hl4 hl48
-      · exact oneB impl R hpre hW hr0 hz hl4 hl48
+        exact oneC impl R hmk hpre.toG hW hr0 hl4 hl48
+      · exact oneB impl R hpre.toG hW hr0 hz hl4 hl48
   · have hv2 : 2 ≤ vl.toNat := by omega
     refine two1 impl R b dc L zp zl zc st z2 z2l z2c up ul uc vp vl vc s hpc h0 h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 h12
       hv2 hpre _ fun X x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 x24 x25 x26
@@ -70,11 +70,11 @@ theorem full (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     · have hr0 : S.regs 0 = 18446744073709551615#64 := by rw [hS.r0]; exact cmp_lt hp.un hU
       have kC : ∀ S' p c L' b', AtS R b L zp.toNat zc.toNat z2.toNat z2c.toNat up.toNat ul.toNat s p c L' b' S' →
           ReachesRet (LibDiv.program.link impl) (s.regs 30) S'
-            (RQ R b dc L zp.toNat zc.toNat st.toNat z2.toNat z2c.toNat up.toNat ul.toNat vp.toNat vl.toNat s) := by
+            (RQG R b dc L zp.toNat zc.toNat st.toNat z2.toNat z2c.toNat up.toNat ul.toNat vp.toNat vl.toNat s) := by
         intro S' p c L' b' hA
         rcases Nat.eq_zero_or_pos ul.toNat with hu | hu
         · rw [hu] at hpre hA hU ⊢
-          exact lessC0 impl R hmz hpre hA hU hl4 hl48
+          exact lessC0 impl R hmz hpre.toG hA hU hl4 hl48
         · exact lessC1 impl R hmv hpre hA hU hu hl4 hl48
       by_cases hz : ul.toNat ≤ z2c.toNat
       · exact lessR impl R hpre hS hr0 hz _ fun S' hA => kC S' _ _ _ _ hA
@@ -95,17 +95,17 @@ theorem full (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
 returns `q = U / V`, `r = U mod V`, both normalised (in `z` / `z2`'s array or fresh ones), the stack restored; writes
 only `z`, `z2`, the stack, the runtime's memory and the window; no panic, no fault. The precondition is
 `ExpHyp.DivPre` (= `ExpHyp.DivHyp`). Premises: `DivLarge.Hyp` and the live runtime contracts. -/
-theorem ensL (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+theorem ensLG0 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hmk0 : MakesliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
     (hmv0 : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
     (hmz0 : MemmoveZeroLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
-    (dc : Nat → Nat → Nat → Nat) (hL : DivLarge.Hyp impl R dc)
+    (dc : Nat → Nat → Nat → Nat) (hL : DivLarge.HypG impl R dc)
     (b : Nat) (L : List (Nat × Nat)) (z zl zc st z2 z2l z2c u ul uc v vl vc : BitVec 64) :
     Ensures ((Extracted.program.onlySegments names).link impl) (segAddr Extracted.program fn)
       [z, zl, zc, st, z2, z2l, z2c, u, ul, uc, v, vl, vc]
       (fun s => Pre R b dc L z.toNat zl.toNat zc.toNat st.toNat z2.toNat z2l.toNat z2c.toNat u.toNat ul.toNat
         v.toNat vl.toNat s)
-      (fun s s' => PostL R b dc L z.toNat zc.toNat st.toNat z2.toNat z2c.toNat u.toNat ul.toNat v.toNat vl.toNat s s') := by
+      (fun s s' => PostLG R b dc L z.toNat zc.toNat st.toNat z2.toNat z2c.toNat u.toNat ul.toNat v.toNat vl.toNat s s') := by
   rw [show names = LibDiv.names from rfl, ← LibDiv.eq_only]
   intro ret hret s hs hpre
   janus_intro hs
@@ -116,12 +116,27 @@ theorem ensL (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
   · rw [h_lr, BitVec.toNat_ofNat, Nat.mod_eq_of_lt (show ret < 2 ^ 64 by omega)]; exact hr4
   · rw [h_lr, BitVec.toNat_ofNat, Nat.mod_eq_of_lt (show ret < 2 ^ 64 by omega)]; exact hr48
 
+/-- `ensLG0` in the `PostL` form -/
+theorem ensL (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+    (hmk0 : MakesliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
+    (hmv0 : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
+    (hmz0 : MemmoveZeroLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
+    (dc : Nat → Nat → Nat → Nat) (hL : DivLarge.HypG impl R dc)
+    (b : Nat) (L : List (Nat × Nat)) (z zl zc st z2 z2l z2c u ul uc v vl vc : BitVec 64) :
+    Ensures ((Extracted.program.onlySegments names).link impl) (segAddr Extracted.program fn)
+      [z, zl, zc, st, z2, z2l, z2c, u, ul, uc, v, vl, vc]
+      (fun s => Pre R b dc L z.toNat zl.toNat zc.toNat st.toNat z2.toNat z2l.toNat z2c.toNat u.toNat ul.toNat
+        v.toNat vl.toNat s)
+      (fun s s' => PostL R b dc L z.toNat zc.toNat st.toNat z2.toNat z2c.toNat u.toNat ul.toNat v.toNat vl.toNat s s') :=
+  (ensLG0 impl hap R hmk0 hmv0 hmz0 dc hL b L z zl zc st z2 z2l z2c u ul uc v vl vc).mono (fun _ h => h)
+    (fun _ _ _ h => ExpSlow.DivPostLG.toL h)
+
 /-- `ensL` in the `StackBack` form (`ExpHyp.DivPost`) -/
 theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hmk0 : MakesliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
     (hmv0 : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
     (hmz0 : MemmoveZeroLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
-    (dc : Nat → Nat → Nat → Nat) (hL : DivLarge.Hyp impl R dc)
+    (dc : Nat → Nat → Nat → Nat) (hL : DivLarge.HypG impl R dc)
     (b : Nat) (L : List (Nat × Nat)) (z zl zc st z2 z2l z2c u ul uc v vl vc : BitVec 64) :
     Ensures ((Extracted.program.onlySegments names).link impl) (segAddr Extracted.program fn)
       [z, zl, zc, st, z2, z2l, z2c, u, ul, uc, v, vl, vc]
@@ -151,7 +166,7 @@ theorem ensDL (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
       (fun s => Pre R b dc L z.toNat zl.toNat zc.toNat st.toNat z2.toNat z2l.toNat z2c.toNat u.toNat ul.toNat
         v.toNat vl.toNat s)
       (fun s s' => PostL R b dc L z.toNat zc.toNat st.toNat z2.toNat z2c.toNat u.toNat ul.toNat v.toNat vl.toNat s s') :=
-  ensL impl hap R hmk0 hmv0 hmz0 dc (DivLarge.ens impl hap R hgr hmc hwb hmk0 hmv0 dc hD) b L z zl zc st z2 z2l z2c u ul
+  ensL impl hap R hmk0 hmv0 hmz0 dc (DivLarge.ensG impl hap R hgr hmc hwb hmk0 hmv0 dc hD) b L z zl zc st z2 z2l z2c u ul
     uc v vl vc
 
 

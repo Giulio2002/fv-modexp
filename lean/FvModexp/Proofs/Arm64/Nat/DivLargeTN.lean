@@ -116,5 +116,7 @@ structure AtR (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (c : Nat) (zp zc st 
   rval : natVal S.mem P (il + 1) = natVal s.mem ip il % natVal s.mem vp vl
   reg : S.mem.regions = s.mem.regions
   arrL2 : ¬(w2 = w1 ∧ c2 = c1) → (w2, w2 + 8 * c2) ∈ L2 ∧ 0 < c2
+  /-- `q`'s array is held by `Lq` (as `AtD.qL`) -/
+  qL : Held R Lq qp (8 * qc)
 
 end FvModexp.Arm64.DivLarge

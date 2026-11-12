@@ -154,7 +154,8 @@ theorem divPost {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {dc : Nat → Nat 
     arrL2 := by
       have h2 : ¬(stW T.mem st = stW X.mem st ∧ stCap T.mem st = stCap X.mem st) →
           (stW T.mem st, stW T.mem st + 8 * stCap T.mem st) ∈ L' ∧ 0 < stCap T.mem st := harrL
-      rw [hW, hCp] at h2; exact h2 }
+      rw [hW, hCp] at h2; exact h2,
+    qL := hQ.pheld }
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in

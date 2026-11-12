@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Arm64.Nat.DivRel
+import FvModexp.Proofs.Arm64.Nat.DivG
 
 set_option autoImplicit false
 
@@ -32,8 +33,11 @@ theorem bigFin {R : RtInv} {b : Nat} {dc : Nat → Nat → Nat → Nat} {L : Lis
     (hlf : LiveFrame X.mem T.mem L ((ar zp zc ++ ar z2 z2c) ++ stkWs X.mem st))
     (s' : State) (hW : MemFrame T.mem s'.mem [(s.sp.toNat - 80, s.sp.toNat - 32)])
     (h0 : s'.regs 0 = BitVec.ofNat 64 q) (h1 : s'.regs 1 = BitVec.ofNat 64 ql) (h2 : s'.regs 2 = BitVec.ofNat 64 qc)
-    (h3 : s'.regs 3 = BitVec.ofNat 64 r) (h4 : s'.regs 4 = BitVec.ofNat 64 rl) (h5 : s'.regs 5 = BitVec.ofNat 64 rc) :
-    PostL R b dc L zp zc st z2 z2c u ul v vl s s' := by
+    (h3 : s'.regs 3 = BitVec.ofNat 64 r) (h4 : s'.regs 4 = BitVec.ofNat 64 rl) (h5 : s'.regs 5 = BitVec.ofNat 64 rc)
+    (hqr : 0 < qc → 0 < rc → Apart q (8 * qc) r (8 * rc))
+    (hqf : ¬ (q = zp ∧ qc = zc) → 0 < qc → 0 < stCap T.mem st →
+      Apart q (8 * qc) (stW T.mem st) (8 * stCap T.mem st)) :
+    PostLG R b dc L zp zc st z2 z2c u ul v vl s s' := by
   have hp := hpre.f
   obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, hdl, hout, hga, hgr, hLs, hro⟩ := hp.ce
   have hspn : X.sp.toNat = s.sp.toNat - 240 := by
@@ -83,7 +87,7 @@ theorem bigFin {R : RtInv} {b : Nat} {dc : Nat → Nat → Nat → Nat} {L : Lis
   obtain ⟨⟨⟨hs8, hsh, hsacc, hs48, hsnl, hslc, hsc40⟩, hslen, hsor⟩, harr⟩ := hsb
   refine ⟨q, ql, qc, r, rl, rc, h0, h1, h2, h3, h4, h5, L', b'', nof _ _ _ _ _ _ hp.zo hq, nof _ _ _ _ _ _ hp.z2o hr,
     ⟨hext, ?bud, ?inv⟩, ⟨⟨⟨hs8, hsh, by rw [hW.accessible]; exact hsacc, hs48, ?nl, by rw [tl, tc]; exact hslc,
-      by rw [tc]; exact hsc40⟩, by rw [tl, hslen, el], ?or⟩, ?arrL⟩, ?fr, ?mf, ?lf⟩
+      by rw [tc]; exact hsc40⟩, by rw [tl, hslen, el], ?or⟩, ?arrL⟩, ?fr, ?mf, ?lf, hqr, ?qf⟩
   case bud => have := hp.cost; simp only [cost] at this ⊢; rw [el] at hbud; omega
   case inv =>
     rw [h28] at hinv
@@ -99,6 +103,7 @@ theorem bigFin {R : RtInv} {b : Nat} {dc : Nat → Nat → Nat → Nat} {L : Lis
       (stW s'.mem st, stW s'.mem st + 8 * stCap s'.mem st) ∈ L' ∧ 0 < stCap s'.mem st
     rw [tw, tc, ← ew, ← ec]; exact harr
   case fr => rw [tw, tc]; exact hfr
+  case qf => rw [tw, tc]; exact hqf
   case mf =>
     obtain ⟨x1, x2, x3, x4, -⟩ := spX hsp (by omega)
     rw [ews] at hmf

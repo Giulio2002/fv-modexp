@@ -124,7 +124,7 @@ theorem t1r (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     by simp only [retState0, regs0_apply]; simp only [Nat.reduceEqDiff, or_false, false_or, if_true, h18],
     MemU.frame hE hMU (hU.live hS.ext4) hF4 hlf hinv4, (rs _ (by omega) (by omega)).trans hq0, (rs _ (by omega) (by omega)).trans hq1,
     (rs _ (by omega) (by omega)).trans hq2, hU.frame hacc, hQ.frame hacc, hS.ext3, hS.ext4, hS.bud, hS.arr2,
-    natLive_acc hS.live2 hacc, hS.c2len, hS.c2b, hql, ?_, ?_, ?_, by simp only [retState0] at hrg ⊢; rw [hrg]; exact hXreg, hS.arrL2⟩
+    natLive_acc hS.live2 hacc, hS.c2len, hS.c2b, hql, ?_, ?_, ?_, by simp only [retState0] at hrg ⊢; rw [hrg]; exact hXreg, hS.arrL2, hS.qL⟩
   · rw [← hqv]; unfold natVal; exact rq _ _ (by omega) (by omega)
   · exact natNorm_frame hqn (rq _ _ (by omega) (by omega))
   · have q1' : natVal m4 P (il + 1) = natVal X.mem P (il + 1) / 2 ^ sh := q1
@@ -162,7 +162,7 @@ theorem atR0 {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st u
     fun r hr => hl.lsep r (hE.ext.mem_old hr)
   refine ⟨hpc, hsp, h28, h29, h18, MemU.frame hE hS.mem (hU.live hS.ext4) (hF.mono fun a n ho => ?_) ⟨fun a n hin _ => ?_⟩ ?_,
     hq0, hq1, hq2, hU.frame hacc, hQ.frame hacc, hS.ext3, hS.ext4, hS.bud, hS.arr2, natLive_acc hS.live2 hacc,
-    hS.c2len, hS.c2b, hql, ?_, ?_, ?_, by rw [hreg]; exact hS.reg, hS.arrL2⟩
+    hS.c2len, hS.c2b, hql, ?_, ?_, ?_, by rw [hreg]; exact hS.reg, hS.arrL2, hS.qL⟩
   · rw [outside_append, outside_append, outside_append] at ho
     have h2 := ho.1.1.2
     simp only [scrB, outside_cons, outside_nil, and_true] at h2

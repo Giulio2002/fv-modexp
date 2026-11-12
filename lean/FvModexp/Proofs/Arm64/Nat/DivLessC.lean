@@ -27,7 +27,7 @@ theorem lessC1 (impl : List Segment) (R : RtInv)
     (hpre : Pre R b dc L zp zl zc st z2 z2l z2c u ul v vl s) {p c : Nat} {L' : List (Nat × Nat)} {b' : Nat}
     {S : State} (hS : AtS R b L zp zc z2 z2c u ul s p c L' b' S) (hU : natVal s.mem u ul < natVal s.mem v vl)
     (hu0 : 0 < ul) (hl4 : (s.regs 30).toNat % 4 = 0) (hl48 : (s.regs 30).toNat < 2 ^ 48) :
-    ReachesRet (LibDiv.program.link impl) (s.regs 30) S (RQ R b dc L zp zc st z2 z2c u ul v vl s) := by
+    ReachesRet (LibDiv.program.link impl) (s.regs 30) S (RQG R b dc L zp zc st z2 z2c u ul v vl s) := by
   have hp := hpre.f
   have hce := hp.ce
   obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, -, hout, hga, hgr, hLs, -⟩ := hp.ce
@@ -100,7 +100,7 @@ theorem lessC1 (impl : List Segment) (R : RtInv)
   have har : ar p ul = [(p, p + 8 * ul)] := by unfold ar; rw [if_pos hu0]
   have hW2 : MemFrame m (((m.writeLE (s.sp.toNat - 80) 8 p).writeLE (s.sp.toNat - 72) 8 ul).writeLE
       (s.sp.toNat - 64) 8 c) [(s.sp.toNat - 80, s.sp.toNat - 56)] := by janus_frame
-  refine ⟨⟨?_, ?_, ?_, ?_⟩, lessFin hpre hS hU _ ?_ ?_ ?_ ?_ ?_ ?_ ?hM ?hLF ?hI ?hV ?hT⟩
+  refine ⟨⟨?_, ?_, ?_, ?_⟩, lessFin hpre.toG hS hU _ ?_ ?_ ?_ ?_ ?_ ?_ ?hM ?hLF ?hI ?hV ?hT⟩
   case hM =>
     rw [har]
     refine (hW1.trans hMF (rs'' := R.rt ++ winA s 41504 112 ++ [(p, p + 8 * ul)]) fun a n h => ?_).trans
@@ -139,10 +139,10 @@ theorem lessC0 (impl : List Segment) (R : RtInv)
     (hmz : MemmoveZeroLive (LibDiv.program.link impl) (cA "runtime.memmove") 4096 R)
     {b : Nat} {dc : Nat → Nat → Nat → Nat} {L : List (Nat × Nat)}
     {zp zl zc st z2 z2l z2c u v vl : Nat} {s : State}
-    (hpre : Pre R b dc L zp zl zc st z2 z2l z2c u 0 v vl s) {p c : Nat} {L' : List (Nat × Nat)} {b' : Nat}
+    (hpre : PreG R b dc L zp zl zc st z2 z2l z2c u 0 v vl s) {p c : Nat} {L' : List (Nat × Nat)} {b' : Nat}
     {S : State} (hS : AtS R b L zp zc z2 z2c u 0 s p c L' b' S) (hU : natVal s.mem u 0 < natVal s.mem v vl)
     (hl4 : (s.regs 30).toNat % 4 = 0) (hl48 : (s.regs 30).toNat < 2 ^ 48) :
-    ReachesRet (LibDiv.program.link impl) (s.regs 30) S (RQ R b dc L zp zc st z2 z2c u 0 v vl s) := by
+    ReachesRet (LibDiv.program.link impl) (s.regs 30) S (RQG R b dc L zp zc st z2 z2c u 0 v vl s) := by
   have hp := hpre.f
   obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, -, hout, hga, hgr, hLs, -⟩ := hp.ce
   unfold Apart at hga
@@ -167,7 +167,7 @@ theorem lessC0 (impl : List Segment) (R : RtInv)
     rcases hS.arr with ⟨rfl, rfl, hz⟩ | ⟨hz, hc1, hc2, -⟩
     · exact hp.z2o.1
     · omega
-  have hB : Box (Pre R b dc L zp zl zc st z2 z2l z2c u 0 v vl s ∧ AtS R b L zp zc z2 z2c u 0 s p c L' b' S) :=
+  have hB : Box (PreG R b dc L zp zl zc st z2 z2l z2c u 0 v vl s ∧ AtS R b L zp zc z2 z2c u 0 s p c L' b' S) :=
     ⟨⟨hpre, hS⟩⟩
   have har : ar p 0 = [] := rfl
   clear hpre hp hS

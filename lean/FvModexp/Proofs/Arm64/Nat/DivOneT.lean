@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Arm64.Nat.DivOneF
+import FvModexp.Proofs.Arm64.Nat.DivOneFG
 
 /-!
 # `nat.div` (arm64), `len v = 1`: `r = z2.setWord(r2)`, return (natdiv.go:528-529, nat.go:72-77)
@@ -20,17 +20,17 @@ set_option maxHeartbeats 32000000 in
 /-- `r2 = 0`: `r = z2[:0]` -/
 theorem oneA (impl : List Segment) (R : RtInv) {b : Nat} {dc : Nat → Nat → Nat → Nat} {L : List (Nat × Nat)}
     {zp zl zc st z2 z2l z2c u ul v : Nat} {s : State}
-    (hpre : Pre R b dc L zp zl zc st z2 z2l z2c u ul v 1 s) {q ql qc : Nat} {L' : List (Nat × Nat)} {b' : Nat}
+    (hpre : PreG R b dc L zp zl zc st z2 z2l z2c u ul v 1 s) {q ql qc : Nat} {L' : List (Nat × Nat)} {b' : Nat}
     {T : State} (hW : AtW R b L zp zc z2 z2c u ul v 1 s q ql qc L' b' T)
     (hr0 : natVal s.mem u ul % natVal s.mem v 1 = 0)
     (hl4 : (s.regs 30).toNat % 4 = 0) (hl48 : (s.regs 30).toNat < 2 ^ 48) :
-    ReachesRet (LibDiv.program.link impl) (s.regs 30) T (RQ R b dc L zp zc st z2 z2c u ul v 1 s) := by
+    ReachesRet (LibDiv.program.link impl) (s.regs 30) T (RQG R b dc L zp zc st z2 z2c u ul v 1 s) := by
   have hp := hpre.f
   have hce := hp.ce
   obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, -, hout, hga, hgr, -, -⟩ := hp.ce
   have hz2 := hp.z2o
   have hext := hW.ext
-  have hB : Box (Pre R b dc L zp zl zc st z2 z2l z2c u ul v 1 s ∧ AtW R b L zp zc z2 z2c u ul v 1 s q ql qc L' b' T) :=
+  have hB : Box (PreG R b dc L zp zl zc st z2 z2l z2c u ul v 1 s ∧ AtW R b L zp zc z2 z2c u ul v 1 s q ql qc L' b' T) :=
     ⟨⟨hpre, hW⟩⟩
   have hpc := hW.pc; have hsp := hW.sp; have h28 := hW.r28; have h29 := hW.r29; have h18 := hW.r18
   have hr0' := hW.r0; have hr1 := hW.r1; have hr2 := hW.r2
@@ -42,7 +42,8 @@ theorem oneA (impl : List Segment) (R : RtInv) {b : Nat} {dc : Nat → Nat → N
   clear hpre hW hp
   janus_run [m1, m2, m5, m7, h3]
   obtain ⟨hpre, hW⟩ := hB.h
-  refine ⟨⟨?_, ?_, ?_, ?_⟩, oneFin (r := z2) (rl := 0) (rc := z2c) hpre hW _ ?_ ?_ ?_ ?_ ?_ ?_ ?hM ?hLF (LiveExt.refl R L') (Nat.sub_le _ _) ?hI ?hR⟩
+  refine ⟨⟨?_, ?_, ?_, ?_⟩, oneFinG (r := z2) (rl := 0) (rc := z2c) hpre hW _ ?_ ?_ ?_ ?_ ?_ ?_ ?hM ?hLF (LiveExt.refl R L') (Nat.sub_le _ _) ?hI ?hR
+    (fun h _ => absurd ⟨rfl, rfl⟩ h)⟩
   case hM => exact (winFrame hce hext (by janus_frame) (lo := s.sp.toNat - 80) (hi := s.sp.toNat - 32) (by omega) (by omega) z2 z2c).1
   case hLF => exact (winFrame hce hext (by janus_frame) (lo := s.sp.toNat - 80) (hi := s.sp.toNat - 32) (by omega) (by omega) z2 z2c).2
   case hI =>
@@ -82,11 +83,11 @@ set_option maxHeartbeats 32000000 in
 /-- `r2 ≠ 0`, `cap z2 ≠ 0`: `z2[0] = r2`, `r = z2[:1]` -/
 theorem oneB (impl : List Segment) (R : RtInv) {b : Nat} {dc : Nat → Nat → Nat → Nat} {L : List (Nat × Nat)}
     {zp zl zc st z2 z2l z2c u ul v : Nat} {s : State}
-    (hpre : Pre R b dc L zp zl zc st z2 z2l z2c u ul v 1 s) {q ql qc : Nat} {L' : List (Nat × Nat)} {b' : Nat}
+    (hpre : PreG R b dc L zp zl zc st z2 z2l z2c u ul v 1 s) {q ql qc : Nat} {L' : List (Nat × Nat)} {b' : Nat}
     {T : State} (hW : AtW R b L zp zc z2 z2c u ul v 1 s q ql qc L' b' T)
     (hr0 : natVal s.mem u ul % natVal s.mem v 1 ≠ 0) (hc0 : 0 < z2c)
     (hl4 : (s.regs 30).toNat % 4 = 0) (hl48 : (s.regs 30).toNat < 2 ^ 48) :
-    ReachesRet (LibDiv.program.link impl) (s.regs 30) T (RQ R b dc L zp zc st z2 z2c u ul v 1 s) := by
+    ReachesRet (LibDiv.program.link impl) (s.regs 30) T (RQG R b dc L zp zc st z2 z2c u ul v 1 s) := by
   have hp := hpre.f
   have hce := hp.ce
   obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, -, hout, hga, hgr, -, -⟩ := hp.ce
@@ -96,7 +97,7 @@ theorem oneB (impl : List Segment) (R : RtInv) {b : Nat} {dc : Nat → Nat → N
   simp only [win, outside_cons, outside_nil, and_true] at hz2w
   have hz40 := hz2.1
   have hext := hW.ext
-  have hB : Box (Pre R b dc L zp zl zc st z2 z2l z2c u ul v 1 s ∧ AtW R b L zp zc z2 z2c u ul v 1 s q ql qc L' b' T) :=
+  have hB : Box (PreG R b dc L zp zl zc st z2 z2l z2c u ul v 1 s ∧ AtW R b L zp zc z2 z2c u ul v 1 s q ql qc L' b' T) :=
     ⟨⟨hpre, hW⟩⟩
   have hpc := hW.pc; have hsp := hW.sp; have h28 := hW.r28; have h29 := hW.r29; have h18 := hW.r18
   have hr0' := hW.r0; have hr1 := hW.r1; have hr2 := hW.r2
@@ -112,8 +113,8 @@ theorem oneB (impl : List Segment) (R : RtInv) {b : Nat} {dc : Nat → Nat → N
   clear hpre hW hp
   janus_run [m1, m2, m5, m7, h3]
   obtain ⟨hpre, hW⟩ := hB.h
-  refine ⟨⟨?_, ?_, ?_, ?_⟩, oneFin (r := z2) (rl := 1) (rc := z2c) hpre hW _ ?_ ?_ ?_ ?_ ?_ ?_ ?hM ?hLF
-    (LiveExt.refl R L') (Nat.sub_le _ _) ?hI ?hR⟩
+  refine ⟨⟨?_, ?_, ?_, ?_⟩, oneFinG (r := z2) (rl := 1) (rc := z2c) hpre hW _ ?_ ?_ ?_ ?_ ?_ ?_ ?hM ?hLF
+    (LiveExt.refl R L') (Nat.sub_le _ _) ?hI ?hR (fun h _ => absurd ⟨rfl, rfl⟩ h)⟩
   case hM => exact (winFrame2 hce hext (by janus_frame) (lo := s.sp.toNat - 80) (hi := s.sp.toNat - 32) (by omega)
     (by omega) hc0).1
   case hLF => exact (winFrame2 hce hext (by janus_frame) (lo := s.sp.toNat - 80) (hi := s.sp.toNat - 32) (by omega)
@@ -150,11 +151,11 @@ theorem oneC (impl : List Segment) (R : RtInv)
     (hmk : MakesliceLiveContract (LibDiv.program.link impl) (cA "runtime.makeslice") 4096 R)
     {b : Nat} {dc : Nat → Nat → Nat → Nat} {L : List (Nat × Nat)}
     {zp zl zc st z2 z2l u ul v : Nat} {s : State}
-    (hpre : Pre R b dc L zp zl zc st z2 z2l 0 u ul v 1 s) {q ql qc : Nat} {L' : List (Nat × Nat)} {b' : Nat}
+    (hpre : PreG R b dc L zp zl zc st z2 z2l 0 u ul v 1 s) {q ql qc : Nat} {L' : List (Nat × Nat)} {b' : Nat}
     {T : State} (hW : AtW R b L zp zc z2 0 u ul v 1 s q ql qc L' b' T)
     (hr0 : natVal s.mem u ul % natVal s.mem v 1 ≠ 0)
     (hl4 : (s.regs 30).toNat % 4 = 0) (hl48 : (s.regs 30).toNat < 2 ^ 48) :
-    ReachesRet (LibDiv.program.link impl) (s.regs 30) T (RQ R b dc L zp zc st z2 0 u ul v 1 s) := by
+    ReachesRet (LibDiv.program.link impl) (s.regs 30) T (RQG R b dc L zp zc st z2 0 u ul v 1 s) := by
   have hp := hpre.f
   have hce := hp.ce
   obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, hd, hout, hga, hgr, -, hro⟩ := hp.ce
@@ -164,7 +165,7 @@ theorem oneC (impl : List Segment) (R : RtInv)
   have hzo := hp.zo
   have hext := hW.ext
   have hbud := hW.bud
-  have hB : Box (Pre R b dc L zp zl zc st z2 z2l 0 u ul v 1 s ∧ AtW R b L zp zc z2 0 u ul v 1 s q ql qc L' b' T) :=
+  have hB : Box (PreG R b dc L zp zl zc st z2 z2l 0 u ul v 1 s ∧ AtW R b L zp zc z2 0 u ul v 1 s q ql qc L' b' T) :=
     ⟨⟨hpre, hW⟩⟩
   have hpc := hW.pc; have hsp := hW.sp; have h28 := hW.r28; have h29 := hW.r29; have h18 := hW.r18
   have hr0' := hW.r0; have hr1 := hW.r1; have hr2 := hW.r2
@@ -224,8 +225,8 @@ theorem oneC (impl : List Segment) (R : RtInv)
     have := inL_out hce hext hin
     rw [hLF.readLE a n hin trivial]
     exact hpW.readLE a n (by simp only [outside_cons, outside_nil, and_true]; omega)
-  refine ⟨⟨?_, ?_, ?_, ?_⟩, oneFin (r := ptr.toNat) (rl := 1) (rc := 1) (b'' := b' - 8) hpre hW _ ?_ ?_ ?_ ?_ ?_ ?_ ?hM ?hLF hx1 ?hb
-    ?hI ?hR⟩
+  refine ⟨⟨?_, ?_, ?_, ?_⟩, oneFinG (r := ptr.toNat) (rl := 1) (rc := 1) (b'' := b' - 8) hpre hW _ ?_ ?_ ?_ ?_ ?_ ?_ ?hM ?hLF hx1 ?hb
+    ?hI ?hR (fun _ _ => ⟨by simpa using hAp, by simpa using hIn⟩)⟩
   case hM =>
     refine hf1.trans (by janus_frame : MemFrame m _ [(ptr.toNat, ptr.toNat + 8), (s.sp.toNat - 80, s.sp.toNat - 56)])
       fun a n h => ⟨h, ?_⟩
