@@ -1233,3 +1233,6 @@ DrsFRel3 3.0 s, DrsF3 12.0 s / 2.7 GB. First DrsF2 draft never finished (> 12 mi
 `repeat (first | rw [readLE_writeLE_self] | rw [readLE_writeLE_of_disjoint _ _ (by omega)])` closer retrying failing
 omegas; explicit per-goal rewrite chains → 17 s for f2x. Budget-invariant change (Cx.lo) rebuilt the drs chain to DrsLoop
 with no time change.
+### infra s31 (2026-11-12, dev compile, arm64)
+EvSetT 1.8 s / 2.5 GB · EvSetU 1.8 s / 2.5 GB · EvSetP 2.4 s / 2.5 GB · EvSet 1.9 s / 2.5 GB · SubMod2NG 1.0 s / 2.1 GB
+(all term-mode compositions; every `janus_run` lives in EvSetR).
