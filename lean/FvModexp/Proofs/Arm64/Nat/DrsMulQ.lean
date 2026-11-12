@@ -172,7 +172,7 @@ theorem mul_post {R : RtInv} {c : Cx} {s S X T : State} {Lk : List (Nat × Nat)}
   refine ⟨by rw [e0], by rw [hr1, hl'], e2, L', b', hcr, hEv, hFp, hBd, hBs, hA.jB, hA.li,
     by rw [hqn]; exact hA.q3.frame hMF' hhi h0,
     ⟨hx.held hrg.h, hrg.w, hrg.g, hrg.st, hrg.gA, hrg.q, hrg.u, hrg.v, hrg.t0⟩,
-    by rw [hqn, limbs_congr (rd_sub kt0 (Nat.le_refl _) (by omega))]; exact hqk0, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+    by rw [hqn, limbs_congr (rd_sub kt0 (Nat.le_refl _) (by omega))]; exact hqk0, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · show Asm.limbs T.mem (c.qv s S.mem) (3 * c.vl) = c.P s j U ++ List.replicate (3 * c.vl - (c.P s j U).length) 0
     rw [hP]; exact Asm.buf_mul (by omega) hvT hzT
   · show _ = (c.U2 s j U).drop (j - c.vl / 2)

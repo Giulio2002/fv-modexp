@@ -1207,3 +1207,8 @@ amd64 Top_RunErr in the same run: **FAIL (timeout) 901 s**, peak 1.4 GB — at l
 amd64-only re-measure after the trims (cache-top-freshD, `ONLY_ISA=amd64`, load 45-55): warm-up 1110 s, amd64 Top_RunErr
 **PASS 886 s / 4.9 GB** (was TIMEOUT 901 s / at similar load; 802 s at load ~15 in s17). Margin is thin under load:
 remaining trim candidates RunLLo/RunLHi (janus64_data 28 s + failing `first` alternatives 15 s each), RunH1, RunH2M/H3M.
+
+## asm s27 (2026-11-12, dev compile, host load 20–40)
+DrsDV 3.7 s, DrsDG 1.6 s, DrsD1 4.0 s, DrsD2 6.6 s, DrsD3 16 s, DrsD4 32 s / 3.4 GB, DrsD5R 8.8 s, DrsD5 27 s / 3.3 GB,
+DrsD6R 5.7 s, DrsD6 44 s / 3.1 GB, DrsD7 6.4 s (was 449 s killed: store/read disjointness not in omega form → symbolic
+reads + rfl over memory; fixed by `simp … at hsto'` before janus_run), DrsDL 1.8 s, DrsLoop 1.3 s. DrsMulQ 68 s / 4.4 GB.
