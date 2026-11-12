@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Arm64.Exp.ExpHyp
+import FvModexp.Proofs.Arm64.Exp.MulHyp
 import FvModexp.Proofs.Arm64.Nat.StackNatCall
 
 /-!
@@ -92,7 +93,8 @@ def SlowHyp (impl : List Segment) (R : RtInv) (ns : List String) (stk above : Na
         (cost (stLen s.mem st.toNat) xl.toNat yl.toNat ml.toNat) s s')
 
 /-! ## `z.expNNPowerOfTwo(stk, x, y, logM)` (nat.go:906) — z X0..X2, st X3, x X4..X6, y X7..X9, logM X10;
-`X ^ Y % 2 ^ logM` -/
+`X ^ Y % 2 ^ logM`. Pre's last conjunct (infra s18 request): the package global `natOne` (`powers[0].set(natOne)` in
+`buildPrecomputationWindowModPower2`), outside the window, `z` and the stack's written ranges, apart from the stack. -/
 
 def fnP2 : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.nat.expNNPowerOfTwo"
 
@@ -103,7 +105,9 @@ def P2Hyp (impl : List Segment) (R : RtInv) (ns : List String) (stk above : Nat)
       [z, zl, zc, st, x, xl, xc, y, yl, yc, lm]
       (fun s => CPre R b L stk above z.toNat zl.toNat zc.toNat st.toNat [(x.toNat, xl.toNat), (y.toNat, yl.toNat)]
           (need xl.toNat yl.toNat lm.toNat) (cost (stLen s.mem st.toNat) xl.toNat yl.toNat lm.toNat) s ∧
-        0 < natVal s.mem x.toNat xl.toNat ∧ 0 < natVal s.mem y.toNat yl.toNat ∧ 1 ≤ lm.toNat ∧ lm.toNat ≤ 2 ^ 13)
+        0 < natVal s.mem x.toNat xl.toNat ∧ 0 < natVal s.mem y.toNat yl.toNat ∧ 1 ≤ lm.toNat ∧ lm.toNat ≤ 2 ^ 13 ∧
+        ∃ op, EvenHyp.NatOne R L s.mem op (win s stk above ++ [(z.toNat, z.toNat + 8 * zc.toNat)] ++ stWs s.mem st.toNat) ∧
+          EvenHyp.StkApart s.mem st.toNat op 8)
       (fun s s' => CPost R b L stk above z.toNat zc.toNat st.toNat
         (natVal s.mem x.toNat xl.toNat ^ natVal s.mem y.toNat yl.toNat % 2 ^ lm.toNat)
         (cost (stLen s.mem st.toNat) xl.toNat yl.toNat lm.toNat) s s')

@@ -934,3 +934,6 @@ unified against `growCap8 (len0 + 8n)` by defeq; fixed by rewriting the fact to 
 P2W2Pre ~1 s, P2W2EnA 30 s (finer frame, under J=2 load), P2W2Ent 13.6 s / 2.5 GB, P2W2Ctx ~2 s, P2W2N 8.5 s / 2.3 GB.
 P2Pre closure rebuilt after the `Pre` Globals-list change: every module unchanged in time (P2PreX 53 s, P2PreD 22 s,
 P2Pre 7.7 s; all ≤ 4.4 GB).
+
+### expmc session 22 (2026-11-12), arm64 dev compile, wall / max RSS
+NCallP 8 s / 2.8 GB; NCPre 4 s / 2.6 GB; NCall 2 s / 2.5 GB; NRemP 5 s / 2.6 GB (all pure/composition; no janus_run).

@@ -1,5 +1,6 @@
 import FvModexp.Proofs.Arm64.Exp.LibN
 import FvModexp.Proofs.Arm64.Exp.NHyp
+import FvModexp.Proofs.Arm64.Exp.MulHyp
 import FvModexp.Proofs.Arm64.Exp.OddDefs
 
 /-!
@@ -12,7 +13,8 @@ import FvModexp.Proofs.Arm64.Exp.OddDefs
 
 Here `sp := SP - 1312` (= `expNNOdd`'s `sp`) and the window is `[sp - K, sp + 1432) = [SP - (K + 1312), SP + 120)`.
 
-* `NPre`: as `ExpOdd.OPre` with the larger window, `0 < st` (stack given), `slow = 0`, `0 < len m`, the alias condition
+* `NPre`: as `ExpOdd.OPre` with the larger window, `0 < st` (stack given), `slow = 0`, `0 < len m`, `len z ≤ cap z`,
+  the package global `natOne` (read by `expNNPowerOfTwo`'s precomputation), the alias condition
   of `z` (Go `alias(z, x) || alias(z, y)` → `z = nil`; otherwise `z` is apart from `x`, `y`, `m`: `ZOK`), the stack
   bounds of every callee, the budget `NBud`.
 * `Pre` = `NPre` ∧ (`M` odd ∨ `M` a power of two) (`noEven`: `expNNEven` is never called).
@@ -56,7 +58,7 @@ threshold globals -/
 def NPre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K : Nat) (costF : Nat → Nat → Nat → Nat)
     (needR : Nat → Nat → Nat) (costR : Nat → Nat → Nat → Nat) (needS needP : Nat → Nat → Nat → Nat)
     (costS costP : Nat → Nat → Nat → Nat → Nat)
-    (g sp zp zc st xp xl xc yp yl yc mp n mc slow : Nat) (s : State) : Prop :=
+    (g sp zp zl zc st xp xl xc yp yl yc mp n mc slow : Nat) (s : State) : Prop :=
   NEnv R L g sp K s ∧ K + 288 ≤ 2 ^ 20 ∧ RunIface.Globals R s.mem [(sp - K, sp + 1432)] ∧ RoOut R ∧
   Outside StackNat.wT 16 R.rt ∧ slow = 0 ∧
   0 < n ∧ n ≤ 128 ∧ n ≤ mc ∧ mc < 2 ^ 40 ∧
@@ -66,10 +68,12 @@ def NPre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K : Nat) (costF : Nat �
     NatNorm s.mem yp yl ∧ yl ≤ 2 ^ 9 ∧ yc < 2 ^ 64 ∧
   NE R L sp K st s.mem xp (8 * xl) ∧ s.mem.accessible xp (8 * xl) false = true ∧ xp + 8 * xl ≤ 2 ^ 48 ∧
     NatNorm s.mem xp xl ∧ xl ≤ 128 ∧ xp < 2 ^ 64 ∧ xc < 2 ^ 64 ∧
-  zp < 2 ^ 64 ∧ zc < 2 ^ 40 ∧
+  zp < 2 ^ 64 ∧ zl ≤ zc ∧ zc < 2 ^ 40 ∧
   (0 < zc → (0 < xc ∧ zp + 8 * zc = xp + 8 * xc) ∨ (0 < yc ∧ zp + 8 * zc = yp + 8 * yc) ∨
     ZOK R L g sp K st zp zc xp xl yp yl mp n s.mem) ∧
   NE R L sp K st s.mem RunIface.gA 32 ∧
+  (∃ op, EvenHyp.NatOne R L s.mem op ([(sp - K, sp + 1432), (zp, zp + 8 * zc)] ++ stkWs s.mem st) ∧
+    EvenHyp.StkApart s.mem st op 8) ∧
   0 < st ∧ st < 2 ^ 48 ∧ StkOK s.mem R L st ∧ Apart st 24 (sp - K) (K + 1432) ∧ Apart st 24 (g + 16) 8 ∧
   (0 < stCap s.mem st → Apart (stW s.mem st) (8 * stCap s.mem st) (sp - K) (K + 1432) ∧
     Apart (stW s.mem st) (8 * stCap s.mem st) (g + 16) 8) ∧
@@ -94,9 +98,9 @@ def NCost (costF : Nat → Nat → Nat → Nat) (costR : Nat → Nat → Nat →
 def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K : Nat) (costF : Nat → Nat → Nat → Nat)
     (needR : Nat → Nat → Nat) (costR : Nat → Nat → Nat → Nat) (needS needP : Nat → Nat → Nat → Nat)
     (costS costP : Nat → Nat → Nat → Nat → Nat)
-    (zp zc st xp xl xc yp yl yc mp n mc slow : Nat) (s : State) : Prop :=
-  NPre R b L K costF needR costR needS needP costS costP (s.regs 28).toNat (s.sp.toNat - 1312) zp zc st xp xl xc yp yl
-    yc mp n mc slow s ∧
+    (zp zl zc st xp xl xc yp yl yc mp n mc slow : Nat) (s : State) : Prop :=
+  NPre R b L K costF needR costR needS needP costS costP (s.regs 28).toNat (s.sp.toNat - 1312) zp zl zc st xp xl xc yp
+    yl yc mp n mc slow s ∧
   (natVal s.mem mp n % 2 = 1 ∨ ∃ k, natVal s.mem mp n = 2 ^ k)
 
 /-- the postcondition (results `X0..X2`): `x^y mod m`, normalised, empty, in `z`'s array or in a fresh one -/
