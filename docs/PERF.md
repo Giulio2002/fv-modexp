@@ -1317,3 +1317,16 @@ close sp / slot goals with tiny lemmas (`sp_ret`, `Nat.sub_sub`) instead of omeg
   implications removed earlier; natOne/pool reads boxed).
 * Frame composition at byte granularity (`Common/ByteFrame`: `MemFrame.of_bytes` + per-byte `MemFrame.byte`) with the
   range arithmetic in tiny standalone lemmas (`IExpDefs.out_atN/out_slot/out_post/out_live`): no omega in big contexts.
+
+## agent top s20 (2026-11-12): arm64 success-row D segments (dev compile, LEAN_NUM_THREADS=4; host load 30-85, NOISY)
+* `Top/RunDSlot`: `OpDone.transportS` / `OpsApart.transportS` take ONE `SlotsEq m m' s k` fact (reads in the operand slots
+  `[opAt s (k-1), opAt s 0 + 32)`), closed by a single `janus_simp` with symbolic `a n` — replaces 4 `janus_simp [opAt]`
+  per operand (+4 for OpsApart), each ≈ 4 s on the segment context. RunD3LB 121 → 50 s (load 35), RunD3ZN 95 → 61 s,
+  RunD3J 44 s, RunD2J 52 s, RunD2ZN 60 s; RunD3/RunD3P/RunD3ZA ≈ unchanged within the load noise (93-98 s).
+* `Top/RunU8` (`u8T_acc/size/ptr`): the `uint8` descriptor facts (`janus_data`, ≈ 4 s each in a segment context, 2 s here)
+  proved once, used by RunD1L/RunD2L/RunD2ZA/RunD3ZA (−3 janus_data each).
+* RunD3P profile (98 s): 54 s janus_run of which ONE memmove-source `Outside` side goal = 21 s of `janus_omega_prune`
+  (atoms `len - 96 - min (…) (…)`; context disjunctions hoffc/hmN). Tried: Box hoffc/hmN before the run (a later
+  dispatch then fails slowly: 44 s, worse); generalize the length (`nD`) at * (run gets stuck: a branch needs the relation).
+  Left as is. RunD1L profile (125 s at load 40): 3 runs 13 + 32 + 20 s, final `refine` 26 s (many 1-3 s janus_simp side
+  goals), no single hotspot.
