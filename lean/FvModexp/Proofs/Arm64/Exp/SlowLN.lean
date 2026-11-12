@@ -154,16 +154,18 @@ theorem LN.of_res {R : RtInv} {L : List (Nat × Nat)} {st zp zc : Nat} {M M' : M
     {L1 L2 : List (Nat × Nat)} {pd cd : Nat} (hd : DL R L st zp zc M L1 pd cd) (hLL : ∀ r ∈ L, r ∈ L1)
     (hok : StkOK M R L1 st) (hc0 : stCap M st = 0 → stW M st = 0)
     {need p' l' c' v : Nat} (hr : ExpHyp.NatOF R L1 L2 M' pd cd need p' l' c' v) (hx : LiveExt R L1 L2)
-    (hsb : StackBackL R L1 L2 st M M') (hrs : ResSep M M' st p' c') (h0 : c' = 0 → p' = 0) :
+    (hsb : StackBackL R L1 L2 st M M') (hrs : ¬ (p' = pd ∧ c' = cd) → ResSep M M' st p' c') (h0 : c' = 0 → p' = 0) :
     LN R L st zp zc M' L2 p' l' c' v := by
   obtain ⟨hv, hn, hlc, hc40, hlv, hof⟩ := hr
   refine ⟨⟨hc40, hlv, ?_, fun hc => ?_, h0⟩, hlc, hv, hn⟩
   · rcases hof with ⟨rfl, rfl⟩ | ⟨-, hin, hap⟩
     · exact hd.2.2.1
     · exact Or.inr (Or.inl ⟨hin, fun r hr => hap r (hLL r hr)⟩)
-  · rcases hof with ⟨rfl, rfl⟩ | ⟨-, hin, hap⟩
-    · exact (hd.2.2.2.1 hc).back hx hsb.1
-    · exact ob_fresh hok hc0 hsb.1 hin hap (hlv hc).2.1 hrs hc
+  · by_cases ho : p' = pd ∧ c' = cd
+    · obtain ⟨rfl, rfl⟩ := ho
+      exact (hd.2.2.2.1 hc).back hx hsb.1
+    · obtain ⟨-, hin, hap⟩ := hof.resolve_left ho
+      exact ob_fresh hok hc0 hsb.1 hin hap (hlv hc).2.1 (hrs ho) hc
 
 /-- the result is `Pw`-apart from every non-empty live buffer other than the destination -/
 theorem pw_res {R : RtInv} {L L1 L2 : List (Nat × Nat)} {st zp zc : Nat} {M M' : Memory} {pd cd p' c' q k : Nat}

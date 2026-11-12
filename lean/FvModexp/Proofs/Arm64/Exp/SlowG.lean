@@ -88,7 +88,8 @@ def SqrHypG (impl : List Segment) (R : RtInv) (ns : List String) (stk above : Na
     cost (stLen s.mem st) ul vl ≤ b ∧ R.inv b L (s.regs 28).toNat (view R.rt L s.mem)
 
 /-- `ExpHyp.DivPostL` + the two results apart when both non-empty (both may be fresh: `NatOF` alone does not separate
-two allocations of the same call; `nat.expNNSlow` later passes them as destination and operand of one call) -/
+two allocations of the same call; `nat.expNNSlow` later passes them as destination and operand of one call) + a fresh
+QUOTIENT apart from the stack's final array (as the remainder's clause; the quotient buffer is reused later) -/
 @[reducible] def DivPostLG (R : RtInv) (b : Nat) (cost : Nat → Nat → Nat → Nat) (L : List (Nat × Nat))
     (stk above zp zc st z2 z2c u ul v vl : Nat) (s s' : State) : Prop :=
   ∃ (q ql qc r rl rc : Nat), s'.regs 0 = BitVec.ofNat 64 q ∧ s'.regs 1 = BitVec.ofNat 64 ql ∧
@@ -102,13 +103,15 @@ two allocations of the same call; `nat.expNNSlow` later passes them as destinati
         Apart r (8 * rc) (stW s'.mem st) (8 * stCap s'.mem st)) ∧
       MemFrame s.mem s'.mem (R.rt ++ winA s stk above ++ [(zp, zp + 8 * zc), (z2, z2 + 8 * z2c)] ++ ExpHyp.stWs s.mem st) ∧
       LiveFrame s.mem s'.mem L ([(zp, zp + 8 * zc), (z2, z2 + 8 * z2c)] ++ ExpHyp.stWs s.mem st) ∧
-      (0 < qc → 0 < rc → Apart q (8 * qc) r (8 * rc))
+      (0 < qc → 0 < rc → Apart q (8 * qc) r (8 * rc)) ∧
+      (¬ (q = zp ∧ qc = zc) → 0 < qc → 0 < stCap s'.mem st →
+        Apart q (8 * qc) (stW s'.mem st) (8 * stCap s'.mem st))
 
 theorem DivPostLG.toL {R : RtInv} {b : Nat} {cost : Nat → Nat → Nat → Nat} {L : List (Nat × Nat)}
     {stk above zp zc st z2 z2c u ul v vl : Nat} {s s' : State}
     (h : DivPostLG R b cost L stk above zp zc st z2 z2c u ul v vl s s') :
     DivPostL R b cost L stk above zp zc st z2 z2c u ul v vl s s' := by
-  obtain ⟨q, ql, qc, r, rl, rc, h0, h1, h2, h3, h4, h5, L', b', hq, hr, hp, hsb, ha, hf, hl, -⟩ := h
+  obtain ⟨q, ql, qc, r, rl, rc, h0, h1, h2, h3, h4, h5, L', b', hq, hr, hp, hsb, ha, hf, hl, -, -⟩ := h
   exact ⟨q, ql, qc, r, rl, rc, h0, h1, h2, h3, h4, h5, L', b', hq, hr, hp, hsb, ha, hf, hl⟩
 
 /-- **`nat.div`**, empty-tolerant dividend, `StackBackL` post, results apart (see the module doc) -/
