@@ -123,7 +123,7 @@ theorem make_alloc (impl : List Segment) (R : RtInv)
     case qcs => intro a n h; simp only [winA, outside_cons, outside_nil, and_true] at h ⊢; omega
     case qacc => rw [hMF.accessible]; simpa only [Memory.accessible_writeLE] using hacc
     case q1 => omega
-    case q2 => rw [hmc]; exact blockSize_le_allocCost _ true
+    case q2 => rw [hmc, show yl.toNat + xl.toNat = xl.toNat + yl.toNat from Nat.add_comm _ _]; exact blockSize_le_allocCost _ true
     case q3 => omega
     case q4 => omega
     case q5 => omega
