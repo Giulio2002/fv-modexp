@@ -32,16 +32,16 @@ def needE (needR : Nat → Nat → Nat) (needS needP : Nat → Nat → Nat → N
 
 /-- the two `nat.expNN` calls' worst budget at modulus length `ml`, level `l` -/
 @[reducible] def eC (costF : Nat → Nat → Nat → Nat) (costR : Nat → Nat → Nat → Nat)
-    (costS costP : Nat → Nat → Nat → Nat → Nat) (xl yl ml l : Nat) : Nat :=
-  NBudE costF costR costS costP xl yl ml l (64 * ml) + ExpN.NCost costF costR costS costP xl yl ml l (64 * ml)
+    (costS costP : Nat → Nat → Nat → Nat → Nat) (bU cU : Nat → Nat → Nat → Nat → Nat → Nat) (xl yl ml l : Nat) : Nat :=
+  bU xl yl ml l (64 * ml) + cU xl yl ml l (64 * ml)
 
 /-- the budget (entry stack level `ℓ0`) -/
 def costE (costF : Nat → Nat → Nat → Nat) (costR : Nat → Nat → Nat → Nat)
-    (costS costP : Nat → Nat → Nat → Nat → Nat) (sqC : Nat → Nat → Nat) (mlC mlG : Nat → Nat → Nat → Nat)
-    (ℓ0 xl yl ml : Nat) : Nat :=
+    (costS costP : Nat → Nat → Nat → Nat → Nat) (bU cU : Nat → Nat → Nat → Nat → Nat → Nat) (sqC : Nat → Nat → Nat)
+    (mlC mlG : Nat → Nat → Nat → Nat) (ℓ0 xl yl ml : Nat) : Nat :=
   stackNatCost ℓ0 ml + makeB (ml + 1) + stackNatCost (ℓ0 + rnd ml) ml + makeB ml +
-    stackNatCost (wL2 ℓ0 ml) (2 * ml) + eC costF costR costS costP xl yl ml (wL3 ℓ0 ml) +
-    stackNatCost (wL3 ℓ0 ml) (2 * ml) + eC costF costR costS costP xl yl ml (wL4 ℓ0 ml) +
+    stackNatCost (wL2 ℓ0 ml) (2 * ml) + eC costF costR costS costP bU cU xl yl ml (wL3 ℓ0 ml) +
+    stackNatCost (wL3 ℓ0 ml) (2 * ml) + eC costF costR costS costP bU cU xl yl ml (wL4 ℓ0 ml) +
     allocCost (8 * (ml + 4)) + SubMod2N.costG (64 * ml) +
     ModInv.cost (sqC (wL4 ℓ0 ml)) (mlC (wL4 ℓ0 ml)) (64 * ml) + mlG (wL4 ℓ0 ml) ml ml + makeB (2 * ml) +
     mlG (wL4 ℓ0 ml) ml ml + makeB (ml + 1)

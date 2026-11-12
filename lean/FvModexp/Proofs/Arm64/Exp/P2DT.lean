@@ -30,6 +30,15 @@ theorem hdr_eq {R : RtInv} {L : List (Nat × Nat)} {st : Nat} {m M : Memory} {ws
     (hH.sub (by omega) (by omega)).readLE hF (LiveFrame.of_nil' hLF ws) (ho.of_sub (by omega) (by omega))
   exact ⟨by have := rd 0 (by omega); simpa using this, rd 8 (by omega), rd 16 (by omega)⟩
 
+/-- a read through a frame whose ranges are each empty or apart from the read -/
+theorem rd_frame {m m' : Memory} {rs : List (Nat × Nat)} (h : MemFrame m m' rs) {a k : Nat}
+    (ho : ∀ r ∈ rs, r.2 ≤ r.1 ∨ a + k ≤ r.1 ∨ r.2 ≤ a) : m'.readLE a k = m.readLE a k := by
+  refine Memory.readLE_congr fun j hj => ?_
+  have h1 := h.readLE (a + j) 1 (outside_of_forall fun r hr => by
+    rcases ho r hr with q | q | q <;> omega)
+  simp only [Memory.readLE_one] at h1
+  exact BitVec.eq_of_toNat_eq h1
+
 section
 variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {stk A zp zl zc st : Nat} {ins : List (Nat × Nat)}
   {need cst : Nat} {s S : State}

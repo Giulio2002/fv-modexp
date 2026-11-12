@@ -123,12 +123,13 @@ theorem fullI {impl : List Segment} (hap : ImplApart Extracted.program impl) {R 
     (hRm : ∀ x a a', a ≤ a' → needR x a ≤ needR x a')
     (hSm : ∀ x y a a', a ≤ a' → needS x y a ≤ needS x y a')
     (hPm : ∀ x y a a', a ≤ a' → needP x y a ≤ needP x y a')
+    {bU cU : Nat → Nat → Nat → Nat → Nat → Nat}
     (hNB : ∀ x y a a' l l' k k', a ≤ a' → l ≤ l' → k ≤ k' →
-      NBudE costF costR costS costP x y a l k ≤ NBudE costF costR costS costP x y a' l' k')
+      NBudE costF costR costS costP x y a l k ≤ bU x y a' l' k')
     (hNC : ∀ x y a a' l l' k k', a ≤ a' → l ≤ l' → k ≤ k' →
-      ExpN.NCost costF costR costS costP x y a l k ≤ ExpN.NCost costF costR costS costP x y a' l' k')
+      ExpN.NCost costF costR costS costP x y a l k ≤ cU x y a' l' k')
     {stk : Nat} (hk1 : 71168 ≤ stk) (hk2 : stk ≤ 2 ^ 20 + 336) (hk3 : KN + 1648 ≤ stk) :
-    EvenSum impl R stk 112 (needE needR needS needP) (costE costF costR costS costP sqrC mulC mulC) := by
+    EvenSum impl R stk 112 (needE needR needS needP) (costE costF costR costS costP bU cU sqrC mulC mulC) := by
   obtain ⟨e1, e2, e3, e4, e5⟩ := sub_e
   have hc : CodeIn (Extracted.program.ofImpl impl) (LibNE.program.link impl) := by
     rw [LibNE.eq_only]; exact codeIn_ofImpl_restrict_of_apart hap LibNE.names
