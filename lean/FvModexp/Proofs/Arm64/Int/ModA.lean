@@ -32,6 +32,14 @@ abbrev raD : Nat := 0x1b0dcc
 /-- the address of the last capacity word of a nat `(p, _, c)` as the machine computes it -/
 @[reducible] def lastA (p c : Nat) : Nat := (p + 8 * (c - 1)) % 2 ^ 64
 
+/-- `q`'s header after the `len, cap` stores (`q` at `t - 72`) -/
+@[reducible] def hdrQ (M : Memory) (t ql qc : Nat) : Memory := (M.writeLE (t - 72 + 16) 8 ql).writeLE (t - 72 + 24) 8 qc
+
+/-- the final stores after the barrier: `q.ptr`, `z.cap`, `z.ptr`, `z.len`, `q.neg = qn`, `z.neg = 0` -/
+@[reducible] def finW (Mw : Memory) (t zA q r rl rc qn : Nat) : Memory :=
+  (((((Mw.writeLE (t - 72 + 8) 8 q).writeLE (zA + 24) 8 rc).writeLE (zA + 8) 8 r).writeLE (zA + 16) 8 rl).writeLE
+    (t - 72) 1 qn).writeLE zA 1 0
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem runA1 (impl : List Segment) (ret0 : Nat) (hret : RetAddr (LibMod.program.link impl) ret0)

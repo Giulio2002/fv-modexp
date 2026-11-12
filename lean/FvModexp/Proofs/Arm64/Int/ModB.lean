@@ -18,14 +18,6 @@ set_option autoImplicit false
 
 namespace FvModexp.Arm64.IMod
 
-/-- `q`'s header after the `len, cap` stores (`q` at `t - 72`) -/
-@[reducible] def hdrQ (M : Memory) (t ql qc : Nat) : Memory := (M.writeLE (t - 72 + 16) 8 ql).writeLE (t - 72 + 24) 8 qc
-
-/-- the final stores after the barrier: `q.ptr`, `z.cap`, `z.ptr`, `z.len`, `q.neg = qn`, `z.neg = 0` -/
-@[reducible] def finW (Mw : Memory) (t zA q r rl rc qn : Nat) : Memory :=
-  (((((Mw.writeLE (t - 72 + 8) 8 q).writeLE (zA + 24) 8 rc).writeLE (zA + 8) 8 r).writeLE (zA + 16) 8 rl).writeLE
-    (t - 72) 1 qn).writeLE zA 1 0
-
 /-- a store inside the barrier's buffer (runtime-owned, apart from the live set) commutes with `view` -/
 theorem view_buf {rt L : List (Nat × Nat)} {buf : Nat} (hR : InRanges buf 32 rt) (hL : ApartAll buf 32 L)
     {a n : Nat} (h1 : buf ≤ a) (h2 : a + n ≤ buf + 32) (M : Memory) (v : Nat) :
@@ -34,8 +26,6 @@ theorem view_buf {rt L : List (Nat × Nat)} {buf : Nat} (hR : InRanges buf 32 rt
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-set_option trace.profiler true in
-set_option trace.profiler.threshold 2000 in
 theorem runB (impl : List Segment) (R : RtInv)
     (hwb : WbLiveContract (LibMod.program.link impl) (cA "runtime.gcWriteBarrier4") 4096 R 4)
     (ret0 : Nat) (hret : RetAddr (LibMod.program.link impl) ret0) (F : State → Prop)
@@ -217,10 +207,7 @@ theorem runB (impl : List Segment) (R : RtInv)
         simp (disch := omega) only [view_buf hbufR hapL']
         exact hinvS _ (by janus_frame)
       case r29 =>
-        first
-          | exact hb
-          | (simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte]; done)
-          | (simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte]; exact hb)
-          | (simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte]; rw [sfp]; exact hb)
+        simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte]
+        first | (rw [sfp]; exact hb) | exact hb
 
 end FvModexp.Arm64.IMod
