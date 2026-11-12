@@ -63,4 +63,24 @@ suffices, the result capacity bounded. -/
     (need xl yl ≤ zc.toNat → (s'.regs 0).toNat = zp.toNat ∧ (s'.regs 1).toNat = zc.toNat) ∧
     (mx xl yl < 2 ^ 39 → (s'.regs 1).toNat < 2 ^ 40)
 
+/-- `PostR` with the exact write set in `z`'s old array: only `z[0:min(max(len x, len y) + 1, cap z)]` (twin of the
+arm64 `PostX`; karatsuba(Sqr) temporaries are slices of the result whose capacity reaches beyond what they may write). -/
+@[reducible] def PostX (stk : Nat) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl yp yl : BitVec 64)
+    (s s' : State) : Prop :=
+  PostR stk R b L zp zc xp xl yp yl s s' ∧
+    MemFrame s.mem s'.mem (R.rt ++ win s stk 80 ++ [(zp.toNat, zp.toNat + 8 * min (max xl.toNat yl.toNat + 1) zc.toNat)]) ∧
+    LiveFrame s.mem s'.mem L [(zp.toNat, zp.toNat + 8 * min (max xl.toNat yl.toNat + 1) zc.toNat)]
+
+/-- the exact write set implies `PostS`'s -/
+theorem frames_of_x {stk : Nat} {R : RtInv} {L : List (Nat × Nat)} {zp zc xl yl : BitVec 64} {s s' : State}
+    (hmf : MemFrame s.mem s'.mem (R.rt ++ win s stk 80 ++ [(zp.toNat, zp.toNat + 8 * min (max xl.toNat yl.toNat + 1) zc.toNat)]))
+    (hlf : LiveFrame s.mem s'.mem L [(zp.toNat, zp.toNat + 8 * min (max xl.toNat yl.toNat + 1) zc.toNat)]) :
+    MemFrame s.mem s'.mem (R.rt ++ win s stk 80 ++ [(zp.toNat, zp.toNat + 8 * zc.toNat)]) ∧
+      LiveFrame s.mem s'.mem L [(zp.toNat, zp.toNat + 8 * zc.toNat)] := by
+  have hmo : ∀ a n, Outside a n [(zp.toNat, zp.toNat + 8 * zc.toNat)] →
+      Outside a n [(zp.toNat, zp.toNat + 8 * min (max xl.toNat yl.toNat + 1) zc.toNat)] := fun a n ho => by
+    simp only [outside_cons, outside_nil, and_true] at ho ⊢; omega
+  exact ⟨hmf.mono fun a n ho => by simp only [outside_append] at ho ⊢; exact ⟨ho.1, hmo a n ho.2⟩,
+    ⟨fun a n hin ho => hlf.readLE a n hin (hmo a n ho)⟩⟩
+
 end FvModexp.Amd64.NatAdd

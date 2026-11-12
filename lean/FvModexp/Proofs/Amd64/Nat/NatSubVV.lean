@@ -25,10 +25,10 @@ theorem vv_after {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl xc y
         natVal M (xp.toNat + 8 * yl.toNat) (xl.toNat - yl.toNat) := by
   have hsp0 := h.sp0; have hpw := h.pw; have hxw := h.xw; have hcap := h.cap
   unfold Apart at hpw hxw
-  have hws1 : WsOK s p c [((s.regs 4).toNat - 152, (s.regs 4).toNat - 72), ((s.regs 4).toNat - 64, (s.regs 4).toNat - 48), ((s.regs 4).toNat - 24, (s.regs 4).toNat - 16)] := by
+  have hws1 : WsOK s p xl.toNat [((s.regs 4).toNat - 152, (s.regs 4).toNat - 72), ((s.regs 4).toNat - 64, (s.regs 4).toNat - 48), ((s.regs 4).toNat - 24, (s.regs 4).toNat - 16)] := by
     intro r hr; simp only [List.mem_cons, List.not_mem_nil, or_false] at hr
     rcases hr with rfl | rfl | rfl <;> simp only <;> omega
-  have hws2 : WsOK s p c [(p, p + 8 * yl.toNat), ((s.regs 4).toNat - 152 + 80, (s.regs 4).toNat - 152 + 88)] := by
+  have hws2 : WsOK s p xl.toNat [(p, p + 8 * yl.toNat), ((s.regs 4).toNat - 152 + 80, (s.regs 4).toNat - 152 + 88)] := by
     intro r hr; simp only [List.mem_cons, List.not_mem_nil, or_false] at hr
     rcases hr with rfl | rfl <;> simp only <;> omega
   refine ⟨(h.frame0 hws1 hf1).frame0 hws2 hfr, ?_, ?_, ?_, ?_⟩
@@ -62,7 +62,7 @@ theorem vv (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program 
     (hsp : S.regs 4 = s.regs 4 - 144#64) (h14 : S.regs 14 = s.regs 14) (h5 : S.regs 5 = s.regs 4 - 8#64)
     (hfs : S.fsBase = s.fsBase) (hdf : S.df = false) (hm : S.mem = M) :
     ReachesRet (LibNatSub.program.link impl) (retAddrOf s) S fun s' =>
-      RegsOK s s' ∧ PostR 4288 R b L zp zc xp xl yp yl s s' := by
+      RegsOK s s' ∧ PostX 4288 R b L zp zc xp xl yp yl s s' := by
   have hc1 : CodeIn64 ((Extracted.program.onlySegments [subVVfn]).link impl) (LibNatSub.program.link impl) := by
     rw [LibNatSub.eq_only]; exact A64.codeIn_restrict_mono64 hap (sub_of_all (by decide))
   have hVV' := SubVVHyp.live (Janus.Contracts.EqHashModel.Summary.of_codeIn64 hc1 (subVVHyp impl hap)) R b' L'
