@@ -101,7 +101,7 @@ theorem segL5 {J : Nat} {impl : List Segment} (hap : ImplApart Extracted.program
     {stkT aboveT : Nat} (hkT : stkT ≤ 4464) (haT : aboveT ≤ 88) (htr : Trunc.Hyp2 impl R ns stkT aboveT)
     (hsub : SubMod2N.SubHypR impl R) (hadd : SubMod2N.AddHypR impl R) {kc : Nat} (hkc : 4608 ≤ kc)
     {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat} {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat}
-    {s : State} (kJ : ∀ j, J2j impl R kc sqrC mulC b L zp zl zc st xp xl xc n s (j + 1)) :
+    {s : State} (kJ : J2j impl R kc sqrC mulC b L zp zl zc st xp xl xc n s (J + 1)) :
     S5 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s 1797984 (ExL3 s n J) eL kL := by
   intro S j p l c q ql qc L1 b1 Zv hrc hpc hex hqs h0 h1 h2 hv hnz hl hvq hnq hql hb
   obtain ⟨hpreB, hn, hsp, h28, h18, hmidB, hj1, hjn, hbud, hcong⟩ := hrc
@@ -118,12 +118,12 @@ theorem segL5 {J : Nat} {impl : List Segment} (hap : ImplApart Extracted.program
     rw [show s.sp.toNat - 240 + 120 = s.sp.toNat - 120 by omega]; exact hqs.2.2
   have r176 : S.mem.readLE (s.sp.toNat - 240 + 176) 8 = 2 ^ j * 64 := by
     rw [show s.sp.toNat - 240 + 176 = s.sp.toNat - 64 by omega]; exact hex.2.1
-  have hen : 2 ^ j * 64 ≤ n := by have := hex.2.2; simp only [NW] at this; omega
+  have hen : 2 ^ j * 64 ≤ n := by have := hex.2.2.1; simp only [NW] at this; omega
   have hcm := cost_mono hen
   have hbo : SubMod2N.cost (2 ^ j * 64) ≤ b1 :=
     bud_ok hb hbud (m := SubMod2N.cost n) (by simp only [roundCost, P5, P4, P3, P2, P1]; omega) hcm
   have hpre := hpreB.h
-  have hK' := contL5 hkc (kJ j) hpre hn hj1 hex hqs hcong hv hvq hb hbud hcm
+  have hK' := contL5 (c := c) hkc kJ hpre hn hj1 hex hqs hcong hv hvq hb hbud hcm
   clear hcong hv hvq hbud hcm hjn
   unfold Goal
   janus_run [r216, r112, r120, r176] until [1805584]

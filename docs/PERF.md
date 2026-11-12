@@ -811,3 +811,11 @@ Row amd64 RunErr (janus-provfix, warm cache-top): 491 s wall, peak 5.94 GB (cold
 | Arm64/Nat/LshShiftC | 59 s / 2.6 GB (was 113-161 s / 3.4 GB) | post-call run moved into `shiftT` (small context), as amd64 s13 |
 | Amd64/Nat/RshMainA/B → RshMainAC/AS/BC/BS | see rows log | one makeslice run per module (copy / shift), shr6 moved to RshDefs |
 | row TruncRow arm64 / amd64 | PASS 257 s / 3.2 GB; PASS 426 s / 4.2 GB | |
+### infra s13 (2026-11-12) — modInv arm64 completion (dev compile, load ~25-30, LEAN_NUM_THREADS=4)
+| module | before | after | fix |
+|---|---|---|---|
+| Arm64/Exp/ModInvL5 (segL5) | 370 s / 9.2 GB (over caps) | 18 s / 2.5 GB | continuation after `subMod2N` moved into `contL5` (own small context, pure facts) and passed as a term; `callSub`'s continuation gets `sp`/`x28`/`x18` against the entry `s` (no post-run state literals in it); only register goals go to `janus_simp` |
+| Arm64/Exp/ModInvF5 (segF5, retF5, contF5) | new | 10 s / 2.3 GB | same pattern; `post_mid` (pure) builds `Post` from the round facts |
+| Arm64/Exp/ModInvL0 (segL0, store_zs, store_i) | new | 18 s / 2.5 GB | `CMP R8->6` operand needs `toNat_sshiftRight_of_msb_false` run lemma (`hss`) |
+| Arm64/Exp/ModInvLoop / ModInv | new | 2 s / 5 s | induction on `numWords - 2^(j-1)` (`j2_all`) |
+| Arm64/Exp/SubMod2NS1 / S2 / S4C (Trunc.Hyp2) | 54 / 58 / ~80 s | 64 / 73 / 77 s | unchanged structure (load differences) |
