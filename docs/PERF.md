@@ -1439,3 +1439,13 @@ Dev: SubMod2NRow 10 s / 2.4 GB.
   failing simp-discharge omega split 2^7 ways — 35 discharges × 2-3 s; fix: callee-form Apart facts, Hide-box the
   window disjunctions, re-open them only after the run), Sub 80 s, AddR 52 s, Add 55 s, TailR 120 s (3 paths), Tail 2 s,
   Step 41 s, End 5 s, Exit 18 s, Loop 3 s, DivBasic 7 s. All ≤ 2.8 GB.
+
+## asm s35 (2026-11-14, dev, v0.3.1, load ~45-55, LEAN_NUM_THREADS=4)
+* DivHypLG (new): DivG 6 s, DivOneFG 2.5 s, DivZOne 6.4 s, DivZTwo 2.8 s, DivLargeG <2 s, DivLG 3 s, DivCG 1.2 s;
+  in place: DivLessC 86 s / 4.3 GB, DivBigF 41 s / 4.0 GB, DivOneT 39 s, DivBigC 21 s, DivLessF 2.3 s, DivLargeTP 4-5 s,
+  Div 3 s, DivMLPre 104 s / 5.6 GB (unchanged module, rebuilt).
+* AtD/AtR `qL` field (DivLargeDRel/TN) forced the drs-chain rebuild: 280 modules in ~85 min at J=2.
+* Row modules: DivRow 16 s, DivMRow 6 s, RemRow 16 s, DrsRow 27 s, DivWRow 2.7 s (dev). amd64 TruncE0 21 s.
+* Rows (Janus v0.3.1, JANUS_REPLAY_THREADS=1, cache-asm after the s34 warm-up, load ~55): DivWRow 409 s (first run,
+  own modules compiled; audit rejected for the missing MemmoveZero site) → 57 s PASS; DivBasicRow 743 s / 4.3 GB PASS
+  (78 modules rebuilt incl. ExpHyp/LibExp/StackNat/leaf sums owned by earlier rows in the release order).
