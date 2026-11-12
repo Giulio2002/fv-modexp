@@ -21,7 +21,7 @@ theorem clz_one : clzNat 64 1 = 63 := by decide
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem c2m (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl) (R : RtInv) (stkM aboveM : Nat)
-    (hM : RunIface.ModSpec impl R stkM aboveM) (hBy : RunIface.BytesSpec impl R stkM aboveM) (hsv : RunIface.Serves R)
+    (hM : RunIface.ModSpecM impl R stkM aboveM) (hBy : RunIface.BytesSpec impl R stkM aboveM) (hsv : RunIface.Serves R)
     (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64) (ret : Nat)
     (hret : RetAddr (LibRun.program.link impl) ret) (s : State) (hx0 : s.xmm 15 = 0) (hdf0 : s.df = false)
     (Q : Janus.Amd64.Outcome → Prop)
@@ -144,6 +144,15 @@ theorem c2m (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
       simp only [win] at h0 ⊢
       rw [← hMd]
       exact poolG_push h0 ⟨by rw [h4, hsp0]; omega, by rw [h4, hsp0]; omega⟩)
+    (by
+      unfold RunIface.ModX
+      have e24 := hMr 0 (by omega) 24 (by omega)
+      have e8 := hMr 0 (by omega) 8 (by omega)
+      simp only [opAt, Nat.mul_zero, Nat.sub_zero] at e24 e8
+      rw [e24, e8, show (s.regs 4).toNat - 136 + 24 = (s.regs 4).toNat - 112 by omega,
+        show (s.regs 4).toNat - 136 + 8 = (s.regs 4).toNat - 128 by omega]
+      intro hc
+      exact (InRanges.apart (hlive0 hc).2.2.2.2.1 hglob.2.2.2.2.2.2.2.2.1).symm)
   have hz136 : (s.regs 4 - 608#64 + 472#64).toNat = (s.regs 4).toNat - 136 := by
     rw [BitVec.toNat_add, BitVec.toNat_sub]; simp; omega
   have hz200 : (s.regs 4 - 608#64 + 408#64).toNat = (s.regs 4).toNat - 200 := by

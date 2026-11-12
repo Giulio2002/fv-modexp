@@ -51,7 +51,7 @@ theorem ensOkLib (impl : List Amd64.Segment) (hap : ImplApart Extracted.program 
     (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
     (hmz : MemmoveZeroLive64 (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
     (hno : NewobjectLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.newobject") 4096 R)
-    (stkM aboveM : Nat) (hM : RunIface.ModSpec impl R stkM aboveM) (hE : RunIface.ExpSpec impl R stkM aboveM)
+    (stkM aboveM : Nat) (hM : RunIface.ModSpecM impl R stkM aboveM) (hE : RunIface.ExpSpec impl R stkM aboveM)
     (hBy : RunIface.BytesSpec impl R stkM aboveM)
     (W : Nat) (hW : 616 + stkM ≤ W) (hW1 : 4800 ≤ W) (hab : aboveM ≤ 144) (ha8 : 8 ≤ aboveM)
     (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64) :

@@ -1,5 +1,6 @@
 import FvModexp.Proofs.Amd64.Top.RunC2Lem2
 import FvModexp.Proofs.Amd64.Top.LibRun
+import FvModexp.Proofs.Amd64.Top.RunModX
 
 set_option autoImplicit false
 
@@ -67,13 +68,13 @@ theorem subBytes : ∀ y, [RunIface.fnBytes].contains y = true → LibRun.names.
 open RunIface in
 /-- `z.Mod(z, y)` at a call state with entry `RSP = sp0`, memory `M`, `R14 = g`, `fsBase = fs`. -/
 theorem modW (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl) (R : RtInv) (stkM aboveM : Nat)
-    (hM : ModSpec impl R stkM aboveM) (b1 : Nat) (L1 : List (Nat × Nat)) (sp0 g fs : BitVec 64)
+    (hM : ModSpecM impl R stkM aboveM) (b1 : Nat) (L1 : List (Nat × Nat)) (sp0 g fs : BitVec 64)
     (M : Janus.Arm64.Memory) (zA yA : Nat)
     (hRA : RetAddr ((Extracted.program.onlySegments namesMod).link impl) (M.readLE sp0.toNat 8))
     (hIP : ∀ t : State, t.regs 4 = sp0 → t.mem = M → t.regs 14 = g → t.fsBase = fs →
       IntPre R b1 (ModBudget (max (lenW M zA) (lenW M yA))) L1 stkM aboveM [zA, yA] t)
     (hy0 : 0 < IntV M yA) (hzl : IntLenLe M zA maxW) (hyl : IntLenLe M yA maxW)
-    (hPool : ∀ t : State, t.regs 4 = sp0 → PoolG R M (win t stkM aboveM)) (z y : BitVec 64) :
+    (hPool : ∀ t : State, t.regs 4 = sp0 → PoolG R M (win t stkM aboveM)) (hX : ModX M zA) (z y : BitVec 64) :
     Summary (LibRun.program.link impl)
       (segAddr Extracted.program "github.com/ethereum/go-bigmodexpfix/src/math/big.(*Int).Mod")
       (fun t => t.xmm 15 = 0 ∧ ArgsFrom64 t 0 [z, z, y] ∧ t.df = false ∧ t.regs 4 = sp0 ∧ t.mem = M ∧
@@ -88,7 +89,7 @@ theorem modW (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl
   · rintro t ⟨hx, ha, hdf, hsp, hm, h14, hfs, hz, hy⟩
     subst hz hy
     refine ⟨by rw [hm, hsp]; exact hRA, hx, ha, hdf, by rw [hm]; exact hIP t hsp hm h14 hfs, by rw [hm]; exact hy0,
-      by rw [hm]; exact hzl, by rw [hm]; exact hyl, by rw [hm]; exact hPool t hsp⟩
+      by rw [hm]; exact hzl, by rw [hm]; exact hyl, by rw [hm]; exact hPool t hsp, by rw [hm]; exact hX⟩
   · rintro t t' ⟨-, -, -, -, hm, -, -, hz, hy⟩ ⟨⟨hcs, hfs, hdf, h0, hpost, hyv⟩, hreg⟩
     subst hz hy
     rw [hm] at hpost hyv
