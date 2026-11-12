@@ -837,3 +837,10 @@ pass the hypotheses as terms / use named `case`s after `janus_simp` (bs 189 s �
 lemma is handed to janus through `Summary.mono` with a register/sp/mem-equality pre' (no 30-conjunct unfolding).
 A summary from an SCC induction hypothesis must be ascribed with the literal entry (`Summary P 0x1bc2b0 _ _`), else
 janus runs into the callee's code.
+
+## divmc session 13 (arm64, dev compile, LEAN_NUM_THREADS=4)
+* NatSub/NatAdd with exact write sets (PostX): NatSubAlloc 68 s, NatSubVW 38 s, NatSubSetE 38 s, NatAddVW 37 s,
+  NatAddAlloc 40 s, NatAddSetE 41 s, all others ≤ 15 s; ≤ 2.9 GB. IntASTail 43 s, IntAS* others ≤ 12 s.
+* Squaring member (after SPre/StkSep/SPost changes): SqrMake 119 s / 4.7 GB (trim pending), SqrBM 83 s / 4.9 GB,
+  SqrBS 40 s, SqrKS 33 s, SqrOne 32 s, others ≤ 10 s.
+* KSqrRel 15 s / 2.9 GB (pure relation lemmas; KM.step is generic over the callee's write list), KSqrCall 1.4 s.
