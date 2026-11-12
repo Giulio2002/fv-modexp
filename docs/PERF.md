@@ -997,3 +997,11 @@ rest unchanged (all ≤ 4.4 GB).
 LESSON (MulOneP): two `omega` calls (a window-inclusion `wsub` and `max/min` side goals of `mulC`) inside a context holding a
 callee's whole destructured post took 190 s + 106 s; moved into 3-line standalone lemmas (`wsub_one`, `makeB_le_mulC1`) they
 cost milliseconds. Never call `omega` after `obtain`ing a callee post; prove the arithmetic in a separate lemma first.
+
+## divmc session 19 (arm64, dev compile, LEAN_NUM_THREADS=4) — nat.mul chunk loop relation modules
+| module | wall | peak RSS |
+|---|---|---|
+| MulLoopRel (LB, LB.step, LB.local) | 10 s | 2.7 GB |
+| MulLoopEnv | 3 s | 2.4 GB |
+| MulLoopT (TOK, LB.mpreT) | 2 s | 2.3 GB |
+| MulLoopStep | 2 s | 2.3 GB |
