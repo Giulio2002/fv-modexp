@@ -41,4 +41,54 @@ theorem epi0 (impl : List Segment) (ret0 : Nat) (hret : RetAddr (LibN.program.li
         | refine MemFrame.writeLE ?_ _ (r := (sp + 1232, sp + 1256)) (by simp) (by simp only; omega) (by simp only; omega))
       exact MemFrame.refl _ _
 
+
+/-! ## The epilogue as a continuation (flag-generic chain, s26)
+
+The downstream chain (from `J5` / `rem`'s entry) is shared by the stack-given path (defer flag byte `SP' + 126` = 0)
+and the `stk == nil` path (flag 1, closure record `SP' + 216/224`, `SP' + 240`, byte `SP' + 127`). It carries the
+frame slots of the flag and the record unchanged (`SlotEq M M0 sp`: equal to those of the reference memory `M0`, the
+memory at `J5`) and ends in an abstract epilogue `EpiK`: from a callee return point, given the function's post `P` at
+every state that only adds the result stores. `epiK0`: the flag-0 epilogue (`epi0`) is one. -/
+
+/-- the defer flag bytes `SP' + 126/127` and the closure record words `SP' + 216, 224, 240` -/
+@[reducible] def Slot (sp a k : Nat) : Prop :=
+  (sp + 1182 ≤ a ∧ a + k ≤ sp + 1184) ∨ (sp + 1272 ≤ a ∧ a + k ≤ sp + 1288) ∨ (sp + 1296 ≤ a ∧ a + k ≤ sp + 1304)
+
+/-- the slots of `M` are those of `M0` -/
+def SlotEq (M M0 : Memory) (sp : Nat) : Prop := ∀ a k, Slot sp a k → M.readLE a k = M0.readLE a k
+
+theorem SlotEq.refl (M : Memory) (sp : Nat) : SlotEq M M sp := fun _ _ _ => rfl
+
+theorem SlotEq.of_rd {M M' M0 : Memory} {sp : Nat} (h : SlotEq M M0 sp)
+    (hk : ∀ a k, Slot sp a k → M'.readLE a k = M.readLE a k) : SlotEq M' M0 sp :=
+  fun a k hs => (hk a k hs).trans (h a k hs)
+
+theorem SlotEq.of_frame {M M' M0 : Memory} {sp : Nat} {ws : List (Nat × Nat)} (h : SlotEq M M0 sp)
+    (hF : MemFrame M M' ws) (ho : ∀ a k, Slot sp a k → Outside a k ws) : SlotEq M' M0 sp :=
+  h.of_rd fun a k hs => hF.readLE a k (ho a k hs)
+
+/-- the epilogue from a callee return point `r` (`SP' = sp + 1056`): given the post `P` at every state that differs
+from the return-point state only by the result stores `SP' + 176..200`, the function returns with `F` -/
+def EpiK (impl : List Segment) (ret0 : Nat) (F : State → Prop) (sp f29 : Nat) (r18 r28 : BitVec 64) (M0 : Memory)
+    (P : State → Prop) : Prop :=
+  ∀ (r : Nat) (S : State), RetPt r → S.pc = BitVec.ofNat 64 r → S.sp = BitVec.ofNat 64 (sp + 1056) →
+    S.regs 18 = r18 → S.regs 28 = r28 →
+    S.mem.accessible (sp + 1048) 216 true = true → S.mem.readLE (sp + 1048) 8 = f29 →
+    S.mem.readLE (sp + 1056) 8 = ret0 → SlotEq S.mem M0 sp →
+    (∀ s'' : State, MemFrame S.mem s''.mem [(sp + 1232, sp + 1256)] → s''.regs 0 = S.regs 0 →
+      s''.regs 1 = S.regs 1 → s''.regs 2 = S.regs 2 → P s'') →
+    Reaches ((LibN.program.link impl).withExit ret0) S (IsReturn F)
+
+/-- the stack-given epilogue (flag 0) -/
+theorem epiK0 (impl : List Segment) (ret0 : Nat) (hret : RetAddr (LibN.program.link impl) ret0) (F : State → Prop)
+    (sp f29 : Nat) (r18 r28 : BitVec 64) (M0 : Memory) (P : State → Prop)
+    (hal : sp % 16 = 0) (hsp1 : 8 ≤ sp) (hsp2 : sp + 1432 ≤ 2 ^ 48) (hfl : M0.readLE (sp + 1182) 1 = 0)
+    (hK' : ∀ s'' : State, s''.sp = BitVec.ofNat 64 (sp + 1312) → s''.regs 29 = BitVec.ofNat 64 f29 →
+      s''.regs 18 = r18 → s''.regs 28 = r28 → P s'' → F s'') :
+    EpiK impl ret0 F sp f29 r18 r28 M0 P := by
+  intro r S hr hpc hsp h18 h28 hacc h29v h30v hsl hP
+  exact epi0 impl ret0 hret F sp f29 r S.mem hr hal hsp1 hsp2 hacc h29v h30v
+    ((hsl _ _ (Or.inl ⟨Nat.le_refl _, by omega⟩)).trans hfl) S hpc hsp rfl
+    fun s'' f1 f2 f3 f4 f5 f6 f7 f8 _ => hK' s'' f1 f2 (f6.trans h18) (f7.trans h28) (hP s'' f8 f3 f4 f5)
+
 end FvModexp.Arm64.ExpN

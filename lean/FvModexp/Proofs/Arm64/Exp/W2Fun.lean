@@ -427,7 +427,7 @@ theorem post_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K costD g sp st z
     exact bud_fin hb1 hbd hb3 hb5 hb8 (if_le n) (snc_mono (lvl_le hl1b))
   · rw [hgE]; exact inv_fin hF9 hLrt (x8.held hsok.2.1) hK4 hKs hinv8
   · refine ⟨⟨⟨hsok.1, x8.held hsok.2.1, by rw [hacc]; exact hsok.2.2.1, hsok.2.2.2.1, ?_, ?_, ?_⟩, eL, ?_⟩,
-      W2Pro.arrIn_chain hai0 haid hxd ⟨hd1.1, hd1.2.2⟩ (W2Pro.arrIn_split hkept3 hmem3) hx3 ⟨eW, eC⟩ (hx5.trans hx8)⟩
+      W2Pro.arrIn_chain hai0 haid hxd ⟨hd1.1, hd1.2.2⟩ (W2Pro.arrIn_split hsok3.2.2.2.2.2.1 hlen3 hkept3 hmem3) hx3 ⟨eW, eC⟩ (hx5.trans hx8)⟩
     · rw [eW, eC]; exact natLive_tr hsok3.2.2.2.2.1 (hx5.trans hx8) hacc2
     · rw [eL, eC]; exact Nat.le_trans hl0L (Nat.le_trans (Nat.le_add_right _ _) hcM2)
     · rw [eC]; exact hsok3.2.2.2.2.2.2
