@@ -1005,3 +1005,10 @@ cost milliseconds. Never call `omega` after `obtain`ing a callee post; prove the
 | MulLoopEnv | 3 s | 2.4 GB |
 | MulLoopT (TOK, LB.mpreT) | 2 s | 2.3 GB |
 | MulLoopStep | 2 s | 2.3 GB |
+### infra s21 (arm64 P2W2: skip loop, return-1 paths, tail/closure, post, allocation calls; dev compile)
+P2W2Sk 9.3 s / 2.2 GB (before: > 330 s — `all_goals first | (janus_simp; done) | … | refine yiX …` over 12 post-run
+goals: the failing alternatives each re-elaborated big terms; fixed by closing the goals one by one in the
+deterministic order janus_run produces them), P2W2Tail 24 s / 2.9 GB, P2W2Fin 3.9 s, P2W2R1 6.1 s, P2W2Al 3.7 s,
+P2W2R1b 8.5 s (before: > 9 min — applying `mkPost hP hw _ rfl … rfl` to the janus literal call state: `rfl`
+unification of `setReg` chains / `retStateX` against the contract post; fixed by the continuation-form wrappers
+`mkCall`/`noCall` whose state equations are left as goals for `janus_simp`), P2W2Ret1 1.2 s. All ≤ 2.9 GB.
