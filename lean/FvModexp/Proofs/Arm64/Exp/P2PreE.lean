@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Arm64.Exp.P2PreE1
+import FvModexp.Proofs.Common.TruncMath
 
 /-!
 # `buildPrecomputationWindowModPower2` (arm64): the entry segment (agent infra)
@@ -52,16 +53,18 @@ theorem segE (hap : ImplApart Extracted.program impl) {ns : List String}
     have hmul : (5#64) * BitVec.ofNat 64 (W lm) = BitVec.ofNat 64 (NB (2 ^ 2) lm) := by
       rw [show (5#64) = BitVec.ofNat 64 5 from rfl, mul_ofNat64]
     unfold Goal
-    janus_run [hadd, hsh, hmul] until [1784176]
+    janus_run [hadd, TruncMath.rot6, hsh, hmul] until [1784176]
     refine callSN hap hns hnf hsn hkS haS hkc hpreH.h kF ?_ ?_ ?_ _ ?_ ?_ ?_ ?_ rfl ?_ ?_ ?_ ?_
-    all_goals first | (simp only [winA, K, A]; janus_frame) | janus_simp
+    all_goals first | (simp only [winA, K, A]; janus_frame) | exact Expmc.sp_sub _ _ (by omega) (by omega) |
+      (simp only [Sl]; refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;> janus_simp <;> exact Nat.mod_eq_of_lt (by simp only [W]; omega)) | janus_simp
   · subst hplw
     have hmul : (17#64) * BitVec.ofNat 64 (W lm) = BitVec.ofNat 64 (NB (2 ^ 4) lm) := by
       rw [show (17#64) = BitVec.ofNat 64 17 from rfl, mul_ofNat64]
     unfold Goal
-    janus_run [hadd, hsh, hmul] until [1784176]
+    janus_run [hadd, TruncMath.rot6, hsh, hmul] until [1784176]
     refine callSN hap hns hnf hsn hkS haS hkc hpreH.h kF ?_ ?_ ?_ _ ?_ ?_ ?_ ?_ rfl ?_ ?_ ?_ ?_
-    all_goals first | (simp only [winA, K, A]; janus_frame) | janus_simp
+    all_goals first | (simp only [winA, K, A]; janus_frame) | exact Expmc.sp_sub _ _ (by omega) (by omega) |
+      (simp only [Sl]; refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;> janus_simp <;> exact Nat.mod_eq_of_lt (by simp only [W]; omega)) | janus_simp
 
 end
 
