@@ -22,15 +22,15 @@ set_option maxHeartbeats 64000000 in
 set_option janus.callRegions true in
 /-- the allocation path (`cap u < len uIn + 1`): `makeslice(Word, len uIn + 1, len uIn + 5)` -/
 theorem mkA (impl : List Segment) (R : RtInv) (stkSN abSN : Nat) (hk1 : stkSN ≤ 4224) (hk2 : abSN ≤ 96)
-    (hmk : MakesliceLiveContract (LibDiv.program.link impl) (cA "runtime.makeslice") 4096 R)
+    (hmk : MakesliceLiveContract (LibDivL.program.link impl) (cA "runtime.makeslice") 4096 R)
     (b : Nat) (L : List (Nat × Nat)) (c : Nat) (zp zc st up uc ip il ic vp vl vc : Nat) (s : State)
     (hpre : Pre R b L c zp zc st up uc ip il vp vl s)
     (P : State) (hP : AtNat st up uc ip il ic vp vl vc zp zc s P)
     (S2 : State) (L1 : List (Nat × Nat)) (b1 : Nat) (hA : AfterNat R b L st vl s P S2 stkSN abSN L1 b1)
     (hz : uc < il + 1) (hb1 : makeCost (il + 1) ≤ b1) (Q : State → Prop)
     (k : ∀ S Lk bk P' C', AtU R b L zp zc st up uc ip il ic vp vl vc s (stW S2.mem st + 8 * stLen s.mem st)
-      (stW S2.mem st) (stCap S2.mem st) L1 b1 Lk bk P' C' S → ReachesRet (LibDiv.program.link impl) (s.regs 30) S Q) :
-    ReachesRet (LibDiv.program.link impl) (s.regs 30) S2 Q := by
+      (stW S2.mem st) (stCap S2.mem st) L1 b1 Lk bk P' C' S → ReachesRet (LibDivL.program.link impl) (s.regs 30) S Q) :
+    ReachesRet (LibDivL.program.link impl) (s.regs 30) S2 Q := by
   have hE := env_of (S2 := S2.mem) hpre hA.ext hA.bud hA.ok hA.len hA.same hA.grow
     (fun a n v => by rw [hA.F2.accessible, hP.fr.accessible])
   have hl := hE.lay

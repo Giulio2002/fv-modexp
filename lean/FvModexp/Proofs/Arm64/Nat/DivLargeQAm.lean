@@ -21,7 +21,7 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 set_option janus.callRegions true in
 theorem qAm (impl : List Segment) (R : RtInv)
-    (hmk : MakesliceLiveContract (LibDiv.program.link impl) (cA "runtime.makeslice") 4096 R)
+    (hmk : MakesliceLiveContract (LibDivL.program.link impl) (cA "runtime.makeslice") 4096 R)
     (b : Nat) (L : List (Nat × Nat)) (c : Nat) (zp zc st up uc ip il ic vp vl vc : Nat) (s : State)
     (t w1 c1 : Nat) (L1 : List (Nat × Nat)) (b1 : Nat) (Lk : List (Nat × Nat)) (bk P C sh : Nat)
     (hE : Env R b L c zp zc st up uc ip il vp vl s t L1 b1 w1 c1) (S : State)
@@ -32,8 +32,8 @@ theorem qAm (impl : List Segment) (R : RtInv)
     (h13 : X.regs 13 = BitVec.ofNat 64 (il - vl)) (h15 : X.regs 15 = BitVec.ofNat 64 (il - vl + 1))
     (hm : X.mem = S.mem) (Q : State → Prop)
     (k : ∀ S' Lq bq qp qc, AtJ R b L zp zc st up uc ip il ic vp vl vc s t w1 c1 L1 b1 Lq bq P C sh qp qc S' →
-      ReachesRet (LibDiv.program.link impl) (s.regs 30) S' Q) :
-    ReachesRet (LibDiv.program.link impl) (s.regs 30) X Q := by
+      ReachesRet (LibDivL.program.link impl) (s.regs 30) S' Q) :
+    ReachesRet (LibDivL.program.link impl) (s.regs 30) X Q := by
   have hl := hE.lay
   have hsp0 := hl.sp0; have hsp1 := hl.sp1; have hil9 := hl.il9; have hv2 := hl.v2; have hvil := hl.vil
   have hpre := hE.pre

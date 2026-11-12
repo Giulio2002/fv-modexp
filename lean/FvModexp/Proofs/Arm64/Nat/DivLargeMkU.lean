@@ -26,8 +26,8 @@ theorem mkR (impl : List Segment) (R : RtInv) (stkSN abSN : Nat) (hk1 : stkSN �
     (S2 : State) (L1 : List (Nat × Nat)) (b1 : Nat) (hA : AfterNat R b L st vl s P S2 stkSN abSN L1 b1)
     (hz : il + 1 ≤ uc) (Q : State → Prop)
     (k : ∀ S, AtU R b L zp zc st up uc ip il ic vp vl vc s (stW S2.mem st + 8 * stLen s.mem st) (stW S2.mem st)
-      (stCap S2.mem st) L1 b1 L1 b1 up uc S → ReachesRet (LibDiv.program.link impl) (s.regs 30) S Q) :
-    ReachesRet (LibDiv.program.link impl) (s.regs 30) S2 Q := by
+      (stCap S2.mem st) L1 b1 L1 b1 up uc S → ReachesRet (LibDivL.program.link impl) (s.regs 30) S Q) :
+    ReachesRet (LibDivL.program.link impl) (s.regs 30) S2 Q := by
   have hE := env_of (S2 := S2.mem) hpre hA.ext hA.bud hA.ok hA.len hA.same hA.grow
     (fun a n v => by rw [hA.F2.accessible, hP.fr.accessible])
   have hl := hE.lay

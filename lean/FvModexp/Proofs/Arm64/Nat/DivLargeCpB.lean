@@ -66,8 +66,8 @@ theorem cpC (impl : List Segment) (R : RtInv)
     (h28 : T.regs 28 = s.regs 28) (h29 : T.regs 29 = s.sp - 312#64) (h18 : T.regs 18 = s.regs 18) (hm : T.mem = m4)
     (hreg4 : m4.regions = s.mem.regions) (Q : State → Prop)
     (k : ∀ S', AtA R b L zp zc st up uc ip il ic vp vl vc s t w1 c1 L1 b1 Lk bk P C 0 S' →
-      ReachesRet (LibDiv.program.link impl) (s.regs 30) S' Q) :
-    ReachesRet (LibDiv.program.link impl) (s.regs 30) T Q := by
+      ReachesRet (LibDivL.program.link impl) (s.regs 30) S' Q) :
+    ReachesRet (LibDivL.program.link impl) (s.regs 30) T Q := by
   have hl := hE.lay
   have hsp0 := hl.sp0; have hsp1 := hl.sp1
   have hU := hS.ua
@@ -95,14 +95,14 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- after `copy(v, vIn)` (`fn + 0x198`): `copy(u[:len uIn], uIn)` (skipped when `P = uIn`) → `fn + 0x204` -/
 theorem cpB (impl : List Segment) (R : RtInv)
-    (hmv : MemmoveLive (LibDiv.program.link impl) (cA "runtime.memmove") 4096 R)
+    (hmv : MemmoveLive (LibDivL.program.link impl) (cA "runtime.memmove") 4096 R)
     (b : Nat) (L : List (Nat × Nat)) (c : Nat) (zp zc st up uc ip il ic vp vl vc : Nat) (s : State)
     (t w1 c1 : Nat) (L1 : List (Nat × Nat)) (b1 : Nat) (Lk : List (Nat × Nat)) (bk P C : Nat)
     (hE : Env R b L c zp zc st up uc ip il vp vl s t L1 b1 w1 c1) (S : State)
     (hS : AtU R b L zp zc st up uc ip il ic vp vl vc s t w1 c1 L1 b1 Lk bk P C S)
     (hclz : clzNat 64 (s.mem.readLE (vp + 8 * (vl - 1)) 8) = 0) (Q : State → Prop)
     (k : ∀ S', AtA R b L zp zc st up uc ip il ic vp vl vc s t w1 c1 L1 b1 Lk bk P C 0 S' →
-      ReachesRet (LibDiv.program.link impl) (s.regs 30) S' Q)
+      ReachesRet (LibDivL.program.link impl) (s.regs 30) S' Q)
     (m : Memory) (T : State) (hpc : T.pc = BitVec.ofNat 64 (segAddr Extracted.program fn + 0x198))
     (hsp : T.sp = s.sp - 304#64) (h28 : T.regs 28 = s.regs 28) (h29 : T.regs 29 = s.sp - 312#64)
     (h18 : T.regs 18 = s.regs 18) (hm : T.mem = m) (hreg : m.regions = s.mem.regions)
@@ -110,7 +110,7 @@ theorem cpB (impl : List Segment) (R : RtInv)
     (hLF1 : LiveFrame (S.mem.writeLE (s.sp.toNat - 120) 8 0) m Lk [(t, t + 8 * vl)])
     (hinv : R.inv bk Lk (s.regs 28).toNat (view R.rt Lk m))
     (hcp1 : Mem.Copied (S.mem.writeLE (s.sp.toNat - 120) 8 0) m t vp (8 * vl)) :
-    ReachesRet (LibDiv.program.link impl) (s.regs 30) T Q := by
+    ReachesRet (LibDivL.program.link impl) (s.regs 30) T Q := by
   have hl := hE.lay
   have hsp0 := hl.sp0; have hsp1 := hl.sp1; have hvil := hl.vil; have hil9 := hl.il9
   have hU := hS.ua

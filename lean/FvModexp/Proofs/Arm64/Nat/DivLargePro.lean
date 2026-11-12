@@ -75,8 +75,8 @@ theorem pro1 (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat))
     (hpre : Pre R b L c zp.toNat zc.toNat st.toNat up.toNat uc.toNat ip.toNat il.toNat vp.toNat vl.toNat s)
     (Q : State → Prop)
     (k : ∀ P, AtNat st.toNat up.toNat uc.toNat ip.toNat il.toNat ic.toNat vp.toNat vl.toNat vc.toNat zp.toNat zc.toNat
-      s P → R.inv b L (s.regs 28).toNat (view R.rt L P.mem) → ReachesRet (LibDiv.program.link impl) (s.regs 30) P Q) :
-    ReachesRet (LibDiv.program.link impl) (s.regs 30) s Q := by
+      s P → R.inv b L (s.regs 28).toNat (view R.rt L P.mem) → ReachesRet (LibDivL.program.link impl) (s.regs 30) P Q) :
+    ReachesRet (LibDivL.program.link impl) (s.regs 30) s Q := by
   have hce := hpre.ce
   obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, -, hout, hga, hgr, hLs, -⟩ := hce
   obtain ⟨⟨-, -, hstacc, hst48, -, -, -⟩, hsw, -, -⟩ := hpre.sti
