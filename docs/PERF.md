@@ -1059,3 +1059,14 @@ amd64 RunErr has the smaller margin (802 s of 900): next trim target (the La/H3 
 | Nat/DrsSNI | 6.4 s | 2.5 GB |
 | Nat/DrsSN | 17.5 s | 2.6 GB (was > 6 min: implicit call state unified via `?X.mem =?= P.mem`; fixed by argument order) |
 | Common/DivRecIdeal | 0.4 s | 0.6 GB |
+
+### infra s24 (arm64 P2W2: loop body B0..B6, exit, full/ens/sum + ResSep; dev compile, LEAN_NUM_THREADS=4)
+| module | time | mem |
+|---|---|---|
+| P2W2BJ (join defs J1..J6, JC, BF.win) | 4.1 s | 2.1 GB |
+| P2W2B0 / B1 / B2 / B3 / B4 / B5 / B6 | 9.3 / 4.5 / 8.3 / 4.6 / 15.0 / 4.5 / 12.5 s | ≤ 2.3 GB |
+| P2W2Bd (bodyKI composition) | 1.8 s | 2.1 GB |
+| P2W2X1 (norm+tail) / X2 (set copy) / X3 (make) / X4 (exitKI) | 6.0 / 18.4 / 7.9 / 11.7 s | ≤ 2.4 GB |
+| P2W2 (full) / P2W2E (ens/sum) | 2.2 / 5.7 s | ≤ 2.4 GB |
+| P2W2Cp2 after the UB.rs field (rebuild) | 81.7 s (s22: 41 s) | 2.4 GB |
+Body segments are independent modules importing only BJ (ROW-TIME rule); composition modules are trivial.
