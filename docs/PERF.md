@@ -1426,3 +1426,9 @@ P2DMk 1.9 s, P2DOne 11.9 s/2.6 GB, P2DZero 2.6 s, P2DWinR 2.9 s, P2DWin 29-32 s/
 | Exp/P2DFull (v0.3.1) | 39 s | 3.0 GB (budget arithmetic in the small lemma `bud3`, out of the big context) |
 | Exp/P2DE (v0.3.1) | 2 s | 2.4 GB |
 | Exp/SubMod2NGAlloc (v0.3.1 sweep) | 8 s | 2.4 GB |
+
+## agent top s24 (2026-11-14, dev, load 60-75, LEAN_NUM_THREADS=4, J=1 rebuild alongside)
+* amd64 divBasic: SubR 100 s (subRun was 196-230 s: 7 unfolded `Apart` disjunctions in the run context made every
+  failing simp-discharge omega split 2^7 ways — 35 discharges × 2-3 s; fix: callee-form Apart facts, Hide-box the
+  window disjunctions, re-open them only after the run), Sub 80 s, AddR 52 s, Add 55 s, TailR 120 s (3 paths), Tail 2 s,
+  Step 41 s, End 5 s, Exit 18 s, Loop 3 s, DivBasic 7 s. All ≤ 2.8 GB.
