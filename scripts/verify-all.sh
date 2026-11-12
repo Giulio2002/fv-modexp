@@ -126,10 +126,13 @@ if [ -z "${SKIP_WARMUP:-}" ]; then
   wsym=""; for i in "${!jobs_sym[@]}"; do [ "${jobs_sym[$i]}" != "-" ] && { wsym="${jobs_sym[$i]}"; wisa="${jobs_isa[$i]}"; break; }; done
   if [ -n "$wsym" ]; then
     tw=$(date +%s)
-    $JANUS extract "build/harness-$wisa" "$wsym" build/ex-warmup >build/log-warmup 2>&1 &&
+    wc="${wsym%.abi0}"; wc="${wc%.abiinternal}"; wc="${wc##*.}"; wc="${wc^}"
+    # the warm-up extraction needs the same extract flags as its row (e.g. Run: runtime contracts, --max-functions)
+    $JANUS extract "build/harness-$wisa" "$wsym" build/ex-warmup $(contract_flags "$wc") >build/log-warmup 2>&1 &&
       memcap -m "$ROW_MEMCAP" $JANUS verify build/ex-warmup --proof lean/FvModexp/Proofs/Warmup.lean --proof-root lean \
         --theorem FvModexp.Warmup.correctness >>build/log-warmup 2>&1
-    echo "cache warm-up: $(( $(date +%s) - tw )) s (build/log-warmup; not a row)"
+    if grep -q 'Kernel replay: leanchecker passed' build/log-warmup; then wv=ok; else wv="FAILED: rows will pay the framework build / kernel replay"; fi
+    echo "cache warm-up: $(( $(date +%s) - tw )) s, $wv (build/log-warmup; not a row)"
   fi
 fi
 # ---- ROW CAP RULE (BRIEF): all rows share the ONE fresh cache above; Janus's olean store reuses consumer modules compiled by earlier
