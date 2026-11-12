@@ -1,5 +1,6 @@
 import FvModexp.Proofs.Amd64.Nat.DivBasicRel
 import FvModexp.Proofs.Amd64.Nat.DivBasicCallees
+import FvModexp.Proofs.Amd64.Nat.DivBasicMemF
 
 set_option autoImplicit false
 
@@ -152,5 +153,16 @@ theorem addFin (impl : List Amd64.Segment) (r : Nat) (Q : State → Prop) (S : S
     show Arm64.Memory.writeLE _ _ _ _ = _
     simp only [show (vl < vl + 1) = True from eq_true (by omega), ite_true]
     rw [show up + 8 * (j + vl) = up + (j + vl) * 8 by omega]
+
+/-- what the continuation of the add-back gets (`S` at `afterSub`, `S'` at `tailPt`; the twin of the arm64 `AddK`) -/
+@[reducible] def AddK (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (qp ql st up ul uc vp vl vc : Nat) (s : State)
+    (t : Nat) (L1 : List (Nat × Nat)) (b1 w1 c1 : Nat) (S S' : State) (j qhat q bw : Nat) : Prop :=
+  Bd R b L qp ql st up ul uc vp vl vc s t L1 b1 w1 c1 S' tailPt j ∧ S'.regs 0 = BitVec.ofNat 64 vl ∧
+    S'.regs 6 = BitVec.ofNat 64 ul ∧ S'.regs 10 = BitVec.ofNat 64 up ∧
+    S'.regs 8 = BitVec.ofNat 64 (if bw = 0 then qhat else (qhat + 2 ^ 64 - 1) % 2 ^ 64) ∧
+    MemFrame S.mem S'.mem (scr s ++ [(up + 8 * j, up + 8 * j + 8 * q)]) ∧
+    (bw = 0 → ∀ a n, S'.mem.readLE a n = S.mem.readLE a n) ∧
+    (bw ≠ 0 → ∃ ca, natVal S'.mem (up + 8 * j) vl + 2 ^ (64 * vl) * ca = natVal S.mem (up + 8 * j) vl + natVal s.mem vp vl ∧
+      (vl < q → S'.mem.readLE (up + 8 * j + 8 * vl) 8 = (S.mem.readLE (up + 8 * j + 8 * vl) 8 + ca) % 2 ^ 64))
 
 end FvModexp.Amd64.DivBasic
