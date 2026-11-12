@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Top.RunHMask
+import FvModexp.Proofs.Amd64.Top.RunSmall
 
 /-! # `Run` (amd64): `B1` to `B2`, `32 ≤ len < 64` (header 1 = `expLen`: `getData(input, 32, 32)`, std `setBytes`)
 
@@ -63,7 +64,6 @@ theorem h2m (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
   have hspn : (S.regs 4).toNat = (s.regs 4).toNat - 608 := by rw [hsp, BitVec.toNat_sub]; simp; omega
   simp only [LiveSep, win] at hLsS
   simp only [win, Outside, and_true] at hpw hcw
-  janus64_data hdS
   have hS := RunCallees.sbStdD impl hap R hmk b1 L1
   have hwT : Outside SetBytesStd.wordT 16 R.rt := RoOut.out' hro 1 (by decide) (by decide)
   janus_eval_nat h_t : SetBytesStd.wordT
@@ -126,7 +126,7 @@ theorem h2m (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
   all_goals try (janus64_simp; done)
   all_goals try (first | (dsimp only; rw [hfs1]; exact hfs; done) | (dsimp only; rw [hdf1]; exact hdf.trans hdf0.symm; done) | (simp only [hfs1, hfs]; done) | (simp only [hdf1, hdf, hdf0]; done))
   case h.refine_14 => janus64_callpre
-  case h.refine_15 => simp [SetBytesStd.nW] at hb2; omega
+  case h.refine_15 => simp [SetBytesStd.nW] at hb2; exact bud_step hbud hb2
   case h.refine_16 =>
     dsimp only
     rw [view_writeLE_out (hout.of_sub (by omega) (by omega)), view_writeLE_out (hout.of_sub (by omega) (by omega)),
