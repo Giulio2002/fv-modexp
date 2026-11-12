@@ -85,14 +85,18 @@ set_option maxHeartbeats 32000000 in
 /-- `cenv_of` with extra written ranges `ws` (accessible at entry, apart from the guard word) -/
 theorem cenv_ofW (hP : NHyp.CPre R b L stk A zp zl zc st ins need cst s) {M : Memory} {ws : List (Nat × Nat)}
     (hF : MemFrame s.mem M (R.rt ++ ws)) (hws : ∀ r ∈ ws, r.1 < r.2 → s.mem.accessible r.1 (r.2 - r.1) true = true)
-    (hgws : Outside ((s.regs 28).toNat + 16) 8 ws) (hrg : M.regions = s.mem.regions)
+    (hgws : ∀ r ∈ ws, r.2 ≤ r.1 ∨ (s.regs 28).toNat + 16 + 8 ≤ r.1 ∨ r.2 ≤ (s.regs 28).toNat + 16)
+    (hrg : M.regions = s.mem.regions)
     {L1 : List (Nat × Nat)} (hx : LiveExt R L L1) (hk : 112 ≤ stk) :
     CallW.CEnv R L1 (s.regs 28).toNat (s.sp.toNat - 112) (stk - 112) 88 M := by
   obtain ⟨⟨⟨g1, g2, g3⟩, ⟨hal, hle, h48, hacc⟩, hd, hwrt, hgw, hgrt, hLs, hro'⟩, -, -, hro, -⟩ := hP
   generalize hSP : s.sp.toNat = SP at *
   have hout : Outside (SP - stk) (stk + A) R.rt := hwrt
   have hgM : M.readLE ((s.regs 28).toNat + 16) 8 = s.mem.readLE ((s.regs 28).toNat + 16) 8 :=
-    hF.readLE _ _ (by rw [outside_append]; exact ⟨hgrt, hgws⟩)
+    rd_frame hF fun r hr => by
+      rcases List.mem_append.1 hr with h | h
+      · have := MemFrame.outside_mem hgrt h; omega
+      · exact hgws r h
   refine ⟨by omega, by omega, by omega, by
       rw [hF.accessible]; exact Memory.accessible_mono _ hacc (by omega) (by omega),
     g1, by rw [hF.accessible]; exact g2, by rw [hgM]; omega, hout.of_sub (by omega) (by omega),
