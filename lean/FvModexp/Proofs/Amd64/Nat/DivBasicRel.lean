@@ -67,6 +67,58 @@ structure Hd (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (qp ql st up ul uc vp
   env : Env R b L qp ql st up ul uc vp vl s t L1 b1 w1 c1
   mem : Mem R L qp ql st up ul uc vp vl vc s t L1 b1 w1 c1 S.mem
 
+/-- `qhatv[0:n] = mulAddVWW(…)` setup point (`CMPQ DI, CX`) -/
+abbrev mulPt : Nat := segAddr Extracted.program fn + 0x26c
+
+/-- the `CALL divWW` (return `+0x1ee`) -/
+abbrev callWW : Nat := segAddr Extracted.program fn + 0x1e9
+
+/-- the facts at `mulPt` (state `S'`), `S` the head state: the head's registers except `R8 = qhat` -/
+structure AtMul (s S S' : State) (vp vl t rec vn1 j qhat : Nat) : Prop where
+  pc : S'.rip = BitVec.ofNat 64 mulPt
+  sp : S'.regs 4 = s.regs 4 - 224#64
+  r5 : S'.regs 5 = s.regs 4 - 8#64
+  r14 : S'.regs 14 = s.regs 14
+  fs : S'.fsBase = s.fsBase
+  x15 : S'.xmm 15 = 0#128
+  df : S'.df = false
+  r0 : S'.regs 0 = BitVec.ofNat 64 rec
+  r1 : S'.regs 1 = BitVec.ofNat 64 vl
+  r2 : S'.regs 2 = BitVec.ofNat 64 j
+  r3 : S'.regs 3 = BitVec.ofNat 64 (vl + 1)
+  r6 : S'.regs 6 = BitVec.ofNat 64 vp
+  r7 : S'.regs 7 = BitVec.ofNat 64 (vl + 1)
+  r8 : S'.regs 8 = BitVec.ofNat 64 qhat
+  r10 : S'.regs 10 = BitVec.ofNat 64 t
+  r11 : S'.regs 11 = BitVec.ofNat 64 vn1
+  fr : MemFrame S.mem S'.mem [((s.regs 4).toNat - 232, (s.regs 4).toNat - 224), ((s.regs 4).toNat - 96, (s.regs 4).toNat - 88)]
+  jj : S'.mem.readLE ((s.regs 4).toNat - 96) 8 = j
+
+/-- the frame facts at a point `pc` of the loop body after `R14`/`X15` were restored (`j` stored at `RSP-96`) -/
+structure Bd (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (qp ql st up ul uc vp vl vc : Nat) (s : State)
+    (t : Nat) (L1 : List (Nat × Nat)) (b1 w1 c1 : Nat) (S : State) (pc j : Nat) : Prop where
+  pc : S.rip = BitVec.ofNat 64 pc
+  sp : S.regs 4 = s.regs 4 - 224#64
+  r5 : S.regs 5 = s.regs 4 - 8#64
+  r14 : S.regs 14 = s.regs 14
+  fs : S.fsBase = s.fsBase
+  x15 : S.xmm 15 = 0#128
+  df : S.df = false
+  mem : Mem R L qp ql st up ul uc vp vl vc s t L1 b1 w1 c1 S.mem
+  jj : S.mem.readLE ((s.regs 4).toNat - 96) 8 = j
+
+/-- the `CALL mulAddVWW.abi0` (return `+0x2b2` = 6222994) and the point after `XORPS X15; MOVQ FS:-8, R14` -/
+abbrev callVww : Nat := segAddr Extracted.program fn + 0x2ad
+abbrev afterVww : Nat := segAddr Extracted.program fn + 0x2bf
+/-- the `CALL subVV.abi0` (return 6223247) and after the restore -/
+abbrev callSub : Nat := segAddr Extracted.program fn + 0x3aa
+abbrev afterSub : Nat := segAddr Extracted.program fn + 0x3bc
+/-- the `CALL addVV.abi0` (return 6223429) and after the restore -/
+abbrev callAdd : Nat := segAddr Extracted.program fn + 0x460
+abbrev afterAdd : Nat := segAddr Extracted.program fn + 0x472
+/-- `ujn = u[j+n-1]`, the `q[j]` store and the back edge -/
+abbrev tailPt : Nat := segAddr Extracted.program fn + 0x4c9
+
 /-- a store into the stack window keeps the runtime's view -/
 theorem view_win {R : RtInv} {lo n0 : Nat} (hout : Outside lo n0 R.rt) (L : List (Nat × Nat)) (m : Memory)
     (a n v : Nat) (h1 : lo ≤ a) (h2 : a + n ≤ lo + n0) : view R.rt L (m.writeLE a n v) = view R.rt L m :=
