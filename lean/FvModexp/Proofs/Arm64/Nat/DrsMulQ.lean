@@ -43,14 +43,14 @@ set_option maxHeartbeats 16000000 in
 theorem mul_post {R : RtInv} {c : Cx} {s S X T : State} {Lk : List (Nat × Nat)} {bk j qn stkM aboveM : Nat}
     {Z U : List Nat} (hA : A3 R c s Lk bk S j Z U qn) (hm : X.mem = S.mem) (hsp : X.sp.toNat = s.sp.toNat - 400)
     (h28 : X.regs 28 = s.regs 28) (hk : stkM ≤ mulWX) (ha : aboveM ≤ 88)
-    (hpost : EvenHyp.MulPostL R bk (mulC (stLen X.mem c.st) qn (c.vl / 2 - 1)) Lk stkM aboveM (c.qv s S.mem)
+    (hpost : EvenHyp.MulPostL R bk (mulC (stLen X.mem c.st) qn (c.vl / 2 - 1)) Lk stkM aboveM (c.qv s X.mem)
         (3 * c.vl) c.st c.t0 qn c.vp (c.vl / 2 - 1) X T ∧
-      ExactR R Lk (winA X stkM aboveM) (qn + (c.vl / 2 - 1)) (c.qv s S.mem) (3 * c.vl) c.st c.t0 (c.vl / 2 + 1)
+      ExactR R Lk (winA X stkM aboveM) (qn + (c.vl / 2 - 1)) (c.qv s X.mem) (3 * c.vl) c.st c.t0 (c.vl / 2 + 1)
         c.vp c.vc (natVal X.mem c.t0 qn * natVal X.mem c.vp (c.vl / 2 - 1)) X T)
     (hreg : T.mem.regions = X.mem.regions) :
-    T.regs 0 = BitVec.ofNat 64 (c.qv s S.mem) ∧ T.regs 1 = BitVec.ofNat 64 (c.P s j U).length ∧
+    T.regs 0 = BitVec.ofNat 64 (c.qv s X.mem) ∧ T.regs 1 = BitVec.ofNat 64 (c.P s j U).length ∧
       T.regs 2 = BitVec.ofNat 64 (3 * c.vl) ∧
-      ∃ L' b', Mc R c s L' b' T.mem j Z U (c.qv s S.mem) (c.st0 s j U) := by
+      ∃ L' b', Mc R c s L' b' T.mem j Z U (c.qv s X.mem) (c.st0 s j U) := by
   have hcr := hA.cr; have hev := hA.ev; have hfp := hA.fp; have hrg := hA.rg
   have hW := hcr.hW; have hWg := drsW_ge c.vl; have h40 := hcr.h40
   have hu1 := hcr.u1ul; have hvu := hcr.vu1; have hqle := hA.qle
@@ -61,7 +61,7 @@ theorem mul_post {R : RtInv} {c : Cx} {s S X T : State} {Lk : List (Nat × Nat)}
     ⟨-, hstw, -, -⟩, ⟨-, -, hvcf, -⟩, ⟨hqs, -⟩, ⟨hus, -⟩, ⟨hvs, -⟩, -⟩ := hcr.pre
   obtain ⟨-, ⟨-, hb', -, hw⟩, -, hout, -, -, -, -⟩ := hce
   obtain ⟨⟨p', l', c', hr0, hr1, hr2, L', b', hNOF, ⟨hx, hbud, hinv⟩, hsbL, -, -, -⟩, hex⟩ := hpost
-  rw [hm] at hbud hNOF hreg
+  rw [hm] at hbud hNOF hreg hex ⊢
   rw [h28] at hinv
   have hlen := hfp.len
   have hr3 : 3 * c.vl ≤ StackNat.rnd (3 * c.vl) := by simp only [StackNat.rnd]; omega
