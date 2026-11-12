@@ -38,16 +38,16 @@ def W4Cost (n xl costD l : Nat) : Nat :=
 
 /-- the precondition: the entry facts (frame `sp = SP - 928`, window `[sp - K, sp + 1040)`), `m` odd and `> 1`, the
 stack-length bound, the budget -/
-def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K costD : Nat) (zp zc st xp xl xc yp ylen mp n mc : Nat)
+def PreD (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K costD : Nat) (zp zc st xp xl xc yp ylen mp n mc : Nat)
     (s : State) : Prop :=
   EPre R b L K (s.regs 28).toNat (s.sp.toNat - 928) st zp zc xp xl xc yp ylen mp n mc s ∧
   natVal s.mem mp n % 2 = 1 ∧ 1 < natVal s.mem mp n ∧
-  stLen s.mem st + StackNat.rnd (23 * n) + StackNat.rnd (xl - n + 1) + StackNat.rnd n + 4 * xl + StackNat.rnd n +
-    2 * StackNat.rnd (2 * n) + 17 * n + 68 ≤ 2 ^ 16 ∧
+  stLen s.mem st + StackNat.rnd (23 * n) + StackNat.rnd (xl - n + 1) + StackNat.rnd n + 16 * xl + StackNat.rnd n +
+    2 * StackNat.rnd (2 * n) + 32 * n + 80 ≤ 2 ^ 16 ∧
   W4Bud n xl costD (stLen s.mem st) ≤ b
 
 /-- the postcondition (results `X0..X2`) -/
-def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K costD : Nat) (zp zc st xp xl yp ylen mp n : Nat)
+def PostD (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K costD : Nat) (zp zc st xp xl yp ylen mp n : Nat)
     (s s' : State) : Prop :=
   ∃ p l c : Nat, s'.regs 0 = BitVec.ofNat 64 p ∧ s'.regs 1 = BitVec.ofNat 64 l ∧ s'.regs 2 = BitVec.ofNat 64 c ∧
     natVal s'.mem p l = natVal s.mem xp xl ^ natVal s.mem yp ylen % natVal s.mem mp n ∧ NatNorm s'.mem p l ∧
@@ -260,7 +260,7 @@ theorem natLive_tr {R : RtInv} {L L' : List (Nat × Nat)} {M M' : Memory} {p c :
     (hx : LiveExt R L L') (hacc : ∀ a k w, M'.accessible a k w = M.accessible a k w) : NatLive M' R L' p c :=
   fun hc => ⟨(h hc).1, hx.held (h hc).2.1, by rw [hacc]; exact (h hc).2.2.1, (h hc).2.2.2⟩
 
-theorem lvl_le {l r n : Nat} (h : l + r + 17 * n + 68 ≤ 2 ^ 16) : l + r ≤ 2 ^ 16 := by omega
+theorem lvl_le {l r n : Nat} (h : l + r + 32 * n + 80 ≤ 2 ^ 16) : l + r ≤ 2 ^ 16 := by omega
 
 theorem inv_fin {R : RtInv} {b g sp K st : Nat} {L : List (Nat × Nat)} {M M' : Memory}
     (hF : MemFrame M M' [(sp - 24, sp - 8), (sp + 127, sp + 128), (sp + 376, sp + 400), (st + 8, st + 16)])
@@ -313,7 +313,7 @@ theorem post_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K costD g sp st z
     (hMo : s.mem.readLE mp (8 * n) % 2 = 1)
     (hE : EnPost R b L K g sp st zp zc xp xl yp ylen mp n mc costD s s') :
     (s'.sp = s.sp ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧ s'.regs 18 = s.regs 18) ∧
-    Post R b L K costD zp zc st xp xl yp ylen mp n s s' := by
+    PostD R b L K costD zp zc st xp xl yp ylen mp n s s' := by
   have hP' := hP
   obtain ⟨he, -, -, -, -, hn, -, -, -, hmO, -, -, hmN, hyO, -, -, hyN, hyl, -,
     -, -, -, -, -, -, -, -, -, -, hz, -, hsok, hstw, -, -, -, -, hstf, -, -⟩ := hP'
@@ -436,5 +436,29 @@ theorem post_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K costD g sp st z
   · refine ⟨fun a k hin ho => ?_⟩
     obtain ⟨hd, hf, hzc⟩ := final_outL ho
     exact (zone a k (Or.inr hin) (zw_of_sep hLs hin hKs) hd hf (fun _ => hzc)).2
+
+/-- the division cost the window charges, from `nat.div`'s level-dependent cost `costF` (`l` = the stack length at
+entry): `x mod m` (when `len x > n`) and the `RR` division on its four possible stack levels -/
+def divCost (costF : Nat → Nat → Nat → Nat) (n xl l : Nat) : Nat :=
+  costF (l + StackNat.rnd (23 * n) + StackNat.rnd (xl - n + 1) + StackNat.rnd n) xl n +
+  costF (l + StackNat.rnd (23 * n) + StackNat.rnd (xl - n + 1) + StackNat.rnd n + StackNat.rnd n +
+    2 * StackNat.rnd (2 * n)) (2 * n + 1) n +
+  costF (l + StackNat.rnd (23 * n) + StackNat.rnd (xl - n + 1) + StackNat.rnd n + 2 * StackNat.rnd (2 * n)) (2 * n + 1) n +
+  costF (l + StackNat.rnd (23 * n) + StackNat.rnd n + 2 * StackNat.rnd (2 * n)) (2 * n + 1) n +
+  costF (l + StackNat.rnd (23 * n) + 2 * StackNat.rnd (2 * n)) (2 * n + 1) n
+
+theorem divCosts_of (costF : Nat → Nat → Nat → Nat) (n xl l : Nat) :
+    W4Pro.DivCosts costF (divCost costF n xl l) n xl (l + StackNat.rnd (23 * n)) := by
+  unfold W4Pro.DivCosts divCost; omega
+
+/-- the precondition (see `PreD`), with the division cost `divCost costF` -/
+def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K : Nat) (costF : Nat → Nat → Nat → Nat)
+    (zp zc st xp xl xc yp ylen mp n mc : Nat) (s : State) : Prop :=
+  PreD R b L K (divCost costF n xl (stLen s.mem st)) zp zc st xp xl xc yp ylen mp n mc s
+
+/-- the postcondition (see `PostD`), with the division cost `divCost costF` -/
+def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K : Nat) (costF : Nat → Nat → Nat → Nat)
+    (zp zc st xp xl yp ylen mp n : Nat) (s s' : State) : Prop :=
+  PostD R b L K (divCost costF n xl (stLen s.mem st)) zp zc st xp xl yp ylen mp n s s'
 
 end FvModexp.Arm64.ExpW4

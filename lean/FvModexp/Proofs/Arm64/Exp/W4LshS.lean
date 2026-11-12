@@ -34,7 +34,7 @@ theorem lshStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
     (hSN : StackNat.Hyp impl R StackNat.names 4208 24)
-    (nsD : List String) (stkD costD : Nat) (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costD)
+    (nsD : List String) (stkD costD : Nat) (costF : Nat → Nat → Nat → Nat) (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costF)
     (hnsD : ∀ x, nsD.contains x = true → LibExp.names.contains x = true)
     (hnsW : nsD.contains Extracted.seg34.name = false)
     (nsL : List String) (stkL : Nat) (hLsh : Lsh.Hyp2 impl R nsL stkL 64)
@@ -51,7 +51,8 @@ theorem lshStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
       Apart rrp (8 * (2 * n)) (stW M st) (8 * stCap M st))
     (ht : t < 2 ^ 64) (r224 : M.readLE (sp + 224) 8 = t) (r128 : M.readLE (sp + 128) 8 = 2 * n)
     (hkk : ((2 ^ 64 - t) % 2 ^ 64 * Mv + 1) % Exp.B = 0) (hmB : Mv < Exp.B ^ n) (hMo : Mv % 2 = 1) (hM1 : 1 < Mv)
-    (hslen : stLen M st + StackNat.rnd (2 * n) + 17 * n + 68 ≤ 2 ^ 16)
+    (hslen : stLen M st + StackNat.rnd (2 * n) + 32 * n + 80 ≤ 2 ^ 16)
+    (hcF : costF (stLen M st + StackNat.rnd (2 * n)) (2 * n + 1) n ≤ costD)
     (hbud : makeCost (1 + 128 * n / 64 + 1) + (stackNatCost (stLen M st) (2 * n) + (costD + (blockSize (8 * n) true +
       stackNatCost (stLen M st + StackNat.rnd (2 * n)) (17 * n) + blockSize (8 * (2 * n + 4)) true))) ≤ b)
     (hinv : R.inv b L g (view R.rt L M))
@@ -126,12 +127,12 @@ theorem lshStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
       M1.readLE (sp + j) 8 = M.readLE (sp + j) 8 := fun j hj hj2 =>
     hmf.readLE _ _ (by simp only [outside_cons, outside_nil, and_true]; omega)
   have hlenE : stLen M2 st = stLen M st := by rw [e1', k1]
-  refine reaches_mono (sn2Step impl hap R hclr hmv hmk hSN nsD stkD costD hDiv hnsD hnsW hserv ret hret b2 L2 g sp K n
+  refine reaches_mono (sn2Step impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW hserv ret hret b2 L2 g sp K n
     mp mc Mv xp xc Xv yp ylen Y yi zp zc st n0 l0 t rrp p c M2 r18 r29 f29 hKD hC2 hZ hzzK hzl hzv hzzr hrL2 hrW hrG hrS
     hrB2 (by rw [sl 408 (by omega) (by omega)]; exact q408) (by rw [sl 176 (by omega) (by omega)]; exact q176) ht
     (by rw [sl 224 (by omega) (by omega), rs1 224 (by omega) (by omega)]; exact r224)
     (by rw [sl 128 (by omega) (by omega), rs1 128 (by omega) (by omega)]; exact r128)
-    hkk hmB hMo hM1 (by rw [hlenE]; exact hslen) (by rw [hlenE]; omega) hinv2
+    hkk hmB hMo hM1 (by rw [hlenE]; exact hslen) (by rw [hlenE]; exact hcF) (by rw [hlenE]; omega) hinv2
     L0 bA M0 hAn2 (by rw [hlenE]; exact ble2 hbA hb2) hl0A hexA
     S2 f1 f2 f3 (by rw [f4, hl]) f5 f6 f7 f8 f9)
     (isReturn_mono fun s' h => ⟨p, c, ⟨hzl, (hD.1.2.2.2.2.2.2 (Nat.succ_pos _) (Nat.lt_of_lt_of_le (Nat.succ_pos _) hzl)).1,

@@ -24,7 +24,7 @@ theorem sn2Step (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
     (hSN : StackNat.Hyp impl R StackNat.names 4208 24)
-    (nsD : List String) (stkD costD : Nat) (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costD)
+    (nsD : List String) (stkD costD : Nat) (costF : Nat → Nat → Nat → Nat) (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costF)
     (hnsD : ∀ x, nsD.contains x = true → LibExp.names.contains x = true)
     (hnsW : nsD.contains Extracted.seg34.name = false)
     (hserv : RunIface.Serves R)
@@ -42,7 +42,8 @@ theorem sn2Step (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (r408 : M.readLE (sp + 408) 8 = rrp) (r176 : M.readLE (sp + 176) 8 = 2 * n)
     (ht : t < 2 ^ 64) (r224 : M.readLE (sp + 224) 8 = t) (r128 : M.readLE (sp + 128) 8 = 2 * n)
     (hkk : ((2 ^ 64 - t) % 2 ^ 64 * Mv + 1) % Exp.B = 0) (hmB : Mv < Exp.B ^ n) (hMo : Mv % 2 = 1) (hM1 : 1 < Mv)
-    (hslen : stLen M st + StackNat.rnd (2 * n) + 17 * n + 68 ≤ 2 ^ 16)
+    (hslen : stLen M st + StackNat.rnd (2 * n) + 32 * n + 80 ≤ 2 ^ 16)
+    (hcF : costF (stLen M st + StackNat.rnd (2 * n)) (2 * n + 1) n ≤ costD)
     (hbud : stackNatCost (stLen M st) (2 * n) + (costD + (blockSize (8 * n) true +
       stackNatCost (stLen M st + StackNat.rnd (2 * n)) (17 * n) + blockSize (8 * (2 * n + 4)) true)) ≤ b)
     (hinv : R.inv b L g (view R.rt L M))
@@ -154,7 +155,7 @@ theorem sn2Step (impl : List Segment) (hap : ImplApart Extracted.program impl) (
   have sl : ∀ j, 24 ≤ j → j + 8 ≤ 1040 → M2.readLE (sp + j) 8 = M1.readLE (sp + j) 8 := fun j a b =>
     slot_sn hS hrt4 (by omega) (Apart.sub hstw1 (Nat.le_refl _) (Nat.le_refl _) (by omega) (by omega)) hfw j a b
   have hlenM2 : stLen M2 st = stLen M st + StackNat.rnd (2 * n) := by rw [hlen2, hlen1]
-  refine reaches_mono (divStep impl hap R hclr hmv hmk hSN nsD stkD costD hDiv hnsD hnsW hserv ret hret b2 L2 g sp K n mp
+  refine reaches_mono (divStep impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW hserv ret hret b2 L2 g sp K n mp
     mc Mv xp xc Xv yp ylen Y yi zp zc st n0 l0 t (stW M2 st + 8 * stLen M1 st) rrp zzp zzc M2 r18 r29 f29 hKD hC2 hZ2 hzzK
     hzl hzv2 (norm_of_pow hzv2) hzzr hqin hqL hqr0.symm hrL2 hrW hrG hrS hrB2
     (by rw [sl 408 (by omega) (by omega), rs1 408 (by omega)]; exact r408)
@@ -163,7 +164,7 @@ theorem sn2Step (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (by rw [sl 168 (by omega) (by omega)]; exact q168) ht
     (by rw [sl 224 (by omega) (by omega), rs1 224 (by omega)]; exact r224)
     (by rw [sl 128 (by omega) (by omega), rs1 128 (by omega)]; exact r128)
-    hkk hmB hMo hM1 (by rw [hlenM2]; omega) (by rw [hlenM2]; rw [hlen1] at hb2; omega) hinv2
+    hkk hmB hMo hM1 (by rw [hlenM2]; omega) (by rw [hlenM2]; exact hcF) (by rw [hlenM2]; rw [hlen1] at hb2; omega) hinv2
     L0 bA M0 hAn2 (by rw [hlen1] at hb2; exact ble2 hbA hb2) hl0A hexA
     S2 f1 f2 f3 f4 f5 f6 f7 f8 f9) (isReturn_mono fun s' h => ?_)
   rw [hlenM2] at h

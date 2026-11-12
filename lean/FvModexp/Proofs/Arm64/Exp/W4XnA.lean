@@ -109,7 +109,7 @@ theorem xnA2K (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
     (hSN : StackNat.Hyp impl R StackNat.names 4208 24)
-    (nsD : List String) (stkD costD : Nat) (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costD)
+    (nsD : List String) (stkD costD : Nat) (costF : Nat → Nat → Nat → Nat) (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costF)
     (hnsD : ∀ x, nsD.contains x = true → LibExp.names.contains x = true)
     (hnsW : nsD.contains Extracted.seg34.name = false)
     (nsL : List String) (stkL : Nat) (hLsh : Lsh.Hyp2 impl R nsL stkL 64)
@@ -131,8 +131,11 @@ theorem xnA2K (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     (hx48 : xp + 8 * xl ≤ 2 ^ 48) (hxN : NatNorm M xp xl) (hxl : n < xl) (hxl' : xl ≤ 128) (hxc : xc < 2 ^ 64)
     (hxv : M.readLE xp (8 * xl) = Xv)
     (hmB : Mv < Exp.B ^ n) (hMo : Mv % 2 = 1) (hM1 : 1 < Mv)
-    (hslen : l0 + StackNat.rnd k + StackNat.rnd n + 4 * xl + StackNat.rnd n + 2 * StackNat.rnd (2 * n) + 17 * n + 68 ≤
+    (hslen : l0 + StackNat.rnd k + StackNat.rnd n + 16 * xl + StackNat.rnd n + 2 * StackNat.rnd (2 * n) + 32 * n + 80 ≤
       2 ^ 16)
+    (hcX : costF (l0 + StackNat.rnd k + StackNat.rnd n) xl n ≤ costD)
+    (hcRB : costF (l0 + StackNat.rnd k + StackNat.rnd n + StackNat.rnd n + 2 * StackNat.rnd (2 * n)) (2 * n + 1) n ≤ costD)
+    (hcRC : costF (l0 + StackNat.rnd k + StackNat.rnd n + 2 * StackNat.rnd (2 * n)) (2 * n + 1) n ≤ costD)
     (hbC : costD + xjBud n costD (l0 + StackNat.rnd k + StackNat.rnd n) ≤ b)
     (hbB : costD + (stackNatCost (l0 + StackNat.rnd k + StackNat.rnd n) n +
       xjBud n costD (l0 + StackNat.rnd k + StackNat.rnd n + StackNat.rnd n)) ≤ b)
@@ -172,19 +175,20 @@ theorem xnA2K (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     CallW.retAddr_restrict hap (cs := Extracted.seg34) (ns := nsD)
       (by simp only [Extracted.program, Extracted.segments, List.mem_cons, true_or, or_true]) hnsW 131
       (by decide) (by decide) (by decide)
-  have hpre : DvPreG R b costD L g sp K stkD st qp k k (stW M st + 8 * (l0 + StackNat.rnd k)) n n xp xl mp n M := by
+  have hpre : DvPreG R b costF costD L g sp K stkD st qp k k (stW M st + 8 * (l0 + StackNat.rnd k)) n n xp xl mp n M := by
     obtain ⟨a1, a2⟩ := harr0
     obtain ⟨o1, o2, o3, o4, o5⟩ := hxO
     obtain ⟨m1, m2, m3, m4, m5⟩ := hmO
     have ox := o5 _ (List.mem_cons_self ..)
     have om := m5 _ (List.mem_cons_self ..)
-    refine ⟨hce, hKD, hserv, globals_nil hgl, hn128, hn, Nat.le_refl _, Nat.le_refl _,
+    refine ⟨hce, hKD, hserv, hgl, hn128, hn, Nat.le_refl _, Nat.le_refl _,
       ⟨hk40, fun _ => ⟨hq8, hqH, hqa, hq48⟩, fun _ => ⟨hqW, hqG⟩⟩,
       ⟨by omega, fun _ => ⟨by omega, held_sub lah (by omega) (by omega),
         M.accessible_sub laacc (Or.inr rfl) (by omega) (by omega), by omega⟩,
         fun _ => ⟨by simp only [AW, Apart] at a1 ⊢; omega, by unfold Apart at a2 ⊢; omega⟩⟩,
       by omega, hxa, hx48, o1, o2, hm.1, hm.2.1, hm.2.2.1, m2, hxN, hnm, hsok, hstw, harr, by omega,
-      fun _ _ => hqz, fun p c hpc hc0 => ?_, by unfold xjBud at hbC; omega, hinv⟩
+      by omega, o3, by simp only [stUp, Apart] at o4 ⊢; omega, m3, by simp only [stUp, Apart] at m4 ⊢; omega,
+      fun _ _ => hqz, fun p c hpc hc0 => ?_, cf_eq hcX (by omega), by unfold xjBud at hbC; omega, hinv⟩
     rcases hpc with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
     · refine ⟨ox.symm, om.symm, hqS, ?_⟩
       rcases hqB with h | h
@@ -192,7 +196,7 @@ theorem xnA2K (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
       · unfold Apart at h ⊢; omega
     · simp only [stUp, Apart] at o4 m4 hsu
       exact ⟨by unfold Apart; omega, by unfold Apart; omega, by unfold Apart; omega, by unfold Apart; omega⟩
-  refine divCallG impl hap R nsD stkD costD hDiv hnsD hnsW ret hret _ b L g sp K st qp k k
+  refine divCallG impl hap R nsD stkD costD costF hDiv hnsD hnsW ret hret _ b L g sp K st qp k k
     (stW M st + 8 * (l0 + StackNat.rnd k)) n n xp xl xc mp n mc aDivRet M r18 f29 hRA (by decide) hpre (by omega)
     (by omega) (by omega) (by omega) hxc (by have := hm.2.1; omega) (by omega)
     S4 d1 d2 d3 d4 d5 d6 (by rw [d7, h0]) (by rw [d8, h1]) (by rw [d9, h2]) d10 d11 d12 d13 d14 d15 d16
@@ -214,10 +218,10 @@ theorem xnA2K (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
   refine xnA3 impl ret hret _ sp st ylen mp n M5 hal (by omega) hA he5.2.2.2.1 q960 q1000 q1016 q1024 S5 e1 e2 e9
     (fun S6 g1 g2 g3 g4 g5 g6 g7 g8 g9 g10 g11 g12 g13 => ?_)
   have hB6 := CtxB.raise (CtxB.dropEx hB5) (l1 := stLen M5 st) (by omega) (Nat.le_refl _)
-  refine reaches_mono (xnJStep impl hap R hclr hmv hmk hSN nsD stkD costD hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL
+  refine reaches_mono (xnJStep impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL
     hserv ret hret b5 L5 g sp K n mp mc Mv (Xv % Mv) yp ylen Y yi zp zc st n0 (stLen M5 st) r rl rc rc M5 r18 r29 f29
     hKD hKL hB6 rfl hxi (by rw [hval, hxv]) hrln (by have := hxi.2.2.1; omega) hmB hMo hM1
-    (by rw [hlen5, hlen]; omega) (by rw [hlen5, hlen]; unfold xjBud at hbC ⊢; omega)
+    (by rw [hlen5, hlen]; omega) (cf_eq hcRB (by omega)) (cf_eq hcRC (by omega)) (by rw [hlen5, hlen]; unfold xjBud at hbC ⊢; omega)
     (by rw [hlen5, hlen]; unfold xjBud at hbB ⊢; omega) hD.2.2.2.1
     L0 bA M0 hAn5 (by rw [hlen5, hlen]; exact ble2 hbAC hb5) (by rw [hlen5, hlen]; exact ble2 hbAB hb5)
     (by rw [hlen5, hlen]; exact Nat.le_trans hl0A (Nat.le_trans (Nat.le_add_right _ _) (Nat.le_add_right _ _)))
