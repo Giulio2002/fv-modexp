@@ -147,8 +147,9 @@ theorem li_init {M M0 : Memory} {qp ql up u1 vp vl : Nat} (hv1 : 1 ≤ vl) (hvu 
 theorem bud_init {R : RtInv} {c : Cx} {s : State} {b1 : Nat}
     (hc : drsC (stLen s.mem c.st) c.ul c.vl ≤ c.b) (h40 : 40 ≤ c.vl) (hvu : c.vl ≤ c.u1) (hu : c.u1 ≤ c.ul)
     (hb1 : c.b - stackNatCost (stLen s.mem c.st) (c.vl / 2 + 1) ≤ b1) :
-    ((c.u1 - c.vl) / (c.vl / 2) + 1) * c.K s ≤ b1 := by
-  rw [drsC_big (by omega)] at hc
+    c.lo s + ((c.u1 - c.vl) / (c.vl / 2) + 1) * c.K s ≤ b1 := by
+  unfold Cx.lo
+  rw [drsC_big (by omega)] at hc ⊢
   have hq : (c.u1 - c.vl) / (c.vl / 2) ≤ (c.ul - c.vl) / (c.vl / 2) := Nat.div_le_div_right (by omega)
   have := Nat.mul_le_mul_right (c.K s) (Nat.add_le_add_right hq 1)
   simp only [Cx.K, Cx.l1] at this ⊢

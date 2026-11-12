@@ -31,7 +31,7 @@ structure T3 (R : RtInv) (c : Cx) (s : State) (Lk : List (Nat × Nat)) (bk : Nat
   q3 : Q3 c s M qn
   rg : Rg R c s Lk (c.qv s M) (8 * (3 * c.vl))
   fl : FL R c s Lk M
-  bud : (j / (c.vl / 2)) * c.K s + mulC (c.l1 s + StackNat.rnd (3 * c.vl)) (c.vl / 2 + 1) (c.vl / 2 - 1) ≤ bk
+  bud : c.lo s + (j / (c.vl / 2)) * c.K s + mulC (c.l1 s + StackNat.rnd (3 * c.vl)) (c.vl / 2 + 1) (c.vl / 2 - 1) ≤ bk
 
 /-- a range of the stack's array from a length `≥` the entry length is a `Loc` range -/
 theorem arr_loc {R : RtInv} {c : Cx} {s : State} {Lk : List (Nat × Nat)} {bk : Nat} {M : Memory} {l a n : Nat}

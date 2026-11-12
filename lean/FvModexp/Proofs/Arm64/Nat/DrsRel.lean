@@ -59,6 +59,10 @@ abbrev Cx.B (c : Cx) : Nat := c.vl / 2
   drsC (c.l1 s) c.ul (c.vl - c.vl / 2 + 1) + stackNatCost (c.l1 s) (3 * c.vl) +
     mulC (c.l1 s + StackNat.rnd (3 * c.vl)) (c.vl / 2 + 1) (c.vl / 2 - 1)
 
+/-- the part of the entry budget `b` that must be left at the return (`RtPost`: `b - drsC … ≤ b'`); every budget
+invariant of the big path carries it as `c.lo s + (what the rest of the path consumes) ≤ bk` -/
+def Cx.lo (c : Cx) (s : State) : Nat := c.b - drsC (stLen s.mem c.st) c.ul c.vl
+
 /-- the ranges of the entry the big path may write -/
 @[reducible] def Cx.ws (c : Cx) (s : State) : List (Nat × Nat) :=
   [(c.qp, c.qp + 8 * c.ql), (c.up, c.up + 8 * c.ul)] ++ stkWs s.mem c.st
@@ -220,6 +224,6 @@ structure H (R : RtInv) (c : Cx) (s : State) (Lk : List (Nat × Nat)) (bk : Nat)
     (Asm.limbs S.mem c.qp c.ql) (Asm.limbs S.mem c.up c.u1)
   vk : S.mem.readLE c.vp (8 * c.vl) = s.mem.readLE c.vp (8 * c.vl)
   utl : S.mem.readLE (c.up + 8 * c.u1) (8 * (c.ul - c.u1)) = s.mem.readLE (c.up + 8 * c.u1) (8 * (c.ul - c.u1))
-  bud : (j / (c.vl / 2) + 1) * c.K s ≤ bk
+  bud : c.lo s + (j / (c.vl / 2) + 1) * c.K s ≤ bk
 
 end FvModexp.Arm64.DivRec

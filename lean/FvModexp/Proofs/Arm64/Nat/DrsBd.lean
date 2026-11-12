@@ -193,6 +193,6 @@ structure A1 (R : RtInv) (c : Cx) (s : State) (Lk : List (Nat × Nat)) (bk : Nat
   li : c.LI s j Z U
   uk : Asm.limbs S.mem c.up c.u1 = U
   q0 : S.mem.readLE c.t0 (8 * (c.vl / 2 + 1)) = 0
-  bud : (j / (c.vl / 2) + 1) * c.K s ≤ bk
+  bud : c.lo s + (j / (c.vl / 2) + 1) * c.K s ≤ bk
 
 end FvModexp.Arm64.DivRec
