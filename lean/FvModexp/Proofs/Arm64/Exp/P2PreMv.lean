@@ -92,7 +92,7 @@ theorem mvCall (hmv : MemmoveLive (LibExp.program.link impl) mvE 4096 R)
   have hF' : MemFrame M m' (R.rt ++ winA S 4096 32 ++ [(d, d + 8)]) := hfr2.mono fun a n ho => by
     simp only [winA, outside_append, outside_cons, outside_nil, and_true] at ho ⊢
     rw [hspN] at ho; exact ⟨⟨ho.1.1, ho.1.2.1, by omega⟩, ho.2⟩
-  have hsah := sa_hdr hc.sa hc.sap (LiveExt.refl R L1) (fun b n h1 h2 => by
+  have hsah := sa_hdr' hc.ain hc.bu hc.sa hc.sap (LiveExt.refl R L1) (fun b n h1 h2 => by
       have hd := hf.w.hd
       simp only [win, K, A, outside_cons, outside_nil, and_true] at hd
       have hz := (bufObj hpre hc hf (S' := S) hspN (stk := 4096) (above := 32) (by omega) (by omega)
@@ -101,7 +101,7 @@ theorem mvCall (hmv : MemmoveLive (LibExp.program.link impl) mvE 4096 R)
       exact rd_keep hf.w hspN (by omega) (by omega) hF' hlf2 (hc.sa.1.2.1.sub h1 h2) (by simp only [K, A]; omega)
         fun r hr hr' => by simp only [List.mem_singleton] at hr; subst hr; simp only at hr' ⊢; omega)
     hF'.accessible
-  have hc2 := keepC hc hf.w hspN (by omega) (by omega) hws hF' hlf2 hrg (LiveExt.refl R L1) hinv2 hsah.1 hsah.2
+  have hc2 := keepC hc hf.w hspN (by omega) (by omega) hws hF' hlf2 hrg (LiveExt.refl R L1) hinv2 hsah.1 hsah.2.1 hsah.2.2.1 hsah.2.2.2
   refine k junk f2 v2 m' ex2 ep2 hc2 (fun a n h0' hr hd => ?_) ?_
   · rcases hr with hr | hr | hr
     · exact pw_rd hf (hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.1) (by have := (pl_facts hpre).1; omega) hspN

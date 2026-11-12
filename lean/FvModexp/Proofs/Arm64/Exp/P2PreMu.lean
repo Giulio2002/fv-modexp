@@ -25,7 +25,7 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 4000000 in
 theorem callMulH (hap : ImplApart Extracted.program impl) {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
-    {stkM aboveM : Nat} (hmu : MulHypR impl R ns stkM aboveM mlC) (hkM : stkM ≤ kc) (haM : aboveM ≤ 88)
+    {stkM aboveM : Nat} (hmu : MulHypX impl R ns stkM aboveM mlC) (hkM : stkM ≤ kc) (haM : aboveM ≤ 88)
     (hmm : ∀ ℓ a a' c c', a ≤ a' → c ≤ c' → mlC ℓ a c ≤ mlC ℓ a' c') (hkc : 4608 ≤ kc)
     (hpre : Pre R kc sqC mlC b L st pw pl ws lm x xl s) {i : Nat}
     (kC : JC impl R kc sqC mlC b L st pw pl lm x xl s i) {bp : Nat} {M : Memory} {L1 : List (Nat × Nat)} {b1 : Nat}
@@ -70,7 +70,7 @@ theorem callMulH (hap : ImplApart Extracted.program impl) {ns : List String}
     (by omega) (by omega) (by omega) (by omega)
   have hmono := hmm (ℓ1 (stLen s.mem st) pl lm) _ _ _ _ d1 e1'
   have hrnd := rnd_le (NB pl lm)
-  refine LibCalls.mulCallR hap hns hmu (b := b1) (L := L1) (ra_bp hap hnf 255 (by decide)) (by rw [hpc, mul_addr])
+  refine LibCalls.mulCallX hap hns hmu (b := b1) (L := L1) (ra_bp hap hnf 255 (by decide)) (by rw [hpc, mul_addr])
     h30 h0 h1 h2 h3 h4 h5 h6 h7 h8 h9 (by omega) (by omega) (by omega) (by have := hc.sa.1.2.2.2.1; omega) (by omega)
     (by omega) (by omega) (by omega) (by omega) (by omega) (by decide)
     ⟨callEnv_ctx hpre hc hsp h28 hm hkM haM, hsv, by rw [hm]; exact globals_ctx hpre hc hspN hkM haM,
@@ -80,6 +80,9 @@ theorem callMulH (hap : ImplApart Extracted.program impl) {ns : List String}
       by rw [hm]; exact hz.2.2.2, by rw [hm]; exact sa_sub hx.2.2.2 (by omega),
       by rw [hm]; exact sa_sub hy.2.2.2 (by omega),
       by rw [hm, hst]; omega, by rw [hm, h28]; exact hc.inv⟩ (hx.2.2.1 _ d1) (hy.2.2.1 _ e1')
+    ⟨stkX_ctx hpre hc hf hspN h28 hm hkM haM, (hz.1.2.2 (by omega)).1, fun he => absurd he (by omega),
+      fun he => absurd he (by omega), by rw [hm]; exact bufOp hpre hc (by omega) hin,
+      by rw [hm]; exact bufOp hpre hc (by omega) (by omega), by rw [hm]; exact bufOp hpre hc (by omega) (by omega)⟩
     fun s' hpc' hsp' h28' h29' h18' hrg hpost hreu => ?_
   obtain ⟨p', l', c', e0, e1, e2, L', b', ⟨hv', hn', hlc', hc40', hlive', -⟩, ⟨hLE, hbud', hinv'⟩, hsb, -, hF',
     hLF'⟩ := hpost
@@ -94,11 +97,12 @@ theorem callMulH (hap : ImplApart Extracted.program impl) {ns : List String}
   rw [h28] at hinv'
   rw [hst] at hbud'
   have hwok := wok_zs (zn := 8 * (2 * W lm)) hc (by omega) hin
-  have hsa' := sa_back hc.sa hsb hc.le
-  have hsap' := sap_back hc.sap hc.scr.held hsb
+  have hsa' := sa_back hc.sa hsb.1 hc.le
+  have hsap' := sap_back hc.sap hc.scr.held hsb.1
   have hF2 : MemFrame M s'.mem (R.rt ++ winA S' stkM aboveM ++ ([(bp + 8 * ((i + 1) * W lm),
       bp + 8 * ((i + 1) * W lm) + 8 * (2 * W lm))] ++ stWs M st)) := by rw [List.append_assoc] at hF'; exact hF'
-  have hc2 := keepC hc hf.w hspN hkM haM hwok hF2 hLF' hrg hLE hinv' hsa' hsap'
+  have hc2 := keepC hc hf.w hspN hkM haM hwok hF2 hLF' hrg hLE hinv' hsa' hsap' (hc.ain.trans hsb.2 hLE)
+    (bu_back hc.bu hc.scr.held hsb.1)
   have hrs2 := rs_call hrs hf hsapw (by omega) hspN hkM haM (fun r hr => hr) hwok (Nat.le_refl _) (by omega) hF2
     hLF' hc2
   have hlo2' := lo2_keep hf.w hspN hkM haM hwok hF2 hlo2

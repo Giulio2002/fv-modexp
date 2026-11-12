@@ -22,7 +22,7 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem jB2 (hap : ImplApart Extracted.program impl) {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
-    {stkM aboveM : Nat} (hmu : MulHypR impl R ns stkM aboveM mlC) (hkM : stkM ≤ kc) (haM : aboveM ≤ 88)
+    {stkM aboveM : Nat} (hmu : MulHypX impl R ns stkM aboveM mlC) (hkM : stkM ≤ kc) (haM : aboveM ≤ 88)
     (hmm : ∀ ℓ a a' c c', a ≤ a' → c ≤ c' → mlC ℓ a c ≤ mlC ℓ a' c') (hkc : 4608 ≤ kc)
     (hpre : Pre R kc sqC mlC b L st pw pl ws lm x xl s) {i : Nat}
     (kC : JC impl R kc sqC mlC b L st pw pl lm x xl s i) {bp : Nat} {M : Memory} {L1 : List (Nat × Nat)} {b1 l : Nat}
@@ -123,7 +123,7 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem segB (hap : ImplApart Extracted.program impl) {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
-    {stkM aboveM : Nat} (hmu : MulHypR impl R ns stkM aboveM mlC) (hkM : stkM ≤ kc) (haM : aboveM ≤ 88)
+    {stkM aboveM : Nat} (hmu : MulHypX impl R ns stkM aboveM mlC) (hkM : stkM ≤ kc) (haM : aboveM ≤ 88)
     (hmm : ∀ ℓ a a' c c', a ≤ a' → c ≤ c' → mlC ℓ a c ≤ mlC ℓ a' c')
     (hwb : WbLiveContract (LibExp.program.link impl) wbE 4096 R 2) (hkc : 4608 ≤ kc)
     (hpre : Pre R kc sqC mlC b L st pw pl ws lm x xl s) {i : Nat}

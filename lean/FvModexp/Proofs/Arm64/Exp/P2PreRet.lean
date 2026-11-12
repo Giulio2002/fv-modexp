@@ -29,7 +29,7 @@ theorem headRet {impl : List Segment} {R : RtInv} {kc : Nat} {sqC : Nat → Nat 
   have hpl : pl < 2 ^ 63 := by have := hpre.2.2.2.2.1; rcases hpre.2.2.2.1 with rfl | rfl <;> simp_all
   unfold Goal
   janus_run [f48, f1, f2]
-  refine ⟨⟨?_, ?_, ?_, ?_⟩, bp, fun j hj => hd j hj, L1, b1, hc.le, hb, hc.inv, hc.scr, hc.sap, hc.sa, hc.fr, hc.lf⟩
+  refine ⟨⟨?_, ?_, ?_, ?_⟩, bp, fun j hj => hd j hj, L1, b1, hc.le, hb, hc.inv, hc.scr, hc.sap, hc.sa, hc.fr, hc.lf, hc.ain⟩
   · apply BitVec.eq_of_toNat_eq
     simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega
   all_goals janus_simp

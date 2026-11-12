@@ -166,7 +166,8 @@ theorem keepC {R : RtInv} {kc : Nat} {L : List (Nat × Nat)} {st pw pl lm : Nat}
     {ws : List (Nat × Nat)} (hws : ∀ r ∈ ws, WOK R L s st r) {M' : Memory} {L2 : List (Nat × Nat)} {b2 : Nat}
     (hF : MemFrame M M' (R.rt ++ winA S' kC aC ++ ws)) (hLF : LiveFrame M M' L1 ws) (hrg : M'.regions = M.regions)
     (hLE : LiveExt R L1 L2) (hinv : R.inv b2 L2 (s.regs 28).toNat (view R.rt L2 M'))
-    (hsa : StkAfter R L L2 st (stLen s.mem st) pl lm s.mem M') (hsap : StkApart M' st bp (8 * NB pl lm)) :
+    (hsa : StkAfter R L L2 st (stLen s.mem st) pl lm s.mem M') (hsap : StkApart M' st bp (8 * NB pl lm))
+    (hain : ArrIn L2 st s.mem M') (hbu : BU M' st bp (8 * NB pl lm)) :
     Ctx R kc L st pw pl lm s bp M' L2 b2 := by
   have hK := hw.sp
   simp only [K] at hK
@@ -175,7 +176,7 @@ theorem keepC {R : RtInv} {kc : Nat} {L : List (Nat × Nat)} {st pw pl lm : Nat}
     ⟨fun a n hin ho => (lf_read hLF (hc.le.inRanges_old hin) fun r hr hr' => wok_L (hws r hr) hin ho hr').trans
       (hc.lf.readLE a n hin ho)⟩, hrg.trans hc.rg, hc.le.trans hLE, hinv,
     ⟨hc.scr.b48, by rw [hF.accessible]; exact hc.scr.acc, hc.scr.al, hLE.held hc.scr.held, hc.scr.loc⟩, hsa, hsap,
-    sl_keep (L1 := L1) hw hsp hk ha hws hF hc.sl⟩
+    sl_keep (L1 := L1) hw hsp hk ha hws hF hc.sl, hain, hbu⟩
   have ho' := ho
   rw [AW, outside_append, outside_append] at ho'
   obtain ⟨⟨hrt, hwa⟩, -⟩ := ho'
@@ -186,6 +187,22 @@ theorem keepC {R : RtInv} {kc : Nat} {L : List (Nat × Nat)} {st pw pl lm : Nat}
   · subst hr; simp only at hr' ⊢; omega
   · subst hr; simp only at hr' ⊢; omega
   · exact wok_aw (hws r hr) ho hr'
+
+/-- `BU` through a step that keeps the header -/
+theorem bu_hdr {M M' : Memory} {st bp n : Nat} (h : BU M st bp n) (hW : stW M' st = stW M st)
+    (hL : stLen M' st = stLen M st) (hC : stCap M' st = stCap M st) : BU M' st bp n := by
+  simp only [BU, stW, stLen, stCap] at h hW hL hC ⊢; rw [hW, hL, hC]; exact h
+
+/-- `BU` through a callee that restores the stack (`buf` held) -/
+theorem bu_back {R : RtInv} {L1 L2 : List (Nat × Nat)} {st bp n : Nat} {M M' : Memory}
+    (h : BU M st bp n) (hh : Held R L1 bp n) (hb : StackBack R L1 L2 st M M') : BU M' st bp n := by
+  obtain ⟨-, hl, hb⟩ := hb
+  rcases hb with ⟨e1, e2⟩ | ⟨a1, a2⟩
+  · exact bu_hdr h e1 hl e2
+  · right
+    rcases hh with hL | hO
+    · have := a2.apart_of_inRanges hL; unfold Apart; omega
+    · have := a1.apart hO; unfold Apart at this ⊢; omega
 
 /-- the buffer stays apart from the stack's header and free part through a callee that restores the stack -/
 theorem sap_back {R : RtInv} {L1 L2 : List (Nat × Nat)} {st bp n : Nat} {M M' : Memory}

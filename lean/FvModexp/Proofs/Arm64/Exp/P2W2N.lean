@@ -54,7 +54,7 @@ theorem segN1 {impl : List Segment} (hap : ImplApart Extracted.program impl) {R 
     ReachesRet (LibExp.program.link impl) ret0 S1 Q := by
   have hW : W lm ≤ 128 := by simp only [W]; omega
   have hspN : S1.sp.toNat = sp := by rw [hsp, BitVec.toNat_ofNat]; omega
-  refine stkNatCallL hap hns hsn (b := b1) (L := L1) (ra_w2 hap hnf 102 (by decide)) (by rw [hpc]; decide)
+  refine LibCalls.stkNatCallL hap hns hsn (b := b1) (L := L1) (ra_w2 hap hnf 102 (by decide)) (by rw [hpc]; decide)
     h30 h0 h1 (by omega) (by omega) (by decide) hpre fun s' hpc' hsp' h28' h29' h18' hrg' hpost => ?_
   have hz := hpost.1 (by simp only [W]; omega)
   obtain ⟨-, -, -, -, -, -, -, -, -, -, hF', -, -⟩ := id hpost

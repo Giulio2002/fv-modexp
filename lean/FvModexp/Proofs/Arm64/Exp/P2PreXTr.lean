@@ -79,7 +79,7 @@ theorem callTrX (hap : ImplApart Extracted.program impl) {ns : List String}
   rw [h28] at hinv'
   have hws : ∀ r ∈ [(bp + 8 * (1 * W lm), bp + 8 * (1 * W lm) + 8 * (2 * W lm))], WOK R L s st r := by
     intro r hr; simp only [List.mem_singleton] at hr; subst hr; exact wok_buf hc.scr (by omega) hin
-  have hsah := sa_hdr hc.sa hc.sap hLE (fun b n h1 h2 => by
+  have hsah := sa_hdr' hc.ain hc.bu hc.sa hc.sap hLE (fun b n h1 h2 => by
       have hd := hf.w.hd
       have hzs := (hz.2.2.2 (by omega)).1
       simp only [win, K, A, outside_cons, outside_nil, and_true] at hd
@@ -87,7 +87,7 @@ theorem callTrX (hap : ImplApart Extracted.program impl) {ns : List String}
       exact rd_keep hf.w hspN hkT haT hF' hLF' (hc.sa.1.2.1.sub h1 h2) (by simp only [K, A]; omega)
         fun r hr hr' => by simp only [List.mem_singleton] at hr; subst hr; simp only at hr' ⊢; omega)
     hF'.accessible
-  have hc2 := keepC hc hf.w hspN hkT haT hws hF' hLF' hrg hLE hinv' hsah.1 hsah.2
+  have hc2 := keepC hc hf.w hspN hkT haT hws hF' hLF' hrg hLE hinv' hsah.1 hsah.2.1 hsah.2.2.1 hsah.2.2.2
   have hrs2 := rs0_call hrs hf hsapw (by omega) hspN hkT haT (fun r hr => List.mem_append_left _ hr) hws
     (Nat.le_refl _) (by omega) hF' hLF' hc2
   have hlW : l' ≤ W lm := len_le_w hn' (by rw [hv']; exact Nat.mod_lt _ (Nat.two_pow_pos _))

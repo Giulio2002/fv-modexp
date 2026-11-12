@@ -63,7 +63,7 @@ theorem ctx_own {R : RtInv} {kc : Nat} {L : List (Nat × Nat)} {st pw pl lm : Na
       by rw [hW, hC]; intro h0; obtain ⟨b1, b2, b3, b4⟩ := ha5 h0; exact ⟨b1, b2, by rw [Memory.accessible_writeLE]; exact b3, b4⟩,
       by rw [hLn, hC]; exact ha6, by rw [hC]; exact ha7⟩, by rw [hLn]; exact hl, by rw [hW, hC]; exact har⟩,
     by intro h0; have := hc.sap h0; simp only [stW, stLen, stCap] at hW hLn hC this ⊢; rw [hW, hLn, hC]; exact this,
-    ?_⟩
+    ?_, hc.ain.congr hW hC (fun _ h => h), bu_hdr hc.bu hW hLn hC⟩
   · -- the frame
     rcases ho with h | h | h
     · exact hc.fr.writeLE v (r := (s.sp.toNat - K kc, s.sp.toNat - 8)) (by simp [AW, winA]) (by simp only [K]; omega)
@@ -109,6 +109,23 @@ theorem sa_hdr {R : RtInv} {L L1 L2 : List (Nat × Nat)} {st ℓ pl lm bp : Nat}
       by rw [hLn, hC]; exact ha6, by rw [hC]; exact ha7⟩, by rw [hLn]; exact hl, by rw [hW, hC]; exact har⟩, ?_⟩
   intro h0; have := hsap h0; simp only [stW, stLen, stCap] at hW hLn hC this ⊢; rw [hW, hLn, hC]; exact this
 
+/-- `ArrIn` survives a step that keeps the header bytes -/
+theorem ain_hdr {R : RtInv} {L1 L2 : List (Nat × Nat)} {st : Nat} {m0 M M' : Memory} (h : ArrIn L1 st m0 M)
+    (hrd : ∀ b n, st ≤ b → b + n ≤ st + 24 → M'.readLE b n = M.readLE b n) (hLE : LiveExt R L1 L2) :
+    ArrIn L2 st m0 M' :=
+  h.congr (hrd _ _ (Nat.le_refl _) (by omega)) (hrd _ _ (by omega) (by omega)) fun _ hr => hLE.mem_old hr
+
+/-- `sa_hdr` with `ArrIn` -/
+theorem sa_hdr' {R : RtInv} {L L1 L2 : List (Nat × Nat)} {st ℓ pl lm bp : Nat} {m0 M M' : Memory}
+    (hain : ArrIn L1 st m0 M) (hbu : BU M st bp (8 * NB pl lm)) (h : StkAfter R L L1 st ℓ pl lm m0 M)
+    (hsap : StkApart M st bp (8 * NB pl lm))
+    (hLE : LiveExt R L1 L2) (hrd : ∀ b n, st ≤ b → b + n ≤ st + 24 → M'.readLE b n = M.readLE b n)
+    (hacc : ∀ a n w, M'.accessible a n w = M.accessible a n w) :
+    StkAfter R L L2 st ℓ pl lm m0 M' ∧ StkApart M' st bp (8 * NB pl lm) ∧ ArrIn L2 st m0 M' ∧
+      BU M' st bp (8 * NB pl lm) :=
+  ⟨(sa_hdr h hsap hLE hrd hacc).1, (sa_hdr h hsap hLE hrd hacc).2, ain_hdr hain hrd hLE,
+    bu_hdr hbu (hrd _ _ (Nat.le_refl _) (by omega)) (hrd _ _ (by omega) (by omega)) (hrd _ _ (by omega) (by omega))⟩
+
 set_option maxRecDepth 20000 in
 /-- a store into a runtime range apart from the live set (the write barrier's buffer) -/
 theorem ctx_rtw {R : RtInv} {kc : Nat} {L : List (Nat × Nat)} {st pw pl lm : Nat} {s : State} {bp : Nat}
@@ -131,7 +148,9 @@ theorem ctx_rtw {R : RtInv} {kc : Nat} {L : List (Nat × Nat)} {st pw pl lm : Na
     (fun _ _ _ => by rw [Memory.accessible_writeLE])
   refine ⟨?_, ?_, by rw [Memory.regions_writeLE]; exact hc.rg, hc.le, hinv,
     ⟨hc.scr.b48, by rw [Memory.accessible_writeLE]; exact hc.scr.acc, hc.scr.al, hc.scr.held, hc.scr.loc⟩,
-    hsa.1, hsa.2, ?_⟩
+    hsa.1, hsa.2, ?_, ain_hdr hc.ain (by intro b n h1 h2; apply Memory.readLE_writeLE_of_disjoint; omega)
+      (LiveExt.refl R L1), bu_hdr hc.bu (Memory.readLE_writeLE_of_disjoint _ _ (by omega))
+      (Memory.readLE_writeLE_of_disjoint _ _ (by omega)) (Memory.readLE_writeLE_of_disjoint _ _ (by omega))⟩
   · obtain ⟨r, hr, h1, h2⟩ := hin
     exact hc.fr.writeLE v (r := r) (by simp only [AW, List.mem_append]; exact Or.inl (Or.inl hr)) h1 h2
   · refine ⟨fun b n hb hout => ?_⟩
@@ -171,6 +190,8 @@ theorem ctx_wb {R : RtInv} {kc : Nat} {L : List (Nat × Nat)} {st pw pl lm : Nat
   have hsa := sa_hdr hc.sa hc.sap (LiveExt.refl R L1) hrd hF.accessible
   have hc1 : Ctx R kc L st pw pl lm s bp m' L1 b1 :=
     keepC hc hw hsp hk (by omega) (by simp) hF' hLF hrg (LiveExt.refl R L1) hinvS.inv hsa.1 hsa.2
+      (ain_hdr hc.ain hrd (LiveExt.refl R L1))
+      (bu_hdr hc.bu (hrd _ _ (Nat.le_refl _) (by omega)) (hrd _ _ (by omega) (by omega)) (hrd _ _ (by omega) (by omega)))
   obtain ⟨hbR, hb48, -, -⟩ := hsl
   have hv : ∀ (m : Memory), MemFrame (view R.rt L1 m') (view R.rt L1 m) [(buf, buf + 8 * 2)] →
       R.inv b1 L1 (s.regs 28).toNat (view R.rt L1 m) := fun m h => hinvS _ h
