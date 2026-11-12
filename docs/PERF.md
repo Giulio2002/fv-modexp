@@ -1322,3 +1322,7 @@ close sp / slot goals with tiny lemmas (`sp_ret`, `Nat.sub_sub`) instead of omeg
 * SubMod2N re-derived from `ensG` (old S1..S4C chain deleted): SubMod2NBase 6.7 s / 2.5 GB, SubMod2N 3 s; G chain unchanged
   (GS4C 109 s / 2.6 GB = slowest, GS3 48 s / 4.2 GB). ModInv chain rebuilt on SubHypR0: max ModInvMake 73 s / 3.7 GB.
 * expNNEven: EvSmP 1.6 s, EvSm 2.5 s / 2.6 GB (runSm), EvSmS (segSm) 4.8 s / 2.8 GB; all other Ev modules ≤ 32 s as before.
+
+### infra s34 (2026-11-13, dev compile, LEAN_NUM_THREADS=4, host load ~40-80)
+EvJ11 6.0 s / 2.7 GB; EvMiP 2.9 s; EvMiR 5.5 s; EvMi 10.0 s / 2.6 GB; EvDst 22.8 s / 2.4 GB; EvMulP ~6 s; EvJ12/EvJ13/EvJ14/EvTrD ≤ 6 s;
+EvM1 6.7 s / 2.6 GB; EvTr 8.5 s / 2.8 GB; EvM2 6.2 s / 2.6 GB. (Full closure rebuild after top's RunIface edit: 224 modules, ~65 min at load 80.)
