@@ -58,6 +58,7 @@ structure KM (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (W st zp zc xp n xc :
   ext : LiveExt R L Lk
   bud : b - spent ≤ bk
   inv : R.inv bk Lk (s.regs 28).toNat (view R.rt Lk M)
+  reg : M.regions = s.mem.regions
   fr : MemFrame s.mem M (R.rt ++ winA s W 48 ++ kws s st zp n)
   lf : LiveFrame s.mem M L (kws s st zp n)
   -- the stack
@@ -99,7 +100,8 @@ theorem KM.lay {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc
 the stack's current header and free part -/
 def KWs (s : State) (M : Memory) (st zp n t : Nat) (ws : List (Nat × Nat)) : Prop :=
   ∀ r ∈ ws, r.1 ≤ r.2 ∧ ((zp ≤ r.1 ∧ r.2 ≤ zp + 8 * (2 * n)) ∨ (t ≤ r.1 ∧ r.2 ≤ t + 8 * kT n) ∨
-    (s.sp.toNat - 232 ≤ r.1 ∧ r.2 ≤ s.sp.toNat - 168) ∨ (st ≤ r.1 ∧ r.2 ≤ st + 24) ∨
+    (s.sp.toNat - 232 ≤ r.1 ∧ r.2 ≤ s.sp.toNat - 168) ∨ (s.sp.toNat - 144 ≤ r.1 ∧ r.2 ≤ s.sp.toNat - 80) ∨
+    (st ≤ r.1 ∧ r.2 ≤ st + 24) ∨
     (stW M st + 8 * stLen M st ≤ r.1 ∧ r.2 ≤ stW M st + 8 * stCap M st))
 
 theorem KWs.append {s : State} {M : Memory} {st zp n t : Nat} {ws ws' : List (Nat × Nat)}
@@ -125,26 +127,27 @@ theorem KM.wcls {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n x
     (h : KM R b L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) {ws : List (Nat × Nat)}
     (hws : KWs s M st zp n t ws) :
     ∀ r ∈ ws, r.1 ≤ r.2 ∧ ((s.sp.toNat - 232 ≤ r.1 ∧ r.2 ≤ s.sp.toNat - 168) ∨
-      (∃ q ∈ kws s st zp n, q.1 ≤ r.1 ∧ r.2 ≤ q.2) ∨
+      (s.sp.toNat - 144 ≤ r.1 ∧ r.2 ≤ s.sp.toNat - 80) ∨ (∃ q ∈ kws s st zp n, q.1 ≤ r.1 ∧ r.2 ≤ q.2) ∨
       (InRanges r.1 (r.2 - r.1) R.rt ∧ ApartAll r.1 (r.2 - r.1) L)) := by
   intro r hr
   obtain ⟨hle, hc⟩ := hws r hr
   refine ⟨hle, ?_⟩
-  rcases hc with hc | hc | hc | hc | hc
-  · exact Or.inr (Or.inl ⟨_, List.mem_cons_self, hc.1, hc.2⟩)
+  rcases hc with hc | hc | hc | hc | hc | hc
+  · exact Or.inr (Or.inr (Or.inl ⟨_, List.mem_cons_self, hc.1, hc.2⟩))
   · rcases h.scr.loc with ⟨-, h1, h2⟩ | ⟨hin, hap⟩
-    · exact Or.inr (Or.inl ⟨_, List.mem_cons_of_mem _ (List.mem_cons_of_mem _ List.mem_cons_self),
-        by simp only; omega, by simp only; omega⟩)
-    · exact Or.inr (Or.inr ⟨hin.sub (by omega) (by omega), ApartAll.sub' hap (by omega) (by omega)⟩)
+    · exact Or.inr (Or.inr (Or.inl ⟨_, List.mem_cons_of_mem _ (List.mem_cons_of_mem _ List.mem_cons_self),
+        by simp only; omega, by simp only; omega⟩))
+    · exact Or.inr (Or.inr (Or.inr ⟨hin.sub (by omega) (by omega), ApartAll.sub' hap (by omega) (by omega)⟩))
   · exact Or.inl hc
-  · exact Or.inr (Or.inl ⟨_, List.mem_cons_of_mem _ List.mem_cons_self, hc.1, hc.2⟩)
+  · exact Or.inr (Or.inl hc)
+  · exact Or.inr (Or.inr (Or.inl ⟨_, List.mem_cons_of_mem _ List.mem_cons_self, hc.1, hc.2⟩))
   · rcases h.free with ⟨e1, e2, e3⟩ | ⟨hin, hap⟩
     · rw [e1, e2] at hc
       have := h.sok.2.2.2.2.2.1
-      exact Or.inr (Or.inl ⟨_, List.mem_cons_of_mem _ (List.mem_cons_of_mem _ List.mem_cons_self),
-        by simp only; omega, by simp only; omega⟩)
+      exact Or.inr (Or.inr (Or.inl ⟨_, List.mem_cons_of_mem _ (List.mem_cons_of_mem _ List.mem_cons_self),
+        by simp only; omega, by simp only; omega⟩))
     · have := h.sok.2.2.2.2.2.1
-      exact Or.inr (Or.inr ⟨hin.sub (by omega) (by omega), ApartAll.sub' hap (by omega) (by omega)⟩)
+      exact Or.inr (Or.inr (Or.inr ⟨hin.sub (by omega) (by omega), ApartAll.sub' hap (by omega) (by omega)⟩))
 
 /-- the ranges of `kws` are outside the window -/
 theorem KM.kwsOut {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State}
@@ -170,9 +173,10 @@ theorem KM.wsep {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n x
 ranges, extended the live set, charged at most `c`, and brought the stack back. -/
 theorem KM.step {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State}
     {lx0 lx1 t : Nat} {Lk : List (Nat × Nat)} {bk spent : Nat} {M : Memory}
-    (h : KM R b L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) {M' : Memory} {S1 : State} {k a : Nat}
-    (hsp : S1.sp.toNat = s.sp.toNat - 320) (hk : 320 + k ≤ W) (ha : a ≤ 64) {ws : List (Nat × Nat)}
-    (hws : KWs s M st zp n t ws) (hF : MemFrame M M' (R.rt ++ winA S1 k a ++ ws)) (hLF : LiveFrame M M' Lk ws)
+    (h : KM R b L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) {M' : Memory} {k a : Nat}
+    (hk : 320 + k ≤ W) (ha : a ≤ 64) {ws : List (Nat × Nat)} (hws : KWs s M st zp n t ws)
+    (hF : MemFrame M M' (R.rt ++ [(s.sp.toNat - 320 - k, s.sp.toNat - 320 - 8), (s.sp.toNat - 320 + 8,
+      s.sp.toNat - 320 + a)] ++ ws)) (hLF : LiveFrame M M' Lk ws) (hreg : M'.regions = M.regions)
     {Lk' : List (Nat × Nat)} {bk' c : Nat} (hext : LiveExt R Lk Lk') (hb : bk - c ≤ bk')
     (hinv : R.inv bk' Lk' (s.regs 28).toNat (view R.rt Lk' M')) (hsb : StackBack R Lk Lk' st M M') :
     KM R b L W st zp zc xp n xc s lx0 lx1 t Lk' bk' (spent + c) M' := by
@@ -180,16 +184,17 @@ theorem KM.step {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n x
   have hcl := h.wcls hws
   have hko := h.kwsOut
   have hLs := h.wsep
-  simp only [winA, hsp] at hF
   -- a read in our window above the callee's, or outside both windows and all write ranges, is unchanged
   have hrd : ∀ x m, s.sp.toNat - 328 ≤ x → x + m ≤ s.sp.toNat + 48 → (x + m ≤ s.sp.toNat - 312 ∨ s.sp.toNat - 256 ≤ x) →
-      (x + m ≤ s.sp.toNat - 232 ∨ s.sp.toNat - 168 ≤ x) → M'.readLE x m = M.readLE x m := by
-    intro x m h1 h2 h3 h4
+      (x + m ≤ s.sp.toNat - 232 ∨ s.sp.toNat - 168 ≤ x) → (x + m ≤ s.sp.toNat - 144 ∨ s.sp.toNat - 80 ≤ x) →
+      M'.readLE x m = M.readLE x m := by
+    intro x m h1 h2 h3 h4 h5
     refine hF.readLE _ _ ?_
-    simp only [outside_append, winA, outside_cons, outside_nil, and_true]
+    simp only [outside_append, outside_cons, outside_nil, and_true]
     refine ⟨⟨hout.of_sub (by omega) (by omega), by omega, by omega⟩, outside_of_forall fun r hr => ?_⟩
     obtain ⟨hle, hc⟩ := hcl r hr
-    rcases hc with hc | ⟨q, hq, q1, q2⟩ | ⟨hin, -⟩
+    rcases hc with hc | hc | ⟨q, hq, q1, q2⟩ | ⟨hin, -⟩
+    · omega
     · omega
     · have := hko q hq; omega
     · have := NatSub.outside_of_inRanges (hout.of_sub (a := x) (n := m) (by omega) (by omega)) hin; omega
@@ -214,7 +219,7 @@ theorem KM.step {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n x
   refine
     { pre := h.pre, l0 := h.l0, v0 := h.v0, nn0 := h.nn0, l1 := h.l1, v1 := h.v1, nn1 := h.nn1,
       scr := { h.scr with held := hext.held h.scr.held }, tsep := htsep, ext := h.ext.trans hext,
-      bud := by have := h.bud; omega, inv := hinv, fr := ?_, lf := ?_, sok := hok', slen := by rw [hlen']; exact h.slen,
+      bud := by have := h.bud; omega, inv := hinv, reg := hreg.trans h.reg, fr := ?_, lf := ?_, sok := hok', slen := by rw [hlen']; exact h.slen,
       sarr := hsarr, lr := ?_, fp := ?_, bit := ?_, n2s := ?_, n1s := ?_, dfn := ?_, dst := ?_, dln := ?_, dpt := ?_,
       s1 := ?_, s2 := ?_, s3 := ?_, s4 := ?_, s5 := ?_, x0h := ?_, x1h := ?_ }
   · refine h.fr.trans hF fun x m ho => ⟨ho, ?_⟩
@@ -225,7 +230,8 @@ theorem KM.step {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n x
     simp only [outside_append, outside_cons, outside_nil, and_true]
     refine ⟨⟨hrt, by omega, by omega⟩, outside_of_forall fun r hr => ?_⟩
     obtain ⟨hle, hc⟩ := hcl r hr
-    rcases hc with hc | ⟨q, hq, q1, q2⟩ | ⟨hin, -⟩
+    rcases hc with hc | hc | ⟨q, hq, q1, q2⟩ | ⟨hin, -⟩
+    · omega
     · omega
     · have := MemFrame.outside_mem hz hq; omega
     · have := NatSub.outside_of_inRanges hrt hin; omega
@@ -234,33 +240,96 @@ theorem KM.step {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n x
     · exact h.lf.readLE x m hin hz
     · obtain ⟨hle, hc⟩ := hcl r hr
       obtain ⟨q, hq, hq1, hq2⟩ := hin
-      rcases hc with hc | ⟨q', hq', q1, q2⟩ | ⟨-, hap⟩
+      rcases hc with hc | hc | ⟨q', hq', q1, q2⟩ | ⟨-, hap⟩
+      · have := hLs q hq; simp only [win, outside_cons, outside_nil, and_true] at this; omega
       · have := hLs q hq; simp only [win, outside_cons, outside_nil, and_true] at this; omega
       · have := MemFrame.outside_mem hz hq'; omega
       · have := hap q hq; unfold Apart at this; omega
-  · rw [hrd _ _ (by omega) (by omega) (by omega) (by omega)]; exact h.lr
-  · rw [hrd _ _ (by omega) (by omega) (by omega) (by omega)]; exact h.fp
-  · rw [hrd _ _ (by omega) (by omega) (by omega) (by omega)]; exact h.bit
-  · rw [hrd _ _ (by omega) (by omega) (by omega) (by omega)]; exact h.n2s
-  · rw [hrd _ _ (by omega) (by omega) (by omega) (by omega)]; exact h.n1s
-  · rw [hrd _ _ (by omega) (by omega) (by omega) (by omega)]; exact h.dfn
-  · rw [hrd _ _ (by omega) (by omega) (by omega) (by omega)]; exact h.dst
-  · rw [hrd _ _ (by omega) (by omega) (by omega) (by omega)]; exact h.dln
-  · rw [hrd _ _ (by omega) (by omega) (by omega) (by omega)]; exact h.dpt
-  · rw [hrd _ _ (by omega) (by omega) (by omega) (by omega)]; exact h.s1
-  · rw [hrd _ _ (by omega) (by omega) (by omega) (by omega)]; exact h.s2
-  · rw [hrd _ _ (by omega) (by omega) (by omega) (by omega)]; exact h.s3
-  · rw [hrd _ _ (by omega) (by omega) (by omega) (by omega)]; exact h.s4
-  · rw [hrd _ _ (by omega) (by omega) (by omega) (by omega)]; exact h.s5
+  · rw [hrd _ _ (by omega) (by omega) (by omega) (by omega) (by omega)]; exact h.lr
+  · rw [hrd _ _ (by omega) (by omega) (by omega) (by omega) (by omega)]; exact h.fp
+  · rw [hrd _ _ (by omega) (by omega) (by omega) (by omega) (by omega)]; exact h.bit
+  · rw [hrd _ _ (by omega) (by omega) (by omega) (by omega) (by omega)]; exact h.n2s
+  · rw [hrd _ _ (by omega) (by omega) (by omega) (by omega) (by omega)]; exact h.n1s
+  · rw [hrd _ _ (by omega) (by omega) (by omega) (by omega) (by omega)]; exact h.dfn
+  · rw [hrd _ _ (by omega) (by omega) (by omega) (by omega) (by omega)]; exact h.dst
+  · rw [hrd _ _ (by omega) (by omega) (by omega) (by omega) (by omega)]; exact h.dln
+  · rw [hrd _ _ (by omega) (by omega) (by omega) (by omega) (by omega)]; exact h.dpt
+  · rw [hrd _ _ (by omega) (by omega) (by omega) (by omega) (by omega)]; exact h.s1
+  · rw [hrd _ _ (by omega) (by omega) (by omega) (by omega) (by omega)]; exact h.s2
+  · rw [hrd _ _ (by omega) (by omega) (by omega) (by omega) (by omega)]; exact h.s3
+  · rw [hrd _ _ (by omega) (by omega) (by omega) (by omega) (by omega)]; exact h.s4
+  · rw [hrd _ _ (by omega) (by omega) (by omega) (by omega) (by omega)]; exact h.s5
   · obtain ⟨q1, q2, q3, q4⟩ := h.x0h
-    exact ⟨by rw [hrd _ _ (by omega) (by omega) (by omega) (by omega)]; exact q1,
-      by rw [hrd _ _ (by omega) (by omega) (by omega) (by omega)]; exact q2,
-      by rw [hrd _ _ (by omega) (by omega) (by omega) (by omega)]; exact q3,
-      by rw [hrd _ _ (by omega) (by omega) (by omega) (by omega)]; exact q4⟩
+    exact ⟨by rw [hrd _ _ (by omega) (by omega) (by omega) (by omega) (by omega)]; exact q1,
+      by rw [hrd _ _ (by omega) (by omega) (by omega) (by omega) (by omega)]; exact q2,
+      by rw [hrd _ _ (by omega) (by omega) (by omega) (by omega) (by omega)]; exact q3,
+      by rw [hrd _ _ (by omega) (by omega) (by omega) (by omega) (by omega)]; exact q4⟩
   · obtain ⟨q1, q2, q3, q4⟩ := h.x1h
-    exact ⟨by rw [hrd _ _ (by omega) (by omega) (by omega) (by omega)]; exact q1,
-      by rw [hrd _ _ (by omega) (by omega) (by omega) (by omega)]; exact q2,
-      by rw [hrd _ _ (by omega) (by omega) (by omega) (by omega)]; exact q3,
-      by rw [hrd _ _ (by omega) (by omega) (by omega) (by omega)]; exact q4⟩
+    exact ⟨by rw [hrd _ _ (by omega) (by omega) (by omega) (by omega) (by omega)]; exact q1,
+      by rw [hrd _ _ (by omega) (by omega) (by omega) (by omega) (by omega)]; exact q2,
+      by rw [hrd _ _ (by omega) (by omega) (by omega) (by omega) (by omega)]; exact q3,
+      by rw [hrd _ _ (by omega) (by omega) (by omega) (by omega) (by omega)]; exact q4⟩
+
+/-- the read-only data stays loaded -/
+theorem KM.dl {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State}
+    {lx0 lx1 t : Nat} {Lk : List (Nat × Nat)} {bk spent : Nat} {M : Memory}
+    (h : KM R b L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) : Extracted.program.DataLoaded M := by
+  obtain ⟨⟨-, ⟨hal, hb, ha', hw⟩, hdl, -, -, -, -, hro⟩, -⟩ := h.pre
+  have hzl : 2 * n ≤ zc := h.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hzlive : NatLive s.mem R L zp zc := h.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hsp : StkPre R L s W 48 st := h.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  obtain ⟨-, ⟨-, -, hsacc, -, hnl, hlc, -⟩, -⟩ := hsp
+  have hfr : MemFrame s.mem M (R.rt ++ (winA s W 48 ++ kws s st zp n)) := by
+    rw [← List.append_assoc]; exact h.fr
+  refine dataLoaded_frame hdl h.reg hro hfr fun r hr hlt => ?_
+  simp only [winA, kws, stkWs, List.mem_append, List.mem_cons, List.not_mem_nil, or_false] at hr
+  rcases hr with (rfl | rfl) | rfl | rfl | rfl
+  · exact Memory.accessible_mono _ hw (by simp only; omega) (by simp only; omega)
+  · exact Memory.accessible_mono _ hw (by simp only; omega) (by simp only; omega)
+  · obtain ⟨-, -, hacc, -⟩ := hzlive (by simp only at hlt; omega)
+    exact Memory.accessible_mono _ hacc (by simp only; omega) (by simp only; omega)
+  · exact Memory.accessible_mono _ hsacc (by simp only; omega) (by simp only; omega)
+  · simp only at hlt
+    obtain ⟨-, -, hacc, -⟩ := hnl (by omega)
+    exact Memory.accessible_mono _ hacc (by simp only; omega) (by simp only; omega)
+
+/-- the stack-guard word keeps its value -/
+theorem KM.grd {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State}
+    {lx0 lx1 t : Nat} {Lk : List (Nat × Nat)} {bk spent : Nat} {M : Memory}
+    (h : KM R b L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) :
+    M.readLE ((s.regs 28).toNat + 16) 8 = s.mem.readLE ((s.regs 28).toNat + 16) 8 := by
+  obtain ⟨hW, hWs, -, -, -, -, -, -, -, -, hout, hgr, hga⟩ := h.lay
+  have hzg : Apart zp (8 * zc) (guard s) 8 := h.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hzl : 2 * n ≤ zc := h.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hsp : StkPre R L s W 48 st := h.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  obtain ⟨-, -, -, hstg, -, hfg, -⟩ := hsp
+  simp only [guard, BasicSqr.freeP, BasicSqr.freeN] at hzg hstg hfg
+  unfold Apart at hzg hstg hfg hga
+  refine h.fr.readLE _ _ ?_
+  simp only [winA, kws, stkWs, outside_append, outside_cons, outside_nil, and_true]
+  refine ⟨⟨hgr, by omega, by omega⟩, by omega, by omega, by omega⟩
+
+/-- the call environment of a callee at `SP - 320` (window inside ours, below the locals) -/
+theorem KM.callee {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State}
+    {lx0 lx1 t : Nat} {Lk : List (Nat × Nat)} {bk spent : Nat} {M : Memory}
+    (h : KM R b L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) {S1 : State} {stk1 above1 : Nat}
+    (hsp : S1.sp.toNat = s.sp.toNat - 320) (hg : S1.regs 28 = s.regs 28) (hm : S1.mem = M)
+    (hk : 320 + stk1 ≤ W) (ha : above1 ≤ 64) : CallEnv R Lk S1 stk1 above1 := by
+  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb, ha', hw⟩, hdl, hout, hga, hgr, hLs, hro⟩, -⟩ := h.pre
+  unfold Apart at hga
+  have hgrd := h.grd
+  obtain ⟨ns, hLk, hn, -⟩ := h.ext
+  refine ⟨⟨by rw [hg]; exact hg1, by rw [hg, hm, h.fr.accessible]; exact hg2, by rw [hg, hm, hgrd, hsp]; omega⟩,
+    ⟨by omega, by omega, by omega, ?_⟩, ?_, ?_, ?_, by rw [hg]; exact hgr, ?_, hro⟩
+  · rw [hm, h.fr.accessible, hsp]; exact Memory.accessible_mono _ hw (by omega) (by omega)
+  · rw [hm]; exact h.dl
+  · rw [hsp]; exact hout.of_sub (by omega) (by omega)
+  · rw [hsp, hg]; unfold Apart; omega
+  · intro r hr
+    simp only [win, outside_cons, outside_nil, and_true]; rw [hsp]
+    rw [hLk] at hr
+    rcases List.mem_append.1 hr with hr | hr
+    · have := hLs r hr; simp only [win, outside_cons, outside_nil, and_true] at this; omega
+    · have := NatSub.outside_of_inRanges hout (hn r hr).1; omega
 
 end FvModexp.Arm64.NatSqr
