@@ -28,6 +28,11 @@ open FvModexp.Arm64.W2Loop (Env Inp Buf FinEnv)
       (2 ^ (128 * n) % Mv) M2 s'
 
 /-- a range inside the stack above `l0` is apart from everything apart from that part -/
+theorem free_of_up {a k st l0 : Nat} {M : Memory} (h : Apart a k (stUp M st l0).1 (stUp M st l0).2)
+    (h1 : l0 ≤ stLen M st) (h2 : stLen M st ≤ stCap M st) :
+    Apart a k (stW M st + 8 * stLen M st) (8 * (stCap M st - stLen M st)) := by
+  simp only [stUp, Apart] at h ⊢; omega
+
 theorem in_stUp {a k p q st l0 : Nat} {M : Memory} (h : Apart a k (stUp M st l0).1 (stUp M st l0).2)
     (h1 : stW M st + 8 * l0 ≤ p) (h2 : p + q ≤ stW M st + 8 * stCap M st) : Apart a k p q := by
   simp only [stUp, Apart] at h ⊢; omega
@@ -40,7 +45,7 @@ theorem divStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
     (hSN : StackNat.Hyp impl R StackNat.names 4208 24)
-    (nsD : List String) (stkD costD : Nat) (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costD)
+    (nsD : List String) (stkD costD : Nat) (costF : Nat → Nat → Nat → Nat) (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costF)
     (hnsD : ∀ x, nsD.contains x = true → LibExp.names.contains x = true)
     (hnsW : nsD.contains Extracted.seg35.name = false)
     (hserv : RunIface.Serves R)
@@ -62,7 +67,8 @@ theorem divStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (r168 : M.readLE (sp + 168) 8 = zzc)
     (ht : t < 2 ^ 64) (r224 : M.readLE (sp + 224) 8 = t) (r128 : M.readLE (sp + 128) 8 = 2 * n)
     (hkk : ((2 ^ 64 - t) % 2 ^ 64 * Mv + 1) % Exp.B = 0) (hmB : Mv < Exp.B ^ n) (hMo : Mv % 2 = 1) (hM1 : 1 < Mv)
-    (hslen : stLen M st + 9 * n + 68 ≤ 2 ^ 16)
+    (hslen : stLen M st + 32 * n + 80 ≤ 2 ^ 16)
+    (hcF : costF (stLen M st) (2 * n + 1) n ≤ costD)
     (hbud : costD + (blockSize (8 * n) true + stackNatCost (stLen M st) (5 * n) + blockSize (8 * (2 * n + 4)) true) ≤ b)
     (hinv : R.inv b L g (view R.rt L M))
     (L0 : List (Nat × Nat)) (bA : Nat) (M0 : Memory) (hAn : Anc R L0 sp K st M0 L M) (hbA : bA + costD ≤ b)
@@ -80,7 +86,7 @@ theorem divStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
   have hce0 := hce
   obtain ⟨hal, hK0, hA, hacc, -, -, -, -, -, -, -, -, -⟩ := hce0
   have hZ0 := hZ
-  obtain ⟨⟨-, hzc40, hzacc, hz48, hzH, -, -⟩, -, -, -, -, -, -, hzU, -⟩ := hZ0
+  obtain ⟨⟨-, hzc40, hzacc, hz48, hzH, -, -⟩, -, -, -, -, -, hzS, hzU, -⟩ := hZ0
   have hlc := hsok.2.2.2.2.2.1
   have hst48 := hsok.2.2.2.1
   obtain ⟨hq8, -, -, hq48⟩ := hqL (by omega)
@@ -91,13 +97,15 @@ theorem divStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (M.accessible_sub hacc (Or.inr rfl) (by omega) (by omega)) r672 r408 r176 r400 r160 r168 r728 r736 r744
     S hpc hsp hmem (fun S1 e1 e2 e3 e4 e5 e6 e7 e8 e9 e10 e11 e12 e13 e14 e15 e16 e17 e18 e19 em => ?_)
   -- the division
-  have hpre : DvPre R b costD L g sp K stkD st qp rrp n zzp (2 * n + 1) mp M := by
-    refine ⟨hce, hKD, hserv, globals_nil hgl, hn128, hn, hqL, (in_stUp huw.symm hqa hqb).symm,
+  have hpre : DvPre R b costF costD L g sp K stkD st qp rrp n zzp (2 * n + 1) mp M := by
+    refine ⟨hce, hKD, hserv, hgl, hn128, hn, hqL, (in_stUp huw.symm hqa hqb).symm,
       (in_stUp hug.symm hqa hqb).symm, hrL, hrW, hrG, by omega,
       M.accessible_sub hzacc (Or.inl rfl) (by omega) (by omega), by omega,
       hzH.imp (fun h => h.sub (by omega) (by omega)) (fun h => h.of_sub (by omega) (by omega)),
       Apart.mono hzzK (by omega) (by omega), hm.1, hm.2.1, hm.2.2.1, hmO.2.1, hzN, hnm, hsok, hstw, harr,
-      by omega, hqr, fun p hp => ?_, by omega, hinv⟩
+      by omega, by omega, Apart.mono hzS (by omega) (Nat.le_refl _),
+      free_of_up (Apart.mono hzU (by omega) (Nat.le_refl _)) hl0 hlc, hmO.2.2.1, free_of_up hmO.2.2.2.1 hl0 hlc,
+      hqr, fun p hp => ?_, hcF, by omega, hinv⟩
     rcases hp with rfl | rfl
     · refine ⟨((in_stUp hzU hqa hqb).symm).mono (Nat.le_refl _) (by omega), (in_stUp hmO.2.2.2.1 hqa hqb).symm,
         (in_stUp hsu hqa hqb).symm, by unfold Apart; omega⟩
@@ -105,7 +113,7 @@ theorem divStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
       rcases hrB with h | h
       · unfold Apart; omega
       · exact h.sub (Nat.le_refl _) (Nat.le_refl _) (by omega) (by omega)
-  refine divCallK impl hap R nsD stkD costD hDiv hnsD hnsW ret hret _ b L g sp K st qp rrp n zzp (2 * n + 1) zzc mp mc
+  refine divCallK impl hap R nsD stkD costD costF hDiv hnsD hnsW ret hret _ b L g sp K st qp rrp n zzp (2 * n + 1) zzc mp mc
     M r18 f29 hpre (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) S1 e1 e2
     (e3.trans h0) (e4.trans h1) (e5.trans h2) e6 e7 e8 e9 e10 e11 e12 e13 e14 e15 e16 (e17.trans h18) (e18.trans h28)
     (e19.trans h29) em (fun S2 M' L' b' r rl rc f1 f2 f3 f4 f5 f6 f7 f8 f9 hD => ?_)
