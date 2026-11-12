@@ -609,7 +609,7 @@ theorem g_post (tys : Tys) (hty : TysOK tys) (ok : Nat → List Nat → Prop) (L
     (h1 : fin.regs 1 = BitVec.ofNat 64 (growCap8 (s.regs 3).toNat (s.regs 1).toNat))
     (hmem : fin.mem = M.writeLE BUMP 8 (p + 16 * K)) :
     GPost (toyR tys ok) L b s fin := by
-  obtain ⟨⟨⟨hcall, htyok, hsz, hpb, h71, h1n3, h13, hn40⟩, hold⟩, hroom, hok, hinv, hcost, hLs, hWs⟩ := pre
+  obtain ⟨⟨⟨hcall, htyok, hsz, hpb, h71, h1n3, h13, hn40, -⟩, hold⟩, hroom, hok, hinv, hcost, hLs, hWs⟩ := pre
   have hinvT : toyInv tys b L (s.regs 14).toNat (view (toyRt tys) L s.mem) := hinv
   have hround : growsliceRound64 s = K := by simp only [growsliceRound64]; omega
   have hcostK : K ≤ b := by rw [← hround]; exact hcost
@@ -751,7 +751,7 @@ theorem g_alloc (tys : Tys) (hty : TysOK tys) (ok : Nat → List Nat → Prop) (
     (h10 : (U.regs 10).toNat = roundupsize (8 * nextslicecap (s.regs 3).toNat (s.regs 1).toNat) true) :
     ReachesRet P (retAddrOf s) U (GPost (toyR tys ok) L b s) := by
   have pre0 := pre
-  obtain ⟨⟨⟨hcall, htyok, hsz, hpb, h71, h1n3, h13, hn40⟩, hold⟩, hroom, hok, hinv, hcost, hLs, hWs⟩ := pre0
+  obtain ⟨⟨⟨hcall, htyok, hsz, hpb, h71, h1n3, h13, hn40, -⟩, hold⟩, hroom, hok, hinv, hcost, hLs, hWs⟩ := pre0
   obtain ⟨h4, h5, h14, hx, hfs, hdf, hmx, h87, hfw, hm, h0, h3, h1, h7⟩ := hP
   have hacB := LiveSat.bump_acc hinv
   have hKr : 8 * growCap8 (s.regs 3).toNat (s.regs 1).toNat = (U.regs 10).toNat := by rw [h10, round_eq]
@@ -835,7 +835,7 @@ theorem gr (tys : Tys) (hty : TysOK tys) (ok : Nat → List Nat → Prop) :
   intro L b s hpc pre
   change ReachesRet P (retAddrOf s) s (GPost (toyR tys ok) L b s)
   have pre0 : GPre (toyR tys ok) L b s := pre
-  obtain ⟨⟨⟨hcall, -, -, -, h71, h1n3, h13, hn40⟩, -⟩, -⟩ := pre
+  obtain ⟨⟨⟨hcall, -, -, -, h71, h1n3, h13, hn40, -⟩, -⟩, -⟩ := pre
   have hle := le_nextslicecap (s.regs 3).toNat (s.regs 1).toNat
   have hle2 := nsc_le (s.regs 3).toNat (s.regs 1).toNat h13
   exact nsc_entry s hpc h13 hn40.1 fun T hT hpcT h8 =>
