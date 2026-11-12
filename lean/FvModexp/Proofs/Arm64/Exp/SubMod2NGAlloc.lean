@@ -103,6 +103,8 @@ theorem gcallG {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {op zp zl zc yp yl 
     rw [h0]
     refine ⟨a4, Memory.accessible_weaken _ a3, ?_⟩
     -- v0.3.1: the old array is outside the callee's window (it is z's, or fresh in the runtime ranges)
+    have hKv : K = 4608 := rfl
+    have hAv : A = 88 := rfl
     have hw : Apart p (8 * c) (s.sp.toNat - K) (K + A) := by
       rcases hcur with ⟨q1, q2⟩ | ⟨hin, -⟩
       · rw [q1, q2]

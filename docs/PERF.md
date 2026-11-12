@@ -1418,3 +1418,11 @@ P2DMk 1.9 s, P2DOne 11.9 s/2.6 GB, P2DZero 2.6 s, P2DWinR 2.9 s, P2DWin 29-32 s/
 * amd64 divBasic est: `DivBasicQhR` (estE/estD1/estD2/estX small run lemmas) 36 s — estD1 3 m 32 s → 23 s by clearing the
   janus branch hypotheses `hbr` (full of `% 2^64`) before omega; `DivBasicQh` (composition) 4.5 s.
 * amd64 divBasic mul: `DivBasicMulR` (mulRun, mulAddVWW.abi0 call) 27 s, `DivBasicMul` 31 s.
+### infra s40 (2026-11-14, arm64 dev compiles, host load ~80)
+| module | time | peak RSS |
+|---|---|---|
+| Exp/P2DRet (v0.2.0) | 35 s | 3.1 GB |
+| Exp/P2DLsh (v0.2.0) | 76 s | 3.8 GB |
+| Exp/P2DFull (v0.3.1) | 39 s | 3.0 GB (budget arithmetic in the small lemma `bud3`, out of the big context) |
+| Exp/P2DE (v0.3.1) | 2 s | 2.4 GB |
+| Exp/SubMod2NGAlloc (v0.3.1 sweep) | 8 s | 2.4 GB |
