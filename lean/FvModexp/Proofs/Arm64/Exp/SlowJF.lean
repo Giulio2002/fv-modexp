@@ -71,10 +71,13 @@ theorem DL.frameW (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s)
   refine ⟨c40, fun hc => ?_, hloc, fun hc => ?_, h0⟩
   · obtain ⟨a1, a2, a3, a4⟩ := hlv hc
     exact ⟨a1, a2, by rw [hF.accessible]; exact a3, a4⟩
-  · obtain ⟨o1, o2⟩ := hob hc
-    refine ⟨o1, ?_⟩
-    show Apart p (8 * c) (stW M' st + 8 * stLen M' st) (8 * (stCap M' st - stLen M' st))
-    rw [e0, e1, e2]; exact o2
+  · obtain ⟨o1, o2, o3⟩ := hob hc
+    refine ⟨o1, ?_, ?_⟩
+    · show Apart p (8 * c) (stW M' st + 8 * stLen M' st) (8 * (stCap M' st - stLen M' st))
+      rw [e0, e1, e2]; exact o2
+    · show InRanges (stW M' st) (8 * stCap M' st) R.rt → ApartAll (stW M' st) (8 * stCap M' st) L →
+        Apart p (8 * c) (stW M' st) (8 * stCap M' st)
+      rw [e0, e2]; exact o3
 
 /-- a live local keeps its facts and value through slot stores -/
 theorem LN.frameW (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) {M M' : Memory}

@@ -33,7 +33,7 @@ namespace FvModexp.Arm64.ExpSlow
 /-- a destination buffer `p[0:c]` at memory `M` (live set `L1`) -/
 @[reducible] def DL (R : RtInv) (L : List (Nat × Nat)) (st zp zc : Nat) (M : Memory) (L1 : List (Nat × Nat))
     (p c : Nat) : Prop :=
-  c < 2 ^ 40 ∧ NatLive M R L1 p c ∧ Loc R L zp zc p c ∧ (0 < c → Ob R L1 st M p c) ∧ (c = 0 → p = 0)
+  c < 2 ^ 40 ∧ NatLive M R L1 p c ∧ Loc R L zp zc p c ∧ (0 < c → Ob R L L1 st M p c) ∧ (c = 0 → p = 0)
 
 /-- a live local nat `p[0:l]` (cap `c`) of value `v` -/
 @[reducible] def LN (R : RtInv) (L : List (Nat × Nat)) (st zp zc : Nat) (M : Memory) (L1 : List (Nat × Nat))
@@ -131,23 +131,21 @@ theorem LN.keep {R : RtInv} {L : List (Nat × Nat)} {st zp zc : Nat} {M M' : Mem
       · right; rw [hb c0 _ _ (by omega) (by omega)]; exact hne
 
 /-- a fresh non-empty array (relative to `L1`; apart from the final stack array when that changed) is an `Ob` -/
-theorem ob_fresh {R : RtInv} {L1 L2 : List (Nat × Nat)} {st : Nat} {M M' : Memory} {p c : Nat}
+theorem ob_fresh {R : RtInv} {L L1 L2 : List (Nat × Nat)} {st : Nat} {M M' : Memory} {p c : Nat}
     (hok : StkOK M R L1 st) (hc0 : stCap M st = 0 → stW M st = 0) (hsb : StackBack R L1 L2 st M M')
     (hin : InRanges p (8 * c) R.rt) (hap : ApartAll p (8 * c) L1) (hh : Held R L2 p (8 * c))
-    (hrs : ResSep M M' st p c) (hc : 0 < c) : Ob R L2 st M' p c := by
-  refine ⟨hh, ?_⟩
+    (hrs : ResSep M M' st p c) (hc : 0 < c) : Ob R L L2 st M' p c := by
   have hlc' := hsb.1.2.2.2.2.2.1
-  have hl := hsb.2.1
-  have hlc := hok.2.2.2.2.2.1
+  have hA : Apart p (8 * c) (stW M' st) (8 * stCap M' st) := by
+    by_cases e : stW M' st = stW M st ∧ stCap M' st = stCap M st
+    · rw [e.1, e.2]
+      rcases Nat.eq_zero_or_pos (stCap M st) with c0 | c0
+      · rw [c0, hc0 c0]; unfold Apart; omega
+      · exact hfresh (hok.2.2.2.2.1 c0).2.1 hap hin
+    · exact hrs hc e
+  refine ⟨hh, ?_, fun _ _ => hA⟩
   show Apart p (8 * c) (stW M' st + 8 * stLen M' st) (8 * (stCap M' st - stLen M' st))
-  by_cases e : stW M' st = stW M st ∧ stCap M' st = stCap M st
-  · rw [e.1, e.2, hl]
-    rcases Nat.eq_zero_or_pos (stCap M st) with c0 | c0
-    · rw [c0, hc0 c0]; unfold Apart; omega
-    · have := hfresh (hok.2.2.2.2.1 c0).2.1 hap hin
-      unfold Apart at this ⊢; omega
-  · have := hrs hc e
-    unfold Apart at this ⊢; omega
+  unfold Apart at hA ⊢; omega
 
 /-- the result of a callee (`NatOF`: the destination `(pd, cd)` reused, or fresh) is a live local -/
 theorem LN.of_res {R : RtInv} {L : List (Nat × Nat)} {st zp zc : Nat} {M M' : Memory}
@@ -165,7 +163,7 @@ theorem LN.of_res {R : RtInv} {L : List (Nat × Nat)} {st zp zc : Nat} {M M' : M
     · obtain ⟨rfl, rfl⟩ := ho
       exact (hd.2.2.2.1 hc).back hx hsb.1
     · obtain ⟨-, hin, hap⟩ := hof.resolve_left ho
-      exact ob_fresh hok hc0 hsb.1 hin hap (hlv hc).2.1 (hrs ho) hc
+      exact ob_fresh (L := L) hok hc0 hsb.1 hin hap (hlv hc).2.1 (hrs ho) hc
 
 /-- the result is `Pw`-apart from every non-empty live buffer other than the destination -/
 theorem pw_res {R : RtInv} {L L1 L2 : List (Nat × Nat)} {st zp zc : Nat} {M M' : Memory} {pd cd p' c' q k : Nat}

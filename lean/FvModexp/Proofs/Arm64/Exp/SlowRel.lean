@@ -123,31 +123,42 @@ theorem hfresh {R : RtInv} {L : List (Nat × Nat)} {a n ptr k : Nat} (h : Held R
 
 /-- a nat array the function keeps using (see the module doc): held, apart from the stack's CURRENT free part (the
 entry `z` array may lie anywhere outside the entry free part, so infra's "inside the used part or apart from the whole
-array" form is not available for it) -/
-@[reducible] def Ob (R : RtInv) (L1 : List (Nat × Nat)) (st : Nat) (M : Memory) (t k : Nat) : Prop :=
-  Held R L1 t (8 * k) ∧ Apart t (8 * k) (free M st).1 (free M st).2
+array" form is not available for it), and apart from the CURRENT array whenever that is fresh relative to the entry
+live set `L` (`FA`; gives the final `ResSep`: a grown array is fresh, `ArrKF`) -/
+@[reducible] def FA (R : RtInv) (L : List (Nat × Nat)) (st : Nat) (M : Memory) (t k : Nat) : Prop :=
+  InRanges (stW M st) (8 * stCap M st) R.rt → ApartAll (stW M st) (8 * stCap M st) L →
+    Apart t (8 * k) (stW M st) (8 * stCap M st)
+
+@[reducible] def Ob (R : RtInv) (L L1 : List (Nat × Nat)) (st : Nat) (M : Memory) (t k : Nat) : Prop :=
+  Held R L1 t (8 * k) ∧ Apart t (8 * k) (free M st).1 (free M st).2 ∧ FA R L st M t k
 
 /-- `Ob` through a callee with `StackBack` (level kept; array kept, or fresh relative to `L1`) -/
-theorem Ob.back {R : RtInv} {L1 L2 : List (Nat × Nat)} {st : Nat} {M M' : Memory} {t k : Nat}
-    (h : Ob R L1 st M t k) (hx : LiveExt R L1 L2) (hsb : StackBack R L1 L2 st M M') : Ob R L2 st M' t k := by
+theorem Ob.back {R : RtInv} {L L1 L2 : List (Nat × Nat)} {st : Nat} {M M' : Memory} {t k : Nat}
+    (h : Ob R L L1 st M t k) (hx : LiveExt R L1 L2) (hsb : StackBack R L1 L2 st M M') : Ob R L L2 st M' t k := by
   refine ⟨hx.held h.1, ?_⟩
   have hl := hsb.2.1
   have hlc := hsb.1.2.2.2.2.2.1
   rcases hsb.2.2 with ⟨e1, e2⟩ | ⟨hin, hap⟩
-  · have := h.2
-    show Apart t (8 * k) (stW M' st + 8 * stLen M' st) (8 * (stCap M' st - stLen M' st))
-    simp only [free] at this
-    rw [e1, e2, hl]; exact this
-  · have := hfresh h.1 hap hin
-    show Apart t (8 * k) (stW M' st + 8 * stLen M' st) (8 * (stCap M' st - stLen M' st))
-    unfold Apart at this ⊢; omega
+  · have := h.2.1
+    have h3 := h.2.2
+    refine ⟨?_, ?_⟩
+    · show Apart t (8 * k) (stW M' st + 8 * stLen M' st) (8 * (stCap M' st - stLen M' st))
+      rw [e1, e2, hl]; exact this
+    · show InRanges (stW M' st) (8 * stCap M' st) R.rt → ApartAll (stW M' st) (8 * stCap M' st) L →
+        Apart t (8 * k) (stW M' st) (8 * stCap M' st)
+      rw [e1, e2]; exact h3
+  · have hA : Apart t (8 * k) (stW M' st) (8 * stCap M' st) := (hfresh h.1 hap hin).symm
+    refine ⟨?_, ?_⟩
+    · show Apart t (8 * k) (stW M' st + 8 * stLen M' st) (8 * (stCap M' st - stLen M' st))
+      unfold Apart at hA ⊢; omega
+    · intro _ _; exact hA
 
 /-- an `Ob` array is apart from the stack's free part -/
-theorem Ob.free {R : RtInv} {L1 : List (Nat × Nat)} {st : Nat} {M : Memory} {t k : Nat} (h : Ob R L1 st M t k) :
-    Apart t (8 * k) (free M st).1 (free M st).2 := h.2
+theorem Ob.free {R : RtInv} {L L1 : List (Nat × Nat)} {st : Nat} {M : Memory} {t k : Nat} (h : Ob R L L1 st M t k) :
+    Apart t (8 * k) (free M st).1 (free M st).2 := h.2.1
 
 /-- an `Ob` array is outside the stack's writable ranges when apart from the header -/
-theorem Ob.out {R : RtInv} {L1 : List (Nat × Nat)} {st : Nat} {M : Memory} {t k : Nat} (h : Ob R L1 st M t k)
+theorem Ob.out {R : RtInv} {L L1 : List (Nat × Nat)} {st : Nat} {M : Memory} {t k : Nat} (h : Ob R L L1 st M t k)
     (hlc : stLen M st ≤ stCap M st) (hst : Apart t (8 * k) st 24) : Outside t (8 * k) (stkWs M st) := by
   have := h.free
   simp only [free, Apart] at this hst
