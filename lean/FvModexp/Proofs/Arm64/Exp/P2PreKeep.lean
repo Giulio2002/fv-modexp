@@ -165,14 +165,15 @@ theorem keepC {R : RtInv} {kc : Nat} {L : List (Nat × Nat)} {st pw pl lm : Nat}
     {ws : List (Nat × Nat)} (hws : ∀ r ∈ ws, WOK R L s st r) {M' : Memory} {L2 : List (Nat × Nat)} {b2 : Nat}
     (hF : MemFrame M M' (R.rt ++ winA S' kC aC ++ ws)) (hLF : LiveFrame M M' L1 ws) (hrg : M'.regions = M.regions)
     (hLE : LiveExt R L1 L2) (hinv : R.inv b2 L2 (s.regs 28).toNat (view R.rt L2 M'))
-    (hsa : StkAfter R L L2 st (stLen s.mem st) pl lm s.mem M') : Ctx R kc L st pw pl lm s bp M' L2 b2 := by
+    (hsa : StkAfter R L L2 st (stLen s.mem st) pl lm s.mem M') (hsap : StkApart M' st bp (8 * NB pl lm)) :
+    Ctx R kc L st pw pl lm s bp M' L2 b2 := by
   have hK := hw.sp
   simp only [K] at hK
   refine ⟨⟨fun a n ho => (frame_read hF fun r hr hr' => ?_).trans (hc.fr.readLE a n ho),
       fun a n w => (hF.accessible a n w).trans (hc.fr.accessible a n w)⟩,
     ⟨fun a n hin ho => (lf_read hLF (hc.le.inRanges_old hin) fun r hr hr' => wok_L (hws r hr) hin ho hr').trans
       (hc.lf.readLE a n hin ho)⟩, hrg.trans hc.rg, hc.le.trans hLE, hinv,
-    ⟨hc.scr.b48, by rw [hF.accessible]; exact hc.scr.acc, hc.scr.al, hLE.held hc.scr.held, hc.scr.loc⟩, hsa,
+    ⟨hc.scr.b48, by rw [hF.accessible]; exact hc.scr.acc, hc.scr.al, hLE.held hc.scr.held, hc.scr.loc⟩, hsa, hsap,
     sl_keep (L1 := L1) hw hsp hk ha hws hF hc.sl⟩
   have ho' := ho
   rw [AW, outside_append, outside_append] at ho'
@@ -184,5 +185,52 @@ theorem keepC {R : RtInv} {kc : Nat} {L : List (Nat × Nat)} {st pw pl lm : Nat}
   · subst hr; simp only at hr' ⊢; omega
   · subst hr; simp only at hr' ⊢; omega
   · exact wok_aw (hws r hr) ho hr'
+
+/-- the buffer stays apart from the stack's header and free part through a callee that restores the stack -/
+theorem sap_back {R : RtInv} {L1 L2 : List (Nat × Nat)} {st bp n : Nat} {M M' : Memory}
+    (h : StkApart M st bp n) (hh : Held R L1 bp n) (hb : StackBack R L1 L2 st M M') : StkApart M' st bp n := by
+  obtain ⟨-, hl, hb⟩ := hb
+  intro hn
+  refine ⟨(h hn).1, fun hlt => ?_⟩
+  rcases hb with ⟨e1, e2⟩ | ⟨a1, a2⟩
+  · simp only [stLen, stW, stCap] at e1 e2 hl hlt h ⊢
+    rw [e2, hl] at hlt; rw [e1, e2, hl]
+    exact (h hn).2 hlt
+  · rcases hh with hL | hO
+    · have := a2.apart_of_inRanges hL; unfold Apart at this ⊢; omega
+    · have := a1.apart hO; unfold Apart at this ⊢; omega
+
+/-- a held range outside the function's window is kept by a callee (frame `R.rt ++ winA S' kC aC ++ ws`) if it is
+apart from every non-empty range of `ws` -/
+theorem rd_keep {R : RtInv} {kc : Nat} {s S' : State} {st : Nat} (hw : WinF R kc s st)
+    (hsp : S'.sp.toNat = s.sp.toNat - 208) {kC aC : Nat} (hk : kC ≤ kc) (ha : aC ≤ 88)
+    {L1 ws : List (Nat × Nat)} {M M' : Memory} (hF : MemFrame M M' (R.rt ++ winA S' kC aC ++ ws))
+    (hLF : LiveFrame M M' L1 ws) {a n : Nat} (hh : Held R L1 a n)
+    (hwin : s.sp.toNat + A ≤ a ∨ a + n ≤ s.sp.toNat - K kc)
+    (hws : ∀ r ∈ ws, r.1 < r.2 → a + n ≤ r.1 ∨ r.2 ≤ a) : M'.readLE a n = M.readLE a n := by
+  have hK := hw.sp
+  simp only [K, A] at hK hwin
+  rcases hh with hL | hO
+  · exact lf_read hLF hL hws
+  · refine frame_read hF fun r hr hr' => ?_
+    simp only [List.mem_append, winA, List.mem_cons, List.not_mem_nil, or_false] at hr
+    rcases hr with (hr | hr | hr) | hr
+    · have := MemFrame.outside_mem hO hr; omega
+    · subst hr; simp only at hr' ⊢; omega
+    · subst hr; simp only at hr' ⊢; omega
+    · exact hws r hr hr'
+
+/-- the non-empty ranges of a `sqr` / `mul` frame `[z] ++ stWs M st` are apart from a buffer range apart from `z` -/
+theorem ws_apart {M : Memory} {st bp k zp zn a n : Nat} (hsap : StkApart M st bp k) (h1 : bp ≤ a)
+    (h2 : a + n ≤ bp + k) (h0 : 0 < n) (hz : Apart a n zp zn) :
+    ∀ r ∈ [(zp, zp + zn)] ++ stWs M st, r.1 < r.2 → a + n ≤ r.1 ∨ r.2 ≤ a := by
+  intro r hr hr'
+  simp only [stWs, stkWs, List.cons_append, List.nil_append, List.mem_cons, List.not_mem_nil, or_false] at hr
+  have hs := hsap (by omega)
+  unfold Apart at hz hs
+  rcases hr with rfl | rfl | rfl <;> simp only at hr' ⊢
+  · omega
+  · omega
+  · have := hs.2 (by omega); unfold Apart at this; omega
 
 end FvModexp.Arm64.P2Pre
