@@ -25,7 +25,7 @@ variable {impl : List Segment} {ret0 : BitVec 64} {Q : State → Prop} {R : RtIn
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
 /-- the first `sqr` call from the stores' memory (pure; `T` = the call state) -/
-theorem c0 (hap : ImplApart Extracted.program impl) {ns : List String}
+theorem callB0 (hap : ImplApart Extracted.program impl) {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibExp.names.contains x = true) (hnf : ns.contains fn = false)
     {stkS aboveS : Nat} (hsq : SqrHypX impl R ns stkS aboveS sqC) (hkS : stkS ≤ K) (haS : aboveS ≤ 88)
     (hsm : ∀ ℓ a a', a ≤ a' → sqC ℓ a ≤ sqC ℓ a') (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s)
@@ -110,7 +110,7 @@ theorem segB0 (hap : ImplApart Extracted.program impl) {ns : List String}
     -, -⟩ := h
   subst em
   janus_run [hbit, hmacc] until [1815584]
-  refine c0 hap hns hnf hsq hkS haS hsm hP hcb K1 h' _ ?_ ?_ ?_ ?_ ?_ ?hF ?hrg ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
+  refine callB0 hap hns hnf hsq hkS haS hsm hP hcb K1 h' _ ?_ ?_ ?_ ?_ ?_ ?hF ?hrg ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
   case hF => janus_frame
   case hrg => simp only [Memory.regions_writeLE]
   all_goals (janus_simp <;> omega)
