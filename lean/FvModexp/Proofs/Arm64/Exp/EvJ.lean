@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Arm64.Exp.EvLN
+import FvModexp.Proofs.Common.SubMod2NMath
 
 set_option autoImplicit false
 
@@ -159,6 +160,19 @@ theorem nE_bd (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) (hM
 
 end
 
+/-- budget steps, closed OUTSIDE the segments' large contexts (an `omega` there case-splits every disjunction in
+scope: EvRsh 515 s → seconds) -/
+theorem bud_pre {rk b1 c rk' : Nat} (h1 : rk ≤ b1) (h2 : c + rk' ≤ rk) : c ≤ b1 := by omega
+theorem bud_step {rk b1 c rk' b2 : Nat} (h1 : rk ≤ b1) (h2 : c + rk' ≤ rk) (h3 : b1 - c ≤ b2) : rk' ≤ b2 := by omega
+
+theorem stkNat_a : segAddr Extracted.program StackNat.fn = 1784176 := by decide
+
+theorem rnd_ge (n : Nat) : n ≤ StackNat.rnd n := by unfold StackNat.rnd; omega
+
+theorem nlen_bd' {M : Memory} {p l n : Nat} (hN : NatNorm M p l) (hv : natVal M p l < 2 ^ (64 * n)) : l ≤ n := by
+  rw [← SubMod2N.norm_nlen M p l hN]
+  exact Exp.nlen_le_iff.2 (by simp only [Exp.B]; rw [← Nat.pow_mul]; exact hv)
+
 /-- the join point `nat1R` (return of `m1 = stk.nat(n/64 + 1)`): scratch `m1 = (p, a1, a1)` -/
 structure J1 (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl yc mp ml mc ret : Nat) (s : State)
     (rk : Nat) (S : State) (L1 : List (Nat × Nat)) (b1 p : Nat) : Prop where
@@ -204,5 +218,49 @@ structure J3 (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl
   c1p : 0 < c1
   d2 : DL R L s.mem st S.mem L1 q (a2 ml (nE s mp ml))
   ap : Apart q (8 * a2 ml (nE s mp ml)) p1 (8 * c1)
+
+/-- the join point `rshR` (return of `m2 = m2.rsh(m, n)`): `m1` in the slots, `m2 = (q, l2, a2)` of value
+`M / 2^n` in its own (scratch) array -/
+structure J4 (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl yc mp ml mc ret : Nat) (s : State)
+    (rk : Nat) (S : State) (L1 : List (Nat × Nat)) (b1 p1 l1 c1 q l2 : Nat) : Prop where
+  jx : JX R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s S L1 b1 (ℓ2 s st mp ml) rk
+  pc : S.pc = BitVec.ofNat 64 rshR
+  r0 : S.regs 0 = BitVec.ofNat 64 q
+  r1 : S.regs 1 = BitVec.ofNat 64 l2
+  r2 : S.regs 2 = BitVec.ofNat 64 (a2 ml (nE s mp ml))
+  s288 : S.mem.readLE (sp + 288) 8 = p1
+  s208 : S.mem.readLE (sp + 208) 8 = l1
+  s216 : S.mem.readLE (sp + 216) 8 = c1
+  m1 : LN R L s.mem st S.mem L1 p1 l1 c1 (2 ^ nE s mp ml)
+  c1p : 0 < c1
+  m2 : LN R L s.mem st S.mem L1 q l2 (a2 ml (nE s mp ml)) (natVal s.mem mp ml / 2 ^ nE s mp ml)
+  ap : Apart q (8 * a2 ml (nE s mp ml)) p1 (8 * c1)
+
+/-- the level after `z1 = stk.nat(2 max(len m1, len m2))` -/
+@[reducible] def ℓ3 (s : State) (st mp ml l1 l2 : Nat) : Nat := ℓ2 s st mp ml + StackNat.rnd (2 * max l1 l2)
+
+/-- the join point `nat3R` (return of `z1 = stk.nat(2·max(len m1, len m2))`): `m1`, `m2` in their slots, slot 224
+= `2·max`, scratch `z1 = (r, 2·max, 2·max)` apart from both -/
+structure J5 (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl yc mp ml mc ret : Nat) (s : State)
+    (rk : Nat) (S : State) (L1 : List (Nat × Nat)) (b1 p1 l1 c1 q l2 r : Nat) : Prop where
+  jx : JX R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s S L1 b1 (ℓ3 s st mp ml l1 l2) rk
+  pc : S.pc = BitVec.ofNat 64 nat3R
+  r0 : S.regs 0 = BitVec.ofNat 64 r
+  r1 : S.regs 1 = BitVec.ofNat 64 (2 * max l1 l2)
+  r2 : S.regs 2 = BitVec.ofNat 64 (2 * max l1 l2)
+  s288 : S.mem.readLE (sp + 288) 8 = p1
+  s208 : S.mem.readLE (sp + 208) 8 = l1
+  s216 : S.mem.readLE (sp + 216) 8 = c1
+  s280 : S.mem.readLE (sp + 280) 8 = q
+  s192 : S.mem.readLE (sp + 192) 8 = l2
+  s200 : S.mem.readLE (sp + 200) 8 = a2 ml (nE s mp ml)
+  s224 : S.mem.readLE (sp + 224) 8 = 2 * max l1 l2
+  m1 : LN R L s.mem st S.mem L1 p1 l1 c1 (2 ^ nE s mp ml)
+  c1p : 0 < c1
+  m2 : LN R L s.mem st S.mem L1 q l2 (a2 ml (nE s mp ml)) (natVal s.mem mp ml / 2 ^ nE s mp ml)
+  ap : Apart q (8 * a2 ml (nE s mp ml)) p1 (8 * c1)
+  d3 : DL R L s.mem st S.mem L1 r (2 * max l1 l2)
+  ap1 : Apart r (8 * (2 * max l1 l2)) p1 (8 * c1)
+  ap2 : Apart r (8 * (2 * max l1 l2)) q (8 * a2 ml (nE s mp ml))
 
 end FvModexp.Arm64.ExpEven

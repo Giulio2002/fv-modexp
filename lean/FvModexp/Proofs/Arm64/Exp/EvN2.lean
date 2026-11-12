@@ -51,10 +51,6 @@ theorem runN2 {impl : List Segment} (ret0 : BitVec 64) (Q : State → Prop) (sp 
   all_goals first | omega | skip
   rw [← eS, hsp]
 
-theorem stkNat_a : segAddr Extracted.program StackNat.fn = 1784176 := by decide
-
-theorem rnd_ge (n : Nat) : n ≤ StackNat.rnd n := by unfold StackNat.rnd; omega
-
 section
 variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc yp yl yc mp ml mc ret : Nat}
     {s : State}
@@ -107,7 +103,7 @@ theorem segN2 {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns
   have h28 : S2.regs 28 = BitVec.ofNat 64 g := f28.trans h.jx.e28
   have hsN : S2.sp.toNat = sp := by rw [hS2, BitVec.toNat_ofNat]; omega
   have hgN : (S2.regs 28).toNat = g := by rw [h28, BitVec.toNat_ofNat]; have := hP.1.2.2.1; omega
-  have hpre := snPre hP hw2 hkN haN hS2 h28 fm (by omega) hl16 (by omega)
+  have hpre := snPre hP hw2 hkN haN hS2 h28 fm (by omega) hl16 (bud_pre hb1 hrk)
   refine CallNE.stkNatCallL hap hns hsn (ra_ev hap hnf 60 (by decide)) (by rw [f0, stkNat_a]) f30 f1 f2
     (by have := hP.stk0.2.2.2.1; omega) (by omega) (by decide) hpre ?_
   intro s' g1 g2 g3 g4 g5 g6 hpost
@@ -119,7 +115,7 @@ theorem segN2 {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns
     (fun _ _ _ _ => by simp only [outside_nil])
   refine K3 s' L2 b2 p1 l1 c1 _ ⟨⟨g2.trans hS2, g3.trans h28, g4.trans (f29.trans h.jx.e29),
       g5.trans (f18.trans h.jx.e18), hw3, hesl.keep (fun a k ha => hk a k (by simp only [SlotR] at ha; omega))
-        (by omega), by omega⟩, g1, hz0, hz1, hz2, ?_, ?_, ?_, hm1'', hc1,
+        (by omega), bud_step hb1 hrk hb2⟩, g1, hz0, hz1, hz2, ?_, ?_, ?_, hm1'', hc1,
     DL.of_scr hw3 hscE rfl (by have := rnd_ge (a2 ml (nE s mp ml)); omega) (by omega),
     Scr.apartLN hscC hlc hm1' hc1⟩
   · rw [hk _ _ (Or.inr ⟨by omega, by omega⟩)]; exact r288

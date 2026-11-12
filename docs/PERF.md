@@ -1191,3 +1191,10 @@ amd64 Top_RunErr in the same run: **FAIL (timeout) 901 s**, peak 1.4 GB — at l
 | MulITail (itail) | — | 42 s / 3.0 GB | two janus_run segments (wb on/off) |
 | MulICall / MulIMul | — | 2.4 s / 17 s | |
 | full mul chain rebuild after MulDefs change (36 modules, J=1) | — | max MulOne 173 s / 6.55 GB, MulBM 98 s, MulKar 77 s | all green |
+## infra s28 (2026-11-12) — expNNEven arm64 segments nat1R → nat3R (dev compile, LEAN_NUM_THREADS=4)
+* `EvLN` 2.8 s, `EvJ` 3.2 s / 2.3 GB, `EvLsh` **220.9 s / 5.4 GB → 7.4 s / 2.3 GB**: one `omega` (`Outside st 24 [callee
+  window]`) ran in the full post-call context (198 s of case splits) — moved into the lemma `EPre.st_cw`.
+* `EvRsh` **518.9 s / 7.5 GB → 4.4 s / 2.3 GB**: the final budget `omega` (510 s) → `bud_step`/`bud_pre` (EvJ: budget
+  arithmetic proved in a 3-hypothesis lemma). RULE for every segment: no `omega` after the callee post is in scope
+  except on goals whose context was cleared; close budget/bounds goals with the EvJ lemmas.
+* `EvN2` 3.4 s, `EvN3` 22.8 s / 2.6 GB (the `CSEL GT` max run: `by_cases` + simp per goal).
