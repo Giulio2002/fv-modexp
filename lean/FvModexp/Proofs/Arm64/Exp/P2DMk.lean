@@ -89,8 +89,11 @@ theorem mkCallD {impl : List Segment} (hmk : MakesliceLiveContract (LibW.program
       simp only [List.mem_singleton] at hr; subst hr; simp only
       rw [show SP + A - (SP - stk) = stk + A by omega]; exact hwin) (by simpa only [win, hSP] using hLs)
     (by rw [← mkE_eq, t0, t1, t2]; exact hsv.1 _ _ _ (by decide)) hinvT (by rw [hround]; exact Nat.le_trans (blockSize_le_allocCost 8 true) hcb)
-  refine ReachesRet.call_regions (hmk L b) hpc ⟨⟨hc.1, ⟨by omega, by rw [t0]; exact ht3⟩, by omega, by omega, ?_⟩, hc.2⟩ ?_
+  refine ReachesRet.call_regions (hmk L b) hpc ⟨⟨hc.1, ⟨by omega, by rw [t0]; exact ht3⟩, by omega, by omega, ?_, ?_⟩, hc.2⟩ ?_
   · simp only [typSize, t0, t2, ht1, maxAlloc]; omega
+  · -- v0.3.1: the type descriptor (rodata) is outside the callee's window
+    rw [t0]; exact outside_calleeStack_of_data (p := Extracted.program) hdT (by decide +kernel)
+      hc.1.2.2.2.1 hc.1.2.2.2.2.2.2
   intro S1 _ hpost hrg1
   have hsz : typSize T.mem (T.regs 0).toNat * (T.regs 2).toNat = 8 := by simp only [typSize, t0, t2, ht1]
   obtain ⟨ptr, junk, f, v, m, ex, ep, hs1, hMF, hLF, hQ, hcsA, hinv'⟩ := hpost

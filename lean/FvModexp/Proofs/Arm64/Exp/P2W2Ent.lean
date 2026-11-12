@@ -122,7 +122,7 @@ theorem ent (impl : List Segment) (R : RtInv)
       (stCap s.mem st) s he hk hW (by omega) (Memory.readLE_lt _ _ _) (fun hc => ?_) (by omega) hinv S1 M1 c1 c2 c3
       c4 c5 c6 c7 c8 c10 c12 hF1 q240 q176 q192 q232 a9 q248 ?_
     · obtain ⟨-, -, a3, a4⟩ := k5 hc
-      exact ⟨a4, Memory.accessible_weaken _ a3⟩
+      exact ⟨a4, Memory.accessible_weaken _ a3, (harr hc).1⟩
     intro S2 M2 p gc d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 hgc hpin hapL hp8 hp48 hpacc hF2 hLF2 hrg2 hinv2
     subst hgc
     have hx : LiveExt R L (L ++ [(p, p + 8 * growCap8 (stLen s.mem st + 8 * W lm) (stCap s.mem st))]) :=

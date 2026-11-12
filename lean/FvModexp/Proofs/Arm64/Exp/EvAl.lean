@@ -107,8 +107,10 @@ theorem mkPre (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) (h 
     simp only [makesliceRound, typSize, typNoscan, typPtrBytes, t0, t2, hm, ht1, ht2]; rfl
   have hc := wcall hP h T hsp h28 hm h30a h30b 3 (by omega) mk [(T.regs 0).toNat, (T.regs 1).toNat, (T.regs 2).toNat]
     (by rw [← hmk, t0, t1, t2]; exact hsv.1 _ _ _ hc) (makesliceRound T) (by rw [hround]; exact hcost)
-  refine ⟨⟨hc.1, ⟨by omega, by rw [t0, hm]; exact ht3⟩, by omega, by omega, ?_⟩, hc.2⟩
-  simp only [typSize, t0, t2, hm, ht1, maxAlloc]; omega
+  refine ⟨⟨hc.1, ⟨by omega, by rw [t0, hm]; exact ht3⟩, by omega, by omega, ?_, ?_⟩, hc.2⟩
+  · simp only [typSize, t0, t2, hm, ht1, maxAlloc]; omega
+  · rw [t0]; exact outside_calleeStack_of_data (p := Extracted.program) (by rw [hm]; exact hd) (by decide +kernel)
+      hc.1.2.2.2.1 hc.1.2.2.2.2.2.2
 
 set_option maxRecDepth 20000 in
 /-- the pre of `newobject([1]Word)` at a call from `SP = sp` -/
@@ -129,8 +131,10 @@ theorem noPre (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) (h 
     simp only [newobjectRound, typSize, typNoscan, typPtrBytes, t0, hm, ht1, ht2]; rfl
   have hc := wcall hP h T hsp h28 hm h30a h30b 1 (by omega) no [(T.regs 0).toNat]
     (by rw [← hno]; exact hsv.2.2.2.2.1 _) (newobjectRound T) (by rw [hround]; exact hcost)
-  refine ⟨⟨hc.1, ⟨by omega, by rw [t0, hm]; exact ht3⟩, ?_⟩, hc.2⟩
-  simp only [typSize, t0, hm, ht1, maxAlloc]; omega
+  refine ⟨⟨hc.1, ⟨by omega, by rw [t0, hm]; exact ht3⟩, ?_, ?_⟩, hc.2⟩
+  · simp only [typSize, t0, hm, ht1, maxAlloc]; omega
+  · rw [t0]; exact outside_calleeStack_of_data (p := Extracted.program) (by rw [hm]; exact hd) (by decide +kernel)
+      hc.1.2.2.2.1 hc.1.2.2.2.2.2.2
 
 /-- a held range apart from the window keeps its bytes through a call writing the runtime and `cs` (in the window) -/
 theorem alloc_rd {M m : Memory} {cs : List (Nat × Nat)} (hMF : MemFrame M m (R.rt ++ cs))
