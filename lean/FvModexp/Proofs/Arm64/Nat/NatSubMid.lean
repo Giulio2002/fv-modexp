@@ -77,8 +77,8 @@ structure Mid (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl xc yp y
   inv : R.inv b' L' (s.regs 28).toNat (view R.rt L' M)
   lsep : LiveSep L' (win s 4304 80)
   ror : (p = zp.toNat ∧ c = zc.toNat) ∨ (InRanges p (8 * c) R.rt ∧ ApartAll p (8 * c) L)
-  mf : MemFrame s.mem M (R.rt ++ winA s 4304 80 ++ [(zp.toNat, zp.toNat + 8 * zc.toNat)])
-  lf : LiveFrame s.mem M L [(zp.toNat, zp.toNat + 8 * zc.toNat)]
+  mf : MemFrame s.mem M (R.rt ++ winA s 4304 80 ++ [(zp.toNat, zp.toNat + 8 * min xl.toNat zc.toNat)])
+  lf : LiveFrame s.mem M L [(zp.toNat, zp.toNat + 8 * min xl.toNat zc.toNat)]
   mv : ∀ d src k, k ≤ 8 * xl.toNat → R.ok (cA "runtime.memmove") [d, src, k]
 
 theorem outside_of_inRanges {a n p k : Nat} {rs : List (Nat × Nat)} (h : Outside a n rs) (hin : InRanges p k rs) :
@@ -109,10 +109,10 @@ result array (`WsOK`), extending the live set. -/
 theorem Mid.frame {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl xc yp yl : BitVec 64} {s : State}
     {p c : Nat} {L' : List (Nat × Nat)} {b' : Nat} {M : Memory}
     (h : Mid R b L zp zc xp xl xc yp yl s p c L' b' M) {M2 : Memory} {ws : List (Nat × Nat)} {L'' : List (Nat × Nat)}
-    {b'' : Nat} (hws : WsOK s p c ws) (hf : MemFrame M M2 (R.rt ++ ws)) (hl : LiveFrame M M2 L' ws)
+    {b'' : Nat} (hws : WsOK s p xl.toNat ws) (hf : MemFrame M M2 (R.rt ++ ws)) (hl : LiveFrame M M2 L' ws)
     (hext : LiveExt R L' L'') (hb : b' ≤ b'') (hinv : R.inv b'' L'' (s.regs 28).toNat (view R.rt L'' M2)) :
     Mid R b L zp zc xp xl xc yp yl s p c L'' b'' M2 := by
-  have hpw := h.pw; have hgw := h.gw; have hpg := h.pg; have hsp0 := h.sp0
+  have hpw := h.pw; have hgw := h.gw; have hpg := h.pg; have hsp0 := h.sp0; have hcap := h.cap
   unfold Apart at hpw hgw hpg
   -- a range in the window below / between the spills, or apart from the array, is outside `R.rt ++ ws`
   have key : ∀ a n, s.sp.toNat - 4304 ≤ a → a + n ≤ s.sp.toNat + 80 →
@@ -203,8 +203,8 @@ theorem Mid.frame {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl xc 
 theorem Mid.frame0 {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl xc yp yl : BitVec 64} {s : State}
     {p c : Nat} {L' : List (Nat × Nat)} {b' : Nat} {M : Memory}
     (h : Mid R b L zp zc xp xl xc yp yl s p c L' b' M) {M2 : Memory} {ws : List (Nat × Nat)}
-    (hws : WsOK s p c ws) (hf : MemFrame M M2 ws) : Mid R b L zp zc xp xl xc yp yl s p c L' b' M2 := by
-  have hsp0 := h.sp0
+    (hws : WsOK s p xl.toNat ws) (hf : MemFrame M M2 ws) : Mid R b L zp zc xp xl xc yp yl s p c L' b' M2 := by
+  have hsp0 := h.sp0; have hcap := h.cap
   refine h.frame hws (hf.widen R.rt) (liveFrame_of_memFrame hf) (LiveExt.refl R L') (Nat.le_refl _) ?_
   refine RtInv.inv_frame' hf (fun r hr => ?_) h.inv
   have h0 := (hws r hr).1
@@ -225,9 +225,9 @@ theorem Mid.read {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl xc y
 /-- **The store `z[i] = v`** (inside the result array) keeps `Mid`. -/
 theorem Mid.store {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl xc yp yl : BitVec 64} {s : State}
     {p c : Nat} {L' : List (Nat × Nat)} {b' : Nat} {M : Memory}
-    (h : Mid R b L zp zc xp xl xc yp yl s p c L' b' M) {a : Nat} (v : Nat) (h1 : p ≤ a) (h2 : a + 8 ≤ p + 8 * c) :
+    (h : Mid R b L zp zc xp xl xc yp yl s p c L' b' M) {a : Nat} (v : Nat) (h1 : p ≤ a) (h2 : a + 8 ≤ p + 8 * xl.toNat) :
     Mid R b L zp zc xp xl xc yp yl s p c L' b' (M.writeLE a 8 v) := by
-  have hpw := h.pw; have hpg := h.pg; have hsp0 := h.sp0
+  have hpw := h.pw; have hpg := h.pg; have hsp0 := h.sp0; have hcap := h.cap
   unfold Apart at hpw hpg
   have rd : ∀ x, s.sp.toNat - 4304 ≤ x → x + 8 ≤ s.sp.toNat + 80 → (M.writeLE a 8 v).readLE x 8 = M.readLE x 8 :=
     fun x hx1 hx2 => Memory.readLE_writeLE_of_disjoint _ _ (by omega)
@@ -244,7 +244,7 @@ theorem Mid.store {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl xc 
       pacc := ?_
       xacc := ?_
       yacc := ?_
-      inv := inv_store_held h.inv (h.pheld.sub h1 h2)
+      inv := inv_store_held h.inv (h.pheld.sub h1 (by omega))
       mf := ?_
       lf := ?_ }
   · rw [rd _ (by omega) (by omega)]; exact h.lr
@@ -260,11 +260,11 @@ theorem Mid.store {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl xc 
   · simpa only [Memory.accessible_writeLE] using h.xacc
   · simpa only [Memory.accessible_writeLE] using h.yacc
   · rcases h.ror with ⟨rfl, rfl⟩ | ⟨hin, -⟩
-    · exact MemFrame.writeLE_inRanges h.mf v ⟨(zp.toNat, zp.toNat + 8 * zc.toNat), by simp, h1, h2⟩
+    · exact MemFrame.writeLE_inRanges h.mf v ⟨(zp.toNat, zp.toNat + 8 * min xl.toNat zc.toNat), by simp, h1, by simp only; omega⟩
     · obtain ⟨r, hr, hr1, hr2⟩ := hin
       exact MemFrame.writeLE_inRanges h.mf v ⟨r, by simp [hr], by omega, by omega⟩
   · rcases h.ror with ⟨rfl, rfl⟩ | ⟨-, hap⟩
-    · exact LiveFrame.writeLE_ws h.lf v ⟨(zp.toNat, zp.toNat + 8 * zc.toNat), by simp, h1, h2⟩
+    · exact LiveFrame.writeLE_ws h.lf v ⟨(zp.toNat, zp.toNat + 8 * min xl.toNat zc.toNat), by simp, h1, by simp only; omega⟩
     · exact LiveFrame.writeLE h.lf v (ApartAll.outside (fun r hr => by
         have := hap r hr; unfold Apart at this ⊢; omega))
 
@@ -275,11 +275,17 @@ theorem Mid.post {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl xc y
     (hm : s'.mem = M) (h0 : (s'.regs 0).toNat = p) (h1 : (s'.regs 1).toNat = n') (h2 : (s'.regs 2).toNat = c)
     (hn : n' ≤ xl.toNat)
     (hv : natVal M p n' = natVal s.mem xp.toNat xl.toNat - natVal s.mem yp.toNat yl.toNat) (hnorm : NatNorm M p n') :
-    PostR 4304 R b L zp zc xp xl yp yl s s' := by
+    PostX 4304 R b L zp zc xp xl yp yl s s' := by
   subst hm
-  refine ⟨?_, fun hle => ⟨h0.trans (h.ru hle).1, h2.trans (h.ru hle).2⟩, fun hx => by rw [h2]; exact h.c40 hx⟩
+  have hcap := h.cap
+  have hmo : ∀ a n, Outside a n [(zp.toNat, zp.toNat + 8 * zc.toNat)] →
+      Outside a n [(zp.toNat, zp.toNat + 8 * min xl.toNat zc.toNat)] := fun a n ho => by
+    simp only [outside_cons, outside_nil, and_true] at ho ⊢; omega
+  refine ⟨⟨?_, fun hle => ⟨h0.trans (h.ru hle).1, h2.trans (h.ru hle).2⟩, fun hx => by rw [h2]; exact h.c40 hx⟩, h.mf, h.lf⟩
   exact ⟨p, n', c, h0, h1, h2, hv, hnorm, by have := h.cap; omega, hn, L', b', h.ext, h.bud, h.inv,
-    fun _ => ⟨h.p8, h.pheld, h.pacc, h.p48⟩, h.ror, h.mf, h.lf⟩
+    fun _ => ⟨h.p8, h.pheld, h.pacc, h.p48⟩, h.ror,
+    h.mf.mono fun a n ho => by simp only [outside_append] at ho ⊢; exact ⟨ho.1, hmo a n ho.2⟩,
+    ⟨fun a n hin ho => h.lf.readLE a n hin (hmo a n ho)⟩⟩
 
 /-- **`Mid` on the reuse path** (`zc ≥ m + 1`): `p = zp`, `c = zc`, nothing allocated; `M` = the entry memory changed
 only in the window (frame push and spills). -/
@@ -366,7 +372,7 @@ theorem mid_of_alloc {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl 
     simp only [outside_cons, outside_nil, and_true]; omega
   have hpa : InRanges ptr (8 * c) (L ++ [(ptr, ptr + round)]) :=
     ⟨(ptr, ptr + round), by simp, Nat.le_refl _, by simp only; omega⟩
-  have hmo : ∀ a n, Outside a n (R.rt ++ winA s 4304 80 ++ [(zp.toNat, zp.toNat + 8 * zc.toNat)]) →
+  have hmo : ∀ a n, Outside a n (R.rt ++ winA s 4304 80 ++ [(zp.toNat, zp.toNat + 8 * min xl.toNat zc.toNat)]) →
       Outside a n (R.rt ++ [(s.sp.toNat - 160 - 4096, s.sp.toNat - 160 - 8),
         (s.sp.toNat - 160 + 8, s.sp.toNat - 160 + 8 + 24)]) := by
     intro a n h

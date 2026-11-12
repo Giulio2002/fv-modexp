@@ -111,8 +111,8 @@ def Post (sub : Bool) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (z x y : Nat
       ((hP s'.mem z = hP s.mem z ∧ hC s'.mem z = hC s.mem z) ∨
         (InRanges (hP s'.mem z) (8 * hC s'.mem z) R.rt ∧ ApartAll (hP s'.mem z) (8 * hC s'.mem z) L)) ∧
       (asNeed (hL s.mem x) (hL s.mem y) ≤ hC s.mem z → hP s'.mem z = hP s.mem z ∧ hC s'.mem z = hC s.mem z) ∧
-      MemFrame s.mem s'.mem (R.rt ++ winA s 4560 32 ++ [(z, z + 32), (hP s.mem z, hP s.mem z + 8 * hC s.mem z)]) ∧
-      LiveFrame s.mem s'.mem L [(z, z + 32), (hP s.mem z, hP s.mem z + 8 * hC s.mem z)]
+      MemFrame s.mem s'.mem (R.rt ++ winA s 4560 32 ++ [(z, z + 32), (hP s.mem z, hP s.mem z + 8 * min (max (hL s.mem x) (hL s.mem y) + 1) (hC s.mem z))]) ∧
+      LiveFrame s.mem s'.mem L [(z, z + 32), (hP s.mem z, hP s.mem z + 8 * min (max (hL s.mem x) (hL s.mem y) + 1) (hC s.mem z))]
 
 /-! ## Library-program plumbing -/
 

@@ -28,11 +28,11 @@ theorem vv_after {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl xc y
         natVal M (xp.toNat + 8 * yl.toNat) (xl.toNat - yl.toNat) := by
   have hsp0 := h.sp0; have hpw := h.pw; have hxw := h.xw; have hcap := h.cap
   unfold Apart at hpw hxw
-  have hws1 : WsOK s p c [(s.sp.toNat - 152, s.sp.toNat - 80), (s.sp.toNat - 64, s.sp.toNat - 48),
+  have hws1 : WsOK s p xl.toNat [(s.sp.toNat - 152, s.sp.toNat - 80), (s.sp.toNat - 64, s.sp.toNat - 48),
       (s.sp.toNat - 24, s.sp.toNat - 16)] := by
     intro r hr; simp only [List.mem_cons, List.not_mem_nil, or_false] at hr
     rcases hr with rfl | rfl | rfl <;> simp only <;> omega
-  have hws2 : WsOK s p c [(p, p + 8 * yl.toNat), (s.sp.toNat - 160 + 80, s.sp.toNat - 160 + 88)] := by
+  have hws2 : WsOK s p xl.toNat [(p, p + 8 * yl.toNat), (s.sp.toNat - 160 + 80, s.sp.toNat - 160 + 88)] := by
     intro r hr; simp only [List.mem_cons, List.not_mem_nil, or_false] at hr
     rcases hr with rfl | rfl <;> simp only <;> omega
   refine ⟨(h.frame0 hws1 hf1).frame0 hws2 hfr, ?_, ?_, ?_, ?_⟩
@@ -67,7 +67,7 @@ theorem vv (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
     (h18 : S.regs 18 = s.regs 18) (hm : S.mem = M) :
     ReachesRet (LibNatSub.program.link impl) (s.regs 30) S fun s' =>
       (s'.sp = s.sp ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧ s'.regs 18 = s.regs 18) ∧
-        PostR 4304 R b L zp zc xp xl yp yl s s' := by
+        PostX 4304 R b L zp zc xp xl yp yl s s' := by
   have hc1 : CodeIn ((Extracted.program.onlySegments [subVVfn]).link impl) (LibNatSub.program.link impl) := by
     rw [LibNatSub.eq_only]; exact codeIn_restrict_mono hap (sub_of_all (by decide))
   have hVV' : Summary (LibNatSub.program.link impl) (segAddr Extracted.program subVVfn) (VVLPre R b' L')

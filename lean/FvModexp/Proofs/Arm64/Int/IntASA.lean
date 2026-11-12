@@ -73,6 +73,16 @@ theorem frames_after {R : RtInv} {L : List (Nat × Nat)} {s S S' : State} {zp zc
     simp only [win, winA, outside_cons, outside_nil, and_true] at this ⊢
     omega
 
+/-- a write set `[zp, zp + 8·min k c)` is inside `[zp, zp + 8·min k' c)` for `k ≤ k'` -/
+theorem frames_wider {R : RtInv} {L ws : List (Nat × Nat)} {m m' : Memory} {zp k c k' : Nat}
+    (hF : MemFrame m m' (R.rt ++ ws ++ [(zp, zp + 8 * min k c)])) (hLF : LiveFrame m m' L [(zp, zp + 8 * min k c)])
+    (hk : k ≤ k') :
+    MemFrame m m' (R.rt ++ ws ++ [(zp, zp + 8 * min k' c)]) ∧ LiveFrame m m' L [(zp, zp + 8 * min k' c)] := by
+  have hmo : ∀ a n, Outside a n [(zp, zp + 8 * min k' c)] → Outside a n [(zp, zp + 8 * min k c)] := fun a n ho => by
+    simp only [outside_cons, outside_nil, and_true] at ho ⊢; omega
+  exact ⟨hF.mono fun a n ho => by simp only [outside_append] at ho ⊢; exact ⟨ho.1, hmo a n ho.2⟩,
+    ⟨fun a n hin ho => hLF.readLE a n hin (hmo a n ho)⟩⟩
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- path A from the entry of `nat.add` to `RET` -/
@@ -92,7 +102,7 @@ theorem pathA (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     ReachesRet (LibIntAS.program.link impl) (s.regs 30) S fun s' =>
       (s'.sp = s.sp ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧ s'.regs 18 = s.regs 18) ∧
         Post sub R b L z x y s s' := by
-  have hS' := hypSum hap add_names (NatAdd.ensR impl hap R hmk hmv b L (BitVec.ofNat 64 (hP s.mem z))
+  have hS' := hypSum hap add_names (NatAdd.ensX impl hap R hmk hmv b L (BitVec.ofNat 64 (hP s.mem z))
     (BitVec.ofNat 64 (hL s.mem z)) (BitVec.ofNat 64 (hC s.mem z)) (BitVec.ofNat 64 (hP s.mem x))
     (BitVec.ofNat 64 (hL s.mem x)) (BitVec.ofNat 64 (hC s.mem x)) (BitVec.ofNat 64 (hP s.mem y))
     (BitVec.ofNat 64 (hL s.mem y)) (BitVec.ofNat 64 (hC s.mem y)))
@@ -113,11 +123,11 @@ theorem pathA (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
   have hzl : hL s.mem z < 2 ^ 64 := by have := Memory.readLE_lt s.mem (z + 16) 8; simpa using this
   refine ReachesRet.call_regions hS' hpc ⟨?_, ?_, addPre_of hpre (by rw [hA.sp]; exact sp96 hsp0) hA.r28
     (hA.mf.mono fun a n ho => by simp only [win, winA, outside_cons, outside_nil, and_true] at ho ⊢; omega) hA.reg⟩
-    fun S' hr ⟨⟨e1, e2, e3, e4⟩, hq, hr1, hr2⟩ _ => ?_
+    fun S' hr ⟨⟨e1, e2, e3, e4⟩, ⟨hq, hr1, hr2⟩, hF, hLF⟩ _ => ?_
   · rw [h30, tN (by cases sub <;> simp [entry])]
     exact ra_of hap (by decide) sub 22 (by omega)
   · simp only [ArgsFrom]; exact ⟨h0, h1, h2, h3, h4, h5, h6, h7, h8, trivial⟩
-  obtain ⟨p', n', c', q0, q1, q2, hv, hn, hlc, hln, L', b', hLE, hb, hinv, hlive, hor, hF, hLF⟩ := hq
+  obtain ⟨p', n', c', q0, q1, q2, hv, hn, hlc, hln, L', b', hLE, hb, hinv, hlive, hor, -, -⟩ := hq
   simp only [NatAdd.mx, NatAdd.need] at hln hb hr1 hr2
   simp only [tN hzp, tN (show hC s.mem z < 2 ^ 64 by omega), tN (show hP s.mem x < 2 ^ 64 by omega),
     tN (show hL s.mem x < 2 ^ 64 by omega), tN (show hP s.mem y < 2 ^ 64 by omega),
@@ -125,7 +135,8 @@ theorem pathA (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
   rw [hxv, hyv] at hv
   simp only [winA] at hF
   rw [hA.r28] at hinv
-  obtain ⟨f1, f2, f3, f4, f5, f6⟩ := frames_after hce (stk1 := 4464) (Nat.le_refl _) hA hF hLF hzo
+  obtain ⟨f1, f2, f3, f4, f5, f6⟩ := frames_after hce (stk1 := 4464) (Nat.le_refl _) hA hF hLF
+    (hzo.of_sub (Nat.le_refl _) (by omega))
   have hp64 : p' < 2 ^ 64 := by rw [← q0]; exact BitVec.isLt _
   have hcA := asCost_add (hL s.mem x) (hL s.mem y)
   unfold asNeed at hcA

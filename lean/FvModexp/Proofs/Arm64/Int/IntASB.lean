@@ -43,7 +43,7 @@ theorem pathSub (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     ReachesRet (LibIntAS.program.link impl) (s.regs 30) S fun s' =>
       (s'.sp = s.sp ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧ s'.regs 18 = s.regs 18) ∧
         Post sub R b L z x y s s' := by
-  have hS' := hypSum hap sub_names (NatSub.ensR impl hap R hmk hmv b L (BitVec.ofNat 64 (hP s.mem z))
+  have hS' := hypSum hap sub_names (NatSub.ensX impl hap R hmk hmv b L (BitVec.ofNat 64 (hP s.mem z))
     (BitVec.ofNat 64 (hL s.mem z)) (BitVec.ofNat 64 (hC s.mem z)) (BitVec.ofNat 64 (hP s.mem u))
     (BitVec.ofNat 64 (hL s.mem u)) (BitVec.ofNat 64 (hC s.mem u)) (BitVec.ofNat 64 (hP s.mem v))
     (BitVec.ofNat 64 (hL s.mem v)) (BitVec.ofNat 64 (hC s.mem v)))
@@ -64,20 +64,22 @@ theorem pathSub (impl : List Segment) (hap : ImplApart Extracted.program impl) (
   obtain ⟨-, -, -, -, hxlc, hxc, hxl16, -, hx48, -, -, -⟩ := hu
   obtain ⟨-, -, -, -, hylc, hyc, hyl16, -, hy48, -, -, -⟩ := hv
   have hzp : hP s.mem z < 2 ^ 64 := by have := Memory.readLE_lt s.mem (z + 8) 8; simpa using this
-  refine ReachesRet.call_regions hS' hpc ⟨?_, ?_, hpre'⟩ fun S' hr ⟨⟨e1, e2, e3, e4⟩, hq, hr1, hr2⟩ _ => ?_
+  refine ReachesRet.call_regions hS' hpc ⟨?_, ?_, hpre'⟩ fun S' hr ⟨⟨e1, e2, e3, e4⟩, ⟨hq, hr1, hr2⟩, hF, hLF⟩ _ => ?_
   · rw [h30, tN (by rcases hoff with rfl | rfl <;> cases sub <;> simp [entry])]
     rcases hoff with rfl | rfl
     · exact ra_of hap (by decide) sub 53 (by omega)
     · exact ra_of hap (by decide) sub 74 (by omega)
   · simp only [ArgsFrom]; exact ⟨h0, h1, h2, h3, h4, h5, h6, h7, h8, trivial⟩
-  obtain ⟨p', n', c', q0, q1, q2, hv, hn, hlc, hln, L', b', hLE, hb, hinv, hlive, hor, hF, hLF⟩ := hq
+  obtain ⟨p', n', c', q0, q1, q2, hv, hn, hlc, hln, L', b', hLE, hb, hinv, hlive, hor, -, -⟩ := hq
   simp only [tN hzp, tN (show hC s.mem z < 2 ^ 64 by omega), tN (show hP s.mem u < 2 ^ 64 by omega),
     tN (show hL s.mem u < 2 ^ 64 by omega), tN (show hP s.mem v < 2 ^ 64 by omega),
     tN (show hL s.mem v < 2 ^ 64 by omega)] at hv hln hb hinv hor hF hLF hr1 hr2
   rw [huv, hvv] at hv
   simp only [winA] at hF
   rw [hA.r28] at hinv
-  obtain ⟨f1, f2, f3, f4, f5, f6⟩ := frames_after hce (stk1 := 4304) (by omega) hA hF hLF hzo
+  obtain ⟨f1, f2, f3, f4, f5, f6⟩ := frames_after hce (stk1 := 4304) (by omega) hA hF hLF
+    (hzo.of_sub (Nat.le_refl _) (by omega))
+  obtain ⟨f1, f2⟩ := frames_wider f1 f2 (k' := max (hL s.mem x) (hL s.mem y) + 1) (by omega)
   have hp64 : p' < 2 ^ 64 := by rw [← q0]; exact BitVec.isLt _
   refine tail impl R hwb sub off (Or.inr hoff) b L z x y s nb _ _ p' n' c' b' L' S'
     ⟨hpre, hl4, hl48, e1.trans hA.sp, e2.trans hA.r28, e3.trans hA.r29, e4.trans hA.r18,

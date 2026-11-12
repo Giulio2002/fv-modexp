@@ -56,8 +56,8 @@ structure SetMid (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl : Bi
   inv : R.inv b' L' (s.regs 28).toNat (view R.rt L' M)
   lsep : LiveSep L' (win s 4304 80)
   ror : (p = zp.toNat ∧ c = zc.toNat) ∨ (InRanges p (8 * c) R.rt ∧ ApartAll p (8 * c) L)
-  mf : MemFrame s.mem M (R.rt ++ winA s 4304 80 ++ [(zp.toNat, zp.toNat + 8 * zc.toNat)])
-  lf : LiveFrame s.mem M L [(zp.toNat, zp.toNat + 8 * zc.toNat)]
+  mf : MemFrame s.mem M (R.rt ++ winA s 4304 80 ++ [(zp.toNat, zp.toNat + 8 * min xl.toNat zc.toNat)])
+  lf : LiveFrame s.mem M L [(zp.toNat, zp.toNat + 8 * min xl.toNat zc.toNat)]
   mv : ∀ d src k, k ≤ 8 * xl.toNat → R.ok (cA "runtime.memmove") [d, src, k]
 
 /-- **The postcondition of the `z.set(x)` path** from the final memory `M'`: `M` changed by the window and (when
@@ -72,24 +72,20 @@ theorem SetMid.post {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl y
     (hnz : M'.readLE (p + 8 * (xl.toNat - 1)) 8 = M.readLE (xp.toNat + 8 * (xl.toNat - 1)) 8)
     (s' : State) (hm : s'.mem = M') (h0 : (s'.regs 0).toNat = p) (h1 : (s'.regs 1).toNat = xl.toNat)
     (h2 : (s'.regs 2).toNat = c) :
-    PostR 4304 R b L zp zc xp xl yp yl s s' := by
+    PostX 4304 R b L zp zc xp xl yp yl s s' := by
   subst hm
-  refine ⟨?_, fun hle => ⟨h0.trans (h.ru hle).1, h2.trans (h.ru hle).2⟩, fun hx => by rw [h2]; exact h.c40 hx⟩
   have hpw := h.pw; have hsp0 := h.sp0; have hcap := h.cap
   unfold Apart at hpw
-  refine ⟨p, xl.toNat, c, h0, h1, h2, ?_, Or.inr ?_, hcap, Nat.le_refl _, L', b', h.ext, h.bud,
-    hinv, fun _ => ⟨h.p8, h.pheld, by rw [hF.accessible]; exact h.pacc, h.p48⟩, h.ror, ?_, ?_⟩
-  · rw [show natVal s'.mem p xl.toNat = s'.mem.readLE p (8 * xl.toNat) from rfl, hcp, hy0, natVal_zero,
-      Nat.sub_zero]; exact h.xv
-  · rw [hnz]; exact h.xn
-  · refine h.mf.trans hF fun a n ho => ⟨ho, ?_⟩
+  have hmf : MemFrame s.mem s'.mem (R.rt ++ winA s 4304 80 ++ [(zp.toNat, zp.toNat + 8 * min xl.toNat zc.toNat)]) := by
+    refine h.mf.trans hF fun a n ho => ⟨ho, ?_⟩
     simp only [outside_append, winA, outside_cons, outside_nil, and_true] at ho ⊢
     obtain ⟨⟨hrt, hw1, hw2⟩, hz⟩ := ho
     refine ⟨hrt, by omega, ?_⟩
     rcases h.ror with ⟨rfl, rfl⟩ | ⟨hin, -⟩
     · omega
     · have := outside_of_inRanges hrt hin; omega
-  · refine ⟨fun a n hin hz => ?_⟩
+  have hlf : LiveFrame s.mem s'.mem L [(zp.toNat, zp.toNat + 8 * min xl.toNat zc.toNat)] := by
+    refine ⟨fun a n hin hz => ?_⟩
     rw [hLF.readLE a n (h.ext.inRanges_old hin) ?_]
     · exact h.lf.readLE a n hin hz
     · obtain ⟨q, hq, hq1, hq2⟩ := hin
@@ -97,6 +93,18 @@ theorem SetMid.post {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl y
       rcases h.ror with ⟨rfl, rfl⟩ | ⟨-, hap⟩
       · omega
       · have := hap q hq; unfold Apart at this; omega
+  have hmo : ∀ a n, Outside a n [(zp.toNat, zp.toNat + 8 * zc.toNat)] →
+      Outside a n [(zp.toNat, zp.toNat + 8 * min xl.toNat zc.toNat)] := fun a n ho => by
+    simp only [outside_cons, outside_nil, and_true] at ho ⊢; omega
+  refine ⟨⟨?_, fun hle => ⟨h0.trans (h.ru hle).1, h2.trans (h.ru hle).2⟩, fun hx => by rw [h2]; exact h.c40 hx⟩,
+    hmf, hlf⟩
+  refine ⟨p, xl.toNat, c, h0, h1, h2, ?_, Or.inr ?_, hcap, Nat.le_refl _, L', b', h.ext, h.bud,
+    hinv, fun _ => ⟨h.p8, h.pheld, by rw [hF.accessible]; exact h.pacc, h.p48⟩, h.ror,
+    hmf.mono fun a n ho => by simp only [outside_append] at ho ⊢; exact ⟨ho.1, hmo a n ho.2⟩,
+    ⟨fun a n hin ho => hlf.readLE a n hin (hmo a n ho)⟩⟩
+  · rw [show natVal s'.mem p xl.toNat = s'.mem.readLE p (8 * xl.toNat) from rfl, hcp, hy0, natVal_zero,
+      Nat.sub_zero]; exact h.xv
+  · rw [hnz]; exact h.xn
 
 end FvModexp.Arm64.NatSub
 
@@ -183,7 +191,7 @@ theorem setmid_of_alloc {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp 
   have hxk : ∀ a n, xp.toNat ≤ a → a + n ≤ xp.toNat + 8 * xl.toNat → m.readLE a n = s.mem.readLE a n := by
     intro a n h1 h2
     rw [held_keep (hxh.sub h1 h2) hLF hMF (hCo _ _ (by omega)), hF.readLE _ _ (hFo _ _ (by omega))]
-  have hmo : ∀ a n, Outside a n (R.rt ++ winA s 4304 80 ++ [(zp.toNat, zp.toNat + 8 * zc.toNat)]) →
+  have hmo : ∀ a n, Outside a n (R.rt ++ winA s 4304 80 ++ [(zp.toNat, zp.toNat + 8 * min xl.toNat zc.toNat)]) →
       Outside a n (R.rt ++ [(s.sp.toNat - 160 - 4096, s.sp.toNat - 160 - 8),
         (s.sp.toNat - 160 + 8, s.sp.toNat - 160 + 8 + 24)]) := by
     intro a n h
@@ -240,7 +248,7 @@ theorem setTail (impl : List Segment) (R : RtInv)
     (h18 : S.regs 18 = s.regs 18) (hm : S.mem = M) :
     ReachesRet (LibNatSub.program.link impl) (s.regs 30) S fun s' =>
       (s'.sp = s.sp ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧ s'.regs 18 = s.regs 18) ∧
-        PostR 4304 R b L zp zc xp xl yp yl s s' := by
+        PostX 4304 R b L zp zc xp xl yp yl s s' := by
   have hsp0 := h.sp0; have hsp1 := h.sp1; have hcap := h.cap; have hc41 := h.c41; have hp48 := h.p48
   have hxl := h.xl40; have hx0 := h.x0; have hx48 := h.x48
   have r1 := h.lr; have r2 := h.fp; have hsacc := h.sacc; have hal := h.al; have hinv := h.inv

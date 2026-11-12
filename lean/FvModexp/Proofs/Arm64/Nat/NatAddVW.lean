@@ -36,7 +36,7 @@ theorem afterVV (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (h18 : S.regs 18 = s.regs 18) (hm : S.mem = M) :
     ReachesRet (LibNatAdd.program.link impl) (s.regs 30) S fun s' =>
       (s'.sp = s.sp ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧ s'.regs 18 = s.regs 18) ∧
-        PostR 4304 R b L zp zc xp xl yp yl s s' := by
+        PostX 4304 R b L zp zc xp xl yp yl s s' := by
   have hc2 : CodeIn ((Extracted.program.onlySegments [addVWfn]).link impl) (LibNatAdd.program.link impl) := by
     rw [LibNatAdd.eq_only]; exact codeIn_restrict_mono hap (sub_of_all (by decide))
   have hVW' := fun b L => Ensures.toSummaryRegs7 (fun zp zl zc xp xl xc y => AddVW.ens impl hap R hmv b L zp zl zc xp xl xc y) (noExit_restrict hap [addVWfn]) hc2
@@ -111,7 +111,7 @@ theorem afterVV (impl : List Segment) (hap : ImplApart Extracted.program impl) (
       simp only [winA, e160, outside_append, outside_cons, outside_nil, and_true] at ho ⊢
       obtain ⟨hr, c1, c2, c3⟩ := ho
       exact ⟨⟨hr, by omega, by omega⟩, c3⟩
-    have hws : WsOK s p c [(s.sp.toNat - 4304, s.sp.toNat - 168), (s.sp.toNat - 152, s.sp.toNat - 120),
+    have hws : WsOK s p (xl.toNat + 1) [(s.sp.toNat - 4304, s.sp.toNat - 168), (s.sp.toNat - 152, s.sp.toNat - 120),
         (p + 8 * yl.toNat, p + 8 * yl.toNat + 8 * (xl.toNat - yl.toNat))] := by
       intro r hr; simp only [List.mem_cons, List.not_mem_nil, or_false] at hr
       rcases hr with rfl | rfl | rfl <;> simp only <;> omega
