@@ -1150,3 +1150,6 @@ New `Top/RunGS.lean` `gS_read` (stackguard slot survives the frame; was an inlin
 | RunD1L / D1P / D2L / D2P | 212 / 103 / 184 / 163 s | 128 / 142 / 131 / 111 s (load 40) | Box `hnz hoffc (hmN) hga` after the last run |
 Fresh-cache re-measure of the RunErr rows (cache-top-freshC, load 35-60 — the coordinator's v0.3.1 gate ran alongside):
 warm-up 1017 s (s17: 702 s at load ~15); arm64 Top_RunErr **PASS 751 s / 6.5 GB** (s17: 535 s at load ~15) — see the amd64 line below.
+amd64 Top_RunErr in the same run: **FAIL (timeout) 901 s**, peak 1.4 GB — at load 35-60 the 51 amd64 own modules (dev sum
+≈ 1270 s, critical path SetBytes chain → H3M → H3) plus their replay do not fit 900 s; at load ~15 (s17) it was 802 s.
+→ amd64 RunErr-row modules are being trimmed (LLo/LHi/H2M/H3M/H2S/H3S/H1, SetBytes chain); re-measure after.
