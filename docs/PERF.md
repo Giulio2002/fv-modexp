@@ -934,3 +934,18 @@ unified against `growCap8 (len0 + 8n)` by defeq; fixed by rewriting the fact to 
 P2W2Pre ~1 s, P2W2EnA 30 s (finer frame, under J=2 load), P2W2Ent 13.6 s / 2.5 GB, P2W2Ctx ~2 s, P2W2N 8.5 s / 2.3 GB.
 P2Pre closure rebuilt after the `Pre` Globals-list change: every module unchanged in time (P2PreX 53 s, P2PreD 22 s,
 P2Pre 7.7 s; all ≤ 4.4 GB).
+
+## asm s18 — nat.div arm64 (dev compile, run-a64 oleans, LEAN_NUM_THREADS=4, machine shared/loaded)
+| module | time | peak RSS |
+|---|---|---|
+| DivWZ | 3.1 s | 2.2 GB |
+| DivDefs (raD `decide +kernel`) | 12.6 s | 3.5 GB |
+| DivRel / DivPostK / DivOneF / DivLessF / DivBigP / Div | ≤ 3 s | ≤ 2.4 GB |
+| DivOneA / DivOneB / DivCmp / DivCmpB / DivBig / DivBigC | 6–12 s | ≤ 2.6 GB |
+| DivOneT (3 setWord tails) | 26 s | 2.7 GB |
+| DivLess (z2.make 3 variants) | 34 s | 2.6 GB |
+| DivBigF (bigFin + slots_keep) | 25 s | 4.0 GB |
+| DivLessC (copy tails) | 57–69 s | 4.4 GB — perf candidate (omega in large post-call contexts) |
+* DivBigC first version: >9 GB / killed. Cause: `by omega` (slot-range side conditions) in a context holding divLarge's
+  whole post (NatOF with `/`, `%`, RtPost, frames). Fix: side conditions proved BEFORE the call (`i1..i4`) and the slot
+  frame reasoning moved to a pure lemma (`slots_keep`) with a minimal context → 9.9 s / 2.5 GB.
