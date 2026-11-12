@@ -1282,3 +1282,21 @@ closer did 30-60 s of `Nat.sub` literal unfolding per goal; KQm reads now closed
 * RESULT (cache-top-freshF, verify-all with the replay/warm-up change, load 20-30): warm-ups 1020 s (arm64) + 128 s (amd64);
   arm64 Top_RunErr PASS 376 s (own compile 306 s, replay 4-wide 59 s, audit 6 s); amd64 Top_RunErr PASS 412 s (own compile
   303 s, replay 98 s, audit 7 s). At load ~50 expect ≈ ×1.3-1.5 on the compile part (≈ 500-560 s): inside 600 s, thin margin.
+
+## divmc s26 (2026-11-12) — empty-tolerant nat.sub / nat.add (both ISAs), amd64 Lib seeds (dev, LEAN_NUM_THREADS=4, load ~20-30)
+| module | wall | peak RSS |
+|---|---|---|
+| Arm64 NatSub0Defs / NatSub0Set / NatSub0Alloc / NatSub0 / Exp.SubHyp0 | 1.2 / 28.5 / 40.1 / 4.3 / 0.9 s | ≤ 2.6 GB |
+| Arm64 NatAdd0Defs / NatAdd0Set / NatAdd0Swap / NatAdd0 | 1.2 / 28.8 / 4.3 / 6.3 s | ≤ 2.5 GB |
+| Amd64 NatSub0Defs / NatSub0Set / NatSub0Alloc / NatSub0 | 1.3 / 53.4 / 53.0 / 5.4 s | ≤ 2.8 GB |
+| Amd64 NatAdd0Defs / NatAdd0Set / NatAdd0Swap / NatAdd0 | 1.7 / 53.5 / 4.9 / 11.9 s | ≤ 2.7 GB |
+| Amd64 LibSqr / LibMul / Int.LibIntAS (generated) | 16.3 / 17.5 / 11.1 s | ≤ 2.4 GB |
+* before/after: `preS0_swap` (arm64) first draft (anonymous constructor with the CallEnv omegas in a context holding the
+  GUARDED operand facts `0 < n → s.mem.accessible … = true` …): > 200k heartbeats / killed at the 8 GB cap → 4.3 s with a
+  named-hole `refine` and `case ce => clear <guarded facts>` before the omegas. amd64 `preS0_mono`: 200k-heartbeat timeout
+  → 1.7 s (same fix). The weakened-in-place copies (`PreS0` with the same conjunct positions) compiled with no other change.
+* Rows (divmc s26, janus-provfix, ONE fresh store (`v1` wiped: JANUS-ISSUES "[divmc s26]"), warm-up `Warmup.lean` 471 s outside
+  the caps, `JANUS_REPLAY_THREADS=1 JANUS_JOBS=2 LEAN_NUM_THREADS=4`, load 8-12): StackNatRow PASS 17 s / 0.5 GB, MulAddWWRow
+  PASS 160 s / 0.9 GB, SqrRow PASS 815 s / 4.2 GB (over the 600 s margin — trim), **MulRow PASS 370 s / 2.5 GB** (with MulOne
+  trimmed 94 → 42.5 s). Earlier attempts without JANUS_REPLAY_THREADS (one replay worker) / with the warm-up inside the cap:
+  SqrRow 901 s timeout, StackNatRow 901 s timeout (empty logs: janus prints at the end only).
