@@ -877,3 +877,9 @@ goals with a tiny pure lemma (`bud_step`, `bud_room2`) instead.
 | Arm64/Nat/DivLargeMkA (`mkA`, makeslice) | 35–39 s | 2.6 GB |
 | Arm64/Nat/DivLargeCallees | 10 s | 2.6 GB |
 | Common/DivLargeMath | 1.1 s | 2.0 GB |
+## divmc session 13 (arm64, dev compile, LEAN_NUM_THREADS=4)
+* NatSub/NatAdd with exact write sets (PostX): NatSubAlloc 68 s, NatSubVW 38 s, NatSubSetE 38 s, NatAddVW 37 s,
+  NatAddAlloc 40 s, NatAddSetE 41 s, all others ≤ 15 s; ≤ 2.9 GB. IntASTail 43 s, IntAS* others ≤ 12 s.
+* Squaring member (after SPre/StkSep/SPost changes): SqrMake 119 s / 4.7 GB (trim pending), SqrBM 83 s / 4.9 GB,
+  SqrBS 40 s, SqrKS 33 s, SqrOne 32 s, others ≤ 10 s.
+* KSqrRel 15 s / 2.9 GB (pure relation lemmas; KM.step is generic over the callee's write list), KSqrCall 1.4 s.
