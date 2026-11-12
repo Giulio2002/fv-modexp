@@ -1,6 +1,7 @@
 import FvModexp.Proofs.Arm64.Top.RunD2ZDefs
 import FvModexp.Proofs.Arm64.Top.RunGS
 import FvModexp.Proofs.Arm64.Top.RunDSlot
+import FvModexp.Proofs.Arm64.Top.RunU8
 
 /-! # `Run` (arm64): `D1` to `Z2`, exponent operand of more than 32 bytes with no input byte left: the `makeslice`
 buffer of `RightPadBytes` (see `RunD2ZDefs`) -/
@@ -93,12 +94,9 @@ theorem d2zA (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
   janus_eval_nat h_u : uint8T
   have hokb : R.ok (cA "runtime.makeslice") [uint8T, hdrV s p len 1, hdrV s p len 1] := hokB _ (by omega)
   rw [h_u] at hokb
-  have hU1 : s.mem.accessible 2639168 16 false = true := by
-    janus_data hd; exact Memory.accessible_mono _ h_data0 (by omega) (by omega)
-  have hU2 : S.mem.readLE 2639168 8 = 1 := by
-    janus_data hdS; rw [h_rodata _ _ (by decide)]; decide
-  have hU3 : S.mem.readLE 2639176 8 = 0 := by
-    janus_data hdS; rw [h_rodata _ _ (by decide)]; decide
+  have hU1 : s.mem.accessible 2639168 16 false = true := u8T_acc hd
+  have hU2 : S.mem.readLE 2639168 8 = 1 := u8T_size hdS
+  have hU3 : S.mem.readLE 2639176 8 = 0 := u8T_ptr hdS
   have hut : Apart 2639168 16 (s.sp.toNat - 4800) (4800 + 40) :=
     apart_of_data (x := 2639168) (l := 16) hdS 0 (by decide) (by decide) hwS
   unfold Apart at hut
