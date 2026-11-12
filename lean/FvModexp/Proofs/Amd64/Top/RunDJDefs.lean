@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Top.RunDEDefs
+import FvModexp.Proofs.Amd64.Top.RunBox
 
 /-!
 # `Run` (amd64): the padded operand buffers — the join `J j` before `RightPadBytes`' copy
@@ -55,10 +56,6 @@ def AtE (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64) (
 end FvModexp.Amd64.Run
 
 namespace FvModexp.Amd64.Run
-
-/-- A fact hidden from `janus64_run` (which destructures every conjunction in the context). -/
-structure Box (P : Prop) : Prop where
-  h : P
 
 /-- A pointer into (or one past) the input is not a frame slot: the input is outside the window. -/
 theorem src_ne_frame {e p l src n k : Nat} (hp : p ≤ src) (hs : src + n ≤ p + l)

@@ -1,5 +1,6 @@
 import FvModexp.Proofs.Amd64.Top.RunHMask
 import FvModexp.Proofs.Amd64.Top.RunSmall
+import FvModexp.Proofs.Amd64.Top.RunBox
 
 /-! # `Run` (amd64): `B2` to `B3`, `len < 64` (header 2 = `modLen`: `getData(input, 64, 32)`, std `setBytes`)
 
@@ -114,6 +115,8 @@ theorem h3s (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
     toInt_ite, toNat_ite, toInt_small, BitVec.msb_eq_decide] until [pcB3] calls [hP := hS]
   obtain ⟨⟨-, hfs1, hdf1, p1, n1, c1, hp1, hn1, hc1, hv1, hnorm1, hnc1, hnw1, L2, b2, hext2, hb2, hinv2, hlive2, hor2,
     hMF2, hLF2⟩, hd2⟩ := hP
+  have bxq := Box.mk (And.intro hga (And.intro hfsw (And.intro hpw (And.intro hcw (And.intro hBuf hor2)))))
+  clear hga hfsw hpw hcw hBuf hor2
   simp only [win, setRegF, hspn', ↓reduceIte, Nat.reduceEqDiff] at hMF2 hLF2 hfs1 hdf1
   have hdst : LiveSep L1 [((s.regs 4).toNat - 360, (s.regs 4).toNat - 360)] := by
     intro r hr; have := hLsS r hr
@@ -163,10 +166,11 @@ theorem h3s (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
           Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega), Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega)]
       case fr =>
         intro hc
-        rcases hor2 with ⟨-, h⟩ | ⟨h, -⟩
+        rcases bxq.h.2.2.2.2.2 with ⟨-, h⟩ | ⟨h, -⟩
         · simp at h; omega
         · exact h
       case v =>
+        have hpw := bxq.h.2.2.1
         rw [hv1, hdrV, show 32 * 2 = 64 from rfl]
         apply beVal_padded
         intro j hj
