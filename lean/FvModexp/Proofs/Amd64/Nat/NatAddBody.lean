@@ -15,7 +15,7 @@ theorem zeroPath (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Na
     (he : Entry s zp zl zc xp xl xc yp yl yc) (hyx : yl.toNat ≤ xl.toNat) (hx0 : xl.toNat = 0)
     (hpre : PreS 4288 R b L zp zc xp xl xc yp yl yc s) :
     ReachesRet (LibNatAdd.program.link impl) (retAddrOf s) s fun s' =>
-      RegsOK s s' ∧ PostR 4288 R b L zp zc xp xl yp yl s s' := by
+      RegsOK s s' ∧ PostX 4288 R b L zp zc xp xl yp yl s s' := by
   obtain ⟨hpc, hra, hx15, hdf, h0, h3, h1, h7, h6, h8, h9, h10, h11⟩ := he
   obtain ⟨hg1, hg2, hg3, hb', ha, hw, hal, htg⟩ := preS_env hpre
   have hpre' := hpre
@@ -25,7 +25,7 @@ theorem zeroPath (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Na
   have hyz : yl = 0#64 := BitVec.eq_of_toNat_eq (by simp; omega)
   subst hxz hyz
   janus64_run [BitVec.msb_eq_decide]
-  refine ⟨⟨?_, ?_, ?_, ?_⟩, ⟨rfl, ?df, zp.toNat, 0, zc.toNat, ?_, ?_, ?_, by simp, Or.inl rfl, by omega, by omega, L, b,
+  refine ⟨⟨?_, ?_, ?_, ?_⟩, ⟨⟨rfl, ?df, zp.toNat, 0, zc.toNat, ?_, ?_, ?_, by simp, Or.inl rfl, by omega, by omega, L, b,
     LiveExt.refl R L, Nat.sub_le _ _, inv_win ?hF hout hb' hinv, fun hc => ?nl, Or.inl ⟨rfl, rfl⟩,
     MemFrame.mono ?hF fun a n h => by simp only [outside_append] at h; exact h.1.2,
     liveFrame_of_frame (rs := win s 4288 80) (MemFrame.mono ?hF fun a n h => by
@@ -34,7 +34,15 @@ theorem zeroPath (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Na
         have := hLs r hr; simp only [win, outside_cons, outside_nil, and_true] at this; omega)
       (fun r hr => by
         simp only [win, List.mem_cons, List.not_mem_nil, or_false] at hr
-        subst hr; simp only; omega)⟩, fun _ => ⟨?_, ?_⟩, fun _ => ?_⟩
+        subst hr; simp only; omega)⟩, fun _ => ⟨?_, ?_⟩, fun _ => ?_⟩,
+    MemFrame.mono ?hF fun a n h => by simp only [outside_append] at h; exact h.1.2,
+    liveFrame_of_frame (rs := win s 4288 80) (MemFrame.mono ?hF fun a n h => by
+        simp only [outside_append] at h; exact h.1)
+      (fun r hr => by
+        have := hLs r hr; simp only [win, outside_cons, outside_nil, and_true] at this; omega)
+      (fun r hr => by
+        simp only [win, List.mem_cons, List.not_mem_nil, or_false] at hr
+        subst hr; simp only; omega)⟩
   case hF => simp only [win]; janus_frame
   case df => exact hdf.symm
   case nl =>
@@ -54,7 +62,7 @@ theorem body (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
         s.regs 0 = zp ∧ s.regs 3 = zl ∧ s.regs 1 = zc ∧ s.regs 7 = xp ∧ s.regs 6 = xl ∧ s.regs 8 = xc ∧
         s.regs 9 = yp ∧ s.regs 10 = yl ∧ s.regs 11 = yc ∧ yl.toNat ≤ xl.toNat ∧
         PreS 4288 R b L zp zc xp xl xc yp yl yc s)
-      (fun s s' => RegsOK s s' ∧ PostR 4288 R b L zp zc xp xl yp yl s s') := by
+      (fun s s' => RegsOK s s' ∧ PostX 4288 R b L zp zc xp xl yp yl s s') := by
   intro s hpc ⟨hra, hx15, hdf, h0, h3, h1, h7, h6, h8, h9, h10, h11, hyx, hpre⟩
   have he : Entry s zp zl zc xp xl xc yp yl yc := ⟨hpc, hra, hx15, hdf, h0, h3, h1, h7, h6, h8, h9, h10, h11⟩
   have hc3 : CodeIn64 (Extracted.program.ofImpl impl) (LibNatAdd.program.link impl) := by

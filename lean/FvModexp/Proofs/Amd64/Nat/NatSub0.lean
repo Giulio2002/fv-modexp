@@ -74,8 +74,8 @@ theorem full0 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progr
   · exact alloc0 impl hap R hmk' hmv b L zp zl zc xp xl xc yp yl yc s he hyx (by omega) (by omega) hpre
   have hpS := hpre.toS (by omega) (by omega) (by omega)
   by_cases hz : xl.toNat ≤ zc.toNat
-  · exact reuse impl hap R hmv b L zp zl zc xp xl xc yp yl yc s he hyx (by omega) hz hpS
-  · exact alloc impl hap R hmk' hmv b L zp zl zc xp xl xc yp yl yc s he hyx (by omega) (by omega) hpS
+  · exact ReachesRet.mono (reuse impl hap R hmv b L zp zl zc xp xl xc yp yl yc s he hyx (by omega) hz hpS) (fun _ h => ⟨h.1, h.2.1⟩)
+  · exact ReachesRet.mono (alloc impl hap R hmk' hmv b L zp zl zc xp xl xc yp yl yc s he hyx (by omega) (by omega) hpS) (fun _ h => ⟨h.1, h.2.1⟩)
 
 /-- **`nat.sub`** (amd64, empty-tolerant `Pre0`): as `FvModexp.Arm64.NatSub.ensR0`. -/
 theorem ensR0 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)

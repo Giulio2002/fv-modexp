@@ -57,4 +57,11 @@ suffices, the result capacity bounded. -/
     (xl.toNat ≤ zc.toNat → (s'.regs 0).toNat = zp.toNat ∧ (s'.regs 1).toNat = zc.toNat) ∧
     (xl.toNat < 2 ^ 39 → (s'.regs 1).toNat < 2 ^ 40)
 
+/-- `PostR` with the exact write set in `z`'s old array: only `z[0:min(len x, cap z)]` (twin of the arm64 `PostX`). -/
+@[reducible] def PostX (stk : Nat) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl yp yl : BitVec 64)
+    (s s' : State) : Prop :=
+  PostR stk R b L zp zc xp xl yp yl s s' ∧
+    MemFrame s.mem s'.mem (R.rt ++ win s stk 80 ++ [(zp.toNat, zp.toNat + 8 * min xl.toNat zc.toNat)]) ∧
+    LiveFrame s.mem s'.mem L [(zp.toNat, zp.toNat + 8 * min xl.toNat zc.toNat)]
+
 end FvModexp.Amd64.NatSub
