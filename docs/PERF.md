@@ -1411,3 +1411,10 @@ P2DMk 1.9 s, P2DOne 11.9 s/2.6 GB, P2DZero 2.6 s, P2DWinR 2.9 s, P2DWin 29-32 s/
 | Exp/P2DRDefs | 1.8 s | 2.1 GB |
 | Exp/P2DRsh | 3.5 s | 2.3 GB |
 | Exp/P2DRec | 66 s | 3.8 GB (before: >10 min / 10 GB with subtraction-heavy budget facts ahead of `omega`s — moved after; see NOTES-infra s39) |
+
+## agent top s23 (2026-11-14, dev, load ~75)
+* amd64 divBasic `pro3`: monolith 326 s / 10.1 GB (over cap, failing) → `DivBasicHdM` (pure head memory: rdS2r per held
+  object instead of one 3-way disjunction — rdS2v 97 s → 3.5 s; head_mem/head_fr/head_lf/head_tls) 10 s + `DivBasicPro3` 2.5 s.
+* amd64 divBasic est: `DivBasicQhR` (estE/estD1/estD2/estX small run lemmas) 36 s — estD1 3 m 32 s → 23 s by clearing the
+  janus branch hypotheses `hbr` (full of `% 2^64`) before omega; `DivBasicQh` (composition) 4.5 s.
+* amd64 divBasic mul: `DivBasicMulR` (mulRun, mulAddVWW.abi0 call) 27 s, `DivBasicMul` 31 s.
