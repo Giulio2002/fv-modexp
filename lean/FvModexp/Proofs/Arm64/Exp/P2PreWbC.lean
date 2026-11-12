@@ -275,4 +275,18 @@ theorem rs_of_rdr {X bp : Nat} {M M' : Memory} {L1 L2 : List (Nat × Nat)} {b1 b
 
 end
 
+section
+variable {R : RtInv} {kc : Nat} {L : List (Nat × Nat)} {st pw pl lm : Nat} {s : State}
+
+/-- `powers[k]` completed: `RS … i k` → `RS … i (k + 1)` -/
+theorem rs_next {X bp : Nat} {M : Memory} {L1 : List (Nat × Nat)} {b1 i k : Nat}
+    (h : RS R kc L st pw pl lm s X bp M L1 b1 i k) (hd : PwD M pw bp lm X k) :
+    RS R kc L st pw pl lm s X bp M L1 b1 i (k + 1) :=
+  ⟨h.c, fun j hj => by
+    rcases Nat.lt_or_ge j k with h1 | h1
+    · exact h.d j h1
+    · rw [show j = k by omega]; exact hd, fun j hj hjp => h.t j (by omega) hjp, h.lo⟩
+
+end
+
 end FvModexp.Arm64.P2Pre
