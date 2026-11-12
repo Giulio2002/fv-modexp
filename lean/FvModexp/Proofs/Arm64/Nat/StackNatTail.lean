@@ -35,7 +35,7 @@ theorem tail (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat))
     (h29 : S.regs 29 = s.sp - 120#64) (h18 : S.regs 18 = s.regs 18) (hm : S.mem = M2) :
     ReachesRet (LibStackNat.program.link impl) (s.regs 30) S fun s' =>
       (s'.sp = s.sp ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧ s'.regs 18 = s.regs 18) ∧
-        Post R b L 4208 24 st.toNat n.toNat s s' := by
+        PostL R b L 4208 24 st.toNat n.toNat s s' := by
   have hpre := h.pre
   obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, hd, hout, hga, hgr, hLs, hro⟩, hsv, hok, hstw, harr, hn16, hln,
     hcost, hinv0, hwb, hwbA, hfa⟩ := hpre

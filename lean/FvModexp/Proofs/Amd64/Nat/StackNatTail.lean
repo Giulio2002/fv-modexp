@@ -36,7 +36,7 @@ theorem tail (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat ×
     (h2 : S.regs 2 = BitVec.ofNat 64 (stLen s.mem st.toNat)) (h14 : S.regs 14 = s.regs 14)
     (h5 : S.regs 5 = s.regs 4 - 8#64) (hx15 : S.xmm 15 = s.xmm 15) (hfs : S.fsBase = s.fsBase) (hdf : S.df = false) (hm : S.mem = M2) :
     ReachesRet (LibStackNat.program.link impl) (retAddrOf s) S fun s' =>
-      RegsOK s s' ∧ Post R b L 4192 24 st.toNat n.toNat s s' := by
+      RegsOK s s' ∧ PostL R b L 4192 24 st.toNat n.toNat s s' := by
   have hpre := h.pre
   obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, hLs, hro, htls⟩, hsv, hok, hstw, harr, hn16, hln,
     hcost, hinv0, hwb, hwbA, hfa⟩ := hpre

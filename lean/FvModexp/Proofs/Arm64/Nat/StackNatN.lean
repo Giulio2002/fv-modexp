@@ -24,7 +24,7 @@ theorem noGrow (impl : List Segment) (R : RtInv)
     (hk : stLen s.mem st.toNat + rnd n.toNat ≤ stCap s.mem st.toNat) :
     ReachesRet (LibStackNat.program.link impl) (s.regs 30) s fun s' =>
       (s'.sp = s.sp ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧ s'.regs 18 = s.regs 18) ∧
-        Post R b L 4208 24 st.toNat n.toNat s s' := by
+        PostL R b L 4208 24 st.toNat n.toNat s s' := by
   have hpre' := hpre
   obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, hd, hout, hga, hgr, hLs, hro⟩, hsv, hok, hstw, harr, hn16, hln,
     hcost, hinv0, hwbf, hwbA, hfa⟩ := hpre'
@@ -51,7 +51,8 @@ theorem noGrow (impl : List Segment) (R : RtInv)
     have hcl := hpre.2.2.2.2.1
     refine ⟨hpre, hl4, hl48, ?_, ?_, hF.mono fun a k h => by rw [outside_append] at h; exact h.2, LiveFrame.of_win hF
       (liveSep_winA hLs), LiveExt.refl R L, by omega, ?_, hnl, hk, hcb, by simp only [stW]; exact Memory.readLE_lt _ _ _,
-      fun _ => ⟨rfl, rfl⟩, fun h => absurd h (by simp only [stLen, stCap]; omega), hLs, fun h => (hcl h).1⟩
+      fun _ => ⟨rfl, rfl⟩, fun h => absurd h (by simp only [stLen, stCap]; omega), hLs, fun h => (hcl h).1,
+      fun h => absurd h (by simp only [stLen, stCap]; omega)⟩
     · rw [Memory.readLE_writeLE_of_disjoint _ _ (by omega), Memory.readLE_writeLE_self, Nat.mod_eq_of_lt (by omega)]
     · rw [Memory.readLE_writeLE_self, Nat.mod_eq_of_lt (by omega)]
     · exact inv_frame_winA hF hout (by omega) (by omega) (by simpa using hinv0)

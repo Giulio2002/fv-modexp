@@ -39,7 +39,7 @@ theorem g2 (impl : List Amd64.Segment) (R : RtInv)
     (s18 : S.mem.readLE ((s.regs 4).toNat - 24) 8 = stLen s.mem st.toNat + rnd n.toNat - stCap s.mem st.toNat)
     (sst : S.mem.readLE ((s.regs 4).toNat + 8) 8 = st.toNat) (sn : S.mem.readLE ((s.regs 4).toNat + 16) 8 = n.toNat) :
     ReachesRet (LibStackNat.program.link impl) (retAddrOf s) S fun s' =>
-      RegsOK s s' ∧ Post R b L 4192 24 st.toNat n.toNat s s' := by
+      RegsOK s s' ∧ PostL R b L 4192 24 st.toNat n.toNat s s' := by
   have hpre' := hpre
   obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr', hLs, hro, htls⟩, hsv, hok, hstw, harr, hn16, hln,
     hcost, hinv0, -⟩ := hpre'

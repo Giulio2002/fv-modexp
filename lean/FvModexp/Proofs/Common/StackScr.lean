@@ -41,6 +41,15 @@ open Janus Janus.Arm64 Janus.Contracts
     ((stW m st = stW m0 st ∧ stCap m st = stCap m0 st) ∨
       (InRanges (stW m st) (8 * stCap m st) R.rt ∧ ApartAll (stW m st) (8 * stCap m st) L))
 
+/-- `StackBack` plus (coordinator's STACK-IN-LIVE-SET DECISION): when the stack's array is not the entry one, its range
+is an exact element of the final live set (needed by `sync.(*Pool).Put` of the `stk == nil` path) -/
+@[reducible] def StackBackL (R : RtInv) (L L1 : List (Nat × Nat)) (st : Nat) (m0 m : Memory) : Prop :=
+  StackBack R L L1 st m0 m ∧
+    (¬(stW m st = stW m0 st ∧ stCap m st = stCap m0 st) → (stW m st, stW m st + 8 * stCap m st) ∈ L1)
+
+theorem StackBackL.toStackBack {R : RtInv} {L L1 : List (Nat × Nat)} {st : Nat} {m0 m : Memory}
+    (h : StackBackL R L L1 st m0 m) : StackBack R L L1 st m0 m := h.1
+
 /-- a scratch nat of `k > 0` words at `t` (see the module doc) -/
 structure Scr (R : RtInv) (L L1 : List (Nat × Nat)) (m0 m : Memory) (st t k : Nat) : Prop where
   b48 : t + 8 * k ≤ 2 ^ 48
