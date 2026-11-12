@@ -43,14 +43,19 @@ structure DHyps (impl : List Segment) (R : RtInv) (K : Nat) (costF : Nat → Nat
 /-- the modulus is odd or a power of two (hidden from `omega`) -/
 def NoEvenB (M : Memory) (mp n : Nat) : Prop := natVal M mp n % 2 = 1 ∨ ∃ k, natVal M mp n = 2 ^ k
 
-/-- `Spills` hidden from `omega` (its byte conjunct trips `omega`'s proof reconstruction) -/
-def SpillsB (M : Memory) (sp st xp xl xc yp yl yc mp n mc : Nat) : Prop := Spills M sp st xp xl xc yp yl yc mp n mc
+/-- the argument spills `SP' + 296 .. 368` at `J5` (`Spills` without the `st` slot, which only the `makeslice` paths
+store), hidden from `omega` (its byte conjunct trips `omega`'s proof reconstruction) -/
+def SpillsB (M : Memory) (sp xp xl xc yp yl yc mp n mc : Nat) : Prop :=
+  M.readLE (sp + 1056 + 296) 8 = xp ∧ M.readLE (sp + 1056 + 304) 8 = xl ∧
+  M.readLE (sp + 1056 + 312) 8 = xc ∧ M.readLE (sp + 1056 + 320) 8 = yp ∧ M.readLE (sp + 1056 + 328) 8 = yl ∧
+  M.readLE (sp + 1056 + 336) 8 = yc ∧ M.readLE (sp + 1056 + 344) 8 = mp ∧ M.readLE (sp + 1056 + 352) 8 = n ∧
+  M.readLE (sp + 1056 + 360) 8 = mc ∧ M.readLE (sp + 1056 + 368) 1 = 0
 
-theorem spills_fr {M m : Memory} {sp st xp xl xc yp yl yc mp n mc : Nat} (hsp : SpillsB M sp st xp xl xc yp yl yc mp n mc)
+theorem spills_fr {M m : Memory} {sp st xp xl xc yp yl yc mp n mc : Nat} (hsp : SpillsB M sp xp xl xc yp yl yc mp n mc)
     (h232 : m.readLE (sp + 1056 + 232) 8 = st)
     (kp : ∀ a k, sp + 1352 ≤ a → a + k ≤ sp + 1432 → m.readLE a k = M.readLE a k) :
     Spills m sp st xp xl xc yp yl yc mp n mc := by
-  obtain ⟨-, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10⟩ := hsp
+  obtain ⟨s1, s2, s3, s4, s5, s6, s7, s8, s9, s10⟩ := hsp
   exact ⟨h232, by rw [kp _ _ (by omega) (by omega)]; exact s1, by rw [kp _ _ (by omega) (by omega)]; exact s2,
     by rw [kp _ _ (by omega) (by omega)]; exact s3, by rw [kp _ _ (by omega) (by omega)]; exact s4,
     by rw [kp _ _ (by omega) (by omega)]; exact s5, by rw [kp _ _ (by omega) (by omega)]; exact s6,
@@ -80,7 +85,7 @@ theorem fromJ5 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     (h11 : S.regs 11 = BitVec.ofNat 64 n) (h12 : S.regs 12 = BitVec.ofNat 64 mc) (h13 : S.regs 13 = 0#64)
     (h28 : S.regs 28 = s.regs 28) (hmem : S.mem = M)
     (hF : MemFrame s.mem M (wN sp K)) (hrg : M.regions = s.mem.regions)
-    (hsp : SpillsB M sp st xp xl xc yp yl yc mp n mc)
+    (hsp : SpillsB M sp xp xl xc yp yl yc mp n mc)
     (h29v : M.readLE (sp + 1048) 8 = f29) (h30v : M.readLE (sp + 1056) 8 = ret0)
     (hfl : M.readLE (sp + 1182) 1 = 0)
     (hK' : ∀ s'' : State, s''.sp = BitVec.ofNat 64 (sp + 1312) → s''.regs 29 = BitVec.ofNat 64 f29 →
