@@ -112,4 +112,89 @@ theorem dr2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   case g18 => simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, h18]
   all_goals simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte]
 
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 64000000 in
+/-- `n ≥ divRecursiveThreshold`: from `joinQ` (q stored, threshold loaded, `BLT` not taken, spills) to `memclr(q)`, then
+`dr2` -/
+theorem dr (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+    (hmc : MemclrNoHeapPointersLive (LibDivL.program.link impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
+    (dc : Nat → Nat → Nat → Nat) (hD : DrsHyp impl R dc)
+    (b : Nat) (L : List (Nat × Nat)) (zp zc st up uc ip il ic vp vl vc : Nat) (s : State)
+    (t w1 c1 : Nat) (L1 : List (Nat × Nat)) (b1 : Nat) (Lq : List (Nat × Nat)) (bq P C sh qp qc : Nat)
+    (hE : Env R b L (cost dc (stLen s.mem st) il vl) zp zc st up uc ip il vp vl s t L1 b1 w1 c1) (S : State)
+    (hS : AtJ R b L zp zc st up uc ip il ic vp vl vc s t w1 c1 L1 b1 Lq bq P C sh qp qc S) (hv40 : 40 ≤ vl)
+    (Q : State → Prop)
+    (k : ∀ L2 b2 w2 c2 T, AtD R b L (cost dc (stLen s.mem st) il vl) zp zc st up uc ip il ic vp vl vc s t w1 c1 L1 Lq P
+      C sh qp qc L2 b2 w2 c2 T → ReachesRet (LibDivL.program.link impl) (s.regs 30) T Q) :
+    ReachesRet (LibDivL.program.link impl) (s.regs 30) S Q := by
+  have hl := hE.lay
+  have hsp0 := hl.sp0; have hsp1 := hl.sp1; have hil9 := hl.il9; have hvil := hl.vil
+  have hMU := hS.mem
+  have hM := hMU.mem
+  have m1 := hM.s4
+  obtain ⟨g1, g2⟩ := Mem.glob hE hM
+  obtain ⟨hal, hb', ha, hw⟩ := hE.pre.ce.2.1
+  have hSacc : ∀ a n v, S.mem.accessible a n v = s.mem.accessible a n v := fun a n v => hM.fr.accessible a n v
+  have hwacc : S.mem.accessible (s.sp.toNat - 41264) (41264 + 112) true = true := by rw [hSacc]; exact hw
+  have hpc := hS.pc; have hsp := hS.sp; have h28 := hS.r28; have h29 := hS.r29; have h18 := hS.r18
+  have hr0 := hS.r0; have hr1 := hS.r1; have hr2 := hS.r2; have hr3 := hS.r3; have hr4 := hS.r4; have hr5 := hS.r5
+  have hr6 := hS.r6; have hr12 := hS.r12; have hr14 := hS.r14; have hr15 := hS.r15
+  have hgw : 7147136 + 32 ≤ s.sp.toNat - 41264 ∨ s.sp.toNat + 112 ≤ 7147136 := by
+    have := hE.pre.gl.2.2.2.2.2.2.2.2.2.1
+    simp only [win, outside_cons, outside_nil, and_true] at this; exact this
+  have hQ := hS.qa
+  have hqcap := hQ.cap; have hq48 := hQ.p48; have hq40 := hQ.c40
+  have hl3 := lsl3_ofNat (il - vl + 1) (by omega)
+  have hne : (BitVec.ofNat 64 (il - vl + 1) = 0#64) = False := by
+    simp only [eq_iff_iff, iff_false]; intro e
+    have := congrArg BitVec.toNat e; simp only [BitVec.toNat_ofNat] at this; omega
+  have hout : Outside (s.sp.toNat - 41264) (41264 + 112) R.rt := hE.pre.ce.2.2.2.1
+  have hga := hE.pre.ce.2.2.2.2.1
+  unfold Apart at hga
+  have e304 : (s.sp - 304#64).toNat = s.sp.toNat - 304 := by
+    rw [BitVec.toNat_sub_of_le (by simp only [BitVec.le_def, BitVec.toNat_ofNat]; omega)]; rfl
+  have hsv := hE.pre.sv
+  janus_run [m1, g1, hl3, hne] until [cA "runtime.memclrNoHeapPointers"]
+  refine ReachesRet.call_regions (hmc Lq bq) rfl (mc_pre (dst := qp) (n := 8 * (il - vl + 1)) hE hS.ext3 _ rfl ?q28 ?qg
+    ?qa ?l1 ?l2 ?qi ?q0 ?q1 (hsv.2.2.1 _ _ (by omega)) (by omega) ?dacc ?dh ?dw) ?qk
+  case q28 => simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, h28]
+  case qg =>
+    simp (disch := omega) only [Memory.readLE_writeLE_of_disjoint]; exact hMU.grd
+  case qa => intro a n w; simp only [Memory.accessible_writeLE]; exact hSacc a n w
+  case l1 => simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte]; decide
+  case l2 => simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte]; decide
+  case qi =>
+    refine RtInv.inv_frame' (ws := [(s.sp.toNat - 200, s.sp.toNat - 40)]) (by janus_frame) (fun r hr => ?_) hM.inv
+    simp only [List.mem_cons, List.not_mem_nil, or_false] at hr; subst hr
+    left; exact hout.of_sub (by simp only; omega) (by simp only; omega)
+  case q0 => simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, BitVec.toNat_ofNat]; omega
+  case q1 => simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, BitVec.toNat_ofNat]; omega
+  case dacc =>
+    simp only [Memory.accessible_writeLE]; exact Memory.accessible_mono _ hQ.pacc (Nat.le_refl _) (by omega)
+  case dh => exact hQ.pheld.sub (Nat.le_refl _) (by omega)
+  case dw => have := hQ.pw; omega
+  case qk =>
+    intro T hT ⟨junk, f, v, m, ex, ep, hs, hMF, hLF, hinv, hz⟩ hrg
+    subst hs
+    simp only [calleeStack, setReg_apply, Nat.reduceEqDiff, ↓reduceIte, BitVec.toNat_ofNat, e304, h28] at hMF hLF hz hinv
+    rw [Nat.mod_eq_of_lt (show qp < 2 ^ 64 by omega), Nat.mod_eq_of_lt (show 8 * (il - vl + 1) < 2 ^ 64 by omega)]
+      at hMF hLF hz
+    refine dr2 impl hap R dc hD b L zp zc st up uc ip il ic vp vl vc s t w1 c1 L1 b1 Lq bq P C sh qp qc hE S hS ?Zm ?hZ
+      ?z0 ?z1 ?z2 ?z3 ?z4 ?z5 m ?hMF ?hLF hinv hz _ ?pc ?sp ?r28 ?r29 ?r18 rfl ?hreg Q k
+    case hMF => exact hMF
+    case hLF => exact hLF
+    case hZ => simp only [scrB]; janus_frame
+    case pc => rw [hT]; simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte]; rfl
+    case sp => rfl
+    case r28 =>
+      simp only [retStateX, callRegs_apply, setReg_apply, Nat.reduceEqDiff, ↓reduceIte, h28, true_or, or_true, if_true]
+    case r29 =>
+      simp only [retStateX, callRegs_apply, setReg_apply, Nat.reduceEqDiff, ↓reduceIte, h29, true_or, or_true, if_true]
+    case r18 =>
+      simp only [retStateX, callRegs_apply, setReg_apply, Nat.reduceEqDiff, ↓reduceIte, h18, true_or, or_true, if_true]
+    case hreg => simp only [retStateX, Memory.regions_writeLE] at hrg ⊢; rw [hrg]; exact hS.reg
+    all_goals
+      simp (disch := omega) only [FvModexp.Expmc.readLE_writeLE_same, Memory.readLE_writeLE_of_disjoint, Nat.reducePow]
+      omega
+
 end FvModexp.Arm64.DivLarge
