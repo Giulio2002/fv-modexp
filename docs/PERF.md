@@ -1059,3 +1059,8 @@ amd64 RunErr has the smaller margin (802 s of 900): next trim target (the La/H3 
 | Nat/DrsSNI | 6.4 s | 2.5 GB |
 | Nat/DrsSN | 17.5 s | 2.6 GB (was > 6 min: implicit call state unified via `?X.mem =?= P.mem`; fixed by argument order) |
 | Common/DivRecIdeal | 0.4 s | 0.6 GB |
+
+## asm s22 (2026-11-12) — drs loop body modules (arm64 dev, LEAN_NUM_THREADS=4)
+DrsBd 3.5 s / 2.3 GB, DrsEnv 1.8 s, DrsCallS 1.3 s (was 292 s with `simp … at ho` over un-split `Outside` of appended
+lists; split `outside_append` by hand → 1.3 s), DrsRecQ 1.1 s, DrsRecP 9 s / 2.5 GB (was > 6 min: `unfold Apart at` 15
+hypotheses before ~40 omega calls; per-goal `apL`/`apR` sub-range lemmas instead), DrsB1 10 s / 2.6 GB, DrsB2 (WIP) 20 s.
