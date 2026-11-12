@@ -970,3 +970,15 @@ containing a 1-byte readLE fact in context -> hide them behind irreducible defs 
 | MulKar (karEq / karEq2) | 56 s | 4.3 GB |
 LESSON: inside `Summary.mono (ih …) (pre' := …) (post' := …) conv conv`, elaborate every intermediate fact with an explicit
 type (`have h : T := …`) — implicit-argument unification against the reducible `MPost` blew up memory.
+
+## divmc session 18 (arm64, dev compile, LEAN_NUM_THREADS=4) — mulAddWW exact-write variant, nat.mul n = 1 path
+| module | time | peak |
+|---|---|---|
+| MulAddWWXA (XM, frame0X, vwwX, tailX) | 39 s | 2.7 GB |
+| MulAddWWX (reuseX, allocX, setZeroX, ensX) | 25 s | 2.6 GB |
+| MulOnePre (pre_one, wsub_one, makeB_le_mulC1) | 3 s | 2.3 GB |
+| MulOneP (mpost_one) | 325 s / 8.2 GB → **13 s / 2.6 GB** | |
+| MulOne (one / one2) | 107 s | 6.5 GB |
+LESSON (MulOneP): two `omega` calls (a window-inclusion `wsub` and `max/min` side goals of `mulC`) inside a context holding a
+callee's whole destructured post took 190 s + 106 s; moved into 3-line standalone lemmas (`wsub_one`, `makeB_le_mulC1`) they
+cost milliseconds. Never call `omega` after `obtain`ing a callee post; prove the arithmetic in a separate lemma first.
