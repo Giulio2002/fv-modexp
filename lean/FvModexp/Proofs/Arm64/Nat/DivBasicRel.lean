@@ -2,6 +2,8 @@ import FvModexp.Proofs.Arm64.Nat.DivBasicPro
 import FvModexp.Proofs.Arm64.Nat.DivBasicMemF
 import FvModexp.Proofs.Common.AsmDivVW
 
+set_option autoImplicit false
+
 /-!
 # `divBasic` (arm64): the relations between the segment lemmas (no proofs)
 
@@ -37,6 +39,8 @@ structure AfterNat (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (st vl : Nat) (
   F2 : MemFrame P.mem S2.mem (R.rt ++ [(s.sp.toNat - 240 - stkSN, s.sp.toNat - 248),
     (s.sp.toNat - 232, s.sp.toNat - 240 + abSN)] ++ stkWs s.mem st)
   LF2 : LiveFrame P.mem S2.mem L (stkWs s.mem st)
+  mem : stCap s.mem st < stLen s.mem st + (vl + 1 + 3) / 4 * 4 →
+    (stW S2.mem st, stW S2.mem st + 8 * stCap S2.mem st) ∈ L1
 
 /-- the `CALL reciprocalWord` -/
 abbrev callRec : Nat := segAddr Extracted.program fn + 0xac
