@@ -238,4 +238,68 @@ theorem ks_intcall (impl : List Segment) (hap : ImplApart Extracted.program impl
     rw [tN' hz64, tN' hx64, tN' hy64] at hq
     exact hK s2 hr (by rw [hreg, hm]) hk hq
 
+/-- **After an `(*Int).Add/Sub` call** (header `z` in the `tx`/`z1` or `z2`/`z0` area, array writes inside `z[0:2n]` or
+`t`): `KM` holds again -/
+theorem KM.intStep {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State}
+    {lx0 lx1 t : Nat} {Lk : List (Nat × Nat)} {bk spent : Nat} {M : Memory}
+    (h : KM R b L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) {M' : Memory} {S1 : State}
+    (hsp : S1.sp.toNat = s.sp.toNat - 320) {z q w : Nat}
+    (hz : (s.sp.toNat - 232 ≤ z ∧ z + 32 ≤ s.sp.toNat - 168) ∨ (s.sp.toNat - 144 ≤ z ∧ z + 32 ≤ s.sp.toNat - 80))
+    (hq : (zp ≤ q ∧ q + 8 * w ≤ zp + 8 * (2 * n)) ∨ (t ≤ q ∧ q + 8 * w ≤ t + 8 * kT n))
+    (hF : MemFrame M M' (R.rt ++ winA S1 4560 32 ++ [(z, z + 32), (q, q + 8 * w)]))
+    (hLF : LiveFrame M M' Lk [(z, z + 32), (q, q + 8 * w)]) (hreg : M'.regions = M.regions)
+    {Lk' : List (Nat × Nat)} {bk' c : Nat} (hext : LiveExt R Lk Lk') (hb : bk - c ≤ bk')
+    (hinv : R.inv bk' Lk' (s.regs 28).toNat (view R.rt Lk' M')) :
+    KM R b L W st zp zc xp n xc s lx0 lx1 t Lk' bk' (spent + c) M' := by
+  obtain ⟨hW, hWs, -, -, -, -, -, -, -, -, hout, -, -⟩ := h.lay
+  have hstw : Outside st 24 (win s W 48) := h.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1.2.2.1
+  have hzs : StkSep s.mem st zp (8 * zc) := h.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hzl : 2 * n ≤ zc := h.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hts := h.tsep.1
+  have hzs1 := hzs.1
+  simp only [win, outside_cons, outside_nil, and_true] at hstw
+  unfold Apart at hts hzs1
+  simp only [winA, hsp] at hF
+  have hF' : MemFrame M M' (R.rt ++ ([(s.sp.toNat - 320 - 4560, s.sp.toNat - 320 - 8),
+      (s.sp.toNat - 320 + 8, s.sp.toNat - 320 + 32)] ++ [(z, z + 32), (q, q + 8 * w)])) := by
+    rw [← List.append_assoc]; exact hF
+  have hsb : StackBack R Lk Lk' st M M' := by
+    refine stackBack_keep' h.sok hF' (FvModexp.LiveFrame.mono_ws hLF fun a k ho => by rw [outside_append] at ho; exact ho.2) ?_ hext
+    simp only [outside_append, outside_cons, outside_nil, and_true]
+    refine ⟨⟨by omega, by omega⟩, by omega, by omega⟩
+  refine h.step (k := 4560) (a := 32) (by omega) (by omega) (fun r hr => ?_) hF hLF hreg hext hb hinv hsb
+  simp only [List.mem_cons, List.not_mem_nil, or_false] at hr
+  rcases hr with rfl | rfl
+  · rcases hz with hz | hz
+    · exact ⟨by simp only; omega, Or.inr (Or.inr (Or.inl ⟨by simp only; omega, by simp only; omega⟩))⟩
+    · exact ⟨by simp only; omega, Or.inr (Or.inr (Or.inr (Or.inl ⟨by simp only; omega, by simp only; omega⟩)))⟩
+  · rcases hq with hq | hq
+    · exact ⟨by simp only; omega, Or.inl ⟨by simp only; omega, by simp only; omega⟩⟩
+    · exact ⟨by simp only; omega, Or.inr (Or.inl ⟨by simp only; omega, by simp only; omega⟩)⟩
+
+/-- **After an inner `nat.sqr` that reused its result array** (writes `[q, q + 8w)` inside `z[0:2n]` or `t`, the
+stack's header and free part): `KM` holds again -/
+theorem KM.sqStep {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State}
+    {lx0 lx1 t : Nat} {Lk : List (Nat × Nat)} {bk spent : Nat} {M : Memory}
+    (h : KM R b L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) {M' : Memory} {S1 : State}
+    (hsp : S1.sp.toNat = s.sp.toNat - 320) {q w : Nat}
+    (hq : (zp ≤ q ∧ q + 8 * w ≤ zp + 8 * (2 * n)) ∨ (t ≤ q ∧ q + 8 * w ≤ t + 8 * kT n))
+    (hF : MemFrame M M' (R.rt ++ winA S1 (W - 320) 64 ++ [(q, q + 8 * w)] ++ stkWs M st))
+    (hLF : LiveFrame M M' Lk ([(q, q + 8 * w)] ++ stkWs M st)) (hreg : M'.regions = M.regions)
+    {Lk' : List (Nat × Nat)} {bk' c : Nat} (hext : LiveExt R Lk Lk') (hb : bk - c ≤ bk')
+    (hinv : R.inv bk' Lk' (s.regs 28).toNat (view R.rt Lk' M')) (hsb : StackBack R Lk Lk' st M M') :
+    KM R b L W st zp zc xp n xc s lx0 lx1 t Lk' bk' (spent + c) M' := by
+  obtain ⟨hW, -⟩ := h.lay
+  have hlc := h.sok.2.2.2.2.2.1
+  simp only [winA, hsp] at hF
+  rw [List.append_assoc] at hF
+  refine h.step (k := W - 320) (a := 64) (by omega) (by omega) (fun r hr => ?_) hF hLF hreg hext hb hinv hsb
+  simp only [stkWs, List.cons_append, List.nil_append, List.mem_cons, List.not_mem_nil, or_false] at hr
+  rcases hr with rfl | rfl | rfl
+  · rcases hq with hq | hq
+    · exact ⟨by simp only; omega, Or.inl ⟨by simp only; omega, by simp only; omega⟩⟩
+    · exact ⟨by simp only; omega, Or.inr (Or.inl ⟨by simp only; omega, by simp only; omega⟩)⟩
+  · exact ⟨by simp only; omega, Or.inr (Or.inr (Or.inr (Or.inr (Or.inl ⟨Nat.le_refl _, Nat.le_refl _⟩))))⟩
+  · exact ⟨by simp only; omega, Or.inr (Or.inr (Or.inr (Or.inr (Or.inr ⟨Nat.le_refl _, Nat.le_refl _⟩))))⟩
+
 end FvModexp.Arm64.NatSqr
