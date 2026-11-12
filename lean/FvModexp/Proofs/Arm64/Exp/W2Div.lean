@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.LibWC
 import FvModexp.Proofs.Arm64.Exp.W2Ctx
 import FvModexp.Proofs.Arm64.Exp.W2RR
 
@@ -6,7 +7,7 @@ import FvModexp.Proofs.Arm64.Exp.W2RR
 
 `nat.div` is a premise in expmc's `ExpHyp.DivHyp` shape (asm proves it), parametric in its names `nsD`, its stack bound
 `stkD ≤ K` and its closed cost `costD`; its spill bound is `112` (13 register arguments). The call is made by hand
-(`Reaches.call_regions` + `CallW.hypSum`, return address `divRet` = seg35 word ?). Arguments: `z` = the fresh
+(`Reaches.call_regions` + `LibWC.hypSum`, return address `divRet` = seg35 word ?). Arguments: `z` = the fresh
 stack nat `q` (`2n` words), `z2` = `RR` (pointer, len 1, cap `2n`), `u` = `zz` (`2^(128n)`), `v` = `m`.
 -/
 
@@ -74,9 +75,9 @@ set_option linter.janusRenameI false in
 /-- `nat.div` from its entry (return address `divRet`) to `divRet` -/
 theorem divCallK (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (nsD : List String) (stkD costD : Nat) (costF : Nat → Nat → Nat → Nat) (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costF)
-    (hnsD : ∀ x, nsD.contains x = true → LibExp.names.contains x = true)
+    (hnsD : ∀ x, nsD.contains x = true → LibW.names.contains x = true)
     (hnsW : nsD.contains Extracted.seg35.name = false)
-    (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret) (Q : Outcome → Prop)
+    (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret) (Q : Outcome → Prop)
     (b : Nat) (L : List (Nat × Nat)) (g sp K st qp rrp n zzp zzl zzc mp mc : Nat) (M : Memory) (r18 r29 : BitVec 64)
     (hpre : DvPre R b costF costD L g sp K stkD st qp rrp n zzp zzl mp M)
     (hst : st < 2 ^ 64) (hqp : qp < 2 ^ 64) (hrrp : rrp < 2 ^ 64) (hzzp : zzp < 2 ^ 64) (hzzc : zzc < 2 ^ 64)
@@ -94,13 +95,13 @@ theorem divCallK (impl : List Segment) (hap : ImplApart Extracted.program impl) 
       S'.regs 3 = BitVec.ofNat 64 r → S'.regs 4 = BitVec.ofNat 64 rl → S'.regs 5 = BitVec.ofNat 64 rc →
       S'.regs 18 = r18 → S'.regs 28 = BitVec.ofNat 64 g → S'.regs 29 = r29 → S'.mem = M' →
       DvPost R b costD L L' b' g sp stkD st qp rrp n zzp zzl mp M M' r rl rc →
-      Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret) S Q := by
+      Reaches ((LibW.program.link impl).withExit ret) S' Q) :
+    Reaches ((LibW.program.link impl).withExit ret) S Q := by
   obtain ⟨hce, hKD, hserv, hgl, hn128, hn, hqL, hqW, hqG, hrL, hrW, hrG, hzl, hza, hz48, hzH, hzW, hma, hm48, hmH, hmW,
     hzN, hmN, hsok, hstW, harr, hslen, hcap, huH, huF, hvH, hvF, hqr, hpair, hcF, hcost, hinv⟩ := hpre
   have hce0 := hce
   obtain ⟨hal, hK, hA, hacc, hg1, hg2, hg3, hrt, hga, hgrt, hLs, hd, hro⟩ := hce0
-  have hS0 := CallW.hypSum hap hnsD (hDiv b L (BitVec.ofNat 64 qp) (BitVec.ofNat 64 (2 * n)) (BitVec.ofNat 64 (2 * n))
+  have hS0 := LibWC.hypSum hap hnsD (hDiv b L (BitVec.ofNat 64 qp) (BitVec.ofNat 64 (2 * n)) (BitVec.ofNat 64 (2 * n))
     (BitVec.ofNat 64 st) (BitVec.ofNat 64 rrp) (BitVec.ofNat 64 1) (BitVec.ofNat 64 (2 * n)) (BitVec.ofNat 64 zzp)
     (BitVec.ofNat 64 zzl) (BitVec.ofNat 64 zzc) (BitVec.ofNat 64 mp) (BitVec.ofNat 64 n) (BitVec.ofNat 64 mc))
   rw [show segAddr Extracted.program ExpHyp.fnDiv = divE by decide] at hS0

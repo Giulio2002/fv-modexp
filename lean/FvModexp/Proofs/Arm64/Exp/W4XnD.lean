@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.LibWC
 import FvModexp.Proofs.Arm64.Exp.W4CtxB
 import FvModexp.Proofs.Arm64.Exp.W4Div
 
@@ -53,9 +54,9 @@ set_option linter.janusRenameI false in
 /-- `nat.div` from its entry (return address `ra`, word `i` of window-4) to `ra` -/
 theorem divCallG (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (nsD : List String) (stkD costD : Nat) (costF : Nat → Nat → Nat → Nat) (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costF)
-    (hnsD : ∀ x, nsD.contains x = true → LibExp.names.contains x = true)
+    (hnsD : ∀ x, nsD.contains x = true → LibW.names.contains x = true)
     (hnsW : nsD.contains Extracted.seg34.name = false)
-    (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret) (Q : Outcome → Prop)
+    (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret) (Q : Outcome → Prop)
     (b : Nat) (L : List (Nat × Nat)) (g sp K st qp ql qc z2p z2l z2c up ul uc mp n mc ra : Nat) (M : Memory)
     (r18 r29 : BitVec 64)
     (hRA : RetAddr ((Extracted.program.onlySegments nsD).link impl) ra) (hra : ra < 2 ^ 64)
@@ -75,13 +76,13 @@ theorem divCallG (impl : List Segment) (hap : ImplApart Extracted.program impl) 
       S'.regs 3 = BitVec.ofNat 64 r → S'.regs 4 = BitVec.ofNat 64 rl → S'.regs 5 = BitVec.ofNat 64 rc →
       S'.regs 18 = r18 → S'.regs 28 = BitVec.ofNat 64 g → S'.regs 29 = r29 → S'.mem = M' →
       DvPostG R b costD L L' b' g sp stkD st qp qc z2p z2c up ul mp n M M' r rl rc →
-      Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret) S Q := by
+      Reaches ((LibW.program.link impl).withExit ret) S' Q) :
+    Reaches ((LibW.program.link impl).withExit ret) S Q := by
   obtain ⟨hce, hKD, hserv, hgl, hn128, hn, hqlc, hzlc, ⟨hqc, hqL, hqWG⟩, ⟨hzc, hzL, hzWG⟩, hul, hua, hu48, huH,
     huW, hma, hm48, hmH, hmW, huN, hmN, hsok, hstW, harr, hslen, hcap, huSt, huFr, hvSt, hvFr, hqz, hpair, hcF, hcost, hinv⟩ := hpre
   have hce0 := hce
   obtain ⟨hal, hK, hA, hacc, hg1, hg2, hg3, hrt, hga, hgrt, hLs, hd, hro⟩ := hce0
-  have hS0 := CallW.hypSum hap hnsD (hDiv b L (BitVec.ofNat 64 qp) (BitVec.ofNat 64 ql) (BitVec.ofNat 64 qc)
+  have hS0 := LibWC.hypSum hap hnsD (hDiv b L (BitVec.ofNat 64 qp) (BitVec.ofNat 64 ql) (BitVec.ofNat 64 qc)
     (BitVec.ofNat 64 st) (BitVec.ofNat 64 z2p) (BitVec.ofNat 64 z2l) (BitVec.ofNat 64 z2c) (BitVec.ofNat 64 up)
     (BitVec.ofNat 64 ul) (BitVec.ofNat 64 uc) (BitVec.ofNat 64 mp) (BitVec.ofNat 64 n) (BitVec.ofNat 64 mc))
   rw [show segAddr Extracted.program ExpHyp.fnDiv = divE by decide] at hS0

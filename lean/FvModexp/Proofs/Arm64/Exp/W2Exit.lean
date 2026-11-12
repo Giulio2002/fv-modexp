@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.LibWC
 import FvModexp.Proofs.Arm64.Exp.ExpHyp
 import FvModexp.Proofs.Arm64.Exp.W2Defs
 
@@ -18,9 +19,9 @@ abbrev cmp1Ret : Nat := 1804584
 /-- `nat.cmp`'s entry (literal: the executor must not evaluate a name lookup in `until`) -/
 abbrev cmpEntry : Nat := 1782608
 
-theorem cmpEntry_eq : segAddr LibExp.program ExpHyp.fnCmp = cmpEntry := by decide
+theorem cmpEntry_eq : segAddr LibW.program ExpHyp.fnCmp = cmpEntry := by decide
 
-theorem fnBase : segAddr LibExp.program fn = 1801904 := by decide
+theorem fnBase : segAddr LibW.program fn = 1801904 := by decide
 
 /-- `one` (nat.go:1407, `make(nat, numWords)`): a held array apart from the loop window, or — `n ≤ 4`, the compiler's
 non-escaping buffer — the frame words `[sp + 336, sp + 368)` (never written by the loop, `fw`) -/
@@ -82,7 +83,7 @@ theorem exA (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     (hclr : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
-    (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret) (Q : Outcome → Prop)
+    (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret) (Q : Outcome → Prop)
     (b : Nat) (L : List (Nat × Nat)) (g sp n mp mc k0 yp ylen Y : Nat) (tbl pp pcap : Nat → Nat) {ext : List (Nat × Nat)} (M0 : Memory)
     (r18 r29 : BitVec 64) (onep : Nat)
     (hst : Static R L g sp n mp mc k0 yp ylen Y tbl pp pcap M0)
@@ -104,8 +105,8 @@ theorem exA (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
       Mem R b L g sp M0 M' zp zc zzp zzc →
       M'.readLE (sp + 400) 8 = zzp → M'.readLE (sp + 160) 8 = n → M'.readLE (sp + 168) 8 = zzc →
       M'.readLE zzp (8 * n) = Exp.montgomery n (M.readLE zp (8 * n)) 1 (M0.readLE mp (8 * n)) k0 →
-      Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret) S Q := by
+      Reaches ((LibW.program.link impl).withExit ret) S' Q) :
+    Reaches ((LibW.program.link impl).withExit ret) S Q := by
   obtain ⟨he, hn, hn16, hmc, hmc', hk0, hyl, hyl', hm, hy, hY, hpw, r728, r736, r744, r224, r712, r704, hok⟩ := hst
   obtain ⟨hF, hLF, hinv, hrg0⟩ := hM
   obtain ⟨hal, hsp1, hsp2, hwacc, hg1, hg2, hg3, hwrt, hgw, hgrt, hLs⟩ := he
@@ -114,7 +115,7 @@ theorem exA (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   have hzI : Inp R L sp n M0 zp := ⟨M0.accessible_sub hBz.2.2.1 (Or.inr rfl) (Nat.le_refl _) (by omega),
     by omega, hBz.2.2.2.2.1.imp (fun h => h.sub (Nat.le_refl _) (by omega)) (fun h => h.of_sub (Nat.le_refl _) (by omega)),
     by have := hBz.2.2.2.2.2.1; unfold Apart at this ⊢; omega⟩
-  have hA := MontW.sum impl hap R hclr hmv b L g sp n mp mc zzp zzc zp onep k0 (BitVec.ofNat 64 n)
+  have hA := LibWC.montSum impl hap R hclr hmv b L g sp n mp mc zzp zzc zp onep k0 (BitVec.ofNat 64 n)
     (BitVec.ofNat 64 zc) (BitVec.ofNat 64 n) (M0.readLE (g + 16) 8)
     (mcall_of' he' hn hmc hmc' hBzz hzI (OneIn.c he' hone) hm (by have := hzzz; unfold Apart at this ⊢; omega) hzzo hzzm (hok _)) hk0
   have hF0 := hF

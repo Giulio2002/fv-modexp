@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.LibWC
 import FvModexp.Proofs.Arm64.Exp.W4Sn2R
 import FvModexp.Proofs.Arm64.Nat.LshDefs
 
@@ -42,9 +43,9 @@ set_option linter.janusRenameI false in
 /-- `nat.lsh` from its entry (return address `lshRet`) to `lshRet` -/
 theorem lshCallK (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (nsL : List String) (stkL : Nat) (hLsh : Lsh.Hyp2 impl R nsL stkL 64)
-    (hnsL : ∀ x, nsL.contains x = true → LibExp.names.contains x = true)
+    (hnsL : ∀ x, nsL.contains x = true → LibW.names.contains x = true)
     (hnsW : nsL.contains Extracted.seg34.name = false)
-    (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret) (Q : Outcome → Prop)
+    (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret) (Q : Outcome → Prop)
     (b : Nat) (L : List (Nat × Nat)) (g sp K rrp n : Nat) (M : Memory) (r18 r29 : BitVec 64)
     (hpre : LsPre R b L g sp K stkL rrp n M) (hrrp : rrp < 2 ^ 64)
     (S : State) (hpc : S.pc = BitVec.ofNat 64 lshE) (hsp : S.sp = BitVec.ofNat 64 sp)
@@ -57,12 +58,12 @@ theorem lshCallK (impl : List Segment) (hap : ImplApart Extracted.program impl) 
       S'.regs 0 = BitVec.ofNat 64 p → S'.regs 1 = BitVec.ofNat 64 l → S'.regs 2 = BitVec.ofNat 64 c →
       S'.regs 18 = r18 → S'.regs 28 = BitVec.ofNat 64 g → S'.regs 29 = r29 → S'.mem = M' →
       LsPost R b L L' b' g sp stkL rrp n M M' p l c →
-      Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret) S Q := by
+      Reaches ((LibW.program.link impl).withExit ret) S' Q) :
+    Reaches ((LibW.program.link impl).withExit ret) S Q := by
   obtain ⟨hce, hKL, hserv, hn128, hn, hra, hr48, hrH, hrW, hcost, hinv⟩ := hpre
   have hce0 := hce
   obtain ⟨hal, hK, hA, hacc, hg1, hg2, hg3, hrt, hga, hgrt, hLs, hd, hro⟩ := hce0
-  have hS0 := CallW.hypSum hap hnsL (hLsh b L (BitVec.ofNat 64 0) (BitVec.ofNat 64 0) (BitVec.ofNat 64 0)
+  have hS0 := LibWC.hypSum hap hnsL (hLsh b L (BitVec.ofNat 64 0) (BitVec.ofNat 64 0) (BitVec.ofNat 64 0)
     (BitVec.ofNat 64 rrp) (BitVec.ofNat 64 1) (BitVec.ofNat 64 (2 * n)) (BitVec.ofNat 64 (128 * n)))
   rw [show segAddr Extracted.program Lsh.fn = lshE by decide] at hS0
   have t0 : (BitVec.ofNat 64 0).toNat = 0 := rfl

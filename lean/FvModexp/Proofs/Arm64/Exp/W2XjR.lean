@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.LibW
 import FvModexp.Proofs.Arm64.Exp.W2K0
 import FvModexp.Proofs.Arm64.Exp.W2LshR
 
@@ -18,7 +19,7 @@ abbrev xJ : Nat := 1802648
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem toK (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret)
+theorem toK (impl : List Segment) (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret)
     (Q : Outcome → Prop) (ylen mp n m0 : Nat) (M : Memory)
     (hyl : 0 < ylen) (hyl' : ylen < 2 ^ 64) (hn : 0 < n) (hn' : n < 2 ^ 64) (hm48 : mp + 8 ≤ 2 ^ 48)
     (hma : M.accessible mp 8 false = true) (hm0 : M.readLE mp 8 = m0)
@@ -30,8 +31,8 @@ theorem toK (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program.li
       S'.regs 13 = BitVec.ofNat 64 ((2 + 18446744073709551616 - m0 % 18446744073709551616) % 18446744073709551616) →
       S'.regs 3 = S.regs 3 → S'.regs 4 = S.regs 4 → S'.regs 5 = S.regs 5 → S'.regs 6 = S.regs 6 →
       S'.regs 11 = S.regs 11 → S'.regs 18 = S.regs 18 → S'.regs 28 = S.regs 28 → S'.regs 29 = S.regs 29 →
-      Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret) S Q := by
+      Reaches ((LibW.program.link impl).withExit ret) S' Q) :
+    Reaches ((LibW.program.link impl).withExit ret) S Q := by
   generalize e3 : S.regs 3 = x3 at KH
   generalize e4 : S.regs 4 = x4 at KH
   generalize e5 : S.regs 5 = x5 at KH
@@ -53,7 +54,7 @@ theorem toK (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program.li
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem toSn1 (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret)
+theorem toSn1 (impl : List Segment) (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret)
     (Q : Outcome → Prop) (sp st xp xc n t : Nat) (M : Memory)
     (hal : sp % 16 = 0) (hsp1 : 4288 ≤ sp) (hsp2 : sp + 752 ≤ 2 ^ 48)
     (hacc : M.accessible (sp - 4288) (4288 + 752) true = true)
@@ -69,8 +70,8 @@ theorem toSn1 (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program.
       M'.regions = M.regions →
       M'.readLE (sp + 616) 8 = xp → M'.readLE (sp + 328) 8 = xc → M'.readLE (sp + 320) 8 = n →
       M'.readLE (sp + 224) 8 = t → M'.readLE (sp + 128) 8 = 2 * n →
-      Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret) S Q := by
+      Reaches ((LibW.program.link impl).withExit ret) S' Q) :
+    Reaches ((LibW.program.link impl).withExit ret) S Q := by
   generalize e18 : S.regs 18 = x18 at KS
   generalize e28 : S.regs 28 = x28 at KS
   generalize e29 : S.regs 29 = x29 at KS

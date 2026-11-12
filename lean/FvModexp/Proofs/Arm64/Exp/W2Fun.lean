@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.LibW
 import FvModexp.Proofs.Arm64.Exp.W2En
 import FvModexp.Proofs.Arm64.Exp.W2FunO
 import FvModexp.Proofs.Arm64.Exp.W2FunV
@@ -21,8 +22,8 @@ open FvModexp.Arm64.W2En (EPre EnPost)
 
 def fn : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.nat.expNNOddMontgomeryWindowSize2"
 
-/-- the names of the program window-2 is proved on (`LibExp.names`: every function of the exp layer) -/
-abbrev names : List String := LibExp.names
+/-- the names of the program window-2 is proved on (`LibW.names`: every function of the exp layer) -/
+abbrev names : List String := LibW.names
 
 /-- the closed budget the precondition asks for (`l` = the stack length at entry, `k = len x - n + 1`) -/
 def W2Bud (n xl costD l : Nat) : Nat :=

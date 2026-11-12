@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.LibW
 import FvModexp.Proofs.Arm64.Exp.W4Body1
 import FvModexp.Proofs.Arm64.Exp.W4Body2
 
@@ -22,7 +23,7 @@ theorem loop (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     (hclr : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
-    (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret) (Q : Outcome → Prop)
+    (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret) (Q : Outcome → Prop)
     (b : Nat) (L : List (Nat × Nat)) (g sp n mp mc k0 yp ylen Y : Nat) (tbl pp pcap : Nat → Nat) {ext : List (Nat × Nat)} (M0 : Memory)
     (r18 r29 : BitVec 64) (V : Nat) (Pz : Nat → Nat → Nat → Nat → Prop)
     (hPs : ∀ a b c d, Pz a b c d → Pz c d a b)
@@ -34,7 +35,7 @@ theorem loop (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
       S.regs 11 = BitVec.ofNat 64 mc → S.regs 12 = BitVec.ofNat 64 k0 →
       S.regs 18 = r18 → S.regs 28 = BitVec.ofNat 64 g → S.regs 29 = r29 → S.mem = M →
       Bufs R L g sp n mp yp ylen pp ext M0 zp zc zzp zzc → Mem R b L g sp M0 M zp zc zzp zzc →
-      M.readLE zp (8 * n) = V → Pz zp zc zzp zzc → Reaches ((LibExp.program.link impl).withExit ret) S Q) :
+      M.readLE zp (8 * n) = V → Pz zp zc zzp zzc → Reaches ((LibW.program.link impl).withExit ret) S Q) :
     ∀ (f : Nat) (S : State) (i c yi zp zc zzp zzc : Nat) (M : Memory), f = 17 * i + c → c ≤ 16 → i < ylen →
       yi < 2 ^ 64 → S.pc = BitVec.ofNat 64 test → S.sp = BitVec.ofNat 64 sp →
       S.regs 0 = BitVec.ofNat 64 zp → S.regs 13 = BitVec.ofNat 64 n → S.regs 14 = BitVec.ofNat 64 zc →
@@ -46,7 +47,7 @@ theorem loop (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
       Bufs R L g sp n mp yp ylen pp ext M0 zp zc zzp zzc → Mem R b L g sp M0 M zp zc zzp zzc →
       M.readLE (sp + 240) 8 = i →
       Exp.outerLoop 4 (step n (M0.readLE mp (8 * n)) k0 tbl) Y 16 i yi c (M.readLE zp (8 * n)) = V →
-      Pz zp zc zzp zzc → Reaches ((LibExp.program.link impl).withExit ret) S Q := by
+      Pz zp zc zzp zzc → Reaches ((LibW.program.link impl).withExit ret) S Q := by
   have hst' := hst
   obtain ⟨he, hn, hn16, hmc, hmc', hk0, hyl, hyl', hm, hy, hY, hpw, r1016, r1024, r1032, r224, r1000, r992, hok⟩ := hst
   intro f

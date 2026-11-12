@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.LibW
 import FvModexp.Proofs.Arm64.Exp.W2Loop
 import FvModexp.Proofs.Arm64.Exp.W2P01Defs
 import FvModexp.Proofs.Arm64.Exp.W2Tail
@@ -27,7 +28,7 @@ theorem isReturn_mono {P P' : State → Prop} (hq : ∀ s, P s → P' s) : ∀ o
   all_goals first | exact hq _ h | exact h
 
 theorem test_eq : W2Loop.test = testL := by
-  show segAddr LibExp.program W2Loop.fn + 0xa10 = 1804480; rw [fnBase']
+  show segAddr LibW.program W2Loop.fn + 0xa10 = 1804480; rw [fnBase']
 
 /-- the window-2 value from the first window: `outerLoop` over the remaining bits of `y` -/
 abbrev zjVal (n Mv k0 : Nat) (tbl : Nat → Nat) (Y ylen yi : Nat) : Nat :=
@@ -59,7 +60,7 @@ theorem zjRet (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
     (hserv : RunIface.Serves R)
-    (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret)
+    (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret)
     (b : Nat) (L : List (Nat × Nat)) (g sp n mp mc k0 yp ylen Y yi bp zp zc zzp zzc : Nat) (tbl : Nat → Nat)
     (M : Memory) (r18 r29 f29 : BitVec 64) (onep st n0 : Nat)
     (he : Env R L g sp M) (hce : CallW.CEnv R L g sp 4304 752 M)
@@ -86,11 +87,11 @@ theorem zjRet (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     (S : State) (hpc : S.pc = BitVec.ofNat 64 zj) (hsp : S.sp = BitVec.ofNat 64 sp)
     (h0 : S.regs 0 = BitVec.ofNat 64 zp) (h13 : S.regs 13 = BitVec.ofNat 64 n) (h14 : S.regs 14 = BitVec.ofNat 64 zc)
     (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = f29) (hmem : S.mem = M) :
-    Reaches ((LibExp.program.link impl).withExit ret) S
+    Reaches ((LibW.program.link impl).withExit ret) S
       (IsReturn (ZjPost R b L g sp n mp mc k0 yp ylen bp zp zc zzp zzc tbl
         (zjVal n (M.readLE mp (8 * n)) k0 tbl Y ylen yi) st n0 onep r18 r29 M)) := by
-  have hc := codeIn_ofImpl_restrict_of_apart hap LibExp.names
-  rw [← LibExp.eq_only] at hc
+  have hc := codeIn_ofImpl_restrict_of_apart hap LibW.names
+  rw [← LibW.eq_only] at hc
   have hmvL := MemmoveLive.of_codeIn hc hmv
   have he0 := he
   obtain ⟨hal, hsp1, hsp2, hwacc, hg1, hg2, hg3, hwrt, hgw, hgrt, hLs⟩ := he0

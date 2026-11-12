@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.LibW
 import FvModexp.Proofs.Arm64.Exp.W4EnA
 import FvModexp.Proofs.Arm64.Exp.W4EnG2
 import FvModexp.Proofs.Arm64.Exp.W4EnJ
@@ -48,16 +49,16 @@ theorem enStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
     (hSN : StackNat.Hyp impl R StackNat.names 4208 24)
-    (hgr : GrowsliceLiveContract (LibExp.program.link impl) grE 4096 R)
-    (hmc : MemclrNoHeapPointersLive (LibExp.program.link impl) mcE 4096 R)
-    (hwb : WbLiveContract (LibExp.program.link impl) wbE 4096 R 2)
+    (hgr : GrowsliceLiveContract (LibW.program.link impl) grE 4096 R)
+    (hmc : MemclrNoHeapPointersLive (LibW.program.link impl) mcE 4096 R)
+    (hwb : WbLiveContract (LibW.program.link impl) wbE 4096 R 2)
     (nsD : List String) (stkD costD : Nat) (costF : Nat → Nat → Nat → Nat) (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costF)
-    (hnsD : ∀ x, nsD.contains x = true → LibExp.names.contains x = true)
+    (hnsD : ∀ x, nsD.contains x = true → LibW.names.contains x = true)
     (hnsW : nsD.contains Extracted.seg34.name = false)
     (nsL : List String) (stkL : Nat) (hLsh : Lsh.Hyp2 impl R nsL stkL 64)
-    (hnsL : ∀ x, nsL.contains x = true → LibExp.names.contains x = true)
+    (hnsL : ∀ x, nsL.contains x = true → LibW.names.contains x = true)
     (hnsWL : nsL.contains Extracted.seg34.name = false)
-    (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret)
+    (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret)
     (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp ylen mp n mc : Nat) (s : State)
     (hP : EPre R b L K g sp st zp zc xp xl xc yp ylen mp n mc s) (hKD : stkD ≤ K) (hKL : stkL ≤ K)
     (hMo : s.mem.readLE mp (8 * n) % 2 = 1) (hM1 : 1 < s.mem.readLE mp (8 * n))
@@ -79,7 +80,7 @@ theorem enStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     (h6 : s.regs 6 = BitVec.ofNat 64 xc) (h7 : s.regs 7 = BitVec.ofNat 64 yp) (h8 : s.regs 8 = BitVec.ofNat 64 ylen)
     (h10 : s.regs 10 = BitVec.ofNat 64 mp) (h11 : s.regs 11 = BitVec.ofNat 64 n)
     (h12 : s.regs 12 = BitVec.ofNat 64 mc) (h30 : s.regs 30 = BitVec.ofNat 64 ret) :
-    Reaches ((LibExp.program.link impl).withExit ret) s
+    Reaches ((LibW.program.link impl).withExit ret) s
       (IsReturn (EnPost R b L K g sp st zp zc xp xl yp ylen mp n mc costD s)) := by
   have hP' := hP
   obtain ⟨he, hK20, hgl, hro, hty, hn, hn128, hmc0, hmc', hmO, hma, hm48, hmN, hyO, hya, hy48, hyN, hyl, hyl',

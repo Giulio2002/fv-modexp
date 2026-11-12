@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.LibW
 import FvModexp.Proofs.Arm64.Exp.W2OneRet2
 import FvModexp.Proofs.Arm64.Exp.W2RR
 
@@ -46,7 +47,7 @@ theorem rrRet (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
     (hSN : StackNat.Hyp impl R StackNat.names 4208 24)
     (hserv : RunIface.Serves R)
-    (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret)
+    (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret)
     (b : Nat) (L : List (Nat × Nat)) (g sp n mp mc t rp rl rc xp xc yp ylen Y yi zp zc zzp zzc st n0 : Nat)
     (M : Memory) (r18 r29 f29 : BitVec 64)
     (he : Env R L g sp M) (hce : CallW.CEnv R L g sp 4304 752 M)
@@ -102,7 +103,7 @@ theorem rrRet (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     (S : State) (hpc : S.pc = BitVec.ofNat 64 divRet) (hsp : S.sp = BitVec.ofNat 64 sp)
     (h3 : S.regs 3 = BitVec.ofNat 64 rp) (h4 : S.regs 4 = BitVec.ofNat 64 rl) (h5 : S.regs 5 = BitVec.ofNat 64 rc)
     (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = f29) (hmem : S.mem = M) :
-    Reaches ((LibExp.program.link impl).withExit ret) S
+    Reaches ((LibW.program.link impl).withExit ret) S
       (IsReturn (fun s' => ∃ (M1 : Memory) (rrp rrc onep : Nat) (M2 : Memory) (L2 : List (Nat × Nat)) (b2 : Nat),
         RRPost R b L g sp n rp rl rc zzp zzc M M1 rrp rrc ∧ OneChain R b L L2 b2 sp n st M1 M2 ∧
         RetPost R b2 L2 g sp n mp mc t (stW M2 st + 8 * stLen M st) yp ylen Y yi zp zc zzp zzc st n0 onep r18 r29
@@ -112,14 +113,14 @@ theorem rrRet (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
   have hzz0' := hzz
   obtain ⟨hzn2, hzzc, hzacc, hz48, hzh, hzw, hzg⟩ := hzz0'
   have hzn : n ≤ zzc := by omega
-  have hc := codeIn_ofImpl_restrict_of_apart hap LibExp.names
-  rw [← LibExp.eq_only] at hc
+  have hc := codeIn_ofImpl_restrict_of_apart hap LibW.names
+  rw [← LibW.eq_only] at hc
   have hmvL := MemmoveLive.of_codeIn hc hmv
   -- the continuation at `oneJ`
   have K : ∀ (S' : State) (M1 : Memory) (rrp rrc : Nat), S'.pc = BitVec.ofNat 64 oneJ → S'.sp = BitVec.ofNat 64 sp →
       S'.regs 0 = BitVec.ofNat 64 n → S'.regs 18 = r18 → S'.regs 28 = BitVec.ofNat 64 g → S'.regs 29 = f29 →
       S'.mem = M1 → RRPost R b L g sp n rp rl rc zzp zzc M M1 rrp rrc →
-      Reaches ((LibExp.program.link impl).withExit ret) S'
+      Reaches ((LibW.program.link impl).withExit ret) S'
         (IsReturn (fun s' => ∃ (M1 : Memory) (rrp rrc onep : Nat) (M2 : Memory) (L2 : List (Nat × Nat)) (b2 : Nat),
           RRPost R b L g sp n rp rl rc zzp zzc M M1 rrp rrc ∧ OneChain R b L L2 b2 sp n st M1 M2 ∧
           RetPost R b2 L2 g sp n mp mc t (stW M2 st + 8 * stLen M st) yp ylen Y yi zp zc zzp zzc st n0 onep r18 r29

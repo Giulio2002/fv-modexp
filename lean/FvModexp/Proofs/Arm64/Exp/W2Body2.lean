@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.LibWC
 import FvModexp.Proofs.Arm64.Exp.W2Defs
 
 /-!
@@ -19,7 +20,7 @@ theorem body2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     (hclr : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
-    (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret) (Q : Outcome → Prop)
+    (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret) (Q : Outcome → Prop)
     (b : Nat) (L : List (Nat × Nat)) (g sp n mp mc k0 yp ylen Y : Nat) (tbl pp pcap : Nat → Nat) {ext : List (Nat × Nat)} (M0 : Memory)
     (r18 r29 : BitVec 64)
     (hst : Static R L g sp n mp mc k0 yp ylen Y tbl pp pcap M0)
@@ -40,8 +41,8 @@ theorem body2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
       S'.regs 18 = r18 → S'.regs 28 = BitVec.ofNat 64 g → S'.regs 29 = r29 → S'.mem = M' →
       Mem R b L g sp M0 M' zzp zzc zp zc → M'.readLE (sp + 240) 8 = i →
       M'.readLE zzp (8 * n) = Exp.montgomery n (M.readLE zp (8 * n)) (tbl (yi / 2 ^ 62)) (M0.readLE mp (8 * n)) k0 →
-      Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret) S Q := by
+      Reaches ((LibW.program.link impl).withExit ret) S' Q) :
+    Reaches ((LibW.program.link impl).withExit ret) S Q := by
   obtain ⟨he, hn, hn16, hmc, hmc', hk0, hyl, hyl', hm, hy, hY, hpw, r728, r736, r744, r224, r712, r704, hok⟩ := hst
   have hd : yi / 2 ^ 62 < 4 := by omega
   obtain ⟨hpi, hpv, hpc', rp0, rp1, rp2⟩ := hpw _ hd
@@ -67,7 +68,7 @@ theorem body2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     simp only [outside_append, outside_cons, outside_nil, and_true, hgrt, true_and]
     omega
   obtain ⟨hma, hmb, hmh, hmw⟩ := hm
-  have hC := MontW.sum impl hap R hclr hmv b L g sp n mp mc zzp zzc zp (pp (yi / 2 ^ 62)) k0 (BitVec.ofNat 64 n)
+  have hC := LibWC.montSum impl hap R hclr hmv b L g sp n mp mc zzp zzc zp (pp (yi / 2 ^ 62)) k0 (BitVec.ofNat 64 n)
     (BitVec.ofNat 64 zc) (BitVec.ofNat 64 (pcap (yi / 2 ^ 62))) (M0.readLE (g + 16) 8)
     (mcall_of he' hn hmc hmc' hBzz' hzI hpi hm' (by have := hzzz; unfold Apart at this ⊢; omega) hzzp1 hzzm (hok _)) hk0
   obtain ⟨hpa, hpb, hph, hpw'⟩ := hpi

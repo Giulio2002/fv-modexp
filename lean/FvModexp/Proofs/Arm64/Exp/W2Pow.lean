@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.LibWC
 import FvModexp.Proofs.Arm64.Exp.W2PowDefs
 
 /-!
@@ -22,7 +23,7 @@ theorem powStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (hclr : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
-    (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret) (Q : Outcome → Prop)
+    (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret) (Q : Outcome → Prop)
     (b : Nat) (L : List (Nat × Nat)) (g sp n mp mc k0 bp bc : Nat) (M0 : Memory) (r18 r29 : BitVec 64)
     (tbl : Nat → Nat) (hs : PStatic R L g sp n mp mc k0 bp bc M0)
     (i : Nat) (S : State) (M : Memory) (hi2 : 2 ≤ i) (hi : i < 4)
@@ -35,8 +36,8 @@ theorem powStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
       S'.mem = M' → FP R L sp bp bc M0 M' → R.inv b L g (view R.rt L M') → M'.regions = M0.regions →
       (∀ d, d < i → Ent sp n bp tbl M' d) →
       Ent sp n bp (fun _ => Exp.montgomery n (tbl (i - 1)) (tbl 1) (M0.readLE mp (8 * n)) k0) M' i →
-      Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret) S Q := by
+      Reaches ((LibW.program.link impl).withExit ret) S' Q) :
+    Reaches ((LibW.program.link impl).withExit ret) S Q := by
   have hs' := hs
   obtain ⟨he, hn, hn16, hmc, hmc', hk0, hm, hbc, hbc', hba, hbb, hbh, hbw, hbg, hbm, r728, r736, r744, r224, r128,
     r248, r536, hok⟩ := hs'
@@ -53,7 +54,7 @@ theorem powStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
   have hrB := buf_sub hs (d := i) (by omega)
   have hxI := inp_ent hs (d := i - 1) (by omega)
   have hyI := inp_ent hs (d := 1) (by omega)
-  have hA := MontW.sum impl hap R hclr hmv b L g sp n mp mc (bp + 8 * (i * n)) (2 * n) (bp + 8 * ((i - 1) * n))
+  have hA := LibWC.montSum impl hap R hclr hmv b L g sp n mp mc (bp + 8 * (i * n)) (2 * n) (bp + 8 * ((i - 1) * n))
     (bp + 8 * (1 * n)) k0 (BitVec.ofNat 64 n) (BitVec.ofNat 64 (2 * n)) (BitVec.ofNat 64 (2 * n)) (M0.readLE (g + 16) 8)
     (mcall_of he' hn hmc hmc' hrB hxI hyI hm (by unfold Apart; omega) (by unfold Apart; omega)
       (by have := hbm; unfold Apart at this ⊢; omega) (hok _)) hk0

@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.LibW
 import FvModexp.Proofs.Arm64.Exp.W2Div
 
 /-!
@@ -13,7 +14,7 @@ abbrev sn2Ret : Nat := 1802912
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem toDiv (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret)
+theorem toDiv (impl : List Segment) (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret)
     (Q : Outcome → Prop) (sp st rrp zzp zzl zzc mp n mc : Nat) (M : Memory)
     (hal : sp % 16 = 0) (hsp1 : 4288 ≤ sp) (hsp2 : sp + 752 ≤ 2 ^ 48)
     (hacc : M.accessible (sp - 4288) (4288 + 752) true = true)
@@ -28,8 +29,8 @@ theorem toDiv (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program.
       S'.regs 9 = BitVec.ofNat 64 zzc → S'.regs 10 = BitVec.ofNat 64 mp → S'.regs 11 = BitVec.ofNat 64 n →
       S'.regs 12 = BitVec.ofNat 64 mc → S'.regs 30 = BitVec.ofNat 64 divRet →
       S'.regs 18 = S.regs 18 → S'.regs 28 = S.regs 28 → S'.regs 29 = S.regs 29 → S'.mem = M →
-      Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret) S Q := by
+      Reaches ((LibW.program.link impl).withExit ret) S' Q) :
+    Reaches ((LibW.program.link impl).withExit ret) S Q := by
   generalize e0 : S.regs 0 = x0 at KD
   generalize e1 : S.regs 1 = x1 at KD
   generalize e2 : S.regs 2 = x2 at KD

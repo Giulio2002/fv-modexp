@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.LibW
 import FvModexp.Proofs.Arm64.Exp.W4P01
 import FvModexp.Proofs.Arm64.Exp.W4PowLoop
 
@@ -23,7 +24,7 @@ theorem p01pow (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     (hclr : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
-    (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret) (Q : Outcome → Prop)
+    (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret) (Q : Outcome → Prop)
     (b : Nat) (L : List (Nat × Nat)) (g sp n mp mc t bp onep rrp rrc xp xc : Nat) (M : Memory) (r18 r29 : BitVec 64)
     (he : Env R L g sp M) (hn : 0 < n) (hn16 : n ≤ 2 ^ 16) (hmc : n ≤ mc) (hmc' : mc < 2 ^ 40) (ht : t < 2 ^ 64)
     (hm : Inp R L sp n M mp)
@@ -52,8 +53,8 @@ theorem p01pow (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
       M'.readLE (sp + 224) 8 = (2 ^ 64 - t) % 2 ^ 64 →
       (∀ d, d < 16 → Ent sp n bp (Exp.montPow n (M.readLE mp (8 * n)) ((2 ^ 64 - t) % 2 ^ 64) (M.readLE xp (8 * n))
         (M.readLE rrp (8 * n))) M' d) →
-      Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret) S Q := by
+      Reaches ((LibW.program.link impl).withExit ret) S' Q) :
+    Reaches ((LibW.program.link impl).withExit ret) S Q := by
   have he0 := he
   obtain ⟨hal, hsp1, hsp2, hwacc, hg1, hg2, hg3, hwrt, hgw, hgrt, hLs⟩ := he0
   refine p01run impl hap R hclr hmv ret hret Q b L g sp n mp mc t bp onep rrp rrc xp xc M r18 r29 he hn hn16 hmc hmc'

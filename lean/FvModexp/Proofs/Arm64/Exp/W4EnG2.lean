@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.LibW
 import FvModexp.Proofs.Arm64.Exp.W4EnG
 
 /-!
@@ -12,9 +13,9 @@ namespace FvModexp.Arm64.W4En
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem enG2 (impl : List Segment) (R : RtInv)
-    (hgr : GrowsliceLiveContract (LibExp.program.link impl) grE 4096 R)
-    (hmc : MemclrNoHeapPointersLive (LibExp.program.link impl) mcE 4096 R)
-    (ret0 : Nat) (hret : RetAddr (LibExp.program.link impl) ret0) (Q : Outcome → Prop)
+    (hgr : GrowsliceLiveContract (LibW.program.link impl) grE 4096 R)
+    (hmc : MemclrNoHeapPointersLive (LibW.program.link impl) mcE 4096 R)
+    (ret0 : Nat) (hret : RetAddr (LibW.program.link impl) ret0) (Q : Outcome → Prop)
     (b : Nat) (L : List (Nat × Nat)) (g sp K st xp xl xc ylen mp n w0 len0 cap0 : Nat) (s : State)
     (he : EEnv R L g sp K s) (hk : cap0 < len0 + StackNat.rnd (23 * n)) (hn : n ≤ 128)
     (hl16 : len0 + 23 * n + 3 ≤ 2 ^ 16) (hw64 : w0 < 2 ^ 64)
@@ -44,8 +45,8 @@ theorem enG2 (impl : List Segment) (R : RtInv)
       MemFrame M1 M' (R.rt ++ [(sp - 4096, sp - 8), (sp + 8, sp + 424)]) → LiveFrame M1 M' L [] →
       M'.regions = M1.regions →
       R.inv (b - 8 * gc) (L ++ [(p, p + 8 * gc)]) g (view R.rt (L ++ [(p, p + 8 * gc)]) M') →
-      Reaches ((LibExp.program.link impl).withExit ret0) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret0) S Q := by
+      Reaches ((LibW.program.link impl).withExit ret0) S' Q) :
+    Reaches ((LibW.program.link impl).withExit ret0) S Q := by
   have he' := he
   obtain ⟨hs1, hs28, hg1, hg2, hg3, hgo, hal, hK, hK', hsp2, hacc, hwrt, hLs, hd, hsv⟩ := he'
   have esp := he.sp

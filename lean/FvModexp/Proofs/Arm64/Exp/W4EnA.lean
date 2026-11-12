@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Arm64.Exp.LibExp
+import FvModexp.Proofs.Arm64.Exp.LibW
 import FvModexp.Proofs.Arm64.Exp.W4EnDefs
 
 /-!
@@ -14,7 +14,7 @@ namespace FvModexp.Arm64.W4En
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem enA (impl : List Segment) (ret0 : Nat) (hret : RetAddr (LibExp.program.link impl) ret0)
+theorem enA (impl : List Segment) (ret0 : Nat) (hret : RetAddr (LibW.program.link impl) ret0)
     (Q : Outcome → Prop) (sp g st zp zl zc xp xl xc yp ylen yc mp n mc ret w0 len0 cap0 : Nat) (r29 : BitVec 64)
     (M : Memory)
     (hal : sp % 16 = 0) (hsp1 : 8 ≤ sp) (hsp2 : sp + 1040 ≤ 2 ^ 48)
@@ -42,7 +42,7 @@ theorem enA (impl : List Segment) (ret0 : Nat) (hret : RetAddr (LibExp.program.l
       S'.regs 18 = S.regs 18 → S'.regs 28 = BitVec.ofNat 64 g → S'.regs 29 = BitVec.ofNat 64 (sp - 8) →
       S'.mem = M' → MemFrame M M' [(sp - 8, sp + 920), (sp + 936, sp + 1040)] → M'.regions = M.regions →
       ESl M' sp st r29 ret zp zc xp xl xc yp ylen mp n mc len0 →
-      Reaches ((LibExp.program.link impl).withExit ret0) S' Q)
+      Reaches ((LibW.program.link impl).withExit ret0) S' Q)
     (KG : cap0 < len0 + StackNat.rnd (23 * n) → ∀ (S' : State) (M' : Memory),
       S'.pc = BitVec.ofNat 64 grE → S'.sp = BitVec.ofNat 64 sp →
       S'.regs 0 = BitVec.ofNat 64 w0 → S'.regs 1 = BitVec.ofNat 64 (len0 + StackNat.rnd (23 * n)) →
@@ -53,8 +53,8 @@ theorem enA (impl : List Segment) (ret0 : Nat) (hret : RetAddr (LibExp.program.l
       ESl M' sp st r29 ret zp zc xp xl xc yp ylen mp n mc len0 →
       M'.readLE (sp + 328) 8 = len0 + StackNat.rnd (23 * n) → M'.readLE (sp + 192) 8 = len0 →
       M'.readLE (sp + 216) 8 = len0 + StackNat.rnd (23 * n) - cap0 → M'.readLE (sp + 320) 8 = cap0 →
-      Reaches ((LibExp.program.link impl).withExit ret0) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret0) S Q := by
+      Reaches ((LibW.program.link impl).withExit ret0) S' Q) :
+    Reaches ((LibW.program.link impl).withExit ret0) S Q := by
   generalize e18 : S.regs 18 = x18 at KJ KG
   have hr := rnd23 n hn
   have hm1 := mul23 n hn

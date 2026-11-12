@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.LibW
 import FvModexp.Proofs.Arm64.Exp.W4XnA
 
 /-!
@@ -45,13 +46,13 @@ theorem xnAStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
     (hSN : StackNat.Hyp impl R StackNat.names 4208 24)
     (nsD : List String) (stkD costD : Nat) (costF : Nat → Nat → Nat → Nat) (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costF)
-    (hnsD : ∀ x, nsD.contains x = true → LibExp.names.contains x = true)
+    (hnsD : ∀ x, nsD.contains x = true → LibW.names.contains x = true)
     (hnsW : nsD.contains Extracted.seg34.name = false)
     (nsL : List String) (stkL : Nat) (hLsh : Lsh.Hyp2 impl R nsL stkL 64)
-    (hnsL : ∀ x, nsL.contains x = true → LibExp.names.contains x = true)
+    (hnsL : ∀ x, nsL.contains x = true → LibW.names.contains x = true)
     (hnsWL : nsL.contains Extracted.seg34.name = false)
     (hserv : RunIface.Serves R)
-    (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret)
+    (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret)
     (b : Nat) (L : List (Nat × Nat)) (g sp K n mp mc Mv Xv yp ylen Y yi zp zc st n0 l0 xp xl xc : Nat)
     (M : Memory) (r18 r29 f29 : BitVec 64) (hKD : stkD ≤ K) (hKL : stkL ≤ K)
     (hB : CtxB R L g sp K n mp mc Mv yp ylen Y yi zp zc st n0 l0 ret r29 [] M) (hl0e : stLen M st = l0)
@@ -72,7 +73,7 @@ theorem xnAStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (h0 : S.regs 0 = BitVec.ofNat 64 st) (h1 : S.regs 1 = BitVec.ofNat 64 (xl - n + 1))
     (h30 : S.regs 30 = BitVec.ofNat 64 aSn1Ret)
     (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = f29) (hmem : S.mem = M) :
-    Reaches ((LibExp.program.link impl).withExit ret) S
+    Reaches ((LibW.program.link impl).withExit ret) S
       (IsReturn (XnPost R L0 K bA M0 g sp n mp mc Mv (Xv % Mv) yp ylen Y yi zp zc st n0 l0 r18 r29)) := by
   have hB0 := hB
   obtain ⟨he, hce, hK, -, hn, hn128, -, -, -, -, -, -, -, -, -, -, -, -, -,
@@ -217,13 +218,13 @@ theorem xnStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
     (hSN : StackNat.Hyp impl R StackNat.names 4208 24)
     (nsD : List String) (stkD costD : Nat) (costF : Nat → Nat → Nat → Nat) (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costF)
-    (hnsD : ∀ x, nsD.contains x = true → LibExp.names.contains x = true)
+    (hnsD : ∀ x, nsD.contains x = true → LibW.names.contains x = true)
     (hnsW : nsD.contains Extracted.seg34.name = false)
     (nsL : List String) (stkL : Nat) (hLsh : Lsh.Hyp2 impl R nsL stkL 64)
-    (hnsL : ∀ x, nsL.contains x = true → LibExp.names.contains x = true)
+    (hnsL : ∀ x, nsL.contains x = true → LibW.names.contains x = true)
     (hnsWL : nsL.contains Extracted.seg34.name = false)
     (hserv : RunIface.Serves R)
-    (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret)
+    (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret)
     (b : Nat) (L : List (Nat × Nat)) (g sp K n mp mc Mv Xv yp ylen Y yi zp zc st n0 l0 xp xl xc : Nat)
     (M : Memory) (r18 r29 f29 : BitVec 64) (hKD : stkD ≤ K) (hKL : stkL ≤ K)
     (hB : CtxB R L g sp K n mp mc Mv yp ylen Y yi zp zc st n0 l0 ret r29 [] M) (hl0e : stLen M st = l0)
@@ -247,7 +248,7 @@ theorem xnStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     (h6 : S.regs 6 = BitVec.ofNat 64 xc) (h8 : S.regs 8 = BitVec.ofNat 64 ylen) (h10 : S.regs 10 = BitVec.ofNat 64 mp)
     (h11 : S.regs 11 = BitVec.ofNat 64 n)
     (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = f29) (hmem : S.mem = M) :
-    Reaches ((LibExp.program.link impl).withExit ret) S
+    Reaches ((LibW.program.link impl).withExit ret) S
       (IsReturn (fun s' => ∃ Xv', Xv' % Mv = Xv % Mv ∧ Xv' < Exp.B ^ n ∧
         XnPost R L0 K bA M0 g sp n mp mc Mv Xv' yp ylen Y yi zp zc st n0 l0 r18 r29 s')) := by
   have hst64 : st < 2 ^ 64 := by have := hB.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1.2.2.2.1; omega

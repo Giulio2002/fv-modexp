@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.LibW
 import FvModexp.Proofs.Arm64.Exp.W2Pow
 
 /-!
@@ -16,19 +17,19 @@ theorem powLoop (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (hclr : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
-    (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret) (Q : Outcome → Prop)
+    (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret) (Q : Outcome → Prop)
     (b : Nat) (L : List (Nat × Nat)) (g sp n mp mc k0 bp bc : Nat) (M0 : Memory) (r18 r29 : BitVec 64)
     (tbl : Nat → Nat) (hs : PStatic R L g sp n mp mc k0 bp bc M0)
     (htbl : ∀ i, 2 ≤ i → i < 4 → tbl i = Exp.montgomery n (tbl (i - 1)) (tbl 1) (M0.readLE mp (8 * n)) k0)
     (KX : ∀ (S' : State) (M' : Memory), S'.pc = BitVec.ofNat 64 j4 → S'.sp = BitVec.ofNat 64 sp →
       S'.regs 18 = r18 → S'.regs 28 = BitVec.ofNat 64 g → S'.regs 29 = r29 → S'.mem = M' →
       FP R L sp bp bc M0 M' → R.inv b L g (view R.rt L M') → M'.regions = M0.regions →
-      (∀ d, d < 4 → Ent sp n bp tbl M' d) → Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
+      (∀ d, d < 4 → Ent sp n bp tbl M' d) → Reaches ((LibW.program.link impl).withExit ret) S' Q) :
     ∀ (f i : Nat) (S : State) (M : Memory), f = 4 - i → 2 ≤ i → i ≤ 4 →
       S.pc = BitVec.ofNat 64 powHead → S.sp = BitVec.ofNat 64 sp → S.regs 0 = BitVec.ofNat 64 i →
       S.regs 18 = r18 → S.regs 28 = BitVec.ofNat 64 g → S.regs 29 = r29 → S.mem = M →
       FP R L sp bp bc M0 M → R.inv b L g (view R.rt L M) → M.regions = M0.regions →
-      (∀ d, d < i → Ent sp n bp tbl M d) → Reaches ((LibExp.program.link impl).withExit ret) S Q := by
+      (∀ d, d < i → Ent sp n bp tbl M d) → Reaches ((LibW.program.link impl).withExit ret) S Q := by
   intro f
   induction f with
   | zero =>

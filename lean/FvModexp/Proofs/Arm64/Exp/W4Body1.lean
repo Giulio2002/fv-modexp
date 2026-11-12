@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.LibWC
 import FvModexp.Proofs.Arm64.Exp.W4Defs
 
 /-!
@@ -19,7 +20,7 @@ theorem body1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     (hclr : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
-    (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret) (Q : Outcome → Prop)
+    (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret) (Q : Outcome → Prop)
     (b : Nat) (L : List (Nat × Nat)) (g sp n mp mc k0 yp ylen Y : Nat) (tbl pp pcap : Nat → Nat) {ext : List (Nat × Nat)} (M0 : Memory)
     (r18 r29 : BitVec 64)
     (hst : Static R L g sp n mp mc k0 yp ylen Y tbl pp pcap M0)
@@ -39,8 +40,8 @@ theorem body1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
       M'.readLE (sp + 400) 8 = zzp → M'.readLE (sp + 160) 8 = n → M'.readLE (sp + 168) 8 = zzc →
       M'.readLE (sp + 184) 8 = yi → M'.readLE (sp + 232) 8 = c → M'.readLE (sp + 240) 8 = i →
       M'.readLE zp (8 * n) = sq n (M0.readLE mp (8 * n)) k0 (sq n (M0.readLE mp (8 * n)) k0 (M.readLE zp (8 * n))) →
-      Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret) S Q := by
+      Reaches ((LibW.program.link impl).withExit ret) S' Q) :
+    Reaches ((LibW.program.link impl).withExit ret) S Q := by
   obtain ⟨he, hn, hn16, hmc, hmc', hk0, hyl, hyl', hm, hy, hY, hpw, r1016, r1024, r1032, r224, r1000, r992, hok⟩ := hst
   have h63 : (BitVec.ofNat 64 c).getLsbD 63 = false := by
     simp only [BitVec.getLsbD_ofNat]; simp [Nat.testBit, Nat.shiftRight_eq_div_pow]; omega
@@ -54,11 +55,11 @@ theorem body1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
   have hzzI : Inp R L sp n M0 zzp := ⟨M0.accessible_sub hBzz.2.2.1 (Or.inr rfl) (Nat.le_refl _) (by omega),
     by omega, hBzz.2.2.2.2.1.imp (fun h => h.sub (Nat.le_refl _) (by omega)) (fun h => h.of_sub (Nat.le_refl _) (by omega)),
     by have := hBzz.2.2.2.2.2.1; unfold Apart at this ⊢; omega⟩
-  have hA := MontW.sum impl hap R hclr hmv b L g sp n mp mc zzp zzc zp zp k0 (BitVec.ofNat 64 n)
+  have hA := LibWC.montSum impl hap R hclr hmv b L g sp n mp mc zzp zzc zp zp k0 (BitVec.ofNat 64 n)
     (BitVec.ofNat 64 zc) (BitVec.ofNat 64 zc) (M0.readLE (g + 16) 8)
     (mcall_of he' hn hmc hmc' hBzz hzI hzI hm (by have := hzzz; unfold Apart at this ⊢; omega)
       (by have := hzzz; unfold Apart at this ⊢; omega) hzzm (hok _)) hk0
-  have hBs := MontW.sum impl hap R hclr hmv b L g sp n mp mc zp zc zzp zzp k0 (BitVec.ofNat 64 n)
+  have hBs := LibWC.montSum impl hap R hclr hmv b L g sp n mp mc zp zc zzp zzp k0 (BitVec.ofNat 64 n)
     (BitVec.ofNat 64 zzc) (BitVec.ofNat 64 zzc) (M0.readLE (g + 16) 8)
     (mcall_of he' hn hmc hmc' hBz hzzI hzzI hm (by have := hzzz; unfold Apart at this ⊢; omega)
       (by have := hzzz; unfold Apart at this ⊢; omega) hzm (hok _)) hk0
@@ -73,7 +74,7 @@ theorem body1 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
   obtain ⟨hma, hmb, hmh, hmw⟩ := hm
   obtain ⟨hzc1, hzc2, hza, hzb, hzh, hzw, hzg⟩ := hBz
   obtain ⟨hzzc1, hzzc2, hzza, hzzb, hzzh, hzzw, hzzg⟩ := hBzz
-  janus_run [r1016, r1024, r1032, r224, r1000, r992, r240, h63] until [segAddr LibExp.program fn + 0x92c]
+  janus_run [r1016, r1024, r1032, r224, r1000, r992, r240, h63] until [segAddr LibW.program fn + 0x92c]
     calls [hP1 := hA]
   janus_run [r1016, r1024, r1032, r224, r1000, r992, r240] until [mid]
     calls [hP2 := hBs]

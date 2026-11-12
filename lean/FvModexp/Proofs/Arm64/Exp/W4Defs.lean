@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.LibW
 import FvModexp.Proofs.Arm64.Exp.MontW
 import FvModexp.Proofs.Common.ExpOdd
 
@@ -15,9 +16,9 @@ namespace FvModexp.Arm64.W4Loop
 
 def fn : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.nat.expNNOddMontgomeryWindowSize4"
 /-- the loop test `TBZ $63, R21` -/
-abbrev test : Nat := segAddr LibExp.program fn + 0xaa0
+abbrev test : Nat := segAddr LibW.program fn + 0xaa0
 /-- the loop exit (after `if i == 0 { break }`): the final `zz.montgomery(z, one, …)` -/
-abbrev exit : Nat := segAddr LibExp.program fn + 0xab8
+abbrev exit : Nat := segAddr LibW.program fn + 0xab8
 
 /-- the window step of `expNNOddMont 4` (ExpOdd.lean) -/
 abbrev step (n Mv k : Nat) (tbl : Nat → Nat) (z d : Nat) : Nat :=
@@ -189,7 +190,7 @@ theorem FL.read {R : RtInv} {L : List (Nat × Nat)} {sp zp zc zzp zzc : Nat} {M0
     (by simp only [outside_cons, outside_nil, and_true]; omega)
 
 /-- the return point of the 2nd squaring `z = z.montgomery(zz, zz, …)` (nat.go:1454) -/
-abbrev mid : Nat := segAddr LibExp.program fn + 0x974
+abbrev mid : Nat := segAddr LibW.program fn + 0x974
 
 /-- one squaring of the window step -/
 abbrev sq (n Mv k z : Nat) : Nat := Exp.montgomery n z z Mv k

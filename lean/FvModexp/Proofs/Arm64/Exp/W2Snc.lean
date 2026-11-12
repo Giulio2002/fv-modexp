@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.LibWC
 import FvModexp.Proofs.Arm64.Exp.CallW
 import FvModexp.Proofs.Arm64.Exp.W2One
 
@@ -5,7 +6,7 @@ import FvModexp.Proofs.Arm64.Exp.W2One
 # window-2 prologue (arm64): the call `buf := stk.nat(17n)` (nat.go:1412), `snE → p01`
 
 `(*stack).nat` is a premise in divmc's proved shape (`StackNat.Hyp impl R StackNat.names 4208 24`, discharged by
-`StackNat.hyp`); the call is made by hand (`Reaches.call_regions` + `CallW.hypSum`). The continuation gets the callee's
+`StackNat.hyp`); the call is made by hand (`Reaches.call_regions` + `LibWC.hypSum`). The continuation gets the callee's
 post in memory form.
 -/
 
@@ -47,7 +48,7 @@ set_option linter.janusRenameI false in
 /-- `buf := stk.nat(17n)`: from the entry of `(*stack).nat` (return address `p01`) to `p01` -/
 theorem snCall (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hSN : StackNat.Hyp impl R StackNat.names 4208 24)
-    (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret) (Q : Outcome → Prop)
+    (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret) (Q : Outcome → Prop)
     (b : Nat) (L : List (Nat × Nat)) (g sp n st : Nat) (M : Memory) (r18 r29 : BitVec 64)
     (hpre : SnPre R b L g sp st (5 * n) M) (hst : st < 2 ^ 64) (hn : 0 < n)
     (S : State) (hpc : S.pc = BitVec.ofNat 64 snE) (hsp : S.sp = BitVec.ofNat 64 sp)
@@ -60,13 +61,13 @@ theorem snCall (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
       S'.regs 2 = BitVec.ofNat 64 (5 * n) →
       S'.regs 18 = r18 → S'.regs 28 = BitVec.ofNat 64 g → S'.regs 29 = r29 → S'.mem = M' →
       SnPost R b L L' b' g sp st (5 * n) M M' →
-      Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret) S Q := by
+      Reaches ((LibW.program.link impl).withExit ret) S' Q) :
+    Reaches ((LibW.program.link impl).withExit ret) S Q := by
   obtain ⟨hce, hserv, hsok, hstw, harr, hk16, hlen, hcost, hinv, hwba, hstwb, hstf⟩ := hpre
   have hce0 := hce
   obtain ⟨hal, hK, hA, hacc, hg1, hg2, hg3, hrt, hga, hgrt, hLs, hd, hro⟩ := hce0
-  have hns : ∀ x, StackNat.names.contains x = true → LibExp.names.contains x = true := MontW.sub_of_all (by decide)
-  have hS0 := CallW.hypSum hap hns (hSN b L (BitVec.ofNat 64 st) (BitVec.ofNat 64 (5 * n)))
+  have hns : ∀ x, StackNat.names.contains x = true → LibW.names.contains x = true := MontW.sub_of_all (by decide)
+  have hS0 := LibWC.hypSum hap hns (hSN b L (BitVec.ofNat 64 st) (BitVec.ofNat 64 (5 * n)))
   rw [show segAddr Extracted.program StackNat.fn = snE by decide] at hS0
   have tst := toNat_lt' hst
   have tk : (BitVec.ofNat 64 (5 * n)).toNat = 5 * n := toNat_lt' (by omega)

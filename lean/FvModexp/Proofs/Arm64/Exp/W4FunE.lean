@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.LibWC
 import FvModexp.Proofs.Arm64.Exp.W4Fun
 import FvModexp.Proofs.Arm64.Nat.StackNat
 import FvModexp.Proofs.Arm64.Nat.Lsh
@@ -27,7 +28,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     (hgr : GrowsliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.growslice") 4096 R)
     (hwb : WbLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 4096 R 2)
     (nsD : List String) (stkD : Nat) (costF : Nat → Nat → Nat → Nat) (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costF)
-    (hnsD : ∀ x, nsD.contains x = true → LibExp.names.contains x = true)
+    (hnsD : ∀ x, nsD.contains x = true → LibW.names.contains x = true)
     (hnsW : nsD.contains Extracted.seg34.name = false)
     (b : Nat) (L : List (Nat × Nat)) (K : Nat) (hKD : stkD ≤ K) (hKL : 4256 ≤ K)
     (zp zl zc st xp xl xc yp ylen yc mp n mc : Nat) :
@@ -36,19 +37,19 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
         BitVec.ofNat 64 xl, BitVec.ofNat 64 xc, BitVec.ofNat 64 yp, BitVec.ofNat 64 ylen, BitVec.ofNat 64 yc,
         BitVec.ofNat 64 mp, BitVec.ofNat 64 n, BitVec.ofNat 64 mc]
       (Pre R b L K costF zp zc st xp xl xc yp ylen mp n mc) (Post R b L K costF zp zc st xp xl yp ylen mp n) := by
-  rw [show names = LibExp.names from rfl, ← LibExp.eq_only, show segAddr Extracted.program fn = fnE by decide]
+  rw [show names = LibW.names from rfl, ← LibW.eq_only, show segAddr Extracted.program fn = fnE by decide]
   intro ret hret s hs hpre
   janus_intro hs
   obtain ⟨hP, hMo, hM1, hslen, hbud⟩ := hpre
   have hcs := divCosts_of costF n xl (stLen s.mem st)
   obtain ⟨hbC, hbB, hbA, hbAC, hbP⟩ := buds hbud
-  have hc := codeIn_ofImpl_restrict_of_apart hap LibExp.names
-  rw [← LibExp.eq_only] at hc
-  have hgr' : GrowsliceLiveContract (LibExp.program.link impl) grE 4096 R := by
+  have hc := codeIn_ofImpl_restrict_of_apart hap LibW.names
+  rw [← LibW.eq_only] at hc
+  have hgr' : GrowsliceLiveContract (LibW.program.link impl) grE 4096 R := by
     rw [← grE_eq]; exact StackNat.GrowsliceLiveContract.of_codeIn hc hgr
-  have hmc' : MemclrNoHeapPointersLive (LibExp.program.link impl) mcE 4096 R := by
+  have hmc' : MemclrNoHeapPointersLive (LibW.program.link impl) mcE 4096 R := by
     rw [← mcE_eq]; exact MemclrNoHeapPointersLive.of_codeIn hc hclr
-  have hwb' : WbLiveContract (LibExp.program.link impl) wbE 4096 R 2 := by
+  have hwb' : WbLiveContract (LibW.program.link impl) wbE 4096 R 2 := by
     rw [← wbE_eq]; exact WbLiveContract.of_codeIn hc hwb
   refine returns_of_reaches (W4Pro.reaches_mono (W4En.enStep impl hap R hclr hmv hmk
     (StackNat.hyp impl hap R hgr hclr hwb) hgr' hmc' hwb' nsD stkD (divCost costF n xl (stLen s.mem st)) costF hDiv hnsD hnsW Lsh.names 4256
@@ -60,7 +61,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   exact ⟨⟨e1, e2, e3, e4⟩, hq⟩
 
 set_option linter.defProp false in
-/-- `ens` as a callee summary in a caller whose program keeps `LibExp.names` -/
+/-- `ens` as a callee summary in a caller whose program keeps `LibW.names` -/
 def sum (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hclr : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
@@ -69,11 +70,11 @@ def sum (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtIn
     (hgr : GrowsliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.growslice") 4096 R)
     (hwb : WbLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 4096 R 2)
     (nsD : List String) (stkD : Nat) (costF : Nat → Nat → Nat → Nat) (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costF)
-    (hnsD : ∀ x, nsD.contains x = true → LibExp.names.contains x = true)
+    (hnsD : ∀ x, nsD.contains x = true → LibW.names.contains x = true)
     (hnsW : nsD.contains Extracted.seg34.name = false)
     (b : Nat) (L : List (Nat × Nat)) (K : Nat) (hKD : stkD ≤ K) (hKL : 4256 ≤ K)
     (zp zl zc st xp xl xc yp ylen yc mp n mc : Nat) :=
-  CallW.hypSum hap (fun _ h => h) (ens impl hap R hclr hmv hmk hgr hwb nsD stkD costF hDiv hnsD hnsW b L K hKD hKL
+  LibWC.hypSum hap (fun _ h => h) (ens impl hap R hclr hmv hmk hgr hwb nsD stkD costF hDiv hnsD hnsW b L K hKD hKL
     zp zl zc st xp xl xc yp ylen yc mp n mc)
 
 end FvModexp.Arm64.ExpW4

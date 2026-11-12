@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.LibW
 import FvModexp.Proofs.Arm64.Exp.W2Defs
 
 /-!
@@ -20,7 +21,7 @@ abbrev powHead : Nat := 1803692
 /-- the loop exit (after the table): `z = z.make(2 * numWords)` -/
 abbrev j4 : Nat := 1803756
 
-theorem fnBase' : segAddr LibExp.program W2Loop.fn = 1801904 := by decide
+theorem fnBase' : segAddr LibW.program W2Loop.fn = 1801904 := by decide
 
 /-- the frame words the table loop writes (callee window, `i+1` at `328`, `24·i` at `320`, headers, `&powers[i]` at `592`) -/
 @[reducible] def pw (sp : Nat) : List (Nat × Nat) :=

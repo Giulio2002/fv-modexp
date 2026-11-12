@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.LibW
 import FvModexp.Proofs.Arm64.Exp.W2ZcC
 import FvModexp.Proofs.Arm64.Exp.W2ZcP
 
@@ -24,8 +25,8 @@ set_option janus.callRegions true in
 set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 theorem zcB (impl : List Segment) (R : RtInv)
-    (hmv : MemmoveLive (LibExp.program.link impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
-    (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret) (Q : Outcome → Prop)
+    (hmv : MemmoveLive (LibW.program.link impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
+    (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret) (Q : Outcome → Prop)
     (b : Nat) (L : List (Nat × Nat)) (g sp n mp mc k0 yp ylen zp zc zzp zzc yi k pd V : Nat) (M : Memory)
     (r18 r29 : BitVec 64)
     (he : Env R L g sp M) (hn : 0 < n) (hn16 : n ≤ 2 ^ 16) (hz : Buf R L g sp n M zp zc) (hk : k ≤ 31)
@@ -55,8 +56,8 @@ theorem zcB (impl : List Segment) (R : RtInv)
       MemFrame M M' (R.rt ++ cw sp ++ [(zp, zp + 8 * n)]) → LiveFrame M M' L [(zp, zp + 8 * n)] →
       R.inv b L g (view R.rt L M') → M'.regions = M.regions →
       M'.readLE zp (8 * n) = V → M'.readLE (sp + 240) 8 = ylen - 1 →
-      Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret) S Q := by
+      Reaches ((LibW.program.link impl).withExit ret) S' Q) :
+    Reaches ((LibW.program.link impl).withExit ret) S Q := by
   have he0' := he
   have hz0 := hz
   have he0 := he

@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.LibW
 import FvModexp.Proofs.Arm64.Exp.W4XnR
 
 /-!
@@ -73,10 +74,10 @@ set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 set_option janus.callRegions true in
 theorem xnB (impl : List Segment) (R : RtInv)
-    (hmv : MemmoveLive (LibExp.program.link impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
-    (hclr : MemclrNoHeapPointersLive (LibExp.program.link impl)
+    (hmv : MemmoveLive (LibW.program.link impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
+    (hclr : MemclrNoHeapPointersLive (LibW.program.link impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
-    (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret)
+    (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret)
     (Q : Outcome → Prop) (L : List (Nat × Nat)) (g sp n xp xl rr st ylen mp : Nat) (M : Memory)
     (he : W4Loop.Env R L g sp M) (hn : n ≤ 128) (hxl : xl < n)
     (hxa : M.accessible xp (8 * xl) false = true) (hx48 : xp + 8 * xl ≤ 2 ^ 48)
@@ -99,8 +100,8 @@ theorem xnB (impl : List Segment) (R : RtInv)
       S'.regs 11 = BitVec.ofNat 64 n → S'.regs 18 = r18 → S'.regs 28 = BitVec.ofNat 64 g → S'.regs 29 = r29 →
       S'.mem = M' → MemFrame M M' (R.rt ++ xbW sp rr n) → LiveFrame M M' L [(rr, rr + 8 * n)] →
       R.inv b L g (view R.rt L M') → M'.regions = M.regions → M'.readLE rr (8 * n) = M.readLE xp (8 * xl) →
-      Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret) S Q := by
+      Reaches ((LibW.program.link impl).withExit ret) S' Q) :
+    Reaches ((LibW.program.link impl).withExit ret) S Q := by
   have he0 := he
   obtain ⟨hal, hsp1, hsp2, hwacc, hg1, hg2, hg3, hwrt, hgw, hgrt, hLs⟩ := he0
   have hLs' : ∀ r ∈ L, (r.1 + (r.2 - r.1) ≤ sp - 4096 ∨ sp - 8 ≤ r.1) ∧

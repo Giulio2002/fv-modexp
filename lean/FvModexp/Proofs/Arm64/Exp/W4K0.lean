@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Arm64.Exp.LibExp
+import FvModexp.Proofs.Arm64.Exp.LibW
 import FvModexp.Proofs.Common.ExpMont
 
 /-!
@@ -19,20 +19,20 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 /-- one test of the Newton loop -/
-theorem kIter (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret) (Q : Outcome → Prop)
+theorem kIter (impl : List Segment) (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret) (Q : Outcome → Prop)
     (S : State) (j t k : Nat) (hj : j ≤ 6) (ht : t < 2 ^ 64) (hk : k < 2 ^ 64)
     (hpc : S.pc = BitVec.ofNat 64 kHead) (h1 : S.regs 1 = BitVec.ofNat 64 (2 ^ j))
     (h9 : S.regs 9 = BitVec.ofNat 64 t) (h13 : S.regs 13 = BitVec.ofNat 64 k)
     (KE : ∀ S' : State, ¬ 2 ^ j < 64 → S'.pc = BitVec.ofNat 64 kExit → S'.sp = S.sp → S'.mem = S.mem →
       S'.regs 13 = BitVec.ofNat 64 k →
       (∀ i, i ≠ 1 → i ≠ 9 → i ≠ 13 → i ≠ 14 → S'.regs i = S.regs i) →
-      Reaches ((LibExp.program.link impl).withExit ret) S' Q)
+      Reaches ((LibW.program.link impl).withExit ret) S' Q)
     (KL : ∀ S' : State, 2 ^ j < 64 → S'.pc = BitVec.ofNat 64 kHead → S'.sp = S.sp → S'.mem = S.mem →
       S'.regs 1 = BitVec.ofNat 64 (2 ^ (j + 1)) → S'.regs 9 = BitVec.ofNat 64 (t * t % 2 ^ 64) →
       S'.regs 13 = BitVec.ofNat 64 (k * ((t * t % 2 ^ 64 + 1) % 2 ^ 64) % 2 ^ 64) →
       (∀ i, i ≠ 1 → i ≠ 9 → i ≠ 13 → i ≠ 14 → S'.regs i = S.regs i) →
-      Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret) S Q := by
+      Reaches ((LibW.program.link impl).withExit ret) S' Q) :
+    Reaches ((LibW.program.link impl).withExit ret) S Q := by
   have hp : 2 ^ j ≤ 64 := by
     calc 2 ^ j ≤ 2 ^ 6 := Nat.pow_le_pow_right (by omega) hj
       _ = 64 := by rfl
@@ -53,15 +53,15 @@ theorem kIter (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program.
     · intro i a1 a2 a3 a4; first | (janus_simp; done) | (janus_simp; simp [a1, a2, a3, a4])
 
 /-- the whole Newton loop from its head (`j` doublings done) -/
-theorem kLoop (impl : List Segment) (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret) (Q : Outcome → Prop) :
+theorem kLoop (impl : List Segment) (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret) (Q : Outcome → Prop) :
     ∀ (d j t k : Nat) (S : State), j + d = 6 → t < 2 ^ 64 → k < 2 ^ 64 →
       S.pc = BitVec.ofNat 64 kHead → S.regs 1 = BitVec.ofNat 64 (2 ^ j) →
       S.regs 9 = BitVec.ofNat 64 t → S.regs 13 = BitVec.ofNat 64 k →
       (∀ S' : State, S'.pc = BitVec.ofNat 64 kExit → S'.sp = S.sp → S'.mem = S.mem →
         S'.regs 13 = BitVec.ofNat 64 (Exp.newtonLoop 64 j t k) →
         (∀ i, i ≠ 1 → i ≠ 9 → i ≠ 13 → i ≠ 14 → S'.regs i = S.regs i) →
-        Reaches ((LibExp.program.link impl).withExit ret) S' Q) →
-      Reaches ((LibExp.program.link impl).withExit ret) S Q := by
+        Reaches ((LibW.program.link impl).withExit ret) S' Q) →
+      Reaches ((LibW.program.link impl).withExit ret) S Q := by
   intro d
   induction d with
   | zero =>

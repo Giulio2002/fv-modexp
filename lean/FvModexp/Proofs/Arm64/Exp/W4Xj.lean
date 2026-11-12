@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.LibW
 import FvModexp.Proofs.Arm64.Exp.W4CtxB
 import FvModexp.Proofs.Arm64.Exp.W4Sn1
 import FvModexp.Proofs.Arm64.Exp.W4XjR
@@ -97,13 +98,13 @@ theorem xjStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
     (hSN : StackNat.Hyp impl R StackNat.names 4208 24)
     (nsD : List String) (stkD costD : Nat) (costF : Nat → Nat → Nat → Nat) (hDiv : ExpHyp.DivHyp impl R nsD stkD 112 costF)
-    (hnsD : ∀ x, nsD.contains x = true → LibExp.names.contains x = true)
+    (hnsD : ∀ x, nsD.contains x = true → LibW.names.contains x = true)
     (hnsW : nsD.contains Extracted.seg34.name = false)
     (nsL : List String) (stkL : Nat) (hLsh : Lsh.Hyp2 impl R nsL stkL 64)
-    (hnsL : ∀ x, nsL.contains x = true → LibExp.names.contains x = true)
+    (hnsL : ∀ x, nsL.contains x = true → LibW.names.contains x = true)
     (hnsWL : nsL.contains Extracted.seg34.name = false)
     (hserv : RunIface.Serves R)
-    (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret)
+    (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret)
     (b : Nat) (L : List (Nat × Nat)) (g sp K n mp mc Mv xp xc Xv yp ylen Y yi zp zc st n0 l0 : Nat)
     (M : Memory) (r18 r29 f29 : BitVec 64) (hKD : stkD ≤ K) (hKL : stkL ≤ K)
     (hB : CtxB R L g sp K n mp mc Mv yp ylen Y yi zp zc st n0 l0 ret r29 [] M) (hl0e : stLen M st = l0)
@@ -123,7 +124,7 @@ theorem xjStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     (h6 : S.regs 6 = BitVec.ofNat 64 xc) (h8 : S.regs 8 = BitVec.ofNat 64 ylen) (h10 : S.regs 10 = BitVec.ofNat 64 mp)
     (h11 : S.regs 11 = BitVec.ofNat 64 n)
     (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = f29) (hmem : S.mem = M) :
-    Reaches ((LibExp.program.link impl).withExit ret) S
+    Reaches ((LibW.program.link impl).withExit ret) S
       (IsReturn (fun s' => ∃ zzp zzc : Nat, (2 * n + 1 ≤ zzc ∧ InRanges zzp (8 * zzc) R.rt ∧ ApartAll zzp (8 * zzc) L0) ∧
         DivRetPost R L0 K bA M0 g sp n mp mc Mv Xv (Exp.newton 64 (Mv % Exp.B)) yp ylen Y yi
         zp zc st n0 zzp zzc (l0 + 2 * StackNat.rnd (2 * n)) r18 r29 s')) := by

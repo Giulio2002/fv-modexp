@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.LibWC
 import FvModexp.Proofs.Arm64.Exp.W4Defs
 
 /-!
@@ -19,7 +20,7 @@ theorem body2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     (hclr : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
-    (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret) (Q : Outcome → Prop)
+    (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret) (Q : Outcome → Prop)
     (b : Nat) (L : List (Nat × Nat)) (g sp n mp mc k0 yp ylen Y : Nat) (tbl pp pcap : Nat → Nat) {ext : List (Nat × Nat)} (M0 : Memory)
     (r18 r29 : BitVec 64)
     (hst : Static R L g sp n mp mc k0 yp ylen Y tbl pp pcap M0)
@@ -41,8 +42,8 @@ theorem body2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
       Mem R b L g sp M0 M' zzp zzc zp zc → M'.readLE (sp + 240) 8 = i →
       M'.readLE zzp (8 * n) = Exp.montgomery n (sq n (M0.readLE mp (8 * n)) k0 (sq n (M0.readLE mp (8 * n)) k0
         (M.readLE zp (8 * n)))) (tbl (yi / 2 ^ 60)) (M0.readLE mp (8 * n)) k0 →
-      Reaches ((LibExp.program.link impl).withExit ret) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret) S Q := by
+      Reaches ((LibW.program.link impl).withExit ret) S' Q) :
+    Reaches ((LibW.program.link impl).withExit ret) S Q := by
   obtain ⟨he, hn, hn16, hmc, hmc', hk0, hyl, hyl', hm, hy, hY, hpw, r1016, r1024, r1032, r224, r1000, r992, hok⟩ := hst
   have hd : yi / 2 ^ 60 < 16 := by omega
   obtain ⟨hpi, hpv, hpc', rp0, rp1, rp2⟩ := hpw _ hd
@@ -59,11 +60,11 @@ theorem body2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
   have hzzI : Inp R L sp n M0 zzp := ⟨M0.accessible_sub hBzz.2.2.1 (Or.inr rfl) (Nat.le_refl _) (by omega),
     by omega, hBzz.2.2.2.2.1.imp (fun h => h.sub (Nat.le_refl _) (by omega)) (fun h => h.of_sub (Nat.le_refl _) (by omega)),
     by have := hBzz.2.2.2.2.2.1; unfold Apart at this ⊢; omega⟩
-  have hA := MontW.sum impl hap R hclr hmv b L g sp n mp mc zzp zzc zp zp k0 (BitVec.ofNat 64 n)
+  have hA := LibWC.montSum impl hap R hclr hmv b L g sp n mp mc zzp zzc zp zp k0 (BitVec.ofNat 64 n)
     (BitVec.ofNat 64 zc) (BitVec.ofNat 64 zc) (M0.readLE (g + 16) 8)
     (mcall_of he' hn hmc hmc' hBzz hzI hzI hm (by have := hzzz; unfold Apart at this ⊢; omega)
       (by have := hzzz; unfold Apart at this ⊢; omega) hzzm (hok _)) hk0
-  have hBs := MontW.sum impl hap R hclr hmv b L g sp n mp mc zp zc zzp zzp k0 (BitVec.ofNat 64 n)
+  have hBs := LibWC.montSum impl hap R hclr hmv b L g sp n mp mc zp zc zzp zzp k0 (BitVec.ofNat 64 n)
     (BitVec.ofNat 64 zzc) (BitVec.ofNat 64 zzc) (M0.readLE (g + 16) 8)
     (mcall_of he' hn hmc hmc' hBz hzzI hzzI hm (by have := hzzz; unfold Apart at this ⊢; omega)
       (by have := hzzz; unfold Apart at this ⊢; omega) hzm (hok _)) hk0
@@ -77,15 +78,15 @@ theorem body2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     simp only [outside_append, outside_cons, outside_nil, and_true, hgrt, true_and]
     omega
   obtain ⟨hma, hmb, hmh, hmw⟩ := hm
-  have hC := MontW.sum impl hap R hclr hmv b L g sp n mp mc zzp zzc zp (pp (yi / 2 ^ 60)) k0 (BitVec.ofNat 64 n)
+  have hC := LibWC.montSum impl hap R hclr hmv b L g sp n mp mc zzp zzc zp (pp (yi / 2 ^ 60)) k0 (BitVec.ofNat 64 n)
     (BitVec.ofNat 64 zc) (BitVec.ofNat 64 (pcap (yi / 2 ^ 60))) (M0.readLE (g + 16) 8)
     (mcall_of he' hn hmc hmc' hBzz' hzI hpi hm' (by have := hzzz; unfold Apart at this ⊢; omega) hzzp1 hzzm (hok _)) hk0
   obtain ⟨hpa, hpb, hph, hpw'⟩ := hpi
   obtain ⟨hzc1, hzc2, hza, hzb, hzh, hzw, hzg⟩ := hBz
   obtain ⟨hzzc1, hzzc2, hzza, hzzb, hzzh, hzzw, hzzg⟩ := hBzz
   janus_run [r1016, r1024, r1032, r224, r1000, r992, r240, r400, r160, r168, r184, r232]
-    until [segAddr LibExp.program fn + 0x9bc] calls [hP3 := hA]
-  janus_run [r1016, r1024, r1032, r224, r1000, r992, r240, r184, r232] until [segAddr LibExp.program fn + 0xa04]
+    until [segAddr LibW.program fn + 0x9bc] calls [hP3 := hA]
+  janus_run [r1016, r1024, r1032, r224, r1000, r992, r240, r184, r232] until [segAddr LibW.program fn + 0xa04]
     calls [hP4 := hBs]
   have hd' : yi / 1152921504606846976 < 16 := hd
   have e0 : sp + 432 + (8 * (yi / 1152921504606846976) + 2 * (8 * (yi / 1152921504606846976))) =

@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.LibW
 import FvModexp.Proofs.Arm64.Exp.W2OneRet
 
 /-!
@@ -19,7 +20,7 @@ theorem oneRet (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
     (hSN : StackNat.Hyp impl R StackNat.names 4208 24)
     (hserv : RunIface.Serves R)
-    (ret : Nat) (hret : RetAddr (LibExp.program.link impl) ret)
+    (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret)
     (b : Nat) (L : List (Nat × Nat)) (g sp n mp mc t rrp rrc xp xc yp ylen Y yi zp zc zzp zzc st n0 : Nat)
     (M : Memory) (r18 r29 f29 : BitVec 64)
     (he : Env R L g sp M) (hce : CallW.CEnv R L g sp 4304 752 M)
@@ -71,7 +72,7 @@ theorem oneRet (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     (S : State) (hpc : S.pc = BitVec.ofNat 64 oneJ) (hsp : S.sp = BitVec.ofNat 64 sp)
     (h0 : S.regs 0 = BitVec.ofNat 64 n)
     (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = f29) (hmem : S.mem = M) :
-    Reaches ((LibExp.program.link impl).withExit ret) S
+    Reaches ((LibW.program.link impl).withExit ret) S
       (IsReturn (fun s' => ∃ (onep : Nat) (M2 : Memory) (L2 : List (Nat × Nat)) (b2 : Nat),
         OneChain R b L L2 b2 sp n st M M2 ∧
         RetPost R b2 L2 g sp n mp mc t (stW M2 st + 8 * stLen M st) yp ylen Y yi zp zc zzp zzc st n0 onep r18 r29
@@ -79,8 +80,8 @@ theorem oneRet (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
 
   have hce0 := hce
   obtain ⟨-, -, -, -, -, -, -, -, -, -, -, hd, -⟩ := hce0
-  have hc := codeIn_ofImpl_restrict_of_apart hap LibExp.names
-  rw [← LibExp.eq_only] at hc
+  have hc := codeIn_ofImpl_restrict_of_apart hap LibW.names
+  rw [← LibW.eq_only] at hc
   have hmkL := MakesliceLiveContract.of_codeIn hc hmk
   by_cases h4 : n ≤ 4
   · exact oneSmall impl ret hret _ R b L g sp n st M r18 f29 he hn h4 r736 r672 hinv S hpc hsp h0 h18 h28 h29 hmem
