@@ -60,8 +60,8 @@ theorem c2m (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     exact ⟨0, 2, by omega, by omega, by simp only [opAt]; omega, by simp only [opAt]; omega⟩
   have hBm : RunIface.ModBudget (max (RunIface.lenW T.mem (s.sp.toNat - 136)) (RunIface.lenW T.mem (s.sp.toNat - 200)))
       ≤ b1 := by
-    have l0 : RunIface.lenW T.mem (s.sp.toNat - 136) ≤ opW s p len 0 := lenW_op (hop 0 (by omega)) (by omega)
-    have l2 : RunIface.lenW T.mem (s.sp.toNat - 200) ≤ opW s p len 2 := lenW_op (hop 2 (by omega)) (by omega)
+    have l0 : RunIface.lenW T.mem (s.sp.toNat - 136) ≤ opW s p len 0 := lenW_op0 (hop 0 (by omega))
+    have l2 : RunIface.lenW T.mem (s.sp.toNat - 200) ≤ opW s p len 2 := lenW_op2 (hop 2 (by omega))
     have hbB' := hbB
     simp only [okB, callB] at hbB'
     have := budget_mod (w := wMax s p len) (lb := 0)
@@ -108,8 +108,8 @@ theorem c2m (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     unfold RunIface.lenW; omega
   have hBB : RunIface.ModBudget (max (RunIface.lenW T.mem (s.sp.toNat - 136)) (RunIface.lenW T.mem (s.sp.toNat - 200))) +
       RunIface.BytesBudget (RunIface.lenW s'.mem (s.sp.toNat - 136)) ≤ b1 := by
-    have l0 : RunIface.lenW T.mem (s.sp.toNat - 136) ≤ opW s p len 0 := lenW_op (hop 0 (by omega)) (by omega)
-    have l2 : RunIface.lenW T.mem (s.sp.toNat - 200) ≤ opW s p len 2 := lenW_op (hop 2 (by omega)) (by omega)
+    have l0 : RunIface.lenW T.mem (s.sp.toNat - 136) ≤ opW s p len 0 := lenW_op0 (hop 0 (by omega))
+    have l2 : RunIface.lenW T.mem (s.sp.toNat - 200) ≤ opW s p len 2 := lenW_op2 (hop 2 (by omega))
     simp only [okB, callB] at hbB
     exact budget_mod (w := wMax s p len) (Nat.le_trans l0 (Nat.le_trans (Nat.le_max_left _ _) (Nat.le_max_left _ _)))
       (Nat.le_trans l2 (Nat.le_max_right _ _)) hlb hbud hbB
@@ -135,9 +135,9 @@ theorem c2m (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     exact hval0
   have hIV2 : RunIface.IntV T.mem (s.sp.toNat - 200) = opV s p len 2 := by rw [intV_eq]; exact hval2
   have l0 : RunIface.lenW T.mem (s.sp.toNat - 136) ≤ wMax s p len :=
-    Nat.le_trans (lenW_op (hop 0 (by omega)) (by omega)) (Nat.le_trans (Nat.le_max_left _ _) (Nat.le_max_left _ _))
+    Nat.le_trans (lenW_op0 (hop 0 (by omega))) (Nat.le_trans (Nat.le_max_left _ _) (Nat.le_max_left _ _))
   have l2 : RunIface.lenW T.mem (s.sp.toNat - 200) ≤ wMax s p len :=
-    Nat.le_trans (lenW_op (hop 2 (by omega)) (by omega)) (Nat.le_max_right _ _)
+    Nat.le_trans (lenW_op2 (hop 2 (by omega))) (Nat.le_max_right _ _)
   have hspW : W ≤ s.sp.toNat := by omega
   have hTw : T.mem.accessible (s.sp.toNat - W) (W + 40) true = true := by rw [hMF.accessible]; exact hw
   have hz1 : s.sp.toNat - W ≤ s.sp.toNat - 136 := by omega

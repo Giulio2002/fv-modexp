@@ -71,12 +71,12 @@ theorem c2eXB (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     · simp only [List.mem_singleton] at ha'; subst ha'
       exact ⟨1, 2, by omega, by omega, by simp only [opAt]; omega, by simp only [opAt]; omega⟩
   have l0 : RunIface.lenW T.mem (s.sp.toNat - 136) ≤ wMax s p len :=
-    Nat.le_trans (lenW_op (hop 0 (by omega)) (by omega)) (Nat.le_trans (Nat.le_max_left _ _) (Nat.le_max_left _ _))
+    Nat.le_trans (lenW_op0 (hop 0 (by omega))) (Nat.le_trans (Nat.le_max_left _ _) (Nat.le_max_left _ _))
   have l1 : RunIface.lenW T.mem (s.sp.toNat - 168) ≤ wMax s p len :=
-    Nat.le_trans (lenW_op (hop 1 (by omega)) (by omega)) (Nat.le_trans (Nat.le_max_right _ _) (Nat.le_max_left _ _))
-  have l1' : RunIface.lenW T.mem (s.sp.toNat - 168) ≤ opW s p len 1 := lenW_op (hop 1 (by omega)) (by omega)
+    Nat.le_trans (lenW_op1 (hop 1 (by omega))) (Nat.le_trans (Nat.le_max_right _ _) (Nat.le_max_left _ _))
+  have l1' : RunIface.lenW T.mem (s.sp.toNat - 168) ≤ opW s p len 1 := lenW_op1 (hop 1 (by omega))
   have l2 : RunIface.lenW T.mem (s.sp.toNat - 200) ≤ wMax s p len :=
-    Nat.le_trans (lenW_op (hop 2 (by omega)) (by omega)) (Nat.le_max_right _ _)
+    Nat.le_trans (lenW_op2 (hop 2 (by omega))) (Nat.le_max_right _ _)
   have hbB' := hbB
   simp only [okB, callB] at hbB'
   have hBm : RunIface.ExpBudget (max (max (RunIface.lenW T.mem (s.sp.toNat - 136)) (RunIface.lenW T.mem (s.sp.toNat - 168)))
@@ -264,12 +264,12 @@ theorem c2eX (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     · simp only [List.mem_singleton] at ha'; subst ha'
       exact ⟨1, 2, by omega, by omega, by simp only [opAt]; omega, by simp only [opAt]; omega⟩
   have l0 : RunIface.lenW T.mem (s.sp.toNat - 136) ≤ wMax s p len :=
-    Nat.le_trans (lenW_op (hop 0 (by omega)) (by omega)) (Nat.le_trans (Nat.le_max_left _ _) (Nat.le_max_left _ _))
+    Nat.le_trans (lenW_op0 (hop 0 (by omega))) (Nat.le_trans (Nat.le_max_left _ _) (Nat.le_max_left _ _))
   have l1 : RunIface.lenW T.mem (s.sp.toNat - 168) ≤ wMax s p len :=
-    Nat.le_trans (lenW_op (hop 1 (by omega)) (by omega)) (Nat.le_trans (Nat.le_max_right _ _) (Nat.le_max_left _ _))
-  have l1' : RunIface.lenW T.mem (s.sp.toNat - 168) ≤ opW s p len 1 := lenW_op (hop 1 (by omega)) (by omega)
+    Nat.le_trans (lenW_op1 (hop 1 (by omega))) (Nat.le_trans (Nat.le_max_right _ _) (Nat.le_max_left _ _))
+  have l1' : RunIface.lenW T.mem (s.sp.toNat - 168) ≤ opW s p len 1 := lenW_op1 (hop 1 (by omega))
   have l2 : RunIface.lenW T.mem (s.sp.toNat - 200) ≤ wMax s p len :=
-    Nat.le_trans (lenW_op (hop 2 (by omega)) (by omega)) (Nat.le_max_right _ _)
+    Nat.le_trans (lenW_op2 (hop 2 (by omega))) (Nat.le_max_right _ _)
   have hbB' := hbB
   simp only [okB, callB] at hbB'
   have hBm : RunIface.ExpBudget (max (max (RunIface.lenW T.mem (s.sp.toNat - 136)) (RunIface.lenW T.mem (s.sp.toNat - 168)))

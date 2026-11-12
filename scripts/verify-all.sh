@@ -17,6 +17,11 @@ readonly ROW_MEMCAP=16G ROW_TIMEOUT=900
 JANUS_FIXED=/srv/fv-modexp-ops/janus-provfix
 if [ -z "${JANUS:-}" ]; then if [ -x "$JANUS_FIXED" ]; then JANUS="$JANUS_FIXED"; else JANUS=janus; fi; fi
 export LEAN_NUM_THREADS="${LEAN_NUM_THREADS:-4}" JANUS_JOBS="${JANUS_JOBS:-2}"
+# Kernel replay of a row's own modules (leanchecker, one process per module): under the row's memcap 16G Janus sizes the
+# replay workers by a 5 GiB-per-worker estimate for 2 threads (cmd/janus/replaybudget.go) -> ONE worker, i.e. the row's
+# 50-56 modules replayed one after the other (147-206 s of a 545-629 s RunErr row, agent top s19). Our modules replay in
+# <= 3 GB each with one thread, so 1 thread per worker (2 GiB estimate) lets 4 run at once. A Janus option, not a cap.
+export JANUS_REPLAY_THREADS="${JANUS_REPLAY_THREADS:-1}"
 WITNESS="${WITNESS:-1}"; NPAR="${ROWS:-1}"
 command -v memcap >/dev/null || { echo "error: memcap not found (every row must run under a memory cap)" >&2; exit 2; }
 command -v "$JANUS" >/dev/null || { echo "error: janus binary not found (JANUS=...)" >&2; exit 2; }
@@ -122,8 +127,15 @@ print(b//1048576)' "$out" 2>/dev/null || echo 0)
 admit() { local l m; l=$(cut -d' ' -f1 /proc/loadavg | cut -d. -f1); m=$(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo); [ "$l" -lt "${MAX_LOAD:-40}" ] && [ "$m" -ge 20 ]; }
 # ---- cache warm-up (outside the row caps): build the Janus framework and the consumer dependency closure into the cache once, so that a
 # row's 900 s / 16 G caps measure the row's own modules and kernel replay only. The verdict of the warm-up is irrelevant (logged only).
+# One warm-up per ISA among the rows (agent top s19): the per-extraction `Extracted`/`JanusTrusted` compile (~85 s for the
+# amd64 Run extraction) is not a row's own module either.
 if [ -z "${SKIP_WARMUP:-}" ]; then
-  wsym=""; for i in "${!jobs_sym[@]}"; do [ "${jobs_sym[$i]}" != "-" ] && { wsym="${jobs_sym[$i]}"; wisa="${jobs_isa[$i]}"; break; }; done
+ wdone=""
+ for wi in "${!jobs_sym[@]}"; do
+  wsym="${jobs_sym[$wi]}"; wisa="${jobs_isa[$wi]}"
+  [ "$wsym" != "-" ] || continue
+  case " $wdone " in *" $wisa "*) continue ;; esac
+  wdone="$wdone $wisa"
   if [ -n "$wsym" ]; then
     tw=$(date +%s)
     wc="${wsym%.abi0}"; wc="${wc%.abiinternal}"; wc="${wc##*.}"; wc="${wc^}"
@@ -132,8 +144,9 @@ if [ -z "${SKIP_WARMUP:-}" ]; then
       memcap -m "$ROW_MEMCAP" $JANUS verify build/ex-warmup --proof lean/FvModexp/Proofs/Warmup.lean --proof-root lean \
         --theorem FvModexp.Warmup.correctness >>build/log-warmup 2>&1
     if grep -q 'Kernel replay: leanchecker passed' build/log-warmup; then wv=ok; else wv="FAILED: rows will pay the framework build / kernel replay"; fi
-    echo "cache warm-up: $(( $(date +%s) - tw )) s, $wv (build/log-warmup; not a row)"
+    echo "cache warm-up ($wisa): $(( $(date +%s) - tw )) s, $wv (build/log-warmup; not a row)"
   fi
+ done
 fi
 # ---- ROW CAP RULE (BRIEF): all rows share the ONE fresh cache above; Janus's olean store reuses consumer modules compiled by earlier
 # rows, so rows run BOTTOM-UP (scripts/row-order.py: by import-closure size) and a row starts only after every row it shares a proof
