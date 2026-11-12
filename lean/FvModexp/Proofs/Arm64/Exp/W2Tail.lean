@@ -127,7 +127,7 @@ theorem exitRet (impl : List Segment) (hap : ImplApart Extracted.program impl) (
   have hfj := finEnv_chain hM' hJ hfe hwrt hgrt hsth hs.1 hs.2 hBz.2.2.2.2.2.2 hBzz.2.2.2.2.2.2 hBz.2.2.2.2.2.1
     hBzz.2.2.2.2.2.1 hgw4 hstw4
   rw [← njoin_eq] at b1
-  refine (fin impl hap ret hret sp g st n0 p c r18 r29 Mj hc64 hfj l Sj b1 b2 b3 b4 b5 b6 b7 b9 hlc hpa).mono ?_
+  refine (fin impl hap ret hret sp g st n0 p c r18 r29 Mj (by have := hc64.2; omega) hfj l Sj b1 b2 b3 b4 b5 b6 b7 b9 hlc hpa).mono ?_
   intro o ho'
   cases o with
   | returned s' => exact ⟨M', Mj, p, l, c, hM', hval, hJ, ho'⟩
