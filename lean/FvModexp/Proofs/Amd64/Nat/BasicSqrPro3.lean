@@ -75,6 +75,8 @@ theorem pro3 (impl : List Amd64.Segment) (R : RtInv)
     (hgrow : stCap s.mem st.toNat < stLen s.mem st.toNat + (2 * xl.toNat + 3) / 4 * 4 →
       InRanges (stW S2.mem st.toNat) (8 * stCap S2.mem st.toNat) R.rt ∧
         ApartAll (stW S2.mem st.toNat) (8 * stCap S2.mem st.toNat) L)
+    (hmem : stCap s.mem st.toNat < stLen s.mem st.toNat + (2 * xl.toNat + 3) / 4 * 4 →
+      (stW S2.mem st.toNat, stW S2.mem st.toNat + 8 * stCap S2.mem st.toNat) ∈ L1)
     (hF2 : MemFrame (P.mem.writeLE ((s.regs 4).toNat - 200) 8 6231390) S2.mem
       (R.rt ++ [((s.regs 4).toNat - 200 - 4192, (s.regs 4).toNat - 200 + 24)] ++ stkWs s.mem st.toNat))
     (hLF2 : LiveFrame (P.mem.writeLE ((s.regs 4).toNat - 200) 8 6231390) S2.mem L (stkWs s.mem st.toNat)) :
@@ -99,7 +101,9 @@ theorem pro3 (impl : List Amd64.Segment) (R : RtInv)
         rw [hPs (st.toNat + 8) _ (by omega), hPs (st.toNat + 16) _ (by omega), hPs st.toNat _ (by omega)]; exact hsame)
     (by simp only [stLen, stW, stCap] at hgrow ⊢
         rw [hPs (st.toNat + 8) _ (by omega), hPs (st.toNat + 16) _ (by omega)]; exact hgrow)
-    (fun a n v => by rw [hF2.accessible, Janus.Arm64.Memory.accessible_writeLE]) hx15s hdfs hra
+    (fun a n v => by rw [hF2.accessible, Janus.Arm64.Memory.accessible_writeLE])
+    (by simp only [stLen, stW, stCap] at hmem ⊢
+        rw [hPs (st.toNat + 8) _ (by omega), hPs (st.toNat + 16) _ (by omega)]; exact hmem) hx15s hdfs hra
   have hl := hE.lay
   have hsp0 := hl.sp0; have hsp1 := hl.sp1; have hx0 := hl.x0
   -- reads of `S2.mem` in the frame record

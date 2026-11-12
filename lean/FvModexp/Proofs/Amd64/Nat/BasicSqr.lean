@@ -17,7 +17,7 @@ namespace FvModexp.Amd64.BasicSqr
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem pro1 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
-    (hSN : StackNat.Hyp impl R StackNat.names 4192 24)
+    (hSN : StackNat.HypL impl R StackNat.names 4192 24)
     (hmc : MemclrNoHeapPointersLive64 (LibBasicSqr.program.link impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
     (hLsh : ∀ b L, Summary0 (LibBasicSqr.program.link impl) (segAddr Extracted.program lshVUfn) (LshLPre R b L)
       (LshLQ R b L))
@@ -87,7 +87,7 @@ theorem full (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
     rw [LibBasicSqr.eq_only]; exact A64.codeIn_restrict_mono64 hap (sub_of_all (by decide))
   have c4 : CodeIn64 (Extracted.program.ofImpl impl) (LibBasicSqr.program.link impl) := by
     rw [LibBasicSqr.eq_only]; exact codeIn_ofImpl_restrict_of_apart64 hap LibBasicSqr.names
-  exact pro1 impl hap R (StackNat.hyp impl hap R hgr hmc hwb) (MemclrNoHeapPointersLive64.of_codeIn c4 hmc)
+  exact pro1 impl hap R (StackNat.hypL impl hap R hgr hmc hwb) (MemclrNoHeapPointersLive64.of_codeIn c4 hmc)
     (fun b L => LshVUHyp.live (Summary.of_codeIn64 c1 (lshVUHyp impl hap)) R b L)
     (fun b L => AddVVHyp.live (Summary.of_codeIn64 c2 (addVVHyp impl hap)) R b L)
     (fun b L => AddMulVVWWHyp.live (Summary.of_codeIn64 c3 (addMulVVWWHyp impl hap)) R b L)

@@ -140,7 +140,7 @@ theorem post_fin {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp x
       · right; simpa using h
       · left; simpa using h
   case sb =>
-    refine ⟨⟨hst8, hE.ext.held hsth, by rw [hacc]; exact hstacc, hst48, ?_, ?_, ?_⟩, hlen, ?_⟩
+    refine ⟨⟨⟨hst8, hE.ext.held hsth, by rw [hacc]; exact hstacc, hst48, ?_, ?_, ?_⟩, hlen, ?_⟩, ?_⟩
     · show NatLive s'.mem R L1 (s'.mem.readLE st 8) (s'.mem.readLE (st + 16) 8)
       rw [hW, hC]
       intro h0
@@ -154,6 +154,9 @@ theorem post_fin {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp x
         (InRanges (s'.mem.readLE st 8) (8 * s'.mem.readLE (st + 16) 8) R.rt ∧
           ApartAll (s'.mem.readLE st 8) (8 * s'.mem.readLE (st + 16) 8) L)
       rw [hW, hC]; exact hE.arr
+    · show ArrIn L1 st s.mem s'.mem
+      simp only [ArrIn, stW, stCap]
+      rw [hW, hC]; exact fun hn => ⟨hE.amem hn, by have := hE.c1len; have := hE.big; omega⟩
   case mf =>
     refine hMF.mono fun a n ho => ?_
     simp only [win, ws, stkWs, outside_append, outside_cons, outside_nil, and_true] at ho ⊢
