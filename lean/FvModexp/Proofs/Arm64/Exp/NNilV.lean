@@ -126,7 +126,7 @@ theorem npreV {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {costF : N
     (hF : MemFrame s.mem M1 (R.rt ++ wN sp K)) (hLF : LiveFrame s.mem M1 L []) (hrg : M1.regions = s.mem.regions) :
     NPre R b1 L1 K costF needR costR needS needP costS costP g sp zp zl zc st xp xl xc yp yl yc mp n mc slow
       { s with mem := M1 } := by
-  obtain ⟨⟨hs1, hs28, hg1, hg2, hg3, hgo, hal, hK4, hKs, hsp2, hacc, hwrt, hLs, hd, hsv⟩, hK20, hG, hro, hwT, hslow,
+  obtain ⟨⟨hs1, hs28, hg1, hg2, hg3, hgo, hal, hK4, hKs, hsp2, hacc, hwrt, hLs, hd, hsv⟩, hK20, hG, ⟨hro, -⟩, hwT, hslow,
     hn, hn128, hnmc, hmc, hmO, hma, hm48, hmN, hyO, hya, hy48, hyN, hyl, hyc, hxO, hxa, hx48, hxN, hxl, hxp, hxc,
     hzp, hzlc, hzc, -, hali, hgAO, ⟨op, hone⟩, -, hwb, hb1, hb2, hb3, hb4, hbud, -, -, -⟩ := hP
   have hN' := hN

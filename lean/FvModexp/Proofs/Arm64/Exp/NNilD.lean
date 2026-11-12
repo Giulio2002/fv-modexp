@@ -11,7 +11,7 @@ import FvModexp.Proofs.Arm64.Exp.NGet
 * `PreNil`: `NDefs.NPre` with `st = 0` and without the stack block; the stack-size bounds and the budget at
   `stLen = 0`, the budget also pays the 24-byte `newobject`; `z`'s array (when non-empty) is held and apart from the
   window even when the alias test drops it (at `(*Int).exp`'s call it is the receiver's live array), and `z`'s range is
-  apart from the goroutine's stack-guard word (the deferred `stk.free()` runs after `z` may have been written); the pool's `New` word is `0` (the `Get` pre) and lies
+  apart from the goroutine's stack-guard word (the deferred `stk.free()` runs after `z` may have been written); address 0 is not a runtime object (`Outside 0 1 R.rt`: `newobject`'s result is non-nil); the pool's `New` word is `0` (the `Get` pre) and lies
   outside the window.
 * `PostNil`: `NDefs.Post` without the stack conjuncts: value, normalised, `LiveExt` (the stack's ranges, given back to
   the pool, are NOT in the final live set), budget `24 + NCost` at `stLen = 0`, frame `R.rt ++ winA ++ [z]`.
@@ -39,7 +39,7 @@ def PreNil (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K : Nat) (costF : Nat 
     (needR : Nat → Nat → Nat) (costR : Nat → Nat → Nat → Nat) (needS needP : Nat → Nat → Nat → Nat)
     (costS costP : Nat → Nat → Nat → Nat → Nat)
     (g sp zp zl zc st xp xl xc yp yl yc mp n mc slow : Nat) (s : State) : Prop :=
-  NEnv R L g sp K s ∧ K + 288 ≤ 2 ^ 20 ∧ RunIface.Globals R s.mem [(sp - K, sp + 1432)] ∧ RoOut R ∧
+  NEnv R L g sp K s ∧ K + 288 ≤ 2 ^ 20 ∧ RunIface.Globals R s.mem [(sp - K, sp + 1432)] ∧ (RoOut R ∧ Outside 0 1 R.rt) ∧
   Outside StackNat.wT 16 R.rt ∧ slow = 0 ∧
   0 < n ∧ n ≤ 128 ∧ n ≤ mc ∧ mc < 2 ^ 40 ∧
   NE0 R L sp K mp (8 * n) ∧ s.mem.accessible mp (8 * n) false = true ∧ mp + 8 * n ≤ 2 ^ 48 ∧

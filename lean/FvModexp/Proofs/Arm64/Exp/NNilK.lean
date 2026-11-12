@@ -30,10 +30,6 @@ theorem dwSum (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
   have h := Janus.Contracts.EqHashModel.Summary.of_codeIn hc (FreeSh.sum impl R hput b L rs)
   rwa [show segAddr Extracted.program Free.fn = dwA by decide] at h
 
-theorem stkRs_congr {m m' : Memory} {st : Nat} (hw : stW m' st = stW m st) (hc : stCap m' st = stCap m st) :
-    stkRs m' st = stkRs m st := by
-  simp only [stkRs]; rw [hw, hc]
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- **the flag-1 epilogue** (`stk == nil`): the `EpiK` the downstream chain needs, for the stack-given `Post` at the

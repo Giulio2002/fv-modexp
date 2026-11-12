@@ -58,6 +58,10 @@ theorem stkOK_frame {R : RtInv} {L : List (Nat × Nat)} {st : Nat} {m m' : Memor
   obtain ⟨a1, a2, a3, a4⟩ := h5 hc
   exact ⟨a1, a2, by rw [hF.accessible]; exact a3, a4⟩
 
+theorem stkRs_congr {m m' : Memory} {st : Nat} (hw : stW m' st = stW m st) (hc : stCap m' st = stCap m st) :
+    stkRs m' st = stkRs m st := by
+  simp only [stkRs]; rw [hw, hc]
+
 theorem liveSep_ext {R : RtInv} {L1 L2 w : List (Nat × Nat)} (hx : LiveExt R L1 L2) (hL : LiveSep L1 w)
     (hw : ∀ r ∈ w, Outside r.1 (r.2 - r.1) R.rt) : LiveSep L2 w := by
   obtain ⟨ns, rfl, hn, -⟩ := hx
