@@ -1,6 +1,8 @@
 import FvModexp.Proofs.Amd64.Top.RunC2Lem
 import FvModexp.Spec.RunAmd64
 
+set_option autoImplicit false
+
 /-! # `Run` (amd64): the `natOne` global at the `(*Int).exp` call (`RunIface.OneG`), from `Run`'s `Spec.RunAmd64.NatOne`
 
 As arm64 (`FvModexp.Arm64.Run.oneG_ops`); `oneG_push` moves the fact over the `CALL`'s return-address push (the pushed
@@ -61,5 +63,36 @@ theorem oneG_push {R : RtInv} {L : List (Nat × Nat)} {m : Janus.Arm64.Memory} {
   have hd := hxs a ha
   rw [hr (a + 8) 8 (by omega), hr (a + 24) 8 (by omega)]
   exact hap a ha
+
+/-- `stackPool`'s `New` word at the `Mod` / `exp` call (`RunIface.PoolG`), from `Run`'s `Spec.RunAmd64.StackPool` (as
+arm64 `poolG_ops`). -/
+theorem poolG_ops {R : RtInv} {s T : State} {M : Janus.Arm64.Memory} {W stkM aboveM : Nat}
+    (hT : (T.regs 4).toNat = (s.regs 4).toNat - 616) (hW : 616 + stkM ≤ W) (hab : aboveM ≤ 144)
+    (hsW : W ≤ (s.regs 4).toNat) (hpool : FvModexp.Spec.RunAmd64.StackPool R s.mem (win s W 40))
+    (hMF : MemFrame s.mem M (R.rt ++ win s 4800 40)) (hW1 : 4800 ≤ W) :
+    RunIface.PoolG R M (win T stkM aboveM) := by
+  dsimp only [FvModexp.Spec.RunAmd64.StackPool] at hpool
+  rw [show Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.stackPool» = RunIface.stackPoolA
+    from rfl] at hpool
+  obtain ⟨h0, hw, hrt, hwin⟩ := hpool
+  unfold RunIface.PoolG
+  generalize RunIface.stackPoolA + Pool.newOffset = a at hw hrt hwin ⊢
+  simp only [win, Janus.outside_cons, Janus.outside_nil, and_true] at hwin
+  refine ⟨h0, ?_, hrt, ?_⟩
+  · rw [hMF.readLE _ _ (by
+      simp only [win, Janus.outside_append, Janus.outside_cons, Janus.outside_nil, and_true]
+      exact ⟨hrt, by omega⟩)]
+    exact hw
+  · simp only [win, Janus.outside_cons, Janus.outside_nil, and_true]; rw [hT]; omega
+
+/-- `PoolG` survives a store of 8 bytes inside the window `[(lo, hi)]`. -/
+theorem poolG_push {R : RtInv} {m : Janus.Arm64.Memory} {lo hi : Nat} {addr v : Nat}
+    (h : RunIface.PoolG R m [(lo, hi)]) (hin : lo ≤ addr ∧ addr + 8 ≤ hi) :
+    RunIface.PoolG R (m.writeLE addr 8 v) [(lo, hi)] := by
+  obtain ⟨h0, hw, hrt, hwin⟩ := h
+  refine ⟨h0, ?_, hrt, hwin⟩
+  have hwin' := hwin
+  simp only [Janus.outside_cons, Janus.outside_nil, and_true] at hwin'
+  rw [Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega)]; exact hw
 
 end FvModexp.Amd64.Run

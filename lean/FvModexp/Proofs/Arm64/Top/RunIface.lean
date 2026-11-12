@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Conv
 
+set_option autoImplicit false
+
 /-!
 # `(*bigModExp).Run` (arm64): the interface of the big callees (DRAFT v1, agent top)
 
@@ -156,7 +158,8 @@ def IntOK (m : Memory) (R : RtInv) (L : List (Nat × Nat)) (a : Nat) : Prop :=
   m.readLE a 1 = 0 ∧ a % 8 = 0 ∧ a + 32 ≤ 2 ^ 48 ∧ m.accessible a 32 true = true ∧ Held R L a 32 ∧
     NatLive m R L (m.readLE (a + 8) 8) (m.readLE (a + 24) 8) ∧ m.readLE (a + 16) 8 ≤ m.readLE (a + 24) 8 ∧
     NatNorm m (m.readLE (a + 8) 8) (m.readLE (a + 16) 8) ∧
-    (0 < m.readLE (a + 24) 8 → Apart a 32 (m.readLE (a + 8) 8) (8 * m.readLE (a + 24) 8))
+    (0 < m.readLE (a + 24) 8 → Apart a 32 (m.readLE (a + 8) 8) (8 * m.readLE (a + 24) 8)) ∧
+    m.readLE (a + 24) 8 < 2 ^ 40
 
 /-- The requests of the Run extraction's contracts the runtime serves: every request up to a size bound (1 MiB for a copy or
 clear, 2^17 elements for a new or grown slice; Run's operands are at most 1024 bytes by EIP-7823). Pointer arguments are
@@ -260,13 +263,24 @@ def IntPost (R : RtInv) (b B : Nat) (L : List (Nat × Nat)) (stk above : Nat) (z
     MemFrame s.mem s'.mem (R.rt ++ winA s stk above ++ (z, z + 32) :: arrW s.mem z) ∧
     LiveFrame s.mem s'.mem L ((z, z + 32) :: arrW s.mem z)
 
+/-- The address of `math/big`'s package global `stackPool` (`arith.go`/`nat.go` `var stackPool sync.Pool`, `.bss`). -/
+@[reducible] def stackPoolA : Nat := Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.stackPool»
+
+/-- What the `stk == nil` paths of `(*Int).exp` / `(*Int).Mod` need (`getStack()` = `stackPool.Get()` or `newobject`,
+deferred `stk.free()`; NOTES-conventions "[expmc s32] REQUEST"): address 0 is not runtime memory (a new stack object is
+never nil), and `stackPool`'s `New` word (`Janus.Spec.Pool.newOffset`) is 0 (`New` is never set; Pool.Get's pre),
+outside the runtime-owned ranges and the stack ranges `w`. -/
+def PoolG (R : RtInv) (m : Memory) (w : List (Nat × Nat)) : Prop :=
+  Outside 0 1 R.rt ∧ m.readLE (stackPoolA + Pool.newOffset) 8 = 0 ∧ Outside (stackPoolA + Pool.newOffset) 8 R.rt ∧
+    Outside (stackPoolA + Pool.newOffset) 8 w
+
 /-- **`z.Mod(z, y)`** as Run calls it (`int.go:325`; `X0 = z`, `X1 = x = z`, `X2 = y`): returns `z` with `z = x mod y`. -/
 def ModSpec (impl : List Segment) (R : RtInv) (stk above : Nat) : Prop :=
   ∀ (b : Nat) (L : List (Nat × Nat)) (z y : BitVec 64),
     Ensures ((Extracted.program.onlySegments namesMod).link impl) (segAddr Extracted.program (P ++ "(*Int).Mod")) [z, z, y]
       (fun s => IntPre R b (ModBudget (max (lenW s.mem z.toNat) (lenW s.mem y.toNat))) L stk above [z.toNat, y.toNat] s ∧
         0 < IntV s.mem y.toNat ∧
-        IntLenLe s.mem z.toNat maxW ∧ IntLenLe s.mem y.toNat maxW)
+        IntLenLe s.mem z.toNat maxW ∧ IntLenLe s.mem y.toNat maxW ∧ PoolG R s.mem (win s stk above))
       (fun s s' => s'.regs 0 = z ∧ IntPost R b (ModBudget (max (lenW s.mem z.toNat) (lenW s.mem y.toNat)))
           L stk above z.toNat (IntV s.mem z.toNat % IntV s.mem y.toNat) s s' ∧
         IntV s'.mem y.toNat = IntV s.mem y.toNat)
@@ -295,7 +309,8 @@ def ExpSpec (impl : List Segment) (R : RtInv) (stk above : Nat) : Prop :=
       (fun s => IntPre R b (ExpBudget (max (max (lenW s.mem z.toNat) (lenW s.mem y.toNat)) (lenW s.mem mm.toNat)) (lenW s.mem y.toNat))
         L stk above [z.toNat, y.toNat, mm.toNat] s ∧ 0 < IntV s.mem mm.toNat ∧
         IntLenLe s.mem z.toNat maxW ∧ IntLenLe s.mem y.toNat maxW ∧ IntLenLe s.mem mm.toNat maxW ∧
-        OneG R L s.mem (win s stk above) [z.toNat, y.toNat, mm.toNat])
+        OneG R L s.mem (win s stk above) [z.toNat, y.toNat, mm.toNat] ∧
+        PoolG R s.mem (win s stk above))
       (fun s s' => s'.regs 0 = z ∧
         IntPost R b (ExpBudget (max (max (lenW s.mem z.toNat) (lenW s.mem y.toNat)) (lenW s.mem mm.toNat)) (lenW s.mem y.toNat))
           L stk above z.toNat (IntV s.mem z.toNat ^ IntV s.mem y.toNat % IntV s.mem mm.toNat) s s')

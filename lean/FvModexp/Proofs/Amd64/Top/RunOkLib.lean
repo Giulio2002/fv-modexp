@@ -2,6 +2,8 @@ import FvModexp.Proofs.Amd64.Top.RunOk
 import FvModexp.Proofs.Amd64.Top.RunErrLib
 import FvModexp.Proofs.Common.ComputeBridge
 
+set_option autoImplicit false
+
 /-!
 # Row 1, amd64, success path: the library-program theorem behind `Run.correctness_ok` (twin of the arm64 `RunOkLib`)
 
@@ -57,14 +59,15 @@ theorem ensOkLib (impl : List Amd64.Segment) (hap : ImplApart Extracted.program 
       (fun s => RunAmd64.EnvW R L s W ∧ RunAmd64.Input R L c p len cp s ∧ OsakaReceiver s.mem c.toNat ∧
         R.inv b L (s.regs 14).toNat (view R.rt L s.mem) ∧ RunAmd64.OkReqs R ∧
         RunAmd64.Globals R s.mem (RunAmd64.windowW s W) ∧ RunAmd64.NatOne R s.mem (RunAmd64.windowW s W) ∧
+        RunAmd64.StackPool R s.mem (RunAmd64.windowW s W) ∧
         RunAmd64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat)) ≤ b ∧
         LengthsPass (bytesAt s.mem p.toNat len.toNat))
       (fun s s' => RunAmd64.OkRet (bytesAt s.mem p.toNat len.toNat) s' ∧
         RunAmd64.FrameW R b (RunAmd64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat))) L W s s') := by
-  intro ret hret s hs ⟨⟨henvW, hgL, hfL⟩, hin, hrecv, hinv, hsv, hglob, hone, hbud, hpass⟩
+  intro ret hret s hs ⟨⟨henvW, hgL, hfL⟩, hin, hrecv, hinv, hsv, hglob, hone, hpool, hbud, hpass⟩
   rw [okB_spec] at hbud
   obtain ⟨n, o, hrun, hQ⟩ := okReach impl hap R hmk hmv hmz hno stkM aboveM hM hE hBy hsv b L c p len cp ret hret s hs
-    W henvW hW hW1 hab ha8 hin hinv (osaka_read hrecv) hglob hgL hfL hbud hone (pass_hdr hpass)
+    W henvW hW hW1 hab ha8 hin hinv (osaka_read hrecv) hglob hgL hfL hbud hone hpool (pass_hdr hpass)
     (fun o => ∃ s', o = .returned s' ∧ ABIReturn s s' ∧ RunAmd64.OkRet (bytesAt s.mem p.toNat len.toNat) s' ∧
       RunAmd64.FrameW R b (RunAmd64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat))) L W s s')
     (fun S' habi hret' hfr => ⟨S', rfl, habi, okRet_spec hret', by

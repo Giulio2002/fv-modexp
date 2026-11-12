@@ -1,6 +1,8 @@
 import FvModexp.Proofs.Arm64.Top.RunC2EX
 import FvModexp.Proofs.Common.GenReg
 
+set_option autoImplicit false
+
 /-! # `Run` (arm64): `C2` to `V` when `base ≠ 1` (`base.BitLen() ≠ 1`): to the `exp` call block, then `RunC2EX` -/
 
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
@@ -18,13 +20,14 @@ theorem c2e (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     (W : Nat) (henvW : CallEnv R L s W 40) (hW : 624 + stkM ≤ W) (hW1 : 4800 ≤ W) (hab : aboveM ≤ 160)
     (hglob : RunIface.Globals R s.mem (win s W 40)) (hgL : ApartAll ((s.regs 28).toNat + 16) 8 L)
     (hbB : okB s p len ≤ b) (hone : FvModexp.Spec.RunArm64.NatOne R s.mem (win s W 40))
+    (hpool : FvModexp.Spec.RunArm64.StackPool R s.mem (win s W 40))
     (L1 : List (Nat × Nat)) (b1 : Nat) (T : State) (hrel : RelD R b L c p len cp s ret 3 L1 b1 T)
     (hpc : T.pc = BitVec.ofNat 64 pcC2) (h7 : T.regs 7 = 64#64)
     (hv0 : opV s p len 0 ≠ 1) (hv2 : 0 < opV s p len 2)
     (hk : ∀ V Lk bk, RelV R b L p len s ret W Lk bk V → V.pc = BitVec.ofNat 64 pcCV →
       Reaches ((LibRun.program.link impl).withExit ret) V Q) :
     Reaches ((LibRun.program.link impl).withExit ret) T Q := by
-  have hX := c2eX impl hap R stkM aboveM hE hBy hsv b L c p len cp ret hret s Q W henvW hW hW1 hab hglob hgL hbB hone L1 b1
+  have hX := c2eX impl hap R stkM aboveM hE hBy hsv b L c p len cp ret hret s Q W henvW hW hW1 hab hglob hgL hbB hone hpool L1 b1
   have hrel0 := hrel
   obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, hd, hout, hga, hgr, hLs, hro⟩ := henvW
   obtain ⟨hsp, h28, h29, h18, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -,

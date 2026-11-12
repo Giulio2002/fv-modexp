@@ -1,6 +1,8 @@
 import FvModexp.Proofs.Arm64.Nat.SetBytesWord
 import FvModexp.Proofs.Arm64.Nat.SetBytesMid
 
+set_option autoImplicit false
+
 /-!
 # PILOT: `nat.setBytes` (go-bigmodexpfix copy), arm64 — the theorem `ens` and the callee summary `sum`
 
@@ -57,7 +59,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
         janus_run [asr_small_bv, asr63_small, sshiftRight_small, toInt_small, asr_small_toNat, BitVec.toNat_ushiftRight,
           Nat.shiftRight_eq_div_pow, toInt_ushiftRight] until [hWord] calls [hmk'.pos]
         rename_i ptr _ _ _ m _ _ hLF hMF hAp hIn hle hacc h8 _ _ _ _ hinv' _ _
-        refine wordLoop impl R b L zp zc bp bl ret hret s ptr.toNat 1 _ _ hbl (by omega) ⟨hb', ha, hal⟩ hw hbacc hbp
+        refine wordLoop impl R b L zp zc bp bl ret hret s ptr.toNat 1 _ _ ⟨hbl, Or.inr (by decide)⟩ (by omega) ⟨hb', ha, hal⟩ hw hbacc hbp
           (bl.toNat / 8) _ m ptr 1#64 1#64 bl 0#64 (by omega) (by simp) rfl (by simp [nW]; omega) (by simp)
           (mid_of_alloc hLs0 hout hb' hheld hbwin (by janus_simp) (by janus_simp) ?_ ?_ hLF hMF hAp hIn (by omega) hacc h8
             hinv' (by omega) (by simp only [makeCost, makeCap, allocCost, nW]; rw [h1]; decide) (by simp only [nW]; omega))
@@ -75,7 +77,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
           Nat.shiftRight_eq_div_pow, toInt_ushiftRight] until [hWord] calls [hmk'.pos]
         rename_i ptr _ _ _ m _ _ hLF hMF hAp hIn hle hacc h8 _ _ _ _ hinv' _ _
         have hsz := (by janus_assumption : 8 * ((bl.toNat + 7) / 8 + 4) ≤ blockSize (8 * ((bl.toNat + 7) / 8 + 4)) true)
-        refine wordLoop impl R b L zp zc bp bl ret hret s ptr.toNat ((bl.toNat + 7) / 8 + 4) _ _ hbl (by omega)
+        refine wordLoop impl R b L zp zc bp bl ret hret s ptr.toNat ((bl.toNat + 7) / 8 + 4) _ _ ⟨hbl, Or.inr (by omega)⟩ (by omega)
           ⟨hb', ha, hal⟩ hw hbacc hbp (bl.toNat / 8) _ m ptr (BitVec.ofNat 64 ((bl.toNat + 7) / 8))
           (BitVec.ofNat 64 ((bl.toNat + 7) / 8 + 4)) bl 0#64 (by omega) (by simp) rfl
           (by simp only [BitVec.toNat_ofNat, nW]; omega) (by simp only [BitVec.toNat_ofNat]; omega)
@@ -95,7 +97,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
       janus_run [asr_small_bv, asr63_small, sshiftRight_small, toInt_small, asr_small_toNat, BitVec.toNat_ushiftRight,
         Nat.shiftRight_eq_div_pow, toInt_ushiftRight] until [hWord]
       have hz0 : 0 < zc.toNat := by simp only [nW] at hz; omega
-      refine wordLoop impl R b L zp zc bp bl ret hret s zp.toNat zc.toNat L b hbl (by omega) ⟨hb', ha, hal⟩ hw hbacc hbp
+      refine wordLoop impl R b L zp zc bp bl ret hret s zp.toNat zc.toNat L b ⟨hbl, Or.inl rfl⟩ (by omega) ⟨hb', ha, hal⟩ hw hbacc hbp
         (bl.toNat / 8) _ _ zp ((bl + 7#64) >>> 3) zc bl 0#64 (by omega) (by simp) rfl
         (by rw [BitVec.toNat_ushiftRight, Nat.shiftRight_eq_div_pow]; janus_simp) rfl
         (mid_of_reuse hlive hzb hzw hLs0 hout hb' hinv (by omega) hz0 (by janus_simp) (by janus_simp) ?_ ?_)

@@ -1,6 +1,9 @@
 import FvModexp.Proofs.Amd64.Top.RunC2RA
 import FvModexp.Proofs.Amd64.Top.RunC2Lem
 import FvModexp.Proofs.Amd64.Top.RunC2B
+import FvModexp.Proofs.Amd64.Top.RunC2One
+
+set_option autoImplicit false
 
 /-! # `Run` (amd64): `C2` to `V` when `base = 1` (`base.BitLen() == 1`): `v = base.Mod(base, mod).Bytes()`
 
@@ -26,7 +29,7 @@ theorem c2m (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
     (ha8 : 8 ≤ aboveM)
     (hglob : RunIface.Globals R s.mem (win s W 40)) (hgL : ApartAll ((s.regs 14).toNat + 16) 8 L)
     (hfL : ApartAll (s.fsBase.toNat - 8) 8 L)
-    (hbB : okB s p len ≤ b)
+    (hbB : okB s p len ≤ b) (hpool : FvModexp.Spec.RunAmd64.StackPool R s.mem (win s W 40))
     (L1 : List (Nat × Nat)) (b1 : Nat) (T : State) (hrel : RelD R b L c p len cp s ret 3 3 (cstD 3) L1 b1 T)
     (hpc : T.rip = BitVec.ofNat 64 pcC2)
     (hv0 : opV s p len 0 = 1) (hv2 : 0 < opV s p len 2)
@@ -136,6 +139,11 @@ theorem c2m (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
     exact raMod impl hap
   have hMod := modW impl hap R stkM aboveM hM b1 L1 (T.regs 4 - 8#64) (s.regs 14) s.fsBase M
     ((s.regs 4).toNat - 136) ((s.regs 4).toNat - 200) hRA hIP hy0 hzl hyl
+    (fun t h4 => by
+      have h0 := poolG_ops (T := t) (M := T.mem) (by rw [h4]; exact hsp0) hW hab hb' hpool hMF hW1
+      simp only [win] at h0 ⊢
+      rw [← hMd]
+      exact poolG_push h0 ⟨by rw [h4, hsp0]; omega, by rw [h4, hsp0]; omega⟩)
   have hz136 : (s.regs 4 - 608#64 + 472#64).toNat = (s.regs 4).toNat - 136 := by
     rw [BitVec.toNat_add, BitVec.toNat_sub]; simp; omega
   have hz200 : (s.regs 4 - 608#64 + 408#64).toNat = (s.regs 4).toNat - 200 := by

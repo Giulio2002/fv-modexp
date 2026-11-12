@@ -1,6 +1,8 @@
 import FvModexp.Proofs.Amd64.Top.RunRel
 import FvModexp.Proofs.Amd64.Top.RunLDefs
 
+set_option autoImplicit false
+
 /-!
 # `Run` (amd64): the operand phase (`C0` to `C1`): relations
 
@@ -34,7 +36,7 @@ def uint8T : Nat := Extracted.dataAddr.«type:uint8#6a8c7679»
 def OpDone (R : RtInv) (m : Janus.Arm64.Memory) (s : State) (p len : BitVec 64) (L Lk : List (Nat × Nat)) (j : Nat) : Prop :=
   m.readLE (opAt s j) 1 = 0 ∧ natAt m (opAt s j + 8) = opV s p len j ∧
     NatNorm m (m.readLE (opAt s j + 8) 8) (m.readLE (opAt s j + 16) 8) ∧ m.readLE (opAt s j + 16) 8 ≤ 128 ∧
-    m.readLE (opAt s j + 16) 8 ≤ m.readLE (opAt s j + 24) 8 ∧
+    (m.readLE (opAt s j + 16) 8 ≤ m.readLE (opAt s j + 24) 8 ∧ m.readLE (opAt s j + 24) 8 < 2 ^ 40) ∧
     (0 < m.readLE (opAt s j + 24) 8 →
       InRanges (m.readLE (opAt s j + 8) 8) (8 * m.readLE (opAt s j + 24) 8) Lk ∧
       m.readLE (opAt s j + 8) 8 % 8 = 0 ∧
@@ -201,15 +203,16 @@ namespace FvModexp.Amd64.Run
 open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Spec Janus.Contracts
 
 /-- An operand read by `setBytes` and stored into its `big.Int` (memory `M`, equal to the callee's `m` outside the window). -/
-theorem opDone_of {R : RtInv} {L L1 Lc : List (Nat × Nat)} {m M : Janus.Arm64.Memory} {s : State} {p len : BitVec 64} {j p1 n1 c1 : Nat}
+theorem opDone_of {R : RtInv} {L L1 Lc : List (Nat × Nat)} {m M : Janus.Arm64.Memory} {s : State} {p len : BitVec 64} {j p1 n1 c1 zc : Nat}
     (hrd : ∀ a n, Outside a n (win s stk 40) → M.readLE a n = m.readLE a n)
     (hacc : ∀ a n w, m.accessible a n w = s.mem.accessible a n w)
     (hs : M.readLE (opAt s j) 1 = 0) (hs0 : M.readLE (opAt s j + 8) 8 = p1) (hs1 : M.readLE (opAt s j + 16) 8 = n1)
     (hs2 : M.readLE (opAt s j + 24) 8 = c1)
-    (hv : natVal m p1 n1 = opV s p len j) (hn : NatNorm m p1 n1) (hn4 : n1 ≤ 128) (hnc : n1 ≤ c1)
+    (hv : natVal m p1 n1 = opV s p len j) (hn : NatNorm m p1 n1) (hn4 : n1 ≤ 128) (hnc : n1 ≤ c1 ∧ SetBytes.CapB zc c1)
     (hfresh : 0 < c1 → InRanges p1 (8 * c1) R.rt ∧ ApartAll p1 (8 * c1) Lc) (hLc : LiveExt R L Lc)
     (hlive : NatLive m R L1 p1 c1)
-    (hout : Outside ((s.regs 4).toNat - stk) (stk + 40) R.rt) : OpDone R M s p len L L1 j := by
+    (hout : Outside ((s.regs 4).toNat - stk) (stk + 40) R.rt) 
+    (hz : zc < 2 ^ 40 := by first | decide | simp | omega) : OpDone R M s p len L L1 j := by
   have hw : 0 < c1 → Outside p1 (8 * c1) (win s stk 40) := fun hc => by
     have := InRanges.apart (hfresh hc).1 hout
     simp only [win, Janus.outside_cons, Janus.outside_nil, and_true]; unfold Apart at this; omega
@@ -227,7 +230,8 @@ theorem opDone_of {R : RtInv} {L L1 Lc : List (Nat × Nat)} {m M : Janus.Arm64.M
       · right
         rw [hrd _ _ ((hw (by omega)).of_sub (by omega) (by omega))]; exact h
   · rw [hs1]; exact hn4
-  · rw [hs1, hs2]; exact hnc
+  · rw [hs1, hs2]
+    exact ⟨hnc.1, by rcases (hnc.2 : c1 = zc ∨ c1 < 2 ^ 40) with h | h <;> omega⟩
   · rw [hs0, hs2]
     intro hc
     obtain ⟨h1, h2, h3, h4⟩ := hlive hc

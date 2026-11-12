@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Amd64.Top.RunCDefs
 
+set_option autoImplicit false
+
 /-!
 # `Run` (amd64): the compute calls — callee preconditions, frames, budgets (pure lemmas; twin of the arm64
 `RunC2Lem`/`RunC2Lem2`/`RunC2Lem3`)
@@ -144,7 +146,7 @@ theorem intPre_ops {R : RtInv} {b1 B : Nat} {L L1 : List (Nat × Nat)} {p len : 
       by rw [hMF.accessible]; exact Janus.Arm64.Memory.accessible_mono _ hw (by simp only [opAt]; omega) (by simp only [opAt]; omega),
       Or.inr (hout.of_sub (by simp only [opAt]; omega) (by simp only [opAt]; omega)),
       fun hc => ⟨(hlive hc).2.1, Or.inl (hlive hc).1, by rw [hMF.accessible]; exact (hlive hc).2.2.1, (hlive hc).2.2.2.1⟩,
-      hlc, hnorm, fun hc => ?_⟩, hfa⟩
+      hlc.1, hnorm, fun hc => ?_, hlc.2⟩, hfa⟩
     have := (hfa hc).1
     simp only [win, Janus.outside_cons, Janus.outside_nil, and_true] at this
     generalize M.readLE (opAt s j + 8) 8 = P at this ⊢

@@ -1,6 +1,8 @@
 import FvModexp.Proofs.Arm64.Top.RunC2Lem
 import FvModexp.Spec.RunArm64
 
+set_option autoImplicit false
+
 /-! # `Run` (arm64): the `natOne` global at the `(*Int).exp` call (`RunIface.OneG`), from `Run`'s `Spec.RunArm64.NatOne`
 
 `natOne`'s header and word lie outside the runtime-owned ranges and `Run`'s window, so `Run`'s writes (stack frame,
@@ -43,5 +45,26 @@ theorem oneG_ops {R : RtInv} {L L1 : List (Nat × Nat)} {p len : BitVec 64} {s T
     refine ⟨by unfold Apart; simp only [opAt]; omega, by unfold Apart; simp only [opAt]; omega, fun hc => ⟨?_, ?_⟩⟩
     · exact (InRanges.apart (hlive hc).2.2.2.2.1 hrt).symm
     · exact (InRanges.apart (hlive hc).2.2.2.2.1 hort).symm
+
+/-- `stackPool`'s `New` word at the `Mod` / `exp` call (`RunIface.PoolG`), from `Run`'s `Spec.RunArm64.StackPool`: the word
+lies outside the runtime-owned ranges and `Run`'s window, so `Run`'s writes keep it. -/
+theorem poolG_ops {R : RtInv} {s T : State} {M : Memory} {W stkM aboveM : Nat}
+    (hT : T.sp.toNat = s.sp.toNat - 624) (hW : 624 + stkM ≤ W) (hab : aboveM ≤ 160)
+    (hsW : W ≤ s.sp.toNat) (hpool : FvModexp.Spec.RunArm64.StackPool R s.mem (win s W 40))
+    (hMF : MemFrame s.mem M (R.rt ++ winA s 4800 40)) (hW1 : 4800 ≤ W) :
+    RunIface.PoolG R M (win T stkM aboveM) := by
+  dsimp only [FvModexp.Spec.RunArm64.StackPool] at hpool
+  rw [show Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.stackPool» = RunIface.stackPoolA
+    from rfl] at hpool
+  obtain ⟨h0, hw, hrt, hwin⟩ := hpool
+  unfold RunIface.PoolG
+  generalize RunIface.stackPoolA + Pool.newOffset = a at hw hrt hwin ⊢
+  simp only [win, Janus.outside_cons, Janus.outside_nil, and_true] at hwin
+  refine ⟨h0, ?_, hrt, ?_⟩
+  · rw [hMF.readLE _ _ (by
+      simp only [winA, Janus.outside_append, Janus.outside_cons, Janus.outside_nil, and_true]
+      exact ⟨hrt, by omega, by omega⟩)]
+    exact hw
+  · simp only [win, Janus.outside_cons, Janus.outside_nil, and_true]; rw [hT]; omega
 
 end FvModexp.Arm64.Run

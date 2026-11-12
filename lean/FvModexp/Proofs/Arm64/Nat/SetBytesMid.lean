@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Nat.SetBytesDefs
 
+set_option autoImplicit false
+
 /-! # `nat.setBytes` (arm64): establishing `Mid` at the word-loop head (reuse of `z`, or `makeslice`) -/
 
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
@@ -96,7 +98,7 @@ theorem post_empty {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc bp bl : 
     (hLs : LiveSep L (win s 4160 48)) (hout : Outside (s.sp.toNat - 4160) (4160 + 48) R.rt) (hsp : 4160 ≤ s.sp.toNat)
     (hinv : R.inv b L (s.regs 28).toNat (view R.rt L s.mem)) : Post R b L zp zc bp bl s s' := by
   refine ⟨zp.toNat, 0, zc.toNat, h0, h1, h2, by simp [hbl], Or.inl rfl,
-    Nat.zero_le _, Nat.zero_le _, L, b, LiveExt.refl R L, Nat.sub_le _ _, ?_, ?_, Or.inl ⟨rfl, rfl⟩, ?_, ?_⟩
+    ⟨Nat.zero_le _, Or.inl rfl⟩, Nat.zero_le _, L, b, LiveExt.refl R L, Nat.sub_le _ _, ?_, ?_, Or.inl ⟨rfl, rfl⟩, ?_, ?_⟩
   · exact inv_frame_winA hF hout hsp (by decide) hinv
   · intro hc
     obtain ⟨h8, hh, hacc, hle⟩ := hlive hc
