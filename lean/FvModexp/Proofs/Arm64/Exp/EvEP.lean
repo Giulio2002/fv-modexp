@@ -39,12 +39,11 @@ set_option maxHeartbeats 16000000 in
 /-- **the internal entry facts** -/
 theorem epre_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {stk : Nat} {need : Nat → Nat → Nat → Nat}
     {cost : Nat → Nat → Nat → Nat → Nat} {zp zl zc st xp xl xc yp yl yc mp ml mc : Nat} {s : State}
-    (hP : Pre R b L stk 112 need cost zp zl zc st xp xl yp yl mp ml s)
-    (hk1 : 4640 ≤ stk) (hk2 : stk ≤ 2 ^ 20 + 336) (hzp : zp < 2 ^ 64) (hxc : xc < 2 ^ 64) (hyc : yc < 2 ^ 64)
-    (hmc : mc < 2 ^ 64) :
+    (hP : Pre R b L stk 112 need cost zp zl zc st xp xl yp yl mp ml mc s)
+    (hk1 : 4640 ≤ stk) (hk2 : stk ≤ 2 ^ 20 + 336) (hzp : zp < 2 ^ 64) (hxc : xc < 2 ^ 64) (hyc : yc < 2 ^ 64) :
     EPre R b L (stk - 336) (s.regs 28).toNat (s.sp.toNat - 336) st zp zc xp xl xc yp yl yc mp ml mc s := by
   obtain ⟨⟨hce, hsv, hgl, hro, hwT, hzl, hwo, hins, hsok, hstw, hstg, harr, hcap0, hneed, hwba, hstwb, hstf, hzs,
-    hstgA, hfgA, hcst, hinv⟩, hX, hY, hM, hMe, hxl, hml, hst0, op, hone, hsa⟩ := hP
+    hstgA, hfgA, hcst, hinv⟩, hX, hY, hM, hMe, hxl, hml, hst0, hmlc, hmc, op, hone, hsa⟩ := hP
   obtain ⟨hgd, hsok', hd, hwrt, hgw, hgrt, hLs, -⟩ := hce
   obtain ⟨hal, hle, h48, hacc⟩ := hsok'
   obtain ⟨g1, g2, g3⟩ := hgd
@@ -75,7 +74,7 @@ theorem epre_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {stk : Nat} {need 
     hxl, by have := hx.1.2.2.1; omega, hxc, hzp, hwo1, fun hz => ?_, ?_, hsok, ap_w hstw (by omega) hle, hstg,
     fun hc => ⟨ap_w (harr hc).1 (by omega) hle, (harr hc).2⟩, hwba, hstwb, hstf, by omega, by omega,
     ⟨op, ?_, hsa⟩, ⟨oe_of hS (by omega) hle hm.1 hm.2.2.2.1 hm.2.2.2.2.1, hm.1.2.1, hm.1.2.2.1, hm.2.2.1,
-      hm.2.2.2.2.2, by have := hy.1.2.2.1; omega, hyc, by have := hm.1.2.2.1; omega, hmc, hcap0⟩, hinv⟩
+      hm.2.2.2.2.2, by have := hy.1.2.2.1; omega, hyc, by have := hm.1.2.2.1; omega, ⟨hmc, hmlc⟩, hcap0⟩, hinv⟩
   · simp only [outside_cons] at hgw ⊢
     refine ⟨?_, hgrt⟩
     unfold Apart at hgw; omega

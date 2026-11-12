@@ -31,7 +31,10 @@ theorem WC.stkNat (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s)
       WC R L K g sp st zp zc s.mem s'.mem L2 b2 (ℓ + StackNat.rnd n) ∧
       Scr R L L2 s.mem s'.mem st (stW s'.mem st + 8 * ℓ) n ∧
       s'.regs 0 = BitVec.ofNat 64 (stW s'.mem st + 8 * ℓ) ∧ s'.regs 1 = BitVec.ofNat 64 n ∧
-      s'.regs 2 = BitVec.ofNat 64 n ∧ MemFrame M s'.mem (R.rt ++ [(sp - stk, sp - 8), (sp + 8, sp + above)] ++ stkWs M st) := by
+      s'.regs 2 = BitVec.ofNat 64 n ∧ MemFrame M s'.mem (R.rt ++ [(sp - stk, sp - 8), (sp + 8, sp + above)] ++ stkWs M st) ∧
+      Scr R L1 L2 M s'.mem st (stW s'.mem st + 8 * ℓ) n ∧ LiveFrame M s'.mem L1 (stkWs M st) ∧ LiveExt R L1 L2 ∧
+      ((stW s'.mem st = stW M st ∧ stCap s'.mem st = stCap M st) ∨
+        (InRanges (stW s'.mem st) (8 * stCap s'.mem st) R.rt ∧ ApartAll (stW s'.mem st) (8 * stCap s'.mem st) L1)) := by
   have hK := hP.1.2.2.2.2.2.2.2.2.1
   obtain ⟨h0, h1, h2, L2, b2, ⟨hx, hb, hinv⟩, hok, hlen, hsame, hgrow, hF, hLF, hmemb⟩ := hpost
   subst hm
@@ -41,17 +44,19 @@ theorem WC.stkNat (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s)
     simpa only [winA, hsp] using hF
   have hsc : Scr R L1 L2 S1.mem s'.mem st (stW s'.mem st + 8 * ℓ) n :=
     Scr.of_post hok hlen hn hsame hgrow h.len.symm
-  refine ⟨L2, b2, hb, ?_, Scr.rebase h hsc, h0 hn, h1, h2, hF'⟩
+  have harr : (stW s'.mem st = stW S1.mem st ∧ stCap s'.mem st = stCap S1.mem st) ∨
+      (InRanges (stW s'.mem st) (8 * stCap s'.mem st) R.rt ∧ ApartAll (stW s'.mem st) (8 * stCap s'.mem st) L1) := by
+    by_cases hc : ℓ + StackNat.rnd n ≤ stCap S1.mem st
+    · exact Or.inl (hsame hc)
+    · exact Or.inr (hgrow (by omega))
+  refine ⟨L2, b2, hb, ?_, Scr.rebase h hsc, h0 hn, h1, h2, hF', hsc, hLF, hx, harr⟩
   refine h.call (ws := [(sp - stk, sp - 8), (sp + 8, sp + above)] ++ stkWs S1.mem st) (by rwa [List.append_assoc] at hF')
-    hLF hrg ?_ (fun a k hin ho => stk_out h (Or.inl hin) ho) hx hinv hok hlen (by omega) ?_ ?_
+    hLF hrg ?_ (fun a k hin ho => stk_out h (Or.inl hin) ho) hx hinv hok hlen (by omega) harr ?_
   · intro a k o1 o2 o3 o4
     rw [outside_append]
     refine ⟨?_, o3⟩
     simp only [WN, outside_cons, outside_nil, and_true] at o2 ⊢
     exact ⟨by omega, by omega⟩
-  · by_cases hc : ℓ + StackNat.rnd n ≤ stCap S1.mem st
-    · exact Or.inl (hsame hc)
-    · exact Or.inr (hgrow (by omega))
   · exact ArrIn.of_nat hok.2.2.2.2.2.1 hlen hsame (fun hc => hmemb (by rw [h.len]; omega))
 
 /-- `(*stack).nat(n)`'s precondition at `SP = sp` -/
@@ -123,11 +128,13 @@ set_option maxRecDepth 20000 in
 theorem natOne_at (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ)
     {S' : State} (hsp : S'.sp.toNat = sp) {stk above lo hi : Nat} (hstk : stk ≤ K) (habove : above ≤ 88)
     (hlo : sp - K ≤ lo) (hhi : hi ≤ sp + 448) :
-    ∃ op, NatOne R L1 M op (winA S' stk above ++ ([(lo, hi)] ++ stkWs M st)) ∧ StkApart M st op 8 := by
+    ∃ op, NatOne R L1 M op (winA S' stk above ++ ([(lo, hi)] ++ stkWs M st)) ∧ StkApart M st op 8 ∧
+      NatOne R L s.mem op ([(sp - K, sp + 448), (zp, zp + 8 * zc)] ++ stkWs s.mem st) ∧ StkApart s.mem st op 8 := by
   have hK := hP.1.2.2.2.2.2.2.2.2.1
   have hlc := h.lc0
-  obtain ⟨op, ⟨n0, n8, n16, nw, na, nrt, nwin, oa, o48, oh, ow⟩, -⟩ :=
-    hP.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  obtain ⟨op, hone, hsa⟩ := hP.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hone' := hone
+  obtain ⟨n0, n8, n16, nw, na, nrt, nwin, oa, o48, oh, ow⟩ := hone'
   have bA := out_bytes nwin
   have bO := out_bytes ow
   have hrd : ∀ j, j + 8 ≤ 24 → M.readLE (natOneA + j) 8 = s.mem.readLE (natOneA + j) 8 := fun j hj =>
@@ -140,7 +147,7 @@ theorem natOne_at (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s)
     stk_out h oh (by simp only [ZS, List.cons_append, List.nil_append, outside_cons, outside_append] at ow ⊢; exact ow.2)
   refine ⟨op, ⟨by rw [show natOneA = natOneA + 0 from rfl, hrd 0 (by omega)]; exact n0, by rw [hrd 8 (by omega)]; exact n8,
     by rw [hrd 16 (by omega)]; exact n16, by rw [hO]; exact nw, by rw [h.fr.accessible]; exact na, nrt, ?_,
-    by rw [h.fr.accessible]; exact oa, o48, h.le.held oh, ?_⟩, fun _ => ⟨?_, fun _ => ?_⟩⟩
+    by rw [h.fr.accessible]; exact oa, o48, h.le.held oh, ?_⟩, fun _ => ⟨?_, fun _ => ?_⟩, hone, hsa⟩
   · rw [outside_append, outside_append]
     refine ⟨?_, ?_, sA⟩ <;> simp only [winA, hsp, List.cons_append, outside_append, outside_cons, outside_nil, and_true] at nwin ⊢ <;> omega
   · rw [outside_append, outside_append]
