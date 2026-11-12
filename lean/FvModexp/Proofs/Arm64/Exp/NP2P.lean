@@ -16,12 +16,6 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvMod
 
 namespace FvModexp.Arm64.ExpN
 
-theorem val_mod2 {M : Memory} {mp n : Nat} (hn : 0 < n) : natVal M mp n % 2 = M.readLE mp 8 % 2 := by
-  obtain ⟨k, rfl⟩ : ∃ k, n = 1 + k := ⟨n - 1, by omega⟩
-  rw [FvModexp.natVal_add]
-  have e : natVal M mp 1 = M.readLE mp 8 := rfl
-  rw [e, show 2 ^ (64 * 1) = 2 * 2 ^ 63 by decide, Nat.mul_assoc, Nat.add_mul_mod_self_left]
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- `natOne` at a callee entry (`P2Hyp`'s last conjunct) from `NPre`'s -/
@@ -138,7 +132,7 @@ theorem p2Path (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
   rw [← e7] at hF0 hLF0 hrg hinv1 hZQ ew el ec h29v h30v hfl hrdx hrdy
   refine callC impl hap hns hn11 ret0 hret F hs hal hKs (by omega) hsp2 hLs hwrt hsok hstw hF0 hLF0 hx1
     hb1 hZA hstk ((r 28 (by decide) (by decide) (by decide) (by decide) (by decide) (by decide)).trans h28) ?_ ?_
-    (Or.inr (Or.inr (Or.inr rfl))) hE e1 hS'sp e6 ?_ ⟨?_, ?_, ?_, by omega, by omega, ?_⟩ (fun s' h => h)
+    (Or.inr (Or.inr (Or.inr rfl))) hE e1 hS'sp e6 ?_ ⟨?_, ?_, ?_, by omega, by omega, ?_⟩ (fun s' h => cpostG_of h)
     (by rw [ec, ew]; intro hc; exact (harr hc).1) (by rw [ec, ew]; exact hc0)
     (by rw [el, ec]; exact hsok.2.2.2.2.2.1) hacc2 h29v h30v hfl
     (fun s'' f1 f2 f3 f4 hq => hK' s'' f1 f2

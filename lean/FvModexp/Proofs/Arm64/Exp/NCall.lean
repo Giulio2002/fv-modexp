@@ -88,7 +88,7 @@ theorem callC (impl : List Segment) (hap : ImplApart Extracted.program impl) {ns
     {e r : Nat} (hr : RetPt r) {args : List (BitVec 64)} {P : State → Prop} {Q : State → State → Prop}
     (hE : Ensures ((Extracted.program.onlySegments ns).link impl) e args P Q)
     (hpc : S.pc = BitVec.ofNat 64 e) (hSsp : S.sp = BitVec.ofNat 64 (sp + 1056)) (h30 : S.regs 30 = BitVec.ofNat 64 r)
-    (hargs : ArgsFrom S 0 args) (hPS : P S) (hQ : ∀ s', Q S s' → NHyp.CPost R b1 L1 stk 112 zq zcq st v cst S s')
+    (hargs : ArgsFrom S 0 args) (hPS : P S) (hQ : ∀ s', Q S s' → CPostG R b1 L1 stk 112 zq zcq st v cst S s')
     (harr : 0 < stCap S.mem st → Apart (stW S.mem st) (8 * stCap S.mem st) (sp - K) (K + 1432))
     (hc0 : stCap S.mem st = 0 → stW S.mem st = 0) (hlc : stLen S.mem st ≤ stCap S.mem st)
     (hacc : S.mem.accessible (sp + 1048) 216 true = true) (h29v : S.mem.readLE (sp + 1048) 8 = f29)

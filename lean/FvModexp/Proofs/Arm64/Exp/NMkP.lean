@@ -20,6 +20,12 @@ namespace FvModexp.Arm64.ExpN
   LiveExt R L L1 ∧ b - mk ≤ b1 ∧ mk ≤ makeCost n ∧ R.inv b1 L1 g (view R.rt L1 M) ∧
   ZQ R L1 g sp K st xp xl yp yl mp n M zq zcq ∧ ZArg R L sp K zp zc zq zcq ∧ n ≤ zcq ∧ zq < 2 ^ 64
 
+theorem val_mod2 {M : Memory} {mp n : Nat} (hn : 0 < n) : natVal M mp n % 2 = M.readLE mp 8 % 2 := by
+  obtain ⟨k, rfl⟩ : ∃ k, n = 1 + k := ⟨n - 1, by omega⟩
+  rw [FvModexp.natVal_add]
+  have e : natVal M mp 1 = M.readLE mp 8 := rfl
+  rw [e, show 2 ^ (64 * 1) = 2 * 2 ^ 63 by decide, Nat.mul_assoc, Nat.add_mul_mod_self_left]
+
 theorem val_pos {M : Memory} {p l : Nat} (hN : NatNorm M p l) (hl : l ≠ 0) : 0 < natVal M p l :=
   Nat.lt_of_lt_of_le (Nat.two_pow_pos _) (FvModexp.SubMod2N.natVal_lower M p l hN (by omega))
 
