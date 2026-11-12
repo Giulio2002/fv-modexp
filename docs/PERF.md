@@ -1383,3 +1383,13 @@ path ≈ 205 s (was: 117 own modules, row 815 s).
   155 → 30 s, RunCP1 164 → 47 s, RunDM0 106 → 50 s; amd64 `Top/RunDSlot`: RunDM2 159 → 91 s, RunDP2 156 → 93 s,
   RunDJS2 59 → 39 s, DE1/DE2/DJS1/DJZ*/DJF*/DM1/DP1 ≈ unchanged (1 operand: few janus_simps saved). Load fell 80 → 20
   during these, so compare `u` times in build/dgen.log. Both RunOkRow chains rebuilt OK after all trims (19:01).
+
+## agent top s21 (2026-11-12, dev compile, LEAN_NUM_THREADS=4, host load ~10-13)
+* Re-measured the arm64 success-row trim targets (FORCE rebuild): RunD3P 77 s / 4.7 GB, RunD1L 81 s / 4.3 GB,
+  RunD3 78 s / 3.6 GB, RunD3ZA 45 s / 3.2 GB — all ≤ 5 min / 8 GB with margin at low load.
+* RunD3P `janus.omega.log 1000`: the dominant omega is a `prune(full)` branch-infeasibility call (10.2 s, 7 disjunctions,
+  closed False) in the memmove run; the 4 split facts it spends time on are `hsw1`/`hsw2` (source vs callee window, needed
+  by memmove's pre) × the `len - 96 - min …` subtraction. Not fixed (would need the callee-window facts in a non-disjunctive
+  form that `janus_callpre` still finds); ≤ 13 % of the module.
+* New modules: Arm64/Top/RunModX 1.0 s, RunModI 1.0 s; Amd64/Top/RunModX 1.1 s. Rebuilt with ModSpecM: arm64 RunC2M 17 s,
+  RunC2EX 19 s; amd64 RunC2Sum 51 s, RunC2B 83 s / 5.1 GB, RunC2M 15 s, RunC2EX 18 s.
