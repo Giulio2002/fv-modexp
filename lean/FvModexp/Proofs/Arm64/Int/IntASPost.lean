@@ -45,8 +45,8 @@ structure AtRet (sub : Bool) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (z x 
   live : NatLive S.mem R L1 p' c'
   orf : (p' = hP s.mem z ∧ c' = hC s.mem z) ∨ (InRanges p' (8 * c') R.rt ∧ ApartAll p' (8 * c') L)
   reuse : asNeed (hL s.mem x) (hL s.mem y) ≤ hC s.mem z → p' = hP s.mem z ∧ c' = hC s.mem z
-  mf : MemFrame s.mem S.mem (R.rt ++ winA s 4560 32 ++ [(hP s.mem z, hP s.mem z + 8 * hC s.mem z)])
-  lf : LiveFrame s.mem S.mem L [(hP s.mem z, hP s.mem z + 8 * hC s.mem z)]
+  mf : MemFrame s.mem S.mem (R.rt ++ winA s 4560 32 ++ [(hP s.mem z, hP s.mem z + 8 * min (max (hL s.mem x) (hL s.mem y) + 1) (hC s.mem z))])
+  lf : LiveFrame s.mem S.mem L [(hP s.mem z, hP s.mem z + 8 * min (max (hL s.mem x) (hL s.mem y) + 1) (hC s.mem z))]
   nb1 : nb ≤ 1
   res : (if nb = 0 ∨ V = 0 then (V : Int) else -(V : Int)) = resZ sub (intZ s.mem x) (intZ s.mem y)
 
@@ -199,9 +199,9 @@ theorem post_of {sub : Bool} {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {z x 
     exact ⟨a1, a2, by rw [hacc]; exact a3, a4⟩
   · simp only [hP, hC]; rw [eP, eC]; exact h.orf
   · simp only [hP, hC]; rw [eP, eC]; exact h.reuse
-  · refine MemFrame.trans (rs'' := R.rt ++ winA s 4560 32 ++ [(z, z + 32), (hP s.mem z, hP s.mem z + 8 * hC s.mem z)])
-      (MemFrame.trans (rs'' := R.rt ++ winA s 4560 32 ++ [(z, z + 32), (hP s.mem z, hP s.mem z + 8 * hC s.mem z)])
-        (MemFrame.trans (rs'' := R.rt ++ winA s 4560 32 ++ [(z, z + 32), (hP s.mem z, hP s.mem z + 8 * hC s.mem z)])
+  · refine MemFrame.trans (rs'' := R.rt ++ winA s 4560 32 ++ [(z, z + 32), (hP s.mem z, hP s.mem z + 8 * min (max (hL s.mem x) (hL s.mem y) + 1) (hC s.mem z))])
+      (MemFrame.trans (rs'' := R.rt ++ winA s 4560 32 ++ [(z, z + 32), (hP s.mem z, hP s.mem z + 8 * min (max (hL s.mem x) (hL s.mem y) + 1) (hC s.mem z))])
+        (MemFrame.trans (rs'' := R.rt ++ winA s 4560 32 ++ [(z, z + 32), (hP s.mem z, hP s.mem z + 8 * min (max (hL s.mem x) (hL s.mem y) + 1) (hC s.mem z))])
           h.mf hFH ?_) hMw ?_) hF2 ?_
     · intro a n ho
       simp only [winA, outside_append, outside_cons, outside_nil, and_true] at ho ⊢
@@ -212,7 +212,7 @@ theorem post_of {sub : Bool} {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {z x 
     · intro a n ho
       simp only [winA, outside_append, outside_cons, outside_nil, and_true] at ho ⊢
       exact ⟨ho, ho.2.1⟩
-  · have l1 : LiveFrame s.mem S.mem L [(z, z + 32), (hP s.mem z, hP s.mem z + 8 * hC s.mem z)] :=
+  · have l1 : LiveFrame s.mem S.mem L [(z, z + 32), (hP s.mem z, hP s.mem z + 8 * min (max (hL s.mem x) (hL s.mem y) + 1) (hC s.mem z))] :=
       LiveFrame.mono_ws h.lf fun a n ho => by simp only [outside_cons, outside_nil, and_true] at ho ⊢; exact ho.2
     refine (((l1.trans ⟨fun a n _ ho => hFH.readLE a n (by
         simp only [outside_cons, outside_nil, and_true] at ho ⊢; exact ho.1)⟩ fun _ _ hi => hi).trans

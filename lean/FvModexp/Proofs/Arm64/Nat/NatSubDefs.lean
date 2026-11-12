@@ -74,4 +74,12 @@ suffices, the result capacity bounded. -/
     (xl.toNat ≤ zc.toNat → (s'.regs 0).toNat = zp.toNat ∧ (s'.regs 2).toNat = zc.toNat) ∧
     (xl.toNat < 2 ^ 39 → (s'.regs 2).toNat < 2 ^ 40)
 
+/-- `PostR` with the exact write set in `z`'s old array: only `z[0:min(len x, cap z)]` (karatsubaSqr needs it: its
+temporaries are slices of the result whose capacity reaches beyond the part they may write). -/
+@[reducible] def PostX (stk : Nat) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl yp yl : BitVec 64)
+    (s s' : State) : Prop :=
+  PostR stk R b L zp zc xp xl yp yl s s' ∧
+    MemFrame s.mem s'.mem (R.rt ++ winA s stk 80 ++ [(zp.toNat, zp.toNat + 8 * min xl.toNat zc.toNat)]) ∧
+    LiveFrame s.mem s'.mem L [(zp.toNat, zp.toNat + 8 * min xl.toNat zc.toNat)]
+
 end FvModexp.Arm64.NatSub

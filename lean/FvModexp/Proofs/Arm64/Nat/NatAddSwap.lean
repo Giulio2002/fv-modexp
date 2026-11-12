@@ -120,4 +120,35 @@ theorem postR_mono {stk stk' : Nat} (hk : stk ≤ stk') {R : RtInv} {b : Nat} {L
     (h : PostR stk R b L zp zc xp xl yp yl s s') : PostR stk' R b L zp zc xp xl yp yl s s' :=
   ⟨postS_mono hk hsp h.1, h.2⟩
 
+set_option maxRecDepth 20000 in
+theorem postX_swap {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl xc yp yl yc : BitVec 64}
+    {s S1 s' : State} (hpre : PreS 4464 R b L zp zc xp xl xc yp yl yc s) (hsp : S1.sp = s.sp - 160#64)
+    (h28 : S1.regs 28 = s.regs 28) (hF : MemFrame s.mem S1.mem (winA s 4464 80))
+    (hq : PostX 4304 R b L zp zc yp yl xp xl S1 s') :
+    PostX 4464 R b L zp zc xp xl yp yl s s' := by
+  obtain ⟨hq, hmf, hlf⟩ := hq
+  have hsp0 := hpre.1.2.1.2.1
+  have hLs := hpre.1.2.2.2.2.2.2.1
+  have e160 : S1.sp.toNat = s.sp.toNat - 160 := by
+    rw [hsp]; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
+  have em : max yl.toNat xl.toNat = max xl.toNat yl.toNat := Nat.max_comm _ _
+  rw [em] at hmf hlf
+  refine ⟨postR_swap hpre hsp h28 hF hq, hF.trans hmf fun a n ho => ⟨?_, ?_⟩, ⟨fun a n hin hz => ?_⟩⟩
+  · simp only [outside_append, winA, outside_cons, outside_nil, and_true] at ho ⊢
+    exact ⟨ho.1.2.1, ho.1.2.2⟩
+  · simp only [outside_append, winA, outside_cons, outside_nil, and_true, e160] at ho ⊢
+    obtain ⟨⟨hr, hw1, hw2⟩, hz⟩ := ho
+    exact ⟨⟨hr, by omega, by omega⟩, hz⟩
+  · rw [hlf.readLE a n hin hz]
+    refine hF.readLE a n ?_
+    obtain ⟨q, hq, hq1, hq2⟩ := hin
+    have := hLs q hq; simp only [win, outside_cons, outside_nil, and_true] at this
+    simp only [winA, outside_cons, outside_nil, and_true]; omega
+
+theorem postX_congr {stk : Nat} {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl yp yl : BitVec 64}
+    {s s2 s3 : State} (h : PostX stk R b L zp zc xp xl yp yl s s2) (h0 : s3.regs 0 = s2.regs 0)
+    (h1 : s3.regs 1 = s2.regs 1) (h2 : s3.regs 2 = s2.regs 2) (hm : s3.mem = s2.mem) :
+    PostX stk R b L zp zc xp xl yp yl s s3 := by
+  unfold PostX PostR PostS; rw [h0, h1, h2, hm]; exact h
+
 end FvModexp.Arm64.NatAdd
