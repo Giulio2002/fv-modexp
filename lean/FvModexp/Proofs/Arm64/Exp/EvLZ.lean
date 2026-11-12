@@ -17,10 +17,50 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvMod
 
 namespace FvModexp.Arm64.ExpEven
 
+/-- an array held and apart from the stack's CURRENT array (the result `ResSep` needs this form: a fresh `z` is
+never inside the stack's used part) -/
+@[reducible] def ObZ (R : RtInv) (L1 : List (Nat × Nat)) (st : Nat) (M : Memory) (t k : Nat) : Prop :=
+  Held R L1 t (8 * k) ∧ Apart t (8 * k) (stW M st) (8 * stCap M st)
+
+theorem ObZ.toOb {R : RtInv} {L1 : List (Nat × Nat)} {st : Nat} {M : Memory} {t k : Nat} (h : ObZ R L1 st M t k) :
+    Ob R L1 st M t k := ⟨h.1, Or.inr h.2⟩
+
+/-- `ObZ` through a step where the array is kept or fresh relative to `L1` -/
+theorem ObZ.mono {R : RtInv} {L1 L2 : List (Nat × Nat)} {st : Nat} {M M' : Memory} {t k : Nat}
+    (h : ObZ R L1 st M t k) (hx : LiveExt R L1 L2) (_hl : stLen M st ≤ stLen M' st)
+    (harr : (stW M' st = stW M st ∧ stCap M' st = stCap M st) ∨
+      (InRanges (stW M' st) (8 * stCap M' st) R.rt ∧ ApartAll (stW M' st) (8 * stCap M' st) L1)) :
+    ObZ R L2 st M' t k := by
+  refine ⟨hx.held h.1, ?_⟩
+  rcases harr with ⟨e1, e2⟩ | ⟨hin, hap⟩
+  · rw [e1, e2]; exact h.2
+  · exact (hfresh h.1 hap hin).symm
+
+theorem ObZ.back {R : RtInv} {L1 L2 : List (Nat × Nat)} {st : Nat} {M M' : Memory} {t k : Nat}
+    (h : ObZ R L1 st M t k) (hx : LiveExt R L1 L2) (hsb : StackBack R L1 L2 st M M') : ObZ R L2 st M' t k :=
+  h.mono hx (by rw [hsb.2.1]; exact Nat.le_refl _) hsb.2.2
+
+theorem ObZ.out {R : RtInv} {L1 : List (Nat × Nat)} {st : Nat} {M : Memory} {t k : Nat} (h : ObZ R L1 st M t k)
+    (hlc : stLen M st ≤ stCap M st) (hst : Apart t (8 * k) st 24) : Outside t (8 * k) (stkWs M st) :=
+  h.toOb.out hlc hst
+
+/-- `ob_fresh` in the `ObZ` form -/
+theorem ob_freshZ {R : RtInv} {L1 L2 : List (Nat × Nat)} {st : Nat} {M M' : Memory} {p c : Nat}
+    (hok : StkOK M R L1 st) (hc0 : stCap M st = 0 → stW M st = 0) (hin : InRanges p (8 * c) R.rt)
+    (hap : ApartAll p (8 * c) L1) (hh : Held R L2 p (8 * c)) (hrs : ResSep M M' st p c) (hc : 0 < c) :
+    ObZ R L2 st M' p c := by
+  refine ⟨hh, ?_⟩
+  by_cases e : stW M' st = stW M st ∧ stCap M' st = stCap M st
+  · rw [e.1, e.2]
+    rcases Nat.eq_zero_or_pos (stCap M st) with c0 | c0
+    · rw [c0, hc0 c0]; unfold Apart; omega
+    · exact hfresh (hok.2.2.2.2.1 c0).2.1 hap hin |>.symm |> fun h => h.symm
+  · exact hrs hc e
+
 /-- `z`'s array after `set`: the entry array, or fresh relative to the entry live set `L` -/
 @[reducible] def ZOK (R : RtInv) (L : List (Nat × Nat)) (st zp zc : Nat) (M : Memory) (L1 : List (Nat × Nat))
     (p c : Nat) : Prop :=
-  (p = zp ∧ c = zc) ∨ (InRanges p (8 * c) R.rt ∧ ApartAll p (8 * c) L ∧ Ob R L1 st M p c)
+  (p = zp ∧ c = zc) ∨ (InRanges p (8 * c) R.rt ∧ ApartAll p (8 * c) L ∧ ObZ R L1 st M p c)
 
 /-- a live nat `p[0:l]` (cap `c`, value `v`) in a `ZOK` array -/
 @[reducible] def LZ (R : RtInv) (L : List (Nat × Nat)) (st zp zc : Nat) (M : Memory) (L1 : List (Nat × Nat))

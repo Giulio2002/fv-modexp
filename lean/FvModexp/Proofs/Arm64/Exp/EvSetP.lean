@@ -173,8 +173,8 @@ theorem JP.mkJS (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) {
   have hheld : Held R (L1 ++ [(ptr, ptr + r)]) ptr (8 * c) :=
     Or.inl ⟨(ptr, ptr + r), List.mem_append_right _ (List.mem_singleton_self _), Nat.le_refl _, by
       simp only; omega⟩
-  have hob : Ob R (L1 ++ [(ptr, ptr + r)]) st m ptr c :=
-    ob_fresh hw.sok (WC.cap0 hP hw) hin hap1 hheld (fun _ hne => absurd ⟨hhd.1, hhd.2.2⟩ hne) hc0
+  have hob : ObZ R (L1 ++ [(ptr, ptr + r)]) st m ptr c :=
+    ob_freshZ hw.sok (WC.cap0 hP hw) hin hap1 hheld (fun _ hne => absurd ⟨hhd.1, hhd.2.2⟩ hne) hc0
   have hb48 := hA.b48
   subst hm
   refine ⟨⟨esp.trans h.jx.esp, e28.trans h.jx.e28, e29.trans h.jx.e29, e18.trans h.jx.e18, hA.wc,
