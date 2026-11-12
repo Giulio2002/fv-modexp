@@ -1191,3 +1191,8 @@ amd64 Top_RunErr in the same run: **FAIL (timeout) 901 s**, peak 1.4 GB — at l
 | MulITail (itail) | — | 42 s / 3.0 GB | two janus_run segments (wb on/off) |
 | MulICall / MulIMul | — | 2.4 s / 17 s | |
 | full mul chain rebuild after MulDefs change (36 modules, J=1) | — | max MulOne 173 s / 6.55 GB, MulBM 98 s, MulKar 77 s | all green |
+
+## divmc s24 (2026-11-12) — karatsuba member arm64 (dev, LEAN_NUM_THREADS=4)
+KMulRel 9 s / 2.5 GB, KMulB 15 s / 2.9 GB, KMulI 35 s / 3.5 GB, KMulMath 2 s, KMulSub 21 s / 2.8 GB, KMulS1c 195 s / 7.7 GB →
+16 s / 2.5 GB (context cleared before janus_run + post lemma), KMulS1 8 s, KMulS2 47 s → 21 s / 2.9 GB (disjunctive hyps cleared
+before the tail), KMulAdd1 18 s, KMulAdd2 25 s, KMulEndP 10 s, KMulEnd 15 s. KMulS3: > 900 s (WIP, not committed; see NOTES).
