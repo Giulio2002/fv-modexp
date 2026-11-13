@@ -1716,6 +1716,17 @@ rel42 (snapshot snap42 = 8923cef0, same store, the four rows alone, load 30-46):
   (context = summary + DivPostL pieces) never finished; the same facts proved at the top of the proof take ms. Prove
   every arithmetic side fact BEFORE the call (or in a small lemma) — never omega in a post-call context.
 
+### expmc s57 (amd64 window-4 entry + W4Fun bridge infra, dev builds on v0.3.1, host load ~50)
+* New: W4EnDefs 2.4 s, W4EnA (entry → enJ | growslice; 3 janus64_runs: no-grow `<`/`=` + grow) 78 s / 2.5 GB,
+  W4EnG (memclr call → enJ) 32 s / 2.5 GB, W4EnG2 (growslice call → memclr) 40 s / 3.2 GB, W4EnJ (header + WB → xnE)
+  22 s / 2.5 GB, W4EnCtx (EPre, ctxX_of) 42 s / 3.8 GB, W4EnX (atXnE) 2.4 s, W4En (enStep) 33 s / 3.3 GB, W4FunA 1.5 s.
+* LESSON: a blanket `first | exact h14 | rfl | exact hdf | …` over the ~17 remaining call-argument goals of a
+  continuation (state-record goals) ran > 5 min (killed); closing each goal BY NAME (`?hsp … ?r3b0` + `case`) = 40 s.
+  Also: `?name` holes are global in a tactic proof — reusing `?mf/?lf/?rg` in a second branch silently unified with the
+  first branch's holes (type mismatch on a DIFFERENT branch's state); use distinct names per branch.
+* LESSON: a big bundled budget hypothesis (`XnB`, 10 conjuncts with `costF` atoms) in context made a trivial `omega`
+  fail/slow (omega splits conjunctions); hide it as `Nonempty (XnB …)` and `clear` it, re-open with `.elim id`.
+
 ### expmc s56 (amd64 window-4 path A + anchor bridge, dev builds on v0.3.1, host load ~45)
 * W4XnR2 RE-MEASURED: 27 s / 2.3 GB (unchanged source; s55's 234 s was a load artefact) — no trim needed.
 * New: W4Anc 3.1 s / 2.3 GB, W4XnA (CtxX.addEx/dropEx, keeps_divX, rem_xin) 23 s / 3.0 GB, W4XnAP (dvgPre_of)
