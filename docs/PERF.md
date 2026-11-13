@@ -1706,3 +1706,8 @@ rel42 (snapshot snap42 = 8923cef0, same store, the four rows alone, load 30-46):
   sp - 232) → isolated lemma `sp232`; and an `omega` over 3 ranges with many truncated subtractions in context (hst2)
   → lemma `st3`; budget fact boxed (`hbbB`). Lesson: never `bv_omega`/multi-range `omega` in a context holding the
   callee post; state the arithmetic as a standalone lemma (also `win240`, `gwin_aux` in DivMBigK).
+* Rows (arm64, top s40-s42 run build/s40/rs.sh: verify-all ONLY_ISA=arm64 ROWS=1, fresh cache cache-top/rs40, Janus v0.3.2,
+  JANUS_REPLAY_THREADS=1, load ~70): warm-up 1887 s; RequiredGas PASS 643 s / 2.1 GB (> 600 s margin target — owner to
+  trim/profile); Top_RunErr PASS 493 s / 2.4 GB; Top_RunSucc FAIL 901 s / 1.6 GB = timeout: the row itself compiled ~370
+  chain modules (Common, Lib, Arm64/Nat… up to Top/RunC2Lem2) because verify-all's arm64 list has no lower rows that pre-build
+  them, so the 900 s cap measured the chain, not the row's own modules. Next: rerun Top_RunSucc on the now-warm cache.
