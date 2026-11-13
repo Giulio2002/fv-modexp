@@ -1795,3 +1795,9 @@ Util → IcDefs → IcHL → Ic → Og → Pre → Seg → FinA → Fin → Row 
 | Amd64/NatQ/KMulS3 (new) | 123 s | 31 s / 2.7 GB | frame side conditions `hrd`/`hkz` by `omega_only [layout facts]` instead of `omega` in the full context (39 s + 50 s) |
 | Arm64/NatQ/MulITail | 50 s | 37 s / 2.5 GB | `hmx`/`hmy`/`hmrd` by `omega_only` (the context holds unfolded `Apart` disjunctions) |
 | Arm64/NatQ/KMulPC | 88 s | (no gain) | clearing 24 unrelated hypotheses before `all_goals janus_simp` changed nothing (janus_omega is already sparse): the cost is ~160 read-over-write discharges at ~0.15 s |
+* c5f300f9: segment modules moved `Proofs/<Isa>/RequiredGas/*` → `Proofs/<Isa>/RG/*`: the row module name was a prefix of every
+  segment module, so Janus replayed them in ONE leanchecker process (a3: "replay of 13 targets" 291 s). Now "48 targets at 4 at once".
+* Targeted runs (snapshot, warm-up-only cache, JANUS_TIMINGS=1): a3 (before the move) arm64 568 s = compile 255 + replay 291 (load ~45);
+  **a4 arm64 275 s / 1.7 GB = compile 196 + replay 65 (load ~27-40) — target ≤ 450 s met**;
+  **b4 amd64 537 s = compile 325 + replay 190 (load ~30-40) — still over 450**: amd64 Sb* (SetBytes cases, 55-117 s each dev, ≈480 s)
+  dominate compile and replay → next trim.
