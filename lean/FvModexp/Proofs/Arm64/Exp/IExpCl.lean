@@ -141,7 +141,7 @@ abbrev clBU : Nat → Nat → Nat → Nat → Nat → Nat := Exp.supU (ExpEven.N
 /-- the dominating bound of `expNNEven`'s inner cost -/
 abbrev clCU : Nat → Nat → Nat → Nat → Nat → Nat := Exp.supU (ExpN.NCost clF clR clS clP)
 /-- `nat.expNNEven`'s cost -/
-abbrev clE : Nat → Nat → Nat → Nat → Nat := ExpEven.costE clF clR clS clP clBU clCU sqrCQ mulCQ mulC
+abbrev clE : Nat → Nat → Nat → Nat → Nat := ExpEven.costE clF clR clS clP clBU clCU sqrCQ mulCQ (ExpEven.mulBrE mulCQ)
 
 /-- the closed allocation-budget bound of `(*Int).exp` (`IExp.ens`'s `hbud` for the closed callee costs; the same
 text as top's `Run.Closed.BudOK`) -/
