@@ -7,7 +7,7 @@ set_option autoImplicit false
 # `expNNPowerOfTwoWindowSize4` (arm64): the loop body's shared context `BF` and its transport through a callee
 (agent infra)
 
-`BF … M L1 b1 zzp bp` = `WC` at the loop level `ℓL`, the frame slots `ESl` and the table / `zz` facts `TZ` — what
+`BF … M L1 b1 zzp bp` = `WC` at the loop level `lvlL`, the frame slots `ESl` and the table / `zz` facts `TZ` — what
 every point of the loop body has. `BF.call`: through a callee at `SP = sp` (window `[sp - stk, sp - 8) ∪ [sp + 8,
 sp + above)`, `above ≤ 88`) that writes a destination buffer `(pd, cd)` of either class and restores the stack
 (`StackBackL`): `BF` at the new memory, the window slots from `sp + 88` on, and every other buffer (class kept, bytes
@@ -23,7 +23,7 @@ open P2W2 (grE mcE wbE wTy grE_eq mcE_eq wbE_eq)
 /-- the common facts of every point of the loop body -/
 structure BF (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl lm ret : Nat) (s : State)
     (M : Memory) (L1 : List (Nat × Nat)) (b1 zzp bp : Nat) : Prop where
-  wc : WC R L K g sp st zp zc s.mem M L1 b1 (ℓL (stLen s.mem st) lm)
+  wc : WC R L K g sp st zp zc s.mem M L1 b1 (lvlL (stLen s.mem st) lm)
   esl : ESl M sp st (s.regs 29) ret zp zc xp xl xc yp yl lm (stLen s.mem st)
   tz : TZ R L s.mem M L1 st sp zzp bp lm (natVal s.mem xp xl)
 
@@ -173,7 +173,7 @@ theorem BF.call (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {ret : Nat
   have hK := hP.1.2.2.2.2.2.2.2.1
   have hK1 := hP.1.2.2.2.2.2.2.2.2.1
   have hsp2 := hP.1.2.2.2.2.2.2.2.2.2.1
-  have hlp : 0 < ℓL (stLen s.mem st) lm := by have := hP.2.2.2.2.2.1; simp only [ℓL, ℓZ, ℓR, W]; omega
+  have hlp : 0 < lvlL (stLen s.mem st) lm := by have := hP.2.2.2.2.2.1; simp only [lvlL, lvlZ, lvlR, W]; omega
   have hwo := WC.win_out hP hB.wc hlp
   obtain ⟨dH, dW, dS, dF⟩ := BC.out hP hB.tz hd hcd
   unfold Apart at dW dS
@@ -198,7 +198,7 @@ theorem BF.call (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {ret : Nat
       rw [outside_append, outside_append, outside_append]
       refine ⟨⟨⟨h0.1, ?_⟩, ?_⟩, h0.2⟩ <;> simp only [outside_cons, outside_nil, and_true] <;> omega)
   obtain ⟨zr, zl⟩ := BC.zs hP hB.tz hd hcd
-  have hw : WC R L K g sp st zp zc s.mem M' L2 b2 (ℓL (stLen s.mem st) lm) := by
+  have hw : WC R L K g sp st zp zc s.mem M' L2 b2 (lvlL (stLen s.mem st) lm) := by
     refine hB.wc.call (ws := [(sp - stk, sp - 8), (sp + 8, sp + above)] ++ [(pd, pd + 8 * cd)] ++ stkWs M st)
       (by simpa only [List.append_assoc] using hF) hLF hrg ?_ ?_ hx hinv
       hsb.1.1 (hsb.1.2.1.trans hB.wc.len) (Nat.le_refl _) hsb.1.2.2 hsb.2

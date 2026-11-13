@@ -20,7 +20,7 @@ namespace FvModexp.Arm64.ExpEven
 /-- the join point `mul2R` (return of `z1.mul(stk, z2, m2)`): `X0..X2` = `u` -/
 structure J14 (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl yc mp ml mc ret : Nat) (s : State)
     (rk : Nat) (S : State) (L1 : List (Nat × Nat)) (b1 l1 l2 lw pZ cZ pu lu cu : Nat) : Prop where
-  jx : JX R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s S L1 b1 (ℓ4 s st mp ml l1 l2) rk
+  jx : JX R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s S L1 b1 (lvl4 s st mp ml l1 l2) rk
   pc : S.pc = BitVec.ofNat 64 mul2R
   l1m : l1 ≤ ml
   r0 : S.regs 0 = BitVec.ofNat 64 pu

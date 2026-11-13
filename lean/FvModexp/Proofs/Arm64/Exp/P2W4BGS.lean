@@ -71,10 +71,10 @@ theorem callS (hap : ImplApart Extracted.program impl) {ns : List String}
   obtain ⟨hZr, hZrk⟩ := hkeep v pr cr h.rr hcr
   have hZn : NV T.mem pr lr cr Vr := NV.keep h.nr hZrk
   have hZr' : BC R L K g sp st zp zc T.mem L1 zzp bp lm (!w) pr cr := hvw ▸ hZr
-  have hmono := hsm (ℓL (stLen s.mem st) lm) lr (W lm) (by omega)
+  have hmono := hsm (lvlL (stLen s.mem st) lm) lr (W lm) (by omega)
   have hb := h.hb
   have hcb := hjc.hcb
-  have hcst : sqC (ℓL (stLen s.mem st) lm) lr ≤ b1 := by simp only [bodyB, SQ, ML] at hb hmono hrem; omega
+  have hcst : sqC (lvlL (stLen s.mem st) lm) lr ≤ b1 := by simp only [bodyB, SQ, ML] at hb hmono hrem; omega
   refine sqrB hap hns hnf hsq hkS haS hP hB (v := w) hO hco h.no.1 hZr' hZn (by omega) hcst hidx T hpc hsp h28 rfl
     h30 h0 h1 h2 h3 h4 h5 h6 ?_
   intro s' L2 b2 p' l' c' hpc' hsp' h28' h29' h18' e0 e1 e2 hB' hslot hres hnv hl' hx hxn hbud

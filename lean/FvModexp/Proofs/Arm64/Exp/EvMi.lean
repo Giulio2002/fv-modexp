@@ -8,7 +8,7 @@ set_option autoImplicit false
 # `nat.expNNEven` (arm64): **`segMi`** — `J10` (`smR`) → `m2inv := m1.modularInverseModPowerOfTwo(stk, m2, n)` →
 `J11` (`miR`) (agent infra)
 
-`runMi` spills `z3`; `miPre` gives `ModInv.PreL` (window `[sp - (240 + kc), sp + 72)`, level `ℓ4`); the callee is a
+`runMi` spills `z3`; `miPre` gives `ModInv.PreL` (window `[sp - (240 + kc), sp + 72)`, level `lvl4`); the callee is a
 stack user (`stepC` with destination `m1`'s array, `StackBackL` from `ModInv.Post`). `m2`, `z2`, `z`, `z3` are apart
 from `m1` and survive; `m2inv` is located (`LN.of_sm`: `m1`'s array or fresh) and apart from them (`apart_res`).
 -/
@@ -29,10 +29,10 @@ theorem segMi {impl : List Segment} (hap : ImplApart Extracted.program impl) {kc
     (hK : 240 + kc ≤ K) (hkc : 4608 ≤ kc)
     (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) (hM : 0 < natVal s.mem mp ml)
     (hev : natVal s.mem mp ml % 2 = 0)
-    (hs16 : ∀ l1 l2, l1 ≤ ml → l2 ≤ ml → ℓ4 s st mp ml l1 l2 + 8 * ModInv.NW (nE s mp ml) + 72 ≤ 2 ^ 16)
+    (hs16 : ∀ l1 l2, l1 ≤ ml → l2 ≤ ml → lvl4 s st mp ml l1 l2 + 8 * ModInv.NW (nE s mp ml) + 72 ≤ 2 ^ 16)
     {rk rk' : Nat}
     (hrk : ∀ l1 l2, l1 ≤ ml → l2 ≤ ml →
-      ModInv.cost (sqC (ℓ4 s st mp ml l1 l2)) (mlC (ℓ4 s st mp ml l1 l2)) (nE s mp ml) + rk' ≤ rk)
+      ModInv.cost (sqC (lvl4 s st mp ml l1 l2)) (mlC (lvl4 s st mp ml l1 l2)) (nE s mp ml) + rk' ≤ rk)
     {ret0 : BitVec 64} {Q : State → Prop}
     (K11 : ∀ (S : State) (L1 : List (Nat × Nat)) (b1 l1 q l2 pw lw cw pZ cZ p3 l3 c3 p4 l4 c4 : Nat),
       J11 R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s rk' S L1 b1 l1 q l2 pw lw cw pZ cZ p3 l3 c3 p4 l4 c4 →
@@ -98,7 +98,7 @@ theorem segMi {impl : List Segment} (hap : ImplApart Extracted.program impl) {kc
   have hpre := miPre hP hw2 hK hkc hS2 h28 fm (sqC := sqC) (mlC := mlC) f30 ⟨by decide, by decide⟩
     hm1 h.c1p hp1 hm2 hl20 (by omega) hodd h.ap (by omega) (by omega) (hs16 l1 l2 hl1 hl2)
     (bud_pre hb1 (hrk l1 l2 hl1 hl2))
-  have hS := CallNE.hypSum hap libW_sub (hE (ℓ4 s st mp ml l1 l2) b1 L1 p1 l1 c1 st q l2 (a2 ml (nE s mp ml))
+  have hS := CallNE.hypSum hap libW_sub (hE (lvl4 s st mp ml l1 l2) b1 L1 p1 l1 c1 st q l2 (a2 ml (nE s mp ml))
     (nE s mp ml))
   refine ReachesRet.call_regions hS (by rw [f0, modInv_a]) ⟨?_, ?_, hpre⟩
     fun s' hr ⟨⟨e1, e2, e3, e4⟩, hq⟩ hrg' => ?_
@@ -122,7 +122,7 @@ theorem segMi {impl : List Segment} (hap : ImplApart Extracted.program impl) {kc
     have hmi := LN.of_sm hP hw2 hm1 hv hN hlc hc40 hlv hor hx hsb hrs
     have k : ∀ a, sp + 128 ≤ a → a + 8 ≤ sp + 448 → s'.mem.readLE a 8 = M2.readLE a 8 := fun a h1 h2 =>
       hk a 8 (Or.inr ⟨h1, h2⟩)
-    have hjx : JX R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s s' L2 b2 (ℓ4 s st mp ml l1 l2) rk' :=
+    have hjx : JX R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s s' L2 b2 (lvl4 s st mp ml l1 l2) rk' :=
       ⟨e1.trans hS2, e2.trans h28, e3.trans (f29.trans h.jx.e29), e4.trans (f18.trans h.jx.e18), hw',
         hesl.keep (fun a k' ha => hk a k' (by simp only [SlotR] at ha; omega)) (by omega),
         bud_step hb1 (hrk l1 l2 hl1 hl2) hb⟩

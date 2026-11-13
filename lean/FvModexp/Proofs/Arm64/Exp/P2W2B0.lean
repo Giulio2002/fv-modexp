@@ -55,10 +55,10 @@ theorem callB0 (hap : ImplApart Extracted.program impl) {ns : List String}
   obtain ⟨hA, hAk⟩ := hkeep u pA cA li.ca hcA
   obtain ⟨hBc, -⟩ := hkeep (!u) pB cB li.cb li.cb0
   have hAn : NV T.mem pA lA cA Z := NV.keep ⟨li.lac, li.va, li.na, li.zo⟩ hAk
-  have hmono := hsm (ℓL (stLen s.mem st) lm) lA (W lm) li.la
+  have hmono := hsm (lvlL (stLen s.mem st) lm) lA (W lm) li.la
   have hb := h.hb
   rw [bud_c1 0 _ c i] at hb
-  have hcst : sqC (ℓL (stLen s.mem st) lm) lA ≤ b1 := by simp only [bc] at hb; omega
+  have hcst : sqC (lvlL (stLen s.mem st) lm) lA ≤ b1 := by simp only [bc] at hb; omega
   refine sqrB hap hns hnf hsq hkS haS hP hB (v := !u) hBc li.cb0 li.lbc (by rw [Bool.not_not]; exact hA) hAn li.la
     hcst (by decide) T hpc hsp h28 rfl h30 h0 h1 h2 h3 h4 h5 h6 ?_
   intro s' L2 b2 p' l' c' hpc' hsp' h28' h29' h18' e0 e1 e2 hB' hslot hres hnv hl' hx hxn hbud

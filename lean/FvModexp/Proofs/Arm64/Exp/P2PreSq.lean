@@ -72,7 +72,7 @@ theorem callSqrH (hap : ImplApart Extracted.program impl) {ns : List String}
   have hal : bp % 8 = 0 := hc.scr.al
   have hb48 := hc.scr.b48
   have hnb := nb_le hpl16 hw128
-  have hst : stLen M st = ℓ1 (stLen s.mem st) pl lm := hc.sa.2.1
+  have hst : stLen M st = lvl1 (stLen s.mem st) pl lm := hc.sa.2.1
   have hsep := pw_sep (lm := lm) (j := i / 2) (k := i) (by omega)
   have hin := pw_in (pl := pl) (lm := lm) (bp := bp) (j := i) (by omega)
   have hroom := bud_room hcost hip hi hb
@@ -80,13 +80,13 @@ theorem callSqrH (hap : ImplApart Extracted.program impl) {ns : List String}
     (by omega) (by omega) (by omega)
   have hx := bufArr hpre hc hf hspN h28 hm hkS haS (a := bp + 8 * (i / 2 * W lm)) (c := W lm) (by omega)
     (by omega) (by omega) (by omega) (by omega)
-  have hmono := hsm (ℓ1 (stLen s.mem st) pl lm) _ _ d1
+  have hmono := hsm (lvl1 (stLen s.mem st) pl lm) _ _ d1
   have hrnd := rnd_le (NB pl lm)
   refine LibCalls.sqrCallX hap hns hsq (b := b1) (L := L1) (ra_bp hap hnf 201 (by decide)) (by rw [hpc, sqr_addr]) h30 h0 h1 h2 h3 h4
     h5 h6 (by omega) (by omega) (by omega) (by have := hc.sa.1.2.2.2.1; omega) (by omega) (by omega) (by omega)
     (by decide) ⟨callEnv_ctx hpre hc hsp h28 hm hkS haS, hsv, by rw [hm]; exact globals_ctx hpre hc hspN hkS haS,
       by omega, hz.1, hx.2.1 _ d1, by omega, Or.inr fun _ _ => by unfold Apart; omega,
-      stkIn_ctx hpre hc hf hspN h28 hm hkS haS, by rw [hm, hst]; simp only [ℓ1]; omega,
+      stkIn_ctx hpre hc hf hspN h28 hm hkS haS, by rw [hm, hst]; simp only [lvl1]; omega,
       by rw [hm]; exact hz.2.2.2, by rw [hm]; exact sa_sub hx.2.2.2 (by omega),
       by rw [hm, hst]; simp only [rc] at hroom; omega, by rw [hm, h28]; exact hc.inv⟩ (hx.2.2.1 _ d1)
     ⟨stkX_ctx hpre hc hf hspN h28 hm hkS haS, (hz.1.2.2 (by omega)).1, fun he => absurd he (by omega),

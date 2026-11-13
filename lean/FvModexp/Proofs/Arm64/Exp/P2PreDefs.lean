@@ -50,14 +50,14 @@ abbrev A : Nat := 80
 @[reducible] def NB (pl lm : Nat) : Nat := (pl + 1) * W lm
 
 /-- the stack length inside the loop -/
-@[reducible] def ℓ1 (ℓ pl lm : Nat) : Nat := ℓ + StackNat.rnd (NB pl lm)
+@[reducible] def lvl1 (ℓ pl lm : Nat) : Nat := ℓ + StackNat.rnd (NB pl lm)
 
 /-- a `trunc` budget (any result length `≤ w`; `makeCap 0 = 4`) -/
 @[reducible] def tC (lm : Nat) : Nat := makeCost (W lm + 4)
 
 /-- one loop round: `sqr`, `mul`, two `trunc`s -/
 @[reducible] def rc (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat) (ℓ pl lm : Nat) : Nat :=
-  sqC (ℓ1 ℓ pl lm) (W lm) + mlC (ℓ1 ℓ pl lm) (W lm) (W lm) + 2 * tC lm
+  sqC (lvl1 ℓ pl lm) (W lm) + mlC (lvl1 ℓ pl lm) (W lm) (W lm) + 2 * tC lm
 
 /-- before the loop: `stk.nat` and `trunc(x)` -/
 @[reducible] def c0 (ℓ pl lm : Nat) : Nat := stackNatCost ℓ (NB pl lm) + tC lm

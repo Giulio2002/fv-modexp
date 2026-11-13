@@ -71,7 +71,7 @@ theorem segC (hap : ImplApart Extracted.program impl) {ns : List String}
       (n0 := 8) (by omega) (Or.inl ⟨by omega, by omega⟩)).c (2 * W lm) (a0 := pw + 24 * i + 24 + 16) (n0 := 8)
     (Or.inl ⟨by omega, by omega⟩))
   have hvT : PV lm x xl s (i + 1) = PV lm x xl s i * PV lm x xl s 1 % 2 ^ lm := p2_odd hi hi2
-  have hct : sqC (ℓ1 (stLen s.mem st) pl lm) (W lm) + tC lm + mlC (ℓ1 (stLen s.mem st) pl lm) (W lm) (W lm) + tC lm =
+  have hct : sqC (lvl1 (stLen s.mem st) pl lm) (W lm) + tC lm + mlC (lvl1 (stLen s.mem st) pl lm) (W lm) (W lm) + tC lm =
       rc sqC mlC (stLen s.mem st) pl lm := by simp only [rc]; omega
   unfold Goal
   janus_run [f184, f128, f224, f256, hwbf] until [wbE, 1786000]

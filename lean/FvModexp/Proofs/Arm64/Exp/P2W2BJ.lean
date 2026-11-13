@@ -21,12 +21,12 @@ namespace FvModexp.Arm64.P2W2
 /-- the budget part common to the body: what the loop needs after this body -/
 @[reducible] def bodyB (b : Nat) (s : State) (st lm : Nat) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat)
     (i c : Nat) : Nat :=
-  b + (c + 32 * i) * bc sqC mlC (ℓL (stLen s.mem st) lm) lm + P2Pre.tC lm
+  b + (c + 32 * i) * bc sqC mlC (lvlL (stLen s.mem st) lm) lm + P2Pre.tC lm
 
 /-- the `sqr` / `mul` bounds at the loop level -/
-@[reducible] def SQ (s : State) (st lm : Nat) (sqC : Nat → Nat → Nat) : Nat := sqC (ℓL (stLen s.mem st) lm) (W lm)
+@[reducible] def SQ (s : State) (st lm : Nat) (sqC : Nat → Nat → Nat) : Nat := sqC (lvlL (stLen s.mem st) lm) (W lm)
 @[reducible] def ML (s : State) (st lm : Nat) (mlC : Nat → Nat → Nat → Nat) : Nat :=
-  mlC (ℓL (stLen s.mem st) lm) (W lm) (W lm)
+  mlC (lvlL (stLen s.mem st) lm) (W lm) (W lm)
 
 /-- the window `d = yi >> 62` -/
 @[reducible] def dOf (yi : Nat) : Nat := yi / 2 ^ 62

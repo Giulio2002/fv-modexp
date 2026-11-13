@@ -105,22 +105,22 @@ theorem lg2_le (s : State) (mp ml : Nat) : lg2 s mp ml ≤ 64 * ml := by
 section
 variable {s : State} {st mp ml : Nat}
 
-theorem ℓ2_le (hn : nE s mp ml < 64 * ml) : ℓ2 s st mp ml ≤ wL2 (stLen s.mem st) ml := by
+theorem ℓ2_le (hn : nE s mp ml < 64 * ml) : lvl2 s st mp ml ≤ wL2 (stLen s.mem st) ml := by
   have h1 := rnd_mono (a := a1 (nE s mp ml)) (b := ml) (by simp only [a1]; omega)
   have h2 := rnd_mono (a := a2 ml (nE s mp ml)) (b := ml) (by simp only [a2]; omega)
-  simp only [ℓ2, wL2]; omega
+  simp only [lvl2, wL2]; omega
 
 theorem ℓ3_le (hn : nE s mp ml < 64 * ml) {l1 l2 : Nat} (h1 : l1 ≤ ml) (h2 : l2 ≤ ml) :
-    ℓ3 s st mp ml l1 l2 ≤ wL3 (stLen s.mem st) ml := by
+    lvl3 s st mp ml l1 l2 ≤ wL3 (stLen s.mem st) ml := by
   have := ℓ2_le (st := st) hn
   have h3 := rnd_mono (a := 2 * max l1 l2) (b := 2 * ml) (by omega)
-  simp only [ℓ3, wL3]; omega
+  simp only [lvl3, wL3]; omega
 
 theorem ℓ4_le (hn : nE s mp ml < 64 * ml) {l1 l2 : Nat} (h1 : l1 ≤ ml) (h2 : l2 ≤ ml) :
-    ℓ4 s st mp ml l1 l2 ≤ wL4 (stLen s.mem st) ml := by
+    lvl4 s st mp ml l1 l2 ≤ wL4 (stLen s.mem st) ml := by
   have := ℓ3_le (st := st) hn h1 h2
   have h3 := rnd_mono (a := 2 * max l1 l2) (b := 2 * ml) (by omega)
-  simp only [ℓ4, wL4]; omega
+  simp only [lvl4, wL4]; omega
 
 end
 

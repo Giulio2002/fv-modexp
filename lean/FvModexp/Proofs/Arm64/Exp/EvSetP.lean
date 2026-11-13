@@ -17,7 +17,7 @@ namespace FvModexp.Arm64.ExpEven
 /-- `J8`'s locals after `z2`'s spills -/
 structure JP (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl yc mp ml mc ret : Nat) (s : State)
     (rk : Nat) (S : State) (L1 : List (Nat × Nat)) (b1 p1 l1 c1 q l2 pz lz cz pw lw cw : Nat) : Prop where
-  jx : JX R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s S L1 b1 (ℓ4 s st mp ml l1 l2) rk
+  jx : JX R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s S L1 b1 (lvl4 s st mp ml l1 l2) rk
   s288 : S.mem.readLE (sp + 288) 8 = p1
   s208 : S.mem.readLE (sp + 208) 8 = l1
   s216 : S.mem.readLE (sp + 216) 8 = c1
@@ -141,7 +141,7 @@ theorem JP.mkJS (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) {
     {L1 : List (Nat × Nat)} {b1 p1 l1 c1 q l2 pz lz cz pw lw cw : Nat}
     (h : JP R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s rk S L1 b1 p1 l1 c1 q l2 pz lz cz pw lw cw)
     {m : Memory} {ptr r c : Nat}
-    (hA : AllocR R L K g sp st zp zc s.mem S.mem L1 b1 (ℓ4 s st mp ml l1 l2) m ptr r (8 * c))
+    (hA : AllocR R L K g sp st zp zc s.mem S.mem L1 b1 (lvl4 s st mp ml l1 l2) m ptr r (8 * c))
     (hc : lw ≤ c) (hc40 : c < 2 ^ 40) (hc0 : 0 < c) (hptr : ptr < 2 ^ 64) (hbud : rk' ≤ b1 - r)
     (S' : State) (esp : S'.sp = S.sp) (e28 : S'.regs 28 = S.regs 28) (e29 : S'.regs 29 = S.regs 29)
     (e18 : S'.regs 18 = S.regs 18) (hm : S'.mem = m) (hpc : S'.pc = BitVec.ofNat 64 setJ)

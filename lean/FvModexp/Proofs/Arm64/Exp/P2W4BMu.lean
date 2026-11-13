@@ -34,7 +34,7 @@ theorem mulB {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns 
     {v : Bool} {pd ld cd : Nat} (hd : BC R L K g sp st zp zc M L1 zzp bp lm v pd cd) (hcd : 0 < cd) (hld : ld ≤ cd)
     {px lx cx X' : Nat} (hx : BC R L K g sp st zp zc M L1 zzp bp lm (!v) px cx) (hxv : NV M px lx cx X')
     (hlx : lx ≤ W lm) {j ly : Nat} (hj : j < 16) (hly : M.readLE (sp + 320 + 24 * j + 8) 8 = ly)
-    (hPo : Exp.p2Pow lm (natVal s.mem xp xl) j % 2 = 1) (hcost : mlC (ℓL (stLen s.mem st) lm) lx ly ≤ b1)
+    (hPo : Exp.p2Pow lm (natVal s.mem xp xl) j % 2 = 1) (hcost : mlC (lvlL (stLen s.mem st) lm) lx ly ≤ b1)
     {ret0 : BitVec 64} {Q : State → Prop} {idx : Nat} (hidx : idx < 519)
     (T : State) (hpc : T.pc = BitVec.ofNat 64 1814128) (hsp : T.sp = BitVec.ofNat 64 sp)
     (h28 : T.regs 28 = BitVec.ofNat 64 g) (hm : T.mem = M) (h30 : T.regs 30 = BitVec.ofNat 64 (1792928 + 4 * idx))
@@ -49,7 +49,7 @@ theorem mulB {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns 
       (∀ a k, sp + 88 ≤ a → a + k ≤ sp + 848 → s'.mem.readLE a k = M.readLE a k) →
       BC R L K g sp st zp zc s'.mem L2 zzp bp lm v p' c' → NV s'.mem p' l' c' (X' * Exp.p2Pow lm (natVal s.mem xp xl) j) → l' ≤ 2 * W lm →
       BC R L K g sp st zp zc s'.mem L2 zzp bp lm (!v) px cx → NV s'.mem px lx cx X' →
-      b1 - mlC (ℓL (stLen s.mem st) lm) lx ly ≤ b2 → ReachesRet (LibW.program.link impl) ret0 s' Q) :
+      b1 - mlC (lvlL (stLen s.mem st) lm) lx ly ≤ b2 → ReachesRet (LibW.program.link impl) ret0 s' Q) :
     ReachesRet (LibW.program.link impl) ret0 T Q := by
   obtain ⟨xlc, xv, xN, xo⟩ := hxv
   have hlx0 : 0 < lx := len_pos xv xo

@@ -60,9 +60,9 @@ theorem segM1 {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns
     (hkM : stkM ≤ K) (haM : aboveM ≤ 88)
     (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) (hM : 0 < natVal s.mem mp ml)
     (hev : natVal s.mem mp ml % 2 = 0)
-    (hs16 : ∀ l1 l2, l1 ≤ ml → l2 ≤ ml → ℓ4 s st mp ml l1 l2 + 8 * ml + 64 ≤ 2 ^ 16)
+    (hs16 : ∀ l1 l2, l1 ≤ ml → l2 ≤ ml → lvl4 s st mp ml l1 l2 + 8 * ml + 64 ≤ 2 ^ 16)
     {rk rk' : Nat}
-    (hrk : ∀ l1 l2 a c, l1 ≤ ml → l2 ≤ ml → a ≤ ml → c ≤ ml → mlC (ℓ4 s st mp ml l1 l2) a c + rk' ≤ rk)
+    (hrk : ∀ l1 l2 a c, l1 ≤ ml → l2 ≤ ml → a ≤ ml → c ≤ ml → mlC (lvl4 s st mp ml l1 l2) a c + rk' ≤ rk)
     {ret0 : BitVec 64} {Q : State → Prop}
     (K12 : ∀ (S : State) (L1 : List (Nat × Nat)) (b1 l1 q l2 lw pZ cZ p3 l3 c3 pt lt ct : Nat),
       J12 R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s rk' S L1 b1 l1 q l2 lw pZ cZ p3 l3 c3 pt lt ct →
@@ -109,7 +109,7 @@ theorem segM1 {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns
   intro S' f0 fsp fm r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r30 r18 r28 r29
   have hsN' : S'.sp.toNat = sp := by rw [fsp]; exact hsN
   have hgN' : (S'.regs 28).toNat = g := by rw [r28]; exact hgN
-  have hlen : stLen S'.mem st = ℓ4 s st mp ml l1 l2 := by rw [fm]; exact hw.len
+  have hlen : stLen S'.mem st = lvl4 s st mp ml l1 l2 := by rw [fm]; exact hw.len
   have hpre := mulPreG hP hw hkM haM (fsp.trans h.jx.esp) (r28.trans h.jx.e28) fm h.z2 h.z2e h.z3 h.mi
     (fun c0 cw0 => h.tw c0 cw0) (fun c0 cw0 => h.iw c0 cw0) (by omega) (by omega)
     (by have := hs16 l1 l2 hl1 hl2; omega) (c := mlC (stLen S'.mem st) l3 l4)

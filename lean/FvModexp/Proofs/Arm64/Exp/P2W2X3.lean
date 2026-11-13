@@ -23,7 +23,7 @@ set_option maxRecDepth 20000 in
 /-- `BF` through a live allocation -/
 theorem BF.alloc (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {M : Memory} {L1 : List (Nat × Nat)}
     {b1 zzp bp : Nat} (h : BF R L K g sp st zp zc xp xl xc yp yl lm ret s M L1 b1 zzp bp) {m : Memory} {p r n : Nat}
-    (hA : AllocR R L K g sp st zp zc s.mem M L1 b1 (ℓL (stLen s.mem st) lm) m p r n) :
+    (hA : AllocR R L K g sp st zp zc s.mem M L1 b1 (lvlL (stLen s.mem st) lm) m p r n) :
     BF R L K g sp st zp zc xp xl xc yp yl lm ret s m (L1 ++ [(p, p + r)]) (b1 - r) zzp bp := by
   have hK := hP.1.2.2.2.2.2.2.2.1
   have hK1 := hP.1.2.2.2.2.2.2.2.2.1
@@ -47,7 +47,7 @@ set_option maxRecDepth 20000 in
 /-- after an exit allocation: the context, the fresh U buffer, the source and the window slots -/
 theorem xAft (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {M : Memory} {L1 : List (Nat × Nat)}
     {b1 zzp bp : Nat} (hB : BF R L K g sp st zp zc xp xl xc yp yl lm ret s M L1 b1 zzp bp) {m : Memory} {p c : Nat}
-    (hA : AllocR R L K g sp st zp zc s.mem M L1 b1 (ℓL (stLen s.mem st) lm) m p (blockSize (8 * c) true) (8 * c))
+    (hA : AllocR R L K g sp st zp zc s.mem M L1 b1 (lvlL (stLen s.mem st) lm) m p (blockSize (8 * c) true) (8 * c))
     (hc0 : 0 < c) (hc40 : c < 2 ^ 40) {n Z : Nat} (hsrc : NV M zzp n (2 * W lm) Z) :
     BF R L K g sp st zp zc xp xl xc yp yl lm ret s m (L1 ++ [(p, p + blockSize (8 * c) true)])
       (b1 - blockSize (8 * c) true) zzp bp ∧
@@ -56,7 +56,7 @@ theorem xAft (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {M : Memory} 
     (∀ a k, sp + 32 ≤ a → a + k ≤ sp + 560 → m.readLE a k = M.readLE a k) := by
   have hK := hP.1.2.2.2.2.2.2.2.1
   have hK1 := hP.1.2.2.2.2.2.2.2.2.1
-  have hlpos : 0 < ℓL (stLen s.mem st) lm := by have := hP.2.2.2.2.2.1; simp only [ℓL, ℓZ, ℓR, W]; omega
+  have hlpos : 0 < lvlL (stLen s.mem st) lm := by have := hP.2.2.2.2.2.1; simp only [lvlL, lvlZ, lvlR, W]; omega
   have hzW := scr_win hP hB.tz.zscr
   unfold Apart at hzW
   refine ⟨hB.alloc hP hA, ub_fresh hP hB.wc hlpos hA hB.tz hc0 hA.sz hc40, NV.keep hsrc fun a k h1 h2 =>

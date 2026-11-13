@@ -47,7 +47,7 @@ structure KS (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp x
   hyi : yi < 2 ^ 64
   hc : c ≤ 16
   hu : u = true ↔ (c + kk) % 2 = 1
-  hb : b + (c + 16 * i) * bc sqC mlC (ℓL (stLen s.mem st) lm) lm + P2Pre.tC lm ≤ b1 + cst
+  hb : b + (c + 16 * i) * bc sqC mlC (lvlL (stLen s.mem st) lm) lm + P2Pre.tC lm ≤ b1 + cst
   hfv : Exp.outerLoop 4 (stp lm (natVal s.mem xp xl)) (natVal s.mem yp yl) 16 i yi c Z = FV
 
 /-- value and normal form of `p[0:l]` through a step keeping its bytes -/

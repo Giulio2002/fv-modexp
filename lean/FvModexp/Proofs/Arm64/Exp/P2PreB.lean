@@ -36,7 +36,7 @@ theorem jB2 (hap : ImplApart Extracted.program impl) {ns : List String}
     (hv : natVal M (bp + 8 * (i * W lm)) l = PV lm x xl s i) (hn : NatNorm M (bp + 8 * (i * W lm)) l)
     (hi2 : i % 2 = 0) (hi : 2 ≤ i) (hip : i + 2 ≤ pl)
     (hb : b - (c0 (stLen s.mem st) pl lm + (i / 2 - 1) * rc sqC mlC (stLen s.mem st) pl lm +
-      (sqC (ℓ1 (stLen s.mem st) pl lm) (W lm) + tC lm)) ≤ b1) :
+      (sqC (lvl1 (stLen s.mem st) pl lm) (W lm) + tC lm)) ≤ b1) :
     ReachesRet (LibW.program.link impl) (s.regs 30) S (GoalQ R kc sqC mlC b L st pw pl lm x xl s) := by
   have hsl := s.sp.isLt
   have hf := pf_of hpre (by omega)

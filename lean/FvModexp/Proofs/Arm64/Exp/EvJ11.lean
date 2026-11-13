@@ -43,7 +43,7 @@ theorem modInv_a : segAddr Extracted.program ModInv.fn = 1797104 := by decide
 /-- the join point `miR` (return of `m1.modularInverseModPowerOfTwo(stk, m2, n)`): `X0..X2` = `m2inv` -/
 structure J11 (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl yc mp ml mc ret : Nat) (s : State)
     (rk : Nat) (S : State) (L1 : List (Nat × Nat)) (b1 l1 q l2 pw lw cw pZ cZ p3 l3 c3 p4 l4 c4 : Nat) : Prop where
-  jx : JX R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s S L1 b1 (ℓ4 s st mp ml l1 l2) rk
+  jx : JX R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s S L1 b1 (lvl4 s st mp ml l1 l2) rk
   pc : S.pc = BitVec.ofNat 64 miR
   l1m : l1 ≤ ml
   r0 : S.regs 0 = BitVec.ofNat 64 p4

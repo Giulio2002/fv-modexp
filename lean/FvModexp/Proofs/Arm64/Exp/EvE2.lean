@@ -66,11 +66,11 @@ theorem segE2 {impl : List Segment} (hap : ImplApart Extracted.program impl)
     (hKN : 4304 ≤ KN) (hKN1 : KN + 1312 ≤ K) (hKN2 : KN + 288 ≤ 2 ^ 20)
     (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) (hM : 0 < natVal s.mem mp ml)
     (hev : natVal s.mem mp ml % 2 = 0) (hX : NHyp.XFacts R L xp xl xc)
-    (hst : ∀ l1 l2, l1 ≤ ml → l2 ≤ ml → NStkE needR needS needP xl yl l2 (ℓ4 s st mp ml l1 l2) (lg2 s mp ml))
+    (hst : ∀ l1 l2, l1 ≤ ml → l2 ≤ ml → NStkE needR needS needP xl yl l2 (lvl4 s st mp ml l1 l2) (lg2 s mp ml))
     {rk rk' : Nat}
     (hrk : ∀ l1 l2, l1 ≤ ml → l2 ≤ ml →
-      NBudE costF costR costS costP xl yl l2 (ℓ4 s st mp ml l1 l2) (lg2 s mp ml) ≤ rk ∧
-      ExpN.NCost costF costR costS costP xl yl l2 (ℓ4 s st mp ml l1 l2) (lg2 s mp ml) + rk' ≤ rk)
+      NBudE costF costR costS costP xl yl l2 (lvl4 s st mp ml l1 l2) (lg2 s mp ml) ≤ rk ∧
+      ExpN.NCost costF costR costS costP xl yl l2 (lvl4 s st mp ml l1 l2) (lg2 s mp ml) + rk' ≤ rk)
     {ret0 : BitVec 64} {Q : State → Prop}
     (K8 : ∀ (S : State) (L1 : List (Nat × Nat)) (b1 p1 l1 c1 q l2 pz lz cz pw lw cw : Nat),
       J8 R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s rk' S L1 b1 p1 l1 c1 q l2 pz lz cz pw lw cw →

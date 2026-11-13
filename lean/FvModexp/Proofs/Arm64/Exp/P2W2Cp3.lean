@@ -19,7 +19,7 @@ abbrev CP : Nat := 1796092
 /-- the frame facts from the table to the copy point -/
 structure CPF (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl lm ret : Nat) (s : State)
     (M : Memory) (L1 : List (Nat × Nat)) (b1 zzp bp : Nat) : Prop where
-  wc : WC R L K g sp st zp zc s.mem M L1 b1 (ℓL (stLen s.mem st) lm)
+  wc : WC R L K g sp st zp zc s.mem M L1 b1 (lvlL (stLen s.mem st) lm)
   esl : ESl M sp st (s.regs 29) ret zp zc xp xl xc yp yl lm (stLen s.mem st)
   tz : TZ R L s.mem M L1 st sp zzp bp lm (natVal s.mem xp xl)
   z280 : M.readLE (sp + 280) 8 = zzp
@@ -70,7 +70,7 @@ set_option maxRecDepth 20000 in
 /-- `CPF` through a live allocation -/
 theorem CPF.alloc (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s)
     (h : CPF R L K g sp st zp zc xp xl xc yp yl lm ret s M L1 b1 zzp bp) {m : Memory} {p r n : Nat}
-    (hA : AllocR R L K g sp st zp zc s.mem M L1 b1 (ℓL (stLen s.mem st) lm) m p r n) :
+    (hA : AllocR R L K g sp st zp zc s.mem M L1 b1 (lvlL (stLen s.mem st) lm) m p r n) :
     CPF R L K g sp st zp zc xp xl xc yp yl lm ret s m (L1 ++ [(p, p + r)]) (b1 - r) zzp bp := by
   have hK := hP.1.2.2.2.2.2.2.2.1
   have hK1 := hP.1.2.2.2.2.2.2.2.2.1
@@ -120,7 +120,7 @@ theorem cpC {impl : List Segment} (hmv : MemmoveLive (LibW.program.link impl) P2
     (hlen : M.readLE (sp + 320 + 24 * d + 8) 8 = n)
     (s160 : M.readLE (sp + 160) 8 = yi) (s200 : M.readLE (sp + 200) 8 = kk) (s240 : M.readLE (sp + 240) 8 = kk - 1)
     (s208 : M.readLE (sp + 208) 8 = i) (hkk1 : 1 ≤ kk) (hkk : kk ≤ 32) (hi : i < yl) (hyi : yi < 2 ^ 64)
-    (hbud : b + (kk - 1 + 32 * i) * bc sqC mlC (ℓL (stLen s.mem st) lm) lm + P2Pre.tC lm ≤ b1 + cst)
+    (hbud : b + (kk - 1 + 32 * i) * bc sqC mlC (lvlL (stLen s.mem st) lm) lm + P2Pre.tC lm ≤ b1 + cst)
     (hFV : Exp.outerLoop 2 (stp lm (natVal s.mem xp xl)) (natVal s.mem yp yl) 32 i
       (yi * 2 ^ (64 - (kk - 1) * 2) % 2 ^ 64) (kk - 1) (Exp.p2Pow lm (natVal s.mem xp xl) d) = FV)
     (S : State) (hpc : S.pc = BitVec.ofNat 64 CP) (hsp : S.sp = BitVec.ofNat 64 sp)
