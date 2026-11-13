@@ -1637,3 +1637,14 @@ KSqrEnd 17 s / 2.6, KSqrProD 12 s / 2.7; Amd64/Nat/AddTo (+ df conjunct) 134 s /
 | Amd64/Nat/DivLessF (lessFin on PreG) / DivLessC | 1.6 s / 23.1 s | 2.8 GB |
 | Amd64/Nat/DivOneT / DivOneTB / DivOneTC (on PreG/RQG) | 5.4 s / 22.0 s / 15.2 s | 3.0 GB |
 | Amd64/Nat/DivBigF / DivBigC (lsumG) | 4.8 s / 17.3 s | 3.6 GB |
+
+### top s36 (2026-11-13, dev builds `build/dbuild.sh <isa>`, LEAN_NUM_THREADS=4, load ~10-14)
+* Row amd64 RequiredGas on Janus **v0.3.2** (first v0.3.2-binary row; verify-all, fresh cache `cache-top/rg35b`, warm-up
+  877 s): **PASS 613 s / 3.2 GB**, correctness + 2 witnesses, no proof edit (v0.3.1-era 423 s / 5.7 GiB with warm framework;
+  arm64 v0.3.1 s35: 422 s / 2.1 GB). Slightly above the 600 s ROW MARGIN target at load ~13: owner infra may trim.
+* amd64 nat.div G form (dev): DivW0 (Pre0: zeroPath0/setZero0/full0/ens0) 16 s / 2.4 GB; DivZOneA.one1G 8 s; DivZOne
+  (wsum0, w_preZ, one2Z) 7 s; DivZCmp.two1G 12 s; DivZTwo.two2G 5 s; DivZLess.lessRG 4 s; Div (full on HypG → RQG) 2 s;
+  DivLG (fullZ, ensLG, ensDLG) 2.7 s; DivRowWit (witness setup + pre) 10 s / 2.5 GB. All ≤ 2.6 GB.
+* TIGHT COSTS prep: Arm64/Top/RunSuccW2 3.5 s, Amd64/Top/RunSuccW2 6.5 s (3^5 mod 7 call data, compute2 by decide +kernel).
+* Dev tooling: build/dbuild.sh compiles `Proofs/<Isa>/RequiredGas/*` against the RequiredGas extraction (Arm64 Mv 30 s incl.
+  the one-off Extracted.olean) — dev sweeps no longer report RequiredGas as failing.
