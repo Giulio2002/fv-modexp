@@ -1,6 +1,7 @@
 import FvModexp.Proofs.Arm64.NatQ.MulLoopPA
 import FvModexp.Proofs.Common.DivmcNat
 import FvModexp.Proofs.Common.DivmcMem
+import FvModexp.Proofs.Common.OmegaOnly
 
 /-!
 # [Q-form copy of Arm64/Nat/MulLoopClr.lean — TIGHT COSTS, divmc s34] `nat.mul` (arm64), the chunk loop's prologue: `clear(z[2n:])` and the defer record (natmul.go:53-54), `KA → LP`
@@ -87,6 +88,7 @@ theorem lpOf {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp xl xc 
       exact hLFc.readLE a n hin (by simp only [outside_cons, outside_nil, and_true]; omega)⟩
   have hsbC : StackBackL R Lk Lk st S.mem P.mem ∧ stCap P.mem st = stCap S.mem st :=
     NatSqr.stackBack_keepC hq.sok hFall hLall (by simp only [outside_cons, outside_nil, and_true]; omega) (LiveExt.refl R Lk)
+  have h264 : 264 ≤ s.sp.toNat := Nat.le_trans (by decide) (Nat.le_trans hW hWs)
   have hrd : ∀ x m, s.sp.toNat - 264 ≤ x → x + m ≤ s.sp.toNat + 88 → (x + m ≤ s.sp.toNat - 162 ∨ s.sp.toNat - 160 ≤ x) →
       (x + m ≤ s.sp.toNat - 64 ∨ s.sp.toNat - 40 ≤ x) → (x + m ≤ s.sp.toNat - 16 ∨ s.sp.toNat - 8 ≤ x) →
       (x + m ≤ s.sp.toNat - 248 ∨ s.sp.toNat - 232 ≤ x) → P.mem.readLE x m = S.mem.readLE x m :=
@@ -122,19 +124,19 @@ theorem lpOf {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp xl xc 
       fr := hfr1.trans hFsW fun x m ho => ⟨ho, by simp only [outside_append] at ho; exact ho.1.2⟩,
       lf := LiveFrame.trans hlf1 (lf_win' _ hFsW hLs) fun _ _ h => h,
       sok := hsb.1.1, sb := sbl_trans hq.sb hsb hq.ext (LiveExt.refl R Lk),
-      lr := (hrd _ _ (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)).trans hq.lr,
-      fp := (hrd _ _ (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)).trans hq.fp,
-      c96 := (hrd _ _ (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)).trans hq.c96,
-      n120 := (hrd _ _ (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)).trans hq.n120,
-      n136 := (hrd _ _ (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)).trans hq.n136,
-      p144 := (hrd _ _ (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)).trans hq.p144,
-      s184 := (hrd _ _ (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)).trans hq.s184,
-      a296 := (hrd _ _ (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)).trans hq.a296,
-      a304 := (hrd _ _ (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)).trans hq.a304,
-      a312 := (hrd _ _ (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)).trans hq.a312,
-      a320 := (hrd _ _ (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)).trans hq.a320,
-      a328 := (hrd _ _ (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)).trans hq.a328,
-      a336 := (hrd _ _ (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)).trans hq.a336,
+      lr := (hrd _ _ (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264])).trans hq.lr,
+      fp := (hrd _ _ (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264])).trans hq.fp,
+      c96 := (hrd _ _ (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264])).trans hq.c96,
+      n120 := (hrd _ _ (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264])).trans hq.n120,
+      n136 := (hrd _ _ (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264])).trans hq.n136,
+      p144 := (hrd _ _ (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264])).trans hq.p144,
+      s184 := (hrd _ _ (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264])).trans hq.s184,
+      a296 := (hrd _ _ (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264])).trans hq.a296,
+      a304 := (hrd _ _ (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264])).trans hq.a304,
+      a312 := (hrd _ _ (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264])).trans hq.a312,
+      a320 := (hrd _ _ (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264])).trans hq.a320,
+      a328 := (hrd _ _ (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264])).trans hq.a328,
+      a336 := (hrd _ _ (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264])).trans hq.a336,
       px := hq.px, py := hq.py }
 
 end FvModexp.Arm64.Q.NatMul

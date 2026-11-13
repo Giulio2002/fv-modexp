@@ -1,5 +1,6 @@
 import FvModexp.Proofs.Arm64.NatQ.MulLoopClr
 import FvModexp.Proofs.Common.DivmcBits
+import FvModexp.Proofs.Common.OmegaOnly
 
 /-!
 # [Q-form copy of Arm64/Nat/MulLoopClrJ.lean — TIGHT COSTS, divmc s34] `nat.mul` (arm64), the chunk loop's prologue: from `0x1bb054` (`KA`) through `clear(z[2n:])` and the defer record
@@ -114,18 +115,19 @@ theorem lclr (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
       exact ⟨⟨ho.1.1, ho.1.2.1, by omega⟩, by omega⟩
   rw [show p + yl * 16 = p + 8 * (2 * yl) by omega] at hLFc hz
   obtain ⟨hW', hWs', -, -, hout', -⟩ := hq.lay
+  have h264 : 264 ≤ s.sp.toNat := by omega
   have hrw : ∀ x m, s.sp.toNat - 264 ≤ x → x + m ≤ s.sp.toNat + 88 → (x + m ≤ s.sp.toNat - 248 ∨ s.sp.toNat - 232 ≤ x) →
       w.readLE x m = S.mem.readLE x m :=
     fun x m h1 h2 h3 => hF1.readLE _ _ (by
       simp only [outside_append, outside_cons, outside_nil, and_true]
       exact ⟨⟨hout'.of_sub (by omega) (by omega), by omega, by omega⟩, by omega⟩)
-  have w94 : w.readLE (s.sp.toNat - 162) 1 = 0 := by rw [hrw _ _ (by omega) (by omega) (by omega)]; exact q94
-  have w184 : w.readLE (s.sp.toNat - 72) 8 = st := by rw [hrw _ _ (by omega) (by omega) (by omega)]; exact q184
-  have w136 : w.readLE (s.sp.toNat - 120) 8 = 2 * yl := by rw [hrw _ _ (by omega) (by omega) (by omega)]; exact q136
+  have w94 : w.readLE (s.sp.toNat - 162) 1 = 0 := by rw [hrw _ _ (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264])]; exact q94
+  have w184 : w.readLE (s.sp.toNat - 72) 8 = st := by rw [hrw _ _ (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264])]; exact q184
+  have w136 : w.readLE (s.sp.toNat - 120) 8 = 2 * yl := by rw [hrw _ _ (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264])]; exact q136
   have hwacc : w.accessible (s.sp.toNat - W) (W + 88) true = true := by rw [hF1.accessible]; exact hsacc
   have hwst : w.accessible st 24 true = true := by rw [hF1.accessible]; exact hstacc
   have hln := Memory.readLE_lt w (st + 8) 8
-  clear hrw hsacc hstacc hzH hzH' hzacc hok hL1 hinv hgQ hg2' hg3' hga1 hga2
+  clear hrw h264 hsacc hstacc hzH hzH' hzacc hok hL1 hinv hgQ hg2' hg3' hga1 hga2
   janus_run [w94, w184, w136] until [0x1b3970]
   refine hK _ (lpOf h hF1 hLFc hinvw hz hrg1 _ ?fs ?regP ?pc ?sp ?g ?fp ?x18 ?r0 ?r1 ?r30 ?q94 ?q95 ?qdfn ?qdst ?qdln
     ?qdpt)

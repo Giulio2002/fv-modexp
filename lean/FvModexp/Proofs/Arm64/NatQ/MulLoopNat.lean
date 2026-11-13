@@ -1,6 +1,7 @@
 import FvModexp.Proofs.Arm64.NatQ.MulLoopPA
 import FvModexp.Proofs.Arm64.NatQ.MulLoopAdd
 import FvModexp.Proofs.Arm64.Nat.StackNat
+import FvModexp.Proofs.Common.OmegaOnly
 
 /-!
 # [Q-form copy of Arm64/Nat/MulLoopNat.lean — TIGHT COSTS, divmc s34] `nat.mul` (arm64), the chunk loop's prologue: `t := stk.nat(2n)` (natmul.go:55) → the loop head with `k = 0`
@@ -22,6 +23,9 @@ open FvModexp.Arm64.Q.NatSqr (outside_of_liveSep apart_of_apartAll apart_of_held
 section
 variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp xl xc yp yl yc : Nat} {s : State}
   {p c : Nat} {L1 : List (Nat × Nat)} {b1 : Nat} {M : Memory} {Lk : List (Nat × Nat)} {bk : Nat}
+
+/-- the budget step over `stk.nat` (small omega context; divmc s48 trim) -/
+private theorem bud_step {x c d bk bk' : Nat} (h1 : x + c ≤ bk) (h2 : bk - c + d ≤ bk') : x + d ≤ bk' := by omega
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
@@ -47,6 +51,7 @@ theorem lbOf {P S : State} (h : LP R b H L W zp zc st xp xl xc yp yl yc s p c L1
   simp only [win, outside_cons, outside_nil, and_true, BasicSqr.freeP, BasicSqr.freeN] at hstw hfw hfgA hpw
   have hlcP := hq0.sok.2.2.2.2.2.1
   have hkT : 0 < 2 * yl := by omega
+  have h264 : 264 ≤ s.sp.toNat := Nat.le_trans (by decide) (Nat.le_trans hW hWs)
   have hscr := Scr.of_post (m0 := P.mem) (k := 2 * yl) hok hlen hkT hsame hgrow rfl
   rw [hlenP] at hscr hlen
   rw [hlenP] at hr0
@@ -117,7 +122,7 @@ theorem lbOf {P S : State} (h : LP R b H L W zp zc st xp xl xc yp yl yc s p c L1
     hr0 hkT, hr1, hr2, by rw [hpv]; exact h.val⟩
   exact
     { core := hq0.core, h40 := h40, hlt := hq0.hlt, ext := hq0.ext.trans hext,
-      bud := by have := hq0.bud; simp only [lsp, chunkSum, Nat.add_zero]; omega,
+      bud := by have := hq0.bud; simp only [lsp, chunkSum, Nat.add_zero]; exact bud_step this hbud,
       spk := by have := hq0.spk; simp only [lsp, chunkSum, Nat.add_zero]; exact this,
       inv := by rw [h.g] at hinv; exact hinv, reg := hreg.trans hq0.reg, fr := hfr, lf := hlf, sok := hok,
       slen := hlen,
@@ -135,24 +140,24 @@ theorem lbOf {P S : State} (h : LP R b H L W zp zc st xp xl xc yp yl yc s p c L1
           have hlcS := hok.2.2.2.2.2.1
           simp only [StackNat.rnd] at hlen hc
           exact ⟨hmem (by omega), by simp only [stLen, stCap] at hlen hlcS ⊢; omega⟩,
-      lr := (hrd _ _ (by omega) (by omega) (by omega)).trans hq0.lr,
-      fp := (hrd _ _ (by omega) (by omega) (by omega)).trans hq0.fp,
-      b94 := (hrd _ _ (by omega) (by omega) (by omega)).trans h.b94,
-      b95 := (hrd _ _ (by omega) (by omega) (by omega)).trans h.b95,
-      c96 := (hrd _ _ (by omega) (by omega) (by omega)).trans hq0.c96,
-      n120 := (hrd _ _ (by omega) (by omega) (by omega)).trans hq0.n120,
-      p144 := (hrd _ _ (by omega) (by omega) (by omega)).trans hq0.p144,
-      s184 := (hrd _ _ (by omega) (by omega) (by omega)).trans hq0.s184,
-      dfn := (hrd _ _ (by omega) (by omega) (by omega)).trans h.dfn,
-      dst := (hrd _ _ (by omega) (by omega) (by omega)).trans h.dst,
-      dln := (hrd _ _ (by omega) (by omega) (by omega)).trans h.dln,
-      dpt := (hrd _ _ (by omega) (by omega) (by omega)).trans h.dpt,
-      a296 := (hrd _ _ (by omega) (by omega) (by omega)).trans hq0.a296,
-      a304 := (hrd _ _ (by omega) (by omega) (by omega)).trans hq0.a304,
-      a312 := (hrd _ _ (by omega) (by omega) (by omega)).trans hq0.a312,
-      a320 := (hrd _ _ (by omega) (by omega) (by omega)).trans hq0.a320,
-      a328 := (hrd _ _ (by omega) (by omega) (by omega)).trans hq0.a328,
-      a336 := (hrd _ _ (by omega) (by omega) (by omega)).trans hq0.a336 }
+      lr := (hrd _ _ (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264])).trans hq0.lr,
+      fp := (hrd _ _ (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264])).trans hq0.fp,
+      b94 := (hrd _ _ (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264])).trans h.b94,
+      b95 := (hrd _ _ (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264])).trans h.b95,
+      c96 := (hrd _ _ (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264])).trans hq0.c96,
+      n120 := (hrd _ _ (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264])).trans hq0.n120,
+      p144 := (hrd _ _ (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264])).trans hq0.p144,
+      s184 := (hrd _ _ (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264])).trans hq0.s184,
+      dfn := (hrd _ _ (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264])).trans h.dfn,
+      dst := (hrd _ _ (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264])).trans h.dst,
+      dln := (hrd _ _ (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264])).trans h.dln,
+      dpt := (hrd _ _ (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264])).trans h.dpt,
+      a296 := (hrd _ _ (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264])).trans hq0.a296,
+      a304 := (hrd _ _ (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264])).trans hq0.a304,
+      a312 := (hrd _ _ (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264])).trans hq0.a312,
+      a320 := (hrd _ _ (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264])).trans hq0.a320,
+      a328 := (hrd _ _ (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264])).trans hq0.a328,
+      a336 := (hrd _ _ (by omega_only [h264]) (by omega_only [h264]) (by omega_only [h264])).trans hq0.a336 }
 
 end
 
