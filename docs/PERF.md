@@ -1604,3 +1604,7 @@ Dev compile after the cost edits: P2W2Cp5 1.9 s, P2DFull 25 s / 3.0 GB, ModInvL0
   the whole NatQ chain counted as their own; dev critical paths are only ~130 s, own sums 474 s / 848 s — no DAG change needed).
 * Common/BudQX 1.8 s, Arm64/NatQ/BudRem 1.7 s.
 * Amd64/NatQ/Sqr* (Q copies of the old amd64 front half): max SqrOneA 30 s, SqrNorm 27 s, SqrMakeA1 21 s, SqrBS 18 s; all ≤ 3 GB.
+**Re-measure after the P2Nf split (s45, fresh cache `cache-infra/rel2`, same order, load ~45-55):** warm-up 1077 s;
+StackNatRow 136, MulAddWWRow 166, BasicMulRow 153, BasicSqrRow 434, SqrRow 581, MulRow 486, TruncRow 145, RshRow 135,
+LshRow 124, IntASRow 34 s (all PASS), MontRow audit-FAIL 245 s (no witness); **P2W2Row PASS 430 s / 3.2 GB** (was 631),
+**P2W4Row PASS 233 s / 1.5 GB**, **P2DRow PASS 303 s / 2.2 GB** — each row now compiles only its own chain; all ≤ 600 s.
