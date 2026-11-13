@@ -30,7 +30,8 @@ open FvModexp.Amd64.W4Loop (Env Inp Buf FinEnv)
     b - costD ≤ b' ∧ stLen M' st = stLen M st ∧ M'.readLE rp (8 * rl) = 2 ^ (128 * n) % Mv ∧
     RRPost R b' L' g sp n rp rl rc zzp zzc M' M1 rrq rrc ∧ OneChain R b' L' L2 b2 sp n st M1 M2 ∧
     RetQ R b2 L2 g fs sp n mp yp ylen Y yi zp zc zzp zzc t (stW M2 st + 8 * stLen M st) (17 * n) st n0 onep fbp
-      Mv Xv (2 ^ (128 * n) % Mv) M2 s'
+      Mv Xv (2 ^ (128 * n) % Mv) M2 s' ∧
+    (Apart zzp (8 * zzc) (stW M' st) (8 * stCap M' st) ∧ Held R L' zzp (8 * zzc))
 
 theorem win1 (sp : Nat) : ∀ q ∈ [(sp - 8, sp + 48)], sp - 8 ≤ q.1 ∧ q.2 ≤ sp + 0x3c0 := by
   intro q hq
@@ -194,6 +195,7 @@ theorem divStep {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.pro
     hrS' hrF' hzr (zz_mid S2.mem hzz' hrln) S2 f4 f0 rfl f7 f6 f8 f5 f14 ffs fx15 fdf) (fun s' h => ?_)
   obtain ⟨M1, rrq, rrc, onep, M2, L2, b2, p1, p2, p3⟩ := h
   rw [hval, hlen] at p3
-  exact ⟨S1.mem, S2.mem, L', b', rp, rl, rc, M1, rrq, rrc, onep, M2, L2, b2, hk1, hk2, hb', hlen, hval, p1, p2, p3⟩
+  exact ⟨S1.mem, S2.mem, L', b', rp, rl, rc, M1, rrq, rrc, onep, M2, L2, b2, hk1, hk2, hb', hlen, hval, p1, p2, p3,
+    hZ'.2.2.2.2.2.2.2.1, hZ'.1.2.2.2.2.1⟩
 
 end FvModexp.Amd64.W4Pro

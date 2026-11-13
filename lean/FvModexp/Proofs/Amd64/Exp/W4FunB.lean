@@ -26,7 +26,8 @@ namespace FvModexp.Amd64.W4Pro
     AncI R L0 sp K st M0 L' M' ∧ bA ≤ b' ∧ stLen M' st = lenM ∧ M'.readLE rp (8 * rl) = 2 ^ (128 * n) % Mv ∧
     RRPost R b' L' g sp n rp rl rc zzp zzc M' M1 rrq rrc ∧ OneChain R b' L' L2 b2 sp n st M1 M2 ∧
     RetQ R b2 L2 g fs sp n mp yp ylen Y yi zp zc zzp zzc t (stW M2 st + 8 * lenM) (17 * n) st n0 onep fbp
-      Mv Xv (2 ^ (128 * n) % Mv) M2 s'
+      Mv Xv (2 ^ (128 * n) % Mv) M2 s' ∧
+    (Apart zzp (8 * zzc) (stW M' st) (8 * stCap M' st) ∧ Held R L' zzp (8 * zzc))
 
 /-- `DivR` with the `zz` buffer allocated by the `lsh` layer -/
 @[reducible] def LshR (R : RtInv) (L0 : List (Nat × Nat)) (K bA : Nat) (M0 : Memory)
@@ -72,11 +73,11 @@ theorem divQ_anc {R : RtInv} {L0 L : List (Nat × Nat)} {K bA b costD : Nat} {M0
     (hrr : ALoc R L0 st M0 (rrp, 8 * (2 * n))) (hK : K + 8 ≤ sp) (hb : bA + costD ≤ b)
     (h : DivQ R b costD L g fs sp K n mp Mv yp ylen Y yi zp zc st n0 l0 fbp t zzp zzc rrp Xv M s') :
     DivR R L0 K bA M0 g fs sp n mp Mv yp ylen Y yi zp zc st n0 fbp t zzp zzc (stLen M st) Xv s' := by
-  obtain ⟨Mw, M', L', b', rp, rl, rc, M1, rrq, rrc, onep, M2, L2, b2, k1, k2, hb', hlen, hv, hRR, hOC, hRet⟩ := h
+  obtain ⟨Mw, M', L', b', rp, rl, rc, M1, rrq, rrc, onep, M2, L2, b2, k1, k2, hb', hlen, hv, hRR, hOC, hRet, hzA⟩ := h
   have hA1 := AncI.keep hA k1 hl hl' (ex_one hrr) hK
   have hlw : stLen M st ≤ stLen Mw st := k1.2.2.2.2.2.2.2.2.1
   have hA2 := AncI.keep hA1 k2 hl (Nat.le_trans hl' hlw) (ex_one hrr) hK
-  exact ⟨M', L', b', rp, rl, rc, M1, rrq, rrc, onep, M2, L2, b2, hA2, fbud1 hb hb', hlen, hv, hRR, hOC, hRet⟩
+  exact ⟨M', L', b', rp, rl, rc, M1, rrq, rrc, onep, M2, L2, b2, hA2, fbud1 hb hb', hlen, hv, hRR, hOC, hRet, hzA⟩
 
 /-- the `stk.nat(2n)` layer before the division -/
 theorem sn2Q_anc {R : RtInv} {L0 L : List (Nat × Nat)} {K bA b costD : Nat} {M0 M : Memory}
