@@ -42,9 +42,11 @@ theorem bud_final {j b b1 b' : Nat} (hj1 : 1 ≤ j) (hjn : 2 ^ (j - 1) < NW n)
     (hb : b - spent sqrC mulC n j - P5 sqrC mulC n ≤ b1) (hbud' : b1 - SubMod2N.cost n ≤ b') :
     b - cost sqrC mulC n ≤ b' := by
   have hj : j - 1 < NW n := Nat.lt_trans (Nat.lt_two_pow_self) hjn
-  have hm : (j - 1) * roundCost sqrC mulC n + roundCost sqrC mulC n ≤ (NW n + 1) * roundCost sqrC mulC n := by
-    rw [← Nat.succ_mul]; exact Nat.mul_le_mul_right _ (by omega)
-  simp only [spent, cost, roundCost, P5, P4, P3, P2, P1] at hb hm ⊢
+  have hNW0 : NW n ≠ 0 := by have := Nat.two_pow_pos (j - 1); omega
+  have hjl : j - 1 ≤ Nat.log2 (NW n) := (Nat.le_log2 hNW0).2 (Nat.le_of_lt hjn)
+  have hm : (j - 1) * roundCost sqrC mulC n + roundCost sqrC mulC n ≤ rounds n * roundCost sqrC mulC n := by
+    rw [← Nat.succ_mul]; exact Nat.mul_le_mul_right _ (by simp only [rounds]; omega)
+  simp only [spent, cost, roundCost, rounds, P5, P4, P3, P2, P1] at hb hm ⊢
   omega
 
 end

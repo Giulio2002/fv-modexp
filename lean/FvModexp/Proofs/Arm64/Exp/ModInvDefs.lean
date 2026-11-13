@@ -44,9 +44,13 @@ abbrev A : Nat := 72
   sqrC (NW n + 1) + mulC (2 * NW n + 2) (NW n) + 2 * makeCost (2 * NW n + 2) + makeCost (NW n + 2) +
     SubMod2N.cost n
 
-/-- the budget: the two `make`s, then at most `NW n` rounds (the loop's and the final one) -/
+/-- the number of Hensel rounds charged: the loop runs for `i = 2, 4, …, < NW n` (nat.go:1328), plus the final round,
+    i.e. at most `⌊log2 (NW n)⌋ + 1` (infra s43, TIGHT COSTS: was `NW n + 1`) -/
+@[reducible] def rounds (n : Nat) : Nat := Nat.log2 (NW n) + 1
+
+/-- the budget: the two `make`s, then at most `rounds n` rounds (the loop's and the final one) -/
 @[reducible] def cost (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (n : Nat) : Nat :=
-  makeCost (NW n + 1) + makeCost (2 * NW n) + (NW n + 1) * roundCost sqrC mulC n
+  makeCost (NW n + 1) + makeCost (2 * NW n) + rounds n * roundCost sqrC mulC n
 
 /-- the result value (`k0` masked for `n ≤ 64`) -/
 @[reducible] def val (X n : Nat) : Nat := Exp.modularInverseModPowerOfTwo X n

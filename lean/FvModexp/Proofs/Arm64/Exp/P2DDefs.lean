@@ -18,7 +18,7 @@ Code map (fn `0x1b5920 = 1792288`, segment `seg22`; frame 112: `MOVD.W R30, -112
   `expNNPowerOfTwo(z, stk, xOdd, y, logM - lo)` (return `1792772`), `z.lsh(z, lo)` (return `1792792`).
 * `x` odd: `logM ≥ 48 ∧ bitLen y ≥ 48` → `expNNPowerOfTwoWindowSize4` (return `1792468`), else window 2 (return `1792484`).
 
-Costs: `costO c2 c4 ℓ lm` (odd base: either window or the `logM = 1` allocation), `costP` (any base: the odd cost
+Costs: `costO c2 c4 ℓ yl lm` (odd base: either window or the `logM = 1` allocation), `costP` (any base: the odd cost
 maximised over `logM' ≤ logM` (`supTo`, no monotonicity premise needed), plus the `rsh`/`lsh` allocations).
 -/
 
@@ -48,11 +48,11 @@ theorem le_supTo (f : Nat → Nat) : ∀ n j, j ≤ n → f j ≤ supTo f n := b
     · rw [show j = n + 1 by omega]; exact Nat.le_max_right _ _
 
 /-- the budget on an odd base (`c2`/`c4`: the window costs at stack level `ℓ`) -/
-@[reducible] def costO (c2 c4 : Nat → Nat → Nat) (ℓ lm : Nat) : Nat := c2 ℓ lm + c4 ℓ lm + allocCost 8
+@[reducible] def costO (c2 c4 : Nat → Nat → Nat → Nat) (ℓ yl lm : Nat) : Nat := c2 ℓ yl lm + c4 ℓ yl lm + allocCost 8
 
 /-- the budget on any positive base -/
-@[reducible] def costP (c2 c4 : Nat → Nat → Nat) (ℓ xl _yl lm : Nat) : Nat :=
-  supTo (costO c2 c4 ℓ) lm + makeCost (xl + 2) + makeCost (lm / 64 + 2)
+@[reducible] def costP (c2 c4 : Nat → Nat → Nat → Nat) (ℓ xl yl lm : Nat) : Nat :=
+  supTo (costO c2 c4 ℓ yl) lm + makeCost (xl + 2) + makeCost (lm / 64 + 2)
 
 /-- the stack need (the windows' `2^13`) -/
 @[reducible] def needP : Nat → Nat → Nat → Nat := fun _ _ _ => 2 ^ 13

@@ -24,21 +24,21 @@ namespace FvModexp.Arm64.P2W2
 open FvModexp.Arm64.EvenHyp
 
 /-- the budget of the whole function (stack level `ℓ0` at the entry) -/
-@[reducible] def cost (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat) (ℓ0 lm : Nat) : Nat :=
-  cost0 sqC mlC ℓ0 lm + allocCost 8 + 2 * P2Pre.tC lm + 32 * ((lm - 2) / 64 + 1) * bc sqC mlC (lvlL ℓ0 lm) lm
+@[reducible] def cost (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat) (ℓ0 yl lm : Nat) : Nat :=
+  cost0 sqC mlC ℓ0 lm + allocCost 8 + 2 * P2Pre.tC lm + 32 * min yl ((lm - 2) / 64 + 1) * bc sqC mlC (lvlL ℓ0 lm) lm
 
 /-- the precondition at the entry (frame `SP - 464`, `g = X28`) -/
 def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K : Nat) (sqC : Nat → Nat → Nat)
     (mlC : Nat → Nat → Nat → Nat) (zp zc st xp xl xc yp yl lm : Nat) (s : State) : Prop :=
   EPre R b L K (s.regs 28).toNat (s.sp.toNat - 464) st zp zc xp xl xc yp yl lm s ∧
-    natVal s.mem xp xl % 2 = 1 ∧ 0 < natVal s.mem yp yl ∧ cost sqC mlC (stLen s.mem st) lm ≤ b
+    natVal s.mem xp xl % 2 = 1 ∧ 0 < natVal s.mem yp yl ∧ cost sqC mlC (stLen s.mem st) yl lm ≤ b
 
 /-- the postcondition: the common exit shape with `ResSep` (`NHyp.CPostR`) and the value
 `x^y mod 2^logM` -/
 @[reducible] def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K : Nat) (sqC : Nat → Nat → Nat)
     (mlC : Nat → Nat → Nat → Nat) (zp zc st xp xl yp yl lm : Nat) (s s' : State) : Prop :=
   NHyp.CPostR R b L (K + 464) 96 zp zc st (natVal s.mem xp xl ^ natVal s.mem yp yl % 2 ^ lm)
-    (cost sqC mlC (stLen s.mem st) lm) s s'
+    (cost sqC mlC (stLen s.mem st) yl lm) s s'
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
@@ -68,11 +68,11 @@ theorem full {impl : List Segment} (hap : ImplApart Extracted.program impl) {R :
         s.regs 9 = BitVec.ofNat 64 yc ∧ s.regs 10 = BitVec.ofNat 64 lm ∧
         Pre R b L K sqC mlC zp zc st xp xl xc yp yl lm s ∧ (s.regs 30).toNat % 4 = 0 ∧ (s.regs 30).toNat < 2 ^ 48)
       (fun s s' => FQ R b L K zp zc st (natVal s.mem xp xl ^ natVal s.mem yp yl % 2 ^ lm)
-        (cost sqC mlC (stLen s.mem st) lm) s s') := by
+        (cost sqC mlC (stLen s.mem st) yl lm) s s') := by
   intro s hpc hs
   obtain ⟨h0, -, h2, h3, h4, h5, h6, h7, h8, -, h10, ⟨hP, hX, hY, hbud⟩, hr4, hr48⟩ := hs
   have hmv' : MemmoveLive (LibW.program.link impl) P2Pre.mvE 4096 R := by rw [← P2Pre.mvE_eq]; exact hmv
-  have hcb : cost sqC mlC (stLen s.mem st) lm ≤ b := hbud
+  have hcb : cost sqC mlC (stLen s.mem st) yl lm ≤ b := hbud
   have h30 : s.regs 30 = BitVec.ofNat 64 (s.regs 30).toNat := by rw [BitVec.ofNat_toNat, BitVec.setWidth_eq]
   refine entP hap hns hnf hnfP hgr hmc hmv hwb hkc hsn hkN haN hsq hkS haS hsm hmu hkM haM hmm htr hkT haT
     (s.regs 30) _ b L K (s.regs 28).toNat (s.sp.toNat - 464) st zp zc xp xl xc yp yl lm (s.regs 30).toNat s hP hKk
