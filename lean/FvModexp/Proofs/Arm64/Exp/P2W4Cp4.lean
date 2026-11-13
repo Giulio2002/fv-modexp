@@ -92,7 +92,7 @@ set_option maxHeartbeats 64000000 in
 theorem blH {impl : List Segment} (hmv : MemmoveLive (LibW.program.link impl) P2Pre.mvE 4096 R)
     (hmk : MakesliceLiveContract (LibW.program.link impl) mkE 4096 R)
     (ret0 : BitVec 64) (Q : State → Prop) (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s)
-    {sqC : Nat → Nat → Nat} {mlC : Nat → Nat → Nat → Nat} {cst FV : Nat} {r29 : BitVec 64}
+    {sqC : Nat → Nat} {mlC : Nat → Nat → Nat} {cst FV : Nat} {r29 : BitVec 64}
     (KL : ∀ kk, KL impl ret0 Q R b L K g sp st zp zc xp xl xc yp yl lm ret s r29 sqC mlC zzp bp kk cst FV)
     (hc : CPF R L K g sp st zp zc xp xl xc yp yl lm ret s M L1 b1 zzp bp)
     (S : State) (i yi : Nat) (hpc : S.pc = BitVec.ofNat 64 blE) (hsp : S.sp = BitVec.ofNat 64 sp)

@@ -28,19 +28,24 @@ open P2W2 (grE mcE wbE wTy grE_eq mcE_eq wbE_eq)
 open FvModexp.Arm64.EvenHyp
 
 /-- the budget of the whole function (stack level `ℓ0` at the entry) -/
-@[reducible] def cost (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat) (ℓ0 yl lm : Nat) : Nat :=
+@[reducible] def cost (sqC : Nat → Nat) (mlC : Nat → Nat → Nat) (ℓ0 yl lm : Nat) : Nat :=
   cost0 sqC mlC ℓ0 lm + allocCost 8 + 2 * P2Pre.tC lm + 16 * min yl ((lm - 2) / 64 + 1) * bc sqC mlC (lvlL ℓ0 lm) lm
 
+/-- (divmc s42, TIGHT COSTS) the bridged level-cost budget for callers (`expNNPowerOfTwo`): the Q-form cost plus ONE
+stack reserve `stkRes (HW ℓ0 lm)` for the whole call -/
+@[reducible] def costB (sqC : Nat → Nat) (mlC : Nat → Nat → Nat) (ℓ0 yl lm : Nat) : Nat :=
+  cost sqC mlC ℓ0 yl lm + stkRes (HW ℓ0 lm)
+
 /-- the precondition at the entry (frame `SP - 752`, `g = X28`) -/
-def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K : Nat) (sqC : Nat → Nat → Nat)
-    (mlC : Nat → Nat → Nat → Nat) (zp zc st xp xl xc yp yl lm : Nat) (s : State) : Prop :=
+def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K : Nat) (sqC : Nat → Nat)
+    (mlC : Nat → Nat → Nat) (zp zc st xp xl xc yp yl lm : Nat) (s : State) : Prop :=
   EPre R b L K (s.regs 28).toNat (s.sp.toNat - 752) st zp zc xp xl xc yp yl lm s ∧
     natVal s.mem xp xl % 2 = 1 ∧ 0 < natVal s.mem yp yl ∧ cost sqC mlC (stLen s.mem st) yl lm ≤ b
 
 /-- the postcondition: the common exit shape with `ResSep` (`NHyp.CPostR`) and the value
 `x^y mod 2^logM` -/
-@[reducible] def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K : Nat) (sqC : Nat → Nat → Nat)
-    (mlC : Nat → Nat → Nat → Nat) (zp zc st xp xl yp yl lm : Nat) (s s' : State) : Prop :=
+@[reducible] def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K : Nat) (sqC : Nat → Nat)
+    (mlC : Nat → Nat → Nat) (zp zc st xp xl yp yl lm : Nat) (s s' : State) : Prop :=
   NHyp.CPostR R b L (K + 752) 96 zp zc st (natVal s.mem xp xl ^ natVal s.mem yp yl % 2 ^ lm)
     (cost sqC mlC (stLen s.mem st) yl lm) s s'
 
@@ -57,11 +62,11 @@ theorem full {impl : List Segment} (hap : ImplApart Extracted.program impl) {R :
     (hno : NewobjectLiveContract (LibW.program.link impl) noE 4096 R)
     (hwb : WbLiveContract (LibW.program.link impl) wbE 4096 R 2)
     {kcP : Nat} (hkc : 4608 ≤ kcP)
-    {stkN aboveN : Nat} (hsn : StackNat.HypL impl R ns stkN aboveN) (hkN : stkN ≤ kcP) (haN : aboveN ≤ 88)
-    {stkS aboveS : Nat} {sqC : Nat → Nat → Nat} (hsq : SqrHypX impl R ns stkS aboveS sqC)
-    (hkS : stkS ≤ kcP) (haS : aboveS ≤ 88) (hsm : ∀ ℓ a a', a ≤ a' → sqC ℓ a ≤ sqC ℓ a')
-    {stkM aboveM : Nat} {mlC : Nat → Nat → Nat → Nat} (hmu : MulHypX impl R ns stkM aboveM mlC)
-    (hkM : stkM ≤ kcP) (haM : aboveM ≤ 88) (hmm : ∀ ℓ a a' c c', a ≤ a' → c ≤ c' → mlC ℓ a c ≤ mlC ℓ a' c')
+    {stkN aboveN : Nat} (hsn : StackNatX.HypQ impl R ns stkN aboveN) (hkN : stkN ≤ kcP) (haN : aboveN ≤ 88)
+    {stkS aboveS : Nat} {sqC : Nat → Nat} (hsq : SqrHypQ impl R ns stkS aboveS sqC)
+    (hkS : stkS ≤ kcP) (haS : aboveS ≤ 88) (hsm : ∀ a a', a ≤ a' → sqC a ≤ sqC a')
+    {stkM aboveM : Nat} {mlC : Nat → Nat → Nat} (hmu : MulHypQ impl R ns stkM aboveM mlC)
+    (hkM : stkM ≤ kcP) (haM : aboveM ≤ 88) (hmm : ∀ a a' c c', a ≤ a' → c ≤ c' → mlC a c ≤ mlC a' c')
     {stkT aboveT : Nat} (htr : Trunc.Hyp2 impl R ns stkT aboveT) (hkT : stkT ≤ kcP) (haT : aboveT ≤ 88)
     (b : Nat) (L : List (Nat × Nat)) (K : Nat) (hKk : 208 + kcP ≤ K)
     (zp zl zc st xp xl xc yp yl yc lm : Nat) :

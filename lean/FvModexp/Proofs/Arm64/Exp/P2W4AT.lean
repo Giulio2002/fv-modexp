@@ -21,14 +21,21 @@ open P2W2 (grE mcE wbE wTy grE_eq mcE_eq wbE_eq)
 @[reducible] def lvlZ (ℓ0 lm : Nat) : Nat := lvlR ℓ0 lm + StackNat.rnd (2 * W lm)
 @[reducible] def lvlL (ℓ0 lm : Nat) : Nat := lvlZ ℓ0 lm + StackNat.rnd (P2Pre.NB 16 lm)
 
-/-- the cost up to the table's return -/
-@[reducible] def cost0 (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat) (ℓ0 lm : Nat) : Nat :=
-  stackNatCost ℓ0 (20 * W lm) + stackNatCost (lvlR ℓ0 lm) (2 * W lm) + P2Pre.cost sqC mlC (lvlZ ℓ0 lm) 16 lm
+/-- `HW` is `buildPrecomputationWindowModPower2`'s reserve level at its entry (`lvlZ`) -/
+theorem hw_eq (ℓ0 lm : Nat) : HW ℓ0 lm = P2Pre.HP (lvlZ ℓ0 lm) 16 lm := rfl
+
+/-- (divmc s42) the loop's `sqr`/`mul` level twin: at `lvlL`, operands of at most `2 w` words in all fit `HW` -/
+theorem lvl_twin {ℓ0 lm l a : Nat} (h : l = lvlL ℓ0 lm) (ha : a ≤ 2 * W lm) : l + 4 * a + 64 ≤ HW ℓ0 lm := by
+  subst h; simp only [HW, lvlL, lvlZ, lvlR, P2Pre.NB, P2Pre.W, W, StackNat.rnd, Nat.reduceAdd] at ha ⊢; omega
+
+/-- the cost up to the table's return (TIGHT COSTS, divmc s42: the two `stk` operations are paid by the reserve) -/
+@[reducible] def cost0 (sqC : Nat → Nat) (mlC : Nat → Nat → Nat) (ℓ0 lm : Nat) : Nat :=
+  P2Pre.cost sqC mlC (lvlZ ℓ0 lm) 16 lm
 
 /-- the facts after the table (see the module doc) -/
 structure AT (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl lm ret : Nat) (s : State)
     (M : Memory) (L3 : List (Nat × Nat)) (b3 zzp bp : Nat) : Prop where
-  wc : WC R L K g sp st zp zc s.mem M L3 b3 (lvlL (stLen s.mem st) lm)
+  wc : WC R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem M L3 b3 (lvlL (stLen s.mem st) lm)
   esl : ESl M sp st (s.regs 29) ret zp zc xp xl xc yp yl lm (stLen s.mem st)
   z280 : M.readLE (sp + 280) 8 = zzp
   z112 : M.readLE (sp + 112) 8 = 2 * W lm
@@ -84,10 +91,10 @@ variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc
     {M : Memory} {L1 : List (Nat × Nat)} {b1 ℓ : Nat}
 
 /-- `WC` through stores into window ranges `ws` (outside the caller's saved FP/LR) -/
-theorem WC.win (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ)
+theorem WC.win (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem M L1 b1 ℓ)
     {M' : Memory} {ws : List (Nat × Nat)} (hF : MemFrame M M' ws) (hrg : M'.regions = M.regions)
     (hws : ∀ r ∈ ws, sp - K ≤ r.1 ∧ r.1 ≤ r.2 ∧ r.2 ≤ sp + 848 ∧ (r.2 ≤ sp + 744 ∨ sp + 760 ≤ r.1)) :
-    WC R L K g sp st zp zc s.mem M' L1 b1 ℓ := by
+    WC R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem M' L1 b1 ℓ := by
   have hK := hP.1.2.2.2.2.2.2.2.2.1
   have hLs := hP.1.2.2.2.2.2.2.2.2.2.2.2.2.1
   have hout := hP.win_rt

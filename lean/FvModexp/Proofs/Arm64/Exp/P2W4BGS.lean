@@ -24,15 +24,15 @@ open FvModexp.Arm64.EvenHyp
 
 section
 variable {impl : List Segment} {ret0 : BitVec 64} {Q : State → Prop} {R : RtInv} {b : Nat} {L : List (Nat × Nat)}
-    {K g sp st zp zc xp xl xc yp yl lm ret : Nat} {s : State} {r29 : BitVec 64} {sqC : Nat → Nat → Nat}
-    {mlC : Nat → Nat → Nat → Nat} {zzp bp kk cst FV : Nat}
+    {K g sp st zp zc xp xl xc yp yl lm ret : Nat} {s : State} {r29 : BitVec 64} {sqC : Nat → Nat}
+    {mlC : Nat → Nat → Nat} {zzp bp kk cst FV : Nat}
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
 theorem callS (hap : ImplApart Extracted.program impl) {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
-    {stkS aboveS : Nat} (hsq : SqrHypX impl R ns stkS aboveS sqC) (hkS : stkS ≤ K) (haS : aboveS ≤ 88)
-    (hsm : ∀ ℓ a a', a ≤ a' → sqC ℓ a ≤ sqC ℓ a') (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s)
+    {stkS aboveS : Nat} (hsq : SqrHypQ impl R ns stkS aboveS sqC) (hkS : stkS ≤ K) (haS : aboveS ≤ 88)
+    (hsm : ∀ a a', a ≤ a' → sqC a ≤ sqC a') (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s)
     {i c yi Z : Nat} {u : Bool}
     {pcT : Nat} {v w : Bool} {Vr lrb Vo o1 o2 o3 rem rem' idx n1 n2 n3 : Nat} (hvw : v = !w) (hlrb : lrb ≤ W lm)
     (hn : NS n1 n2 n3) (hrem : rem' + SQ s st lm sqC ≤ rem) (hidx : idx < 519)
@@ -71,10 +71,10 @@ theorem callS (hap : ImplApart Extracted.program impl) {ns : List String}
   obtain ⟨hZr, hZrk⟩ := hkeep v pr cr h.rr hcr
   have hZn : NV T.mem pr lr cr Vr := NV.keep h.nr hZrk
   have hZr' : BC R L K g sp st zp zc T.mem L1 zzp bp lm (!w) pr cr := hvw ▸ hZr
-  have hmono := hsm (lvlL (stLen s.mem st) lm) lr (W lm) (by omega)
+  have hmono := hsm lr (W lm) (by omega)
   have hb := h.hb
   have hcb := hjc.hcb
-  have hcst : sqC (lvlL (stLen s.mem st) lm) lr ≤ b1 := by simp only [bodyB, SQ, ML] at hb hmono hrem; omega
+  have hcst : sqC lr ≤ b1 := by simp only [bodyB, SQ, ML] at hb hmono hrem; omega
   refine sqrB hap hns hnf hsq hkS haS hP hB (v := w) hO hco h.no.1 hZr' hZn (by omega) hcst hidx T hpc hsp h28 rfl
     h30 h0 h1 h2 h3 h4 h5 h6 ?_
   intro s' L2 b2 p' l' c' hpc' hsp' h28' h29' h18' e0 e1 e2 hB' hslot hres hnv hl' hx hxn hbud

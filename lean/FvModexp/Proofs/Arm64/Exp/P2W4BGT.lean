@@ -20,8 +20,8 @@ open FvModexp.Arm64.EvenHyp
 
 section
 variable {impl : List Segment} {ret0 : BitVec 64} {Q : State → Prop} {R : RtInv} {b : Nat} {L : List (Nat × Nat)}
-    {K g sp st zp zc xp xl xc yp yl lm ret : Nat} {s : State} {r29 : BitVec 64} {sqC : Nat → Nat → Nat}
-    {mlC : Nat → Nat → Nat → Nat} {zzp bp kk cst FV : Nat}
+    {K g sp st zp zc xp xl xc yp yl lm ret : Nat} {s : State} {r29 : BitVec 64} {sqC : Nat → Nat}
+    {mlC : Nat → Nat → Nat} {zzp bp kk cst FV : Nat}
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in

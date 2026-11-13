@@ -27,7 +27,7 @@ theorem bit0_kk (kk : Nat) :
 
 section
 variable {impl : List Segment} {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc yp yl lm : Nat}
-    {s : State} {r29 : BitVec 64} {sqC : Nat → Nat → Nat} {mlC : Nat → Nat → Nat → Nat} {zzp bp kk cst FV : Nat}
+    {s : State} {r29 : BitVec 64} {sqC : Nat → Nat} {mlC : Nat → Nat → Nat} {zzp bp kk cst FV : Nat}
 
 
 set_option maxRecDepth 20000 in
