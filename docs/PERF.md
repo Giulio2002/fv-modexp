@@ -1676,3 +1676,17 @@ SubMod2NRow 12 s.
   (first draft hung > 5 min: a fallback `decide | rfl` on a goal with a wrong return-address constant — fixed constant),
   DivMStk 3 s, DivMGet 8 s. TIGHT COSTS edit set (arm64): ModFun 108 s / 5.7 GB, IExpP 65 s, BudEvenQ 41 s / 5.4 GB,
   RunSucc 3 s / 4.7 GB.
+
+## divmc s47 (2026-11-13) — rel44 (arm64, Janus v0.3.2, fresh cache-divmc/rel44, REPLAY_THREADS=1, load 30-50)
+StackNatRow 276 s, MulAddWWRow 323, BasicMulRow 274, TruncRow 207, RshRow 204, LshRow 157, IntASRow 377 / 1.2 GB,
+MontRow audit-FAIL 347 (no `Witness.nonvacuous`; expmc's), BasicSqrRowQ PASS 396 s / 2.9 GB, **SqrRowQ PASS 465 s / 3.1 GB
+(≤ 600)**, **MulRowQ PASS 700 s / 2.2 GB (> 600 → trim)** at load ~44-50 (48 cores: CPU-saturated).
+MulRowQ analysis (import DAG of its 77 own modules, s38 dev times at load ~25): own sum 873 s, critical path only 133 s
+(LibMul → MulDefs → MulRel → MulNorm → MulKar 43 → MulLoopCall/Add/Nat 31 → … → MulRowQ), 4-worker sim 266 s ⇒ the row is
+THROUGHPUT-bound: cut the own sum. Largest: MulBM 62, KMulPC 57, MulOne 46, MulKar 43, MulSwap 43, MulKarLt 38, MulLoopClr 33,
+MulLoopNat 31, MulLoopClrJ 31, MulITail 28, MulMakeA1 26.
+Profile MulBM (arm64, load ~60: 153 s): `bm2`'s single-step `janus_run [e2] until [0x1bb0e4] calls [hBM]` = 83 s — Janus's
+`janus_callpre` discharging `BasicMul.Pre` by `first` alternatives (many failing 1-6 s attempts, `decide` on
+`List.decidableBAll` 4.6 s each). Fix = the amd64 `bmCallM` pattern (stop at the callee entry, `ReachesRet.call_regions` with
+the pre proved by name).
+amd64 karatsuba (dev, LEAN_NUM_THREADS=4, load ~50): KMulRel 15 s / 2.6 GB, KMulB 19-22 s / 3.0 GB, KMulMath 2 s, KMulI 36 s / 3.4 GB.
