@@ -3,6 +3,7 @@ import FvModexp.Proofs.Arm64.Top.RunErr
 import FvModexp.Proofs.Arm64.Witness.StubsMvz
 import FvModexp.Proofs.Arm64.Witness.StubsMkz
 import FvModexp.Proofs.Arm64.Int.IntBytes
+import FvModexp.Proofs.Arm64.Top.RunIfaceL
 
 set_option autoImplicit false
 
@@ -35,7 +36,7 @@ theorem correctness_ok (impl : List Segment) (hap : ImplApart Extracted.program 
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
     (hmz : MemmoveZeroLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
     (hno : NewobjectLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.newobject") 4096 R)
-    (stkM aboveM : Nat) (hM : RunIface.ModSpecM impl R stkM aboveM) (hE : RunIface.ExpSpec impl R stkM aboveM)
+    (stkM aboveM : Nat) (hM : RunIface.ModSpecL impl R stkM aboveM) (hE : RunIface.ExpSpecL impl R stkM aboveM)
     (W : Nat) (hW : 624 + stkM ≤ W) (hW1 : 4800 ≤ W) (hab : aboveM ≤ 160) (hk1 : 4160 ≤ stkM) (ha1 : 16 ≤ aboveM)
     (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64) :
     Ensures (Extracted.program.link impl) (segAddr Extracted.program RunArm64.fn) [c, p, len, cp]
@@ -47,7 +48,7 @@ theorem correctness_ok (impl : List Segment) (hap : ImplApart Extracted.program 
         LengthsPass (bytesAt s.mem p.toNat len.toNat))
       (fun s s' => RunArm64.OkRet (bytesAt s.mem p.toNat len.toNat) s' ∧
         RunArm64.FrameW R b (RunArm64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat))) L W s s') :=
-  ensOkLib impl hap R hmk hmv hmz hno stkM aboveM hM hE
+  ensOkLib impl hap R hmk hmv hmz hno stkM aboveM hM.toM hE.to
     (IntBytes.bytesSpec_at impl hap R hmk hmkz stkM aboveM hk1 ha1) W hW hW1 hab b L c p len cp
 
 end FvModexp.Arm64.Run
@@ -231,8 +232,8 @@ theorem site_mz : (sMz.regs 2).toNat = 0 ∧ Mem.EqPre 4096 3 sMz ∧
     ⟨trivial, Witness.inv_cs _ _ _ _, fun r hr => by simp at hr, Witness.cs_winR _ _ _ _ 3 (by omega)⟩⟩
 
 /-- The returning run at the witness, from `correctness_ok` (given the callee specs). -/
-theorem returnsF (stkM aboveM : Nat) (hM : RunIface.ModSpecM implAt R stkM aboveM)
-    (hE : RunIface.ExpSpec implAt R stkM aboveM)
+theorem returnsF (stkM aboveM : Nat) (hM : RunIface.ModSpecL implAt R stkM aboveM)
+    (hE : RunIface.ExpSpecL implAt R stkM aboveM)
     (hW : 624 + stkM ≤ WW) (hab : aboveM ≤ 160) (hk1 : 4160 ≤ stkM) (ha1 : 16 ≤ aboveM) :
     Returns ((Extracted.program.link implAt).withExit ret) s1 fun s' =>
       ABIReturn s1 s' ∧ (RunArm64.OkRet (bytesAt s1.mem p1.toNat (99 : BitVec 64).toNat) s' ∧
@@ -251,8 +252,8 @@ theorem compute1 : compute (bytesAt s1.mem p1.toNat (99 : BitVec 64).toNat)
 /-- All hypotheses of `correctness_ok` except the three callee specs (premises until their proofs land) hold together,
 with every conjunct of its precondition, and the call returns: the toy runtime, an empty live set, budget `bW`, window
 `WW`, and the call `Run(c, p, 99, 99)` on 99 zero bytes (lengths `0, 0, 0`, empty output). -/
-theorem nonvacuous_of (stkM aboveM : Nat) (hM : RunIface.ModSpecM implAt R stkM aboveM)
-    (hE : RunIface.ExpSpec implAt R stkM aboveM)
+theorem nonvacuous_of (stkM aboveM : Nat) (hM : RunIface.ModSpecL implAt R stkM aboveM)
+    (hE : RunIface.ExpSpecL implAt R stkM aboveM)
     (hW : 624 + stkM ≤ WW) (hab : aboveM ≤ 160) (hk1 : 4160 ≤ stkM) (ha1 : 16 ≤ aboveM) :
     ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64)
       (ret : Nat) (s : State) (W : Nat),

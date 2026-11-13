@@ -252,12 +252,12 @@ theorem exSub (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
   have hgv' : s'.mem.readLE (g + 16) 8 < sp := by
     have ho : Outside (g + 16) 8 (R.rt ++ [(sp - 4304, sp - 8), (sp + 8, sp + 80)] ++ [(zzp, zzp + 8 * zzc)]) := by
       simp only [outside_append, outside_cons, outside_nil, and_true]
-      exact ⟨⟨hgrt, by unfold Apart at hga; omega⟩, by omega⟩
+      exact ⟨⟨hgrt, by clear u1 u2 u3; unfold Apart at hga; omega⟩, by omega⟩
     rw [hF.readLE _ _ ho]; omega
   have hma' : s'.mem.accessible mp (8 * n) false = true := by rw [hF.accessible]; exact hma
   have hpb : p' < 2 ^ 64 := by rw [← hp0']; exact BitVec.isLt _
   refine exSubT impl ret hret Q s' sp g p' c' mp n mc r18 r29 s'.mem hpc' hsp' e0 e1' e2' h18' h28' h29' rfl
-    s1016 s1024 s1032 hc64 hpb (by omega) hal hK hA hacc' hg1 hga' hgv' (by unfold Apart at hga; omega) hn hm48 hma'
+    s1016 s1024 s1032 hc64 hpb (by omega) hal hK hA hacc' hg1 hga' hgv' (by clear u1 u2 u3; unfold Apart at hga; omega) hn hm48 hma'
     (by unfold Apart; omega) ?_
   intro S4 M4 a1 a2 a3 a4 a5 a6 a7 a8 a9 hW2 hrg2
   have hWR : ∀ r ∈ tw sp, InRanges r.1 (r.2 - r.1) L' ∨ Outside r.1 (r.2 - r.1) R.rt := by
