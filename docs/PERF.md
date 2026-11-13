@@ -1707,6 +1707,11 @@ rel42 (snapshot snap42 = 8923cef0, same store, the four rows alone, load 30-46):
   → lemma `st3`; budget fact boxed (`hbbB`). Lesson: never `bv_omega`/multi-range `omega` in a context holding the
   callee post; state the arithmetic as a standalone lemma (also `win240`, `gwin_aux` in DivMBigK).
 
+### expmc s54 (amd64 window-4 RR section + x join, dev builds on v0.3.1, host load ~54)
+* New: W4LshR (toLsh) 25 s / 2.4 GB, W4LshK (Ctx.addEx, keeps_own2, keeps_lsh, zz_of_lsh) 12 s / 2.7 GB,
+  W4LshS (lshStep) 3.9 s, W4Sn1 (sn1Step) 3.9 s, W4Sn1R (toSn1) 17 s, W4CtxX 7.4 s, W4XjR (toK) 22 s, W4Xj (xjStep) 4.5 s.
+  The run pieces (janus64_run) dominate; compositions stay at ~4 s (explicit terms only).
+
 ### expmc s53 (amd64 window-4 RR section, dev builds on v0.3.1, host load ~40)
 * New: W4DivP 2.1 s, W4DivS (divStep) 3.4 s, W4SncR 4.4 s, W4SnK 14–17 s / 3.0 GB, W4SnP 2.0 s, W4Sn2R 7.7 s,
   W4Sn2 (sn2Step) 3.6 s, W4Lsh 6.2 s; rebuilt after the KeptJ shrink: W4Ctx 4.6 s, W4DivK 23 s, W4DivM 25 s.
