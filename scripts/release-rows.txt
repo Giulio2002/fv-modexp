@@ -21,8 +21,6 @@ arm64 Int/IntSubRow
 arm64 NatQ/BasicSqrRowQ
 arm64 NatQ/SqrRowQ
 arm64 NatQ/MulRowQ
-arm64 Nat/SqrRow        # old form: RETIRED once divmc posts it (superseded by NatQ/SqrRowQ)
-arm64 Nat/MulRow        # old form: RETIRED once divmc posts it (superseded by NatQ/MulRowQ)
 arm64 Exp/MontRow
 arm64 Exp/SubMod2NRow
 arm64 Exp/ModInvRow
