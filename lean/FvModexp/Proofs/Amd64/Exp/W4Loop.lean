@@ -21,7 +21,7 @@ namespace FvModexp.Amd64.W4Loop
 
 theorem m1_eq : BitVec.ofNat 64 0 - 1#64 = 18446744073709551615#64 := by decide
 
-theorem sub1_succ (c : Nat) (h : c + 1 < 2 ^ 64) : BitVec.ofNat 64 (c + 1) - 1#64 = BitVec.ofNat 64 c := by
+theorem sub1_succ (c : Nat) (_h : c + 1 < 2 ^ 64) : BitVec.ofNat 64 (c + 1) - 1#64 = BitVec.ofNat 64 c := by
   apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
 
 set_option maxRecDepth 20000 in
@@ -92,17 +92,34 @@ theorem loop {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progra
       refine ih (17 * i + 16) (by omega) _ i 16 (Exp.wd Y i) zp zc zzp zzc rfl (by omega) (by omega) hwd ?_ ?_ ?_ ?_ ?_
         ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ hB hM' ?_ ?_ ?_ hPz
       · rw [show test = 6209681 by simp only [test, fnE_eq]]
-      all_goals first
-        | (simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; done)
-        | (simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte, h0, h2, h3, h5, h6, h7, h8, h10, h11, h12, h13,
-            h14, hsp]; done)
-        | (simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte, h1]
-           apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_add, BitVec.toNat_ofNat]; omega)
-        | (simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint, Arm64.Memory.readLE_writeLE_self,
-            show (256 : Nat) ^ 8 = 2 ^ 64 from rfl, Nat.mod_eq_of_lt]; first | exact r140 | done)
-        | (have u1 := hB.1.2.2.2.2.2.1; unfold Apart at u1
-           rw [Arm64.Memory.readLE_writeLE_of_disjoint _ (by omega)]; rw [outer_zero] at hV; exact hV)
-        | skip
+      · simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact hsp
+      · simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact h5
+      · simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact h14
+      · exact hfs
+      · exact hx15
+      · rfl
+      · simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact h0
+      · simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact h2
+      · simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact h8
+      · simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact h11
+      · simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact h12
+      · simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact h3
+      · simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact h6
+      · simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact h10
+      · simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]
+        rw [show yp + (i + 1) * 8 - 8 = yp + 8 * i by omega, ey]
+      · simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; decide
+      · simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact h7
+      · simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact h13
+      · simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact sub1_succ i (by omega)
+      · show (Arm64.Memory.writeLE S.mem (sp + 232) 8 i).readLE (sp + 320) 8 = n
+        rdw; exact r140
+      · show (Arm64.Memory.writeLE S.mem (sp + 232) 8 i).readLE (sp + 232) 8 = i
+        rdw
+      · show Exp.outerLoop 4 (step n (M0.readLE mp (8 * n)) k0 tbl) Y 16 i (Exp.wd Y i) 16
+          ((Arm64.Memory.writeLE S.mem (sp + 232) 8 i).readLE zp (8 * n)) = V
+        have u1 := hB.1.2.2.2.2.2.1; have u0 := hB.1.1; unfold Apart at u1
+        simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint]; rw [outer_zero] at hV; exact hV
   · rw [sub1_succ c (by omega)] at h15
     refine seg1 hap hclr hmv hst S c yi zp zc zzp zzc (by omega) hyi hpc hsp h0 h2 h8 h11 h12 h3 h6 h10 h9 h15 h14 hfs
       hx15 hdf hB hM r140 ?_
