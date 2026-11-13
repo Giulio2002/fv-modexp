@@ -1812,3 +1812,9 @@ Util → IcDefs → IcHL → Ic → Og → Pre → Seg → FinA → Fin → Row 
   **a4 arm64 275 s / 1.7 GB = compile 196 + replay 65 (load ~27-40) — target ≤ 450 s met**;
   **b4 amd64 537 s = compile 325 + replay 190 (load ~30-40) — still over 450**: amd64 Sb* (SetBytes cases, 55-117 s each dev, ≈480 s)
   dominate compile and replay → next trim.
+
+### asm s45 (2026-11-13, dev builds at load ~32)
+| module | before | after | fix |
+|---|---|---|---|
+| Amd64/NatQ/DrsSN (callN, snH) | 104 s / 5.1 GB | 14 s / 2.9 GB | after the callee's post is destructured (big disjunctive context) every `omega` is expensive: `hMFP`'s window inclusion 73 s → pure lemma `out_sub`; `hst`/`eW`/`hSacc` (9 s + 13 s) moved before `ReachesRet.call_regions`; `sl_init`/`head_mk` split into DrsSNH (5 s) |
+| Amd64/NatQ/DrsRel, DrsSNP, DrsSNI, DrsNat (new) | — | 4 / 6 / 11 / 5 s | — |
