@@ -1648,3 +1648,6 @@ KSqrEnd 17 s / 2.6, KSqrProD 12 s / 2.7; Amd64/Nat/AddTo (+ df conjunct) 134 s /
 * TIGHT COSTS prep: Arm64/Top/RunSuccW2 3.5 s, Amd64/Top/RunSuccW2 6.5 s (3^5 mod 7 call data, compute2 by decide +kernel).
 * Dev tooling: build/dbuild.sh compiles `Proofs/<Isa>/RequiredGas/*` against the RequiredGas extraction (Arm64 Mv 30 s incl.
   the one-off Extracted.olean) — dev sweeps no longer report RequiredGas as failing.
+* amd64 RequiredGas after the Blk2/Blk3 Lt/Ge split (top s36, v0.3.2, fresh cache, warm-up 904 s): **PASS 848 s / 3.4 GB**,
+  but the host load rose from ~15 to **75** during the row (load avg 75/50/30 at the end) — NOT comparable with the 613 s
+  run at load ~13; the trim's effect is unmeasured. Re-measure at load ≤ 20 (or in the release run) before further trims.
