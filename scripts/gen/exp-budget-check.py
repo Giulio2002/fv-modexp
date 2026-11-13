@@ -14,7 +14,10 @@ import sys
 from functools import lru_cache
 import numpy as np
 sys.setrecursionlimit(100000)
-TIGHT = '--tight' in sys.argv
+TARGET = '--target' in sys.argv   # = --tight --amort --costE: the TIGHT COSTS plan
+TIGHT = '--tight' in sys.argv or TARGET
+AMORT = '--amort' in sys.argv or TARGET   # Q-form stack accounting (Common/StackPot): no per-call stk.nat charge, + stkRes H once
+COSTE = '--costE' in sys.argv or TARGET   # expmc: costE's two nat.expNN calls charged max(b3, c3 + b4) (sequential rule)
 FIX = '--fix' in sys.argv or TIGHT
 
 # ---- tropical (max-affine) functions of the level l: {slope: intercept}
@@ -60,9 +63,13 @@ makeCap = lambda n: 1 if n == 1 else n + 4
 makeCost = lambda n: alloc(8 * makeCap(n))
 makeB = lambda k: alloc(8 * (k + 4))
 asB = lambda k: alloc(8 * (k + 5))
-def sncN(l, n): return alloc(8 * (2 * (l + n + 3) + 4))
-def snc(n): return TP({32: 32 * n + 184})          # stackNatCost l n as a function of l
-assert all(snc(n)(l) == sncN(l, n) for n in range(5) for l in range(5))
+def sncN(l, n): return 0 if AMORT else alloc(8 * (2 * (l + n + 3) + 4))
+def snc(n): return TP.const(0) if AMORT else TP({32: 32 * n + 184})  # stackNatCost l n as a function of l
+assert AMORT or all(snc(n)(l) == sncN(l, n) for n in range(5) for l in range(5))
+# Q-form reserve stkRes H = 40 (4 H + 11) (Common/StackPot); H = the top-level stack depth (ESTIMATE from ExpN.NPre's
+# level bound: rnd(23n) + rnd(xl-n+1) + 2 rnd n + 16 xl + 2 rnd(2n) + 32 n + 80, doubled for needR/needS/needP)
+def stkRes(H): return 40 * (4 * H + 11)
+def Htop(xl, n): return 2 * (23 * n + 3 + xl + 4 + 2 * (n + 3) + 16 * xl + 2 * (2 * n + 3) + 32 * n + 80)
 kh = lambda n: (n + 1) // 2
 rnd = lambda k: (k + 3) // 4 * 4
 sub = lambda a, b: a - b if a > b else 0
@@ -272,6 +279,7 @@ def costE(xl, ml):
     fixed = (sncN(l0, ml) + makeB(ml + 1) + sncN(l0 + rnd(ml), ml) + makeB(ml) + sncN(w2, 2 * ml) + sncN(w3, 2 * ml) +
              alloc(8 * (ml + 4)) + costG(64 * ml) + modInv(w4, 64 * ml) + 2 * mulC(ml, ml)(w4) + makeB(2 * ml) +
              makeB(ml + 1))
+    if COSTE: return fixed + np.maximum(b3, c3 + b4)
     return fixed + b3 + c3 + b4 + c4
 
 opCost = lambda w: alloc(1024 * w + 1024)
@@ -286,7 +294,7 @@ def row(n):
         T = cS(xl, n)(0)
         cs = makeCost(xl) + 64 * YL * T
         cp = cPv(0, xl, lm)
-        common = makeCost(1) + makeCost(n) + cR(xl, n)(0) + cs + cE + cp
+        common = makeCost(1) + makeCost(n) + cR(xl, n)(0) + cs + cE + cp + (stkRes(Htop(xl, n)) if AMORT else 0)
         for yl in range(129):
             out.append((xl, yl, int(24 + common[yl] + OBud(n, xl, yl, 0)), int(24 + common[yl] + OCost(n, xl, yl, 0))))
     return n, out
