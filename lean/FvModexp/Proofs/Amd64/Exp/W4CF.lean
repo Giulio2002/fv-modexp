@@ -26,6 +26,40 @@ theorem sp_add8 {sp : Nat} (h1 : 8 ≤ sp) (h2 : sp < 2 ^ 64) :
     BitVec.ofNat 64 (sp - 8) + 8#64 = BitVec.ofNat 64 sp := by
   apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega
 
+/-- the input facts `MontW.MCall` needs of an operand (apart from the callee window `[sp - 4296, sp + 0x60)` only;
+`one` may be the frame buffer `sp + 0x148` for `n ≤ 4`) -/
+@[reducible] def InpC (R : RtInv) (L : List (Nat × Nat)) (sp n : Nat) (M0 : Memory) (p : Nat) : Prop :=
+  M0.accessible p (8 * n) false = true ∧ p + 8 * n ≤ 2 ^ 48 ∧ (InRanges p (8 * n) L ∨ Outside p (8 * n) R.rt) ∧
+  Apart p (8 * n) (sp - 4296) (4296 + 0x60)
+
+theorem Inp.c {R : RtInv} {L : List (Nat × Nat)} {sp n : Nat} {M0 : Memory} {p : Nat}
+    (h : Inp R L sp n M0 p) : InpC R L sp n M0 p :=
+  ⟨h.1, h.2.1, h.2.2.1, by have := h.2.2.2; unfold Apart at this ⊢; omega⟩
+
+set_option maxRecDepth 20000 in
+theorem mcall_ofC {R : RtInv} {L : List (Nat × Nat)} {g fs sp n mp mc rp rc xp yp : Nat} {M0 : Memory}
+    (he : Env R L g fs sp M0) (hn : 0 < n) (hmc : n ≤ mc) (hmc' : mc < 2 ^ 40) (hr : Buf R L g fs sp n M0 rp rc)
+    (hx : Inp R L sp n M0 xp) (hy : InpC R L sp n M0 yp) (hm : Inp R L sp n M0 mp)
+    (hrx : Apart rp (8 * rc) xp (8 * n)) (hry : Apart rp (8 * rc) yp (8 * n)) (hrm : Apart rp (8 * rc) mp (8 * n))
+    (hok : R.ok (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") [rp, 16 * n] ∧
+      R.ok (Extracted.program.contractAddr "runtime.memmove") [rp, rp + n * 8, n * 8]) :
+    MontW.MCall R L g (M0.readLE (g + 16) 8) fs (sp - 8) n mp mc rp rc xp yp := by
+  obtain ⟨h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11, h12, -, -, h15, h16, -⟩ := he
+  obtain ⟨r1, r2, r3, r4, r5, r6, r7, r8⟩ := hr
+  have sub : ∀ p k, Apart p k (sp - 4296) (4296 + 0x3c0) → Apart p k (sp - 8 - 4288) (4288 + 104) := by
+    intro p k h; unfold Apart at h ⊢; omega
+  have subC : ∀ p k, Apart p k (sp - 4296) (4296 + 0x60) → Apart p k (sp - 8 - 4288) (4288 + 104) := by
+    intro p k h; unfold Apart at h ⊢; omega
+  refine ⟨by omega, by omega, by omega, h5, by omega,
+    h8.of_sub (by omega) (by omega), sub _ _ h9, h10, ?_, h12, sub _ _ h15, h16, hn, r1, r2, hmc, hmc', r4, r5,
+    sub _ _ r6, r7, r8,
+    ⟨hx.2.1, hx.2.2.1, sub _ _ hx.2.2.2⟩, ⟨hy.2.1, hy.2.2.1, subC _ _ hy.2.2.2⟩,
+    ⟨hm.2.1, hm.2.2.1, sub _ _ hm.2.2.2⟩, hrx, hry, hrm, hok.1, hok.2⟩
+  intro r hr
+  have := h11 r hr
+  simp only [outside_cons, outside_nil, and_true] at this ⊢
+  omega
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- **one montgomery call of the loop body** (into the first buffer), at the callee entry -/
@@ -38,7 +72,7 @@ theorem callF {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
     (hst : Static R L g fs sp n mp mc k0 yp ylen Y tbl pp pcap M0)
     {zp zc zzp zzc xp xq : Nat} {zl xc yc : BitVec 64} {S : State} {ret : W64} {Q : State → Prop} {ra : Nat}
     (hB : Bufs R L g fs sp n mp yp ylen pp ext M0 zp zc zzp zzc)
-    (hx : Inp R L sp n M0 xp) (hy : Inp R L sp n M0 xq)
+    (hx : Inp R L sp n M0 xp) (hy : InpC R L sp n M0 xq)
     (hrx : Apart zp (8 * zc) xp (8 * n)) (hry : Apart zp (8 * zc) xq (8 * n))
     (hra : RetAddr ((Extracted.program.onlySegments LibMont.names).link impl) ra)
     (hpc : S.rip = BitVec.ofNat 64 (segAddr LibW.program MontHyp.fn))
@@ -61,7 +95,7 @@ theorem callF {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
       ReachesRet (LibW.program.link impl) ret s' Q) :
     ReachesRet (LibW.program.link impl) ret S Q := by
   obtain ⟨he, hn, -, hmc, hmc', hk0, -, -, hm, -, -, -, -, -, -, -, -, -, hok⟩ := hst
-  have hc := mcall_of he hn hmc hmc' hB.1 hx hy hm hrx hry hB.2.2.2.1 (hok zp)
+  have hc := mcall_ofC he hn hmc hmc' hB.1 hx hy hm hrx hry hB.2.2.2.1 (hok zp)
   obtain ⟨hal, hsp1, hsp2, hwacc, hg1, hg2, hg3, hwrt, hgw, hgrt, hLs, hfs1, hfacc, hfrd, hfw, hfrt, hadx⟩ := he
   obtain ⟨⟨hF, hLF⟩, hinv, hrg⟩ := hM
   obtain ⟨hBz, hBzz, hzzz, hzm, hzzm, -, -, -, -⟩ := hB

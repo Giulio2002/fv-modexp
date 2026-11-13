@@ -62,7 +62,7 @@ theorem seg@N@ {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.prog
     ra_of hap mont_not @B@ (by decide)
   have hzzI := hB.2.1.inp
   have hzzz := hB.2.2.1
-  refine callF hap hclr hmv (b := b) hst hB hzzI hzzI (by have := hzzz; unfold Apart at this ⊢; omega)
+  refine callF hap hclr hmv (b := b) hst hB hzzI hzzI.c (by have := hzzz; unfold Apart at this ⊢; omega)
     (by have := hzzz; unfold Apart at this ⊢; omega) hra (by rw [montE])
     (by simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact bv_sub8 (by omega) (by omega))
     (by simp (disch := omega) only [Arm64.Memory.readLE_writeLE_self])
@@ -115,9 +115,9 @@ T3 = T3.replace("""      s'.regs 0 = BitVec.ofNat 64 zp → s'.regs 3 = BitVec.o
       s'.mem.readLE zzp (8 * n) = sq n (M0.readLE mp (8 * n)) k0 (S.mem.readLE zp (8 * n)) →""")
 T3 = T3.replace("""  have hzzI := hB.2.1.inp
   have hzzz := hB.2.2.1
-  refine callF hap hclr hmv (b := b) hst hB hzzI hzzI""", """  have hzzI := hB.1.inp
+  refine callF hap hclr hmv (b := b) hst hB hzzI hzzI.c""", """  have hzzI := hB.1.inp
   have hzzz := hB.2.2.1
-  refine callF hap hclr hmv (b := b) hst hB.swap hzzI hzzI""")
+  refine callF hap hclr hmv (b := b) hst hB.swap hzzI hzzI.c""")
 T3 = T3.replace("""    repeat (first | exact hM | refine Mem.wr ?_ he _ (by omega))""", """    repeat (first | exact hM.swap | refine Mem.wr ?_ he _ (by omega))""")
 T3 = T3.replace("""    refine K s' hrip e4 e5 e14 efs e15 edf r0 r3 r1 hM' ?_ ?_ ?_ ?_ ?_ ?_""", """    refine K s' hrip e4 e5 e14 efs e15 edf r0 r3 r1 hM'.swap ?_ ?_ ?_ ?_ ?_ ?_""")
 T3 = T3.replace("""    · rw [hzz]; have := hB.2.1.2.2.2.2.2.1; unfold Apart at this; rdw
