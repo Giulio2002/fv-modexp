@@ -1795,3 +1795,9 @@ Util → IcDefs → IcHL → Ic → Og → Pre → Seg → FinA → Fin → Row 
 | Amd64/NatQ/KMulS3 (new) | 123 s | 31 s / 2.7 GB | frame side conditions `hrd`/`hkz` by `omega_only [layout facts]` instead of `omega` in the full context (39 s + 50 s) |
 | Arm64/NatQ/MulITail | 50 s | 37 s / 2.5 GB | `hmx`/`hmy`/`hmrd` by `omega_only` (the context holds unfolded `Apart` disjunctions) |
 | Arm64/NatQ/KMulPC | 88 s | (no gain) | clearing 24 unrelated hypotheses before `all_goals janus_simp` changed nothing (janus_omega is already sparse): the cost is ~160 read-over-write discharges at ~0.15 s |
+
+### asm s45 (2026-11-13, dev builds at load ~32)
+| module | before | after | fix |
+|---|---|---|---|
+| Amd64/NatQ/DrsSN (callN, snH) | 104 s / 5.1 GB | 14 s / 2.9 GB | after the callee's post is destructured (big disjunctive context) every `omega` is expensive: `hMFP`'s window inclusion 73 s → pure lemma `out_sub`; `hst`/`eW`/`hSacc` (9 s + 13 s) moved before `ReachesRet.call_regions`; `sl_init`/`head_mk` split into DrsSNH (5 s) |
+| Amd64/NatQ/DrsRel, DrsSNP, DrsSNI, DrsNat (new) | — | 4 / 6 / 11 / 5 s | — |
