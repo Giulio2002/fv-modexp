@@ -1925,3 +1925,7 @@ Util → IcDefs → IcHL → Ic → Og → Pre → Seg → FinA → Fin → Row 
   98 s** (cpu 228 s) + ~3 s rest. The witness is compiled inside the own-compile stage. 66 > RunErr's 41-module own set: the gc'd copy
   lost ~25 lower store entries, so this is an upper bound for the own compile. ⇒ rel44's 900 s cap = contention (2 rows + RequiredGas
   at once) on a ~360 s compile, not a hidden serial stage. Replay is parallel (4 at once), not the serial-prefix pattern.
+* **JANUS_JOBS experiment (top s46; RunErr targeted, snap44 sources, fresh copies of the rel44 cache, load 13-22, alongside rel45):**
+  JANUS_JOBS=4 PASS **297 s** (own compile 66 mods 218 s / cpu 1037 s, replay 70.5 s, audit 5.6 s) vs JANUS_JOBS=2 PASS **319 s**
+  (own compile 231 s / cpu 948 s, replay 79 s, audit 6.4 s) in the same window ⇒ −7 %, noise-level: the own compile is
+  critical-path bound. The s45 467 s was load. Row peak (summed RSS, J=2) 5.4 GB. verify-all default stays JANUS_JOBS=2.
