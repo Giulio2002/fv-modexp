@@ -62,7 +62,7 @@ theorem correctness (impl : List Segment) (hap : ImplApart Extracted.program imp
   -- the Pool shape is a row binder fixed by the precondition (Janus's PoolShape row pattern; audit, v0.3.1)
   intro ret hret s hs ⟨hS, hpre⟩
   subst hS
-  exact Run.correctness_okC impl hap R hmk hmkz hmv hmz hno hgr hmc hwb hget hput hwb4 W hW b L c p len cp ret
+  exact Run.okC impl hap R hmk hmkz hmv hmz hno hgr hmc hwb hget hput hwb4 W hW b L c p len cp ret
     hret s hs hpre
 
 end FvModexp.Arm64.RunSucc
@@ -76,49 +76,11 @@ open FvModexp.Arm64.Run.WitnessOk (s2 c2 p2 WW bW setup2 pre2 sMkz site_mkz sMz 
 open FvModexp.Arm64.AsmWit (callS callS5 callP OA OB mkSite mvSite noSite grSite clSite wbSite getSite putSite)
 
 set_option maxRecDepth 100000
-
-/-- The runtime models of every contract `correctness` assumes, on the shared witness runtime. -/
-theorem m_mk : MakesliceLiveContract (Extracted.program.ofImpl implAt) (Extracted.program.contractAddr "runtime.makeslice")
-    4096 R := by rw [WStubs.addr_mk]; exact WStubs.mk [] tys0 ok
-theorem m_mkz : MakesliceZeroLive (Extracted.program.ofImpl implAt) (Extracted.program.contractAddr "runtime.makeslice")
-    4096 R := by rw [WStubs.addr_mk]; exact WStubs.mkz [] tys0 ok
-theorem m_mv : MemmoveLive (Extracted.program.ofImpl implAt) (Extracted.program.contractAddr "runtime.memmove") 4096 R := by
-  rw [WStubs.addr_mv]; exact WStubs.mv R
-theorem m_mvz : MemmoveZeroLive (Extracted.program.ofImpl implAt) (Extracted.program.contractAddr "runtime.memmove")
-    4096 R := by rw [WStubs.addr_mv]; exact WStubs.mvz R
-theorem m_no : NewobjectLiveContract (Extracted.program.ofImpl implAt) (Extracted.program.contractAddr "runtime.newobject")
-    4096 R := by rw [WStubs.addr_no]; exact WStubs.no [] tys0 ok
-theorem m_gr : GrowsliceLiveContract (Extracted.program.ofImpl implAt) (Extracted.program.contractAddr "runtime.growslice")
-    4096 R := by rw [WStubs.addr_gr]; exact WStubs.gr [] tys0 ok
-theorem m_cl : MemclrNoHeapPointersLive (Extracted.program.ofImpl implAt)
-    (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R := by rw [WStubs.addr_cl]; exact WStubs.cl R
-theorem m_wb2 : WbLiveContract (Extracted.program.ofImpl implAt) (Extracted.program.contractAddr "runtime.gcWriteBarrier2")
-    4096 R 2 := by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] tys0 ok
-theorem m_wb4 : WbLiveContract (Extracted.program.ofImpl implAt) (Extracted.program.contractAddr "runtime.gcWriteBarrier4")
-    4096 R 4 := by rw [WStubs.addr_wb4]; exact WStubs.wb4 [] tys0 ok
-theorem m_get : PoolGetLive (Extracted.program.ofImpl implAt) (Extracted.program.contractAddr "sync.(*Pool).Get") 4096 R
-    Free.stkT StkSh := by rw [WStubs.addr_get]; exact WStubs.get [] ok _ _
-theorem m_put : PoolPutLive (Extracted.program.ofImpl implAt) (Extracted.program.contractAddr "sync.(*Pool).Put") 4096 R
-    Free.stkT StkSh := by rw [WStubs.addr_put]; exact WStubs.put [] tys0 ok _ _
-
-/-- The cost bound at the witness: lengths `1, 1, 1` fit the toy budget `bW = 0x300000` (heap `2^22`). -/
-theorem budget2 : RunArm64.okBudget (parseLengths (bytesAt s2.mem p2.toNat (99 : BitVec 64).toNat)) ≤ bW := by
-  decide +kernel
-
-/-- The returning run at the witness call. -/
-theorem returnsC :
-    Returns ((Extracted.program.link implAt).withExit ret) s2 fun s' =>
-      ABIReturn s2 s' ∧ (RunArm64.OkRet (bytesAt s2.mem p2.toNat (99 : BitVec 64).toNat) s' ∧
-        RunArm64.FrameW R bW (RunArm64.okBudget (parseLengths (bytesAt s2.mem p2.toNat (99 : BitVec 64).toNat)))
-          [] WW s2 s') :=
-  correctness implAt hap R m_mk m_mkz m_mv m_mvz m_no m_gr m_cl m_wb2 StkSh m_get m_put m_wb4 WW (by decide) bW []
-    c2 p2 99 99 ret hret s2 setup2 ⟨rfl, (pre2 budget2)⟩
-
 /-- Every hypothesis of `correctness` (the eleven runtime contracts, the window) and every conjunct of its
 precondition hold together, with one call-site state per contract, and the call returns: the shared witness runtime,
 budget `bW`, window `WW`, empty live set, `Run(c, p, 99, 99)` on lengths `1, 1, 1`, `3^5 mod 7` (output `[5]`). -/
 theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat))
-    (c p len cp : BitVec 64) (ret : Nat) (s : State) (W : Nat) (S : PoolShape),
+    (c p len cp : BitVec 64) (ret : Nat) (s : State) (W : Nat),
     ImplApart Extracted.program impl ∧
     MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R ∧
     MakesliceZeroLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R ∧
@@ -130,14 +92,14 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R ∧
     WbLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 4096 R 2 ∧
     PoolGetLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "sync.(*Pool).Get") 4096 R
-      Free.stkT S ∧
+      Free.stkT StkSh ∧
     PoolPutLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "sync.(*Pool).Put") 4096 R
-      Free.stkT S ∧
+      Free.stkT StkSh ∧
     WbLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier4") 4096 R 4 ∧
     624 + 72944 ≤ W ∧
     RetAddr (Extracted.program.link impl) ret ∧
     CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program RunArm64.fn) [c, p, len, cp] s ∧
-    S = StkSh ∧ RunArm64.EnvW R L s W ∧ RunArm64.Input R L c p len cp s ∧ OsakaReceiver s.mem c.toNat ∧
+    StkSh = StkSh ∧ RunArm64.EnvW R L s W ∧ RunArm64.Input R L c p len cp s ∧ OsakaReceiver s.mem c.toNat ∧
     R.inv b L (s.regs 28).toNat (view R.rt L s.mem) ∧ RunArm64.OkReqs R ∧
     RunArm64.Globals R s.mem (RunArm64.windowW s W) ∧ RunArm64.NatOne R s.mem (RunArm64.windowW s W) ∧
     RunArm64.StackPool R s.mem (RunArm64.windowW s W) ∧
@@ -186,27 +148,6 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
     Returns ((Extracted.program.link impl).withExit ret) s fun s' =>
       ABIReturn s s' ∧ (RunArm64.OkRet (bytesAt s.mem p.toNat len.toNat) s' ∧
         RunArm64.FrameW R b (RunArm64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat))) L W s s') :=
-  ⟨implAt, R, bW, [], c2, p2, 99, 99, ret, s2, WW, StkSh, hap, m_mk, m_mkz, m_mv, m_mvz, m_no, m_gr, m_cl, m_wb2, m_get, m_put,
-    m_wb4, by decide, hret, setup2, rfl,
-    (pre2 budget2).1, (pre2 budget2).2.1, (pre2 budget2).2.2.1, (pre2 budget2).2.2.2.1, (pre2 budget2).2.2.2.2.1, (pre2 budget2).2.2.2.2.2.1, (pre2 budget2).2.2.2.2.2.2.1, (pre2 budget2).2.2.2.2.2.2.2.1,
-    (pre2 budget2).2.2.2.2.2.2.2.2.1, (pre2 budget2).2.2.2.2.2.2.2.2.2, compute2,
-    ⟨[], 0x1000, callS WStubs.mkA Extracted.dataAddr.«type:big.Word#51b931e8» 1 1, by rw [WStubs.addr_mk]; rfl,
-      by rw [WStubs.addr_mk]; exact AsmWit.site_mk _⟩,
-    ⟨[], 0x1000, sMkz, by rw [WStubs.addr_mk]; rfl, by rw [WStubs.addr_mk]; exact site_mkz⟩,
-    ⟨[], 0x1000, callS WStubs.mvA OA OB 8, by rw [WStubs.addr_mv]; rfl, by rw [WStubs.addr_mv]; exact AsmWit.site_mv _⟩,
-    ⟨[], 0x1000, sMz, by rw [WStubs.addr_mv]; rfl, by rw [WStubs.addr_mv]; exact site_mz⟩,
-    ⟨[], 0x1000, callS WStubs.noA Extracted.dataAddr.«type:big.Word#51b931e8» 0 0, by rw [WStubs.addr_no]; rfl,
-      by rw [WStubs.addr_no]; exact AsmWit.site_no _⟩,
-    ⟨[], 0x1000, callS5 WStubs.grA OA 2 1 1 Extracted.dataAddr.«type:big.Word#51b931e8», by rw [WStubs.addr_gr]; rfl,
-      by rw [WStubs.addr_gr]; exact AsmWit.site_gr _⟩,
-    ⟨[], 0x1000, callS WStubs.clA OA 8 0, by rw [WStubs.addr_cl]; rfl, by rw [WStubs.addr_cl]; exact AsmWit.site_cl _⟩,
-    ⟨[], 0x1000, callS WStubs.wb2A 0 0 0, by rw [WStubs.addr_wb2]; rfl,
-      by rw [WStubs.addr_wb2]; exact AsmWit.site_wb _ _⟩,
-    ⟨[], 0x1000, callS WStubs.getA OA 0 0, by rw [WStubs.addr_get]; rfl, by rw [WStubs.addr_get]; exact AsmWit.site_get _⟩,
-    ⟨[(HEAP, HEAP + 24)], 0x1000, [(HEAP, HEAP + 24)], callP WStubs.putA, by rw [WStubs.addr_put]; rfl,
-      by rw [WStubs.addr_put]; exact AsmWit.site_put _⟩,
-    ⟨[], 0x1000, callS WStubs.wb4A 0 0 0, by rw [WStubs.addr_wb4]; rfl,
-      by rw [WStubs.addr_wb4]; exact AsmWit.site_wb _ _⟩,
-    returnsC⟩
+  Run.WitnessC.nonvacuous
 
 end FvModexp.Arm64.RunSucc.Witness
