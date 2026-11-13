@@ -116,4 +116,39 @@ theorem Pre4.frame {R : RtInv} {L L' : List (Nat × Nat)} {g fs sp n mp mc k0 yp
     rw [rdh _ _ (hsth.imp (fun h => h.sub (by omega) (by omega)) (fun h => h.of_sub (by omega) (by omega)))
       (out_low (by unfold Apart; omega) hs1 ws hlw)]; exact f11
 
+set_option maxRecDepth 20000 in
+/-- `zjRet` with its memory facts bundled (`Pre4`) -/
+theorem zjRet4 {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
+    (hclr : MemclrNoHeapPointersLive64 (Extracted.program.ofImpl impl)
+      (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
+    (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
+    (hmk : MakesliceLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice")
+      4096 R)
+    (hmvok : ∀ d src k, k ≤ 2 ^ 20 → R.ok (Extracted.program.contractAddr "runtime.memmove") [d, src, k])
+    (hwt : Outside NatSub.wordT 16 R.rt) (hro : RoOut R)
+    {b : Nat} {L : List (Nat × Nat)} {g fs sp n mp mc k0 yp ylen Y yi Mv zp zc zzp zzc : Nat} {pp tbl : Nat → Nat}
+    {M : Memory} {r5 : W64} {onep st n0 bp r : Nat}
+    (he : Env R L g fs sp M) (hP : Pre4 R L sp n mp mc k0 yp ylen Y yi Mv pp tbl onep st n0 bp r M)
+    (hn : 0 < n) (hn16 : n ≤ 2 ^ 16) (hmc : n ≤ mc) (hmc' : mc < 2 ^ 40) (hk0 : k0 < 2 ^ 64)
+    (hyl : 0 < ylen) (hyl' : ylen < 2 ^ 40) (hyi0 : 0 < yi)
+    (hz : Buf R L g fs sp n M zp zc) (hzz : Buf R L g fs sp n M zzp zzc) (hz8 : zp % 8 = 0) (hzz8 : zzp % 8 = 0)
+    (hB : Bufs R L g fs sp n mp yp ylen pp [(onep, 8 * n), (st, 24)] M zp zc zzp zzc)
+    (r168 : M.readLE (sp + 0x168) 8 = zp) (r88 : M.readLE (sp + 0x88) 8 = zc)
+    (hokS : ∀ rp, R.ok (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") [rp, 16 * n] ∧
+      R.ok (Extracted.program.contractAddr "runtime.memmove") [rp, rp + n * 8, n * 8])
+    (hinv : R.inv b L g (view R.rt L M))
+    (hkk : (k0 * Mv + 1) % Exp.B = 0) (hmB : Mv < Exp.B ^ n) (hbp : bp < 2 ^ 64)
+    (S : State) (hpc : S.rip = BitVec.ofNat 64 zj) (hsp : S.regs 4 = BitVec.ofNat 64 sp) (hmem : S.mem = M)
+    (h5 : S.regs 5 = r5) (h14 : S.regs 14 = BitVec.ofNat 64 g) (hfs : S.fsBase.toNat = fs) (hx15 : S.xmm 15 = 0)
+    (hdf : S.df = false)
+    (h0 : S.regs 0 = BitVec.ofNat 64 zp) (h2 : S.regs 2 = BitVec.ofNat 64 zc) (h1 : S.regs 1 = BitVec.ofNat 64 zzp)
+    (h11 : S.regs 11 = BitVec.ofNat 64 n) (h12 : S.regs 12 = BitVec.ofNat 64 zzc) :
+    ReachesRet (LibW.program.link impl) (BitVec.ofNat 64 r) S
+      (ZjPost R b L g fs sp n mp yp ylen zp zc zzp zzc k0 pp (zjVal n Mv k0 tbl Y ylen yi) st n0 onep bp M) := by
+  obtain ⟨hd, hm, hy, hY, hyi, hent, hbuf, s1, s2, s3, s4, s5, s6, hnm, hmv', hone, hone1, r328, hfe, hsth⟩ := hP
+  subst hmv'
+  exact zjRet hap hclr hmv hmk hmvok hwt hro b L g fs sp n mp mc k0 yp ylen Y yi zp zc zzp zzc pp tbl M r5 onep st n0 bp r
+    he hd hn hn16 hmc hmc' hk0 hyl hyl' hm hy hY hyi hyi0 hz hzz hz8 hzz8 hent hbuf hB s1 s2 r168 r88 s3 s4 s5 s6 hokS
+    hinv hnm hone hone1 r328 hkk hmB hfe hsth hbp S hpc hsp hmem h5 h14 hfs hx15 hdf h0 h2 h1 h11 h12
+
 end FvModexp.Amd64.W4Pro
