@@ -1901,3 +1901,12 @@ Util → IcDefs → IcHL → Ic → Og → Pre → Seg → FinA → Fin → Row 
   DivWSetE 4.5 s. In each: `Pre` boxed (`BoxW`, DivWMid) before the makeslice `janus_run`, and the disjunctions
   hga/hwt/hxw cleared after it (omega 20 s → 10 s in the old DivWGen).
 * Critical path 126 → ~106 s (Call → GenAN → Gen 69 → 50 s); module max 50 → 25.5 s.
+## expmc s65 (2026-11-13) — OddFun (both ISAs) and amd64 W2XnR / W4XnR
+* `LibW ⊆ LibOdd` (`w_sub`) was `MontW.sub_of_all (by decide)` (73×74 string comparisons): now `names_split`
+  (`LibOdd.names = LibW.names.take 15 ++ fn :: LibW.names.drop 15`, by `simp only [List.take, List.drop, …]`) + a
+  `List.contains_iff_mem` / `mem_append` / `mem_cons` lemma; `LibW.names.contains fn = false` by `simp [LibW.names, fn]`
+  instead of `decide`. amd64 OddFun **38 s / 6.8 GB → 1.7 s / 2.6 GB**; arm64 OddFun **49 s / 6.9 GB → 7.6 s / 2.8 GB**
+  (probe compiles, load ~25).
+* amd64 W2XnR / W4XnR `xnJ` path B: `all_goals first | exact h3 | skip` failed at full transparency on three `readLE`
+  goals (~45 s each, unfolding the memory terms) → `with_reducible exact h3` (and `h7`): **W2XnR 163 → 31 s, W4XnR
+  148 → 24 s** (dev, load ~25). Same lesson as infra's ModInv: never let a full-transparency `exact` fail on memory goals.

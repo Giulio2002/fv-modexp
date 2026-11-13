@@ -109,7 +109,11 @@ theorem xnA1 {impl : List Amd64.Segment} {ret : W64} {Q : State → Prop}
   · simp only [Janus.Arm64.Memory.regions_writeLE]
   all_goals
     simp (disch := omega) only [readLE_writeLE_disjoint, readLE_writeLE_same]
-  all_goals exact Nat.mod_eq_of_lt (by omega)
+  -- (s65 trim: `exact Nat.mod_eq_of_lt (by omega)` took ~50 s per goal on `_ % 256 ^ 8`)
+  all_goals simp only [Nat.reducePow]
+  · exact Nat.mod_eq_of_lt hqp
+  · exact Nat.mod_eq_of_lt hql
+  · exact Nat.mod_eq_of_lt hqc
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
@@ -171,7 +175,8 @@ theorem xnJ {impl : List Amd64.Segment} {ret : W64} {Q : State → Prop}
     · simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]
       apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
     all_goals try simp only [setRegF_apply, callRegs64_apply, Nat.reduceEqDiff, ↓reduceIte, true_or, or_true]
-    all_goals first | exact h3 | skip
+    -- (s65 trim: a failing `exact h3` on the `readLE` goals unfolded memory terms, ~45 s per goal)
+    all_goals first | with_reducible exact h3 | skip
     · have i : ∀ lo hi a, (lo, hi) ∈ xbWs sp → lo ≤ a → a + 8 ≤ hi → InRanges a 8 (xbWs sp) :=
         fun lo hi a hm h1 h2 => ⟨(lo, hi), hm, h1, h2⟩
       have m0 : (sp - 8, sp) ∈ xbWs sp := by simp only [xbWs, List.mem_cons, true_or]
@@ -182,6 +187,6 @@ theorem xnJ {impl : List Amd64.Segment} {ret : W64} {Q : State → Prop}
     · simp only [Janus.Arm64.Memory.regions_writeLE]
     all_goals
       simp (disch := omega) only [readLE_writeLE_disjoint, readLE_writeLE_same]
-    all_goals first | exact h7 | exact Nat.mod_eq_of_lt (by omega)
+    all_goals first | with_reducible exact h7 | exact Nat.mod_eq_of_lt (by omega)
 
 end FvModexp.Amd64.W2Pro
