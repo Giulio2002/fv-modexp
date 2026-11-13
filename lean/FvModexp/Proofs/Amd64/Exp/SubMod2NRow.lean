@@ -12,7 +12,7 @@ set_option autoImplicit false
 `correctness` = `SubMod2N.ensG` (general form: any capacity of `z`, empty / `nil` operands) with the PROVED callees
 `nat.trunc` (asm `Trunc.ens`), `nat.sub` (divmc `NatSub.ensR0`) and `nat.add` (divmc `NatAdd.ensR`, inside `ensG`) and
 asm's `nat.cmp`, moved to `Extracted.program.link impl` (`Ensures.full64`). Runtime premises: the live `makeslice`,
-`memmove` and `growslice` contracts. `n` is the tenth argument, passed on the stack (`[RSP + 8]`, `PreGR`'s `EntR`).
+`memmove` and `growslice` contracts. `n` is the tenth argument, passed on the stack (`[RSP + 8]`, `PreGR`'s `EntR` via the framework's `GoABI0.FrameArgs`).
 `Witness.nonvacuous`: the shared witness runtime, the toy allocator invariant, `natOne` (header outside the extracted
 data, its word in the `OB` object), the call `z.subMod2N(z, y, 64)` with `z = [5]` (cap 1), `y = [3]`, `n = 64` at
 `SP0 + 8`; one call-site state per contract.
@@ -144,6 +144,7 @@ theorem pre : PreGR R 0x1000 [] OP OA 1 1 YP 1 1 64 s0 := by
   repeat' apply And.intro
   all_goals first
     | decide
+    | (apply frameArgs_of (by decide); rw [hm]; decide +kernel)
     | exact inv1 _
     | (intro _; exact bud)
     | exact bud
