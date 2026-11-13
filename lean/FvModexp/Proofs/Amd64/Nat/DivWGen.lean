@@ -24,6 +24,7 @@ theorem genReuse (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.pr
   obtain ⟨hg1, hg2, hg3, hb', ha, hw, hal, htg⟩ := pre_env hpre
   have hpre' := hpre
   obtain ⟨⟨-, -, -, -, hout, hga, -, -, -, -⟩, -, -, hx40, hz40, -, hzw', -, hxacc, hx48, -, -, hxw, -, -, -⟩ := hpre'
+  replace hzw' := hzw' (by omega)
   simp only [win, outside_cons, outside_nil, and_true] at hzw' hxw
   have hx0' : (xl = 0#64) = False := by simp only [eq_iff_iff, iff_false]; intro e; rw [e] at hx0; simp at hx0
   have hy0' : (y = 0#64) = False := by simp only [eq_iff_iff, iff_false]; intro e; apply hy0; rw [e]; rfl
