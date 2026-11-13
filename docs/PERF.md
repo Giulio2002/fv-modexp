@@ -1687,3 +1687,16 @@ SubMod2NRow 12 s.
   explicit `rw [show sp - 8 + 16 = sp + 8 by omega, …]`; (2) `omega` calls in the continuation's context (huge post) —
   fixed by moving all arithmetic into small lemmas (`dv_facts`, `dv_pre`, `dv_post`) and passing `8 ≤ sp`/`sp < 2^64`.
 * New: W4Ctx 5.4 s, W4RRC 3.9 s, W4DivK 37–42 s / 3.3 GB, W4DivM 30 s / 3.0 GB, W4DivR 24 s, W4Own 2.6 s.
+### asm s41/s42 — arm64 Q division rows (Janus v0.3.2, cache-asm, JANUS_REPLAY_THREADS=1, 2026-11-13)
+rel40 (s41→s42, snapshot snap40, release order, one store, load 60-100), s / MB: AddVW 210/2479, SubVW 105/1002, DivWVW 135/1044,
+Lsh 389/1161, Rsh 190/896, Trunc 246/871, StackNat 184/773, MulAddWW 219/897, BasicMul 237/3389, BasicSqr 592/3350, IntAS 464/1223,
+BasicSqrQ 536/2899, SqrQ 581/3167, **MulQ 782/2259** (divmc's chain; divmc re-measures it), DivW 210/1236, DivBasicQ 550/4536,
+**DrsQ FAIL 901**, **DivQ FAIL 902**, **DivMQ FAIL 900**, RemQ PASS 504/4539.
+Root cause of the drs/div failures: the Q drs chain imported the OLD chains — `Nat/DrsIface` → `Nat.DivBasic` (27 modules,
+~570 s), NatQ/MulE → divmc's NatQ/MulHypQ → Nat/MulHypX → old `Nat.NatMul` (86 modules, ~1130 s), DrsRowWQ → old DrsRowW →
+NatMulXE. DrsRowQ's own set after DivBasicRowQ: 253 modules, dev-sum 2509 s, 4-worker schedule 727 s.
+Fix (8923cef0): DrsIface imports only light defs (old importers that use divBasic import it explicitly; every other module's
+closure unchanged), `NatQ/MulHypD` (`Q.DivRec.mulHyp` from `Q.NatMul.ens`, 2.6 s), DrsRowWQ self-contained (31 s).
+DrsRowQ own set 253 → 140 modules, dev-sum ~900 s, schedule ~340 s.
+rel42 (snapshot snap42 = 8923cef0, same store, the four rows alone, load 30-46): **DrsRowQ 491 s / 1.7 GB, DivRowQ 539 s /
+2.7 GB, DivMRowQ 199 s / 3.5 GB, RemRowQ 60 s / 1.7 GB** — all PASS. cache-asm gc'd to 6.9 GiB (one pinned entry kept).
