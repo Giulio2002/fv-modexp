@@ -13,7 +13,9 @@ the deferred `stk.free()` (`sync.(*Pool).Put`); every callee proved) moved to `E
 (`Ensures.full`); window `41504` below / `112` above `SP`. Statement: divmc's `IMod.DivPreM` (the dividend may be
 empty with any pointer) → `IMod.DivPostM` (`r = U mod V` in `u`'s array or fresh). Runtime premises: the live
 `growslice`, `memclrNoHeapPointers`, `gcWriteBarrier2`, `makeslice`, `memmove` (+ `MemmoveZeroLive`), `newobject`,
-`sync.(*Pool).Get`/`Put` (`*big.stack`, `StkSh`) contracts.
+`sync.(*Pool).Get`/`Put` (`*big.stack`) contracts. The pool's object shape is the statement variable `S : PoolShape`
+with the precondition conjunct `S = StkSh` (Janus's pattern: examples/proofs/StackGrow.lean, RUNTIME-CONTRACTS.md
+"sync.Pool"; the witness meets it with `S = StkSh`).
 `Witness.nonvacuous`: the shared witness runtime (`WStubs.impl`, toy allocator, budget `0x80000`), a 48 KiB stack, the
 threshold globals at their initial values, the call `nil.div(nil, u, u, v)` with `u = 7`, `v = 3`; one call-site state
 per contract.
@@ -27,7 +29,7 @@ namespace FvModexp.Arm64.DivMRow
 
 /-- **`nat.div`** (arm64), `(*Int).Mod`'s call `nil.div(nil, u, u, v)`: returns `U mod V` (normalised) in `u`'s array or
 a fresh one; writes only `u`, the runtime's memory and the window; for every runtime meeting the live contracts. -/
-theorem correctness (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+theorem correctness (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv) (S : PoolShape)
     (hgr : GrowsliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.growslice") 4096 R)
     (hmc : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
@@ -37,16 +39,20 @@ theorem correctness (impl : List Segment) (hap : ImplApart Extracted.program imp
     (hmz : MemmoveZeroLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
     (hno : NewobjectLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.newobject") 4096 R)
     (hget : PoolGetLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "sync.(*Pool).Get") 4096 R
-      Free.stkT StkSh)
+      Free.stkT S)
     (hput : PoolPutLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "sync.(*Pool).Put") 4096 R
-      Free.stkT StkSh)
+      Free.stkT S)
     (b : Nat) (L : List (Nat × Nat)) (u ul uc v vl vc : BitVec 64) :
     Ensures (Extracted.program.link impl) (segAddr Extracted.program NatDiv.fn)
       [0#64, 0#64, 0#64, 0#64, u, ul, uc, u, ul, uc, v, vl, vc]
-      (fun s => IMod.DivPreM R b (NatDiv.costM DivRec.drsC) L 41504 112 u.toNat ul.toNat uc.toNat v.toNat vl.toNat s)
+      (fun s => S = StkSh ∧
+        IMod.DivPreM R b (NatDiv.costM DivRec.drsC) L 41504 112 u.toNat ul.toNat uc.toNat v.toNat vl.toNat s)
       (fun s s' => IMod.DivPostM R b (NatDiv.costM DivRec.drsC) L 41504 112 u.toNat ul.toNat uc.toNat v.toNat vl.toNat
-        s s') :=
-  Ensures.full hap (NatDiv.ensMC impl hap R hgr hmc hwb hmk hmv hmz hno hget hput b L u ul uc v vl vc)
+        s s') := by
+  intro ret hret s hs ⟨hS, hpre⟩
+  subst hS
+  exact Ensures.full hap (NatDiv.ensMC impl hap R hgr hmc hwb hmk hmv hmz hno hget hput b L u ul uc v vl vc)
+    ret hret s hs hpre
 
 end FvModexp.Arm64.DivMRow
 
@@ -168,7 +174,8 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
     RetAddr (Extracted.program.link impl) ret ∧
     CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program NatDiv.fn)
       [0#64, 0#64, 0#64, 0#64, u, ul, uc, u, ul, uc, v, vl, vc] s ∧
-    IMod.DivPreM R b (NatDiv.costM DivRec.drsC) L 41504 112 u.toNat ul.toNat uc.toNat v.toNat vl.toNat s ∧
+    (StkSh = StkSh ∧
+      IMod.DivPreM R b (NatDiv.costM DivRec.drsC) L 41504 112 u.toNat ul.toNat uc.toNat v.toNat vl.toNat s) ∧
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.growslice") ∧
       grSite R (Extracted.program.contractAddr "runtime.growslice") L b s_c) ∧
@@ -210,7 +217,7 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
     by rw [WStubs.addr_no]; exact WStubs.no [] hty _,
     by rw [WStubs.addr_get]; exact WStubs.get [] _ _ _,
     by rw [WStubs.addr_put]; exact WStubs.put [] hty _ _ _,
-    hret, setup, pre,
+    hret, setup, ⟨rfl, pre⟩,
     ⟨[], 0x1000, callS5 WStubs.grA OA 2 1 1 Extracted.dataAddr.«type:big.Word#51b931e8», by rw [WStubs.addr_gr]; rfl,
       by rw [WStubs.addr_gr]; exact site_gr _⟩,
     ⟨[], 0x1000, callS WStubs.clA OA 8 0, by rw [WStubs.addr_cl]; rfl, by rw [WStubs.addr_cl]; exact site_cl _⟩,
@@ -224,12 +231,12 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
     ⟨[], 0x1000, callS WStubs.getA OA 0 0, by rw [WStubs.addr_get]; rfl, by rw [WStubs.addr_get]; exact site_get _⟩,
     ⟨[(HEAP, HEAP + 24)], 0x1000, [(HEAP, HEAP + 24)], callP WStubs.putA, by rw [WStubs.addr_put]; rfl,
       by rw [WStubs.addr_put]; exact site_put _⟩,
-    correctness WStubs.impl WStubs.hap R (by rw [WStubs.addr_gr]; exact WStubs.gr [] hty _)
+    correctness WStubs.impl WStubs.hap R StkSh (by rw [WStubs.addr_gr]; exact WStubs.gr [] hty _)
       (by rw [WStubs.addr_cl]; exact WStubs.cl R) (by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] hty _)
       (by rw [WStubs.addr_mk]; exact WStubs.mk [] hty _)
       (by rw [WStubs.addr_mv]; exact WStubs.mv R) (by rw [WStubs.addr_mv]; exact WStubs.mvz R)
       (by rw [WStubs.addr_no]; exact WStubs.no [] hty _) (by rw [WStubs.addr_get]; exact WStubs.get [] _ _ _)
       (by rw [WStubs.addr_put]; exact WStubs.put [] hty _ _ _) 0x80000 []
-      (BitVec.ofNat 64 OB) 1 1 (BitVec.ofNat 64 VP) 1 1 RET hret s0 setup pre⟩
+      (BitVec.ofNat 64 OB) 1 1 (BitVec.ofNat 64 VP) 1 1 RET hret s0 setup ⟨rfl, pre⟩⟩
 
 end FvModexp.Arm64.DivMRow.Witness
