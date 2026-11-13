@@ -299,4 +299,38 @@ theorem t1c (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
     all_goals (try janus64_simp)
     all_goals first | exact h5 | exact hfs | exact hdf | skip
 
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 64000000 in
+/-- **the tail, part 1**: `AtD` → `q = q.norm()` → `q` stored → `rshVU` (if `shift ≠ 0`) → `AtR` -/
+theorem t1 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
+    {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st up uc ip il vp vl : Nat} {s : State}
+    {t w1 c1 : Nat} {L1 : List (Nat × Nat)} {b1 : Nat} {Lq : List (Nat × Nat)} {P C sh qp qc : Nat}
+    {L2 : List (Nat × Nat)} {b2 w2 c2 : Nat}
+    (hE : Env R b L c zp zc st up uc ip il vp vl s t L1 b1 w1 c1) (S : State)
+    (hS : AtD R b L c zp zc st up uc ip il vp vl s t w1 c1 L1 Lq P C sh qp qc L2 b2 w2 c2 S) (Q : State → Prop)
+    (k : ∀ ql T, AtR R b L c zp zc st up uc ip il vp vl s t w1 c1 L1 Lq P C sh qp qc L2 b2 w2 c2 ql T →
+      ReachesRet (LibDivL.program.link impl) (retAddrOf s) T Q) :
+    ReachesRet (LibDivL.program.link impl) (retAddrOf s) S Q := by
+  have hl := hE.lay
+  have hsp0 := hl.sp0; have hsp1 := hl.sp1; have hil9 := hl.il9; have hvil := hl.vil
+  have hQ := hS.qa
+  have hqcap := hQ.cap; have hq40 := hQ.c40; have hq48 := hQ.p48
+  have m0 := hS.sq0; have m1 := hS.sq1
+  obtain ⟨-, ⟨hb', ha, hw⟩, -⟩ := hE.pre.ce
+  simp only [regSP] at hb' ha hw
+  have hwacc : S.mem.accessible ((s.regs 4).toNat - 41272) (41272 + 112) true = true := by
+    rw [hS.mem.mem.fr.accessible]; exact hw
+  have hpc := hS.pc; have hsp := hS.sp; have h5 := hS.r5; have h14 := hS.r14; have hfs := hS.fs
+  have hx15 := hS.x15; have hdf := hS.df
+  janus64_run [m0, m1] until [qHead]
+  refine qnorm impl (retAddrOf s) S.mem qp (il - vl + 1) (natVal s.mem ip il / natVal s.mem vp vl) (s.regs 4 - 304#64)
+    (s.regs 4 - 8#64) (s.regs 14) s.fsBase 0#128 Q
+    (fun s' n' hpc' hm' h0' h1' hsp' h5' h14' hfs' hx' hdf' hle hv hn =>
+      t1c impl hap R hE hS hle hv hn s' hpc' hm' h0' h1' hsp' h5' h14' hfs' hx' hdf' Q (k n'))
+    (by omega) (by omega)
+    (Janus.Arm64.Memory.accessible_read_of_write _ (Janus.Arm64.Memory.accessible_mono _ hQ.pacc (Nat.le_refl _) (by omega)))
+    (il - vl + 1) _ (Nat.le_refl _) rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl hS.qval
+  all_goals (try janus64_simp)
+  all_goals first | exact hsp | exact h5 | exact h14 | exact hfs | exact hx15 | exact hdf | skip
+
 end FvModexp.Amd64.DivLarge
