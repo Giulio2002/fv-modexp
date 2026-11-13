@@ -55,6 +55,7 @@ theorem alloc_head (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat ×
   have hzl' : 0 < zc.toNat → zp.toNat + 8 * zc.toNat ≤ 2 ^ 48 := fun h => (hzl h).2.2.2
   clear hzl hxh hyh hmw
   have hacc0 := hw
+  have _ := h1
   janus_run [toInt_small zc (by omega), toInt_small xl (by omega), toInt_small yl (by omega)] until [0x1baf0c]
   all_goals
     refine alloc_join impl W st xp xl xc yp yl yc s Q hK hW hb' hal ha (by omega) (by omega) _ ?_ ?_ ?_ ?_ ?_

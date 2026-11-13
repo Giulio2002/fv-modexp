@@ -61,6 +61,7 @@ amd64 Nat/LshRow
 amd64 Int/IntASRow
 amd64 NatQ/BasicSqrRowQ
 amd64 NatQ/SqrRowQ
+amd64 NatQ/MulRowQ
 amd64 RequiredGas
 amd64 Exp/SubMod2NRow
 amd64 Nat/DivWRow

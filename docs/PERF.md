@@ -1841,3 +1841,33 @@ Util → IcDefs → IcHL → Ic → Og → Pre → Seg → FinA → Fin → Row 
 |---|---|---|---|
 | Amd64/NatQ/DrsBd, DrsB1, DrsEnv, DrsRecP (new) | — | 6 s / 28 s / 4 s / 19 s (≤ 3.2 GB) | DrsRecP 65 s → 19 s: stack-argument offsets stated directly (`r - 392` …) instead of `rw [hsp]` into `r - 400 + 8` (recursion-depth blowup) |
 | Amd64/NatQ/DrsCallS, DrsA2, DrsB2, DrsA3, DrsSN3, DrsNorm3, DrsB3N, DrsB3T, DrsB3S, DrsB3C, DrsCRel (new, asm s47) | — | 2 / 16 / 49 / 2 / 1.5 / 9 / 12 / 2.4 / 5 / 17 / 2.6 s (≤ 3.5 GB; dev build, load ~40) | runs closed by name (setRegF_apply simp per register, `readLE_writeLE` rw chains); BitVec hints stated in the exact form the run produces (`ofNat a - ofNat b`, `+ 1#64`, masks via `neg_sshr63_and`) |
+
+### divmc s52 (2026-11-13, arm64 MulRowQ trim, prof.sh dev builds vs dev031 oleans, load ~30-37)
+| module | before | after | fix |
+|---|---|---|---|
+| Arm64/NatQ/MulLoopClrJ | 37 s | 15.6 s | memclr stop-at-entry: `lclrPre` (pre via Janus `call_pre`) + `lclrC` (call_regions, continuation over an abstract return state `T`) instead of `janus_run … calls [hmc' Lk bk]` |
+| Arm64/NatQ/MulMakeA1 | 32 s | 18-20 s | the 4 alloc paths stop at the join `0x1baf0c` and share one continuation `alloc_join` (one run to `makeslice`, one set of `AA` closers) |
+| Arm64/NatQ/KMulPC | 61 s | 43-44 s | `kpmOf`: `KPm` from one fine `MemFrame` over the 4 written ranges; lr/fp/s5/s6/x0h/x1h/fr by omega instead of `janus_simp` through ~30 stores |
+| Arm64/NatQ/SqrBM | 59 s | 17.5-24 s | basicMul stop-at-entry: `bmC` proves `BasicMul.Pre` explicitly (`Core.callee`, `RetAddr.of_placement`) and continues from an abstract `T` (bm2 33 s → 5 s) |
+| Amd64/NatQ/KMulPN (new) | — | 13 s / 2.9 GB | port of arm64 KMulPN with amd64 KSqrProD mechanics |
+| Amd64/NatQ/KMulPC (new) | — | 109 s / 4.2 GB | kpmOf-style from the start (`kpmOfX`, 7 written ranges); janus64_run dominates — profile if the row needs it |
+## infra s52 (2026-11-13) — EvenRow / ModInvRow trims (arm64, dev `lean`, load ~20-40)
+* EvenRow own set (release order): 195 → 140 modules (dev-CPU estimate ~3100 s → ~1700 s) by importing the new
+  `Exp/IExpClD` (IExp.dhyps & co., moved verbatim out of expmc's IExpCl) instead of IExpCl (the whole (*Int).exp proof).
+  EvenRow 28.8 s / 4.6 GB; IExpClD 1.2 s; IExpCl 1.6 s.
+* ModInv (trace.profiler): ModInvL1 152 → 17 s (`all_goals try clear hpost` before janus_simp: one omega over the callee post
+  took 132 s); ModInvMake 126 → 27 s and ModInvEntry 43 → 10 s (janus_simp once per goal + `with_reducible exact` alternatives;
+  failing full-transparency `exact f1` cost 40 s each). Fresh dev: whole ModInv chain ≤ 18 s per module (L2 18, L5 15, Row 13,
+  ZZ 12, L0 12, Alloc 11, PostM 10, Keep2 10, MkZZ 9); critical path ~325 → ~180 s.
+* amd64 RG SetBytes case cost (SbF case 29, probe): 20.7 s = kernel type checking 17.7 s + tactic 10.7 s (parallel).
+  Split: janus64_run alone 5.5 s kernel / 2 s tactic; value closer ~9 s kernel / ~4 s tactic; dl_close ~3 s kernel.
+  Dropping the 28 `Util.rd2_lt` facts still proves (tactic 10.7 → 7.0 s, kernel unchanged). The lever for amd64 RG
+  (33 cases ≈ 660 s compile + ~560 s replay CPU) is the value closer's kernel term (per-word fromBE lemma), not the run.
+
+## infra s53 (2026-11-13) — amd64 RequiredGas: SetBytes value closers → generic lemmas
+* New `Amd64/RG/SbVal` (5.8 s): `word` (byte-reversed 8-byte load = `fromBE` of 8 bytes), `as1/as2/as3` (k words under
+  a head), nine head lemmas `hd1..hd7, hd6b, hd7b` (the compiled head shapes; 14/15/30/31 use the second OR order).
+  Every Sb case's value goal is now ONE `exact SbVal.as<k> … (SbVal.hd<h> …) (by omega)… rfl` (generator updated).
+* SbF (cases 29, 30): 41.0 s → 15.8 s dev (same load). Sb A..G dev: 70 / 40 / 30 / 19 / 21 / 16 / 15 s.
+* Targeted row run (s51/rgrow2.sh amd64 b23b839b, warm-up-only cache, row alone): **amd64 RequiredGas 448 s**, peak
+  3258 MB, load 30.7 (was 538 s / 3520 MB at load 34.6) — target ≤ 450 s met.
