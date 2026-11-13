@@ -1480,3 +1480,12 @@ conjunct — asm's row, state of the worktree at that time), DivWVWRow 13 s, Div
 amd64: AddVWRow 107 s, SubVWRow 100 s, StackNatRow 229 s, MulAddWWRow 340 s, **BasicSqrRow FAIL 902 s** (timeout, 0.6 GB;
 own modules BasicSqrBody 107 s / 7.6 GB, Pro 182 s, Pro3 135 s / 6.2 GB, Fin 89 s, Small 90 s dev — trim),
 **Int/IntASRow PASS 350 s / 2.3 GB** (was 766 s; s32 trim: WordTData + flattened nat.add/nat.sub continuation chains).
+
+### top s30 (2026-11-13), amd64 divLarge divBasic branch (dev builds, load ~30, LEAN_NUM_THREADS=4)
+| module | time | mem |
+|---|---|---|
+| Amd64/Nat/DivLargeDRel (Mem.frameS, frameX, MemU.frameS, AtD) | 26.5 s | — |
+| Amd64/Nat/DivLargeDBP (dl_at, w1_facts, db_pre) | < 60 s | < 8 GB |
+| Amd64/Nat/DivLargeDB (divPost, dbPost) | 17.0 s | 3.2 GB |
+| Amd64/Nat/DivLargeDBR (Mem.thr, ra_dl, db2) | < 60 s | < 8 GB |
+| Amd64/Nat/DivLargeDBS (db run) | 15.1 s | 2.5 GB |
