@@ -30,6 +30,7 @@ theorem supTo_le {f : Nat → Nat} {C : Nat} : ∀ n, (∀ j, j ≤ n → f j �
 
 theorem tC_le {lm : Nat} (hlm : lm ≤ 8192) : P2Pre.tC lm ≤ 2200 := by
   have := makeCost_le_makeB (P2Pre.W lm + 4)
+  have hW : P2Pre.W lm ≤ 128 := by unfold P2Pre.W; omega
   unfold makeB allocCost at this; unfold P2Pre.tC; omega
 
 section
@@ -93,11 +94,11 @@ theorem p2w4_le {ℓ0 lm : Nat} (hl : ℓ0 ≤ 1024) (hlm : lm ≤ 8192) :
 
 /-- `nat.expNNPowerOfTwo`'s budget `P2D.cP` (any positive base) -/
 theorem cP_gen {ℓ xl yl lm : Nat} (hl : ℓ ≤ 1024) (hx : xl ≤ 128) (hlm : lm ≤ 8192) :
-    P2D.cP sqC mlC ℓ xl yl lm ≤ 1010000 + 14 * (S + M + 4400) + 4096 * (2 * S + M + 6600) +
+    P2D.cP sqC mlC ℓ xl yl lm ≤ 1020000 + 14 * (S + M + 4400) + 4096 * (2 * S + M + 6600) +
       2048 * (4 * S + M + 11000) := by
   unfold P2D.cP P2D.costP
   have hs := supTo_le (f := P2D.costO (P2W2.cost sqC mlC) (P2W4.cost sqC mlC) ℓ)
-    (C := 1000000 + 14 * (S + M + 4400) + 4096 * (2 * S + M + 6600) + 2048 * (4 * S + M + 11000)) lm
+    (C := 1010000 + 14 * (S + M + 4400) + 4096 * (2 * S + M + 6600) + 2048 * (4 * S + M + 11000)) lm
     (fun j hj => by
       have := p2w2_le sqC mlC S M hS hM (ℓ0 := ℓ) (lm := j) hl (by omega)
       have := p2w4_le sqC mlC S M hS hM (ℓ0 := ℓ) (lm := j) hl (by omega)
