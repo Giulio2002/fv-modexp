@@ -208,6 +208,16 @@ theorem natVal_hi_zero {M : Memory} {p n k : Nat} (hk : k ≤ n) (h : natVal M p
   · exact h0
   · have := Nat.mul_le_mul (Nat.succ_le_of_lt this) (Nat.succ_le_of_lt h0); omega
 
+/-- the frame step of `db_postS` (small context; the inline `omega` took 48 s) -/
+theorem frameB {a n qp ql k up ul ul' st : Nat} {m : Memory} {rt wA wB : List (Nat × Nat)}
+    (ho : Outside a n (rt ++ wA ++ [(qp, qp + 8 * ql), (up, up + 8 * ul)] ++ stkWs m st))
+    (hw : Outside a n wA → Outside a n wB) (hk : k ≤ ql) (hu : ul' ≤ ul) :
+    Outside a n (rt ++ wB ++ [(qp, qp + 8 * k), (up, up + 8 * ul'), (st, st + 24),
+      (stW m st + 8 * stLen m st, stW m st + 8 * stCap m st)]) := by
+  simp only [stkWs, outside_append, outside_cons, outside_nil, and_true] at ho ⊢
+  obtain ⟨⟨⟨h1, h2⟩, h3, h4⟩, h5, h6⟩ := ho
+  exact ⟨⟨h1, hw h2⟩, by omega, by omega, h5, h6⟩
+
 set_option maxHeartbeats 16000000 in
 /-- **`DivBasic.Post` → `DrsPostW`** (pure) -/
 theorem db_postS {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c W qp ql qc st up ul uc vp vl vc : Nat}
@@ -295,10 +305,7 @@ theorem db_postS {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c W qp ql qc st 
   · refine hF.trans hMF fun a n ho => ⟨?_, ?_⟩
     · simp only [outside_append] at ho
       exact winA_mono ho.1.1.2 (by omega) (Nat.le_refl _)
-    · have hrt : Outside a n R.rt := by simp only [outside_append] at ho; exact ho.1.1.1
-      simp only [outside_append, winA, outside_cons, outside_nil, and_true] at ho ⊢
-      simp only [hrt, true_and]
-      rw [hspn]; omega
+    · exact frameB ho (fun h => winA_in h hspn (by omega) (by omega) (by decide)) hqn hle
   · refine ⟨fun a n hin ho => ?_⟩
     simp only [List.cons_append, outside_cons, List.nil_append, outside_nil, and_true] at ho
     rw [hLF.readLE a n hin (by simp only [outside_cons, outside_nil, and_true]; omega)]
