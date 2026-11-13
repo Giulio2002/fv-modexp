@@ -19,7 +19,7 @@ namespace FvModexp.Arm64.P2W2
 /-- the common facts of every point of the loop body -/
 structure BF (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl lm ret : Nat) (s : State)
     (M : Memory) (L1 : List (Nat × Nat)) (b1 zzp bp : Nat) : Prop where
-  wc : WC R L K g sp st zp zc s.mem M L1 b1 (lvlL (stLen s.mem st) lm)
+  wc : WC R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem M L1 b1 (lvlL (stLen s.mem st) lm)
   esl : ESl M sp st (s.regs 29) ret zp zc xp xl xc yp yl lm (stLen s.mem st)
   tz : TZ R L s.mem M L1 st sp zzp bp lm (natVal s.mem xp xl)
 
@@ -160,7 +160,8 @@ theorem BF.call (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {ret : Nat
     {M' : Memory} {L2 : List (Nat × Nat)} {b2 : Nat}
     (hF : MemFrame M M' (R.rt ++ [(sp - stk, sp - 8), (sp + 8, sp + above)] ++ [(pd, pd + 8 * cd)] ++ stkWs M st))
     (hLF : LiveFrame M M' L1 ([(pd, pd + 8 * cd)] ++ stkWs M st)) (hrg : M'.regions = M.regions)
-    (hx : LiveExt R L1 L2) (hinv : R.inv b2 L2 g (view R.rt L2 M')) (hsb : StackBackL R L1 L2 st M M') :
+    (hx : LiveExt R L1 L2) (hinv : R.inv (b2 + stkR (HW (stLen s.mem st) lm) M' st) L2 g (view R.rt L2 M'))
+    (hsb : StackBackL R L1 L2 st M M') :
     BF R L K g sp st zp zc xp xl xc yp yl lm ret s M' L2 b2 zzp bp ∧
     (∀ a k, sp + 88 ≤ a → a + k ≤ sp + 560 → M'.readLE a k = M.readLE a k) ∧
     (∀ (w : Bool) (q c : Nat), BC R L K g sp st zp zc M L1 zzp bp lm w q c → 0 < c →
@@ -194,7 +195,7 @@ theorem BF.call (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {ret : Nat
       rw [outside_append, outside_append, outside_append]
       refine ⟨⟨⟨h0.1, ?_⟩, ?_⟩, h0.2⟩ <;> simp only [outside_cons, outside_nil, and_true] <;> omega)
   obtain ⟨zr, zl⟩ := BC.zs hP hB.tz hd hcd
-  have hw : WC R L K g sp st zp zc s.mem M' L2 b2 (lvlL (stLen s.mem st) lm) := by
+  have hw : WC R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem M' L2 b2 (lvlL (stLen s.mem st) lm) := by
     refine hB.wc.call (ws := [(sp - stk, sp - 8), (sp + 8, sp + above)] ++ [(pd, pd + 8 * cd)] ++ stkWs M st)
       (by simpa only [List.append_assoc] using hF) hLF hrg ?_ ?_ hx hinv
       hsb.1.1 (hsb.1.2.1.trans hB.wc.len) (Nat.le_refl _) hsb.1.2.2 hsb.2

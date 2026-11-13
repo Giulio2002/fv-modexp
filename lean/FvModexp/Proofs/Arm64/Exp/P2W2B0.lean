@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.P2W2BJ
 
+set_option autoImplicit false
+
 /-!
 # `expNNPowerOfTwoWindowSize2` (arm64): loop body segment B0 — loop test → first `sqr` → `J1` (agent infra)
 
@@ -19,16 +21,16 @@ theorem bud_c1 (B X : Nat) (c i : Nat) : (c + 1 + 32 * i) * X = (c + 32 * i) * X
 
 section
 variable {impl : List Segment} {ret0 : BitVec 64} {Q : State → Prop} {R : RtInv} {b : Nat} {L : List (Nat × Nat)}
-    {K g sp st zp zc xp xl xc yp yl lm ret : Nat} {s : State} {r29 : BitVec 64} {sqC : Nat → Nat → Nat}
-    {mlC : Nat → Nat → Nat → Nat} {zzp bp kk cst FV : Nat}
+    {K g sp st zp zc xp xl xc yp yl lm ret : Nat} {s : State} {r29 : BitVec 64} {sqC : Nat → Nat}
+    {mlC : Nat → Nat → Nat} {zzp bp kk cst FV : Nat}
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
 /-- the first `sqr` call from the stores' memory (pure; `T` = the call state) -/
 theorem callB0 (hap : ImplApart Extracted.program impl) {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
-    {stkS aboveS : Nat} (hsq : SqrHypX impl R ns stkS aboveS sqC) (hkS : stkS ≤ K) (haS : aboveS ≤ 88)
-    (hsm : ∀ ℓ a a', a ≤ a' → sqC ℓ a ≤ sqC ℓ a') (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s)
+    {stkS aboveS : Nat} (hsq : SqrHypQ impl R ns stkS aboveS sqC) (hkS : stkS ≤ K) (haS : aboveS ≤ 88)
+    (hsm : ∀ a a', a ≤ a' → sqC a ≤ sqC a') (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s)
     (hcb : cst ≤ b) {i c yi Z : Nat} {u : Bool}
     (K1 : KJ impl ret0 Q (J1 R b L K g sp st zp zc xp xl xc yp yl lm ret s r29 zzp bp kk cst FV sqC mlC i c yi Z u))
     {S0 : State} {M0 : Memory} {L1 : List (Nat × Nat)} {b1 pA lA cA pB lB cB : Nat}
@@ -55,10 +57,10 @@ theorem callB0 (hap : ImplApart Extracted.program impl) {ns : List String}
   obtain ⟨hA, hAk⟩ := hkeep u pA cA li.ca hcA
   obtain ⟨hBc, -⟩ := hkeep (!u) pB cB li.cb li.cb0
   have hAn : NV T.mem pA lA cA Z := NV.keep ⟨li.lac, li.va, li.na, li.zo⟩ hAk
-  have hmono := hsm (lvlL (stLen s.mem st) lm) lA (W lm) li.la
+  have hmono := hsm lA (W lm) li.la
   have hb := h.hb
   rw [bud_c1 0 _ c i] at hb
-  have hcst : sqC (lvlL (stLen s.mem st) lm) lA ≤ b1 := by simp only [bc] at hb; omega
+  have hcst : sqC lA ≤ b1 := by simp only [bc] at hb; omega
   refine sqrB hap hns hnf hsq hkS haS hP hB (v := !u) hBc li.cb0 li.lbc (by rw [Bool.not_not]; exact hA) hAn li.la
     hcst (by decide) T hpc hsp h28 rfl h30 h0 h1 h2 h3 h4 h5 h6 ?_
   intro s' L2 b2 p' l' c' hpc' hsp' h28' h29' h18' e0 e1 e2 hB' hslot hres hnv hl' hx hxn hbud
@@ -80,8 +82,8 @@ set_option maxHeartbeats 16000000 in
 /-- **B0**: the body premise's first segment, from `KS` at the loop test with `c + 1` windows left -/
 theorem segB0 (hap : ImplApart Extracted.program impl) {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
-    {stkS aboveS : Nat} (hsq : SqrHypX impl R ns stkS aboveS sqC) (hkS : stkS ≤ K) (haS : aboveS ≤ 88)
-    (hsm : ∀ ℓ a a', a ≤ a' → sqC ℓ a ≤ sqC ℓ a') (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s)
+    {stkS aboveS : Nat} (hsq : SqrHypQ impl R ns stkS aboveS sqC) (hkS : stkS ≤ K) (haS : aboveS ≤ 88)
+    (hsm : ∀ a a', a ≤ a' → sqC a ≤ sqC a') (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s)
     (hcb : cst ≤ b) {i c yi Z : Nat} {u : Bool}
     (K1 : KJ impl ret0 Q (J1 R b L K g sp st zp zc xp xl xc yp yl lm ret s r29 zzp bp kk cst FV sqC mlC i c yi Z u))
     (S : State) (M : Memory) (L1 : List (Nat × Nat)) (b1 pA lA cA pB lB cB : Nat)

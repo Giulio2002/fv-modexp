@@ -35,7 +35,7 @@ theorem bodyEnv (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s)
     (hstk : stk ≤ K) (habove : above ≤ 88) :
     CallEnv R L1 S stk above ∧ RunIface.Serves R ∧ RunIface.Globals R S.mem (win S stk above) ∧
       StkIn R L1 S stk above st ∧ StkX R L1 S stk above st ∧
-      R.inv b1 L1 (S.regs 28).toNat (view R.rt L1 S.mem) ∧ S.sp.toNat = sp ∧ (S.regs 28).toNat = g := by
+      R.inv (b1 + stkR (HW (stLen s.mem st) lm) S.mem st) L1 (S.regs 28).toNat (view R.rt L1 S.mem) ∧ S.sp.toNat = sp ∧ (S.regs 28).toNat = g := by
   have hce := hB.wc.cenv hP
   have hsN : S.sp.toNat = sp := by rw [hsp, BitVec.toNat_ofNat]; have := hce.2.2.1; omega
   have hgN : (S.regs 28).toNat = g := by rw [h28, BitVec.toNat_ofNat]; have := hce.2.2.2.2.1; omega

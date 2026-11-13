@@ -76,3 +76,39 @@ theorem effQ {R : RtInv} {b1 C r r' b' : Nat} {L : List (Nat × Nat)} {g : Nat} 
   ⟨b' - r', by rw [Nat.sub_add_cancel (by omega)]; exact hinv, by omega⟩
 
 end FvModexp.Arm64.P2Q
+
+namespace FvModexp.Arm64.P2Q
+
+/-- the effective budget after `stk.nat`'s Q-form post (no charge) -/
+theorem effN {R : RtInv} {b1 r r' b' : Nat} {L : List (Nat × Nat)} {g : Nat} {v : Memory} (hinv : R.inv b' L g v)
+    (h : b1 + r - r + r' ≤ b') : ∃ b2, R.inv (b2 + r') L g v ∧ b1 ≤ b2 :=
+  ⟨b' - r', by rw [Nat.sub_add_cancel (by omega)]; exact hinv, by omega⟩
+
+end FvModexp.Arm64.P2Q
+
+namespace FvModexp.Arm64.P2Q
+
+/-- an inline stack growth (`stk.reserve`'s `slices.Grow`, `growslice` charged `8 · gc`) paid by the reserve: the
+budget fits, and afterwards the effective budget is not lower -/
+theorem grow_eff {R : RtInv} {len n c H b gc st : Nat} {M' : Memory} {L : List (Nat × Nat)} {g : Nat} {v : Memory}
+    (hc : c < len + (n + 3) / 4 * 4) (hH : len + n + 3 ≤ H) (hgc : gc = growCap8 (len + (n + 3) / 4 * 4) c) :
+    8 * gc ≤ b + (stkRes H - potK * c) ∧
+      (R.inv (b + (stkRes H - potK * c) - 8 * gc) L g v → stCap M' st = gc →
+        ∃ b2, R.inv (b2 + stkR H M' st) L g v ∧ b ≤ b2) := by
+  have hg := grow_bud len n c H (b + (stkRes H - potK * c)) hc hH (Nat.le_add_left _ _)
+  rw [← hgc] at hg
+  refine ⟨hg.1, fun hinv hcap => ?_⟩
+  rw [stkR_of_cap hcap]
+  refine ⟨b + (stkRes H - potK * c) - 8 * gc - (stkRes H - potK * gc), ?_, by omega⟩
+  rw [Nat.sub_add_cancel (by omega)]; exact hinv
+
+end FvModexp.Arm64.P2Q
+
+namespace FvModexp.Arm64.P2Q
+
+/-- the effective budget from a post `b - c + r' ≤ b'` (an effective-budget callee such as `P2Pre`) -/
+theorem effP {R : RtInv} {b c r' b' : Nat} {L : List (Nat × Nat)} {g : Nat} {v : Memory} (hinv : R.inv b' L g v)
+    (h : b - c + r' ≤ b') : ∃ b2, R.inv (b2 + r') L g v ∧ b - c ≤ b2 :=
+  ⟨b' - r', by rw [Nat.sub_add_cancel (by omega)]; exact hinv, by omega⟩
+
+end FvModexp.Arm64.P2Q

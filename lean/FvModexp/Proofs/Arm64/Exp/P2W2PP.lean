@@ -1,6 +1,8 @@
 import FvModexp.Proofs.Arm64.Exp.P2W2WC
 import FvModexp.Proofs.Arm64.Exp.P2PreDefs
 
+set_option autoImplicit false
+
 /-!
 # `expNNPowerOfTwoWindowSize2` (arm64): `WC` at `rsE`, through `stk.nat`, and the callee preconditions of
 `(*stack).nat` and `buildPrecomputationWindowModPower2` at `SP = sp` (agent infra)
@@ -26,8 +28,8 @@ theorem wc_rs (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {M : Memory}
     (hkf : ArrKF R L st s.mem M) (hlen : stLen M st = stLen s.mem st + 8 * W lm) (hlc : stLen M st ≤ stCap M st)
     (hc40 : stCap M st < 2 ^ 40) (hnl : NatLive M R L1 (stW M st) (stCap M st))
     (hmem : ¬(stW M st = stW s.mem st ∧ stCap M st = stCap s.mem st) → (stW M st, stW M st + 8 * stCap M st) ∈ L1)
-    (hinv : R.inv b1 L1 g (view R.rt L1 M)) :
-    WC R L K g sp st zp zc s.mem M L1 b1 (stLen s.mem st + 8 * W lm) := by
+    (hinv : R.inv (b1 + stkR (HW (stLen s.mem st) lm) M st) L1 g (view R.rt L1 M)) :
+    WC R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem M L1 b1 (stLen s.mem st + 8 * W lm) := by
   obtain ⟨k1, k2, k3, k4, -, k6, -⟩ := hP.stk0
   refine ⟨hF.mono fun a k ho => ?_, Expmc.liveFrame_widen hLF fun a k ho => ?_, hrg, hx, hinv,
     ⟨k1, hx.held k2, by rw [hF.accessible]; exact k3, k4, hnl, hlc, hc40⟩, hlen, by omega, k6, hkf,
@@ -43,19 +45,20 @@ variable {M : Memory} {L1 : List (Nat × Nat)} {b1 ℓ : Nat}
 set_option maxRecDepth 20000 in
 /-- `WC` through `(*stack).nat(n)` called at `SP = sp` (window `stk ≤ K` below, `above ≤ 88` above) -/
 theorem WC.stkNat (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s)
-    (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ) {stk above n : Nat} (hstk : stk ≤ K) (habove : above ≤ 88)
+    (h : WC R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem M L1 b1 ℓ) {stk above n : Nat} (hstk : stk ≤ K) (habove : above ≤ 88)
     {S1 s' : State} (hsp : S1.sp.toNat = sp) (h28 : (S1.regs 28).toNat = g) (hm : S1.mem = M) (hrg : s'.mem.regions = M.regions) (hn : 0 < n)
-    (hpost : StackNat.PostL R b1 L1 stk above st n S1 s') :
-    ∃ (L2 : List (Nat × Nat)) (b2 : Nat), b1 - stackNatCost ℓ n ≤ b2 ∧
-      WC R L K g sp st zp zc s.mem s'.mem L2 b2 (ℓ + StackNat.rnd n) ∧
+    (hpost : StackNatX.PostQ R (b1 + stkR (HW (stLen s.mem st) lm) M st) L1 (HW (stLen s.mem st) lm) stk above st n S1 s') :
+    ∃ (L2 : List (Nat × Nat)) (b2 : Nat), b1 ≤ b2 ∧
+      WC R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem s'.mem L2 b2 (ℓ + StackNat.rnd n) ∧
       Scr R L L2 s.mem s'.mem st (stW s'.mem st + 8 * ℓ) n ∧
       s'.regs 0 = BitVec.ofNat 64 (stW s'.mem st + 8 * ℓ) ∧ s'.regs 1 = BitVec.ofNat 64 n ∧
       s'.regs 2 = BitVec.ofNat 64 n ∧ MemFrame M s'.mem (R.rt ++ [(sp - stk, sp - 8), (sp + 8, sp + above)] ++ stkWs M st) := by
   have hK := hP.1.2.2.2.2.2.2.2.2.1
-  obtain ⟨h0, h1, h2, L2, b2, ⟨hx, hb, hinv⟩, hok, hlen, hsame, hgrow, hF, hLF, hmemb⟩ := hpost
+  obtain ⟨h0, h1, h2, L2, b2', ⟨hx, hb', hinv'⟩, hok, hlen, hsame, hgrow, hF, hLF, hmemb⟩ := hpost
   subst hm
-  rw [h28] at hinv
-  rw [h.len] at hlen hsame hgrow hb h0
+  rw [h28] at hinv'
+  obtain ⟨b2, hinv, hb⟩ := P2Q.effN hinv' hb'
+  rw [h.len] at hlen hsame hgrow h0
   have hF' : MemFrame S1.mem s'.mem (R.rt ++ [(sp - stk, sp - 8), (sp + 8, sp + above)] ++ stkWs S1.mem st) := by
     simpa only [winA, hsp] using hF
   have hsc : Scr R L1 L2 S1.mem s'.mem st (stW s'.mem st + 8 * ℓ) n :=
@@ -74,10 +77,11 @@ theorem WC.stkNat (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s)
   · exact ArrIn.of_nat hok.2.2.2.2.2.1 hlen hsame (fun hc => hmemb (by rw [h.len]; omega))
 
 /-- `(*stack).nat(n)`'s precondition at `SP = sp` -/
-theorem snPre (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ)
+theorem snPre (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem M L1 b1 ℓ)
     {stk above n : Nat} (hstk : stk ≤ K) (habove : above ≤ 88) {S1 : State} (hsp : S1.sp = BitVec.ofNat 64 sp)
     (h28 : S1.regs 28 = BitVec.ofNat 64 g) (hm : S1.mem = M) (hn : n ≤ 2 ^ 16) (hl : ℓ + n + 3 ≤ 2 ^ 16)
-    (hb : stackNatCost ℓ n ≤ b1) : StackNat.Pre R b1 L1 stk above st n S1 := by
+    (hH : ℓ + n + 3 ≤ (HW (stLen s.mem st) lm)) :
+    StackNatX.PreQ R (b1 + stkR (HW (stLen s.mem st) lm) M st) L1 (HW (stLen s.mem st) lm) stk above st n S1 := by
   have hce := h.cenv hP
   have hsN : S1.sp.toNat = sp := by rw [hsp, BitVec.toNat_ofNat]; have := hce.2.2.1; omega
   have hgN : (S1.regs 28).toNat = g := by rw [h28, BitVec.toNat_ofNat]; have := hce.2.2.2.2.1; omega
@@ -89,7 +93,7 @@ theorem snPre (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R L 
   have hheld := hP.stk0.2.1
   subst hm
   refine ⟨CallW.callEnv_of hce hsp h28 rfl (by omega) habove, hsv, h.sok, hsi.2.1, hsi.2.2.2, hn,
-    by rw [h.len]; omega, by rw [h.len]; exact hb, by rw [hgN]; exact h.inv, by rw [h.fr.accessible]; exact hwbf, hwbA,
+    by rw [h.len]; omega, ⟨by rw [h.len]; exact hH, Nat.le_add_left _ _⟩, by rw [hgN]; exact h.inv, by rw [h.fr.accessible]; exact hwbf, hwbA,
     ?_⟩
   exact free_apart h hheld hst
 
@@ -101,7 +105,7 @@ variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc
 
 set_option maxRecDepth 20000 in
 /-- an entry input nat `(p, n)` (`OE`, readable, normalised, apart from `z`) as a callee at `SP = sp` reads it -/
-theorem obj_at (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ)
+theorem obj_at (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem M L1 b1 ℓ)
     {p n : Nat} (hoe : OE R L sp K st s.mem p (8 * n)) (hacc : s.mem.accessible p (8 * n) false = true)
     (h48 : p + 8 * n ≤ 2 ^ 48) (hN : NatNorm s.mem p n) (hn : n ≤ 2 ^ 12)
     (hza : 0 < zc → Apart zp (8 * zc) p (8 * n))
@@ -139,7 +143,7 @@ theorem out_bytes {a k : Nat} {m0 : Memory} (ho : Outside a k ([(sp - K, sp + 56
 
 set_option maxRecDepth 20000 in
 /-- `natOne` at `M`, outside a callee window at `SP = sp`, a window range `[lo, hi)` and the stack's writable ranges -/
-theorem natOne_at (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ)
+theorem natOne_at (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem M L1 b1 ℓ)
     {S' : State} (hsp : S'.sp.toNat = sp) {stk above lo hi : Nat} (hstk : stk ≤ K) (habove : above ≤ 88)
     (hlo : sp - K ≤ lo) (hhi : hi ≤ sp + 560) :
     ∃ op, NatOne R L1 M op (winA S' stk above ++ ([(lo, hi)] ++ stkWs M st)) ∧ StkApart M st op 8 := by
@@ -178,10 +182,11 @@ variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc
 set_option maxRecDepth 20000 in
 /-- **`buildPrecomputationWindowModPower2(stk, powers[:], 2, logM, x)`'s precondition** at `SP = sp`
 (`powers` = the four headers at `sp + 320`) -/
-theorem ppre (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ)
-    {kcP : Nat} {sqC : Nat → Nat → Nat} {mlC : Nat → Nat → Nat → Nat} (hkc : 208 + kcP ≤ K)
+theorem ppre (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem M L1 b1 ℓ)
+    {kcP : Nat} {sqC : Nat → Nat} {mlC : Nat → Nat → Nat} (hkc : 208 + kcP ≤ K)
     (hℓ : ℓ + 2 ^ 12 ≤ 2 ^ 16) {S2 : State} (hsp : S2.sp = BitVec.ofNat 64 sp) (h28 : S2.regs 28 = BitVec.ofNat 64 g)
-    (hm : S2.mem = M) (h30 : S2.regs 30 = BitVec.ofNat 64 1795572) (hcost : P2Pre.cost sqC mlC ℓ 4 lm ≤ b1) :
+    (hm : S2.mem = M) (h30 : S2.regs 30 = BitVec.ofNat 64 1795572) (hcost : P2Pre.cost sqC mlC ℓ 4 lm ≤ b1)
+    (hℓZ : ℓ = stLen s.mem st + 8 * W lm + StackNat.rnd (2 * W lm)) :
     P2Pre.Pre R kcP sqC mlC b1 L1 st (sp + 320) 4 2 lm xp xl S2 := by
   have hce := h.cenv hP
   have hsN : S2.sp.toNat = sp := by rw [hsp, BitVec.toNat_ofNat]; have := hce.2.2.1; omega
@@ -212,7 +217,7 @@ theorem ppre (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R L K
   refine ⟨CallW.callEnv_of hce hsp h28 rfl (by simp only [P2Pre.K]; omega) (by simp only [P2Pre.A]; omega), hsv, ?_,
     Or.inl rfl, by decide, hlm2, hlm, by omega, by omega, ?_, hout.of_sub (by omega) (by omega), ?_, ?_, ?_, ?_,
     hxo.1, hxo.2.1, hxl, hxo.2.2.1, hsi, by rw [hlen]; omega, free_apart h hsok.2.1 hstf, ?_, by rw [hlen]; exact hcost,
-    by rw [hgN]; exact h.inv, by rw [h30]; decide, by rw [h30]; decide, ?_, ?_, hstnz⟩
+    by rw [hgN, hlen, hℓZ]; exact h.inv, by rw [h30]; decide, by rw [h30]; decide, ?_, ?_, hstnz⟩
   · exact hgl
   · rw [h.fr.accessible]; exact Memory.accessible_mono _ hacc (by omega) (by omega)
   · simp only [win, P2Pre.K, P2Pre.A, hsN, outside_cons, outside_nil, and_true]; omega
