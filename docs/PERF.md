@@ -1597,3 +1597,12 @@ Dev compile after the cost edits: P2W2Cp5 1.9 s, P2DFull 25 s / 3.0 GB, ModInvL0
 | Amd64/Nat/DivOneA / DivOneB | 8 s / 22 s | 2.4 / 3.0 GB |
 | Amd64/Nat/DivOneF / DivOneT / DivOneTB / DivOneTC | 2 / 7 / 11 / 18 s | ≤ 2.5 GB |
 | Amd64/Nat/DivLessRel / DivLess / DivLessA | 1 / 4 / 19 s | ≤ 2.6 GB |
+
+## top s34 (2026-11-13, dev builds, load ~25, LEAN_NUM_THREADS=4)
+| module | time | peak |
+|---|---|---|
+| Amd64/Nat/DivLessF | 2 s | 2.3 GB |
+| Amd64/Nat/DivLessC | 93 s / 7.0 GB → 19 s / 2.6 GB (lessC1's post in pure `lessC1F`); with lessC0: 34 s | 2.8 GB |
+| Amd64/Nat/DivBig (big1) | 267 s → 11 s (named `case`s + `simp (disch := omega) only`, no `exact` alternatives in `first`) | 2.4 GB |
+| Amd64/Nat/DivBigRel / DivBigP / DivBigF / DivBigC | 2 / 3 / 5 / 7 s | ≤ 2.6 GB |
+| Amd64/Nat/Div (composition, `ens : HypL`) | 2 s | 2.5 GB |
