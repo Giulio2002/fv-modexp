@@ -3,8 +3,7 @@ import FvModexp.Proofs.Amd64.Exp.W2EnG
 set_option autoImplicit false
 
 /-!
-# window-2 entry (amd64): the `growslice` call of the inline `stk.reserve(11n)` (agent expmc s57; twin of
-`Arm64.W2EnG2`)
+# window-2 entry (amd64): the `growslice` call of the inline `stk.reserve(11n)` (agent expmc s63; ported from `Amd64.W4EnG2`)
 
 `enG2`: entry of `growslice(w, len + nr, cap, len + nr - cap, Word)` → (fn+0x145 .. fn+0x174: `R13 = CX` the new
 capacity, `R11 = AX` the block, `0xc0 = R13`, `0x198 = R11`, `AX = R11 + 8·cap`, `BX = 8·(len + nr - cap)`) `enG3`.
@@ -18,21 +17,21 @@ namespace FvModexp.Amd64.W2En
 set_option maxRecDepth 20000 in
 /-- the precondition of the `growslice` call from window-2's frame (`RSP = sp - 8` at the callee) -/
 theorem gpre {R : RtInv} {L : List (Nat × Nat)} {b g fs sp K w0 len0 cap0 nr : Nat} {S : State}
-    (hce : CallW.CEnv R L g fs (sp - 8) K 0x400 S.mem) (hK : 4200 ≤ K) (hsv : RunIface.Serves R)
+    (hce : CallW.CEnv R L g fs (sp - 8) K 0x2e8 S.mem) (hK : 4200 ≤ K) (hsv : RunIface.Serves R)
     (hsp : S.regs 4 = BitVec.ofNat 64 (sp - 8)) (h14 : S.regs 14 = BitVec.ofNat 64 g)
     (hra : S.mem.readLE (sp - 8) 8 < 2 ^ 47)
     (h0 : (S.regs 0).toNat = w0) (h3 : (S.regs 3).toNat = len0 + nr) (h1 : (S.regs 1).toNat = cap0)
     (h7 : (S.regs 7).toNat = len0 + nr - cap0) (h6 : (S.regs 6).toNat = wTy)
     (hk : cap0 < len0 + nr) (hln : len0 + nr ≤ 2 ^ 16)
     (hold : 0 < cap0 → w0 + 8 * cap0 ≤ 2 ^ 48 ∧ S.mem.accessible w0 (8 * cap0) false = true ∧
-      Apart w0 (8 * cap0) (sp - 8 - K) (K + 0x400))
+      Apart w0 (8 * cap0) (sp - 8 - K) (K + 0x2e8))
     (hcost : 8 * growCap8 (len0 + nr) cap0 ≤ b) (hinv : R.inv b L g (view R.rt L S.mem)) :
     GrowslicePre64 4096 S ∧ StackRoom64 S 4096 5 ∧
       LiveAt R grE (growsliceArgs64 S) L b (growsliceRound64 S) (S.regs 14).toNat S.mem (liveWin64 S 4096 5) := by
   obtain ⟨hal, hK0, hA0, hacc, hg1, hg2, hg3, hrt, hga, hgrt, hLs, hd, hro, f1, f2, f3, f4, f5, f6⟩ := hce
   have tsp : (S.regs 4).toNat = sp - 8 := by rw [hsp, BitVec.toNat_ofNat]; omega
   have tg : (S.regs 14).toNat = g := by rw [h14, BitVec.toNat_ofNat]; omega
-  have hwT : Apart wTy 16 (sp - 8 - K) (K + 0x400) := apart_of_data hd 1 (by decide) (by decide) hacc
+  have hwT : Apart wTy 16 (sp - 8 - K) (K + 0x2e8) := apart_of_data hd 1 (by decide) (by decide) hacc
   unfold Apart at hga hwT
   obtain ⟨ht1, ht2, ht3⟩ := StackNat.wT_facts hd
   rw [wTy_eq] at ht1 ht2 ht3
@@ -78,11 +77,11 @@ theorem enG2 {impl : List Amd64.Segment} {R : RtInv}
     (hmc : MemclrNoHeapPointersLive64 (LibW.program.link impl) mcE 4096 R)
     {ret : W64} {Q : State → Prop}
     {b : Nat} {L : List (Nat × Nat)} {g fs sp K st xp xl xc n w0 len0 cap0 : Nat} {M : Memory}
-    (hce : CallW.CEnv R L g fs (sp - 8) K 0x400 M) (hK : 4200 ≤ K) (hsv : RunIface.Serves R)
+    (hce : CallW.CEnv R L g fs (sp - 8) K 0x2e8 M) (hK : 4200 ≤ K) (hsv : RunIface.Serves R)
     (hk : cap0 < len0 + StackNat.rnd (11 * n)) (hn : n ≤ 128) (hl16 : len0 + 11 * n + 3 ≤ 2 ^ 16)
     (hc40 : cap0 < 2 ^ 40) (hw64 : w0 < 2 ^ 64)
     (hold : 0 < cap0 → w0 + 8 * cap0 ≤ 2 ^ 48 ∧ M.accessible w0 (8 * cap0) false = true ∧
-      Apart w0 (8 * cap0) (sp - 8 - K) (K + 0x400))
+      Apart w0 (8 * cap0) (sp - 8 - K) (K + 0x2e8))
     (hcost : 8 * growCap8 (len0 + StackNat.rnd (11 * n)) cap0 ≤ b) (hinv : R.inv b L g (view R.rt L M))
     (S : State) (hpc : S.rip = BitVec.ofNat 64 grE) (hsp : S.regs 4 = BitVec.ofNat 64 (sp - 8))
     (h14 : S.regs 14 = BitVec.ofNat 64 g) (h5 : S.regs 5 = BitVec.ofNat 64 (sp + 0x268)) (hx15 : S.xmm 15 = 0)
@@ -94,11 +93,13 @@ theorem enG2 {impl : List Amd64.Segment} {R : RtInv}
     (rb8 : M.readLE (sp + 0xb8) 8 = len0) (r140 : M.readLE (sp + 0x140) 8 = StackNat.rnd (11 * n))
     (r3d8 : M.readLE (sp + 0x2c0) 8 = st) (r3e0 : M.readLE (sp + 0x2c8) 8 = xp)
     (r3e8 : M.readLE (sp + 0x2d0) 8 = xl) (r3f0 : M.readLE (sp + 0x2d8) 8 = xc) (r3b0 : M.readLE (sp + 0x298) 8 = n)
+    (r148 : M.readLE (sp + 0x148) 8 = 5 * n)
     (K' : ∀ (S' : State) (M' : Memory) (p gc : Nat),
       S'.rip = BitVec.ofNat 64 enJ → S'.regs 4 = BitVec.ofNat 64 sp → S'.regs 5 = BitVec.ofNat 64 (sp + 0x268) →
       S'.regs 7 = BitVec.ofNat 64 st → S'.regs 6 = BitVec.ofNat 64 xp → S'.regs 8 = BitVec.ofNat 64 xl →
       S'.regs 9 = BitVec.ofNat 64 xc → S'.regs 3 = BitVec.ofNat 64 n → S'.regs 13 = BitVec.ofNat 64 len0 →
       S'.regs 15 = BitVec.ofNat 64 gc → S'.regs 2 = BitVec.ofNat 64 (StackNat.rnd (11 * n)) →
+      S'.regs 10 = BitVec.ofNat 64 (5 * n) →
       S'.regs 11 = BitVec.ofNat 64 p → S'.regs 14 = BitVec.ofNat 64 g →
       S'.fsBase = S.fsBase → S'.xmm 15 = 0 → S'.df = S.df → S'.mem = M' →
       gc = growCap8 (len0 + StackNat.rnd (11 * n)) cap0 → InRanges p (8 * gc) R.rt → ApartAll p (8 * gc) L →
@@ -146,6 +147,7 @@ theorem enG2 {impl : List Amd64.Segment} {R : RtInv}
   have q6 := (hrd _ (by omega) (by omega)).trans r3e8
   have q7 := (hrd _ (by omega) (by omega)).trans r3f0
   have q8 := (hrd _ (by omega) (by omega)).trans r3b0
+  have q9 := (hrd _ (by omega) (by omega)).trans r148
   have sret' : M.readLE (sp - 8) 8 = 6210885 := sret
   have sret'' : S.mem.readLE (sp - 8) 8 = 6210885 := by rw [hmem]; exact sret
   have hsp8 : BitVec.ofNat 64 (sp - 8) + 8#64 = BitVec.ofNat 64 sp := by
@@ -156,7 +158,7 @@ theorem enG2 {impl : List Amd64.Segment} {R : RtInv}
     apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
   janus64_run [q0, q1, q3, q4, q5, q6, q7, q8, sret', sret'', hsp, hsp8, h3, esub] until [mcE]
   generalize hgc : growCap8 (len0 + StackNat.rnd (11 * n)) cap0 = gc at *
-  generalize hM2 : ((m1.writeLE (sp + 192) 8 gc).writeLE (sp + 416) 8 ptr.toNat).writeLE (sp - 8) 8 6210937 = M2
+  generalize hM2 : ((m1.writeLE (sp + 416) 8 ptr.toNat).writeLE (sp + 192) 8 gc).writeLE (sp - 8) 8 6210937 = M2
   have hws : MemFrame m1 M2 [(sp + 0xc0, sp + 0xc8), (sp + 0x1a0, sp + 0x1a8), (sp - 8, sp)] := by
     rw [← hM2]; janus_frame
   have hwr : LiveSep [(sp + 0xc0, sp + 0xc8), (sp + 0x1a0, sp + 0x1a8), (sp - 8, sp)] R.rt := by
@@ -172,7 +174,7 @@ theorem enG2 {impl : List Amd64.Segment} {R : RtInv}
   have hrg1 : m1.regions = M.regions := hrg
   have hrg2 : M2.regions = M.regions := by
     rw [← hrg1, ← hM2]; simp only [Janus.Arm64.Memory.regions_writeLE]
-  have hce2 : CallW.CEnv R L g fs (sp - 8) K 0x400 M2 := by
+  have hce2 : CallW.CEnv R L g fs (sp - 8) K 0x2e8 M2 := by
     refine CallW.CEnv.frame hce hF2 hrg2 (fun r hr _ => ?_) ?_ ?_
     · simp only [List.mem_cons, List.not_mem_nil, or_false] at hr
       unfold Apart at hga f6
@@ -194,13 +196,13 @@ theorem enG2 {impl : List Amd64.Segment} {R : RtInv}
   have hal8' : ptr.toNat % 8 = 0 := hal8 (Or.inr (by omega))
   refine enG3 hmc (b := b) (L := L) (st := st) (xp := xp) (xl := xl) (xc := xc) (len0 := len0) (cap0 := cap0)
     (p := ptr.toNat) (gc := gc) (M := M2) hce2 hK hsv hk (by omega) (by omega) hn (by omega) hpin hp48 hpacc2 hinv2
-    _ rfl ?hsp ?h14 ?h5 ?hx15 ?hdf ?h0 ?h3 rfl ?sret ?rc0 ?rb8 ?r198 ?r140 ?r3d8 ?r3e0 ?r3e8 ?r3f0 ?r3b0 ?K
+    _ rfl ?hsp ?h14 ?h5 ?hx15 ?hdf ?h0 ?h3 rfl ?sret ?rc0 ?rb8 ?r198 ?r140 ?r3d8 ?r3e0 ?r3e8 ?r3f0 ?r3b0 ?r148 ?K
   case K =>
-    intro S' M' e1 e2 e3 e4 e5 e6 e7 e8 e9 e10 e11 e12 e13 e14 e15 e16 e17 hF3 hLF3 hrg3 hinv3
-    refine K' S' M' ptr.toNat gc e1 e2 e3 e4 e5 e6 e7 e8 e9 e10 e11 e12 e13 ?_ e15 ?_ e17 rfl hpin hapL hal8' hp48
+    intro S' M' e1 e2 e3 e4 e5 e6 e7 e8 e9 e10 e11 e12 e13 e14 e15 e16 e17 e18 hF3 hLF3 hrg3 hinv3
+    refine K' S' M' ptr.toNat gc e1 e2 e3 e4 e5 e6 e7 e8 e9 e10 e11 e12 e13 e14 ?_ e16 ?_ e18 rfl hpin hapL hal8' hp48
       ?_ ?_ ?_ (hrg3.trans hrg2) hinv3
-    · exact e14
-    · rw [e16]; first | rfl | exact hdf.symm
+    · exact e15
+    · rw [e17]; first | rfl | exact hdf.symm
     · rw [hF3.accessible]; exact hpacc2
     · refine MemFrame.trans hF2 hF3 fun a k ho => ⟨ho, ?_⟩
       simp only [outside_append, outside_cons, outside_nil, and_true] at ho ⊢
@@ -224,7 +226,8 @@ theorem enG2 {impl : List Amd64.Segment} {R : RtInv}
   case h0 =>
     simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]
     apply BitVec.eq_of_toNat_eq
-    simp only [BitVec.toNat_add, BitVec.toNat_shiftLeft, BitVec.toNat_ofNat, Nat.shiftLeft_eq]; omega
+    simp only [BitVec.toNat_add, BitVec.toNat_mul, BitVec.toNat_sub, BitVec.toNat_shiftLeft, BitVec.toNat_ofNat,
+      Nat.shiftLeft_eq]; omega
   case h3 =>
     simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]
     apply BitVec.eq_of_toNat_eq
@@ -232,11 +235,11 @@ theorem enG2 {impl : List Amd64.Segment} {R : RtInv}
   case sret => rw [← hM2, Janus.Arm64.Memory.readLE_writeLE_self]
   case rc0 =>
     rw [← hM2, Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega),
-      Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega), Janus.Arm64.Memory.readLE_writeLE_self,
-      Nat.mod_eq_of_lt (by omega)]
+      Janus.Arm64.Memory.readLE_writeLE_self, Nat.mod_eq_of_lt (by omega)]
   case r198 =>
     rw [← hM2, Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega),
-      Janus.Arm64.Memory.readLE_writeLE_self, Nat.mod_eq_of_lt (by omega)]
+      Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega), Janus.Arm64.Memory.readLE_writeLE_self,
+      Nat.mod_eq_of_lt (by omega)]
   case rb8 => rw [hrd2 _ (by omega) (by omega) (by omega)]; exact q1
   case r140 => rw [hrd2 _ (by omega) (by omega) (by omega)]; exact q3
   case r3d8 => rw [hrd2 _ (by omega) (by omega) (by omega)]; exact q4
@@ -244,5 +247,6 @@ theorem enG2 {impl : List Amd64.Segment} {R : RtInv}
   case r3e8 => rw [hrd2 _ (by omega) (by omega) (by omega)]; exact q6
   case r3f0 => rw [hrd2 _ (by omega) (by omega) (by omega)]; exact q7
   case r3b0 => rw [hrd2 _ (by omega) (by omega) (by omega)]; exact q8
+  case r148 => rw [hrd2 _ (by omega) (by omega) (by omega)]; exact q9
 
 end FvModexp.Amd64.W2En

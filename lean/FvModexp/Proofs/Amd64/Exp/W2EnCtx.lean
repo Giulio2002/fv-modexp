@@ -4,8 +4,7 @@ import FvModexp.Proofs.Amd64.Exp.W2XnK
 set_option autoImplicit false
 
 /-!
-# window-2 entry (amd64): the entry facts `EPre` and `W2Pro.CtxX` at `xnE` (agent expmc s57; twin of
-`Arm64.W2EnPre` + `Arm64.W2EnCtx`)
+# window-2 entry (amd64): the entry facts `EPre` and `W2Pro.CtxX` at `xnE` (agent expmc s63; ported from `Amd64.W4EnCtx`)
 
 At the entry state `s` (`RSP = sp + 0x270`, the function's frame is `sp`), register arguments `z = (zp, _, zc)`
 `AX, BX, CX`, `stk = st` `DI`, `x = (xp, xl, xc)` `SI, R8, R9`; stack arguments `y = (yp, ylen, _)` at `sp + 0x278`,
@@ -26,7 +25,7 @@ open FvModexp.Amd64.W2Pro (Obj AW stUp)
 
 /-- an operand object at the entry: held, apart from the window, the stack header and the stack's free part -/
 @[reducible] def OE (R : RtInv) (L : List (Nat × Nat)) (sp K st : Nat) (M : Memory) (a k : Nat) : Prop :=
-  (InRanges a k L ∨ Outside a k R.rt) ∧ Apart a k (sp - 8 - K) (K + 0x400) ∧ Apart a k st 24 ∧
+  (InRanges a k L ∨ Outside a k R.rt) ∧ Apart a k (sp - 8 - K) (K + 0x2e8) ∧ Apart a k st 24 ∧
     Apart a k (free M st).1 (free M st).2
 
 /-- the entry facts of window-2 -/
@@ -45,8 +44,8 @@ def EPre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K : Nat) (g fs sp st bp 
     s.mem.accessible zp (8 * zc) true = true ∧ zp + 8 * zc ≤ 2 ^ 48 ∧ zp % 8 = 0 ∧ Apart (g + 16) 8 zp (8 * zc) ∧
     Apart (fs - 8) 8 zp (8 * zc) ∧ Apart zp (8 * zc) mp (8 * n) ∧ Apart zp (8 * zc) yp (8 * ylen)) ∧
   OE R L sp K st s.mem RunIface.gA 32 ∧
-  StkOK s.mem R L st ∧ Apart st 24 (sp - 8 - K) (K + 0x400) ∧ Apart st 24 (g + 16) 8 ∧ Apart st 24 (fs - 8) 8 ∧
-  (0 < stCap s.mem st → Apart (stW s.mem st) (8 * stCap s.mem st) (sp - 8 - K) (K + 0x400) ∧
+  StkOK s.mem R L st ∧ Apart st 24 (sp - 8 - K) (K + 0x2e8) ∧ Apart st 24 (g + 16) 8 ∧ Apart st 24 (fs - 8) 8 ∧
+  (0 < stCap s.mem st → Apart (stW s.mem st) (8 * stCap s.mem st) (sp - 8 - K) (K + 0x2e8) ∧
     Apart (stW s.mem st) (8 * stCap s.mem st) (g + 16) 8 ∧ Apart (stW s.mem st) (8 * stCap s.mem st) (fs - 8) 8) ∧
   Apart st 24 StackNat.wbA 4 ∧ Apart st 24 (free s.mem st).1 (free s.mem st).2 ∧
   stLen s.mem st + 11 * n + 3 ≤ 2 ^ 16 ∧
@@ -95,17 +94,17 @@ theorem liveSep_sub' {L : List (Nat × Nat)} {lo hi lo' hi' : Nat} (h : LiveSep 
 
 /-- the CallW environment at `xnE` (window `[sp - 8 - K, sp + 0x2e0)`) from the entry one and the entry frame -/
 theorem cenv_at {R : RtInv} {L L1 : List (Nat × Nat)} {g fs sp K st : Nat} {M0 M : Memory}
-    (h : CallW.CEnv R L g fs (sp - 8) K 0x400 M0)
+    (h : CallW.CEnv R L g fs (sp - 8) K 0x2e8 M0)
     (hF : MemFrame M0 M (R.rt ++ [(sp - 8 - K, sp + 0x2e0), (st, st + 24)])) (hrg : M.regions = M0.regions)
     (hx : LiveExt R L L1) (hsta : M0.accessible st 24 true = true) (hstg : Apart st 24 (g + 16) 8)
-    (hstf : Apart st 24 (fs - 8) 8) : CallW.CEnv R L1 g fs (sp - 8) K 0x400 M := by
+    (hstf : Apart st 24 (fs - 8) 8) : CallW.CEnv R L1 g fs (sp - 8) K 0x2e8 M := by
   have h' := h
   obtain ⟨hal, hK0, hA0, hacc, hg1, hg2, hg3, hrt, hga, hgrt, hLs, hd, hro, f1, f2, f3, f4, f5, f6⟩ := h'
   unfold Apart at hga f6 hstg hstf
   have := CallW.CEnv.frame h hF hrg (fun r hr _ => by
       simp only [List.mem_cons, List.not_mem_nil, or_false] at hr
       rcases hr with rfl | rfl
-      · simp only; rw [show sp + 0x2e0 - (sp - 8 - K) = K + 0x400 by omega]; exact hacc
+      · simp only; rw [show sp + 0x2e0 - (sp - 8 - K) = K + 0x2e8 by omega]; exact hacc
       · simp only; rw [show st + 24 - st = 24 by omega]; exact hsta)
     (by simp only [outside_cons, outside_nil, and_true]; omega)
     (by simp only [outside_cons, outside_nil, and_true]; omega)
@@ -113,11 +112,11 @@ theorem cenv_at {R : RtInv} {L L1 : List (Nat × Nat)} {g fs sp K st : Nat} {M0 
   refine ⟨a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, hx.liveSep hLs fun r hr => ?_, a12, a13, a14, a15, a16, a17,
     a18, a19⟩
   simp only [List.mem_singleton] at hr; subst hr; simp only
-  rw [show sp - 8 + 0x400 - (sp - 8 - K) = K + 0x400 by omega]; exact hrt
+  rw [show sp - 8 + 0x2e8 - (sp - 8 - K) = K + 0x2e8 by omega]; exact hrt
 
 /-- window-2's loop environment from the CallW one -/
 theorem env_of {R : RtInv} {L : List (Nat × Nat)} {g fs sp K : Nat} {M : Memory}
-    (h : CallW.CEnv R L g fs (sp - 8) K 0x400 M) (hal : sp % 16 = 0) (hK : 4288 ≤ K)
+    (h : CallW.CEnv R L g fs (sp - 8) K 0x2e8 M) (hal : sp % 16 = 0) (hK : 4288 ≤ K)
     (hadx : M.accessible MontHyp.hasADX 1 false = true) : W2Loop.Env R L g fs sp M := by
   obtain ⟨-, hK0, hA0, hacc, hg1, hg2, hg3, hrt, hga, hgrt, hLs, hd, hro, f1, f2, f3, f4, f5, f6⟩ := h
   unfold Apart at hga f6
@@ -135,7 +134,7 @@ theorem ctxX_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)}
     (hLF : LiveFrame s.mem M L [(st, st + 24)]) (hrg : M.regions = s.mem.regions) (hx : LiveExt R L L1)
     (hkf : ArrKF R L st s.mem M) (hlen : stLen M st = stLen s.mem st + StackNat.rnd (11 * n))
     (hcap : stLen M st ≤ stCap M st) (hc40 : stCap M st < 2 ^ 40) (hnl : NatLive M R L1 (stW M st) (stCap M st))
-    (hsl : ESl M sp st bp r zp zc xp xl xc yp ylen mp n mc (stLen s.mem st)) :
+    (hsl : ESl M sp st bp r zp zc xp xl xc yp ylen mp n mc (stLen s.mem st)) (h148 : M.readLE (sp + 0x148) 8 = 5 * n) :
     W2Pro.CtxX R L1 g fs sp K n mp mc (s.mem.readLE mp (8 * n)) mp (s.mem.readLE mp (8 * n)) yp ylen
       (s.mem.readLE yp (8 * ylen)) (s.mem.readLE (yp + 8 * (ylen - 1)) 8) zp zc st (stLen s.mem st) (stLen M st)
       bp r [] M ∧
@@ -166,7 +165,7 @@ theorem ctxX_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)}
         M.accessible a k false = true ∧ a + k ≤ 2 ^ 48 ∧ (InRanges a k L1 ∨ Outside a k R.rt) ∧
           Apart a k (sp - 4296) (4296 + 0x2a8))
   -- the array after the reserve
-  have harr' : 0 < stCap M st → Apart (stW M st) (8 * stCap M st) (sp - 8 - K) (K + 0x400) ∧
+  have harr' : 0 < stCap M st → Apart (stW M st) (8 * stCap M st) (sp - 8 - K) (K + 0x2e8) ∧
       Apart (stW M st) (8 * stCap M st) (g + 16) 8 ∧ Apart (stW M st) (8 * stCap M st) (fs - 8) 8 := by
     intro hc
     rcases hkf with ⟨e1, e2⟩ | ⟨hin, -⟩
@@ -185,7 +184,7 @@ theorem ctxX_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)}
     hsthL, by simp only [AW]; unfold Apart; omega, ⟨k1, hsthL, by rw [hacc']; exact k3, k4, hnl, hcap, hc40⟩,
     by omega, Nat.le_refl _, hcap0, ?arr, ?ug, ?uf, ?uw, ?su, by unfold Apart; omega, by unfold Apart; omega,
     ?glob, obj hgO, hwbA, ?wbacc, ?sacc, hrt.of_sub (by omega) (by omega), ?sobj, q15, q16, q17, q8, q7, q14, q13, q9,
-    hstnz⟩, ?sobj2, ?sacc2, ⟨hxlc, by omega, hxc, by rw [hacc']; exact hxa, hx48, obj hxO⟩, ?xN,
+    h148, hstnz⟩, ?sobj2, ?sacc2, ⟨hxlc, by omega, hxc, by rw [hacc']; exact hxa, hx48, obj hxO⟩, ?xN,
     rd hxO (Nat.le_refl _) (by omega)⟩
   case sobj2 =>
     refine ⟨Or.inr (hrt.of_sub (by omega) (by omega)), by simp only [AW]; unfold Apart; omega,

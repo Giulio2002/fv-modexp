@@ -6,13 +6,13 @@ import FvModexp.Proofs.Common.BitLemmas
 set_option autoImplicit false
 
 /-!
-# window-2 entry (amd64): pcs and the frame facts after the prologue (agent expmc s57; twin of `Arm64.W2EnDefs`)
+# window-2 entry (amd64): pcs and the frame facts after the prologue (agent expmc s63; ported from `Amd64.W4EnDefs`)
 
-`nat.expNNOddMontgomeryWindowSize4` (fn = 0x5eb060 = 6210560) from its entry to `xnE` (fn+0x22d): stack-guard check,
+`nat.expNNOddMontgomeryWindowSize4` (fn = 0x5ec400 = 6210560) from its entry to `xnE` (fn+0x22d): stack-guard check,
 `PUSHQ BP`, `SUBQ $0x268` (frame `sp = RSP - 0x270`, saved `BP` at `sp + 0x268`, return address at `sp + 0x270`),
 argument spills (`AX → 0x2a8`, `SI → 0x2c8`, then `DI, R9, R8, SI, CX, AX` → `0x2c0, 0x2d8, 0x2d0, 0x2c8, 0x2b8,
 0x2a8`), the `defer stk.restore(stk.save())` record (`[0x228]` = closure 0x5ed6a0, `[0x230]` = st, `[0x238]` = old len,
-`[0x260]` = sp + 0x228) and the INLINE `stk.reserve(23·n)` (nat.go:333-337 = `slices.Grow` + header update):
+`[0x260]` = sp + 0x228) and the INLINE `stk.reserve(11·n)` (`5n` computed at fn+0x59 and spilled at `0x148`, fn+0xd3) (nat.go:333-337 = `slices.Grow` + header update):
 `growslice`/`memclrNoHeapPointers` when the array is too small, the header stores with the write barrier,
 `len := len + rnd(11n)`. Stack arguments: `y = [0x278, 0x290)`, `m = [0x290, 0x2a8)`.
 -/
@@ -74,18 +74,27 @@ theorem ESl.keep {M1 M3 : Memory} {sp st bp r zp zc xp xl xc yp ylen mp n mc len
 @[reducible] def EEnv (R : RtInv) (L : List (Nat × Nat)) (g fs sp K : Nat) (s : State) : Prop :=
   s.regs 4 = BitVec.ofNat 64 (sp + 0x270) ∧ s.regs 14 = BitVec.ofNat 64 g ∧ s.fsBase.toNat = fs ∧
   s.xmm 15 = 0 ∧ s.df = false ∧ sp % 16 = 0 ∧ 41512 ≤ K ∧ K ≤ 2 ^ 20 ∧
-  CallW.CEnv R L g fs (sp - 8) K 0x400 s.mem ∧ RunIface.Serves R
+  CallW.CEnv R L g fs (sp - 8) K 0x2e8 s.mem ∧ RunIface.Serves R
 
-theorem rnd23 (n : Nat) (hn : n ≤ 128) :
-    (BitVec.ofNat 64 n * 23#64 + 3#64) &&& BitVec.ofNat 64 18446744073709551612 =
+/-- `5n` (`LEAQ (BX)(BX*4), R10`, fn+0x59) -/
+theorem e5n (n : Nat) (hn : n ≤ 128) :
+    BitVec.ofNat 64 n + BitVec.ofNat 64 n <<< 2 = BitVec.ofNat 64 (5 * n) := by
+  apply BitVec.eq_of_toNat_eq
+  simp only [BitVec.toNat_add, BitVec.toNat_shiftLeft, BitVec.toNat_ofNat, Nat.shiftLeft_eq]; omega
+
+/-- `11n` (`LEAQ (BX)(R10*2), R12`, fn+0x61) -/
+theorem e11n (n : Nat) (hn : n ≤ 128) :
+    BitVec.ofNat 64 n + BitVec.ofNat 64 (5 * n) <<< 1 = BitVec.ofNat 64 (11 * n) := by
+  apply BitVec.eq_of_toNat_eq
+  simp only [BitVec.toNat_add, BitVec.toNat_shiftLeft, BitVec.toNat_ofNat, Nat.shiftLeft_eq]; omega
+
+/-- `rnd(11n)` (`LEAQ 3(R12), R12; ANDQ $-4, R12`, fn+0x65) -/
+theorem rnd11 (n : Nat) (hn : n ≤ 128) :
+    (BitVec.ofNat 64 (11 * n) + 3#64) &&& BitVec.ofNat 64 18446744073709551612 =
       BitVec.ofNat 64 (StackNat.rnd (11 * n)) := by
-  have e : BitVec.ofNat 64 n * 23#64 = BitVec.ofNat 64 (11 * n) := by
-    apply BitVec.eq_of_toNat_eq
-    simp only [BitVec.toNat_mul, BitVec.toNat_ofNat]
-    rw [Nat.mod_eq_of_lt (show n < 2 ^ 64 by omega)]; omega
   have := StackNat.rnd_bv (BitVec.ofNat 64 (11 * n))
     (by rw [BitVec.toNat_ofNat, Nat.mod_eq_of_lt (show 11 * n < 2 ^ 64 by omega)]; omega)
-  rw [e]; rwa [BitVec.toNat_ofNat, Nat.mod_eq_of_lt (show 11 * n < 2 ^ 64 by omega)] at this
+  rwa [BitVec.toNat_ofNat, Nat.mod_eq_of_lt (show 11 * n < 2 ^ 64 by omega)] at this
 
 /-- the sign of `nr - (cap - len)` (the `TEST R10, R10; JLE` of `slices.Grow`) -/
 theorem sub3_msb (a r c : Nat) (ha : a < 2 ^ 60) (hr : r < 2 ^ 60) (hc : c < 2 ^ 60) (hac : a ≤ c) :

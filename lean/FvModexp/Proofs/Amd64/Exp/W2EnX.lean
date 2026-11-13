@@ -5,7 +5,7 @@ set_option autoImplicit false
 
 /-!
 # window-2 entry (amd64): at `xnE` (after the inline `stk.reserve`) → the function's `RET` (= `ctxX_of` + `xnStep`)
-(agent expmc s57; twin of `Arm64.W2EnX`)
+(agent expmc s63; ported from `Amd64.W4EnX`)
 
 `XnB`: the level / budget side conditions of `W2Pro.xnStep` at the level `l` (both `x` normalisation paths), bundled;
 monotone in the budget.
@@ -59,7 +59,7 @@ theorem atXnE {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
     (hLF : LiveFrame s.mem M L [(st, st + 24)]) (hrg : M.regions = s.mem.regions) (hx : LiveExt R L L1)
     (hkf : ArrKF R L st s.mem M) (hlen : stLen M st = stLen s.mem st + StackNat.rnd (11 * n))
     (hcap : stLen M st ≤ stCap M st) (hc40 : stCap M st < 2 ^ 40) (hnl : NatLive M R L1 (stW M st) (stCap M st))
-    (hsl : ESl M sp st bp r zp zc xp xl xc yp ylen mp n mc (stLen s.mem st))
+    (hsl : ESl M sp st bp r zp zc xp xl xc yp ylen mp n mc (stLen s.mem st)) (h148 : M.readLE (sp + 0x148) 8 = 5 * n)
     (hB : XnB costF n costD (stLen s.mem st + StackNat.rnd (11 * n)) xl b1)
     (hinv1 : R.inv b1 L1 g (view R.rt L1 M))
     (S : State) (hpc : S.rip = BitVec.ofNat 64 xnE) (hsp : S.regs 4 = BitVec.ofNat 64 sp) (hmem : S.mem = M)
@@ -70,7 +70,7 @@ theorem atXnE {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
       (XnQ R b1 costD L1 g fs sp K n mp (s.mem.readLE mp (8 * n)) yp ylen (s.mem.readLE yp (8 * ylen))
         (s.mem.readLE (yp + 8 * (ylen - 1)) 8) zp zc st (stLen s.mem st) (stLen s.mem st + StackNat.rnd (11 * n)) bp xl
         (s.mem.readLE xp (8 * xl)) M) := by
-  obtain ⟨hC, hxs, hacc2, hxi, hxN, hxr⟩ := ctxX_of hP hstnz hF hLF hrg hx hkf hlen hcap hc40 hnl hsl
+  obtain ⟨hC, hxs, hacc2, hxi, hxN, hxr⟩ := ctxX_of hP hstnz hF hLF hrg hx hkf hlen hcap hc40 hnl hsl h148
   rw [hlen] at hC hxs hxi
   have hP' := hP
   obtain ⟨he, hgl, hwt, hadx, hn, hn128, hmc, hmc', hmO, hma, hm48, hmN, hyO, hya, hy48, hyN, hyl, hyl',
