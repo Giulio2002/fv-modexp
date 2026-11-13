@@ -1925,3 +1925,9 @@ Util → IcDefs → IcHL → Ic → Og → Pre → Seg → FinA → Fin → Row 
   98 s** (cpu 228 s) + ~3 s rest. The witness is compiled inside the own-compile stage. 66 > RunErr's 41-module own set: the gc'd copy
   lost ~25 lower store entries, so this is an upper bound for the own compile. ⇒ rel44's 900 s cap = contention (2 rows + RequiredGas
   at once) on a ~360 s compile, not a hidden serial stage. Replay is parallel (4 at once), not the serial-prefix pattern.
+
+### expmc s66 — v61 targeted row runs (arm64, Janus v0.3.2, snapshot of agent/expmc 951223ee, rel44 cache with the row's own modules purged)
+* **Exp_MontRow PASS 177 s / 1.7 GB** (load ~15; s61 Mont/MontLoop trims: was 245 s in rel43). Under the 550 s bar.
+* **Exp_W2Row PASS 734 s / 3.1 GB** (load ~34; rel44 758 s FAIL at the cap). Breakdown (JANUS_TIMINGS): own compile 104
+  modules 517 s, kernel replay 150 s (115 targets, 4 at once), theorem audit 63 s. Over the 500 s bar → structural trim
+  (cut the window-2 continuation chain into independent segments composed last) needed; see NOTES-expmc s66.
