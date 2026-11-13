@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Arm64.NatQ.MulCall
+import FvModexp.Proofs.Arm64.NatQ.MulBMP
 import FvModexp.Proofs.Arm64.NatQ.MulNorm
 import FvModexp.Proofs.Arm64.Nat.DivmcCall
 import FvModexp.Proofs.Common.BitLemmas
@@ -36,8 +37,8 @@ theorem bm2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     (S : State) (hpc : S.pc = BitVec.ofNat 64 0x1bb0e0) (hsp : S.sp = s.sp - 256#64) (h28 : S.regs 28 = s.regs 28)
     (h29 : S.regs 29 = s.sp - 264#64) (h18 : S.regs 18 = s.regs 18)
     (r0 : S.regs 0 = BitVec.ofNat 64 p) (r1 : S.regs 1 = BitVec.ofNat 64 (xl.toNat + yl.toNat))
-    (r2 : S.regs 2 = BitVec.ofNat 64 c) (r3 : S.regs 3 = xp) (r4 : S.regs 4 = xl) (r5 : S.regs 5 = xc)
-    (r6 : S.regs 6 = yp) (r7 : S.regs 7 = yl) (r8 : S.regs 8 = yc)
+    (r2 : S.regs 2 = BitVec.ofNat 64 c) (r3 : S.regs 3 = xp) (r4 : S.regs 4 = xl) (_r5 : S.regs 5 = xc)
+    (r6 : S.regs 6 = yp) (r7 : S.regs 7 = yl) (_r8 : S.regs 8 = yc)
     (hF : MemFrame M S.mem (winA s W 88)) (hreg : S.mem.regions = s.mem.regions)
     (m144 : S.mem.readLE (s.sp.toNat - 112) 8 = p) (m120 : S.mem.readLE (s.sp.toNat - 136) 8 = xl.toNat + yl.toNat)
     (m96 : S.mem.readLE (s.sp.toNat - 160) 8 = c)
@@ -51,51 +52,29 @@ theorem bm2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   have hBM := Ensures.toSummaryRegs9 (fun a0 a1 a2 a3 a4 a5 a6 a7 a8 =>
     BasicMul.ens impl hap R hmc b1 L1 a0 a1 a2 a3 a4 a5 a6 a7 a8) (noExit_restrict hap BasicMul.names) hc
   clear hc
-  simp only [BasicMul.Pre, CallEnv] at hBM
-  have hpre := hJ.pre
-  obtain ⟨hce, hmw, hsv, -, -, ⟨⟨hxlc, hxc40, hxl12, hxacc, hxh, hxw⟩, ⟨hylc, hyc40, hyl12, hyacc, hyh, hyw⟩, -, -⟩,
-    hstk, -, -⟩ := hpre
+  rw [show segAddr Extracted.program BasicMul.fn = 0x1bbd00 by decide] at hBM
+  obtain ⟨hce, hmw, -⟩ := hJ.pre
   have hW : 4608 ≤ W := Nat.le_trans (mulW_ge _ _) hmw
-  obtain ⟨-, ⟨hal0, hb0, ha0, hw0⟩, -, hout0, -, -, hLs0, -⟩ := hce
+  obtain ⟨-, ⟨hal0, hb0, ha0, hw0⟩, -, hout0, -, -, -, -⟩ := hce
   have hsp' : S.sp.toNat = s.sp.toNat - 256 := by rw [hsp]; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
-  have hce1 := hJ.callee (stk1 := 4224) (above1 := 72) hsp' h28 hF hreg (by omega) (by omega)
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, hdl, hout, hga, hgr, hLs, hro⟩ := hce1
-  simp only [LiveSep, win, outside_cons, outside_nil, and_true] at hLs
-  rw [h28] at hg1 hg2 hg3 hga hgr
-  rw [hsp'] at hg3 hga hout hLs hw
-  unfold Apart at hga
-  have hinv : R.inv b1 L1 (s.regs 28).toNat (view R.rt L1 S.mem) :=
-    inv_frame_winA hF hout0 (by omega) (by decide) hJ.inv
   have hcap := hJ.cap; have hc40 := hJ.c40
   obtain ⟨hp8, hph, hpacc, hp48⟩ := hJ.live (by omega)
-  have hpw := hJ.pw
-  simp only [win, outside_cons, outside_nil, and_true] at hpw
-  have hpg := hJ.pg (by omega)
-  unfold Apart at hpx hpy hpg
-  have hxw' := (hxw (by omega)).1
-  have hyw' := (hyw (by omega)).1
-  simp only [win, outside_cons, outside_nil, and_true] at hxw' hyw'
-  obtain ⟨hxh', hx48⟩ := hxh (by omega)
-  obtain ⟨hyh', hy48⟩ := hyh (by omega)
-  have hxh1 : Held R L1 xp.toNat (8 * xl.toNat) := hJ.ext.held (hxh'.sub (Nat.le_refl _) (by omega))
-  have hyh1 : Held R L1 yp.toNat (8 * yl.toNat) := hJ.ext.held (hyh'.sub (Nat.le_refl _) (by omega))
-  have hpaccS : S.mem.accessible p (8 * (xl.toNat + yl.toNat)) true = true := by
-    rw [hF.accessible]; exact Memory.accessible_mono _ hpacc (Nat.le_refl _) (by omega)
-  have hxaccS : S.mem.accessible xp.toNat (8 * xl.toNat) false = true := by
-    rw [hF.accessible, hJ.F.accessible]; exact hxacc (by omega)
-  have hyaccS : S.mem.accessible yp.toNat (8 * yl.toNat) false = true := by
-    rw [hF.accessible, hJ.F.accessible]; exact hyacc (by omega)
-  have hph1 : Held R L1 p (8 * (xl.toNat + yl.toNat)) := hph.sub (Nat.le_refl _) (by omega)
-  have hok : R.ok (cA "runtime.memclrNoHeapPointers") [p, 8 * (xl.toNat + yl.toNat)] := hsv.2.2.1 _ _ (by omega)
-  have hp64 : p < 2 ^ 64 := by omega
+  have tp : (BitVec.ofNat 64 p).toNat = p := by simp only [BitVec.toNat_ofNat]; omega
   have e2 : (BitVec.ofNat 64 (xl.toNat + yl.toNat)).toNat = xl.toNat + yl.toNat := by
     simp only [BitVec.toNat_ofNat]; omega
-  janus_run [e2] until [0x1bb0e4] calls [hBM]
-  rename_i hpc2 hsp2 h282 h292 h182 L2 b2 hext hbb hval hinv2 hF2 hLF2
-  simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte] at hpc2 hsp2 h282 h292 h182
-  clear hpx hpy hpg hga
   have e256 : (s.sp - 256#64).toNat = s.sp.toNat - 256 := by
     simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
+  janus_run [e2] until [0x1bbd00]
+  refine ReachesRet.call_regions hBM rfl ⟨mul_ra157 hap, ?_⟩ fun s' hpc2 hq hrg => ?_
+  · simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, r0, r1, r2, r3, r4, r6, r7]
+    exact bm_pre hJ hpx hpy hy2 hyx e256 h28 hF hreg
+  obtain ⟨⟨hsp2, h282, h292, h182⟩, hval, L2, b2, hext, hbb, hinv2, hF2, hLF2⟩ := hq
+  simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte, r0, r3, r4, r6, r7, tp] at hval hF2 hLF2 hinv2
+  rw [h28] at hinv2
+  have hpw := hJ.pw
+  simp only [win, outside_cons, outside_nil, and_true] at hpw
+  simp only [setReg_apply, Nat.reduceEqDiff, ↓reduceIte] at hpc2 hsp2 h282 h292 h182
+  clear hpx hpy
   simp only [winA, e256] at hF2
   have hrd : ∀ a, s.sp.toNat - 264 ≤ a → a + 8 ≤ s.sp.toNat - 248 ∨ s.sp.toNat - 184 ≤ a → a + 8 ≤ s.sp.toNat →
       s'.mem.readLE a 8 = S.mem.readLE a 8 := by
@@ -117,7 +96,9 @@ theorem bm2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   janus_run [q144, q120] until [hnormA]
   have hval' : natVal s'.mem p (xl.toNat + yl.toNat) =
       natVal s.mem xp.toNat xl.toNat * natVal s.mem yp.toNat yl.toNat := by
-    rw [hval]; show natVal M _ _ * natVal M _ _ = _; rw [hJ.xv (by omega), hJ.yv (by omega)]
+    obtain ⟨-, -, -, -, -, ⟨⟨-, -, -, -, -, hxw⟩, ⟨-, -, -, -, -, hyw⟩, -⟩, -⟩ := hJ.pre
+    rw [hval, natVal_frame hF (winA_of_win' (hxw (by omega)).1), natVal_frame hF (winA_of_win' (hyw (by omega)).1),
+      hJ.xv (by omega), hJ.yv (by omega)]
   have hstkS : StkOK S.mem R L1 st.toNat := stkOK_frame hJ.stk hF (by
     obtain ⟨-, -, -, -, -, -, ⟨-, -, hstw, -⟩, -⟩ := hJ.pre
     exact winA_of_win' hstw)
