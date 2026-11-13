@@ -1608,3 +1608,8 @@ Dev compile after the cost edits: P2W2Cp5 1.9 s, P2DFull 25 s / 3.0 GB, ModInvL0
 StackNatRow 136, MulAddWWRow 166, BasicMulRow 153, BasicSqrRow 434, SqrRow 581, MulRow 486, TruncRow 145, RshRow 135,
 LshRow 124, IntASRow 34 s (all PASS), MontRow audit-FAIL 245 s (no witness); **P2W2Row PASS 430 s / 3.2 GB** (was 631),
 **P2W4Row PASS 233 s / 1.5 GB**, **P2DRow PASS 303 s / 2.2 GB** — each row now compiles only its own chain; all ≤ 600 s.
+
+### divmc s39 (2026-11-13): amd64 Q karatsubaSqr segments (dev, LEAN_NUM_THREADS=4, load ~15-20)
+KSqrB 14 s / 3.0 GB, KSqrS1c 14 s / 2.8, KSqrS1 13 s / 2.6, KSqrS2 11 s / 2.6, KSqrS3 17 s / 2.9, KSqrSub 20 s / 2.9,
+KSqrAdd1 54 s / 3.5, KSqrAdd2 75 s / 4.5 (largest; candidates: the cont's omega context), KSqrEndP 13 s / 2.9,
+KSqrEnd 17 s / 2.6, KSqrProD 12 s / 2.7; Amd64/Nat/AddTo (+ df conjunct) 134 s / 5.5 GB (was 110 s).
