@@ -172,7 +172,35 @@ theorem WC.own (hP : EPre R b L K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml 
     · left
       exact ⟨hF.readLE _ _ (hwin _ _ (by omega)), hF.readLE _ _ (hwin _ _ (by omega))⟩
 
+set_option maxRecDepth 20000 in
+/-- a destination through the function's own stores (the `CALL`'s return-address push, slot spills) -/
+theorem DL.own (hP : EPre R b L K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml mc s) {M : Memory}
+    {L1 : List (Nat × Nat)} {p c : Nat} (hd : DL R L s.mem st M L1 p c) {M' : Memory}
+    {ws : List (Nat × Nat)} (hF : MemFrame M M' ws) (hws : ∀ r ∈ ws, OwnR sp K r) :
+    DL R L s.mem st M' L1 p c := by
+  have hk := hP.kf
+  obtain ⟨hstw, -⟩ := hP.stkF
+  unfold Apart at hstw
+  have hhd : Outside st 24 ws := outside_of_forall fun r hr => by have := hws r hr; omega
+  have e0 : stW M' st = stW M st := hF.readLE _ _ (hhd.of_sub (by omega) (by omega))
+  have e1 : stLen M' st = stLen M st := hF.readLE _ _ (hhd.of_sub (by omega) (by omega))
+  have e2 : stCap M' st = stCap M st := hF.readLE _ _ (hhd.of_sub (by omega) (by omega))
+  obtain ⟨c40, hlv, hlo⟩ := hd
+  refine ⟨c40, fun hc => ?_, fun hc => ?_⟩
+  · obtain ⟨a1, a2, a3, a4⟩ := hlv hc
+    exact ⟨a1, a2, by rw [hF.accessible]; exact a3, a4⟩
+  · obtain ⟨l, ob⟩ := hlo hc
+    refine ⟨l, ob.1, ?_⟩
+    simp only [e0, e1, e2]; exact ob.2
+
 end
+
+theorem bv_add8 {sp : Nat} (h1 : 8 ≤ sp) (h2 : sp < 2 ^ 64) :
+    BitVec.ofNat 64 (sp - 8) + 8#64 = BitVec.ofNat 64 sp := by
+  apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega
+
+theorem bv_of_toNat {x : W64} {n : Nat} (h : x.toNat = n) : x = BitVec.ofNat 64 n := by
+  subst h; apply BitVec.eq_of_toNat_eq; rw [BitVec.toNat_ofNat, Nat.mod_eq_of_lt x.isLt]
 
 /-- budget steps, closed OUTSIDE the segments' large contexts -/
 theorem bud_pre {rk b1 c rk' : Nat} (h1 : rk ≤ b1) (h2 : c + rk' ≤ rk) : c ≤ b1 := by omega
