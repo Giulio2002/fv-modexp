@@ -42,6 +42,9 @@ theorem mpost_comm {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp 
     rw [em] at hvz
     exact ⟨e1, e2, hvz, hF, hLF'⟩
 
+private theorem kpA {x : Nat} (h : 264 ≤ x) : x - 256 - 8 ≤ x - 256 ∧ x - 256 + 8 ≤ x - 256 + 8 := by omega
+private theorem kpB {x : Nat} (h : 264 ≤ x) : x - 256 - 8 ≤ x - 264 ∧ x - 264 + 8 ≤ x - 256 + 8 := by omega
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
@@ -91,18 +94,20 @@ theorem swap2 (impl : List Segment) (R : RtInv) (n : Nat) (ih : ∀ j, IH impl R
       have hsp1 : s1.sp.toNat = s.sp.toNat - 256 := by rw [hs]; exact hsp'
       have hz' : Outside zp.toNat (8 * zc.toNat) (win s W 88) := hpreS.2.2.2.2.2.1.2.2.1.2.2.1
       have hF1 : MemFrame s.mem s1.mem (winA s W 88) := by rw [hm]; exact hF
+      have h264 : 264 ≤ s.sp.toNat := Nat.le_trans (by decide) (Nat.le_trans hW hb0)
       have hkp := mul_keeps (W1 := W - 256) (f := 256) (S1 := s1) (m2 := s2.mem) hpreS hsp1 (by omega) (by omega)
         (by omega) hF1 hz' hMF
       have e1 : s2.mem.readLE (s.sp.toNat - 256) 8 = (s.regs 30).toNat := by
-        rw [hkp _ _ (Or.inl (by omega)), hm]; exact mlr
+        rw [hkp (s.sp.toNat - 256) 8 (Or.inl (by rw [hsp1]; exact kpA h264)), hm]; exact mlr
       have e2 : s2.mem.readLE (s.sp.toNat - 264) 8 = (s.regs 29).toNat := by
-        rw [hkp _ _ (Or.inl (by omega)), hm]; exact mfp
+        rw [hkp (s.sp.toNat - 264) 8 (Or.inl (by rw [hsp1]; exact kpB h264)), hm]; exact mfp
       have e3 : s2.mem.accessible (s.sp.toNat - 264) 264 true = true := by
         rw [hMF.accessible, hm, hF.accessible]; exact Memory.accessible_mono _ hw0 (by omega) (by omega)
       exact ⟨hk, e3, e1, e2, ⟨⟨s1, hm, hs, hg, hq⟩⟩⟩)
   janus_run until [0x1bb160] calls [hBS]
   rename_i e3 e1 e2 hbox
   obtain ⟨⟨S1, hm1, hs1, hg1, hq⟩⟩ := hbox
+  clear hBS hpreS hμ hw1 ih
   janus_run [e1, e2]
   refine ⟨⟨?_, ?_, ?_, ?_⟩, hfin S1 _ _ (by rw [hm1]; exact hF) (by rw [hs1, hsp]) (by rw [hg1, h28]) hq ?qF ?_ ?_ ?_⟩
   case qF => simp only [winA]; janus_frame

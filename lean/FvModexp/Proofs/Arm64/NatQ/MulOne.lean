@@ -60,6 +60,17 @@ theorem one_kp {R : RtInv} {s s1 : State} {m2 : Memory} {W zp zc : Nat}
   rw [hsp1]
   exact ⟨⟨hout0.of_sub (by omega) (by omega), by omega, by omega⟩, by omega⟩
 
+/-- `one_kp` at the two frame-record words (small omega context; divmc s48 trim) -/
+theorem one_kp2 {R : RtInv} {s s1 : State} {m2 : Memory} {W zp zc : Nat}
+    (hMF : MemFrame s1.mem m2 (R.rt ++ winA s1 4208 72 ++ [(zp, zp + 8 * zc)]))
+    (hsp1 : s1.sp.toNat = s.sp.toNat - 256) (hout0 : Outside (s.sp.toNat - W) (W + 88) R.rt)
+    (hW : 4608 ≤ W) (hb0 : W ≤ s.sp.toNat)
+    (hzw : zp + 8 * zc ≤ s.sp.toNat - W ∨ s.sp.toNat + 88 ≤ zp) :
+    m2.readLE (s.sp.toNat - 256) 8 = s1.mem.readLE (s.sp.toNat - 256) 8 ∧
+      m2.readLE (s.sp.toNat - 264) 8 = s1.mem.readLE (s.sp.toNat - 264) 8 :=
+  ⟨one_kp hMF hsp1 hout0 hW hb0 hzw _ _ (by omega) (by omega),
+    one_kp hMF hsp1 hout0 hW hb0 hzw _ _ (by omega) (by omega)⟩
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
@@ -110,11 +121,11 @@ theorem one2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
       have hMF : MemFrame s1.mem s2.mem (R.rt ++ winA s1 4208 72 ++ [(zp.toNat, zp.toNat + 8 * zc.toNat)]) := by
         obtain ⟨⟨_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, h, -⟩, -⟩ := hq; exact h
       have hsp1 : s1.sp.toNat = s.sp.toNat - 256 := by rw [hs]; exact hsp'
-      have hkp := one_kp hMF hsp1 hout0 hW hb0 hzw
+      have hkp := one_kp2 hMF hsp1 hout0 hW hb0 hzw
       have e1 : s2.mem.readLE (s.sp.toNat - 256) 8 = (s.regs 30).toNat := by
-        rw [hkp _ _ (by omega) (by omega), hm]; exact mlr
+        rw [hkp.1, hm]; exact mlr
       have e2 : s2.mem.readLE (s.sp.toNat - 264) 8 = (s.regs 29).toNat := by
-        rw [hkp _ _ (by omega) (by omega), hm]; exact mfp
+        rw [hkp.2, hm]; exact mfp
       have e3 : s2.mem.accessible (s.sp.toNat - 264) 264 true = true := by
         rw [hMF.accessible, hm, hF.accessible]; exact Memory.accessible_mono _ hw0 (by omega) (by omega)
       exact ⟨hk, e3, e1, e2, ⟨⟨s1, hm, hs, hg, hq⟩⟩⟩)
