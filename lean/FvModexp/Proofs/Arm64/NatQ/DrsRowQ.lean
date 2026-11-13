@@ -2,6 +2,10 @@ import FvModexp.Proofs.Arm64.NatQ.DrsStep
 import FvModexp.Proofs.Arm64.NatQ.DrsRowWQ
 import FvModexp.Proofs.Arm64.NatQ.MulHypD
 import FvModexp.Proofs.Arm64.Nat.RowLink
+-- row ORDER (asm s43): not used by this row; imported so that the divLarge/nat.div program modules are compiled
+-- (and replayed) here, by the earlier row, instead of on DivRowQ's critical path (coordinator ROW CAP / ORDER rule).
+import FvModexp.Proofs.Arm64.Nat.LibDiv
+import FvModexp.Proofs.Arm64.Nat.LibDivL
 
 set_option autoImplicit false
 
