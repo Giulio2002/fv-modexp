@@ -3,8 +3,7 @@ import FvModexp.Proofs.Amd64.Exp.W2EnDefs
 set_option autoImplicit false
 
 /-!
-# window-2 entry (amd64): the `memclrNoHeapPointers` call of the inline `stk.reserve(11n)` (agent expmc s57; twin of
-`Arm64.W2EnG`)
+# window-2 entry (amd64): the `memclrNoHeapPointers` call of the inline `stk.reserve(11n)` (agent expmc s63; ported from `Amd64.W4EnG`)
 
 `enG3`: entry of `memclrNoHeapPointers(p + 8·cap, 8·(len + nr - cap))` (after `growslice` returned the block
 `(p, 8·gc)`) → the join `enJ` (fn+0x179 .. fn+0x1ed: the `cap ≥ len` check and the reloads).
@@ -31,13 +30,13 @@ theorem cenv_ext {R : RtInv} {L : List (Nat × Nat)} {g fs sp K A p k : Nat} {M 
 set_option maxRecDepth 20000 in
 /-- the precondition of a `memclrNoHeapPointers(d, k)` call from window-2's frame (`RSP = sp - 8` at the callee) -/
 theorem mpre {R : RtInv} {L : List (Nat × Nat)} {b g fs sp K d k : Nat} {S : State}
-    (hce : CallW.CEnv R L g fs (sp - 8) K 0x400 S.mem) (hK : 4200 ≤ K) (hsv : RunIface.Serves R)
+    (hce : CallW.CEnv R L g fs (sp - 8) K 0x2e8 S.mem) (hK : 4200 ≤ K) (hsv : RunIface.Serves R)
     (hsp : S.regs 4 = BitVec.ofNat 64 (sp - 8)) (h14 : S.regs 14 = BitVec.ofNat 64 g)
     (hra : S.mem.readLE (sp - 8) 8 < 2 ^ 47) (hx15 : S.xmm 15 = 0#128) (hdf : S.df = false)
     (h0 : (S.regs 0).toNat = d) (h3 : (S.regs 3).toNat = k) (hk : k ≤ 2 ^ 20)
     (hinv : R.inv b L g (view R.rt L S.mem))
     (hd48 : d + k ≤ 2 ^ 48) (hdacc : S.mem.accessible d k true = true) (hdL : InRanges d k L)
-    (hdw : Apart d k (sp - 8 - K) (K + 0x400)) :
+    (hdw : Apart d k (sp - 8 - K) (K + 0x2e8)) :
     MemPre64 4096 2 S ∧
       LiveMemAt64 R mcE [(S.regs 0).toNat, (S.regs 3).toNat] L b S (liveWin64 S 4096 2) ∧
       LiveDest64 R L S 4096 2 (S.regs 0).toNat (S.regs 3).toNat := by
@@ -78,7 +77,7 @@ theorem enG3 {impl : List Amd64.Segment} {R : RtInv}
     (hmc : MemclrNoHeapPointersLive64 (LibW.program.link impl) mcE 4096 R)
     {ret : W64} {Q : State → Prop}
     {b : Nat} {L : List (Nat × Nat)} {g fs sp K st xp xl xc n len0 cap0 p gc : Nat} {M : Memory}
-    (hce : CallW.CEnv R L g fs (sp - 8) K 0x400 M) (hK : 4200 ≤ K) (hsv : RunIface.Serves R)
+    (hce : CallW.CEnv R L g fs (sp - 8) K 0x2e8 M) (hK : 4200 ≤ K) (hsv : RunIface.Serves R)
     (hk : cap0 < len0 + StackNat.rnd (11 * n)) (hgc : len0 + StackNat.rnd (11 * n) ≤ gc)
     (hgc40 : gc < 2 ^ 40) (hn : n ≤ 128) (hl16 : len0 ≤ 2 ^ 16)
     (hpin : InRanges p (8 * gc) R.rt) (hp48 : p + 8 * gc ≤ 2 ^ 48)
@@ -93,12 +92,13 @@ theorem enG3 {impl : List Amd64.Segment} {R : RtInv}
     (rc0 : M.readLE (sp + 0xc0) 8 = gc) (rb8 : M.readLE (sp + 0xb8) 8 = len0) (r198 : M.readLE (sp + 0x1a0) 8 = p)
     (r140 : M.readLE (sp + 0x140) 8 = StackNat.rnd (11 * n)) (r3d8 : M.readLE (sp + 0x2c0) 8 = st)
     (r3e0 : M.readLE (sp + 0x2c8) 8 = xp) (r3e8 : M.readLE (sp + 0x2d0) 8 = xl) (r3f0 : M.readLE (sp + 0x2d8) 8 = xc)
-    (r3b0 : M.readLE (sp + 0x298) 8 = n)
+    (r3b0 : M.readLE (sp + 0x298) 8 = n) (r148 : M.readLE (sp + 0x148) 8 = 5 * n)
     (K' : ∀ (S' : State) (M' : Memory),
       S'.rip = BitVec.ofNat 64 enJ → S'.regs 4 = BitVec.ofNat 64 sp → S'.regs 5 = BitVec.ofNat 64 (sp + 0x268) →
       S'.regs 7 = BitVec.ofNat 64 st → S'.regs 6 = BitVec.ofNat 64 xp → S'.regs 8 = BitVec.ofNat 64 xl →
       S'.regs 9 = BitVec.ofNat 64 xc → S'.regs 3 = BitVec.ofNat 64 n → S'.regs 13 = BitVec.ofNat 64 len0 →
       S'.regs 15 = BitVec.ofNat 64 gc → S'.regs 2 = BitVec.ofNat 64 (StackNat.rnd (11 * n)) →
+      S'.regs 10 = BitVec.ofNat 64 (5 * n) →
       S'.regs 11 = BitVec.ofNat 64 p → S'.regs 14 = BitVec.ofNat 64 g →
       S'.fsBase = S.fsBase → S'.xmm 15 = 0 → S'.df = S.df → S'.mem = M' →
       MemFrame M M' (R.rt ++ [(sp - 8 - 4096, sp - 8), (sp, sp + 16)]) →
@@ -143,15 +143,16 @@ theorem enG3 {impl : List Amd64.Segment} {R : RtInv}
   have q6 := (hrd _ (by omega) (by omega)).trans r3e8
   have q7 := (hrd _ (by omega) (by omega)).trans r3f0
   have q8 := (hrd _ (by omega) (by omega)).trans r3b0
+  have q9 := (hrd _ (by omega) (by omega)).trans r148
   have sret' : M.readLE (sp - 8) 8 = 6210937 := sret
   have sret'' : S.mem.readLE (sp - 8) 8 = 6210937 := by rw [hmem]; exact sret
-  have hacc3 : m3.accessible (sp - 8 - K) (K + 0x400) true = true := by rw [hMF3.accessible]; exact hacc
+  have hacc3 : m3.accessible (sp - 8 - K) (K + 0x2e8) true = true := by rw [hMF3.accessible]; exact hacc
   have hle : ¬ BitVec.ofNat 64 gc < BitVec.ofNat 64 len0 := by
     simp only [BitVec.lt_def, BitVec.toNat_ofNat]; omega
   have hsp8 : BitVec.ofNat 64 (sp - 8) + 8#64 = BitVec.ofNat 64 sp := by
     apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega
-  janus64_run [q0, q1, q2, q3, q4, q5, q6, q7, q8, hle, sret', sret'', hsp, hsp8] until [enJ]
-  refine K' _ m3 ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?mf ?lf hrg ?inv
+  janus64_run [q0, q1, q2, q3, q4, q5, q6, q7, q8, q9, hle, sret', sret'', hsp, hsp8] until [enJ]
+  refine K' _ m3 ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?mf ?lf hrg ?inv
   case mf =>
     refine hMF3.mono fun a k h => ?_
     simp only [outside_append, outside_cons, outside_nil, and_true] at h ⊢

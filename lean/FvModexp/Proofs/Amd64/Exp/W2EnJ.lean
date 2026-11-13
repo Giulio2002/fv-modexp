@@ -3,8 +3,7 @@ import FvModexp.Proofs.Amd64.Exp.W2EnDefs
 set_option autoImplicit false
 
 /-!
-# window-2 entry (amd64): the join of `slices.Grow` (`enJ`, fn+0x1ed) → `xnE` (fn+0x22d) (agent expmc s57; twin of
-`Arm64.W2EnJ`)
+# window-2 entry (amd64): the join of `slices.Grow` (`enJ`, fn+0x1ed) → `xnE` (fn+0x22d) (agent expmc s63; ported from `Amd64.W4EnJ`)
 
 The header update of the inline `stk.reserve(11n)` (nat.go:336-337): `len, cap` stores, the write-barrier flag test,
 (flag on) `gcWriteBarrier2` with its buffer stores `(new ptr, old ptr)`, the pointer store, `len := len + nr`.
@@ -37,7 +36,7 @@ theorem enJn {impl : List Amd64.Segment} {R : RtInv}
     (hmem : S.mem = M)
     (K : ∀ (S' : State) (M' : Memory), S'.rip = BitVec.ofNat 64 xnE → S'.regs 4 = BitVec.ofNat 64 sp →
       S'.regs 7 = BitVec.ofNat 64 st → S'.regs 3 = S.regs 3 → S'.regs 6 = S.regs 6 → S'.regs 8 = S.regs 8 →
-      S'.regs 9 = S.regs 9 → S'.regs 14 = BitVec.ofNat 64 g → S'.fsBase = S.fsBase → S'.xmm 15 = S.xmm 15 →
+      S'.regs 9 = S.regs 9 → S'.regs 10 = S.regs 10 → S'.regs 14 = BitVec.ofNat 64 g → S'.fsBase = S.fsBase → S'.xmm 15 = S.xmm 15 →
       S'.df = S.df → S'.mem = M' →
       MemFrame M M' (R.rt ++ [(st, st + 24), (sp - 8 - 4096, sp)]) → LiveFrame M M' L1 [(st, st + 24)] →
       M'.regions = M.regions → R.inv b1 L1 g (view R.rt L1 M') →
@@ -60,6 +59,7 @@ theorem enJn {impl : List Amd64.Segment} {R : RtInv}
   generalize e6' : S.regs 6 = x6 at K
   generalize e8 : S.regs 8 = x8 at K
   generalize e9 : S.regs 9 = x9 at K
+  generalize e10 : S.regs 10 = x10 at K
   have hstwb : st + 24 ≤ sp - 8 - 4096 ∨ sp ≤ st := hstw
   have hM1 : MemFrame S.mem ((S.mem.writeLE (st + 8) 8 len0).writeLE (st + 16) 8 c1) [(st, st + 24)] := by janus_frame
   have hinvW : ∀ (ws : List (Nat × Nat)) (m' : Memory),
@@ -73,7 +73,7 @@ theorem enJn {impl : List Amd64.Segment} {R : RtInv}
   janus64_run [hacc16, hacc8, hacc8', hwbf, e6] until [wbE, enS]
   · -- the barrier is off
     janus64_run [hacc16, hacc8] until [xnE]
-    refine K _ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?mf ?lf ?rg ?inv ?q1 ?q2 ?q3
+    refine K _ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?mf ?lf ?rg ?inv ?q1 ?q2 ?q3
     case mf => janus_frame
     case lf =>
       have h : MemFrame S.mem ((((S.mem.writeLE (st + 8) 8 len0).writeLE (st + 16) 8 c1).writeLE st 8 w1).writeLE
@@ -93,7 +93,7 @@ theorem enJn {impl : List Amd64.Segment} {R : RtInv}
         Nat.mod_eq_of_lt (by omega)]
     all_goals first | (janus64_simp; done) | skip
     all_goals try simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]
-    all_goals first | exact h7 | exact h14 | exact hsp | rfl
+    all_goals first | exact h7 | exact h14 | exact hsp | exact e10 | rfl
   · -- the barrier is on
     have hsp8 : (BitVec.ofNat 64 sp - 8#64).toNat = sp - 8 := by
       simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
@@ -157,7 +157,7 @@ theorem enJn {impl : List Amd64.Segment} {R : RtInv}
       · refine hfr2.readLE a k ?_
         simp only [outside_append, outside_cons, outside_nil, and_true]
         exact ⟨hO.of_sub h1 h2, by omega⟩
-    refine K _ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?mf2 ?lf2 ?rg2 ?inv2 ?p1 ?p2 ?p3
+    refine K _ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?mf2 ?lf2 ?rg2 ?inv2 ?p1 ?p2 ?p3
     case mf2 =>
       refine MemFrame.trans (MemFrame.trans (MemFrame.trans hM1' hfr2 fun a k ho => ⟨?_, ?_⟩) hbs
         fun a k ho => ⟨ho, ?_⟩) hst2 fun a k ho => ⟨ho, ?_⟩
@@ -204,6 +204,6 @@ theorem enJn {impl : List Amd64.Segment} {R : RtInv}
         Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega), Janus.Arm64.Memory.readLE_writeLE_self,
         Nat.mod_eq_of_lt (by omega)]
     all_goals try simp only [setRegF_apply, wbRegs64, Nat.reduceEqDiff, ↓reduceIte]
-    all_goals first | exact hsp0 | exact h7 | exact e3 | exact e6' | exact e8 | exact e9 | exact h14
+    all_goals first | exact hsp0 | exact h7 | exact e3 | exact e6' | exact e8 | exact e9 | exact e10 | exact h14
 
 end FvModexp.Amd64.W2En
