@@ -136,7 +136,7 @@ theorem d5 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
     have := hrg.u; unfold Apart at this; simp only [Cx.uuP, Cx.uuL, outside_cons, outside_nil, and_true]; omega
   -- `uu` after the call
   have hql3 : (c.P s j U).length ≤ 3 * c.vl := by omega
-  have hqlu : (c.P s j U).length ≤ c.uuL j := by simp only [Cx.uuL]; omega
+  have hqlu : (c.P s j U).length ≤ c.uuL j := Nat.le_trans hPl (uuL_ge hjm hcr.vu1)
   have hbf := hmc.bf
   have hbl : (c.stF s j U).buf.length = 3 * c.vl := by
     simp only [stS] at hbf; rw [← hbf, Asm.length_limbs]

@@ -1518,3 +1518,21 @@ minimal imports; generated `Lib*` modules spend ~1.5 s per `decide +kernel` mask
 | Amd64/Nat/DivLargeDB (divPost, dbPost) | 17.0 s | 3.2 GB |
 | Amd64/Nat/DivLargeDBR (Mem.thr, ra_dl, db2) | < 60 s | < 8 GB |
 | Amd64/Nat/DivLargeDBS (db run) | 15.1 s | 2.5 GB |
+### asm s37 — DrsRow 739 s → 367 s, DivRow 394 s → 256 s (Janus v0.3.1, release order, cache-asm, REPLAY_THREADS=1, 2026-11-13)
+Root causes and fixes (module dev times before → after; fresh sequential rebuild at load ~24 in brackets):
+* **Whole-context `omega` at frame/window side conditions** (a `fun x n h => by simp … at h ⊢; omega` inside a big proof
+  sees every hypothesis and case-splits all the `Outside` disjunctions): replaced by small-context lemmas
+  `Arm64/Nat/WinIn.lean` (`winA_in`, `winA_mono`), `Arm64/Nat/DrsWs.lean` (`ws_up`/`ws_up0`/`ws_qp`/`ws_qp0`,
+  `limbs_eq2` instead of `congr 1`), `DivLargeDRel.scrB_winA`, `DrsPathB.frameB`, `DrsD3.uuL_ge`.
+  DrsMulQ 107 → 19, DrsFMulQ 97 → 15, DrsC6 102 → 19 (`congr 1 <;> omega`: 40 s of failing defeq on `Nat` arithmetic),
+  DrsD6 68 → 21, DrsPathB 60 → 18, DivLargeDRel 54 → 29, DrsD4 42 → 18, DrsD5 39 → 16, DrsFRecQ 38 → 24, DrsA2 28 → 20.
+* **Imports**: drs no longer imports the divLarge relation chain (DrsNorm used one 2-line lemma of DivLargeTN), nat.div's
+  modules (DrsCN used `natLive_ext` of DivOneF → LibDiv/DivDefs) or LibDivL (`DrsIface` = DrsPreW/DrsPostW/DrsHyp split
+  out of DivLargeDefs; DrsPathB used `pw_forall` of DivLargeCallees). DrsRow's own modules 146 → 131, sum 1816 → 755 s
+  (fresh), critical path 670 → 232 s. The DivLarge chain is now DivRow's (it was already needed there).
+* DivRow: `DivMBase` (costM/PFM/wsum0) and `DivMLessA` (two1G/two2M/lessRM) split out so the DivHypLG modules do not import
+  Int.ModDefs/LibMod (54 s).
+* `DrsRowW`: the witness's kernel decisions (bump/inv1/len0/cost0/pre ≈ 20 s) + `mul_code` compile in parallel with the
+  chain; DrsRow itself is now 1 s.
+Row results (snapshot cache-asm/snap37, rows in release order in one store): DrsRow PASS **367 s / 1.6 GB** (load 29),
+DivRow PASS **256 s / 2.0 GB** (load 26). (Rows below in this run: see build/asm-rows.tsv of the snapshot / NOTES-asm s37.)

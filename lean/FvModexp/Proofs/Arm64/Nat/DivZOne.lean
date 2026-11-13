@@ -1,5 +1,5 @@
 import FvModexp.Proofs.Arm64.Nat.DivOneB
-import FvModexp.Proofs.Arm64.Nat.DivMDefs
+import FvModexp.Proofs.Arm64.Nat.DivMBase
 import FvModexp.Proofs.Arm64.Nat.DivG
 
 set_option autoImplicit false

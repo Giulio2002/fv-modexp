@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Arm64.Nat.DrsPro2
+import FvModexp.Proofs.Arm64.Nat.NatAddMid
 
 /-!
 # `divRecursiveStep` (arm64): preconditions of the live runtime calls (pure)

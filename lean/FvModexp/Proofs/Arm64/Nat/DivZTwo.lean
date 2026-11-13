@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Arm64.Nat.DivMLess
+import FvModexp.Proofs.Arm64.Nat.DivMLessA
 
 set_option autoImplicit false
 
