@@ -19,7 +19,7 @@ set_option maxHeartbeats 64000000 in
 /-- `stk.nat(k)` from the entry of `(*stack).nat` (return address fn+`i` at `[sp - 8]`) to fn+`i`, with `BX = k` -/
 theorem snCallR {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
     (hSN : StackNat.HypL impl R StackNat.names 4192 24)
-    (i : Nat) (hi : i < 0x1300) {ret : W64} {Q : State → Prop} {b : Nat} {L : List (Nat × Nat)} {g fs sp st k : Nat} {r5 : W64}
+    (i : Nat) (hi : i < 0x1280) {ret : W64} {Q : State → Prop} {b : Nat} {L : List (Nat × Nat)} {g fs sp st k : Nat} {r5 : W64}
     (S : State) (hpre : SnPre R b L g fs sp st k S.mem) (hst : st < 2 ^ 64) (hpc : S.rip = BitVec.ofNat 64 snE) (hsp : S.regs 4 = BitVec.ofNat 64 (sp - 8))
     (hrd : S.mem.readLE (sp - 8) 8 = 6210560 + i)
     (h0 : S.regs 0 = BitVec.ofNat 64 st) (h3 : S.regs 3 = BitVec.ofNat 64 k)

@@ -1,0 +1,170 @@
+import FvModexp.Proofs.Amd64.Exp.W2EnDefs
+
+set_option autoImplicit false
+
+/-!
+# window-2 entry (amd64): the `memclrNoHeapPointers` call of the inline `stk.reserve(11n)` (agent expmc s57; twin of
+`Arm64.W2EnG`)
+
+`enG3`: entry of `memclrNoHeapPointers(p + 8·cap, 8·(len + nr - cap))` (after `growslice` returned the block
+`(p, 8·gc)`) → the join `enJ` (fn+0x179 .. fn+0x1ed: the `cap ≥ len` check and the reloads).
+Adapted from agent divmc's amd64 `(*stack).nat` `g3`/`mcall_pre` (Amd64/Nat/StackNatG3, StackNatCall), window-2 frame.
+-/
+
+open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Spec Janus.Contracts FvModexp
+
+namespace FvModexp.Amd64.W2En
+
+/-- the live set grown by a fresh runtime block keeps the window -/
+theorem cenv_ext {R : RtInv} {L : List (Nat × Nat)} {g fs sp K A p k : Nat} {M : Memory}
+    (h : CallW.CEnv R L g fs sp K A M) (hin : InRanges p k R.rt) : CallW.CEnv R (L ++ [(p, p + k)]) g fs sp K A M := by
+  obtain ⟨hal, hK0, hA0, hacc, hg1, hg2, hg3, hrt, hga, hgrt, hLs, hd, hro, f1, f2, f3, f4, f5, f6⟩ := h
+  refine ⟨hal, hK0, hA0, hacc, hg1, hg2, hg3, hrt, hga, hgrt, ?_, hd, hro, f1, f2, f3, f4, f5, f6⟩
+  intro r hr
+  rcases List.mem_append.1 hr with hr | hr
+  · exact hLs r hr
+  · simp only [List.mem_singleton] at hr; subst hr
+    have := hin.apart hrt
+    unfold Apart at this
+    simp only [outside_cons, outside_nil, and_true]; omega
+
+set_option maxRecDepth 20000 in
+/-- the precondition of a `memclrNoHeapPointers(d, k)` call from window-2's frame (`RSP = sp - 8` at the callee) -/
+theorem mpre {R : RtInv} {L : List (Nat × Nat)} {b g fs sp K d k : Nat} {S : State}
+    (hce : CallW.CEnv R L g fs (sp - 8) K 0x400 S.mem) (hK : 4200 ≤ K) (hsv : RunIface.Serves R)
+    (hsp : S.regs 4 = BitVec.ofNat 64 (sp - 8)) (h14 : S.regs 14 = BitVec.ofNat 64 g)
+    (hra : S.mem.readLE (sp - 8) 8 < 2 ^ 47) (hx15 : S.xmm 15 = 0#128) (hdf : S.df = false)
+    (h0 : (S.regs 0).toNat = d) (h3 : (S.regs 3).toNat = k) (hk : k ≤ 2 ^ 20)
+    (hinv : R.inv b L g (view R.rt L S.mem))
+    (hd48 : d + k ≤ 2 ^ 48) (hdacc : S.mem.accessible d k true = true) (hdL : InRanges d k L)
+    (hdw : Apart d k (sp - 8 - K) (K + 0x400)) :
+    MemPre64 4096 2 S ∧
+      LiveMemAt64 R mcE [(S.regs 0).toNat, (S.regs 3).toNat] L b S (liveWin64 S 4096 2) ∧
+      LiveDest64 R L S 4096 2 (S.regs 0).toNat (S.regs 3).toNat := by
+  obtain ⟨hal, hK0, hA0, hacc, hg1, hg2, hg3, hrt, hga, hgrt, hLs, hd, hro, f1, f2, f3, f4, f5, f6⟩ := hce
+  have tsp : (S.regs 4).toNat = sp - 8 := by rw [hsp, BitVec.toNat_ofNat]; omega
+  have tg : (S.regs 14).toNat = g := by rw [h14, BitVec.toNat_ofNat]; omega
+  unfold Apart at hga hdw
+  refine ⟨⟨⟨?_, ?_, ?_⟩, ⟨?_, ?_, ?_, ?_, hx15, hdf, ?_⟩, ?_⟩, ⟨?_, by rw [tg]; exact hinv, ?_, ?_⟩,
+    ?_, ?_, ?_, ?_, ?_⟩
+  · simp only [stackguard0Offset, regG, tg]; omega
+  · simp only [stackguard0Offset, regG, tg]; exact hg2
+  · simp only [stackguard0, stackguard0Offset, regG, regSP, tg, tsp]; omega
+  · rw [tsp]; omega
+  · rw [tsp]; omega
+  · rw [tsp]; omega
+  · rw [tsp]; exact Janus.Arm64.Memory.accessible_mono _ hacc (by omega) (by omega)
+  · rw [tsp]; exact hra
+  · simp only [MemAmd64.calleeStack, MapAmd64.calleeStack, tg, tsp, outside_cons, outside_nil, and_true]; omega
+  · rw [← mcE_eq]; exact hsv.2.2.1 _ _ (by rw [h3]; exact hk)
+  · intro r hr
+    have := hLs r hr
+    simp only [liveWin64, calleeStack64, tsp, List.cons_append, List.nil_append, outside_cons, outside_nil,
+      and_true] at this ⊢
+    omega
+  · intro r hr
+    simp only [liveWin64, calleeStack64, tsp, List.cons_append, List.nil_append, List.mem_cons, List.not_mem_nil,
+      or_false] at hr
+    rcases hr with rfl | rfl | rfl <;> exact hrt.of_sub (by simp only; omega) (by simp only; omega)
+  · rw [h0, h3]; exact hd48
+  · rw [h0, h3]; exact hdacc
+  · simp only [calleeStack64, tsp, outside_cons, outside_nil, and_true]; rw [h0, h3]; omega
+  · left; rw [h0, h3]; exact hdL
+  · simp only [tsp, outside_cons, outside_nil, and_true]; rw [h0, h3]; omega
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 64000000 in
+theorem enG3 {impl : List Amd64.Segment} {R : RtInv}
+    (hmc : MemclrNoHeapPointersLive64 (LibW.program.link impl) mcE 4096 R)
+    {ret : W64} {Q : State → Prop}
+    {b : Nat} {L : List (Nat × Nat)} {g fs sp K st xp xl xc n len0 cap0 p gc : Nat} {M : Memory}
+    (hce : CallW.CEnv R L g fs (sp - 8) K 0x400 M) (hK : 4200 ≤ K) (hsv : RunIface.Serves R)
+    (hk : cap0 < len0 + StackNat.rnd (11 * n)) (hgc : len0 + StackNat.rnd (11 * n) ≤ gc)
+    (hgc40 : gc < 2 ^ 40) (hn : n ≤ 128) (hl16 : len0 ≤ 2 ^ 16)
+    (hpin : InRanges p (8 * gc) R.rt) (hp48 : p + 8 * gc ≤ 2 ^ 48)
+    (hpacc : M.accessible p (8 * gc) true = true)
+    (hinv : R.inv (b - 8 * gc) (L ++ [(p, p + 8 * gc)]) g (view R.rt (L ++ [(p, p + 8 * gc)]) M))
+    (S : State) (hpc : S.rip = BitVec.ofNat 64 mcE) (hsp : S.regs 4 = BitVec.ofNat 64 (sp - 8))
+    (h14 : S.regs 14 = BitVec.ofNat 64 g) (h5 : S.regs 5 = BitVec.ofNat 64 (sp + 0x268)) (hx15 : S.xmm 15 = 0)
+    (hdf : S.df = false)
+    (h0 : S.regs 0 = BitVec.ofNat 64 (p + 8 * cap0))
+    (h3 : S.regs 3 = BitVec.ofNat 64 (8 * (len0 + StackNat.rnd (11 * n) - cap0))) (hmem : S.mem = M)
+    (sret : M.readLE (sp - 8) 8 = mcRet)
+    (rc0 : M.readLE (sp + 0xc0) 8 = gc) (rb8 : M.readLE (sp + 0xb8) 8 = len0) (r198 : M.readLE (sp + 0x1a0) 8 = p)
+    (r140 : M.readLE (sp + 0x140) 8 = StackNat.rnd (11 * n)) (r3d8 : M.readLE (sp + 0x2c0) 8 = st)
+    (r3e0 : M.readLE (sp + 0x2c8) 8 = xp) (r3e8 : M.readLE (sp + 0x2d0) 8 = xl) (r3f0 : M.readLE (sp + 0x2d8) 8 = xc)
+    (r3b0 : M.readLE (sp + 0x298) 8 = n)
+    (K' : ∀ (S' : State) (M' : Memory),
+      S'.rip = BitVec.ofNat 64 enJ → S'.regs 4 = BitVec.ofNat 64 sp → S'.regs 5 = BitVec.ofNat 64 (sp + 0x268) →
+      S'.regs 7 = BitVec.ofNat 64 st → S'.regs 6 = BitVec.ofNat 64 xp → S'.regs 8 = BitVec.ofNat 64 xl →
+      S'.regs 9 = BitVec.ofNat 64 xc → S'.regs 3 = BitVec.ofNat 64 n → S'.regs 13 = BitVec.ofNat 64 len0 →
+      S'.regs 15 = BitVec.ofNat 64 gc → S'.regs 2 = BitVec.ofNat 64 (StackNat.rnd (11 * n)) →
+      S'.regs 11 = BitVec.ofNat 64 p → S'.regs 14 = BitVec.ofNat 64 g →
+      S'.fsBase = S.fsBase → S'.xmm 15 = 0 → S'.df = S.df → S'.mem = M' →
+      MemFrame M M' (R.rt ++ [(sp - 8 - 4096, sp - 8), (sp, sp + 16)]) →
+      LiveFrame M M' (L ++ [(p, p + 8 * gc)]) [(p + 8 * cap0, p + 8 * (len0 + StackNat.rnd (11 * n)))] →
+      M'.regions = M.regions →
+      R.inv (b - 8 * gc) (L ++ [(p, p + 8 * gc)]) g (view R.rt (L ++ [(p, p + 8 * gc)]) M') →
+      ReachesRet (LibW.program.link impl) ret S' Q) :
+    ReachesRet (LibW.program.link impl) ret S Q := by
+  have hrn := rnd23_le n
+  have hce' := hce
+  obtain ⟨hal, hK0, hA0, hacc, hg1, hg2, hg3, hrt, hga, hgrt, hLs, hd, hro, f1, f2, f3, f4, f5, f6⟩ := hce'
+  have tsp : (S.regs 4).toNat = sp - 8 := by rw [hsp, BitVec.toNat_ofNat]; omega
+  have hpw := hpin.apart hrt
+  unfold Apart at hpw
+  have hsub := hpin.sub (a := p + 8 * cap0) (n := 8 * (len0 + StackNat.rnd (11 * n) - cap0)) (by omega) (by omega)
+  have hpre := mpre (L := L ++ [(p, p + 8 * gc)]) (b := b - 8 * gc) (d := p + 8 * cap0)
+    (k := 8 * (len0 + StackNat.rnd (11 * n) - cap0)) (by rw [hmem]; exact cenv_ext hce hpin) hK hsv hsp h14
+    (by rw [hmem, sret]; decide) (by rw [hx15]; rfl) hdf (by rw [h0, BitVec.toNat_ofNat]; omega)
+    (by rw [h3, BitVec.toNat_ofNat]; omega) (by omega) (by rw [hmem]; exact hinv) (by omega)
+    (by rw [hmem]; exact Janus.Arm64.Memory.accessible_mono _ hpacc (by omega) (by omega))
+    ⟨(p, p + 8 * gc), List.mem_append_right _ (List.mem_singleton_self _), by simp only; omega, by simp only; omega⟩
+    (by unfold Apart; omega)
+  refine ReachesRet.call_regions (hmc _ _) hpc hpre fun S3 hpc3 hq hrg => ?_
+  obtain ⟨junk, f3, x3, yh3, m3, zh3, kr3, hs3, hMF3, hLF3, hinv3, _⟩ := hq
+  subst hs3
+  rw [hmem] at hMF3 hLF3 hrg
+  simp only [calleeStack64, tsp, h0, h3, BitVec.toNat_ofNat] at hMF3 hLF3
+  have hsubw := hsub.apart hrt
+  unfold Apart at hsubw
+  have hrd : ∀ a, sp + 16 ≤ a → a + 8 ≤ sp + 0x2e0 → m3.readLE a 8 = M.readLE a 8 := by
+    intro a h1 h2
+    refine hMF3.readLE a 8 ?_
+    simp only [outside_append, outside_cons, outside_nil, and_true]
+    refine ⟨⟨hrt.of_sub (by omega) (by omega), by omega, by omega⟩, ?_⟩
+    rw [Nat.mod_eq_of_lt (by omega), Nat.mod_eq_of_lt (by omega)]; omega
+  have q0 := (hrd _ (by omega) (by omega)).trans rc0
+  have q1 := (hrd _ (by omega) (by omega)).trans rb8
+  have q2 := (hrd _ (by omega) (by omega)).trans r198
+  have q3 := (hrd _ (by omega) (by omega)).trans r140
+  have q4 := (hrd _ (by omega) (by omega)).trans r3d8
+  have q5 := (hrd _ (by omega) (by omega)).trans r3e0
+  have q6 := (hrd _ (by omega) (by omega)).trans r3e8
+  have q7 := (hrd _ (by omega) (by omega)).trans r3f0
+  have q8 := (hrd _ (by omega) (by omega)).trans r3b0
+  have sret' : M.readLE (sp - 8) 8 = 6210937 := sret
+  have sret'' : S.mem.readLE (sp - 8) 8 = 6210937 := by rw [hmem]; exact sret
+  have hacc3 : m3.accessible (sp - 8 - K) (K + 0x400) true = true := by rw [hMF3.accessible]; exact hacc
+  have hle : ¬ BitVec.ofNat 64 gc < BitVec.ofNat 64 len0 := by
+    simp only [BitVec.lt_def, BitVec.toNat_ofNat]; omega
+  have hsp8 : BitVec.ofNat 64 (sp - 8) + 8#64 = BitVec.ofNat 64 sp := by
+    apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega
+  janus64_run [q0, q1, q2, q3, q4, q5, q6, q7, q8, hle, sret', sret'', hsp, hsp8] until [enJ]
+  refine K' _ m3 ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?mf ?lf hrg ?inv
+  case mf =>
+    refine hMF3.mono fun a k h => ?_
+    simp only [outside_append, outside_cons, outside_nil, and_true] at h ⊢
+    refine ⟨⟨h.1, by omega, by omega⟩, ?_⟩
+    have := hsub.apart h.1
+    unfold Apart at this
+    rw [Nat.mod_eq_of_lt (by omega), Nat.mod_eq_of_lt (by omega)]; omega
+  case lf =>
+    refine ⟨fun a k hin ho => hLF3.readLE a k hin ?_⟩
+    simp only [outside_cons, outside_nil, and_true] at ho ⊢
+    rw [Nat.mod_eq_of_lt (by omega), Nat.mod_eq_of_lt (by omega)]; omega
+  case inv => rw [h14, BitVec.toNat_ofNat, Nat.mod_eq_of_lt (by omega)] at hinv3; exact hinv3
+  all_goals first | (janus64_simp; done) | skip
+  all_goals simp only [setRegF_apply, callRegs64_apply, Nat.reduceEqDiff, ↓reduceIte, hsp, h5, h14, hsp8]
+
+end FvModexp.Amd64.W2En
