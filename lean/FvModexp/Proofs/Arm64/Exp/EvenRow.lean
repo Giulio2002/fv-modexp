@@ -1,4 +1,7 @@
-import FvModexp.Proofs.Arm64.Exp.IExpCl
+import FvModexp.Proofs.Arm64.Exp.IExpClD
+import FvModexp.Proofs.Arm64.Exp.EvInst
+import FvModexp.Proofs.Arm64.Exp.NCap
+import FvModexp.Proofs.Arm64.Nat.RemC
 import FvModexp.Proofs.Common.NCostU
 import FvModexp.Proofs.Arm64.Witness.StubsMvz
 import FvModexp.Proofs.Arm64.Int.ModRowW
