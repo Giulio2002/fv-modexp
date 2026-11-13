@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Build the harness for both ISAs, then extract and `janus verify` every row of docs/COVERAGE.md whose status says `verified` for an ISA.
 # adapted from fv-uint256 scripts/verify-all.sh.
-# Usage: [JANUS=/path/to/janus] scripts/verify-all.sh [FN ...]        (default: all rows; FN = row function name, e.g. RequiredGas)
+# Usage: [JANUS=/path/to/janus] scripts/verify-all.sh [FN ...]        (default: all rows in RELEASE ORDER = scripts/release-rows.txt, then the
+#        remaining COVERAGE rows; FN = row id = module path with / -> _, e.g. RequiredGas, Nat_DivWRow, Top_RunSucc; LIST_ONLY=1 prints the order)
 # Env:   SKIP_WARMUP=1 (skip the cache warm-up), ONLY_ISA=arm64|amd64, ROWS=N (rows in parallel, default 1; the release run uses 6), JANUS_CACHE_DIR (default: a FRESH empty build/jcache-<stamp>;
 #        a non-empty dir is refused unless ALLOW_WARM_CACHE=1, a dev-run convenience that is never used for the release), WITNESS (default 1),
 #        SKIP_HARNESS=1 (reuse build/harness-*; the hash check still runs), LEAN_NUM_THREADS (default 4), JANUS_JOBS (2).
@@ -52,6 +53,21 @@ declare -a jobs_isa jobs_fn jobs_sym jobs_mod
 # rows: | `full.go.Symbol` | owner | arm64 status | amd64 status | ...   ; `todo`/`in progress` is reported MISSING and fails the run (never skipped silently)
 mapfile -t rows < <(grep -E '^\| `' docs/COVERAGE.md)
 fail=0
+# RELEASE ORDER (top s43; NOTES-conventions "[top s43] RELEASE ORDER"): scripts/release-rows.txt lists every Run-extraction row
+# (`ISA DIR/ROW`, proof module lean/FvModexp/Proofs/<Isa>/DIR/ROW.lean) in dependency order, the Top rows last. Those rows run
+# first, in that order; a COVERAGE row not listed there (same ISA + module) runs after them. RUN_SYM = the extraction of every listed row.
+RUN_SYM='github.com/ethereum/go-ethereum/core/vm.(*bigModExp).Run'
+declare -A listed
+if [ -f "$root/scripts/release-rows.txt" ]; then
+  while read -r isa mod _; do
+    case "$isa" in ''|\#*) continue;; esac
+    [ -z "${ONLY_ISA:-}" ] || [ "$ONLY_ISA" = "$isa" ] || continue
+    fn="${mod//\//_}"; listed["$isa:$mod"]=1
+    [ $# -gt 0 ] && { case " $* " in *" $fn "*) ;; *) continue;; esac; }
+    sym="$RUN_SYM"; [ "$mod" = RequiredGas ] && sym='github.com/ethereum/go-ethereum/core/vm.(*bigModExp).RequiredGas'
+    jobs_isa+=("$isa"); jobs_fn+=("$fn"); jobs_sym+=("$sym"); jobs_mod+=("$mod")
+  done < "$root/scripts/release-rows.txt"
+fi
 for row in "${rows[@]}"; do
   sym=$(echo "$row" | cut -d'|' -f2 | tr -d ' `')
   st_arm=$(echo "$row" | cut -d'|' -f4 | tr -d ' '); st_amd=$(echo "$row" | cut -d'|' -f5 | tr -d ' ')
@@ -65,6 +81,7 @@ for row in "${rows[@]}"; do
   for pair in "arm64:$st_arm" "amd64:$st_amd"; do
     IFS=: read -r isa st <<<"$pair"
     [ -z "${ONLY_ISA:-}" ] || [ "$ONLY_ISA" = "$isa" ] || continue
+    [ -z "${listed[$isa:$mod]:-}" ] || continue   # already a release-order row
     case "$st" in
       verified*|partial*) jobs_isa+=("$isa"); jobs_fn+=("$fn"); jobs_sym+=("$sym"); jobs_mod+=("$mod");;
       todo*|inprogress*|in-progress*) echo "MISSING ($st)" >"build/res/$isa-$fn.pre"; echo "MISSING 0 0 0" >"build/res/$isa-$fn"; fail=1
@@ -129,7 +146,7 @@ admit() { local l m; l=$(cut -d' ' -f1 /proc/loadavg | cut -d. -f1); m=$(awk '/M
 # row's 900 s / 16 G caps measure the row's own modules and kernel replay only. The verdict of the warm-up is irrelevant (logged only).
 # One warm-up per ISA among the rows (agent top s19): the per-extraction `Extracted`/`JanusTrusted` compile (~85 s for the
 # amd64 Run extraction) is not a row's own module either.
-if [ -z "${SKIP_WARMUP:-}" ]; then
+if [ -z "${SKIP_WARMUP:-}${LIST_ONLY:-}" ]; then
  wdone=""
  for wi in "${!jobs_sym[@]}"; do
   wsym="${jobs_sym[$wi]}"; wisa="${jobs_isa[$wi]}"
@@ -157,9 +174,12 @@ while read -r i d; do order+=("$i"); deps_of[$i]="$d"; done < <(
   for i in "${!jobs_fn[@]}"; do
     [ "${jobs_sym[$i]}" = "-" ] && continue
     echo "$i FvModexp/Proofs/$(isa_dir "${jobs_isa[$i]}")/$(pf_of "${jobs_isa[$i]}" "${jobs_mod[$i]}").lean"
-  done | python3 "$root/scripts/row-order.py")
+  done | python3 "$root/scripts/row-order.py" --keep-order)
 deps_done() { local d; [ "${deps_of[$1]}" = "-" ] && return 0
   for d in ${deps_of[$1]//,/ }; do [ -s "build/res/${jobs_isa[$d]}-${jobs_fn[$d]}" ] || return 1; done; }
+nreal=0; for i in "${!jobs_sym[@]}"; do [ "${jobs_sym[$i]}" = "-" ] || nreal=$((nreal+1)); done
+[ ${#order[@]} -eq "$nreal" ] || { echo "error: scripts/row-order.py produced no order (see above)" >&2; exit 2; }
+if [ -n "${LIST_ONLY:-}" ]; then for i in "${order[@]}"; do echo "row ${jobs_isa[$i]} ${jobs_fn[$i]} (after: ${deps_of[$i]})"; done; exit 0; fi
 for i in "${order[@]}"; do
   echo "row ${jobs_isa[$i]} ${jobs_fn[$i]} (after: ${deps_of[$i]})"
   while :; do

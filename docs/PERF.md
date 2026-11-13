@@ -1736,3 +1736,12 @@ Profile MulBM (arm64, load ~60: 153 s): `bm2`'s single-step `janus_run [e2] unti
 `List.decidableBAll` 4.6 s each). Fix = the amd64 `bmCallM` pattern (stop at the callee entry, `ReachesRet.call_regions` with
 the pre proved by name).
 amd64 karatsuba (dev, LEAN_NUM_THREADS=4, load ~50): KMulRel 15 s / 2.6 GB, KMulB 19-22 s / 3.0 GB, KMulMath 2 s, KMulI 36 s / 3.4 GB.
+* RunSucc warm-cache ESTIMATE (arm64, top s43, snapshot of agent/top 2f72c8e6, warm cache-top/rs40, Janus v0.3.2,
+  MAX_LOAD=80, load 60-77): **FAIL 902 s / 1.9 GB = timeout again — no estimate obtained.** Janus stores a row's modules
+  only as they finish; this rerun added 109 chain oleans to the store, so the "warm" cache was still missing a large part
+  of the ~365-module chain. (s42's first rerun never started a row: verify-all's admit() waits for load < 40.)
+  In RELEASE ORDER (scripts/release-rows.txt) Top_RunSucc's OWN modules are only Top/RunSucc + Top/RunSuccW2 (dev 3 s +
+  3.5 s); the chain goes to the rows below it: Top/RunOkRowC owns 36 (ExpQ IExp/Slow/Bud chain, RunModC/I), Top/RunOkRow
+  owns 59 (Run C/D segments, IntBytes), Top/RunErr owns 36 (SetBytes*, Run H/L). The real numbers come from the
+  fresh-cache release-order run (cache-top/rel43, log cache-top/snap43/rel43.out).
+* Dev (amd64, top s43): NatQ/DivMFull (fullM + ensML) 4.4 s / 2.5 GB.
