@@ -61,13 +61,13 @@ amd64 Nat/LshRow
 amd64 Int/IntASRow
 amd64 NatQ/BasicSqrRowQ
 amd64 NatQ/SqrRowQ
+amd64 RequiredGas
 amd64 Exp/SubMod2NRow
 amd64 Nat/DivWRow
 amd64 Nat/DivWVWRow
 amd64 Nat/DivBasicRow
 amd64 NatQ/DivBasicRowQ
 # ---- amd64 Top rows (last) ----
-amd64 RequiredGas
 amd64 Top/RunErr
 amd64 Top/RunOkRow
 amd64 Top/RunSucc
