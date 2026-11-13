@@ -12,7 +12,7 @@ open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Spec Janus.Con
 
 set_option maxHeartbeats 64000000 in
 set_option maxRecDepth 100000 in
-theorem rg_blk2_Ge (k : Blk3Stmt) : Blk2If (fun len cap => ¬ len.toNat < cap.toNat) := by
+theorem rg_blk2_Ge (hsb : SbSum) (hmv : MvSum) (k : Blk3Stmt) : Blk2If (fun len cap => ¬ len.toNat < cap.toNat) := by
   intro c ptr len cap ret hret s S hpre hpc h4 h14 hx hf hdl m_ret m_fp m_c m_ptr m_len m_cap h0 h2 m_x5 w0 d0
   have hpre' := hpre
   obtain ⟨⟨hra, hra2, hra3⟩, hg, ⟨hlow, hnw, hacc⟩, hx15, hd, hlc, hc48, ⟨hp, hp'⟩, ⟨hcr, hcr'⟩, ⟨ho0, ho1, ho2⟩, hd1, hd2, hdg⟩ := hpre
@@ -25,7 +25,7 @@ theorem rg_blk2_Ge (k : Blk3Stmt) : Blk2If (fun len cap => ¬ len.toNat < cap.to
   by_cases c32 : len.toNat < 32 <;> by_cases c64 : len.toNat < 64 <;> by_cases d32 : 32 < cap.toNat
   all_goals try (exfalso; omega)
   all_goals janus64_run [h4, h14, hx, h0, h2, m_ptr, m_len, m_cap, m_x5, c32, c64, d0, d32, neg_asr63_and,
-    neg_asr63_and_lit, Nat.lt_add_right_iff_pos, Nat.mod_eq_of_lt, BitVec.toInt_eq_toNat_cond, BitVec.toNat_sub, BitVec.msb_eq_decide] until [Extracted.entry + 0x1d0] calls [sb, mv]
+    neg_asr63_and_lit, Nat.lt_add_right_iff_pos, Nat.mod_eq_of_lt, BitVec.toInt_eq_toNat_cond, BitVec.toNat_sub, BitVec.msb_eq_decide] until [Extracted.entry + 0x1d0] calls [hsb, hmv]
   all_goals try (exfalso; omega)
   all_goals
     refine reaches_of_returns (k c ptr len cap ret hret s _ hpre' ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ trivial)
