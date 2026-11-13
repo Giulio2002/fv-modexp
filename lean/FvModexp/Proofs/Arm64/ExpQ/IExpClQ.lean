@@ -86,7 +86,7 @@ theorem dhypsQ {impl : List Segment} (hap : ImplApart Extracted.program impl) {R
     (hwb : WbLiveContract (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2)
     (hdQ : ExpSlow.DivHypLGQ impl R NatDiv.names 41504 112 (Q.NatDiv.costQ Q.drsCQ))
     {K : Nat} (hK : 70720 ≤ K) :
-    ExpN.DHyps impl R K clFQ ExpSlow.need P2D.needP clSQ (P2D.cP sqrC mulC) NatDiv.names 41504 LibW.names 71776
+    ExpN.DHyps impl R K clFQ ExpSlow.need P2D.needP clSQ (P2D.cP sqrCQ mulCQ) NatDiv.names 41504 LibW.names 71776
       LibW.names 71776 :=
   { mkN := MakesliceLiveContract.of_codeIn (libN_code impl hap) hmk, clr := hmc, mv := hmv, mkO := hmk, gr := hgr,
     wb := hwb, div := Q.divL_of_Q hdQ.toL, hnsD := DivInst.ns_sub,
