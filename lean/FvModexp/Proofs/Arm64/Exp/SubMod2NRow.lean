@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Arm64.Exp.SubMod2NGEns
+import FvModexp.Proofs.Arm64.Exp.SubMod2NGR
 import FvModexp.Proofs.Arm64.Nat.Trunc
 import FvModexp.Proofs.Arm64.Nat.NatSub0
 import FvModexp.Proofs.Arm64.Nat.RowLink
@@ -32,7 +32,7 @@ theorem trW_fn : Trunc.names.contains SubMod2N.fn = false := by decide
 
 /-- **`nat.subMod2N`** (arm64): `z.subMod2N(z, y, n)` returns a normalised nat holding `(Z − Y) mod 2^n`
 (`Exp.subMod2N`), in `z`'s array or a fresh one, for every runtime meeting the live `makeslice` / `memmove` /
-`growslice` contracts (`PreG` / `PostG`). -/
+`growslice` contracts (`PreGR` / `PostG`; no constraint on `X30` beyond the ABI). -/
 theorem correctness (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice")
       4096 R)
@@ -43,10 +43,11 @@ theorem correctness (impl : List Segment) (hap : ImplApart Extracted.program imp
     Ensures (Extracted.program.link impl) (segAddr Extracted.program SubMod2N.fn)
       [BitVec.ofNat 64 zp, BitVec.ofNat 64 zl, BitVec.ofNat 64 zc, BitVec.ofNat 64 zp, BitVec.ofNat 64 zl,
         BitVec.ofNat 64 zc, BitVec.ofNat 64 yp, BitVec.ofNat 64 yl, BitVec.ofNat 64 yc, BitVec.ofNat 64 n]
-      (PreG R b L op zp zl zc yp yl yc n) (PostG R b L zp zl zc yp yl n) :=
-  Ensures.full hap (SubMod2N.ensG impl hap R trW_sub trW_fn (by omega) (by omega) (Trunc.ens impl hap R hmk hmv)
+      (PreGR R b L op zp zl zc yp yl yc n) (PostG R b L zp zl zc yp yl n) :=
+  Ensures.full hap (ensGR_of (SubMod2N.ensG impl hap R trW_sub trW_fn (by omega) (by omega)
+    (Trunc.ens impl hap R hmk hmv)
     (fun b L zp zl zc xp xl xc yp yl yc => NatSub.ensR0 impl hap R hmk hmv b L zp zl zc xp xl xc yp yl yc)
-    hmk hmv hgr b L op zp zl zc yp yl yc n)
+    hmk hmv hgr) b L op zp zl zc yp yl yc n)
 
 end FvModexp.Arm64.SubMod2NRow
 
@@ -117,11 +118,11 @@ theorem one0 : NatOne R [] s0.mem OP (win s0 K A) := by
 theorem bud : cost 64 ≤ 0x1000 := by decide +kernel
 
 set_option maxHeartbeats 64000000 in
-/-- the witness state satisfies `PreG` (`z.subMod2N(z, y, 64)`, `z = [5]` cap 1, `y = [3]`) -/
-theorem pre : PreG R 0x1000 [] OP OA 1 1 YP 1 1 64 s0 := by
+/-- the witness state satisfies `PreGR` (`z.subMod2N(z, y, 64)`, `z = [5]` cap 1, `y = [3]`) -/
+theorem pre : PreGR R 0x1000 [] OP OA 1 1 YP 1 1 64 s0 := by
   have hm : s0.mem = mem0 := rfl
   have hone := one0
-  unfold PreG
+  unfold PreGR
   refine ⟨?_, WStubs.serves [], ?_, hone, ?_⟩
   · refine ⟨⟨by decide +kernel, by rw [hm, acc0]; decide +kernel, by decide +kernel⟩,
       ⟨by decide +kernel, by decide +kernel, by decide +kernel, by rw [hm, acc0]; decide +kernel⟩,
@@ -159,7 +160,7 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
     CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program SubMod2N.fn)
       [BitVec.ofNat 64 zp, BitVec.ofNat 64 zl, BitVec.ofNat 64 zc, BitVec.ofNat 64 zp, BitVec.ofNat 64 zl,
         BitVec.ofNat 64 zc, BitVec.ofNat 64 yp, BitVec.ofNat 64 yl, BitVec.ofNat 64 yc, BitVec.ofNat 64 n] s ∧
-    PreG R b L op zp zl zc yp yl yc n s ∧
+    PreGR R b L op zp zl zc yp yl yc n s ∧
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.makeslice") ∧
       mkSite R (Extracted.program.contractAddr "runtime.makeslice") L b s_c) ∧
