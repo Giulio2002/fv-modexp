@@ -1536,3 +1536,10 @@ Root causes and fixes (module dev times before → after; fresh sequential rebui
   chain; DrsRow itself is now 1 s.
 Row results (snapshot cache-asm/snap37, rows in release order in one store): DrsRow PASS **367 s / 1.6 GB** (load 29),
 DivRow PASS **256 s / 2.0 GB** (load 26). (Rows below in this run: see build/asm-rows.tsv of the snapshot / NOTES-asm s37.)
+
+## divmc s36 (2026-11-13) — TIGHT COSTS Q-form copies (arm64 `NatQ/*`), dev compile J=1, load ~33
+Q-form basicSqr + nat.sqr/karatsubaSqr SCC (`NatQ/BasicSqr*`, `Sqr*`, `KSqr*`, `NatSqr`, `SqrHypQ`): 839 s summed,
+every module ≤ 81 s / 4.3 GB. Q vs old (same proofs, `stkR` budgets): BasicSqrPro 81 s vs 105 s, BasicSqrBody 48 vs 44,
+KSqrAdd1 50 vs 46, KSqrPC 40 vs 42, SqrBM 38 vs 44, BasicSqrSmall 36 vs 39 — the Q-form costs nothing extra.
+(Pitfall measured in s35: a `stkR H P.mem st` fact passed where `stkR H s.mem st` is expected made BasicSqrPro hang
+> 15 min; `rw [stkR_congr eC]` first → 100 s.)
