@@ -1,0 +1,96 @@
+import FvModexp.Proofs.Amd64.Exp.EvDefs
+import FvModexp.Proofs.Common.ExpPow2
+
+set_option autoImplicit false
+
+/-!
+# `nat.expNNEven` (amd64): `n := m.trailingZeroBits()` (nat.go:364-374, inlined; asm s55, twin of infra's arm64 EvTz)
+
+The loop at `tzH = fnE + 0x598` (`CMPQ DX, BX; JBE panicBounds; MOVQ (R10)(BX*8), R11; TESTQ R11, R11; JE tzI;
+SHLQ $6, BX; BSFQ R11, R11; ADDQ R11, BX; JMP enS`, `tzI: INCQ BX`), by induction on `ml - i`; `panicBounds` at
+`i = len m` is unreachable for `0 < M`; exit `enS` with `RBX = tz M` (`Exp.tz_words`, `ctz_eq`: `BSF w = tz w` for a
+non-zero word). Pure segment: memory, `RSP` and every register but `RBX`/`R11` unchanged (flags clobbered).
+-/
+
+open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Contracts FvModexp
+
+namespace FvModexp.Amd64.ExpEven
+
+/-- `BSF`'s count (`Janus.Amd64.ctzNat`) is `Exp.tz` on a value with a non-zero bit below `2^n` -/
+theorem ctzNat_eq : ∀ (n x : Nat), x % 2 ^ n ≠ 0 → Janus.Amd64.ctzNat n x = Exp.tz x
+  | 0, x, h => absurd (Nat.mod_one x) (by simpa using h)
+  | n + 1, x, h => by
+    unfold Janus.Amd64.ctzNat
+    by_cases ho : x % 2 = 1
+    · rw [if_pos ho, Exp.tz_odd ho]
+    · rw [if_neg ho]
+      have he : x % 2 = 0 := by omega
+      have hx : x ≠ 0 := by intro h0; rw [h0, Nat.zero_mod] at h; exact h rfl
+      have h2 : x / 2 % 2 ^ n ≠ 0 := by
+        intro h0
+        have : x % 2 ^ (n + 1) = 2 * (x / 2 % 2 ^ n) + x % 2 := by
+          rw [Nat.pow_succ, Nat.mul_comm, Nat.mod_mul]; omega
+        rw [this, h0, he] at h; exact h rfl
+      rw [Exp.tz_even hx he, ctzNat_eq n (x / 2) h2]
+
+theorem ctz_eq {w : Nat} (hw : w ≠ 0) (hw64 : w < 2 ^ 64) : Janus.Amd64.ctzNat 64 w = Exp.tz w :=
+  ctzNat_eq 64 w (by rw [Nat.mod_eq_of_lt hw64]; exact hw)
+
+theorem words_zero_lt {X ml : Nat} (hz : ∀ j, j < ml → Exp.wd X j = 0) (hX : X < Exp.B ^ ml) : X = 0 := by
+  have := Exp.mod_B_pow_zero X ml hz; rwa [Nat.mod_eq_of_lt hX] at this
+
+theorem tz_wd_lt {w : Nat} (hw : w ≠ 0) (hw64 : w < 2 ^ 64) : Exp.tz w < 64 := by
+  have hs := (Exp.tz_spec (x := w) (by omega)).1
+  have hq : 0 < w / 2 ^ Exp.tz w := by
+    rcases Nat.eq_zero_or_pos (w / 2 ^ Exp.tz w) with h0 | h0
+    · rw [h0, Nat.mul_zero] at hs; omega
+    · exact h0
+  have : 2 ^ Exp.tz w ≤ w := by
+    calc 2 ^ Exp.tz w ≤ 2 ^ Exp.tz w * (w / 2 ^ Exp.tz w) := Nat.le_mul_of_pos_right _ hq
+      _ = w := hs.symm
+  exact (Nat.pow_lt_pow_iff_right (by omega)).1 (Nat.lt_of_le_of_lt this hw64)
+
+/-- what the loop keeps: every register but `RBX`/`R11`, memory, FS base, `X15`, `DF` -/
+@[reducible] def TzKeep (rg : Nat → BitVec 64) (M : Memory) (fb : BitVec 64) (x15 : W128) (df : Bool) (S : State) : Prop :=
+  (∀ r, r ≠ 3 → r ≠ 11 → S.regs r = rg r) ∧ S.mem = M ∧ S.fsBase = fb ∧ S.xmm 15 = x15 ∧ S.df = df
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 16000000 in
+/-- **the `trailingZeroBits` loop** from its head (`RBX = i`, words `0 .. i-1` zero) to `enS` with `RBX = tz M` -/
+theorem tzLoop {impl : List Amd64.Segment} (ret0 : Nat) (Q : State → Prop) (mp ml X : Nat) (M : Memory)
+    (rg : Nat → BitVec 64) (fb : BitVec 64) (x15 : W128) (df : Bool)
+    (hm : ∀ j, j < ml → M.readLE (mp + 8 * j) 8 = Exp.wd X j)
+    (hacc : M.accessible mp (8 * ml) false = true) (h48 : mp + 8 * ml ≤ 2 ^ 48)
+    (hX : 0 < X) (hXl : X < Exp.B ^ ml) (hml : ml ≤ 2 ^ 12)
+    (h10 : rg 10 = BitVec.ofNat 64 mp) (h2 : rg 2 = BitVec.ofNat 64 ml)
+    (KE : ∀ S' : State, S'.rip = BitVec.ofNat 64 enS → TzKeep rg M fb x15 df S' →
+      S'.regs 3 = BitVec.ofNat 64 (Exp.tz X) → ReachesRet (LibNE.program.link impl) ret0 S' Q) :
+    ∀ d i (S : State), ml - i = d → i ≤ ml → (∀ j, j < i → Exp.wd X j = 0) →
+      S.rip = BitVec.ofNat 64 tzH → TzKeep rg M fb x15 df S →
+      S.regs 3 = BitVec.ofNat 64 i → ReachesRet (LibNE.program.link impl) ret0 S Q := by
+  intro d
+  induction d with
+  | zero =>
+    intro i S hd hi hz
+    exact absurd (words_zero_lt (fun j hj => hz j (by omega)) hXl) (by omega)
+  | succ d ih =>
+    intro i S hd hi hz hpc hK h3
+    obtain ⟨hrg, hmem, hfb, hx, hdf⟩ := hK
+    have hil : i < ml := by omega
+    have r10 : S.regs 10 = BitVec.ofNat 64 mp := (hrg 10 (by omega) (by omega)).trans h10
+    have r2 : S.regs 2 = BitVec.ofNat 64 ml := (hrg 2 (by omega) (by omega)).trans h2
+    have hrd : S.mem.readLE (mp + 8 * i) 8 = Exp.wd X i := hmem ▸ hm i hil
+    have hrd' : S.mem.readLE (mp + i * 8) 8 = Exp.wd X i := by rw [Nat.mul_comm]; exact hrd
+    have hacc' : S.mem.accessible mp (8 * ml) false = true := hmem ▸ hacc
+    have hlt : ¬ ml ≤ i := by omega
+    have hw64 : Exp.wd X i < 2 ^ 64 := by have := Exp.wd_lt X i; rw [Exp.B_def] at this; exact this
+    by_cases hw : Exp.wd X i = 0
+    · janus64_run [hrd, hrd', hw] until [tzH, enS]
+      all_goals sorry  -- WIP (asm s55): close the branch goals (see NOTES-asm s55)
+    · have hc := ctz_eq hw hw64
+      have htz := Exp.tz_words hz hw
+      have ht := tz_wd_lt hw hw64
+      janus64_run [hrd, hrd', hc] until [enS, pbE]
+      all_goals sorry  -- WIP (asm s55): close the branch goals (see NOTES-asm s55)
+
+end FvModexp.Amd64.ExpEven
