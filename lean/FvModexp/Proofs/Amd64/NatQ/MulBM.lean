@@ -61,6 +61,11 @@ theorem bmCallM {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.pro
     refine K s' ?_ e4 e5 e14 e15 hq hrg
     rw [hr, retAddrOf, hrd]
 
+/-- the window `win s W 88` covers `bm`'s frame and `basicMul`'s stack window (a small-context `omega`, kept out of
+`bm`'s large context: 86 s → 0) -/
+theorem bmWin {sp W a n : Nat} (h : a + n ≤ sp - W ∨ sp + 88 ≤ a) (hW : 4608 ≤ W) :
+    a + n ≤ sp - 264 - 4224 ∨ sp - 264 + 72 ≤ a := by omega
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
@@ -161,7 +166,7 @@ theorem bm (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program 
       hinv2 hsbk.1
       (hF2.mono fun a n h => by
         simp only [stkWs, win, outside_append, outside_cons, outside_nil, and_true] at h ⊢
-        exact ⟨⟨h.1.1, by omega⟩, by have := h.2.1; omega⟩)
+        exact ⟨⟨h.1.1, bmWin h.1.2 hW⟩, h.2.1⟩)
       (FvModexp.LiveFrame.mono_ws hLF2 fun a n h => by
         simp only [outside_cons, outside_nil, and_true] at h ⊢; omega)
       (hF3.mono fun a n h => by simp only [win, outside_cons, outside_nil, and_true] at h ⊢; omega)

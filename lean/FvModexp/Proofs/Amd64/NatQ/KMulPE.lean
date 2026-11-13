@@ -51,6 +51,10 @@ theorem km_rd {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc 
     (hrd _ _ (by omega) (by omega)).trans h.q96, (hrd _ _ (by omega) (by omega)).trans h.s2,
     (hrd _ _ (by omega) (by omega)).trans h.q88⟩
 
+/-- `2a - a = a` as 64-bit words (for every `a`; kept out of `kmCall`'s large `omega` context: 22 s → 0) -/
+theorem bvDblSub (a : Nat) : BitVec.ofNat 64 (2 * a) - BitVec.ofNat 64 a = BitVec.ofNat 64 a := by
+  apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- **the `stk.nat` call and the headers after it** -/
@@ -110,8 +114,7 @@ theorem kmCall (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.prog
     simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
   have hs1 : BitVec.ofNat 64 zc - BitVec.ofNat 64 (kh n) = BitVec.ofNat 64 (zc - kh n) :=
     bv_sub_ofNat (by omega) (by omega)
-  have hs2 : BitVec.ofNat 64 (2 * kh n) - BitVec.ofNat 64 (kh n) = BitVec.ofNat 64 (kh n) := by
-    rw [bv_sub_ofNat (by omega) (by omega)]; congr 1; omega
+  have hs2 : BitVec.ofNat 64 (2 * kh n) - BitVec.ofNat 64 (kh n) = BitVec.ofNat 64 (kh n) := bvDblSub _
   have hm := kmask (zc - kh n) (8 * kh n) (by omega) (by omega)
   have hza : BitVec.ofNat 64 zp + BitVec.ofNat 64 (8 * kh n) = BitVec.ofNat 64 (zp + 8 * kh n) :=
     bv_add_ofNat (by omega)
