@@ -20,7 +20,7 @@ namespace FvModexp.Amd64.Q.DivRec
 open FvModexp.Amd64.Q.DivLarge (DrsPreW DrsPostW)
 
 /-- the own stores of segment 1: the return slot of the call and the iteration slots -/
-@[reducible] def is4 (s : State) : List (Nat × Nat) :=
+@[reducible] def isB1 (s : State) : List (Nat × Nat) :=
   [((s.regs 4).toNat - 400, (s.regs 4).toNat - 392), ((s.regs 4).toNat - 288, (s.regs 4).toNat - 272),
     ((s.regs 4).toNat - 120, (s.regs 4).toNat - 104), ((s.regs 4).toNat - 88, (s.regs 4).toNat - 80)]
 
@@ -37,7 +37,7 @@ theorem b1c (impl : List Amd64.Segment) (R : RtInv)
     (hsp : X.regs 4 = s.regs 4 - 400#64) (h5 : X.regs 5 = s.regs 4 - 8#64) (h14 : X.regs 14 = s.regs 14)
     (hfs : X.fsBase = s.fsBase) (hdf : X.df = false) (hx15 : X.xmm 15 = 0#128)
     (h0 : X.regs 0 = BitVec.ofNat 64 c.t0) (h3 : X.regs 3 = BitVec.ofNat 64 (8 * (c.vl / 2 + 1)))
-    (hF4 : MemFrame S.mem X.mem (is4 s)) (hreg : X.mem.regions = S.mem.regions)
+    (hF4 : MemFrame S.mem X.mem (isB1 s)) (hreg : X.mem.regions = S.mem.regions)
     (hra : X.mem.readLE ((s.regs 4).toNat - 400) 8 = r1)
     (e1 : X.mem.readLE ((s.regs 4).toNat - 112) 8 = j - c.vl / 2)
     (e1' : X.mem.readLE ((s.regs 4).toNat - 120) 8 = 8 * (j - c.vl / 2))
@@ -61,12 +61,12 @@ theorem b1c (impl : List Amd64.Segment) (R : RtInv)
     rw [hsp, BitVec.toNat_sub_of_le (by simp only [BitVec.le_def, BitVec.toNat_ofNat]; omega)]; rfl
   have hx : LiveExt R c.L Lk := hcr.ext1.trans hev.ext
   have hF : MemFrame S.mem X.mem (fw s) := hF4.mono fun x n ho => by
-    simp only [fw, win, is4, outside_cons, outside_nil, and_true] at ho ⊢; omega
+    simp only [fw, win, isB1, outside_cons, outside_nil, and_true] at ho ⊢; omega
   have hEvX : Ev R c s Lk bk X.mem := Ev.own hcr hev hF hreg
   have hFpX : Fp R c s Lk X.mem (c.l1 s) := Fp.own hcr hH.fp hF
   have rd4 : ∀ x n, Outside x n (win s c.W 96) → X.mem.readLE x n = S.mem.readLE x n := fun x n ho =>
-    hF4.readLE _ _ (by simp only [win, is4, outside_cons, outside_nil, and_true] at ho ⊢; omega)
-  have hsl : Sl c s X.mem := hH.sl.frame hF4 (by simp only [FixOut, is4, outside_cons, outside_nil, and_true]; omega)
+    hF4.readLE _ _ (by simp only [win, isB1, outside_cons, outside_nil, and_true] at ho ⊢; omega)
+  have hsl : Sl c s X.mem := hH.sl.frame hF4 (by simp only [FixOut, isB1, outside_cons, outside_nil, and_true]; omega)
   have hBdX : Bd c s X.mem j (Asm.limbs S.mem c.qp c.ql) :=
     ⟨hsl, e1, e1', e2, e3, e4, by rw [rd4 _ _ hvw]; exact hH.vk,
       by rw [rd4 _ _ (huw.of_sub (by omega) (by omega))]; exact hH.utl, limbs_congr (rd4 _ _ hqw)⟩
@@ -184,7 +184,7 @@ theorem b1 (impl : List Amd64.Segment) (R : RtInv)
     until [cA "runtime.memclrNoHeapPointers"]
   refine b1c impl R hmc c s Lk bk S j hH hj Q k _ rfl ?sp ?r5 ?r14 hH.fs hH.df hH.x15 ?r0 ?r3 ?fr ?reg ?ra
     ?e1 ?e1' ?e2 ?e3 ?e4
-  case fr => unfold is4; janus_frame
+  case fr => unfold isB1; janus_frame
   case reg => janus64_simp
   case sp => simp only [Janus.Amd64.Tactic.setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]
   case r5 => simp only [Janus.Amd64.Tactic.setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact hH.r5
