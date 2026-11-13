@@ -264,4 +264,83 @@ theorem f2x (impl : List Amd64.Segment) (R : RtInv) (c : Cx) (ih : ∀ a, IH imp
   case e2 => (repeat (first | rw [Janus.Arm64.Memory.readLE_writeLE_self] | rw [Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega)])); exact hr296
   all_goals ((repeat (first | rw [Janus.Arm64.Memory.readLE_writeLE_self] | rw [Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega)])) <;> omega)
 
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 32000000 in
+/-- **segment 2**: from `AF1` (`0x5f00e5`) → `u[s:].norm()` → the recursive call → `AF2` -/
+theorem f2 (impl : List Amd64.Segment) (R : RtInv) (c : Cx) (ih : ∀ a, IH impl R c.vl a)
+    (s : State) (Lk : List (Nat × Nat)) (bk : Nat) (S : State) (j : Nat) (Z U : List Nat)
+    (hA : AF1 R c s Lk bk S j Z U) (Q : State → Prop)
+    (k : ∀ L' b' S', AF2 R c s L' b' S' j Z U → ReachesRet (LibDrs.program.link impl) (retAddrOf s) S' Q) :
+    ReachesRet (LibDrs.program.link impl) (retAddrOf s) S Q := by
+  have hcr := hA.cr
+  have hpre := hcr.pre
+  obtain ⟨-, ⟨hb', ha, hw⟩, -⟩ := hpre.ce
+  simp only [regSP] at hb' ha hw
+  obtain ⟨hua, -, -, -, -⟩ := hpre.ua
+  have hWg := drsW64_ge c.vl
+  have hW := hcr.hW; have hu1 := hcr.u1ul; have hvu := hcr.vu1; have h40 := hcr.h40
+  have huc := hpre.ulc; have huc4 := hpre.uc40; have hv9 := hpre.v9.1
+  have hu48 := hpre.ua.2.1
+  have hsl := hA.sl
+  have hpc := hA.pc; have hsp := hA.sp
+  have hspS : (S.regs 4).toNat = (s.regs 4).toNat - 392 := by
+    rw [hsp, BitVec.toNat_sub_of_le (by simp only [BitVec.le_def, BitVec.toNat_ofNat]; omega)]; rfl
+  have hsp' : s.regs 4 - 392#64 = BitVec.ofNat 64 ((s.regs 4).toNat - 392) := by
+    rw [← hsp]; apply BitVec.eq_of_toNat_eq; rw [hspS, BitVec.toNat_ofNat, Nat.mod_eq_of_lt (by omega)]
+  have haccS : S.mem.accessible ((s.regs 4).toNat - 400) 496 true = true := by
+    rw [hA.ev.fr.accessible]; exact Janus.Arm64.Memory.accessible_mono _ hw (by omega) (by omega)
+  have hacc : S.mem.accessible (c.up + 8 * (c.vl / 2 - 1)) (8 * (c.u1 - (c.vl / 2 - 1))) false = true := by
+    rw [hA.ev.fr.accessible]
+    exact Janus.Arm64.Memory.accessible_read_of_write _ (Janus.Arm64.Memory.accessible_mono _ hua (by omega) (by omega))
+  have r1 := hsl.q0p; have r2 := hsl.q0c; have r3 := hsl.q0l; have r4 := hsl.bb; have r5 := hsl.ul'
+  have r6 := hsl.s7; have r7 := hsl.s5
+  have bv : ∀ a b : Nat, a < 2 ^ 64 → b < 2 ^ 64 → (a + b < 2 ^ 64 → BitVec.ofNat 64 a + BitVec.ofNat 64 b = BitVec.ofNat 64 (a + b)) ∧
+      (b ≤ a → BitVec.ofNat 64 a - BitVec.ofNat 64 b = BitVec.ofNat 64 (a - b)) := fun a b ha hb => by
+    refine ⟨fun h => ?_, fun h => ?_⟩ <;> apply BitVec.eq_of_toNat_eq <;>
+      simp only [BitVec.toNat_add, BitVec.toNat_sub, BitVec.toNat_ofNat] <;> omega
+  have one : (1#64) = BitVec.ofNat 64 1 := rfl
+  have b1 := (bv (c.vl / 2) 1 (by omega) (by omega)).2 (by omega)
+  rw [← one] at b1
+  have lt1 : (BitVec.ofNat 64 c.u1 < BitVec.ofNat 64 (c.vl / 2 - 1)) = False := by
+    simp only [BitVec.lt_def, BitVec.toNat_ofNat, eq_iff_iff, iff_false]; omega
+  have u1 := (bv c.uc (c.vl / 2) (by omega) (by omega)).2 (by omega)
+  have u2 := (bv (c.uc - c.vl / 2) 1 (by omega) (by omega)).1 (by omega)
+  rw [← one, show c.uc - c.vl / 2 + 1 = c.uc - (c.vl / 2 - 1) by omega] at u2
+  have w1 := (bv c.u1 (c.vl / 2) (by omega) (by omega)).2 (by omega)
+  have w2 := (bv (c.u1 - c.vl / 2) 1 (by omega) (by omega)).1 (by omega)
+  rw [← one, show c.u1 - c.vl / 2 + 1 = c.u1 - (c.vl / 2 - 1) by omega] at w2
+  have sh : BitVec.ofNat 64 (c.vl / 2 - 1) <<< 3 = BitVec.ofNat 64 (8 * (c.vl / 2 - 1)) := by
+    apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_shiftLeft, BitVec.toNat_ofNat, Nat.shiftLeft_eq]; omega
+  have m1 : ((0#64 - BitVec.ofNat 64 (c.uc - (c.vl / 2 - 1))).sshiftRight 63 &&& BitVec.ofNat 64 (8 * (c.vl / 2 - 1))) =
+      BitVec.ofNat 64 (8 * (c.vl / 2 - 1)) :=
+    neg_sshr63_and _ _ (by simp only [BitVec.toNat_ofNat]; omega) (by simp only [BitVec.toNat_ofNat]; omega)
+  have pu := (bv (8 * (c.vl / 2 - 1)) c.up (by omega) (by omega)).1 (by omega)
+  rw [show 8 * (c.vl / 2 - 1) + c.up = c.up + 8 * (c.vl / 2 - 1) by omega] at pu
+  janus64_run [r1, r2, r3, r4, r5, r6, r7, b1, lt1, u1, u2, w1, w2, sh, m1, pu, BitVec.msb_eq_decide]
+    until [nHdF1]
+  refine normF1 impl (retAddrOf s) _ (c.up + 8 * (c.vl / 2 - 1)) (c.u1 - (c.vl / 2 - 1)) _ _ Q ?fin (by omega)
+    (by omega) ?acc ?p6 ((s.regs 4).toNat - 392) ?sp4 (by omega) ?acc4 (c.u1 - (c.vl / 2 - 1)) _ (Nat.le_refl _) rfl ?r12
+    ⟨fun _ _ _ => rfl, rfl, rfl, rfl⟩ rfl rfl
+  case fin =>
+    intro P n' hpc' hm' h12' hS' hle' hv' hN'
+    refine f2x impl R c ih s Lk bk S j Z U hA Q k _ _ ?fr ?reg ?r296 ?sp ?r5 ?r14 ?fs ?df ?x15 ?r0 ?r1 ?r3 ?r11
+      ?r2 ?r13 ?r6 ?r7 P n' hpc' hm' h12' hS' hle' hv' hN'
+    case fr => unfold isF2; janus_frame
+    case reg => janus64_simp
+    case r296 => rw [Janus.Arm64.Memory.readLE_writeLE_self] <;> omega
+    case fs => exact hA.fs
+    case df => exact hA.df
+    case x15 => exact hA.x15
+    case sp => exact hsp
+    all_goals (simp only [Janus.Amd64.Tactic.setRegF_apply, Nat.reduceEqDiff, ↓reduceIte])
+    case r5 => exact hA.r5
+    case r14 => exact hA.r14
+  case acc =>
+    simp only [Janus.Arm64.Memory.accessible_writeLE]; exact hacc
+  case acc4 =>
+    simp only [Janus.Arm64.Memory.accessible_writeLE]
+    exact Janus.Arm64.Memory.accessible_read_of_write _ (Janus.Arm64.Memory.accessible_mono _ haccS (by omega) (by omega))
+  all_goals (simp only [Janus.Amd64.Tactic.setRegF_apply, Nat.reduceEqDiff, ↓reduceIte])
+  case sp4 => rw [hsp]; exact hsp'
+
 end FvModexp.Amd64.Q.DivRec

@@ -1,0 +1,138 @@
+import FvModexp.Proofs.Amd64.NatQ.DrsFCE
+import FvModexp.Proofs.Amd64.NatQ.DrsC1
+import FvModexp.Proofs.Amd64.NatQ.DrsNormF
+
+set_option autoImplicit false
+
+/-! (amd64 twin (asm s53) of Arm64/NatQ/DrsFC1.lean; adapted from Amd64/NatQ/DrsC1.lean)
+# `divRecursiveStep` (amd64), final correction loop: the head (natdiv.go:869-870)
+
+`c1F`: from the head `CF` (`0x5f0360`, `CMPQ DX, $2; JGE`): `i = 2` → the exit `EF` (`0x5f050a`); otherwise `u.norm()`
+(`normF3`; `R8 = 0x120(SP')` = `u1`, `DI = 0x1c8(SP')` = `up`), the `len ≤ cap` check (`JB 0x5f06e5` panic excluded;
+cap `0x1d8(SP')`), the spill of `i` (`0xd0(SP')` = `r - 184`) → `CALL nat.cmp(qhatv, u.norm())` (`0x5f03b7`, return
+`0x5f03bc`; `x = (AX, BX, CX)`, `y = (DI, SI, R8)`).
+-/
+
+open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Spec Janus.Contracts Janus.Contracts.EqHashModel
+
+set_option linter.janusRenameI false
+
+namespace FvModexp.Amd64.Q.DivRec
+
+open FvModexp.Amd64.Q.DivLarge (DrsPreW DrsPostW)
+
+/-- the return address of the final loop's `nat.cmp` -/
+abbrev rFC1 : Nat := 0x5f03bc
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 32000000 in
+/-- from `normF3`'s exit (`0x5f0391`) to the `CALL nat.cmp` -/
+theorem c1xF (impl : List Amd64.Segment) (c : Cx) (s : State) (M : Memory) (i qv ql n' : Nat) (Q : State → Prop)
+    (P : State) (hpc : P.rip = BitVec.ofNat 64 nExF3) (hm : P.mem = M) (h8 : P.regs 8 = BitVec.ofNat 64 n')
+    (hsp : P.regs 4 = s.regs 4 - 392#64) (h5 : P.regs 5 = s.regs 4 - 8#64) (h14 : P.regs 14 = s.regs 14)
+    (hfs : P.fsBase = s.fsBase) (hdf : P.df = false) (hx15 : P.xmm 15 = 0#128)
+    (h0 : P.regs 0 = BitVec.ofNat 64 qv) (h3 : P.regs 3 = BitVec.ofNat 64 ql)
+    (h1 : P.regs 1 = BitVec.ofNat 64 (3 * c.vl)) (h2 : P.regs 2 = BitVec.ofNat 64 i)
+    (h7 : P.regs 7 = BitVec.ofNat 64 c.up) (hi : i < 2)
+    (hsp4 : 408 ≤ (s.regs 4).toNat) (hsp48 : (s.regs 4).toNat + 96 ≤ 2 ^ 48)
+    (hacc : M.accessible ((s.regs 4).toNat - 400) 496 true = true)
+    (hsuc : M.readLE ((s.regs 4).toNat + 80) 8 = c.uc) (hle : n' ≤ c.uc) (hcap : c.uc < 2 ^ 40)
+    (k : ∀ X : State, X.rip = BitVec.ofNat 64 cmpA → X.regs 4 = s.regs 4 - 400#64 → X.regs 5 = s.regs 4 - 8#64 →
+      X.regs 14 = s.regs 14 → X.fsBase = s.fsBase → X.df = false → X.xmm 15 = 0#128 →
+      X.regs 0 = BitVec.ofNat 64 qv → X.regs 3 = BitVec.ofNat 64 ql → X.regs 1 = BitVec.ofNat 64 (3 * c.vl) →
+      X.regs 7 = BitVec.ofNat 64 c.up → X.regs 6 = BitVec.ofNat 64 n' →
+      MemFrame M X.mem (is1F s) → X.mem.regions = M.regions →
+      X.mem.readLE ((s.regs 4).toNat - 400) 8 = rFC1 → X.mem.readLE ((s.regs 4).toNat - 184) 8 = i →
+      ReachesRet (LibDrs.program.link impl) (retAddrOf s) X Q) :
+    ReachesRet (LibDrs.program.link impl) (retAddrOf s) P Q := by
+  subst hm
+  have hgt : (BitVec.ofNat 64 c.uc < BitVec.ofNat 64 n') = False := by
+    simp only [BitVec.lt_def, BitVec.toNat_ofNat, eq_iff_iff, iff_false]; omega
+  janus64_run [hsuc, hgt] until [cmpA]
+  refine k _ rfl ?sp ?r5 ?r14 hfs rfl hx15 ?r0 ?r3 ?r1 ?r7 ?r6 (by unfold is1F; janus_frame) (by janus64_simp) ?ra ?si
+  case sp => simp only [Janus.Amd64.Tactic.setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]
+  case r5 => simp only [Janus.Amd64.Tactic.setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact h5
+  case r14 => simp only [Janus.Amd64.Tactic.setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact h14
+  case r0 => simp only [Janus.Amd64.Tactic.setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact h0
+  case r3 => simp only [Janus.Amd64.Tactic.setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact h3
+  case r1 => simp only [Janus.Amd64.Tactic.setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact h1
+  case r7 => simp only [Janus.Amd64.Tactic.setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact h7
+  case r6 => simp only [Janus.Amd64.Tactic.setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]
+  all_goals dsimp only
+  case ra => (repeat (first | rw [Janus.Arm64.Memory.readLE_writeLE_self] | rw [Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega)])) <;> omega
+  case si =>
+    (repeat (first | rw [Janus.Arm64.Memory.readLE_writeLE_self] | rw [Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega)]))
+    rw [show (256 : Nat) ^ 8 = 2 ^ 64 by decide]; omega
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 32000000 in
+/-- **the final correction loop's head**: `i = 2` → `EF`; else `u.norm()` → `CALL nat.cmp` -/
+theorem c1F (impl : List Amd64.Segment) (R : RtInv) (c : Cx) (s : State) (Lk : List (Nat × Nat)) (bk : Nat)
+    (S : State) (j : Nat) (Z U : List Nat) (qv i : Nat) (st : Mdl.St) (hC : CF R c s Lk bk S j Z U qv i st)
+    (Q : State → Prop)
+    (kE : ∀ S', EF R c s Lk bk S' j Z U qv → ReachesRet (LibDrs.program.link impl) (retAddrOf s) S' Q)
+    (kX : ∀ (X : State) (n' : Nat), X.rip = BitVec.ofNat 64 cmpA → X.regs 4 = s.regs 4 - 400#64 →
+      X.regs 5 = s.regs 4 - 8#64 → X.regs 14 = s.regs 14 → X.fsBase = s.fsBase → X.df = false →
+      X.xmm 15 = 0#128 → X.regs 0 = BitVec.ofNat 64 qv → X.regs 3 = BitVec.ofNat 64 (c.PF s U).length →
+      X.regs 1 = BitVec.ofNat 64 (3 * c.vl) → X.regs 7 = BitVec.ofNat 64 c.up →
+      X.regs 6 = BitVec.ofNat 64 n' → MemFrame S.mem X.mem (is1F s) → X.mem.regions = S.mem.regions →
+      X.mem.readLE ((s.regs 4).toNat - 400) 8 = rFC1 → X.mem.readLE ((s.regs 4).toNat - 184) 8 = i →
+      i < 2 → n' ≤ c.u1 → natVal S.mem c.up n' = natVal S.mem c.up c.u1 →
+      NatNorm S.mem c.up n' → ReachesRet (LibDrs.program.link impl) (retAddrOf s) X Q) :
+    ReachesRet (LibDrs.program.link impl) (retAddrOf s) S Q := by
+  have hmc := hC.mc
+  have hcr := hmc.cr
+  have hpre := hcr.pre
+  obtain ⟨-, ⟨hb', ha, hw⟩, -⟩ := hpre.ce
+  simp only [regSP] at hb' ha hw
+  obtain ⟨hua, hu48, -, -, -⟩ := hpre.ua
+  have hulc := hpre.ulc; have huc40 := hpre.uc40
+  have hWg := drsW64_ge c.vl; have hW := hcr.hW; have hu1 := hcr.u1ul
+  have hpc := hC.pc; have hsp := hC.sp; have h5 := hC.r5; have h14 := hC.r14; have hfs := hC.fs
+  have hdf := hC.df; have hx15 := hC.x15
+  have h0 := hC.r0; have h1 := hC.r1; have h2 := hC.r2; have h3 := hC.r3
+  have hspS : (S.regs 4).toNat = (s.regs 4).toNat - 392 := by
+    rw [hsp, BitVec.toNat_sub_of_le (by simp only [BitVec.le_def, BitVec.toNat_ofNat]; omega)]; rfl
+  have haccS : S.mem.accessible ((s.regs 4).toNat - 400) 496 true = true := by
+    rw [hmc.ev.fr.accessible]; exact Janus.Arm64.Memory.accessible_mono _ hw (by omega) (by omega)
+  have hiN := toIntC (a := i) (by have := hC.hi; omega)
+  by_cases hi : i < 2
+  · have r1 := hmc.bd.sl.s5; have r2 := hmc.bd.sl.ul'
+    have hacc : S.mem.accessible c.up (8 * c.u1) false = true := by
+      rw [hmc.ev.fr.accessible]
+      exact Janus.Arm64.Memory.accessible_read_of_write _ (Janus.Arm64.Memory.accessible_mono _ hua
+        (Nat.le_refl _) (by omega))
+    have hsuc := hmc.bd.sl.s7
+    have hB : Box (CF R c s Lk bk S j Z U qv i st) := ⟨hC⟩
+    clear hC hmc
+    janus64_run [r1, r2, hiN] until [nHdF3]
+    refine normF3 impl (retAddrOf s) S.mem c.up c.u1 (natVal S.mem c.up c.u1) _ Q ?_
+      (by omega) (by omega) hacc ?_ c.u1 _ (Nat.le_refl _) rfl ?_ ⟨fun _ _ _ => rfl, rfl, rfl, rfl⟩ rfl rfl
+    · intro P n' hpc' hm' h8' hS' hle' hv' hN'
+      refine c1xF impl c s S.mem i qv (c.PF s U).length n' Q P hpc' hm' h8' ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
+        hi (by omega) (by omega) haccS hsuc (by omega) (by omega) ?k
+      case k =>
+        exact fun X a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 =>
+          kX X n' a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 hi hle' hv' hN'
+      · rw [hS'.1 4 (by decide) (by decide)]; simp only [Janus.Amd64.Tactic.setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact hsp
+      · rw [hS'.1 5 (by decide) (by decide)]; simp only [Janus.Amd64.Tactic.setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact h5
+      · rw [hS'.1 14 (by decide) (by decide)]; simp only [Janus.Amd64.Tactic.setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact h14
+      · rw [hS'.2.1]; exact hfs
+      · rw [hS'.2.2.1]
+      · rw [hS'.2.2.2]; exact hx15
+      · rw [hS'.1 0 (by decide) (by decide)]; simp only [Janus.Amd64.Tactic.setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact h0
+      · rw [hS'.1 3 (by decide) (by decide)]; simp only [Janus.Amd64.Tactic.setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact h3
+      · rw [hS'.1 1 (by decide) (by decide)]; simp only [Janus.Amd64.Tactic.setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact h1
+      · rw [hS'.1 2 (by decide) (by decide)]; simp only [Janus.Amd64.Tactic.setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact h2
+      · rw [hS'.1 7 (by decide) (by decide)]; simp only [Janus.Amd64.Tactic.setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]
+    all_goals (try simp only [Janus.Amd64.Tactic.setRegF_apply, Nat.reduceEqDiff, ↓reduceIte])
+  · have hfin := CF.done hC.hi hi hC.inv
+    have hM : McF R c s Lk bk S.mem j Z U qv (c.sFF s U) := hfin ▸ hmc
+    have hv3 := hC.v3
+    have hB : Box (McF R c s Lk bk S.mem j Z U qv (c.sFF s U)) := ⟨hM⟩
+    have hB4 : Box (V3F c s S.mem qv (c.PF s U).length) := ⟨hv3⟩
+    clear hC hmc hM hv3 hfin
+    janus64_run [hiN] until [cExitF]
+    exact kE _ ⟨rfl, hsp, h5, h14, hfs, rfl, hx15, h0, h3, h1, hB.h, hB4.h⟩
+
+end FvModexp.Amd64.Q.DivRec
