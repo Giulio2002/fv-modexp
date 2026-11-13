@@ -1,5 +1,4 @@
 import FvModexp.Proofs.Amd64.Exp.SubMod2NGEns
-import Janus.Amd64.GoABI0
 
 set_option autoImplicit false
 
@@ -20,24 +19,8 @@ open FvModexp.Amd64.EvenHyp
 
 /-- `Ent` without the return-address bound -/
 @[reducible] def EntR (s : State) (zp zc n : Nat) : Prop :=
-  Apart zp (8 * zc) (s.fsBase.toNat - 8) 8 ∧ GoABI0.FrameArgs s [BitVec.ofNat 64 n] ∧ s.xmm 15 = 0 ∧
+  Apart zp (8 * zc) (s.fsBase.toNat - 8) 8 ∧ s.mem.readLE ((s.regs 4).toNat + 8) 8 = n ∧ s.xmm 15 = 0 ∧
     s.df = false
-
-/-- (s50) the stack argument `n` through the framework's `FrameArgs` (word 0 at `RSP + 8`): the v0.3.2 audit rejects a
-raw `readLE (RSP + 8)` in a row precondition as a return-address constraint -/
-theorem frameArgs_n {s : State} {n : Nat} (hn : n < 2 ^ 64) (h : GoABI0.FrameArgs s [BitVec.ofNat 64 n]) :
-    s.mem.readLE ((s.regs 4).toNat + 8) 8 = n := by
-  have h0 := h 0 (by simp)
-  simp only [List.getElem_cons_zero, BitVec.toNat_ofNat, Nat.mul_zero, Nat.add_zero] at h0
-  rw [h0]; exact Nat.mod_eq_of_lt hn
-
-theorem frameArgs_of {s : State} {n : Nat} (hn : n < 2 ^ 64) (h : s.mem.readLE ((s.regs 4).toNat + 8) 8 = n) :
-    GoABI0.FrameArgs s [BitVec.ofNat 64 n] := by
-  intro i hi
-  simp only [List.length_cons, List.length_nil, Nat.zero_add, Nat.lt_one_iff] at hi
-  subst hi
-  simp only [List.getElem_cons_zero, BitVec.toNat_ofNat, Nat.mul_zero, Nat.add_zero]
-  rw [h]; exact (Nat.mod_eq_of_lt hn).symm
 
 /-- `PreG` with `EntR` in place of `Ent` -/
 @[reducible] def PreGR (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (op zp zl zc yp yl yc n : Nat) (s : State) :
@@ -59,7 +42,7 @@ theorem PreGR.toG {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {op zp zl zc yp 
   obtain ⟨a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23,
     a24, a25, a26, a27, e1, e2, e3, e4⟩ := h
   exact ⟨a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23,
-    a24, a25, a26, a27, e1, hr, frameArgs_n (by omega) e2, e3, e4⟩
+    a24, a25, a26, a27, e1, hr, e2, e3, e4⟩
 
 /-- the general summary on `PreGR` -/
 def EnsGR (impl : List Amd64.Segment) (R : RtInv) : Prop :=
