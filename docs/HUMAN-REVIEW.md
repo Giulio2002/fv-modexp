@@ -92,12 +92,16 @@ the Janus toy runtime's heap (budgets up to 2^22):
 |---|---|---|
 | `opCost w` | `allocCost (1024 w + 1024)` | a request of a callee with operands of at most `w` words is at most `64 w + 64` words (window-4 `stk.reserve(23 · len m)`, Karatsuba / recursive-division scratch of `2 len m`-word products, `nat.make` results), at most doubled by `growslice`: a block of at most `1024 w + 1024` bytes; `blockSize_le_allocCost` |
 | `ModBudget w` | `64 · opCost w` | `z.Mod(z, y)`, `w = max(len z, len y)`: `nat.make` of `u` (len x + 1), `q`, `z`; `getStack`; `(*stack).nat` scratch of `divLarge` / `divRecursiveStep` (w ≤ 128 ≥ divRecursiveThreshold 40: ≤ 4 blocks, depth ≤ 2) — under 64 requests |
-| `ExpBudget w yW` | `(8 · 64 yW + 128) · opCost w` | `z.exp(z, y, m, false)`, `w = max(len z, len y, len m)`, `yW = len y`: ≤ `64 yW` exponent bits; per bit at most one `sqr`, one `mul`, one reduction (`div` or `montgomery`), each with ≤ 2 allocating requests (its `nat.make` result when the capacity is short, `(*stack).nat` scratch): ≤ 8 per bit; setup ≤ 128 (power table 16 entries, `stk.reserve`, `m1 m2 z1 z2` of `expNNEven`, `lsh`, `getStack`). The per-bit allowance lets a loop invariant charge each iteration a constant without tracking capacities |
+| `ExpBudget w yW` | `(8 · 64 yW + 128) · opCost w · (2^32 · min w 1)` | `z.exp(z, y, m, false)`, `w = max(len z, len y, len m)`, `yW = len y`: ≤ `64 yW` exponent bits; per bit at most one `sqr`, one `mul`, one reduction (`div` or `montgomery`), each with ≤ 2 allocating requests (its `nat.make` result when the capacity is short, `(*stack).nat` scratch): ≤ 8 per bit; setup ≤ 128 (power table 16 entries, `stk.reserve`, `m1 m2 z1 z2` of `expNNEven`, `lsh`, `getStack`). The per-bit allowance lets a loop invariant charge each iteration a constant without tracking capacities. SLACK `2^32` (top s28, after "[divmc s33] FINDING" in NOTES-conventions): the proved cost envelopes of the `nat` chain (Karatsuba `MC` closure, per-modulus-bit charges of the power-of-two / even paths, `stackNatCost` at the stack-level bound `2^16`) exceed the request count above by up to `2^19.84` (numeric mirror scripts/gen/exp-budget-check.py; worst `xl = n = 128, yl = 0`); `2^32` is what the uniform Lean bound needs. The factor is `0` for `w = 0` (all three lengths `0`: `Run` returns before any call) |
 | `BytesBudget w` | `allocCost (8 w)` | `x.Bytes()`, `w = len x`: one `make([]byte, 8 w)` |
 
-For 128-word operands: `opCost 128 ≈ 2^18`, `ExpBudget 128 128 ≈ 2^34` (a deliberate over-approximation: `B` only has
-to be an upper bound). For the `correctness_ok` witness (base 3, exponent 5, modulus 7: one word each):
-`ExpBudget 1 1 = 640 · 4120 ≈ 2.6 · 10^6 < 2^22`. If a callee proof finds a request count above an allowance it reports it
+For 128-word operands: `opCost 128 ≈ 2^18`, `ExpBudget 128 128 ≈ 2^66` (a deliberate over-approximation: `B` only has
+to be an upper bound). CONSEQUENCE of the `2^32` slack: `ExpBudget 1 0 ≈ 2^51` exceeds the Janus toy runtime's heap
+(budgets ≤ `2^22`), so the success-path witnesses (`Top/RunOkRow`, `Top/RunOk`) run `Run` on 99 zero bytes (lengths
+`0, 0, 0`, empty output, `okBudget = 149832`); the theorem itself covers every input, but for inputs with a nonzero length
+its budget premise holds only for runtimes whose invariant admits budgets ≥ `2^51` (e.g. a budget-free collector model).
+An exponentiating witness needs cost envelopes ≥ 2x tighter at one-word operands (the dominant term is `stackNatCost` at
+the stack-level bound `2^16`). If a callee proof finds a request count above an allowance it reports it
 here and the constant is raised (never the proof weakened). Request sizes stay as in the table above.
 
 **Non-vacuity plan (coordinator requirement, open):**

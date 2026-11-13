@@ -98,7 +98,7 @@ theorem budget_c2e {b b1 b2 b3 X w yW lw0 lw1 lw2 lb M : Nat} (h0 : lw0 ≤ w) (
   have e1 : ExpBudget (max (max lw0 lw1) lw2) lw1 ≤ ExpBudget w yW := by
     unfold ExpBudget opCost allocCost
     have : max (max lw0 lw1) lw2 ≤ w := by omega
-    exact Nat.mul_le_mul (by omega) (by omega)
+    exact Nat.mul_le_mul (Nat.mul_le_mul (by omega) (by omega)) (Nat.mul_le_mul_left _ (by omega))
   have e2 : BytesBudget lb ≤ BytesBudget maxW := by
     unfold BytesBudget allocCost; omega
   omega
@@ -111,7 +111,7 @@ theorem budget_c2e0 {b b1 X w yW lw0 lw1 lw2 lb M A : Nat} (h0 : lw0 ≤ w) (h1 
   have e1 : ExpBudget (max (max lw0 lw1) lw2) lw1 ≤ ExpBudget w yW := by
     unfold ExpBudget opCost allocCost
     have : max (max lw0 lw1) lw2 ≤ w := by omega
-    exact Nat.mul_le_mul (by omega) (by omega)
+    exact Nat.mul_le_mul (Nat.mul_le_mul (by omega) (by omega)) (Nat.mul_le_mul_left _ (by omega))
   have e2 : BytesBudget lb ≤ BytesBudget maxW := by
     unfold BytesBudget allocCost; omega
   omega

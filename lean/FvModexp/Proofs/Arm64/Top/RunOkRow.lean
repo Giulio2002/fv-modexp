@@ -19,7 +19,7 @@ interface shape (`RunIface.ModSpec`/`ExpSpec`/`BytesSpec`, call depth `stkM`/`ab
 their machine-code proofs land (divmc / expmc / top); then they are instantiated and `W` fixed.
 
 `WitnessOk.nonvacuous_of`: every hypothesis (except the three callee specs, still premises) and every precondition
-conjunct hold together for the toy runtime and the call `Run(c, p, 99, 99)` computing `3 ^ 5 mod 7` (budget `0x300000`
+conjunct hold together for the toy runtime and the call `Run(c, p, 99, 99)` on 99 zero bytes (lengths `0, 0, 0`, empty output) (budget `0x300000`
 ≤ the toy heap's `2^22`, window `0x20000`).
 -/
 
@@ -64,7 +64,8 @@ set_option maxRecDepth 100000
 
 /-- The window of the witness call. -/
 def WW : Nat := 0x20000
-/-- The budget of the witness call (`okBudget` of the lengths `1, 1, 1` is `2917704`; the toy heap admits `2^22`). -/
+/-- The budget of the witness call (`okBudget` of the lengths `0, 0, 0` is `149832`; the toy heap admits `2^22`; since
+the `2^32` slack of `RunIface.ExpBudget` no input with a nonzero length fits the toy heap). -/
 def bW : Nat := 0x300000
 def gAw : Nat := 0x6d0e80
 def wbAw : Nat := 0x743640
@@ -77,13 +78,11 @@ theorem wbA_eq : RunIface.wbA = wbAw := by decide
 theorem nA_eq : RunIface.natOneA = nAw := by decide
 
 /-- Below `0x500000` (the read-only data, the bump cell) the bytes of the error witness; the receiver flags; the call
-data: lengths `1, 1, 1` (bytes 31, 63, 95), base `3`, exponent `5`, modulus `7`; the four `math/big` thresholds
+data: 99 zero bytes (lengths `0, 0, 0`: `Run` returns the empty output before any `math/big` call); the four `math/big` thresholds
 `40, 40, 12, 80` at `gA`. -/
 def bytes1 (a : Nat) : Byte :=
   if a < 0x500000 then bytes0 a else
   if a = cR then 1 else if a = cR + 1 then 1 else if a = cR + 2 then 1 else
-  if a = pI + 31 then 1 else if a = pI + 63 then 1 else if a = pI + 95 then 1 else
-  if a = pI + 96 then 3 else if a = pI + 97 then 5 else if a = pI + 98 then 7 else
   if a = gAw then 40 else if a = gAw + 8 then 40 else if a = gAw + 16 then 12 else if a = gAw + 24 then 80 else
   if a = nAw + 1 then 0x0f else if a = nAw + 2 then 0x6d else if a = nAw + 8 then 1 else if a = nAw + 16 then 1 else
   if a = opw then 1 else 0
@@ -244,14 +243,14 @@ theorem returnsF (stkM aboveM : Nat) (hM : RunIface.ModSpecM implAt R stkM above
     (by rw [addr_mv]; exact model_mvz) (by rw [addr_no]; exact model_no) stkM aboveM hM hE WW hW (by decide) hab hk1 ha1
     bW [] c1 p1 99 99 ret hret s1 setup pre
 
-/-- The output at the witness is `[3 ^ 5 mod 7] = [5]` (EthLib `compute` on the witness call data). -/
+/-- The output at the witness is empty (EthLib `compute` on the witness call data, lengths `0, 0, 0`). -/
 theorem compute1 : compute (bytesAt s1.mem p1.toNat (99 : BitVec 64).toNat)
-    (parseLengths (bytesAt s1.mem p1.toNat (99 : BitVec 64).toNat)) = ⟨#[5]⟩ := by
+    (parseLengths (bytesAt s1.mem p1.toNat (99 : BitVec 64).toNat)) = ⟨#[]⟩ := by
   decide +kernel
 
 /-- All hypotheses of `correctness_ok` except the three callee specs (premises until their proofs land) hold together,
 with every conjunct of its precondition, and the call returns: the toy runtime, an empty live set, budget `bW`, window
-`WW`, and the call `Run(c, p, 99, 99)` computing `3 ^ 5 mod 7`. -/
+`WW`, and the call `Run(c, p, 99, 99)` on 99 zero bytes (lengths `0, 0, 0`, empty output). -/
 theorem nonvacuous_of (stkM aboveM : Nat) (hM : RunIface.ModSpecM implAt R stkM aboveM)
     (hE : RunIface.ExpSpec implAt R stkM aboveM)
     (hW : 624 + stkM ≤ WW) (hab : aboveM ≤ 160) (hk1 : 4160 ≤ stkM) (ha1 : 16 ≤ aboveM) :
@@ -272,7 +271,7 @@ theorem nonvacuous_of (stkM aboveM : Nat) (hM : RunIface.ModSpecM implAt R stkM 
         RunArm64.StackPool R s.mem (RunArm64.windowW s W) ∧
     RunArm64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat)) ≤ b ∧
     LengthsPass (bytesAt s.mem p.toNat len.toNat) ∧
-    compute (bytesAt s.mem p.toNat len.toNat) (parseLengths (bytesAt s.mem p.toNat len.toNat)) = ⟨#[5]⟩ ∧
+    compute (bytesAt s.mem p.toNat len.toNat) (parseLengths (bytesAt s.mem p.toNat len.toNat)) = ⟨#[]⟩ ∧
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.memmove") ∧
       ((s_c.regs 2).toNat = 0 ∧ Mem.EqPre 4096 3 s_c ∧

@@ -143,13 +143,13 @@ def StackPool (R : RtInv) (m : Memory) (w : List (Nat × Nat)) : Prop :=
 
 /-- The budget of the success path, from the three lengths (bytes): the three length headers (`nat.make(4)`), the three
 operand reads (a copy buffer and a `nat`), the `Mod` / `exp` call (per request at most `blockBound (1024 w + 1024)`
-for operands of at most `w` words: `Mod` ≤ 64 requests, `exp` ≤ `8 · 64 · ⌈expLen/8⌉ + 128`), `Bytes` and the
-`LeftPadBytes` buffer. Derivation: docs/HUMAN-REVIEW.md ("Operand bound and budgets"). -/
+for operands of at most `w` words: `Mod` ≤ 64 requests, `exp` ≤ `8 · 64 · ⌈expLen/8⌉ + 128`, times the slack
+`2^32` of the proved cost envelopes, `0` when all lengths are `0`), `Bytes` and the `LeftPadBytes` buffer. Derivation: docs/HUMAN-REVIEW.md ("Operand bound and budgets"). -/
 def okBudget (l : EthLib.Execution.Evm.Precompiles.Modexp.Lengths) : Nat :=
   let w := max (max ((l.base + 7) / 8) ((l.exponent + 7) / 8)) ((l.modulus + 7) / 8)
   let op := blockBound (1024 * w + 1024)
   3 * blockBound 64 + 3 * (blockBound 1024 + blockBound (8 * 132)) +
-    (64 * op + (8 * (64 * ((l.exponent + 7) / 8)) + 128) * op + blockBound (8 * 128)) + blockBound 1024
+    (64 * op + (8 * (64 * ((l.exponent + 7) / 8)) + 128) * op * (2 ^ 32 * min w 1) + blockBound (8 * 128)) + blockBound 1024
 
 /-- `Run` returned `(out, nil)`: the nil `error` (type word `X3 = 0`) and `out = (X0, X1)` holds exactly the bytes
 `compute data (parseLengths data)` of the EthLib specification (`data` = the input bytes in the entry memory `m`). -/
