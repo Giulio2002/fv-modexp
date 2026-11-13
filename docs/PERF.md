@@ -1651,3 +1651,17 @@ KSqrEnd 17 s / 2.6, KSqrProD 12 s / 2.7; Amd64/Nat/AddTo (+ df conjunct) 134 s /
 * amd64 RequiredGas after the Blk2/Blk3 Lt/Ge split (top s36, v0.3.2, fresh cache, warm-up 904 s): **PASS 848 s / 3.4 GB**,
   but the host load rose from ~15 to **75** during the row (load avg 75/50/30 at the end) — NOT comparable with the 613 s
   run at load ~13; the trim's effect is unmeasured. Re-measure at load ≤ 20 (or in the release run) before further trims.
+
+## infra s47/s49 (2026-11-13) — arm64 release-order run `rel47` (Janus v0.3.2, fresh cache-infra/rel47, JANUS_REPLAY_THREADS=1, load 15 → 100)
+Warm-up 837 s, then (wall s / peak MB): StackNat 126/2467, MulAddWW 153/945, BasicMul 119/3318, BasicSqr 333/3221,
+Sqr 479/3009, Mul 402/2176, Trunc 140/873, Rsh 121/836, Lsh 113/899, IntAS 64/402, BasicSqrQ 390/2872, SqrQ 255/2141,
+MulQ 697/2246, SubMod2N 470/2841, **ModInv (ensQ, first run) 518/4411**, DivW 333/1253, DivBasic 143/1383.
+FAIL: MontRow (expmc's calibration row has no `Witness.nonvacuous` — not a release row; listed by mistake), DrsRow and
+DivRow hit the 900 s timeout at load ~85-100 (asm; load-induced, Drs's closure compiled in DrsRow). Stopped at RemRow
+(11:45) to merge main (divmc's P2 Q-form) for BudClQ; W2/W4/P2W2/P2W4/P2D/Even not reached (stale P2 files anyway).
+
+### infra s49 dev (amd64 SubMod2N G chain, full rebuild at load ~100, LEAN_NUM_THREADS=4)
+GC 14, GS1J 121 / 6.2 GB, GS1Z 47, GS1N 119, GS1T 170, GS2J 110, GS2Z 29, GS2N 168 / 4.8 GB, **GS2T 288 / 6.4 GB**
+(145 s at load ~20), GS3L 48, GS3G 49, GS3 133 / 5.3 GB, GAlloc 10, **GS4A 66 / 3.1 GB** (was a > 9.5 min hang:
+blanket `all_goals first | exact …` closers after janus64_run → per-goal bullets), GS4B 104, GS4C 64, GS4Cb 16, GEns 6,
+SubMod2NRow 12 s.
