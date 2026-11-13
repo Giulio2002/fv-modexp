@@ -1716,6 +1716,15 @@ rel42 (snapshot snap42 = 8923cef0, same store, the four rows alone, load 30-46):
   (context = summary + DivPostL pieces) never finished; the same facts proved at the top of the proof take ms. Prove
   every arithmetic side fact BEFORE the call (or in a small lemma) — never omega in a post-call context.
 
+### expmc s58 (amd64 window-4 W4Fun bridge, dev builds on v0.3.1, host load ~35)
+* New: W4FunB (per-layer AncI bridge, 10 lemmas) 1.8 s, W4FunV (w4_value) 1.6 s, W4FunO (S0..S10 Outside facts,
+  chainA/chainT) 3.2 s, W4FunH (costs + post helpers) 2.8 s. W4XnS (XnQ keeps the branch condition) 6 s, W4En 27 s.
+* LESSON: `omega` (and `by omega` arguments) in a context holding the reducible chain posts (`Keeps`, `DivQ`, `RetQ`…)
+  hit "(deterministic) timeout at whnf" (200k heartbeats) — omega whnf's every hypothesis. Pass tiny arithmetic
+  lemmas (`fbud2 hb hb2 : bA + d ≤ b'` from `bA + (c + d) ≤ b`, `b - c ≤ b'`) instead: whole module 70 s (failing) → 1.8 s.
+* NOTE: in amd64 modules even a 3-hypothesis `omega` over `sp - 8 - K`/`0x3f8` reached maxRecDepth; the file-level
+  `set_option maxRecDepth 20000` fixes it.
+
 ### expmc s57 (amd64 window-4 entry + W4Fun bridge infra, dev builds on v0.3.1, host load ~50)
 * New: W4EnDefs 2.4 s, W4EnA (entry → enJ | growslice; 3 janus64_runs: no-grow `<`/`=` + grow) 78 s / 2.5 GB,
   W4EnG (memclr call → enJ) 32 s / 2.5 GB, W4EnG2 (growslice call → memclr) 40 s / 3.2 GB, W4EnJ (header + WB → xnE)
