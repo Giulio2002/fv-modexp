@@ -280,7 +280,7 @@ theorem dr_pre {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st
     ⟨by have := hpre.lvH; simp only [StackNat.rnd]; omega,
       by show dcv + (stkRes H - potK * stCap X.mem st) ≤ bq; rw [hCp]; exact hcost⟩, by rw [h14]; exact hinvX,
     by rw [hsp4.1]; exact hvS, by rw [hsp4.2.1]; exact hlS, by rw [hsp4.2.2]; exact hcS,
-    ⟨?tq, ?tp, ?ts, ?tf⟩, by rw [hXacc]; exact hpre.adx⟩
+    ⟨?tq, ?tp, ?ts, ?tf⟩, by rw [hXacc]; exact hpre.adx, fun _ => by rw [hfs]; exact w1_ta hE⟩
   all_goals clear hroom
   case ce =>
     obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -, -, hga, hgr, -, hro, ⟨⟨htb, htr, htg⟩, -, htw⟩⟩ := hpre.ce

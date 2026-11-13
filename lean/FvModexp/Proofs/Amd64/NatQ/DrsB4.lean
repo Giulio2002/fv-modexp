@@ -27,7 +27,7 @@ theorem b4 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program 
     (hmul : MulHypQE impl R ns mulWX64)
     (c : Cx) (s : State) (Lk : List (Nat × Nat)) (bk : Nat) (S : State) (j : Nat) (Z U : List Nat) (qn : Nat)
     (hA : A3 R c s Lk bk S j Z U qn)
-    (htarr : 0 < stCap s.mem c.st → Apart (stW s.mem c.st) (8 * stCap s.mem c.st) (tls s) 8) (Q : State → Prop)
+    (Q : State → Prop)
     (k : ∀ L' b' S', C R c s L' b' S' j Z U (c.qv s S.mem) 0 (c.st0 s j U) →
       ReachesRet (LibDrs.program.link impl) (retAddrOf s) S' Q) :
     ReachesRet (LibDrs.program.link impl) (retAddrOf s) S Q := by
@@ -71,7 +71,7 @@ theorem b4 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program 
   have hvc40 : c.vc < 2 ^ 40 := hpre.vc40
   clear hA hcr hpre hsl k
   janus64_run [r1, r2, r3, r4', r5, r6, r7, r8, r9, r10] until [segAddr Extracted.program FvModexp.Amd64.Q.NatMul.fn]
-  refine b4c impl hap R ns hns hcode hmul c s Lk bk S j Z U qn hB.h htarr Q _ rfl ?sp ?r5 ?r14 hfs rfl hx15
+  refine b4c impl hap R ns hns hcode hmul c s Lk bk S j Z U qn hB.h Q _ rfl ?sp ?r5 ?r14 hfs rfl hx15
     ?r0 ?r3 ?r1 ?r7 ?r6 ?r8 ?r9 (by unfold is4; janus_frame) (by janus64_simp) ?ra ?a1 ?a2 ?a3 kT
   case sp => simp only [Janus.Amd64.Tactic.setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]
   case r5 => simp only [Janus.Amd64.Tactic.setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact h5

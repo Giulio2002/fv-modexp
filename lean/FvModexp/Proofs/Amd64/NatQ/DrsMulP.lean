@@ -10,8 +10,7 @@ set_option autoImplicit false
 `mul_pre`: at the callee entry `X` (`RSP = r - 400`, memory = `A3`'s): divmc's `Q.NatMul.MPre` (window `W'`,
 `mulW64 qn (B-1) ≤ W'`, `W' + 400 ≤ W`, above `88`) with `z = qhatv (qv, 3n)`, `x = qhat (t0, qn, cap B+1)`,
 `y = v[:B-1] (vp, B-1, cap vc)`, reserve level `Hq`, budget `bk`.
-Extra premise `htarr`: the entry stack array is apart from the TLS slot (`StkPre` needs it for the whole array;
-`DrsPreW` only states it for the free part — FINDING "[asm s48] stack array vs TLS").
+The whole entry stack array is apart from the TLS slot by `DrsPreW.ta` (asm s49; `StkPre` needs it for the whole array).
 -/
 
 open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Spec Janus.Contracts
@@ -27,7 +26,6 @@ theorem mul_pre {R : RtInv} {c : Cx} {s X : State} {Lk : List (Nat × Nat)} {bk 
     (hrg : Rg R c s Lk (c.qv s X.mem) (8 * (3 * c.vl))) (hqle : qn ≤ c.vl / 2 + 1)
     (hsp : (X.regs 4).toNat = (s.regs 4).toNat - 400) (h14 : X.regs 14 = s.regs 14) (hfs : X.fsBase = s.fsBase)
     (hk : mulW64 qn (c.vl / 2 - 1) ≤ W') (hkW : W' + 400 ≤ c.W)
-    (htarr : 0 < stCap s.mem c.st → Apart (stW s.mem c.st) (8 * stCap s.mem c.st) (tls s) 8)
     (hbud : mulCQ (c.vl / 2 + 1) (c.vl / 2 - 1) + stkR c.Hq X.mem c.st ≤ bk) :
     Q.NatMul.MPre R bk c.Hq Lk W' (c.qv s X.mem) (3 * c.vl) c.st c.t0 qn (c.vl / 2 + 1) c.vp (c.vl / 2 - 1)
       c.vc X := by
@@ -84,7 +82,7 @@ theorem mul_pre {R : RtInv} {c : Cx} {s X : State} {Lk : List (Nat × Nat)} {bk 
     rcases hev.sarr with ⟨e1, e2⟩ | ⟨hin, -⟩
     · have hn' : 0 < stCap s.mem c.st := by rw [← e2]; exact hn
       rw [e1, e2]; obtain ⟨b1, b2⟩ := harr hn'
-      exact ⟨hwin _ _ b1, by rw [h14]; exact b2, by rw [hfs]; exact htarr hn'⟩
+      exact ⟨hwin _ _ b1, by rw [h14]; exact b2, by rw [hfs]; exact hcr.pre.ta hn'⟩
     · have h1 := outside_of_inRangesR hout hin
       have h2 := outside_of_inRangesR hgr hin
       have h3 := outside_of_inRangesR htrt hin

@@ -18,7 +18,7 @@ open FvModexp.Amd64.RunIface (Serves)
 namespace FvModexp.Amd64.Q.DivLarge
 open FvModexp.Amd64.DivLarge
 
-/-- The precondition (register args `z = (zp, _, zc)`, `st`, `u = (up, _, uc)`; the stack args `uIn = (ip, il, _)` at `RSP + 8, + 16` and `vIn = (vp, vl, _)` at `RSP + 32, + 40`); a plain conjunction (conjuncts in order: ce, sv, gl, zo, uo, io, vo, v2, vil, il9, vn, zu, zio, uv, ui, sti, stl, sz, su, si, svv, wbap, hf, w0, st0, ga, cost, inv, ipS, ilS, vpS, vlS, stt, stft, adx; accessors `Pre.<name>`). -/
+/-- The precondition (register args `z = (zp, _, zc)`, `st`, `u = (up, _, uc)`; the stack args `uIn = (ip, il, _)` at `RSP + 8, + 16` and `vIn = (vp, vl, _)` at `RSP + 32, + 40`); a plain conjunction (conjuncts in order: ce, sv, gl, zo, uo, io, vo, v2, vil, il9, vn, zu, zio, uv, ui, sti, stl, sz, su, si, svv, wbap, hf, w0, st0, ga, cost, inv, ipS, ilS, vpS, vlS, stt, stft, adx, ta; accessors `Pre.<name>`). -/
 def Pre (R : RtInv) (b H : Nat) (L : List (Nat × Nat)) (c : Nat) (zp zc st up uc ip il vp vl : Nat) (s : State) :
     Prop :=
   (CallEnv R L s 41272 112) ∧
@@ -55,7 +55,8 @@ def Pre (R : RtInv) (b H : Nat) (L : List (Nat × Nat)) (c : Nat) (zp zc st up u
   (s.mem.readLE ((s.regs 4).toNat + 40) 8 = vl) ∧
   (Apart st 24 (s.fsBase.toNat - 8) 8) ∧
   (Apart (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st)) (s.fsBase.toNat - 8) 8) ∧
-  (s.mem.accessible Callees.adxAddr 1 false = true)
+  (s.mem.accessible Callees.adxAddr 1 false = true) ∧
+  (0 < stCap s.mem st → Apart (stW s.mem st) (8 * stCap s.mem st) (s.fsBase.toNat - 8) 8)
 
 theorem Pre.ce {R : RtInv} {b H : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st up uc ip il vp vl : Nat} {s : State}
     (h : Pre R b H L c zp zc st up uc ip il vp vl s) : CallEnv R L s 41272 112 := h.1
@@ -128,7 +129,10 @@ theorem Pre.stt {R : RtInv} {b H : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc
 theorem Pre.stft {R : RtInv} {b H : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st up uc ip il vp vl : Nat} {s : State}
     (h : Pre R b H L c zp zc st up uc ip il vp vl s) : Apart (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st)) (s.fsBase.toNat - 8) 8 := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
 theorem Pre.adx {R : RtInv} {b H : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st up uc ip il vp vl : Nat} {s : State}
-    (h : Pre R b H L c zp zc st up uc ip il vp vl s) : s.mem.accessible Callees.adxAddr 1 false = true := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2
+    (h : Pre R b H L c zp zc st up uc ip il vp vl s) : s.mem.accessible Callees.adxAddr 1 false = true := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+
+theorem Pre.ta {R : RtInv} {b H : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st up uc ip il vp vl : Nat} {s : State}
+    (h : Pre R b H L c zp zc st up uc ip il vp vl s) : 0 < stCap s.mem st → Apart (stW s.mem st) (8 * stCap s.mem st) (s.fsBase.toNat - 8) 8 := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2
 
 /-- The postcondition (as arm64; FS base and DF kept): `q = U / V` (old `z` array or a fresh one) in `RAX, RBX, RCX`,
 `r = U mod V` (old `u` array or a fresh one, apart from the stack's final array) in `RDI, RSI, R8`, both normalised;

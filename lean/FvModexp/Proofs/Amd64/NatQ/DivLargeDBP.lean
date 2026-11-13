@@ -124,6 +124,18 @@ theorem w1_facts {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc 
       rw [e1, e2]; unfold Apart at this ⊢; omega
     · have := outside_of_inRanges htr hin; unfold Apart; omega
 
+/-- the WHOLE drs stack array is apart from the TLS slot (pure) -/
+theorem w1_ta {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st up uc ip il vp vl : Nat}
+    {s : State} {t : Nat} {L1 : List (Nat × Nat)} {b1 w1 c1 : Nat}
+    (hE : Env R b H L c zp zc st up uc ip il vp vl s t L1 b1 w1 c1) :
+    Apart w1 (8 * c1) (s.fsBase.toNat - 8) 8 := by
+  have hpre := hE.pre
+  have hc0 := (w1_facts hE).1
+  have htr : Outside (s.fsBase.toNat - 8) 8 R.rt := hpre.ce.2.2.2.2.2.2.2.2.2.2.1
+  rcases hE.arr with ⟨e1, e2⟩ | ⟨hin, -⟩
+  · rw [e2] at hc0; rw [e1, e2]; exact hpre.ta hc0
+  · have := outside_of_inRanges htr hin; unfold Apart; omega
+
 /-- the budget of the division call (pure) -/
 theorem bud_div {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {dc : Nat → Nat → Nat}
     {zp zc st up uc ip il vp vl : Nat} {s : State} {t : Nat} {L1 : List (Nat × Nat)} {b1 w1 c1 : Nat}

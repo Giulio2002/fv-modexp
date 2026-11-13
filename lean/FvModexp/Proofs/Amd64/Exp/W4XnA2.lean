@@ -142,6 +142,7 @@ theorem xnA2K {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
   refine divCallG hap hDiv hnsD hnsW 0x2d6 (by decide) S4 hpre (by omega) (by omega) hz64 d1 d2 (by rw [d17])
     d3 d4 d5 d6 d7 d8 d9 d10 (by rw [d11, h14]) (by rw [d12, hfs]) (by rw [d13, hx15]) (by rw [d14, hdf])
     (by obtain ⟨-, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, hx⟩ := hC.1; rw [haw]; exact hx)
+    (fun hc => (hCw.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1 hc).2.2)
     (fun S5 L5 b5 r' rl rc e1 e2 e3 e4 e5 e6 e7 e8 e9 e10 hD => ?_)
   have hk5 := keeps_divX hCw hKD hzinw (by rw [haw]; exact (hqL hk0).2.2.1) hqW hqG hqF hD
   have hC5 := CtxX.keep hCw hk5

@@ -27,7 +27,7 @@ theorem b4c (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
     (hmul : MulHypQE impl R ns mulWX64)
     (c : Cx) (s : State) (Lk : List (Nat × Nat)) (bk : Nat) (S : State) (j : Nat) (Z U : List Nat) (qn : Nat)
     (hA : A3 R c s Lk bk S j Z U qn)
-    (htarr : 0 < stCap s.mem c.st → Apart (stW s.mem c.st) (8 * stCap s.mem c.st) (tls s) 8) (Q : State → Prop)
+    (Q : State → Prop)
     (X : State) (hpc : X.rip = BitVec.ofNat 64 (segAddr Extracted.program FvModexp.Amd64.Q.NatMul.fn))
     (hsp : X.regs 4 = s.regs 4 - 400#64) (h5 : X.regs 5 = s.regs 4 - 8#64) (h14 : X.regs 14 = s.regs 14)
     (hfs : X.fsBase = s.fsBase) (hdf : X.df = false) (hx15 : X.xmm 15 = 0#128)
@@ -82,7 +82,7 @@ theorem b4c (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
       by rw [show (s.regs 4).toNat - 400 + 16 = (s.regs 4).toNat - 384 by omega]; exact a2,
       by rw [show (s.regs 4).toNat - 400 + 24 = (s.regs 4).toNat - 376 by omega]; exact a3, ?_⟩
     exact mul_pre (X := X) hcr hA'.ev hA'.fp hA'.rg hqle hspn h14 hfs (mulW64_le_X (by omega) (by omega))
-      (by show 30792 + 400 ≤ c.W; omega) htarr (by have h := hA'.bud; dsimp only at h; omega)
+      (by show 30792 + 400 ≤ c.W; omega) (by have h := hA'.bud; dsimp only at h; omega)
   rw [h0, h1, h7, h6, h8, h9, t1, t2, t3, t4, t5, t6] at hq
   obtain ⟨hTfs, hTdf, hr0, hr3, hr1, L', b', hmc⟩ := mul_post (X := X) hA' rfl hspn h14 (by show 30792 + 400 ≤ c.W; omega) hq hrg
   refine k T ?_ ?_ (f5.trans h5) (f14.trans h14) (hTfs.trans hfs) (hTdf.trans hdf) (f15.trans hx15)
