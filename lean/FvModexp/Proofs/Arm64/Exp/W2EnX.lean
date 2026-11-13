@@ -60,7 +60,7 @@ theorem atXnE (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
         Xv' < Exp.B ^ n ∧
         XnPost R L1 K (b1 - W2Pro.xnPre n costD (stLen s.mem st + StackNat.rnd (11 * n)) (xl - n + 1)) M g sp n mp mc (s.mem.readLE mp (8 * n)) Xv' yp ylen (s.mem.readLE yp (8 * ylen))
           (s.mem.readLE (yp + 8 * (ylen - 1)) 8) zp zc st (stLen s.mem st) (stLen s.mem st + StackNat.rnd (11 * n))
-          r18 r29 s')) := by
+          (stLen s.mem st + StackNat.rnd (11 * n) + StackNat.rnd (xl - n + 1) + StackNat.rnd n + StackNat.rnd n) r18 r29 s')) := by
   have hC := ctxB_of hP hstnz hF hLF hrg hx hkf hlen hcap hc40 hnl hsl
   rw [hlen] at hC
   have hP' := hP
@@ -70,7 +70,7 @@ theorem atXnE (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
   have hl0 : stLen s.mem st ≤ stLen M st := by omega
   have hrd := fun {a' k' : Nat} (h1 : xp ≤ a') (h2 : a' + k' ≤ xp + 8 * xl) => rd_of_OE hxO hF hLF h1 h2
   obtain ⟨q1, q2, q3, q4, q5, q6, q7, q8, q9, q10, q11, q12, q13, q14, q15, q16, q17⟩ := hsl
-  refine W2Pro.xnStep impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL hsv ret hret b1 L1
+  refine W2Pro.xnStep (lu := (stLen s.mem st + StackNat.rnd (11 * n) + StackNat.rnd (xl - n + 1) + StackNat.rnd n + StackNat.rnd n)) (hlu := Nat.le_refl _) impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL hsv ret hret b1 L1
     g sp K n mp mc (s.mem.readLE mp (8 * n)) (s.mem.readLE xp (8 * xl)) yp ylen (s.mem.readLE yp (8 * ylen))
     (s.mem.readLE (yp + 8 * (ylen - 1)) 8) zp zc st (stLen s.mem st) (stLen s.mem st + StackNat.rnd (11 * n)) xp xl xc
     M r18 r29 f29 hKD hKL hC hlen ?_ (by rw [hF.accessible]; exact hxa) hx48 ?_ hxl hxl' hxc

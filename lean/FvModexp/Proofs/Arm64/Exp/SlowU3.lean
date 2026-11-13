@@ -37,7 +37,7 @@ theorem mkKT1 {S : State} {L1 : List (Nat × Nat)} {b1 j w : Nat} {v : BitVec 64
     {z zl zc' Zv zz zzl zzc r rl rc q ql qc : Nat}
     (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s)
     (hj : JC R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s r18 r29 ret S S.mem L1 b1)
-    (hB : BB R L st zp zc S.mem L1 z zl zc' Zv zz zzl zzc r rl rc q ql qc) (hzl : zl ≤ 128) (hjw : j ≤ w)
+    (hB : BB R L st zp zc S.mem L1 z zl zc' Zv zz zzl zzc r rl rc q ql qc) (hzl : zl ≤ max xl ml) (hjw : j ≤ w)
     (hw63 : w ≤ 63) (s152 : S.mem.readLE (sp + 152) 8 = w)
     (T : State) (hpc : T.pc = BitVec.ofNat 64 (fnE + 0x208)) (hsp : T.sp = BitVec.ofNat 64 sp)
     (h28 : T.regs 28 = BitVec.ofNat 64 g) (h29 : T.regs 29 = BitVec.ofNat 64 (sp - 8)) (h18 : T.regs 18 = r18)
@@ -93,6 +93,7 @@ theorem callU3 {impl : List Segment} (hap : ImplApart Extracted.program impl) {n
   have hs13 := hP.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
   have hml := hP.2.2.2.2.2.2.1
   have hz := hk.zl384
+  have hxl := hP.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
   have hw63 := hk.w63
   have hjw := hk.jw
   have hrT : ∀ a, (a + 8 ≤ sp + 288 ∨ sp + 304 ≤ a ∧ a + 8 ≤ sp + 408 ∨ sp + 416 ≤ a) →

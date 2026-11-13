@@ -62,18 +62,18 @@ theorem loopL {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns
     have hz := hk.zl128
     obtain ⟨P, hPd⟩ : ∃ P, P = perB sqC mlC dvC (stLen s.mem st) xl ml := ⟨_, rfl⟩
     rw [← hPd] at hb
-    have hsq1 := Exp.le_supN (sqC (stLen s.mem st)) 128 zl hz
+    have hsq1 := Exp.le_supN (sqC (stLen s.mem st)) (max xl ml) zl hz
     have hb1 : B0 + P * (c + n) + P ≤ b1 := by
       rw [show c + 1 + n = (c + n) + 1 by omega, Nat.mul_succ] at hb; omega
-    have hPs : Exp.supN (sqC (stLen s.mem st)) 128 + Exp.supN (fun n => mlC (stLen s.mem st) n xl) 256 +
-        Exp.supN (fun n => dvC (stLen s.mem st) n ml) 384 = P := hPd.symm
+    have hPs : Exp.supN (sqC (stLen s.mem st)) (max xl ml) + Exp.supN (fun n => mlC (stLen s.mem st) n xl) (2 * max xl ml) +
+        Exp.supN (fun n => dvC (stLen s.mem st) n ml) (3 * max xl ml) = P := hPd.symm
     refine segL1 hap hns hnf hsq hkS haS hP hk (by omega) (by omega) fun S1 L2 b2 p1 l1 c1 hk1 hb2 => ?_
     have hz1 := hk1.zl256
-    have hml1 := Exp.le_supN (fun n => mlC (stLen s.mem st) n xl) 256 l1 hz1
+    have hml1 := Exp.le_supN (fun n => mlC (stLen s.mem st) n xl) (2 * max xl ml) l1 hz1
     refine segL2 hap hns hnf hmu hkM haM hP hX hxl0 hk1 (by omega)
       fun S2 L3 b3 p2 l2 c2 zz2 zzl2 zzc2 hk2 hb3 => ?_
     have hz2 := hk2.zl384
-    have hdv1 := Exp.le_supN (fun n => dvC (stLen s.mem st) n ml) 384 l2 hz2
+    have hdv1 := Exp.le_supN (fun n => dvC (stLen s.mem st) n ml) (3 * max xl ml) l2 hz2
     have hb3' : b1 - sqC (stLen s.mem st) zl - mlC (stLen s.mem st) l1 xl ≤ b3 := by
       split at hb3 <;> omega
     refine segL3 hap hns hnf hdv hkD haD hP hM hk2 (by omega)

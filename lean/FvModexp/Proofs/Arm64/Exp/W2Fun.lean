@@ -27,17 +27,23 @@ def fn : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.nat.expNNOd
 /-- the names of the program window-2 is proved on (`LibW.names`: every function of the exp layer) -/
 abbrev names : List String := LibW.names
 
-/-- the closed budget the precondition asks for (`l` = the stack length at entry, `k = len x - n + 1`) -/
+/-- the closed budget the precondition asks for (`l` = the stack length at entry, `k = len x - n + 1`): the entry
+`stk.nat` plus the MAXIMUM over the paths (TIGHT COSTS, expmc s42; was their sum) -/
 def W2Bud (n xl costD l : Nat) : Nat :=
-  stackNatCost l (11 * n) + (xjBud n costD (l + StackNat.rnd (11 * n)) +
-    (stackNatCost (l + StackNat.rnd (11 * n)) n + xjBud n costD (l + StackNat.rnd (11 * n) + StackNat.rnd n)) +
-    xnBudA n costD (l + StackNat.rnd (11 * n)) (xl - n + 1) + xnBudAC n costD (l + StackNat.rnd (11 * n)) (xl - n + 1) +
-    xnPre n costD (l + StackNat.rnd (11 * n)) (xl - n + 1))
+  stackNatCost l (11 * n) + max (max (xjBud n costD (l + StackNat.rnd (11 * n)))
+    (stackNatCost (l + StackNat.rnd (11 * n)) n + xjBud n costD (l + StackNat.rnd (11 * n) + StackNat.rnd n)))
+    (max (max (xnBudA n costD (l + StackNat.rnd (11 * n)) (xl - n + 1)) (xnBudAC n costD (l + StackNat.rnd (11 * n)) (xl - n + 1)))
+      (xnPre n costD (l + StackNat.rnd (11 * n)) (xl - n + 1)))
 
-/-- the cost the postcondition charges -/
+/-- the stack level bound at the window's last `stk.nat` (`zz`'s scratch, after `x`'s normalisation and the `RR`
+section): entry `l`, `stk.reserve(11n)`, path A's `q`/`z2` (`len x - n + 1`, `n`), path B's `n`, two `2n` scratches -/
+@[reducible] def lvT (n xl l : Nat) : Nat :=
+  l + StackNat.rnd (11 * n) + StackNat.rnd (xl - n + 1) + StackNat.rnd n + StackNat.rnd n + 2 * StackNat.rnd (2 * n)
+
+/-- the cost the postcondition charges (TIGHT COSTS, expmc s42: the last `stk.nat` at the level bound `lvT`, was `2^16`) -/
 def W2Cost (n xl costD l : Nat) : Nat :=
   stackNatCost l (11 * n) + xnPre n costD (l + StackNat.rnd (11 * n)) (xl - n + 1) + blockSize (8 * n) true +
-    stackNatCost (2 ^ 16) (5 * n) + blockSize (8 * (2 * n + 4)) true + makeCost n
+    stackNatCost (lvT n xl l) (5 * n) + blockSize (8 * (2 * n + 4)) true + makeCost n
 
 /-- the precondition: the entry facts (frame `sp = SP - 640`, window `[sp - K, sp + 752)`), `m` odd and `> 1`, the
 stack-length bound, the budget -/
@@ -71,10 +77,13 @@ theorem buds {n xl costD l b : Nat} (h : W2Bud n xl costD l ≤ b) :
     stackNatCost l (11 * n) + xnPre n costD (l + StackNat.rnd (11 * n)) (xl - n + 1) ≤ b := by
   unfold W2Bud at h; omega
 
-theorem bud_fin {b b1 bd b2 b' b'' s0 P bs8 iff17 snc17 bsz mk n : Nat} (hb1 : b - s0 ≤ b1) (hbd : b1 - P ≤ bd)
+theorem bud_fin {b b1 bd b2 b' b'' s0 P bs8 iff17 snc17 bsz mk S17 : Nat} (hb1 : b - s0 ≤ b1) (hbd : b1 - P ≤ bd)
     (hb3 : bd - (iff17 + snc17) ≤ b2) (hb5 : b2 - bsz ≤ b') (hb8 : b' - mk ≤ b'') (hif : iff17 ≤ bs8)
-    (hs : snc17 ≤ stackNatCost (2 ^ 16) (5 * n)) :
-    b - (s0 + P + bs8 + stackNatCost (2 ^ 16) (5 * n) + bsz + mk) ≤ b'' := by omega
+    (hs : snc17 ≤ S17) :
+    b - (s0 + P + bs8 + S17 + bsz + mk) ≤ b'' := by omega
+
+theorem snc_le {l l' n : Nat} (h : l ≤ l') : stackNatCost l n ≤ stackNatCost l' n := by
+  unfold stackNatCost allocCost; omega
 
 theorem snc_mono {l n : Nat} (h : l ≤ 2 ^ 16) : stackNatCost l n ≤ stackNatCost (2 ^ 16) n := by
   unfold stackNatCost allocCost; omega
@@ -323,7 +332,7 @@ theorem post_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K costD g sp st z
   have hspE := he.sp
   have hgE := he.g
   obtain ⟨hs1, hs28, -, -, -, -, -, hK, hKs, -, -, hLrt, hLs, -, -⟩ := he
-  obtain ⟨Xv', hXm, hXB, M, L1, b1, hF0, hLF0, hx0, hb1, hkf0, hai0, hlen0, hcapM, l1, zzp, zzc, -, hl1b,
+  obtain ⟨Xv', hXm, hXB, M, L1, b1, hF0, hLF0, hx0, hb1, hkf0, hai0, hlen0, hcapM, l1, zzp, zzc, -, hl1u, hl1b,
     ⟨hzzl, hzzin, hzzap⟩, Md, Ld, bd, rp, rl, rc, M1, rrp, rrc, onep, M2, L2, b2, ⟨hxd, hFd, hLFd, hlend, hkfd, haid⟩, hbd,
     hlenD, ⟨hzzA, hzzH⟩, -, hRR, hOC, hRet⟩ := hE
   have hF2 := hRR.1
@@ -426,7 +435,7 @@ theorem post_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K costD g sp st z
   · show b - W2Cost n xl costD (stLen s.mem st) ≤ b''
     unfold W2Cost
     rw [hlenM1] at hb3
-    exact bud_fin hb1 hbd hb3 hb5 hb8 (if_le n) (snc_mono (lvl_le hl1b))
+    exact bud_fin hb1 hbd hb3 hb5 hb8 (if_le n) (snc_le (by unfold lvT; omega))
   · rw [hgE]; exact inv_fin hF9 hLrt (x8.held hsok.2.1) hK4 hKs hinv8
   · refine ⟨⟨⟨hsok.1, x8.held hsok.2.1, by rw [hacc]; exact hsok.2.2.1, hsok.2.2.2.1, ?_, ?_, ?_⟩, eL, ?_⟩,
       W2Pro.arrIn_chain hai0 haid hxd ⟨hd1.1, hd1.2.2⟩ (W2Pro.arrIn_split hsok3.2.2.2.2.2.1 hlen3 hkept3 hmem3) hx3 ⟨eW, eC⟩ (hx5.trans hx8)⟩
@@ -453,14 +462,15 @@ theorem post_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K costD g sp st z
     · exact ResSep.of_apart (apart_arr_of_fresh hap (hx5.held hA2) hin)
 
 /-- the division cost the window charges, from `nat.div`'s level-dependent cost `costF` (`l` = the stack length at
-entry): `x mod m` (when `len x > n`) and the `RR` division on its four possible stack levels -/
+entry): the MAXIMUM (TIGHT COSTS, expmc s42; was the sum) of `x mod m` (when `len x > n`) and the `RR` division
+on its four possible stack levels -/
 def divCost (costF : Nat → Nat → Nat → Nat) (n xl l : Nat) : Nat :=
-  costF (l + StackNat.rnd (11 * n) + StackNat.rnd (xl - n + 1) + StackNat.rnd n) xl n +
-  costF (l + StackNat.rnd (11 * n) + StackNat.rnd (xl - n + 1) + StackNat.rnd n + StackNat.rnd n +
-    2 * StackNat.rnd (2 * n)) (2 * n + 1) n +
-  costF (l + StackNat.rnd (11 * n) + StackNat.rnd (xl - n + 1) + StackNat.rnd n + 2 * StackNat.rnd (2 * n)) (2 * n + 1) n +
-  costF (l + StackNat.rnd (11 * n) + StackNat.rnd n + 2 * StackNat.rnd (2 * n)) (2 * n + 1) n +
-  costF (l + StackNat.rnd (11 * n) + 2 * StackNat.rnd (2 * n)) (2 * n + 1) n
+  max (max (costF (l + StackNat.rnd (11 * n) + StackNat.rnd (xl - n + 1) + StackNat.rnd n) xl n)
+    (costF (l + StackNat.rnd (11 * n) + StackNat.rnd (xl - n + 1) + StackNat.rnd n + StackNat.rnd n +
+    2 * StackNat.rnd (2 * n)) (2 * n + 1) n))
+  (max (max (costF (l + StackNat.rnd (11 * n) + StackNat.rnd (xl - n + 1) + StackNat.rnd n + 2 * StackNat.rnd (2 * n)) (2 * n + 1) n)
+    (costF (l + StackNat.rnd (11 * n) + StackNat.rnd n + 2 * StackNat.rnd (2 * n)) (2 * n + 1) n))
+    (costF (l + StackNat.rnd (11 * n) + 2 * StackNat.rnd (2 * n)) (2 * n + 1) n))
 
 theorem divCosts_of (costF : Nat → Nat → Nat → Nat) (n xl l : Nat) :
     W2Pro.DivCosts costF (divCost costF n xl l) n xl (l + StackNat.rnd (11 * n)) := by

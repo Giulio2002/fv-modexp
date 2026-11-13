@@ -147,7 +147,7 @@ theorem xnA2K (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     (hserv : RunIface.Serves R)
     (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret)
     (b : Nat) (L : List (Nat × Nat)) (g sp K n mp mc Mv Xv yp ylen Y yi zp zc st n0 l0 xp xl xc qp k : Nat)
-    (M : Memory) (r18 r29 f29 : BitVec 64) (hKD : stkD ≤ K) (hKL : stkL ≤ K)
+    (M : Memory) (r18 r29 f29 : BitVec 64) {lu : Nat} (hlu : l0 + StackNat.rnd k + StackNat.rnd n + StackNat.rnd n ≤ lu) (hKD : stkD ≤ K) (hKL : stkL ≤ K)
     (hB : CtxB R L g sp K n mp mc Mv yp ylen Y yi zp zc st n0 l0 ret r29 [(qp, 8 * k)] M)
     (hlen : stLen M st = l0 + StackNat.rnd k + StackNat.rnd n)
     (hk0 : 0 < k) (hk40 : k < 2 ^ 40) (hq8 : qp % 8 = 0) (hqH : Held R L qp (8 * k))
@@ -181,7 +181,7 @@ theorem xnA2K (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     (h2 : S.regs 2 = BitVec.ofNat 64 n)
     (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = f29) (hmem : S.mem = M) :
     Reaches ((LibW.program.link impl).withExit ret) S
-      (IsReturn (XnPost R L0 K bA M0 g sp n mp mc Mv (Xv % Mv) yp ylen Y yi zp zc st n0 l0 r18 r29)) := by
+      (IsReturn (XnPost R L0 K bA M0 g sp n mp mc Mv (Xv % Mv) yp ylen Y yi zp zc st n0 l0 lu r18 r29)) := by
   have hB0 := hB
   obtain ⟨he, hce, hK, -, hn, hn128, -, hmc', hm, hmO, hmV, hnm, -, -, -, -, -, -, -,
     -, -, -, hsth, hstw, hsok, -, -, hcap, harr, -, -, hsu, hgl, -, -, -, -,
@@ -251,7 +251,7 @@ theorem xnA2K (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
   refine xnA3 impl ret hret _ sp st ylen mp n M5 hal (by omega) hA he5.2.2.2.1 q672 q712 q728 q736 S5 e1 e2 e9
     (fun S6 g1 g2 g3 g4 g5 g6 g7 g8 g9 g10 g11 g12 g13 => ?_)
   have hB6 := CtxB.raise (CtxB.dropEx hB5) (l1 := stLen M5 st) (by omega) (Nat.le_refl _)
-  refine reaches_mono (xnJStep impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL
+  refine reaches_mono (xnJStep (lu := lu) (hlu := by rw [hlen5, hlen]; omega) impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL
     hserv ret hret b5 L5 g sp K n mp mc Mv (Xv % Mv) yp ylen Y yi zp zc st n0 (stLen M5 st) r rl rc rc M5 r18 r29 f29
     hKD hKL hB6 rfl hxi (by rw [hval, hxv]) hrln (by have := hxi.2.2.1; omega) hmB hMo hM1
     (by rw [hlen5, hlen]; omega) (cf_eq hcRB (by omega)) (cf_eq hcRC (by omega)) (by rw [hlen5, hlen]; unfold xjBud at hbC ⊢; omega)

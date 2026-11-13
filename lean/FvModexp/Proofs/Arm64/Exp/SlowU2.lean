@@ -38,7 +38,7 @@ theorem mkKD1 {S : State} {L1 : List (Nat × Nat)} {b1 j w : Nat} {v : BitVec 64
     {z zl zc' Zv zz zzl zzc r rl rc q ql qc : Nat}
     (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s)
     (hj : JC R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s r18 r29 ret S S.mem L1 b1)
-    (hB : BB R L st zp zc S.mem L1 z zl zc' Zv zz zzl zzc r rl rc q ql qc) (hzl : zl ≤ 384) (hjw : j < w)
+    (hB : BB R L st zp zc S.mem L1 z zl zc' Zv zz zzl zzc r rl rc q ql qc) (hzl : zl ≤ 3 * max xl ml) (hjw : j < w)
     (hw63 : w ≤ 63) (s152 : S.mem.readLE (sp + 152) 8 = w)
     (s352 : S.mem.readLE (sp + 352) 8 = r) (s168 : S.mem.readLE (sp + 168) 8 = rl)
     (s176 : S.mem.readLE (sp + 176) 8 = rc) (s360 : S.mem.readLE (sp + 360) 8 = q)
@@ -92,6 +92,7 @@ theorem callU2 {impl : List Segment} (hap : ImplApart Extracted.program impl) {n
   have hs13 := hP.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
   have hxl := hP.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
   have hz := hk.zl256
+  have hml := hP.2.2.2.2.2.2.1
   have hw63 := hk.w63
   have hrT : ∀ a, (a + 8 ≤ sp + 304 ∨ sp + 320 ≤ a ∧ a + 8 ≤ sp + 416) → T.mem.readLE a 8 = S0.mem.readLE a 8 :=
     fun a ha => hF.readLE _ _ (by simp only [wsU2, outside_cons, outside_nil, and_true]; omega)

@@ -24,37 +24,47 @@ theorem bs2_le (n : Nat) (h : n ≤ 128) : blockSize (8 * (2 * n + 4)) true ≤ 
 theorem mk_le (n : Nat) (h : n ≤ 128) : makeCost (1 + 128 * n / 64 + 1) ≤ 4216 := by
   have := makeCost_le_makeB (1 + 128 * n / 64 + 1); unfold makeB allocCost at this; omega
 
+/-- path MAXIMUM (expmc s42): split a budget `s + max a b` into its paths -/
+theorem addmax {s a b T : Nat} (h1 : s + a ≤ T) (h2 : s + b ≤ T) : s + max a b ≤ T := by omega
+/-- the same for the charged window cost `s0 + xnPre + …` -/
+theorem costmax {s0 a b c d e f T : Nat} (h1 : s0 + a + c + d + e + f ≤ T) (h2 : s0 + b + c + d + e + f ≤ T) :
+    s0 + max a b + c + d + e + f ≤ T := by omega
+
 theorem w4bud_le {n xl cD l : Nat} (hn : n ≤ 128) (hx : xl ≤ 128) (hl : l ≤ 1024) :
     ExpW4.W4Bud n xl cD l ≤ 20000000 + 12 * cD := by
   have := bs_le n hn; have := bs2_le n hn; have := mk_le n hn
-  unfold ExpW4.W4Bud W4Pro.xjBud W4Pro.xnBudA W4Pro.xnBudAC W4Pro.xnPre W4Pro.xjBudA W4Pro.xnBudAB W4Pro.xnBudAA
-    stackNatCost allocCost
-  simp only [StackNat.rnd]
-  omega
+  unfold ExpW4.W4Bud
+  simp only [W4Pro.xnPre]
+  repeat' apply addmax
+  all_goals (unfold W4Pro.xjBud W4Pro.xnBudA W4Pro.xnBudAC W4Pro.xjBudA W4Pro.xnBudAB W4Pro.xnBudAA
+    stackNatCost allocCost; simp only [StackNat.rnd]; omega)
 
 theorem w2bud_le {n xl cD l : Nat} (hn : n ≤ 128) (hx : xl ≤ 128) (hl : l ≤ 1024) :
     ExpW2.W2Bud n xl cD l ≤ 20000000 + 12 * cD := by
   have := bs_le n hn; have := bs2_le n hn; have := mk_le n hn
-  unfold ExpW2.W2Bud W2Pro.xjBud W2Pro.xnBudA W2Pro.xnBudAC W2Pro.xnPre W2Pro.xjBudA W2Pro.xnBudAB W2Pro.xnBudAA
-    stackNatCost allocCost
-  simp only [StackNat.rnd]
-  omega
+  unfold ExpW2.W2Bud
+  simp only [W2Pro.xnPre]
+  repeat' apply addmax
+  all_goals (unfold W2Pro.xjBud W2Pro.xnBudA W2Pro.xnBudAC W2Pro.xjBudA W2Pro.xnBudAB W2Pro.xnBudAA
+    stackNatCost allocCost; simp only [StackNat.rnd]; omega)
 
 theorem w4cost_le {n xl cD l : Nat} (hn : n ≤ 128) (hx : xl ≤ 128) (hl : l ≤ 1024) :
     ExpW4.W4Cost n xl cD l ≤ 20000000 + 6 * cD := by
   have := bs_le n hn; have := bs2_le n hn; have := mk_le n hn
   have := makeCost_le_makeB n; unfold makeB allocCost at this
-  unfold ExpW4.W4Cost W4Pro.xnPre W4Pro.xjBudA W4Pro.xnBudAB W4Pro.xnBudAA stackNatCost allocCost
-  simp only [StackNat.rnd]
-  omega
+  unfold ExpW4.W4Cost
+  simp only [W4Pro.xnPre]
+  repeat' apply costmax
+  all_goals (unfold W4Pro.xjBudA W4Pro.xnBudAB W4Pro.xnBudAA stackNatCost allocCost; simp only [StackNat.rnd]; omega)
 
 theorem w2cost_le {n xl cD l : Nat} (hn : n ≤ 128) (hx : xl ≤ 128) (hl : l ≤ 1024) :
     ExpW2.W2Cost n xl cD l ≤ 20000000 + 6 * cD := by
   have := bs_le n hn; have := bs2_le n hn; have := mk_le n hn
   have := makeCost_le_makeB n; unfold makeB allocCost at this
-  unfold ExpW2.W2Cost W2Pro.xnPre W2Pro.xjBudA W2Pro.xnBudAB W2Pro.xnBudAA stackNatCost allocCost
-  simp only [StackNat.rnd]
-  omega
+  unfold ExpW2.W2Cost
+  simp only [W2Pro.xnPre]
+  repeat' apply costmax
+  all_goals (unfold W2Pro.xjBudA W2Pro.xnBudAB W2Pro.xnBudAA stackNatCost allocCost; simp only [StackNat.rnd]; omega)
 
 section
 variable (costF : Nat → Nat → Nat → Nat) (D : Nat)

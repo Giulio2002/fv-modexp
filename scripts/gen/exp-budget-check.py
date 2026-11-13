@@ -18,7 +18,7 @@ TARGET = '--target' in sys.argv   # = --tight --amort: the TIGHT COSTS plan
 TIGHT = '--tight' in sys.argv or TARGET
 AMORT = '--amort' in sys.argv or TARGET   # Q-form stack accounting (Common/StackPot): no per-call stk.nat charge, + stkRes H once
 COSTE = False  # (was a what-if; infra s43 landed the exact costE eC1 + eC2 below)
-FIX = '--fix' in sys.argv or TIGHT
+FIX = True  # expmc s42 LANDED: ExpSlow.cost boxes M/2M/3M with M = max xl ml (was --fix)
 
 # ---- tropical (max-affine) functions of the level l: {slope: intercept}
 class TP:
@@ -222,18 +222,18 @@ def xjBudA(n, cD, l): return sncN(l, 2 * n) + makeCost(1 + 128 * n // 64 + 1) + 
 def xnPre(n, cD, l, k):
     AB = sncN(l, k) + sncN(l + rnd(k), n) + cD + sncN(l + rnd(k) + rnd(n), n) + xjBudA(n, cD, l + rnd(k) + 2 * rnd(n))
     AA = sncN(l, k) + sncN(l + rnd(k), n) + cD + xjBudA(n, cD, l + rnd(k) + rnd(n))
-    return xjBudA(n, cD, l) + sncN(l, n) + xjBudA(n, cD, l + rnd(n)) + AB + AA
+    return max(xjBudA(n, cD, l), sncN(l, n) + xjBudA(n, cD, l + rnd(n)), AB, AA)  # expmc s42: path MAX (landed)
 def divCost(n, xl, l, t):
     T = l + rnd(t * n); K = rnd(sub(xl, n) + 1); r = rnd(n); r2 = rnd(2 * n)
-    return (cF(xl, n)(T + K + r) + cF(2 * n + 1, n)(T + K + r + r + 2 * r2) + cF(2 * n + 1, n)(T + K + r + 2 * r2) +
-            cF(2 * n + 1, n)(T + r + 2 * r2) + cF(2 * n + 1, n)(T + 2 * r2))
+    return max(cF(xl, n)(T + K + r), cF(2 * n + 1, n)(T + K + r + r + 2 * r2), cF(2 * n + 1, n)(T + K + r + 2 * r2),
+               cF(2 * n + 1, n)(T + r + 2 * r2), cF(2 * n + 1, n)(T + 2 * r2))  # expmc s42: MAX (landed)
 def WBud(n, xl, l, t, k17):
     cD = divCost(n, xl, l, t); T = l + rnd(t * n); k = sub(xl, n) + 1
-    return (sncN(l, t * n) + xjBud(n, cD, T, k17) + sncN(T, n) + xjBud(n, cD, T + rnd(n), k17) +
-            xnBudA(n, cD, T, k, k17) + xnBudAC(n, cD, T, k, k17) + xnPre(n, cD, T, k))
+    return (sncN(l, t * n) + max(xjBud(n, cD, T, k17), sncN(T, n) + xjBud(n, cD, T + rnd(n), k17),
+            xnBudA(n, cD, T, k, k17), xnBudAC(n, cD, T, k, k17), xnPre(n, cD, T, k)))  # expmc s42: path MAX (landed)
 def WCost(n, xl, l, t, k17):
-    cD = divCost(n, xl, l, t); T = l + rnd(t * n); k = sub(xl, n) + 1
-    return (sncN(l, t * n) + xnPre(n, cD, T, k) + blockSize(8 * n) + sncN((T + 2 * rnd(2 * n)) if TIGHT else 2 ** 16, k17 * n) + blockSize(8 * (2 * n + 4)) +
+    cD = divCost(n, xl, l, t); T = l + rnd(t * n); k = sub(xl, n) + 1  # expmc s42: last stk.nat at lvT (landed)
+    return (sncN(l, t * n) + xnPre(n, cD, T, k) + blockSize(8 * n) + sncN(T + rnd(k) + 2 * rnd(n) + 2 * rnd(2 * n), k17 * n) + blockSize(8 * (2 * n + 4)) +
             makeCost(n))
 def OBud(n, xl, yl, l): return WBud(n, xl, l, 23, 17) if 1 < yl else WBud(n, xl, l, 11, 5)
 def OCost(n, xl, yl, l): return WCost(n, xl, l, 23, 17) if 1 < yl else WCost(n, xl, l, 11, 5)
