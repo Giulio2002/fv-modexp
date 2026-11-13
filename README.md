@@ -20,7 +20,7 @@ more heartbeats, timeouts or memory. Targets: median row at most 3 minutes; a fu
 
 ## Pins and known limitations
 
-* **Janus** v0.3.1 = `1b51b4ac8fc70a736fad4a179641a6d0bd4d1d79` (`lean/lakefile.toml`, `lean/lake-manifest.json`), Lean `v4.34.1`.
+* **Janus** v0.3.3 = `6d65752215a09ceaf88d18e2f11bac7bcf19eb82` (`lean/lakefile.toml`, `lean/lake-manifest.json`), Lean `v4.34.1`.
 * **EthLib pin**: package `ethlibspec` = `github.com/Giulio2002/EthLib` branch `modexp-spec-lean-v4.34.1` @ `f4756ef5dc5619357f336e81166fb64a139abcd7`, a byte-identical copy of `ethereum/EthLib@ffd60c4bcbafa185ad8fbcf23be544d4b01f6d1c` (see its `UPSTREAM.md`); needed because upstream is on Lean v4.35.0. The spec is never edited here.
 * **Go toolchain: 1.26.10 vs geth's 1.27.3.** geth's own release binaries are built with Go 1.27.3, which Janus v0.2.0's runtime pins do not cover. The harness (`go/`: geth v1.17.10, go-bigmodexpfix `f9e208c548ab`, holiman/uint256 v1.3.2) is built with the Janus-pinned
   `GOTOOLCHAIN=go1.26.10` (which satisfies geth's `go.mod`), `CGO_ENABLED=0 GOAMD64=v1 -trimpath -buildvcs=false`; its hashes are in `scripts/harness.sha256`. The verified artefact is geth v1.17.10 compiled by Go 1.26.10, not the shipped release binary.
