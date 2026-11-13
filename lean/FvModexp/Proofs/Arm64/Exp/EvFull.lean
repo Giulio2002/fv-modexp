@@ -125,7 +125,7 @@ theorem body {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns 
     (hmm : ∀ ℓ ℓ' a a' c c', ℓ ≤ ℓ' → a ≤ a' → c ≤ c' → mlC ℓ a c ≤ mlC ℓ' a' c')
     (hgm : ∀ ℓ ℓ' a a' c c', ℓ ≤ ℓ' → a ≤ a' → c ≤ c' → mlG ℓ a c ≤ mlG ℓ' a' c')
     (zl : Nat) (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) (hM : 0 < natVal s.mem mp ml)
-    (hev : natVal s.mem mp ml % 2 = 0) (hzw : Outside zp (8 * zc) [(sp - K, sp + 448)])
+    (hev : natVal s.mem mp ml % 2 = 0) (hX : NHyp.XFacts R L xp xl xc) (hzw : Outside zp (8 * zc) [(sp - K, sp + 448)])
     (hneed : stLen s.mem st + needE needR needS needP xl yl ml ≤ 2 ^ 16)
     (hcost : costE costF costR costS costP bU cU sqC mlC mlG (stLen s.mem st) xl yl ml ≤ b)
     (hr4 : ret % 4 = 0) (hr48 : ret < 2 ^ 48) (hzl : zl < 2 ^ 64)
@@ -184,7 +184,7 @@ theorem body {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns 
   refine segN3 hap hns hnf hsn hkN haN hP hM hev (need3 hneed (Nat.le_trans (ℓ2_le hn) (wL2_le _ _)))
     (rk' := r5) (fun l1 l2 q1 q2 => rk_le (stackNatCost_mono (ℓ2_le hn) (max2_le q1 q2)) e4) ?_ h
   intros; rename_i h
-  refine segE1 hap hE hKN hKN1 hKN2 hP hM hev
+  refine segE1 hap hE hKN hKN1 hKN2 hP hM hev hX
     (fun l1 l2 q1 q2 => nstkE_of hRm hSm hPm hneed (Nat.le_trans (ℓ3_le hn q1 q2) (wL3_le _ _)) q1 hnw)
     (rk' := r6) (fun l1 l2 q1 q2 => rk_le2 (hNB xl yl l1 ml _ _ _ _ q1 (ℓ3_le hn q1 q2) hnw)
       (hNC xl yl l1 ml _ _ _ _ q1 (ℓ3_le hn q1 q2) hnw) e5) ?_ h
@@ -193,7 +193,7 @@ theorem body {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns 
     (fun l1 l2 q1 q2 => need3 hneed (Nat.le_trans (ℓ3_le hn q1 q2) (wL3_le _ _))) (rk' := r7)
     (fun l1 l2 q1 q2 => rk_le (stackNatCost_mono (ℓ3_le hn q1 q2) (max2_le q1 q2)) e6) ?_ h
   intros; rename_i h
-  refine segE2 hap hE hKN hKN1 hKN2 hP hM hev
+  refine segE2 hap hE hKN hKN1 hKN2 hP hM hev hX
     (fun l1 l2 q1 q2 => nstkE_of hRm hSm hPm hneed (ℓ4_le hn q1 q2) q2 (lg2_le s mp ml))
     (rk' := r8) (fun l1 l2 q1 q2 => rk_le2 (hNB xl yl l2 ml _ _ _ _ q2 (ℓ4_le hn q1 q2) (lg2_le s mp ml))
       (hNC xl yl l2 ml _ _ _ _ q2 (ℓ4_le hn q1 q2) (lg2_le s mp ml)) e7) ?_ h
