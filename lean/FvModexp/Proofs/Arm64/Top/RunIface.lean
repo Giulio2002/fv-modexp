@@ -240,11 +240,10 @@ def ModBudget (w : Nat) : Nat := 64 * opCost w
 /-- Budget of `z.exp(z, y, m, false)` for operands of at most `w` words and an exponent of `yW` words: per exponent bit
 (`64 yW` bits) at most 8 allocating requests (one `sqr`, one `mul`, one reduction by `div`/`montgomery`: their `nat.make`
 results and `(*stack).nat` scratch), plus 128 setup requests (power table of 16 entries, `stk.reserve`, `m1 m2 z1 z2` of
-`expNNEven`, `lsh`, `getStack`), times the slack `2^32` of the proved cost envelopes (they over-approximate the
-requests by up to `2^19.84`: numeric mirror scripts/gen/exp-budget-check.py, NOTES-conventions "[divmc s33] FINDING").
-The factor is `0` for `w = 0`: then all three lengths are `0` and `Run` returns before any call. Derivation in
-docs/HUMAN-REVIEW.md. -/
-def ExpBudget (w yW : Nat) : Nat := (8 * (64 * yW) + 128) * opCost w * (2 ^ 32 * min w 1)
+`expNNEven`, `lsh`, `getStack`), each of at most `opCost w`. This is the factor-free release allowance
+`BudQ.ExpBudgetF` (BRIEF "TIGHT COSTS": the former `×2^32` slack is gone; `BudQ.gate : ExpBudgetF 128 128 ≤ 2^35`).
+Derivation in docs/HUMAN-REVIEW.md. -/
+def ExpBudget (w yW : Nat) : Nat := (8 * (64 * yW) + 128) * opCost w
 
 /-- Budget of `x.Bytes()` for `x` of `w` words: one `make([]byte, 8 w)`. -/
 def BytesBudget (w : Nat) : Nat := allocCost (8 * w)

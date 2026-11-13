@@ -1,5 +1,6 @@
 import FvModexp.Proofs.Arm64.Top.RunOkRowC
 import FvModexp.Proofs.Arm64.Int.ModRowW
+import FvModexp.Proofs.Arm64.Top.RunSuccW2
 
 set_option autoImplicit false
 
@@ -10,21 +11,26 @@ set_option autoImplicit false
 Osaka receiver, `Run` returns `(out, nil)` with `out = compute data (parseLengths data)` (EthLib), keeping the Go ABI and
 the memory frame (`Spec.RunArm64`: `EnvW`, `Input`, `OkReqs`, `Globals`, `NatOne`, `StackPool`, `okBudget`, `OkRet`,
 `FrameW`). Every machine-code callee is proved (`Run.correctness_okC`: `(*Int).Mod`, `(*Int).exp` with the whole `nat`
-chain, `(*Int).Bytes`, via expmc's `IExp.ensCl`); the premises are the Janus runtime contracts on
-`Extracted.program.ofImpl impl` and the closed cost bound `hbud : IExp.BudCl` (explicit premise until the Q-form BudOK of
-BRIEF "TIGHT COSTS" lands; then it is discharged and `Witness.sat_of` becomes the premise-free `Witness.nonvacuous`).
+chain and the closed Q-form cost bound (expmc's `IExp.ensClBQ`), `(*Int).Bytes`); the premises are the Janus runtime
+contracts on `Extracted.program.ofImpl impl` only. The budget is the factor-free one (BRIEF "TIGHT COSTS", top s40:
+`RunIface.ExpBudget = BudQ.ExpBudgetF`, `okBudget` without the former `2^32` slack).
 
-`Witness.sat_of` (given `IExp.BudCl`): the shared witness runtime (`WStubs.impl`, toy
-allocator `toyR [] (fun _ _ => True)`), budget `0x300000`, window `0x20000`, empty live set, and the call
-`Run(c, p, 99, 99)` on 99 zero bytes (lengths `0, 0, 0`, empty output: the `2^32` slack of `RunIface.ExpBudget` puts every
-input with a nonzero length above the toy heap's budget `2^22`); one
-call-site state per runtime contract (`AsmWit` / `Sites` / `RunOkRow` site lemmas).
+`Witness.nonvacuous`: the shared witness runtime (`WStubs.impl`, toy allocator `toyR [] (fun _ _ => True)`, heap `2^22`),
+budget `bW = 0x300000`, window `0x20000`, empty live set, and a REAL exponentiation: `Run(c, p, 99, 99)` on the call data
+with lengths `1, 1, 1`, `B = 3`, `E = 5`, `M = 7` (`Run.WitnessOk.s2`, Top/RunSuccW2.lean), output `[5]` (`compute2`); the
+budget fits (`budget2`, `decide`); one call-site state per runtime contract (`AsmWit` / `Sites` / `RunOkRow` site lemmas).
 -/
 
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Spec.Pool Janus.Contracts Janus.Contracts.Pool
 open FvModexp FvModexp.Spec EthLib.Execution.Evm.Precompiles.Modexp
 
 namespace FvModexp.Arm64.RunSucc
+
+/-- the release gate (BRIEF "TIGHT COSTS"): `ExpBudget` = the factor-free `BudQ.ExpBudgetF` (definitionally), so the
+largest `(*Int).exp` budget of the spec range (128-word operands, 128-word exponent) is at most `2^35` bytes (32 GiB) -/
+theorem expBudget_eq (w yW : Nat) : RunIface.ExpBudget w yW = BudQ.ExpBudgetF w yW := rfl
+
+theorem expBudget_gate : RunIface.ExpBudget 128 128 ≤ 2 ^ 35 := BudQ.gate
 
 /-- **Row 1, arm64, EIP-7823 success**: `Run` returns `(compute data (parseLengths data), nil)`. -/
 theorem correctness (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
@@ -43,7 +49,6 @@ theorem correctness (impl : List Segment) (hap : ImplApart Extracted.program imp
     (hput : PoolPutLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "sync.(*Pool).Put") 4096 R
       Free.stkT S)
     (hwb4 : WbLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier4") 4096 R 4)
-    (hbud : IExp.BudCl)
     (W : Nat) (hW : 624 + 72944 ≤ W) (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64) :
     Ensures (Extracted.program.link impl) (segAddr Extracted.program RunArm64.fn) [c, p, len, cp]
       (fun s => S = StkSh ∧ RunArm64.EnvW R L s W ∧ RunArm64.Input R L c p len cp s ∧ OsakaReceiver s.mem c.toNat ∧
@@ -57,7 +62,7 @@ theorem correctness (impl : List Segment) (hap : ImplApart Extracted.program imp
   -- the Pool shape is a row binder fixed by the precondition (Janus's PoolShape row pattern; audit, v0.3.1)
   intro ret hret s hs ⟨hS, hpre⟩
   subst hS
-  exact Run.correctness_okC impl hap R hmk hmkz hmv hmz hno hgr hmc hwb hget hput hwb4 hbud W hW b L c p len cp ret
+  exact Run.correctness_okC impl hap R hmk hmkz hmv hmz hno hgr hmc hwb hget hput hwb4 W hW b L c p len cp ret
     hret s hs hpre
 
 end FvModexp.Arm64.RunSucc
@@ -67,7 +72,7 @@ open Janus.Contracts.Toy Janus.Contracts.LiveSat
 namespace FvModexp.Arm64.RunSucc.Witness
 
 open FvModexp.Arm64.Run.Witness (implAt hap R tys0 ok hret ret)
-open FvModexp.Arm64.Run.WitnessOk (s1 c1 p1 WW bW setup pre sMkz site_mkz sMz site_mz compute1)
+open FvModexp.Arm64.Run.WitnessOk (s2 c2 p2 WW bW setup2 pre2 sMkz site_mkz sMz site_mz compute2)
 open FvModexp.Arm64.AsmWit (callS callS5 callP OA OB mkSite mvSite noSite grSite clSite wbSite getSite putSite)
 
 set_option maxRecDepth 100000
@@ -96,19 +101,23 @@ theorem m_get : PoolGetLive (Extracted.program.ofImpl implAt) (Extracted.program
 theorem m_put : PoolPutLive (Extracted.program.ofImpl implAt) (Extracted.program.contractAddr "sync.(*Pool).Put") 4096 R
     Free.stkT StkSh := by rw [WStubs.addr_put]; exact WStubs.put [] tys0 ok _ _
 
+/-- The cost bound at the witness: lengths `1, 1, 1` fit the toy budget `bW = 0x300000` (heap `2^22`). -/
+theorem budget2 : RunArm64.okBudget (parseLengths (bytesAt s2.mem p2.toNat (99 : BitVec 64).toNat)) ≤ bW := by
+  decide +kernel
+
 /-- The returning run at the witness call. -/
-theorem returnsC (hbud : IExp.BudCl) :
-    Returns ((Extracted.program.link implAt).withExit ret) s1 fun s' =>
-      ABIReturn s1 s' ∧ (RunArm64.OkRet (bytesAt s1.mem p1.toNat (99 : BitVec 64).toNat) s' ∧
-        RunArm64.FrameW R bW (RunArm64.okBudget (parseLengths (bytesAt s1.mem p1.toNat (99 : BitVec 64).toNat)))
-          [] WW s1 s') :=
-  correctness implAt hap R m_mk m_mkz m_mv m_mvz m_no m_gr m_cl m_wb2 StkSh m_get m_put m_wb4 hbud WW (by decide) bW []
-    c1 p1 99 99 ret hret s1 setup ⟨rfl, pre⟩
+theorem returnsC :
+    Returns ((Extracted.program.link implAt).withExit ret) s2 fun s' =>
+      ABIReturn s2 s' ∧ (RunArm64.OkRet (bytesAt s2.mem p2.toNat (99 : BitVec 64).toNat) s' ∧
+        RunArm64.FrameW R bW (RunArm64.okBudget (parseLengths (bytesAt s2.mem p2.toNat (99 : BitVec 64).toNat)))
+          [] WW s2 s') :=
+  correctness implAt hap R m_mk m_mkz m_mv m_mvz m_no m_gr m_cl m_wb2 StkSh m_get m_put m_wb4 WW (by decide) bW []
+    c2 p2 99 99 ret hret s2 setup2 ⟨rfl, (pre2 budget2)⟩
 
 /-- Every hypothesis of `correctness` (the eleven runtime contracts, the window) and every conjunct of its
 precondition hold together, with one call-site state per contract, and the call returns: the shared witness runtime,
-budget `bW`, window `WW`, empty live set, `Run(c, p, 99, 99)` on 99 zero bytes (lengths `0, 0, 0`). -/
-theorem sat_of (hbud : IExp.BudCl) : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat))
+budget `bW`, window `WW`, empty live set, `Run(c, p, 99, 99)` on lengths `1, 1, 1`, `3^5 mod 7` (output `[5]`). -/
+theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat))
     (c p len cp : BitVec 64) (ret : Nat) (s : State) (W : Nat) (S : PoolShape),
     ImplApart Extracted.program impl ∧
     MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R ∧
@@ -134,7 +143,7 @@ theorem sat_of (hbud : IExp.BudCl) : ∃ (impl : List Segment) (R : RtInv) (b : 
     RunArm64.StackPool R s.mem (RunArm64.windowW s W) ∧
     RunArm64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat)) ≤ b ∧
     LengthsPass (bytesAt s.mem p.toNat len.toNat) ∧
-    compute (bytesAt s.mem p.toNat len.toNat) (parseLengths (bytesAt s.mem p.toNat len.toNat)) = ⟨#[]⟩ ∧
+    compute (bytesAt s.mem p.toNat len.toNat) (parseLengths (bytesAt s.mem p.toNat len.toNat)) = ⟨#[5]⟩ ∧
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.makeslice") ∧
       mkSite R (Extracted.program.contractAddr "runtime.makeslice") L b s_c) ∧
@@ -177,10 +186,10 @@ theorem sat_of (hbud : IExp.BudCl) : ∃ (impl : List Segment) (R : RtInv) (b : 
     Returns ((Extracted.program.link impl).withExit ret) s fun s' =>
       ABIReturn s s' ∧ (RunArm64.OkRet (bytesAt s.mem p.toNat len.toNat) s' ∧
         RunArm64.FrameW R b (RunArm64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat))) L W s s') :=
-  ⟨implAt, R, bW, [], c1, p1, 99, 99, ret, s1, WW, StkSh, hap, m_mk, m_mkz, m_mv, m_mvz, m_no, m_gr, m_cl, m_wb2, m_get, m_put,
-    m_wb4, by decide, hret, setup, rfl,
-    pre.1, pre.2.1, pre.2.2.1, pre.2.2.2.1, pre.2.2.2.2.1, pre.2.2.2.2.2.1, pre.2.2.2.2.2.2.1, pre.2.2.2.2.2.2.2.1,
-    pre.2.2.2.2.2.2.2.2.1, pre.2.2.2.2.2.2.2.2.2, compute1,
+  ⟨implAt, R, bW, [], c2, p2, 99, 99, ret, s2, WW, StkSh, hap, m_mk, m_mkz, m_mv, m_mvz, m_no, m_gr, m_cl, m_wb2, m_get, m_put,
+    m_wb4, by decide, hret, setup2, rfl,
+    (pre2 budget2).1, (pre2 budget2).2.1, (pre2 budget2).2.2.1, (pre2 budget2).2.2.2.1, (pre2 budget2).2.2.2.2.1, (pre2 budget2).2.2.2.2.2.1, (pre2 budget2).2.2.2.2.2.2.1, (pre2 budget2).2.2.2.2.2.2.2.1,
+    (pre2 budget2).2.2.2.2.2.2.2.2.1, (pre2 budget2).2.2.2.2.2.2.2.2.2, compute2,
     ⟨[], 0x1000, callS WStubs.mkA Extracted.dataAddr.«type:big.Word#51b931e8» 1 1, by rw [WStubs.addr_mk]; rfl,
       by rw [WStubs.addr_mk]; exact AsmWit.site_mk _⟩,
     ⟨[], 0x1000, sMkz, by rw [WStubs.addr_mk]; rfl, by rw [WStubs.addr_mk]; exact site_mkz⟩,
@@ -198,6 +207,6 @@ theorem sat_of (hbud : IExp.BudCl) : ∃ (impl : List Segment) (R : RtInv) (b : 
       by rw [WStubs.addr_put]; exact AsmWit.site_put _⟩,
     ⟨[], 0x1000, callS WStubs.wb4A 0 0 0, by rw [WStubs.addr_wb4]; rfl,
       by rw [WStubs.addr_wb4]; exact AsmWit.site_wb _ _⟩,
-    returnsC hbud⟩
+    returnsC⟩
 
 end FvModexp.Arm64.RunSucc.Witness

@@ -17,15 +17,12 @@ ANNOUNCE") from the per-term targets of divmc's `BudQ.Targets` (`W = BudQ.opC (m
 
 namespace FvModexp.Arm64.IExp
 
-/-- the factor-free allowance is below the current `RunIface.ExpBudget` -/
+/-- the factor-free allowance is below `RunIface.ExpBudget` (equal at `w = w'`; TIGHT COSTS final step, top s40) -/
 theorem bF_le {w w' yl : Nat} (h : w ≤ w') (h1 : 1 ≤ w') :
     (8 * (64 * yl) + 128) * BudQ.opC w ≤ RunIface.ExpBudget w' yl := by
   unfold RunIface.ExpBudget
   have e1 : BudQ.opC w ≤ RunIface.opCost w' := by unfold BudQ.opC RunIface.opCost allocCost; omega
-  have e2 : min w' 1 = 1 := by omega
-  rw [e2, Nat.mul_one]
-  calc (8 * (64 * yl) + 128) * BudQ.opC w ≤ (8 * (64 * yl) + 128) * RunIface.opCost w' := Nat.mul_le_mul_left _ e1
-    _ ≤ (8 * (64 * yl) + 128) * RunIface.opCost w' * 2 ^ 32 := Nat.le_mul_of_pos_right _ (by decide)
+  exact Nat.mul_le_mul_left _ e1
 
 /-- **`BudClQ` from the other owners' targets** (expmc's slow/obud/ocost proved) -/
 theorem budClQ_of

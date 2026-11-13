@@ -1668,3 +1668,11 @@ GC 14, GS1J 121 / 6.2 GB, GS1Z 47, GS1N 119, GS1T 170, GS2J 110, GS2Z 29, GS2N 1
 (145 s at load ~20), GS3L 48, GS3G 49, GS3 133 / 5.3 GB, GAlloc 10, **GS4A 66 / 3.1 GB** (was a > 9.5 min hang:
 blanket `all_goals first | exact …` closers after janus64_run → per-goal bullets), GS4B 104, GS4C 64, GS4Cb 16, GEns 6,
 SubMod2NRow 12 s.
+
+### top s40 (2026-11-13)
+* amd64 `DivBasicRowQ` PROVISIONAL (Janus 5e954613 spfix, throwaway pin): PASS 806 s / 3.7 GB, fresh cache cache-top/spfix39
+  (warm-up 2051 s at load ~80), all 437 modules of the closure compiled in-row (no earlier rows) — release order will be lower.
+* Dev (amd64, top s40): DivMOneT 10 s, DivMOneTB 15 s, DivMOneTC 24 s, DivMLessA 36 s, DivMLess 10 s, DivFree 21 s
+  (first draft hung > 5 min: a fallback `decide | rfl` on a goal with a wrong return-address constant — fixed constant),
+  DivMStk 3 s, DivMGet 8 s. TIGHT COSTS edit set (arm64): ModFun 108 s / 5.7 GB, IExpP 65 s, BudEvenQ 41 s / 5.4 GB,
+  RunSucc 3 s / 4.7 GB.
