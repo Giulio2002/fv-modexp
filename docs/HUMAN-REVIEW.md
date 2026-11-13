@@ -101,7 +101,15 @@ to be an upper bound). CONSEQUENCE of the `2^32` slack: `ExpBudget 1 0 ≈ 2^51`
 `0, 0, 0`, empty output, `okBudget = 149832`); the theorem itself covers every input, but for inputs with a nonzero length
 its budget premise holds only for runtimes whose invariant admits budgets ≥ `2^51` (e.g. a budget-free collector model).
 An exponentiating witness needs cost envelopes ≥ 2x tighter at one-word operands (the dominant term is `stackNatCost` at
-the stack-level bound `2^16`). If a callee proof finds a request count above an allowance it reports it
+the stack-level bound `2^16`).
+**RELEASE GATE "TIGHT COSTS" (coordinator decision 2026-11-15): the `2^32 · min w 1` factor is TEMPORARY and is NOT
+accepted for the release.** Release requires (a) `RunIface.ExpBudget` / Spec `okBudget` ≤ `2^34` bytes over the whole spec
+range (operands and exponent ≤ 128 words; the factor-free formula above gives `ExpBudget 128 128 = 65664 · opCost 128 ≈
+2^34`), and (b) success witnesses on BOTH ISAs that run a real exponentiation (`3^5 mod 7`) inside the toy runtime's
+`2^22` budget. Owners tighten the cost envelopes to the bytes actually allocated as functions of the real lengths
+(divmc: StackNat/mul/sqr/karatsuba + BudOK; expmc: NCost/supU/windows/slow/expNN; infra: P2/Even/SubMod2N/ModInv;
+asm: div/rem); top then removes the factor (both ISAs) and restores the `3^5 mod 7` witnesses. Until then any success-row
+timing is PROVISIONAL (measured against the slack), not verified-final. If a callee proof finds a request count above an allowance it reports it
 here and the constant is raised (never the proof weakened). Request sizes stay as in the table above.
 
 **Non-vacuity plan (coordinator requirement, open):**
