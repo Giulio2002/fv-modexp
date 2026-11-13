@@ -1,0 +1,169 @@
+import FvModexp.Proofs.Amd64.Exp.ModInvAlloc
+
+set_option autoImplicit false
+
+/-!
+# `nat.modularInverseModPowerOfTwo` (amd64): runtime facts across a call; `JA` (agent infra s54; twin of
+`Arm64/Exp/ModInvRt`)
+
+`rtM_call`: `RtM` survives a call whose frame `R.rt ++ ws` stays inside the ranges written so far and whose `ws` meets
+no live object of the entry live set outside them; the stack object comes back by the callee's `StackBack`.
+`alloc_jm`: the facts `JM` needs after the allocating `z.make`; `alloc`: `JA` from `JM`.
+-/
+
+open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Spec Janus.Contracts FvModexp
+
+namespace FvModexp.Amd64.ModInv
+
+open FvModexp.Amd64.EvenHyp
+open FvModexp.Amd64.Q.NatSqr (StkSep tls guard)
+
+theorem apartAll_old {R : RtInv} {L L1 : List (Nat × Nat)} (h : LiveExt R L L1) {p n : Nat}
+    (ha : ApartAll p n L1) : ApartAll p n L := fun r hr => ha r (h.mem_old hr)
+
+/-- the stack's array not re-allocated (header kept) -/
+theorem ain_keep {L : List (Nat × Nat)} {st : Nat} {M M' : Memory} (e0 : stW M' st = stW M st)
+    (e2 : stCap M' st = stCap M st) : ArrIn L st M M' := fun hn => absurd ⟨e0, e2⟩ hn
+
+theorem rtM_call {R : RtInv} {kc : Nat} {L : List (Nat × Nat)} {s : State} {zp zc st : Nat} {M0 M1 : Memory}
+    {L1 L2 : List (Nat × Nat)} {b1 b2 : Nat} {ws : List (Nat × Nat)}
+    (hrt : RtM R kc L s zp zc st M0 L1 b1) (hreg : M1.regions = M0.regions) (hF : MemFrame M0 M1 (R.rt ++ ws))
+    (hws : ∀ a k, Outside a k (R.rt ++ win s (K kc) A ++ [(zp, zp + 8 * zc)] ++ stkWs s.mem st) →
+      Outside a k (R.rt ++ ws))
+    (hLF : LiveFrame M0 M1 L1 ws)
+    (hwsL : ∀ a k, InRanges a k L → Outside a k ([(zp, zp + 8 * zc)] ++ stkWs s.mem st) → Outside a k ws)
+    (hLE : LiveExt R L1 L2) (hinv : R.inv b2 L2 (s.regs 14).toNat (view R.rt L2 M1))
+    (hstk : StackBack R L1 L2 st M0 M1) (hain : ArrIn L2 st M0 M1) : RtM R kc L s zp zc st M1 L2 b2 := by
+  obtain ⟨r0, F0, LF0, LE0, -, -, len0, arr0, ain0⟩ := hrt
+  obtain ⟨hk1, hk2, hk3⟩ := hstk
+  refine ⟨hreg.trans r0, F0.trans hF (fun a k h => ⟨h, hws a k h⟩),
+    ⟨fun a k hin hout => (hLF.readLE a k (LE0.inRanges_old hin) (hwsL a k hin hout)).trans (LF0.readLE a k hin hout)⟩,
+    LE0.trans hLE, hinv, hk1, hk2.trans len0, ?_, ArrIn.trans ain0 hain hLE⟩
+  rcases hk3 with ⟨e1, e2⟩ | ⟨i1, i2⟩
+  · rw [e1, e2]; exact arr0
+  · exact Or.inr ⟨i1, apartAll_old LE0 (apartAll_old (L1 := L1) (LiveExt.refl R L1) i2)⟩
+
+/-- a fresh runtime object is apart from every held range -/
+theorem fresh_apart {R : RtInv} {L : List (Nat × Nat)} {p n a k : Nat} (hIn : InRanges p n R.rt) (hAp : ApartAll p n L)
+    (h : Held R L a k) : Apart p n a k := by
+  rcases h with h | h
+  · obtain ⟨r, hr, h1, h2⟩ := h
+    have := hAp r hr; unfold Apart at this ⊢; omega
+  · obtain ⟨r, hr, h1, h2⟩ := hIn
+    have := MemFrame.outside_mem h hr; unfold Apart; omega
+
+/-- a fresh runtime object is apart from a range outside the runtime ranges -/
+theorem fresh_out {R : RtInv} {p n a k : Nat} (hIn : InRanges p n R.rt) (h : Outside a k R.rt) : Apart p n a k := by
+  obtain ⟨r, hr, h1, h2⟩ := hIn
+  have := MemFrame.outside_mem h hr; unfold Apart; omega
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 8000000 in
+/-- the facts at `JM` after the allocating `z.make(numWords + 1)` (pure) -/
+theorem alloc_jm {R : RtInv} {kc : Nat} {H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
+    {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State} (hkc : 4096 ≤ kc)
+    (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) {Mc m : Memory} {p r k : Nat}
+    (hF0 : MemFrame s.mem Mc (win s (K kc) A)) (hreg0 : Mc.regions = s.mem.regions)
+    (hfw : Fw1 s Mc st xp xl xc n k)
+    (hap : AllocPost R L (b + stkR H s.mem st) (s.regs 14).toNat (s.regs 4).toNat (NW n) Mc m p r) :
+    Fw1 s m st xp xl xc n k ∧ RtM R kc L s zp zc st m (L ++ [(p, p + r)]) (b + stkR H s.mem st - r) ∧
+      b - makeCost (NW n + 1) + stkR H m st ≤ b + stkR H s.mem st - r ∧
+      Own R kc L (L ++ [(p, p + r)]) s zp zc st xp xl m p (NW n + 5) := by
+  have hrt := rt0 hpre hF0 hreg0
+  have hcap0 := rt0_cap hpre hF0
+  have hcb : makeCost (NW n + 1) ≤ b := by
+    have := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1.2; simp only [cost] at this; omega
+  obtain ⟨⟨-, ⟨hb', -, -⟩, -, -, hout, -, hgrt, hLs, -, ⟨-, htls, -⟩⟩, -, ⟨hgl, -⟩, hn1, hn2, -, -, -, -, -, -, -,
+    -, ⟨-, -, -, hxh, -⟩, -, -, -, -, ⟨-, hst0, hstw, -, -, -, -, -, -, hfh, -⟩, -⟩ := hpre
+  have hgA : Outside RunIface.gA 32 R.rt := hgl.2.2.2.2.2.2.2.2.1
+  obtain ⟨-, e0c, e1c, e2c⟩ := stkOK_frame hst0 hF0 hstw (LiveExt.refl R L)
+  obtain ⟨hMF, hLF, hrg, hIn, hAp, hle, hacc, h8, hsz, hbr, hinv⟩ := hap
+  have hstk := hrt.1.2.2.2.2.2.1
+  simp only [K, A, regSP] at hout hstw hb'
+  have hwo : Outside ((s.regs 4).toNat - (232 + kc)) (232 + kc + 72) R.rt := hout
+  have hrd : ∀ a, (s.regs 4).toNat - (232 + kc) ≤ a → a + 8 ≤ (s.regs 4).toNat - 232 - 4096 ∨
+      ((s.regs 4).toNat - 200 ≤ a ∧ a + 8 ≤ (s.regs 4).toNat - 128) ∨
+      ((s.regs 4).toNat - 120 ≤ a ∧ a + 8 ≤ (s.regs 4).toNat - 88) ∨
+      ((s.regs 4).toNat - 80 ≤ a ∧ a + 8 ≤ (s.regs 4).toNat + 72) → m.readLE a 8 = Mc.readLE a 8 := by
+    intro a h1 h2
+    refine hMF.readLE _ _ ?_
+    simp only [outside_append, outside_cons, outside_nil, and_true]
+    exact ⟨hwo.of_sub h1 (by omega), by omega, by omega, by omega⟩
+  obtain ⟨⟨f1, f2⟩, f3, f4, f5, f6, f7, f8, f9⟩ := hfw
+  have hLF' : LiveFrame Mc m L [((s.regs 4).toNat - 232 - 4096, (s.regs 4).toNat - 200),
+      ((s.regs 4).toNat - 128, (s.regs 4).toNat - 120), ((s.regs 4).toNat - 88, (s.regs 4).toNat - 80)] :=
+    ⟨fun a k h _ => hLF.readLE a k h (by simp only [outside_nil])⟩
+  have hLE : LiveExt R L (L ++ [(p, p + r)]) := LiveExt.single (by simpa using hIn) (by simpa using hAp)
+  have hws : ∀ a k, Outside a k (win s (232 + kc) 72) →
+      Outside a k [((s.regs 4).toNat - 232 - 4096, (s.regs 4).toNat - 200),
+        ((s.regs 4).toNat - 128, (s.regs 4).toNat - 120), ((s.regs 4).toNat - 88, (s.regs 4).toNat - 80)] := by
+    intro a k h; simp only [win, outside_cons, outside_nil, and_true] at h ⊢; omega
+  have hhdr : ∀ j, j + 8 ≤ 24 → m.readLE (st + j) 8 = Mc.readLE (st + j) 8 := by
+    intro j hj
+    refine Held.readLE ((hstk.2.1).sub (by omega) (by omega)) hMF hLF' ?_
+    have h := hstw.of_sub (a := st + j) (n := 8) (by omega) (by omega)
+    exact hws _ _ (by simp only [win, outside_cons, outside_nil, and_true] at h ⊢; omega)
+  have e0 : stW m st = stW Mc st := by have := hhdr 0 (by omega); simpa using this
+  have e1 : stLen m st = stLen Mc st := hhdr 8 (by omega)
+  have e2 : stCap m st = stCap Mc st := hhdr 16 (by omega)
+  have hsb : StackBack R L (L ++ [(p, p + r)]) st Mc m := stackBack_hdr hstk hMF e0 e1 e2 hLE
+  have hc : 8 * (NW n + 5) ≤ r := hsz
+  have hIn' : InRanges p (8 * (NW n + 5)) R.rt := hIn.sub (Nat.le_refl _) (by omega)
+  have hAp' : ApartAll p (8 * (NW n + 5)) L := fun q hq => by
+    have := hAp q hq; unfold Apart at this ⊢; omega
+  have hw1 := fresh_out hIn' hwo
+  unfold Apart at hw1
+  refine ⟨⟨⟨?_, ?_⟩, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩, rtM_call hrt.1 hrg hMF ?_ hLF' ?_ hLE hinv hsb (ain_keep e0 e2),
+    (by rw [stkR_congr (e2.trans hcap0)]; omega), ?_⟩
+  · rw [hrd _ (by omega) (by omega)]; exact f1
+  · rw [hrd _ (by omega) (by omega)]; exact f2
+  · rw [hrd _ (by omega) (by omega)]; exact f3
+  · rw [hrd _ (by omega) (by omega)]; exact f4
+  · rw [hrd _ (by omega) (by omega)]; exact f5
+  · rw [hrd _ (by omega) (by omega)]; exact f6
+  · rw [hrd _ (by omega) (by omega)]; exact f7
+  · rw [hrd _ (by omega) (by omega)]; exact f8
+  · rw [hrd _ (by omega) (by omega)]; exact f9
+  · intro a k h; simp only [outside_append] at h ⊢; exact ⟨h.1.1.1, hws a k h.1.1.2⟩
+  · intro a k hin _
+    obtain ⟨q, hq, h1, h2⟩ := hin
+    have := hLs q hq
+    simp only [win, K, A, outside_cons, outside_nil, and_true] at this ⊢; omega
+  · refine ⟨by simp only [NW]; omega, by omega, fun _ => ⟨h8, Or.inl ⟨(p, p + r), by simp, by omega, by simp only; omega⟩,
+      hacc, by omega⟩, Or.inr ⟨hIn', hAp'⟩, by simp only [win, K, A, outside_cons, outside_nil, and_true]; omega,
+      fresh_out hIn' hgrt, fresh_out hIn' htls, fresh_apart hIn' hAp' (hxh.sub (Nat.le_refl _) (by omega)),
+      ⟨?_, ?_, fresh_out hIn' hgA⟩, ?_⟩
+    · have := fresh_apart hIn' hAp' hstk.2.1; unfold Apart at this ⊢; omega
+    · simp only [Q.BasicSqr.freeP, Q.BasicSqr.freeN] at hfh ⊢
+      rw [e0, e1, e2, e0c, e1c, e2c]; exact fresh_apart hIn' hAp' hfh
+    · intro _ _ hcap
+      rw [e2] at hcap; rw [e0, e2]
+      exact fresh_apart hIn' hAp' (hstk.2.2.2.2.1 hcap).2.1
+
+set_option maxRecDepth 20000 in
+/-- **`JA` from `JM`**: the allocating `make` -/
+theorem alloc (impl : List Amd64.Segment) (R : RtInv)
+    (hmk : MakesliceLiveContract64 (LibW.program.link impl) (cA "runtime.makeslice") 4096 R)
+    (kc H : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat) (L : List (Nat × Nat))
+    (zp zl zc st xp xl xc n : Nat) (s : State) (hkc : 4096 ≤ kc)
+    (kM : JM impl R kc H sqrC mulC b L zp zl zc st xp xl xc n s) :
+    JA impl R kc H sqrC mulC b L zp zl zc st xp xl xc n s := by
+  intro S hpre hn _hr hpc h4 h5 hab h2 h3 _h7 _h6 _h8 _h9 _h10 _h12 hfw hF hrg
+  refine zalloc impl R hmk kc H sqrC mulC b L zp zl zc st xp xl xc n s hkc hpre hn S hpc h4 h5 hab h2 h3 hF _ ?_
+  intro S' m p r e1 e4 e5 eab e0 e1' e2 e3 e6 e7 e8 e9 e10 e12 em hap
+  have J := alloc_jm hkc hpre hF hrg hfw hap
+  obtain ⟨-, f3, f4, f5, f6, f7, f8, f9⟩ := hfw
+  have hsp : 232 ≤ (s.regs 4).toNat := by
+    have := hpre.1.2.1.1; simp only [regSP, K] at this; omega
+  rw [show (s.regs 4).toNat - 224 + 120 = (s.regs 4).toNat - 104 by omega, f9] at e3
+  rw [show (s.regs 4).toNat - 224 + 264 = (s.regs 4).toNat + 40 by omega, f4] at e6
+  rw [show (s.regs 4).toNat - 224 + 256 = (s.regs 4).toNat + 32 by omega, f3] at e7
+  rw [show (s.regs 4).toNat - 224 + 272 = (s.regs 4).toNat + 48 by omega, f5] at e8
+  rw [show (s.regs 4).toNat - 224 + 280 = (s.regs 4).toNat + 56 by omega, f6] at e9
+  rw [show (s.regs 4).toNat - 224 + 288 = (s.regs 4).toNat + 64 by omega, f7] at e10
+  rw [show (s.regs 4).toNat - 224 + 144 = (s.regs 4).toNat - 80 by omega, f8] at e12
+  subst em
+  exact kM S' p (NW n + 5) _ _ hpre hn e1 (e4.trans h4) (e5.trans h5) eab e0 e2 e1' e3 e7 e6 e8 e9 e10 e12
+    J.1 J.2.1 J.2.2.1 J.2.2.2 (by omega)
+
+end FvModexp.Amd64.ModInv
