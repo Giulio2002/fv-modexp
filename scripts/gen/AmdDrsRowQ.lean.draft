@@ -1,0 +1,21 @@
+import FvModexp.Proofs.Amd64.NatQ.DrsRowWQ
+set_option autoImplicit false
+open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Spec Janus.Contracts Janus.Contracts.EqHashModel FvModexp
+namespace FvModexp.Amd64.DrsRowQ
+theorem correctness (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
+    (hgr : GrowsliceLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.growslice") 4096 R)
+    (hmc : MemclrNoHeapPointersLive64 (Extracted.program.ofImpl impl)
+      (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
+    (hwb : WbLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 4096 R 2)
+    (hmk : MakesliceLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
+    (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
+    (H b : Nat) (L : List (Nat × Nat)) (qp ql qc st up ul uc d : BitVec 64) (vp vl vc : Nat) :
+    Ensures (Extracted.program.link impl) (segAddr Extracted.program DivLarge.drsFn)
+      [qp, ql, qc, st, up, ul, uc, d]
+      (fun s => Q.DivLarge.DrsPre R b L H (Q.drsCQ ul.toNat vl) qp.toNat ql.toNat qc.toNat
+        st.toNat up.toNat ul.toNat uc.toNat vp vl vc s)
+      (fun s s' => Q.DivLarge.DrsPost R b L H (Q.drsCQ ul.toNat vl) qp.toNat ql.toNat
+        st.toNat up.toNat ul.toNat vp vl s s') :=
+  Ensures.full64 hap (by simp [numIntRegs]) (Q.DivRec.hyp impl hap R Q.NatMul.names mul_ns (mul_code impl hap)
+    (Q.NatMul.hypQE impl hap R hmk hgr hmc hmv hwb _) hgr hmc hwb hmv H b L qp ql qc st up ul uc d vp vl vc)
+end FvModexp.Amd64.DrsRowQ
