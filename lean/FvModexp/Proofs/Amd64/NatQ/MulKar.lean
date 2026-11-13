@@ -1,6 +1,7 @@
 import FvModexp.Proofs.Amd64.NatQ.MulKPre
 import FvModexp.Proofs.Amd64.NatQ.MulNorm
 import FvModexp.Proofs.Common.BitLemmas
+import FvModexp.Proofs.Common.OmegaOnly
 
 set_option autoImplicit false
 
@@ -115,23 +116,25 @@ theorem kar2 (impl : List Amd64.Segment) (R : RtInv) (n0 : Nat)
   simp only [win, outside_cons, outside_nil, and_true] at hpw
   obtain ⟨-, -, -, -, -, -, ⟨-, -, hstw, -, -, -, hfw, -⟩, -⟩ := hJ.pre
   simp only [win, outside_cons, outside_nil, and_true, BasicSqr.freeP, BasicSqr.freeN] at hstw hfw
+  have h264 : 264 ≤ (s.regs 4).toNat := by omega
   have hrd' : ∀ a n, (s.regs 4).toNat - 184 ≤ a → a + n ≤ (s.regs 4).toNat + 88 →
       s'.mem.readLE a n = S.mem.readLE a n := by
     intro a n h1 h2
+    clear mret my0 my1 my2 mra mbp m112 m144 m168 m170 m72 m16 hra hih
     refine hF2.readLE _ _ ?_
     simp only [stkWs, outside_append, outside_cons, outside_nil, and_true]
     rw [eW, eL, eC]
     refine ⟨⟨hout0.of_sub (by omega) (by omega), ?_⟩, ?_⟩
     · omega
     · and_intros <;> omega
-  have q112 := (hrd' _ 8 (by omega) (by omega)).trans m112
-  have q144 := (hrd' _ 8 (by omega) (by omega)).trans m144
-  have q168 := (hrd' _ 8 (by omega) (by omega)).trans m168
-  have q170 := (hrd' _ 1 (by omega) (by omega)).trans m170
-  have q72 := (hrd' _ 8 (by omega) (by omega)).trans (m72.trans hmn)
-  have q16 := (hrd' _ 8 (by omega) (by omega)).trans m16
-  have qra := (hrd' _ 8 (by omega) (by omega)).trans mra
-  have qbp := (hrd' _ 8 (by omega) (by omega)).trans mbp
+  have q112 := (hrd' _ 8 (by omega_only [h264]) (by omega_only [h264])).trans m112
+  have q144 := (hrd' _ 8 (by omega_only [h264]) (by omega_only [h264])).trans m144
+  have q168 := (hrd' _ 8 (by omega_only [h264]) (by omega_only [h264])).trans m168
+  have q170 := (hrd' _ 1 (by omega_only [h264]) (by omega_only [h264])).trans m170
+  have q72 := (hrd' _ 8 (by omega_only [h264]) (by omega_only [h264])).trans (m72.trans hmn)
+  have q16 := (hrd' _ 8 (by omega_only [h264]) (by omega_only [h264])).trans m16
+  have qra := (hrd' _ 8 (by omega_only [h264]) (by omega_only [h264])).trans mra
+  have qbp := (hrd' _ 8 (by omega_only [h264]) (by omega_only [h264])).trans mbp
   have hacc2 : ∀ a n w, s'.mem.accessible a n w = M.accessible a n w := fun a n w => by
     rw [hF2.accessible, hF.accessible]
   have hsacc8 : s'.mem.accessible ((s.regs 4).toNat - 256) 344 true = true := by
@@ -151,6 +154,7 @@ theorem kar2 (impl : List Amd64.Segment) (R : RtInv) (n0 : Nat)
     rw [show xl.toNat + yl.toNat = 2 * yl.toNat by omega, hval, hxS, hyS, hJ.xv (by omega), hJ.yv (by omega)]
   have hk : makeB (xl.toNat + yl.toNat) + KCQ yl.toNat ≤ mulCQ xl.toNat yl.toNat := by
     unfold mulCQ; rw [hmn, Nat.max_self, Nat.min_self]; exact MCQ_kar h40
+  clear mret my0 my1 my2 mra mbp m112 m144 m168 m170 m72 m16 hrd' hxS hyS hxw hyw hih hpx hpy
   have hF2' : MemFrame S.mem s'.mem (R.rt ++ win s W 88 ++ (p, p + 8 * (xl.toNat + yl.toNat)) :: stkWs S.mem st.toNat) :=
     hF2.mono fun a n h => by
       rw [show 2 * yl.toNat = xl.toNat + yl.toNat by omega]
@@ -159,6 +163,7 @@ theorem kar2 (impl : List Amd64.Segment) (R : RtInv) (n0 : Nat)
       exact ⟨⟨h1, by omega⟩, h3⟩
   have hLF2' : LiveFrame S.mem s'.mem L1 ((p, p + 8 * (xl.toNat + yl.toNat)) :: stkWs S.mem st.toNat) := by
     rw [show xl.toNat + yl.toNat = 2 * yl.toNat by omega]; exact hLF2
+  clear hpw hstw hfw
   janus64_run [q72, q16, q170, q112, q144, hsp2, BitVec.msb_eq_decide] until [hnormB]
   refine normB impl s s'.mem p c (xl.toNat + yl.toNat) (natVal s'.mem p (xl.toNat + yl.toNat)) 0
     (fun s3 => Kept s s3 ∧ MPost R b H L W zp zc st.toNat xp.toNat xl.toNat xc.toNat yp.toNat yl.toNat yc.toNat s s3)
