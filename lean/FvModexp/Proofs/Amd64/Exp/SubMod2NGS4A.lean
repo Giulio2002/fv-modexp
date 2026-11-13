@@ -34,6 +34,16 @@ theorem natVal_store_top' (m : Memory) (p k v a : Nat) (ha : a = p + 8 * k) (hv 
     natVal (m.writeLE a 8 v) p (k + 1) = natVal m p k + 2 ^ (64 * k) * v := by
   subst ha; exact natVal_store_top m p k v hv
 
+/-- the frame words survive stores below `e - 8` (copy of `fwG_lo`, SubMod2NGS3.lean, which this module does not import) -/
+theorem fwG_lo4 {s : State} {M M' : Memory} {zp zl zc yp n lo : Nat} (hs : 152 ≤ (s.regs 4).toNat)
+    (h : Fw s M zp zl zc yp n) (hF : MemFrame M M' [(lo, (s.regs 4).toNat - 8)]) :
+    Fw s M' zp zl zc yp n := by
+  obtain ⟨f1, f2, f3, f4, f5, f6, f7⟩ := h
+  have r : ∀ a, (s.regs 4).toNat - 8 ≤ a → M'.readLE a 8 = M.readLE a 8 :=
+    fun a ha => hF.readLE a 8 (by simp only [outside_cons, outside_nil, and_true]; omega)
+  refine ⟨(r _ ?_).trans f1, (r _ ?_).trans f2, (r _ ?_).trans f3, (r _ ?_).trans f4, (r _ ?_).trans f5,
+    (r _ ?_).trans f6, (r _ ?_).trans f7⟩ <;> omega
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- from the `growslice` entry (`c = l < ⌈n/64⌉`) to the next test, with the fresh array -/
@@ -59,7 +69,7 @@ theorem gstep (impl : List Amd64.Segment) {R : RtInv}
   have hn15 := hpre.2.2.2.2.2.2.2.1
   have hs4 : 4576 ≤ (s.regs 4).toNat := hpre.1.2.1.1
   have hout := hpre.1.2.2.2.2.1
-  simp only [K, A] at hout
+  simp only [A] at hout
   have hround : growsliceRound64 T = 8 * growCap8 (l + 1) c := by simp only [growsliceRound64, h3, h1]
   have hgr8 := growRoundG (N := l + 1) (c := c) (n := n) (by omega) hlW
   obtain ⟨hbr, hbud⟩ := bud_grow (r := 8 * growCap8 (l + 1) c) hcG (by omega) hrt.2.2.2.2.1 hgr8
@@ -98,15 +108,18 @@ theorem gstep (impl : List Amd64.Segment) {R : RtInv}
     (b3 - 8 * growCap8 (l + 1) c) ?_ ⟨?_, ⟨?_, ?_, ?_, ?_⟩, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, BitVec.isLt _, ?_, ?_,
       ?_, ?_, ?_⟩
   all_goals try janus64_simp
-  all_goals first
-    | exact h14 | exact hfs | exact hx15 | exact hdf
-    | (apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_add, BitVec.toNat_ofNat, hspT]; omega)
-    | exact fw_cstore hfw1 (by omega) hs4
-    | exact rt_cstore hrt1 hcurN hlvN (by omega) (by omega)
-    | exact natLive_store hlvN _ _ _
-    | exact hcurN | exact hgcb | exact hgcl | exact hlW | exact hg | exact fun h => by omega
-    | (rw [natVal_store_top' _ _ _ _ _ (by omega) (by decide), hval1, hv]; simp)
-    | skip
+  · apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega
+  · exact hfs
+  · exact fw_cstore hfw1 (by omega) hs4
+  · exact rt_cstore hrt1 hcurN hlvN (by omega) (by omega)
+  · exact natLive_store hlvN _ _ _
+  · exact hcurN
+  · exact hgcb
+  · exact hgcl
+  · exact hlW
+  · exact hg
+  · exact fun h => by omega
+  · rw [natVal_store_top' _ _ _ _ _ (by omega) (by decide), hval1, hv]; simp
 
 end FvModexp.Amd64.SubMod2N
 
@@ -142,7 +155,8 @@ theorem appIterG (impl : List Amd64.Segment) {R : RtInv}
     subst hlW'
     janus64_run [hc, hsh] until [6216656]
     refine k4 _ p c g L3 b3 hpre ?_ ?_ ⟨?_, ?_, ?_, ?_⟩ ?_ ?_ ?_ ?_ hfw hrt hlv hcur hc40 hp64 hlc hg hgz hlt hv
-    all_goals first | (janus64_simp; done) | exact h14 | exact hfs | exact hx15 | exact hdf | janus64_simp
+    all_goals try janus64_simp
+    exact hfs
   · by_cases hcap : l + 1 ≤ c
     · have hw1 := (curA_win hpre hcur).1
       obtain ⟨-, -, hpacc, hp48⟩ := hlv (by omega)
@@ -150,29 +164,32 @@ theorem appIterG (impl : List Amd64.Segment) {R : RtInv}
       refine KL _ p c g L3 b3 (by simp only [W]; omega) ?_ ⟨?_, ⟨?_, ?_, ?_, ?_⟩, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_,
         hp64, ?_, ?_, ?_, hgz, ?_⟩
       all_goals try janus64_simp
-      all_goals first
-        | exact h14 | exact hfs | exact hx15 | exact hdf
-        | exact fw_cstore hfw (by omega) hs4
-        | exact rt_cstore hrt hcur hlv (by omega) (by omega)
-        | exact natLive_store hlv _ _ _
-        | exact hcur | exact hc40 | exact hcap
-        | (simp only [W]; omega)
-        | omega
-        | (rw [natVal_store_top' _ _ _ _ _ (by omega) (by decide), hv]; simp)
-        | skip
+      · exact hfs
+      · exact fw_cstore hfw (by omega) hs4
+      · exact rt_cstore hrt hcur hlv (by omega) (by omega)
+      · exact natLive_store hlv _ _ _
+      · exact hcur
+      · exact hc40
+      · exact hcap
+      · simp only [W]; omega
+      · omega
+      · rw [natVal_store_top' _ _ _ _ _ (by omega) (by decide), hv]; simp
     · have hcl : c = l := by omega
       have hs136 : (s.regs 4).toNat - 128 - 8 = (s.regs 4).toNat - 136 := by omega
+      have hw1 := (curA_win hpre hcur).1
+      have hzA : Outside p (8 * l) (win s K A) := by
+        simp only [win, K, A, outside_cons, outside_nil, and_true]; omega
       janus64_run [hc, hsh, hcap, hs136] until [cA "runtime.growslice"]
       refine gstep impl hgr hpre (L3 := L3) (b3 := b3) _ ?_ ?_ ⟨?_, ?_, ?_, ?_⟩ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ hcur hp64 hcl
         (by simp only [W]; omega) hg hgz ?_
         fun S' p' c' L' b' hpc' hI' => KL S' p' c' (g + 1) L' b' (by simp only [W]; omega) hpc' hI'
       all_goals try janus64_simp
-      all_goals first
-        | exact h14 | exact hfs | exact hx15 | exact hdf
-        | exact hfw | exact hrt | exact hlv | exact hv
-        | (apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega)
-        | omega
-        | skip
+      · apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
+      · exact hfs
+      · exact fwG_lo4 (lo := (s.regs 4).toNat - 4576) (by omega) hfw (by janus_frame)
+      · exact rtG_stk hpre hrt (by simp only [win, K, A]; janus_frame) (by janus64_simp)
+      · exact natLive_store hlv _ _ _
+      · exact hv
 
 theorem appG (impl : List Amd64.Segment) {R : RtInv}
     (hgr : GrowsliceLiveContract64 (LibW.program.link impl) (cA "runtime.growslice") 4096 R)
@@ -210,6 +227,7 @@ theorem s4aG (impl : List Amd64.Segment) (R : RtInv)
   janus64_run [r8] until [6216608]
   refine appG impl hgr k4 hpre hlt _ _ p3 l3 c3 0 L3 b3 rfl ?_ ⟨?_, ⟨?_, ?_, ?_, ?_⟩, ?_, ?_, ?_, ?_, hfw, hrt0, hlv, hcur,
     hc40, hp64, hlc, hl3, Nat.zero_le _, fun h => ⟨(hgz h).1, (hgz h).2, rfl⟩, hv⟩
-  all_goals first | (janus64_simp; done) | exact h14 | exact hfs | exact hx15 | exact hdf | janus64_simp
+  all_goals try janus64_simp
+  exact hfs
 
 end FvModexp.Amd64.SubMod2N
