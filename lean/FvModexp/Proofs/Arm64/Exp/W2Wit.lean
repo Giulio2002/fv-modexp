@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Arm64.Exp.W2FunE
+import FvModexp.Proofs.Arm64.Exp.W2FunDefs
 import FvModexp.Proofs.Arm64.Witness.AsmWit
 
 set_option autoImplicit false

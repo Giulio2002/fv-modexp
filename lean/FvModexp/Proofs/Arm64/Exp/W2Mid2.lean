@@ -1,6 +1,8 @@
+import FvModexp.Proofs.Arm64.Exp.W2ZmP
 import FvModexp.Proofs.Arm64.Exp.LibW
 import FvModexp.Proofs.Arm64.Exp.W2Mid
 import FvModexp.Proofs.Arm64.Exp.W2Zm
+import FvModexp.Proofs.Arm64.Exp.W2Posts
 
 /-!
 # window-2 (arm64): from the end of the table (`j4`) to the return
@@ -15,12 +17,6 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvMod
 namespace FvModexp.Arm64.W2Pro
 
 open FvModexp.Arm64.W2Loop (Env Inp Buf Bufs Mem Static OneIn FinEnv TailPost step)
-
-theorem apart_held {R : RtInv} {L : List (Nat × Nat)} {p k a n : Nat} (hin : InRanges p k R.rt)
-    (hap : ApartAll p k L) (hh : InRanges a n L ∨ Outside a n R.rt) : Apart p k a n := by
-  rcases hh with h | h
-  · exact hap.apart_of_inRanges h
-  · have := out_inR h hin; unfold Apart; omega
 
 /-- the loop buffers after `z = z.make(2n)`: the old array (caller's facts) or a fresh one -/
 theorem bufs_of {R : RtInv} {L L' : List (Nat × Nat)} {g sp n mp yp ylen zp zc zp' zc' zzp zzc onep st : Nat}
@@ -59,11 +55,6 @@ theorem bufs_of {R : RtInv} {L L' : List (Nat × Nat)} {g sp n mp yp ylen zp zc 
 theorem inp_ext {R : RtInv} {L L' : List (Nat × Nat)} {sp n p : Nat} {M M' : Memory} {ws : List (Nat × Nat)}
     (hx : LiveExt R L L') (h : Inp R L sp n M p) (hf : MemFrame M M' ws) : Inp R L' sp n M' p :=
   ⟨by rw [hf.accessible]; exact h.1, h.2.1, hx.held h.2.2.1, h.2.2.2⟩
-
-theorem buf_ext {R : RtInv} {L L' : List (Nat × Nat)} {g sp n p c : Nat} {M M' : Memory} {ws : List (Nat × Nat)}
-    (hx : LiveExt R L L') (h : Buf R L g sp n M p c) (hf : MemFrame M M' ws) : Buf R L' g sp n M' p c := by
-  obtain ⟨a1, a2, a3, a4, a5, a6, a7⟩ := h
-  exact ⟨a1, a2, by rw [hf.accessible]; exact a3, a4, hx.held a5, a6, a7⟩
 
 /-- the `ZPost` frame: held objects apart from the zmake window keep their bytes -/
 theorem zrd {R : RtInv} {L : List (Nat × Nat)} {sp a k : Nat} {M M' : Memory}
