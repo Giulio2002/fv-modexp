@@ -1706,3 +1706,9 @@ rel42 (snapshot snap42 = 8923cef0, same store, the four rows alone, load 30-46):
   sp - 232) → isolated lemma `sp232`; and an `omega` over 3 ranges with many truncated subtractions in context (hst2)
   → lemma `st3`; budget fact boxed (`hbbB`). Lesson: never `bv_omega`/multi-range `omega` in a context holding the
   callee post; state the arithmetic as a standalone lemma (also `win240`, `gwin_aux` in DivMBigK).
+
+### expmc s53 (amd64 window-4 RR section, dev builds on v0.3.1, host load ~40)
+* New: W4DivP 2.1 s, W4DivS (divStep) 3.4 s, W4SncR 4.4 s, W4SnK 14–17 s / 3.0 GB, W4SnP 2.0 s, W4Sn2R 7.7 s,
+  W4Sn2 (sn2Step) 3.6 s, W4Lsh 6.2 s; rebuilt after the KeptJ shrink: W4Ctx 4.6 s, W4DivK 23 s, W4DivM 25 s.
+  All composition steps pass only explicit terms (no omega in the big contexts; arithmetic in small lemmas).
+* arm64 MontRow with Witness.nonvacuous: 3.6 s (dev).
