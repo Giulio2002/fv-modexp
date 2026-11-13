@@ -12,6 +12,7 @@ set_option autoImplicit false
 open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.GoABI0 Janus.Amd64.Tactic Janus.Spec Janus.Contracts
 open Janus.Contracts.EqHashModel
 open FvModexp.Amd64.NatAdd (outside_of_inRanges)
+open FvModexp (Held.readLE2 liveFrame_of_frame)
 
 set_option linter.janusRenameI false
 
@@ -67,7 +68,60 @@ theorem mkR (impl : List Amd64.Segment) (R : RtInv)
   have hout : Outside ((s.regs 4).toNat - 41272) (41272 + 112) R.rt := hpre.ce.2.2.2.2.1
   obtain ⟨-, ⟨-, -, hw⟩, -⟩ := hpre.ce
   have hwacc : S2.mem.accessible ((s.regs 4).toNat - 41272) (41272 + 112) true = true := by rw [hS2acc]; exact hw
+  have hvt : s.mem.readLE (vp + 8 * (vl - 1)) 8 ≠ 0 := by
+    rcases hpre.vn with h | h
+    · omega
+    · exact h
+  have hiS : ∀ a n, ip ≤ a → a + n ≤ ip + 8 * il → S2.mem.readLE a n = s.mem.readLE a n := by
+    intro a n h1 h2
+    have hiw := hl.iw; have hsi := hpre.si
+    unfold Apart at hsi
+    rw [Held.readLE2 (hpre.io.2.2.2.1.sub h1 h2) hA.F2 hA.LF2
+      (by simp only [outside_cons, outside_nil, and_true]; omega)
+      (by simp only [stkWs, outside_cons, outside_nil, and_true]; omega),
+      Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega),
+      hP.fr.readLE a n (by simp only [proWs, outside_cons, outside_nil, and_true]; omega)]
   janus64_run [p1, p2, p3, p4] until [joinU]
-  all_goals done
+  clear hbr
+  have hMF : MemFrame S2.mem (((S2.mem.writeLE ((s.regs 4).toNat - 96) 8 (stW S2.mem st + 8 * stLen s.mem st)).writeLE
+      ((s.regs 4).toNat - 160) 8 vl).writeLE ((s.regs 4).toNat - 152) 8 vl) (slotsW s) := by
+    simp only [slotsW]; janus_frame
+  refine k _ ⟨?qpc, ?qsp, ?q5, ?q14, ?qfs, ?qx, ?qdf, ?q0, ?q3, ?q1, ?q2, ?q6, ?q7, ?q8, ?qmem, ?qua,
+    LiveExt.refl R L1, Nat.sub_le _ _, ?qis, ?qreg⟩
+  case qpc => rfl
+  case qsp => simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte, hsp2]
+  case q5 => simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte, h5]
+  case q14 => simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte, h14]
+  case qfs => exact hfs
+  case qx => exact hx2
+  case qdf => rfl
+  case q0 =>
+    simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte, hr0]
+    try exact Nat.mod_eq_of_lt (by have := hl.t48; omega)
+  case q3 => simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte, hr3]
+  case q1 => simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte, hr1]
+  case q2 => simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte, hvt]
+  case q6 => simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]
+  case q7 => simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]
+  case q8 => simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]
+  case qreg => simp only [Janus.Arm64.Memory.regions_writeLE]; exact hA.reg
+  case qmem =>
+    refine mem_of_nat hE hP hA rfl hA.len rfl (hMF.widen R.rt)
+      (liveFrame_of_frame (rs := slotsW s) (ws := []) (lo := (s.regs 4).toNat - 41272) (hi := (s.regs 4).toNat + 112)
+        (by simpa using hMF) hl.lsep (fun r hr => by
+          simp only [slotsW, List.mem_cons, List.not_mem_nil, or_false] at hr
+          rcases hr with rfl | rfl | rfl | rfl <;> simp only <;> omega))
+      (by janus_simp; have := hl.t48; omega) (by janus_simp) (by janus_simp) ?_
+    refine RtInv.inv_frame' hMF (fun r hr => ?_) hA.inv
+    simp only [slotsW, List.mem_cons, List.not_mem_nil, or_false] at hr
+    left
+    rcases hr with rfl | rfl | rfl | rfl <;> exact hout.of_sub (by dsimp only; omega) (by dsimp only; omega)
+  case qua =>
+    exact uarr_reuse hE hz (fun a n w => by simp only [Janus.Arm64.Memory.accessible_writeLE]; exact hS2acc a n w)
+  case qis =>
+    intro a n h1 h2
+    have hiw := hl.iw
+    rw [hMF.readLE a n (by simp only [slotsW, outside_cons, outside_nil, and_true]; omega)]
+    exact hiS a n h1 h2
 
 end FvModexp.Amd64.DivLarge
