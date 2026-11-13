@@ -108,26 +108,25 @@ the Janus toy runtime's heap (budgets up to 2^22):
 |---|---|---|
 | `opCost w` | `allocCost (1024 w + 1024)` | a request of a callee with operands of at most `w` words is at most `64 w + 64` words (window-4 `stk.reserve(23 · len m)`, Karatsuba / recursive-division scratch of `2 len m`-word products, `nat.make` results), at most doubled by `growslice`: a block of at most `1024 w + 1024` bytes; `blockSize_le_allocCost` |
 | `ModBudget w` | `64 · opCost w` | `z.Mod(z, y)`, `w = max(len z, len y)`: `nat.make` of `u` (len x + 1), `q`, `z`; `getStack`; `(*stack).nat` scratch of `divLarge` / `divRecursiveStep` (w ≤ 128 ≥ divRecursiveThreshold 40: ≤ 4 blocks, depth ≤ 2) — under 64 requests |
-| `ExpBudget w yW` | `(8 · 64 yW + 128) · opCost w · (2^32 · min w 1)` | `z.exp(z, y, m, false)`, `w = max(len z, len y, len m)`, `yW = len y`: ≤ `64 yW` exponent bits; per bit at most one `sqr`, one `mul`, one reduction (`div` or `montgomery`), each with ≤ 2 allocating requests (its `nat.make` result when the capacity is short, `(*stack).nat` scratch): ≤ 8 per bit; setup ≤ 128 (power table 16 entries, `stk.reserve`, `m1 m2 z1 z2` of `expNNEven`, `lsh`, `getStack`). The per-bit allowance lets a loop invariant charge each iteration a constant without tracking capacities. SLACK `2^32` (top s28, after "[divmc s33] FINDING" in NOTES-conventions): the proved cost envelopes of the `nat` chain (Karatsuba `MC` closure, per-modulus-bit charges of the power-of-two / even paths, `stackNatCost` at the stack-level bound `2^16`) exceed the request count above by up to `2^19.84` (numeric mirror scripts/gen/exp-budget-check.py; worst `xl = n = 128, yl = 0`); `2^32` is what the uniform Lean bound needs. The factor is `0` for `w = 0` (all three lengths `0`: `Run` returns before any call) |
+| `ExpBudget w yW` | `(8 · 64 yW + 128) · opCost w` (= `BudQ.ExpBudgetF`; `RunSucc.expBudget_eq … := rfl`) | `z.exp(z, y, m, false)`, `w = max(len z, len y, len m)`, `yW = len y`: ≤ `64 yW` exponent bits; per bit at most one `sqr`, one `mul`, one reduction (`div` or `montgomery`), each with ≤ 2 allocating requests (its `nat.make` result when the capacity is short, `(*stack).nat` scratch): ≤ 8 per bit; setup ≤ 128 (power table 16 entries, `stk.reserve`, `m1 m2 z1 z2` of `expNNEven`, `lsh`, `getStack`). The per-bit allowance lets a loop invariant charge each iteration a constant without tracking capacities. NO SLACK FACTOR (top s40, commit 3e3c02b): the former temporary `2^32 · min w 1` factor is removed on both ISAs (Spec `okBudget` and `RunIface.ExpBudget`); the proved cost envelopes of the `nat` chain fit this formula (`BudQ.budOK` from the owners' per-term targets; numeric mirror scripts/gen/exp-budget-check.py transcribes the factor-free Lean definitions). CHANGE AT `w = 0`: with `min w 1` gone, the all-zero-lengths case (`Run` returns before any `Mod`/`exp` call) now has the exp allowance `128 · opCost 0` in `okBudget` instead of `0` — a slightly looser (larger) budget premise there; it is still a finite closed bound and no proof consumes it |
 | `BytesBudget w` | `allocCost (8 w)` | `x.Bytes()`, `w = len x`: one `make([]byte, 8 w)` |
 
-For 128-word operands: `opCost 128 ≈ 2^18`, `ExpBudget 128 128 ≈ 2^66` (a deliberate over-approximation: `B` only has
-to be an upper bound). CONSEQUENCE of the `2^32` slack: `ExpBudget 1 0 ≈ 2^51` exceeds the Janus toy runtime's heap
-(budgets ≤ `2^22`), so the success-path witnesses (`Top/RunOkRow`, `Top/RunOk`) run `Run` on 99 zero bytes (lengths
-`0, 0, 0`, empty output, `okBudget = 149832`); the theorem itself covers every input, but for inputs with a nonzero length
-its budget premise holds only for runtimes whose invariant admits budgets ≥ `2^51` (e.g. a budget-free collector model).
-An exponentiating witness needs cost envelopes ≥ 2x tighter at one-word operands (the dominant term is `stackNatCost` at
-the stack-level bound `2^16`).
-**RELEASE GATE "TIGHT COSTS" (coordinator decision 2026-11-15): the `2^32 · min w 1` factor is TEMPORARY and is NOT
-accepted for the release.** Release requires (a) `RunIface.ExpBudget` / Spec `okBudget` ≤ `2^34` bytes over the whole spec
-range (operands and exponent ≤ 128 words; the factor-free formula above gives `ExpBudget 128 128 = 65664 · opCost 128 ≈ 1.73e10 ≈
-2^34.01` with `opCost 128 ≈ 2.64e5` from divmc's mirror — so the allowance formula itself must also shrink slightly, e.g. the
-per-bit 8 requests or `opCost`'s doubling, to meet the gate), and (b) success witnesses on BOTH ISAs that run a real exponentiation (`3^5 mod 7`) inside the toy runtime's
-`2^22` budget. Owners tighten the cost envelopes to the bytes actually allocated as functions of the real lengths
-(divmc: StackNat/mul/sqr/karatsuba + BudOK; expmc: NCost/supU/windows/slow/expNN; infra: P2/Even/SubMod2N/ModInv;
-asm: div/rem); top then removes the factor (both ISAs) and restores the `3^5 mod 7` witnesses. Until then any success-row
-timing is PROVISIONAL (measured against the slack), not verified-final. If a callee proof finds a request count above an allowance it reports it
-here and the constant is raised (never the proof weakened). Request sizes stay as in the table above.
+For 128-word operands: `opCost 128 ≈ 2.64e5 ≈ 2^18`, `ExpBudget 128 128 = 65664 · opCost 128 ≈ 1.73e10 ≈ 2^34.01` (`RunSucc.expBudget_gate : RunIface.ExpBudget 128 128 ≤ 2^35`, from `BudQ.gate`). For one-word operands the whole success
+budget fits the Janus toy runtime's heap (`≤ 2^22`), so the success witness runs a real exponentiation.
+**RELEASE GATE "TIGHT COSTS" (coordinator decision 2026-11-15)** requires (a) `RunIface.ExpBudget` / Spec `okBudget` ≤ `2^35`
+bytes (32 GiB) over the whole spec range (operands and exponent ≤ 128 words) and (b) success witnesses on BOTH ISAs that run a
+real exponentiation (`3^5 mod 7`) inside the toy runtime's `2^22` budget.
+* **arm64: MET** (top s40, commit 3e3c02b): factor-free `ExpBudget := BudQ.ExpBudgetF`, Spec/RunArm64 `okBudget` without the
+  `2^32 · min w 1` factor, `RunSucc.correctness` without the former budget premise `hbud`, `RunSucc.expBudget_gate`, and the
+  premise-free `RunSucc.Witness.nonvacuous` running `Run` on `3^5 mod 7` (output `[5]`, budget checked by `decide +kernel`).
+  Janus row verification of `Top_RunSucc` (arm64): see docs/COVERAGE.md.
+* **amd64: PENDING** — the statement side is done (Spec/RunAmd64 `okBudget` and amd64 `RunIface.ExpBudget` factor-free,
+  same commit), but the amd64 `RunSucc` success witness (`3^5 mod 7`) waits for the amd64 `Mod`/`exp` providers (IMod/IExp);
+  until it exists the gate is not met on amd64 and amd64 success-row timings are PROVISIONAL.
+* The `w = 0` change (all three lengths `0`): `okBudget` now includes `128 · opCost 0` for `exp` where the factor made it `0`;
+  the bound is slightly looser there (the code allocates nothing for `Mod`/`exp` on that path).
+If a callee proof finds a request count above an allowance it reports it here and the constant is raised (never the proof
+weakened). Request sizes stay as in the table above.
 
 **Non-vacuity plan (coordinator requirement, open):**
 1. `correctness` (full row-1 statement) — `Witness.nonvacuous` runs the EIP-7823 error path (no `Serves` needed there).
