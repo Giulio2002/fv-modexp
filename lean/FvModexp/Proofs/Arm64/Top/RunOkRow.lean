@@ -216,7 +216,8 @@ theorem site_mkz : (MakeslicePre 4096 sMkz ∧ StackRoom sMkz 4096 3 ∧
     typSize sMkz.mem (sMkz.regs 0).toNat * (sMkz.regs 2).toNat = 0 ∧
     Outside (sMkz.regs 0).toNat 16 (calleeStack sMkz 4096 3) :=
   ⟨⟨⟨Witness.cs_callOK _ _ _ _ 3 (by omega), ⟨by decide +kernel, by decide +kernel⟩, by decide +kernel, by decide +kernel,
-    by decide +kernel⟩, Witness.cs_room _ _ _ _ 3 (by omega), trivial, Witness.inv_cs _ _ _ _, by decide +kernel,
+    by decide +kernel, by simp only [calleeStack, Outside]; decide +kernel⟩, Witness.cs_room _ _ _ _ 3 (by omega), trivial,
+    Witness.inv_cs _ _ _ _, by decide +kernel,
     fun r hr => by simp at hr, Witness.cs_winR _ _ _ _ 3 (by omega)⟩, by decide +kernel,
     by simp only [calleeStack, outside_cons, outside_nil, and_true]; decide +kernel⟩
 
