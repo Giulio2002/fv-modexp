@@ -1480,3 +1480,10 @@ conjunct — asm's row, state of the worktree at that time), DivWVWRow 13 s, Div
 amd64: AddVWRow 107 s, SubVWRow 100 s, StackNatRow 229 s, MulAddWWRow 340 s, **BasicSqrRow FAIL 902 s** (timeout, 0.6 GB;
 own modules BasicSqrBody 107 s / 7.6 GB, Pro 182 s, Pro3 135 s / 6.2 GB, Fin 89 s, Small 90 s dev — trim),
 **Int/IntASRow PASS 350 s / 2.3 GB** (was 766 s; s32 trim: WordTData + flattened nat.add/nat.sub continuation chains).
+
+## divmc s36 (2026-11-13) — TIGHT COSTS Q-form copies (arm64 `NatQ/*`), dev compile J=1, load ~33
+Q-form basicSqr + nat.sqr/karatsubaSqr SCC (`NatQ/BasicSqr*`, `Sqr*`, `KSqr*`, `NatSqr`, `SqrHypQ`): 839 s summed,
+every module ≤ 81 s / 4.3 GB. Q vs old (same proofs, `stkR` budgets): BasicSqrPro 81 s vs 105 s, BasicSqrBody 48 vs 44,
+KSqrAdd1 50 vs 46, KSqrPC 40 vs 42, SqrBM 38 vs 44, BasicSqrSmall 36 vs 39 — the Q-form costs nothing extra.
+(Pitfall measured in s35: a `stkR H P.mem st` fact passed where `stkR H s.mem st` is expected made BasicSqrPro hang
+> 15 min; `rw [stkR_congr eC]` first → 100 s.)
