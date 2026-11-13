@@ -1,5 +1,10 @@
-import FvModexp.Proofs.Amd64.Nat.BasicSqrPro
+import FvModexp.Proofs.Amd64.Nat.BasicSqrProA
+import FvModexp.Proofs.Amd64.Nat.BasicSqrProB
+import FvModexp.Proofs.Amd64.Nat.BasicSqrSmall
 import FvModexp.Proofs.Amd64.Nat.StackNat
+import FvModexp.Proofs.Amd64.Nat.BasicSqrClr
+
+set_option autoImplicit false
 
 /-!
 # `basicSqr(stk, z, x)` (go-bigmodexpfix natmul.go:113), amd64: the summary (twin of `Arm64/Nat/BasicSqr.lean`)
@@ -13,6 +18,21 @@ open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.GoABI0 Janus.Amd64.Tactic J
 open FvModexp.Amd64.Callees Janus.Contracts.EqHashModel
 
 namespace FvModexp.Amd64.BasicSqr
+
+/-- the `CALL (*stack).nat` → `clear(t)`: the two cases of the stack's capacity (`BasicSqrProA` / `BasicSqrProB`) -/
+theorem pro2 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
+    (hSN : StackNat.HypL impl R StackNat.names 4192 24)
+    (b : Nat) (L : List (Nat × Nat)) (st zp zl zc xp xl xc : BitVec 64) (s : State)
+    (hclr : ClrK impl R b L st zp zl zc xp xl xc s)
+    (hpre : Pre R b L st.toNat zp.toNat zl.toNat zc.toNat xp.toNat xl.toNat s) (hbig : 12 ≤ xl.toNat)
+    (hra : s.mem.readLE (s.regs 4).toNat 8 < 2 ^ 47) (hx15s : s.xmm 15 = 0#128) (hdfs : s.df = false)
+    (P : State) (hP : AtNat R b L st.toNat zp.toNat zl.toNat zc.toNat xp.toNat xl.toNat xc.toNat s P)
+    (hinvP : R.inv b L (s.regs 14).toNat (view R.rt L P.mem)) :
+    ReachesRet (LibBasicSqr.program.link impl) (retAddrOf s) P fun s' =>
+      RegsOK s s' ∧ Post R b L st.toNat zp.toNat zl.toNat xp.toNat xl.toNat s s' := by
+  by_cases hc0 : 0 < s.mem.readLE (st.toNat + 16) 8
+  · exact pro2p impl hap R hSN b L st zp zl zc xp xl xc s hclr hpre hbig hra hx15s hdfs P hP hinvP hc0
+  · exact pro2z impl hap R hSN b L st zp zl zc xp xl xc s hclr hpre hbig hra hx15s hdfs P hP hinvP hc0
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
@@ -50,7 +70,9 @@ theorem pro1 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
   have hstacc8 : s.mem.accessible (st.toNat + 8) 8 false = true :=
     Janus.Arm64.Memory.accessible_weaken _ (Janus.Arm64.Memory.accessible_mono _ hstacc (by omega) (by omega))
   janus64_run [hthV, BitVec.msb_eq_decide, hstacc8] until [callNat]
-  refine pro2 impl hap R hSN hmc hLsh hVV hMV' b L st zp zl zc xp xl xc s hpre hbig hra hx15 hdf _
+  refine pro2 impl hap R hSN b L st zp zl zc xp xl xc s
+    (fun t L1 b1 w1 c1 hE Q => clr impl R hmc hLsh hVV hMV' b L st zp zl zc xp xl xc s t L1 b1 w1 c1 hE Q)
+    hpre hbig hra hx15 hdf _
     ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?qF, ?qR, ?_, ?qD, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ ?qI
   case qF => janus_frame
   case qR => simp only [Janus.Arm64.Memory.regions_writeLE]

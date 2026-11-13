@@ -1,7 +1,10 @@
 import FvModexp.Proofs.Amd64.Nat.BasicSqrFin
+import FvModexp.Proofs.Amd64.Nat.BasicSqrEnv
 import FvModexp.Proofs.Amd64.Nat.BasicSqrLoop
 import FvModexp.Proofs.Common.DivmcBits
 import FvModexp.Proofs.Common.BitLemmas
+
+set_option autoImplicit false
 
 /-!
 # `basicSqr` (amd64): `clear(t)` (`memclrNoHeapPointers`), `z[1], z[0] = mulWW(x[0], x[0])`, into the loop
@@ -15,9 +18,6 @@ open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.GoABI0 Janus.Amd64.Tactic J
 open FvModexp.Amd64.Callees
 
 namespace FvModexp.Amd64.BasicSqr
-
-/-- the `CALL runtime.memclrNoHeapPointers` -/
-abbrev callClr : Nat := segAddr Extracted.program fn + 0xe0
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
