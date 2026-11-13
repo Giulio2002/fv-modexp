@@ -122,9 +122,9 @@ theorem c5r (impl : List Amd64.Segment) (R : RtInv) (c : Cx) (s : State) (Lk : L
   have ht1 := toInt_small (n := (c.P s j U).length) (by omega)
   have ht2 := toInt_small (n := c.vl / 2 - 1) (by omega)
   have e1 : BitVec.ofNat 64 (c.u1 - (j - c.vl / 2)) - BitVec.ofNat 64 (c.vl / 2) + 1#64 =
-      BitVec.ofNat 64 (c.u1 - j + 1) := by rw [bvA (by omega) (by omega)]; congr 1; omega
+      BitVec.ofNat 64 (c.u1 - j + 1) := by exact (bvA (by omega) (by omega)).trans (congrArg (BitVec.ofNat 64) (by omega))
   have e3 : BitVec.ofNat 64 (3 * c.vl) - BitVec.ofNat 64 (c.vl / 2) + 1#64 =
-      BitVec.ofNat 64 (3 * c.vl - (c.vl / 2 - 1)) := by rw [bvA (by omega) (by omega)]; congr 1; omega
+      BitVec.ofNat 64 (3 * c.vl - (c.vl / 2 - 1)) := by exact (bvA (by omega) (by omega)).trans (congrArg (BitVec.ofNat 64) (by omega))
   have e4 : BitVec.ofNat 64 qv + ((0#64 - BitVec.ofNat 64 (3 * c.vl - (c.vl / 2 - 1))).sshiftRight 63 &&&
       BitVec.ofNat 64 (8 * (c.vl / 2 - 1))) = BitVec.ofNat 64 (qv + 8 * (c.vl / 2 - 1)) :=
     bvM (by omega) (by omega) (by omega) (by omega)
@@ -150,8 +150,8 @@ theorem c5r (impl : List Amd64.Segment) (R : RtInv) (c : Cx) (s : State) (Lk : L
     case wr5 => exact h5
     case wr14 => exact h14
     case wx15 => exact hx15
-    case wa3 => rw [bvA (by omega) (by omega)]; congr 1; omega
-    case wa6 => rw [bvA (by omega) (by omega)]; congr 1; omega
+    case wa3 => exact (bvA (by omega) (by omega)).trans (congrArg (BitVec.ofNat 64) (by omega))
+    case wa6 => exact (bvA (by omega) (by omega)).trans (congrArg (BitVec.ofNat 64) (by omega))
     case wra => (repeat (first | rw [Janus.Arm64.Memory.readLE_writeLE_self] | rw [Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega)])) <;> omega
 
 end FvModexp.Amd64.Q.DivRec
