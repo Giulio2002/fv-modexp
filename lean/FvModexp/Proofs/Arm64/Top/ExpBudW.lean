@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Arm64.Exp.OddDefs
+import FvModexp.Proofs.Common.SqrCost
 
 set_option autoImplicit false
 
@@ -36,8 +37,7 @@ theorem w4bud_le {n xl cD l : Nat} (hn : n ≤ 128) (hx : xl ≤ 128) (hl : l �
   unfold ExpW4.W4Bud
   simp only [W4Pro.xnPre]
   repeat' apply addmax
-  all_goals (unfold W4Pro.xjBud W4Pro.xnBudA W4Pro.xnBudAC W4Pro.xjBudA W4Pro.xnBudAB W4Pro.xnBudAA
-    stackNatCost allocCost; simp only [StackNat.rnd]; omega)
+  all_goals (unfold W4Pro.xjBud W4Pro.xnBudA W4Pro.xnBudAC W4Pro.xjBudA W4Pro.xnBudAB W4Pro.xnBudAA stackNatCost allocCost; simp only [StackNat.rnd]; omega)
 
 theorem w2bud_le {n xl cD l : Nat} (hn : n ≤ 128) (hx : xl ≤ 128) (hl : l ≤ 1024) :
     ExpW2.W2Bud n xl cD l ≤ 20000000 + 12 * cD := by
@@ -45,8 +45,7 @@ theorem w2bud_le {n xl cD l : Nat} (hn : n ≤ 128) (hx : xl ≤ 128) (hl : l �
   unfold ExpW2.W2Bud
   simp only [W2Pro.xnPre]
   repeat' apply addmax
-  all_goals (unfold W2Pro.xjBud W2Pro.xnBudA W2Pro.xnBudAC W2Pro.xjBudA W2Pro.xnBudAB W2Pro.xnBudAA
-    stackNatCost allocCost; simp only [StackNat.rnd]; omega)
+  all_goals (unfold W2Pro.xjBud W2Pro.xnBudA W2Pro.xnBudAC W2Pro.xjBudA W2Pro.xnBudAB W2Pro.xnBudAA stackNatCost allocCost; simp only [StackNat.rnd]; omega)
 
 theorem w4cost_le {n xl cD l : Nat} (hn : n ≤ 128) (hx : xl ≤ 128) (hl : l ≤ 1024) :
     ExpW4.W4Cost n xl cD l ≤ 20000000 + 6 * cD := by
