@@ -1,6 +1,8 @@
-import FvModexp.Proofs.Amd64.Nat.BasicSqrStep
+import FvModexp.Proofs.Amd64.Nat.BasicSqrEnv
 import FvModexp.Proofs.Common.DivmcBits
 import FvModexp.Proofs.Common.BitLemmas
+
+set_option autoImplicit false
 
 /-!
 # `basicSqr` (amd64): the second half of a loop iteration — the `addMulVVWW.abi0` call, `t[2i] = c`, back to the head
@@ -13,17 +15,6 @@ namespace FvModexp.Amd64.BasicSqr
 
 /-- the `CALL addMulVVWW.abi0` of the loop body -/
 abbrev callMV : Nat := segAddr Extracted.program fn + 0x287
-
-/-- the continuation at the loop head (iteration `i`) -/
-def HeadK (impl : List Amd64.Segment) (R : RtInv) (L : List (Nat × Nat)) (st zp zl zc xp xl xc : BitVec 64) (s : State)
-    (t : Nat) (L1 : List (Nat × Nat)) (b1 w1 c1 : Nat) (Q : State → Prop) (i : Nat) : Prop :=
-  ∀ S : State, S.rip = BitVec.ofNat 64 head → S.regs 4 = s.regs 4 - 192#64 → S.regs 5 = s.regs 4 - 8#64 →
-    S.regs 14 = s.regs 14 → S.fsBase = s.fsBase → S.xmm 15 = 0#128 → S.df = false →
-    S.regs 0 = BitVec.ofNat 64 i → S.regs 3 = BitVec.ofNat 64 (2 * xl.toNat) →
-    S.regs 1 = BitVec.ofNat 64 (2 * xl.toNat) → S.regs 7 = xl → S.regs 6 = xp → S.regs 8 = BitVec.ofNat 64 t →
-    S.regs 9 = zl → S.regs 10 = zp →
-    Inv R L st.toNat zp.toNat zl.toNat zc.toNat xp.toNat xl.toNat xc.toNat s t L1 b1 w1 c1 i S.mem →
-    ReachesRet (LibBasicSqr.program.link impl) (retAddrOf s) S Q
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in

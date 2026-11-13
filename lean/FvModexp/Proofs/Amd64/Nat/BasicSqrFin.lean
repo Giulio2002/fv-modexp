@@ -1,7 +1,9 @@
 import FvModexp.Proofs.Amd64.Nat.BasicSqrVV
-import FvModexp.Proofs.Amd64.Nat.BasicSqrBody
+import FvModexp.Proofs.Amd64.Nat.BasicSqrEnv
 import FvModexp.Proofs.Common.DivmcBits
 import FvModexp.Proofs.Common.BitLemmas
+
+set_option autoImplicit false
 
 /-!
 # `basicSqr` (amd64): after the loop (`i = n`, natmul.go:131-133)
