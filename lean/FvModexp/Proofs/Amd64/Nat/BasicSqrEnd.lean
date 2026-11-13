@@ -1,4 +1,7 @@
 import FvModexp.Proofs.Amd64.Nat.BasicSqrDfr
+import FvModexp.Proofs.Amd64.Nat.BasicSqrEnv
+
+set_option autoImplicit false
 
 /-!
 # `basicSqr` (amd64): the postcondition at the return (pure)
@@ -17,13 +20,6 @@ namespace FvModexp.Amd64.BasicSqr
 
 /-- the ranges the closure writes -/
 @[reducible] def wsF (sp st : Nat) : List (Nat × Nat) := [(sp - 208, sp - 192), (st + 8, st + 16)]
-
-theorem mfTrans {m₀ m₁ m₂ : Memory} {rs rs' : List (Nat × Nat)} (h₁ : MemFrame m₀ m₁ rs)
-    (h₂ : MemFrame m₁ m₂ rs') : MemFrame m₀ m₂ (rs ++ rs') where
-  readLE a k ho := by
-    rw [outside_append] at ho
-    rw [h₂.readLE a k ho.2, h₁.readLE a k ho.1]
-  accessible a k w := by rw [h₂.accessible, h₁.accessible]
 
 /-- `t` (in the stack's old free part or a fresh runtime block) is outside every range a caller keeps -/
 theorem t_out {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st zp zl zc xp xl : Nat} {s : State}

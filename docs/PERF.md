@@ -1563,3 +1563,37 @@ only the numeric hypotheses, instantiated after the run; the post-return run in 
 | Arm64/Exp/IExpCl (ensCl, cost facts proved) | 1.4 s / 4.1 GB | 1.4 s / 4.0 GB |
 | Arm64/Exp/W4Wit `bud` (path-MAX budget) | omega on unfolded nested max: >200k heartbeats (timeout) | structural `bud_c` split: < 15 s |
 | Amd64/Exp/W4Defs, W4MC (new) | — | 1.7 s, 3.1 s / 2.3 GB |
+### infra s43 (2026-11-15, arm64 rows in RELEASE ORDER, Janus v0.3.1, JANUS_REPLAY_THREADS=1, load ~40, after the TIGHT COSTS edits)
+Fresh cache `cache-infra/rel`: warm-up 1081 s; StackNatRow PASS 141 s / 2.5 GB, MulAddWWRow PASS 175 s / 1.0 GB,
+BasicMulRow PASS 126 s / 3.3 GB, BasicSqrRow PASS 352 s / 3.1 GB, SqrRow PASS 500 s / 3.0 GB, MulRow PASS 406 s / 2.2 GB,
+TruncRow PASS 137 s / 0.9 GB, RshRow PASS 127 s, LshRow PASS 104 s, IntASRow PASS 36 s, MontRow audit-FAIL 233 s (no
+witness; modules compiled), then infra: **P2W2Row PASS 631 s / 3.0 GB** (P2Wit imported P2DE + P2W4E, so P2W2Row
+compiled all three P2 chains), **P2W4Row PASS 41 s**, **P2DRow PASS 94 s / 1.6 GB**, **ModInvRow PASS 350 s / 2.7 GB**,
+**SubMod2NRow PASS 22 s** (closure inside ModInvRow's). Fix for P2W2Row > 600 s: `Exp/P2Nf` (the four name facts on the
+`fn` defs only); P2W2Row/P2W4Row import P2Nf + their own `…E` module (dev: 7.6 / 7.5 s) — re-measure in `cache-infra/rel2`.
+Dev compile after the cost edits: P2W2Cp5 1.9 s, P2DFull 25 s / 3.0 GB, ModInvL0 9.6 s, EvFull 2.5 s, P2DRow 50 s / 3.8 GB.
+
+## divmc s37 (2026-11-13) — amd64 BasicSqrRow trim (dev, J=2, load ~17)
+| module | before | after | change |
+|---|---|---|---|
+| Common/MulCostQB (closed mul/sqr bounds) | — | 3.2 s / 2.1 GB | new |
+| Common/BudQ (BudOK skeleton) | — | 1.6 s / 2.0 GB | new |
+| Amd64/Nat/BasicSqrPro (`pro2`, both cap cases) | 108 s / 3.9 GB | removed | split into ProA (`cap > 0`) 70 s / 3.6 GB and ProB (`cap = 0`) 62 s / 3.7 GB, compiled in PARALLEL, dispatched in BasicSqr (17 s) |
+| Amd64/Nat/BasicSqrPro3 | 78 s / 6.2 GB, imported Clr (→ Fin → VV → End, Body → Loop) | 80 s / 6.2 GB, imports Env only | takes the clr continuation `ClrK` (defined in Env) as a premise |
+| Amd64/Nat/BasicSqrFin | imported Body | imports Env | `HeadK` moved Body → Env |
+* DAG: before, one chain Defs → Step → Body → Fin → Clr → Pro3 → Pro → BasicSqr (≈ 2+24+73+49+24+78+108+17 = 375 s);
+  after, three independent branches after Step+Env: {Body → Loop}, {Dfr → End → VV → Fin}, {Pro3 → ProA ∥ ProB}, joined
+  at Clr / BasicSqr: critical path ≈ 2 + 24 + 1 + max(80+34, 3+16+52+67, 80+70) + 26 + 17 ≈ 220 s.
+* A single janus64_run for both cap cases (implication fact `0 < cap → …` in context) FAILS: janus's call-pre discharger
+  intros the branch hypothesis and wants the NatLive conclusions as plain facts (and the failing run cost 327 s): keep
+  the case split, but in separate modules.
+* Row (s37, janus v0.3.1, cache-divmc warm deps, load ~20, a J=1 dev build alongside): **amd64 BasicSqrRow PASS 319 s / 6.1 GB** (was FAIL 902 s).
+## top s33 (2026-11-13, dev builds, load ~30, LEAN_NUM_THREADS=4)
+| module | time | peak |
+|---|---|---|
+| Arm64/Top/RunOkRowC | 1.4 s | 4.4 GB |
+| Arm64/Top/RunSucc | 1.7 s | 4.4 GB |
+| Amd64/Nat/DivWZ | 13 s | 2.4 GB |
+| Amd64/Nat/DivOneA / DivOneB | 8 s / 22 s | 2.4 / 3.0 GB |
+| Amd64/Nat/DivOneF / DivOneT / DivOneTB / DivOneTC | 2 / 7 / 11 / 18 s | ≤ 2.5 GB |
+| Amd64/Nat/DivLessRel / DivLess / DivLessA | 1 / 4 / 19 s | ≤ 2.6 GB |

@@ -1,6 +1,6 @@
 import FvModexp.Proofs.Arm64.Top.RunModC
 import FvModexp.Proofs.Arm64.Top.RunOkRow
-import FvModexp.Proofs.Arm64.Exp.IExpClB
+import FvModexp.Proofs.Arm64.Exp.IExpCl
 
 set_option autoImplicit false
 
@@ -9,11 +9,11 @@ set_option autoImplicit false
 
 `correctness_okC` = `Run.correctness_ok` (`ensOkLib`: Run's own code, `(*Int).Bytes` = `IntBytes.bytesSpec_at`) with
 * `(*Int).Mod` (`hM`) = `modSpecM_C` (divmc's `IMod.ens` + `IMod.bud`, asm's `NatDiv.ensMC`);
-* `(*Int).exp` (`hE`) = `expC` below = expmc's `IExp.ensClB` (IExpClB.lean, s32 switch): `IExp.ensCl` in the
-  `Exp.supU`/`Exp.dom` form with every callee proved, windows `KN = 70720`, `stkE = 72368`, `K = 71312`, and the closed
-  cost bound `BudCl` proved for the CURRENT `RunIface.ExpBudget` (with the temporary `2^32` slack — BRIEF "TIGHT COSTS").
+* `(*Int).exp` (`hE`) = `expC` below = expmc's `IExp.ensCl` (IExpCl.lean): `(*Int).exp` in the `Exp.supU`/`Exp.dom`
+  form with every callee proved, windows `KN = 70720`, `stkE = 72368`, `K = 71312`.
 
-Premises: the Janus runtime contracts on `Extracted.program.ofImpl impl` only.
+Premises: the Janus runtime contracts on `Extracted.program.ofImpl impl` and the closed cost bound `hbud : IExp.BudCl`
+(explicit premise until the Q-form BudOK lands — coordinator 2026-11-15, BRIEF "TIGHT COSTS"; it is discharged then).
 -/
 
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Spec.Pool Janus.Contracts Janus.Contracts.Pool
@@ -23,8 +23,8 @@ open FvModexp FvModexp.Spec EthLib.Execution.Evm.Precompiles.Modexp
 namespace FvModexp.Arm64.Run.Closed
 
 set_option maxHeartbeats 64000000 in
-/-- **`(*Int).exp`** (arm64) as `Run` calls it, every machine-code callee proved and the closed cost bound discharged:
-expmc's `IExp.ensClB` (premises = the Janus runtime contracts only). -/
+/-- **`(*Int).exp`** (arm64) as `Run` calls it, every machine-code callee proved: expmc's `IExp.ensCl` (premises = the
+Janus runtime contracts + the closed cost bound `IExp.BudCl`). -/
 theorem expC (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
     (hgr : GrowsliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.growslice") 4096 R)
@@ -35,9 +35,10 @@ theorem expC (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     (hwb : WbLiveContract (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2)
     (hget : PoolGetLive (Extracted.program.ofImpl impl) (cA "sync.(*Pool).Get") 4096 R Free.stkT StkSh)
     (hput : PoolPutLive (Extracted.program.ofImpl impl) (cA "sync.(*Pool).Put") 4096 R Free.stkT StkSh)
-    {stk above : Nat} (hK : 72944 ≤ stk) (hab : 48 ≤ above) :
+    {stk above : Nat} (hK : 72944 ≤ stk) (hab : 48 ≤ above) (hbud : IExp.BudCl) :
     RunIface.ExpSpec impl R stk above :=
-  IExp.ensClB impl hap R hmk hgr hmc hmv hmz hno hwb hget hput hK hab
+  IExp.ensCl impl hap R hmk hgr hmc hmv hmz hno hwb hget hput (K := 71312) (KN := 70720) (stkE := 72368)
+    (by decide) (by decide) (by decide) (by decide) (by decide) (by decide) (by omega) (by omega) hab hbud
 
 end FvModexp.Arm64.Run.Closed
 
@@ -45,7 +46,7 @@ namespace FvModexp.Arm64.Run
 
 set_option maxHeartbeats 64000000 in
 /-- **Row 1, arm64, EIP-7823 success**, every machine-code callee proved (`(*Int).Mod`, `(*Int).exp` with the whole
-`nat` chain, `(*Int).Bytes`); premises: the Janus runtime contracts only. -/
+`nat` chain, `(*Int).Bytes`); premises: the Janus runtime contracts and the closed cost bound `IExp.BudCl`. -/
 theorem correctness_okC (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
     (hmkz : MakesliceZeroLive (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
@@ -58,7 +59,7 @@ theorem correctness_okC (impl : List Segment) (hap : ImplApart Extracted.program
     (hget : PoolGetLive (Extracted.program.ofImpl impl) (cA "sync.(*Pool).Get") 4096 R Free.stkT StkSh)
     (hput : PoolPutLive (Extracted.program.ofImpl impl) (cA "sync.(*Pool).Put") 4096 R Free.stkT StkSh)
     (hwb4 : WbLiveContract (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier4") 4096 R 4)
-    (W : Nat) (hW : 624 + 72944 ≤ W) (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64) :
+    (hbud : IExp.BudCl) (W : Nat) (hW : 624 + 72944 ≤ W) (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64) :
     Ensures (Extracted.program.link impl) (segAddr Extracted.program RunArm64.fn) [c, p, len, cp]
       (fun s => RunArm64.EnvW R L s W ∧ RunArm64.Input R L c p len cp s ∧ OsakaReceiver s.mem c.toNat ∧
         R.inv b L (s.regs 28).toNat (view R.rt L s.mem) ∧ RunArm64.OkReqs R ∧
@@ -70,7 +71,7 @@ theorem correctness_okC (impl : List Segment) (hap : ImplApart Extracted.program
         RunArm64.FrameW R b (RunArm64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat))) L W s s') :=
   correctness_ok impl hap R hmk hmkz hmv hmz hno 72944 112
     (modSpecM_C impl hap R hgr hmc hwb hmk hmv hmz hno hget hput hwb4 (by decide) (by decide))
-    (Closed.expC impl hap R hmk hgr hmc hmv hmz hno hwb hget hput (Nat.le_refl _) (by decide))
+    (Closed.expC impl hap R hmk hgr hmc hmv hmz hno hwb hget hput (Nat.le_refl _) (by decide) hbud)
     W hW (by omega) (by decide) (by decide) (by decide) b L c p len cp
 
 end FvModexp.Arm64.Run

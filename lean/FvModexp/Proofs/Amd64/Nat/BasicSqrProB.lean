@@ -1,9 +1,10 @@
 import FvModexp.Proofs.Amd64.Nat.BasicSqrPro3
-import FvModexp.Proofs.Amd64.Nat.BasicSqrSmall
 import FvModexp.Proofs.Amd64.Nat.StackNatDefs
 
+set_option autoImplicit false
+
 /-!
-# `basicSqr` (amd64): the large path's prologue — `defer stk.restore(stk.save())`, `t := stk.nat(2n)` (natmul.go:119-120;
+# `basicSqr` (amd64): the large path's prologue, the `cap = 0` case (s37: the two cases are separate modules, compiled in parallel) — `defer stk.restore(stk.save())`, `t := stk.nat(2n)` (natmul.go:119-120;
 the amd64 twin of `Arm64/Nat/BasicSqrPro.lean`)
 
 `CALL (*stack).nat` at `+0xb9` (entry `RSP - 200`, return `+0xbe` = 6231390), then the spills of `t` (`RSP - 88` len,
@@ -18,20 +19,14 @@ namespace FvModexp.Amd64.BasicSqr
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
-theorem pro2 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
+theorem pro2z (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
     (hSN : StackNat.HypL impl R StackNat.names 4192 24)
-    (hmc : MemclrNoHeapPointersLive64 (LibBasicSqr.program.link impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
-    (hLsh : ∀ b L, Summary0 (LibBasicSqr.program.link impl) (segAddr Extracted.program lshVUfn) (LshLPre R b L)
-      (LshLQ R b L))
-    (hVV : ∀ b L, Summary0 (LibBasicSqr.program.link impl) (segAddr Extracted.program addVVfn) (VVLPre R b L)
-      (VVLQ R b L))
-    (hMV' : ∀ b L, Summary0 (LibBasicSqr.program.link impl) (segAddr Extracted.program addMulVVWWfn)
-      (VVWWLPre R b L) (VVWWLQ R b L))
     (b : Nat) (L : List (Nat × Nat)) (st zp zl zc xp xl xc : BitVec 64) (s : State)
+    (hclr : ClrK impl R b L st zp zl zc xp xl xc s)
     (hpre : Pre R b L st.toNat zp.toNat zl.toNat zc.toNat xp.toNat xl.toNat s) (hbig : 12 ≤ xl.toNat)
     (hra : s.mem.readLE (s.regs 4).toNat 8 < 2 ^ 47) (hx15s : s.xmm 15 = 0#128) (hdfs : s.df = false)
     (P : State) (hP : AtNat R b L st.toNat zp.toNat zl.toNat zc.toNat xp.toNat xl.toNat xc.toNat s P)
-    (hinvP : R.inv b L (s.regs 14).toNat (view R.rt L P.mem)) :
+    (hinvP : R.inv b L (s.regs 14).toNat (view R.rt L P.mem)) (hc0 : ¬ 0 < s.mem.readLE (st.toNat + 16) 8) :
     ReachesRet (LibBasicSqr.program.link impl) (retAddrOf s) P fun s' =>
       RegsOK s s' ∧ Post R b L st.toNat zp.toNat zl.toNat xp.toNat xl.toNat s s' := by
   have hc : CodeIn64 ((Extracted.program.onlySegments StackNat.names).link impl) (LibBasicSqr.program.link impl) := by
@@ -99,39 +94,17 @@ theorem pro2 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
       Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega),
       Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega), hrd _ _ (by omega), hrd _ _ (by omega),
       hrd _ _ (by omega)]
-  by_cases hc0 : 0 < s.mem.readLE (st.toNat + 16) 8
-  · have hnl := hpre.stok.2.2.2.2.1
-    simp only [NatLive, stW, stCap] at hnl
-    obtain ⟨a1, a2, a3, a4⟩ := hnl hc0
-    obtain ⟨a5, a6⟩ := hstarr hc0
-    simp only [win, outside_cons, outside_nil, and_true] at a5
-    unfold Apart at a6
-    have a2' : InRanges (s.mem.readLE st.toNat 8) (8 * s.mem.readLE (st.toNat + 16) 8) L ∨
-      Outside (s.mem.readLE st.toNat 8) (8 * s.mem.readLE (st.toNat + 16) 8) R.rt := a2
-    janus64_run [p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, hn2, hgP, htP', hfs] until [callNat + 5] calls [hSN' b L]
-    rename_i hpc' hsp' h5' h14' hx15' hfs' hdf' hr3' hr1' L1 b1 hext hr0' hbud hinv2 k1 k2 k3 k4 k5 k6 k7 hlen2 hsame
-      hgrow hF2 hLF2 hmem2
-    simp only [win, Janus.Amd64.Tactic.setRegF_apply, ↓reduceIte, e200, hws] at hF2 hLF2
-    exact pro3 impl R hmc hLsh hVV hMV' b L st zp zl zc xp xl xc s hpre hbig hra hx15s hdfs P hP s'
-      (by rw [hpc']; try janus64_simp) (by rw [hsp']; try janus64_simp) (by rw [h5']; try janus64_simp)
-      (by rw [h14']; try janus64_simp) (by rw [hfs']) (by rw [hx15']; try exact hx15) (by rw [hdf']; try exact hdf)
-      (hr0' (by omega)) (by rw [hr3']; try janus64_simp)
-      (by rw [hr1']; try janus64_simp)
-      L1 b1 hext hbud hinv2
-      ⟨k1, k2, by rw [hF2.accessible, Janus.Arm64.Memory.accessible_writeLE, hPacc]; exact k3, by omega, k5, k6, k7⟩
-      hlen2 hsame hgrow hmem2 hF2 hLF2
-  · janus64_run [p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, hn2, hgP, htP', hfs] until [callNat + 5] calls [hSN' b L]
-    rename_i hpc' hsp' h5' h14' hx15' hfs' hdf' hr3' hr1' L1 b1 hext hr0' hbud hinv2 k1 k2 k3 k4 k5 k6 k7 hlen2 hsame
-      hgrow hF2 hLF2 hmem2
-    simp only [win, Janus.Amd64.Tactic.setRegF_apply, ↓reduceIte, e200, hws] at hF2 hLF2
-    exact pro3 impl R hmc hLsh hVV hMV' b L st zp zl zc xp xl xc s hpre hbig hra hx15s hdfs P hP s'
-      (by rw [hpc']; try janus64_simp) (by rw [hsp']; try janus64_simp) (by rw [h5']; try janus64_simp)
-      (by rw [h14']; try janus64_simp) (by rw [hfs']) (by rw [hx15']; try exact hx15) (by rw [hdf']; try exact hdf)
-      (hr0' (by omega)) (by rw [hr3']; try janus64_simp)
-      (by rw [hr1']; try janus64_simp)
-      L1 b1 hext hbud hinv2
-      ⟨k1, k2, by rw [hF2.accessible, Janus.Arm64.Memory.accessible_writeLE, hPacc]; exact k3, by omega, k5, k6, k7⟩
-      hlen2 hsame hgrow hmem2 hF2 hLF2
-
+  janus64_run [p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, hn2, hgP, htP', hfs] until [callNat + 5] calls [hSN' b L]
+  rename_i hpc' hsp' h5' h14' hx15' hfs' hdf' hr3' hr1' L1 b1 hext hr0' hbud hinv2 k1 k2 k3 k4 k5 k6 k7 hlen2 hsame
+    hgrow hF2 hLF2 hmem2
+  simp only [win, Janus.Amd64.Tactic.setRegF_apply, ↓reduceIte, e200, hws] at hF2 hLF2
+  exact pro3 impl R b L st zp zl zc xp xl xc s hclr hpre hbig hra hx15s hdfs P hP s'
+    (by rw [hpc']; try janus64_simp) (by rw [hsp']; try janus64_simp) (by rw [h5']; try janus64_simp)
+    (by rw [h14']; try janus64_simp) (by rw [hfs']) (by rw [hx15']; try exact hx15) (by rw [hdf']; try exact hdf)
+    (hr0' (by omega)) (by rw [hr3']; try janus64_simp)
+    (by rw [hr1']; try janus64_simp)
+    L1 b1 hext hbud hinv2
+    ⟨k1, k2, by rw [hF2.accessible, Janus.Arm64.Memory.accessible_writeLE, hPacc]; exact k3, by omega, k5, k6, k7⟩
+    hlen2 hsame hgrow hmem2 hF2 hLF2
 
 end FvModexp.Amd64.BasicSqr
