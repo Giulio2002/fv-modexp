@@ -1588,3 +1588,12 @@ Dev compile after the cost edits: P2W2Cp5 1.9 s, P2DFull 25 s / 3.0 GB, ModInvL0
   intros the branch hypothesis and wants the NatLive conclusions as plain facts (and the failing run cost 327 s): keep
   the case split, but in separate modules.
 * Row (s37, janus v0.3.1, cache-divmc warm deps, load ~20, a J=1 dev build alongside): **amd64 BasicSqrRow PASS 319 s / 6.1 GB** (was FAIL 902 s).
+## top s33 (2026-11-13, dev builds, load ~30, LEAN_NUM_THREADS=4)
+| module | time | peak |
+|---|---|---|
+| Arm64/Top/RunOkRowC | 1.4 s | 4.4 GB |
+| Arm64/Top/RunSucc | 1.7 s | 4.4 GB |
+| Amd64/Nat/DivWZ | 13 s | 2.4 GB |
+| Amd64/Nat/DivOneA / DivOneB | 8 s / 22 s | 2.4 / 3.0 GB |
+| Amd64/Nat/DivOneF / DivOneT / DivOneTB / DivOneTC | 2 / 7 / 11 / 18 s | ≤ 2.5 GB |
+| Amd64/Nat/DivLessRel / DivLess / DivLessA | 1 / 4 / 19 s | ≤ 2.6 GB |
