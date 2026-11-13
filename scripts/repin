@@ -1,0 +1,71 @@
+#!/bin/bash
+# scripts/repin REV [JANUS_BIN]   (agent top s37; generic successor of scripts/repin-v031.sh for Lean-compatible releases)
+#
+# Re-pin the Janus dependency to REV (full 40-hex commit of a release tag) when the release changes no proof-facing API
+# (v0.3.2: Go only; v0.3.3: Janus/Tools/Audit.lean + docs):
+#   1. REBUILD SCOPE: the Janus .lean files that differ between the current pin and REV, the Janus modules that import them
+#      (transitively), and the FvModexp modules that import any of those. "rebuild scope: NONE" = the oleans stay valid
+#      (only the pin hash changes); otherwise a dev sweep of the listed modules is needed before verifying rows.
+#   2. pin: lean/lakefile.toml janus rev → REV, `lake update janus` (manifest + .lake/packages/janus checkout);
+#   3. (if JANUS_BIN) verify-all.sh's default binary JANUS_FIXED → JANUS_BIN (asm-runrow.sh's default too).
+# Nothing is committed. DRY=1: only step 1 + what would change.
+set -euo pipefail
+REV=${1:?usage: scripts/repin REV [JANUS_BIN]}
+JB=${2:-}
+[[ "$REV" =~ ^[0-9a-f]{40}$ ]] || { echo "error: REV must be a full 40-hex commit" >&2; exit 2; }
+ROOT=$(git rev-parse --show-toplevel); cd "$ROOT"
+DRY=${DRY:-0}
+OLD=$(grep -A3 'name = "janus"' lean/lakefile.toml | grep -oE 'rev = "[0-9a-f]{40}"' | grep -oE '[0-9a-f]{40}')
+[ -n "$OLD" ] || { echo "error: no janus rev in lean/lakefile.toml" >&2; exit 2; }
+[ "$OLD" != "$REV" ] || { echo "already pinned to $REV"; exit 0; }
+if [ "$DRY" != 1 ] && [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+  echo "error: tracked files modified; commit or stash first" >&2; exit 2; fi
+PKG=lean/.lake/packages/janus
+git -C "$PKG" cat-file -e "$REV^{commit}" 2>/dev/null || git -C "$PKG" fetch -q origin "$REV" || git -C "$PKG" fetch -q --tags origin
+echo "== 1. rebuild scope ($OLD -> $REV)"
+mapfile -t CH < <(git -C "$PKG" diff --name-only "$OLD" "$REV" -- '*.lean' | grep -v '^lakefile' || true)
+echo "changed Janus .lean files: ${#CH[@]}"; printf '  %s\n' "${CH[@]}"
+python3 - "$PKG" "$REV" "${CH[@]}" <<'EOF'
+import os, re, subprocess, sys
+pkg, rev, changed = sys.argv[1], sys.argv[2], sys.argv[3:]
+def mod(p): return p[:-5].replace('/', '.')
+# Janus import graph at REV
+files = subprocess.run(['git', '-C', pkg, 'ls-tree', '-r', '--name-only', rev], capture_output=True, text=True).stdout.split()
+imp = {}
+for f in files:
+    if not f.endswith('.lean'): continue
+    src = subprocess.run(['git', '-C', pkg, 'show', f'{rev}:{f}'], capture_output=True, text=True).stdout
+    imp[mod(f)] = set(re.findall(r'^import\s+(\S+)', src, re.M))
+dirty = {mod(c) for c in changed}
+grow = True
+while grow:
+    grow = False
+    for m, deps in imp.items():
+        if m not in dirty and deps & dirty: dirty.add(m); grow = True
+users = []
+for d, _, fs in os.walk('lean/FvModexp'):
+    for f in fs:
+        if f.endswith('.lean'):
+            p = os.path.join(d, f)
+            if set(re.findall(r'^import\s+(\S+)', open(p).read(), re.M)) & dirty: users.append(p)
+print(f'Janus modules affected (changed + transitive importers): {len(dirty)}')
+for m in sorted(dirty): print('  ', m)
+print('FvModexp modules importing an affected Janus module directly:', len(users))
+for u in sorted(users)[:50]: print('  ', u)
+print('rebuild scope:', 'NONE (oleans stay valid)' if not users else 'those modules + their importers (dev sweep)')
+EOF
+[ "$DRY" = 1 ] && { echo "DRY: would set rev $REV, lake update janus${JB:+, JANUS_FIXED=$JB}"; exit 0; }
+echo "== 2. pin"
+sed -i "s/rev = \"$OLD\"/rev = \"$REV\"/" lean/lakefile.toml
+(cd lean && lake update janus)
+grep -q "\"rev\": \"$REV\"" lean/lake-manifest.json || { echo "error: manifest not at $REV" >&2; exit 3; }
+[ "$(git -C "$PKG" rev-parse HEAD)" = "$REV" ] || { echo "error: package checkout not at $REV" >&2; exit 3; }
+if [ -n "$JB" ]; then
+  echo "== 3. binary"
+  [ -x "$JB" ] || { echo "error: $JB not executable" >&2; exit 2; }
+  sed -i "s|^JANUS_FIXED=.*|JANUS_FIXED=$JB|" scripts/verify-all.sh
+  sed -i "s|^JANUS=\${JANUS:-[^}]*}|JANUS=\${JANUS:-$JB}|" scripts/asm-runrow.sh
+fi
+echo "-- other mentions of the old pin (update by hand where they describe the pin):"
+git grep -n "${OLD:0:8}" -- . ':!lean/lakefile.toml' ':!lean/lake-manifest.json' | head -20 || true
+git diff --stat
