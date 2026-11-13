@@ -1935,3 +1935,9 @@ Util → IcDefs → IcHL → Ic → Og → Pre → Seg → FinA → Fin → Row 
   JANUS_JOBS=4 PASS **297 s** (own compile 66 mods 218 s / cpu 1037 s, replay 70.5 s, audit 5.6 s) vs JANUS_JOBS=2 PASS **319 s**
   (own compile 231 s / cpu 948 s, replay 79 s, audit 6.4 s) in the same window ⇒ −7 %, noise-level: the own compile is
   critical-path bound. The s45 467 s was load. Row peak (summed RSS, J=2) 5.4 GB. verify-all default stays JANUS_JOBS=2.
+* **amd64 targeted d46 (top s46; Janus v0.3.2 → audit PROVISIONAL; agent/top 29047149; fresh cache; StackNat → DivW → MulRowQ →
+  DivBasicRowQ → DivRowQ, ROWS=1, alongside rel45):** StackNatRow PASS 165 s, DivWRow PASS 236 s, MulRowQ cap 900 s (fresh cache
+  without BasicSqr/Sqr rows before it), DivBasicRowQ FAIL 394 s = v0.3.2 audit RSP-word rule (expected; fixed in v0.3.3),
+  **DivRowQ cap 901 s**: own compile 248 modules (310 from the store) 881 s / cpu 4001 s, ok=true (so the new DivCG/DivMC/DivRowQ
+  modules compile under Janus). Its own set includes the whole amd64 drs chain: it needs asm's amd64 DrsRowQ row before it (as on
+  arm64) to fit. Re-measure in rel46 (v0.3.3, full amd64 order).
