@@ -111,13 +111,13 @@ returns `q = UIn / VIn`, `r = UIn mod VIn`, both normalised, `q` in `z`'s array 
 fresh one (apart from the stack's final array), the stack's `len` restored; writes only `z`, `u`, the stack, the
 runtime's memory and the window; `fsBase` and `DF` kept; no panic, no fault. Premises: `divRecursiveStep` (`DrsHyp`)
 and the live runtime contracts (`growslice`, `memclrNoHeapPointers`, `gcWriteBarrier2`, `makeslice`, `memmove`). -/
-theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
+theorem ensG (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
     (hgr : GrowsliceLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.growslice") 4096 R)
     (hmc0 : MemclrNoHeapPointersLive64 (Extracted.program.ofImpl impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
     (hwb : WbLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2)
     (hmk0 : MakesliceLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
     (hmv0 : MemmoveLive64 (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
-    (dc : Nat → Nat → Nat → Nat) (hD : DrsHyp impl R dc) : Hyp impl R dc := by
+    (dc : Nat → Nat → Nat → Nat) (hD : DrsHyp impl R dc) : HypG impl R dc := by
   intro b L zp zl zc st up ul uc ip il vp vl
   rw [show names = LibDivL.names from rfl, ← LibDivL.eq_only]
   intro ret hret s hs hpre
@@ -126,5 +126,15 @@ theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
     (by rw [h_rip]; rfl) (by rw [retAddrOf, h_ret]) ⟨by rw [h_ret]; exact hret.user, h_x15, h_df, h_a0, h_a1, h_a2,
       h_a3, h_a4, h_a5, h_a6, hpre⟩
     fun s' ⟨⟨a, b, c, d⟩, hq⟩ => ⟨⟨a, b, c, d⟩, hq⟩
+
+/-- `ensG` in the `Post` form (`Hyp`) -/
+theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
+    (hgr : GrowsliceLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.growslice") 4096 R)
+    (hmc0 : MemclrNoHeapPointersLive64 (Extracted.program.ofImpl impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
+    (hwb : WbLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2)
+    (hmk0 : MakesliceLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
+    (hmv0 : MemmoveLive64 (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
+    (dc : Nat → Nat → Nat → Nat) (hD : DrsHyp impl R dc) : Hyp impl R dc :=
+  (ensG impl hap R hgr hmc0 hwb hmk0 hmv0 dc hD).toHyp
 
 end FvModexp.Amd64.DivLarge

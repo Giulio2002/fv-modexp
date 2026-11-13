@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Amd64.Nat.DivOneF
+import FvModexp.Proofs.Amd64.Nat.DivOneFG
 
 set_option autoImplicit false
 
@@ -22,18 +22,18 @@ set_option maxHeartbeats 32000000 in
 /-- `r2 = 0`: `r = z2[:0]` -/
 theorem oneA (impl : List Amd64.Segment) (R : RtInv) {b : Nat} {dc : Nat → Nat → Nat → Nat} {L : List (Nat × Nat)}
     {zp zl zc st z2 z2l z2c u ul uc v vc : Nat} {s : State}
-    (hpre : Pre R b dc L zp zl zc st z2 z2l z2c u ul uc v 1 vc s) {q ql qc : Nat} {L' : List (Nat × Nat)} {b' : Nat}
+    (hpre : PreG R b dc L zp zl zc st z2 z2l z2c u ul uc v 1 vc s) {q ql qc : Nat} {L' : List (Nat × Nat)} {b' : Nat}
     {T : State} (hW : AtW R b L zp zc z2 z2c u ul v 1 s q ql qc L' b' T)
     (hr0 : natVal s.mem u ul % natVal s.mem v 1 = 0) (hra : s.mem.readLE (s.regs 4).toNat 8 < 2 ^ 47)
     (hx0 : s.xmm 15 = 0#128) (hdf0 : s.df = false) :
-    ReachesRet (LibDiv.program.link impl) (retAddrOf s) T (RQ R b dc L zp zc st z2 z2c u ul v 1 s) := by
+    ReachesRet (LibDiv.program.link impl) (retAddrOf s) T (RQG R b dc L zp zc st z2 z2c u ul v 1 s) := by
   have hp := hpre.f
   have hce := hp.ce
   obtain ⟨-, ⟨hb', ha, hw⟩, -, -, hout, -, -, -, -, -⟩ := hp.ce
   simp only [regSP] at hb' ha hw
   have hz2 := hp.z2o
   have hext := hW.ext
-  have hB : Box (Pre R b dc L zp zl zc st z2 z2l z2c u ul uc v 1 vc s ∧
+  have hB : Box (PreG R b dc L zp zl zc st z2 z2l z2c u ul uc v 1 vc s ∧
       AtW R b L zp zc z2 z2c u ul v 1 s q ql qc L' b' T) := ⟨⟨hpre, hW⟩⟩
   have hpc := hW.pc; have hsp := hW.sp; have h5 := hW.r5; have h14 := hW.r14; have hfs := hW.fs
   have hx15 := hW.x15; have hdf := hW.df
@@ -47,8 +47,9 @@ theorem oneA (impl : List Amd64.Segment) (R : RtInv) {b : Nat} {dc : Nat → Nat
   clear hpre hW hp
   janus64_run [m1, m2, m5, m7, h7]
   obtain ⟨hpre, hW⟩ := hB.h
-  refine ⟨⟨?_, ?_, ?_, ?_⟩, oneFin (r := z2) (rl := 0) (rc := z2c) hpre hW _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?hM ?hLF
-    (LiveExt.refl R L') (Nat.sub_le _ _) ?hI ?hR⟩
+  refine ⟨⟨?_, ?_, ?_, ?_⟩, oneFinG (r := z2) (rl := 0) (rc := z2c) hpre hW _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?hM ?hLF
+    (LiveExt.refl R L') (Nat.sub_le _ _) ?hI ?hR
+    (fun h _ => absurd ⟨rfl, rfl⟩ h)⟩
   case hM => exact (winFrame hce hext (by janus_frame) (lo := (s.regs 4).toNat - 80)
     (hi := (s.regs 4).toNat - 32) (by omega) (by omega) z2 z2c).1
   case hLF => exact (winFrame hce hext (by janus_frame) (lo := (s.regs 4).toNat - 80)

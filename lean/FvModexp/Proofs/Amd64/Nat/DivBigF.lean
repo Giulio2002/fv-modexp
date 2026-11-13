@@ -1,5 +1,6 @@
 import FvModexp.Proofs.Amd64.Nat.DivBigRel
 import FvModexp.Proofs.Amd64.Nat.DivOneB
+import FvModexp.Proofs.Amd64.Nat.DivG
 
 set_option autoImplicit false
 
@@ -34,8 +35,11 @@ theorem bigFin {R : RtInv} {b : Nat} {dc : Nat → Nat → Nat → Nat} {L : Lis
     (s' : State) (hfs : s'.fsBase = s.fsBase) (hdf : s'.df = s.df)
     (hW : MemFrame T.mem s'.mem [((s.regs 4).toNat - 80, (s.regs 4).toNat - 32)])
     (h0 : s'.regs 0 = BitVec.ofNat 64 q) (h1 : s'.regs 3 = BitVec.ofNat 64 ql) (h2 : s'.regs 1 = BitVec.ofNat 64 qc)
-    (h3 : s'.regs 7 = BitVec.ofNat 64 r) (h4 : s'.regs 6 = BitVec.ofNat 64 rl) (h5 : s'.regs 8 = BitVec.ofNat 64 rc) :
-    PostL R b dc L zp zc st z2 z2c u ul v vl s s' := by
+    (h3 : s'.regs 7 = BitVec.ofNat 64 r) (h4 : s'.regs 6 = BitVec.ofNat 64 rl) (h5 : s'.regs 8 = BitVec.ofNat 64 rc)
+    (hqr : 0 < qc → 0 < rc → Apart q (8 * qc) r (8 * rc))
+    (hqf : ¬ (q = zp ∧ qc = zc) → 0 < qc → 0 < stCap T.mem st →
+      Apart q (8 * qc) (stW T.mem st) (8 * stCap T.mem st)) :
+    PostLG R b dc L zp zc st z2 z2c u ul v vl s s' := by
   have hp := hpre.f
   obtain ⟨-, ⟨hb', ha, hw⟩, -, -, hout, -, -, hLs, -⟩ := hp.ce
   simp only [regSP] at hb' ha hw
@@ -88,7 +92,7 @@ theorem bigFin {R : RtInv} {b : Nat} {dc : Nat → Nat → Nat → Nat} {L : Lis
   refine ⟨hfs, hdf, q, ql, qc, r, rl, rc, h0, h1, h2, h3, h4, h5, L', b'', nof _ _ _ _ _ _ hp.zo hq,
     nof _ _ _ _ _ _ hp.z2o hr,
     ⟨hext, ?bud, ?inv⟩, ⟨⟨⟨hs8, hsh, by rw [hW.accessible]; exact hsacc, hs48, ?nl, by rw [tl, tc]; exact hslc,
-      by rw [tc]; exact hsc40⟩, by rw [tl, hslen, el], ?or⟩, ?arrL⟩, ?fr, ?mf, ?lf⟩
+      by rw [tc]; exact hsc40⟩, by rw [tl, hslen, el], ?or⟩, ?arrL⟩, ?fr, ?mf, ?lf, hqr, ?qf⟩
   case bud => have := hp.cost; simp only [cost] at this ⊢; rw [el] at hbud; omega
   case inv =>
     rw [h14] at hinv
@@ -104,6 +108,7 @@ theorem bigFin {R : RtInv} {b : Nat} {dc : Nat → Nat → Nat → Nat} {L : Lis
       (stW s'.mem st, stW s'.mem st + 8 * stCap s'.mem st) ∈ L' ∧ 0 < stCap s'.mem st
     rw [tw, tc, ← ew, ← ec]; exact harr
   case fr => rw [tw, tc]; exact hfr
+  case qf => rw [tw, tc]; exact hqf
   case mf =>
     rw [ews] at hmf
     refine (hF.trans hmf fun a n h => ⟨?_, ?_⟩).trans hW fun a n h => ⟨h, ?_⟩

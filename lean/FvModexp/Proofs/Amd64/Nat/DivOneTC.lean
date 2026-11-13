@@ -26,11 +26,11 @@ theorem oneC (impl : List Amd64.Segment) (R : RtInv)
     (hmk : MakesliceLiveContract64 (LibDiv.program.link impl) (cA "runtime.makeslice") 4096 R)
     {b : Nat} {dc : Nat → Nat → Nat → Nat} {L : List (Nat × Nat)}
     {zp zl zc st z2 z2l u ul uc v vc : Nat} {s : State}
-    (hpre : Pre R b dc L zp zl zc st z2 z2l 0 u ul uc v 1 vc s) {q ql qc : Nat} {L' : List (Nat × Nat)} {b' : Nat}
+    (hpre : PreG R b dc L zp zl zc st z2 z2l 0 u ul uc v 1 vc s) {q ql qc : Nat} {L' : List (Nat × Nat)} {b' : Nat}
     {T : State} (hW : AtW R b L zp zc z2 0 u ul v 1 s q ql qc L' b' T)
     (hr0 : natVal s.mem u ul % natVal s.mem v 1 ≠ 0)
     (hra : s.mem.readLE (s.regs 4).toNat 8 < 2 ^ 47) (hx0 : s.xmm 15 = 0#128) (hdf0 : s.df = false) :
-    ReachesRet (LibDiv.program.link impl) (retAddrOf s) T (RQ R b dc L zp zc st z2 0 u ul v 1 s) := by
+    ReachesRet (LibDiv.program.link impl) (retAddrOf s) T (RQG R b dc L zp zc st z2 0 u ul v 1 s) := by
   have hp := hpre.f
   have hce := hp.ce
   obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, -, hro, ⟨htg, htr, htw⟩⟩ := hp.ce
@@ -41,7 +41,7 @@ theorem oneC (impl : List Amd64.Segment) (R : RtInv)
   have hzo := hp.zo
   have hext := hW.ext
   have hbud := hW.bud
-  have hB : Box (Pre R b dc L zp zl zc st z2 z2l 0 u ul uc v 1 vc s ∧
+  have hB : Box (PreG R b dc L zp zl zc st z2 z2l 0 u ul uc v 1 vc s ∧
       AtW R b L zp zc z2 0 u ul v 1 s q ql qc L' b' T) := ⟨⟨hpre, hW⟩⟩
   have hpc := hW.pc; have hsp := hW.sp; have h5 := hW.r5; have h14 := hW.r14; have hfs := hW.fs
   have hx15 := hW.x15; have hdf := hW.df
@@ -116,8 +116,8 @@ theorem oneC (impl : List Amd64.Segment) (R : RtInv)
     have := inL_out hce hext hin
     rw [hLF.readLE a n hin trivial]
     exact hpW.readLE a n (by simp only [outside_cons, outside_nil, and_true]; omega)
-  refine ⟨⟨?_, ?_, ?_, ?_⟩, oneFin (r := ptr.toNat) (rl := 1) (rc := 1) (b'' := b' - 8) hpre hW _ ?_ ?_ ?_ ?_ ?_ ?_
-    ?_ ?_ ?hM ?hLF hx1 ?hb ?hI ?hR⟩
+  refine ⟨⟨?_, ?_, ?_, ?_⟩, oneFinG (r := ptr.toNat) (rl := 1) (rc := 1) (b'' := b' - 8) hpre hW _ ?_ ?_ ?_ ?_ ?_ ?_
+    ?_ ?_ ?hM ?hLF hx1 ?hb ?hI ?hR (fun _ _ => ⟨by simpa using hAp, by simpa using hIn⟩)⟩
   case hM =>
     refine hf1.trans (by janus_frame : MemFrame m _ [(ptr.toNat, ptr.toNat + 8),
       ((s.regs 4).toNat - 80, (s.regs 4).toNat - 56)]) fun a n h => ⟨h, ?_⟩
