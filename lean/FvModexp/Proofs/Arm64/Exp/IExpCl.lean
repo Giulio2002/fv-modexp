@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Arm64.Exp.IExpSpec
+import FvModexp.Proofs.Arm64.Exp.IExpClN
 import FvModexp.Proofs.Arm64.Exp.SlowSum
 import FvModexp.Proofs.Arm64.Exp.SlowSqG
 import FvModexp.Proofs.Arm64.Exp.EvMulG
@@ -34,44 +35,6 @@ open FvModexp.Arm64.EnsWiden (ens_widen)
 open Janus.Contracts.EqHashModel (CodeIn)
 
 namespace FvModexp.Arm64.IExp
-
-theorem libN_code (impl : List Segment) (hap : ImplApart Extracted.program impl) :
-    CodeIn (Extracted.program.ofImpl impl) (LibN.program.link impl) := by
-  rw [LibN.eq_only]; exact codeIn_ofImpl_restrict_of_apart hap _
-
-theorem libNE_code (impl : List Segment) (hap : ImplApart Extracted.program impl) :
-    CodeIn (Extracted.program.ofImpl impl) (LibNE.program.link impl) := by
-  rw [LibNE.eq_only]; exact codeIn_ofImpl_restrict_of_apart hap _
-
-theorem libExp_code (impl : List Segment) (hap : ImplApart Extracted.program impl) :
-    CodeIn (Extracted.program.ofImpl impl) (LibExp.program.link impl) := by
-  rw [LibExp.eq_only]; exact codeIn_ofImpl_restrict_of_apart hap _
-
-theorem libFree_code (impl : List Segment) (hap : ImplApart Extracted.program impl) :
-    CodeIn (Extracted.program.ofImpl impl) (LibFree.program.link impl) := by
-  rw [LibFree.eq_only]; exact codeIn_ofImpl_restrict_of_apart hap _
-
-/-- `nat.expNNSlow`'s callees (`sqr`, `mul`, and the `div` premise's functions) -/
-def nsSl (nsD : List String) : List String := NatSqr.names ++ NatMul.names ++ nsD
-
-set_option maxHeartbeats 64000000 in
-theorem sqr_slow : ∀ x, NatSqr.names.contains x = true → LibW.names.contains x = true := MontW.sub_of_all (by decide)
-set_option maxHeartbeats 64000000 in
-theorem mul_slow : ∀ x, NatMul.names.contains x = true → LibW.names.contains x = true := MontW.sub_of_all (by decide)
-set_option maxHeartbeats 64000000 in
-theorem w_n : ∀ x, LibW.names.contains x = true → LibN.names.contains x = true := MontW.sub_of_all (by decide)
-set_option maxHeartbeats 64000000 in
-theorem rem_n : ∀ x, LibRem.names.contains x = true → LibN.names.contains x = true := MontW.sub_of_all (by decide)
-set_option maxHeartbeats 64000000 in
-theorem w_11 : LibW.names.contains Extracted.seg11.name = false := by decide
-set_option maxHeartbeats 64000000 in
-theorem rem_11 : LibRem.names.contains Extracted.seg11.name = false := by decide
-set_option maxHeartbeats 64000000 in
-theorem div_fn : NatDiv.names.contains ExpSlow.fn = false := by decide
-set_option maxHeartbeats 64000000 in
-theorem sqr_fn : NatSqr.names.contains ExpSlow.fn = false := by decide
-set_option maxHeartbeats 64000000 in
-theorem mul_fn : NatMul.names.contains ExpSlow.fn = false := by decide
 
 theorem nsSl_sub {nsD : List String} (hnsD : ∀ x, nsD.contains x = true → LibW.names.contains x = true) :
     ∀ x, (nsSl nsD).contains x = true → LibW.names.contains x = true := by
@@ -228,9 +191,9 @@ theorem ensCl (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
   have hEv := ExpEven.fullI hap hmk hgr hmc hmv hmz hwb (EvenHyp.ExpNNHypNE.toNE1 hNE) (by omega) (by omega)
     hRm hSm hPm hNB hNC hk1 hk2 hk3
   exact ExpSpecX.toSpecM <|
-    ens impl hap R hD hEv hstkE (fun L b => Summary.of_codeIn (libNE_code impl hap) (hget L b))
+    ens impl hap R hD hEv hstkE (fun L b => Janus.Contracts.EqHashModel.Summary.of_codeIn (libNE_code impl hap) (hget L b))
       (NewobjectLiveContract.of_codeIn (libNE_code impl hap) hno)
-      (fun L b rs => Summary.of_codeIn (libFree_code impl hap) (hput L b rs)) hRem rem_n rem_11 (by omega)
+      (fun L b rs => Janus.Contracts.EqHashModel.Summary.of_codeIn (libFree_code impl hap) (hput L b rs)) hRem rem_n rem_11 (by omega)
       (WbLiveContract.of_codeIn (libExp_code impl hap) hwb) hK (by omega) hK20 h4416 hab hneed hbud
 
 end FvModexp.Arm64.IExp
