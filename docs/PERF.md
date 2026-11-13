@@ -1700,3 +1700,9 @@ closure unchanged), `NatQ/MulHypD` (`Q.DivRec.mulHyp` from `Q.NatMul.ens`, 2.6 s
 DrsRowQ own set 253 → 140 modules, dev-sum ~900 s, schedule ~340 s.
 rel42 (snapshot snap42 = 8923cef0, same store, the four rows alone, load 30-46): **DrsRowQ 491 s / 1.7 GB, DivRowQ 539 s /
 2.7 GB, DivMRowQ 199 s / 3.5 GB, RemRowQ 60 s / 1.7 GB** — all PASS. cache-asm gc'd to 6.9 GiB (one pinned entry kept).
+* Dev (amd64, top s42, load ~70): Nat/DivFreeS 22 s / 2.7 GB; NatQ/DivMEpi 9-15 s / 2.4 GB, DivMBigK 12-17 s / 3.1 GB,
+  DivMBigPost 10-16 s / 2.8 GB, DivMBig 12-14 s / 2.7 GB, DivMBigJ 3 s, DivMGetK 3 s, DivMLPre 72 s / 6.0 GB (rebuild).
+  DivMBig was >9 min / 11 GB (killed) before the fix: ONE `bv_omega` in the big post-call context (hspT: T.regs 4 =
+  sp - 232) → isolated lemma `sp232`; and an `omega` over 3 ranges with many truncated subtractions in context (hst2)
+  → lemma `st3`; budget fact boxed (`hbbB`). Lesson: never `bv_omega`/multi-range `omega` in a context holding the
+  callee post; state the arithmetic as a standalone lemma (also `win240`, `gwin_aux` in DivMBigK).
