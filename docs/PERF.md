@@ -1910,3 +1910,9 @@ Util → IcDefs → IcHL → Ic → Og → Pre → Seg → FinA → Fin → Row 
 * amd64 W2XnR / W4XnR `xnJ` path B: `all_goals first | exact h3 | skip` failed at full transparency on three `readLE`
   goals (~45 s each, unfolding the memory terms) → `with_reducible exact h3` (and `h7`): **W2XnR 163 → 31 s, W4XnR
   148 → 24 s** (dev, load ~25). Same lesson as infra's ModInv: never let a full-transparency `exact` fail on memory goals.
+
+### expmc s66 — v61 targeted row runs (arm64, Janus v0.3.2, snapshot of agent/expmc 951223ee, rel44 cache with the row's own modules purged)
+* **Exp_MontRow PASS 177 s / 1.7 GB** (load ~15; s61 Mont/MontLoop trims: was 245 s in rel43). Under the 550 s bar.
+* **Exp_W2Row PASS 734 s / 3.1 GB** (load ~34; rel44 758 s FAIL at the cap). Breakdown (JANUS_TIMINGS): own compile 104
+  modules 517 s, kernel replay 150 s (115 targets, 4 at once), theorem audit 63 s. Over the 500 s bar → structural trim
+  (cut the window-2 continuation chain into independent segments composed last) needed; see NOTES-expmc s66.
