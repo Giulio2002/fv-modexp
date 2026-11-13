@@ -32,7 +32,7 @@ theorem callMulH (hap : ImplApart Extracted.program impl) {ns : List String}
     (hrs : RS R kc L st pw pl lm s (natVal s.mem x xl) bp M L1 b1 i (i + 1)) (hlo2 : Lo2 s pw i M)
     (hi2 : i % 2 = 0) (hi : 2 ≤ i) (hip : i + 2 ≤ pl)
     (hb : b - (c0 (stLen s.mem st) pl lm + (i / 2 - 1) * rc sqC mlC (stLen s.mem st) pl lm +
-      (sqC (ℓ1 (stLen s.mem st) pl lm) (W lm) + tC lm)) ≤ b1)
+      (sqC (lvl1 (stLen s.mem st) pl lm) (W lm) + tC lm)) ≤ b1)
     (S' : State) (hsp : S'.sp = BitVec.ofNat 64 (s.sp.toNat - 208)) (h28 : S'.regs 28 = s.regs 28)
     (h29 : S'.regs 29 = BitVec.ofNat 64 (s.sp.toNat - 216)) (h18 : S'.regs 18 = s.regs 18) (hm : S'.mem = M)
     (hpc : S'.pc = BitVec.ofNat 64 1814128) (h30 : S'.regs 30 = BitVec.ofNat 64 1791948)
@@ -56,11 +56,11 @@ theorem callMulH (hap : ImplApart Extracted.program impl) {ns : List String}
   have hal : bp % 8 = 0 := hc.scr.al
   have hb48 := hc.scr.b48
   have hnb := nb_le hpl16 hw128
-  have hst : stLen M st = ℓ1 (stLen s.mem st) pl lm := hc.sa.2.1
+  have hst : stLen M st = lvl1 (stLen s.mem st) pl lm := hc.sa.2.1
   have hsep := pw_sep (lm := lm) (j := i) (k := i + 1) (by omega)
   have hsep1 := pw_sep (lm := lm) (j := 1) (k := i) (by omega)
   have hin := pw_in (pl := pl) (lm := lm) (bp := bp) (j := i + 1) (by omega)
-  have hroom := bud_room2 hcost hip hi hb (t := mlC (ℓ1 (stLen s.mem st) pl lm) (W lm) (W lm))
+  have hroom := bud_room2 hcost hip hi hb (t := mlC (lvl1 (stLen s.mem st) pl lm) (W lm) (W lm))
     (by simp only [rc]; omega)
   have hz := bufArr hpre hc hf hspN h28 hm hkM haM (a := bp + 8 * ((i + 1) * W lm)) (c := 2 * W lm) (by omega) hin
     (by omega) (by omega) (by omega)
@@ -68,7 +68,7 @@ theorem callMulH (hap : ImplApart Extracted.program impl) {ns : List String}
     (by omega) (by omega) (by omega) (by omega)
   have hy := bufArr hpre hc hf hspN h28 hm hkM haM (a := bp + 8 * (1 * W lm)) (c := W lm) (by omega)
     (by omega) (by omega) (by omega) (by omega)
-  have hmono := hmm (ℓ1 (stLen s.mem st) pl lm) _ _ _ _ d1 e1'
+  have hmono := hmm (lvl1 (stLen s.mem st) pl lm) _ _ _ _ d1 e1'
   have hrnd := rnd_le (NB pl lm)
   refine LibCalls.mulCallX hap hns hmu (b := b1) (L := L1) (ra_bp hap hnf 255 (by decide)) (by rw [hpc, mul_addr])
     h30 h0 h1 h2 h3 h4 h5 h6 h7 h8 h9 (by omega) (by omega) (by omega) (by have := hc.sa.1.2.2.2.1; omega) (by omega)
@@ -76,7 +76,7 @@ theorem callMulH (hap : ImplApart Extracted.program impl) {ns : List String}
     ⟨callEnv_ctx hpre hc hsp h28 hm hkM haM, hsv, by rw [hm]; exact globals_ctx hpre hc hspN hkM haM,
       by omega, hz.1, hx.2.1 _ d1, hy.2.1 _ e1', by omega, by omega, Or.inr fun _ _ => by unfold Apart; omega,
       Or.inr fun _ _ => by unfold Apart; omega,
-      stkIn_ctx hpre hc hf hspN h28 hm hkM haM, by rw [hm, hst]; simp only [ℓ1]; omega,
+      stkIn_ctx hpre hc hf hspN h28 hm hkM haM, by rw [hm, hst]; simp only [lvl1]; omega,
       by rw [hm]; exact hz.2.2.2, by rw [hm]; exact sa_sub hx.2.2.2 (by omega),
       by rw [hm]; exact sa_sub hy.2.2.2 (by omega),
       by rw [hm, hst]; omega, by rw [hm, h28]; exact hc.inv⟩ (hx.2.2.1 _ d1) (hy.2.2.1 _ e1')

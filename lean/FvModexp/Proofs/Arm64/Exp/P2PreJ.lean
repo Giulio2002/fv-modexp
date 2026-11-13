@@ -67,16 +67,16 @@ abbrev PV (j : Nat) : Nat := Exp.p2Pow lm (natVal s.mem x xl) j
 
 /-- after `sqr` (`0x1b56f4`) -/
 abbrev JA : Nat → Prop := JX impl R kc sqC mlC b L st pw pl lm x xl s 1791732 (fun _ _ => True) id
-  (fun i => PV lm x xl s (i / 2) * PV lm x xl s (i / 2)) (2 * W lm) (sqC (ℓ1 (stLen s.mem st) pl lm) (W lm))
+  (fun i => PV lm x xl s (i / 2) * PV lm x xl s (i / 2)) (2 * W lm) (sqC (lvl1 (stLen s.mem st) pl lm) (W lm))
 
 /-- after the first `trunc` (`0x1b5748`) -/
 abbrev JB : Nat → Prop := JX impl R kc sqC mlC b L st pw pl lm x xl s 1791816 (fun i M => Lo2 s pw i M) id
-  (fun i => PV lm x xl s i) (W lm) (sqC (ℓ1 (stLen s.mem st) pl lm) (W lm) + tC lm)
+  (fun i => PV lm x xl s i) (W lm) (sqC (lvl1 (stLen s.mem st) pl lm) (W lm) + tC lm)
 
 /-- after `mul` (`0x1b57cc`) -/
 abbrev JC : Nat → Prop := JX impl R kc sqC mlC b L st pw pl lm x xl s 1791948 (fun i M => Lo2 s pw i M) (· + 1)
   (fun i => PV lm x xl s i * PV lm x xl s 1) (2 * W lm)
-  (sqC (ℓ1 (stLen s.mem st) pl lm) (W lm) + tC lm + mlC (ℓ1 (stLen s.mem st) pl lm) (W lm) (W lm))
+  (sqC (lvl1 (stLen s.mem st) pl lm) (W lm) + tC lm + mlC (lvl1 (stLen s.mem st) pl lm) (W lm) (W lm))
 
 /-- after the second `trunc` (`0x1b5818`) -/
 abbrev JD : Nat → Prop := JX impl R kc sqC mlC b L st pw pl lm x xl s 1792024 (fun i M => Lo2 s pw i M) (· + 1)

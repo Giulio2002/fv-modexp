@@ -5,8 +5,8 @@ set_option autoImplicit false
 /-!
 # `expNNPowerOfTwoWindowSize4` (arm64): the facts after the table (`AT`, at `0x1b5d90 = 1793424`) (agent infra)
 
-Stack levels: `ℓR = ℓ₀ + 8w` (`reserve(8w)` consumes `8w`), `ℓZ = ℓR + rnd(2w)` (`zz = stk.nat(2w)`),
-`ℓL = ℓZ + rnd(5w)` (the table's `buf`); the cost so far `cost0`. `AT` = `WC` at level `ℓL` + the slots `ESl` + `zz`
+Stack levels: `lvlR = ℓ₀ + 8w` (`reserve(8w)` consumes `8w`), `lvlZ = lvlR + rnd(2w)` (`zz = stk.nat(2w)`),
+`lvlL = lvlZ + rnd(5w)` (the table's `buf`); the cost so far `cost0`. `AT` = `WC` at level `lvlL` + the slots `ESl` + `zz`
 (slots `280/112/120`, a scratch nat of `2w` words relative to the entry, `BU`) + the table (`powers[j]`, `j < 16`, in
 `buf`, scratch, `BU`) + `zz` apart from `buf`.
 -/
@@ -17,18 +17,18 @@ namespace FvModexp.Arm64.P2W4
 
 open P2W2 (grE mcE wbE wTy grE_eq mcE_eq wbE_eq)
 
-@[reducible] def ℓR (ℓ0 lm : Nat) : Nat := ℓ0 + 20 * W lm
-@[reducible] def ℓZ (ℓ0 lm : Nat) : Nat := ℓR ℓ0 lm + StackNat.rnd (2 * W lm)
-@[reducible] def ℓL (ℓ0 lm : Nat) : Nat := ℓZ ℓ0 lm + StackNat.rnd (P2Pre.NB 16 lm)
+@[reducible] def lvlR (ℓ0 lm : Nat) : Nat := ℓ0 + 20 * W lm
+@[reducible] def lvlZ (ℓ0 lm : Nat) : Nat := lvlR ℓ0 lm + StackNat.rnd (2 * W lm)
+@[reducible] def lvlL (ℓ0 lm : Nat) : Nat := lvlZ ℓ0 lm + StackNat.rnd (P2Pre.NB 16 lm)
 
 /-- the cost up to the table's return -/
 @[reducible] def cost0 (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat) (ℓ0 lm : Nat) : Nat :=
-  stackNatCost ℓ0 (20 * W lm) + stackNatCost (ℓR ℓ0 lm) (2 * W lm) + P2Pre.cost sqC mlC (ℓZ ℓ0 lm) 16 lm
+  stackNatCost ℓ0 (20 * W lm) + stackNatCost (lvlR ℓ0 lm) (2 * W lm) + P2Pre.cost sqC mlC (lvlZ ℓ0 lm) 16 lm
 
 /-- the facts after the table (see the module doc) -/
 structure AT (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl lm ret : Nat) (s : State)
     (M : Memory) (L3 : List (Nat × Nat)) (b3 zzp bp : Nat) : Prop where
-  wc : WC R L K g sp st zp zc s.mem M L3 b3 (ℓL (stLen s.mem st) lm)
+  wc : WC R L K g sp st zp zc s.mem M L3 b3 (lvlL (stLen s.mem st) lm)
   esl : ESl M sp st (s.regs 29) ret zp zc xp xl xc yp yl lm (stLen s.mem st)
   z280 : M.readLE (sp + 280) 8 = zzp
   z112 : M.readLE (sp + 112) 8 = 2 * W lm

@@ -24,7 +24,7 @@ the window, the stack header, the guard word (what `subMod2N`'s `PreG` asks of a
 `2·max`, `z1 = (pz, lz, cz)` of value `x^y mod 2^n`; its array apart from `m1`, `m2` -/
 structure J6 (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl yc mp ml mc ret : Nat) (s : State)
     (rk : Nat) (S : State) (L1 : List (Nat × Nat)) (b1 p1 l1 c1 q l2 pz lz cz : Nat) : Prop where
-  jx : JX R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s S L1 b1 (ℓ3 s st mp ml l1 l2) rk
+  jx : JX R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s S L1 b1 (lvl3 s st mp ml l1 l2) rk
   pc : S.pc = BitVec.ofNat 64 exp1R
   r0 : S.regs 0 = BitVec.ofNat 64 pz
   r1 : S.regs 1 = BitVec.ofNat 64 lz
@@ -92,13 +92,13 @@ theorem DL.step {m0 M M' : Memory} {L1 L2 : List (Nat × Nat)} {p c : Nat} (hd :
 end
 
 /-- the level after `z2 = stk.nat(2·max(len m1, len m2))` -/
-@[reducible] def ℓ4 (s : State) (st mp ml l1 l2 : Nat) : Nat := ℓ3 s st mp ml l1 l2 + StackNat.rnd (2 * max l1 l2)
+@[reducible] def lvl4 (s : State) (st mp ml l1 l2 : Nat) : Nat := lvl3 s st mp ml l1 l2 + StackNat.rnd (2 * max l1 l2)
 
 /-- the join point `nat4R` (return of `z2 = stk.nat(2·max)`): `J6`'s locals, `z1` in the slots `264/152/160`, the
 scratch `z2 = (t, 2·max, 2·max)` apart from `m1`, `m2` and `z1`'s array -/
 structure J7 (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl yc mp ml mc ret : Nat) (s : State)
     (rk : Nat) (S : State) (L1 : List (Nat × Nat)) (b1 p1 l1 c1 q l2 pz lz cz t : Nat) : Prop where
-  jx : JX R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s S L1 b1 (ℓ4 s st mp ml l1 l2) rk
+  jx : JX R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s S L1 b1 (lvl4 s st mp ml l1 l2) rk
   pc : S.pc = BitVec.ofNat 64 nat4R
   r0 : S.regs 0 = BitVec.ofNat 64 t
   r1 : S.regs 1 = BitVec.ofNat 64 (2 * max l1 l2)

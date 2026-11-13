@@ -39,7 +39,7 @@ theorem afterT {impl : List Segment} (hap : ImplApart Extracted.program impl)
     (hAT : AT R L K g sp st zp zc xp xl xc yp yl lm (s.regs 30).toNat s M L3 b3 zzp bp)
     {sqC : Nat → Nat → Nat} {mlC : Nat → Nat → Nat → Nat} {c0 cst : Nat}
     (hb3 : b - c0 ≤ b3) (hcst : c0 + allocCost 8 ≤ cst) (hcb : cst ≤ b)
-    (hcst2 : c0 + 2 * P2Pre.tC lm + 16 * ((lm - 2) / 64 + 1) * bc sqC mlC (ℓL (stLen s.mem st) lm) lm ≤ cst)
+    (hcst2 : c0 + 2 * P2Pre.tC lm + 16 * ((lm - 2) / 64 + 1) * bc sqC mlC (lvlL (stLen s.mem st) lm) lm ≤ cst)
     (hr4 : (s.regs 30).toNat % 4 = 0) (hr48 : (s.regs 30).toNat < 2 ^ 48)
     (hX : natVal s.mem xp xl % 2 = 1) (hY : 0 < natVal s.mem yp yl) (r29 : BitVec 64)
     (KL : ∀ kk, KL impl (s.regs 30) (FQ R b L K zp zc st (natVal s.mem xp xl ^ natVal s.mem yp yl % 2 ^ lm) cst s)
@@ -56,8 +56,8 @@ theorem afterT {impl : List Segment} (hap : ImplApart Extracted.program impl)
   have hii := skipZero_le _ _ _ _ _ hv
   have hi0 : i ≤ (lm - 2) / 64 := by simp only [i0] at hii; omega
   obtain ⟨hk1, hk32, -⟩ := kk_facts yi hyi0 hyi
-  have hmul : (kkOf yi - 1 + 16 * i) * bc sqC mlC (ℓL (stLen s.mem st) lm) lm ≤
-      16 * ((lm - 2) / 64 + 1) * bc sqC mlC (ℓL (stLen s.mem st) lm) lm :=
+  have hmul : (kkOf yi - 1 + 16 * i) * bc sqC mlC (lvlL (stLen s.mem st) lm) lm ≤
+      16 * ((lm - 2) / 64 + 1) * bc sqC mlC (lvlL (stLen s.mem st) lm) lm :=
     Nat.mul_le_mul_right _ (by omega)
   refine blH hmv hmk _ _ hP KL (CPF.ofAT hAT) S' i yi e1 e2 e3 e4 e5 e6 e7 e8 e9 e10 e11 hi hyi0 hyi hX
     (by omega) (by omega) ?_

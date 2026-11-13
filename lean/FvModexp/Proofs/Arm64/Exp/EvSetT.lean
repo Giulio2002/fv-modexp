@@ -36,7 +36,7 @@ theorem DZ.frm {R : RtInv} {L : List (Nat × Nat)} {st zp zc : Nat} {M M' : Memo
 /-- the join point `setJ` (`z`'s array chosen; `X0..X5` as `runJ` needs them) -/
 structure JS (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl yc mp ml mc ret : Nat) (s : State)
     (rk : Nat) (S : State) (L1 : List (Nat × Nat)) (b1 p1 l1 c1 q l2 pz lz cz pw lw cw pZ cZ : Nat) : Prop where
-  jx : JX R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s S L1 b1 (ℓ4 s st mp ml l1 l2) rk
+  jx : JX R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s S L1 b1 (lvl4 s st mp ml l1 l2) rk
   pc : S.pc = BitVec.ofNat 64 setJ
   r0 : S.regs 0 = BitVec.ofNat 64 pw
   r1 : S.regs 1 = BitVec.ofNat 64 lw
@@ -84,7 +84,7 @@ structure JS (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl
 /-- the facts after `runJ`'s spills of `z` (no pc / registers; `z` not yet copied) -/
 structure JO (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl yc mp ml mc ret : Nat) (s : State)
     (rk : Nat) (S : State) (L1 : List (Nat × Nat)) (b1 p1 l1 c1 q l2 pz lz cz pw lw cw pZ cZ : Nat) : Prop where
-  jx : JX R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s S L1 b1 (ℓ4 s st mp ml l1 l2) rk
+  jx : JX R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s S L1 b1 (lvl4 s st mp ml l1 l2) rk
   s288 : S.mem.readLE (sp + 288) 8 = p1
   s208 : S.mem.readLE (sp + 208) 8 = l1
   s216 : S.mem.readLE (sp + 216) 8 = c1
@@ -177,7 +177,7 @@ theorem JO.mv (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) {rk
         (by unfold Apart at hstw ⊢; omega) (by unfold Apart at hdS ⊢; omega)
     refine ⟨?_, hh 8 (by omega), hh 16 (by omega)⟩
     have := hh 0 (by omega); simpa using this
-  have hw2 : WC R L K g sp st zp zc s.mem m L1 b1 (ℓ4 s st mp ml l1 l2) := by
+  have hw2 : WC R L K g sp st zp zc s.mem m L1 b1 (lvl4 s st mp ml l1 l2) := by
     refine WC.mv hP hw hF hLF hrg hinv (by unfold Apart at hdS ⊢; omega) (fun a k ho => ?_) (fun a k hin ho => ?_)
     · rcases hd with ⟨rfl, rfl⟩ | ⟨rfl, hn, c0⟩
       · simp only [outside_cons, outside_nil, and_true]; omega

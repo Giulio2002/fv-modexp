@@ -73,7 +73,7 @@ theorem libW_nf : LibW.names.contains fn = false := by decide +kernel
 /-- the join point `smR` (return of `z1 = z1.subMod2N(z1, z2, n)`): `X0..X2` = the result `(p3, l3, c3)` -/
 structure J10 (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl yc mp ml mc ret : Nat) (s : State)
     (rk : Nat) (S : State) (L1 : List (Nat × Nat)) (b1 p1 l1 c1 q l2 pw lw cw pZ cZ p3 l3 c3 : Nat) : Prop where
-  jx : JX R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s S L1 b1 (ℓ4 s st mp ml l1 l2) rk
+  jx : JX R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s S L1 b1 (lvl4 s st mp ml l1 l2) rk
   pc : S.pc = BitVec.ofNat 64 smR
   r0 : S.regs 0 = BitVec.ofNat 64 p3
   r1 : S.regs 1 = BitVec.ofNat 64 l3

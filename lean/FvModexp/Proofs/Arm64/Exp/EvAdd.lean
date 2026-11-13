@@ -19,7 +19,7 @@ namespace FvModexp.Arm64.ExpEven
 /-- the join point `addR` (return of `z.add(z, u)`): `X0..X2` = the function's result -/
 structure J15 (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl yc mp ml mc ret : Nat) (s : State)
     (rk : Nat) (S : State) (L1 : List (Nat × Nat)) (b1 l1 l2 p l c : Nat) : Prop where
-  jx : JX R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s S L1 b1 (ℓ4 s st mp ml l1 l2) rk
+  jx : JX R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s S L1 b1 (lvl4 s st mp ml l1 l2) rk
   pc : S.pc = BitVec.ofNat 64 addR
   r0 : S.regs 0 = BitVec.ofNat 64 p
   r1 : S.regs 1 = BitVec.ofNat 64 l

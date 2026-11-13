@@ -62,8 +62,8 @@ theorem segN4 {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns
     {stkN aboveN : Nat} (hsn : StackNat.HypL impl R ns stkN aboveN) (hkN : stkN ≤ K) (haN : aboveN ≤ 88)
     (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) (hM : 0 < natVal s.mem mp ml)
     (hev : natVal s.mem mp ml % 2 = 0)
-    (hl16 : ∀ l1 l2, l1 ≤ ml → l2 ≤ ml → ℓ3 s st mp ml l1 l2 + 2 * ml + 3 ≤ 2 ^ 16)
-    {rk rk' : Nat} (hrk : ∀ l1 l2, l1 ≤ ml → l2 ≤ ml → stackNatCost (ℓ3 s st mp ml l1 l2) (2 * max l1 l2) + rk' ≤ rk)
+    (hl16 : ∀ l1 l2, l1 ≤ ml → l2 ≤ ml → lvl3 s st mp ml l1 l2 + 2 * ml + 3 ≤ 2 ^ 16)
+    {rk rk' : Nat} (hrk : ∀ l1 l2, l1 ≤ ml → l2 ≤ ml → stackNatCost (lvl3 s st mp ml l1 l2) (2 * max l1 l2) + rk' ≤ rk)
     {ret0 : BitVec 64} {Q : State → Prop}
     (K7 : ∀ (S : State) (L1 : List (Nat × Nat)) (b1 p1 l1 c1 q l2 pz lz cz t : Nat),
       J7 R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s rk' S L1 b1 p1 l1 c1 q l2 pz lz cz t →

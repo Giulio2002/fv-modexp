@@ -34,7 +34,7 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
 /-- **the loop invariant after the first copy** (see the module doc) -/
 theorem li_first (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {M : Memory} {L1 : List (Nat × Nat)} {b1 : Nat}
-    (hw : WC R L K g sp st zp zc s.mem M L1 b1 (ℓL (stLen s.mem st) lm)) {ret : Nat}
+    (hw : WC R L K g sp st zp zc s.mem M L1 b1 (lvlL (stLen s.mem st) lm)) {ret : Nat}
     (hsl : ESl M sp st (s.regs 29) ret zp zc xp xl xc yp yl lm (stLen s.mem st)) {zzp bp : Nat}
     (htz : TZ R L s.mem M L1 st sp zzp bp lm (natVal s.mem xp xl)) {dp dc n d kk i : Nat}
     (hub : UB R L K g sp st zp zc M L1 zzp bp lm dp dc) (hnd : n ≤ dc) (hn1 : 0 < n) (hd : d < 16) (hZo : Exp.p2Pow lm (natVal s.mem xp xl) d % 2 = 1)

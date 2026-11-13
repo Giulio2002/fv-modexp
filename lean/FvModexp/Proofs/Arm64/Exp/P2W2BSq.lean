@@ -36,7 +36,7 @@ theorem sqrB {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns 
     {b1 zzp bp : Nat} (hB : BF R L K g sp st zp zc xp xl xc yp yl lm ret s M L1 b1 zzp bp)
     {v : Bool} {pd ld cd : Nat} (hd : BC R L K g sp st zp zc M L1 zzp bp lm v pd cd) (hcd : 0 < cd) (hld : ld ≤ cd)
     {px lx cx X' : Nat} (hx : BC R L K g sp st zp zc M L1 zzp bp lm (!v) px cx) (hxv : NV M px lx cx X')
-    (hlx : lx ≤ W lm) (hcost : sqC (ℓL (stLen s.mem st) lm) lx ≤ b1)
+    (hlx : lx ≤ W lm) (hcost : sqC (lvlL (stLen s.mem st) lm) lx ≤ b1)
     {ret0 : BitVec 64} {Q : State → Prop} {idx : Nat} (hidx : idx < 480)
     (T : State) (hpc : T.pc = BitVec.ofNat 64 1815584) (hsp : T.sp = BitVec.ofNat 64 sp)
     (h28 : T.regs 28 = BitVec.ofNat 64 g) (hm : T.mem = M) (h30 : T.regs 30 = BitVec.ofNat 64 (1795088 + 4 * idx))
@@ -50,7 +50,7 @@ theorem sqrB {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns 
       (∀ a k, sp + 88 ≤ a → a + k ≤ sp + 560 → s'.mem.readLE a k = M.readLE a k) →
       BC R L K g sp st zp zc s'.mem L2 zzp bp lm v p' c' → NV s'.mem p' l' c' (X' * X') → l' ≤ 2 * W lm →
       BC R L K g sp st zp zc s'.mem L2 zzp bp lm (!v) px cx → NV s'.mem px lx cx X' →
-      b1 - sqC (ℓL (stLen s.mem st) lm) lx ≤ b2 → ReachesRet (LibW.program.link impl) ret0 s' Q) :
+      b1 - sqC (lvlL (stLen s.mem st) lm) lx ≤ b2 → ReachesRet (LibW.program.link impl) ret0 s' Q) :
     ReachesRet (LibW.program.link impl) ret0 T Q := by
   obtain ⟨xlc, xv, xN, xo⟩ := hxv
   have hlx0 : 0 < lx := len_pos xv xo

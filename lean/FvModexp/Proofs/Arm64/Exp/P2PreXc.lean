@@ -28,7 +28,7 @@ theorem free_ctx (hpre : Pre R kc sqC mlC b L st pw pl ws lm x xl s) {bp : Nat} 
     Apart a n (frP M st) (frN M st) := by
   obtain ⟨⟨-, -, -, -, -, hlc, -⟩, hl, har⟩ := hc.sa
   have hlc0 := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1.1.2.2.2.2.2.1
-  simp only [frP, frN, ℓ1] at hl hlc ⊢
+  simp only [frP, frN, lvl1] at hl hlc ⊢
   rcases har with ⟨e1, e2⟩ | ⟨hin, hap⟩
   · rw [e2] at hlc; rw [e1, e2, hl]; unfold Apart at h1 ⊢; omega
   · have : a + n ≤ stW M st ∨ stW M st + 8 * stCap M st ≤ a := by
@@ -53,7 +53,7 @@ theorem stkX_ctx (hpre : Pre R kc sqC mlC b L st pw pl ws lm x xl s) {bp : Nat} 
   obtain ⟨-, hhd, -, -, hnl, hlc, -⟩ := hok
   subst hm
   have hcap : 0 < stCap S'.mem st := by
-    simp only [ℓ1, NB, StackNat.rnd] at hl
+    simp only [lvl1, NB, StackNat.rnd] at hl
     have : 0 < (pl + 1) * W lm := Nat.mul_pos (by omega) (by omega)
     omega
   obtain ⟨-, hah, -, -⟩ := hnl hcap

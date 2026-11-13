@@ -15,8 +15,8 @@ namespace FvModexp.Arm64.P2W2
 open FvModexp.Arm64.EvenHyp
 open FvModexp.Arm64.ExpHyp (RdIn WrOut)
 
-theorem lL_bd (ℓ0 lm : Nat) : ℓL ℓ0 lm ≤ ℓ0 + 15 * W lm + 6 := by
-  simp only [ℓL, ℓZ, ℓR, StackNat.rnd, P2Pre.NB, P2Pre.W, W]; omega
+theorem lL_bd (ℓ0 lm : Nat) : lvlL ℓ0 lm ≤ ℓ0 + 15 * W lm + 6 := by
+  simp only [lvlL, lvlZ, lvlR, StackNat.rnd, P2Pre.NB, P2Pre.W, W]; omega
 
 theorem ofNat_inj' {a b : Nat} (ha : a < 2 ^ 64) (hb : b < 2 ^ 64) (h : BitVec.ofNat 64 a = BitVec.ofNat 64 b) :
     a = b := by
@@ -40,7 +40,7 @@ theorem bodyEnv (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s)
   have hsN : S.sp.toNat = sp := by rw [hsp, BitVec.toNat_ofNat]; have := hce.2.2.1; omega
   have hgN : (S.regs 28).toNat = g := by rw [h28, BitVec.toNat_ofNat]; have := hce.2.2.2.2.1; omega
   have hK := hP.1.2.2.2.2.2.2.2.2.1
-  have hlp : 0 < ℓL (stLen s.mem st) lm := by have := hP.2.2.2.2.2.1; simp only [ℓL, ℓZ, ℓR, W]; omega
+  have hlp : 0 < lvlL (stLen s.mem st) lm := by have := hP.2.2.2.2.2.1; simp only [lvlL, lvlZ, lvlR, W]; omega
   have hwo := WC.win_out hP hB.wc hlp
   have hsi := hB.wc.stkIn hP hsN hgN hm hstk habove
   have hgl := hB.wc.globals hP (w := win S stk above) (fun a n ho => by
@@ -181,7 +181,7 @@ theorem ub_res (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s)
   show Apart p (8 * c) (stW M' st + 8 * stLen M' st) (8 * (stCap M' st - stLen M' st))
   rcases Nat.eq_zero_or_pos (stCap M' st) with h0 | h0
   · have := hb.2.1; have := hB.wc.len
-    have : 0 < ℓL (stLen s.mem st) lm := by have := hP.2.2.2.2.2.1; simp only [ℓL, ℓZ, ℓR, W]; omega
+    have : 0 < lvlL (stLen s.mem st) lm := by have := hP.2.2.2.2.2.1; simp only [lvlL, lvlZ, lvlR, W]; omega
     omega
   · have := hnew h0; unfold Apart at this ⊢; omega
 

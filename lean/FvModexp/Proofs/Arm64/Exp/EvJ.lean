@@ -199,14 +199,14 @@ structure J2 (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl
   c1p : 0 < c1
 
 /-- the level after `m1` and `m2 = stk.nat(ml - n/64)` -/
-@[reducible] def ℓ2 (s : State) (st mp ml : Nat) : Nat :=
+@[reducible] def lvl2 (s : State) (st mp ml : Nat) : Nat :=
   stLen s.mem st + StackNat.rnd (a1 (nE s mp ml)) + StackNat.rnd (a2 ml (nE s mp ml))
 
 /-- the join point `nat2R` (return of `m2 = stk.nat(ml - n/64)`): `m1` in the slots `288/208/216`, scratch
 `m2 = (q, a2, a2)` apart from `m1` -/
 structure J3 (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl yc mp ml mc ret : Nat) (s : State)
     (rk : Nat) (S : State) (L1 : List (Nat × Nat)) (b1 p1 l1 c1 q : Nat) : Prop where
-  jx : JX R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s S L1 b1 (ℓ2 s st mp ml) rk
+  jx : JX R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s S L1 b1 (lvl2 s st mp ml) rk
   pc : S.pc = BitVec.ofNat 64 nat2R
   r0 : S.regs 0 = BitVec.ofNat 64 q
   r1 : S.regs 1 = BitVec.ofNat 64 (a2 ml (nE s mp ml))
@@ -223,7 +223,7 @@ structure J3 (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl
 `M / 2^n` in its own (scratch) array -/
 structure J4 (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl yc mp ml mc ret : Nat) (s : State)
     (rk : Nat) (S : State) (L1 : List (Nat × Nat)) (b1 p1 l1 c1 q l2 : Nat) : Prop where
-  jx : JX R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s S L1 b1 (ℓ2 s st mp ml) rk
+  jx : JX R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s S L1 b1 (lvl2 s st mp ml) rk
   pc : S.pc = BitVec.ofNat 64 rshR
   r0 : S.regs 0 = BitVec.ofNat 64 q
   r1 : S.regs 1 = BitVec.ofNat 64 l2
@@ -237,13 +237,13 @@ structure J4 (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl
   ap : Apart q (8 * a2 ml (nE s mp ml)) p1 (8 * c1)
 
 /-- the level after `z1 = stk.nat(2 max(len m1, len m2))` -/
-@[reducible] def ℓ3 (s : State) (st mp ml l1 l2 : Nat) : Nat := ℓ2 s st mp ml + StackNat.rnd (2 * max l1 l2)
+@[reducible] def lvl3 (s : State) (st mp ml l1 l2 : Nat) : Nat := lvl2 s st mp ml + StackNat.rnd (2 * max l1 l2)
 
 /-- the join point `nat3R` (return of `z1 = stk.nat(2·max(len m1, len m2))`): `m1`, `m2` in their slots, slot 224
 = `2·max`, scratch `z1 = (r, 2·max, 2·max)` apart from both -/
 structure J5 (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl yc mp ml mc ret : Nat) (s : State)
     (rk : Nat) (S : State) (L1 : List (Nat × Nat)) (b1 p1 l1 c1 q l2 r : Nat) : Prop where
-  jx : JX R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s S L1 b1 (ℓ3 s st mp ml l1 l2) rk
+  jx : JX R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s S L1 b1 (lvl3 s st mp ml l1 l2) rk
   pc : S.pc = BitVec.ofNat 64 nat3R
   r0 : S.regs 0 = BitVec.ofNat 64 r
   r1 : S.regs 1 = BitVec.ofNat 64 (2 * max l1 l2)

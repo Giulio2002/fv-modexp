@@ -93,7 +93,7 @@ theorem TZ.keep {R : RtInv} {L : List (Nat × Nat)} {m0 M M' : Memory} {L1 L2 : 
 /-- the memory facts at the loop test (see the module doc) -/
 structure LI (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl lm ret : Nat) (s : State)
     (M : Memory) (L1 : List (Nat × Nat)) (b1 zzp bp kk i : Nat) (u : Bool) (pA lA cA pB lB cB Z : Nat) : Prop where
-  wc : WC R L K g sp st zp zc s.mem M L1 b1 (ℓL (stLen s.mem st) lm)
+  wc : WC R L K g sp st zp zc s.mem M L1 b1 (lvlL (stLen s.mem st) lm)
   esl : ESl M sp st (s.regs 29) ret zp zc xp xl xc yp yl lm (stLen s.mem st)
   s200 : M.readLE (sp + 200) 8 = (BitVec.ofNat 64 kk - 2#64).toNat
   s208 : M.readLE (sp + 208) 8 = i
@@ -123,7 +123,7 @@ structure LI (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl
     S.regs 12 = BitVec.ofNat 64 yp → S.regs 2 = BitVec.ofNat 64 lm →
     LI R L K g sp st zp zc xp xl xc yp yl lm ret s M L1 b1 zzp bp kk i u pA lA cA pB lB cB Z →
     i < yl → yi < 2 ^ 64 → c ≤ 16 → (u = true ↔ (c + kk) % 2 = 1) →
-    b + (c + 16 * i) * bc sqC mlC (ℓL (stLen s.mem st) lm) lm + P2Pre.tC lm ≤ b1 + cst →
+    b + (c + 16 * i) * bc sqC mlC (lvlL (stLen s.mem st) lm) lm + P2Pre.tC lm ≤ b1 + cst →
     Exp.outerLoop 4 (stp lm (natVal s.mem xp xl)) (natVal s.mem yp yl) 16 i yi c Z = FV →
     ReachesRet (LibW.program.link impl) ret0 S Q
 

@@ -182,7 +182,7 @@ abbrev mvJ : Nat := 1790424
 of `z2`'s value in the slots `272/168/176`, apart from every local array -/
 structure J9 (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl yc mp ml mc ret : Nat) (s : State)
     (rk : Nat) (S : State) (L1 : List (Nat × Nat)) (b1 p1 l1 c1 q l2 pz lz cz pw lw cw pZ cZ : Nat) : Prop where
-  jx : JX R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s S L1 b1 (ℓ4 s st mp ml l1 l2) rk
+  jx : JX R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s S L1 b1 (lvl4 s st mp ml l1 l2) rk
   pc : S.pc = BitVec.ofNat 64 mvJ
   r0 : S.regs 0 = BitVec.ofNat 64 pw
   r2 : S.regs 2 = BitVec.ofNat 64 cw

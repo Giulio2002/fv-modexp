@@ -40,7 +40,7 @@ theorem cpM {impl : List Segment} (hmv : MemmoveLive (LibW.program.link impl) P2
     {sqC : Nat → Nat → Nat} {mlC : Nat → Nat → Nat → Nat} {zzp bp kk cst FV ret : Nat} {r29 : BitVec 64}
     (KL : KL impl ret0 Q R b L K g sp st zp zc xp xl xc yp yl lm ret s r29 sqC mlC zzp bp kk cst FV)
     {M : Memory} {L1 : List (Nat × Nat)} {b1 : Nat}
-    (hw : WC R L K g sp st zp zc s.mem M L1 b1 (ℓL (stLen s.mem st) lm))
+    (hw : WC R L K g sp st zp zc s.mem M L1 b1 (lvlL (stLen s.mem st) lm))
     (hsl : ESl M sp st (s.regs 29) ret zp zc xp xl xc yp yl lm (stLen s.mem st))
     (htz : TZ R L s.mem M L1 st sp zzp bp lm (natVal s.mem xp xl))
     (z280 : M.readLE (sp + 280) 8 = zzp) (z112 : M.readLE (sp + 112) 8 = 2 * W lm)
@@ -49,7 +49,7 @@ theorem cpM {impl : List Segment} (hmv : MemmoveLive (LibW.program.link impl) P2
     (hlen : M.readLE (sp + 320 + 24 * d + 8) 8 = n)
     (s160 : M.readLE (sp + 160) 8 = yi) (s200 : M.readLE (sp + 200) 8 = kk) (s240 : M.readLE (sp + 240) 8 = kk - 1)
     (s208 : M.readLE (sp + 208) 8 = i) (hkk1 : 1 ≤ kk) (hkk : kk ≤ 32) (hi : i < yl) (hyi : yi < 2 ^ 64)
-    (hbud : b + (kk - 1 + 32 * i) * bc sqC mlC (ℓL (stLen s.mem st) lm) lm + P2Pre.tC lm ≤ b1 + cst)
+    (hbud : b + (kk - 1 + 32 * i) * bc sqC mlC (lvlL (stLen s.mem st) lm) lm + P2Pre.tC lm ≤ b1 + cst)
     (hFV : Exp.outerLoop 2 (stp lm (natVal s.mem xp xl)) (natVal s.mem yp yl) 32 i
       (yi * 2 ^ (64 - (kk - 1) * 2) % 2 ^ 64) (kk - 1) (Exp.p2Pow lm (natVal s.mem xp xl) d) = FV)
     {M1 : Memory} (hF1 : MemFrame M M1 [(sp + 136, sp + 144), (sp + 152, sp + 160), (sp + 296, sp + 304)])

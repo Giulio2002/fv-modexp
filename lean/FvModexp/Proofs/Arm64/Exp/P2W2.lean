@@ -25,7 +25,7 @@ open FvModexp.Arm64.EvenHyp
 
 /-- the budget of the whole function (stack level `ℓ0` at the entry) -/
 @[reducible] def cost (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat) (ℓ0 lm : Nat) : Nat :=
-  cost0 sqC mlC ℓ0 lm + allocCost 8 + 2 * P2Pre.tC lm + 32 * ((lm - 2) / 64 + 1) * bc sqC mlC (ℓL ℓ0 lm) lm
+  cost0 sqC mlC ℓ0 lm + allocCost 8 + 2 * P2Pre.tC lm + 32 * ((lm - 2) / 64 + 1) * bc sqC mlC (lvlL ℓ0 lm) lm
 
 /-- the precondition at the entry (frame `SP - 464`, `g = X28`) -/
 def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K : Nat) (sqC : Nat → Nat → Nat)

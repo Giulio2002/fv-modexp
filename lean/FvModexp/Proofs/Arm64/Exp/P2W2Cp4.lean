@@ -94,7 +94,7 @@ theorem blH {impl : List Segment} (hmv : MemmoveLive (LibW.program.link impl) P2
     (h2 : S.regs 2 = BitVec.ofNat 64 lm) (h10 : S.regs 10 = BitVec.ofNat 64 yl) (h11 : S.regs 11 = BitVec.ofNat 64 i)
     (h12 : S.regs 12 = BitVec.ofNat 64 yp) (h13 : S.regs 13 = BitVec.ofNat 64 yi) (hi : i < yl) (hyi0 : 0 < yi)
     (hyi : yi < 2 ^ 64) (hX : natVal s.mem xp xl % 2 = 1)
-    (hbud : b + (kkOf yi - 1 + 32 * i) * bc sqC mlC (ℓL (stLen s.mem st) lm) lm + P2Pre.tC lm + P2Pre.tC lm ≤ b1 + cst)
+    (hbud : b + (kkOf yi - 1 + 32 * i) * bc sqC mlC (lvlL (stLen s.mem st) lm) lm + P2Pre.tC lm + P2Pre.tC lm ≤ b1 + cst)
     (htc : P2Pre.tC lm ≤ b1)
     (hFV : Exp.outerLoop 2 (stp lm (natVal s.mem xp xl)) (natVal s.mem yp yl) 32 i
       (yi * 2 ^ (64 - (kkOf yi - 1) * 2) % 2 ^ 64) (kkOf yi - 1)
@@ -162,7 +162,7 @@ theorem blH {impl : List Segment} (hmv : MemmoveLive (LibW.program.link impl) P2
     · exact h0
   have hmacc1 : M1.accessible (sp - K) (K + 560) true = true := by
     rw [hc1.wc.fr.accessible]; exact hP.1.2.2.2.2.2.2.2.2.2.2.1
-  have hlpos : 0 < ℓL (stLen s.mem st) lm := by have := hP.2.2.2.2.2.1; simp only [ℓL, ℓZ, ℓR, W]; omega
+  have hlpos : 0 < lvlL (stLen s.mem st) lm := by have := hP.2.2.2.2.2.1; simp only [lvlL, lvlZ, lvlR, W]; omega
   have hb48 := hc1.tz.bscr.b48
   have hjW : (d + 1) * W lm ≤ P2Pre.NB 4 lm := by
     simp only [P2Pre.NB]; exact Nat.mul_le_mul_right _ (by omega)

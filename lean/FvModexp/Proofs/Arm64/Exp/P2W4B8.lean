@@ -86,10 +86,10 @@ theorem callB8 (hap : ImplApart Extracted.program impl) {ns : List String}
   have hly : T.mem.readLE (sp + 320 + 24 * dOf yi + 8) 8 = M0.readLE (sp + 320 + 24 * dOf yi + 8) 8 :=
     hrd _ _ (by omega)
   have hlyW : M0.readLE (sp + 320 + 24 * dOf yi + 8) 8 ≤ W lm := (hjc.bf.tz.pw (dOf yi) hj).2.2.1
-  have hmono := hmm (ℓL (stLen s.mem st) lm) lr (W lm) _ (W lm) hlr hlyW
+  have hmono := hmm (lvlL (stLen s.mem st) lm) lr (W lm) _ (W lm) hlr hlyW
   have hb := h.hb
   have hcb := hjc.hcb
-  have hcst : mlC (ℓL (stLen s.mem st) lm) lr (M0.readLE (sp + 320 + 24 * dOf yi + 8) 8) ≤ b1 := by
+  have hcst : mlC (lvlL (stLen s.mem st) lm) lr (M0.readLE (sp + 320 + 24 * dOf yi + 8) 8) ≤ b1 := by
     simp only [bodyB, ML] at hb hmono; omega
   have hPo := p2Pow_odd lm (natVal s.mem xp xl) (dOf yi) (by have := hP.2.2.2.2.2.1; omega) hX
   refine mulB hap hns hnf hmu hkM haM hP hB (v := !u) hZ1 hco hlo (by rw [Bool.not_not]; exact hZ2) hZn hlr hj hly
