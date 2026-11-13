@@ -52,6 +52,11 @@ theorem own_rd {sp K a k : Nat} {M Mw : Memory} (hF : MemFrame M Mw [(sp - 8, sp
   simp only [outside_cons, outside_nil, and_true]
   omega
 
+/-- a frame slot above the argument area is kept by the argument stores -/
+theorem own_slot {sp : Nat} {M Mw : Memory} (hF : MemFrame M Mw [(sp - 8, sp + 48)]) (j : Nat) (hj : 48 ≤ j) :
+    Mw.readLE (sp + j) 8 = M.readLE (sp + j) 8 :=
+  hF.readLE _ _ (by simp only [outside_cons, outside_nil, and_true]; omega)
+
 theorem own_stk {sp K st : Nat} {M Mw : Memory} (hF : MemFrame M Mw [(sp - 8, sp + 48)]) (h : AW sp K st 24) :
     stW Mw st = stW M st ∧ stLen Mw st = stLen M st ∧ stCap Mw st = stCap M st :=
   ⟨own_rd hF (Apart.sub h (Nat.le_refl _) (by omega) (Nat.le_refl _) (Nat.le_refl _)),
@@ -179,10 +184,12 @@ theorem divStep {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.pro
   have hZ' := ZZ.keep hZw hxD (fun a k w => hF2.accessible a k w) hst'
   have sl : ∀ j, 104 ≤ j → j + 8 ≤ 0x3c0 → KeptJ j → S2.mem.readLE (sp + j) 8 = M.readLE (sp + j) 8 :=
     fun j h1 h2 hj => (slot_div hCw hqinw hrW hD j h1 h2).trans (hk1.2.2.2.2.1 j hj)
+  have sl' : ∀ j, 104 ≤ j → j + 8 ≤ 0x3c0 → S2.mem.readLE (sp + j) 8 = M.readLE (sp + j) 8 :=
+    fun j h1 h2 => (slot_div hCw hqinw hrW hD j h1 h2).trans (own_slot hF j (Nat.le_trans (by decide) h1))
   have hlen : stLen S2.mem st = stLen M st := hlen'.trans el
   refine ReachesRet.mono (rrRetC hap hclr hmv hmk hwt hro hSN hserv hC' hZ' ht hfbp
     ((sl 0xd8 (by decide) (by decide) (by decide)).trans rd8) ((sl 0x78 (by decide) (by decide) (by decide)).trans r78)
-    ((sl 0xa0 (by decide) (by decide) (by decide)).trans ra0) ((sl 0x188 (by decide) (by decide) (by decide)).trans r188)
+    ((sl' 0xa0 (by decide) (by decide)).trans ra0) ((sl' 0x188 (by decide) (by decide)).trans r188)
     hkk hmB (by rw [hlen]; exact hsl2) (by rw [hlen]; exact bud_sub hbud hb') hinv' hrl0 hrln hrc hra hr48 hrh hrw
     hrS' hrF' hzr (zz_mid S2.mem hzz' hrln) S2 f4 f0 rfl f7 f6 f8 f5 f14 ffs fx15 fdf) (fun s' h => ?_)
   obtain ⟨M1, rrq, rrc, onep, M2, L2, b2, p1, p2, p3⟩ := h
