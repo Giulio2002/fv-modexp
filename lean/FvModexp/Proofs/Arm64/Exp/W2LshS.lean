@@ -27,6 +27,13 @@ theorem slot_lsh {R : RtInv} {L L' : List (Nat × Nat)} {b b' g sp stkL rrp n p 
   · simp only [outside_cons, outside_nil, and_true]; omega
   · simp only [outside_cons, outside_nil, and_true]; omega
 
+/-- the two call-frame words `M → M1` writes are apart from every other frame word (small context for omega) -/
+theorem rs1_aux {sp K rrp n j : Nat} (hrW : Apart rrp (8 * (2 * n)) (sp - K) (K + 752)) (hn : 0 < n) (hK : K ≤ sp)
+    (hj : j + 8 ≤ 176 ∨ 184 ≤ j ∧ j + 8 ≤ 408 ∨ 416 ≤ j) (hj2 : j + 8 ≤ 752) :
+    Outside (sp + j) 8 [(sp + 176, sp + 184), (sp + 408, sp + 416), (rrp, rrp + 8)] := by
+  unfold Apart at hrW
+  simp only [outside_cons, outside_nil, and_true]; omega
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem lshStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
@@ -126,7 +133,7 @@ theorem lshStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
   have sl := fun j h1 h2 => slot_lsh (j := j) hD hrt hK0 hKL h1 h2
   have rs1 : ∀ j, (j + 8 ≤ 176 ∨ 184 ≤ j ∧ j + 8 ≤ 408 ∨ 416 ≤ j) → j + 8 ≤ 752 →
       M1.readLE (sp + j) 8 = M.readLE (sp + j) 8 := fun j hj hj2 =>
-    hmf.readLE _ _ (by simp only [outside_cons, outside_nil, and_true]; omega)
+    hmf.readLE _ _ (rs1_aux hrW (by omega) (by omega) hj hj2)
   have hlenE : stLen M2 st = stLen M st := by rw [e1', k1]
   refine reaches_mono (sn2Step impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW hserv ret hret b2 L2 g sp K n
     mp mc Mv xp xc Xv yp ylen Y yi zp zc st n0 l0 t rrp p c M2 r18 r29 f29 hKD hC2 hZ hzzK hzl hzv hzzr hrL2 hrW hrG hrS
