@@ -24,7 +24,7 @@ abbrev divRet : Nat := 6212127
 
 /-- the frame words `divRet → rrJ` writes (memmove window + return slot, spills) -/
 @[reducible] def rw4 (sp : Nat) : List (Nat × Nat) :=
-  [(sp - 4104, sp + 0x18), (sp + 0x100, sp + 0x108), (sp + 0x128, sp + 0x148), (sp + 0x248, sp + 0x368)]
+  [(sp - 4104, sp + 0x18), (sp + 0x100, sp + 0x108), (sp + 0x128, sp + 0x130), (sp + 0x248, sp + 0x250)]
 
 /-- the facts at `rrJ` -/
 @[reducible] def RRPost (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (g sp n rp rl rc zzp zzc : Nat) (M M' : Memory)
@@ -58,8 +58,8 @@ theorem rrBpost {R : RtInv} {L : List (Nat × Nat)} {b g fs sp n rp rl rc zzp zz
       (R.rt ++ rw4 sp ++ [(zzp, zzp + 8 * n)]) := by
     repeat (first
       | refine MemFrame.writeLE ?_ _ (r := (sp + 0x100, sp + 0x108)) (by simp) (by simp only; omega) (by simp only; omega)
-      | refine MemFrame.writeLE ?_ _ (r := (sp + 0x128, sp + 0x148)) (by simp) (by simp only; omega) (by simp only; omega)
-      | refine MemFrame.writeLE ?_ _ (r := (sp + 0x248, sp + 0x368)) (by simp) (by simp only; omega) (by simp only; omega)
+      | refine MemFrame.writeLE ?_ _ (r := (sp + 0x128, sp + 0x130)) (by simp) (by simp only; omega) (by simp only; omega)
+      | refine MemFrame.writeLE ?_ _ (r := (sp + 0x248, sp + 0x250)) (by simp) (by simp only; omega) (by simp only; omega)
       | refine MemFrame.writeLE ?_ _ (r := (sp - 4104, sp + 0x18)) (by simp) (by simp only; omega) (by simp only; omega))
     exact MemFrame.refl _ _
   have hLw : LiveFrame M ((((M.writeLE (sp + 0x100) 8 zzc).writeLE (sp + 0x128) 8 n).writeLE (sp + 0x248) 8 zzp).writeLE (sp - 8) 8 6212389) L

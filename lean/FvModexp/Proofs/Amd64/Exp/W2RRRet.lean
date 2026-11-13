@@ -41,8 +41,8 @@ theorem rr_slot {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {g sp n rp rl rc z
     {M M1 : Memory} (hP : RRPost R b L g sp n rp rl rc zzp zzc M M1 rrp rrc) (hs : 4296 ≤ sp) (hn : n ≤ zzc)
     (hrt : Outside (sp - 4296) (4296 + 0x2a8) R.rt) (hca : Outside (sp + 0x2a8) 0x20 R.rt)
     (hzw : Apart zzp (8 * zzc) (sp - 4296) (4296 + 0x2a8)) (hzc : Apart zzp (8 * zzc) (sp + 0x2a8) 0x20)
-    (hK : (0x18 ≤ K ∧ K + 8 ≤ 0x100) ∨ (0x108 ≤ K ∧ K + 8 ≤ 0x128) ∨ (0x148 ≤ K ∧ K + 8 ≤ 0x248) ∨
-      (0x368 ≤ K ∧ K + 8 ≤ 0x2a8) ∨ (0x2a8 ≤ K ∧ K + 8 ≤ 0x2c8)) :
+    (hK : (0x18 ≤ K ∧ K + 8 ≤ 0x100) ∨ (0x108 ≤ K ∧ K + 8 ≤ 0x128) ∨ (0x130 ≤ K ∧ K + 8 ≤ 0x248) ∨
+      (0x250 ≤ K ∧ K + 8 ≤ 0x2a8) ∨ (0x2a8 ≤ K ∧ K + 8 ≤ 0x2c8)) :
     M1.readLE (sp + K) 8 = M.readLE (sp + K) 8 := by
   unfold Apart at hzw hzc
   refine hP.1.readLE _ _ ?_
@@ -137,7 +137,7 @@ theorem rrRet {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
   have hmvL := MemmoveLive64.of_codeIn hc hmv
   have K : ∀ (S' : State) (rrp rrc : Nat), S'.rip = BitVec.ofNat 64 rrJ → S'.regs 4 = BitVec.ofNat 64 sp →
       S'.regs 0 = BitVec.ofNat 64 n → S'.regs 3 = BitVec.ofNat 64 rrp → S'.regs 1 = BitVec.ofNat 64 n →
-      S'.regs 2 = BitVec.ofNat 64 rrc → S'.regs 6 = BitVec.ofNat 64 zzc → S'.regs 7 = BitVec.ofNat 64 zzp →
+      S'.regs 8 = BitVec.ofNat 64 rrc → S'.regs 2 = BitVec.ofNat 64 zzc → S'.regs 6 = BitVec.ofNat 64 zzp →
       S'.regs 5 = r5 → S'.regs 14 = BitVec.ofNat 64 g → S'.fsBase.toNat = fs → S'.xmm 15 = 0 → S'.df = false →
       RRPost R b L g sp n rp rl rc zzp zzc M S'.mem rrp rrc →
       ReachesRet (LibW.program.link impl) (BitVec.ofNat 64 r) S'
@@ -152,8 +152,8 @@ theorem rrRet {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
     have acc1 : ∀ a k w, M1.accessible a k w = M.accessible a k w := fun a k w => hF.accessible a k w
     have rd : ∀ a k, (InRanges a k L ∨ Outside a k R.rt) → Apart a k (sp - 4296) (4296 + 0x2a8) →
         Apart zzp (8 * zzc) a k → M1.readLE a k = M.readLE a k := fun a k hh hw hz => rr_rd hP hsp1 hzn hh hw hz
-    have rs : ∀ K, ((0x18 ≤ K ∧ K + 8 ≤ 0x100) ∨ (0x108 ≤ K ∧ K + 8 ≤ 0x128) ∨ (0x148 ≤ K ∧ K + 8 ≤ 0x248) ∨
-        (0x368 ≤ K ∧ K + 8 ≤ 0x2a8) ∨ (0x2a8 ≤ K ∧ K + 8 ≤ 0x2c8)) → M1.readLE (sp + K) 8 = M.readLE (sp + K) 8 := fun K hK =>
+    have rs : ∀ K, ((0x18 ≤ K ∧ K + 8 ≤ 0x100) ∨ (0x108 ≤ K ∧ K + 8 ≤ 0x128) ∨ (0x130 ≤ K ∧ K + 8 ≤ 0x248) ∨
+        (0x250 ≤ K ∧ K + 8 ≤ 0x2a8) ∨ (0x2a8 ≤ K ∧ K + 8 ≤ 0x2c8)) → M1.readLE (sp + K) 8 = M.readLE (sp + K) 8 := fun K hK =>
       rr_slot hP hsp1 hzn hwrt hca hzw hzca hK
     have hstw' := hstw; have hzzs' := hzzs
     unfold Apart at hstw' hzzs'
