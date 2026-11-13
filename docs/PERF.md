@@ -1716,6 +1716,14 @@ rel42 (snapshot snap42 = 8923cef0, same store, the four rows alone, load 30-46):
   (context = summary + DivPostL pieces) never finished; the same facts proved at the top of the proof take ms. Prove
   every arithmetic side fact BEFORE the call (or in a small lemma) — never omega in a post-call context.
 
+### expmc s56 (amd64 window-4 path A + anchor bridge, dev builds on v0.3.1, host load ~45)
+* W4XnR2 RE-MEASURED: 27 s / 2.3 GB (unchanged source; s55's 234 s was a load artefact) — no trim needed.
+* New: W4Anc 3.1 s / 2.3 GB, W4XnA (CtxX.addEx/dropEx, keeps_divX, rem_xin) 23 s / 3.0 GB, W4XnAP (dvgPre_of)
+  2.8 s, W4XnA2 (xnA2K) 4.7 s / 2.4 GB, W4XnS (xnAStep, xnStep) 7.6 s / 2.4 GB.
+* LESSON: a `(by omega)` argument for a bound `?x < 2 ^ 64` whose implicit `?x` is not yet fixed gets its mvar
+  ASSIGNED from an unrelated hypothesis in context (seen: `qp := fbp`, `xc := fbp`), producing confusing type
+  mismatches later; pass such implicits explicitly (`(qp := qp)`, `(xc := xc)`).
+
 ### expmc s54 (amd64 window-4 RR section + x join, dev builds on v0.3.1, host load ~54)
 * New: W4LshR (toLsh) 25 s / 2.4 GB, W4LshK (Ctx.addEx, keeps_own2, keeps_lsh, zz_of_lsh) 12 s / 2.7 GB,
   W4LshS (lshStep) 3.9 s, W4Sn1 (sn1Step) 3.9 s, W4Sn1R (toSn1) 17 s, W4CtxX 7.4 s, W4XjR (toK) 22 s, W4Xj (xjStep) 4.5 s.
