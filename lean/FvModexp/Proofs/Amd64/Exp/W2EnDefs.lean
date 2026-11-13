@@ -73,7 +73,7 @@ theorem ESl.keep {M1 M3 : Memory} {sp st bp r zp zc xp xl xc yp ylen mp n mc len
 = the callee stacks, the frame, the saved `BP`, the return address, the stack arguments and the register spill area) -/
 @[reducible] def EEnv (R : RtInv) (L : List (Nat × Nat)) (g fs sp K : Nat) (s : State) : Prop :=
   s.regs 4 = BitVec.ofNat 64 (sp + 0x270) ∧ s.regs 14 = BitVec.ofNat 64 g ∧ s.fsBase.toNat = fs ∧
-  s.xmm 15 = 0 ∧ s.df = false ∧ sp % 16 = 0 ∧ 41512 ≤ K ∧ K ≤ 2 ^ 20 ∧
+  s.xmm 15 = 0 ∧ s.df = false ∧ sp % 8 = 0 ∧ 41512 ≤ K ∧ K ≤ 2 ^ 20 ∧
   CallW.CEnv R L g fs (sp - 8) K 0x2e8 s.mem ∧ RunIface.Serves R
 
 /-- `5n` (`LEAQ (BX)(BX*4), R10`, fn+0x59) -/

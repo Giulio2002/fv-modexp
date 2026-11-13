@@ -116,7 +116,7 @@ theorem cenv_at {R : RtInv} {L L1 : List (Nat × Nat)} {g fs sp K st : Nat} {M0 
 
 /-- window-2's loop environment from the CallW one -/
 theorem env_of {R : RtInv} {L : List (Nat × Nat)} {g fs sp K : Nat} {M : Memory}
-    (h : CallW.CEnv R L g fs (sp - 8) K 0x2e8 M) (hal : sp % 16 = 0) (hK : 4288 ≤ K)
+    (h : CallW.CEnv R L g fs (sp - 8) K 0x2e8 M) (hal : sp % 8 = 0) (hK : 4288 ≤ K)
     (hadx : M.accessible MontHyp.hasADX 1 false = true) : W2Loop.Env R L g fs sp M := by
   obtain ⟨-, hK0, hA0, hacc, hg1, hg2, hg3, hrt, hga, hgrt, hLs, hd, hro, f1, f2, f3, f4, f5, f6⟩ := h
   unfold Apart at hga f6

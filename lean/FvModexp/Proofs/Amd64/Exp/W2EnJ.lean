@@ -20,7 +20,7 @@ theorem enJn {impl : List Amd64.Segment} {R : RtInv}
     (hwb : WbLiveContract64 (LibW.program.link impl) wbE 4096 R 2)
     {ret : W64} {Q : State → Prop}
     {b1 : Nat} {L1 : List (Nat × Nat)} {g sp st w1 len0 c1 n : Nat} {M : Memory}
-    (hsp1 : 4200 ≤ sp) (hsp2 : sp + 0x2e0 ≤ 2 ^ 48) (hal : sp % 16 = 0)
+    (hsp1 : 4200 ≤ sp) (hsp2 : sp + 0x2e0 ≤ 2 ^ 48) (hal : sp % 8 = 0)
     (hwacc : M.accessible (sp - 8 - 4096) (4096 + 8) true = true)
     (hwrt : Outside (sp - 8 - 4096) (4096 + 8) R.rt) (hwL : LiveSep L1 [(sp - 8 - 4096, sp)])
     (hsta : M.accessible st 24 true = true) (hst48 : st + 24 ≤ 2 ^ 48)

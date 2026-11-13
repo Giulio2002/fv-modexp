@@ -28,7 +28,7 @@ theorem dE_eq : segAddr LibW.program fnD = 6215328 := by decide
 /-- the static facts of the end (memory `M` at the join point; `bp` the caller's frame pointer, `r` the return
 address) -/
 @[reducible] def FinEnv (sp st n0 bp r : Nat) (M : Memory) : Prop :=
-  sp % 16 = 0 ∧ 4296 ≤ sp ∧ sp + 0x2a8 ≤ 2 ^ 48 ∧ M.accessible (sp - 4296) (4296 + 0x2a8) true = true ∧
+  sp % 8 = 0 ∧ 4296 ≤ sp ∧ sp + 0x2a8 ≤ 2 ^ 48 ∧ M.accessible (sp - 4296) (4296 + 0x2a8) true = true ∧
     M.readLE (sp + 0x260) 8 = sp + 0x228 ∧ M.readLE (sp + 0x228) 8 = 6215328 ∧
     M.readLE (sp + 0x230) 8 = st ∧ M.readLE (sp + 0x238) 8 = n0 ∧
     st + 24 ≤ 2 ^ 48 ∧ M.accessible st 24 true = true ∧ n0 ≤ M.readLE (st + 16) 8 ∧
@@ -44,7 +44,7 @@ address) -/
 
 theorem dPre {s : State} {sp st n0 : Nat} (h4 : s.regs 4 = BitVec.ofNat 64 (sp - 8))
     (h2 : s.regs 2 = BitVec.ofNat 64 (sp + 0x228)) (hs1 : 4296 ≤ sp) (hs2 : sp + 0x2a8 ≤ 2 ^ 48)
-    (hal : sp % 16 = 0) (hacc : s.mem.accessible (sp - 4296) (4296 + 0x2a8) true = true)
+    (hal : sp % 8 = 0) (hacc : s.mem.accessible (sp - 4296) (4296 + 0x2a8) true = true)
     (rra : s.mem.readLE (sp - 8) 8 = 6215038) (r348 : s.mem.readLE (sp + 0x230) 8 = st)
     (r350 : s.mem.readLE (sp + 0x238) 8 = n0) (hst1 : st + 24 ≤ 2 ^ 48) (hsta : s.mem.accessible st 24 true = true)
     (hn0 : n0 ≤ s.mem.readLE (st + 16) 8) (hstw : Apart st 24 (sp - 4296) (4296 + 0x2a8)) : Defer.Pre s := by
@@ -79,7 +79,7 @@ theorem atD {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program
     (hpc : S.rip = BitVec.ofNat 64 6215328) (h4 : S.regs 4 = BitVec.ofNat 64 (sp - 8))
     (h2 : S.regs 2 = BitVec.ofNat 64 (sp + 0x228))
     (h14 : S.regs 14 = BitVec.ofNat 64 g) (hfs : S.fsBase.toNat = fs) (hx15 : S.xmm 15 = 0) (hdf : S.df = false)
-    (hs1 : 4296 ≤ sp) (hs2 : sp + 0x2a8 ≤ 2 ^ 48) (hal : sp % 16 = 0)
+    (hs1 : 4296 ≤ sp) (hs2 : sp + 0x2a8 ≤ 2 ^ 48) (hal : sp % 8 = 0)
     (hacc : S.mem.accessible (sp - 4296) (4296 + 0x2a8) true = true)
     (rra : S.mem.readLE (sp - 8) 8 = 6215038) (r348 : S.mem.readLE (sp + 0x230) 8 = st)
     (r350 : S.mem.readLE (sp + 0x238) 8 = n0) (hst1 : st + 24 ≤ 2 ^ 48) (hsta : S.mem.accessible st 24 true = true)

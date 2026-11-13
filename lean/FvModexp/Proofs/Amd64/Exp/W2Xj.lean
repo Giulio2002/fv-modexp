@@ -67,7 +67,7 @@ theorem low_limb {M : Memory} {mp n Mv : Nat} (hn : 0 < n) (hmV : M.readLE mp (8
 theorem CtxX.xj {R : RtInv} {L : List (Nat × Nat)}
     {g fs sp K n mp mc Mv xp Xv yp ylen Y yi zp zc st n0 l0 fbp r : Nat} {ex : List (Nat × Nat)} {M : Memory}
     (h : CtxX R L g fs sp K n mp mc Mv xp Xv yp ylen Y yi zp zc st n0 l0 fbp r ex M) :
-    sp % 16 = 0 ∧ 4296 ≤ sp ∧ sp + 0x2a8 ≤ 2 ^ 48 ∧ M.accessible (sp - 4296) (4296 + 0x2a8) true = true ∧
+    sp % 8 = 0 ∧ 4296 ≤ sp ∧ sp + 0x2a8 ≤ 2 ^ 48 ∧ M.accessible (sp - 4296) (4296 + 0x2a8) true = true ∧
     M.readLE (sp + 0x280) 8 = ylen ∧ M.readLE (sp + 0x290) 8 = mp ∧ 0 < ylen ∧ 0 < n ∧ n ≤ 128 ∧
     M.accessible mp (8 * n) false = true ∧ mp + 8 * n ≤ 2 ^ 48 ∧ M.readLE mp (8 * n) = Mv ∧
     xp + 8 * n ≤ 2 ^ 48 ∧ st + 24 ≤ 2 ^ 48 ∧ AW sp K st 24 ∧ Outside (sp - 8 - K) (K + 688) R.rt ∧ K + 8 ≤ sp := by
