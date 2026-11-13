@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Nat.DivLargeTN
+import FvModexp.Proofs.Amd64.Nat.DivLargeG
 
 set_option autoImplicit false
 
@@ -19,7 +20,7 @@ namespace FvModexp.Amd64.DivLarge
 @[reducible] def RQ (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (c : Nat) (zp zc st up uc ip il vp vl : Nat)
     (s s' : State) : Prop :=
   (s'.regs 4 = s.regs 4 + 8 ∧ s'.regs 5 = s.regs 5 ∧ s'.regs 14 = s.regs 14 ∧ s'.xmm 15 = s.xmm 15) ∧
-    Post R b L c zp zc st up uc ip il vp vl s s'
+    PostG R b L c zp zc st up uc ip il vp vl s s'
 
 /-- the final frame list -/
 @[reducible] def finW (s : State) (st : Nat) : List (Nat × Nat) :=
@@ -47,7 +48,7 @@ theorem lpost {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st 
     (hfs : s'.fsBase = s.fsBase) (hdf : s'.df = s.df)
     (h0 : s'.regs 0 = BitVec.ofNat 64 qp) (h3 : s'.regs 3 = BitVec.ofNat 64 ql) (h1 : s'.regs 1 = BitVec.ofNat 64 qc)
     (h7 : s'.regs 7 = BitVec.ofNat 64 P) (h6 : s'.regs 6 = BitVec.ofNat 64 rl) (h8 : s'.regs 8 = BitVec.ofNat 64 C) :
-    Post R b L c zp zc st up uc ip il vp vl s s' := by
+    PostG R b L c zp zc st up uc ip il vp vl s s' := by
   subst hm
   have hl := hE.lay
   have hpre := hE.pre
@@ -68,7 +69,8 @@ theorem lpost {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st 
   have hext : LiveExt R L L2 := hE.ext.trans (hT.ext3.trans hT.ext4)
   have hsth := hpre.sti.1.2.1
   refine ⟨hfs, hdf, qp, ql, qc, P, rl, C, h0, h3, h1, h7, h6, h8, L2, b2, ⟨?qv, ?qn, by omega, hQ.c40, ?qlive, ?qror⟩,
-    ⟨?rv, ?rn, by omega, hU.c40, ?rlive, ?rror⟩, ⟨hext, hT.bud, ?inv⟩, ⟨⟨?stok, hlen, ?arr⟩, ?arrL⟩, ?fresh, ?fr, ?lf⟩
+    ⟨?rv, ?rn, by omega, hU.c40, ?rlive, ?rror⟩, ⟨hext, hT.bud, ?inv⟩, ⟨⟨?stok, hlen, ?arr⟩, ?arrL⟩, ?fresh, ?fr, ?lf,
+    fun _ _ => hQ.pu, ?qfresh⟩
   case qv =>
     rw [← hT.qval]; unfold natVal
     exact rdf _ _ (by have := hQ.pw; omega) (by have := hQ.ps; unfold Apart at this; omega)
@@ -136,6 +138,21 @@ theorem lpost {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st 
         · obtain ⟨r, hr, i1, i2⟩ := hi; have := hapP r hr; unfold Apart at this ⊢; omega
         · have := outside_of_inRanges ho hinP; unfold Apart; omega
       · rcases hU.pheld with hi | ho
+        · obtain ⟨r, hr, i1, i2⟩ := hi; have := hap r hr; unfold Apart at this ⊢; omega
+        · have := outside_of_inRanges ho hin; unfold Apart; omega
+  case qfresh =>
+    intro hne hqc hc0
+    rw [hC2] at hc0
+    rw [hW2, hC2]
+    rcases hQ.ror with h | ⟨-, hinQ, hapQ⟩
+    · exact absurd h hne
+    · rcases hT.arr2 with ⟨hw21, hc21⟩ | ⟨hin, hap⟩
+      · rw [hw21, hc21]
+        have hc0' : 0 < c1 := by omega
+        rcases (hE.w1live hc0').2.1 with hi | ho
+        · obtain ⟨r, hr, i1, i2⟩ := hi; have := hapQ r hr; unfold Apart at this ⊢; omega
+        · have := outside_of_inRanges ho hinQ; unfold Apart; omega
+      · rcases hT.qL with hi | ho
         · obtain ⟨r, hr, i1, i2⟩ := hi; have := hap r hr; unfold Apart at this ⊢; omega
         · have := outside_of_inRanges ho hin; unfold Apart; omega
   case fr =>
