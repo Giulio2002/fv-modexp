@@ -62,7 +62,7 @@ theorem make (impl : List Segment) (R : RtInv)
     · have hk0 : k0 s xp xl n < 2 ^ 64 := by
         unfold k0 Exp.newton; rw [← Exp.B_def]; exact Exp.newton_lt _ _ _ _ (Nat.mod_lt _ Exp.B_pos)
       refine ⟨⟨?_, ?_⟩, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
-      all_goals first | (janus_simp; done) | (janus_simp; first | exact f1 | exact f2 | exact Nat.mod_eq_of_lt hk0)
+      all_goals (janus_simp; try (first | (with_reducible exact f1) | (with_reducible exact f2) | exact Nat.mod_eq_of_lt hk0))
   · have hr' : zc < NW n + 1 := by omega
     have hok1 : R.ok (Extracted.program.contractAddr "runtime.makeslice") [wT, NW n + 1, NW n + 5] :=
       hsv.1 _ _ _ (by simp only [NW]; omega)
@@ -107,7 +107,7 @@ theorem make (impl : List Segment) (R : RtInv)
         simp only [winA, K, A]; janus_frame
       · janus_simp; exact hrg
       · refine ⟨⟨?_, ?_⟩, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
-        all_goals first | (janus_simp; done) | (janus_simp; first | exact f1 | exact f2 | exact Nat.mod_eq_of_lt hk0)
+        all_goals (janus_simp; try (first | (with_reducible exact f1) | (with_reducible exact f2) | exact Nat.mod_eq_of_lt hk0))
     case t8 => have h := hwt'; unfold Apart at h; rw [hwTv] at h ⊢; janus_simp; exact hts8
     case t0 => have h := hwt'; unfold Apart at h; rw [hwTv] at h ⊢; janus_simp; exact hts0
     case ta =>

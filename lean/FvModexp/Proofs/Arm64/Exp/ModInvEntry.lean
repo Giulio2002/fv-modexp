@@ -82,9 +82,9 @@ theorem entry (impl : List Segment) (R : RtInv) (kc H : Nat) (sqrC : Nat → Nat
   clear a13
   by_cases hs : n ≤ 64
   · refine kS _ hpre hs ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
-    all_goals first | (janus_simp; done) | (janus_simp; first | exact hF | exact hrg | exact hfw)
+    all_goals (janus_simp; try (first | (with_reducible exact hF) | (with_reducible exact hrg) | (with_reducible exact hfw)))
   · janus_run [hs] until [1797212]
     refine kB _ hpre (by omega) ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
-    all_goals first | (janus_simp; done) | (janus_simp; first | exact hF | exact hrg | exact hfw | exact r8 | exact r40)
+    all_goals (janus_simp; try (first | (with_reducible exact hF) | (with_reducible exact hrg) | (with_reducible exact hfw) | (with_reducible exact r8) | (with_reducible exact r40)))
 
 end FvModexp.Arm64.ModInv

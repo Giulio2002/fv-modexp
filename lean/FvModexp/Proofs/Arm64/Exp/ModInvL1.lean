@@ -113,6 +113,7 @@ theorem segL1 {J : Nat} {impl : List Segment} (hap : ImplApart Extracted.program
     (Or.inl (own_norm hmid.2.2.2.1 hF hqlc hnq)) (Or.inl rfl)
     fun s' hpc' hsp' h28' h29' h18' hreg' hpost => postL1 hkc hkT haT k2 hpre hn hmid' hj1 hjn hbud hcong
       ?_ ?_ hjlt ?_ ?_ hl0 hl ?_ hql hb rfl ?_ ?_ rfl hpc' hsp' h28' h18' hreg' hpost
+  all_goals try clear hpost
   all_goals try janus_simp
   · exact bud_okP hb hbud (m := makeCost (2 * NW n + 2)) (by simp only [roundCost, P1]; omega)
       (makeCost_mono (by unfold truncNeed; exact Nat.le_trans (Nat.min_le_left _ _) hql) (by omega))
