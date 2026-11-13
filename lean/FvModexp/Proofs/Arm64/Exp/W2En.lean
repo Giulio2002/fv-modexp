@@ -38,7 +38,8 @@ theorem ESl.keep {M1 M3 : Memory} {sp st : Nat} {r29 : BitVec 64} {ret zp zc xp 
     stLen M st ≤ stCap M st ∧
     XnPost R L1 K (b1 - W2Pro.xnPre n costD (stLen s.mem st + StackNat.rnd (11 * n)) (xl - n + 1)) M g sp n mp mc
       (s.mem.readLE mp (8 * n)) Xv' yp ylen (s.mem.readLE yp (8 * ylen)) (s.mem.readLE (yp + 8 * (ylen - 1)) 8) zp zc
-      st (stLen s.mem st) (stLen s.mem st + StackNat.rnd (11 * n)) (s.regs 18) (s.regs 29) s'
+      st (stLen s.mem st) (stLen s.mem st + StackNat.rnd (11 * n))
+      (stLen s.mem st + StackNat.rnd (11 * n) + StackNat.rnd (xl - n + 1) + StackNat.rnd n + StackNat.rnd n) (s.regs 18) (s.regs 29) s'
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in

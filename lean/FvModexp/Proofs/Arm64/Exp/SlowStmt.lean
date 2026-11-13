@@ -8,7 +8,8 @@ set_option autoImplicit false
 
 * `ExpSlow.cost sqC mlC dvC ℓ xl yl ml`: `z.set(x)`'s `makeslice` plus `64 · yl` loop bodies (at most `w ≤ 63` top
   iterations and `64 (yl - 1)` lower ones), each bounded by the box maxima of the callee costs over the lengths the
-  loop can see (`len z ≤ 128` at `sqr`, `≤ 256` at `mul`, `≤ 384` at `div`; `stk`'s length is constant `ℓ`).
+  loop can see: with `M = max (len x) (len m)`, `len z ≤ M` at `sqr`, `≤ 2M` at `mul`, `≤ 3M` at `div` (TIGHT COSTS,
+  expmc s42; the boxes were the constants 128/256/384); `stk`'s length is constant `ℓ`.
 * `SlowHypA` (now an alias of `NHyp.SlowHyp`, batch "[expmc s40] ANNOUNCE") = the former `NHyp.SlowHyp` with ONE more
   pre conjunct `SlowX R L x xl xc` (= `NHyp.XFacts`) (FINDING part 2 of NOTES-conventions
   "[expmc s37]"): `zz.mul(stk, z, x)` multiplies by the INPUT `x`, and every `nat.mul` premise form needs of its
@@ -24,7 +25,8 @@ namespace FvModexp.Arm64.ExpSlow
 
 /-- the budget bound of `nat.expNNSlow` (see the module doc) -/
 def cost (sqC : Nat → Nat → Nat) (mlC dvC : Nat → Nat → Nat → Nat) (ℓ xl yl ml : Nat) : Nat :=
-  makeCost xl + 64 * yl * (Exp.supN (sqC ℓ) 128 + Exp.supN (fun n => mlC ℓ n xl) 256 + Exp.supN (fun n => dvC ℓ n ml) 384)
+  makeCost xl + 64 * yl * (Exp.supN (sqC ℓ) (max xl ml) + Exp.supN (fun n => mlC ℓ n xl) (2 * max xl ml) +
+    Exp.supN (fun n => dvC ℓ n ml) (3 * max xl ml))
 
 /-- = `NHyp.NatOF0` (moved to `NHyp`, batch "[expmc s40] ANNOUNCE") -/
 abbrev NatOF0 := @NHyp.NatOF0

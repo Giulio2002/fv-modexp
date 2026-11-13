@@ -25,7 +25,7 @@ structure KE (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp x
   pc : S.pc = BitVec.ofNat 64 (fnE + 0x528)
   jc : JC R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s r18 r29 ret S S.mem L1 b1
   bb : BB R L st zp zc S.mem L1 z zl zc' Zv zz zzl zzc r rl rc q ql qc
-  zl128 : zl ≤ 128
+  zl128 : zl ≤ max xl ml
   e0 : S.regs 0 = BitVec.ofNat 64 z
   e5 : S.regs 5 = BitVec.ofNat 64 zl
   e2 : S.regs 2 = BitVec.ofNat 64 zc'
@@ -56,7 +56,7 @@ theorem mkKT2w {S : State} {L1 : List (Nat × Nat)} {b1 j w : Nat} {v : BitVec 6
     {z zl zc' Zv zz zzl zzc r rl rc q ql qc : Nat}
     (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s)
     (hj : JC R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s r18 r29 ret S S.mem L1 b1)
-    (hB : BB R L st zp zc S.mem L1 z zl zc' Zv zz zzl zzc r rl rc q ql qc) (hzl : zl ≤ 128) (hj64 : j ≤ 64)
+    (hB : BB R L st zp zc S.mem L1 z zl zc' Zv zz zzl zzc r rl rc q ql qc) (hzl : zl ≤ max xl ml) (hj64 : j ≤ 64)
     (hw : w + 2 ≤ yl) (T : State) {ws : List (Nat × Nat)} (hws : InSlots sp ws) (hF : MemFrame S.mem T.mem ws)
     (hrg : T.mem.regions = S.mem.regions) (s216 : T.mem.readLE (sp + 216) 8 = w)
     (hpc : T.pc = BitVec.ofNat 64 (fnE + 0x3d8)) (hsp : T.sp = BitVec.ofNat 64 sp)
@@ -81,7 +81,7 @@ theorem itS {impl : List Segment} (hP : EPre R b L K g sp st zp zc xp xl xc yp y
     {z zl zc' Zv zz zzl zzc r rl rc q ql qc : Nat}
     (hpc : S.pc = BitVec.ofNat 64 (fnE + 0x364))
     (hj : JC R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s r18 r29 ret S S.mem L1 b1)
-    (hB : BB R L st zp zc S.mem L1 z zl zc' Zv zz zzl zzc r rl rc q ql qc) (hzl : zl ≤ 128) (ht : t < yl)
+    (hB : BB R L st zp zc S.mem L1 z zl zc' Zv zz zzl zzc r rl rc q ql qc) (hzl : zl ≤ max xl ml) (ht : t < yl)
     (e0 : S.regs 0 = BitVec.ofNat 64 z) (e5 : S.regs 5 = BitVec.ofNat 64 zl) (e2 : S.regs 2 = BitVec.ofNat 64 zc')
     (e24 : S.regs 24 = BitVec.ofNat 64 zz) (e23 : S.regs 23 = BitVec.ofNat 64 zzl)
     (e22 : S.regs 22 = BitVec.ofNat 64 zzc) (e20 : S.regs 20 = BitVec.ofNat 64 r)

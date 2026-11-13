@@ -1,6 +1,8 @@
 import FvModexp.Proofs.Arm64.Exp.W4FunE
 import FvModexp.Proofs.Arm64.Witness.AsmWit
 
+set_option autoImplicit false
+
 /-!
 # window-4 (arm64): witness state for the row (non-vacuity of `ExpW4.Pre`)
 
@@ -77,13 +79,25 @@ theorem g0 : (s0.regs 28).toNat = G0 := by decide
 /-- the witness bound on the window-4 budget (`W4Bud` is monotone in `costD`) -/
 theorem stl : stLen s0.mem ST = 0 := by simp only [stLen, show s0.mem = mem0 from rfl]; decide +kernel
 
+theorem key {a b a0 b0 k : Nat} (h1 : a ≤ a0 + k) (h2 : b ≤ b0 + k) : max a b ≤ max a0 b0 + k := by omega
+theorem key0 {s m m0 k : Nat} (h : m ≤ m0 + k) : s + m ≤ s + m0 + k := by omega
+
+/-- `W4Bud` grows by at most `12 · costD` (each path holds at most a dozen `costD` copies; the path MAXIMUM, s42) -/
+theorem bud_c (n xl c l : Nat) : W4Bud n xl c l ≤ W4Bud n xl 0 l + 12 * c := by
+  unfold W4Bud
+  simp only [W4Pro.xnPre]
+  refine key0 ?_
+  repeat' apply key
+  all_goals (simp only [W4Pro.xjBud, W4Pro.xnBudA, W4Pro.xnBudAC, W4Pro.xjBudA, W4Pro.xnBudAA, W4Pro.xnBudAB]; omega)
+
 theorem bud (costD : Nat) (h : costD ≤ CD) : W4Bud 1 1 costD (stLen s0.mem ST) ≤ BW := by
   have hl : stLen s0.mem ST = 0 := by simp only [stLen, show s0.mem = mem0 from rfl]; decide +kernel
-  have e : W4Bud 1 1 costD 0 = W4Bud 1 1 0 0 + 12 * costD := by
-    simp only [W4Bud, W4Pro.xjBud, W4Pro.xnBudA, W4Pro.xnBudAC, W4Pro.xnPre, W4Pro.xjBudA, W4Pro.xnBudAA,
-      W4Pro.xnBudAB]; omega
-  have h0 : W4Bud 1 1 0 0 = 43320 := by decide +kernel
-  rw [hl, e, h0]; simp only [CD, BW] at h ⊢; omega
+  have e : W4Bud 1 1 costD 0 ≤ W4Bud 1 1 0 0 + 12 * costD := bud_c 1 1 costD 0
+  have h0 : W4Bud 1 1 0 0 = 9528 := by decide +kernel
+  rw [h0] at e
+  rw [hl]
+  generalize W4Bud 1 1 costD 0 = A at e ⊢
+  simp only [CD, BW] at h ⊢; omega
 
 theorem accStk : mem0.accessible (SP0 - 0x10000) 0x10100 true = true := by rw [acc0]; decide +kernel
 

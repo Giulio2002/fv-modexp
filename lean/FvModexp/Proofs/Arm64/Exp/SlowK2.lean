@@ -26,7 +26,7 @@ structure KT2 (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp 
   pc : S.pc = BitVec.ofNat 64 (fnE + 0x3d8)
   jc : JC R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s r18 r29 ret S S.mem L1 b1
   bb : BB R L st zp zc S.mem L1 z zl zc' Zv zz zzl zzc r rl rc q ql qc
-  zl128 : zl ≤ 128
+  zl128 : zl ≤ max xl ml
   jw : j ≤ 64
   w63 : w + 2 ≤ yl
   s216 : S.mem.readLE (sp + 216) 8 = w
@@ -55,7 +55,7 @@ structure KS2 (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp 
   pc : S.pc = BitVec.ofNat 64 (fnE + 0x424)
   jc : JC R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s r18 r29 ret S S.mem L1 b1
   bb : BB R L st zp zc S.mem L1 z zl zc' Zv zz zzl zzc r rl rc q ql qc
-  zl256 : zl ≤ 256
+  zl256 : zl ≤ 2 * max xl ml
   jw : j < 64
   w63 : w + 2 ≤ yl
   s216 : S.mem.readLE (sp + 216) 8 = w
@@ -81,7 +81,7 @@ structure KD2 (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp 
   pc : S.pc = BitVec.ofNat 64 (fnE + 0x484)
   jc : JC R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s r18 r29 ret S S.mem L1 b1
   bb : BB R L st zp zc S.mem L1 z zl zc' Zv zz zzl zzc r rl rc q ql qc
-  zl384 : zl ≤ 384
+  zl384 : zl ≤ 3 * max xl ml
   jw : j < 64
   w63 : w + 2 ≤ yl
   s216 : S.mem.readLE (sp + 216) 8 = w

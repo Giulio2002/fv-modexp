@@ -29,8 +29,8 @@ open FvModexp.Arm64.W2Loop (Env Inp Buf FinEnv)
 
 /-- the post of window-2 from the `x` normalisation on (`l1` = the stack level at `xJ`) -/
 @[reducible] def XnPost (R : RtInv) (L0 : List (Nat × Nat)) (K bA : Nat) (M0 : Memory)
-    (g sp n mp mc Mv Xv yp ylen Y yi zp zc st n0 l0 : Nat) (r18 r29 : BitVec 64) (s' : State) : Prop :=
-  ∃ l1 zzp zzc : Nat, l0 ≤ l1 ∧ l1 + 2 * StackNat.rnd (2 * n) + 32 * n + 80 ≤ 2 ^ 16 ∧ (2 * n + 1 ≤ zzc ∧ InRanges zzp (8 * zzc) R.rt ∧ ApartAll zzp (8 * zzc) L0) ∧
+    (g sp n mp mc Mv Xv yp ylen Y yi zp zc st n0 l0 lu : Nat) (r18 r29 : BitVec 64) (s' : State) : Prop :=
+  ∃ l1 zzp zzc : Nat, l0 ≤ l1 ∧ l1 ≤ lu ∧ l1 + 2 * StackNat.rnd (2 * n) + 32 * n + 80 ≤ 2 ^ 16 ∧ (2 * n + 1 ≤ zzc ∧ InRanges zzp (8 * zzc) R.rt ∧ ApartAll zzp (8 * zzc) L0) ∧
     DivRetPost R L0 K bA M0 g sp n mp mc Mv Xv (Exp.newton 64 (Mv % Exp.B)) yp ylen Y yi zp zc st n0
     zzp zzc (l1 + 2 * StackNat.rnd (2 * n)) r18 r29 s'
 
@@ -124,7 +124,7 @@ theorem xnBK (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     (hserv : RunIface.Serves R)
     (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret)
     (b : Nat) (L : List (Nat × Nat)) (g sp K n mp mc Mv Xv yp ylen Y yi zp zc st n0 l0 xp xl xr : Nat)
-    (M : Memory) (r18 r29 f29 : BitVec 64) (hKD : stkD ≤ K) (hKL : stkL ≤ K)
+    (M : Memory) (r18 r29 f29 : BitVec 64) {lu : Nat} (hlu : l0 + StackNat.rnd n ≤ lu) (hKD : stkD ≤ K) (hKL : stkL ≤ K)
     (hB : CtxB R L g sp K n mp mc Mv yp ylen Y yi zp zc st n0 l0 ret r29 [] M)
     (hlen : stLen M st = l0 + StackNat.rnd n)
     (hx : XIn R L sp K st l0 M xp xl xr) (hxv : M.readLE xp (8 * xl) = Xv) (hxl : xl < n)
@@ -141,7 +141,7 @@ theorem xnBK (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     (h2 : S.regs 2 = BitVec.ofNat 64 n)
     (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = f29) (hmem : S.mem = M) :
     Reaches ((LibW.program.link impl).withExit ret) S
-      (IsReturn (XnPost R L0 K bA M0 g sp n mp mc Mv Xv yp ylen Y yi zp zc st n0 l0 r18 r29)) := by
+      (IsReturn (XnPost R L0 K bA M0 g sp n mp mc Mv Xv yp ylen Y yi zp zc st n0 l0 lu r18 r29)) := by
   have hB0 := hB
   obtain ⟨he, hce, hK, -, hn, hn128, -, -, -, -, -, -, -, -, -, -, -, -, -,
     -, -, -, -, -, hsok, -, -, hcap, harr, -, -, hsu, -, -, -, -, -,
@@ -185,7 +185,7 @@ theorem xnBK (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     L0 bA M0 hAn3 hbA (Nat.le_trans hl0A (Nat.le_add_right _ _))
     S3 k1 k2 k3 k4 k5 k6 k7 k8 k9 k10 k11 k12 k13) (isReturn_mono fun s' h => ?_)
   obtain ⟨zzp, zzc, hfr, h⟩ := h
-  exact ⟨l0 + StackNat.rnd n, zzp, zzc, Nat.le_add_right _ _, hslen, hfr, h⟩
+  exact ⟨l0 + StackNat.rnd n, zzp, zzc, Nat.le_add_right _ _, hlu, hslen, hfr, h⟩
 
 theorem obj_sub {R : RtInv} {L : List (Nat × Nat)} {sp K st l0 a k b k' : Nat} {ex : List (Nat × Nat)} {M : Memory}
     (h : Obj R L sp K st l0 ex M a k) (h1 : a ≤ b) (h2 : b + k' ≤ a + k) : Obj R L sp K st l0 ex M b k' := by
@@ -212,7 +212,7 @@ theorem xnJStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (hserv : RunIface.Serves R)
     (ret : Nat) (hret : RetAddr (LibW.program.link impl) ret)
     (b : Nat) (L : List (Nat × Nat)) (g sp K n mp mc Mv Xv yp ylen Y yi zp zc st n0 l0 xp xl xr xc : Nat)
-    (M : Memory) (r18 r29 f29 : BitVec 64) (hKD : stkD ≤ K) (hKL : stkL ≤ K)
+    (M : Memory) (r18 r29 f29 : BitVec 64) {lu : Nat} (hlu : l0 + StackNat.rnd n ≤ lu) (hKD : stkD ≤ K) (hKL : stkL ≤ K)
     (hB : CtxB R L g sp K n mp mc Mv yp ylen Y yi zp zc st n0 l0 ret r29 [] M) (hl0e : stLen M st = l0)
     (hx : XIn R L sp K st l0 M xp xl xr) (hxv : M.readLE xp (8 * xl) = Xv) (hxln : xl ≤ n) (hxc : xc < 2 ^ 64)
     (hmB : Mv < Exp.B ^ n) (hMo : Mv % 2 = 1) (hM1 : 1 < Mv)
@@ -230,7 +230,7 @@ theorem xnJStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (h11 : S.regs 11 = BitVec.ofNat 64 n)
     (h18 : S.regs 18 = r18) (h28 : S.regs 28 = BitVec.ofNat 64 g) (h29 : S.regs 29 = f29) (hmem : S.mem = M) :
     Reaches ((LibW.program.link impl).withExit ret) S
-      (IsReturn (XnPost R L0 K bA M0 g sp n mp mc Mv Xv yp ylen Y yi zp zc st n0 l0 r18 r29)) := by
+      (IsReturn (XnPost R L0 K bA M0 g sp n mp mc Mv Xv yp ylen Y yi zp zc st n0 l0 lu r18 r29)) := by
   have hB0 := hB
   obtain ⟨he, hce, hK, -, hn, hn128, -, -, -, -, -, -, -, -, -, -, -, -, -,
     -, -, -, -, hstw, hsok, -, -, hcap, harr, -, huw, hsu, hgl, -, hstwb, -, -,
@@ -258,7 +258,7 @@ theorem xnJStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
       (by rw [c4, h11]) (by rw [c4, h18]) (by rw [c4, h28]) (by rw [c4, h29]) (by rw [c3, hmem]))
       (isReturn_mono fun s' h => ?_)
     obtain ⟨zzp, zzc, hfr, h⟩ := h
-    exact ⟨l0, zzp, zzc, Nat.le_refl _, le_drop hslen, hfr, h⟩
+    exact ⟨l0, zzp, zzc, Nat.le_refl _, by omega, le_drop hslen, hfr, h⟩
   · -- path B: `len x < n`
     intro hc S1 M1 c1 c2 c3 c4 c5 c6 c7 c8 cm hmf hrg q312 q608
     have ws_in : ∀ r ∈ [(sp + 312, sp + 320), (sp + 608, sp + 616)], sp + 8 ≤ r.1 ∧ r.2 ≤ sp + 752 := by
@@ -313,7 +313,7 @@ theorem xnJStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
         (Nat.le_refl _) (Nat.le_refl _) (by omega) (by omega)
     have sl : ∀ j, 24 ≤ j → j + 8 ≤ 752 → M2.readLE (sp + j) 8 = M1.readLE (sp + j) 8 := fun j a b =>
       slot_sn hS hrt4 (by omega) (Apart.sub hstw1 (Nat.le_refl _) (Nat.le_refl _) (by omega) (by omega)) hfw j a b
-    refine reaches_mono (xnBK impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL hserv
+    refine reaches_mono (xnBK (lu := lu) (hlu := hlu) impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL hserv
       ret hret b2 L2 g sp K n mp mc Mv Xv yp ylen Y yi zp zc st n0 l0 xp xl xr M2 r18 r29 f29 hKD hKL hB2 hlen2 hxI2 hxv2
       (by omega) hmB hMo hM1 hslen hcF (by omega) hinv2
       (by rw [sl 312 (by omega) (by omega)]; exact q312) (by rw [sl 608 (by omega) (by omega)]; exact q608)

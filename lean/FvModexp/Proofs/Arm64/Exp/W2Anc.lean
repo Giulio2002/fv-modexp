@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.W2Ctx
 
+set_option autoImplicit false
+
 /-!
 # window-2 (arm64): the anchor relation of the prologue (`Anc`)
 
@@ -37,11 +39,11 @@ abbrev xnBudAB (n costD l k : Nat) : Nat :=
 abbrev xnBudAA (n costD l k : Nat) : Nat :=
   stackNatCost l k + (stackNatCost (l + StackNat.rnd k) n + (costD + xjBudA n costD (l + StackNat.rnd k + StackNat.rnd n)))
 
-/-- a bound of the allocation cost of every path of the prologue from `xnE` (stack level `l`, `k = len x - n + 1`)
+/-- the maximum of the allocation costs of the paths of the prologue (TIGHT COSTS: path MAX, not sum) from `xnE` (stack level `l`, `k = len x - n + 1`)
 up to `divRet` -/
 abbrev xnPre (n costD l k : Nat) : Nat :=
-  xjBudA n costD l + (stackNatCost l n + xjBudA n costD (l + StackNat.rnd n)) + xnBudAB n costD l k +
-    xnBudAA n costD l k
+  max (max (xjBudA n costD l) (stackNatCost l n + xjBudA n costD (l + StackNat.rnd n)))
+    (max (xnBudAB n costD l k) (xnBudAA n costD l k))
 
 theorem xnPre_ge1 (n costD l k : Nat) : xjBudA n costD l ≤ xnPre n costD l k := by unfold xnPre; omega
 theorem xnPre_ge2 (n costD l k : Nat) :

@@ -66,6 +66,8 @@ theorem callL1 {impl : List Segment} (hap : ImplApart Extracted.program impl) {n
   have hB := BB.frameW hP (wsL1_in sp) hF hk.bb
   have hs13 := hP.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
   have hz := hk.zl128
+  have hxl := hP.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hml := hP.2.2.2.2.2.2.1
   have hw63 := hk.w63
   have r216 : T.mem.readLE (sp + 216) 8 = w := by
     rw [hF.readLE _ _ (by simp only [wsL1, outside_cons, outside_nil, and_true]; omega)]; exact hk.s216

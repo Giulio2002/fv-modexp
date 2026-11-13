@@ -127,7 +127,7 @@ theorem segV {impl : List Segment} (hP : EPre R b L K g sp st zp zc xp xl xc yp 
       fun _ h => absurd h (by decide), fun _ h => absurd h (by decide), fun h => absurd h (by decide),
       fun h => absurd h (by decide), fun h => absurd h (by decide)⟩
   refine KT _ _ _ ⟨rfl, JC.frameW hP hjc (ws := [(sp + 152, sp + 160)]) ?ws ?F ?rg (by janus_simp) (by janus_simp)
-    (by janus_simp) (by janus_simp), BB.frameW hP ?ws ?F hB, hxl, Nat.zero_le _, hw63, ?r152, ?_, ?_, ?_, ?_, ?_,
+    (by janus_simp) (by janus_simp), BB.frameW hP ?ws ?F hB, Nat.le_max_left xl ml, Nat.zero_le _, hw63, ?r152, ?_, ?_, ?_, ?_, ?_,
     ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, rfl, ?_, ?_, ?_, ?_⟩ ?model
   case ws => intro r hr; simp only [List.mem_cons, List.not_mem_nil, or_false] at hr; subst hr; omega
   case F => janus_frame

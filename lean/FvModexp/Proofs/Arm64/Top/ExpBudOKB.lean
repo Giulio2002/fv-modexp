@@ -68,13 +68,13 @@ theorem cR_le {ℓ ul vl : Nat} (hl : ℓ ≤ 1024) (hu : ul ≤ 128) (hv : vl �
 
 theorem cS_le {ℓ xl yl ml : Nat} (hl : ℓ ≤ 1024) (hx : xl ≤ 128) (hm : ml ≤ 128) :
     cS ℓ xl yl ml ≤ 6000 + 8400000000000 * yl := by
-  have h1 := supN_le (f := sqrC ℓ) (C := 2700000) 128 (fun j hj => sqrC_le (by omega) (by omega))
-  have h2 := supN_le (f := fun n => mulC ℓ n xl) (C := 130000000000) 256
+  have h1 := supN_le (f := sqrC ℓ) (C := 2700000) (max xl ml) (fun j hj => sqrC_le (by omega) (by omega))
+  have h2 := supN_le (f := fun n => mulC ℓ n xl) (C := 130000000000) (2 * max xl ml)
     (fun j hj => mulC_le3 (by omega) (by omega) (by omega))
-  have h3 := supN_le (f := fun n => cF ℓ n ml) (C := 825000000) 384
+  have h3 := supN_le (f := fun n => cF ℓ n ml) (C := 825000000) (3 * max xl ml)
     (fun j hj => cF_le (by omega) (by omega) (by omega))
-  have hT : Exp.supN (sqrC ℓ) 128 + Exp.supN (fun n => mulC ℓ n xl) 256 + Exp.supN (fun n => cF ℓ n ml) 384 ≤
-      130827700000 := by omega
+  have hT : Exp.supN (sqrC ℓ) (max xl ml) + Exp.supN (fun n => mulC ℓ n xl) (2 * max xl ml) +
+      Exp.supN (fun n => cF ℓ n ml) (3 * max xl ml) ≤ 130827700000 := by omega
   have hQ := Nat.mul_le_mul_left (64 * yl) hT
   rw [Nat.mul_comm (64 * yl) 130827700000] at hQ
   have hm := makeCost_le_makeB xl
