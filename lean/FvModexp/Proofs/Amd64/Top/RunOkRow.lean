@@ -61,8 +61,8 @@ set_option maxRecDepth 100000
 
 /-- The window of the witness call. -/
 def WW : Nat := 0x20000
-/-- The budget of the witness call (`okBudget` of the lengths `0, 0, 0` is `149832`; the toy heap admits `2^22`; since
-the `2^32` slack of `RunIface.ExpBudget` no input with a nonzero length fits the toy heap). -/
+/-- The budget of the witness call (`okBudget` of the lengths `0, 0, 0` is `149832`; the toy heap admits `2^22`; chosen while
+`RunIface.ExpBudget` carried a temporary `2^32` slack, now removed (TIGHT COSTS: factor-free, ≤ `2^35`)). -/
 def bW : Nat := 0x300000
 def gAw : Nat := 0xb4ae88
 def wbAw : Nat := 0xbb7040

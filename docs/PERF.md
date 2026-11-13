@@ -1712,3 +1712,8 @@ rel42 (snapshot snap42 = 8923cef0, same store, the four rows alone, load 30-46):
   W4Sn2 (sn2Step) 3.6 s, W4Lsh 6.2 s; rebuilt after the KeptJ shrink: W4Ctx 4.6 s, W4DivK 23 s, W4DivM 25 s.
   All composition steps pass only explicit terms (no omega in the big contexts; arithmetic in small lemmas).
 * arm64 MontRow with Witness.nonvacuous: 3.6 s (dev).
+* Rows (arm64, top s40-s42 run build/s40/rs.sh: verify-all ONLY_ISA=arm64 ROWS=1, fresh cache cache-top/rs40, Janus v0.3.2,
+  JANUS_REPLAY_THREADS=1, load ~70): warm-up 1887 s; RequiredGas PASS 643 s / 2.1 GB (> 600 s margin target — owner to
+  trim/profile); Top_RunErr PASS 493 s / 2.4 GB; Top_RunSucc FAIL 901 s / 1.6 GB = timeout: the row itself compiled ~370
+  chain modules (Common, Lib, Arm64/Nat… up to Top/RunC2Lem2) because verify-all's arm64 list has no lower rows that pre-build
+  them, so the 900 s cap measured the chain, not the row's own modules. Next: rerun Top_RunSucc on the now-warm cache.

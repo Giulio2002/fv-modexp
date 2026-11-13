@@ -5,8 +5,9 @@ set_option autoImplicit false
 /-!
 # A real-exponentiation witness state for the arm64 success row (`3^5 mod 7`), prepared for TIGHT COSTS (top s36)
 
-The success witness of `Top/RunSucc` runs `Run` on 99 zero bytes (lengths `0, 0, 0`), because with the `2^32` slack of
-`RunIface.ExpBudget` no input with a nonzero length fits the toy heap's budget. BRIEF "TIGHT COSTS" requires a witness that
+The success witness of `Top/RunSucc` runs `Run` on 99 zero bytes (lengths `0, 0, 0`), because while
+`RunIface.ExpBudget` carried a temporary `2^32` slack (now removed: TIGHT COSTS, factor-free) no input with a nonzero
+length fit the toy heap's budget. BRIEF "TIGHT COSTS" requires a witness that
 runs a real exponentiation: this module builds that call — `Run(c, p, 99, 99)` on the call data with lengths `1, 1, 1`,
 `B = 3`, `E = 5`, `M = 7` — with every precondition conjunct proved except the cost bound (`pre2`'s premise `budget2`,
 discharged by `decide +kernel` once the budget is restored), and `compute2`: the EthLib output is `[5]`.
