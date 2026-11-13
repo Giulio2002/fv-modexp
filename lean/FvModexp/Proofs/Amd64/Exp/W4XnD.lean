@@ -65,7 +65,8 @@ theorem dvg_pre {R : RtInv} {b : Nat} {costF : Nat → Nat → Nat → Nat} {cos
     (hpre : DvPreG R b costF cost L g fs sp K stkD st qp ql qc z2p z2l z2c up ul uc mp n mc S.mem)
     (hst : st < 2 ^ 64) (hqp : qp < 2 ^ 64) (hz2p : z2p < 2 ^ 64)
     (tsp : (S.regs 4).toNat = sp - 8) (tg : (S.regs 14).toNat = g) (hfs : S.fsBase.toNat = fs)
-    (hadx : S.mem.accessible Callees.adxAddr 1 false = true) :
+    (hadx : S.mem.accessible Callees.adxAddr 1 false = true)
+    (hta : 0 < stCap S.mem st → Apart (stW S.mem st) (8 * stCap S.mem st) (fs - 8) 8) :
     ExpHyp.DivPre R b costF L stkD 112 (BitVec.ofNat 64 qp).toNat (BitVec.ofNat 64 ql).toNat
       (BitVec.ofNat 64 qc).toNat (BitVec.ofNat 64 st).toNat (BitVec.ofNat 64 z2p).toNat (BitVec.ofNat 64 z2l).toNat
       (BitVec.ofNat 64 z2c).toNat up ul uc mp n mc S := by
@@ -93,7 +94,7 @@ theorem dvg_pre {R : RtInv} {b : Nat} {costF : Nat → Nat → Nat → Nat} {cos
     huN, hmN, hsok, out_winx hKD hstW, fun hc => ⟨out_winx hKD (harr hc).1, (harr hc).2⟩, hslen,
     fun h => absurd h (by omega), huSt, huFr, hvSt, hvFr, hstz, ⟨hstg, hstwb, hstf⟩, ⟨hstfs, hffs⟩,
     fun h => (hqWG h).2.2.2, fun h => (hzWG h).2.2.2, hgst, hgfr, hqz, fun p c hpc' hc0 => ?_,
-    Nat.le_trans hcF hcost, hadx, hinv⟩
+    Nat.le_trans hcF hcost, hadx, hta, hinv⟩
   simp only [List.mem_cons, List.not_mem_nil, or_false, Prod.mk.injEq] at hpc'
   exact hpair p c hpc' hc0
 
@@ -139,6 +140,7 @@ theorem divCallG {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.pr
     (h6 : S.regs 6 = BitVec.ofNat 64 z2p) (h8 : S.regs 8 = BitVec.ofNat 64 z2l) (h9 : S.regs 9 = BitVec.ofNat 64 z2c)
     (h5 : S.regs 5 = r5) (h14 : S.regs 14 = BitVec.ofNat 64 g) (hfs : S.fsBase.toNat = fs) (hx15 : S.xmm 15 = 0)
     (hdf : S.df = false) (hadx : S.mem.accessible Callees.adxAddr 1 false = true)
+    (hta : 0 < stCap S.mem st → Apart (stW S.mem st) (8 * stCap S.mem st) (fs - 8) 8)
     (KB : ∀ (S' : State) (L' : List (Nat × Nat)) (b' r rl rc : Nat),
       S'.rip = BitVec.ofNat 64 (6205536 + i) → S'.regs 4 = BitVec.ofNat 64 sp → S'.regs 5 = r5 →
       S'.regs 14 = BitVec.ofNat 64 g → S'.fsBase.toNat = fs → S'.xmm 15 = 0 → S'.df = false →
@@ -175,7 +177,7 @@ theorem divCallG {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.pr
   case args =>
     simp only [ArgsFrom64, argReg, intArgRegs]
     exact ⟨h0, h3, h1, h7, h6, h8, h9, trivial⟩
-  case pre => exact dvg_pre hpre hst hqp hz2p tsp tg hfs hadx
+  case pre => exact dvg_pre hpre hst hqp hz2p tsp tg hfs hadx hta
   obtain ⟨efs, edf, L', b', r, rl, rc, hX3, hX4, hX5, hpost⟩ :=
     dvg_post hq hst hqp hz2p (by omega) (by omega) tsp tg hcF hrg
   exact KB s' L' b' r rl rc (by rw [hr, retAddrOf_eq, tsp, hrd])

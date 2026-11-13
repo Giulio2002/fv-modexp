@@ -74,7 +74,7 @@ stack's free part) -/
     (∀ p c, (p, c) ∈ [(zp, zc), (z2, z2c)] → 0 < c →
       Apart p (8 * c) u (8 * ul) ∧ Apart p (8 * c) v (8 * vl) ∧ Apart p (8 * c) st 24 ∧
       Apart p (8 * c) (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st))) ∧
-    cost (stLen s.mem st) ul vl ≤ b ∧ s.mem.accessible Callees.adxAddr 1 false = true ∧
+    cost (stLen s.mem st) ul vl ≤ b ∧ s.mem.accessible Callees.adxAddr 1 false = true ∧ (0 < stCap s.mem st → Apart (stW s.mem st) (8 * stCap s.mem st) (s.fsBase.toNat - 8) 8) ∧
     R.inv b L (s.regs 14).toNat (view R.rt L s.mem)
 
 /-- the postcondition, `StackBack` form -/

@@ -93,7 +93,7 @@ theorem l_pre {R : RtInv} {b : Nat} {dc : Nat → Nat → Nat} {L : List (Nat ×
     Or.inr fun hc => (hz2 hc).1, ⟨?sok, ?sw, by rw [hX.r14]; exact hp.hdr.1, ?sarr⟩,
     hp.sl, fun hc => ⟨(hz hc).2.2.1, (hz hc).2.2.2⟩, fun hc => ⟨(hz2 hc).2.2.1, (hz2 hc).2.2.2⟩,
     ⟨hp.us, hp.uf⟩, ⟨hp.vs, hp.vf⟩, hp.hdr.2.1, hp.hdr.2.2, hp.w0, hp.st0, ⟨hp.zg, hp.z2g, hp.sg, hp.fg⟩, ?cost,
-    ?inv, ?i0, ?i1, ?i3, ?i4, hp.tls.1, hp.tls.2, by rw [hacc]; exact hp.adx⟩
+    ?inv, ?i0, ?i1, ?i3, ?i4, hp.tls.1, hp.tls.2, by rw [hacc]; exact hp.adx, hp.ta⟩
   case gw =>
     have := hp.gl.2.2.2.2.2.2.2.2.2.1
     simp only [win, outside_cons, outside_nil, and_true] at this ⊢; omega
