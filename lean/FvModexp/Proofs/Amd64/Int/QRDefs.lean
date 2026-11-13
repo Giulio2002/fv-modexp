@@ -15,7 +15,8 @@ nil`, `z2 = r.abs = u = x.abs`; premise `IMod.DivHypM`), stores `q.abs` (the poi
 `QuoRem+0xc0`, when the barrier is on) and `r.abs = z.abs`, `q.neg` (any byte) and `r.neg = len r > 0 && x.neg`
 (`= 0`: `x.neg = z.neg = 0` by `IntOK`), and returns `RAX = &q`.
 
-`QRPre` = `RunIface.ModSpec`'s precondition at `QuoRem`'s entry plus `q`'s place and zero header; `QRPost` = `ModSpec`'s
+`QRPre` = `RunIface.ModSpec`'s precondition at `QuoRem`'s entry plus `q`'s place and zero header and `hasADX`
+readable (`nat.div`'s pre since asm s48); `QRPost` = `ModSpec`'s
 postcondition with `RAX = q`. The summary lives on `LibQR` (= `LibMod` without `Mod`, NESTED-PROGRAM RULE: `Mod`'s
 return address `Mod+0x217` is outside it).
 -/
@@ -31,7 +32,7 @@ def QRPre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (stk above : Nat) (q z y
   IntPre R b (ModBudget (max (lenW s.mem z) (lenW s.mem y))) L stk above [z, y] s ∧ 0 < IntV s.mem y ∧
     IntLenLe s.mem z maxW ∧ IntLenLe s.mem y maxW ∧ PoolG R s.mem (win s stk above) ∧ ModX s.mem z ∧
     q = (s.regs 4).toNat + 96 ∧ s.mem.readLE (q + 8) 8 = 0 ∧ s.mem.readLE (q + 16) 8 = 0 ∧
-    s.mem.readLE (q + 24) 8 = 0
+    s.mem.readLE (q + 24) 8 = 0 ∧ s.mem.accessible Callees.adxAddr 1 false = true
 
 /-- `QuoRem`'s postcondition there: `RAX = q`, `z = z mod y` (`IntPost`; `q`'s header is in the window), `y` kept -/
 def QRPost (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (stk above : Nat) (q z y : Nat) (s s' : State) : Prop :=

@@ -62,7 +62,7 @@ theorem runQB (impl : List Amd64.Segment) (R : RtInv)
       MemFrame (hdrQ S.mem qA ql' qc) Mw (R.rt ++ [(t - 4216, t - 112)]) → LiveFrame (hdrQ S.mem qA ql' qc) Mw L1 [] →
       R.inv b1 L1 (S.regs 14).toNat (view R.rt L1 Mw) → s4.regs 4 = BitVec.ofNat 64 (t + 8) →
       s4.regs 0 = BitVec.ofNat 64 qA → s4.regs 14 = S.regs 14 → s4.regs 5 = BitVec.ofNat 64 bp →
-      s4.fsBase = S.fsBase → s4.df = S.df → F s4) :
+      s4.fsBase = S.fsBase → s4.df = S.df → s4.xmm 15 = S.xmm 15 → F s4) :
     Reaches ((LibQR.program.link impl).withExit ret0) S (IsReturn F) := by
   have es1 : BitVec.ofNat 64 (t - 112) + 104#64 = BitVec.ofNat 64 (t - 8) := by
     apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega
@@ -89,7 +89,7 @@ theorem runQB (impl : List Amd64.Segment) (R : RtInv)
   have hWR : LiveSep [(t - 120 - 4096, t - 120 + 8)] R.rt := fun r hr => by
     simp only [List.mem_singleton] at hr; subst hr; exact hrt.of_sub (by omega) (by simp only; omega)
   janus64_run [es1, es2, es3, es4, s8', s16', s24', s32', sbp, sra, hng] until [cA "runtime.gcWriteBarrier4"]
-  all_goals try refine KF _ _ _ _ _ rfl ?_ ?_ (MemFrame.refl _ _) (LiveFrame.refl _ _ _) (hinv0 _ _) ?_ ?_ ?_ ?_ ?_ ?_
+  all_goals try refine KF _ _ _ _ _ rfl ?_ ?_ (MemFrame.refl _ _) (LiveFrame.refl _ _ _) (hinv0 _ _) ?_ ?_ ?_ ?_ ?_ ?_ ?_
   all_goals first | rfl | omega | skip
   all_goals
     refine Reaches.call_regions ((hwb L1 b1).withExit hret) rfl ⟨⟨?_, ?_, ?_, ?_, ?_⟩, hok, ?_, ?_, ?_⟩
@@ -204,7 +204,7 @@ theorem runQB (impl : List Amd64.Segment) (R : RtInv)
     clear hrdS hrdH hfr hlf hsl1 hsl3 hapL rdS0
     janus64_run [hb8a, hb8b, hb8c, hb8d, m1, m2, m3, m4, m5, m6, m7, sra', m8, m8', s16'', s24'', m9, m10, hmz, hmy, hmS, es1, es2, es3, es4, es5]
     all_goals
-      refine KF _ _ _ ql _ rfl ?_ ?_ ?mf ?lf ?iv ?_ ?_ ?_ ?_ ?_ ?_
+      refine KF _ _ _ ql _ rfl ?_ ?_ ?mf ?lf ?iv ?_ ?_ ?_ ?_ ?_ ?_ ?_
       case mf =>
         repeat (first
           | exact hfr'

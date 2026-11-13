@@ -38,7 +38,7 @@ theorem runQA (impl : List Amd64.Segment) (ret0 : Nat) (hret : RetAddr (LibQR.pr
       S'.regs 0 = 0#64 → S'.regs 3 = 0#64 → S'.regs 1 = 0#64 → S'.regs 7 = 0#64 →
       S'.regs 6 = BitVec.ofNat 64 zp → S'.regs 8 = BitVec.ofNat 64 zl → S'.regs 9 = BitVec.ofNat 64 zc →
       S'.regs 14 = S.regs 14 → S'.regs 5 = BitVec.ofNat 64 (t - 8) → S'.fsBase = S.fsBase → S'.df = S.df →
-      S'.mem = M' →
+      S'.xmm 15 = S.xmm 15 → S'.mem = M' →
       MemFrame M M' [(t - 120, t - 64), (t - 8, t), (t + 8, t + 40)] → M'.regions = M.regions →
       M'.readLE (t - 120) 8 = raD →
       M'.readLE (t - 112) 8 = zp → M'.readLE (t - 104) 8 = zl → M'.readLE (t - 96) 8 = zc →
@@ -62,7 +62,7 @@ theorem runQA (impl : List Amd64.Segment) (ret0 : Nat) (hret : RetAddr (LibQR.pr
     apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
   subst hq hz8 hz16 hz24 hy8 hy16 hy24 hmem
   janus64_run [hq8, hq16, hq24, es1, es2, es3] until [fnD]
-  refine KA _ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?mf ?rg ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
+  refine KA _ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?mf ?rg ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
   case mf =>
     dsimp only
     repeat (first
