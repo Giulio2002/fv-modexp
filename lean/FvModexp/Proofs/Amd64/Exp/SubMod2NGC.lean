@@ -133,7 +133,7 @@ theorem addCallW {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.pr
       ((p' = zp ∧ c' = zc) ∨ (InRanges p' (8 * c') R.rt ∧ ApartAll p' (8 * c') L)) →
       MemFrame M s'.mem (R.rt ++ [(sp' - 4440, sp' + 80)] ++ [(zp, zp + 8 * zc)]) →
       LiveFrame M s'.mem L [(zp, zp + 8 * zc)] →
-      ((if min xl yl = 0 then max xl yl else max xl yl + 1) ≤ zc → p' = zp ∧ c' = zc) → c' < 2 ^ 40 →
+      ((if min xl yl = 0 then max xl yl else max xl yl + 1) ≤ zc → p' = zp ∧ c' = zc) → c' < 2 ^ 40 → p' < 2 ^ 64 →
       ReachesRet (LibW.program.link impl) ret s' Q) :
     ReachesRet (LibW.program.link impl) ret S Q := by
   have hS' := hypSumW hap addW_names (by simp [numIntRegs])
@@ -152,6 +152,7 @@ theorem addCallW {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.pr
     refine K s' p' n' c' L' b' (by rw [hr, retAddrOf_eq, hrd]) ?_ e3 e4 hfs hdf' hrg
       (by rw [← q0, Expmc.bv_ofNat_toNat]) (by rw [← q1, Expmc.bv_ofNat_toNat]) (by rw [← q2, Expmc.bv_ofNat_toNat])
       hv hn hlc hln hLE hb hinv hlive hor hF hLF (fun h => ?_) (by rw [← q2]; exact hr2 (by omega))
+      (by rw [← q0]; exact BitVec.isLt _)
     · rw [e1]; apply BitVec.eq_of_toNat_eq; simp [BitVec.toNat_add, hsp]
     · obtain ⟨a1, a2⟩ := hr1 h
       exact ⟨by rw [← q0, a1], by rw [← q2, a2]⟩
