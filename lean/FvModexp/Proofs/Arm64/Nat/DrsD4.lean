@@ -62,7 +62,7 @@ theorem d4 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
   simp only [win, outside_cons, outside_nil, and_true] at hrw huw
   have hPl := P_len_le2 (c := c) (s := s) (j := j) (U := U) (by omega)
   have hql3 : (c.P s j U).length ≤ 3 * c.vl := by omega
-  have hqlu : (c.P s j U).length ≤ c.uuL j := by simp only [Cx.uuL]; omega
+  have hqlu : (c.P s j U).length ≤ c.uuL j := Nat.le_trans hPl (uuL_ge hjm hcr.vu1)
   -- the frame words, at `X.sp`
   have e8 : X.sp.toNat + 8 = s.sp.toNat - 392 := by omega
   have e16 : X.sp.toNat + 16 = s.sp.toNat - 384 := by omega

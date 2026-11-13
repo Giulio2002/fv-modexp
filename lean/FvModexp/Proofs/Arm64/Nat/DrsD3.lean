@@ -17,6 +17,10 @@ set_option linter.janusRenameI false
 
 namespace FvModexp.Arm64.DivRec
 
+/-- `2·B ≤ len uu` (small context, for the `hqlu` facts of D4/D5) -/
+theorem uuL_ge {c : Cx} {j : Nat} (h : j ≤ c.u1 - c.vl) (hv : c.vl ≤ c.u1) : 2 * (c.vl / 2) ≤ c.uuL j := by
+  simp only [Cx.uuL]; omega
+
 /-- `|P| ≤ 2B ≤ n` -/
 theorem P_len_le2 {c : Cx} {s : State} {j : Nat} {U : List Nat} (hB : 1 ≤ c.vl / 2) :
     (c.P s j U).length ≤ 2 * (c.vl / 2) := by
