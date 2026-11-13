@@ -1,0 +1,36 @@
+import FvModexp.Proofs.Arm64.Top.RunOkRowC
+import FvModexp.Proofs.Arm64.Top.ExpBudOKB
+
+set_option autoImplicit false
+
+/-!
+# `Run.Closed.BudOK` — the closed allocation budget of `(*Int).exp` (arm64, divmc s33)
+
+`ExpBud.main` (ExpBudOKB.lean) bounds both inequalities' left sides by `7·10^14 + 4.2·10^13 · yl`; `RunIface.ExpBudget w yW
+= (8 · 64 yW + 128) · opCost w · 2^32 ≥ (512 yl + 128) · 4120 · 2^32` (`w ≥ n ≥ 1`) is larger. Pure arithmetic.
+-/
+
+open FvModexp
+
+namespace FvModexp.Arm64.Run.Closed
+
+theorem expBudget_ge (w yl : Nat) (hw : 1 ≤ w) :
+    700000000000000 + 42000000000000 * yl ≤ RunIface.ExpBudget w yl := by
+  have ho : 4120 ≤ RunIface.opCost w := by unfold RunIface.opCost allocCost; omega
+  have h1 := Nat.mul_le_mul_left (8 * (64 * yl) + 128) ho
+  rw [Nat.mul_comm (8 * (64 * yl) + 128) 4120] at h1
+  have h2 := Nat.mul_le_mul_right (2 ^ 32) h1
+  rw [Nat.mul_comm (4120 * (8 * (64 * yl) + 128)) (2 ^ 32)] at h2
+  unfold RunIface.ExpBudget
+  rw [Nat.mul_comm ((8 * (64 * yl) + 128) * RunIface.opCost w) (2 ^ 32)]
+  simp only [show (2 : Nat) ^ 32 = 4294967296 from rfl] at *
+  omega
+
+/-- **`Run.Closed.BudOK`**: the closed cost of `(*Int).exp` fits `RunIface.ExpBudget` on the whole spec range -/
+theorem budOK : BudOK := by
+  intro xl yl n lm hx hy hn0 hn hlm
+  obtain ⟨h1, h2⟩ := ExpBud.main xl yl n lm hx hy hn0 hn hlm
+  have hB := expBudget_ge (max (max xl yl) n) yl (by omega)
+  exact ⟨Nat.le_trans h1 hB, Nat.le_trans h2 hB⟩
+
+end FvModexp.Arm64.Run.Closed

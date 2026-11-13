@@ -14,7 +14,8 @@ import sys
 from functools import lru_cache
 import numpy as np
 sys.setrecursionlimit(100000)
-FIX = '--fix' in sys.argv
+TIGHT = '--tight' in sys.argv
+FIX = '--fix' in sys.argv or TIGHT
 
 # ---- tropical (max-affine) functions of the level l: {slope: intercept}
 class TP:
@@ -104,7 +105,13 @@ def MC(m, n):
         else:
             k = kh(n)
             inner = snc(2 * k + 1) + 4 * asB(2 * k + 1) + MC(k, k).shift(rnd(2 * k + 1)).mul(3)
-            if n < m: inner = inner + (snc(2 * n) + MC(n, n).shift(rnd(2 * n)).mul((m - 1) // n))
+            if n < m:
+                if TIGHT:  # proposal: (m/n - 1) full n x n chunks + one MC(n, m mod n) remainder chunk
+                    ch = MC(n, n).shift(rnd(2 * n)).mul(m // n - 1)
+                    if m % n: ch = ch + MC(n, m % n).shift(rnd(2 * n))
+                    inner = inner + (snc(2 * n) + ch)
+                else:
+                    inner = inner + (snc(2 * n) + MC(n, n).shift(rnd(2 * n)).mul((m - 1) // n))
             a = inner + makeB(m + n)
     b = None
     if m != 0: b = MC(m - 1, n)
@@ -155,22 +162,47 @@ def p2pre(l, pl, lm):
     l1 = l + rnd(NB(pl, lm))
     rc = sqrC(W(lm))(l1) + mulC(W(lm), W(lm))(l1) + 2 * tC(lm)
     return sncN(l, NB(pl, lm)) + tC(lm) + sub(pl // 2, 1) * rc
-def p2w(l0, lm, wr, pl, rounds, nsq, ntr):
+def p2w(l0, lm, wr, pl, rounds, nsq, ntr, yl=None):
     lR = l0 + wr * W(lm); lZ = lR + rnd(2 * W(lm)); lL = lZ + rnd(NB(pl, lm))
     c0 = sncN(l0, wr * W(lm)) + sncN(lR, 2 * W(lm)) + p2pre(lZ, pl, lm)
     bc = nsq * sqrC(W(lm))(lL) + mulC(W(lm), W(lm))(lL) + ntr * tC(lm)
-    return c0 + alloc(8) + 2 * tC(lm) + rounds * (sub(lm, 2) // 64 + 1) * bc
-def costO(l, lm): return p2w(l, lm, 8, 4, 32, 2, 3) + p2w(l, lm, 20, 16, 16, 4, 5) + alloc(8)
+    it = (sub(lm, 2) // 64 + 1) if not TIGHT else min(yl, sub(lm, 2) // 64 + 1)
+    return c0 + alloc(8) + 2 * tC(lm) + rounds * it * bc
+def costO(l, lm, yl=0): return p2w(l, lm, 8, 4, 32, 2, 3, yl) + p2w(l, lm, 20, 16, 16, 4, 5, yl) + alloc(8)
 _supTo = {}
-def supToO(l, lm):
-    key = l
+def supToO(l, lm, yl=0):
+    key = (l, yl if TIGHT else 0)
     if key not in _supTo:
         arr = []; m = -1
         for j in range(64 * 128 + 1):
-            m = max(m, costO(l, j)); arr.append(m)
+            m = max(m, costO(l, j, yl)); arr.append(m)
         _supTo[key] = arr
     return _supTo[key][lm]
-def cP(l, xl, lm): return supToO(l, lm) + makeCost(xl + 2) + makeCost(lm // 64 + 2)
+def cP(l, xl, lm, yl=0): return supToO(l, lm, yl) + makeCost(xl + 2) + makeCost(lm // 64 + 2)
+
+
+_cPT = {}
+def cPT_table(l):
+    """TIGHT: prefix-max table over lm of costO(l, lm, yl) for every yl (int64 [129, 8193])"""
+    if l in _cPT: return _cPT[l]
+    J = 64 * 128 + 1
+    A = np.zeros(J, dtype=np.int64); B = np.zeros(J, dtype=np.int64); Q = np.zeros(J, dtype=np.int64)
+    for j in range(J):
+        a = alloc(8); b = 0
+        for (wr, pl, rounds, nsq, ntr) in ((8, 4, 32, 2, 3), (20, 16, 16, 4, 5)):
+            lR = l + wr * W(j); lZ = lR + rnd(2 * W(j)); lL = lZ + rnd(NB(pl, j))
+            a += sncN(l, wr * W(j)) + sncN(lR, 2 * W(j)) + p2pre(lZ, pl, j) + alloc(8) + 2 * tC(j)
+            b += rounds * (nsq * sqrC(W(j))(lL) + mulC(W(j), W(j))(lL) + ntr * tC(j))
+        A[j] = a; B[j] = b; Q[j] = sub(j, 2) // 64 + 1
+    T = np.zeros((129, J), dtype=np.int64)
+    for yl in range(129):
+        T[yl] = np.maximum.accumulate(A + np.minimum(yl, Q) * B)
+    _cPT[l] = T; return T
+def cPv(l, xl, lm):
+    """cP for every yl (object array)"""
+    if not TIGHT: return np.full(129, cP(l, xl, lm), dtype=object)
+    T = cPT_table(l)
+    return np.array([int(T[yl][lm]) for yl in range(129)], dtype=object) + makeCost(xl + 2) + makeCost(lm // 64 + 2)
 
 # ---- windows (expNNOdd)
 def xjBud(n, cD, l, k17):
@@ -195,7 +227,7 @@ def WBud(n, xl, l, t, k17):
             xnBudA(n, cD, T, k, k17) + xnBudAC(n, cD, T, k, k17) + xnPre(n, cD, T, k))
 def WCost(n, xl, l, t, k17):
     cD = divCost(n, xl, l, t); T = l + rnd(t * n); k = sub(xl, n) + 1
-    return (sncN(l, t * n) + xnPre(n, cD, T, k) + blockSize(8 * n) + sncN(2 ** 16, k17 * n) + blockSize(8 * (2 * n + 4)) +
+    return (sncN(l, t * n) + xnPre(n, cD, T, k) + blockSize(8 * n) + sncN((T + 2 * rnd(2 * n)) if TIGHT else 2 ** 16, k17 * n) + blockSize(8 * (2 * n + 4)) +
             makeCost(n))
 def OBud(n, xl, yl, l): return WBud(n, xl, l, 23, 17) if 1 < yl else WBud(n, xl, l, 11, 5)
 def OCost(n, xl, yl, l): return WCost(n, xl, l, 23, 17) if 1 < yl else WCost(n, xl, l, 11, 5)
@@ -206,7 +238,8 @@ def costG(n):
 def modInv(l, n):
     NW = (n + 63) // 64
     rc = sqrC(NW + 1)(l) + mulC(2 * NW + 2, NW)(l) + 2 * makeCost(2 * NW + 2) + makeCost(NW + 2) + 5 * alloc(8 * (W(n) + 5))
-    return makeCost(NW + 1) + makeCost(2 * NW) + (NW + 1) * rc
+    R = (NW.bit_length() + 1) if TIGHT else NW + 1
+    return makeCost(NW + 1) + makeCost(2 * NW) + R * rc
 
 def nb_parts(xl, a0, l, ybig):
     """NBudE / NCost at (xl, a0, l) without cS and cP: returns (budget part, cost part)"""
@@ -217,7 +250,7 @@ def nb_parts(xl, a0, l, ybig):
 YL = np.arange(129, dtype=object)
 def supU_vec(xl, ml, l, k):
     """max over a0 <= ml of NBudE / NCost (xl, yl, a0, l, k) for every yl (object arrays over yl)"""
-    cp = cP(l, xl, k)
+    cp = cPv(l, xl, k)
     bB = None; bC = None
     for a0 in range(ml + 1):
         T = cS(xl, a0)(l)
@@ -242,7 +275,7 @@ def costE(xl, ml):
     return fixed + b3 + c3 + b4 + c4
 
 opCost = lambda w: alloc(1024 * w + 1024)
-ExpBudget = lambda w, yW: (8 * (64 * yW) + 128) * opCost(w)
+ExpBudget = lambda w, yW: ((7 if TIGHT else 8) * (64 * yW) + 128) * opCost(w)
 
 def row(n):
     """[(xl, yl, lhs1, lhs2)] for every xl, yl at modulus length n"""
@@ -252,7 +285,7 @@ def row(n):
         lm = 64 * n - 1
         T = cS(xl, n)(0)
         cs = makeCost(xl) + 64 * YL * T
-        cp = cP(0, xl, lm)
+        cp = cPv(0, xl, lm)
         common = makeCost(1) + makeCost(n) + cR(xl, n)(0) + cs + cE + cp
         for yl in range(129):
             out.append((xl, yl, int(24 + common[yl] + OBud(n, xl, yl, 0)), int(24 + common[yl] + OCost(n, xl, yl, 0))))
