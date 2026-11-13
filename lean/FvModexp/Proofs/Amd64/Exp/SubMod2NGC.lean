@@ -1,5 +1,6 @@
 import FvModexp.Proofs.Amd64.Exp.SubMod2NGL
 import FvModexp.Proofs.Amd64.Nat.TruncDefs
+import FvModexp.Proofs.Common.Util
 
 set_option autoImplicit false
 
@@ -373,5 +374,15 @@ theorem post_ofG0 {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zl zc yp yl 
   have h1 : k * wCost n ≤ 5 * wCost n := Nat.mul_le_mul_right _ hk
   exact ⟨hfs, hdf, p', l', c', e0, e1, e2, hv, hnorm, hlc, hc40, L2, b2, hLE, by simp only [costG, cost]; omega,
     fun _ => by simp only [cost]; omega, hinv, hlive, hor, hF, hLF, hre⟩
+
+/-- `bitLen` of a word (as the arm64 `SubMod2N.bitLen_le64`) -/
+theorem bitLen_le64 (v : Nat) (h : v < 2 ^ 64) : Aux.bitLen v ≤ 64 := by
+  by_cases hv : v = 0
+  · subst hv; decide
+  · have h1 := (Util.bitLen_bounds v hv).1
+    have h2 : 2 ^ (Aux.bitLen v - 1) < 2 ^ 64 := by omega
+    have := (Nat.pow_lt_pow_iff_right (by omega)).1 h2
+    omega
+
 
 end FvModexp.Amd64.SubMod2N

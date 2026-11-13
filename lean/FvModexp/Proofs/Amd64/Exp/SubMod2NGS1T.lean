@@ -17,16 +17,6 @@ namespace FvModexp.Amd64.SubMod2N
 open FvModexp.Amd64.RunIface (Serves)
 open FvModexp.Amd64.EvenHyp
 
-/-- `bitLen` of a word (as the arm64 `SubMod2N.bitLen_le64`) -/
-theorem bitLen_le64 (v : Nat) (h : v < 2 ^ 64) : Aux.bitLen v ≤ 64 := by
-  by_cases hv : v = 0
-  · subst hv; decide
-  · have h1 := (Util.bitLen_bounds v hv).1
-    have h2 : 2 ^ (Aux.bitLen v - 1) < 2 ^ 64 := by omega
-    have := (Nat.pow_lt_pow_iff_right (by omega)).1 h2
-    omega
-
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
 theorem s1Gtr (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv) {ns : List String}
