@@ -150,7 +150,7 @@ theorem hty : TysOK [] := by intro t ht; simp at ht
 
 /-- Every hypothesis of `correctness` and every conjunct of its precondition hold together: the shared witness runtime,
 budget `0x80000`, empty live set, `z.Mod(z, y)` with `z = 7`, `y = 3`; one call-site state per runtime contract. -/
-theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (S : PoolShape) (b : Nat) (L : List (Nat × Nat)) (z y : BitVec 64)
+theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (z y : BitVec 64)
     (ret : Nat) (s : State),
     ImplApart Extracted.program impl ∧
     GrowsliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.growslice") 4096 R ∧
@@ -163,12 +163,12 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (S : PoolShape) (b : 
     MemmoveZeroLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R ∧
     NewobjectLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.newobject") 4096 R ∧
     PoolGetLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "sync.(*Pool).Get") 4096 R
-      Free.stkT S ∧
+      Free.stkT StkSh ∧
     PoolPutLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "sync.(*Pool).Put") 4096 R
-      Free.stkT S ∧
+      Free.stkT StkSh ∧
     RetAddr (Extracted.program.link impl) ret ∧
     CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program fnModL) [z, z, y] s ∧
-    Pre R b L S z y s ∧
+    Pre R b L StkSh z y s ∧
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.growslice") ∧
       grSite R (Extracted.program.contractAddr "runtime.growslice") L b s_c) ∧
@@ -202,7 +202,7 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (S : PoolShape) (b : 
       s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "sync.(*Pool).Put") ∧
       putSite R (Extracted.program.contractAddr "sync.(*Pool).Put") L b rs s_c) ∧
     Returns ((Extracted.program.link impl).withExit ret) s fun s' => ABIReturn s s' ∧ Post R b L z y s s' :=
-  ⟨WStubs.impl, R, StkSh, 0x80000, [], BitVec.ofNat 64 OA, BitVec.ofNat 64 (OA + 0x40), RET, s0, WStubs.hap,
+  ⟨WStubs.impl, R, 0x80000, [], BitVec.ofNat 64 OA, BitVec.ofNat 64 (OA + 0x40), RET, s0, WStubs.hap,
     by rw [WStubs.addr_gr]; exact WStubs.gr [] hty _,
     by rw [WStubs.addr_cl]; exact WStubs.cl R,
     by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] hty _,
