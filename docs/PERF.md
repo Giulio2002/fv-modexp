@@ -1621,3 +1621,9 @@ KSqrEnd 17 s / 2.6, KSqrProD 12 s / 2.7; Amd64/Nat/AddTo (+ df conjunct) 134 s /
 | Amd64/Nat/DivBig (big1) | 267 s → 11 s (named `case`s + `simp (disch := omega) only`, no `exact` alternatives in `first`) | 2.4 GB |
 | Amd64/Nat/DivBigRel / DivBigP / DivBigF / DivBigC | 2 / 3 / 5 / 7 s | ≤ 2.6 GB |
 | Amd64/Nat/Div (composition, `ens : HypL`) | 2 s | 2.5 GB |
+
+### divmc s41 (2026-11-13): amd64 Q sqr release rows (janus v0.3.1, cache-divmc bottom-up, JANUS_REPLAY_THREADS=1, load ~12-18)
+| row | result | wall | peak RSS |
+|---|---|---|---|
+| Amd64/NatQ/BasicSqrRowQ | PASS | 559 s | 6.1 GB |
+| Amd64/NatQ/SqrRowQ | PASS | 607 s | 4.4 GB (over the 600 s margin by 7 s: trim KSqrAdd2 74 s, KSqrAdd1 52 s, KSqrPC 53 s) |
