@@ -1,6 +1,7 @@
 import FvModexp.Proofs.Amd64.Nat.DivBigP
 import FvModexp.Proofs.Amd64.Nat.DivBigF
 import FvModexp.Proofs.Amd64.Nat.DivOneF
+import FvModexp.Proofs.Amd64.Nat.DivLargeG
 
 set_option autoImplicit false
 
@@ -19,6 +20,16 @@ set_option linter.janusRenameI false
 
 namespace FvModexp.Amd64.NatDiv
 
+set_option linter.defProp false in
+/-- `nat.divLarge` (premise `DivLarge.HypG`) as a summary in `LibDiv.program.link impl` (as `lsum`) -/
+def lsumG (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
+    (dc : Nat → Nat → Nat → Nat) (hL : DivLarge.HypG impl R dc) (b : Nat) (L : List (Nat × Nat))
+    (z zl zc st u ul uc : BitVec 64) (ip il vp vl : Nat) :=
+  Ensures.toSummaryIn (hL b L z zl zc st u ul uc ip il vp vl) (A64.noExit_restrict64 hap DivLarge.names)
+    (by simp [numIntRegs])
+    (show CodeIn64 ((Extracted.program.onlySegments DivLarge.names).link impl) (LibDiv.program.link impl) by
+      rw [LibDiv.eq_only]; exact A64.codeIn_restrict_mono64 hap (Callees.sub_of_all (by decide)))
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in
 /-- after `divLarge` returned: results stored, the (unset) defer bit tested, return -/
@@ -36,6 +47,9 @@ theorem big3 (impl : List Amd64.Segment) {R : RtInv} {b : Nat} {dc : Nat → Nat
       Apart r (8 * rc) (stW T.mem st) (8 * stCap T.mem st))
     (hmf : MemFrame X.mem T.mem (R.rt ++ win X 41272 112 ++ (ar zp zc ++ ar z2 z2c) ++ stkWs X.mem st))
     (hlf : LiveFrame X.mem T.mem L ((ar zp zc ++ ar z2 z2c) ++ stkWs X.mem st))
+    (hqr : 0 < qc → 0 < rc → Apart q (8 * qc) r (8 * rc))
+    (hqf : ¬ (q = zp ∧ qc = zc) → 0 < qc → 0 < stCap T.mem st →
+      Apart q (8 * qc) (stW T.mem st) (8 * stCap T.mem st))
     (hpcT : T.rip = BitVec.ofNat 64 retL) (hspT : T.regs 4 = s.regs 4 - 232#64) (h5T : T.regs 5 = s.regs 4 - 8#64)
     (h14T : T.regs 14 = s.regs 14) (hfsT : T.fsBase = s.fsBase) (hx15T : T.xmm 15 = 0#128) (hdfT : T.df = false)
     (e0 : T.regs 0 = BitVec.ofNat 64 q) (e1 : T.regs 3 = BitVec.ofNat 64 ql) (e2 : T.regs 1 = BitVec.ofNat 64 qc)
@@ -45,17 +59,19 @@ theorem big3 (impl : List Amd64.Segment) {R : RtInv} {b : Nat} {dc : Nat → Nat
     (m3 : T.mem.readLE ((s.regs 4).toNat - 122) 1 = 0)
     (hTacc : T.mem.accessible ((s.regs 4).toNat - 41512) (41512 + 112) true = true)
     (hra : s.mem.readLE (s.regs 4).toNat 8 < 2 ^ 47) (hx0 : s.xmm 15 = 0#128) (hdf0 : s.df = false) :
-    ReachesRet (LibDiv.program.link impl) (retAddrOf s) T (RQ R b dc L zp zc st z2 z2c u ul v vl s) := by
+    ReachesRet (LibDiv.program.link impl) (retAddrOf s) T (RQG R b dc L zp zc st z2 z2c u ul v vl s) := by
   have hp := hpre.f
   obtain ⟨-, ⟨hb', ha, hw⟩, -, -⟩ := hp.ce
   simp only [regSP] at hb' ha hw
   have hB : Box (Pre R b dc L zp zl zc st z2 z2l z2c u ul uc v vl vc s) := ⟨hpre⟩
-  have hB2 := Box.mk (And.intro hq (And.intro hr (And.intro hrt (And.intro hsb (And.intro hfr (And.intro hmf hlf))))))
-  clear hpre hp hmf hlf hq hr hrt hsb hfr
+  have hB2 := Box.mk (And.intro hq (And.intro hr (And.intro hrt (And.intro hsb (And.intro hfr (And.intro hmf
+    (And.intro hlf (And.intro hqr hqf))))))))
+  clear hpre hp hmf hlf hq hr hrt hsb hfr hqr hqf
   janus64_run [m0, m1, m3, e0, e1, e2, e3, e4, e5]
   obtain ⟨hpre⟩ := hB
-  obtain ⟨hq, hr, hrt, hsb, hfr, hmf, hlf⟩ := hB2.h
-  refine ⟨⟨?_, ?_, ?_, ?_⟩, bigFin hpre hsp h14 hF hq hr hrt hsb hfr hmf hlf _ ?_ ?_ (by janus_frame) ?_ ?_ ?_ ?_ ?_ ?_⟩
+  obtain ⟨hq, hr, hrt, hsb, hfr, hmf, hlf, hqr, hqf⟩ := hB2.h
+  refine ⟨⟨?_, ?_, ?_, ?_⟩, bigFin hpre hsp h14 hF hq hr hrt hsb hfr hmf hlf _ ?_ ?_ (by janus_frame) ?_ ?_ ?_ ?_ ?_ ?_
+    hqr hqf⟩
   all_goals try (janus64_simp; done)
   all_goals first
     | exact hx15T.trans hx0.symm
@@ -68,14 +84,14 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- at `divLarge`'s entry: the call (summary `lsum`), then `big3` -/
 theorem big2 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
-    (dc : Nat → Nat → Nat → Nat) (hL : DivLarge.Hyp impl R dc)
+    (dc : Nat → Nat → Nat → Nat) (hL : DivLarge.HypG impl R dc)
     {b : Nat} {L : List (Nat × Nat)} {zp zl zc st z2 z2l z2c u ul uc v vl vc : Nat} {s : State}
     (hpre : Pre R b dc L zp zl zc st z2 z2l z2c u ul uc v vl vc s)
     (hge : natVal s.mem v vl ≤ natVal s.mem u ul) (hv2 : 2 ≤ vl)
     (X : State) (hX : AtL zp zl zc st z2 z2l z2c u ul uc v vl vc s X)
     (hzp : zp < 2 ^ 64) (hz2 : z2 < 2 ^ 64)
     (hra : s.mem.readLE (s.regs 4).toNat 8 < 2 ^ 47) (hx0 : s.xmm 15 = 0#128) (hdf0 : s.df = false) :
-    ReachesRet (LibDiv.program.link impl) (retAddrOf s) X (RQ R b dc L zp zc st z2 z2c u ul v vl s) := by
+    ReachesRet (LibDiv.program.link impl) (retAddrOf s) X (RQG R b dc L zp zc st z2 z2c u ul v vl s) := by
   have hp := hpre.f
   obtain ⟨-, ⟨hb', ha, hw⟩, -, -⟩ := hp.ce
   simp only [regSP] at hb' ha hw
@@ -84,7 +100,7 @@ theorem big2 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
   have hz40 := hp.zo.1; have hz240 := hp.z2o.1; have hul := hp.ul9; have hvl := hp.vl9
   have hu48 := hp.uo.2.2.1; have hv48 := hp.vo.2.2.1
   have hst48 := hp.sok.2.2.2.1
-  have hsum := lsum impl hap R dc hL b L (BitVec.ofNat 64 zp) (BitVec.ofNat 64 zl) (BitVec.ofNat 64 zc)
+  have hsum := lsumG impl hap R dc hL b L (BitVec.ofNat 64 zp) (BitVec.ofNat 64 zl) (BitVec.ofNat 64 zc)
     (BitVec.ofNat 64 st) (BitVec.ofNat 64 z2) (BitVec.ofNat 64 z2l) (BitVec.ofNat 64 z2c) u ul v vl
   have ezp := tN64 hzp; have ezc := tN64 (n := zc) (by omega); have est := tN64 (n := st) (by omega)
   have ez2 := tN64 hz2; have ez2c := tN64 (n := z2c) (by omega)
@@ -103,7 +119,7 @@ theorem big2 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
     rw [ezp, ezc, est, ez2, ez2c]
     exact l_pre hpre hge hv2 X hX
   rw [ezp, ezc, est, ez2, ez2c] at hq
-  obtain ⟨hfs, hdf, q, ql, qc, r, rl, rc, e0, e1, e2, e3, e4, e5, L', b'', hq', hr', hrt, hsb, hfr, hmf, hlf⟩ := hq
+  obtain ⟨hfs, hdf, q, ql, qc, r, rl, rc, e0, e1, e2, e3, e4, e5, L', b'', hq', hr', hrt, hsb, hfr, hmf, hlf, hqr, hqf⟩ := hq
   have hk := slots_keep hpre hX.sp hF hmf
   have m0 : T.mem.readLE (s.regs 4).toNat 8 = s.mem.readLE (s.regs 4).toNat 8 := by
     rw [hk _ _ ⟨by omega, by omega⟩]; exact hX.ra
@@ -113,7 +129,7 @@ theorem big2 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
     rw [hk _ _ ⟨by omega, by omega⟩]; exact hX.by0
   have hTacc : T.mem.accessible ((s.regs 4).toNat - 41512) (41512 + 112) true = true := by
     rw [hmf.accessible, hF.accessible]; exact hw
-  exact big3 impl hpre hX.sp hX.r14 hF hq' hr' hrt hsb hfr hmf hlf
+  exact big3 impl hpre hX.sp hX.r14 hF hq' hr' hrt hsb hfr hmf hlf hqr hqf
     (by rw [hT, retAddrOf, hspn, hX.rc]) (by rw [f4, hX.sp]; bv_omega) (by rw [f5, hX.r5]) (by rw [f14, hX.r14])
     (by rw [hfs, hX.fs]) (by rw [f15, hX.x15]) (by rw [hdf, hX.df]) e0 e1 e2 e3 e4 e5 m0 m1 m3 hTacc hra hx0 hdf0
 
