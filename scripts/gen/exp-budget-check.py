@@ -9,7 +9,8 @@
 # Every stack-level (l) dependence is exact: a level-dependent cost is a max of affine functions of l (TP below), all
 # slopes >= 0, so supU's maxima over l0 <= l and k0 <= k (costP is monotone in its lm: supTo + makeCost(lm/64+2)) are
 # attained at the top; the maximum over the modulus length a0 <= a (NOT monotone) is taken explicitly.
-# usage: python3 exp-budget-check.py [--fix]   (--fix: expmc's proposed size-dependent boxes for ExpSlow.cost)
+# usage: python3 exp-budget-check.py [--target] [--qb]   (--qb: mul/sqr replaced by the proved bounds of Common/MulCostQB)
+# old: [--fix]   (--fix: expmc's proposed size-dependent boxes for ExpSlow.cost)
 import sys
 from functools import lru_cache
 import numpy as np
@@ -100,7 +101,9 @@ def ksqrC(n):
         r = r + (snc(2 * h + 1) + 3 * asB(2 * h + 1) + (ksqrC(h).shift((2 * h + 1 + 3) // 4 * 4) + makeB(2 * h)).mul(3))
     return r
 @lru_cache(None)
-def sqrC(n): return (ksqrC(n) + makeB(2 * n)) if n >= 12 else TP.const(makeB(2 * n))
+def sqrC(n):
+    if '--qb' in sys.argv: return TP.const(sqrCB(n))
+    return (ksqrC(n) + makeB(2 * n)) if n >= 12 else TP.const(makeB(2 * n))
 
 # ---- MulCost
 @lru_cache(None)
@@ -125,7 +128,21 @@ def MC(m, n):
     if n != 0: b = MC(m, n - 1) if b is None else b.max(MC(m, n - 1))
     if b is None: b = TP.const(0)
     return a.max(b)
-def mulC(x, y): return MC(max(x, y), min(x, y))
+QB = '--qb' in sys.argv  # divmc s37: substitute the PROVED closed bounds of Common/MulCostQB (mulCB / box / sqrCB)
+def mulCB(M, n):  # MulCostQB.mulCB (short side n < 157) and, for squares, the boxes box1/box2
+    if n < 40: return 16 * M + 16 * n + 88
+    if n < 79: b = 202 * M + 128 * n + 944
+    else: assert n < 157, (M, n); b = 617 * M + 320 * n + 3968
+    if M < 79: b = min(b, 160 * M + 1032)
+    elif M < 157: b = min(b, 538 * M + 4912)
+    return b
+def sqrCB(n):
+    if n < 80: return 32 * n + 88
+    if n < 158: return 128 * n + 808
+    assert n < 315; return 272 * n + 3112
+def mulC(x, y):
+    if QB: return TP.const(mulCB(max(x, y), min(x, y)))
+    return MC(max(x, y), min(x, y))
 
 # ---- nat.div / nat.rem
 @lru_cache(None)
