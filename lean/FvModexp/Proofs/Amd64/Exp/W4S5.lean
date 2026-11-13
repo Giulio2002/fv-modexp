@@ -84,7 +84,7 @@ theorem seg5 {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progra
   have e10 : S.mem.readLE (sp + (yi / 1152921504606846976 + yi / 1152921504606846976 * 2) * 8 + 432) 8 = n := by
     rw [show sp + (yi / 1152921504606846976 + yi / 1152921504606846976 * 2) * 8 + 432 =
       sp + 0x1b0 + 24 * (yi / 2 ^ 60) by omega]; exact rT1
-  refine callF hap hclr hmv (b := b) (xq := pp (yi / 2 ^ 60)) hst hB.swap hzI hpI
+  refine callF hap hclr hmv (b := b) (xq := pp (yi / 2 ^ 60)) hst hB.swap hzI hpI.c
     (by have := hzzz; unfold Apart at this ⊢; omega) hzt hra (by rw [montE])
     (by simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact bv_sub8 (by omega) (by omega))
     (by simp (disch := omega) only [Arm64.Memory.readLE_writeLE_self])

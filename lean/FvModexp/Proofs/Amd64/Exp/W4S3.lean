@@ -56,7 +56,7 @@ theorem seg3 {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progra
     ra_of hap mont_not 0xeaa (by decide)
   have hzzI := hB.1.inp
   have hzzz := hB.2.2.1
-  refine callF hap hclr hmv (b := b) hst hB.swap hzzI hzzI (by have := hzzz; unfold Apart at this ⊢; omega)
+  refine callF hap hclr hmv (b := b) hst hB.swap hzzI hzzI.c (by have := hzzz; unfold Apart at this ⊢; omega)
     (by have := hzzz; unfold Apart at this ⊢; omega) hra (by rw [montE])
     (by simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact bv_sub8 (by omega) (by omega))
     (by simp (disch := omega) only [Arm64.Memory.readLE_writeLE_self])
