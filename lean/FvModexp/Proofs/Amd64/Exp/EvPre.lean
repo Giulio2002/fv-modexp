@@ -13,6 +13,9 @@ RAX/RBX/RCX, `stk = st` RDI, `x = (xp, xl, xc)` RSI/R8/R9, `y = (yp, yl, yc)` at
 mc)` at `sp + 0x168/0x170/0x178`. The window is `[sp - 8 - K, sp + 0x1b8)` = the callee stacks (`K`), the frame, the
 saved `BP`, the return address, the stack arguments and the register spill area (`EvenSum`'s `above = 112`): the
 `CallW.CEnv` of the callee `RSP = sp - 8` with `A = 0x1c0`.
+
+Stack floor `42816 ≤ K` (asm s57): the binding callee is the inner `expNN` (`ExpN.NEnv`: its own `K_N ≥ 41640`, window
+`K_N + 0x498` below its entry `RSP = sp - 8`), so `K ≥ 41640 + 0x498 = 42816`; every other callee needs less.
 -/
 
 open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Spec Janus.Contracts FvModexp
@@ -33,7 +36,7 @@ abbrev wTop : Nat := 0x1b8
 /-- the call environment of the entry (entry state `s`, `RSP = sp + 0x148`, window `[sp - 8 - K, sp + 0x1b8)`) -/
 @[reducible] def EEnv (R : RtInv) (L : List (Nat × Nat)) (g fs sp K : Nat) (s : State) : Prop :=
   s.regs 4 = BitVec.ofNat 64 (sp + 0x148) ∧ s.regs 14 = BitVec.ofNat 64 g ∧ s.fsBase.toNat = fs ∧
-  s.xmm 15 = 0 ∧ s.df = false ∧ sp % 8 = 0 ∧ 41512 ≤ K ∧ K ≤ 2 ^ 20 ∧
+  s.xmm 15 = 0 ∧ s.df = false ∧ sp % 8 = 0 ∧ 42816 ≤ K ∧ K ≤ 2 ^ 20 ∧
   CallW.CEnv R L g fs (sp - 8) K 0x1c0 s.mem ∧ RunIface.Serves R
 
 theorem EEnv.sp {R : RtInv} {L : List (Nat × Nat)} {g fs sp K : Nat} {s : State} (h : EEnv R L g fs sp K s) :
