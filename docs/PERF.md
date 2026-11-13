@@ -1651,3 +1651,7 @@ KSqrEnd 17 s / 2.6, KSqrProD 12 s / 2.7; Amd64/Nat/AddTo (+ df conjunct) 134 s /
 * amd64 RequiredGas after the Blk2/Blk3 Lt/Ge split (top s36, v0.3.2, fresh cache, warm-up 904 s): **PASS 848 s / 3.4 GB**,
   but the host load rose from ~15 to **75** during the row (load avg 75/50/30 at the end) — NOT comparable with the 613 s
   run at load ~13; the trim's effect is unmeasured. Re-measure at load ≤ 20 (or in the release run) before further trims.
+
+### top s38 (2026-11-13, amd64 Q division dev builds `build/dgenj.py amd64`, LEAN_NUM_THREADS=4, load ~80)
+* 97 Amd64/NatQ modules (divBasic/divLarge/nat.div Q copies), all ≤ 5 min / 8 GB. Heaviest: DivLargeDRR 176 s / 6.8 GB, DivBasicTailR 175 s / 3.5 GB, DivLargeT1 149 s / 3.7 GB, DivBasicNat 139 s / 3.4 GB, DivLargeNat 133 s / 3.5 GB, DivBasicSubR 111 s / 3.0 GB, DivBasicSub 89 s / 5.2 GB, DivLargeDBR 86 s / 4.4 GB.
+* DivLargeDRR 7.0 GB is the closest to the 8 GB module cap (old Nat twin similar) — trim candidate if a row needs margin.
