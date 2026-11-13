@@ -58,7 +58,8 @@ theorem top : mem0.readLE (OB + 8 * (2 - 1)) 8 ≠ 0 := by decide +kernel
 
 theorem pre : DivW.Pre R 0x1000 [] (BitVec.ofNat 64 OA) 0 (BitVec.ofNat 64 OB) 2 3 s0 := by
   refine ⟨⟨?_, ?_, by decide, dataLoaded _ _, ?_, ?_, ?_, fun r hr => by simp at hr, roOut, ⟨?_, ?_, ?_⟩⟩, ?_,
-    by decide, by decide, by decide, fun h => absurd h (by decide), ?_, fun h => absurd h (by decide), ?_, by decide,
+    by decide, by decide, by decide, fun h => absurd h (by decide), fun h => absurd h (by decide),
+    fun h => absurd h (by decide), ?_, by decide,
     Or.inr ?_, Or.inr top, ?_, ?_, fun _ => ⟨trivial, by decide⟩, fun _ _ _ _ => trivial,
     fun h => absurd h (by decide)⟩
   all_goals first
