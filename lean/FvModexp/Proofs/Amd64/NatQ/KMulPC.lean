@@ -29,6 +29,17 @@ open FvModexp.Amd64.Q.NatSqr (bv_sub_ofNat bv_add_ofNat kmask kmask' kand2 kshr1
     ((s.regs 4).toNat - 16, (s.regs 4).toNat - 8), ((s.regs 4).toNat + 40, (s.regs 4).toNat + 48),
     ((s.regs 4).toNat + 56, (s.regs 4).toNat + 64)]
 
+/-- `KQm`'s frame inside `kpcW` (a small-context `omega`, kept out of `kpmOfX`'s large context) -/
+theorem frW (sp a k : Nat) (h : Outside a k [(sp - 456, sp), (sp + 32, sp + 72)]) :
+    Outside a k [(sp - 448, sp), (sp + 32, sp + 72)] ∧
+    Outside a k [(sp - 456, sp - 448), (sp - 369, sp - 368), (sp - 360, sp - 336), (sp - 232, sp - 80),
+      (sp - 16, sp - 8), (sp + 40, sp + 48), (sp + 56, sp + 64)] := by
+  simp only [outside_cons, outside_nil, and_true] at h ⊢; omega
+
+/-- `kh n + kh n` as a 64-bit sum (holds for every `a`: both sides are `2a mod 2^64`) -/
+theorem bvDbl (a : Nat) : BitVec.ofNat 64 a + BitVec.ofNat 64 a = BitVec.ofNat 64 (2 * a) := by
+  apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 4000000 in
 /-- `KPm` at `P` from `S` (`KQm`): `P.mem` differs from `S.mem` only in `kpcW s` -/
@@ -82,8 +93,7 @@ theorem kpmOfX {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc
       s1 := ?s1, s2 := s2, s3 := ?s3, s4 := s4, s5 := ?s5,
       x0h := ?x0h, x1h := ?x1h, y0h := y0h, y1h := y1h, z0h := z0h, z2h := z2h }
   case fr =>
-    exact hQ.fr.trans hF fun a k h => by
-      simp only [kpcW, outside_cons, outside_nil, and_true] at h ⊢; omega
+    exact hQ.fr.trans hF fun a k h => frW _ a k h
   case fp => rw [hk _ _ (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)]; exact hQ.fp
   case s1 => rw [hk _ _ (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)]; exact m32
   case s3 => rw [hk _ _ (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)]; exact m48
@@ -155,8 +165,7 @@ theorem kmPC (impl : List Amd64.Segment) {R : RtInv} {b : Nat} {L : List (Nat ×
   have hm' := kmask' (zc - 2 * kh n) (16 * kh n) (by omega) (by omega)
   have hza : BitVec.ofNat 64 zp + BitVec.ofNat 64 (16 * kh n) = BitVec.ofNat 64 (zp + 16 * kh n) :=
     bv_add_ofNat (by omega)
-  have hdd : BitVec.ofNat 64 (kh n) + BitVec.ofNat 64 (kh n) = BitVec.ofNat 64 (2 * kh n) :=
-    by rw [bv_add_ofNat (by omega)]; congr 1; omega
+  have hdd : BitVec.ofNat 64 (kh n) + BitVec.ofNat 64 (kh n) = BitVec.ofNat 64 (2 * kh n) := bvDbl _
   have hkt : BitVec.ofNat 64 (2 * kh n) + 1#64 = BitVec.ofNat 64 (kT n) := by
     apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_add, BitVec.toNat_ofNat, kT]; omega
   have hkt' : BitVec.ofNat 64 (2 * kh n) + BitVec.ofNat 64 1 = BitVec.ofNat 64 (kT n) := by

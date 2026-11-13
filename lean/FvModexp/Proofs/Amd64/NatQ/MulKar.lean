@@ -52,6 +52,11 @@ theorem karCall {impl : List Amd64.Segment} {R : RtInv} {n : Nat} (hih : ∀ a, 
   · rw [hrd]; decide
   · rw [hr, retAddrOf, hrd]
 
+/-- `win s W 88` covers `kar2`'s frame and `karatsuba`'s window (a small-context `omega`, kept out of `kar2`'s large
+context: 13 s → 0) -/
+theorem karWin {sp W a n : Nat} (h : a + n ≤ sp - W ∨ sp + 88 ≤ a) (hW : 4608 ≤ W) :
+    a + n ≤ sp - 264 - (W - 264) ∨ sp - 264 + 72 ≤ a := by omega
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
@@ -160,7 +165,7 @@ theorem kar2 (impl : List Amd64.Segment) (R : RtInv) (n0 : Nat)
       rw [show 2 * yl.toNat = xl.toNat + yl.toNat by omega]
       simp only [stkWs, win, outside_append, outside_cons, outside_nil, and_true] at h ⊢
       obtain ⟨⟨h1, h2⟩, h3⟩ := h
-      exact ⟨⟨h1, by omega⟩, h3⟩
+      exact ⟨⟨h1, karWin h2 hW⟩, h3⟩
   have hLF2' : LiveFrame S.mem s'.mem L1 ((p, p + 8 * (xl.toNat + yl.toNat)) :: stkWs S.mem st.toNat) := by
     rw [show xl.toNat + yl.toNat = 2 * yl.toNat by omega]; exact hLF2
   clear hpw hstw hfw

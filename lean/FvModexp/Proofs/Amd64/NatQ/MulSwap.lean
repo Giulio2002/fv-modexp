@@ -59,6 +59,12 @@ theorem mulCall {impl : List Amd64.Segment} {R : RtInv} {n : Nat} (hih : ∀ j, 
   refine ReachesRet.call_regions hS hpc ⟨⟨hE, hpre⟩, hmu⟩ fun s' hr ⟨hk, hq⟩ hrg => K s' ?_ hk hq hrg
   rw [hr, retAddrOf, hrd]
 
+/-- the two bounds of `mul_keeps` for a word `[a, a + 8)`, `sp - 8 ≤ a ≤ sp`, of `swap2`'s caller frame
+(small-context `omega`s, kept out of `swap2`'s large context: 18 s → 0) -/
+theorem swA {sp S4 a : Nat} (e : S4 = sp - 264) (h : 264 ≤ sp) (ha : sp - 8 ≤ a) : S4 + 88 ≤ a := by omega
+
+theorem swB {sp a : Nat} (ha : a ≤ sp) : a + 8 ≤ sp + 88 := by omega
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- from the self-call's entry (operands swapped) to the return of `nat.mul` -/
@@ -101,10 +107,11 @@ theorem swap2 (impl : List Amd64.Segment) (R : RtInv) (n : Nat) (ih : ∀ j, IH 
     obtain ⟨_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, h, -⟩ := hq; exact h
   have hz' : Outside zp.toNat (8 * zc.toNat) (win s W 88) := hpre.2.2.2.2.2.1.2.2.1.2.2.1
   have hkp := mul_keeps (W1 := W - 264) (f := 264) (S1 := S) (m2 := s'.mem) hpreS hsp' (by omega) hF hz' hMF
+  have h264 : 264 ≤ (s.regs 4).toNat := Nat.le_trans (Nat.le_trans (by decide) hW) hb0
   have q1 : s'.mem.readLE (s.regs 4).toNat 8 = s.mem.readLE (s.regs 4).toNat 8 := by
-    rw [hkp _ _ (by omega) (by omega)]; exact mra
+    rw [hkp _ _ (swA hsp' h264 (Nat.sub_le _ _)) (swB (Nat.le_refl _))]; exact mra
   have q2 : s'.mem.readLE ((s.regs 4).toNat - 8) 8 = (s.regs 5).toNat := by
-    rw [hkp _ _ (by omega) (by omega)]; exact mbp
+    rw [hkp _ _ (swA hsp' h264 (Nat.le_refl _)) (swB (Nat.sub_le _ _))]; exact mbp
   have hacc : s'.mem.accessible ((s.regs 4).toNat - 256) 264 true = true := by
     rw [hMF.accessible, hF.accessible]; exact Janus.Arm64.Memory.accessible_mono _ hw0 (by omega) (by omega)
   have hsp2 : s'.regs 4 = s.regs 4 - 256#64 := by
