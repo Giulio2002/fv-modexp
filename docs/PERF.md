@@ -1901,3 +1901,8 @@ Util → IcDefs → IcHL → Ic → Og → Pre → Seg → FinA → Fin → Row 
 * SbF (cases 29, 30): 41.0 s → 15.8 s dev (same load). Sb A..G dev: 70 / 40 / 30 / 19 / 21 / 16 / 15 s.
 * Targeted row run (s51/rgrow2.sh amd64 b23b839b, warm-up-only cache, row alone): **amd64 RequiredGas 448 s**, peak
   3258 MB, load 30.7 (was 538 s / 3520 MB at load 34.6) — target ≤ 450 s met.
+* **RunErr targeted with JANUS_TIMINGS=1 (top s45; snap44 sources, copy of the gc'd rel44 cache, load ~15-20, alongside rel45): PASS 467 s**
+  = own compile **66 modules (0 from the store) 359 s wall / 1352 s cpu** + theorem audit 6.6 s + kernel replay **30 targets at 4 at once
+  98 s** (cpu 228 s) + ~3 s rest. The witness is compiled inside the own-compile stage. 66 > RunErr's 41-module own set: the gc'd copy
+  lost ~25 lower store entries, so this is an upper bound for the own compile. ⇒ rel44's 900 s cap = contention (2 rows + RequiredGas
+  at once) on a ~360 s compile, not a hidden serial stage. Replay is parallel (4 at once), not the serial-prefix pattern.

@@ -111,7 +111,7 @@ run_job() {   # run_job isa fn sym mod   (fn = row id; mod = proof-module path b
   wt=(); if [ "$WITNESS" != 0 ]; then while IFS= read -r w; do [ -n "$w" ] && wt+=(--theorem "$w"); done < <(python3 "$root/scripts/witness-theorems.py" "lean/FvModexp/Proofs/$dir/$pf.lean"); fi
   r=FAIL
   if $JANUS extract "build/harness-$isa" "$sym" "$out" $cflags >"build/log-$isa-$fn" 2>&1; then
-    timeout "$ROW_TIMEOUT" memcap -m "$ROW_MEMCAP" $JANUS verify "$out" --proof "lean/FvModexp/Proofs/$dir/$pf.lean" --proof-root lean \
+    JANUS_TIMINGS=1 timeout "$ROW_TIMEOUT" memcap -m "$ROW_MEMCAP" $JANUS verify "$out" --proof "lean/FvModexp/Proofs/$dir/$pf.lean" --proof-root lean \
        "${mt[@]}" "${wt[@]}" >>"build/log-$isa-$fn" 2>&1 &
     local bg=$! peak=0 cg="" p c v
     # peak RSS of the WHOLE row (janus + sandboxed Lean): memory.peak of the memcap cgroup (adapted from asm's scripts/asm-row.sh)
