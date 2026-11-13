@@ -1480,3 +1480,10 @@ conjunct — asm's row, state of the worktree at that time), DivWVWRow 13 s, Div
 amd64: AddVWRow 107 s, SubVWRow 100 s, StackNatRow 229 s, MulAddWWRow 340 s, **BasicSqrRow FAIL 902 s** (timeout, 0.6 GB;
 own modules BasicSqrBody 107 s / 7.6 GB, Pro 182 s, Pro3 135 s / 6.2 GB, Fin 89 s, Small 90 s dev — trim),
 **Int/IntASRow PASS 350 s / 2.3 GB** (was 766 s; s32 trim: WordTData + flattened nat.add/nat.sub continuation chains).
+
+### expmc s42 (TIGHT COSTS, dev builds on v0.3.1, host load ~25)
+| module | before | after |
+|---|---|---|
+| Arm64/Exp/IExpCl (ensCl, cost facts proved) | 1.4 s / 4.1 GB | 1.4 s / 4.0 GB |
+| Arm64/Exp/W4Wit `bud` (path-MAX budget) | omega on unfolded nested max: >200k heartbeats (timeout) | structural `bud_c` split: < 15 s |
+| Amd64/Exp/W4Defs, W4MC (new) | — | 1.7 s, 3.1 s / 2.3 GB |

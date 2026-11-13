@@ -24,7 +24,8 @@ theorem ra_of {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
     (hn : ns.contains fn = false) (i : Nat) (hi : i < 0x1300) :
     RetAddr ((Extracted.program.onlySegments ns).link impl) (6205536 + i) := by
   have := CallW.retAddr_restrict hap (cs := Extracted.seg34) (ns := ns)
-    (by simp only [Extracted.program, Extracted.segments, List.mem_cons, true_or, or_true]) (by simpa using hn) i
+    (by simp only [Extracted.program, Extracted.segments, List.mem_cons, true_or, or_true])
+    (by rw [show Extracted.seg34.name = fn by decide]; exact hn) i
     (Nat.lt_of_lt_of_le hi (by decide)) (by show 0x5eb060 + i < 2 ^ 47; omega)
   simpa only [Extracted.seg34] using this
 
