@@ -1,6 +1,8 @@
 import FvModexp.Proofs.Arm64.Exp.P2PreF
 import FvModexp.Proofs.Arm64.Exp.P2PreMv
 
+set_option autoImplicit false
+
 /-!
 # `buildPrecomputationWindowModPower2` (arm64): after the fill loop → `powers[0] = powers[0].set(natOne)` (nat.go:881;
 inline `z.make(1)` reusing `powers[0]`, `memmove(z, natOne, 8)`), header store, write barrier (agent infra)
@@ -17,7 +19,7 @@ structure Hide (P : Prop) : Prop where
   h : P
 
 /-- the join after `powers[0]`'s header store and write barrier (`0x1b55dc`, the pointer store `powers[0].ptr = buf`) -/
-def X1J (impl : List Segment) (R : RtInv) (kc : Nat) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat)
+def X1J (impl : List Segment) (R : RtInv) (kc : Nat) (sqC : Nat → Nat) (mlC : Nat → Nat → Nat)
     (b : Nat) (L : List (Nat × Nat)) (st pw pl lm x xl : Nat) (s : State) : Prop :=
   ∀ (S : State) (bp : Nat) (L1 : List (Nat × Nat)) (b1 : Nat),
     S.pc = BitVec.ofNat 64 1791452 → S.sp = BitVec.ofNat 64 (s.sp.toNat - 208) → S.regs 28 = s.regs 28 →
@@ -25,11 +27,11 @@ def X1J (impl : List Segment) (R : RtInv) (kc : Nat) (sqC : Nat → Nat → Nat)
     S.regs 3 = BitVec.ofNat 64 pw → S.regs 4 = BitVec.ofNat 64 (W lm) → S.regs 5 = BitVec.ofNat 64 pl →
     S.regs 7 = BitVec.ofNat 64 (2 * W lm) → S.regs 8 = BitVec.ofNat 64 1 → S.regs 9 = BitVec.ofNat 64 bp →
     Ctx R kc L st pw pl lm s bp S.mem L1 b1 → (∀ j, 1 ≤ j → j < pl → PwT S.mem pw bp lm j) →
-    S.mem.readLE bp 8 = 1 → b - stackNatCost (stLen s.mem st) (NB pl lm) ≤ b1 →
+    S.mem.readLE bp 8 = 1 → b ≤ b1 →
     Goal impl R kc sqC mlC b L st pw pl lm x xl s S
 
 section
-variable {impl : List Segment} {R : RtInv} {kc : Nat} {sqC : Nat → Nat → Nat} {mlC : Nat → Nat → Nat → Nat}
+variable {impl : List Segment} {R : RtInv} {kc : Nat} {sqC : Nat → Nat} {mlC : Nat → Nat → Nat}
     {b : Nat} {L : List (Nat × Nat)} {st pw pl ws lm x xl : Nat} {s : State}
 
 

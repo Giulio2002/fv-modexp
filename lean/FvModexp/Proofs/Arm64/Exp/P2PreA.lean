@@ -1,6 +1,8 @@
 import FvModexp.Proofs.Arm64.Exp.P2PreWbC
 import FvModexp.Proofs.Arm64.Exp.P2PreTr
 
+set_option autoImplicit false
+
 /-!
 # `buildPrecomputationWindowModPower2` (arm64): after `sqr` (`JA`) → header store, write barrier → `trunc` → `JB`
 (agent infra)
@@ -13,7 +15,7 @@ namespace FvModexp.Arm64.P2Pre
 open FvModexp.Arm64.EvenHyp
 
 section
-variable {impl : List Segment} {R : RtInv} {kc : Nat} {sqC : Nat → Nat → Nat} {mlC : Nat → Nat → Nat → Nat}
+variable {impl : List Segment} {R : RtInv} {kc : Nat} {sqC : Nat → Nat} {mlC : Nat → Nat → Nat}
     {b : Nat} {L : List (Nat × Nat)} {st pw pl ws lm x xl : Nat} {s : State}
 
 set_option maxRecDepth 20000 in

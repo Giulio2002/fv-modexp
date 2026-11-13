@@ -1,6 +1,8 @@
 import FvModexp.Proofs.Arm64.Exp.P2PreE1
 import FvModexp.Proofs.Common.TruncMath
 
+set_option autoImplicit false
+
 /-!
 # `buildPrecomputationWindowModPower2` (arm64): the entry segment (agent infra)
 
@@ -20,14 +22,14 @@ theorem mul_ofNat64 (a c : Nat) : BitVec.ofNat 64 a * BitVec.ofNat 64 c = BitVec
   simp only [BitVec.toNat_mul, BitVec.toNat_ofNat, Nat.mul_mod, Nat.mod_mod]
 
 section
-variable {impl : List Segment} {R : RtInv} {kc : Nat} {sqC : Nat → Nat → Nat} {mlC : Nat → Nat → Nat → Nat}
+variable {impl : List Segment} {R : RtInv} {kc : Nat} {sqC : Nat → Nat} {mlC : Nat → Nat → Nat}
     {b : Nat} {L : List (Nat × Nat)} {st pw pl ws lm x xl : Nat} {s : State}
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem segE (hap : ImplApart Extracted.program impl) {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
-    {stkS aboveS : Nat} (hsn : StackNat.HypL impl R ns stkS aboveS) (hkS : stkS ≤ kc) (haS : aboveS ≤ 88)
+    {stkS aboveS : Nat} (hsn : StackNatX.HypQ impl R ns stkS aboveS) (hkS : stkS ≤ kc) (haS : aboveS ≤ 88)
     (hkc : 4608 ≤ kc) (hpre : Pre R kc sqC mlC b L st pw pl ws lm x xl s)
     (hpc : s.pc = BitVec.ofNat 64 1790928) (h0 : s.regs 0 = BitVec.ofNat 64 st) (h1 : s.regs 1 = BitVec.ofNat 64 pw)
     (h2 : s.regs 2 = BitVec.ofNat 64 pl) (h4 : s.regs 4 = BitVec.ofNat 64 ws) (h5 : s.regs 5 = BitVec.ofNat 64 lm)

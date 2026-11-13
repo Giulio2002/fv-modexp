@@ -1,6 +1,8 @@
 import FvModexp.Proofs.Arm64.Exp.P2PreWbC
 import FvModexp.Proofs.Arm64.Exp.P2PreMu
 
+set_option autoImplicit false
+
 /-!
 # `buildPrecomputationWindowModPower2` (arm64): after the first `trunc` (`JB`) → header store, write barrier,
 `cap ≥ w` / `len ≤ w` checks, `powers[i] = (…)[: :w]` → `nat.mul` → `JC` (agent infra)
@@ -15,15 +17,15 @@ namespace FvModexp.Arm64.P2Pre
 open FvModexp.Arm64.EvenHyp
 
 section
-variable {impl : List Segment} {R : RtInv} {kc : Nat} {sqC : Nat → Nat → Nat} {mlC : Nat → Nat → Nat → Nat}
+variable {impl : List Segment} {R : RtInv} {kc : Nat} {sqC : Nat → Nat} {mlC : Nat → Nat → Nat}
     {b : Nat} {L : List (Nat × Nat)} {st pw pl ws lm x xl : Nat} {s : State}
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem jB2 (hap : ImplApart Extracted.program impl) {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
-    {stkM aboveM : Nat} (hmu : MulHypX impl R ns stkM aboveM mlC) (hkM : stkM ≤ kc) (haM : aboveM ≤ 88)
-    (hmm : ∀ ℓ a a' c c', a ≤ a' → c ≤ c' → mlC ℓ a c ≤ mlC ℓ a' c') (hkc : 4608 ≤ kc)
+    {stkM aboveM : Nat} (hmu : MulHypQ impl R ns stkM aboveM mlC) (hkM : stkM ≤ kc) (haM : aboveM ≤ 88)
+    (hmm : ∀ a a' c c', a ≤ a' → c ≤ c' → mlC a c ≤ mlC a' c') (hkc : 4608 ≤ kc)
     (hpre : Pre R kc sqC mlC b L st pw pl ws lm x xl s) {i : Nat}
     (kC : JC impl R kc sqC mlC b L st pw pl lm x xl s i) {bp : Nat} {M : Memory} {L1 : List (Nat × Nat)} {b1 l : Nat}
     (S : State) (hpc : S.pc = BitVec.ofNat 64 1791868) (hsp : S.sp = BitVec.ofNat 64 (s.sp.toNat - 208))
@@ -36,7 +38,7 @@ theorem jB2 (hap : ImplApart Extracted.program impl) {ns : List String}
     (hv : natVal M (bp + 8 * (i * W lm)) l = PV lm x xl s i) (hn : NatNorm M (bp + 8 * (i * W lm)) l)
     (hi2 : i % 2 = 0) (hi : 2 ≤ i) (hip : i + 2 ≤ pl)
     (hb : b - (c0 (stLen s.mem st) pl lm + (i / 2 - 1) * rc sqC mlC (stLen s.mem st) pl lm +
-      (sqC (lvl1 (stLen s.mem st) pl lm) (W lm) + tC lm)) ≤ b1) :
+      (sqC (W lm) + tC lm)) ≤ b1) :
     ReachesRet (LibW.program.link impl) (s.regs 30) S (GoalQ R kc sqC mlC b L st pw pl lm x xl s) := by
   have hsl := s.sp.isLt
   have hf := pf_of hpre (by omega)
@@ -123,8 +125,8 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem segB (hap : ImplApart Extracted.program impl) {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
-    {stkM aboveM : Nat} (hmu : MulHypX impl R ns stkM aboveM mlC) (hkM : stkM ≤ kc) (haM : aboveM ≤ 88)
-    (hmm : ∀ ℓ a a' c c', a ≤ a' → c ≤ c' → mlC ℓ a c ≤ mlC ℓ a' c')
+    {stkM aboveM : Nat} (hmu : MulHypQ impl R ns stkM aboveM mlC) (hkM : stkM ≤ kc) (haM : aboveM ≤ 88)
+    (hmm : ∀ a a' c c', a ≤ a' → c ≤ c' → mlC a c ≤ mlC a' c')
     (hwb : WbLiveContract (LibW.program.link impl) wbE 4096 R 2) (hkc : 4608 ≤ kc)
     (hpre : Pre R kc sqC mlC b L st pw pl ws lm x xl s) {i : Nat}
     (kC : JC impl R kc sqC mlC b L st pw pl lm x xl s i) :

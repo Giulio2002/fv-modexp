@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.P2PreXc
 
+set_option autoImplicit false
+
 /-!
 # `buildPrecomputationWindowModPower2` (arm64): `*p = p.sqr(stk, *p2)` (nat.go:892) → `JA` (agent infra)
 
@@ -37,15 +39,15 @@ theorem wok_zs {R : RtInv} {kc : Nat} {L : List (Nat × Nat)} {st pw pl lm : Nat
   · exact wok_stk hc.sa r hr
 
 section
-variable {impl : List Segment} {R : RtInv} {kc : Nat} {sqC : Nat → Nat → Nat} {mlC : Nat → Nat → Nat → Nat}
+variable {impl : List Segment} {R : RtInv} {kc : Nat} {sqC : Nat → Nat} {mlC : Nat → Nat → Nat}
     {b : Nat} {L : List (Nat × Nat)} {st pw pl ws lm x xl : Nat} {s : State}
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 4000000 in
 theorem callSqrH (hap : ImplApart Extracted.program impl) {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
-    {stkS aboveS : Nat} (hsq : SqrHypX impl R ns stkS aboveS sqC) (hkS : stkS ≤ kc) (haS : aboveS ≤ 88)
-    (hsm : ∀ ℓ a a', a ≤ a' → sqC ℓ a ≤ sqC ℓ a') (hkc : 4608 ≤ kc)
+    {stkS aboveS : Nat} (hsq : SqrHypQ impl R ns stkS aboveS sqC) (hkS : stkS ≤ kc) (haS : aboveS ≤ 88)
+    (hsm : ∀ a a', a ≤ a' → sqC a ≤ sqC a') (hkc : 4608 ≤ kc)
     (hpre : Pre R kc sqC mlC b L st pw pl ws lm x xl s) {i : Nat}
     (kA : JA impl R kc sqC mlC b L st pw pl lm x xl s i) {bp : Nat} {M : Memory} {L1 : List (Nat × Nat)} {b1 : Nat}
     (hrs : RS R kc L st pw pl lm s (natVal s.mem x xl) bp M L1 b1 i i)
@@ -80,17 +82,18 @@ theorem callSqrH (hap : ImplApart Extracted.program impl) {ns : List String}
     (by omega) (by omega) (by omega)
   have hx := bufArr hpre hc hf hspN h28 hm hkS haS (a := bp + 8 * (i / 2 * W lm)) (c := W lm) (by omega)
     (by omega) (by omega) (by omega) (by omega)
-  have hmono := hsm (lvl1 (stLen s.mem st) pl lm) _ _ d1
+  have hmono := hsm _ _ d1
   have hrnd := rnd_le (NB pl lm)
-  refine LibCalls.sqrCallX hap hns hsq (b := b1) (L := L1) (ra_bp hap hnf 201 (by decide)) (by rw [hpc, sqr_addr]) h30 h0 h1 h2 h3 h4
+  refine LibCalls.sqrCallQ hap hns hsq (HP (stLen s.mem st) pl lm) (b := b1 + stkR (HP (stLen s.mem st) pl lm) M st) (L := L1) (ra_bp hap hnf 201 (by decide)) (by rw [hpc, sqr_addr]) h30 h0 h1 h2 h3 h4
     h5 h6 (by omega) (by omega) (by omega) (by have := hc.sa.1.2.2.2.1; omega) (by omega) (by omega) (by omega)
     (by decide) ⟨callEnv_ctx hpre hc hsp h28 hm hkS haS, hsv, by rw [hm]; exact globals_ctx hpre hc hspN hkS haS,
       by omega, hz.1, hx.2.1 _ d1, by omega, Or.inr fun _ _ => by unfold Apart; omega,
       stkIn_ctx hpre hc hf hspN h28 hm hkS haS, by rw [hm, hst]; simp only [lvl1]; omega,
       by rw [hm]; exact hz.2.2.2, by rw [hm]; exact sa_sub hx.2.2.2 (by omega),
-      by rw [hm, hst]; simp only [rc] at hroom; omega, by rw [hm, h28]; exact hc.inv⟩ (hx.2.2.1 _ d1)
+      by rw [hm]; simp only [rc] at hroom; omega, by rw [hm, h28]; exact hc.inv⟩ (hx.2.2.1 _ d1)
     ⟨stkX_ctx hpre hc hf hspN h28 hm hkS haS, (hz.1.2.2 (by omega)).1, fun he => absurd he (by omega),
       by rw [hm]; exact bufOp hpre hc (by omega) hin, by rw [hm]; exact bufOp hpre hc (by omega) (by omega)⟩
+    (by rw [hm, hst]; simp only [lvl1, HP, DPre]; omega)
     fun s' hpc' hsp' h28' h29' h18' hrg hpost hreu => ?_
   obtain ⟨p', l', c', e0, e1, e2, L', b', ⟨hv', hn', hlc', hc40', hlive', -⟩, ⟨hLE, hbud', hinv'⟩, hsb, -, hF',
     hLF'⟩ := hpost
@@ -102,17 +105,17 @@ theorem callSqrH (hap : ImplApart Extracted.program impl) {ns : List String}
   subst hc' hp'
   rw [hm] at hF' hLF' hrg hsb hbud' hv'
   rw [h28] at hinv'
-  rw [hst] at hbud'
+  obtain ⟨b2, hinv2, hbud2⟩ := P2Q.effQ hinv' hbud' (by simp only [rc] at hroom; omega)
   have hwok := wok_zs (zn := 8 * (2 * W lm)) hc (by omega) hin
   have hsa' := sa_back hc.sa hsb.1 hc.le
   have hsap' := sap_back hc.sap hc.scr.held hsb.1
   have hF2 : MemFrame M s'.mem (R.rt ++ winA S' stkS aboveS ++ ([(bp + 8 * (i * W lm),
       bp + 8 * (i * W lm) + 8 * (2 * W lm))] ++ stWs M st)) := by rw [List.append_assoc] at hF'; exact hF'
-  have hc2 := keepC hc hf.w hspN hkS haS hwok hF2 hLF' hrg hLE hinv' hsa' hsap' (hc.ain.trans hsb.2 hLE)
+  have hc2 := keepC hc hf.w hspN hkS haS hwok hF2 hLF' hrg hLE hinv2 hsa' hsap' (hc.ain.trans hsb.2 hLE)
     (bu_back hc.bu hc.scr.held hsb.1)
   have hrs2 := rs_call hrs hf hsapw (by omega) hspN hkS haS (fun r hr => hr) hwok (Nat.le_refl _) (by omega) hF2
     hLF' hc2
-  refine kA s' bp L' b' l' hpc' (hsp'.trans hsp) (h28'.trans h28) (h29'.trans h29) (h18'.trans h18) r0 e1 r2 hrs2
+  refine kA s' bp L' b2 l' hpc' (hsp'.trans hsp) (h28'.trans h28) (h29'.trans h29) (h18'.trans h18) r0 e1 r2 hrs2
     trivial hlc' (hv'.trans (by rw [dv])) hn' hi2 hi hip ?_
   simp only [rc] at hroom hb ⊢
   omega

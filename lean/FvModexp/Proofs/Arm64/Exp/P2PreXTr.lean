@@ -1,6 +1,8 @@
 import FvModexp.Proofs.Arm64.Exp.P2PreX0
 import FvModexp.Proofs.Arm64.Exp.P2PreTr
 
+set_option autoImplicit false
+
 /-!
 # `buildPrecomputationWindowModPower2` (arm64): `powers[1] = powers[1].trunc(x, logM)` (nat.go:883) → `JT` (agent infra)
 
@@ -19,7 +21,7 @@ open FvModexp.Arm64.ExpHyp (stWs RdIn WrOut)
 theorem p2_one {lm X : Nat} : Exp.p2Pow lm X 1 = X % 2 ^ lm := by rw [Exp.p2Pow]; simp
 
 section
-variable {impl : List Segment} {R : RtInv} {kc : Nat} {sqC : Nat → Nat → Nat} {mlC : Nat → Nat → Nat → Nat}
+variable {impl : List Segment} {R : RtInv} {kc : Nat} {sqC : Nat → Nat} {mlC : Nat → Nat → Nat}
     {b : Nat} {L : List (Nat × Nat)} {st pw pl ws lm x xl : Nat} {s : State}
 
 set_option maxRecDepth 20000 in
@@ -31,7 +33,7 @@ theorem callTrX (hap : ImplApart Extracted.program impl) {ns : List String}
     (kT : JT impl R kc sqC mlC b L st pw pl lm x xl s)
     {bp : Nat} {M : Memory} {L1 : List (Nat × Nat)} {b1 xc : Nat}
     (hrs : RS0 R kc L st pw pl lm s (natVal s.mem x xl) bp M L1 b1 1)
-    (hb : b - stackNatCost (stLen s.mem st) (NB pl lm) ≤ b1)
+    (hb : b ≤ b1)
     (S' : State) (hsp : S'.sp = BitVec.ofNat 64 (s.sp.toNat - 208)) (h28 : S'.regs 28 = s.regs 28)
     (h29 : S'.regs 29 = BitVec.ofNat 64 (s.sp.toNat - 216)) (h18 : S'.regs 18 = s.regs 18) (hm : S'.mem = M)
     (hpc : S'.pc = BitVec.ofNat 64 1786000) (h30 : S'.regs 30 = BitVec.ofNat 64 pcT)
@@ -57,7 +59,7 @@ theorem callTrX (hap : ImplApart Extracted.program impl) {ns : List String}
   have hmk : makeCost (truncNeed xl lm) ≤ tC lm :=
     makeCost_le (b := W lm + 4) (by simp only [truncNeed, W]; omega) (by omega)
   have hroom : tC lm ≤ b1 := by
-    have h2 : stackNatCost (stLen s.mem st) (NB pl lm) + tC lm ≤ b := Nat.le_trans (Nat.le_add_right _ _) hcost
+    have h2 : tC lm ≤ b := Nat.le_trans (Nat.le_add_right _ _) hcost
     omega
   have hK := hf.w.sp
   simp only [K] at hK
@@ -65,12 +67,12 @@ theorem callTrX (hap : ImplApart Extracted.program impl) {ns : List String}
     refine ⟨by omega, by rw [hm]; exact xacc, hx48, xh, ?_⟩
     simp only [win, K, A, outside_cons, outside_nil, and_true] at hxw ⊢
     rw [hspN]; omega
-  refine LibCalls.truncCall hap hns htr (b := b1) (L := L1) (ra_bp hap hnf 147 (by decide)) (by rw [hpc, trunc_addr])
+  refine LibCalls.truncCall hap hns htr (b := b1 + stkR (HP (stLen s.mem st) pl lm) M st) (L := L1) (ra_bp hap hnf 147 (by decide)) (by rw [hpc, trunc_addr])
     h30 h0 h1 h2 h3 h4 h5 h6 (by omega) (by omega) (by omega) (by omega) (by omega)
     (by omega) (by decide)
     ⟨callEnv_ctx hpre hc hsp h28 hm hkT haT, hsv, by omega, hz.1, hrdin, by omega, by omega,
       Or.inr fun _ h => by have := xap h; unfold Apart at this ⊢; omega,
-      Nat.le_trans hmk hroom, by rw [hm, h28]; exact hc.inv⟩ (Or.inl (by rw [hm]; exact xn)) (Or.inr (Or.inl (by omega)))
+      by omega, by rw [hm, h28]; exact hc.inv⟩ (Or.inl (by rw [hm]; exact xn)) (Or.inr (Or.inl (by omega)))
     fun s' hpc' hsp' h28' h29' h18' hrg hpost => ?_
   obtain ⟨p', l', c', e0, e1, e2, L', b', ⟨hv', hn', hlc', hc40', hlive', hre, -⟩, -, ⟨hLE, hbud', hinv'⟩, hF',
     hLF'⟩ := hpost
@@ -79,21 +81,23 @@ theorem callTrX (hap : ImplApart Extracted.program impl) {ns : List String}
   rw [h28] at hinv'
   have hws : ∀ r ∈ [(bp + 8 * (1 * W lm), bp + 8 * (1 * W lm) + 8 * (2 * W lm))], WOK R L s st r := by
     intro r hr; simp only [List.mem_singleton] at hr; subst hr; exact wok_buf hc.scr (by omega) hin
-  have hsah := sa_hdr' hc.ain hc.bu hc.sa hc.sap hLE (fun b n h1 h2 => by
+  have hhdr : ∀ b n, st ≤ b → b + n ≤ st + 24 → s'.mem.readLE b n = M.readLE b n := fun b n h1 h2 => by
       have hd := hf.w.hd
       have hzs := (hz.2.2.2 (by omega)).1
       simp only [win, K, A, outside_cons, outside_nil, and_true] at hd
       unfold Apart at hzs
       exact rd_keep hf.w hspN hkT haT hF' hLF' (hc.sa.1.2.1.sub h1 h2) (by simp only [K, A]; omega)
-        fun r hr hr' => by simp only [List.mem_singleton] at hr; subst hr; simp only at hr' ⊢; omega)
-    hF'.accessible
-  have hc2 := keepC hc hf.w hspN hkT haT hws hF' hLF' hrg hLE hinv' hsah.1 hsah.2.1 hsah.2.2.1 hsah.2.2.2
+        fun r hr hr' => by simp only [List.mem_singleton] at hr; subst hr; simp only at hr' ⊢; omega
+  have hsah := sa_hdr' hc.ain hc.bu hc.sa hc.sap hLE hhdr hF'.accessible
+  obtain ⟨b2, hinv2, hbud2⟩ := P2Q.effL (r' := stkR (HP (stLen s.mem st) pl lm) s'.mem st) hinv' hbud' (by omega)
+    (stkR_congr (hhdr _ _ (by omega) (by omega)))
+  have hc2 := keepC hc hf.w hspN hkT haT hws hF' hLF' hrg hLE hinv2 hsah.1 hsah.2.1 hsah.2.2.1 hsah.2.2.2
   have hrs2 := rs0_call hrs hf hsapw (by omega) hspN hkT haT (fun r hr => List.mem_append_left _ hr) hws
     (Nat.le_refl _) (by omega) hF' hLF' hc2
   have hlW : l' ≤ W lm := len_le_w hn' (by rw [hv']; exact Nat.mod_lt _ (Nat.two_pow_pos _))
-  refine kT s' bp L' b' l' hpc' (hsp'.trans hsp) (h28'.trans h28) (h29'.trans h29) (h18'.trans h18) e0 e1 e2 hrs2
+  refine kT s' bp L' b2 l' hpc' (hsp'.trans hsp) (h28'.trans h28) (h29'.trans h29) (h18'.trans h18) e0 e1 e2 hrs2
     hlW (hv'.trans (by rw [xv, PV, p2_one])) hn' ?_
-  exact bud_step hb hbud' hmk
+  simp only [c0]; omega
 
 end
 

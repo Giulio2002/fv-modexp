@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.P2PreCall
 
+set_option autoImplicit false
+
 /-!
 # `buildPrecomputationWindowModPower2` (arm64): divmc's extra `sqr` / `mul` facts (`StkX`, `OpX`) from `Pre`/`Ctx`
 (agent infra)
@@ -16,7 +18,7 @@ open FvModexp.Arm64.EvenHyp
 open FvModexp.Arm64.ExpHyp (stWs RdIn WrOut)
 
 section
-variable {R : RtInv} {kc : Nat} {sqC : Nat → Nat → Nat} {mlC : Nat → Nat → Nat → Nat} {b : Nat}
+variable {R : RtInv} {kc : Nat} {sqC : Nat → Nat} {mlC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {st pw pl ws lm x xl : Nat} {s : State}
 
 /-- the free part at `M` is apart from what the entry free part and the runtime ranges are apart from (`h0`: the
