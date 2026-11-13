@@ -22,6 +22,7 @@ set_option maxHeartbeats 64000000 in
 theorem divPre_of {R : RtInv} {b B : Nat} {L : List (Nat × Nat)} {stk above : Nat} {s : State} {zA yA : Nat}
     (hIP : IntPre R b B L stk above [zA, yA] s) (hyv : 0 < IntV s.mem yA)
     (hpool : PoolG R s.mem (win s stk above)) (hX : ModX s.mem zA)
+    (hadx : s.mem.accessible Callees.adxAddr 1 false = true)
     {stkD aboveD : Nat} (hstkD : stkD + 120 ≤ stk) (habD : aboveD ≤ 112) (hab : 40 ≤ above)
     {zp zl zc yp yl yc : Nat}
     (hzp : s.mem.readLE (zA + 8) 8 = zp) (hzl : s.mem.readLE (zA + 16) 8 = zl) (hzc : s.mem.readLE (zA + 24) 8 = zc)
@@ -84,7 +85,7 @@ theorem divPre_of {R : RtInv} {b B : Nat} {L : List (Nat × Nat)} {stk above : N
       have := hG.2.2.2.2.2.2.2.2.2.1; simp only [win, outside_cons, outside_nil, and_true] at this ⊢; omega) hwin,
     hzlc, ⟨by omega, natLive_frame hzL hac, fun h => ?_⟩,
     ⟨by omega, fun h => ?_⟩, ?_, by omega, hyl0, by omega, natNorm_frame hF ?_ hzN, natNorm_frame hF ?_ hyN,
-    fun h => ⟨?_, hX h⟩, ?_, by omega, ?_⟩
+    fun h => ⟨?_, hX h⟩, ?_, by omega, by rw [hac]; exact hadx, ?_⟩
   · exact ⟨hwin _ _ (hzO h), by rw [hg]; exact hzG h, by rw [hfs]; exact hzT h⟩
   · have e1 : S3.mem.accessible zp (8 * zl) false = true := by
       rw [hac]; exact Janus.Arm64.Memory.accessible_weaken _
