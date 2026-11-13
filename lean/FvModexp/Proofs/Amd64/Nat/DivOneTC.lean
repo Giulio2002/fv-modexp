@@ -168,6 +168,6 @@ theorem oneC (impl : List Amd64.Segment) (R : RtInv)
     | (rw [hdf0]; rfl)
     | (simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact ofNat_modL _)
     | (simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte, BitVec.ofNat_toNat, BitVec.setWidth_eq])
-    | (trace_state; sorry)
+   
 
 end FvModexp.Amd64.NatDiv

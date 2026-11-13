@@ -1613,3 +1613,11 @@ LshRow 124, IntASRow 34 s (all PASS), MontRow audit-FAIL 245 s (no witness); **P
 KSqrB 14 s / 3.0 GB, KSqrS1c 14 s / 2.8, KSqrS1 13 s / 2.6, KSqrS2 11 s / 2.6, KSqrS3 17 s / 2.9, KSqrSub 20 s / 2.9,
 KSqrAdd1 54 s / 3.5, KSqrAdd2 75 s / 4.5 (largest; candidates: the cont's omega context), KSqrEndP 13 s / 2.9,
 KSqrEnd 17 s / 2.6, KSqrProD 12 s / 2.7; Amd64/Nat/AddTo (+ df conjunct) 134 s / 5.5 GB (was 110 s).
+## top s34 (2026-11-13, dev builds, load ~25, LEAN_NUM_THREADS=4)
+| module | time | peak |
+|---|---|---|
+| Amd64/Nat/DivLessF | 2 s | 2.3 GB |
+| Amd64/Nat/DivLessC | 93 s / 7.0 GB → 19 s / 2.6 GB (lessC1's post in pure `lessC1F`); with lessC0: 34 s | 2.8 GB |
+| Amd64/Nat/DivBig (big1) | 267 s → 11 s (named `case`s + `simp (disch := omega) only`, no `exact` alternatives in `first`) | 2.4 GB |
+| Amd64/Nat/DivBigRel / DivBigP / DivBigF / DivBigC | 2 / 3 / 5 / 7 s | ≤ 2.6 GB |
+| Amd64/Nat/Div (composition, `ens : HypL`) | 2 s | 2.5 GB |
