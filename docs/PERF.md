@@ -1543,3 +1543,16 @@ every module ≤ 81 s / 4.3 GB. Q vs old (same proofs, `stkR` budgets): BasicSqr
 KSqrAdd1 50 vs 46, KSqrPC 40 vs 42, SqrBM 38 vs 44, BasicSqrSmall 36 vs 39 — the Q-form costs nothing extra.
 (Pitfall measured in s35: a `stkR H P.mem st` fact passed where `stkR H s.mem st` is expected made BasicSqrPro hang
 > 15 min; `rw [stkR_congr eC]` first → 100 s.)
+
+## top s31 (2026-11-13) — amd64 divLarge DR branch + tail (dev builds, load ~40, memcap 8G)
+| module | time | peak |
+|---|---|---|
+| Amd64/Nat/DivLargeDRP (DrsPre at the drs call, pure) | 51 s | — |
+| Amd64/Nat/DivLargeDRR (dr3: drs call → AtD) | 39 s | — |
+| Amd64/Nat/DivLargeDRM (dr_mem, dr2, dr: joinQ → memclr → drs) | 28 s | 2.9 GB |
+| Amd64/Nat/DivLargeTN (qnorm/rnorm, AtR) | 25 s | 2.4 GB |
+| Amd64/Nat/DivLargeT1 (atR_of, t1_outs, t1r, t1c, t1) | 76 s | 3.8 GB |
+| Amd64/Nat/DivLargeTP (lpost, pure) | 3 s | 2.3 GB |
+LESSON: t1c first took > 10 min (killed): Outside/omega facts proved AFTER a `calls`-run (context holds the big
+write-chain post terms) or `∀`-facts placed in context BEFORE the run. Fix: a standalone pure lemma (`t1_outs`) taking
+only the numeric hypotheses, instantiated after the run; the post-return run in its own lemma (`t1r`) → 76 s.
