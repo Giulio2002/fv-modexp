@@ -28,8 +28,9 @@ namespace FvModexp.Arm64.ModRow
 abbrev fnModL : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.(*Int).Mod"
 
 /-- the precondition (`RunIface.ModSpec`'s, window 41808 / 32) -/
-@[reducible] def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (z y : BitVec 64) (s : State) : Prop :=
-  IntPre R b (ModBudget (max (lenW s.mem z.toNat) (lenW s.mem y.toNat))) L 41808 32 [z.toNat, y.toNat] s ∧
+@[reducible] def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (S : PoolShape) (z y : BitVec 64) (s : State) :
+    Prop :=
+  S = StkSh ∧ IntPre R b (ModBudget (max (lenW s.mem z.toNat) (lenW s.mem y.toNat))) L 41808 32 [z.toNat, y.toNat] s ∧
     0 < IntV s.mem y.toNat ∧ IntLenLe s.mem z.toNat maxW ∧ IntLenLe s.mem y.toNat maxW ∧
     PoolG R s.mem (win s 41808 32) ∧ ModX s.mem z.toNat
 
@@ -51,15 +52,18 @@ theorem correctness (impl : List Segment) (hap : ImplApart Extracted.program imp
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
     (hmz : MemmoveZeroLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
     (hno : NewobjectLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.newobject") 4096 R)
+    (S : PoolShape)
     (hget : PoolGetLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "sync.(*Pool).Get") 4096 R
-      Free.stkT StkSh)
+      Free.stkT S)
     (hput : PoolPutLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "sync.(*Pool).Put") 4096 R
-      Free.stkT StkSh)
+      Free.stkT S)
     (b : Nat) (L : List (Nat × Nat)) (z y : BitVec 64) :
     Ensures (Extracted.program.link impl) (segAddr Extracted.program fnModL) [z, z, y]
-      (Pre R b L z y) (Post R b L z y) :=
-  Ensures.full hap (IMod.ensC impl hap R hgr hmc hwb hwb4 hmk hmv hmz hno hget hput (stk := 41808) (above := 32)
-    (by decide) (by decide) b L z y)
+      (Pre R b L S z y) (Post R b L z y) := by
+  intro ret hret s hs ⟨hS, hp⟩
+  subst hS
+  exact Ensures.full hap (IMod.ensC impl hap R hgr hmc hwb hwb4 hmk hmv hmz hno hget hput (stk := 41808) (above := 32)
+    (by decide) (by decide) b L z y) ret hret s hs hp
 
 end FvModexp.Arm64.ModRow
 
@@ -106,8 +110,9 @@ theorem inv1 (gp : Nat) : R.inv 0x80000 [] gp (view R.rt [] mem0) := by
 theorem rtOut (a n : Nat) (h : WBUF + 64 ≤ a ∧ a + n ≤ HEAP) : Outside a n R.rt := by
   rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; simp only [BUMP, HEAP, WBUF] at *; omega
 
-theorem pre : (Pre R 0x80000 [] (BitVec.ofNat 64 OA) (BitVec.ofNat 64 (OA + 0x40)) s0) := by
+theorem pre : (Pre R 0x80000 [] StkSh (BitVec.ofNat 64 OA) (BitVec.ofNat 64 (OA + 0x40)) s0) := by
   unfold Pre
+  refine ⟨rfl, ?_⟩
   have hm : s0.mem = mem0 := rfl
   have hsp : s0.sp = BitVec.ofNat 64 SP0 := rfl
   have hg : s0.regs 28 = BitVec.ofNat 64 G0 := rfl
@@ -145,7 +150,7 @@ theorem hty : TysOK [] := by intro t ht; simp at ht
 
 /-- Every hypothesis of `correctness` and every conjunct of its precondition hold together: the shared witness runtime,
 budget `0x80000`, empty live set, `z.Mod(z, y)` with `z = 7`, `y = 3`; one call-site state per runtime contract. -/
-theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (z y : BitVec 64)
+theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (S : PoolShape) (b : Nat) (L : List (Nat × Nat)) (z y : BitVec 64)
     (ret : Nat) (s : State),
     ImplApart Extracted.program impl ∧
     GrowsliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.growslice") 4096 R ∧
@@ -158,12 +163,12 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
     MemmoveZeroLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R ∧
     NewobjectLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.newobject") 4096 R ∧
     PoolGetLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "sync.(*Pool).Get") 4096 R
-      Free.stkT StkSh ∧
+      Free.stkT S ∧
     PoolPutLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "sync.(*Pool).Put") 4096 R
-      Free.stkT StkSh ∧
+      Free.stkT S ∧
     RetAddr (Extracted.program.link impl) ret ∧
     CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program fnModL) [z, z, y] s ∧
-    Pre R b L z y s ∧
+    Pre R b L S z y s ∧
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.growslice") ∧
       grSite R (Extracted.program.contractAddr "runtime.growslice") L b s_c) ∧
@@ -197,7 +202,7 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
       s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "sync.(*Pool).Put") ∧
       putSite R (Extracted.program.contractAddr "sync.(*Pool).Put") L b rs s_c) ∧
     Returns ((Extracted.program.link impl).withExit ret) s fun s' => ABIReturn s s' ∧ Post R b L z y s s' :=
-  ⟨WStubs.impl, R, 0x80000, [], BitVec.ofNat 64 OA, BitVec.ofNat 64 (OA + 0x40), RET, s0, WStubs.hap,
+  ⟨WStubs.impl, R, StkSh, 0x80000, [], BitVec.ofNat 64 OA, BitVec.ofNat 64 (OA + 0x40), RET, s0, WStubs.hap,
     by rw [WStubs.addr_gr]; exact WStubs.gr [] hty _,
     by rw [WStubs.addr_cl]; exact WStubs.cl R,
     by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] hty _,
@@ -227,7 +232,7 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
       (by rw [WStubs.addr_cl]; exact WStubs.cl R) (by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] hty _)
       (by rw [WStubs.addr_wb4]; exact WStubs.wb4 [] hty _) (by rw [WStubs.addr_mk]; exact WStubs.mk [] hty _)
       (by rw [WStubs.addr_mv]; exact WStubs.mv R) (by rw [WStubs.addr_mv]; exact WStubs.mvz R)
-      (by rw [WStubs.addr_no]; exact WStubs.no [] hty _) (by rw [WStubs.addr_get]; exact WStubs.get [] _ _ _)
+      (by rw [WStubs.addr_no]; exact WStubs.no [] hty _) StkSh (by rw [WStubs.addr_get]; exact WStubs.get [] _ _ _)
       (by rw [WStubs.addr_put]; exact WStubs.put [] hty _ _ _) 0x80000 []
       (BitVec.ofNat 64 OA) (BitVec.ofNat 64 (OA + 0x40)) RET hret s0 setup pre⟩
 
