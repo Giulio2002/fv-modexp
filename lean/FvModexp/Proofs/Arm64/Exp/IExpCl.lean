@@ -9,6 +9,7 @@ import FvModexp.Proofs.Arm64.Exp.NCap
 import FvModexp.Proofs.Arm64.Exp.DivInst
 import FvModexp.Proofs.Arm64.Nat.RemC
 import FvModexp.Proofs.Arm64.Nat.DivC
+import FvModexp.Proofs.Arm64.Nat.DivCG
 
 set_option autoImplicit false
 
@@ -18,13 +19,12 @@ set_option autoImplicit false
 `IExp.ens` (`ExpSpecX`, then `toSpecM`) with the callee shapes discharged by the proved summaries:
 * `nat.div` (`DHyps.div`): asm's `NatDiv.ensCL` (twice: the outer `DHyps` at `K`, the inner one at `KN`);
 * `nat.expNNSlow` (`DHyps.slow`): expmc's `ExpSlow.hyp` with `nat.sqr` = `ExpSlow.sqrG` (divmc's `NatSqr` in the
-  empty-tolerant form), `nat.mul` = infra's `ExpEven.NatMulG.hypG`, `nat.div` = the premise `hdv : ExpSlow.DivHypLG`
-  (asm REQUEST "[expmc s38] DECISION 1 follow-up" — the ONLY open callee premise);
+  empty-tolerant form), `nat.mul` = infra's `ExpEven.NatMulG.hypG`, `nat.div` = asm's `NatDiv.ensCLG` (`ExpSlow.DivHypLG`);
 * `nat.expNNPowerOfTwo` (`DHyps.p2`): infra's `P2D.ens` with `CalleeInst`'s closed callees (as `P2DRow`);
 * `nat.rem`: asm's `NatRem.ensC`;
 * `nat.expNNEven`: infra's `ExpEven.fullI`, whose inner `nat.expNN` calls are expmc's `ExpN.ens_noEven` on a second
   `DHyps` at `KN` (`ExpNNHypNE.toNE1`).
-Remaining premises: the Janus runtime contracts (on `Extracted.program.ofImpl impl`), `hdv`, and the COST facts — the
+NO open callee premise. Remaining premises: the Janus runtime contracts (on `Extracted.program.ofImpl impl`) and the COST facts — the
 monotonicity premises of `fullI` (`hRm hSm hPm hNB hNC`) and `IExp.ens`'s budget bounds `hneed` / `hbud` (functions of the
 concrete callee costs, stated with them).
 -/
@@ -66,6 +66,8 @@ set_option maxHeartbeats 64000000 in
 theorem w_11 : LibW.names.contains Extracted.seg11.name = false := by decide
 set_option maxHeartbeats 64000000 in
 theorem rem_11 : LibRem.names.contains Extracted.seg11.name = false := by decide
+set_option maxHeartbeats 64000000 in
+theorem div_fn : NatDiv.names.contains ExpSlow.fn = false := by decide
 set_option maxHeartbeats 64000000 in
 theorem sqr_fn : NatSqr.names.contains ExpSlow.fn = false := by decide
 set_option maxHeartbeats 64000000 in
@@ -111,6 +113,18 @@ theorem slowCl {impl : List Segment} (hap : ImplApart Extracted.program impl) {R
   exact ExpSlow.hyp hap (nsSl_sub hnsD) (nsSl_fn hnfD) hsq hmu hdv' (by omega) (by omega) haD hmk hmv
     (by omega) (by omega) (by omega) (by rw [CalleeInst.mulWX_eq]; omega) (by omega)
 
+/-- **`nat.expNNSlow`** (arm64), EVERY callee proved (`div` = asm's `NatDiv.ensCLG`), window `71776` -/
+theorem slowC {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv}
+    (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
+    (hgr : GrowsliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.growslice") 4096 R)
+    (hmc : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
+    (hmv : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
+    (hmz : MemmoveZeroLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
+    (hwb : WbLiveContract (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2) :
+    NHyp.SlowHyp impl R LibW.names 71776 112 ExpSlow.need (ExpSlow.cost sqrC mulC (NatDiv.cost DivRec.drsC)) :=
+  slowCl hap hmk hgr hmc hmv hwb (NatDiv.ensCLG impl hap R hgr hmc hwb hmk hmv hmz) DivInst.ns_sub div_fn
+    (by omega) (by omega)
+
 open FvModexp.Arm64.CalleeInst FvModexp.Arm64.P2Wit in
 /-- **`nat.expNNPowerOfTwo`** (arm64), every callee proved (infra's `P2D.ens` + `CalleeInst`), window `71776` -/
 theorem p2Cl {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv}
@@ -127,7 +141,7 @@ theorem p2Cl {impl : List Segment} (hap : ImplApart Extracted.program impl) {R :
     (mu hap hgr hmc hmv hmk hwb) (by rw [mulWX_eq]; omega) (by omega) mum (tr hap hmv hmk) (by omega) (by omega)
     (rh hap hmv hmk) (by omega) (lh hap hmc hmv hmk) (by omega) 71776 (by omega) (by omega) (by omega) (by omega)
 
-/-- `nat.expNN`'s callee shapes at window level `K` (`70720 ≤ K`), every one proved except `hdv` -/
+/-- `nat.expNN`'s callee shapes at window level `K` (`70720 ≤ K`), every one proved -/
 theorem dhyps {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv}
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
     (hgr : GrowsliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.growslice") 4096 R)
@@ -136,15 +150,13 @@ theorem dhyps {impl : List Segment} (hap : ImplApart Extracted.program impl) {R 
     (hmz : MemmoveZeroLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
     (hno : NewobjectLiveContract (Extracted.program.ofImpl impl) (cA "runtime.newobject") 4096 R)
     (hwb : WbLiveContract (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2)
-    {nsD : List String} {kD aD : Nat} {dvC : Nat → Nat → Nat → Nat} (hdv : ExpSlow.DivHypLG impl R nsD kD aD dvC)
-    (hnsD : ∀ x, nsD.contains x = true → LibW.names.contains x = true) (hnfD : nsD.contains ExpSlow.fn = false)
-    (haD : aD ≤ 120) (hkD : kD ≤ 71344) {K : Nat} (hK : 70720 ≤ K) :
-    ExpN.DHyps impl R K (NatDiv.cost DivRec.drsC) ExpSlow.need P2D.needP (ExpSlow.cost sqrC mulC dvC)
+    {K : Nat} (hK : 70720 ≤ K) :
+    ExpN.DHyps impl R K (NatDiv.cost DivRec.drsC) ExpSlow.need P2D.needP (ExpSlow.cost sqrC mulC (NatDiv.cost DivRec.drsC))
       (P2D.cP sqrC mulC) NatDiv.names 41504 LibW.names 71776 LibW.names 71776 :=
   { mkN := MakesliceLiveContract.of_codeIn (libN_code impl hap) hmk, clr := hmc, mv := hmv, mkO := hmk, gr := hgr,
     wb := hwb, div := NatDiv.ensCL impl hap R hgr hmc hwb hmk hmv hmz, hnsD := DivInst.ns_sub,
     hnsW4 := DivInst.ns_w4, hnsW2 := DivInst.ns_w2, hKD := by omega,
-    slow := slowCl hap hmk hgr hmc hmv hwb hdv hnsD hnfD haD hkD, hnsS := w_n, hn11S := w_11, hKS := by omega,
+    slow := slowC hap hmk hgr hmc hmv hmz hwb, hnsS := w_n, hn11S := w_11, hKS := by omega,
     p2 := p2Cl hap hmk hgr hmc hmv hno hwb, hnsP := w_n, hn11P := w_11, hKP := by omega }
 
 /-- the slow / even need and cost functions of the closed `(*Int).exp` -/
@@ -154,8 +166,7 @@ abbrev needSE : Nat → Nat → Nat → Nat :=
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- **`(*Int).exp`** (arm64) as `Run` calls it, `ExpSpecM` (= `RunIface.ExpSpec` + `ModX z`), with EVERY callee of
-`nat.expNN` proved except `nat.expNNSlow`'s `div` (`hdv : ExpSlow.DivHypLG`, asm request open). Premises besides
-`hdv`: the Janus runtime contracts and the cost facts (`fullI`'s monotonicity `hRm hSm hPm hNB hNC`; `IExp.ens`'s
+`nat.expNN` proved. Premises: the Janus runtime contracts and the cost facts (`fullI`'s monotonicity `hRm hSm hPm hNB hNC`; `IExp.ens`'s
 budget bounds `hneed` / `hbud`). Windows: `nat.expNN` at `K` (outer) and `KN` (inside `expNNEven`). -/
 theorem ensCl (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
@@ -167,54 +178,51 @@ theorem ensCl (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     (hwb : WbLiveContract (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2)
     (hget : PoolGetLive (Extracted.program.ofImpl impl) (cA "sync.(*Pool).Get") 4096 R Free.stkT StkSh)
     (hput : PoolPutLive (Extracted.program.ofImpl impl) (cA "sync.(*Pool).Put") 4096 R Free.stkT StkSh)
-    {nsD : List String} {kD aD : Nat} {dvC : Nat → Nat → Nat → Nat} (hdv : ExpSlow.DivHypLG impl R nsD kD aD dvC)
-    (hnsD : ∀ x, nsD.contains x = true → LibW.names.contains x = true) (hnfD : nsD.contains ExpSlow.fn = false)
-    (haD : aD ≤ 120) (hkD : kD ≤ 71344)
     {K KN stkE : Nat} (hKN : 70720 ≤ KN) (hk1 : 71168 ≤ stkE) (hk2 : stkE ≤ 2 ^ 20 + 336) (hk3 : KN + 1648 ≤ stkE)
     (hstkE : stkE ≤ K + 1056) (hK20 : K + 288 ≤ 2 ^ 20)
     (hRm : ∀ x a a', a ≤ a' → NatRem.need x a ≤ NatRem.need x a')
     (hSm : ∀ x y a a', a ≤ a' → ExpSlow.need x y a ≤ ExpSlow.need x y a')
     (hPm : ∀ x y a a', a ≤ a' → P2D.needP x y a ≤ P2D.needP x y a')
     (hNB : ∀ x y a a' l l' k k', a ≤ a' → l ≤ l' → k ≤ k' →
-      ExpEven.NBudE (NatDiv.cost DivRec.drsC) (NatRem.cost (NatDiv.cost DivRec.drsC)) (ExpSlow.cost sqrC mulC dvC)
+      ExpEven.NBudE (NatDiv.cost DivRec.drsC) (NatRem.cost (NatDiv.cost DivRec.drsC)) (ExpSlow.cost sqrC mulC (NatDiv.cost DivRec.drsC))
           (P2D.cP sqrC mulC) x y a l k ≤
-        ExpEven.NBudE (NatDiv.cost DivRec.drsC) (NatRem.cost (NatDiv.cost DivRec.drsC)) (ExpSlow.cost sqrC mulC dvC)
+        ExpEven.NBudE (NatDiv.cost DivRec.drsC) (NatRem.cost (NatDiv.cost DivRec.drsC)) (ExpSlow.cost sqrC mulC (NatDiv.cost DivRec.drsC))
           (P2D.cP sqrC mulC) x y a' l' k')
     (hNC : ∀ x y a a' l l' k k', a ≤ a' → l ≤ l' → k ≤ k' →
-      ExpN.NCost (NatDiv.cost DivRec.drsC) (NatRem.cost (NatDiv.cost DivRec.drsC)) (ExpSlow.cost sqrC mulC dvC)
+      ExpN.NCost (NatDiv.cost DivRec.drsC) (NatRem.cost (NatDiv.cost DivRec.drsC)) (ExpSlow.cost sqrC mulC (NatDiv.cost DivRec.drsC))
           (P2D.cP sqrC mulC) x y a l k ≤
-        ExpN.NCost (NatDiv.cost DivRec.drsC) (NatRem.cost (NatDiv.cost DivRec.drsC)) (ExpSlow.cost sqrC mulC dvC)
+        ExpN.NCost (NatDiv.cost DivRec.drsC) (NatRem.cost (NatDiv.cost DivRec.drsC)) (ExpSlow.cost sqrC mulC (NatDiv.cost DivRec.drsC))
           (P2D.cP sqrC mulC) x y a' l' k')
     {stk above : Nat} (hK : K + 1632 ≤ stk) (h4416 : 4416 ≤ stk) (hab : 48 ≤ above)
     (hneed : ∀ xl yl n lm, xl ≤ 128 → yl ≤ 128 → 0 < n → n ≤ 128 → lm < 64 * n →
       NatRem.need xl n ≤ 2 ^ 16 ∧ needSE xl yl n ≤ 2 ^ 16 ∧ P2D.needP xl yl lm ≤ 2 ^ 16)
     (hbud : ∀ xl yl n lm, xl ≤ 128 → yl ≤ 128 → 0 < n → n ≤ 128 → lm < 64 * n →
       24 + (makeCost 1 + makeCost n + NatRem.cost (NatDiv.cost DivRec.drsC) 0 xl n +
-        ExpN.addC (ExpSlow.cost sqrC mulC dvC)
-          (ExpEven.costE (NatDiv.cost DivRec.drsC) (NatRem.cost (NatDiv.cost DivRec.drsC)) (ExpSlow.cost sqrC mulC dvC)
+        ExpN.addC (ExpSlow.cost sqrC mulC (NatDiv.cost DivRec.drsC))
+          (ExpEven.costE (NatDiv.cost DivRec.drsC) (NatRem.cost (NatDiv.cost DivRec.drsC)) (ExpSlow.cost sqrC mulC (NatDiv.cost DivRec.drsC))
             (P2D.cP sqrC mulC)
             (ExpEven.NBudE (NatDiv.cost DivRec.drsC) (NatRem.cost (NatDiv.cost DivRec.drsC))
-              (ExpSlow.cost sqrC mulC dvC) (P2D.cP sqrC mulC))
+              (ExpSlow.cost sqrC mulC (NatDiv.cost DivRec.drsC)) (P2D.cP sqrC mulC))
             (ExpN.NCost (NatDiv.cost DivRec.drsC) (NatRem.cost (NatDiv.cost DivRec.drsC))
-              (ExpSlow.cost sqrC mulC dvC) (P2D.cP sqrC mulC)) sqrC mulC mulC) 0 xl yl n +
+              (ExpSlow.cost sqrC mulC (NatDiv.cost DivRec.drsC)) (P2D.cP sqrC mulC)) sqrC mulC mulC) 0 xl yl n +
         P2D.cP sqrC mulC 0 xl yl lm + ExpOdd.OBud (NatDiv.cost DivRec.drsC) n xl yl 0) ≤
           RunIface.ExpBudget (max (max xl yl) n) yl ∧
       24 + ExpN.NCost (NatDiv.cost DivRec.drsC) (NatRem.cost (NatDiv.cost DivRec.drsC))
-        (ExpN.addC (ExpSlow.cost sqrC mulC dvC)
-          (ExpEven.costE (NatDiv.cost DivRec.drsC) (NatRem.cost (NatDiv.cost DivRec.drsC)) (ExpSlow.cost sqrC mulC dvC)
+        (ExpN.addC (ExpSlow.cost sqrC mulC (NatDiv.cost DivRec.drsC))
+          (ExpEven.costE (NatDiv.cost DivRec.drsC) (NatRem.cost (NatDiv.cost DivRec.drsC)) (ExpSlow.cost sqrC mulC (NatDiv.cost DivRec.drsC))
             (P2D.cP sqrC mulC)
             (ExpEven.NBudE (NatDiv.cost DivRec.drsC) (NatRem.cost (NatDiv.cost DivRec.drsC))
-              (ExpSlow.cost sqrC mulC dvC) (P2D.cP sqrC mulC))
+              (ExpSlow.cost sqrC mulC (NatDiv.cost DivRec.drsC)) (P2D.cP sqrC mulC))
             (ExpN.NCost (NatDiv.cost DivRec.drsC) (NatRem.cost (NatDiv.cost DivRec.drsC))
-              (ExpSlow.cost sqrC mulC dvC) (P2D.cP sqrC mulC)) sqrC mulC mulC))
+              (ExpSlow.cost sqrC mulC (NatDiv.cost DivRec.drsC)) (P2D.cP sqrC mulC)) sqrC mulC mulC))
         (P2D.cP sqrC mulC) xl yl n 0 lm ≤ RunIface.ExpBudget (max (max xl yl) n) yl) :
     ExpSpecM impl R stk above := by
-  have hDN := dhyps hap hmk hgr hmc hmv hmz hno hwb hdv hnsD hnfD haD hkD hKN
-  have hD := dhyps hap hmk hgr hmc hmv hmz hno hwb hdv hnsD hnfD haD hkD (K := K) (by omega)
+  have hDN := dhyps hap hmk hgr hmc hmv hmz hno hwb hKN
+  have hD := dhyps hap hmk hgr hmc hmv hmz hno hwb (K := K) (by omega)
   have hRem : NHyp.RemHyp impl R LibRem.names 41712 112 NatRem.need (NatRem.cost (NatDiv.cost DivRec.drsC)) :=
     NatRem.ensC impl hap R hgr hmc hwb hmk hmv hmz
   have hNE : EvenHyp.ExpNNHypNE impl R KN (NatDiv.cost DivRec.drsC) NatRem.need
-      (NatRem.cost (NatDiv.cost DivRec.drsC)) ExpSlow.need P2D.needP (ExpSlow.cost sqrC mulC dvC) (P2D.cP sqrC mulC) :=
+      (NatRem.cost (NatDiv.cost DivRec.drsC)) ExpSlow.need P2D.needP (ExpSlow.cost sqrC mulC (NatDiv.cost DivRec.drsC)) (P2D.cP sqrC mulC) :=
     fun b L zp zl zc st xp xl xc yp yl yc mp n mc slow =>
       ExpN.ens_noEven impl hap R hDN hRem rem_n rem_11 (by omega) b L zp zl zc st xp xl xc yp yl yc mp n mc slow
   have hEv := ExpEven.fullI hap hmk hgr hmc hmv hmz hwb (EvenHyp.ExpNNHypNE.toNE1 hNE) (by omega) (by omega)
