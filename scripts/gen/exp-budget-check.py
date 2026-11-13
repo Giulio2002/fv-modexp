@@ -281,7 +281,7 @@ def costE(xl, ml):
     return fixed + c3 + np.maximum(b4, c4)  # infra s43: costE eC1 = cU at wL3, eC2 = max bU cU at wL4 (landed)
 
 opCost = lambda w: alloc(1024 * w + 1024)
-ExpBudget = lambda w, yW: ((7 if TIGHT else 8) * (64 * yW) + 128) * opCost(w)
+ExpBudget = lambda w, yW: (8 * (64 * yW) + 128) * opCost(w)  # gate (coordinator): ExpBudget 128 128 <= 2^35; factor-free shape
 
 def row(n):
     """[(xl, yl, lhs1, lhs2)] for every xl, yl at modulus length n"""
