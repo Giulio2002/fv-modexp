@@ -1,6 +1,7 @@
 import FvModexp.Proofs.Arm64.Nat.DrsC5R
 import FvModexp.Proofs.Arm64.Nat.DrsC3
 import FvModexp.Proofs.Arm64.Nat.AddTo
+import FvModexp.Proofs.Arm64.Nat.DrsWs
 
 /-!
 # `divRecursiveStep` (arm64), correction loop: `addTo(uu[s:], v[s:])` (natdiv.go:842)
@@ -128,7 +129,7 @@ theorem c6 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
   have hwX : Asm.limbs X.mem (c.up + 8 * (j - 1)) (c.u1 - j + 1) =
       (stC (c.V s) (c.vl / 2 - 1) (c.P s j U).length stb).w.drop (c.vl / 2 - 1) := by
     rw [← hmc.wk, Asm.limbs_drop]
-    congr 1 <;> omega
+    exact limbs_eq2 (by omega) (by omega)
   have hvX : Asm.limbs X.mem (c.vp + 8 * (c.vl / 2 - 1)) (c.vl - c.vl / 2 + 1) = (c.V s).drop (c.vl / 2 - 1) := by
     show _ = (Asm.limbs s.mem c.vp c.vl).drop _
     rw [Asm.limbs_drop, show c.vl - (c.vl / 2 - 1) = c.vl - c.vl / 2 + 1 by omega]
@@ -141,10 +142,10 @@ theorem c6 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
         (by simp only [outside_cons, outside_nil, and_true]; omega)), hmc.wk]
     rw [show c.up + 8 * (j - c.vl / 2) + 8 * (c.vl / 2 - 1) = c.up + 8 * (j - 1) by omega, hzv, hwX, hvX]
     rfl
+  have hpn : c.up + 8 * (j - 1) + 8 * (c.u1 - j + 1) ≤ c.up + 8 * c.ul := by omega
   have hmcT : Mc R c s L' b' T.mem j Z U qv (Mdl.corrOnce (c.V s) (c.vl / 2 - 1) (c.P s j U).length stb) :=
     Mc.callN hmc hspn (by omega) (by omega) hMF hLF hx hinv hreg hb
-      (fun x n h => by simp only [Cx.ws, stkWs, outside_append, outside_cons, outside_nil, and_true] at h ⊢; omega)
-      (fun x n _ h => by simp only [Cx.ws, stkWs, outside_append, outside_cons, outside_nil, and_true] at h ⊢; omega)
+      (fun _ _ h => ws_up h (Nat.le_add_right _ _) hpn) (fun _ _ _ h => ws_up0 h (Nat.le_add_right _ _) hpn)
       (by simp only [win, outside_cons, outside_nil, and_true]; omega)
       (by unfold Apart at hus ⊢; omega) (by unfold Apart at huv ⊢; omega) (by unfold Apart; omega)
       (by unfold Apart at hqu ⊢; omega) (by unfold Apart; omega)

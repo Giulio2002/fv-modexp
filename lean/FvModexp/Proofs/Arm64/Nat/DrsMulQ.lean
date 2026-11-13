@@ -1,5 +1,6 @@
 import FvModexp.Proofs.Arm64.Nat.DrsCRel
 import FvModexp.Proofs.Arm64.Nat.DrsMulP
+import FvModexp.Proofs.Arm64.Nat.WinIn
 
 set_option autoImplicit false
 
@@ -153,8 +154,8 @@ theorem mul_post {R : RtInv} {c : Cx} {s S X T : State} {Lk : List (Nat × Nat)}
   have hl' : l' = (c.P s j U).length := by
     rw [hP, ← Asm.len_mul hNOF.1 hNOF.2.1 hvl, Asm.length_limbs]
   -- the environment
-  have hS : ∀ x k, Outside x k (winA s c.W 96) → Outside x k (winA X stkM aboveM) := fun x k ho => by
-    simp only [winA, outside_cons, outside_nil, and_true] at ho ⊢; rw [hsp]; omega
+  have hS : ∀ x k, Outside x k (winA s c.W 96) → Outside x k (winA X stkM aboveM) := fun _ _ ho =>
+    winA_in ho hsp (by omega) (by omega) (by omega)
   have hloc2 : Loc R c s (c.qv s S.mem) (8 * (qn + (c.vl / 2 - 1))) := by
     rcases hloc with ⟨h1, h2⟩ | ⟨hin, hap⟩
     · left; exact ⟨h1, by omega⟩

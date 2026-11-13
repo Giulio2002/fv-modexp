@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Nat.DrsDG
 import FvModexp.Proofs.Arm64.Nat.DrsC6
+import FvModexp.Proofs.Arm64.Nat.DrsWs
+import FvModexp.Proofs.Arm64.Nat.WinIn
 
 /-!
 # `divRecursiveStep` (arm64), end of a loop iteration: `addTo(z[j-B:], qhat)` (natdiv.go:851)
@@ -103,8 +105,8 @@ theorem d6 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
   have hreg : T.mem.regions = X.mem.regions := hrgT
   rw [h28] at hinv
   -- the environment (as in `Mc.callN`, the written range being `z[j-B:]`)
-  have hS : ∀ x m, Outside x m (winA s c.W 96) → Outside x m (winA X 4240 48) := fun x m ho => by
-    simp only [winA, outside_cons, outside_nil, and_true] at ho ⊢; rw [hspn]; omega
+  have hS : ∀ x m, Outside x m (winA s c.W 96) → Outside x m (winA X 4240 48) := fun _ _ ho =>
+    winA_in ho hspn (by omega) (by omega) (by omega)
   have hst' : Outside c.st 24 [(c.qp + 8 * (j - c.vl / 2), c.qp + 8 * (j - c.vl / 2) + 8 * (c.ql - (j - c.vl / 2)))] := by
     unfold Apart at hqs; simp only [outside_cons, outside_nil, and_true]; omega
   have hF' : MemFrame X.mem T.mem (R.rt ++ winA X 4240 48 ++
@@ -117,8 +119,8 @@ theorem d6 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
   obtain ⟨eW, -, eC⟩ := hdr_keep hcr hev hMF hLF hS hst'
   have hl : stLen s.mem c.st ≤ stLen X.mem c.st := by rw [hmc.fp.len]; simp only [Cx.l1]; omega
   have hEv : Ev R c s L' b' T.mem := Ev.callS hcr hev hl hF' hL' hS
-    (fun x m h => by simp only [Cx.ws, stkWs, outside_append, outside_cons, outside_nil, and_true] at h ⊢; omega)
-    (fun x m _ h => by simp only [Cx.ws, stkWs, outside_append, outside_cons, outside_nil, and_true] at h ⊢; omega)
+    (fun _ _ h => ws_qp h (by omega) (by omega))
+    (fun _ _ _ h => ws_qp0 h (by omega) (by omega))
     hx hinv hsb hreg
   have hFp : Fp R c s L' T.mem (c.l1 s + StackNat.rnd (3 * c.vl)) :=
     Fp.callS hcr hev hmc.fp (by simp only [Cx.l1, StackNat.rnd]; omega) hx hsb

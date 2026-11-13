@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Arm64.Nat.DrsFRel
+import FvModexp.Proofs.Arm64.Nat.WinIn
 
 /-!
 # `divRecursiveStep` (arm64), final block segment 3: relations of `qhat.norm()`, `stk.nat(3n)`, `clear(qhatv)` (pure)
@@ -163,8 +164,8 @@ theorem t3F_post {R : RtInv} {c : Cx} {s X T : State} {Lk : List (Nat × Nat)} {
     fun x n h1 h2 => rd_sub kt0 h1 h2
   -- the environment
   rw [hl] at hlen hsame hgrow hbud hmem
-  have hS : ∀ x k, Outside x k (winA s c.W 96) → Outside x k (winA X 4208 24) := fun x k ho => by
-    simp only [winA, outside_cons, outside_nil, and_true] at ho ⊢; rw [hspn]; omega
+  have hS : ∀ x k, Outside x k (winA s c.W 96) → Outside x k (winA X 4208 24) := fun _ _ ho =>
+    winA_in ho hspn (by omega) (by omega) (by omega)
   have hsar : (stW T.mem c.st = stW X.mem c.st ∧ stCap T.mem c.st = stCap X.mem c.st) ∨
       (InRanges (stW T.mem c.st) (8 * stCap T.mem c.st) R.rt ∧
         ApartAll (stW T.mem c.st) (8 * stCap T.mem c.st) Lk) := by

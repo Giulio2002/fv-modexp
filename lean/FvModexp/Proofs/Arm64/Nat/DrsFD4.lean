@@ -1,6 +1,7 @@
 import FvModexp.Proofs.Arm64.Nat.DrsFD3
 import FvModexp.Proofs.Arm64.Nat.DrsFC4
 import FvModexp.Proofs.Arm64.Nat.DrsD4
+import FvModexp.Proofs.Arm64.Nat.DrsWs
 
 /-!
 # `divRecursiveStep` (arm64), final block: `c := subVV(u[:len(qhatv)], u[:len(qhatv)], qhatv)` (natdiv.go:884)
@@ -132,10 +133,8 @@ theorem d4F (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     simp only [outside_cons, outside_nil, and_true]; omega
   have hmcT : McF R c s Lk bk m j Z U qv (stS (c.PF s U).length st) :=
     McF.callN hmc hspn (by omega) (by omega) hF' hL' (LiveExt.refl R Lk) hinv hregm (Nat.le_refl _)
-      (fun x n h => by
-        simp only [Cx.ws, stkWs, outside_append, outside_cons, outside_nil, and_true] at h ⊢; omega)
-      (fun x n _ h => by
-        simp only [Cx.ws, stkWs, outside_append, outside_cons, outside_nil, and_true] at h ⊢; omega)
+      (fun _ _ h => ws_up h (by omega) (by omega))
+      (fun _ _ _ h => ws_up0 h (by omega) (by omega))
       (by simp only [win, outside_cons, outside_nil, and_true]; omega)
       (by unfold Apart at hus ⊢; omega)
       (by unfold Apart at huv ⊢; omega)

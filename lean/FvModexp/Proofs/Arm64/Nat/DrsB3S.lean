@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Arm64.Nat.DrsA3
+import FvModexp.Proofs.Arm64.Nat.WinIn
 
 /-!
 # `divRecursiveStep` (arm64), loop body segment 3b: `qhatv := stk.nat(3n)`, `clear(qhatv)` (natdiv.go:829-830)
@@ -115,8 +116,8 @@ theorem b3m (impl : List Segment) (R : RtInv)
   have e1' : (X.regs 1).toNat = 8 * (3 * c.vl) := by rw [h1, BitVec.toNat_ofNat]; omega
   rw [e0, e1'] at hMF hLF hzr
   rw [show calleeStack X 4096 2 = winA X 4096 24 by simp only [calleeStack, winA]] at hMF
-  have hS : ∀ x n, Outside x n (winA s c.W 96) → Outside x n (winA X 4096 24) := fun x n ho => by
-    simp only [winA, outside_cons, outside_nil, and_true] at ho ⊢; rw [hspn]; omega
+  have hS : ∀ x n, Outside x n (winA s c.W 96) → Outside x n (winA X 4096 24) := fun _ _ ho =>
+    winA_in ho hspn (by omega) (by omega) (by omega)
   have hloc := (arr_loc (l := c.l1 s) hev (by simp only [Cx.l1]; omega) (Nat.le_refl _) hqin).out
   have hst : Outside c.st 24 [(c.qv s M, c.qv s M + 8 * (3 * c.vl))] := by
     have := hrg.st; unfold Apart at this; simp only [outside_cons, outside_nil, and_true]; omega
