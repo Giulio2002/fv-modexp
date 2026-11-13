@@ -114,7 +114,7 @@ theorem expW (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl
     (hm0 : 0 < IntV M mA) (hzl : IntLenLe M zA maxW) (hyl : IntLenLe M yA maxW) (hml : IntLenLe M mA maxW)
     (hOne : ∀ t : State, t.regs 4 = sp0 → OneG R L1 M (win t stkM aboveM) [zA, yA, mA])
     (hPool : ∀ t : State, t.regs 4 = sp0 → PoolG R M (win t stkM aboveM)) (hmA0 : mA ≠ 0) (hzwb : Apart zA 32 wbA 4)
-    (z y mm : BitVec 64) :
+    (hzX : ModX M zA) (z y mm : BitVec 64) :
     Summary (LibRun.program.link impl)
       (segAddr Extracted.program "github.com/ethereum/go-bigmodexpfix/src/math/big.(*Int).exp")
       (fun t => t.xmm 15 = 0 ∧ ArgsFrom64 t 0 [z, z, y, mm, 0#64] ∧ t.df = false ∧ t.regs 4 = sp0 ∧ t.mem = M ∧
@@ -130,7 +130,7 @@ theorem expW (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl
     subst hz hy hmm
     refine ⟨by rw [hm, hsp]; exact hRA, hx, ha, hdf, by rw [hm]; exact hIP t hsp hm h14 hfs, by rw [hm]; exact hm0,
       by rw [hm]; exact hzl, by rw [hm]; exact hyl, by rw [hm]; exact hml, by rw [hm]; exact hOne t hsp,
-      by rw [hm]; exact hPool t hsp, hmA0, hzwb⟩
+      by rw [hm]; exact hPool t hsp, hmA0, hzwb, by rw [hm]; exact hzX⟩
   · rintro t t' ⟨-, -, -, -, hm, -, -, hz, hy, hmm⟩ ⟨⟨hcs, hfs, hdf, h0, hpost⟩, hreg⟩
     subst hz hy hmm
     rw [hm] at hpost

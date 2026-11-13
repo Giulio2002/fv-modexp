@@ -72,8 +72,8 @@ theorem oneG_mono {R : RtInv} {L : List (Nat × Nat)} {m : Memory} {xs : List Na
 
 theorem ExpSpec.mono {impl : List Segment} {R : RtInv} {k a k' a' : Nat} (h : ExpSpec impl R k a) (hk : k ≤ k')
     (ha : a ≤ a') : ExpSpec impl R k' a' := fun b L z y mm =>
-  (h b L z y mm).mono (fun _ ⟨hp, h1, h2, h3, h4, h5, h6, h7, h8⟩ =>
-    ⟨intPre_mono hk ha hp, h1, h2, h3, h4, oneG_mono hk ha h5, poolG_mono hk ha h6, h7, h8⟩)
+  (h b L z y mm).mono (fun _ ⟨hp, h1, h2, h3, h4, h5, h6, h7, h8, h9⟩ =>
+    ⟨intPre_mono hk ha hp, h1, h2, h3, h4, oneG_mono hk ha h5, poolG_mono hk ha h6, h7, h8, h9⟩)
     fun _ _ _ ⟨h0, h1⟩ => ⟨h0, intPost_mono hk ha h1⟩
 
 end FvModexp.Arm64.RunIface

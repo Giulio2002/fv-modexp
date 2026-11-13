@@ -1,5 +1,5 @@
 import FvModexp.Proofs.Arm64.Top.RunOkRow
-import FvModexp.Proofs.Arm64.Exp.IExpFun
+import FvModexp.Proofs.Arm64.Exp.IExpSpec
 import FvModexp.Proofs.Arm64.Exp.DivInst
 import FvModexp.Proofs.Arm64.Nat.DivC
 
@@ -31,16 +31,10 @@ open FvModexp.Spec EthLib.Execution.Evm.Precompiles.Modexp
 
 namespace FvModexp.Arm64.Run
 
-/-- expmc's local form `IExp.ExpSpecX` gives the final `RunIface.ExpSpec`. -/
+/-- expmc's local form `IExp.ExpSpecX` gives the final `RunIface.ExpSpec` (= expmc's `IExp.ExpSpecM`, whose last pre
+conjunct `ModX` top folded into `ExpSpec`). -/
 theorem expSpec_of_X {impl : List Segment} {R : RtInv} {stk above : Nat} (h : IExp.ExpSpecX impl R stk above) :
-    RunIface.ExpSpec impl R stk above := fun b L z y mm =>
-  (h b L z y mm).mono
-    (fun s ⟨hIP, h1, h2, h3, h4, h5, hpool, hm0, hwb⟩ => by
-      refine ⟨hIP, h1, h2, h3, h4, h5, ⟨hpool, ?_, ?_, ?_, hm0, hwb⟩⟩
-      · exact (hIP.2.2.2.2.2.1 z.toNat (by simp)).1.2.2.2.2.2.2.2.2.2
-      · exact (hIP.2.2.2.2.2.1 y.toNat (by simp)).1.2.2.2.2.2.2.2.2.2
-      · exact (hIP.2.2.2.2.2.1 mm.toNat (by simp)).1.2.2.2.2.2.2.2.2.2)
-    fun _ _ _ ⟨h0, h1, _⟩ => ⟨h0, h1⟩
+    RunIface.ExpSpec impl R stk above := IExp.ExpSpecX.toSpecM h
 
 theorem libN_code (impl : List Segment) (hap : ImplApart Extracted.program impl) :
     CodeIn (Extracted.program.ofImpl impl) (LibN.program.link impl) := by
