@@ -35,7 +35,7 @@ def capB (H : Nat) : Nat := 4 * H + 11
 def stkRes (H : Nat) : Nat := potK * capB H
 
 /-- the part of the reserve not yet held in the stack's capacity -/
-def stkR (H : Nat) (m : Memory) (st : Nat) : Nat := stkRes H - potK * stCap m st
+@[reducible] def stkR (H : Nat) (m : Memory) (st : Nat) : Nat := stkRes H - potK * stCap m st
 
 theorem stkR_le (H : Nat) (m : Memory) (st : Nat) : stkR H m st ≤ stkRes H := by
   unfold stkR; omega
