@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.ModInvSegC
 
+set_option autoImplicit false
+
 /-!
 # `nat.modularInverseModPowerOfTwo` (arm64): loop round, `S1` → `zz = zz.trunc(zz, i·64)` → `S2` (agent infra)
 
@@ -16,23 +18,23 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 4000000 in
 /-- after `trunc` returns (`0x1b6eec`): `S2` -/
 theorem postL1 {J : Nat} {kc : Nat} (hkc : 4608 ≤ kc) {stkT aboveT : Nat} (hkT : stkT ≤ kc) (haT : aboveT ≤ 88)
-    {impl : List Segment} {R : RtInv} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
+    {impl : List Segment} {R : RtInv} {H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
-    (k2 : S2 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s 1797868 (ExL2 s n J) eL kL)
-    (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) (hn : 64 < n) {j p l c q ql qc : Nat}
+    (k2 : S2 impl R kc H sqrC mulC b L zp zl zc st xp xl xc n s 1797868 (ExL2 s n J) eL kL)
+    (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) (hn : 64 < n) {j p l c q ql qc : Nat}
     {L1 : List (Nat × Nat)} {b1 Zv : Nat} {M : Memory}
     (hmid : Mid R kc L s zp zc st xp xl xc n M L1 b1 p l c q ql qc)
-    (hj1 : 1 ≤ j) (hjn : 2 ^ (j - 1) < NW n) (hbud : spent sqrC mulC n j + roundCost sqrC mulC n ≤ b)
+    (hj1 : 1 ≤ j) (hjn : 2 ^ (j - 1) < NW n) (hbud : spent sqrC mulC xl n j + roundCost sqrC mulC xl n j (2 ^ j) ≤ b)
     (hcong : natVal s.mem xp xl * Zv % 2 ^ (2 ^ j * 32) = 1 % 2 ^ (2 ^ j * 32))
     (hi : M.readLE (s.sp.toNat - 80) 8 = 2 ^ j) (hi64 : M.readLE (s.sp.toNat - 64) 8 = 2 ^ j * 64)
-    (hjlt : LJ n J j) (hzs : ZS s M p l c) (hzv : natVal M p l = Zv) (hl0 : 0 < l) (hl : l ≤ NW n + 1)
-    (hv : natVal M q ql = Zv * Zv) (hql : ql ≤ 2 * NW n + 2) (hb : b - spent sqrC mulC n j - P1 sqrC n ≤ b1)
+    (hjlt : LJ n J j) (hzs : ZS s M p l c) (hzv : natVal M p l = Zv) (hl0 : 0 < l) (hl : l ≤ zB n j)
+    (hv : natVal M q ql = Zv * Zv) (hql : ql ≤ 2 * NW n + 2) (hb : b - spent sqrC mulC xl n j - P1 sqrC n j + stkR H M st ≤ b1)
     {S' s' : State} (hsp : S'.sp = BitVec.ofNat 64 (s.sp.toNat - 240)) (h28 : S'.regs 28 = s.regs 28)
     (h18 : S'.regs 18 = s.regs 18) (hm : S'.mem = M)
     (hpc' : s'.pc = BitVec.ofNat 64 1797868) (hsp' : s'.sp = S'.sp) (h28' : s'.regs 28 = S'.regs 28)
     (h18' : s'.regs 18 = S'.regs 18) (hreg : s'.mem.regions = S'.mem.regions)
     (hpost : TruncPost R b1 L1 stkT aboveT q qc q ql (2 ^ j * 64) S' s') :
-    Goal impl R kc sqrC mulC b L zp zc st xp xl n s s' := by
+    Goal impl R kc H sqrC mulC b L zp zc st xp xl n s s' := by
   obtain ⟨q', ql', qc', e0, e1, e2, L', b', ⟨hv', hn', hlc', hc40', hlive', hreuse, -⟩, -, ⟨hLE, hbud', hinv'⟩,
     hF', hLF'⟩ := hpost
   have hqlc : ql ≤ qc := hmid.2.2.2.2.2.2.1
@@ -49,23 +51,25 @@ theorem postL1 {J : Nat} {kc : Nat} (hkc : 4608 ≤ kc) {stkT aboveT : Nat} (hkT
   have hvl : natVal s'.mem q ql' < 2 ^ (64 * 2 ^ j) := by
     rw [hv', show 64 * 2 ^ j = 2 ^ j * 64 by omega]; exact Nat.mod_lt _ (Nat.two_pow_pos _)
   have hlen : ql' ≤ NW n := Nat.le_trans (len_le hn' hvl) (Nat.le_of_lt hjlt.1)
+  have hlenK : ql' ≤ 2 ^ j := len_le hn' hvl
   have hmc := makeCost_mono (a := truncNeed ql (2 ^ j * 64)) (b := 2 * NW n + 2)
     (by unfold truncNeed; exact Nat.le_trans (Nat.min_le_left _ _) hql) (by omega)
   clear hvl
   exact k2 s' j p l c q ql' qc L' b' Zv ⟨⟨hpre⟩, hn, hsp'.trans hsp, h28'.trans h28, h18'.trans h18, ⟨mid2⟩, hj1,
     hjn, hbud, hcong⟩ hpc'
     ⟨slot_keep hsl hsp0 (by decide) (by decide) hi, slot_keep hsl hsp0 (by decide) (by decide) hi64, hjlt⟩
-    (zs_keep hsl hsp0 hzs) (hzv2.trans hzv) hl0 hl e0 e1 e2 (by rw [hv', hv]) hn' hlen (bud_step hb hbud' hmc)
+    (zs_keep hsl hsp0 hzs) (hzv2.trans hzv) hl0 hl e0 e1 e2 (by rw [hv', hv]) hn' hlen hlenK
+    (bud_stepP (by rw [← stkR_congr se2] at hb; exact hb) hbud (by simp only [roundCost, P1]; omega) hbud' hmc)
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem segL1 {J : Nat} {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
     {stkT aboveT : Nat} (htr : Trunc.Hyp2 impl R ns stkT aboveT) {kc : Nat} (hkc : 4608 ≤ kc)
-    (hkT : stkT ≤ kc) (haT : aboveT ≤ 88) {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
+    (hkT : stkT ≤ kc) (haT : aboveT ≤ 88) {H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
-    (k2 : S2 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s 1797868 (ExL2 s n J) eL kL) :
-    S1 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s 1797840 (ExL1 s n J) eL kL := by
+    (k2 : S2 impl R kc H sqrC mulC b L zp zl zc st xp xl xc n s 1797868 (ExL2 s n J) eL kL) :
+    S1 impl R kc H sqrC mulC b L zp zl zc st xp xl xc n s 1797840 (ExL1 s n J) eL kL := by
   intro S j p l c q ql qc L1 b1 Zv hrc hpc hex hzs hzv hl0 hl h0 h1 h2 hv hnq hql hb
   obtain ⟨hpreB, hn, hsp, h28, h18, hmidB, hj1, hjn, hbud, hcong⟩ := hrc
   obtain ⟨hi, hjlt⟩ := hex
@@ -83,6 +87,8 @@ theorem segL1 {J : Nat} {impl : List Segment} (hap : ImplApart Extracted.program
   have hi' : S.mem.readLE (s.sp.toNat - 240 + 160) 8 = 2 ^ j := by
     rw [show s.sp.toNat - 240 + 160 = s.sp.toNat - 80 by omega]; exact hi
   have hsh := lsl6_pow j ((Nat.pow_lt_pow_iff_right (by omega)).1 hjb)
+  have hbB := Box.mk hb
+  clear hb
   unfold Goal
   janus_run [hi', hsh] until [1786000]
   have hpre := hpreB.h
@@ -90,6 +96,11 @@ theorem segL1 {J : Nat} {impl : List Segment} (hap : ImplApart Extracted.program
   clear hpreB hmidB
   have hsp0 : 248 ≤ s.sp.toNat := by omega
   have ea : s.sp.toNat - 240 + 176 = s.sp.toNat - 64 := by omega
+  -- (s45) the budget fact at the memory after the `i·64` store
+  have hb : b - spent sqrC mulC xl n j - P1 sqrC n j +
+      stkR H (S.mem.writeLE (s.sp.toNat - 240 + 176) 8 (2 ^ j * 64)) st ≤ b1 := by
+    rw [stkR_congr (cap_slot hpre _ (a := s.sp.toNat - 240 + 176) _ (by omega) (by omega))]; exact hbB.h
+  clear hbB
   have hF : MemFrame S.mem (S.mem.writeLE (s.sp.toNat - 240 + 176) 8 (2 ^ j * 64)) (winA s (K kc) A) :=
     frame_slot S.mem _ (by omega) (by omega)
   have hfw := fw2_slot (a := s.sp.toNat - 64) hmid.1 (2 ^ j * 64) hsp0 (by omega) (by omega) (by omega)
@@ -103,7 +114,7 @@ theorem segL1 {J : Nat} {impl : List Segment} (hap : ImplApart Extracted.program
     fun s' hpc' hsp' h28' h29' h18' hreg' hpost => postL1 hkc hkT haT k2 hpre hn hmid' hj1 hjn hbud hcong
       ?_ ?_ hjlt ?_ ?_ hl0 hl ?_ hql hb rfl ?_ ?_ rfl hpc' hsp' h28' h18' hreg' hpost
   all_goals try janus_simp
-  · exact bud_ok hb hbud (m := makeCost (2 * NW n + 2)) (by simp only [roundCost, P1]; omega)
+  · exact bud_okP hb hbud (m := makeCost (2 * NW n + 2)) (by simp only [roundCost, P1]; omega)
       (makeCost_mono (by unfold truncNeed; exact Nat.le_trans (Nat.min_le_left _ _) hql) (by omega))
   · exact hi
   · exact zs_store _ hzs (by omega) (by omega)

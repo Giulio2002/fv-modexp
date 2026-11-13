@@ -90,12 +90,12 @@ theorem sumO {impl : List Segment} (hap : ImplApart Extracted.program impl) {R :
       fun _ ⟨⟨a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10⟩, h⟩ => ⟨a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, h⟩
     rcases hc with ⟨rfl, -⟩ | ⟨rfl, -⟩
     · exact winCall (cW := fun ℓ => P2W2.cost sqC mlC ℓ yl lm) hP (by omega) hA hXo (by omega)
-        (Nat.le_trans (Nat.le_add_right _ _) (Nat.le_add_right _ _)) hr4 hr48
+        (Nat.le_trans (Nat.le_max_left _ _) (Nat.le_add_right _ _)) hr4 hr48
         (Summary.mono (P2W2.fullC hap hns hnf2 hnfP hgr hmc hmv hmk hno hwb hkc hsn hkN haN hsq hkS haS hsm hmu hkM haM hmm
           htr hkT haT b L (stk - 112) (by omega) (by omega) zp zl zc st xp xl xc yp yl yc lm hzp hxc) reg (fun _ _ _ h => h))
         (Or.inl rfl) S1 h1pc (h1sp.trans esp) hR1 (h18.trans e18) (h128.trans e28) h130 (h1m.trans hm)
     · exact winCall (cW := fun ℓ => P2W4.cost sqC mlC ℓ yl lm) hP (by omega) hA hXo (by omega)
-        (Nat.le_trans (Nat.le_add_left _ _) (Nat.le_add_right _ _)) hr4 hr48
+        (Nat.le_trans (Nat.le_max_right _ _) (Nat.le_add_right _ _)) hr4 hr48
         (Summary.mono (P2W4.fullC hap hns hnf4 hnfP hgr hmc hmv hmk hno hwb hkc hsn hkN haN hsq hkS haS hsm hmu hkM haM hmm
           htr hkT haT b L (stk - 112) (by omega) (by omega) zp zl zc st xp xl xc yp yl yc lm hzp hxc) reg (fun _ _ _ h => h))
         (Or.inr rfl) S1 h1pc (h1sp.trans esp) hR1 (h18.trans e18) (h128.trans e28) h130 (h1m.trans hm)

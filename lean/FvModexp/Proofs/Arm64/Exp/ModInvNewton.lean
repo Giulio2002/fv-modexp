@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.ModInvDefs
 
+set_option autoImplicit false
+
 /-!
 # `nat.modularInverseModPowerOfTwo` (arm64): the Newton loop (nat.go:1297-1300) (agent infra)
 

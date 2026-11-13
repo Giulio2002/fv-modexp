@@ -25,14 +25,14 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in
 /-- **`J10` → `J11`** (see the module doc) -/
 theorem segMi {impl : List Segment} (hap : ImplApart Extracted.program impl) {kc : Nat}
-    {sqC : Nat → Nat → Nat} {mlC : Nat → Nat → Nat → Nat} (hE : MiEns impl R kc sqC mlC)
+    {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} (hE : MiEns impl R kc sqrC mulC)
     (hK : 240 + kc ≤ K) (hkc : 4608 ≤ kc)
     (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) (hM : 0 < natVal s.mem mp ml)
     (hev : natVal s.mem mp ml % 2 = 0)
     (hs16 : ∀ l1 l2, l1 ≤ ml → l2 ≤ ml → lvl4 s st mp ml l1 l2 + 8 * ModInv.NW (nE s mp ml) + 72 ≤ 2 ^ 16)
     {rk rk' : Nat}
     (hrk : ∀ l1 l2, l1 ≤ ml → l2 ≤ ml →
-      ModInv.cost (sqC (lvl4 s st mp ml l1 l2)) (mlC (lvl4 s st mp ml l1 l2)) (nE s mp ml) + rk' ≤ rk)
+      ModInv.cost sqrC mulC l2 (nE s mp ml) + stkRes (lvl4 s st mp ml l1 l2 + ModInv.D (nE s mp ml)) + rk' ≤ rk)
     {ret0 : BitVec 64} {Q : State → Prop}
     (K11 : ∀ (S : State) (L1 : List (Nat × Nat)) (b1 l1 q l2 pw lw cw pZ cZ p3 l3 c3 p4 l4 c4 : Nat),
       J11 R L K g sp st zp zc xp xl xc yp yl yc mp ml mc ret s rk' S L1 b1 l1 q l2 pw lw cw pZ cZ p3 l3 c3 p4 l4 c4 →
@@ -95,7 +95,7 @@ theorem segMi {impl : List Segment} (hap : ImplApart Extracted.program impl) {kc
   have hsN : S2.sp.toNat = sp := by rw [hS2, BitVec.toNat_ofNat]; omega
   have hgN : (S2.regs 28).toNat = g := by rw [h28, BitVec.toNat_ofNat]; have := hP.1.2.2.1; omega
   -- the call
-  have hpre := miPre hP hw2 hK hkc hS2 h28 fm (sqC := sqC) (mlC := mlC) f30 ⟨by decide, by decide⟩
+  have hpre := miPre hP hw2 hK hkc hS2 h28 fm (sqrC := sqrC) (mulC := mulC) f30 ⟨by decide, by decide⟩
     hm1 h.c1p hp1 hm2 hl20 (by omega) hodd h.ap (by omega) (by omega) (hs16 l1 l2 hl1 hl2)
     (bud_pre hb1 (hrk l1 l2 hl1 hl2))
   have hS := CallNE.hypSum hap libW_sub (hE (lvl4 s st mp ml l1 l2) b1 L1 p1 l1 c1 st q l2 (a2 ml (nE s mp ml))

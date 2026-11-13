@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.ModInvJoin
 
+set_option autoImplicit false
+
 /-!
 # `nat.modularInverseModPowerOfTwo` (arm64): helpers shared by the round segments (agent infra)
 
@@ -73,12 +75,20 @@ theorem slot_keep {s : State} {M M' : Memory} (h : SlotsKept s M M') (hsp : 240 
   (h _ (by omega) (by omega)).trans hv
 
 /-- one budget step: the callee spent at most `m` -/
-theorem bud_step {b S p b1 mc m b' : Nat} (hb : b - S - p ≤ b1) (h' : b1 - mc ≤ b') (hm : mc ≤ m) :
-    b - S - (p + m) ≤ b' := by omega
+theorem bud_step {b S p b1 mc m b' r r' : Nat} (hb : b - S - p + r ≤ b1) (h' : b1 - (mc + r) + r' ≤ b')
+    (hm : mc ≤ m) : b - S - (p + m) + r' ≤ b' := by omega
+
+/-- one budget step through a callee that keeps the stack capacity (plain cost, same reserve) -/
+theorem bud_stepP {b S rc p b1 mc m b' r : Nat} (hb : b - S - p + r ≤ b1) (hbud : S + rc ≤ b) (hp : p + m ≤ rc)
+    (h' : b1 - mc ≤ b') (hm : mc ≤ m) : b - S - (p + m) + r ≤ b' := by omega
 
 /-- a callee's charge fits the budget left in the round -/
-theorem bud_ok {b S rc p b1 m mc : Nat} (hb : b - S - p ≤ b1) (hbud : S + rc ≤ b) (hp : p + m ≤ rc) (hm : mc ≤ m) :
-    mc ≤ b1 := by omega
+theorem bud_ok {b S rc p b1 m mc r : Nat} (hb : b - S - p + r ≤ b1) (hbud : S + rc ≤ b) (hp : p + m ≤ rc)
+    (hm : mc ≤ m) : mc + r ≤ b1 := by omega
+
+/-- `bud_ok` without the reserve (a plain callee's charge) -/
+theorem bud_okP {b S rc p b1 m mc r : Nat} (hb : b - S - p + r ≤ b1) (hbud : S + rc ≤ b) (hp : p + m ≤ rc)
+    (hm : mc ≤ m) : mc ≤ b1 := by omega
 
 /-- `z`'s slots survive a store below them -/
 theorem zs_store {s : State} {M : Memory} {p l c a : Nat} (v : Nat) (hz : ZS s M p l c) (ha : a + 8 ≤ s.sp.toNat - 56)
@@ -105,11 +115,11 @@ theorem len_pos {X Zv j : Nat} {m : Memory} {p l : Nat} (hc : X * Zv % 2 ^ (2 ^ 
     omega
   · exact h0
 
-theorem bud_ok0 {b S rc b1 m mc : Nat} (hb : b - S ≤ b1) (hbud : S + rc ≤ b) (hp : m ≤ rc) (hm : mc ≤ m) :
-    mc ≤ b1 := by omega
+theorem bud_ok0 {b S rc b1 m mc r : Nat} (hb : b - S + r ≤ b1) (hbud : S + rc ≤ b) (hp : m ≤ rc) (hm : mc ≤ m) :
+    mc + r ≤ b1 := by omega
 
-theorem bud_step0 {b S b1 mc m b' : Nat} (hb : b - S ≤ b1) (h' : b1 - mc ≤ b') (hm : mc ≤ m) :
-    b - S - m ≤ b' := by omega
+theorem bud_step0 {b S b1 mc m b' r r' : Nat} (hb : b - S + r ≤ b1) (h' : b1 - (mc + r) + r' ≤ b') (hm : mc ≤ m) :
+    b - S - m + r' ≤ b' := by omega
 
 /-- `NatNorm` from equal prefixes -/
 theorem norm_keep {M M' : Memory} {o oc l : Nat} (h : ∀ k, k ≤ oc → M'.readLE o (8 * k) = M.readLE o (8 * k))
@@ -134,7 +144,7 @@ theorem norm_keep {M M' : Memory} {o oc l : Nat} (h : ∀ k, k ≤ oc → M'.rea
 @[reducible] def kF (n _j : Nat) : Nat := NW n
 
 section
-variable {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
+variable {R : RtInv} {kc : Nat} {H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
 
 /-- an owned array's words through stack-slot stores -/
@@ -152,7 +162,7 @@ theorem own_norm {L1 : List (Nat × Nat)} {M M' : Memory} {p c : Nat} (h : Own R
 
 set_option maxRecDepth 20000 in
 /-- the round facts survive stack-slot stores -/
-theorem mid_frame (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M M' : Memory}
+theorem mid_frame (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) {M M' : Memory}
     {L1 : List (Nat × Nat)} {b1 p l c q ql qc : Nat} (hmid : Mid R kc L s zp zc st xp xl xc n M L1 b1 p l c q ql qc)
     (hF : MemFrame M M' (winA s (K kc) A)) (hreg : M'.regions = M.regions) (hfw : Fw2 s M' st xp xl xc n) :
     Mid R kc L s zp zc st xp xl xc n M' L1 b1 p l c q ql qc := by
@@ -168,7 +178,6 @@ theorem mid_frame (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M M'
     own_mono hzz (LiveExt.refl R L1) hF.accessible e0 e1 e2, r⟩
 
 end
-
 end FvModexp.Arm64.ModInv
 
 namespace FvModexp.Arm64.ModInv
@@ -182,9 +191,9 @@ open FvModexp.Arm64.EvenHyp
 
 set_option maxRecDepth 20000 in
 /-- `zz`'s spills: the round facts survive, `zz`'s slots hold it, other slots and the owned arrays unchanged -/
-theorem store_zz {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
+theorem store_zz {R : RtInv} {kc : Nat} {H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
-    (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory}
+    (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory}
     {L1 : List (Nat × Nat)} {b1 p l c q ql qc : Nat} (hmid : Mid R kc L s zp zc st xp xl xc n M L1 b1 p l c q ql qc)
     (hq : q < 2 ^ 64) (hql : ql < 2 ^ 64) (hqc : qc < 2 ^ 64) (hkc : 4608 ≤ kc) :
     Mid R kc L s zp zc st xp xl xc n (memZZ s M q ql qc) L1 b1 p l c q ql qc ∧ QS s (memZZ s M q ql qc) q ql qc ∧
@@ -245,11 +254,28 @@ theorem final_step {m : Memory} {xp xl Zv j n : Nat} (hx : NatNorm m xp xl) (hod
     rw [SubMod2N.norm_nlen m xp xl hx]; exact Exp.natVal_prefix m xp _ xl (Nat.min_le_right _ _)
   rw [e]; exact Exp.final_val _ _ _ _ hodd hn hj hc
 
-theorem spent_succ (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (n j : Nat) (hj : 1 ≤ j) :
-    spent sqrC mulC n (j + 1) = spent sqrC mulC n j + roundCost sqrC mulC n := by
-  simp only [spent, Nat.add_sub_cancel]
-  have : j * roundCost sqrC mulC n = (j - 1) * roundCost sqrC mulC n + roundCost sqrC mulC n := by
-    rw [← Nat.succ_mul, show (j - 1).succ = j by omega]
+theorem spent_succ (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (xl n j : Nat) (hj : 1 ≤ j) :
+    spent sqrC mulC xl n (j + 1) = spent sqrC mulC xl n j + roundCost sqrC mulC xl n j (2 ^ j) := by
+  obtain ⟨k, rfl⟩ : ∃ k, j = k + 1 := ⟨j - 1, by omega⟩
+  simp only [spent, Nat.add_sub_cancel, sumR_succ]
   omega
+
+/-- (s45) the stack header lies outside the frame window -/
+theorem st_out {R : RtInv} {kc H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
+    {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
+    (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) :
+    st + 24 ≤ s.sp.toNat - (240 + kc) ∨ s.sp.toNat + 72 ≤ st := by
+  obtain ⟨-, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, ⟨-, hstw, -, -⟩, -⟩ := hpre
+  simp only [win, outside_cons, outside_nil, and_true, K, A] at hstw
+  omega
+
+/-- (s45) a frame-slot store keeps the stack capacity (for `stkR_congr`) -/
+theorem cap_slot {R : RtInv} {kc H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
+    {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
+    (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) (m : Memory) {a : Nat} (v : Nat)
+    (h1 : s.sp.toNat - (240 + kc) ≤ a) (h2 : a + 8 ≤ s.sp.toNat + 72) :
+    stCap (m.writeLE a 8 v) st = stCap m st := by
+  have := st_out hpre
+  exact Memory.readLE_writeLE_of_disjoint (m := m) v (by omega)
 
 end FvModexp.Arm64.ModInv

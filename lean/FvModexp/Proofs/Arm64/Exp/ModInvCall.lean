@@ -4,6 +4,8 @@ import FvModexp.Proofs.Arm64.Exp.ModInvSeg3
 import FvModexp.Proofs.Arm64.Nat.TruncDefs
 import FvModexp.Proofs.Arm64.Nat.LshDefs
 
+set_option autoImplicit false
+
 /-!
 # `nat.modularInverseModPowerOfTwo` (arm64): generic call helpers for `nat.sqr` / `nat.mul` / `nat.lsh` (agent infra)
 

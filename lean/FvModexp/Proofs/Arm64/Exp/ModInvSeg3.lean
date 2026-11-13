@@ -1,6 +1,8 @@
 import FvModexp.Proofs.Arm64.Exp.ModInvRt
 import FvModexp.Proofs.Common.ModInvRound
 
+set_option autoImplicit false
+
 /-!
 # `nat.modularInverseModPowerOfTwo` (arm64): the Hensel loop head `J2` (agent infra)
 
@@ -24,14 +26,14 @@ open FvModexp.Arm64.EvenHyp
     M.readLE (s.sp.toNat - 40) 8 = n + 63 ∧ M.readLE (s.sp.toNat - 112) 8 = NW n
 
 /-- the budget spent before round `j` -/
-@[reducible] def spent (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (n j : Nat) : Nat :=
-  makeCost (NW n + 1) + makeCost (2 * NW n) + (j - 1) * roundCost sqrC mulC n
+@[reducible] def spent (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (xl n j : Nat) : Nat :=
+  makeCost (NW n + 1) + makeCost (2 * NW n) + sumR sqrC mulC xl n (j - 1)
 
 /-- **J2** at round `j`: the loop head (see the module doc) -/
-def J2j (impl : List Segment) (R : RtInv) (kc : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
+def J2j (impl : List Segment) (R : RtInv) (kc H : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
     (L : List (Nat × Nat)) (zp zl zc st xp xl xc n : Nat) (s : State) (j : Nat) : Prop :=
   ∀ (S : State) (p l c q ql qc : Nat) (L1 : List (Nat × Nat)) (b1 : Nat),
-    Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s → 64 < n →
+    Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s → 64 < n →
     S.pc = BitVec.ofNat 64 1798064 → S.sp = BitVec.ofNat 64 (s.sp.toNat - 240) →
     S.regs 28 = s.regs 28 → S.regs 18 = s.regs 18 →
     S.regs 0 = BitVec.ofNat 64 (2 ^ j) → S.regs 1 = BitVec.ofNat 64 l → S.regs 2 = BitVec.ofNat 64 c →
@@ -40,17 +42,17 @@ def J2j (impl : List Segment) (R : RtInv) (kc : Nat) (sqrC : Nat → Nat) (mulC 
     S.regs 3 = BitVec.ofNat 64 st → S.regs 4 = BitVec.ofNat 64 xp → S.regs 5 = BitVec.ofNat 64 xl →
     S.regs 6 = BitVec.ofNat 64 xc → S.regs 7 = BitVec.ofNat 64 n → S.regs 8 = BitVec.ofNat 64 (n + 63) →
     S.regs 9 = BitVec.ofNat 64 (NW n) →
-    Fw2 s S.mem st xp xl xc n → RtM R kc L s zp zc st S.mem L1 b1 → b - spent sqrC mulC n j ≤ b1 →
+    Fw2 s S.mem st xp xl xc n → RtM R kc L s zp zc st S.mem L1 b1 → b - spent sqrC mulC xl n j + stkR H S.mem st ≤ b1 →
     Own R kc L L1 s zp zc st xp xl S.mem p c → Own R kc L L1 s zp zc st xp xl S.mem q qc →
-    NW n + 1 ≤ c → l ≤ NW n + 1 → l ≤ c → ql ≤ qc → 0 < qc → 1 ≤ j → 2 ^ (j - 1) < NW n →
+    NW n + 1 ≤ c → l ≤ zB n j → l ≤ c → ql ≤ qc → 0 < qc → 1 ≤ j → 2 ^ (j - 1) < NW n →
     Apart p (8 * c) q (8 * qc) →
     natVal s.mem xp xl * natVal S.mem p l % 2 ^ (2 ^ j * 32) = 1 % 2 ^ (2 ^ j * 32) →
-    Goal impl R kc sqrC mulC b L zp zc st xp xl n s S
+    Goal impl R kc H sqrC mulC b L zp zc st xp xl n s S
 
 /-- **J2**: the loop head at every round -/
-def J2 (impl : List Segment) (R : RtInv) (kc : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
+def J2 (impl : List Segment) (R : RtInv) (kc H : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
     (L : List (Nat × Nat)) (zp zl zc st xp xl xc n : Nat) (s : State) : Prop :=
-  ∀ j, J2j impl R kc sqrC mulC b L zp zl zc st xp xl xc n s j
+  ∀ j, J2j impl R kc H sqrC mulC b L zp zl zc st xp xl xc n s j
 
 /-- a frame read byte by byte (an empty range in the frame never matters for a single byte) -/
 theorem frame_bytes {m m' : Memory} {rs : List (Nat × Nat)} (hF : MemFrame m m' rs) {a n : Nat}
@@ -63,9 +65,9 @@ theorem frame_bytes {m m' : Memory} {rs : List (Nat × Nat)} (hF : MemFrame m m'
 
 set_option maxRecDepth 20000 in
 /-- the frame environment at any memory the runtime facts describe -/
-theorem env_rt {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
+theorem env_rt {R : RtInv} {kc : Nat} {H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
-    (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory} {L1 : List (Nat × Nat)} {b1 : Nat}
+    (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory} {L1 : List (Nat × Nat)} {b1 : Nat}
     (hrt : RtM R kc L s zp zc st M L1 b1) : Env R L1 (s.regs 28).toNat (s.sp.toNat - 240) kc M := by
   obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, -, hout, hga, hgrt, hLs, -⟩, -, -, -, -, -, -, hzc0,
     ⟨-, -, hzw⟩, -, -, -, -, -, -, -, -, ⟨⟨-, -, -, -, -, hlc, -⟩, -, hstg, hsta⟩, -⟩ := hpre
@@ -95,9 +97,9 @@ theorem env_rt {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat �
 
 set_option maxRecDepth 20000 in
 /-- stack-slot stores (inside `winA`) keep the runtime facts -/
-theorem rtM_stk {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
+theorem rtM_stk {R : RtInv} {kc : Nat} {H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
-    (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M M' : Memory} {L1 : List (Nat × Nat)} {b1 : Nat}
+    (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) {M M' : Memory} {L1 : List (Nat × Nat)} {b1 : Nat}
     (hrt : RtM R kc L s zp zc st M L1 b1) (hF : MemFrame M M' (winA s (K kc) A)) (hreg : M'.regions = M.regions) :
     RtM R kc L s zp zc st M' L1 b1 := by
   have he := env_rt hpre hrt

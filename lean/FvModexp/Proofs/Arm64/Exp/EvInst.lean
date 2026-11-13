@@ -13,6 +13,8 @@ import FvModexp.Proofs.Arm64.Nat.NatAdd0
 import FvModexp.Proofs.Arm64.Nat.NatSub0
 import FvModexp.Proofs.Arm64.Nat.SqrHypX
 import FvModexp.Proofs.Arm64.Nat.MulHypX
+import FvModexp.Proofs.Arm64.NatQ.SqrHypQ
+import FvModexp.Proofs.Arm64.NatQ.MulHypQ
 
 set_option autoImplicit false
 
@@ -22,8 +24,8 @@ set_option autoImplicit false
 `fullI` = `ExpEven.full` with the PROVED callee summaries: `(*stack).nat` (divmc `StackNat.ensL`), `nat.lsh`/`nat.rsh`
 (`Lsh.ens`, `Rsh.ens`), `nat.mul` (`NatMulG.hypG`, cost `mulC`, window `mulWX`), `nat.trunc` (asm `Trunc.ens0`; `Trunc.ens`
 inside `subMod2N`/`modInv`), `nat.add` (divmc `NatAdd.ensR0`; `ensR` inside `subMod2N`), `nat.sub` (`NatSub.ensR0`),
-`nat.subMod2N` (`SubMod2N.ensG`), `nat.modularInverseModPowerOfTwo` (`ModInv.ens` with `nat.sqr` = divmc `NatSqr.hypX`,
-cost `sqrC`, frame `kc = sqrWX`). Each summary is moved to the composition's one function list with `EnsWiden.ens_widen`.
+`nat.subMod2N` (`SubMod2N.ensG`), `nat.modularInverseModPowerOfTwo` (`ModInv.ens`, the bridged Q-form, with divmc's Q-form
+`nat.sqr` / `nat.mul` (`Q.NatSqr.hypQ` / `Q.NatMul.hypQ`, costs `sqrCQ` / `mulCQ`), frame `kc = sqrWX`). Each summary is moved to the composition's one function list with `EnsWiden.ens_widen`.
 
 Remaining premises: the Janus runtime contracts (on `Extracted.program.ofImpl impl`; `MemmoveZeroLive` is the local copy
 of Janus PR #2 → re-pin to v0.3.1), expmc's `ExpNNHypNE1` (`ExpNNHypNE.toNE1`) and the monotonicity of expmc's expNN
@@ -37,7 +39,7 @@ open Janus.Contracts.EqHashModel (CodeIn)
 namespace FvModexp.Arm64.ExpEven
 
 /-- the functions of `modInv`'s callees (`sqr`, `trunc`, `mul`, `lsh`) -/
-def nsMi : List String := NatSqr.names ++ Trunc.names ++ NatMul.names ++ Lsh.names
+def nsMi : List String := Q.NatSqr.names ++ Trunc.names ++ Q.NatMul.names ++ Lsh.names
 
 /-- the functions of `expNNEven`'s directly summarised callees -/
 def nsE : List String := StackNat.names ++ Lsh.names ++ Rsh.names ++ NatMul.names ++ Trunc.names
@@ -58,9 +60,9 @@ set_option maxHeartbeats 64000000 in
 theorem trW_fnS : Trunc.names.contains SubMod2N.fn = false := by decide
 
 set_option maxHeartbeats 64000000 in
-theorem sub_mi : (∀ x, NatSqr.names.contains x = true → nsMi.contains x = true) ∧
+theorem sub_mi : (∀ x, Q.NatSqr.names.contains x = true → nsMi.contains x = true) ∧
     (∀ x, Trunc.names.contains x = true → nsMi.contains x = true) ∧
-    (∀ x, NatMul.names.contains x = true → nsMi.contains x = true) ∧
+    (∀ x, Q.NatMul.names.contains x = true → nsMi.contains x = true) ∧
     (∀ x, Lsh.names.contains x = true → nsMi.contains x = true) :=
   ⟨MontW.sub_of_all (by decide), MontW.sub_of_all (by decide), MontW.sub_of_all (by decide),
     MontW.sub_of_all (by decide)⟩
@@ -78,21 +80,21 @@ theorem mulWX_le : mulWX ≤ NatSqr.sqrWX := by simp only [mulWX, NatSqr.sqrWX, 
 
 theorem sqrWX_eq : NatSqr.sqrWX = 70592 := by simp only [NatSqr.sqrWX, sqrW, ksqrW]
 
-/-- `ModInv.ens` with every callee proved: `MiEns` at `kc = sqrWX`, costs `sqrC` / `mulC` -/
+/-- `ModInv.ens` (bridged Q-form) with every callee proved: `MiEns` at `kc = sqrWX`, costs `sqrCQ` / `mulCQ` -/
 theorem miEns {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv}
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
     (hgr : GrowsliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.growslice") 4096 R)
     (hmc : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
     (hwb : WbLiveContract (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2) :
-    MiEns impl R NatSqr.sqrWX sqrC mulC := by
+    MiEns impl R NatSqr.sqrWX sqrCQ mulCQ := by
   obtain ⟨s1, s2, s3, s4⟩ := sub_mi
-  have hsq : EvenHyp.SqrHypX impl R nsMi NatSqr.sqrWX 64 sqrC := fun b L z zl zc st x xl xc =>
-    ens_widen hap s1 (NatSqr.hypX impl hap R hmk hgr hmc hmv hwb b L z zl zc st x xl xc)
+  have hsq : EvenHyp.SqrHypQ impl R nsMi NatSqr.sqrWX 64 sqrCQ := fun H b L z zl zc st x xl xc =>
+    ens_widen hap s1 (Q.NatSqr.hypQ impl hap R hmk hgr hmc hmv hwb H b L z zl zc st x xl xc)
   have htr : Trunc.Hyp2 impl R nsMi 4208 64 := fun b L z zl zc x xl xc n =>
     ens_widen hap s2 (Trunc.ens impl hap R hmk hmv b L z zl zc x xl xc n)
-  have hmu : EvenHyp.MulHypX impl R nsMi mulWX 88 mulC := fun b L z zl zc st x xl xc y yl yc =>
-    ens_widen hap s3 (NatMul.hypX impl hap R hmk hgr hmc hmv hwb b L z zl zc st x xl xc y yl yc)
+  have hmu : EvenHyp.MulHypQ impl R nsMi mulWX 88 mulCQ := fun H b L z zl zc st x xl xc y yl yc =>
+    ens_widen hap s3 (Q.NatMul.hypQ impl hap R hmk hgr hmc hmv hwb H b L z zl zc st x xl xc y yl yc)
   have hls : Lsh.Hyp2 impl R nsMi 4256 64 := fun b L z zl zc x xl xc sh =>
     ens_widen hap s4 (Lsh.ens impl hap R hmk hmv hmc b L z zl zc x xl xc sh)
   have hsub : SubMod2N.SubHypR0 impl R := fun b L zp zl zc xp xl xc yp yl yc =>
@@ -103,7 +105,7 @@ theorem miEns {impl : List Segment} (hap : ImplApart Extracted.program impl) {R 
   intro ℓ b L zp zl zc st xp xl xc n
   exact ModInv.ens hap nsMi_sub nsMi_fn nsMi_fnS hmk (by omega) hsq (Nat.le_refl _) (by omega) htr (by omega)
     (by omega) hmu mulWX_le (by omega) hls (by omega) (by omega) (by omega) hsub hadd hgr
-    (fun ℓ a a' h => sqrC_mono (Nat.le_refl ℓ) h) (fun ℓ a a' c c' h1 h2 => mulC_mono (Nat.le_refl ℓ) h1 h2)
+    (fun a a' h => sqrCQ_mono h) (fun a a' c c' h1 h2 => mulCQ_mono h1 h2)
     ℓ b L zp zl zc st xp xl xc n
 
 set_option maxRecDepth 20000 in
@@ -129,7 +131,7 @@ theorem fullI {impl : List Segment} (hap : ImplApart Extracted.program impl) {R 
     (hNC : ∀ x y a a' l l' k k', a ≤ a' → l ≤ l' → k ≤ k' →
       ExpN.NCost costF costR costS costP x y a l k ≤ cU x y a' l' k')
     {stk : Nat} (hk1 : 71168 ≤ stk) (hk2 : stk ≤ 2 ^ 20 + 336) (hk3 : KN + 1648 ≤ stk) :
-    EvenSum impl R stk 112 (needE needR needS needP) (costE costF costR costS costP bU cU sqrC mulC mulC) := by
+    EvenSum impl R stk 112 (needE needR needS needP) (costE costF costR costS costP bU cU sqrCQ mulCQ mulC) := by
   obtain ⟨e1, e2, e3, e4, e5⟩ := sub_e
   have hc : CodeIn (Extracted.program.ofImpl impl) (LibNE.program.link impl) := by
     rw [LibNE.eq_only]; exact codeIn_ofImpl_restrict_of_apart hap LibNE.names
@@ -163,7 +165,7 @@ theorem fullI {impl : List Segment} (hap : ImplApart Extracted.program impl) {R 
   have hmW : mulWX = 30208 := rfl
   exact full hap nsE_sub nsE_fn hsn (by omega) hlh (by omega) hrh (by omega) hE hKN hKN2 hmvE hmzE hmkE hSE hMi
     (by omega) hmu (by omega) htr hadd hRm hSm hPm hNB hNC
-    (fun ℓ ℓ' a a' h1 h2 => sqrC_mono h1 h2) (fun ℓ ℓ' a a' c c' h1 h2 h3 => mulC_mono h1 h2 h3)
+    (fun a a' h => sqrCQ_mono h) (fun a a' c c' h1 h2 => mulCQ_mono h1 h2)
     (fun ℓ ℓ' a a' c c' h1 h2 h3 => mulC_mono h1 h2 h3) (by omega) hk2
     ⟨by omega, by omega, by omega, by omega, by omega, by omega, by omega⟩
 
