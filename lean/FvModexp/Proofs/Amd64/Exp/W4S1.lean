@@ -20,8 +20,7 @@ theorem bv_sub8 {sp : Nat} (h1 : 8 ≤ sp) (h2 : sp < 2 ^ 64) :
 /-- read-after-write closer for concrete frame offsets -/
 macro "rdw" : tactic => `(tactic| (
   simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint, Arm64.Memory.readLE_writeLE_self,
-    show (256 : Nat) ^ 8 = 2 ^ 64 from rfl]
-  try (exact Nat.mod_eq_of_lt (by omega))))
+    show (256 : Nat) ^ 8 = 2 ^ 64 from rfl, Nat.mod_eq_of_lt]))
 
 theorem montE : segAddr LibW.program MontHyp.fn = 6184288 := by decide
 
