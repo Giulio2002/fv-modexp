@@ -89,7 +89,7 @@ set_option maxRecDepth 20000 in
 theorem Ctx.td {R : RtInv} {L : List (Nat × Nat)}
     {g fs sp K n mp mc Mv xp Xv yp ylen Y yi zp zc st n0 l0 fbp r : Nat} {ex : List (Nat × Nat)} {M : Memory}
     (h : Ctx R L g fs sp K n mp mc Mv xp Xv yp ylen Y yi zp zc st n0 l0 fbp r ex M) :
-    sp % 16 = 0 ∧ 4296 ≤ sp ∧ sp + 0x2a8 ≤ 2 ^ 48 ∧ M.accessible (sp - 4296) (4296 + 0x2a8) true = true ∧
+    sp % 8 = 0 ∧ 4296 ≤ sp ∧ sp + 0x2a8 ≤ 2 ^ 48 ∧ M.accessible (sp - 4296) (4296 + 0x2a8) true = true ∧
     M.accessible (sp + 0x2a8) 0x20 false = true ∧ M.readLE (sp + 0x2c0) 8 = st ∧ M.readLE (sp + 0x290) 8 = mp ∧
     M.readLE (sp + 0x298) 8 = n ∧ M.readLE (sp + 0x2a0) 8 = mc ∧ AW sp K st 24 ∧
     Outside (sp - 8 - K) (K + 688) R.rt ∧ st + 24 ≤ 2 ^ 48 ∧ 0 < n := by
