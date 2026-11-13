@@ -1480,3 +1480,32 @@ conjunct — asm's row, state of the worktree at that time), DivWVWRow 13 s, Div
 amd64: AddVWRow 107 s, SubVWRow 100 s, StackNatRow 229 s, MulAddWWRow 340 s, **BasicSqrRow FAIL 902 s** (timeout, 0.6 GB;
 own modules BasicSqrBody 107 s / 7.6 GB, Pro 182 s, Pro3 135 s / 6.2 GB, Fin 89 s, Small 90 s dev — trim),
 **Int/IntASRow PASS 350 s / 2.3 GB** (was 766 s; s32 trim: WordTData + flattened nat.add/nat.sub continuation chains).
+### asm s36 — RELEASE-ORDER row run in ONE fresh store (Janus v0.3.1, cache-asm wiped, JANUS_REPLAY_THREADS=1, 2026-11-13)
+Warm-ups outside the caps: arm64 1505 s, amd64 122 s. No gc between rows (gc at the end: 7.5 → 6.0 GiB). arm64 rows ran
+sequentially in the coordinator's order; the amd64 sequence ran concurrently in the same store. wall s / peak MB (load at start):
+| row (arm64) | result | row (amd64) | result |
+|---|---|---|---|
+| AddVWRow | PASS 159 / 2479 (37) | AddVWRow | PASS 90 / 1089 |
+| SubVWRow | PASS 111 / 1000 (40) | SubVWRow | PASS 121 / 1046 |
+| DivWVWRow | PASS 135 / 1024 (54) | DivWVWRow | PASS 125 / 1101 |
+| LshRow | PASS 360 / 1164 (53) | LshRow | PASS 471 / 1259 |
+| RshRow | PASS 139 / 832 (34) | RshRow | PASS 229 / 1310 |
+| TruncRow | PASS 187 / 848 (35) | TruncRow | PASS 183 / 835 |
+| StackNatRow (divmc) | PASS 135 / 784 | StackNatRow (divmc) | PASS 264 / 1040 |
+| MulAddWWRow | PASS 187 / 874 | MulAddWWRow | PASS 213 / 919 |
+| BasicMulRow (divmc) | PASS 191 / 3454 | BasicSqrRow (divmc) | **FAIL 900 (cap)** / 590 |
+| BasicSqrRow (divmc) | PASS 519 / 3218 | Int/IntASRow (divmc) | PASS 341 / 2257 |
+| Int/IntASRow (divmc) | PASS 352 / 1211 | DivWRow | PASS 213 / 1264 |
+| SqrRow (divmc) | PASS 448 / 3078 | | |
+| MulRow (divmc) | PASS 523 / 2202 (34) | | |
+| DivWRow | PASS 127 / 1192 (25) | | |
+| DivBasicRow | PASS **331** / 4479 (26; was 743 out of order) | | |
+| DrsRow | PASS **739** / 3175 (27) — OVER the 600 s margin | | |
+| DivRow | PASS 394 / 2673 (25) | | |
+| DivMRow | **FAIL (audit)** 213 / 1757 — proofs + witness verify; v0.3.1 audit rejects the concrete Pool shape (JANUS-ISSUES "[asm s36]") | | |
+| RemRow | PASS 228 / 4346 (33) | | |
+DrsRow analysis (dev times, scratchpad own.py/reimp.py): 146 own modules, sum 1816 s, but the import graph is a 38-module
+CHAIN (critical path 670 s: LibDivL 54 → DivLarge{Pro,Mem,RelB,…,DRel 54,TN} → DrsNorm → … → DrsPathB 60 → … → DrsC6 102 →
+DrsD6 68 → … → DrsRow 27). Minimal imports (exact constant-level module deps from a probe) only cut the path to 566 s (the deps
+are real: segment modules use earlier segments' relations). Trim plan (next): speed DrsC6/DrsD6/DrsPathB/LibDivL on the path +
+minimal imports; generated `Lib*` modules spend ~1.5 s per `decide +kernel` mask (kernel String compares) — 14 masks ≈ 54 s.
