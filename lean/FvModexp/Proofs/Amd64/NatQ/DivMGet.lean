@@ -45,6 +45,7 @@ theorem nilGM (impl : List Amd64.Segment) {zp zl zc z2 z2l z2c u ul uc v vl vc :
       X.regs 5 = s.regs 4 - 8#64 → X.regs 14 = s.regs 14 → X.fsBase = s.fsBase → X.xmm 15 = 0#128 →
       X.df = false → X.regs 0 = BitVec.ofNat 64 Free.poolA →
       MemFrame S.mem X.mem [((s.regs 4).toNat - 240, (s.regs 4).toNat - 232)] →
+      X.mem.regions = S.mem.regions →
       X.mem.readLE ((s.regs 4).toNat - 240) 8 = getR →
       ReachesRet (LibDiv.program.link impl) (retAddrOf s) X Q) :
     ReachesRet (LibDiv.program.link impl) (retAddrOf s) S Q := by
@@ -57,7 +58,7 @@ theorem nilGM (impl : List Amd64.Segment) {zp zl zc z2 z2l z2c u ul uc v vl vc :
   clear hS
   rcases hc' with rfl | rfl
   all_goals janus64_run [hr0, m4, BitVec.msb_eq_decide] until [cA "sync.(*Pool).Get"]
-  all_goals refine k _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ (by janus_frame) ?_
+  all_goals refine k _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ (by janus_frame) (by simp only [Janus.Arm64.Memory.regions_writeLE]) ?_
   all_goals try (janus64_simp; done)
   all_goals first
     | exact hfs | exact hx15 | exact hdf
