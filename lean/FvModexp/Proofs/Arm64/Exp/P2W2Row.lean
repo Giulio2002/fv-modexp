@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.CalleeInstP2Q
 import FvModexp.Proofs.Arm64.Exp.P2Nf
 import FvModexp.Proofs.Arm64.Exp.P2W2E
 
@@ -17,7 +18,7 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvMod
 
 namespace FvModexp.Arm64.P2W2Row
 
-open FvModexp.Arm64.CalleeInst FvModexp.Arm64.P2Wit
+open FvModexp.Arm64.CalleeInstQ FvModexp.Arm64.P2WitQ
 
 /-- **window-2 power-of-two** (arm64): `z.expNNPowerOfTwoWindowSize2(stk, x, y, logM)` returns `x^y mod 2^logM` for
 odd `x`, `y > 0`, `2 ≤ logM ≤ 2^13` (`P2W2.Pre` / `Post`), for every runtime meeting the live allocation / copy /
@@ -40,12 +41,12 @@ theorem correctness (impl : List Segment) (hap : ImplApart Extracted.program imp
       [BitVec.ofNat 64 zp, BitVec.ofNat 64 zl, BitVec.ofNat 64 zc, BitVec.ofNat 64 st, BitVec.ofNat 64 xp,
         BitVec.ofNat 64 xl, BitVec.ofNat 64 xc, BitVec.ofNat 64 yp, BitVec.ofNat 64 yl, BitVec.ofNat 64 yc,
         BitVec.ofNat 64 lm]
-      (P2W2.Pre R b L K sqrC mulC zp zc st xp xl xc yp yl lm)
-      (P2W2.Post R b L K sqrC mulC zp zc st xp xl yp yl lm) := by
-  have hW := sqrWX_eq
+      (P2W2.Pre R b L K sqrCQ mulCQ zp zc st xp xl xc yp yl lm)
+      (P2W2.Post R b L K sqrCQ mulCQ zp zc st xp xl yp yl lm) := by
+  have hW := CalleeInst.sqrWX_eq
   exact Ensures.full hap (P2W2.ens hap sub nf2 nfP hgr hmc hmv hmk hno hwb (kcP := NatSqr.sqrWX) (by omega)
     (sn hap hgr hmc hwb) (by omega) (by omega) (sq hap hgr hmc hmv hmk hwb) (Nat.le_refl _) (by omega) sqm
-    (mu hap hgr hmc hmv hmk hwb) (by rw [mulWX_eq]; omega) (by omega) mum (tr hap hmv hmk) (by omega) (by omega)
+    (mu hap hgr hmc hmv hmk hwb) (by rw [CalleeInst.mulWX_eq]; omega) (by omega) mum (tr hap hmv hmk) (by omega) (by omega)
     b L K (by omega) zp zl zc st xp xl xc yp yl yc lm)
 
 end FvModexp.Arm64.P2W2Row
@@ -66,11 +67,16 @@ abbrev s0 : State := mkS (segAddr Extracted.program P2W2.fn) args
 theorem sp0 : s0.sp.toNat - 464 = SP0 - 464 := by decide
 theorem g0 : (s0.regs 28).toNat = G0 := by decide
 
-theorem bud : P2W2.cost sqrC mulC 0 1 8 ≤ BW := by decide +kernel
+/-- (divmc s42) the effective budget: `BW` less the unheld stack reserve of the call -/
+abbrev BWQ : Nat := BW - stkR (P2W2.HW 0 8) mem0 ST
+
+theorem bwq : BWQ + stkR (P2W2.HW 0 8) mem0 ST = BW := Nat.sub_add_cancel (by decide +kernel)
+
+theorem bud : P2W2.cost sqrCQ mulCQ 0 1 8 ≤ BWQ := by decide +kernel
 
 set_option maxHeartbeats 64000000 in
 /-- the witness state satisfies window-2's precondition (`3^5 mod 2^8`) at window depth `70800` -/
-theorem pre : P2W2.Pre R BW [] KW sqrC mulC 0 0 ST XP 1 1 YP 1 8 s0 := by
+theorem pre : P2W2.Pre R BWQ [] KW sqrCQ mulCQ 0 0 ST XP 1 1 YP 1 8 s0 := by
   have hm : s0.mem = mem0 := rfl
   unfold P2W2.Pre
   rw [hm, stLen0]
@@ -86,6 +92,7 @@ theorem pre : P2W2.Pre R BW [] KW sqrC mulC 0 0 ST XP 1 1 YP 1 8 s0 := by
     | exact WStubs.serves []
     | exact roOut
     | exact inv1 _
+    | (rw [bwq]; exact inv1 _)
     | trivial
     | (intros; trivial)
     | exact ⟨OP, one0 [] _ (by simp only [stkWs, stW0, stLen0, stCap0, List.cons_append, List.nil_append, outside_cons,
@@ -128,7 +135,7 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
       [BitVec.ofNat 64 zp, BitVec.ofNat 64 zl, BitVec.ofNat 64 zc, BitVec.ofNat 64 st, BitVec.ofNat 64 xp,
         BitVec.ofNat 64 xl, BitVec.ofNat 64 xc, BitVec.ofNat 64 yp, BitVec.ofNat 64 yl, BitVec.ofNat 64 yc,
         BitVec.ofNat 64 lm] s ∧
-    P2W2.Pre R b L K sqrC mulC zp zc st xp xl xc yp yl lm s ∧
+    P2W2.Pre R b L K sqrCQ mulCQ zp zc st xp xl xc yp yl lm s ∧
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.growslice") ∧
       grSite R (Extracted.program.contractAddr "runtime.growslice") L b s_c) ∧
@@ -148,8 +155,8 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
       s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.gcWriteBarrier2") ∧
       wbSite R (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 2 L b s_c) ∧
     Returns ((Extracted.program.link impl).withExit ret) s fun s' =>
-      ABIReturn s s' ∧ P2W2.Post R b L K sqrC mulC zp zc st xp xl yp yl lm s s' :=
-  ⟨WStubs.impl, R, BW, [], KW, 0, 0, 0, ST, XP, 1, 1, YP, 1, 1, 8, RET, s0, WStubs.hap,
+      ABIReturn s s' ∧ P2W2.Post R b L K sqrCQ mulCQ zp zc st xp xl yp yl lm s s' :=
+  ⟨WStubs.impl, R, BWQ, [], KW, 0, 0, 0, ST, XP, 1, 1, YP, 1, 1, 8, RET, s0, WStubs.hap,
     by rw [WStubs.addr_gr]; exact WStubs.gr [] (by intro t ht; simp at ht) _,
     by rw [WStubs.addr_cl]; exact WStubs.cl R,
     by rw [WStubs.addr_mv]; exact WStubs.mv R,
@@ -170,7 +177,7 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
       (by rw [WStubs.addr_cl]; exact WStubs.cl R) (by rw [WStubs.addr_mv]; exact WStubs.mv R)
       (by rw [WStubs.addr_mk]; exact WStubs.mk [] (by intro t ht; simp at ht) _)
       (by rw [WStubs.addr_no]; exact WStubs.no [] (by intro t ht; simp at ht) _)
-      (by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] (by intro t ht; simp at ht) _) BW [] KW (Nat.le_refl _)
+      (by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] (by intro t ht; simp at ht) _) BWQ [] KW (Nat.le_refl _)
       0 0 0 ST XP 1 1 YP 1 1 8 RET hret s0 (setup _ args (by decide)) pre⟩
 
 end FvModexp.Arm64.P2W2Row.Witness
