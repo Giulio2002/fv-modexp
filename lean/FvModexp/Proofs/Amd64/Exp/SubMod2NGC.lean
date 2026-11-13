@@ -161,6 +161,11 @@ theorem PreG.costB {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {op zp zl zc yp
     (hpre : PreG R b L op zp zl zc yp yl yc n s) : cost n ≤ b :=
   hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1.1
 
+/-- the amd64 entry facts of `PreG` -/
+theorem PreG.ent {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {op zp zl zc yp yl yc n : Nat} {s : State}
+    (hpre : PreG R b L op zp zl zc yp yl yc n s) : Ent s zp zc n :=
+  hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2
+
 /-- `z`'s window / guard / TLS facts -/
 theorem PreG.zwin {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {op zp zl zc yp yl yc n : Nat} {s : State}
     (hpre : PreG R b L op zp zl zc yp yl yc n s) :
