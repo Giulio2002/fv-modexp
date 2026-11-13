@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Arm64.NatQ.MulIPost
+import FvModexp.Proofs.Common.OmegaOnly
 
 set_option autoImplicit false
 
@@ -128,20 +129,21 @@ theorem itail (impl : List Segment) (R : RtInv)
           simp only [outside_append, outside_cons, outside_nil, and_true]
           exact ⟨hO.of_sub (Nat.le_refl _) (by omega), by omega⟩)
     have hmx : m.readLE x 1 = hNeg s.mem x := by
-      rw [hrdH x hxH1 hxo, Memory.readLE_writeLE_of_disjoint _ _ (by omega),
-        Memory.readLE_writeLE_of_disjoint _ _ (by omega)]; exact hnx
+      rw [hrdH x hxH1 hxo, Memory.readLE_writeLE_of_disjoint _ _ (by omega_only [hzx]),
+        Memory.readLE_writeLE_of_disjoint _ _ (by omega_only [hzx])]; exact hnx
     have hmy : m.readLE y 1 = hNeg s.mem y := by
-      rw [hrdH y hyH1 hyo, Memory.readLE_writeLE_of_disjoint _ _ (by omega),
-        Memory.readLE_writeLE_of_disjoint _ _ (by omega)]; exact hny
+      rw [hrdH y hyH1 hyo, Memory.readLE_writeLE_of_disjoint _ _ (by omega_only [hzy]),
+        Memory.readLE_writeLE_of_disjoint _ _ (by omega_only [hzy])]; exact hny
     have hmrd : ∀ a, (s.sp.toNat - 104 ≤ a ∧ a + 8 ≤ s.sp.toNat - 88) ∨ (s.sp.toNat + 8 ≤ a ∧ a + 8 ≤ s.sp.toNat + 40) →
         m.readLE a 8 = S.mem.readLE a 8 := by
       intro a ha'
-      rw [hrdS _ _ (by omega) (by omega) (by omega), Memory.readLE_writeLE_of_disjoint _ _ (by omega),
-        Memory.readLE_writeLE_of_disjoint _ _ (by omega)]
-    have hmfp : m.readLE (s.sp.toNat - 104) 8 = (s.regs 29).toNat := (hmrd _ (Or.inl (by omega))).trans hfp
-    have hmlr : m.readLE (s.sp.toNat - 96) 8 = (s.regs 30).toNat := (hmrd _ (Or.inl (by omega))).trans hlr
-    have hmxs : m.readLE (s.sp.toNat + 24) 8 = x := (hmrd _ (Or.inr (by omega))).trans hxs
-    have hmys : m.readLE (s.sp.toNat + 32) 8 = y := (hmrd _ (Or.inr (by omega))).trans hys
+      rw [hrdS _ _ (by omega_only [ha', hb', hW4]) (by omega_only [ha', hb', hW4]) (by omega_only [ha', hb', hW4]),
+        Memory.readLE_writeLE_of_disjoint _ _ (by omega_only [ha', hb', hW4, hzo]),
+        Memory.readLE_writeLE_of_disjoint _ _ (by omega_only [ha', hb', hW4, hzo])]
+    have hmfp : m.readLE (s.sp.toNat - 104) 8 = (s.regs 29).toNat := (hmrd _ (Or.inl (by omega_only [hb', hW4]))).trans hfp
+    have hmlr : m.readLE (s.sp.toNat - 96) 8 = (s.regs 30).toNat := (hmrd _ (Or.inl (by omega_only [hb', hW4]))).trans hlr
+    have hmxs : m.readLE (s.sp.toNat + 24) 8 = x := (hmrd _ (Or.inr (by omega_only [hb', hW4]))).trans hxs
+    have hmys : m.readLE (s.sp.toNat + 32) 8 = y := (hmrd _ (Or.inr (by omega_only [hb', hW4]))).trans hys
     have hmz : m.accessible z 32 true = true := by
       rw [hfr.accessible, Memory.accessible_writeLE, Memory.accessible_writeLE]; exact hzaS
     have hmxa : m.accessible x 32 false = true := by
