@@ -457,6 +457,9 @@ theorem KM.x1op {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n x
     rw [h.fr.accessible]; exact Janus.Arm64.Memory.accessible_sub _ hxacc (Or.inl rfl) (by omega) (by simp only [kn2]; omega)
   · simp only [IntAS.intZ, IntAS.hNeg, IntAS.hP, IntAS.hL, q1, q2, q3, if_true, hv, h.v1]
 
+theorem sp_add8 {a c : BitVec 64} (h : a.toNat = c.toNat - 320) (hc : 320 ≤ c.toNat) : a + 8#64 = c - 312#64 := by
+  bv_omega
+
 /-- **An inner `nat.sqr` whose result array is reused** (`2·xl' ≤ zc'`, cap ends differ; the written part
 `[zp', zp' + 16·xl')` inside `z[0:2n]` or `t`): the continuation gets `KM` (charged `kcS`), the result registers, the
 value and the exact frames of the call. -/
@@ -465,7 +468,8 @@ theorem ks_sqcallR (impl : List Amd64.Segment) (R : RtInv) {b : Nat} {L : List (
     (h : KM R b H L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) (ih : ∀ a, IH impl R H (2 * n) (false, a))
     (S1 : State) (hpc : S1.rip = BitVec.ofNat 64 0x5f0fe0) (hsp : (S1.regs 4).toNat = (s.regs 4).toNat - 320)
     (hg : S1.regs 14 = s.regs 14) (hm : S1.mem = M) (hfs : S1.fsBase = s.fsBase)
-    (hra : S1.mem.readLE (S1.regs 4).toNat 8 < 2 ^ 47) (hx15 : S1.xmm 15 = 0#128) (hdf : S1.df = false)
+    {ra : Nat} (hrv : S1.mem.readLE (S1.regs 4).toNat 8 = ra) (hra' : ra < 2 ^ 47) (hx15 : S1.xmm 15 = 0#128)
+    (hdf : S1.df = false) (h5 : S1.regs 5 = s.regs 4 - 8#64) (hx150 : s.xmm 15 = 0#128) (hdf0 : s.df = false)
     {zp' zl' zc' xp' xl' xc' : Nat} (b0 : zp' < 2 ^ 64) (b1 : zl' < 2 ^ 64) (b2 : zc' < 2 ^ 64) (b3 : st < 2 ^ 64)
     (b4 : xp' < 2 ^ 64) (b5 : xl' < 2 ^ 64) (b6 : xc' < 2 ^ 64)
     (r0 : S1.regs 0 = BitVec.ofNat 64 zp') (r1 : S1.regs 3 = BitVec.ofNat 64 zl')
@@ -484,19 +488,19 @@ theorem ks_sqcallR (impl : List Amd64.Segment) (R : RtInv) {b : Nat} {L : List (
     (hq : (zp ≤ zp' ∧ zp' + 8 * (2 * xl') ≤ zp + 8 * (2 * n)) ∨ (t ≤ zp' ∧ zp' + 8 * (2 * xl') ≤ t + 8 * kT n))
     (hsc : spent + kcS n ≤ ksqrCQ n)
     {ret : BitVec 64} {Q : State → Prop}
-    (hK : ∀ (s2 : State) (Lk' : List (Nat × Nat)) (bk' l' : Nat), s2.rip = retAddrOf S1 → s2.mem.regions = M.regions →
-      Kept S1 s2 → s2.fsBase = S1.fsBase → s2.df = S1.df →
+    (hK : ∀ (s2 : State) (Lk' : List (Nat × Nat)) (bk' l' : Nat), KAt s s2 ra → s2.mem.regions = M.regions →
       KM R b H L W st zp zc xp n xc s lx0 lx1 t Lk' bk' (spent + kcS n) s2.mem →
       s2.regs 0 = BitVec.ofNat 64 zp' → s2.regs 3 = BitVec.ofNat 64 l' → s2.regs 1 = BitVec.ofNat 64 zc' →
       natVal s2.mem zp' l' = natVal M xp' xl' * natVal M xp' xl' → NatNorm s2.mem zp' l' → l' ≤ 2 * xl' →
       natVal s2.mem zp' (2 * xl') = natVal M xp' xl' * natVal M xp' xl' →
-      MemFrame M s2.mem (R.rt ++ win S1 (W - 320) 64 ++ [(zp', zp' + 8 * (2 * xl'))] ++ stkWs M st) →
+      MemFrame M s2.mem (R.rt ++ [((s.regs 4).toNat - 320 - (W - 320), (s.regs 4).toNat - 320 + 64)] ++ [(zp', zp' + 8 * (2 * xl'))] ++ stkWs M st) →
       LiveFrame M s2.mem Lk ([(zp', zp' + 8 * (2 * xl'))] ++ stkWs M st) →
       ReachesRet (LibSqr.program.link impl) ret s2 Q) :
     ReachesRet (LibSqr.program.link impl) ret S1 Q := by
   have hle : sqrCQ xl' ≤ kcS n := sqrCQ_le_inner (h.lay.2.2.2.2.1) hxl
   have hcost : sqrCQ xl' + stkR H M st ≤ bk := by
     have := h.costQ (c := kcS n) hsc; omega
+  have hra : S1.mem.readLE (S1.regs 4).toNat 8 < 2 ^ 47 := by rw [hrv]; exact hra'
   refine ks_sqcall impl R h ih S1 hpc hsp hg hm hfs hra hx15 hdf b0 b1 b2 b3 b4 b5 b6 r0 r1 r2 r3 r4 r5 r6 hxl hxc hxc40
     hxacc hxh hxw hzc40 hzl hzw hzg (Or.inr hal) hxs hcost fun s2 hr hreg hk hP => ?_
   obtain ⟨efs, edf, p', l', c', e0, e1, e2, hval, hnn, -, hl2, -, L', b', hext, hbud, hinv, -, -, -, hreu, hsb, -, -⟩ := hP
@@ -506,7 +510,14 @@ theorem ks_sqcallR (impl : List Amd64.Segment) (R : RtInv) {b : Nat} {L : List (
   rw [hg] at hinv
   have hcq := h.costQ (c := kcS n) hsc
   have hkm := h.sqStep hsp hq hF hLF hreg hext (c := kcS n) (by omega) hsc hinv hsb
-  exact hK s2 L' b' l' hr hreg hk efs edf hkm e0 e1 e2 hval hnn hl2 hv2 hF hLF
+  have hWs := h.lay.2.1; have hW0 := h.lay.1
+  have e4 : s2.regs 4 = s.regs 4 - 312#64 := by
+    rw [hk.1]; exact sp_add8 hsp (by omega)
+  have hA : KAt s s2 ra := ⟨by rw [hr, retAddrOf, hrv], e4, hk.2.2.1.trans hg, hk.2.1.trans h5, efs.trans hfs,
+    edf.trans (hdf.trans hdf0.symm), hk.2.2.2.trans (hx15.trans hx150.symm)⟩
+  have hF' := hF
+  simp only [win, hsp] at hF'
+  exact hK s2 L' b' l' hA hreg hkm e0 e1 e2 hval hnn hl2 hv2 hF' hLF
 
 /-- the live set is apart from our window -/
 theorem KM.lsep {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State}
@@ -524,9 +535,8 @@ theorem KM.lsep {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n x
 /-- reads of `z` or `t` outside an inner `nat.sqr`'s writes `[q, q + 8w)` survive the call -/
 theorem KM.sqKeep {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State}
     {lx0 lx1 t : Nat} {Lk : List (Nat × Nat)} {bk spent : Nat} {M : Memory}
-    (h : KM R b H L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) {M' : Memory} {S1 : State}
-    (hsp : (S1.regs 4).toNat = (s.regs 4).toNat - 320) {q w : Nat}
-    (hF : MemFrame M M' (R.rt ++ win S1 (W - 320) 64 ++ [(q, q + 8 * w)] ++ stkWs M st))
+    (h : KM R b H L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) {M' : Memory} {q w : Nat}
+    (hF : MemFrame M M' (R.rt ++ [((s.regs 4).toNat - 320 - (W - 320), (s.regs 4).toNat - 320 + 64)] ++ [(q, q + 8 * w)] ++ stkWs M st))
     (hLF : LiveFrame M M' Lk ([(q, q + 8 * w)] ++ stkWs M st)) {a m : Nat}
     (ha : (zp ≤ a ∧ a + m ≤ zp + 8 * zc) ∨ (t ≤ a ∧ a + m ≤ t + 8 * kT n)) (hq : a + m ≤ q ∨ q + 8 * w ≤ a) :
     M'.readLE a m = M.readLE a m := by
@@ -544,22 +554,20 @@ theorem KM.sqKeep {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n
     · exact h.scr.held.sub h1 h2
   rw [List.append_assoc] at hF
   refine Held.readLE2 hH hF hLF ?_ ?_
-  · simp only [win, hsp, outside_cons, outside_nil, and_true]; omega
+  · simp only [outside_cons, outside_nil, and_true]; omega
   · simp only [stkWs, List.cons_append, List.nil_append, outside_cons, outside_nil, and_true]; omega
 
 /-- reads in our frame above an inner `nat.sqr`'s window survive the call (its array writes are outside our window) -/
 theorem KM.sqRd {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State}
     {lx0 lx1 t : Nat} {Lk : List (Nat × Nat)} {bk spent : Nat} {M : Memory}
-    (h : KM R b H L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) {M' : Memory} {S1 : State}
-    (hsp : (S1.regs 4).toNat = (s.regs 4).toNat - 320) {q w : Nat}
-    (hF : MemFrame M M' (R.rt ++ win S1 (W - 320) 64 ++ [(q, q + 8 * w)] ++ stkWs M st))
+    (h : KM R b H L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) {M' : Memory} {q w : Nat}
+    (hF : MemFrame M M' (R.rt ++ [((s.regs 4).toNat - 320 - (W - 320), (s.regs 4).toNat - 320 + 64)] ++ [(q, q + 8 * w)] ++ stkWs M st))
     (hq : q + 8 * w ≤ (s.regs 4).toNat - W ∨ (s.regs 4).toNat + 48 ≤ q) {x m : Nat}
     (h1 : (s.regs 4).toNat - 256 ≤ x) (h2 : x + m ≤ (s.regs 4).toNat + 48) : M'.readLE x m = M.readLE x m := by
   obtain ⟨hW, hWs, -⟩ := h.lay
   have hstw : Outside st 24 (win s W 48) := h.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1.2.2.1
   have hfw := h.stk.2.2.1
   simp only [win, outside_cons, outside_nil, and_true, BasicSqr.freeP, BasicSqr.freeN] at hstw hfw
-  simp only [win, hsp] at hF
   rw [List.append_assoc] at hF
   exact h.rdW (k := W - 320) (a := 64) (by omega) (Nat.le_refl _) hF h1 h2
     (by simp only [stkWs, List.cons_append, List.nil_append, outside_cons, outside_nil, and_true]; omega)
