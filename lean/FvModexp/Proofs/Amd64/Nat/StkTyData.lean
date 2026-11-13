@@ -22,7 +22,7 @@ set_option maxRecDepth 20000 in
 theorem stkTy_data {m : Janus.Arm64.Memory} (hd : Extracted.program.DataLoaded m) :
     m.accessible 7357344 16 false = true ∧ m.readLE 7357344 8 = 24 ∧ m.readLE 7357352 8 = 8 := by
   janus64_data hd
-  exact ⟨Janus.Arm64.Memory.accessible_mono _ h_data1 (by omega) (by omega), by rw [h_rodata _ _ (by decide)]; decide,
+  exact ⟨Janus.Arm64.Memory.accessible_mono _ h_data4 (by omega) (by omega), by rw [h_rodata _ _ (by decide)]; decide,
     by rw [h_rodata _ _ (by decide)]; decide⟩
 
 end FvModexp.Amd64
