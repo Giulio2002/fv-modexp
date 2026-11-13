@@ -59,7 +59,7 @@ theorem sb{n} : Summary Extracted.program sbA (SbPre {n}) (SbPost {n}) := by
        · dl_close)
 
 '''
-GROUPS = (('SbA', range(0, 13)), ('SbB', range(13, 19)), ('SbC', range(19, 23)), ('SbD', range(23, 26)), ('SbE', range(26, 29)),
+GROUPS = (('SbA', range(0, 7)), ('SbH', range(7, 13)), ('SbB', range(13, 19)), ('SbC', range(19, 23)), ('SbD', range(23, 26)), ('SbE', range(26, 29)),
           ('SbF', range(29, 31)), ('SbG', range(31, 33)))
 for name, rng in GROUPS:
     with open(os.path.join(D, name + '.lean'), 'w') as f:
