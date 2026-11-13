@@ -65,7 +65,7 @@ abbrev s0 : State := mkS (segAddr Extracted.program P2W4.fn) args
 theorem sp0 : s0.sp.toNat - 752 = SP0 - 752 := by decide
 theorem g0 : (s0.regs 28).toNat = G0 := by decide
 
-theorem bud : P2W4.cost sqrC mulC 0 8 ≤ BW := by decide +kernel
+theorem bud : P2W4.cost sqrC mulC 0 1 8 ≤ BW := by decide +kernel
 
 set_option maxHeartbeats 64000000 in
 /-- the witness state satisfies window-4's precondition (`3^5 mod 2^8`) at window depth `70800` -/

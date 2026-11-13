@@ -82,8 +82,8 @@ theorem costE_eq (costF : Nat → Nat → Nat → Nat) (costR : Nat → Nat → 
     (ℓ0 xl yl ml : Nat) :
     costE costF costR costS costP bU cU sqC mlC mlG ℓ0 xl yl ml =
       stackNatCost ℓ0 ml + makeB (ml + 1) + stackNatCost (ℓ0 + rnd ml) ml + makeB ml +
-        stackNatCost (wL2 ℓ0 ml) (2 * ml) + eC costF costR costS costP bU cU xl yl ml (wL3 ℓ0 ml) +
-        stackNatCost (wL3 ℓ0 ml) (2 * ml) + eC costF costR costS costP bU cU xl yl ml (wL4 ℓ0 ml) +
+        stackNatCost (wL2 ℓ0 ml) (2 * ml) + eC1 cU xl yl ml (wL3 ℓ0 ml) +
+        stackNatCost (wL3 ℓ0 ml) (2 * ml) + eC2 bU cU xl yl ml (wL4 ℓ0 ml) +
         allocCost (8 * (ml + 4)) + SubMod2N.costG (64 * ml) +
         ModInv.cost (sqC (wL4 ℓ0 ml)) (mlC (wL4 ℓ0 ml)) (64 * ml) + mlG (wL4 ℓ0 ml) ml ml + makeB (2 * ml) +
         mlG (wL4 ℓ0 ml) ml ml + makeB (ml + 1) := rfl
@@ -157,9 +157,9 @@ theorem body {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns 
     (64 * ml) + r11 := ⟨_, rfl⟩
   obtain ⟨r9, e9⟩ : ∃ r, r = SubMod2N.costG (64 * ml) + r10 := ⟨_, rfl⟩
   obtain ⟨r8, e8⟩ : ∃ r, r = allocCost (8 * (ml + 4)) + r9 := ⟨_, rfl⟩
-  obtain ⟨r7, e7⟩ : ∃ r, r = eC costF costR costS costP bU cU xl yl ml (wL4 (stLen s.mem st) ml) + r8 := ⟨_, rfl⟩
+  obtain ⟨r7, e7⟩ : ∃ r, r = eC2 bU cU xl yl ml (wL4 (stLen s.mem st) ml) + r8 := ⟨_, rfl⟩
   obtain ⟨r6, e6⟩ : ∃ r, r = stackNatCost (wL3 (stLen s.mem st) ml) (2 * ml) + r7 := ⟨_, rfl⟩
-  obtain ⟨r5, e5⟩ : ∃ r, r = eC costF costR costS costP bU cU xl yl ml (wL3 (stLen s.mem st) ml) + r6 := ⟨_, rfl⟩
+  obtain ⟨r5, e5⟩ : ∃ r, r = eC1 cU xl yl ml (wL3 (stLen s.mem st) ml) + r6 := ⟨_, rfl⟩
   obtain ⟨r4, e4⟩ : ∃ r, r = stackNatCost (wL2 (stLen s.mem st) ml) (2 * ml) + r5 := ⟨_, rfl⟩
   obtain ⟨r3, e3⟩ : ∃ r, r = makeB ml + r4 := ⟨_, rfl⟩
   obtain ⟨r2, e2⟩ : ∃ r, r = stackNatCost (stLen s.mem st + rnd ml) ml + r3 := ⟨_, rfl⟩
@@ -186,8 +186,8 @@ theorem body {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns 
   intros; rename_i h
   refine segE1 hap hE hKN hKN1 hKN2 hP hM hev hX
     (fun l1 l2 q1 q2 => nstkE_of hRm hSm hPm hneed (Nat.le_trans (ℓ3_le hn q1 q2) (wL3_le _ _)) q1 hnw)
-    (rk' := r6) (fun l1 l2 q1 q2 => rk_le2 (hNB xl yl l1 ml _ _ _ _ q1 (ℓ3_le hn q1 q2) hnw)
-      (hNC xl yl l1 ml _ _ _ _ q1 (ℓ3_le hn q1 q2) hnw) e5) ?_ h
+    (rk' := r6) (fun l1 l2 q1 q2 => rk_le3 (hNB xl yl l1 ml _ _ _ _ q1 (Nat.le_trans (ℓ3_le hn q1 q2) (wL3_le _ _)) hnw)
+      (hNC xl yl l1 ml _ _ _ _ q1 (ℓ3_le hn q1 q2) hnw) e5 e6 e7) ?_ h
   intros; rename_i h
   refine segN4 hap hns hnf hsn hkN haN hP hM hev
     (fun l1 l2 q1 q2 => need3 hneed (Nat.le_trans (ℓ3_le hn q1 q2) (wL3_le _ _))) (rk' := r7)
@@ -195,7 +195,7 @@ theorem body {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns 
   intros; rename_i h
   refine segE2 hap hE hKN hKN1 hKN2 hP hM hev hX
     (fun l1 l2 q1 q2 => nstkE_of hRm hSm hPm hneed (ℓ4_le hn q1 q2) q2 (lg2_le s mp ml))
-    (rk' := r8) (fun l1 l2 q1 q2 => rk_le2 (hNB xl yl l2 ml _ _ _ _ q2 (ℓ4_le hn q1 q2) (lg2_le s mp ml))
+    (rk' := r8) (fun l1 l2 q1 q2 => rk_le4 (hNB xl yl l2 ml _ _ _ _ q2 (ℓ4_le hn q1 q2) (lg2_le s mp ml))
       (hNC xl yl l2 ml _ _ _ _ q2 (ℓ4_le hn q1 q2) (lg2_le s mp ml)) e7) ?_ h
   intros; rename_i h
   refine segSet hmv hmz hmk hP hM hev (rk' := r9) (fun c hc => rk_le (alloc_le hc) e8) ?_ h

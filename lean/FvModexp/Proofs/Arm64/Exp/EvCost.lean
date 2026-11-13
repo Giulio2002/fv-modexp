@@ -30,18 +30,22 @@ def needE (needR : Nat → Nat → Nat) (needS needP : Nat → Nat → Nat → N
     (rnd (23 * ml) + rnd (xl + 1) + 2 * rnd ml + 16 * xl + 2 * rnd (2 * ml) + 32 * ml + 80 +
       needR xl ml + needS xl yl ml + needP xl yl (64 * ml) + 8 * ml + 72 + 2 * ml + 3)
 
-/-- the two `nat.expNN` calls' worst budget at modulus length `ml`, level `l` -/
-@[reducible] def eC (costF : Nat → Nat → Nat → Nat) (costR : Nat → Nat → Nat → Nat)
-    (costS costP : Nat → Nat → Nat → Nat → Nat) (bU cU : Nat → Nat → Nat → Nat → Nat → Nat) (xl yl ml l : Nat) : Nat :=
-  bU xl yl ml l (64 * ml) + cU xl yl ml l (64 * ml)
+/-- the first `nat.expNN` call (`z1`, level `l`): its worst COST only — its budget premise is covered by the
+remaining budget, which still holds the second call's worst budget `bU` at the higher level `wL4` (infra s43, TIGHT
+COSTS: was `bU + cU` for each call) -/
+@[reducible] def eC1 (cU : Nat → Nat → Nat → Nat → Nat → Nat) (xl yl ml l : Nat) : Nat := cU xl yl ml l (64 * ml)
+
+/-- the second `nat.expNN` call (`z2`, level `l`): its worst budget and worst cost, whichever is larger -/
+@[reducible] def eC2 (bU cU : Nat → Nat → Nat → Nat → Nat → Nat) (xl yl ml l : Nat) : Nat :=
+  max (bU xl yl ml l (64 * ml)) (cU xl yl ml l (64 * ml))
 
 /-- the budget (entry stack level `ℓ0`) -/
 def costE (costF : Nat → Nat → Nat → Nat) (costR : Nat → Nat → Nat → Nat)
     (costS costP : Nat → Nat → Nat → Nat → Nat) (bU cU : Nat → Nat → Nat → Nat → Nat → Nat) (sqC : Nat → Nat → Nat)
     (mlC mlG : Nat → Nat → Nat → Nat) (ℓ0 xl yl ml : Nat) : Nat :=
   stackNatCost ℓ0 ml + makeB (ml + 1) + stackNatCost (ℓ0 + rnd ml) ml + makeB ml +
-    stackNatCost (wL2 ℓ0 ml) (2 * ml) + eC costF costR costS costP bU cU xl yl ml (wL3 ℓ0 ml) +
-    stackNatCost (wL3 ℓ0 ml) (2 * ml) + eC costF costR costS costP bU cU xl yl ml (wL4 ℓ0 ml) +
+    stackNatCost (wL2 ℓ0 ml) (2 * ml) + eC1 cU xl yl ml (wL3 ℓ0 ml) +
+    stackNatCost (wL3 ℓ0 ml) (2 * ml) + eC2 bU cU xl yl ml (wL4 ℓ0 ml) +
     allocCost (8 * (ml + 4)) + SubMod2N.costG (64 * ml) +
     ModInv.cost (sqC (wL4 ℓ0 ml)) (mlC (wL4 ℓ0 ml)) (64 * ml) + mlG (wL4 ℓ0 ml) ml ml + makeB (2 * ml) +
     mlG (wL4 ℓ0 ml) ml ml + makeB (ml + 1)
@@ -79,8 +83,11 @@ theorem miCost_mono {s1 s2 : Nat → Nat} {m1 m2 : Nat → Nat → Nat} (hs : �
   have c7 := hm (2 * ModInv.NW n + 2) (2 * ModInv.NW n' + 2) (ModInv.NW n) (ModInv.NW n') (by omega) hW
   have hr : ModInv.roundCost s1 m1 n ≤ ModInv.roundCost s2 m2 n' := by
     unfold ModInv.roundCost; omega
+  have hW0 : ModInv.NW n' ≠ 0 := by omega
+  have hlg : Nat.log2 (ModInv.NW n) ≤ Nat.log2 (ModInv.NW n') :=
+    (Nat.le_log2 hW0).2 (Nat.le_trans (Nat.log2_self_le (by omega)) hW)
   unfold ModInv.cost
-  have := Nat.mul_le_mul (show ModInv.NW n + 1 ≤ ModInv.NW n' + 1 by omega) hr
+  have := Nat.mul_le_mul (show ModInv.rounds n ≤ ModInv.rounds n' by simp only [ModInv.rounds]; omega) hr
   omega
 
 /-! ### the arithmetic side conditions of the composition (small contexts) -/
@@ -88,6 +95,15 @@ theorem miCost_mono {s1 s2 : Nat → Nat} {m1 m2 : Nat → Nat → Nat} (hs : �
 theorem rk_le {x X r r' : Nat} (hx : x ≤ X) (h : r = X + r') : x + r' ≤ r := by omega
 
 theorem rk_le2 {a A c C r r' : Nat} (h1 : a ≤ A) (h2 : c ≤ C) (h : r = A + C + r') : a ≤ r ∧ c + r' ≤ r := by
+  omega
+
+/-- the first `nat.expNN` call: cost `c ≤ C` charged, budget `a ≤ B` covered by the second call's `max B D` further on -/
+theorem rk_le3 {a B c C D r r6 r7 r8 x : Nat} (h1 : a ≤ B) (h2 : c ≤ C) (e5 : r = C + r6) (e6 : r6 = x + r7)
+    (e7 : r7 = max B D + r8) : a ≤ r ∧ c + r6 ≤ r := by
+  omega
+
+/-- the second `nat.expNN` call: budget `a ≤ B`, cost `c ≤ D`, charged `max B D` -/
+theorem rk_le4 {a B c D r r' : Nat} (h1 : a ≤ B) (h2 : c ≤ D) (h : r = max B D + r') : a ≤ r ∧ c + r' ≤ r := by
   omega
 
 theorem lg2_le (s : State) (mp ml : Nat) : lg2 s mp ml ≤ 64 * ml := by

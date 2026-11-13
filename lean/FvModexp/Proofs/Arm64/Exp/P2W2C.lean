@@ -42,14 +42,14 @@ theorem fullC {impl : List Segment} (hap : ImplApart Extracted.program impl) {R 
         s.regs 3 = BitVec.ofNat 64 st ∧ s.regs 4 = BitVec.ofNat 64 xp ∧ s.regs 5 = BitVec.ofNat 64 xl ∧
         s.regs 6 = BitVec.ofNat 64 xc ∧ s.regs 7 = BitVec.ofNat 64 yp ∧ s.regs 8 = BitVec.ofNat 64 yl ∧
         s.regs 9 = BitVec.ofNat 64 yc ∧ s.regs 10 = BitVec.ofNat 64 lm ∧
-        PreC R b L stk (cost sqC mlC (stLen s.mem st) lm) zp zl zc st xp xl yp yl lm s ∧
+        PreC R b L stk (cost sqC mlC (stLen s.mem st) yl lm) zp zl zc st xp xl yp yl lm s ∧
         (s.regs 30).toNat % 4 = 0 ∧ (s.regs 30).toNat < 2 ^ 48)
       (fun s s' => s'.sp = s.sp ∧ s'.regs 18 = s.regs 18 ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧
         NHyp.CPostR R b L stk 96 zp zc st (natVal s.mem xp xl ^ natVal s.mem yp yl % 2 ^ lm)
-          (cost sqC mlC (stLen s.mem st) lm) s s') := by
+          (cost sqC mlC (stLen s.mem st) yl lm) s s') := by
   intro s hpc ⟨h0, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, hP, hr4, hr48⟩
   have hE := epre_of hP (by omega) hk2 hzp hxc
-  have hcb : cost sqC mlC (stLen s.mem st) lm ≤ b := hP.1.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hcb : cost sqC mlC (stLen s.mem st) yl lm ≤ b := hP.1.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
   have e : stk - 464 + 464 = stk := by omega
   have := full hap hns hnf hnfP hgr hmc hmv hmk hno hwb hkc hsn hkN haN hsq hkS haS hsm hmu hkM haM hmm htr hkT haT
     b L (stk - 464) (by omega) zp zl zc st xp xl xc yp yl yc lm s hpc

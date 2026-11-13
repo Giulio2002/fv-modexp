@@ -83,13 +83,15 @@ theorem store_i (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M : Me
   rw [show s.sp.toNat - 80 = s.sp.toNat - 240 + 160 by omega, Memory.readLE_writeLE_self,
     show (256 : Nat) ^ 8 = 2 ^ 64 from rfl, Nat.mod_eq_of_lt hi]
 
-/-- the round budget fits: at most `numWords + 1` rounds -/
+/-- the round budget fits: at most `rounds n` rounds -/
 theorem bud_j {j : Nat} (hc : cost sqrC mulC n ≤ b) (hjn : 2 ^ (j - 1) < NW n) :
     spent sqrC mulC n j + roundCost sqrC mulC n ≤ b := by
   have hj : j - 1 < NW n := Nat.lt_trans (Nat.lt_two_pow_self) hjn
-  have hm : (j - 1) * roundCost sqrC mulC n + roundCost sqrC mulC n ≤ (NW n + 1) * roundCost sqrC mulC n := by
-    rw [← Nat.succ_mul]; exact Nat.mul_le_mul_right _ (by omega)
-  simp only [spent, cost] at hc hm ⊢
+  have hNW0 : NW n ≠ 0 := by have := Nat.two_pow_pos (j - 1); omega
+  have hjl : j - 1 ≤ Nat.log2 (NW n) := (Nat.le_log2 hNW0).2 (Nat.le_of_lt hjn)
+  have hm : (j - 1) * roundCost sqrC mulC n + roundCost sqrC mulC n ≤ rounds n * roundCost sqrC mulC n := by
+    rw [← Nat.succ_mul]; exact Nat.mul_le_mul_right _ (by simp only [rounds]; omega)
+  simp only [spent, cost, rounds] at hc hm ⊢
   omega
 
 end

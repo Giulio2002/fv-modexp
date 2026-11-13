@@ -25,8 +25,8 @@ open FvModexp.Arm64.ExpHyp FvModexp.Arm64.EvenHyp
   costP (P2W2.cost sqC mlC) (P2W4.cost sqC mlC) ℓ xl yl lm
 
 theorem cO_le_cP (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat) (ℓ xl yl lm lm1 : Nat) (h : lm1 ≤ lm) :
-    cO sqC mlC ℓ lm1 ≤ cP sqC mlC ℓ xl yl lm :=
-  Nat.le_trans (le_supTo (costO (P2W2.cost sqC mlC) (P2W4.cost sqC mlC) ℓ) lm lm1 h)
+    cO sqC mlC ℓ yl lm1 ≤ cP sqC mlC ℓ xl yl lm :=
+  Nat.le_trans (le_supTo (costO (P2W2.cost sqC mlC) (P2W4.cost sqC mlC) ℓ yl) lm lm1 h)
     (Nat.le_trans (Nat.le_add_right _ _) (Nat.le_add_right _ _))
 
 theorem postD_mono {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {stk A zp zc st v c c' : Nat} {s s' : State}
@@ -203,12 +203,12 @@ theorem sumF {impl : List Segment} (hap : ImplApart Extracted.program impl) {R :
       have hlo0 : 0 < Exp.tz X * Y := Nat.mul_pos (tz_pos hX0 hXe) hY0
       have hneed : makeCost (Rsh.need xl (Exp.tz X)) ≤ makeCost (xl + 2) :=
         mk_mono (by simp only [Rsh.need]; omega) (by omega)
-      have hsup := le_supTo (costO (P2W2.cost sqC mlC) (P2W4.cost sqC mlC) (stLen s.mem st)) lm
+      have hsup := le_supTo (costO (P2W2.cost sqC mlC) (P2W4.cost sqC mlC) (stLen s.mem st) 1) lm
         (lm - Exp.tz X * Y) (by omega)
       have hcst : cP sqC mlC (stLen s.mem st) xl 1 lm = supTo (costO (P2W2.cost sqC mlC) (P2W4.cost sqC mlC)
-          (stLen s.mem st)) lm + makeCost (xl + 2) + makeCost (lm / 64 + 2) := rfl
-      have hcOe : cO sqC mlC (stLen s.mem st) (lm - Exp.tz X * Y) =
-          costO (P2W2.cost sqC mlC) (P2W4.cost sqC mlC) (stLen s.mem st) (lm - Exp.tz X * Y) := rfl
+          (stLen s.mem st) 1) lm + makeCost (xl + 2) + makeCost (lm / 64 + 2) := rfl
+      have hcOe : cO sqC mlC (stLen s.mem st) 1 (lm - Exp.tz X * Y) =
+          costO (P2W2.cost sqC mlC) (P2W4.cost sqC mlC) (stLen s.mem st) 1 (lm - Exp.tz X * Y) := rfl
       rw [← hcOe] at hsup
       obtain ⟨hb1, hb2, hb3⟩ := bud3 hneed hsup hcst
       have hodd := (Exp.tz_spec hX0).2
@@ -233,7 +233,7 @@ theorem sumF {impl : List Segment} (hap : ImplApart Extracted.program impl) {R :
       have htz : Exp.tz X = Exp.tz (natVal s.mem xp xl) := by rw [hXd]
       refine rshCall hap hns hnf hrh hkR haR hP (by omega) hA hxc1 hxc2 (tz := Exp.tz X) (lo := Exp.tz X * Y) htz64
         hb1 S4 k1 hsp4 k3 k4 k5 k6 k7 k8 k9 k10 r28' k14 fun S5 j1 j2 j3 j4 j5 j6 hq => ?_
-      refine recCall (cf := cO sqC mlC) (lm' := lm - Exp.tz X * Y)
+      refine recCall (cf := fun ℓ lm => cO sqC mlC ℓ 1 lm) (lm' := lm - Exp.tz X * Y)
         (fun b1 L1 p1 l1 c1 hp1 hc1 => hSO b1 L1 (stk - 112) 96 (by omega) (by omega) (by omega) p1 l1 c1
           (lm - Exp.tz X * Y) hp1 hc1)
         hP (by omega) hA hlt rfl htz hb2 ⟨z1, z2, z3, z4, z5, z6, z7, z8⟩ hkR haR S4 hsp4 r28' r18' e29' k14

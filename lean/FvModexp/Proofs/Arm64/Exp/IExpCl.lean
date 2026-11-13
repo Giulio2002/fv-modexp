@@ -228,9 +228,9 @@ theorem ensCl (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
   have hEv := ExpEven.fullI hap hmk hgr hmc hmv hmz hwb (EvenHyp.ExpNNHypNE.toNE1 hNE) (by omega) (by omega)
     hRm hSm hPm hNB hNC hk1 hk2 hk3
   exact ExpSpecX.toSpecM <|
-    ens impl hap R hD hEv hstkE (fun L b => Summary.of_codeIn (libNE_code impl hap) (hget L b))
+    ens impl hap R hD hEv hstkE (fun L b => Janus.Contracts.EqHashModel.Summary.of_codeIn (libNE_code impl hap) (hget L b))
       (NewobjectLiveContract.of_codeIn (libNE_code impl hap) hno)
-      (fun L b rs => Summary.of_codeIn (libFree_code impl hap) (hput L b rs)) hRem rem_n rem_11 (by omega)
+      (fun L b rs => Janus.Contracts.EqHashModel.Summary.of_codeIn (libFree_code impl hap) (hput L b rs)) hRem rem_n rem_11 (by omega)
       (WbLiveContract.of_codeIn (libExp_code impl hap) hwb) hK (by omega) hK20 h4416 hab hneed hbud
 
 end FvModexp.Arm64.IExp
