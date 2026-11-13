@@ -1,2 +1,1 @@
 # files allowed to contain `sorry` while in progress: path<TAB>owner<TAB>note. MUST be empty at release (RELEASE=1 scripts/no-sorry.sh enforces it).
-lean/FvModexp/Proofs/Amd64/Nat/DivLargeT2.lean	top	s31 WIP: t2c post-run goal is sorry; t2 not written; imported by nothing
