@@ -10,7 +10,7 @@ open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Spec Janus.Con
 set_option maxHeartbeats 64000000 in
 set_option maxRecDepth 100000 in
 /-- From `+0x324` to the return, case `finS len B`. -/
-theorem rg_fin2_S : Fin2If (fun len B _ => finS len B) := by
+theorem rg_fin2_S (hsb : SbSum) (hmv : MvSum) (hog : OgSum) : Fin2If (fun len B _ => finS len B) := by
   intro c ptr len cap B E M ret hret s S hpre hpc h4 h14 hx hf hdl m_ret m_fp m_c m_ptr m_len m_cap h0 h3 h1 hB hE hM kS
   simp only [finS] at kS
   have hpre' := hpre
@@ -25,7 +25,7 @@ theorem rg_fin2_S : Fin2If (fun len B _ => finS len B) := by
   by_cases c96 : len.toNat ≤ 96
   all_goals janus64_run [h4, h14, hx, h0, h1, h3, m_ret, m_fp, m_c, m_ptr, m_len, m_cap, kS, c96, hrc,
     Nat.lt_add_right_iff_pos, Nat.mod_eq_of_lt, BitVec.toInt_eq_toNat_cond, BitVec.toNat_sub, BitVec.msb_eq_decide]
-    calls [sb, mv, og_summary]
+    calls [hsb, hmv, hog]
   all_goals
     apply rgPost_of ptr len B E M s _ hB hE hM
     dsimp only

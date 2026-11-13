@@ -10,7 +10,7 @@ open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Spec Janus.Con
 set_option maxHeartbeats 64000000 in
 set_option maxRecDepth 100000 in
 /-- From `+0x324` to the return, case `¬ finS len B ∧ finE E ∧ ¬ finN1 len B`. -/
-theorem rg_fin2_B : Fin2If (fun len B E => ¬ finS len B ∧ finE E ∧ ¬ finN1 len B) := by
+theorem rg_fin2_B (hsb : SbSum) (hmv : MvSum) (hog : OgSum) : Fin2If (fun len B E => ¬ finS len B ∧ finE E ∧ ¬ finN1 len B) := by
   intro c ptr len cap B E M ret hret s S hpre hpc h4 h14 hx hf hdl m_ret m_fp m_c m_ptr m_len m_cap h0 h3 h1 hB hE hM ⟨kS, kE, kN⟩
   simp only [finS, finE, finN1] at kS kE kN
   have hpre' := hpre
@@ -27,7 +27,7 @@ theorem rg_fin2_B : Fin2If (fun len B E => ¬ finS len B ∧ finE E ∧ ¬ finN1
   have hc96 : (cap - 96#64).toNat = cap.toNat - 96 := by rw [BitVec.toNat_sub]; simp only [BitVec.toNat_ofNat]; omega
   all_goals janus64_run [h4, h14, hx, h0, h1, h3, m_ret, m_fp, m_c, m_ptr, m_len, m_cap, kS, kE, kN, kB, c96, hc96, hrc, neg_asr63_and', neg_asr63_and_lit', neg_asr63_and, neg_asr63_and_lit,
     Nat.lt_add_right_iff_pos, Nat.mod_eq_of_lt, BitVec.toInt_eq_toNat_cond, BitVec.toNat_sub, BitVec.msb_eq_decide]
-    calls [sb, mv, og_summary]
+    calls [hsb, hmv, hog]
   all_goals
     apply rgPost_of ptr len B E M s _ hB hE hM
     dsimp only

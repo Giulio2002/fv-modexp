@@ -3,9 +3,7 @@ import FvModexp.Spec
 import FvModexp.Proofs.Common.Calldata
 import FvModexp.Proofs.Common.BitArith
 import FvModexp.Proofs.Common.RgSpec
-import FvModexp.Proofs.Arm64.RequiredGas.Mv
-import FvModexp.Proofs.Arm64.RequiredGas.Sb
-import FvModexp.Proofs.Arm64.RequiredGas.Og
+import FvModexp.Proofs.Arm64.RequiredGas.OgDefs
 
 /-! The precondition and postcondition of `(*bigModExp).RequiredGas` (arm64), and the frame invariant at the join points of the proof. -/
 

@@ -1,17 +1,12 @@
 import Extracted
 import FvModexp.Proofs.Arm64.RequiredGas.Ic
+import FvModexp.Proofs.Arm64.RequiredGas.OgDefs
 
 /-! `osakaModexpGas` (arm64): `og_any` (returns, for every input) and `og_bounded` (lengths at most 1024: the result is the `Nat` model). -/
 
 namespace FvModexp.Arm64.RG
 
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
-
-abbrev OgPre (s : State) : Prop :=
-  LR s ∧ GuardOK s 0 ∧ StackOK s 88 40 ∧ Disjoint ((s.regs 28).toNat + 16) 8 (s.sp.toNat - 88) 128
-
-/-- The `L4` value of the four limbs at `a`. -/
-abbrev L4at (m : Memory) (a : Nat) : Nat := L4 (m.readLE a 8) (m.readLE (a + 8) 8) (m.readLE (a + 16) 8) (m.readLE (a + 24) 8)
 
 theorem dmod0 (p : Prop) [Decidable p] : (decide p).toNat % 18446744073709551616 = 0 ↔ ¬ p := by
   by_cases h : p <;> simp [h]
