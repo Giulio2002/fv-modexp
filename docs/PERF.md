@@ -1470,3 +1470,13 @@ IntASRow in release order). No trim needed (≤ 600 s with 44% margin). Own-modu
 LibWC 24 s → SubMod2NBase 12 s → G/GL/GC 17 s → {S1 54 s, S2 72 s, S3 74+10 s, Alloc+S4C 8+58 s+S4Cb 6 s} → GEns 5 s → Row 8 s.
 (S4C profile: 55 s tactic time, ~37 `omega` calls of 0.5-0.8 s each over the post-`janus_run` context + two of 6-8 s;
 `janus_omega_cheap`-first was SLOWER (70 s) — the cost is the context size, not disjunctions.)
+
+### infra s43 (2026-11-15, arm64 rows in RELEASE ORDER, Janus v0.3.1, JANUS_REPLAY_THREADS=1, load ~40, after the TIGHT COSTS edits)
+Fresh cache `cache-infra/rel`: warm-up 1081 s; StackNatRow PASS 141 s / 2.5 GB, MulAddWWRow PASS 175 s / 1.0 GB,
+BasicMulRow PASS 126 s / 3.3 GB, BasicSqrRow PASS 352 s / 3.1 GB, SqrRow PASS 500 s / 3.0 GB, MulRow PASS 406 s / 2.2 GB,
+TruncRow PASS 137 s / 0.9 GB, RshRow PASS 127 s, LshRow PASS 104 s, IntASRow PASS 36 s, MontRow audit-FAIL 233 s (no
+witness; modules compiled), then infra: **P2W2Row PASS 631 s / 3.0 GB** (P2Wit imported P2DE + P2W4E, so P2W2Row
+compiled all three P2 chains), **P2W4Row PASS 41 s**, **P2DRow PASS 94 s / 1.6 GB**, **ModInvRow PASS 350 s / 2.7 GB**,
+**SubMod2NRow PASS 22 s** (closure inside ModInvRow's). Fix for P2W2Row > 600 s: `Exp/P2Nf` (the four name facts on the
+`fn` defs only); P2W2Row/P2W4Row import P2Nf + their own `…E` module (dev: 7.6 / 7.5 s) — re-measure in `cache-infra/rel2`.
+Dev compile after the cost edits: P2W2Cp5 1.9 s, P2DFull 25 s / 3.0 GB, ModInvL0 9.6 s, EvFull 2.5 s, P2DRow 50 s / 3.8 GB.
