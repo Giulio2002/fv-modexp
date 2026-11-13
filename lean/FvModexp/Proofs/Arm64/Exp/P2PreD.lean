@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.P2PreWbC
 
+set_option autoImplicit false
+
 /-!
 # `buildPrecomputationWindowModPower2` (arm64): after the second `trunc` (`JD`) → header store of `powers[i+1]`,
 write barrier, `cap ≥ w` / `len ≤ w` checks, `cap := w`, `i += 2` → loop head (`HeadJ (i+2)`) (agent infra)
@@ -19,7 +21,7 @@ theorem bud_next {c0 rc i b b1 : Nat} (hi : 2 ≤ i) (hb : b - (c0 + (i / 2 - 1)
   rw [this, Nat.succ_mul]; omega
 
 section
-variable {impl : List Segment} {R : RtInv} {kc : Nat} {sqC : Nat → Nat → Nat} {mlC : Nat → Nat → Nat → Nat}
+variable {impl : List Segment} {R : RtInv} {kc : Nat} {sqC : Nat → Nat} {mlC : Nat → Nat → Nat}
     {b : Nat} {L : List (Nat × Nat)} {st pw pl ws lm x xl : Nat} {s : State}
 
 set_option maxRecDepth 20000 in

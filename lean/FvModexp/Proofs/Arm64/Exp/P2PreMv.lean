@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.P2PreCall
 
+set_option autoImplicit false
+
 /-!
 # `buildPrecomputationWindowModPower2` (arm64): `runtime.memmove(dst, src, 8)` into `buf` (agent infra)
 
@@ -21,7 +23,7 @@ abbrev mvE : Nat := 609408
 theorem mvE_eq : cA "runtime.memmove" = mvE := by decide
 
 section
-variable {impl : List Segment} {R : RtInv} {kc : Nat} {sqC : Nat → Nat → Nat} {mlC : Nat → Nat → Nat → Nat}
+variable {impl : List Segment} {R : RtInv} {kc : Nat} {sqC : Nat → Nat} {mlC : Nat → Nat → Nat}
     {b : Nat} {L : List (Nat × Nat)} {st pw pl ws lm x xl : Nat} {s : State}
 
 set_option maxRecDepth 20000 in
@@ -66,7 +68,7 @@ theorem mvCall (hmv : MemmoveLive (LibW.program.link impl) mvE 4096 R)
   rw [hspN] at hal
   rw [hm] at hw
   unfold Apart at hga
-  refine ReachesRet.call_regions (hmv L1 b1) hpc ?_ ?_
+  refine ReachesRet.call_regions (hmv L1 (b1 + stkR (HP (stLen s.mem st) pl lm) M st)) hpc ?_ ?_
   · simp only [Mem.EqPre, CallOK, LiveMemAt, Mem.Input, LiveDest, calleeStack, hspN, h0, h1, h2,
       hr30, hm, t0, t1, t2, outside_cons, outside_nil, and_true]
     refine ⟨⟨(guardOK_iff S 4096).1 hgd, ⟨by omega, by omega, hal, by omega, by omega, by omega,
@@ -92,16 +94,18 @@ theorem mvCall (hmv : MemmoveLive (LibW.program.link impl) mvE 4096 R)
   have hF' : MemFrame M m' (R.rt ++ winA S 4096 32 ++ [(d, d + 8)]) := hfr2.mono fun a n ho => by
     simp only [winA, outside_append, outside_cons, outside_nil, and_true] at ho ⊢
     rw [hspN] at ho; exact ⟨⟨ho.1.1, ho.1.2.1, by omega⟩, ho.2⟩
-  have hsah := sa_hdr' hc.ain hc.bu hc.sa hc.sap (LiveExt.refl R L1) (fun b n h1 h2 => by
+  have hhdr : ∀ b n, st ≤ b → b + n ≤ st + 24 → m'.readLE b n = M.readLE b n := fun b n h1 h2 => by
       have hd := hf.w.hd
       simp only [win, K, A, outside_cons, outside_nil, and_true] at hd
       have hz := (bufObj hpre hc hf (S' := S) hspN (stk := 4096) (above := 32) (by omega) (by omega)
         (a := d) (n := 8) hd1 hd2 (by omega)).2.2.2.2.2 (by omega)
       unfold Apart at hz
       exact rd_keep hf.w hspN (by omega) (by omega) hF' hlf2 (hc.sa.1.2.1.sub h1 h2) (by simp only [K, A]; omega)
-        fun r hr hr' => by simp only [List.mem_singleton] at hr; subst hr; simp only at hr' ⊢; omega)
-    hF'.accessible
-  have hc2 := keepC hc hf.w hspN (by omega) (by omega) hws hF' hlf2 hrg (LiveExt.refl R L1) hinv2 hsah.1 hsah.2.1 hsah.2.2.1 hsah.2.2.2
+        fun r hr hr' => by simp only [List.mem_singleton] at hr; subst hr; simp only at hr' ⊢; omega
+  have hsah := sa_hdr' hc.ain hc.bu hc.sa hc.sap (LiveExt.refl R L1) hhdr hF'.accessible
+  have hcap : stCap m' st = stCap M st := hhdr _ _ (by omega) (by omega)
+  have hc2 := keepC hc hf.w hspN (by omega) (by omega) hws hF' hlf2 hrg (LiveExt.refl R L1)
+    (by rw [stkR_congr hcap]; exact hinv2) hsah.1 hsah.2.1 hsah.2.2.1 hsah.2.2.2
   refine k junk f2 v2 m' ex2 ep2 hc2 (fun a n h0' hr hd => ?_) ?_
   · rcases hr with hr | hr | hr
     · exact pw_rd hf (hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.1) (by have := (pl_facts hpre).1; omega) hspN

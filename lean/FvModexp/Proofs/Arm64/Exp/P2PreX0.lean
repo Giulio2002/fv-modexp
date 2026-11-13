@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.P2PreWbC
 
+set_option autoImplicit false
+
 /-!
 # `buildPrecomputationWindowModPower2` (arm64): pre-loop facts before the loop locals exist (agent infra)
 
@@ -85,7 +87,7 @@ theorem rs0_call {S' : State} {X bp : Nat}
 end
 
 section
-variable {impl : List Segment} {R : RtInv} {kc : Nat} {sqC : Nat → Nat → Nat} {mlC : Nat → Nat → Nat → Nat}
+variable {impl : List Segment} {R : RtInv} {kc : Nat} {sqC : Nat → Nat} {mlC : Nat → Nat → Nat}
     {b : Nat} {L : List (Nat × Nat)} {st pw pl ws lm x xl : Nat} {s : State}
 
 set_option maxRecDepth 20000 in
@@ -169,7 +171,7 @@ end
 /-- the join after `powers[1] = trunc(x, logM)` returns -/
 abbrev pcT : Nat := 1791516
 
-def JT (impl : List Segment) (R : RtInv) (kc : Nat) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat)
+def JT (impl : List Segment) (R : RtInv) (kc : Nat) (sqC : Nat → Nat) (mlC : Nat → Nat → Nat)
     (b : Nat) (L : List (Nat × Nat)) (st pw pl lm x xl : Nat) (s : State) : Prop :=
   ∀ (S : State) (bp : Nat) (L1 : List (Nat × Nat)) (b1 l : Nat),
     S.pc = BitVec.ofNat 64 pcT → S.sp = BitVec.ofNat 64 (s.sp.toNat - 208) → S.regs 28 = s.regs 28 →

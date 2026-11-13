@@ -57,7 +57,7 @@ theorem ctx_own {R : RtInv} {kc : Nat} {L : List (Nat × Nat)} {st pw pl lm : Na
   have hLn : stLen (M.writeLE a k v) st = stLen M st := hrd _ _ (by omega) (by omega)
   have hC : stCap (M.writeLE a k v) st = stCap M st := hrd _ _ (by omega) (by omega)
   obtain ⟨⟨ha1, ha2, ha3, ha4, ha5, ha6, ha7⟩, hl, har⟩ := hc.sa
-  refine ⟨?_, ?_, by rw [Memory.regions_writeLE]; exact hc.rg, hc.le, inv_store_out hc.inv hort,
+  refine ⟨?_, ?_, by rw [Memory.regions_writeLE]; exact hc.rg, hc.le, by rw [stkR_congr hC]; exact inv_store_out hc.inv hort,
     ⟨hc.scr.b48, by rw [Memory.accessible_writeLE]; exact hc.scr.acc, hc.scr.al, hc.scr.held, hc.scr.loc⟩,
     ⟨⟨ha1, ha2, by rw [Memory.accessible_writeLE]; exact ha3, ha4,
       by rw [hW, hC]; intro h0; obtain ⟨b1, b2, b3, b4⟩ := ha5 h0; exact ⟨b1, b2, by rw [Memory.accessible_writeLE]; exact b3, b4⟩,
@@ -127,12 +127,27 @@ theorem sa_hdr' {R : RtInv} {L L1 L2 : List (Nat × Nat)} {st ℓ pl lm bp : Nat
     bu_hdr hbu (hrd _ _ (Nat.le_refl _) (by omega)) (hrd _ _ (by omega) (by omega)) (hrd _ _ (by omega) (by omega))⟩
 
 set_option maxRecDepth 20000 in
+/-- (divmc s42) a store into a runtime range apart from the live set keeps the stack capacity -/
+theorem rtw_cap {R : RtInv} {kc : Nat} {L : List (Nat × Nat)} {st pw pl lm : Nat} {s : State} {bp : Nat}
+    {M : Memory} {L1 : List (Nat × Nat)} {b1 : Nat} (hc : Ctx R kc L st pw pl lm s bp M L1 b1)
+    {a k : Nat} (v : Nat) (hin : InRanges a k R.rt) (hap : ApartAll a k L1) :
+    stCap (M.writeLE a k v) st = stCap M st := by
+  have hstH := hc.sa.1.2.1
+  have hst : st + 24 ≤ a ∨ a + k ≤ st := by
+    rcases hstH with hL | hO
+    · have := hap.apart_of_inRanges hL; unfold Apart at this; omega
+    · have := hin.apart hO; unfold Apart at this; omega
+  exact Memory.readLE_writeLE_of_disjoint _ _ (by omega)
+
+set_option maxRecDepth 20000 in
 /-- a store into a runtime range apart from the live set (the write barrier's buffer) -/
 theorem ctx_rtw {R : RtInv} {kc : Nat} {L : List (Nat × Nat)} {st pw pl lm : Nat} {s : State} {bp : Nat}
     {M : Memory} {L1 : List (Nat × Nat)} {b1 : Nat} (hc : Ctx R kc L st pw pl lm s bp M L1 b1)
     (hf : PF R kc L st pw pl s) {a k : Nat} (v : Nat) (hk : 0 < k) (hin : InRanges a k R.rt) (hap : ApartAll a k L1)
-    (hinv : R.inv b1 L1 (s.regs 28).toNat (view R.rt L1 (M.writeLE a k v))) :
+    {M0 : Memory} (hM0 : stCap M st = stCap M0 st)
+    (hinv : R.inv (b1 + stkR (HP (stLen s.mem st) pl lm) M0 st) L1 (s.regs 28).toNat (view R.rt L1 (M.writeLE a k v))) :
     Ctx R kc L st pw pl lm s bp (M.writeLE a k v) L1 b1 := by
+  have hcap := rtw_cap hc v hin hap
   have hK := hf.w.sp
   have hrt := hf.w.rt
   have hk8 := hf.w.kc8
@@ -146,7 +161,7 @@ theorem ctx_rtw {R : RtInv} {kc : Nat} {L : List (Nat × Nat)} {st pw pl lm : Na
   have hsa := sa_hdr (M' := M.writeLE a k v) hc.sa hc.sap (LiveExt.refl R L1)
     (by intro b n h1 h2; apply Memory.readLE_writeLE_of_disjoint; omega)
     (fun _ _ _ => by rw [Memory.accessible_writeLE])
-  refine ⟨?_, ?_, by rw [Memory.regions_writeLE]; exact hc.rg, hc.le, hinv,
+  refine ⟨?_, ?_, by rw [Memory.regions_writeLE]; exact hc.rg, hc.le, by rw [stkR_congr (hcap.trans hM0)]; exact hinv,
     ⟨hc.scr.b48, by rw [Memory.accessible_writeLE]; exact hc.scr.acc, hc.scr.al, hc.scr.held, hc.scr.loc⟩,
     hsa.1, hsa.2, ?_, ain_hdr hc.ain (by intro b n h1 h2; apply Memory.readLE_writeLE_of_disjoint; omega)
       (LiveExt.refl R L1), bu_hdr hc.bu (Memory.readLE_writeLE_of_disjoint _ _ (by omega))
@@ -176,7 +191,7 @@ theorem ctx_wb {R : RtInv} {kc : Nat} {L : List (Nat × Nat)} {st pw pl lm : Nat
     (hf : PF R kc L st pw pl s) (hk : 4096 ≤ kc) (hsp : S'.sp.toNat = s.sp.toNat - 208)
     {m' : Memory} {buf : Nat} (hF : MemFrame M m' (R.rt ++ [(S'.sp.toNat - 4096, S'.sp.toNat - 8)]))
     (hLF : LiveFrame M m' L1 []) (hrg : m'.regions = M.regions) (hsl : WbSlots R.rt m' buf 2)
-    (hapL : ApartAll buf (8 * 2) L1) (hinvS : InvSlots R b1 L1 (s.regs 28).toNat R.rt m' buf 2) (v1 v2 : Nat) :
+    (hapL : ApartAll buf (8 * 2) L1) (hinvS : InvSlots R (b1 + stkR (HP (stLen s.mem st) pl lm) M st) L1 (s.regs 28).toNat R.rt m' buf 2) (v1 v2 : Nat) :
     Ctx R kc L st pw pl lm s bp ((m'.writeLE buf 8 v1).writeLE (buf + 8) 8 v2) L1 b1 := by
   have hw := hf.w
   have hK := hw.sp
@@ -188,13 +203,14 @@ theorem ctx_wb {R : RtInv} {kc : Nat} {L : List (Nat × Nat)} {st pw pl lm : Nat
     simp only [win, K, A, outside_cons, outside_nil, and_true] at hd
     exact rd_keep hw hsp hk (by omega) hF' hLF (hc.sa.1.2.1.sub h1 h2) (by simp only [K, A]; omega) (by simp)
   have hsa := sa_hdr hc.sa hc.sap (LiveExt.refl R L1) hrd hF.accessible
+  have hcap1 : stCap m' st = stCap M st := hrd _ _ (by omega) (by omega)
   have hc1 : Ctx R kc L st pw pl lm s bp m' L1 b1 :=
-    keepC hc hw hsp hk (by omega) (by simp) hF' hLF hrg (LiveExt.refl R L1) hinvS.inv hsa.1 hsa.2
+    keepC hc hw hsp hk (by omega) (by simp) hF' hLF hrg (LiveExt.refl R L1) (by rw [stkR_congr hcap1]; exact hinvS.inv) hsa.1 hsa.2
       (ain_hdr hc.ain hrd (LiveExt.refl R L1))
       (bu_hdr hc.bu (hrd _ _ (Nat.le_refl _) (by omega)) (hrd _ _ (by omega) (by omega)) (hrd _ _ (by omega) (by omega)))
   obtain ⟨hbR, hb48, -, -⟩ := hsl
   have hv : ∀ (m : Memory), MemFrame (view R.rt L1 m') (view R.rt L1 m) [(buf, buf + 8 * 2)] →
-      R.inv b1 L1 (s.regs 28).toNat (view R.rt L1 m) := fun m h => hinvS _ h
+      R.inv (b1 + stkR (HP (stLen s.mem st) pl lm) M st) L1 (s.regs 28).toNat (view R.rt L1 m) := fun m h => hinvS _ h
   have e1 : view R.rt L1 (m'.writeLE buf 8 v1) = (view R.rt L1 m').writeLE buf 8 v1 :=
     view_writeLE_vis (hbR.sub (a := buf) (n := 8) (Nat.le_refl _) (by omega))
       (Outside.of_sub (a := buf) (n := 8) hapL.outside (Nat.le_refl _) (by omega))
@@ -203,8 +219,10 @@ theorem ctx_wb {R : RtInv} {kc : Nat} {L : List (Nat × Nat)} {st pw pl lm : Nat
     rw [view_writeLE_vis (hbR.sub (a := buf + 8) (n := 8) (by omega) (by omega))
       (Outside.of_sub (a := buf + 8) (n := 8) hapL.outside (by omega) (by omega)), e1]
   have hc2 := ctx_rtw hc1 hf v1 (k := 8) (by omega) (hbR.sub (a := buf) (n := 8) (Nat.le_refl _) (by omega))
-    (ApartAll.sub' (a := buf) (n := 8) hapL (Nat.le_refl _) (by omega)) (hv _ (by rw [e1]; janus_frame))
+    (ApartAll.sub' (a := buf) (n := 8) hapL (Nat.le_refl _) (by omega)) hcap1 (hv _ (by rw [e1]; janus_frame))
   exact ctx_rtw hc2 hf v2 (k := 8) (by omega) (hbR.sub (a := buf + 8) (n := 8) (by omega) (by omega))
-    (ApartAll.sub' (a := buf + 8) (n := 8) hapL (by omega) (by omega)) (hv _ (by rw [e2]; janus_frame))
+    (ApartAll.sub' (a := buf + 8) (n := 8) hapL (by omega) (by omega))
+    ((rtw_cap hc1 v1 (hbR.sub (a := buf) (n := 8) (Nat.le_refl _) (by omega))
+      (ApartAll.sub' (a := buf) (n := 8) hapL (Nat.le_refl _) (by omega))).trans hcap1) (hv _ (by rw [e2]; janus_frame))
 
 end FvModexp.Arm64.P2Pre

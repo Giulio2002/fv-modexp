@@ -1,6 +1,10 @@
 import FvModexp.Proofs.Arm64.Exp.LibCallsX
+import FvModexp.Proofs.Arm64.Exp.P2Q
 import FvModexp.Proofs.Common.ExpPow2
 import FvModexp.Proofs.Common.ExpmcFrame
+import FvModexp.Proofs.Common.StackPot
+
+set_option autoImplicit false
 
 /-!
 # `buildPrecomputationWindowModPower2` (go-bigmodexpfix nat.go:856-899), arm64 — statement pieces (agent infra)
@@ -55,14 +59,22 @@ abbrev A : Nat := 80
 /-- a `trunc` budget (any result length `≤ w`; `makeCap 0 = 4`) -/
 @[reducible] def tC (lm : Nat) : Nat := makeCost (W lm + 4)
 
-/-- one loop round: `sqr`, `mul`, two `trunc`s -/
-@[reducible] def rc (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat) (ℓ pl lm : Nat) : Nat :=
-  sqC (lvl1 ℓ pl lm) (W lm) + mlC (lvl1 ℓ pl lm) (W lm) (W lm) + 2 * tC lm
+/-- one loop round: `sqr`, `mul`, two `trunc`s (TIGHT COSTS, divmc s42: LEVEL-FREE `sqC`/`mlC` — divmc's Q-form
+`SqrHypQ`/`MulHypQ` costs; `ℓ` is unused, kept for the signature) -/
+@[reducible] def rc (sqC : Nat → Nat) (mlC : Nat → Nat → Nat) (_ℓ _pl lm : Nat) : Nat :=
+  sqC (W lm) + mlC (W lm) (W lm) + 2 * tC lm
 
-/-- before the loop: `stk.nat` and `trunc(x)` -/
-@[reducible] def c0 (ℓ pl lm : Nat) : Nat := stackNatCost ℓ (NB pl lm) + tC lm
+/-- before the loop: `stk.nat` (Q-form: paid by the stack reserve, no charge) and `trunc(x)` -/
+@[reducible] def c0 (_ℓ _pl lm : Nat) : Nat := tC lm
 
-@[reducible] def cost (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat) (ℓ pl lm : Nat) : Nat :=
+/-- (divmc s42, TIGHT COSTS) the stack reserve span of the function: `buf` (`rnd NB`) + the loop's `sqr`/`mul` level twin
+(`8 w + 64`) -/
+@[reducible] def DPre (pl lm : Nat) : Nat := StackNat.rnd (NB pl lm) + 8 * W lm + 64
+
+/-- the reserve level for an entry stack length `ℓ` -/
+@[reducible] def HP (ℓ pl lm : Nat) : Nat := ℓ + DPre pl lm
+
+@[reducible] def cost (sqC : Nat → Nat) (mlC : Nat → Nat → Nat) (ℓ pl lm : Nat) : Nat :=
   c0 ℓ pl lm + (pl / 2 - 1) * rc sqC mlC ℓ pl lm
 
 /-- the ranges the function writes (besides the runtime's) -/
@@ -71,7 +83,7 @@ abbrev A : Nat := 80
 @[reducible] def AW (R : RtInv) (kc : Nat) (s : State) (pw pl st : Nat) : List (Nat × Nat) :=
   R.rt ++ winA s (K kc) A ++ LW s pw pl st
 
-@[reducible] def Pre (R : RtInv) (kc : Nat) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat) (b : Nat)
+@[reducible] def Pre (R : RtInv) (kc : Nat) (sqC : Nat → Nat) (mlC : Nat → Nat → Nat) (b : Nat)
     (L : List (Nat × Nat)) (st pw pl ws lm x xl : Nat) (s : State) : Prop :=
   CallEnv R L s (K kc) A ∧ Serves R ∧ RunIface.Globals R s.mem (winA s (K kc) A ++ [(pw, pw + 24 * pl), (st, st + 24)]) ∧
     (ws = 2 ∨ ws = 4) ∧ pl = 2 ^ ws ∧ 2 ≤ lm ∧ lm ≤ 2 ^ 13 ∧
@@ -82,7 +94,8 @@ abbrev A : Nat := 80
     StkIn R L s (K kc) A st ∧ stLen s.mem st + 2 ^ 12 ≤ 2 ^ 16 ∧
     Apart st 24 (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st)) ∧
     (∃ op, NatOne R L s.mem op (winA s (K kc) A ++ LW s pw pl st) ∧ StkApart s.mem st op 8) ∧
-    cost sqC mlC (stLen s.mem st) pl lm ≤ b ∧ R.inv b L (s.regs 28).toNat (view R.rt L s.mem) ∧
+    cost sqC mlC (stLen s.mem st) pl lm ≤ b ∧
+      R.inv (b + stkR (HP (stLen s.mem st) pl lm) s.mem st) L (s.regs 28).toNat (view R.rt L s.mem) ∧
     (s.regs 30).toNat % 4 = 0 ∧ (s.regs 30).toNat < 2 ^ 48 ∧
     Apart st 24 RunIface.gA 32 ∧
     Apart (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st)) RunIface.gA 32 ∧ st ≠ 0
@@ -109,10 +122,11 @@ abbrev A : Nat := 80
 @[reducible] def BU (M : Memory) (st bp n : Nat) : Prop :=
   (stW M st ≤ bp ∧ bp + n ≤ stW M st + 8 * stLen M st) ∨ Apart bp n (stW M st) (8 * stCap M st)
 
-@[reducible] def Post (R : RtInv) (kc : Nat) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat) (b : Nat)
+@[reducible] def Post (R : RtInv) (kc : Nat) (sqC : Nat → Nat) (mlC : Nat → Nat → Nat) (b : Nat)
     (L : List (Nat × Nat)) (st pw pl lm x xl : Nat) (s s' : State) : Prop :=
   ∃ bp : Nat, (∀ j, j < pl → PwD s'.mem pw bp lm (natVal s.mem x xl) j) ∧
-    ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b - cost sqC mlC (stLen s.mem st) pl lm ≤ b' ∧
+    ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧
+      b - cost sqC mlC (stLen s.mem st) pl lm + stkR (HP (stLen s.mem st) pl lm) s'.mem st ≤ b' ∧
       R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem) ∧
       Scr R L L' s.mem s'.mem st bp (NB pl lm) ∧ StkApart s'.mem st bp (8 * NB pl lm) ∧
       StkAfter R L L' st (stLen s.mem st) pl lm s.mem s'.mem ∧
@@ -120,13 +134,13 @@ abbrev A : Nat := 80
       ArrIn L' st s.mem s'.mem ∧ BU s'.mem st bp (8 * NB pl lm)
 
 /-- the goal of every segment -/
-@[reducible] def GoalQ (R : RtInv) (kc : Nat) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat) (b : Nat)
+@[reducible] def GoalQ (R : RtInv) (kc : Nat) (sqC : Nat → Nat) (mlC : Nat → Nat → Nat) (b : Nat)
     (L : List (Nat × Nat)) (st pw pl lm x xl : Nat) (s : State) : State → Prop := fun s' =>
   (s'.sp = s.sp ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧ s'.regs 18 = s.regs 18) ∧
     Post R kc sqC mlC b L st pw pl lm x xl s s'
 
-@[reducible] def Goal (impl : List Segment) (R : RtInv) (kc : Nat) (sqC : Nat → Nat → Nat)
-    (mlC : Nat → Nat → Nat → Nat) (b : Nat) (L : List (Nat × Nat)) (st pw pl lm x xl : Nat) (s S : State) : Prop :=
+@[reducible] def Goal (impl : List Segment) (R : RtInv) (kc : Nat) (sqC : Nat → Nat)
+    (mlC : Nat → Nat → Nat) (b : Nat) (L : List (Nat × Nat)) (st pw pl lm x xl : Nat) (s S : State) : Prop :=
   ReachesRet (LibW.program.link impl) (s.regs 30) S (GoalQ R kc sqC mlC b L st pw pl lm x xl s)
 
 /-- the frame slots of the function (from the entry `sp`; `+56 … +72`: the spilled `x` header, entry `X6 … X8`) -/
@@ -145,7 +159,8 @@ structure Ctx (R : RtInv) (kc : Nat) (L : List (Nat × Nat)) (st pw pl lm : Nat)
   lf : LiveFrame s.mem M L (LW s pw pl st)
   rg : M.regions = s.mem.regions
   le : LiveExt R L L1
-  inv : R.inv b1 L1 (s.regs 28).toNat (view R.rt L1 M)
+  /-- (divmc s42) `b1` is the EFFECTIVE budget: the invariant holds with the unheld stack reserve on top -/
+  inv : R.inv (b1 + stkR (HP (stLen s.mem st) pl lm) M st) L1 (s.regs 28).toNat (view R.rt L1 M)
   scr : Scr R L L1 s.mem M st bp (NB pl lm)
   sa : StkAfter R L L1 st (stLen s.mem st) pl lm s.mem M
   sap : StkApart M st bp (8 * NB pl lm)

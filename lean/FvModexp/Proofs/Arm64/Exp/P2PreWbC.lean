@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.P2PreCall
 
+set_option autoImplicit false
+
 /-!
 # `buildPrecomputationWindowModPower2` (arm64): the write-barrier call and the round's own stores (agent infra)
 
@@ -38,7 +40,7 @@ theorem rd_rtw {R : RtInv} {L1 : List (Nat × Nat)} {M : Memory} {a k v c n : Na
   · have := hin.apart hO; unfold Apart at this; omega
 
 section
-variable {impl : List Segment} {R : RtInv} {kc : Nat} {sqC : Nat → Nat → Nat} {mlC : Nat → Nat → Nat → Nat}
+variable {impl : List Segment} {R : RtInv} {kc : Nat} {sqC : Nat → Nat} {mlC : Nat → Nat → Nat}
     {b : Nat} {L : List (Nat × Nat)} {st pw pl ws lm x xl : Nat} {s : State}
 
 set_option maxRecDepth 20000 in
@@ -84,7 +86,7 @@ theorem wbCall (hwb : WbLiveContract (LibW.program.link impl) wbE 4096 R 2)
   simp only [win] at hLs
   have hsv := hpre.2.1
   have hok : R.ok wbE [2] := by rw [← wbE_eq]; exact hsv.2.2.2.2.2.1 [2]
-  refine ReachesRet.call_regions (hwb L1 b1) hpc ⟨⟨?_, ?_, hal, hb', by omega, by omega, ?_⟩, hok, ?_, ?_, ?_⟩ ?_
+  refine ReachesRet.call_regions (hwb L1 (b1 + stkR (HP (stLen s.mem st) pl lm) M st)) hpc ⟨⟨?_, ?_, hal, hb', by omega, by omega, ?_⟩, hok, ?_, ?_, ?_⟩ ?_
   · rw [h30, BitVec.toNat_ofNat, Nat.mod_eq_of_lt (show ra < 2 ^ 64 by omega)]; exact hra4
   · rw [h30, BitVec.toNat_ofNat, Nat.mod_eq_of_lt (show ra < 2 ^ 64 by omega)]; exact hra48
   · exact Memory.accessible_mono _ hw (Nat.le_refl _) (by omega)
