@@ -1731,3 +1731,11 @@ Profile MulBM (arm64, load ~60: 153 s): `bm2`'s single-step `janus_run [e2] unti
 `List.decidableBAll` 4.6 s each). Fix = the amd64 `bmCallM` pattern (stop at the callee entry, `ReachesRet.call_regions` with
 the pre proved by name).
 amd64 karatsuba (dev, LEAN_NUM_THREADS=4, load ~50): KMulRel 15 s / 2.6 GB, KMulB 19-22 s / 3.0 GB, KMulMath 2 s, KMulI 36 s / 3.4 GB.
+
+### divmc s49 (2026-11-13, probes = `lean` with profiler against dev oleans, LEAN_NUM_THREADS=4, load ~40-45)
+| module | before | after | fix |
+|---|---|---|---|
+| Amd64/NatQ/KMulS2 | >1200 s (timeout) | 28 s / 2.9 GB | `IntAt.pushK (sp := …)`: the implicit `sp` occurs only in the conclusion; left as a metavariable the side `omega` failed and error recovery unified pushed-memory terms for >20 min. LESSON: give every conclusion-only implicit explicitly. |
+| Amd64/NatQ/KMulS3 (new) | 123 s | 31 s / 2.7 GB | frame side conditions `hrd`/`hkz` by `omega_only [layout facts]` instead of `omega` in the full context (39 s + 50 s) |
+| Arm64/NatQ/MulITail | 50 s | 37 s / 2.5 GB | `hmx`/`hmy`/`hmrd` by `omega_only` (the context holds unfolded `Apart` disjunctions) |
+| Arm64/NatQ/KMulPC | 88 s | (no gain) | clearing 24 unrelated hypotheses before `all_goals janus_simp` changed nothing (janus_omega is already sparse): the cost is ~160 read-over-write discharges at ~0.15 s |
