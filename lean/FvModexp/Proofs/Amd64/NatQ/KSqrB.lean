@@ -580,4 +580,109 @@ theorem intZ_of {M : Memory} {a ng p l c : Nat} (hh : IntAt M a ng p l c) :
   obtain ⟨q1, q2, q3, -⟩ := hh
   simp only [IntAS.intZ, IntAS.hNeg, IntAS.hP, IntAS.hL, q1, q2, q3]
 
+/-! ## The `CALL` push (amd64): the return address at `RSP - 320` (inside our window, below the locals) -/
+
+/-- the push keeps `KM` -/
+theorem KM.push {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State}
+    {lx0 lx1 t : Nat} {Lk : List (Nat × Nat)} {bk spent : Nat} {M : Memory}
+    (h : KM R b H L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) (v : Nat) :
+    KM R b H L W st zp zc xp n xc s lx0 lx1 t Lk bk spent (M.writeLE ((s.regs 4).toNat - 320) 8 v) := by
+  obtain ⟨hW, hWs, -, -, -, -, -, -, -, -, hout, -, -⟩ := h.lay
+  have hstw : Outside st 24 (win s W 48) := h.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1.2.2.1
+  simp only [win, outside_cons, outside_nil, and_true] at hstw
+  have hF : MemFrame M (M.writeLE ((s.regs 4).toNat - 320) 8 v) [((s.regs 4).toNat - 320, (s.regs 4).toNat - 320 + 8)] := by
+    janus_frame
+  have hF' : MemFrame M (M.writeLE ((s.regs 4).toNat - 320) 8 v)
+      (R.rt ++ [((s.regs 4).toNat - 320 - 0, (s.regs 4).toNat - 320 + 8)] ++ []) :=
+    hF.mono fun a k ho => by simp only [outside_append, outside_nil, and_true, Nat.sub_zero] at ho; exact ho.2
+  have hLs := h.lsep
+  have hLF : LiveFrame M (M.writeLE ((s.regs 4).toNat - 320) 8 v) Lk [] :=
+    LiveFrame.of_win hF fun r hr => by
+      have := hLs r hr; simp only [outside_cons, outside_nil, and_true]; omega
+  have hinv := RtInv.inv_frame' hF (fun r hr => by
+      simp only [List.mem_cons, List.not_mem_nil, or_false] at hr; subst hr
+      exact Or.inl (hout.of_sub (by simp only; omega) (by simp only; omega))) h.inv
+  have hLF2 : LiveFrame M (M.writeLE ((s.regs 4).toNat - 320) 8 v) Lk
+      [((s.regs 4).toNat - 320, (s.regs 4).toNat - 320 + 8)] :=
+    LiveFrame.of_win hF fun r hr => by
+      have := hLs r hr; simp only [outside_cons, outside_nil, and_true]; omega
+  have hsbC := stackBack_keepC h.sok (hF.widen R.rt) hLF2 (by simp only [outside_cons, outside_nil, and_true]; omega)
+    (LiveExt.refl R Lk)
+  have := h.step (k := 0) (a := 8) (by omega) (by omega) (ws := []) (fun r hr => by simp at hr) hF' hLF
+    (by simp only [Janus.Arm64.Memory.regions_writeLE]) (LiveExt.refl R Lk) (c := 0)
+    (Or.inr ⟨by omega, hsbC.2⟩) (by have := h.spk; omega) hinv hsbC.1
+  simpa using this
+
+/-- the push keeps the stack's header -/
+theorem KM.pushHdr {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State}
+    {lx0 lx1 t : Nat} {Lk : List (Nat × Nat)} {bk spent : Nat} {M : Memory}
+    (h : KM R b H L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) (v : Nat) :
+    stW (M.writeLE ((s.regs 4).toNat - 320) 8 v) st = stW M st ∧
+      stLen (M.writeLE ((s.regs 4).toNat - 320) 8 v) st = stLen M st ∧
+      stCap (M.writeLE ((s.regs 4).toNat - 320) 8 v) st = stCap M st := by
+  obtain ⟨hW, hWs, -⟩ := h.lay
+  have hstw : Outside st 24 (win s W 48) := h.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1.2.2.1
+  simp only [win, outside_cons, outside_nil, and_true] at hstw
+  simp only [stW, stLen, stCap]
+  exact ⟨Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega),
+    Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega),
+    Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega)⟩
+
+/-- `StkSep` through the push -/
+theorem KM.pushSep {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State}
+    {lx0 lx1 t : Nat} {Lk : List (Nat × Nat)} {bk spent : Nat} {M : Memory}
+    (h : KM R b H L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) (v : Nat) {p k : Nat} (hs : StkSep M st p k) :
+    StkSep (M.writeLE ((s.regs 4).toNat - 320) 8 v) st p k := by
+  obtain ⟨e1, e2, e3⟩ := h.pushHdr v
+  simp only [StkSep, BasicSqr.freeP, BasicSqr.freeN] at hs ⊢
+  rw [e1, e2, e3]; exact hs
+
+/-- reads outside the pushed slot -/
+theorem pushRd {M : Memory} {q v a k : Nat} (h : a + k ≤ q ∨ q + 8 ≤ a) :
+    (M.writeLE q 8 v).readLE a k = M.readLE a k :=
+  Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ h
+
+/-- `NatLive` through the push -/
+theorem pushLive {M : Memory} {R : RtInv} {Lk : List (Nat × Nat)} {q v p c : Nat} (h : NatLive M R Lk p c) :
+    NatLive (M.writeLE q 8 v) R Lk p c := fun hc => by
+  obtain ⟨a1, a2, a3, a4⟩ := h hc
+  exact ⟨a1, a2, by rw [Janus.Arm64.Memory.accessible_writeLE]; exact a3, a4⟩
+
+/-- frames through the push (the slot is inside the callee window) -/
+theorem pushFrame {M M' : Memory} {q v : Nat} {rt w ws : List (Nat × Nat)}
+    (hq : ∀ a k, Outside a k w → Outside a k [(q, q + 8)])
+    (h : MemFrame (M.writeLE q 8 v) M' (rt ++ w ++ ws)) : MemFrame M M' (rt ++ w ++ ws) := by
+  have h1 : MemFrame M (M.writeLE q 8 v) [(q, q + 8)] := by janus_frame
+  refine h1.trans h fun a k ho => ⟨hq a k (by simp only [outside_append] at ho; exact ho.1.2), ho⟩
+
+theorem pushLF {M M' : Memory} {q v : Nat} {Lk ws : List (Nat × Nat)} (hs : LiveSep Lk [(q, q + 8)])
+    (h : LiveFrame (M.writeLE q 8 v) M' Lk ws) : LiveFrame M M' Lk ws := by
+  have h1 : MemFrame M (M.writeLE q 8 v) [(q, q + 8)] := by janus_frame
+  exact (LiveFrame.of_win (ex := ws) h1 hs).trans h fun _ _ h => h
+
+/-- an `*Int` header in our frame (above `SP - 256`) through the push -/
+theorem IntAt.push {M : Memory} {sp a ng p l c v : Nat} (h : IntAt M a ng p l c) (hs : 320 ≤ sp) (ha : sp - 312 ≤ a) :
+    IntAt (M.writeLE (sp - 320) 8 v) a ng p l c :=
+  h.keep fun x m h1 _ => pushRd (by omega)
+
+/-- an `IOp` with its header in our frame through the push -/
+theorem KM.pushIOp {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State}
+    {lx0 lx1 t : Nat} {Lk : List (Nat × Nat)} {bk spent : Nat} {M : Memory}
+    (h : KM R b H L W st zp zc xp n xc s lx0 lx1 t Lk bk spent M) (v : Nat) {a : Nat}
+    (h1 : (s.regs 4).toNat - 312 ≤ a) (ho : IOp R Lk s W M a) :
+    IOp R Lk s W (M.writeLE ((s.regs 4).toNat - 320) 8 v) a := by
+  obtain ⟨hW, hWs, -⟩ := h.lay
+  obtain ⟨o1, o2, o3, o4, o5, o6, o7, o8, o9⟩ := ho
+  have e0 : (M.writeLE ((s.regs 4).toNat - 320) 8 v).readLE a 1 = M.readLE a 1 := pushRd (by omega)
+  have e1 : (M.writeLE ((s.regs 4).toNat - 320) 8 v).readLE (a + 8) 8 = M.readLE (a + 8) 8 := pushRd (by omega)
+  have e2 : (M.writeLE ((s.regs 4).toNat - 320) 8 v).readLE (a + 16) 8 = M.readLE (a + 16) 8 := pushRd (by omega)
+  have e3 : (M.writeLE ((s.regs 4).toNat - 320) 8 v).readLE (a + 24) 8 = M.readLE (a + 24) 8 := pushRd (by omega)
+  simp only [IOp, IntAS.hNeg, IntAS.hP, IntAS.hL, IntAS.hC] at o1 o2 o3 o4 o5 o6 o7 o8 o9 ⊢
+  rw [e0, e1, e2, e3]
+  refine ⟨o1, o2, o3, o4, by rw [Janus.Arm64.Memory.accessible_writeLE]; exact o5, o6, o7, ?_, o9⟩
+  simp only [win, outside_cons, outside_nil, and_true] at o9
+  rcases o8 with h0 | h0
+  · exact Or.inl h0
+  · right; rw [pushRd (by omega)]; exact h0
+
 end FvModexp.Amd64.Q.NatSqr
