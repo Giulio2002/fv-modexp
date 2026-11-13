@@ -44,6 +44,7 @@ structure AfterNat (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (st vl : Nat) (
   LF2 : LiveFrame (P.mem.writeLE ((s.regs 4).toNat - 312) 8 raNat) S2.mem L (stkWs s.mem st)
   mem : stCap s.mem st < stLen s.mem st + StackNat.rnd vl →
     (stW S2.mem st, stW S2.mem st + 8 * stCap S2.mem st) ∈ L1
+  reg : S2.mem.regions = s.mem.regions
 
 /-- the facts fixed from the `stk.nat` call on: the scratch `v` at `t` (`n` words), the live set `L1`, the budget `b1`,
 the stack array `(w1, c1)` -/

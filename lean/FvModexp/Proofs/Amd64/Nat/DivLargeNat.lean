@@ -18,6 +18,7 @@ namespace FvModexp.Amd64.DivLarge
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
+set_option janus.callRegions true in
 theorem pro2 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
     (hSN : StackNat.HypL impl R StackNat.names 4192 24)
     (b : Nat) (L : List (Nat × Nat)) (c : Nat) (zp zc st up uc : BitVec 64) (ip il vp vl : Nat) (s : State)
@@ -107,7 +108,8 @@ theorem pro2 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
     simp only [win, Janus.Amd64.Tactic.setRegF_apply, ↓reduceIte, e232, hws] at hF2 hLF2
     refine k s' L1 b1 ⟨?qpc, ?qsp, ?q5, ?q14, ?qfs, ?qx, ?qdf, hr0' (by omega), ?q3, ?q1, hext, by simpa using hbud, hinv2,
       ⟨k1, k2, by rw [hF2.accessible, Janus.Arm64.Memory.accessible_writeLE, hPacc]; exact k3, by omega, k5, k6, k7⟩,
-      hlen2, hsame, hgrow, hF2, hLF2, hmem⟩
+      hlen2, hsame, hgrow, hF2, hLF2, hmem, ?qreg⟩
+    case qreg => rw [hrg1]; first | exact hreg | (simp only [Janus.Arm64.Memory.regions_writeLE]; exact hreg)
     case qpc => rw [hpc']; janus64_simp
     case qsp =>
       rw [hsp']; simp only [Janus.Amd64.Tactic.setRegF_apply, ↓reduceIte]; bv_omega
@@ -124,7 +126,8 @@ theorem pro2 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
     simp only [win, Janus.Amd64.Tactic.setRegF_apply, ↓reduceIte, e232, hws] at hF2 hLF2
     refine k s' L1 b1 ⟨?qpc, ?qsp, ?q5, ?q14, ?qfs, ?qx, ?qdf, hr0' (by omega), ?q3, ?q1, hext, by simpa using hbud, hinv2,
       ⟨k1, k2, by rw [hF2.accessible, Janus.Arm64.Memory.accessible_writeLE, hPacc]; exact k3, by omega, k5, k6, k7⟩,
-      hlen2, hsame, hgrow, hF2, hLF2, hmem⟩
+      hlen2, hsame, hgrow, hF2, hLF2, hmem, ?qreg⟩
+    case qreg => rw [hrg1]; first | exact hreg | (simp only [Janus.Arm64.Memory.regions_writeLE]; exact hreg)
     case qpc => rw [hpc']; janus64_simp
     case qsp =>
       rw [hsp']; simp only [Janus.Amd64.Tactic.setRegF_apply, ↓reduceIte]; bv_omega
