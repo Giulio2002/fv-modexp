@@ -1597,3 +1597,10 @@ Dev compile after the cost edits: P2W2Cp5 1.9 s, P2DFull 25 s / 3.0 GB, ModInvL0
 | Amd64/Nat/DivOneA / DivOneB | 8 s / 22 s | 2.4 / 3.0 GB |
 | Amd64/Nat/DivOneF / DivOneT / DivOneTB / DivOneTC | 2 / 7 / 11 / 18 s | ≤ 2.5 GB |
 | Amd64/Nat/DivLessRel / DivLess / DivLessA | 1 / 4 / 19 s | ≤ 2.6 GB |
+
+## divmc s38 (2026-11-13) — TIGHT COSTS rows + BudOK pieces + amd64 Q sqr (dev J=2, load ~25)
+* arm64 release rows on the Q chain (janus v0.3.1, cache-divmc, bottom-up BasicSqrRowQ → SqrRowQ → MulRowQ, REPLAY_THREADS=1):
+  157 s / 2.3 GB, 167 s / 1.4 GB, 187 s / 1.0 GB (the first SqrRowQ/MulRowQ attempts FAILED at 900 s because they ran cold:
+  the whole NatQ chain counted as their own; dev critical paths are only ~130 s, own sums 474 s / 848 s — no DAG change needed).
+* Common/BudQX 1.8 s, Arm64/NatQ/BudRem 1.7 s.
+* Amd64/NatQ/Sqr* (Q copies of the old amd64 front half): max SqrOneA 30 s, SqrNorm 27 s, SqrMakeA1 21 s, SqrBS 18 s; all ≤ 3 GB.
