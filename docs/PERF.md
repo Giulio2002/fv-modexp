@@ -1800,6 +1800,16 @@ amd64 karatsuba (dev, LEAN_NUM_THREADS=4, load ~50): KMulRel 15 s / 2.6 GB, KMul
   not a literal)**, **RunOkRowC 139 / 5257 (audit: PoolGetLive on closed StkSh — needs PoolShape binder)**, **Top_RunSucc 614 / 5065
   (audit: Put call site not at instantiation S)**; old Nat/SqrRow 903 + Nat/MulRow 503 retired. Over 600 s: Mont, DivW, MulRowQ,
   RunErr, IntAS, BasicSqr. RunSucc's 614 s at least shows the chain compiles within the timeout once lower rows own it.
+* RunErr own set (top s44, release order on main aab0b76c, RequiredGas excluded: own extraction) = 41 modules, dev-compiled
+  sequentially (LEAN_NUM_THREADS=4, load ~25): **sum 856 s**, peak 3.8 GB. Top: RunL 93, RunH3SB 91, RunH2SB 77, RunH3SA 75,
+  RunLa 66, RunH1 65, Nat/SetBytes 62, RunH2SA 59, RunH3 56, RunH2 54, SetBytesStd 45 (rest < 20). The row's 701 s ≈ this chain's
+  critical path (SetBytes* → RunH1 → RunH2S* → RunH2 → RunH3S* → RunH3 → RunLa → RunL). trace.profiler (top s44): RunL `lb` 75 s, of which one `janus_run [...] until [pcC0 …]` 39.5 s;
+  RunH3SB 90 s inside `set_option janus.callRegions` — two janus_run 12 + 24 s, `case v` 41 s, of which the 8×
+  `rw [Memory.readLE_writeLE_of_disjoint _ _ (by omega) …]` (line 161) 20 s (omega over the whole context: infra s52 lesson 1 —
+  clear the callee post / big hyps first). NEXT (top): trim those two, then RunH2SB (same shape).
+* Targeted verifies (top s44, snapT44 = agent/top b5fa5db8, gc'd rel43 cache, timeout raised to 3600 s: AUDIT checks, not release
+  times): Top_RunSucc cold FAIL 3601 s (chain compile) then warm **PASS 86 s / 5.0 GB**; Int/ModRow PASS 760 s / 2.7 GB;
+  RunOkRowC FAIL 2078 s (audit), RunOkRow FAIL 16 s (audit) — both retired.
 
 ## infra s50/s51 (2026-11-13) — arm64 release-order run `rel50` (Janus v0.3.2, fresh cache-infra/rel50, JANUS_REPLAY_THREADS=1, load ~45-70, infra dev builds running alongside)
 Warm-up then (wall s / peak MB): StackNat 229/2474, MulAddWW 278/948, BasicMul 227/3500, BasicSqr 679/3374 (divmc, old form),
