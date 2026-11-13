@@ -26,6 +26,8 @@ abbrev ST : Nat := OA + 0x100
 abbrev XP : Nat := OB + 0x100
 abbrev YP : Nat := OB + 0x200
 abbrev OP : Nat := OB + 0x800
+/-- the modulus `m = [6]` (EvenRow) -/
+abbrev MP : Nat := OB + 0x300
 /-- `natOne`'s header (`.data`, outside the extracted read-only data) -/
 abbrev NA : Nat := 0x704010
 abbrev GA : Nat := 0x6d0e80
@@ -38,7 +40,7 @@ theorem wbA_eq : StackNat.wbA = WBA := by decide
 theorem nA_eq : natOneA = NA := by decide
 
 def g (a : Nat) : Byte :=
-  if a = XP then 3 else if a = YP then 5 else if a = OP then 1
+  if a = XP then 3 else if a = YP then 5 else if a = MP then 6 else if a = OP then 1
   else if a = ST + 1 then 0x02 else if a = ST + 2 then 0xA0 else if a = ST + 16 then 4
   else if a = NA + 1 then 0x08 else if a = NA + 2 then 0xB0 else if a = NA + 8 then 1 else if a = NA + 16 then 1
   else if a = GA then 40 else if a = GA + 8 then 40 else if a = GA + 16 then 12 else if a = GA + 24 then 80 else 0

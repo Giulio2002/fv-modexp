@@ -1455,3 +1455,18 @@ Dev (arm64, v0.3.1, load ~60): SubMod2NRow 10 s / 2.4 GB, CalleeInst 37 s / 4.6 
 P2W4Row 13 s, P2DRow 84 s / 3.8 GB, ModInvRow 23 s / 3.0 GB.
 After main 462a986 (XFacts): EvE1 7.5 s / 2.6 GB, EvFull 2.8 s, EvSum 1.4 s, EvInst 54 s / 5.1 GB (arm64 dev, load ~60).
 StackNatRow (divmc's, lower row) PASS 169 s / 0.8 GB in the same cache.
+
+### infra s42 (2026-11-14, arm64 rows, Janus v0.3.1, JANUS_REPLAY_THREADS=1, load ~40-55, two row jobs in parallel)
+Run 3 (same cache as run 2, continued): RshRow PASS 201 s / 0.8 GB, LshRow PASS 139 s / 0.9 GB (asm's), MulRow (divmc's)
+FAIL = timeout 902 s (its whole BasicMul/Karatsuba chain was own: BasicMulRow etc. had not run in this cache), SqrRow
+PASS 374 s / 2.0 GB, **P2W2Row FAIL (audit, not a proof failure): statement uses `P2W2.ℓL` — Janus rejects non-ASCII
+definition names (AUDIT-ROUND6 F1)** → renamed ℓR/ℓZ/ℓL/ℓ1..ℓ4 to `lvlR/lvlZ/lvlL/lvl1..lvl4` (63 files, commit 10e0b8e;
+dev rebuild 158 modules clean: P2W2Row 12 s, P2W4Row 10 s, P2DRow 62 s / 3.8 GB, EvInst 46 s / 5.0 GB);
+**ModInvRow PASS 503 s / 2.2 GB** (48 modules rebuilt).
+**SubMod2NRow in RELEASE ORDER** (fresh cache `cache-infra/rel`: warm-up 1478 s, TruncRow PASS 417 s, IntASRow PASS
+384 s / 1.2 GB, MontRow audit-FAIL 321 s (modules compiled), then): **PASS 338 s / 2.9 GB, 35 own modules** (SubMod2NG*,
+LibWC/MontW/LibW/CmpW/DeferW/LibDefer, divmc's NatSub0*) — the 646 s of run 2 included divmc's NatAdd*/NatSub* (charged to
+IntASRow in release order). No trim needed (≤ 600 s with 44% margin). Own-module dev critical path for reference:
+LibWC 24 s → SubMod2NBase 12 s → G/GL/GC 17 s → {S1 54 s, S2 72 s, S3 74+10 s, Alloc+S4C 8+58 s+S4Cb 6 s} → GEns 5 s → Row 8 s.
+(S4C profile: 55 s tactic time, ~37 `omega` calls of 0.5-0.8 s each over the post-`janus_run` context + two of 6-8 s;
+`janus_omega_cheap`-first was SLOWER (70 s) — the cost is the context size, not disjunctions.)
