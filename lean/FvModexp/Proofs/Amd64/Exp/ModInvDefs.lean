@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.SubMod2NDefs
+import FvModexp.Proofs.Amd64.Exp.LibW
 import FvModexp.Proofs.Amd64.NatQ.SqrDefs
 import FvModexp.Proofs.Common.ModInvMath
 import FvModexp.Proofs.Common.StackScr
@@ -133,7 +134,7 @@ plus the return address a user address (re-derived from `CallSetup.ret` / `RetAd
     (stLen s.mem st + D n ≤ H ∧ cost sqrC mulC xl n ≤ b) ∧
       R.inv (b + stkR H s.mem st) L (s.regs 14).toNat (view R.rt L s.mem) ∧
     Outside NatAdd.wordT 16 R.rt ∧ s.mem.accessible Callees.adxAddr 1 false = true ∧
-    OneIn R L s kc zp zc st ∧ (s.mem.readLE (s.regs 4).toNat 8).toNat < 2 ^ 47
+    OneIn R L s kc zp zc st ∧ s.mem.readLE (s.regs 4).toNat 8 < 2 ^ 47
 
 /-- the internal post at the effective budget (`b − cost + stkR H s'.mem st ≤ b'`) -/
 @[reducible] def Post (R : RtInv) (kc H : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
@@ -146,13 +147,13 @@ variable {R : RtInv} {kc H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → N
 
 /-- `PreQ` (+ the return-address fact) gives the internal `Pre` at the effective budget -/
 theorem pre_of_Q (h : PreQ R kc H sqrC mulC B L zp zl zc st xp xl xc n s)
-    (hra : (s.mem.readLE (s.regs 4).toNat 8).toNat < 2 ^ 47) :
+    (hra : s.mem.readLE (s.regs 4).toNat 8 < 2 ^ 47) :
     Pre R kc H sqrC mulC (B - stkR H s.mem st) L zp zl zc st xp xl xc n s := by
   obtain ⟨c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20, c21, c22,
-    c23, ⟨c24, c25⟩, c26, c27, c28, c29⟩ := h
+    ⟨c23, c24⟩, c25, c26, c27, c28⟩ := h
   refine ⟨c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20, c21, c22,
-    c23, ⟨c24, by omega⟩, ?_, c27, c28, c29, hra⟩
-  rw [Nat.sub_add_cancel (by omega)]; exact c26
+    ⟨c23, by omega⟩, ?_, c26, c27, c28, hra⟩
+  rw [Nat.sub_add_cancel (by omega)]; exact c25
 
 /-- the internal `Post` at the effective budget is the Q-form post -/
 theorem post_of_Q {s' : State} (h : Post R kc H sqrC mulC (B - stkR H s.mem st) L zp zc st xp xl n s s') :
