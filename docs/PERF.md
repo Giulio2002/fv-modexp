@@ -1790,6 +1790,16 @@ amd64 karatsuba (dev, LEAN_NUM_THREADS=4, load ~50): KMulRel 15 s / 2.6 GB, KMul
   owns 59 (Run C/D segments, IntBytes), Top/RunErr owns 36 (SetBytes*, Run H/L). The real numbers come from the
   fresh-cache release-order run (cache-top/rel43, log cache-top/snap43/rel43.out).
 * Dev (amd64, top s43): NatQ/DivMFull (fullM + ensML) 4.4 s / 2.5 GB.
+* **rel43 FINAL (top s44; arm64 release order, fresh cache-top/rel43, snapshot main 527443a0, Janus v0.3.2, ROWS=2, MAX_LOAD=80,
+  total wall 14776 s incl. 1897 s warm-up; wall s / peak MB):** PASS StackNat 212/2465, MulAddWW 286/944, AddVW 103, SubVW 108,
+  BasicMul 319/3266, BasicSqr 605/3482, Trunc 202, Rsh 224, Lsh 190, IntAS 615/1233, IntSub 19, BasicSqrQ 423/2919, SqrQ 515/3094,
+  MulRowQ 721/2205, Mont 791/3015, SubMod2N 388/2914, ModInv 551/2932, DivW 801/1186, DivWVW 12, DivBasic 447/4489, Drs 516,
+  Div 561, DivM 318, Rem 547, DivBasicQ 553/4501, DrsQ 362, DivRowQ 386/2609, DivMQ 161, RemQ 298, P2W4 390/2873, P2D 435/2275,
+  RequiredGas 543/1771, **RunErr 701/2298**. FAIL: **EvenRow 900 timeout / 4330**, P2W2 901 timeout, W2 732 + W4 565 (audit
+  MemmoveZeroLive witness, expmc), Int/ModRow 329 (audit Put site; fixed top 03588c1a), **RunOkRow 404 (audit: segAddr name
+  not a literal)**, **RunOkRowC 139 / 5257 (audit: PoolGetLive on closed StkSh — needs PoolShape binder)**, **Top_RunSucc 614 / 5065
+  (audit: Put call site not at instantiation S)**; old Nat/SqrRow 903 + Nat/MulRow 503 retired. Over 600 s: Mont, DivW, MulRowQ,
+  RunErr, IntAS, BasicSqr. RunSucc's 614 s at least shows the chain compiles within the timeout once lower rows own it.
 
 ## infra s50/s51 (2026-11-13) — arm64 release-order run `rel50` (Janus v0.3.2, fresh cache-infra/rel50, JANUS_REPLAY_THREADS=1, load ~45-70, infra dev builds running alongside)
 Warm-up then (wall s / peak MB): StackNat 229/2474, MulAddWW 278/948, BasicMul 227/3500, BasicSqr 679/3374 (divmc, old form),
