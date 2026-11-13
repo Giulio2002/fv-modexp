@@ -1687,3 +1687,9 @@ SubMod2NRow 12 s.
   explicit `rw [show sp - 8 + 16 = sp + 8 by omega, …]`; (2) `omega` calls in the continuation's context (huge post) —
   fixed by moving all arithmetic into small lemmas (`dv_facts`, `dv_pre`, `dv_post`) and passing `8 ≤ sp`/`sp < 2^64`.
 * New: W4Ctx 5.4 s, W4RRC 3.9 s, W4DivK 37–42 s / 3.3 GB, W4DivM 30 s / 3.0 GB, W4DivR 24 s, W4Own 2.6 s.
+
+### expmc s53 (amd64 window-4 RR section, dev builds on v0.3.1, host load ~40)
+* New: W4DivP 2.1 s, W4DivS (divStep) 3.4 s, W4SncR 4.4 s, W4SnK 14–17 s / 3.0 GB, W4SnP 2.0 s, W4Sn2R 7.7 s,
+  W4Sn2 (sn2Step) 3.6 s, W4Lsh 6.2 s; rebuilt after the KeptJ shrink: W4Ctx 4.6 s, W4DivK 23 s, W4DivM 25 s.
+  All composition steps pass only explicit terms (no omega in the big contexts; arithmetic in small lemmas).
+* arm64 MontRow with Witness.nonvacuous: 3.6 s (dev).
