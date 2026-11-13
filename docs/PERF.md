@@ -1832,3 +1832,4 @@ Util → IcDefs → IcHL → Ic → Og → Pre → Seg → FinA → Fin → Row 
 | module | before | after | fix |
 |---|---|---|---|
 | Amd64/NatQ/DrsBd, DrsB1, DrsEnv, DrsRecP (new) | — | 6 s / 28 s / 4 s / 19 s (≤ 3.2 GB) | DrsRecP 65 s → 19 s: stack-argument offsets stated directly (`r - 392` …) instead of `rw [hsp]` into `r - 400 + 8` (recursion-depth blowup) |
+| Amd64/NatQ/DrsCallS, DrsA2, DrsB2, DrsA3, DrsSN3, DrsNorm3, DrsB3N, DrsB3T, DrsB3S, DrsB3C, DrsCRel (new, asm s47) | — | 2 / 16 / 49 / 2 / 1.5 / 9 / 12 / 2.4 / 5 / 17 / 2.6 s (≤ 3.5 GB; dev build, load ~40) | runs closed by name (setRegF_apply simp per register, `readLE_writeLE` rw chains); BitVec hints stated in the exact form the run produces (`ofNat a - ofNat b`, `+ 1#64`, masks via `neg_sshr63_and`) |
