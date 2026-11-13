@@ -62,7 +62,7 @@ theorem lessC1F {R : RtInv} {b : Nat} {dc : Nat → Nat → Nat → Nat} {L : Li
     (h3 : s'.regs 7 = BitVec.ofNat 64 p) (h4 : s'.regs 6 = BitVec.ofNat 64 ul) (h5 : s'.regs 8 = BitVec.ofNat 64 c)
     (hm : s'.mem = ((m.writeLE ((s.regs 4).toNat - 80) 8 p).writeLE ((s.regs 4).toNat - 72) 8 ul).writeLE
       ((s.regs 4).toNat - 64) 8 c) :
-    PostL R b dc L zp zc st z2 z2c u ul v vl s s' := by
+    PostLG R b dc L zp zc st z2 z2c u ul v vl s s' := by
   have hp := hpre.f
   have hce := hp.ce
   obtain ⟨-, ⟨hb', ha, -⟩, -, -, hout, -⟩ := hp.ce
@@ -79,7 +79,7 @@ theorem lessC1F {R : RtInv} {b : Nat} {dc : Nat → Nat → Nat → Nat} {L : Li
   have har : ar p ul = [(p, p + 8 * ul)] := by unfold ar; rw [if_pos hu0]
   have hW2 : MemFrame m s'.mem [((s.regs 4).toNat - 80, (s.regs 4).toNat - 56)] := by rw [hm]; janus_frame
   clear hce hp
-  refine lessFin hpre hS hU _ hfs hdf h0 h1 h2 h3 h4 h5 ?hM ?hLF ?hI ?hV ?hT
+  refine lessFin hpre.toG hS hU _ hfs hdf h0 h1 h2 h3 h4 h5 ?hM ?hLF ?hI ?hV ?hT
   case hM =>
     rw [har]
     refine (hW0.trans hF2 (rs'' := R.rt ++ win s 41512 112 ++ [(p, p + 8 * ul)]) fun a n h => ?_).trans
@@ -118,7 +118,7 @@ theorem lessC1 (impl : List Amd64.Segment) (R : RtInv)
     (hpre : Pre R b dc L zp zl zc st z2 z2l z2c u ul uc v vl vc s) {p c : Nat} {L' : List (Nat × Nat)} {b' : Nat}
     {S : State} (hS : AtS R b L zp zc z2 z2c u ul s p c L' b' S) (hU : natVal s.mem u ul < natVal s.mem v vl)
     (hu0 : 0 < ul) (hra : s.mem.readLE (s.regs 4).toNat 8 < 2 ^ 47) (hx0 : s.xmm 15 = 0#128) (hdf0 : s.df = false) :
-    ReachesRet (LibDiv.program.link impl) (retAddrOf s) S (RQ R b dc L zp zc st z2 z2c u ul v vl s) := by
+    ReachesRet (LibDiv.program.link impl) (retAddrOf s) S (RQG R b dc L zp zc st z2 z2c u ul v vl s) := by
   have hp := hpre.f
   have hce := hp.ce
   obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, hLs, hro, ⟨htg, htr, htw⟩⟩ := hp.ce
@@ -231,7 +231,7 @@ set_option maxHeartbeats 16000000 in
 /-- `len u = 0`: the postcondition after the (empty or skipped) copy and the `r` stores (pure) -/
 theorem lessC0F {R : RtInv} {b : Nat} {dc : Nat → Nat → Nat → Nat} {L : List (Nat × Nat)}
     {zp zl zc st z2 z2l z2c u uc v vl vc : Nat} {s : State}
-    (hpre : Pre R b dc L zp zl zc st z2 z2l z2c u 0 uc v vl vc s) {p c : Nat} {L' : List (Nat × Nat)} {b' : Nat}
+    (hpre : PreG R b dc L zp zl zc st z2 z2l z2c u 0 uc v vl vc s) {p c : Nat} {L' : List (Nat × Nat)} {b' : Nat}
     {S : State} (hS : AtS R b L zp zc z2 z2c u 0 s p c L' b' S) (hU : natVal s.mem u 0 < natVal s.mem v vl)
     {M1 m : Janus.Arm64.Memory}
     (hW0 : MemFrame S.mem M1 [((s.regs 4).toNat - 240, (s.regs 4).toNat - 232),
@@ -244,7 +244,7 @@ theorem lessC0F {R : RtInv} {b : Nat} {dc : Nat → Nat → Nat → Nat} {L : Li
     (h3 : s'.regs 7 = BitVec.ofNat 64 p) (h4 : s'.regs 6 = BitVec.ofNat 64 0) (h5 : s'.regs 8 = BitVec.ofNat 64 c)
     (hm : s'.mem = ((m.writeLE ((s.regs 4).toNat - 80) 8 p).writeLE ((s.regs 4).toNat - 72) 8 0).writeLE
       ((s.regs 4).toNat - 64) 8 c) :
-    PostL R b dc L zp zc st z2 z2c u 0 v vl s s' := by
+    PostLG R b dc L zp zc st z2 z2c u 0 v vl s s' := by
   have hp := hpre.f
   have hce := hp.ce
   obtain ⟨-, ⟨hb', ha, -⟩, -, -, hout, -⟩ := hp.ce
@@ -284,11 +284,11 @@ theorem lessC0 (impl : List Amd64.Segment) (R : RtInv)
     (hmz : MemmoveZeroLive64 (LibDiv.program.link impl) (cA "runtime.memmove") 4096 R)
     {b : Nat} {dc : Nat → Nat → Nat → Nat} {L : List (Nat × Nat)}
     {zp zl zc st z2 z2l z2c u uc v vl vc : Nat} {s : State}
-    (hpre : Pre R b dc L zp zl zc st z2 z2l z2c u 0 uc v vl vc s) {p c : Nat} {L' : List (Nat × Nat)} {b' : Nat}
+    (hpre : PreG R b dc L zp zl zc st z2 z2l z2c u 0 uc v vl vc s) {p c : Nat} {L' : List (Nat × Nat)} {b' : Nat}
     {S : State} (hS : AtS R b L zp zc z2 z2c u 0 s p c L' b' S) (hU : natVal s.mem u 0 < natVal s.mem v vl)
     (hz2 : z2 < 2 ^ 64) (hra : s.mem.readLE (s.regs 4).toNat 8 < 2 ^ 47) (hx0 : s.xmm 15 = 0#128)
     (hdf0 : s.df = false) :
-    ReachesRet (LibDiv.program.link impl) (retAddrOf s) S (RQ R b dc L zp zc st z2 z2c u 0 v vl s) := by
+    ReachesRet (LibDiv.program.link impl) (retAddrOf s) S (RQG R b dc L zp zc st z2 z2c u 0 v vl s) := by
   have hp := hpre.f
   have hce := hp.ce
   obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, hLs, hro, ⟨htg, htr, htw⟩⟩ := hp.ce
@@ -323,7 +323,7 @@ theorem lessC0 (impl : List Amd64.Segment) (R : RtInv)
   have hu64 : u < 2 ^ 64 := by rw [← hS.s8]; exact Janus.Arm64.Memory.readLE_lt _ _ _
   have hzp : zp < 2 ^ 64 := by rw [← hS.q0]; exact Janus.Arm64.Memory.readLE_lt _ _ _
   have hzc : zc < 2 ^ 64 := by rw [← hS.q2]; exact Janus.Arm64.Memory.readLE_lt _ _ _
-  have hB : Box (Pre R b dc L zp zl zc st z2 z2l z2c u 0 uc v vl vc s ∧ AtS R b L zp zc z2 z2c u 0 s p c L' b' S) :=
+  have hB : Box (PreG R b dc L zp zl zc st z2 z2l z2c u 0 uc v vl vc s ∧ AtS R b L zp zc z2 z2c u 0 s p c L' b' S) :=
     ⟨⟨hpre, hS⟩⟩
   clear hpre hp hS hce hLs
   by_cases hpu : BitVec.ofNat 64 u = BitVec.ofNat 64 p
