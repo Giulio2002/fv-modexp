@@ -24,7 +24,7 @@ namespace FvModexp.Arm64.EvenRow
 abbrev cF : Nat → Nat → Nat → Nat := NatDiv.cost DivRec.drsC
 abbrev cR : Nat → Nat → Nat → Nat := NatRem.cost cF
 abbrev cS : Nat → Nat → Nat → Nat → Nat := ExpSlow.cost sqrC mulC cF
-abbrev cP : Nat → Nat → Nat → Nat → Nat := P2D.cP sqrC mulC
+abbrev cP : Nat → Nat → Nat → Nat → Nat := P2D.cP sqrCQ mulCQ
 abbrev bUC : Nat → Nat → Nat → Nat → Nat → Nat := Exp.supU (ExpEven.NBudE cF cR cS cP)
 abbrev cUC : Nat → Nat → Nat → Nat → Nat → Nat := Exp.supU (ExpN.NCost cF cR cS cP)
 /-- `nat.expNNEven`'s stack need and cost -/

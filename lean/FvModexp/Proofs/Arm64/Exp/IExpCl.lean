@@ -4,6 +4,7 @@ import FvModexp.Proofs.Arm64.Exp.SlowSum
 import FvModexp.Proofs.Arm64.Exp.SlowSqG
 import FvModexp.Proofs.Arm64.Exp.EvMulG
 import FvModexp.Proofs.Arm64.Exp.P2Wit
+import FvModexp.Proofs.Arm64.Exp.CalleeInstP2Q
 import FvModexp.Proofs.Arm64.Exp.EvInst
 import FvModexp.Proofs.Arm64.Exp.NFun
 import FvModexp.Proofs.Arm64.Exp.NCap
@@ -88,8 +89,9 @@ theorem slowC {impl : List Segment} (hap : ImplApart Extracted.program impl) {R 
   slowCl hap hmk hgr hmc hmv hwb (NatDiv.ensCLG impl hap R hgr hmc hwb hmk hmv hmz) DivInst.ns_sub div_fn
     (by omega) (by omega)
 
-open FvModexp.Arm64.CalleeInst FvModexp.Arm64.P2Wit in
-/-- **`nat.expNNPowerOfTwo`** (arm64), every callee proved (infra's `P2D.ens` + `CalleeInst`), window `71776` -/
+open FvModexp.Arm64.CalleeInstQ FvModexp.Arm64.P2WitQ in
+/-- **`nat.expNNPowerOfTwo`** (arm64), every callee proved (infra's `P2D.ens` + `CalleeInstQ`/`P2WitQ`: the P2 chain in
+Q-form, divmc s42), window `71776` -/
 theorem p2Cl {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv}
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
     (hgr : GrowsliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.growslice") 4096 R)
@@ -97,11 +99,11 @@ theorem p2Cl {impl : List Segment} (hap : ImplApart Extracted.program impl) {R :
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
     (hno : NewobjectLiveContract (Extracted.program.ofImpl impl) (cA "runtime.newobject") 4096 R)
     (hwb : WbLiveContract (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2) :
-    NHyp.P2Hyp impl R LibW.names 71776 112 P2D.needP (P2D.cP sqrC mulC) := by
-  have hW := sqrWX_eq
+    NHyp.P2Hyp impl R LibW.names 71776 112 P2D.needP (P2D.cP sqrCQ mulCQ) := by
+  have hW := CalleeInst.sqrWX_eq
   exact P2D.ens hap sub nf2 nf4 nfP nfD hgr hmc hmv hmk hno hwb (kcP := NatSqr.sqrWX) (by omega)
     (sn hap hgr hmc hwb) (by omega) (by omega) (sq hap hgr hmc hmv hmk hwb) (Nat.le_refl _) (by omega) sqm
-    (mu hap hgr hmc hmv hmk hwb) (by rw [mulWX_eq]; omega) (by omega) mum (tr hap hmv hmk) (by omega) (by omega)
+    (mu hap hgr hmc hmv hmk hwb) (by rw [CalleeInst.mulWX_eq]; omega) (by omega) mum (tr hap hmv hmk) (by omega) (by omega)
     (rh hap hmv hmk) (by omega) (lh hap hmc hmv hmk) (by omega) 71776 (by omega) (by omega) (by omega) (by omega)
 
 /-- `nat.expNN`'s callee shapes at window level `K` (`70720 ≤ K`), every one proved -/
@@ -115,7 +117,7 @@ theorem dhyps {impl : List Segment} (hap : ImplApart Extracted.program impl) {R 
     (hwb : WbLiveContract (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2)
     {K : Nat} (hK : 70720 ≤ K) :
     ExpN.DHyps impl R K (NatDiv.cost DivRec.drsC) ExpSlow.need P2D.needP (ExpSlow.cost sqrC mulC (NatDiv.cost DivRec.drsC))
-      (P2D.cP sqrC mulC) NatDiv.names 41504 LibW.names 71776 LibW.names 71776 :=
+      (P2D.cP sqrCQ mulCQ) NatDiv.names 41504 LibW.names 71776 LibW.names 71776 :=
   { mkN := MakesliceLiveContract.of_codeIn (libN_code impl hap) hmk, clr := hmc, mv := hmv, mkO := hmk, gr := hgr,
     wb := hwb, div := NatDiv.ensCL impl hap R hgr hmc hwb hmk hmv hmz, hnsD := DivInst.ns_sub,
     hnsW4 := DivInst.ns_w4, hnsW2 := DivInst.ns_w2, hKD := by omega,
@@ -135,7 +137,7 @@ abbrev clR : Nat → Nat → Nat → Nat := NatRem.cost clF
 /-- `nat.expNNSlow`'s cost -/
 abbrev clS : Nat → Nat → Nat → Nat → Nat := ExpSlow.cost sqrC mulC clF
 /-- `nat.expNNPowerOfTwo`'s cost -/
-abbrev clP : Nat → Nat → Nat → Nat → Nat := P2D.cP sqrC mulC
+abbrev clP : Nat → Nat → Nat → Nat → Nat := P2D.cP sqrCQ mulCQ
 /-- the dominating bound of `expNNEven`'s inner budget (`Exp.supU`: `NBudE` is not monotone in the modulus length) -/
 abbrev clBU : Nat → Nat → Nat → Nat → Nat → Nat := Exp.supU (ExpEven.NBudE clF clR clS clP)
 /-- the dominating bound of `expNNEven`'s inner cost -/
