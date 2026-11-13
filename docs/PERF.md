@@ -1787,3 +1787,11 @@ Util → IcDefs → IcHL → Ic → Og → Pre → Seg → FinA → Fin → Row 
 * amd64 Q drs (dev): DrsPathC 134 s → 7.8 s, DrsPathA 124 s → 9.5 s — the closing `all_goals first | exact … | (rw …; simp)`
   chain over the epilogue's holes replaced by named holes (`?sp ?r14 … ?q ?u`) with one closer each. New: DrsPathB 28 s,
   DrsPathBR 13 s, DrsPro2d 23 s (2.5-3.3 GB).
+
+### divmc s49 (2026-11-13, probes = `lean` with profiler against dev oleans, LEAN_NUM_THREADS=4, load ~40-45)
+| module | before | after | fix |
+|---|---|---|---|
+| Amd64/NatQ/KMulS2 | >1200 s (timeout) | 28 s / 2.9 GB | `IntAt.pushK (sp := …)`: the implicit `sp` occurs only in the conclusion; left as a metavariable the side `omega` failed and error recovery unified pushed-memory terms for >20 min. LESSON: give every conclusion-only implicit explicitly. |
+| Amd64/NatQ/KMulS3 (new) | 123 s | 31 s / 2.7 GB | frame side conditions `hrd`/`hkz` by `omega_only [layout facts]` instead of `omega` in the full context (39 s + 50 s) |
+| Arm64/NatQ/MulITail | 50 s | 37 s / 2.5 GB | `hmx`/`hmy`/`hmrd` by `omega_only` (the context holds unfolded `Apart` disjunctions) |
+| Arm64/NatQ/KMulPC | 88 s | (no gain) | clearing 24 unrelated hypotheses before `all_goals janus_simp` changed nothing (janus_omega is already sparse): the cost is ~160 read-over-write discharges at ~0.15 s |

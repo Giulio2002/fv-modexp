@@ -1,5 +1,6 @@
 import FvModexp.Proofs.Amd64.NatQ.KMulI
 import FvModexp.Proofs.Amd64.NatQ.KMulMath
+import FvModexp.Proofs.Common.OmegaOnly
 
 set_option autoImplicit false
 
@@ -43,7 +44,7 @@ theorem kS2 (impl : List Amd64.Segment) (R : RtInv)
   have hkmP := hkm.push 0x5f21eb
   obtain ⟨x1, x2, x3, x4⟩ := hkmP.x0h
   obtain ⟨y1, y2, y3, y4⟩ := hkmP.y0h
-  obtain ⟨z1, z2, z3, z4⟩ := IntAt.pushK (v := 0x5f21eb) hB.z0h (by omega) (by omega)
+  obtain ⟨z1, z2, z3, z4⟩ := IntAt.pushK (sp := (s.regs 4).toNat) (v := 0x5f21eb) hB.z0h (by omega) (by omega)
   obtain ⟨hxacc, hx48, hxH, hxc48, hxw, hxs, hzx, hxv, hxn⟩ := hkmP.halfX (o := 0) (l := lx0) (by omega)
   obtain ⟨hyacc, hy48, hyH, hyc48, hyw, hys, hzy, hyv, hyn⟩ := hkmP.halfY (o := 0) (l := ly0) (by omega)
   simp only [Nat.mul_zero, Nat.add_zero, Nat.sub_zero] at hxacc hx48 hxH hxc48 hxw hxs hzx hxv hxn
@@ -112,14 +113,14 @@ theorem kS2 (impl : List Amd64.Segment) (R : RtInv)
         (ws := [((s.regs 4).toNat - 176, (s.regs 4).toNat - 176 + 32), (zp, zp + 8 * (lx0 + ly0))] ++ stkWs S.mem st)
         (q := (s.regs 4).toNat - 456) (v := 0x5f21eb) (M := S.mem) (M' := s2.mem)
         (fun a k ho => by simp only [outside_cons, outside_nil, and_true] at ho ⊢; omega)
-      simp only [stkWs, BasicSqr.freeP, BasicSqr.freeN, e1, e2, e3, List.append_assoc] at hF this ⊢
+      simp only [stkWs, e1, e2, e3, List.append_assoc] at hF this ⊢
       exact this hF
     have hLF' : LiveFrame S.mem s2.mem Lk
         ([((s.regs 4).toNat - 176, (s.regs 4).toNat - 176 + 32), (zp, zp + 8 * (lx0 + ly0))] ++ stkWs S.mem st) := by
       have := pushLF (M := S.mem) (M' := s2.mem) (q := (s.regs 4).toNat - 456) (v := 0x5f21eb) (Lk := Lk)
         (ws := [((s.regs 4).toNat - 176, (s.regs 4).toNat - 176 + 32), (zp, zp + 8 * (lx0 + ly0))] ++ stkWs S.mem st)
         (fun r hr => by have := hLs r hr; simp only [outside_cons, outside_nil, and_true]; omega)
-      simp only [stkWs, BasicSqr.freeP, BasicSqr.freeN, e1, e2, e3] at hLF this ⊢
+      simp only [stkWs, e1, e2, e3] at hLF this ⊢
       exact this hLF
     clear hF hLF
     obtain ⟨-, htw, -, htz, -, -, -⟩ := hkm.tops
@@ -137,7 +138,6 @@ theorem kS2 (impl : List Amd64.Segment) (R : RtInv)
     have hrd : ∀ x m, (s.regs 4).toNat - 376 ≤ x → x + m ≤ (s.regs 4).toNat + 72 → (x + m ≤ (s.regs 4).toNat - 176 ∨
         (s.regs 4).toNat - 144 ≤ x) → s2.mem.readLE x m = S.mem.readLE x m := by
       intro x m h1 h2 h3
-      rw [← List.append_assoc] at hF'
       exact hkm.rdW (k := W - 456) (a := 40) (by omega) (by omega) hF' h1 h2
         (by simp only [stkWs, List.cons_append, List.nil_append, outside_cons, outside_nil, and_true]; omega)
     -- `z` and `t` outside the written part keep their bytes
@@ -185,13 +185,14 @@ theorem kS2 (impl : List Amd64.Segment) (R : RtInv)
     · exact hz
     · exact hnn
     · rcases hv2 with hv2 | ⟨hv0', hv2⟩
-      · refine fill_val (by omega) h0 (Or.inl hv2) ?_
+      · refine fill_val (need := lx0 + ly0) (by omega) h0 (Or.inl hv2) ?_
         unfold natVal; exact hkz _ _ (Or.inl ⟨by omega, by omega⟩) (Or.inr (by omega))
-      · refine fill_val (by omega) h0 (Or.inr ⟨hv0', ?_⟩) ?_
+      · refine fill_val (need := lx0 + ly0) (by omega) h0 (Or.inr ⟨hv0', ?_⟩) ?_
         · rw [hv2]; unfold natVal; exact hzP _ _ (by omega) (by omega)
         · unfold natVal; exact hkz _ _ (Or.inl ⟨by omega, by omega⟩) (Or.inr (by omega))
     · rw [← hhi]; unfold natVal; exact hkz _ _ (Or.inl ⟨by omega, by omega⟩) (Or.inr (by omega))
   all_goals (try janus64_simp)
-  all_goals first | exact hfs | exact hdf | exact hx15 | omega
+  all_goals first | exact hfs | exact hdf | exact hx15 | omega_only [hW, hWs] |
+    (apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega_only [hW, hWs])
 
 end FvModexp.Amd64.Q.NatMul
