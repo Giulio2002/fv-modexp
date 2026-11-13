@@ -204,13 +204,14 @@ theorem site_mk : MakeslicePre 4096 sMk ∧ StackRoom sMk 4096 3 ∧
     LiveAt R mkA [(sMk.regs 0).toNat, (sMk.regs 1).toNat, (sMk.regs 2).toNat] [] 0x1000 (makesliceRound sMk)
       (sMk.regs 28).toNat sMk.mem (calleeStack sMk 4096 3) :=
   ⟨⟨cs_callOK _ _ _ _ 3 (by omega), ⟨by decide +kernel, by decide +kernel⟩, by decide +kernel, by decide +kernel,
-    by decide +kernel⟩, cs_room _ _ _ _ 3 (by omega), trivial, inv_cs _ _ _ _, by decide +kernel,
+    by decide +kernel, by simp only [calleeStack, Outside]; decide +kernel⟩, cs_room _ _ _ _ 3 (by omega), trivial, inv_cs _ _ _ _, by decide +kernel,
     fun r hr => by simp at hr, cs_winR _ _ _ _ 3 (by omega)⟩
 
 theorem site_no : NewobjectPre 4096 sNo ∧ StackRoom sNo 4096 1 ∧
     LiveAt R noA [(sNo.regs 0).toNat] [] 0x1000 (newobjectRound sNo) (sNo.regs 28).toNat sNo.mem
       (calleeStack sNo 4096 1) :=
-  ⟨⟨cs_callOK _ _ _ _ 1 (by omega), ⟨by decide +kernel, by decide +kernel⟩, by decide +kernel⟩,
+  ⟨⟨cs_callOK _ _ _ _ 1 (by omega), ⟨by decide +kernel, by decide +kernel⟩, by decide +kernel,
+    by simp only [calleeStack, Outside]; decide +kernel⟩,
     cs_room _ _ _ _ 1 (by omega), trivial, inv_cs _ _ _ _, by decide +kernel, fun r hr => by simp at hr,
     cs_winR _ _ _ _ 1 (by omega)⟩
 

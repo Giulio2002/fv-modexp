@@ -58,7 +58,7 @@ theorem expW (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     (hm0 : 0 < IntV M mA) (hzl : IntLenLe M zA maxW) (hyl : IntLenLe M yA maxW) (hml : IntLenLe M mA maxW)
     (hOne : ∀ t : State, t.sp = sp0 → OneG R L1 M (win t stkM aboveM) [zA, yA, mA])
     (hPool : ∀ t : State, t.sp = sp0 → PoolG R M (win t stkM aboveM)) (hmA0 : mA ≠ 0) (hzwb : Apart zA 32 wbA 4)
-    (z y mm : BitVec 64) :
+    (hzX : ModX M zA) (z y mm : BitVec 64) :
     Summary (LibRun.program.link impl)
       (segAddr Extracted.program "github.com/ethereum/go-bigmodexpfix/src/math/big.(*Int).exp")
       (fun t => RetAddr ((Extracted.program.onlySegments namesExp).link impl) (t.regs 30).toNat ∧
@@ -72,7 +72,7 @@ theorem expW (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     subst hz hy hmm
     exact ⟨hr, ha, by rw [hm]; exact hIP t hsp hm h28, by rw [hm]; exact hm0, by rw [hm]; exact hzl,
       by rw [hm]; exact hyl, by rw [hm]; exact hml, by rw [hm]; exact hOne t hsp,
-      by rw [hm]; exact hPool t hsp, hmA0, hzwb⟩
+      by rw [hm]; exact hPool t hsp, hmA0, hzwb, by rw [hm]; exact hzX⟩
   · rintro t t' ⟨-, -, -, hm, -, hz, hy, hmm⟩ ⟨⟨hcs, h0, hpost⟩, hreg⟩
     subst hz hy hmm
     rw [hm] at hpost

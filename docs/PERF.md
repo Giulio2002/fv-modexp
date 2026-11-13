@@ -1453,3 +1453,5 @@ Run 2 (fresh cache, warm-up 1616 s): TruncRow PASS 439 s / 2.4 GB, expmc MontRow
 381 s), **SubMod2NRow PASS 646 s / 2.9 GB** (Mont* now charged to MontRow; remaining own: SubMod2NG*, divmc NatSub*/NatAdd*).
 Dev (arm64, v0.3.1, load ~60): SubMod2NRow 10 s / 2.4 GB, CalleeInst 37 s / 4.6 GB, ExpWit 6.5 s, P2Wit 10 s, P2W2Row 13 s,
 P2W4Row 13 s, P2DRow 84 s / 3.8 GB, ModInvRow 23 s / 3.0 GB.
+After main 462a986 (XFacts): EvE1 7.5 s / 2.6 GB, EvFull 2.8 s, EvSum 1.4 s, EvInst 54 s / 5.1 GB (arm64 dev, load ~60).
+StackNatRow (divmc's, lower row) PASS 169 s / 0.8 GB in the same cache.

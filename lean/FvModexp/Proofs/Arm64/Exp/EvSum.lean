@@ -53,7 +53,7 @@ theorem full {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns 
       stkM ≤ stk - 336 ∧ 4608 ≤ stk - 336) :
     EvenSum impl R stk 112 (needE needR needS needP) (costE costF costR costS costP bU cU sqC mlC mlG) := by
   intro b L zp zl zc st xp xl xc yp yl yc mp ml mc s hpc hs
-  obtain ⟨h0, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11, h12, hPre, hzp, hxc, hyc, hr4, hr48⟩ := hs
+  obtain ⟨h0, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11, h12, hPre, hzp, hxc, hyc, hr4, hr48, hX⟩ := hs
   have hP := epre_of hPre hk1 hk2 hzp hxc hyc
   have hle : stk ≤ s.sp.toNat := hPre.1.1.2.1.2.1
   have hzw := zw_of hPre (by omega) hle
@@ -66,7 +66,7 @@ theorem full {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns 
   have h30 : s.regs 30 = BitVec.ofNat 64 (s.regs 30).toNat := by rw [BitVec.ofNat_toNat, BitVec.setWidth_eq]
   obtain ⟨k1, k2, k3, k4, k5, k6, k7⟩ := hK
   have hb := body hap hns hnf hsn k1 haN hlh k2 haL hrh k3 haR hE hKN k4 hKN2 hmv hmz hmk hSE k7 hMi k5 hkc hmu k6 haM
-    htr hadd hRm hSm hPm hNB hNC hsm hmm hgm zl hP hM hev hzw hneed hcost hr4 hr48 hzl hpc h0 h1 h2 h3 h4 h5 h6 h7 h8
+    htr hadd hRm hSm hPm hNB hNC hsm hmm hgm zl hP hM hev hX hzw hneed hcost hr4 hr48 hzl hpc h0 h1 h2 h3 h4 h5 h6 h7 h8
     h9 h10 h11 h12 h30
   rw [← h30] at hb
   obtain ⟨k, s', hs', hr', q1, q2, q3, q4, q5⟩ := hb

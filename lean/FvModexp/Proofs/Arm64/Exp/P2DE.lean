@@ -4,7 +4,7 @@ import FvModexp.Proofs.Arm64.Exp.P2W2E
 set_option autoImplicit false
 
 /-!
-# **`nat.expNNPowerOfTwo`** (arm64): `P2D.ens : NHyp2.P2HypC …` (agent infra)
+# **`nat.expNNPowerOfTwo`** (arm64): `P2D.ens : NHyp.P2Hyp …` (agent infra)
 
 The `Ensures` form on the restricted program `LibW.names` (the caller `nat.expNN` is outside it), from the live runtime
 contracts of the whole extraction and the callee summaries (`stk.nat`, `sqr`, `mul`, `trunc`, `rsh`, `lsh`) on a
@@ -42,7 +42,7 @@ theorem ens {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : 
     {stkL aboveL : Nat} (hlh : Lsh.Hyp2 impl R ns stkL aboveL) (haL : aboveL ≤ 88)
     (stk : Nat) (hk1 : 1184 + kcP ≤ stk) (hk2 : stk ≤ 2 ^ 20 + 576) (hkR : stkR + 112 ≤ stk)
     (hkL : stkL + 112 ≤ stk) :
-    NHyp2.P2HypC impl R LibW.names stk 112 needP (cP sqC mlC) := by
+    NHyp.P2Hyp impl R LibW.names stk 112 needP (cP sqC mlC) := by
   have hc := codeIn_ofImpl_restrict_of_apart hap LibW.names
   rw [← LibW.eq_only] at hc
   have hgrL : GrowsliceLiveContract (LibW.program.link impl) P2W2.grE 4096 R := by
