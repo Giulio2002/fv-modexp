@@ -4,12 +4,12 @@ import FvModexp.Proofs.Common.MaskWord
 set_option autoImplicit false
 
 /-!
-# window-2 prologue (amd64): `powers[1] = buf[n:2n:3n].montgomery(x, RR, m, k0, numWords)` (nat.go:1419;
+# window-2 prologue (amd64): `powers[1] = buf[n:2n:3n].montgomery(x, RR, m, k0, numWords)` (nat.go:1552;
 agent expmc s49)
 
 From the return of the `powers[0]` call (fn+0x8ff, its header in `AX, BX, CX`): the header store `powers[0]`
 (`0x1b0`), the bounds checks `3n ≤ cap buf`, `2n ≤ 3n`, the slicing `buf[n:2n:3n]`, the call (`callP`, `d = 1`,
-return fn+0x9d4), the header store `powers[1]` (`0x1c0`), `i = 2` and the jump to the table-loop head.
+return fn+0x9d4), the header store `powers[1]` (`0x1c8`), `i = 2` and the jump to the table-loop head.
 -/
 
 open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Contracts FvModexp
@@ -26,7 +26,7 @@ theorem sl2 {n : Nat} (hn16 : n ≤ 2 ^ 16) : BitVec.ofNat 64 (2 * n) - BitVec.o
 
 /-- the slice pointer of `buf[n:2n:3n]` -/
 theorem slc1 {n bp : Nat} (hn : 0 < n) (hn16 : n ≤ 2 ^ 16) (hbp : bp + 8 * n < 2 ^ 64) :
-    ((0#64 - BitVec.ofNat 64 (2 * n)).sshiftRight 63 &&& BitVec.ofNat 64 n <<< 3) + BitVec.ofNat 64 bp =
+    BitVec.ofNat 64 bp + ((0#64 - BitVec.ofNat 64 (2 * n)).sshiftRight 63 &&& BitVec.ofNat 64 n <<< 3) =
       BitVec.ofNat 64 (bp + 8 * (1 * n)) := by
   rw [FvModexp.sshr63_allOnes _ (by simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega), BitVec.allOnes_and]
   apply BitVec.eq_of_toNat_eq
@@ -49,9 +49,9 @@ theorem p1 {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program 
     (h5 : S.regs 5 = r5) (h14 : S.regs 14 = BitVec.ofNat 64 g) (hfs : S.fsBase.toNat = fs) (hx15 : S.xmm 15 = 0)
     (hdf : S.df = false)
     (hF : FP R L sp bp bc M0 S.mem) (hinv : R.inv b L g (view R.rt L S.mem)) (hrg : S.mem.regions = M0.regions)
-    (hsl : PSl sp n mp mc k0 bp bc S.mem) (s130 : S.mem.readLE (sp + 0x130) 8 = 3 * n)
+    (hsl : PSl sp n mp mc k0 bp bc S.mem) (s130 : S.mem.readLE (sp + 0x148) 8 = 3 * n)
     (s370 : S.mem.readLE (sp + 0x258) 8 = xp) (s138 : S.mem.readLE (sp + 0x140) 8 = n)
-    (s140 : S.mem.readLE (sp + 0x148) 8 = xc) (s338 : S.mem.readLE (sp + 0x338) 8 = rrp)
+    (s140 : S.mem.readLE (sp + 0x138) 8 = xc) (s338 : S.mem.readLE (sp + 0x220) 8 = rrp)
     (sf8 : S.mem.readLE (sp + 0xf8) 8 = n) (s100 : S.mem.readLE (sp + 0x100) 8 = rrc)
     (hv0 : S.mem.readLE bp (8 * n) = V0)
     (K : ∀ S' : State, S'.rip = BitVec.ofNat 64 powHead → S'.regs 4 = BitVec.ofNat 64 sp →
@@ -121,15 +121,15 @@ theorem p1 {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program 
     have hacc' : s'.mem.accessible (sp - 4296) (4296 + 0x2a8) true = true := by
       rw [hF'.1.accessible]; exact he.2.2.2.1
     janus64_run [] until [powHead]
-    have sl : ∀ K, 0x60 ≤ K → K + 8 ≤ 0x2a8 → (K + 8 ≤ 0x1b0 ∨ 0x1d8 ≤ K) →
-        (((s'.mem.writeLE (sp + 448) 8 (bp + 8 * n)).writeLE (sp + 456) 8 n).writeLE (sp + 464) 8 (2 * n)).readLE
+    have sl : ∀ K, 0x60 ≤ K → K + 8 ≤ 0x2a8 → (K + 8 ≤ 0x1b0 ∨ 0x1e0 ≤ K) →
+        (((s'.mem.writeLE (sp + 456) 8 (bp + 8 * n)).writeLE (sp + 464) 8 n).writeLE (sp + 472) 8 (2 * n)).readLE
           (sp + K) 8 = S.mem.readLE (sp + K) 8 := by
       intro K k1 k2 k3
       simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint]
       rw [hsl _ (by omega) (by omega)]
       simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint]
-    have s0 : ∀ K, 0x1b0 ≤ K → K + 8 ≤ 0x1c0 →
-        (((s'.mem.writeLE (sp + 448) 8 (bp + 8 * n)).writeLE (sp + 456) 8 n).writeLE (sp + 464) 8 (2 * n)).readLE
+    have s0 : ∀ K, 0x1b0 ≤ K → K + 8 ≤ 0x1c8 →
+        (((s'.mem.writeLE (sp + 456) 8 (bp + 8 * n)).writeLE (sp + 464) 8 n).writeLE (sp + 472) 8 (2 * n)).readLE
           (sp + K) 8 = (((S.mem.writeLE (sp + 432) 8 bp).writeLE (sp + 440) 8 n).writeLE (sp + 448) 8 (2 * n)).readLE
           (sp + K) 8 := by
       intro K k1 k2
@@ -153,7 +153,7 @@ theorem p1 {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program 
       · rw [sl 0xd8 (by omega) (by omega) (by omega)]; exact qd8
       · rw [sl 0x78 (by omega) (by omega) (by omega)]; exact q78
       · rw [sl 0xf0 (by omega) (by omega) (by omega)]; exact qf0
-      · rw [sl 0x330 (by omega) (by omega) (by omega)]; exact q330
+      · rw [sl 0x218 (by omega) (by omega) (by omega)]; exact q330
     · have hdh := (inp_ent hs (d := 0) (by omega)).2.2.1
       refine ⟨?_, ?_, ?_, ?_⟩
       · simp only [tp, Nat.zero_mul, Nat.mul_zero, Nat.add_zero] at hdh ⊢
@@ -170,8 +170,8 @@ theorem p1 {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program 
         rw [hval]
         simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint]
         rw [hxF, hrF]
-      · rw [show sp + 0x1b0 + 24 * 1 = sp + 448 by omega]; rdwP; simp [tp]
-      · rw [show sp + 0x1b8 + 24 * 1 = sp + 456 by omega]; rdwP
-      · rw [show sp + 0x1c0 + 24 * 1 = sp + 464 by omega]; rdwP
+      · rw [show sp + 0x1b0 + 24 * 1 = sp + 456 by omega]; rdwP; simp [tp]
+      · rw [show sp + 0x1b8 + 24 * 1 = sp + 464 by omega]; rdwP
+      · rw [show sp + 0x1c0 + 24 * 1 = sp + 472 by omega]; rdwP
 
 end FvModexp.Amd64.W2Pro

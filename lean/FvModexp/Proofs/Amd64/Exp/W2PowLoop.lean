@@ -3,7 +3,7 @@ import FvModexp.Proofs.Amd64.Exp.W2Pow
 set_option autoImplicit false
 
 /-!
-# window-2 prologue (amd64): the table loop `i = 2 … 3` (nat.go:1420-1421; agent expmc s49)
+# window-2 prologue (amd64): the table loop `i = 2 … 3` (nat.go:1553-1554; agent expmc s49)
 
 Induction on `4 - i` over `powStep`, from the head (`AX = i`) to the exit `j4` (`AX = 4`).
 -/

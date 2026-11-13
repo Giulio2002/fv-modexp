@@ -4,11 +4,11 @@ import FvModexp.Proofs.Amd64.Exp.W2ExA
 set_option autoImplicit false
 
 /-!
-# window-2 prologue (amd64): `powers[0] = buf[0:n:2n].montgomery(one, RR, m, k0, numWords)` (nat.go:1418;
+# window-2 prologue (amd64): `powers[0] = buf[0:n:2n].montgomery(one, RR, m, k0, numWords)` (nat.go:1551;
 agent expmc s49)
 
-From the return of `stk.nat(17n)` (`p01` = fn+0x852, `AX = bp`, `CX = cap`) through the bounds checks, the spills
-`bc → 0xf0`, `bp → 0x330`, `3n → 0x130`, `k0 = -t → 0xd8` (`computeMontgomeryk0` returns `-t`, nat.go:1280), the
+From the return of `stk.nat(5n)` (`p01` = fn+0x852, `AX = bp`, `CX = cap`) through the bounds checks, the spills
+`bc → 0xf0`, `bp → 0x218`, `3n → 0x148`, `k0 = -t → 0xd8` (`computeMontgomeryk0` returns `-t`, nat.go:1280), the
 call (`callP`, `d = 0`) up to its return fn+0x8ff.
 -/
 
@@ -37,7 +37,7 @@ theorem p0 {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program 
     (hrr : Inp R L sp n M rrp) (hbr : Apart bp (8 * bc) rrp (8 * n))
     (s78 : M.readLE (sp + 0x78) 8 = 2 * n) (s3b0 : M.readLE (sp + 0x298) 8 = n) (s3a8 : M.readLE (sp + 0x290) 8 = mp)
     (s3b8 : M.readLE (sp + 0x2a0) 8 = mc) (sd8 : M.readLE (sp + 0xd8) 8 = t) (s328 : M.readLE (sp + 0x210) 8 = onep)
-    (s338 : M.readLE (sp + 0x338) 8 = rrp) (sf8 : M.readLE (sp + 0xf8) 8 = n) (s100 : M.readLE (sp + 0x100) 8 = rrc)
+    (s338 : M.readLE (sp + 0x220) 8 = rrp) (sf8 : M.readLE (sp + 0xf8) 8 = n) (s100 : M.readLE (sp + 0x100) 8 = rrc)
     (hinv : R.inv b L g (view R.rt L M))
     (S : State) (hpc : S.rip = BitVec.ofNat 64 p01) (hsp : S.regs 4 = BitVec.ofNat 64 sp) (hmem : S.mem = M)
     (h0 : S.regs 0 = BitVec.ofNat 64 bp) (h1 : S.regs 1 = BitVec.ofNat 64 bc)
@@ -47,9 +47,9 @@ theorem p0 {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program 
       S'.regs 0 = BitVec.ofNat 64 bp → S'.regs 3 = BitVec.ofNat 64 n → S'.regs 1 = BitVec.ofNat 64 (2 * n) →
       S'.regs 5 = r5 → S'.regs 14 = BitVec.ofNat 64 g → S'.fsBase.toNat = fs → S'.xmm 15 = 0 → S'.df = false →
       FP R L sp bp bc M S'.mem → R.inv b L g (view R.rt L S'.mem) → S'.mem.regions = M.regions →
-      PSl sp n mp mc ((2 ^ 64 - t) % 2 ^ 64) bp bc S'.mem → S'.mem.readLE (sp + 0x130) 8 = 3 * n →
+      PSl sp n mp mc ((2 ^ 64 - t) % 2 ^ 64) bp bc S'.mem → S'.mem.readLE (sp + 0x148) 8 = 3 * n →
       (∀ K, 0x60 ≤ K → K + 8 ≤ 0x2a8 → (K + 8 ≤ 0xd8 ∨ 0xe0 ≤ K) → (K + 8 ≤ 0xf0 ∨ 0xf8 ≤ K) →
-        (K + 8 ≤ 0x130 ∨ 0x140 ≤ K) → (K + 8 ≤ 0x330 ∨ 0x338 ≤ K) → S'.mem.readLE (sp + K) 8 = M.readLE (sp + K) 8) →
+        (K + 8 ≤ 0x148 ∨ 0x150 ≤ K) → (K + 8 ≤ 0x218 ∨ 0x220 ≤ K) → S'.mem.readLE (sp + K) 8 = M.readLE (sp + K) 8) →
       S'.mem.readLE bp (8 * n) =
         Exp.montgomery n (M.readLE onep (8 * n)) (M.readLE rrp (8 * n)) (M.readLE mp (8 * n)) ((2 ^ 64 - t) % 2 ^ 64) →
       ReachesRet (LibW.program.link impl) ret S' Q) :
@@ -99,7 +99,7 @@ theorem p0 {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program 
   case K =>
     intro s' hrip e4 e5 e14 efs e15 edf r0 r3 r1 hF' hinv' hrg' hsl hheld hval
     have sl : ∀ K, 0x60 ≤ K → K + 8 ≤ 0x2a8 → (K + 8 ≤ 0xd8 ∨ 0xe0 ≤ K) → (K + 8 ≤ 0xf0 ∨ 0xf8 ≤ K) →
-        (K + 8 ≤ 0x130 ∨ 0x140 ≤ K) → (K + 8 ≤ 0x330 ∨ 0x338 ≤ K) → s'.mem.readLE (sp + K) 8 = M.readLE (sp + K) 8 := by
+        (K + 8 ≤ 0x148 ∨ 0x150 ≤ K) → (K + 8 ≤ 0x218 ∨ 0x220 ≤ K) → s'.mem.readLE (sp + K) 8 = M.readLE (sp + K) 8 := by
       intro K k1 k2 k3 k4 k5 k6
       rw [hsl _ (by omega) (by omega)]
       simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint]

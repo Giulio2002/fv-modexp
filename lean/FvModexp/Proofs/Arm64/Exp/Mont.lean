@@ -100,16 +100,6 @@ theorem ens' (impl : List Segment) (R : RtInv)
     hzh.imp (fun h => h.sub (Nat.le_refl _) (by omega)) (fun h => h.of_sub (Nat.le_refl _) (by omega))
   janus_run until [head] calls [hclr L b]
   rename_i _ _ _ w _ _ F LF IV Zr
-  have hzw' := hzw
-  have hxw' := hxw
-  have hyw' := hyw
-  have hmw' := hmw
-  have hgw' := hgw
-  have hgz' := hgz
-  have hzx' := hzx
-  have hzy' := hzy
-  have hzm' := hzm
-  unfold Apart at hzw' hxw' hyw' hmw' hgw' hgz' hzx' hzy' hzm'
   have eA : ∀ a k wr, w.accessible a k wr = s.mem.accessible a k wr := by
     intro a k wr; rw [F.accessible]; simp only [Memory.accessible_writeLE]
   have hcs : ∀ a k, (a + k ≤ s.sp.toNat - 192 - 4096 ∨ s.sp.toNat - 192 - 8 ≤ a) →
@@ -119,17 +109,23 @@ theorem ens' (impl : List Segment) (R : RtInv)
   have hz16 : ∀ a k, (a + k ≤ zp.toNat ∨ zp.toNat + 8 * (n.toNat + n.toNat) ≤ a) →
       Outside a k [(zp.toNat, zp.toNat + 8 * (n.toNat + n.toNat))] := by
     intro a k h; simp only [outside_cons, outside_nil, and_true]; omega
+  have hretlt := hret.user
+  have hX : w.readLE xp.toNat (8 * n.toNat) = s.mem.readLE xp.toNat (8 * n.toNat) := by
+    have u1 := hxw; have u2 := hzx; unfold Apart at u1 u2; inputv hxh
+  have hY : w.readLE yp.toNat (8 * n.toNat) = s.mem.readLE yp.toNat (8 * n.toNat) := by
+    have u1 := hyw; have u2 := hzy; unfold Apart at u1 u2; inputv hyh
+  have hM : w.readLE mp.toNat (8 * n.toNat) = s.mem.readLE mp.toNat (8 * n.toNat) := by
+    have u1 := hmw; have u2 := hzm; unfold Apart at u1 u2; inputv hmh
+  have hG : w.readLE ((s.regs 28).toNat + 16) 8 = s.mem.readLE ((s.regs 28).toNat + 16) 8 := by
+    have u1 := hgw; have u2 := hgz; unfold Apart at u1 u2
+    rw [F.readLE _ _ (by simp only [outside_append]; exact ⟨⟨hgrt, hcs _ _ (by omega) (by omega)⟩, hz16 _ _ (by omega)⟩)]
+    simp (disch := omega) only [Memory.readLE_writeLE_of_disjoint]
+  have hzw' := hzw
+  unfold Apart at hzw'
   have slot : ∀ a, s.sp.toNat - 4288 ≤ a → a + 8 ≤ s.sp.toNat + 120 →
       (a + 8 ≤ s.sp.toNat - 192 - 4096 ∨ s.sp.toNat - 192 - 8 ≤ a) →
       (a + 8 ≤ s.sp.toNat - 192 + 8 ∨ s.sp.toNat - 192 + 8 + 16 ≤ a) → w.readLE a 8 = _ := fun a h1 h2 h3 h4 =>
     FvModexp.Expmc.slot_read F hwin h1 (by omega) (hcs a 8 h3 h4) (hz16 a 8 (by omega))
-  have hretlt := hret.user
-  have hX : w.readLE xp.toNat (8 * n.toNat) = s.mem.readLE xp.toNat (8 * n.toNat) := by inputv hxh
-  have hY : w.readLE yp.toNat (8 * n.toNat) = s.mem.readLE yp.toNat (8 * n.toNat) := by inputv hyh
-  have hM : w.readLE mp.toNat (8 * n.toNat) = s.mem.readLE mp.toNat (8 * n.toNat) := by inputv hmh
-  have hG : w.readLE ((s.regs 28).toNat + 16) 8 = s.mem.readLE ((s.regs 28).toNat + 16) 8 := by
-    rw [F.readLE _ _ (by simp only [outside_append]; exact ⟨⟨hgrt, hcs _ _ (by omega) (by omega)⟩, hz16 _ _ (by omega)⟩)]
-    simp (disch := omega) only [Memory.readLE_writeLE_of_disjoint]
   refine Reaches.mono (MontLoop.loop (impl := impl) (R := R) (hamv := hamv) (hsub := hsub) (hmv := hmv) (ret := ret)
     (hret := hret) (s := s) (L := L) (b := b) (sp := s.sp.toNat - 192) (zp := zp.toNat) (cap := zc.toNat)
     (xp := xp.toNat) (xc := xc.toNat) (yp := yp.toNat) (mp := mp.toNat) (mc := mc.toNat) (k := k.toNat) (n := n.toNat)
@@ -139,12 +135,12 @@ theorem ens' (impl : List Segment) (R : RtInv)
     (hzp := hzp) (hzacc := by rw [eA]; exact hzacc) (hxacc := by rw [eA]; exact hxacc) (hxp := hxp)
     (hyacc := by rw [eA]; exact hyacc) (hyp := hyp) (hmacc := by rw [eA]; exact hmacc) (hmp := hmp)
     (hzx := hzx) (hzy := hzy) (hzm := hzm)
-    (hzs := by unfold Apart; omega) (hxs := by unfold Apart; omega) (hys := by unfold Apart; omega)
-    (hms := by unfold Apart; omega)
+    (hzs := by unfold Apart; omega) (hxs := by have u := hxw; unfold Apart at u ⊢; omega) (hys := by have u := hyw; unfold Apart at u ⊢; omega)
+    (hms := by have u := hmw; unfold Apart at u ⊢; omega)
     (r104 := by slotv) (r112 := by slotv) (r168 := by slotv) (r224 := by slotv) (r232 := by slotv)
     (r240 := by slotv) (r248 := by slotv) (r272 := by slotv) (r280 := by slotv) (r288 := by slotv)
     (r296 := by slotv) (r304 := by slotv) (hret0 := by slotv) (hfp := by slotv)
-    (hg := hg1) (hgacc := by rw [eA]; exact hg2) (hgs := by unfold Apart; omega) (hgz := hgz)
+    (hg := hg1) (hgacc := by rw [eA]; exact hg2) (hgs := by have u := hgw; unfold Apart at u ⊢; omega) (hgz := hgz)
     (hguard := by rw [hG]; omega) (hgrt := hgrt)
     (hwin := by rw [show 4096 + 312 = 4288 + 120 by rfl, show s.sp.toNat - 192 - 4096 = s.sp.toNat - 4288 by omega]; exact hwin)
     (hzh := hzh) (hLs := fun r hr => by

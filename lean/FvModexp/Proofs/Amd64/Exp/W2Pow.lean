@@ -3,10 +3,10 @@ import FvModexp.Proofs.Amd64.Exp.W2PowC
 set_option autoImplicit false
 
 /-!
-# window-2 prologue (amd64): one step of the table loop (nat.go:1420-1421), `2 ≤ i < 4` (agent expmc s49)
+# window-2 prologue (amd64): one step of the table loop (nat.go:1553-1554), `2 ≤ i < 4` (agent expmc s49)
 
 `powers[i] = buf[i·n:(i+1)·n:(i+2)·n].montgomery(powers[i-1], powers[1], m, k0, numWords)`: from the head
-(`CMPQ AX, $0x10`, `AX = i`) through the bounds checks, the body (+0x9f6), `callP` (return +0xa85), the header store
+(`CMPQ AX, $0x4`, `AX = i`) through the bounds checks, the body (+0x9f6), `callP` (return +0xa85), the header store
 `powers[i]` and back to the head with `AX = i + 1`.
 -/
 
@@ -58,7 +58,7 @@ theorem powStep {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.pro
   have hin2 : (i + 2) * n = i * n + 2 * n := by rw [Nat.add_mul]
   have hin1 : (i + 1) * n = i * n + n := Nat.succ_mul i n
   have hin16 : i * n + 2 * n ≤ 5 * n := by
-    have := Nat.mul_le_mul_right n (show i + 2 ≤ 17 by omega); rw [Nat.add_mul] at this; omega
+    have := Nat.mul_le_mul_right n (show i + 2 ≤ 5 by omega); rw [Nat.add_mul] at this; omega
   have hacc : S.mem.accessible (sp - 4296) (4296 + 0x2a8) true = true := by
     rw [hF.1.accessible]; exact he.2.2.2.1
   obtain ⟨q3a8, q3b0, q3b8, qd8, q78, qf0, q330⟩ := hsl
@@ -86,12 +86,12 @@ theorem powStep {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.pro
     simp only [BitVec.lt_def, BitVec.toNat_ofNat, eq_iff_iff, iff_false]; omega
   have c3 : (BitVec.ofNat 64 (i * n + n) < BitVec.ofNat 64 (i * n)) = False := by
     simp only [BitVec.lt_def, BitVec.toNat_ofNat, eq_iff_iff, iff_false]; omega
-  have rd0 : S.mem.readLE (sp + (i + i * 2) * 8 + 400) 8 = tp bp n (i - 1) := by
-    rw [show sp + (i + i * 2) * 8 + 400 = sp + 432 + 24 * (i - 1) by omega]; exact ep
-  have rd1 : S.mem.readLE (sp + (i + i * 2) * 8 + 408) 8 = n := by
-    rw [show sp + (i + i * 2) * 8 + 408 = sp + 440 + 24 * (i - 1) by omega]; exact el
+  have rd0 : S.mem.readLE (sp + (i + i * 2) * 8 + 408) 8 = tp bp n (i - 1) := by
+    rw [show sp + (i + i * 2) * 8 + 408 = sp + 432 + 24 * (i - 1) by omega]; exact ep
+  have rd1 : S.mem.readLE (sp + (i + i * 2) * 8 + 416) 8 = n := by
+    rw [show sp + (i + i * 2) * 8 + 416 = sp + 440 + 24 * (i - 1) by omega]; exact el
   have rd2 : S.mem.readLE (sp + (i + i * 2) * 8 + 424) 8 = tc n (i - 1) := by
-    rw [show sp + (i + i * 2) * 8 + 424 = sp + 456 + 24 * (i - 1) by omega]; exact ec
+    rw [show sp + (i + i * 2) * 8 + 424 = sp + 448 + 24 * (i - 1) by omega]; exact ec
   have ar1 : BitVec.ofNat 64 bp + BitVec.ofNat 64 (i * n) <<< 3 = BitVec.ofNat 64 (bp + 8 * (i * n)) := by
     apply BitVec.eq_of_toNat_eq
     simp only [BitVec.toNat_add, BitVec.toNat_shiftLeft, BitVec.toNat_ofNat, Nat.shiftLeft_eq, Nat.reducePow]
@@ -139,8 +139,8 @@ theorem powStep {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.pro
     janus64_run [m138, m140] until [powHead]
     have sl : ∀ K, 0x60 ≤ K → K + 8 ≤ 0x2a8 → (K + 8 ≤ 0x140 ∨ 0x150 ≤ K) →
         (K + 8 ≤ 0x1b0 + 24 * i ∨ 0x1b0 + 24 * i + 24 ≤ K) →
-        (((s'.mem.writeLE (sp + (i + i * 2) * 8 + 424) 8 (bp + 8 * (i * n))).writeLE (sp + (i + i * 2) * 8 + 432) 8
-          n).writeLE (sp + (i + i * 2) * 8 + 440) 8 (2 * n)).readLE (sp + K) 8 = S.mem.readLE (sp + K) 8 := by
+        (((s'.mem.writeLE (sp + (i + i * 2) * 8 + 432) 8 (bp + 8 * (i * n))).writeLE (sp + (i + i * 2) * 8 + 440) 8
+          n).writeLE (sp + (i + i * 2) * 8 + 448) 8 (2 * n)).readLE (sp + K) 8 = S.mem.readLE (sp + K) 8 := by
       intro K k1 k2 k3 k4
       simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint]
       rw [hsl _ (by omega) (by omega)]
@@ -162,7 +162,7 @@ theorem powStep {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.pro
       · rw [sl 0xd8 (by omega) (by omega) (by omega) (by omega)]; exact qd8
       · rw [sl 0x78 (by omega) (by omega) (by omega) (by omega)]; exact q78
       · rw [sl 0xf0 (by omega) (by omega) (by omega) (by omega)]; exact qf0
-      · rw [sl 0x330 (by omega) (by omega) (by omega) (by omega)]; exact q330
+      · rw [sl 0x218 (by omega) (by omega) (by omega) (by omega)]; exact q330
     · intro d hd
       obtain ⟨f0, f1, f2, f3⟩ := hE d hd
       have hdn : d * n + n ≤ i * n := by

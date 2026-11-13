@@ -4,15 +4,15 @@ import FvModexp.Proofs.Amd64.Exp.W2ZcDefs
 set_option autoImplicit false
 
 /-!
-# window-2 prologue (amd64): the power table (nat.go:1413-1421) — shared definitions (agent expmc s49)
+# window-2 prologue (amd64): the power table (nat.go:1549-1554) — shared definitions (agent expmc s49)
 
-Twin of `Arm64.W2PowDefs`. `buf = stk.nat(17n)` returns at `p01` = fn+0x852 (`AX = bp`, `CX = cap`); then
+Twin of `Arm64.W2PowDefs`. `buf = stk.nat(5n)` returns at `p01` = fn+0x852 (`AX = bp`, `CX = cap`); then
 `powers[0] = buf[0:n:2n].montgomery(one, RR, …)` (call +0x8fa), `powers[1] = buf[n:2n:3n].montgomery(x, RR, …)`
 (call +0x9cf), and the loop `powers[i] = buf[i·n:(i+1)·n:(i+2)·n].montgomery(powers[i-1], powers[1], …)`, head
-`CMPQ AX, $0x10` at fn+0xaad (`AX = i`), body fn+0x9f6, call +0xa80, exit `j4` = fn+0xb05. Entry `d` lives at
+`CMPQ AX, $0x4` at fn+0xaad (`AX = i`), body fn+0x9f6, call +0xa80, exit `j4` = fn+0xb05. Entry `d` lives at
 `bp + 8·(d·n)`, its header at `sp + 0x1b0 + 24·d` (`W2Pro.Ent` with `pp d = bp + 8·(d·n)`, `pcap = 2n`).
 Anchor `M0` = the memory at `p01`; every frame word the table code writes is in `pw sp`.
-Slots: `bc → 0xf0`, `bp → 0x330`, `3n → 0x130`, `k0 = -t → 0xd8` (written after `p01`), `i+1 → 0x148`, `3i → 0x140`.
+Slots: `bc → 0xf0`, `bp → 0x218`, `3n → 0x148`, `k0 = -t → 0xd8` (written after `p01`), `i+1 → 0x148`, `3i → 0x140`.
 -/
 
 open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Contracts FvModexp
@@ -21,9 +21,9 @@ namespace FvModexp.Amd64.W2Pro
 
 open FvModexp.Amd64.W2Loop (Env Inp Buf InpC)
 
-/-- return of `stk.nat(17n)` -/
+/-- return of `stk.nat(5n)` -/
 abbrev p01 : Nat := 6212690
-/-- the table-loop head `CMPQ AX, $0x10` (`AX = i`) -/
+/-- the table-loop head `CMPQ AX, $0x4` (`AX = i`) -/
 abbrev powHead : Nat := 6213293
 /-- the end of the table: `z = z.make(2n)` -/
 abbrev j4 : Nat := 6213381
@@ -34,8 +34,8 @@ abbrev tc (n : Nat) : Nat → Nat := fun _ => 2 * n
 
 /-- the frame words `p01 → j4` writes: callee window, `k0`, `bc`, `3n`/`3i`/`i+1`, headers, `bp` -/
 @[reducible] def pw (sp : Nat) : List (Nat × Nat) :=
-  [(sp - 4296, sp + 0x60), (sp + 0xd8, sp + 0xe0), (sp + 0xf0, sp + 0xf8), (sp + 0x130, sp + 0x150),
-    (sp + 0x1b0, sp + 0x210), (sp + 0x330, sp + 0x338)]
+  [(sp - 4296, sp + 0x60), (sp + 0xd8, sp + 0xe0), (sp + 0xf0, sp + 0xf8), (sp + 0x140, sp + 0x150),
+    (sp + 0x1b0, sp + 0x210), (sp + 0x218, sp + 0x220)]
 
 /-- everything `p01 → j4` may change since the anchor -/
 @[reducible] def pl (R : RtInv) (sp bp bc : Nat) : List (Nat × Nat) := R.rt ++ pw sp ++ [(bp, bp + 8 * bc)]
@@ -56,13 +56,13 @@ def PStatic (R : RtInv) (L : List (Nat × Nat)) (g fs sp n mp mc k0 bp bc : Nat)
 @[reducible] def PSl (sp n mp mc k0 bp bc : Nat) (M : Memory) : Prop :=
   M.readLE (sp + 0x290) 8 = mp ∧ M.readLE (sp + 0x298) 8 = n ∧ M.readLE (sp + 0x2a0) 8 = mc ∧
   M.readLE (sp + 0xd8) 8 = k0 ∧ M.readLE (sp + 0x78) 8 = 2 * n ∧ M.readLE (sp + 0xf0) 8 = bc ∧
-  M.readLE (sp + 0x330) 8 = bp
+  M.readLE (sp + 0x218) 8 = bp
 
 theorem FP.write {R : RtInv} {L : List (Nat × Nat)} {sp bp bc : Nat} {M0 M : Memory}
     (h : FP R L sp bp bc M0 M) (hLs : LiveSep L [(sp - 4296, sp + 0x2a8)]) (hs : 4296 ≤ sp) {a k : Nat} (v : Nat)
     (hw : (sp - 4296 ≤ a ∧ a + k ≤ sp + 0x60) ∨ (sp + 0xd8 ≤ a ∧ a + k ≤ sp + 0xe0) ∨
-      (sp + 0xf0 ≤ a ∧ a + k ≤ sp + 0xf8) ∨ (sp + 0x130 ≤ a ∧ a + k ≤ sp + 0x150) ∨
-      (sp + 0x1b0 ≤ a ∧ a + k ≤ sp + 0x210) ∨ (sp + 0x330 ≤ a ∧ a + k ≤ sp + 0x338)) :
+      (sp + 0xf0 ≤ a ∧ a + k ≤ sp + 0xf8) ∨ (sp + 0x140 ≤ a ∧ a + k ≤ sp + 0x150) ∨
+      (sp + 0x1b0 ≤ a ∧ a + k ≤ sp + 0x210) ∨ (sp + 0x218 ≤ a ∧ a + k ≤ sp + 0x220)) :
     FP R L sp bp bc M0 (M.writeLE a k v) := by
   have hw' : sp - 4296 ≤ a ∧ a + k ≤ sp + 0x2a8 := by omega
   refine ⟨h.1.writeLE_inRanges v ?_, h.2.writeLE v (FvModexp.Expmc.outside_of_liveSep hLs hw'.1 hw'.2)⟩
@@ -70,9 +70,9 @@ theorem FP.write {R : RtInv} {L : List (Nat × Nat)} {sp bp bc : Nat} {M0 M : Me
   · exact ⟨(sp - 4296, sp + 0x60), by simp [pl, pw], h1, h2⟩
   · exact ⟨(sp + 0xd8, sp + 0xe0), by simp [pl, pw], h1, h2⟩
   · exact ⟨(sp + 0xf0, sp + 0xf8), by simp [pl, pw], h1, h2⟩
-  · exact ⟨(sp + 0x130, sp + 0x150), by simp [pl, pw], h1, h2⟩
+  · exact ⟨(sp + 0x140, sp + 0x150), by simp [pl, pw], h1, h2⟩
   · exact ⟨(sp + 0x1b0, sp + 0x210), by simp [pl, pw], h1, h2⟩
-  · exact ⟨(sp + 0x330, sp + 0x338), by simp [pl, pw], h1, h2⟩
+  · exact ⟨(sp + 0x218, sp + 0x220), by simp [pl, pw], h1, h2⟩
 
 theorem FP.call {R : RtInv} {L : List (Nat × Nat)} {sp bp bc : Nat} {M0 M M' : Memory} {rp rc : Nat}
     (h : FP R L sp bp bc M0 M)
@@ -115,7 +115,7 @@ theorem buf_sub {R : RtInv} {L : List (Nat × Nat)} {g fs sp n mp mc k0 bp bc : 
     Buf R L g fs sp n M0 (bp + 8 * (d * n)) (2 * n) := by
   obtain ⟨-, hn, hn16, -, -, -, -, hbc, hbc', hba, hbb, hbh, hbw, hbg, hbf, -⟩ := hs
   have e1 : d * n + 2 * n ≤ bc := by
-    have := Nat.mul_le_mul_right n (show d + 2 ≤ 17 by omega); rw [Nat.add_mul] at this; omega
+    have := Nat.mul_le_mul_right n (show d + 2 ≤ 5 by omega); rw [Nat.add_mul] at this; omega
   refine ⟨Nat.le_refl _, by omega, Arm64.Memory.accessible_sub (m := M0) hba (Or.inr rfl) (by omega) (by omega),
     by omega, hbh.imp (fun h => h.sub (by omega) (by omega)) (fun h => h.of_sub (by omega) (by omega)), ?_, ?_, ?_⟩
   · unfold Apart at hbw ⊢; omega
@@ -128,7 +128,7 @@ theorem inp_ent {R : RtInv} {L : List (Nat × Nat)} {g fs sp n mp mc k0 bp bc : 
     Inp R L sp n M0 (bp + 8 * (d * n)) := by
   obtain ⟨-, hn, hn16, -, -, -, -, hbc, hbc', hba, hbb, hbh, hbw, -⟩ := hs
   have e1 : d * n + n ≤ bc := by
-    have := Nat.mul_le_mul_right n (show d + 1 ≤ 17 by omega); rw [Nat.add_mul] at this; omega
+    have := Nat.mul_le_mul_right n (show d + 1 ≤ 5 by omega); rw [Nat.add_mul] at this; omega
   refine ⟨Arm64.Memory.accessible_sub (m := M0) hba (Or.inr rfl) (by omega) (by omega), by omega,
     hbh.imp (fun h => h.sub (by omega) (by omega)) (fun h => h.of_sub (by omega) (by omega)), ?_⟩
   unfold Apart at hbw ⊢; omega

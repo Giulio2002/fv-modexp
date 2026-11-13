@@ -5,7 +5,7 @@ import FvModexp.Proofs.Amd64.Exp.W2PowLoop
 set_option autoImplicit false
 
 /-!
-# window-2 prologue (amd64): the whole power table, `p01 → j4` (nat.go:1413-1421; agent expmc s49)
+# window-2 prologue (amd64): the whole power table, `p01 → j4` (nat.go:1549-1554; agent expmc s49)
 
 `p0` (`powers[0]`) → `p1` (`powers[1]`) → `powLoop` (`powers[2..4)`): at `j4` every entry `d < 4` holds
 `Exp.montPow n m k0 x RR d` (values read at the anchor `M` = the memory at `p01`), headers `(bp + 8·d·n, n, 2n)`.
@@ -31,7 +31,7 @@ theorem p01pow {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.prog
     (hx : Inp R L sp n M xp) (hbx : Apart bp (8 * bc) xp (8 * n))
     (s78 : M.readLE (sp + 0x78) 8 = 2 * n) (s3b0 : M.readLE (sp + 0x298) 8 = n) (s3a8 : M.readLE (sp + 0x290) 8 = mp)
     (s3b8 : M.readLE (sp + 0x2a0) 8 = mc) (sd8 : M.readLE (sp + 0xd8) 8 = t) (s328 : M.readLE (sp + 0x210) 8 = onep)
-    (s338 : M.readLE (sp + 0x338) 8 = rrp) (sf8 : M.readLE (sp + 0xf8) 8 = n) (s100 : M.readLE (sp + 0x100) 8 = rrc)
+    (s338 : M.readLE (sp + 0x220) 8 = rrp) (sf8 : M.readLE (sp + 0xf8) 8 = n) (s100 : M.readLE (sp + 0x100) 8 = rrc)
     (s370 : M.readLE (sp + 0x258) 8 = xp) (s138 : M.readLE (sp + 0x140) 8 = n)
     (hinv : R.inv b L g (view R.rt L M))
     (S : State) (hpc : S.rip = BitVec.ofNat 64 p01) (hsp : S.regs 4 = BitVec.ofNat 64 sp) (hmem : S.mem = M)
@@ -53,7 +53,7 @@ theorem p01pow {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.prog
     (by rw [hsl 0x258 (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)]; try exact s370)
     (by rw [hsl 0x140 (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)]; try exact s138)
     rfl
-    (by rw [hsl 0x338 (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)]; try exact s338)
+    (by rw [hsl 0x220 (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)]; try exact s338)
     (by rw [hsl 0xf8 (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)]; exact sf8)
     (by rw [hsl 0x100 (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)]; try exact s100) hv0 ?_
   intro S2 c1 c2 c3 c4 c5 c6 c7 c8 hF2 hinv2 hrg2 hsl2 hE0 hE1
