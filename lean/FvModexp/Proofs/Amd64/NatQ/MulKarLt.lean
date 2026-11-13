@@ -210,6 +210,8 @@ theorem karLt2 (impl : List Amd64.Segment) (R : RtInv) (n0 : Nat)
   have hrd' : ∀ a n, (s.regs 4).toNat - 184 ≤ a → a + n ≤ (s.regs 4).toNat + 88 →
       s'.mem.readLE a n = S.mem.readLE a n := by
     intro a n h1 h2
+    clear mret my0 my1 my2 mra mbp m112 m120 m144 m168 m170 m72s m64 m72 m80 m8 m16 m24 hKp hq hK hpx hpy hnx hny
+      hih
     refine hF2.readLE _ _ ?_
     simp only [stkWs, outside_append, outside_cons, outside_nil, and_true]
     rw [eW, eL, eC]
@@ -297,6 +299,7 @@ theorem karLt (impl : List Amd64.Segment) (R : RtInv) (n0 : Nat)
   case q8 => janus64_simp <;> exact m8
   case q16 => janus64_simp <;> exact m16
   case q24 => janus64_simp <;> exact m24
+  case q120 => janus64_simp; omega
   all_goals try janus64_simp
   all_goals first
     | exact h14
@@ -305,7 +308,6 @@ theorem karLt (impl : List Amd64.Segment) (R : RtInv) (n0 : Nat)
     | exact r7
     | exact r6
     | exact r9
-    | omega
     | (apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega)
     | fail "SHOW"
 
