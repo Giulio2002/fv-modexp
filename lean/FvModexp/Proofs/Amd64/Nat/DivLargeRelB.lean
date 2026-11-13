@@ -253,4 +253,37 @@ theorem UArr.live {R : RtInv} {zp zc st up uc ip il vp vl : Nat} {s : State} {t 
     (hx : LiveExt R Lk Lk') : UArr R zp zc st up uc ip il vp vl s t w1 c1 L1 Lk' P C M :=
   { h with pheld := hx.held h.pheld }
 
+/-- the alias test `alias(z, u)` (`fn + 0x452`, `MOVQ 0x178(SP), R13`; reached from the copy path's `JMP` at `+0x338`
+and by fall-through from the shift path's reloads `+0x41a … +0x44a`) -/
+abbrev aliasPt : Nat := segAddr Extracted.program fn + 0x452
+
+/-- (`AtAl`; arm64 `AtA` — the name `AtA` is taken by `DivLargePro`) the state at the alias test: `v` (at `t`) and `u` (`(P, il + 1, C)`) scaled by `2^sh`; registers as both paths
+leave them (`RAX = t`, `RCX = len v`, `RDX = shift`, `RSI = C`, `RDI = il + 1`, `R8 = P`, `R11 = R12 = len v`) -/
+structure AtAl (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc st up uc ip il vp vl : Nat) (s : State)
+    (t w1 c1 : Nat) (L1 : List (Nat × Nat)) (b1 : Nat) (Lk : List (Nat × Nat)) (bk P C sh : Nat) (S : State) : Prop where
+  pc : S.rip = BitVec.ofNat 64 aliasPt
+  sp : S.regs 4 = s.regs 4 - 304#64
+  r5 : S.regs 5 = s.regs 4 - 8#64
+  r14 : S.regs 14 = s.regs 14
+  fs : S.fsBase = s.fsBase
+  x15 : S.xmm 15 = 0#128
+  df : S.df = false
+  r0 : S.regs 0 = BitVec.ofNat 64 t
+  r1 : S.regs 1 = BitVec.ofNat 64 vl
+  r2 : S.regs 2 = BitVec.ofNat 64 sh
+  r6 : S.regs 6 = BitVec.ofNat 64 C
+  r7 : S.regs 7 = BitVec.ofNat 64 (il + 1)
+  r8 : S.regs 8 = BitVec.ofNat 64 P
+  r11 : S.regs 11 = BitVec.ofNat 64 vl
+  r12 : S.regs 12 = BitVec.ofNat 64 vl
+  mem : MemU R L zp zc st up uc ip il vp vl s t w1 c1 Lk bk P C sh S.mem
+  ua : UArr R zp zc st up uc ip il vp vl s t w1 c1 L1 Lk P C S.mem
+  ext2 : LiveExt R L1 Lk
+  bud2 : b1 - makeCost (il + 1) ≤ bk
+  sh63 : sh ≤ 63
+  vval : natVal S.mem t vl = natVal s.mem vp vl * 2 ^ sh
+  vtop : 2 ^ 63 ≤ S.mem.readLE (t + 8 * (vl - 1)) 8
+  uval : natVal S.mem P (il + 1) = natVal s.mem ip il * 2 ^ sh
+  reg : S.mem.regions = s.mem.regions
+
 end FvModexp.Amd64.DivLarge
