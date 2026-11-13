@@ -108,8 +108,11 @@ theorem swap2 (impl : List Segment) (R : RtInv) (n : Nat) (ih : ∀ j, IH impl R
   rename_i e3 e1 e2 hbox
   obtain ⟨⟨S1, hm1, hs1, hg1, hq⟩⟩ := hbox
   clear hBS hpreS hμ hw1 ih
+  -- hide `MPost` (a reducible conjunction with unfolded `Apart` disjunctions) from `janus_run`'s context splitting
+  have hqB := IntAS.Box.mk hq
+  clear hq
   janus_run [e1, e2]
-  refine ⟨⟨?_, ?_, ?_, ?_⟩, hfin S1 _ _ (by rw [hm1]; exact hF) (by rw [hs1, hsp]) (by rw [hg1, h28]) hq ?qF ?_ ?_ ?_⟩
+  refine ⟨⟨?_, ?_, ?_, ?_⟩, hfin S1 _ _ (by rw [hm1]; exact hF) (by rw [hs1, hsp]) (by rw [hg1, h28]) hqB.h ?qF ?_ ?_ ?_⟩
   case qF => simp only [winA]; janus_frame
   all_goals janus_simp
 
