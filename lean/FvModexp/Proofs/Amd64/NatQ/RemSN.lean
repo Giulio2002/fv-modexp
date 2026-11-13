@@ -50,7 +50,7 @@ theorem sn_pre {R : RtInv} {b c : Nat} {L : List (Nat × Nat)} {zp zl zc st up u
     (hsp : (S.regs 4).toNat = (s.regs 4).toNat - 208) (hg : S.regs 14 = s.regs 14) (hfs : S.fsBase = s.fsBase)
     (hF : MemFrame s.mem S.mem (fw s)) (hreg : S.mem.regions = s.mem.regions) :
     StackNatX.PreQ R b L H 4192 24 st (kq ul vl) S := by
-  obtain ⟨-, hce, hsv, -, -, -, -, -, hins, hsok, hsw, -, harr, -, hneed, hwba, hwbs, hfree, -, -, -, -, hcst, -,
+  obtain ⟨-, hce, hsv, -, -, -, -, -, hins, hsok, hsw, -, harr, -, hneed, hwba, hwbs, hfree, -, -, -, -, hcst, -, -,
     hinv, -, -, -, hlv⟩ := hpre
   have hu := (hins up ul (by simp)).2.1
   have hce' := hce
