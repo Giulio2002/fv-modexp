@@ -1470,3 +1470,13 @@ IntASRow in release order). No trim needed (≤ 600 s with 44% margin). Own-modu
 LibWC 24 s → SubMod2NBase 12 s → G/GL/GC 17 s → {S1 54 s, S2 72 s, S3 74+10 s, Alloc+S4C 8+58 s+S4Cb 6 s} → GEns 5 s → Row 8 s.
 (S4C profile: 55 s tactic time, ~37 `omega` calls of 0.5-0.8 s each over the post-`janus_run` context + two of 6-8 s;
 `janus_omega_cheap`-first was SLOWER (70 s) — the cost is the context size, not disjunctions.)
+
+## divmc rowseq32b (s33/s34, 2026-11-13) — Janus v0.3.1, fresh store, bottom-up, JANUS_REPLAY_THREADS=1, load ~45-65
+arm64: AddVWRow 196 s / 2.5 GB, SubVWRow 98 s, LshRow 439 s, RshRow 157 s, TruncRow 217 s, StackNatRow 183 s / 0.8 GB,
+MulAddWWRow 193 s, BasicMulRow 211 s / 3.4 GB, BasicSqrRow 518 s / 3.5 GB, Int/IntASRow 374 s / 1.2 GB, SqrRow 478 s / 3.0 GB,
+**MulRow 705 s / 2.2 GB (> 600 s margin: trim)**, DivWRow FAIL 235 s (audit: witness lacks the MemmoveZeroLive call-site
+conjunct — asm's row, state of the worktree at that time), DivWVWRow 13 s, DivBasicRow 385 s / 4.4 GB,
+**Int/ModRow FAIL 902 s** (timeout; own modules include asm's whole stk==nil div chain — re-measure after asm's DivM row).
+amd64: AddVWRow 107 s, SubVWRow 100 s, StackNatRow 229 s, MulAddWWRow 340 s, **BasicSqrRow FAIL 902 s** (timeout, 0.6 GB;
+own modules BasicSqrBody 107 s / 7.6 GB, Pro 182 s, Pro3 135 s / 6.2 GB, Fin 89 s, Small 90 s dev — trim),
+**Int/IntASRow PASS 350 s / 2.3 GB** (was 766 s; s32 trim: WordTData + flattened nat.add/nat.sub continuation chains).
