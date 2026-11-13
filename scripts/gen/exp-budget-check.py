@@ -14,10 +14,10 @@ import sys
 from functools import lru_cache
 import numpy as np
 sys.setrecursionlimit(100000)
-TARGET = '--target' in sys.argv   # = --tight --amort --costE: the TIGHT COSTS plan
+TARGET = '--target' in sys.argv   # = --tight --amort: the TIGHT COSTS plan
 TIGHT = '--tight' in sys.argv or TARGET
 AMORT = '--amort' in sys.argv or TARGET   # Q-form stack accounting (Common/StackPot): no per-call stk.nat charge, + stkRes H once
-COSTE = '--costE' in sys.argv or TARGET   # expmc: costE's two nat.expNN calls charged max(b3, c3 + b4) (sequential rule)
+COSTE = False  # (was a what-if; infra s43 landed the exact costE eC1 + eC2 below)
 FIX = '--fix' in sys.argv or TIGHT
 
 # ---- tropical (max-affine) functions of the level l: {slope: intercept}
@@ -173,12 +173,12 @@ def p2w(l0, lm, wr, pl, rounds, nsq, ntr, yl=None):
     lR = l0 + wr * W(lm); lZ = lR + rnd(2 * W(lm)); lL = lZ + rnd(NB(pl, lm))
     c0 = sncN(l0, wr * W(lm)) + sncN(lR, 2 * W(lm)) + p2pre(lZ, pl, lm)
     bc = nsq * sqrC(W(lm))(lL) + mulC(W(lm), W(lm))(lL) + ntr * tC(lm)
-    it = (sub(lm, 2) // 64 + 1) if not TIGHT else min(yl, sub(lm, 2) // 64 + 1)
+    it = min(yl, sub(lm, 2) // 64 + 1)  # infra s43: P2W2/P2W4.cost loop rounds over y's words (landed)
     return c0 + alloc(8) + 2 * tC(lm) + rounds * it * bc
 def costO(l, lm, yl=0): return p2w(l, lm, 8, 4, 32, 2, 3, yl) + p2w(l, lm, 20, 16, 16, 4, 5, yl) + alloc(8)
 _supTo = {}
 def supToO(l, lm, yl=0):
-    key = (l, yl if TIGHT else 0)
+    key = (l, yl)
     if key not in _supTo:
         arr = []; m = -1
         for j in range(64 * 128 + 1):
@@ -190,7 +190,7 @@ def cP(l, xl, lm, yl=0): return supToO(l, lm, yl) + makeCost(xl + 2) + makeCost(
 
 _cPT = {}
 def cPT_table(l):
-    """TIGHT: prefix-max table over lm of costO(l, lm, yl) for every yl (int64 [129, 8193])"""
+    """prefix-max table over lm of costO(l, lm, yl) for every yl (int64 [129, 8193])"""
     if l in _cPT: return _cPT[l]
     J = 64 * 128 + 1
     A = np.zeros(J, dtype=np.int64); B = np.zeros(J, dtype=np.int64); Q = np.zeros(J, dtype=np.int64)
@@ -207,7 +207,6 @@ def cPT_table(l):
     _cPT[l] = T; return T
 def cPv(l, xl, lm):
     """cP for every yl (object array)"""
-    if not TIGHT: return np.full(129, cP(l, xl, lm), dtype=object)
     T = cPT_table(l)
     return np.array([int(T[yl][lm]) for yl in range(129)], dtype=object) + makeCost(xl + 2) + makeCost(lm // 64 + 2)
 
@@ -245,7 +244,7 @@ def costG(n):
 def modInv(l, n):
     NW = (n + 63) // 64
     rc = sqrC(NW + 1)(l) + mulC(2 * NW + 2, NW)(l) + 2 * makeCost(2 * NW + 2) + makeCost(NW + 2) + 5 * alloc(8 * (W(n) + 5))
-    R = (NW.bit_length() + 1) if TIGHT else NW + 1
+    R = NW.bit_length()  # infra s43: ModInv.rounds = Nat.log2 NW + 1 (landed)
     return makeCost(NW + 1) + makeCost(2 * NW) + R * rc
 
 def nb_parts(xl, a0, l, ybig):
@@ -279,8 +278,7 @@ def costE(xl, ml):
     fixed = (sncN(l0, ml) + makeB(ml + 1) + sncN(l0 + rnd(ml), ml) + makeB(ml) + sncN(w2, 2 * ml) + sncN(w3, 2 * ml) +
              alloc(8 * (ml + 4)) + costG(64 * ml) + modInv(w4, 64 * ml) + 2 * mulC(ml, ml)(w4) + makeB(2 * ml) +
              makeB(ml + 1))
-    if COSTE: return fixed + np.maximum(b3, c3 + b4)
-    return fixed + b3 + c3 + b4 + c4
+    return fixed + c3 + np.maximum(b4, c4)  # infra s43: costE eC1 = cU at wL3, eC2 = max bU cU at wL4 (landed)
 
 opCost = lambda w: alloc(1024 * w + 1024)
 ExpBudget = lambda w, yW: ((7 if TIGHT else 8) * (64 * yW) + 128) * opCost(w)
