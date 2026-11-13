@@ -67,6 +67,5 @@ theorem oneA (impl : List Amd64.Segment) (R : RtInv) {b : Nat} {dc : Nat → Nat
     | exact hfs
     | (rw [hdf0]; rfl)
     | (simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact ofNat_modL _)
-    | (trace_state; sorry)
 
 end FvModexp.Amd64.NatDiv
