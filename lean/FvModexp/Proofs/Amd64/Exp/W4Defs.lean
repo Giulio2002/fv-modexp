@@ -58,7 +58,7 @@ abbrev whi (sp : Nat) : Nat := sp + 96
 
 /-- the stack / guard / TLS environment of the loop at the anchor `M0` -/
 @[reducible] def Env (R : RtInv) (L : List (Nat × Nat)) (g fs sp : Nat) (M0 : Memory) : Prop :=
-  sp % 16 = 0 ∧ 4296 ≤ sp ∧ sp + 0x3c0 ≤ 2 ^ 48 ∧ M0.accessible (sp - 4296) (4296 + 0x3c0) true = true ∧
+  sp % 8 = 0 ∧ 4296 ≤ sp ∧ sp + 0x3c0 ≤ 2 ^ 48 ∧ M0.accessible (sp - 4296) (4296 + 0x3c0) true = true ∧
   g + 24 ≤ 2 ^ 48 ∧ M0.accessible (g + 16) 8 false = true ∧ M0.readLE (g + 16) 8 + 4296 < sp ∧
   Outside (sp - 4296) (4296 + 0x3c0) R.rt ∧ Apart (g + 16) 8 (sp - 4296) (4296 + 0x3c0) ∧ Outside (g + 16) 8 R.rt ∧
   LiveSep L [(sp - 4296, sp + 0x3c0)] ∧
