@@ -1621,3 +1621,14 @@ KSqrEnd 17 s / 2.6, KSqrProD 12 s / 2.7; Amd64/Nat/AddTo (+ df conjunct) 134 s /
 | Amd64/Nat/DivBig (big1) | 267 s → 11 s (named `case`s + `simp (disch := omega) only`, no `exact` alternatives in `first`) | 2.4 GB |
 | Amd64/Nat/DivBigRel / DivBigP / DivBigF / DivBigC | 2 / 3 / 5 / 7 s | ≤ 2.6 GB |
 | Amd64/Nat/Div (composition, `ens : HypL`) | 2 s | 2.5 GB |
+
+### top s35 (2026-11-13, dev builds `build/dbuild.sh amd64`, load ~12-15)
+| module | wall | peak RSS |
+|---|---|---|
+| Amd64/Nat/DivBasicRow (row + witness) | 7.4 s | 2.3 GB |
+| Amd64/Nat/DivGDefs, DivLargeG, DivG, DivOneFG (defs / pure) | 1.2-2.1 s | 2.3 GB |
+| Amd64/Nat/DivLargeTP (lpost → PostG, + qfresh) | 3.7 s | 2.3 GB |
+| Amd64/Nat/DivLargeT2 / DivLarge (ensG) | 12.9 s / 2.5 s | 2.5 GB |
+| Amd64/Nat/DivLessF (lessFin on PreG) / DivLessC | 1.6 s / 23.1 s | 2.8 GB |
+| Amd64/Nat/DivOneT / DivOneTB / DivOneTC (on PreG/RQG) | 5.4 s / 22.0 s / 15.2 s | 3.0 GB |
+| Amd64/Nat/DivBigF / DivBigC (lsumG) | 4.8 s / 17.3 s | 3.6 GB |
