@@ -46,8 +46,6 @@ arm64 Exp/EvenRow
 # ---- arm64 Top rows (last) ----
 arm64 RequiredGas
 arm64 Top/RunErr
-arm64 Top/RunOkRow
-arm64 Top/RunOkRowC
 arm64 Top/RunSucc
 # ---- amd64 ----
 amd64 Nat/StackNatRow
