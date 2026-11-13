@@ -8,7 +8,8 @@ set_option autoImplicit false
 # `nat.expNNEven` (amd64): the join points `nat1R` … `nat3R` (asm s57; port of infra's arm64 `EvJ`)
 
 `JX` = the facts common to every join point (`RSP = sp`, `R14 = g`, `fsBase`, `X15 = 0`, `DF = 0`, the context `WC`
-at level `ℓ`, the slots `ESl`, the defer bit `[sp + 0x77] = 1`, the remaining budget `rk ≤ b1`). `Jk` = `JX` + the
+at level `ℓ`, the slots `ESl`, the remaining budget `rk ≤ b1`; the defer bit `[sp + 0x77]` only matters on a
+panic, so it is not tracked). `Jk` = `JX` + the
 live locals at the return of call `k` (pc, result registers, local slots; slot map: `EvDefs`). Every callee runs at
 `RSP = sp - 8` with `above ≤ 0x7f` (so `[sp + 0x77, sp + 0x1b8)` survives: `JX.call`).
 `LN.rd` / `DL.wr`: a local as a callee's input (`RdIn`) / destination (`WrOut`).
@@ -31,7 +32,6 @@ structure JX (R : RtInv) (L : List (Nat × Nat)) (K g fs sp st bp r zp zc xp xl 
   edf : S.df = false
   wc : WC R L K g sp st zp zc s.mem S.mem L1 b1 ℓ
   esl : ESl S.mem sp st bp r zp zc xp xl xc yp yl yc mp ml mc (stLen s.mem st) (nE s mp ml)
-  dfb : S.mem.readLE (sp + 0x77) 1 = 1
   bud : rk ≤ b1
 
 theorem tz_lt {X ml : Nat} (h0 : 0 < X) (h : X < 2 ^ (64 * ml)) : Exp.tz X < 64 * ml := by
@@ -121,7 +121,7 @@ theorem JX.call {R : RtInv} {L : List (Nat × Nat)} {K g fs sp st bp r zp zc xp 
     (hb : rk' ≤ b2) : JX R L K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml mc s S' L2 b2 ℓ rk' :=
   ⟨esp.trans h.esp, e14.trans h.e14, by rw [efs]; exact h.efs, ex15.trans h.ex15, edf.trans h.edf, hw,
     h.esl.keep (fun a k ha => hk a k (by simp only [SlotR] at ha; omega) (by simp only [SlotR] at ha; omega)),
-    by rw [hk _ _ (Nat.le_refl _) (by omega)]; exact h.dfb, hb⟩
+    hb⟩
 
 /-- a range apart from `[b, b + k)` is outside it -/
 theorem out1_of_apart {a n b k : Nat} (h : Apart b k a n) : Outside a n [(b, b + k)] := by
