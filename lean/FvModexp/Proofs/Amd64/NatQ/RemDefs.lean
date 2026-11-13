@@ -74,6 +74,9 @@ structure Sl (s : State) (zp zl zc st up ul uc : Nat) (M : Memory) : Prop where
   s2 : M.readLE ((s.regs 4).toNat + 64) 8 = up
   s3 : M.readLE ((s.regs 4).toNat + 72) 8 = ul
   s4 : M.readLE ((s.regs 4).toNat + 80) 8 = uc
+  v1 : M.readLE ((s.regs 4).toNat + 8) 8 = s.mem.readLE ((s.regs 4).toNat + 8) 8
+  v2 : M.readLE ((s.regs 4).toNat + 16) 8 = s.mem.readLE ((s.regs 4).toNat + 16) 8
+  v3 : M.readLE ((s.regs 4).toNat + 24) 8 = s.mem.readLE ((s.regs 4).toNat + 24) 8
 
 /-- the facts at `CALL (*stack).nat` (state `P`, before the call pushes its return address) -/
 structure AtNat (s P : State) (zp zl zc st up ul uc vl : Nat) : Prop where

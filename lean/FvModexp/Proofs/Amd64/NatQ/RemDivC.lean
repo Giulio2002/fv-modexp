@@ -44,6 +44,7 @@ structure AtDiv (s T X : State) (up ul uc vp vl vc : Nat) : Prop where
   sp : X.regs 4 = s.regs 4 - 208#64
   r14 : X.regs 14 = T.regs 14
   fs : X.fsBase = T.fsBase
+  df : X.df = false
   reg : X.mem.regions = T.mem.regions
   mf : MemFrame T.mem X.mem [((s.regs 4).toNat - 208, (s.regs 4).toNat - 208 + 48 + 8)]
   ra : X.mem.readLE ((s.regs 4).toNat - 208) 8 = callDiv + 5
@@ -104,7 +105,7 @@ theorem divc (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
       ReachesRet (LibRem.program.link impl) ret X Q := by
     intro X eM e4 e14 e5 efs edf ex15 erip hargs
     have hAt : AtDiv s T X up ul uc vp vl vc := by
-      refine ⟨e4, e14, efs, by rw [eM]; simp only [Janus.Arm64.Memory.regions_writeLE], by rw [eM]; janus_frame,
+      refine ⟨e4, e14, efs, edf, by rw [eM]; simp only [Janus.Arm64.Memory.regions_writeLE], by rw [eM]; janus_frame,
         ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;> (rw [eM]; janus64_simp) <;> omega
     refine ReachesRet.call_regions (remDivSum impl hap R hD H b L (BitVec.ofNat 64 q) (BitVec.ofNat 64 k)
       (BitVec.ofNat 64 k) (BitVec.ofNat 64 st) (BitVec.ofNat 64 zp) (BitVec.ofNat 64 zl) (BitVec.ofNat 64 zc)

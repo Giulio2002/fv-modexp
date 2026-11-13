@@ -65,7 +65,7 @@ theorem pro (impl : List Amd64.Segment) (R : RtInv) (L : List (Nat × Nat)) (s :
     | (exfalso; exact hnaH.h (by omega) (by omega) (alias_eq z.isLt zc.isLt u.isLt uc.isLt (by janus_assumption) (by janus_assumption) hbr))
     | skip
   all_goals
-    refine k _ ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?qF, ?qR, ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩⟩
+    refine k _ ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?qF, ?qR, ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩⟩
     case qF => unfold fw; janus_frame
     case qR => simp only [Janus.Arm64.Memory.regions_writeLE]
     all_goals try (janus64_simp; done)
