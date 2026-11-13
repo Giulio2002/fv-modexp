@@ -126,7 +126,7 @@ theorem dataLoaded : Extracted.program.DataLoaded s1.mem := by
 
 theorem bytes1_heap (i : Nat) (hi : HEAP ≤ i) : bytes1 i = 0 := by
   simp only [HEAP] at hi
-  unfold bytes1 cR pI gAw nAw opw
+  unfold bytes1 cR gAw nAw opw
   repeat rw [if_neg (by omega)]
 
 theorem bytes1_bump : mem1.readLE BUMP 8 = HEAP := by decide +kernel
