@@ -37,6 +37,6 @@ theorem alloc_head (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat ×
     refine hK _ ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?F, ?_⟩
     case F => simp only [winA]; janus_frame
     all_goals try janus_simp
-    all_goals first | omega | (apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega)
+    all_goals first | (apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega) | omega
 
 end FvModexp.Arm64.Q.NatMul
