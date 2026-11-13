@@ -11,7 +11,7 @@ set_option autoImplicit false
   join);
 * `xnStep`: `xnSplit`, then the join `xnJStep` (`len x ≤ n`, `x` as given) or path A.
 Posts: `XnAQ` (path A: two `KeepsX` steps — before and after `q` is an extra context range — then `XnA2Q`) and
-`XnQ := XnJQ ∨ XnAQ`; every `KeepsX` is at the entry level `l0`, the scratch `q` is a stack nat above it (the
+`XnQ := (xl ≤ n ∧ XnJQ) ∨ (n < xl ∧ XnAQ)` (the branch condition is kept for the value bound); every `KeepsX` is at the entry level `l0`, the scratch `q` is a stack nat above it (the
 `Anc` bridge, `W4Anc`, consumes exactly these facts).
 -/
 
@@ -33,8 +33,8 @@ open FvModexp.Amd64.W4Loop (Env Inp Buf FinEnv)
 /-- the post of the `x` normalisation (`M` at `xnE`) -/
 @[reducible] def XnQ (R : RtInv) (b costD : Nat) (L : List (Nat × Nat))
     (g fs sp K n mp Mv yp ylen Y yi zp zc st n0 l0 fbp xl X : Nat) (M : Memory) (s' : State) : Prop :=
-  XnJQ R b costD L g fs sp K n mp Mv yp ylen Y yi zp zc st n0 l0 fbp X M s' ∨
-    XnAQ R b costD L g fs sp K n mp Mv yp ylen Y yi zp zc st n0 l0 fbp (xl - n + 1) X M s'
+  (xl ≤ n ∧ XnJQ R b costD L g fs sp K n mp Mv yp ylen Y yi zp zc st n0 l0 fbp X M s') ∨
+    (n < xl ∧ XnAQ R b costD L g fs sp K n mp Mv yp ylen Y yi zp zc st n0 l0 fbp (xl - n + 1) X M s')
 
 theorem w0_in (sp : Nat) : ∀ q ∈ [(sp - 8, sp)], sp - 8 ≤ q.1 ∧ q.2 ≤ sp + 0x3c0 := by
   intro q hq; simp only [List.mem_singleton] at hq; subst hq; exact ⟨Nat.le_refl _, by omega⟩
@@ -283,11 +283,11 @@ theorem xnStep {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.prog
       hx hc (by omega) hfbp hmB hMo hM1 hLC0 hLC1 hbC0 hbC1 hinv S' e1 (by rw [e3]; exact hsp) e2
       (by rw [e3]; exact h6) (by rw [e3]; exact h8) (by rw [e3]; exact h9) (by rw [e3]; exact h7) (by rw [e3]; exact h3)
       (by rw [e3]; exact h14) (by rw [e4]; exact hfs) (by rw [e5]; exact hx15) (by rw [e6]; exact hdf))
-      (fun s' h => Or.inl h)
+      (fun s' h => Or.inl ⟨hc, h⟩)
   · refine ReachesRet.mono (xnAStep hap hclr hmv hmk hwt hro hSN hserv hDiv hnsD hnsW hLsh hnsL hnsWL hKD hKL hC hl0e
       hx hxN hc hxl9 hxs hacc2 r3e0 r3e8 r3f0 hfbp hmB hMo hM1 hsl hcX hL0 hL1 hbA hbB hinv S' e1 e2 e3 e4
       (by rw [e6]; exact h14) (by rw [e7]; exact hfs) (by rw [e8]; exact hx15) (by rw [e9]; exact hdf)
       e10)
-      (fun s' h => Or.inr h)
+      (fun s' h => Or.inr ⟨by omega, h⟩)
 
 end FvModexp.Amd64.W4Pro
