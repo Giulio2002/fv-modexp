@@ -1764,3 +1764,9 @@ Util → IcDefs → IcHL → Ic → Og → Pre → Seg → FinA → Fin → Row 
   FinA last at 417 s) + kernel replay 267 s (own modules; leanchecker sum ≈ 462 s CPU: Util 54, FinA 23, SbA 22, FinD 16, Blk3* 15, …).
 * `Common/Util` (3259 lines, adapted fv-uint256 grab-bag): 234 of its 296 theorems are referenced nowhere (any worktree, any script
   except the kept `ow2_self_iff`): removed (528 lines). Util compile 76-100 s → 4.4 s; its replay 54 s → ~few s.
+* c5f300f9: segment modules moved `Proofs/<Isa>/RequiredGas/*` → `Proofs/<Isa>/RG/*`: the row module name was a prefix of every
+  segment module, so Janus replayed them in ONE leanchecker process (a3: "replay of 13 targets" 291 s). Now "48 targets at 4 at once".
+* Targeted runs (snapshot, warm-up-only cache, JANUS_TIMINGS=1): a3 (before the move) arm64 568 s = compile 255 + replay 291 (load ~45);
+  **a4 arm64 275 s / 1.7 GB = compile 196 + replay 65 (load ~27-40) — target ≤ 450 s met**;
+  **b4 amd64 537 s = compile 325 + replay 190 (load ~30-40) — still over 450**: amd64 Sb* (SetBytes cases, 55-117 s each dev, ≈480 s)
+  dominate compile and replay → next trim.
