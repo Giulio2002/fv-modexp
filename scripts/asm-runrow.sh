@@ -8,7 +8,7 @@
 set -uo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"; cd "$root"
 isa=$1 row=$2
-JANUS=${JANUS:-/srv/janus-ops/v032/bin/janus}
+JANUS=${JANUS:-/srv/janus-ops/v033/bin/janus}
 HB=${HARNESS_DIR:-/srv/fv-modexp/build}
 export JANUS_CACHE_DIR=${JANUS_CACHE_DIR:-/srv/fv-modexp-ops/cache-asm} LEAN_NUM_THREADS=${LEAN_NUM_THREADS:-4} JANUS_MEM_MAX=16G JANUS_REPLAY_THREADS=${JANUS_REPLAY_THREADS:-1}
 case $isa in arm64) dir=Arm64;; amd64) dir=Amd64;; esac
