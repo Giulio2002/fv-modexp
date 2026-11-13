@@ -546,4 +546,84 @@ theorem KN.partZ (h : KN R b H L W st zp zc xp n xc yp yc s lx0 lx1 ly0 ly1 t Lk
     by omega, hzw.of_sub (by omega) (by omega), s1, hl, hzw.of_sub (by omega) (by omega), by unfold Apart; omega, s2⟩
 end
 
+/-! ## The `CALL` push (amd64): the return address at `RSP - 456` (inside our window, below the locals) -/
+
+section
+variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc yp yc : Nat} {s : State}
+  {lx0 lx1 ly0 ly1 t : Nat} {Lk : List (Nat × Nat)} {bk spent : Nat} {M : Memory}
+
+/-- the push keeps `KN` -/
+theorem KN.push (h : KN R b H L W st zp zc xp n xc yp yc s lx0 lx1 ly0 ly1 t Lk bk spent M) (v : Nat) :
+    KN R b H L W st zp zc xp n xc yp yc s lx0 lx1 ly0 ly1 t Lk bk spent (M.writeLE ((s.regs 4).toNat - 456) 8 v) := by
+  obtain ⟨hW, hWs, -, -, -, -, -, -, -, -, -, -, hout, -, -⟩ := h.lay
+  have hstw : Outside st 24 (win s W 72) := h.F.stk.2.2.1
+  simp only [win, outside_cons, outside_nil, and_true] at hstw
+  have hF : MemFrame M (M.writeLE ((s.regs 4).toNat - 456) 8 v) [((s.regs 4).toNat - 456, (s.regs 4).toNat - 456 + 8)] := by
+    janus_frame
+  have hF' : MemFrame M (M.writeLE ((s.regs 4).toNat - 456) 8 v)
+      (R.rt ++ [((s.regs 4).toNat - 456 - 0, (s.regs 4).toNat - 456 + 8)] ++ []) :=
+    hF.mono fun a k ho => by simp only [outside_append, outside_nil, and_true, Nat.sub_zero] at ho; exact ho.2
+  have hLs := h.lsep
+  have hLF : LiveFrame M (M.writeLE ((s.regs 4).toNat - 456) 8 v) Lk [] :=
+    LiveFrame.of_win hF fun r hr => by
+      have := hLs r hr; simp only [outside_cons, outside_nil, and_true]; omega
+  have hinv := RtInv.inv_frame' hF (fun r hr => by
+      simp only [List.mem_cons, List.not_mem_nil, or_false] at hr; subst hr
+      exact Or.inl (hout.of_sub (by simp only; omega) (by simp only; omega))) h.inv
+  have hLF2 : LiveFrame M (M.writeLE ((s.regs 4).toNat - 456) 8 v) Lk
+      [((s.regs 4).toNat - 456, (s.regs 4).toNat - 456 + 8)] :=
+    LiveFrame.of_win hF fun r hr => by
+      have := hLs r hr; simp only [outside_cons, outside_nil, and_true]; omega
+  have hsbC := NatSqr.stackBack_keepC h.sok (hF.widen R.rt) hLF2 (by simp only [outside_cons, outside_nil, and_true]; omega)
+    (LiveExt.refl R Lk)
+  have := h.step (k := 0) (a := 8) (by omega) (by omega) (ws := []) (fun r hr => by simp at hr) hF' hLF
+    (by simp only [Janus.Arm64.Memory.regions_writeLE]) (LiveExt.refl R Lk) (c := 0)
+    (Or.inr ⟨by omega, hsbC.2⟩) (by have := h.spk; omega) hinv hsbC.1
+  simpa using this
+
+/-- the push keeps the stack's header -/
+theorem KN.pushHdr (h : KN R b H L W st zp zc xp n xc yp yc s lx0 lx1 ly0 ly1 t Lk bk spent M) (v : Nat) :
+    stW (M.writeLE ((s.regs 4).toNat - 456) 8 v) st = stW M st ∧
+      stLen (M.writeLE ((s.regs 4).toNat - 456) 8 v) st = stLen M st ∧
+      stCap (M.writeLE ((s.regs 4).toNat - 456) 8 v) st = stCap M st := by
+  obtain ⟨hW, hWs, -⟩ := h.lay
+  have hstw : Outside st 24 (win s W 72) := h.F.stk.2.2.1
+  simp only [win, outside_cons, outside_nil, and_true] at hstw
+  simp only [stW, stLen, stCap]
+  exact ⟨Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega),
+    Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega),
+    Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega)⟩
+
+/-- `StkSep` through the push -/
+theorem KN.pushSep (h : KN R b H L W st zp zc xp n xc yp yc s lx0 lx1 ly0 ly1 t Lk bk spent M) (v : Nat) {p k : Nat}
+    (hs : StkSep M st p k) : StkSep (M.writeLE ((s.regs 4).toNat - 456) 8 v) st p k := by
+  obtain ⟨e1, e2, e3⟩ := h.pushHdr v
+  simp only [StkSep, BasicSqr.freeP, BasicSqr.freeN] at hs ⊢
+  rw [e1, e2, e3]; exact hs
+
+/-- an `*Int` header in our frame (above `RSP - 448`) through the push -/
+theorem IntAt.pushK {M : Memory} {sp a ng p l c v : Nat} (h : IntAt M a ng p l c) (hs : 456 ≤ sp) (ha : sp - 448 ≤ a) :
+    IntAt (M.writeLE (sp - 456) 8 v) a ng p l c :=
+  NatSqr.IntAt.keep h fun x m h1 _ => NatSqr.pushRd (by omega)
+
+/-- a `KIOp` with its header in our frame through the push -/
+theorem KN.pushKIOp (h : KN R b H L W st zp zc xp n xc yp yc s lx0 lx1 ly0 ly1 t Lk bk spent M) (v : Nat) {a : Nat}
+    (h1 : (s.regs 4).toNat - 448 ≤ a) (ho : KIOp R Lk s W M a) :
+    KIOp R Lk s W (M.writeLE ((s.regs 4).toNat - 456) 8 v) a := by
+  obtain ⟨hW, hWs, -⟩ := h.lay
+  obtain ⟨o1, o2, o3, o4, o5, o6, o7, o8, o9⟩ := ho
+  have e0 : (M.writeLE ((s.regs 4).toNat - 456) 8 v).readLE a 1 = M.readLE a 1 := NatSqr.pushRd (by omega)
+  have e1 : (M.writeLE ((s.regs 4).toNat - 456) 8 v).readLE (a + 8) 8 = M.readLE (a + 8) 8 := NatSqr.pushRd (by omega)
+  have e2 : (M.writeLE ((s.regs 4).toNat - 456) 8 v).readLE (a + 16) 8 = M.readLE (a + 16) 8 := NatSqr.pushRd (by omega)
+  have e3 : (M.writeLE ((s.regs 4).toNat - 456) 8 v).readLE (a + 24) 8 = M.readLE (a + 24) 8 := NatSqr.pushRd (by omega)
+  simp only [KIOp, IntAS.hNeg, IntAS.hP, IntAS.hL, IntAS.hC] at o1 o2 o3 o4 o5 o6 o7 o8 o9 ⊢
+  rw [e0, e1, e2, e3]
+  refine ⟨o1, o2, o3, o4, by rw [Janus.Arm64.Memory.accessible_writeLE]; exact o5, o6, o7, ?_, o9⟩
+  simp only [win, outside_cons, outside_nil, and_true] at o9
+  rcases o8 with h0 | h0
+  · exact Or.inl h0
+  · right; rw [NatSqr.pushRd (by omega)]; exact h0
+
+end
+
 end FvModexp.Amd64.Q.NatMul
