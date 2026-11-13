@@ -1716,6 +1716,14 @@ rel42 (snapshot snap42 = 8923cef0, same store, the four rows alone, load 30-46):
   (context = summary + DivPostL pieces) never finished; the same facts proved at the top of the proof take ms. Prove
   every arithmetic side fact BEFORE the call (or in a small lemma) — never omega in a post-call context.
 
+### expmc s59 (amd64 window-4 function summary + witness, dev builds on v0.3.1, host load ~35)
+* New: W4FunP (EPreA/PreD/PostD, sepL1, small lemmas) 2.0 s, W4Fun (`post_of`, the whole 11-segment chain) 8.0 s / 2.4 GB,
+  W4FunE (`ens`) 5.0 s / 2.6 GB, W4Wit (`pre` on the witness state) 8.1 s / 2.6 GB.
+* `post_of` stays fast because every arithmetic side fact is a tiny lemma (k8_of, lc_of, cap_pos, z1_ap, …) and the
+  only `omega`s run before the chain posts are destructured (s55/s58 lessons).
+* DivQ/DivR gained one conjunct (zz vs the stack array at the division's return, zz held): chain rebuild W4DivS → W4En
+  86 s in total (W4En 26 s, W4XnJ 13 s).
+
 ### expmc s58 (amd64 window-4 W4Fun bridge, dev builds on v0.3.1, host load ~35)
 * New: W4FunB (per-layer AncI bridge, 10 lemmas) 1.8 s, W4FunV (w4_value) 1.6 s, W4FunO (S0..S10 Outside facts,
   chainA/chainT) 3.2 s, W4FunH (costs + post helpers) 2.8 s. W4XnS (XnQ keeps the branch condition) 6 s, W4En 27 s.
