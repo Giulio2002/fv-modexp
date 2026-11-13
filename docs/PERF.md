@@ -1676,3 +1676,11 @@ SubMod2NRow 12 s.
   (first draft hung > 5 min: a fallback `decide | rfl` on a goal with a wrong return-address constant — fixed constant),
   DivMStk 3 s, DivMGet 8 s. TIGHT COSTS edit set (arm64): ModFun 108 s / 5.7 GB, IExpP 65 s, BudEvenQ 41 s / 5.4 GB,
   RunSucc 3 s / 4.7 GB.
+
+### expmc s52 (amd64 window-4 RR section, dev builds on v0.3.1, host load ~65)
+* `Amd64/Exp/W4Div` (divCall): draft > 900 s / > 5 GB (still > 180 s with the pre replaced by `sorry`) → **5.5 s / 2.3 GB**.
+  Root causes (found with `trace.profiler`): (1) the stack-argument reads of the callee pre (`readLE (sp - 8 + 16)`…) were
+  matched against the caller's `readLE (sp + 8)`… by definitional unification (Nat `whnf`, 10–20 s each) — fixed by
+  explicit `rw [show sp - 8 + 16 = sp + 8 by omega, …]`; (2) `omega` calls in the continuation's context (huge post) —
+  fixed by moving all arithmetic into small lemmas (`dv_facts`, `dv_pre`, `dv_post`) and passing `8 ≤ sp`/`sp < 2^64`.
+* New: W4Ctx 5.4 s, W4RRC 3.9 s, W4DivK 37–42 s / 3.3 GB, W4DivM 30 s / 3.0 GB, W4DivR 24 s, W4Own 2.6 s.
