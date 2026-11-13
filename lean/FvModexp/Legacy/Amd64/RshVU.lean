@@ -1,37 +1,38 @@
+-- LEGACY (retired from the release, coordinator 2026-11-15): standalone row on the single-function extraction of `RshVU`; its Run-extraction coverage is `Proofs/Amd64/RshVUSum.lean` via the rows in docs/COVERAGE.md "Legacy standalone rows". Run on demand: scripts/asm-row.sh.
 import Extracted
-import FvModexp.Proofs.Amd64.LshVUSum
+import FvModexp.Proofs.Amd64.RshVUSum
 
 /-!
-# Row: `math/big.lshVU.abi0` (go-bigmodexpfix arith_amd64.s:116, Go assembly, ABI0, amd64)
+# Row: `math/big.rshVU.abi0` (go-bigmodexpfix arith_amd64.s:178, Go assembly, ABI0, amd64)
 
-**Guarantee** (`correctness`). For every ABI0 call of `lshVU(z, x []Word, s uint) (c Word)` (frame words
+**Guarantee** (`correctness`). For every ABI0 call of `rshVU(z, x []Word, s uint) (c Word)` (frame words
 `z, len(z), cap(z), x, len(x), cap(x), s`, result word 7) with `n = len(z)`, `z[0:n]` writable, `x[0:n]` readable,
-`1 ≤ s ≤ 63`, `x ≤ z` or `x[0:n]` disjoint from `z[0:n]` (the loop runs backward), and `z[0:n]` disjoint from the call frame (return address and
+`1 ≤ s ≤ 63`, `z ≤ x` or `x[0:n]` disjoint from `z[0:n]` (the loop runs forward), and `z[0:n]` disjoint from the call frame (return address and
 argument words), `x[0:n]` from the result word: the call returns (no fault, every length `n`), restores `RSP`, `RBP` and the ABI0 callee state, and
 
-* the `n` limbs at `z` hold `(X · 2^s) mod 2^(64 n)` (`X` = the value of `x[0:n]` before the call);
-* the result word is `(X · 2^s) / 2^(64 n)` (the bits shifted out);
+* the `n` limbs at `z` hold `X / 2^s` (`X` = the value of `x[0:n]` before the call);
+* the result word is `(X mod 2^s) · 2^(64-s)` (the bits shifted out, at the top of the word);
 * nothing outside `z[0:n]` and the result word changes.
 
-It is the library summary `LshVUSum.lshVU_summary` specialised to this extraction (the same single segment).
+It is the library summary `RshVUSum.rshVU_summary` specialised to this extraction (the same single segment).
 -/
 
 open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.GoABI0 Janus.Amd64.Tactic Janus.Spec FvModexp.Asm
 
-namespace FvModexp.Amd64.LshVU
+namespace FvModexp.Amd64.RshVU
 
 theorem correctness (z zl zc x xl xc sh : BitVec 64) :
     Ensures0 Extracted.program Extracted.entry [z, zl, zc, x, xl, xc, sh] 1
       (fun s => Ptr s.mem z (8 * zl.toNat) true ∧ Ptr s.mem x (8 * zl.toNat) false ∧
         1 ≤ sh.toNat ∧ sh.toNat ≤ 63 ∧
-        (x.toNat ≤ z.toNat ∨ Apart z.toNat (8 * zl.toNat) x.toNat (8 * zl.toNat)) ∧
+        (z.toNat ≤ x.toNat ∨ Apart z.toNat (8 * zl.toNat) x.toNat (8 * zl.toNat)) ∧
         Apart z.toNat (8 * zl.toNat) (s.regs 4).toNat 72 ∧ Apart x.toNat (8 * zl.toNat) ((s.regs 4).toNat + 64) 8)
       (fun s s' =>
-        s'.mem.readLE z.toNat (8 * zl.toNat) = (s.mem.readLE x.toNat (8 * zl.toNat) * 2 ^ sh.toNat) % 2 ^ (64 * zl.toNat) ∧
+        s'.mem.readLE z.toNat (8 * zl.toNat) = s.mem.readLE x.toNat (8 * zl.toNat) / 2 ^ sh.toNat ∧
         results0 s s' 7 1 =
-          [BitVec.ofNat 64 ((s.mem.readLE x.toNat (8 * zl.toNat) * 2 ^ sh.toNat) / 2 ^ (64 * zl.toNat))] ∧
+          [BitVec.ofNat 64 (s.mem.readLE x.toNat (8 * zl.toNat) % 2 ^ sh.toNat * 2 ^ (64 - sh.toNat))] ∧
         MemFrame s.mem s'.mem [(z.toNat, z.toNat + 8 * zl.toNat), ((s.regs 4).toNat + 64, (s.regs 4).toNat + 72)]) :=
-  FvModexp.Amd64.LshVUSum.ensures z zl zc x xl xc sh
+  FvModexp.Amd64.RshVUSum.ensures z zl zc x xl xc sh
 
 namespace Witness
 
@@ -70,7 +71,7 @@ theorem setup : CallSetup0 (Extracted.program.withExit ret) Extracted.entry args
 theorem hpre : (fun s : State => Ptr s.mem (BitVec.ofNat 64 dat) (8 * (1 : BitVec 64).toNat) true ∧
     Ptr s.mem (BitVec.ofNat 64 (dat + 0x40)) (8 * (1 : BitVec 64).toNat) false ∧
     1 ≤ (1 : BitVec 64).toNat ∧ (1 : BitVec 64).toNat ≤ 63 ∧
-    ((BitVec.ofNat 64 (dat + 0x40) : BitVec 64).toNat ≤ (BitVec.ofNat 64 dat : BitVec 64).toNat ∨
+    ((BitVec.ofNat 64 dat : BitVec 64).toNat ≤ (BitVec.ofNat 64 (dat + 0x40) : BitVec 64).toNat ∨
       Apart (BitVec.ofNat 64 dat : BitVec 64).toNat (8 * (1 : BitVec 64).toNat)
         (BitVec.ofNat 64 (dat + 0x40) : BitVec 64).toNat (8 * (1 : BitVec 64).toNat)) ∧
     Apart (BitVec.ofNat 64 dat : BitVec 64).toNat (8 * (1 : BitVec 64).toNat) (s.regs 4).toNat 72 ∧
@@ -83,17 +84,17 @@ theorem nonvacuous : ∃ (ret : Nat) (s : State) (z zl zc x xl xc sh : BitVec 64
     CallSetup0 (Extracted.program.withExit ret) Extracted.entry [z, zl, zc, x, xl, xc, sh] 1 s ∧
     (Ptr s.mem z (8 * zl.toNat) true ∧ Ptr s.mem x (8 * zl.toNat) false ∧
         1 ≤ sh.toNat ∧ sh.toNat ≤ 63 ∧
-        (x.toNat ≤ z.toNat ∨ Apart z.toNat (8 * zl.toNat) x.toNat (8 * zl.toNat)) ∧
+        (z.toNat ≤ x.toNat ∨ Apart z.toNat (8 * zl.toNat) x.toNat (8 * zl.toNat)) ∧
         Apart z.toNat (8 * zl.toNat) (s.regs 4).toNat 72 ∧ Apart x.toNat (8 * zl.toNat) ((s.regs 4).toNat + 64) 8) ∧
     Returns (Extracted.program.withExit ret) s
       (fun s' => ABIReturn0 s s' ∧
-        (s'.mem.readLE z.toNat (8 * zl.toNat) = (s.mem.readLE x.toNat (8 * zl.toNat) * 2 ^ sh.toNat) % 2 ^ (64 * zl.toNat) ∧
+        (s'.mem.readLE z.toNat (8 * zl.toNat) = s.mem.readLE x.toNat (8 * zl.toNat) / 2 ^ sh.toNat ∧
         results0 s s' 7 1 =
-          [BitVec.ofNat 64 ((s.mem.readLE x.toNat (8 * zl.toNat) * 2 ^ sh.toNat) / 2 ^ (64 * zl.toNat))] ∧
+          [BitVec.ofNat 64 (s.mem.readLE x.toNat (8 * zl.toNat) % 2 ^ sh.toNat * 2 ^ (64 - sh.toNat))] ∧
         MemFrame s.mem s'.mem [(z.toNat, z.toNat + 8 * zl.toNat), ((s.regs 4).toNat + 64, (s.regs 4).toNat + 72)])) :=
   ⟨ret, s0, _, _, _, _, _, _, _, hret, setup, hpre,
     correctness _ _ _ _ _ _ _ ret hret s0 setup hpre⟩
 
 end Witness
 
-end FvModexp.Amd64.LshVU
+end FvModexp.Amd64.RshVU

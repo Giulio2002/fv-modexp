@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # asm-row.sh ISA Fn SYMBOL [contract flags...]: extract SYMBOL from the pinned build/harness-ISA (main checkout) and
-# `janus verify` lean/FvModexp/Proofs/<Arm64|Amd64>/<Fn>.lean (theorem correctness + every Witness.nonvacuous*) under the
+# `janus verify` lean/FvModexp/{Proofs,Legacy}/<Arm64|Amd64>/<Fn>.lean (theorem correctness + every Witness.nonvacuous*) under the
 # project caps (memcap 16G, timeout 900 s). Appends "isa fn verdict wall_s peak_MB" to build/asm-rows.tsv; peak_MB is the
 # max(memory.peak of the memcap scope (janus driver), memGuard.peakBytes of verified.json (the sandboxed lake/lean jobs)).
 set -uo pipefail
@@ -12,6 +12,8 @@ export JANUS_CACHE_DIR=${JANUS_CACHE_DIR:-/srv/fv-modexp-ops/cache-asm} LEAN_NUM
 case $isa in arm64) dir=Arm64;; amd64) dir=Amd64;; esac
 out=build/ex-$isa-$fn; mkdir -p build
 pf=lean/FvModexp/Proofs/$dir/$fn.lean
+# the retired standalone rows moved to lean/FvModexp/Legacy/<Isa>/ (coordinator 2026-11-15)
+[ -f "$pf" ] || pf=lean/FvModexp/Legacy/$dir/$fn.lean
 th=(--theorem "FvModexp.$dir.$fn.correctness")
 for w in $(python3 - "$pf" <<'PY'
 import sys,re

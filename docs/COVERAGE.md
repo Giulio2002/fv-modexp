@@ -46,3 +46,25 @@ Pure-Lean row 3 (no machine code): `FvModexp.Proofs.Compose.composition` in `lea
 | go-bigmodexpfix `nat.trunc`, empty-tolerant `x` (asm) | proved (`Trunc.ens0 : Hyp0`) | proved (`Trunc.ens0 : Hyp0`, s35, 21 s dev) | `Proofs/<Isa>/Nat/TruncE0.lean` |
 | `(*Int).Mod`, `(*Int).exp`, `(*Int).Bytes` | hypothesis (interface draft v1) | todo | `Proofs/Arm64/Top/RunIface.lean`: `ModSpec`, `ExpSpec`, `BytesSpec` |
 | `(*bigModExp).Run` body | todo | todo | — |
+
+## Legacy standalone rows (retired from the release; coordinator decision 2026-11-15)
+
+asm's session 1–8 rows were stated on SINGLE-FUNCTION extractions (`janus extract <harness> <asm fn>`), so they cannot build against the
+Run extraction. They live in `lean/FvModexp/Legacy/<Isa>/` (not imported by anything; not in `verify-all`; `scripts/asm-row.sh` still
+runs them on demand). Each function's machine code is verified by the Run-extraction rows below through its library summary
+`Proofs/<Isa>/<Fn>Sum.lean`. Coverage checked (asm s36) arm64: by walking the constants of `FvModexp.Arm64.DivRow.correctness`
+(dev oleans: it reaches every `*_summary` below); amd64: constant walk of `DivWRow` / `LshRow` / `RshRow` / `MulAddWWRow`, and for
+`BasicSqrRow` / `IntASRow` (divmc's rows, not in asm's dev store) the source chain (`Nat/AsmCallees`, `Nat/Callees`, `Int/IntASC*`).
+
+| Function (asm summary) | arm64 Run-extraction rows | amd64 Run-extraction rows |
+|---|---|---|
+| `addVV.abi0` (`AddVVSum.addVV_summary`) | DivRow (via nat.mul / divBasic), BasicMulRow, IntASRow, … | IntASRow (nat.add), BasicSqrRow |
+| `subVV.abi0` (`SubVVSum.subVV_summary`) | DivRow (divBasic), IntASRow, … | IntASRow (nat.sub) |
+| `addMulVVWW.abi0` (`AddMulVVWWSum.addMulVVWW_summary`) | DivRow (drs → nat.mul → basicMul), BasicMulRow | BasicSqrRow (basicSqr + basicMul) |
+| `mulAddVWW.abi0` (`MulAddVWWSum.mulAddVWW_summary`) | DivRow (divBasic / drs), MulAddWWRow | MulAddWWRow |
+| `lshVU.abi0` (`LshVUSum.lshVU_summary`) | DivRow (divLarge shift), LshRow | LshRow, BasicSqrRow |
+| `rshVU.abi0` (`RshVUSum.rshVU_summary`) | DivRow (divLarge unshift), RshRow | RshRow |
+| `nat.cmp` (`CmpSum.cmp_summary`) | DivRow (div `u.cmp(v)`), IntASRow | IntASRow (`(*Int).Add/Sub` sign case) |
+| `divWW` (`DivWWSum.divWW_summary`) | DivRow, DivWRow, DivWVWRow | DivWRow, DivWVWRow |
+| `bits.Div64` (`Div64Sum.div64_summary`, arm64 only) | DivRow, DivWRow, DivWVWRow | — (inlined `DIVQ` in divWW) |
+| `reciprocalWord` (`RecipWordSum.recip_summary`, arm64 only) | DivRow, DivWRow, DivWVWRow | — (inlined) |
