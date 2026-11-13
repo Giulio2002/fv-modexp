@@ -2,6 +2,8 @@ import FvModexp.Proofs.Arm64.Exp.P2PreWbC
 import FvModexp.Proofs.Common.DivmcLsl
 import FvModexp.Proofs.Common.BitArith
 
+set_option autoImplicit false
+
 /-!
 # `buildPrecomputationWindowModPower2` (arm64): the fill loop (nat.go:875-877) (agent infra)
 
@@ -36,7 +38,7 @@ theorem mask_ofNat (a c : Nat) (ha : a < 2 ^ 64) (hc : 0 < c) (hc2 : c < 2 ^ 63)
 /-- the fill loop's head -/
 abbrev pcF : Nat := 1791080
 
-def FillJ (impl : List Segment) (R : RtInv) (kc : Nat) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat)
+def FillJ (impl : List Segment) (R : RtInv) (kc : Nat) (sqC : Nat → Nat) (mlC : Nat → Nat → Nat)
     (b : Nat) (L : List (Nat × Nat)) (st pw pl lm x xl : Nat) (s : State) (i : Nat) : Prop :=
   ∀ (S : State) (bp : Nat) (L1 : List (Nat × Nat)) (b1 : Nat),
     S.pc = BitVec.ofNat 64 pcF → S.sp = BitVec.ofNat 64 (s.sp.toNat - 208) → S.regs 28 = s.regs 28 →
@@ -44,11 +46,11 @@ def FillJ (impl : List Segment) (R : RtInv) (kc : Nat) (sqC : Nat → Nat → Na
     S.regs 0 = BitVec.ofNat 64 bp → S.regs 1 = BitVec.ofNat 64 i → S.regs 2 = BitVec.ofNat 64 (NB pl lm) →
     S.regs 3 = BitVec.ofNat 64 pw → S.regs 4 = BitVec.ofNat 64 (W lm) → S.regs 5 = BitVec.ofNat 64 pl →
     Ctx R kc L st pw pl lm s bp S.mem L1 b1 → (∀ j, j < i → PwT S.mem pw bp lm j) → i ≤ pl →
-    b - stackNatCost (stLen s.mem st) (NB pl lm) ≤ b1 →
+    b ≤ b1 →
     Goal impl R kc sqC mlC b L st pw pl lm x xl s S
 
 section
-variable {impl : List Segment} {R : RtInv} {kc : Nat} {sqC : Nat → Nat → Nat} {mlC : Nat → Nat → Nat → Nat}
+variable {impl : List Segment} {R : RtInv} {kc : Nat} {sqC : Nat → Nat} {mlC : Nat → Nat → Nat}
     {b : Nat} {L : List (Nat × Nat)} {st pw pl ws lm x xl : Nat} {s : State}
 
 set_option maxRecDepth 20000 in
@@ -65,7 +67,7 @@ theorem fillP (hkc : 4608 ≤ kc) (hpre : Pre R kc sqC mlC b L st pw pl ws lm x 
     (h9 : S.regs 9 = BitVec.ofNat 64 (bp + 8 * (i * W lm)))
     (hc : Ctx R kc L st pw pl lm s bp M L1 b1) (hd : ∀ j, j < i → PwT M pw bp lm j)
     (hh1 : M.readLE (pw + 24 * i + 8) 8 = W lm) (hh2 : M.readLE (pw + 24 * i + 16) 8 = 2 * W lm)
-    (hb : b - stackNatCost (stLen s.mem st) (NB pl lm) ≤ b1) :
+    (hb : b ≤ b1) :
     ReachesRet (LibW.program.link impl) (s.regs 30) S (GoalQ R kc sqC mlC b L st pw pl lm x xl s) := by
   have hsl := s.sp.isLt
   have hf := pf_of hpre (by omega)

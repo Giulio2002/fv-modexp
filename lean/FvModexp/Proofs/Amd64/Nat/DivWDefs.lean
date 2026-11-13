@@ -29,7 +29,7 @@ def wordT : Nat := Extracted.dataAddr.«type:big.Word#51b931e8»
 def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl y : BitVec 64) (s : State) : Prop :=
   CallEnv R L s 4232 64 ∧ Outside wordT 16 R.rt ∧ y.toNat ≠ 0 ∧ xl.toNat < 2 ^ 40 ∧ zc.toNat < 2 ^ 40 ∧
     NatLive s.mem R L zp.toNat zc.toNat ∧
-    Outside zp.toNat (8 * zc.toNat) (win s 4232 64) ∧
+    (0 < zc.toNat → Outside zp.toNat (8 * zc.toNat) (win s 4232 64)) ∧
     (0 < zc.toNat → Apart zp.toNat (8 * zc.toNat) ((s.regs 14).toNat + 16) 8 ∧
       Apart zp.toNat (8 * zc.toNat) (s.fsBase.toNat - 8) 8 ∧
       (zp = xp ∨ Apart zp.toNat (8 * zc.toNat) xp.toNat (8 * xl.toNat))) ∧
@@ -41,7 +41,8 @@ def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl y : BitVec 64
       makeCost xl.toNat ≤ b) ∧
     (∀ d src k, k ≤ 8 * xl.toNat → R.ok (cA "runtime.memmove") [d, src, k]) ∧
     (xl.toNat = 0 → y.toNat = 1 → zp = xp ∨
-      (s.mem.accessible zp.toNat 0 true = true ∧ zp.toNat ≤ 2 ^ 48 ∧ Held R L zp.toNat 0))
+      (s.mem.accessible zp.toNat 0 true = true ∧ zp.toNat ≤ 2 ^ 48 ∧ Held R L zp.toNat 0 ∧
+        Outside zp.toNat 0 (win s 4232 64)))
 
 /-- The postcondition (`AX, BX, CX = q`, `DI = r`). -/
 @[reducible] def PostI (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl y : BitVec 64) (s s' : State) :

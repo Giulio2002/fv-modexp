@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.P2Q
 import FvModexp.Proofs.Arm64.Exp.P2W2Pre
 import FvModexp.Proofs.Arm64.Exp.P2W2EnA
 import FvModexp.Proofs.Arm64.Exp.P2W2EnG
@@ -26,7 +27,7 @@ namespace FvModexp.Arm64.P2W2
     stCap M st < 2 ^ 40 → NatLive M R L1 (stW M st) (stCap M st) →
     (¬(stW M st = stW s.mem st ∧ stCap M st = stCap s.mem st) → (stW M st, stW M st + 8 * stCap M st) ∈ L1) →
     ESl M sp st (s.regs 29) ret zp zc xp xl xc yp yl lm (stLen s.mem st) →
-    b - stackNatCost (stLen s.mem st) (8 * W lm) ≤ b1 → R.inv b1 L1 g (view R.rt L1 M) →
+    b ≤ b1 → R.inv (b1 + stkR (HW (stLen s.mem st) lm) M st) L1 g (view R.rt L1 M) →
     ∀ S : State, S.pc = BitVec.ofNat 64 rsE → S.sp = BitVec.ofNat 64 sp → S.regs 3 = BitVec.ofNat 64 st →
       S.regs 11 = BitVec.ofNat 64 (W lm) → S.regs 18 = s.regs 18 → S.regs 28 = BitVec.ofNat 64 g →
       S.regs 29 = BitVec.ofNat 64 (sp - 8) → S.mem = M →
@@ -42,7 +43,7 @@ theorem ent (impl : List Segment) (R : RtInv)
     (ret0 : BitVec 64) (Q : State → Prop)
     (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl lm ret : Nat) (s : State)
     (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s)
-    (hbud : stackNatCost (stLen s.mem st) (8 * W lm) ≤ b) (hr48 : ret < 2 ^ 48)
+    (hr48 : ret < 2 ^ 48)
     (hpc : s.pc = BitVec.ofNat 64 fnE)
     (h0 : s.regs 0 = BitVec.ofNat 64 zp) (h2 : s.regs 2 = BitVec.ofNat 64 zc)
     (h3 : s.regs 3 = BitVec.ofNat 64 st) (h4 : s.regs 4 = BitVec.ofNat 64 xp) (h5 : s.regs 5 = BitVec.ofNat 64 xl)
@@ -74,10 +75,10 @@ theorem ent (impl : List Segment) (R : RtInv)
     intro hk S1 M1 c1 c2 c3 c4 c5 c6 c7 c8 c9 c10 c11 c12 hF1p hrg1 hsl1
     have hF1 : MemFrame s.mem M1 [(sp - 8, sp + 560)] := hF1p.mono fun a k ho => by
       simp only [outside_cons, outside_nil, and_true] at ho ⊢; omega
-    have hinvM1 : R.inv b L g (view R.rt L M1) := RtInv.inv_frame hF1 (fun r hr => by
+    have hinvM1 : R.inv (b + stkR (HW (stLen s.mem st) lm) s.mem st) L g (view R.rt L M1) := RtInv.inv_frame hF1 (fun r hr => by
       simp only [List.mem_singleton] at hr; subst hr; simp only
       exact hout.of_sub (by omega) (by omega)) hinv
-    refine enJn impl R hwb ret0 Q b L g sp st (stW s.mem st) (stLen s.mem st) (stCap s.mem st) (W lm) M1 hal
+    refine enJn impl R hwb ret0 Q (b + stkR (HW (stLen s.mem st) lm) s.mem st) L g sp st (stW s.mem st) (stLen s.mem st) (stCap s.mem st) (W lm) M1 hal
       (by omega) hsp2 (by rw [hF1.accessible]; exact Memory.accessible_mono _ hacc (by omega) (by omega))
       (LiveSep.sub_win_rt hwrt (by omega) (by omega) (by omega)) (LiveSep.sub_win hLs (by omega) (by omega))
       (by rw [hF1.accessible]; exact k3) k4 k2 (by omega) (by rw [hF1.accessible]; exact hwbf) hwbA hok hinvM1
@@ -100,7 +101,7 @@ theorem ent (impl : List Segment) (R : RtInv)
     have hcap3 : stLen M3 st ≤ stCap M3 st := by simp only [stLen, stCap] at q2 q3 hk ⊢; omega
     have hc3 : stCap M3 st < 2 ^ 40 := by simp only [stCap] at q3 ⊢; rw [q3]; exact k7
     refine KR M3 L b hF hFp hLF (hrg3.trans hrg1) (LiveExt.refl R L) (Or.inl ⟨q1, q3⟩) q2 hcap3 hc3 ?_ (fun h => absurd ⟨q1, q3⟩ h) hsl3
-      (Nat.sub_le _ _) hinv3 S3 d1 d2 d3 (d4.trans c4) (d5.trans c9) d6 (d7.trans c11) d8
+      (Nat.le_refl _) (by rw [stkR_congr (show stCap M3 st = stCap s.mem st from q3)]; exact hinv3) S3 d1 d2 d3 (d4.trans c4) (d5.trans c9) d6 (d7.trans c11) d8
     intro hc
     simp only [stW, stCap] at q1 q3 hc ⊢
     rw [q3] at hc; rw [q1, q3]
@@ -118,8 +119,11 @@ theorem ent (impl : List Segment) (R : RtInv)
     have hgcb := growCap_lt _ _ _ hk' (by omega)
     rw [e8] at hcostG hgcb
     have hgcl := le_growCap8 (stLen s.mem st + 8 * W lm) (stCap s.mem st)
-    refine enG2 impl R hgr hmc ret0 Q b L g sp K st (W lm) (stW s.mem st) (stLen s.mem st)
-      (stCap s.mem st) s he hk hW (by omega) (Memory.readLE_lt _ _ _) (fun hc => ?_) (by omega) hinv S1 M1 c1 c2 c3
+    have hGE := P2Q.grow_eff (R := R) (b := b) (H := (HW (stLen s.mem st) lm)) (st := st) (M' := s.mem) (L := L) (g := g) (v := s.mem) hk'
+      (by simp only [HW, StackNat.rnd]; omega) rfl
+    rw [e8] at hGE
+    refine enG2 impl R hgr hmc ret0 Q (b + stkR (HW (stLen s.mem st) lm) s.mem st) L g sp K st (W lm) (stW s.mem st) (stLen s.mem st)
+      (stCap s.mem st) s he hk hW (by omega) (Memory.readLE_lt _ _ _) (fun hc => ?_) hGE.1 hinv S1 M1 c1 c2 c3
       c4 c5 c6 c7 c8 c10 c12 hF1 q240 q176 q192 q232 a9 q248 ?_
     · obtain ⟨-, -, a3, a4⟩ := k5 hc
       exact ⟨a4, Memory.accessible_weaken _ a3, (harr hc).1⟩
@@ -137,7 +141,7 @@ theorem ent (impl : List Segment) (R : RtInv)
       refine MemFrame.trans hF1p hF2 fun a k ho => ?_
       simp only [outside_append, outside_cons, outside_nil, and_true] at ho ⊢
       exact ⟨⟨by omega, by omega⟩, ho.1, by omega⟩
-    refine enJn impl R hwb ret0 Q (b - 8 * growCap8 (stLen s.mem st + 8 * W lm) (stCap s.mem st))
+    refine enJn impl R hwb ret0 Q (b + stkR (HW (stLen s.mem st) lm) s.mem st - 8 * growCap8 (stLen s.mem st + 8 * W lm) (stCap s.mem st))
       (L ++ [(p, p + 8 * growCap8 (stLen s.mem st + 8 * W lm) (stCap s.mem st))]) g sp st p
       (stLen s.mem st) (growCap8 (stLen s.mem st + 8 * W lm) (stCap s.mem st)) (W lm) M2 hal (by omega)
       hsp2 (by rw [hF12.accessible]; exact Memory.accessible_mono _ hacc (by omega) (by omega))
@@ -169,8 +173,13 @@ theorem ent (impl : List Segment) (R : RtInv)
       refine MemFrame.trans hF12p hF3 fun a k ho => ?_
       simp only [outside_append, outside_cons, outside_nil, and_true] at ho ⊢
       exact ⟨⟨ho.1, by omega, by omega⟩, ho.1, ho.2.2.2, by omega⟩
-    refine KR M3 _ _ hF hFp hLF (hrg3.trans (hrg2.trans hrg1)) hx hkfG q2 hcap3 hc3 ?_ (fun _ => ?_) hsl3
-      (Nat.sub_le_sub_left hcostG _) hinv3 S3 e1 e2 e3 (e4.trans d4) ((e5.trans d9).trans c9) e6
+    obtain ⟨b1, hinv1, hb1⟩ := (P2Q.grow_eff (R := R) (b := b) (H := (HW (stLen s.mem st) lm)) (st := st) (M' := M3)
+      (gc := growCap8 (stLen s.mem st + 8 * W lm) (stCap s.mem st))
+      (L := L ++ [(p, p + 8 * growCap8 (stLen s.mem st + 8 * W lm) (stCap s.mem st))]) (g := g)
+      (v := view R.rt (L ++ [(p, p + 8 * growCap8 (stLen s.mem st + 8 * W lm) (stCap s.mem st))]) M3) hk'
+      (by simp only [HW, StackNat.rnd]; omega) (by rw [show (8 * W lm + 3) / 4 * 4 = 8 * W lm by omega])).2 hinv3 q3
+    refine KR M3 _ b1 hF hFp hLF (hrg3.trans (hrg2.trans hrg1)) hx hkfG q2 hcap3 hc3 ?_ (fun _ => ?_) hsl3
+      hb1 hinv1 S3 e1 e2 e3 (e4.trans d4) ((e5.trans d9).trans c9) e6
       ((e7.trans d11).trans c11) e8
     · intro hc
       simp only [stW, stCap] at q1 q3 hc ⊢

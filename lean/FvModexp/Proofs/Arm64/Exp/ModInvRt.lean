@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.ModInvAlloc
 
+set_option autoImplicit false
+
 /-!
 # `nat.modularInverseModPowerOfTwo` (arm64): runtime facts across a call (agent infra)
 
@@ -58,15 +60,21 @@ theorem fresh_out {R : RtInv} {p n a k : Nat} (hIn : InRanges p n R.rt) (h : Out
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 4000000 in
 /-- the facts at `JM` after the allocating `z.make(numWords + 1)` (pure) -/
-theorem alloc_jm {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
+theorem alloc_jm {R : RtInv} {kc : Nat} {H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State} (hkc : 4608 ≤ kc)
-    (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {Mc m : Memory} {p r k : Nat}
+    (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) {Mc m : Memory} {p r k : Nat}
     (hF0 : MemFrame s.mem Mc (winA s (K kc) A)) (hreg0 : Mc.regions = s.mem.regions)
     (hfw : Fw1 s Mc st xp xl xc n k)
-    (hap : AllocPost R L b (s.regs 28).toNat (s.sp.toNat - 240) (NW n) Mc m p r) :
-    Fw1 s m st xp xl xc n k ∧ RtM R kc L s zp zc st m (L ++ [(p, p + r)]) (b - r) ∧
-      b - makeCost (NW n + 1) ≤ b - r ∧ Own R kc L (L ++ [(p, p + r)]) s zp zc st xp xl m p (NW n + 5) := by
+    (hap : AllocPost R L (b + stkR H s.mem st) (s.regs 28).toNat (s.sp.toNat - 240) (NW n) Mc m p r) :
+    Fw1 s m st xp xl xc n k ∧ RtM R kc L s zp zc st m (L ++ [(p, p + r)]) (b + stkR H s.mem st - r) ∧
+      b - makeCost (NW n + 1) + stkR H m st ≤ b + stkR H s.mem st - r ∧ Own R kc L (L ++ [(p, p + r)]) s zp zc st xp xl m p (NW n + 5) := by
   have hrt := rt0 hkc hpre hF0 hreg0
+  have hcap0 := rt0_cap hpre hF0
+  have hcb : makeCost (NW n + 1) ≤ b := by
+    have := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1.2; simp only [cost] at this; omega
+  have hmc : makeCost (NW n + 1) = allocCost (8 * (NW n + 5)) := by
+    unfold makeCost makeCap; rw [if_neg (show ¬ (NW n + 1 = 1) by simp only [NW]; omega)]
+  have hbl := blockSize_le_allocCost (8 * (NW n + 5)) true
   obtain ⟨⟨-, ⟨-, hal, -, -⟩, -, hout, hga, hgrt, hLs, -⟩, -, -, hn1, hn2, -, -, -, -, -, -, -, -,
     ⟨-, -, -, hxh, -⟩, -, -, -, ⟨-, hstw, -, hsta⟩, -, -, -, -, -, -⟩ := hpre
   obtain ⟨hMF, hLF, hrg, hIn, hAp, hle, hacc, h8, hsz, hbr, hinv⟩ := hap
@@ -106,7 +114,8 @@ theorem alloc_jm {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat
   have e1 : stLen m st = stLen Mc st := hhdr 8 (by omega)
   have e2 : stCap m st = stCap Mc st := hhdr 16 (by omega)
   have hsb : StackBack R L (L ++ [(p, p + r)]) st Mc m := stackBack_hdr hstk hMF e0 e1 e2 hLE
-  refine ⟨⟨⟨?_, ?_⟩, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩, rtM_call hrt.1 hrg hMF ?_ hLF' ?_ hLE hinv hsb (ain_keep e0 e2), by omega, ?_⟩
+  refine ⟨⟨⟨?_, ?_⟩, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩, rtM_call hrt.1 hrg hMF ?_ hLF' ?_ hLE hinv hsb (ain_keep e0 e2),
+    (by rw [stkR_congr (e2.trans hcap0)]; simp only [NW] at hmc hbl hcb hbr ⊢; omega), ?_⟩
   · rw [hrd _ (by omega) (by omega)]; exact f1
   · rw [hrd _ (by omega) (by omega)]; exact f2
   · rw [hrd _ (by omega) (by omega)]; exact f3
@@ -140,9 +149,9 @@ theorem alloc_jm {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat
       exact fresh_apart hIn' hAp' (hstk.2.2.2.2.1 hcap).2.1
 
 /-- the frame environment at a memory reached by stack-only stores -/
-theorem env_of {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
+theorem env_of {R : RtInv} {kc : Nat} {H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
-    (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory} (hF : MemFrame s.mem M (winA s (K kc) A)) :
+    (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory} (hF : MemFrame s.mem M (winA s (K kc) A)) :
     Env R L (s.regs 28).toNat (s.sp.toNat - 240) kc M := by
   obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, -, hout, hga, hgrt, hLs, -⟩, -⟩ := hpre
   simp only [K, A] at hw hout hb' ha hga hg3 hLs

@@ -1,6 +1,9 @@
 import FvModexp.Proofs.Arm64.Exp.P2W2EnG3
 import FvModexp.Proofs.Arm64.Exp.EvenHyp
 import FvModexp.Proofs.Arm64.Exp.MulHyp
+import FvModexp.Proofs.Common.StackPot
+
+set_option autoImplicit false
 
 /-!
 # `expNNPowerOfTwoWindowSize2` (arm64): the entry facts `EPre` (agent infra)
@@ -24,6 +27,11 @@ namespace FvModexp.Arm64.P2W2
   (InRanges a k L ∨ Outside a k R.rt) ∧ Apart a k (sp - K) (K + 560) ∧ Apart a k st 24 ∧
     Apart a k (free M st).1 (free M st).2
 
+/-- (divmc s42, TIGHT COSTS) the stack reserve level of the function for an entry stack length `ℓ0`: the reserve
+`8 w`, `zz` (`rnd 2w`), then `buildPrecomputationWindowModPower2`'s span `P2Pre.DPre 4 lm` (`rnd 5w + 8 w + 64`) -/
+@[reducible] def HW (ℓ0 lm : Nat) : Nat :=
+  ℓ0 + 8 * W lm + StackNat.rnd (2 * W lm) + (StackNat.rnd (5 * W lm) + 8 * W lm + 64)
+
 /-- the entry facts of `expNNPowerOfTwoWindowSize2` -/
 def EPre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl lm : Nat) (s : State) : Prop :=
   EEnv R L g sp K s ∧ K ≤ 2 ^ 20 ∧ RunIface.Globals R s.mem [(sp - K, sp + 560)] ∧ RoOut R ∧
@@ -44,7 +52,7 @@ def EPre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc
   stLen s.mem st + 2 ^ 13 ≤ 2 ^ 16 ∧
   (∃ op, EvenHyp.NatOne R L s.mem op ([(sp - K, sp + 560), (zp, zp + 8 * zc)] ++ stkWs s.mem st) ∧
     EvenHyp.StkApart s.mem st op 8) ∧
-  R.inv b L g (view R.rt L s.mem)
+  R.inv (b + stkR (HW (stLen s.mem st) lm) s.mem st) L g (view R.rt L s.mem)
 
 /-- the array after the reserve: kept or fresh -/
 @[reducible] def ArrKF (R : RtInv) (L : List (Nat × Nat)) (st : Nat) (M0 M : Memory) : Prop :=

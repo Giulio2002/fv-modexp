@@ -1,11 +1,14 @@
 import FvModexp.Proofs.Arm64.Exp.P2W4Ctx
+import FvModexp.Proofs.Common.StackPot
+
+set_option autoImplicit false
 
 set_option autoImplicit false
 
 /-!
 # `expNNPowerOfTwoWindowSize4` (arm64): the shared context `WC` of every point after the entry (agent infra)
 
-`WC R L K g sp st zp zc m0 M L1 b1 ℓ`: the memory `M` at a point of the function (entry memory `m0`, entry live set
+`WC R H L K g sp st zp zc m0 M L1 b1 ℓ`: the memory `M` at a point of the function (entry memory `m0`, entry live set
 `L`) differs from `m0` only in the runtime ranges, the function's window `WN` (`[sp - K, sp + 848)` without the
 caller's saved FP/LR `[sp + 744, sp + 760)`) and `ZS` (`z`'s array, the stack header, the entry free part of the
 stack's array); live objects of `L` keep their bytes outside `ZS`; the live set `L1` extends `L`, the invariant holds
@@ -30,13 +33,14 @@ open P2W2 (grE mcE wbE wTy grE_eq mcE_eq wbE_eq)
 @[reducible] def ZS (zp zc st : Nat) (m0 : Memory) : List (Nat × Nat) := [(zp, zp + 8 * zc)] ++ stkWs m0 st
 
 /-- the context at every point after the entry (see the module doc) -/
-structure WC (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc : Nat) (m0 M : Memory) (L1 : List (Nat × Nat))
+structure WC (R : RtInv) (H : Nat) (L : List (Nat × Nat)) (K g sp st zp zc : Nat) (m0 M : Memory) (L1 : List (Nat × Nat))
     (b1 ℓ : Nat) : Prop where
   fr : MemFrame m0 M (R.rt ++ WN sp K ++ ZS zp zc st m0)
   lf : LiveFrame m0 M L (ZS zp zc st m0)
   rg : M.regions = m0.regions
   le : LiveExt R L L1
-  inv : R.inv b1 L1 g (view R.rt L1 M)
+  /-- (divmc s42) `b1` is the EFFECTIVE budget: the invariant holds with the unheld stack reserve on top -/
+  inv : R.inv (b1 + stkR H M st) L1 g (view R.rt L1 M)
   sok : StkOK M R L1 st
   len : stLen M st = ℓ
   lo : stLen m0 st ≤ ℓ
@@ -54,11 +58,11 @@ theorem MemFrame.bytewise {m m' : Memory} {rs : List (Nat × Nat)} (h : MemFrame
   exact BitVec.eq_of_toNat_eq this
 
 section
-variable {R : RtInv} {L : List (Nat × Nat)} {K g sp st zp zc : Nat} {m0 M : Memory} {L1 : List (Nat × Nat)}
+variable {R : RtInv} {H : Nat} {L : List (Nat × Nat)} {K g sp st zp zc : Nat} {m0 M : Memory} {L1 : List (Nat × Nat)}
     {b1 ℓ : Nat}
 
 /-- a held range (live in `L` or outside the runtime) outside the entry free part is apart from the free part now -/
-theorem free_apart (h : WC R L K g sp st zp zc m0 M L1 b1 ℓ) {a k : Nat} (hh : InRanges a k L ∨ Outside a k R.rt)
+theorem free_apart (h : WC R H L K g sp st zp zc m0 M L1 b1 ℓ) {a k : Nat} (hh : InRanges a k L ∨ Outside a k R.rt)
     (hf : Apart a k (free m0 st).1 (free m0 st).2) : Apart a k (free M st).1 (free M st).2 := by
   have hc := h.sok.2.2.2.2.2.1
   have hl := h.len
@@ -74,7 +78,7 @@ theorem free_apart (h : WC R L K g sp st zp zc m0 M L1 b1 ℓ) {a k : Nat} (hh :
     unfold Apart; omega
 
 /-- a held range outside `ZS` is outside the stack's writable ranges now -/
-theorem stk_out (h : WC R L K g sp st zp zc m0 M L1 b1 ℓ) {a k : Nat} (hh : InRanges a k L ∨ Outside a k R.rt)
+theorem stk_out (h : WC R H L K g sp st zp zc m0 M L1 b1 ℓ) {a k : Nat} (hh : InRanges a k L ∨ Outside a k R.rt)
     (ho : Outside a k (ZS zp zc st m0)) : Outside a k (stkWs M st) := by
   simp only [ZS, stkWs, List.cons_append, List.nil_append, outside_cons, outside_nil, and_true] at ho ⊢
   refine ⟨ho.2.1, ?_⟩
@@ -85,12 +89,12 @@ theorem stk_out (h : WC R L K g sp st zp zc m0 M L1 b1 ℓ) {a k : Nat} (hh : In
   omega
 
 /-- the read form: a held range outside the window and `ZS` keeps its bytes -/
-theorem WC.read (h : WC R L K g sp st zp zc m0 M L1 b1 ℓ) {a k : Nat} (hh : InRanges a k L ∨ Outside a k R.rt)
+theorem WC.read (h : WC R H L K g sp st zp zc m0 M L1 b1 ℓ) {a k : Nat} (hh : InRanges a k L ∨ Outside a k R.rt)
     (hw : Outside a k (WN sp K)) (ho : Outside a k (ZS zp zc st m0)) : M.readLE a k = m0.readLE a k :=
   Expmc.held_readLE hh h.fr h.lf hw ho
 
 /-- a range outside everything the function may write is outside the runtime and the stack's writable ranges now -/
-theorem out_all (h : WC R L K g sp st zp zc m0 M L1 b1 ℓ) {a k : Nat}
+theorem out_all (h : WC R H L K g sp st zp zc m0 M L1 b1 ℓ) {a k : Nat}
     (ho : Outside a k (R.rt ++ WN sp K ++ ZS zp zc st m0)) :
     Outside a k R.rt ∧ Outside a k (WN sp K) ∧ Outside a k (stkWs M st) := by
   rw [outside_append, outside_append] at ho
@@ -98,18 +102,18 @@ theorem out_all (h : WC R L K g sp st zp zc m0 M L1 b1 ℓ) {a k : Nat}
 
 /-- `WC` through a step that writes `ws` and keeps the stack header (the function's own stores, a callee that
 does not change the stack object) -/
-theorem WC.frame (h : WC R L K g sp st zp zc m0 M L1 b1 ℓ) {M' : Memory} {ws : List (Nat × Nat)}
+theorem WC.frame (h : WC R H L K g sp st zp zc m0 M L1 b1 ℓ) {M' : Memory} {ws : List (Nat × Nat)}
     (hF : MemFrame M M' ws) (hrg : M'.regions = M.regions)
     (hsub : ∀ a k, Outside a k (R.rt ++ WN sp K ++ ZS zp zc st m0) → Outside a k ws)
     (hL : ∀ a k, InRanges a k L → Outside a k (ZS zp zc st m0) → Outside a k ws)
     (hhd : Outside st 24 ws) (hws : ∀ r ∈ ws, InRanges r.1 (r.2 - r.1) L1 ∨ Outside r.1 (r.2 - r.1) R.rt) :
-    WC R L K g sp st zp zc m0 M' L1 b1 ℓ := by
+    WC R H L K g sp st zp zc m0 M' L1 b1 ℓ := by
   have e0 : stW M' st = stW M st := hF.readLE _ _ (hhd.of_sub (by omega) (by omega))
   have e1 : stLen M' st = stLen M st := hF.readLE _ _ (hhd.of_sub (by omega) (by omega))
   have e2 : stCap M' st = stCap M st := hF.readLE _ _ (hhd.of_sub (by omega) (by omega))
   refine ⟨h.fr.trans hF fun a k ho => ⟨ho, hsub a k ho⟩,
     ⟨fun a k hin ho => by rw [hF.readLE a k (hL a k hin ho), h.lf.readLE a k hin ho]⟩, hrg.trans h.rg, h.le,
-    Expmc.inv_frame hF hws h.inv, stkOK_hdr h.sok hF e0 e1 e2 (LiveExt.refl R L1), by rw [e1]; exact h.len, h.lo, h.lc0,
+    by rw [stkR_congr e2]; exact Expmc.inv_frame hF hws h.inv, stkOK_hdr h.sok hF e0 e1 e2 (LiveExt.refl R L1), by rw [e1]; exact h.len, h.lo, h.lc0,
     ?_, ?_⟩
   · rcases h.kf with ⟨a1, a2⟩ | ⟨a1, a2⟩
     · exact Or.inl ⟨e0.trans a1, e2.trans a2⟩
@@ -118,18 +122,18 @@ theorem WC.frame (h : WC R L K g sp st zp zc m0 M L1 b1 ℓ) {M' : Memory} {ws :
 
 /-- `WC` through a callee whose post has a new live set `L2`, budget `b2` and stack level `ℓ'` (array kept, or
 fresh relative to `L1` and then an element of `L2`) -/
-theorem WC.call (h : WC R L K g sp st zp zc m0 M L1 b1 ℓ) {M' : Memory} {ws ws' : List (Nat × Nat)}
+theorem WC.call (h : WC R H L K g sp st zp zc m0 M L1 b1 ℓ) {M' : Memory} {ws ws' : List (Nat × Nat)}
     {L2 : List (Nat × Nat)} {b2 ℓ' : Nat}
     (hF : MemFrame M M' (R.rt ++ ws)) (hLF : LiveFrame M M' L1 ws') (hrg : M'.regions = M.regions)
     (hsub : ∀ a k, Outside a k R.rt → Outside a k (WN sp K) → Outside a k (stkWs M st) →
       Outside a k (ZS zp zc st m0) → Outside a k ws)
     (hL : ∀ a k, InRanges a k L → Outside a k (ZS zp zc st m0) → Outside a k ws')
-    (hx : LiveExt R L1 L2) (hinv : R.inv b2 L2 g (view R.rt L2 M')) (hok : StkOK M' R L2 st)
+    (hx : LiveExt R L1 L2) (hinv : R.inv (b2 + stkR H M' st) L2 g (view R.rt L2 M')) (hok : StkOK M' R L2 st)
     (hlen : stLen M' st = ℓ') (hle : ℓ ≤ ℓ')
     (harr : (stW M' st = stW M st ∧ stCap M' st = stCap M st) ∨
       (InRanges (stW M' st) (8 * stCap M' st) R.rt ∧ ApartAll (stW M' st) (8 * stCap M' st) L1))
     (hmem : ArrIn L2 st M M') :
-    WC R L K g sp st zp zc m0 M' L2 b2 ℓ' := by
+    WC R H L K g sp st zp zc m0 M' L2 b2 ℓ' := by
   have hLL : ∀ r ∈ L, r ∈ L1 := fun r hr => h.le.mem_old hr
   refine ⟨h.fr.trans hF fun a k ho => ⟨ho, ?_⟩, ⟨fun a k hin ho => ?_⟩, hrg.trans h.rg, h.le.trans hx, hinv, hok,
     hlen, by have := h.lo; omega, h.lc0, ?_, h.ain.trans hmem hx⟩
@@ -145,7 +149,7 @@ theorem WC.call (h : WC R L K g sp st zp zc m0 M L1 b1 ℓ) {M' : Memory} {ws ws
     · exact Or.inr ⟨a1, fun r hr => a2 r (hLL r hr)⟩
 
 /-- a scratch nat of a callee (relative to the call memory `M`) is one relative to the entry -/
-theorem Scr.rebase (h : WC R L K g sp st zp zc m0 M L1 b1 ℓ) {L2 : List (Nat × Nat)} {M' : Memory} {t k : Nat}
+theorem Scr.rebase (h : WC R H L K g sp st zp zc m0 M L1 b1 ℓ) {L2 : List (Nat × Nat)} {M' : Memory} {t k : Nat}
     (hs : Scr R L1 L2 M M' st t k) : Scr R L L2 m0 M' st t k := by
   obtain ⟨s1, s2, s3, s4, s5⟩ := hs
   refine ⟨s1, s2, s3, s4, ?_⟩
@@ -160,7 +164,7 @@ theorem Scr.rebase (h : WC R L K g sp st zp zc m0 M L1 b1 ℓ) {L2 : List (Nat �
 end
 
 section
-variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc yp yl lm : Nat} {s : State}
+variable {R : RtInv} {H : Nat} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc yp yl lm : Nat} {s : State}
 
 theorem EPre.win_rt (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) : Outside (sp - K) (K + 848) R.rt := by
   have hK := hP.1.2.2.2.2.2.2.2.2.1
@@ -205,12 +209,12 @@ theorem EPre.g_out (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) :
 end
 
 section
-variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc yp yl lm : Nat} {s : State}
+variable {R : RtInv} {H : Nat} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc yp yl lm : Nat} {s : State}
     {M : Memory} {L1 : List (Nat × Nat)} {b1 ℓ : Nat}
 
 /-- the callee environment at `SP = sp` -/
 theorem WC.cenv (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s)
-    (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ) : CallW.CEnv R L1 g sp K 88 M := by
+    (h : WC R H L K g sp st zp zc s.mem M L1 b1 ℓ) : CallW.CEnv R L1 g sp K 88 M := by
   have hgM : M.readLE (g + 16) 8 = s.mem.readLE (g + 16) 8 := MemFrame.bytewise h.fr hP.g_out
   have hws := hP.ws_acc
   have hout := hP.win_rt
@@ -238,11 +242,11 @@ theorem held_bytesW {rt L ws1 ws2 : List (Nat × Nat)} {m m' : Memory} {a n : Na
   exact BitVec.eq_of_toNat_eq this
 
 section
-variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc yp yl lm : Nat} {s : State}
+variable {R : RtInv} {H : Nat} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc yp yl lm : Nat} {s : State}
     {M : Memory} {L1 : List (Nat × Nat)} {b1 ℓ : Nat}
 
 /-- byte-wise read through `WC` -/
-theorem WC.readB (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ) {a k : Nat} (hh : InRanges a k L ∨ Outside a k R.rt)
+theorem WC.readB (h : WC R H L K g sp st zp zc s.mem M L1 b1 ℓ) {a k : Nat} (hh : InRanges a k L ∨ Outside a k R.rt)
     (hb : ∀ i, i < k → Outside (a + i) 1 (WN sp K) ∧ Outside (a + i) 1 (ZS zp zc st s.mem)) :
     M.readLE a k = s.mem.readLE a k :=
   held_bytesW hh h.fr h.lf hb
@@ -262,7 +266,7 @@ theorem oe_bytes (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {a k : Na
   · have := hza h0; unfold Apart at this; omega
 
 /-- the stack's array apart from a window range (`Outside` the runtime) whenever its free part is not empty -/
-theorem free_apart' (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ) {a k : Nat} (hrt : Outside a k R.rt)
+theorem free_apart' (h : WC R H L K g sp st zp zc s.mem M L1 b1 ℓ) {a k : Nat} (hrt : Outside a k R.rt)
     (hf : 0 < stCap s.mem st → Apart a k (stW s.mem st) (8 * stCap s.mem st)) :
     stLen M st < stCap M st → Apart a k (free M st).1 (free M st).2 := by
   intro hlt
@@ -277,7 +281,7 @@ theorem free_apart' (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ) {a k : Nat} (
     unfold Apart at this ⊢; omega
 
 /-- the stack object as a callee at `SP = sp` needs it -/
-theorem WC.stkIn (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ)
+theorem WC.stkIn (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R H L K g sp st zp zc s.mem M L1 b1 ℓ)
     {S' : State} (hsp : S'.sp.toNat = sp) (h28 : (S'.regs 28).toNat = g) (hm : S'.mem = M) {stk above : Nat}
     (hstk : stk ≤ K) (habove : above ≤ 88) : EvenHyp.StkIn R L1 S' stk above st := by
   have hout := hP.win_rt
@@ -303,7 +307,7 @@ theorem WC.stkIn (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R
 
 set_option maxRecDepth 20000 in
 /-- the globals at `M`, outside any window `w` inside `[sp - K, sp + 848)` and the header -/
-theorem WC.globals (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ)
+theorem WC.globals (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R H L K g sp st zp zc s.mem M L1 b1 ℓ)
     {w : List (Nat × Nat)} (hw : ∀ a n, Outside a n [(sp - K, sp + 848), (st, st + 24)] → Outside a n w) :
     RunIface.Globals R M w := by
   have hK := hP.1.2.2.2.2.2.2.2.2.1
@@ -331,12 +335,12 @@ theorem WC.globals (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC
 end
 
 section
-variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc yp yl lm : Nat} {s : State}
+variable {R : RtInv} {H : Nat} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc yp yl lm : Nat} {s : State}
     {M : Memory} {L1 : List (Nat × Nat)} {b1 ℓ : Nat}
 
 set_option maxRecDepth 20000 in
 /-- the window is outside the runtime ranges and the stack's writable ranges (non-empty stack) -/
-theorem WC.win_out (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ)
+theorem WC.win_out (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R H L K g sp st zp zc s.mem M L1 b1 ℓ)
     (hl : 0 < ℓ) : ∀ a k, sp - K ≤ a → a + k ≤ sp + 848 → Outside a k (R.rt ++ stkWs M st) := by
   have hout := hP.win_rt
   have hstw := hP.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1

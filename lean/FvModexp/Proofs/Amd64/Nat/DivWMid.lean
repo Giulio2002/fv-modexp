@@ -34,6 +34,7 @@ theorem mid_of_reuse {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl 
     hx48, hxh, hxn, hxw, hinv, _, hmv, -⟩ := hpre
   obtain ⟨hzal, hzh, hzacc, hz48⟩ := hzl (by omega)
   obtain ⟨hzg, hzf, hzx⟩ := hzw (by omega)
+  replace hzw' := hzw' (by omega)
   simp only [win, outside_cons, outside_nil, and_true] at hzw' hxw
   have htw' := htw
   unfold Apart at hga htw'

@@ -74,7 +74,7 @@ theorem setZero (impl : List Amd64.Segment) (R : RtInv)
   have hpre' := hpre
   obtain ⟨⟨-, -, -, -, hout, hga, hgr, hLs, -, ⟨-, htr, htw⟩⟩, -, -, -, hz40, hzl, hzw', -, -, -, -, -, hxw, hinv, -,
     hmv', hz0⟩ := hpre'
-  simp only [win, outside_cons, outside_nil, and_true] at hzw' hxw
+  simp only [win, outside_cons, outside_nil, and_true] at hxw
   have hmv0 : ∀ d src, R.ok (cA "runtime.memmove") [d, src, 0] := fun d src => hmv' d src 0 (Nat.zero_le _)
   simp only [LiveSep, win] at hLs
   unfold Apart at hga htw
@@ -85,7 +85,13 @@ theorem setZero (impl : List Amd64.Segment) (R : RtInv)
     case hW => simp only [win]; janus_frame
     all_goals try janus64_simp
     all_goals first | omega | skip
-  obtain ⟨hza, hz48, hzh⟩ := (hz0 rfl rfl).resolve_left hzx
+  obtain ⟨hza, hz48, hzh, hzo⟩ := (hz0 rfl rfl).resolve_left hzx
+  replace hzw' : Outside zp.toNat (8 * zc.toNat) (win s 4232 64) := by
+    by_cases hc : zc.toNat = 0
+    · rw [hc, Nat.mul_zero]; exact hzo
+    · exact hzw' (by omega)
+  clear hzo
+  simp only [win, outside_cons, outside_nil, and_true] at hzw'
   have hzh' : InRanges zp.toNat 0 L ∨ Outside zp.toNat 0 R.rt := hzh
   have hzx' : (zp = xp) = False := by simp only [eq_iff_iff, iff_false]; exact hzx
   have hgok : s.mem.readLE ((s.regs 14).toNat + 16) 8 + 4096 < (s.regs 4).toNat - 136 := by omega

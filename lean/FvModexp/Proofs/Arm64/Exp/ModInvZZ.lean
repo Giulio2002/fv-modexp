@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.ModInvRt
 
+set_option autoImplicit false
+
 /-!
 # `nat.modularInverseModPowerOfTwo` (arm64): `zz := nat(nil).make(2·numWords)` (nat.go:1322, nat.go:68) (agent infra)
 

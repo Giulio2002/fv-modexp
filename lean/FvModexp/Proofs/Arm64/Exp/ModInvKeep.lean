@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.ModInvRnd
 
+set_option autoImplicit false
+
 /-!
 # `nat.modularInverseModPowerOfTwo` (arm64): the runtime facts survive a callee that writes one owned array (agent infra)
 
@@ -65,9 +67,9 @@ theorem keep_wsL {L : List (Nat × Nat)} {sp kc stk above sp' t tc zp zc w0 l0 c
 
 set_option maxRecDepth 20000 in
 /-- the runtime facts survive a callee that writes the owned array `t` -/
-theorem keep_rt {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
+theorem keep_rt {R : RtInv} {kc : Nat} {H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
-    (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M M' : Memory} {L1 L2 : List (Nat × Nat)}
+    (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) {M M' : Memory} {L1 L2 : List (Nat × Nat)}
     {b1 b2 : Nat} (hrt : RtM R kc L s zp zc st M L1 b1) {S' : State} (hS' : S'.sp.toNat = s.sp.toNat - 240)
     {stk above : Nat} (hkc : 4608 ≤ kc) (hstk : stk ≤ kc) (habove : above ≤ 88) {t tc : Nat}
     (ht : Own R kc L L1 s zp zc st xp xl M t tc) (hreg : M'.regions = M.regions)

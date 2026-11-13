@@ -1,4 +1,5 @@
-import FvModexp.Proofs.Arm64.Exp.P2Wit
+import FvModexp.Proofs.Arm64.Exp.P2Nf
+import FvModexp.Proofs.Arm64.Exp.P2W4E
 
 set_option autoImplicit false
 

@@ -70,9 +70,9 @@ theorem trB {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns :
   have hmc : makeCost (truncNeed l lm) ≤ P2Pre.tC lm :=
     makeCost_mono (Nat.le_trans (Nat.min_le_right _ _) (by simp only [P2Pre.W]; omega)) (by omega)
   have hst48 := hB.wc.sok.2.2.2.1
-  refine LibCalls.truncCall hap hns htr (b := b1) (L := L1) (ra_w2 hap hnf idx hidx) (by rw [hpc, trunc_a])
+  refine LibCalls.truncCall hap hns htr (b := b1 + stkR (HW (stLen s.mem st) lm) M st) (L := L1) (ra_w2 hap hnf idx hidx) (by rw [hpc, trunc_a])
     h30 h0 h1 h2 h3 h4 h5 h6 (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)
-    ⟨hce, hsv, xlc, dW, xR, hl, by omega, Or.inl rfl, by omega, hinv⟩ (Or.inl (by rw [hm]; exact xN)) (Or.inl rfl)
+    ⟨hce, hsv, xlc, dW, xR, hl, by omega, Or.inl rfl, by omega, by rw [hm] at hinv ⊢; exact hinv⟩ (Or.inl (by rw [hm]; exact xN)) (Or.inl rfl)
     fun s' hpc' hsp' h28' h29' h18' hrg hpost => ?_
   obtain ⟨p', l', c', e0, e1, e2, L2, b2, ⟨hv', hn', hlc', -, -, hre, -⟩, -, ⟨hLE, hbud', hinv'⟩, hF', hLF'⟩ :=
     hpost
@@ -101,7 +101,8 @@ theorem trB {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns :
       stkWs M st) := hF'.mono fun a k ho => by rw [outside_append] at ho; exact ho.1
   have hLF2 : LiveFrame M s'.mem L1 ([(p', p' + 8 * c')] ++ stkWs M st) :=
     Expmc.liveFrame_widen hLF' fun a k ho => by rw [outside_append] at ho; exact ho.1
-  obtain ⟨hB', hslot, hkeep⟩ := BF.call hP hB hd hc hkT haT hF2 hLF2 hrg hLE hinv' hsb
+  obtain ⟨b3, hinv3, hbud3⟩ := P2Q.effL (r' := stkR (HW (stLen s.mem st) lm) s'.mem st) hinv' hbud' (by omega) (stkR_congr ee2)
+  obtain ⟨hB', hslot, hkeep⟩ := BF.call hP hB hd hc hkT haT hF2 hLF2 hrg hLE hinv3 hsb
   have hval : natVal s'.mem p' l' = X' % 2 ^ lm := by rw [hv', xv]
   have hlW : l' ≤ W lm := by
     refine nlen_bd hn' (by
@@ -110,7 +111,7 @@ theorem trB {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns :
         (Nat.pow_le_pow_right (by decide) (by simp only [W]; omega)))
   have hodd : X' % 2 ^ lm % 2 = 1 := by
     rw [Nat.mod_mod_of_dvd _ (Nat.pow_dvd_pow_iff_le_right'.2 (by omega : 1 ≤ lm) : 2 ^ 1 ∣ 2 ^ lm)]; exact xo
-  exact KC s' L2 b2 l' hpc' hsp' h28' h29' h18' e0 e1 e2 hB' hslot (BC.call hd hF'.accessible hLE hsb.1)
+  exact KC s' L2 b3 l' hpc' hsp' h28' h29' h18' e0 e1 e2 hB' hslot (BC.call hd hF'.accessible hLE hsb.1)
     ⟨hlc', hval, hn', hodd⟩ hlW hkeep (by omega)
 
 end

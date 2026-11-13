@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.ModInvPostS
 
+set_option autoImplicit false
+
 /-!
 # `nat.modularInverseModPowerOfTwo` (arm64): loop head `J2` → first call of a round (agent infra)
 
@@ -20,12 +22,12 @@ open FvModexp.Arm64.EvenHyp
     (s.sp.toNat - 240 + 224) 8 p
 
 section
-variable {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
+variable {R : RtInv} {kc : Nat} {H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
 
 set_option maxRecDepth 20000 in
 /-- `z`'s spills: the round facts survive, `z`'s slots hold it, `z`'s words unchanged -/
-theorem store_zs (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory}
+theorem store_zs (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory}
     {L1 : List (Nat × Nat)} {b1 p l c q ql qc : Nat} (hmid : Mid R kc L s zp zc st xp xl xc n M L1 b1 p l c q ql qc)
     (hkc : 4608 ≤ kc) :
     Mid R kc L s zp zc st xp xl xc n (memZS s M p l c) L1 b1 p l c q ql qc ∧ ZS s (memZS s M p l c) p l c ∧
@@ -64,7 +66,7 @@ theorem store_zs (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M : M
 
 set_option maxRecDepth 20000 in
 /-- the loop body's store of `i` (`SP - 80`) -/
-theorem store_i (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory}
+theorem store_i (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory}
     {L1 : List (Nat × Nat)} {b1 p l c q ql qc : Nat} (hmid : Mid R kc L s zp zc st xp xl xc n M L1 b1 p l c q ql qc)
     (hzs : ZS s M p l c) (hkc : 4608 ≤ kc) {i : Nat} (hi : i < 2 ^ 64) :
     Mid R kc L s zp zc st xp xl xc n (M.writeLE (s.sp.toNat - 240 + 160) 8 i) L1 b1 p l c q ql qc ∧
@@ -83,15 +85,26 @@ theorem store_i (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M : Me
   rw [show s.sp.toNat - 80 = s.sp.toNat - 240 + 160 by omega, Memory.readLE_writeLE_self,
     show (256 : Nat) ^ 8 = 2 ^ 64 from rfl, Nat.mod_eq_of_lt hi]
 
-/-- the round budget fits: at most `rounds n` rounds -/
-theorem bud_j {j : Nat} (hc : cost sqrC mulC n ≤ b) (hjn : 2 ^ (j - 1) < NW n) :
-    spent sqrC mulC n j + roundCost sqrC mulC n ≤ b := by
-  have hj : j - 1 < NW n := Nat.lt_trans (Nat.lt_two_pow_self) hjn
+/-- a loop round's budget fits (`i = 2^j < numWords`: round `j ≤ log2 numWords`) -/
+theorem bud_jL {j : Nat} (hc : cost sqrC mulC xl n ≤ b) (hj1 : 1 ≤ j) (hr : 2 ^ j < NW n) :
+    spent sqrC mulC xl n j + roundCost sqrC mulC xl n j (2 ^ j) ≤ b := by
+  have hNW0 : NW n ≠ 0 := by have := Nat.two_pow_pos j; omega
+  have hjl : j ≤ Nat.log2 (NW n) := (Nat.le_log2 hNW0).2 (Nat.le_of_lt hr)
+  have hm := sumR_mono sqrC mulC xl n hjl
+  obtain ⟨k, rfl⟩ : ∃ k, j = k + 1 := ⟨j - 1, by omega⟩
+  rw [sumR_succ] at hm
+  simp only [spent, cost, Nat.add_sub_cancel] at hc ⊢
+  omega
+
+/-- the final round's budget fits (`2^(j-1) < numWords`) -/
+theorem bud_jF {j : Nat} (hc : cost sqrC mulC xl n ≤ b) (hjn : 2 ^ (j - 1) < NW n)
+    (hsm : ∀ a a', a ≤ a' → sqrC a ≤ sqrC a') :
+    spent sqrC mulC xl n j + roundCost sqrC mulC xl n j (NW n) ≤ b := by
   have hNW0 : NW n ≠ 0 := by have := Nat.two_pow_pos (j - 1); omega
   have hjl : j - 1 ≤ Nat.log2 (NW n) := (Nat.le_log2 hNW0).2 (Nat.le_of_lt hjn)
-  have hm : (j - 1) * roundCost sqrC mulC n + roundCost sqrC mulC n ≤ rounds n * roundCost sqrC mulC n := by
-    rw [← Nat.succ_mul]; exact Nat.mul_le_mul_right _ (by simp only [rounds]; omega)
-  simp only [spent, cost, rounds] at hc hm ⊢
+  have hm := sumR_mono sqrC mulC xl n hjl
+  have hs := hsm _ _ (zB_le hjn)
+  simp only [spent, cost, roundCost] at hc ⊢
   omega
 
 end
@@ -100,13 +113,13 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem segL0 {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
-    {stkS aboveS : Nat} {sqC : Nat → Nat → Nat} (hsq : SqrHypX impl R ns stkS aboveS sqC) {kc : Nat}
-    (hkc : 4608 ≤ kc) (hkS : stkS ≤ kc) (haS : aboveS ≤ 88) {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
+    {stkS aboveS : Nat} {H : Nat} {sqrC : Nat → Nat} (hsq : SqrHypQ impl R ns stkS aboveS sqrC) {kc : Nat}
+    (hkc : 4608 ≤ kc) (hkS : stkS ≤ kc) (haS : aboveS ≤ 88) {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
-    (hsc : ∀ x, sqC (stLen s.mem st) x = sqrC x) (hsm : ∀ a a', a ≤ a' → sqrC a ≤ sqrC a')
-    (j : Nat) (k1L : S1 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s 1797840 (ExL1 s n j) eL kL)
-    (k1F : S1 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s 1798112 (ExF n) (eF n) (kF n)) :
-    J2j impl R kc sqrC mulC b L zp zl zc st xp xl xc n s j := by
+    (hsm : ∀ a a', a ≤ a' → sqrC a ≤ sqrC a')
+    (j : Nat) (k1L : S1 impl R kc H sqrC mulC b L zp zl zc st xp xl xc n s 1797840 (ExL1 s n j) eL kL)
+    (k1F : S1 impl R kc H sqrC mulC b L zp zl zc st xp xl xc n s 1798112 (ExF n) (eF n) (kF n)) :
+    J2j impl R kc H sqrC mulC b L zp zl zc st xp xl xc n s j := by
   intro S p l c q ql qc L1 b1 hpre hn hpc hsp h28 h18 h0 h1 h2 h14 h11 h12 h13 h3 h4 h5 h6 h7 h8 h9 hfw hrt hb hz hzz
     hnc hl hlc hqlc hqc hj1 hjn hap' hcong
   have hK : 240 + kc ≤ s.sp.toNat := sp_K hpre
@@ -118,7 +131,20 @@ theorem segL0 {impl : List Segment} (hap : ImplApart Extracted.program impl) {R 
   simp only [K, A] at hb' ha hw
   have hwS : S.mem.accessible (s.sp.toNat - (240 + kc)) (240 + kc + 72) true = true := by
     rw [hmid.2.1.2.1.accessible]; exact hw
-  have hbud := bud_j hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1 hjn
+  have hcst := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1.2
+  -- (s45) the budget fact at the memories after the slot stores (never let the elaborator compare `stkR` atoms)
+  have ecZ : stCap (memZS s S.mem p l c) st = stCap S.mem st := by
+    simp only [memZS]
+    rw [cap_slot hpre _ (a := s.sp.toNat - 240 + 224) _ (by omega) (by omega),
+      cap_slot hpre _ (a := s.sp.toNat - 240 + 184) _ (by omega) (by omega),
+      cap_slot hpre _ (a := s.sp.toNat - 240 + 192) _ (by omega) (by omega)]
+  have ec4 : stCap ((memZS s S.mem p l c).writeLE (s.sp.toNat - 240 + 160) 8 (2 ^ j)) st = stCap S.mem st :=
+    (cap_slot hpre _ (a := s.sp.toNat - 240 + 160) _ (by omega) (by omega)).trans ecZ
+  have hbZ : Box (b - spent sqrC mulC xl n j + stkR H (memZS s S.mem p l c) st ≤ b1) := ⟨by rw [stkR_congr ecZ]; exact hb⟩
+  have hb4 : Box (b - spent sqrC mulC xl n j +
+      stkR H ((memZS s S.mem p l c).writeLE (s.sp.toNat - 240 + 160) 8 (2 ^ j)) st ≤ b1) :=
+    ⟨by rw [stkR_congr ec4]; exact hb⟩
+  clear hb ecZ ec4
   have hn2 : n ≤ 2 ^ 15 := hpre.2.2.2.2.1
   obtain ⟨m3, hzs, hpw, -⟩ := store_zs hpre hmid hkc
   have hn63 : (BitVec.ofNat 64 (n + 63)).toNat < 2 ^ 63 := by rw [BitVec.toNat_ofNat]; omega
@@ -138,7 +164,7 @@ theorem segL0 {impl : List Segment} (hap : ImplApart Extracted.program impl) {R 
   have hpj : 2 ^ j < 2 ^ 64 := by
     have h12 : j - 1 < 12 := (Nat.pow_lt_pow_iff_right (by omega)).1 (by omega : 2 ^ (j - 1) < 2 ^ 12)
     exact Nat.pow_lt_pow_right (by omega) (by omega)
-  have hpre' : Box (Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) := ⟨hpre⟩
+  have hpre' : Box (Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) := ⟨hpre⟩
   have hmid' : Box (Mid R kc L s zp zc st xp xl xc n S.mem L1 b1 p l c q ql qc) := ⟨hmid⟩
   have hm3' := Box.mk m3
   clear hpre hmid m3
@@ -146,13 +172,15 @@ theorem segL0 {impl : List Segment} (hap : ImplApart Extracted.program impl) {R 
   by_cases hr : 2 ^ j < NW n
   · obtain ⟨m4, hzs4, hi4, hpw4, -⟩ := store_i hpre'.h hm3'.h hzs hkc hpj
     janus_run [h9a, h9b, hnw, hnw', hss, hr] until [1815584]
-    refine callSqr hap hns hnf hsq hkc hkS haS hsc hsm 184 (by decide) rfl k1L hpre'.h hn m4 hj1 hjn hbud hcong
-      (fun M' h => ⟨slot_keep h hsp0 (by decide) (by decide) hi4, hr, rfl⟩) hzs4 (hpw4.trans hpw) hl hb _ ?_ ?_ ?_ ?_ ?_ ?_
+    refine callSqr hap hns hnf hsq hkc hkS haS hsm 184 (by decide) rfl k1L hpre'.h hn m4 hj1 hjn
+      (bud_jL hcst hj1 hr) hcong
+      (fun M' h => ⟨slot_keep h hsp0 (by decide) (by decide) hi4, hr, rfl⟩) hzs4 (hpw4.trans hpw) hl hb4.h _ ?_ ?_ ?_ ?_ ?_ ?_
       ?_ ?_ ?_ ?_ ?_ ?_ ?_
     all_goals try janus_simp
   · janus_run [h9a, h9b, hnw, hnw', hss, hr] until [1815584]
-    refine callSqr hap hns hnf hsq hkc hkS haS hsc hsm 252 (by decide) rfl k1F hpre'.h hn hm3'.h hj1 hjn hbud hcong
-      (fun _ _ => (by simp only [ExF]; omega)) hzs hpw hl hb _ ?_ ?_ ?_ ?_ ?_ ?_
+    refine callSqr hap hns hnf hsq hkc hkS haS hsm 252 (by decide) rfl k1F hpre'.h hn hm3'.h hj1 hjn
+      (bud_jF hcst hjn hsm) hcong
+      (fun _ _ => (by simp only [ExF]; omega)) hzs hpw hl hbZ.h _ ?_ ?_ ?_ ?_ ?_ ?_
       ?_ ?_ ?_ ?_ ?_ ?_ ?_
     all_goals try janus_simp
 

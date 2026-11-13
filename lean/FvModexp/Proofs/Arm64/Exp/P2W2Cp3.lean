@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.P2W2Cp2
 
+set_option autoImplicit false
+
 /-!
 # `expNNPowerOfTwoWindowSize2` (arm64): the copy point `CP = 0x1b67fc` (agent infra)
 
@@ -19,7 +21,7 @@ abbrev CP : Nat := 1796092
 /-- the frame facts from the table to the copy point -/
 structure CPF (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl lm ret : Nat) (s : State)
     (M : Memory) (L1 : List (Nat × Nat)) (b1 zzp bp : Nat) : Prop where
-  wc : WC R L K g sp st zp zc s.mem M L1 b1 (lvlL (stLen s.mem st) lm)
+  wc : WC R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem M L1 b1 (lvlL (stLen s.mem st) lm)
   esl : ESl M sp st (s.regs 29) ret zp zc xp xl xc yp yl lm (stLen s.mem st)
   tz : TZ R L s.mem M L1 st sp zzp bp lm (natVal s.mem xp xl)
   z280 : M.readLE (sp + 280) 8 = zzp
@@ -70,7 +72,7 @@ set_option maxRecDepth 20000 in
 /-- `CPF` through a live allocation -/
 theorem CPF.alloc (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s)
     (h : CPF R L K g sp st zp zc xp xl xc yp yl lm ret s M L1 b1 zzp bp) {m : Memory} {p r n : Nat}
-    (hA : AllocR R L K g sp st zp zc s.mem M L1 b1 (lvlL (stLen s.mem st) lm) m p r n) :
+    (hA : AllocR R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem M L1 b1 (lvlL (stLen s.mem st) lm) m p r n) :
     CPF R L K g sp st zp zc xp xl xc yp yl lm ret s m (L1 ++ [(p, p + r)]) (b1 - r) zzp bp := by
   have hK := hP.1.2.2.2.2.2.2.2.1
   have hK1 := hP.1.2.2.2.2.2.2.2.2.1
@@ -113,7 +115,7 @@ set_option maxHeartbeats 64000000 in
 /-- **from the copy point to the loop test** -/
 theorem cpC {impl : List Segment} (hmv : MemmoveLive (LibW.program.link impl) P2Pre.mvE 4096 R)
     (ret0 : BitVec 64) (Q : State → Prop) (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s)
-    {sqC : Nat → Nat → Nat} {mlC : Nat → Nat → Nat → Nat} {kk cst FV : Nat} {r29 : BitVec 64}
+    {sqC : Nat → Nat} {mlC : Nat → Nat → Nat} {kk cst FV : Nat} {r29 : BitVec 64}
     (KL : KL impl ret0 Q R b L K g sp st zp zc xp xl xc yp yl lm ret s r29 sqC mlC zzp bp kk cst FV)
     (hc : CPF R L K g sp st zp zc xp xl xc yp yl lm ret s M L1 b1 zzp bp) {dp dc n d i yi : Nat}
     (hub : UB R L K g sp st zp zc M L1 zzp bp lm dp dc) (hnd : n ≤ dc) (hn1 : 0 < n) (hd : d < 4) (hZo : Exp.p2Pow lm (natVal s.mem xp xl) d % 2 = 1)

@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.P2W2Cp4
 
+set_option autoImplicit false
+
 /-!
 # `expNNPowerOfTwoWindowSize2` (arm64): from the table to the loop test (agent infra)
 
@@ -33,7 +35,7 @@ theorem afterT {impl : List Segment} (hap : ImplApart Extracted.program impl)
     (hmv : MemmoveLive (LibW.program.link impl) P2Pre.mvE 4096 R)
     (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {M : Memory} {L3 : List (Nat × Nat)} {b3 zzp bp : Nat}
     (hAT : AT R L K g sp st zp zc xp xl xc yp yl lm (s.regs 30).toNat s M L3 b3 zzp bp)
-    {sqC : Nat → Nat → Nat} {mlC : Nat → Nat → Nat → Nat} {c0 cst : Nat}
+    {sqC : Nat → Nat} {mlC : Nat → Nat → Nat} {c0 cst : Nat}
     (hb3 : b - c0 ≤ b3) (hcst : c0 + allocCost 8 ≤ cst) (hcb : cst ≤ b)
     (hcst2 : c0 + 2 * P2Pre.tC lm + 32 * min yl ((lm - 2) / 64 + 1) * bc sqC mlC (lvlL (stLen s.mem st) lm) lm ≤ cst)
     (hr4 : (s.regs 30).toNat % 4 = 0) (hr48 : (s.regs 30).toNat < 2 ^ 48)

@@ -26,7 +26,7 @@ variable {impl : List Segment} {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K 
 set_option maxRecDepth 20000 in
 /-- the facts after the copy -/
 theorem xm (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {M : Memory} {L1 : List (Nat × Nat)} {b1 ℓ : Nat}
-    (hw : WC R L K g sp st zp zc s.mem M L1 b1 ℓ) {ret : Nat}
+    (hw : WC R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem M L1 b1 ℓ) {ret : Nat}
     (hsl : ESl M sp st (s.regs 29) ret zp zc xp xl xc yp yl lm (stLen s.mem st)) {zzp bp X : Nat}
     (htz : TZ R L s.mem M L1 st sp zzp bp lm X) {dp dc n Z : Nat}
     (hub : UB R L K g sp st zp zc M L1 zzp bp lm dp dc) (hnd : n ≤ dc) (hn1 : 0 < n)
@@ -35,9 +35,10 @@ theorem xm (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {M : Memory} {L
     (hF1 : MemFrame M M1 [(sp + 144, sp + 152), (sp + 128, sp + 136), (sp + 288, sp + 296)])
     (hrg1 : M1.regions = M.regions)
     (hF2 : MemFrame M1 m (R.rt ++ [(sp - 4096, sp - 8), (sp + 8, sp + 32)] ++ [(dp, dp + 8 * n)]))
-    (hLF2 : LiveFrame M1 m L1 [(dp, dp + 8 * n)]) (hinv2 : R.inv b1 L1 g (view R.rt L1 m))
+    (hLF2 : LiveFrame M1 m L1 [(dp, dp + 8 * n)])
+    (hinv2 : R.inv (b1 + stkR (HW (stLen s.mem st) lm) M1 st) L1 g (view R.rt L1 m))
     (hcp : Mem.Copied M1 m dp zzp (8 * n)) (hrg2 : m.regions = M1.regions) :
-    WC R L K g sp st zp zc s.mem m L1 b1 ℓ ∧ ESl m sp st (s.regs 29) ret zp zc xp xl xc yp yl lm (stLen s.mem st) ∧
+    WC R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem m L1 b1 ℓ ∧ ESl m sp st (s.regs 29) ret zp zc xp xl xc yp yl lm (stLen s.mem st) ∧
       UB R L K g sp st zp zc m L1 zzp bp lm dp dc ∧ NV m dp n dc Z ∧
       (∀ a k, sp + 32 ≤ a → a + k ≤ sp + 560 → m.readLE a k = M1.readLE a k) := by
   have hK := hP.1.2.2.2.2.2.2.2.1
@@ -108,7 +109,7 @@ set_option maxHeartbeats 64000000 in
 /-- **from the exit's join to the post** -/
 theorem xJ (hap : ImplApart Extracted.program impl) (hmv : MemmoveLive (LibW.program.link impl) P2Pre.mvE 4096 R)
     (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {M : Memory} {L1 : List (Nat × Nat)} {b1 ℓ : Nat}
-    (hw : WC R L K g sp st zp zc s.mem M L1 b1 ℓ)
+    (hw : WC R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem M L1 b1 ℓ)
     (hsl : ESl M sp st (s.regs 29) (s.regs 30).toNat zp zc xp xl xc yp yl lm (stLen s.mem st))
     (hr4 : (s.regs 30).toNat % 4 = 0) (hr48 : (s.regs 30).toNat < 2 ^ 48) {zzp bp X : Nat}
     (htz : TZ R L s.mem M L1 st sp zzp bp lm X) {dp dc n Z cst : Nat}

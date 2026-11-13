@@ -1,6 +1,8 @@
 import FvModexp.Proofs.Arm64.Exp.P2PreSq
 import FvModexp.Proofs.Common.RotA64
 
+set_option autoImplicit false
+
 /-!
 # `buildPrecomputationWindowModPower2` (arm64): loop head (`i < len`) → `nat.sqr` (agent infra)
 -/
@@ -12,7 +14,7 @@ namespace FvModexp.Arm64.P2Pre
 open FvModexp.Arm64.EvenHyp
 
 section
-variable {impl : List Segment} {R : RtInv} {kc : Nat} {sqC : Nat → Nat → Nat} {mlC : Nat → Nat → Nat → Nat}
+variable {impl : List Segment} {R : RtInv} {kc : Nat} {sqC : Nat → Nat} {mlC : Nat → Nat → Nat}
     {b : Nat} {L : List (Nat × Nat)} {st pw pl ws lm x xl : Nat} {s : State}
 
 /-- the round locals stored at the loop body's start (`24 i` at `sp - 72`, `i` at `sp - 88`, `&powers[i]` at `sp - 16`,
@@ -73,8 +75,8 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem segH (hap : ImplApart Extracted.program impl) {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
-    {stkS aboveS : Nat} (hsq : SqrHypX impl R ns stkS aboveS sqC) (hkS : stkS ≤ kc) (haS : aboveS ≤ 88)
-    (hsm : ∀ ℓ a a', a ≤ a' → sqC ℓ a ≤ sqC ℓ a') (hkc : 4608 ≤ kc)
+    {stkS aboveS : Nat} (hsq : SqrHypQ impl R ns stkS aboveS sqC) (hkS : stkS ≤ kc) (haS : aboveS ≤ 88)
+    (hsm : ∀ a a', a ≤ a' → sqC a ≤ sqC a') (hkc : 4608 ≤ kc)
     (hpre : Pre R kc sqC mlC b L st pw pl ws lm x xl s) {i : Nat}
     (kA : JA impl R kc sqC mlC b L st pw pl lm x xl s i) (hip : i + 2 ≤ pl) :
     HeadJ impl R kc sqC mlC b L st pw pl lm x xl s i := by

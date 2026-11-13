@@ -53,7 +53,10 @@ theorem fromJ1N (impl : List Segment) (hap : ImplApart Extracted.program impl) (
   have hP' := hP
   obtain ⟨⟨hs1, hs28, hg1, hg2, hg3, hgo, hal, hK4, hKs, hsp2, hacc, hwrt, hLs, hd, hsv⟩, -, -, hro, hty, hslow,
     hn, hn128, -, hmc, hmO, hma, hm48, hmN, hyO, hya, hy48, hyN, hyl, hyc, hxO, hxa, hx48, -, hxl, hxp, hxc, hzp, hzlc,
-    hzc, -, -, -, -, -, -, -, -, -, -, hbud, -, -, hinv⟩ := hP'
+    hzc, -, -, -, -, -, -, -, -, -, -, hbud0, -, -, hinv⟩ := hP'
+  -- PATH MAX (expmc s44): keep only the max-free part of the budget in omega's context
+  have hbud : 24 + makeCost 1 ≤ b := Nat.le_trans (by omega) hbud0
+  clear hbud0
   have hs : s.sp.toNat = sp + 1312 := by rw [hs1, BitVec.toNat_ofNat]; omega
   have hg : (s.regs 28).toNat = g := by rw [hs28, BitVec.toNat_ofNat]; omega
   have hFw : MemFrame s.mem M (wN sp K) := hF.mono fun a k ho => by

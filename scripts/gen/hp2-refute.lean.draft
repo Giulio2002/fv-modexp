@@ -1,0 +1,15 @@
+-- divmc s41: Lean core of the hp2 refutation (compile: lean with the dev LEAN_PATH; 0.9 s). Not a package module.
+import FvModexp.Proofs.Common.MulCost
+set_option autoImplicit false
+open FvModexp
+theorem sq_lb {ℓ n : Nat} (h : 80 ≤ n) : 64 * ℓ ≤ sqrC ℓ n := by
+  have e := ksqrC_big (ℓ := ℓ) h
+  unfold sqrC; rw [if_pos (by omega), e]
+  unfold stackNatCost allocCost; omega
+theorem mul_lb {ℓ n : Nat} (h : 40 ≤ n) : 32 * ℓ ≤ mulC ℓ n n := by
+  have e := MC_kar (ℓ := ℓ) h
+  have e2 : mulC ℓ n n = MC ℓ n n := by unfold mulC; rw [Nat.max_self, Nat.min_self]
+  rw [e2]; unfold KC stackNatCost allocCost at e; omega
+theorem refute : 6 * allocCost (1024 * 128 + 1024) < 7 * (sqrC 4992 128 + mulC 4992 128 128) := by
+  have := sq_lb (ℓ := 4992) (n := 128) (by omega); have := mul_lb (ℓ := 4992) (n := 128) (by omega)
+  unfold allocCost; omega

@@ -93,7 +93,7 @@ set_option maxHeartbeats 8000000 in
 /-- **`ModInv.PreL`** of `m1.modularInverseModPowerOfTwo(stk, m2, n)` at the callee entry `S'` (`SP = sp`) -/
 theorem miPre (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) {M : Memory} {L1 : List (Nat × Nat)}
     {b1 ℓ : Nat} (hw : WC R L K g sp st zp zc s.mem M L1 b1 ℓ) {kc : Nat} (hK : 240 + kc ≤ K) (hkc : 4608 ≤ kc)
-    {sqC : Nat → Nat → Nat} {mlC : Nat → Nat → Nat → Nat}
+    {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat}
     {S' : State} (fsp : S'.sp = BitVec.ofNat 64 sp) (f28 : S'.regs 28 = BitVec.ofNat 64 g) (fm : S'.mem = M)
     {ra : Nat} (f30 : S'.regs 30 = BitVec.ofNat 64 ra) (hra : ra % 4 = 0 ∧ ra < 2 ^ 48)
     {p1 l1 c1 v1 q l2 c2 v2 n : Nat}
@@ -101,8 +101,8 @@ theorem miPre (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) {M 
     (hm2 : LN R L s.mem st M L1 q l2 c2 v2) (hl20 : 0 < l2) (hl2 : l2 ≤ 2 ^ 12) (hodd : v2 % 2 = 1)
     (hap : Apart q (8 * c2) p1 (8 * c1))
     (hn1 : 1 ≤ n) (hn2 : n ≤ 2 ^ 15) (hs16 : ℓ + 8 * ModInv.NW n + 72 ≤ 2 ^ 16)
-    (hb : ModInv.cost (sqC ℓ) (mlC ℓ) n ≤ b1) :
-    ModInv.PreL R kc sqC mlC ℓ b1 L1 p1 l1 c1 st q l2 c2 n S' := by
+    (hb : ModInv.cost sqrC mulC l2 n + stkRes (ℓ + ModInv.D n) ≤ b1) :
+    ModInv.PreL R kc sqrC mulC ℓ b1 L1 p1 l1 c1 st q l2 c2 n S' := by
   have hsN : S'.sp.toNat = sp := by rw [fsp, BitVec.toNat_ofNat]; have := hP.1.2.2.2.2.2.2.2.2.2.1; omega
   have hgN : (S'.regs 28).toNat = g := by rw [f28, BitVec.toNat_ofNat]; have := hP.1.2.2.1; omega
   have hsv := hP.1.2.2.2.2.2.2.2.2.2.2.2.2.2.2
@@ -131,7 +131,8 @@ theorem miPre (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) {M 
   have hlen : stLen S'.mem st = ℓ := by rw [fm]; exact hw.len
   subst fm
   refine ⟨⟨hce, hsv, ⟨hgl, hgo⟩, hn1, hn2, hm1.2.1, hp1, hc1, hwr, hl20, hm2.2.1, hm2.1.1, hl2, hrd, hm2.2.2.2,
-    by rw [hm2.2.2.1]; exact hodd, fun _ => hap.symm, hsi, by rw [hlen]; exact hs16, o1a, o2a, hb,
+    by rw [hm2.2.2.1]; exact hodd, fun _ => hap.symm, hsi, by rw [hlen]; exact hs16, o1a, o2a,
+    ⟨by omega, by have := stkR_le (ℓ + ModInv.D n) S'.mem st; omega⟩,
     by rw [hgN]; exact hw.inv, by rw [hr30]; exact hra.1, by rw [hr30]; exact hra.2, hwT,
     hone, x1, x2, x3, x4, x5, x6, ⟨hm2.2.1, hm2.1.1, hlv2.2.1, hlv2.2.2.2⟩, o1b, o2b⟩, hlen⟩
 

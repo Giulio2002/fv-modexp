@@ -1,6 +1,8 @@
-import FvModexp.Proofs.Amd64.Nat.BasicSqrClr
 import FvModexp.Proofs.Amd64.Nat.BasicSqrEnv
 import FvModexp.Proofs.Amd64.Nat.StackNatDefs
+import FvModexp.Proofs.Common.DivmcMem
+
+set_option autoImplicit false
 
 /-!
 # `basicSqr` (amd64): after `t := stk.nat(2n)` returned — the spills of `t`, up to `clear(t)` (natmul.go:121-122;
@@ -50,14 +52,8 @@ set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 /-- after `(*stack).nat` returned (state `S2`): the three result spills, up to `clear(t)` -/
 theorem pro3 (impl : List Amd64.Segment) (R : RtInv)
-    (hmc : MemclrNoHeapPointersLive64 (LibBasicSqr.program.link impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
-    (hLsh : ∀ b L, Summary0 (LibBasicSqr.program.link impl) (segAddr Extracted.program lshVUfn) (LshLPre R b L)
-      (LshLQ R b L))
-    (hVV : ∀ b L, Summary0 (LibBasicSqr.program.link impl) (segAddr Extracted.program addVVfn) (VVLPre R b L)
-      (VVLQ R b L))
-    (hMV' : ∀ b L, Summary0 (LibBasicSqr.program.link impl) (segAddr Extracted.program addMulVVWWfn)
-      (VVWWLPre R b L) (VVWWLQ R b L))
     (b : Nat) (L : List (Nat × Nat)) (st zp zl zc xp xl xc : BitVec 64) (s : State)
+    (hclr : ClrK impl R b L st zp zl zc xp xl xc s)
     (hpre : Pre R b L st.toNat zp.toNat zl.toNat zc.toNat xp.toNat xl.toNat s) (hbig : 12 ≤ xl.toNat)
     (hra : s.mem.readLE (s.regs 4).toNat 8 < 2 ^ 47) (hx15s : s.xmm 15 = 0#128) (hdfs : s.df = false)
     (P : State) (hP : AtNat R b L st.toNat zp.toNat zl.toNat zc.toNat xp.toNat xl.toNat xc.toNat s P)
@@ -153,7 +149,7 @@ theorem pro3 (impl : List Amd64.Segment) (R : RtInv)
   unfold Apart at hstt hstft
   have hfs8 := hl.fs
   simp only [stLen, stCap] at hlc
-  refine clr impl R hmc hLsh hVV hMV' b L st zp zl zc xp xl xc s _ L1 b1 _ _ hE _ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?r0 ?r3
+  refine hclr _ L1 b1 _ _ hE _ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?r0 ?r3
     ⟨?ra, (ks _ (by omega)).trans p1, ?tl, ?tc, ?tp, (ks _ (by omega)).trans p2, (ks _ (by omega)).trans p3,
       (ks _ (by omega)).trans p4, (ks _ (by omega)).trans p5, (ks _ (by omega)).trans p6, (ks _ (by omega)).trans p7,
       (ks _ (by omega)).trans p8, (ks _ (by omega)).trans p9, (ks _ (by omega)).trans p10,

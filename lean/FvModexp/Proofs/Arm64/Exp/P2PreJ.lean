@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.P2PrePw
 
+set_option autoImplicit false
+
 /-!
 # `buildPrecomputationWindowModPower2` (arm64): the main loop's join (agent infra)
 
@@ -20,7 +22,7 @@ abbrev pcH : Nat := 1791612
   M.readLE (s.sp.toNat - 88) 8 = i ∧ M.readLE (s.sp.toNat - 72) 8 = 24 * i ∧
     M.readLE (s.sp.toNat - 80) 8 = 24 * i + 24 ∧ M.readLE (s.sp.toNat - 16) 8 = pw + 24 * i
 
-def HeadJ (impl : List Segment) (R : RtInv) (kc : Nat) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat)
+def HeadJ (impl : List Segment) (R : RtInv) (kc : Nat) (sqC : Nat → Nat) (mlC : Nat → Nat → Nat)
     (b : Nat) (L : List (Nat × Nat)) (st pw pl lm x xl : Nat) (s : State) (i : Nat) : Prop :=
   ∀ (S : State) (bp : Nat) (L1 : List (Nat × Nat)) (b1 : Nat),
     S.pc = BitVec.ofNat 64 pcH → S.sp = BitVec.ofNat 64 (s.sp.toNat - 208) → S.regs 28 = s.regs 28 →
@@ -44,7 +46,7 @@ structure RS (R : RtInv) (kc : Nat) (L : List (Nat × Nat)) (st pw pl lm : Nat) 
 
 /-- the generic join inside round `i`, after a call whose result `(bp + 8 k w, l, 2 w)` (`k = kf i`) belongs to
 `powers[k]`: value `v i`, `l ≤ lb`, budget spent `c0 + (i/2 - 1) rc + cst` -/
-def JX (impl : List Segment) (R : RtInv) (kc : Nat) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat)
+def JX (impl : List Segment) (R : RtInv) (kc : Nat) (sqC : Nat → Nat) (mlC : Nat → Nat → Nat)
     (b : Nat) (L : List (Nat × Nat)) (st pw pl lm x xl : Nat) (s : State) (pc : Nat) (E : Nat → Memory → Prop)
     (kf v : Nat → Nat) (lb cst : Nat) (i : Nat) : Prop :=
   ∀ (S : State) (bp : Nat) (L1 : List (Nat × Nat)) (b1 l : Nat),
@@ -59,7 +61,7 @@ def JX (impl : List Segment) (R : RtInv) (kc : Nat) (sqC : Nat → Nat → Nat) 
     Goal impl R kc sqC mlC b L st pw pl lm x xl s S
 
 section
-variable (impl : List Segment) (R : RtInv) (kc : Nat) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat)
+variable (impl : List Segment) (R : RtInv) (kc : Nat) (sqC : Nat → Nat) (mlC : Nat → Nat → Nat)
     (b : Nat) (L : List (Nat × Nat)) (st pw pl lm x xl : Nat) (s : State)
 
 /-- the value of `powers[j]` -/
@@ -67,16 +69,16 @@ abbrev PV (j : Nat) : Nat := Exp.p2Pow lm (natVal s.mem x xl) j
 
 /-- after `sqr` (`0x1b56f4`) -/
 abbrev JA : Nat → Prop := JX impl R kc sqC mlC b L st pw pl lm x xl s 1791732 (fun _ _ => True) id
-  (fun i => PV lm x xl s (i / 2) * PV lm x xl s (i / 2)) (2 * W lm) (sqC (lvl1 (stLen s.mem st) pl lm) (W lm))
+  (fun i => PV lm x xl s (i / 2) * PV lm x xl s (i / 2)) (2 * W lm) (sqC (W lm))
 
 /-- after the first `trunc` (`0x1b5748`) -/
 abbrev JB : Nat → Prop := JX impl R kc sqC mlC b L st pw pl lm x xl s 1791816 (fun i M => Lo2 s pw i M) id
-  (fun i => PV lm x xl s i) (W lm) (sqC (lvl1 (stLen s.mem st) pl lm) (W lm) + tC lm)
+  (fun i => PV lm x xl s i) (W lm) (sqC (W lm) + tC lm)
 
 /-- after `mul` (`0x1b57cc`) -/
 abbrev JC : Nat → Prop := JX impl R kc sqC mlC b L st pw pl lm x xl s 1791948 (fun i M => Lo2 s pw i M) (· + 1)
   (fun i => PV lm x xl s i * PV lm x xl s 1) (2 * W lm)
-  (sqC (lvl1 (stLen s.mem st) pl lm) (W lm) + tC lm + mlC (lvl1 (stLen s.mem st) pl lm) (W lm) (W lm))
+  (sqC (W lm) + tC lm + mlC (W lm) (W lm))
 
 /-- after the second `trunc` (`0x1b5818`) -/
 abbrev JD : Nat → Prop := JX impl R kc sqC mlC b L st pw pl lm x xl s 1792024 (fun i M => Lo2 s pw i M) (· + 1)

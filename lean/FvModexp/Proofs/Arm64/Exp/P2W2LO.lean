@@ -1,6 +1,8 @@
 import FvModexp.Proofs.Arm64.Exp.P2W2LK
 import FvModexp.Proofs.Arm64.Exp.P2W2Ret1
 
+set_option autoImplicit false
+
 /-!
 # `expNNPowerOfTwoWindowSize2` (arm64): the loop's outer step (agent infra)
 
@@ -15,8 +17,8 @@ namespace FvModexp.Arm64.P2W2
 
 section
 variable {impl : List Segment} {ret0 : BitVec 64} {Q : State → Prop} {R : RtInv} {b : Nat} {L : List (Nat × Nat)}
-    {K g sp st zp zc xp xl xc yp yl lm ret : Nat} {s : State} {r29 : BitVec 64} {sqC : Nat → Nat → Nat}
-    {mlC : Nat → Nat → Nat → Nat} {zzp bp kk cst FV : Nat}
+    {K g sp st zp zc xp xl xc yp yl lm ret : Nat} {s : State} {r29 : BitVec 64} {sqC : Nat → Nat}
+    {mlC : Nat → Nat → Nat} {zzp bp kk cst FV : Nat}
 
 theorem m1_63 : (BitVec.ofNat 64 0 - 1#64).getLsbD 63 = true := by decide
 

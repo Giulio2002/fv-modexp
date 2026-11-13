@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.ModInvPost
 
+set_option autoImplicit false
+
 /-!
 # `nat.modularInverseModPowerOfTwo` (arm64): final round, `S3` → the second `zz = zz.trunc(zz, n)` → `S4` (agent infra)
 
@@ -17,10 +19,10 @@ set_option maxHeartbeats 64000000 in
 theorem segF3 {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
     {stkT aboveT : Nat} (htr : Trunc.Hyp2 impl R ns stkT aboveT) {kc : Nat} (hkc : 4608 ≤ kc)
-    (hkT : stkT ≤ kc) (haT : aboveT ≤ 88) {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
+    (hkT : stkT ≤ kc) (haT : aboveT ≤ 88) {H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
-    (k2 : S4 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s 1798200 (ExF n) (eF n) (kF n)) :
-    S3 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s 1798180 (ExF n) (eF n) (kF n) := by
+    (k2 : S4 impl R kc H sqrC mulC b L zp zl zc st xp xl xc n s 1798200 (ExF n) (eF n) (kF n)) :
+    S3 impl R kc H sqrC mulC b L zp zl zc st xp xl xc n s 1798180 (ExF n) (eF n) (kF n) := by
   intro S j p l c q ql qc L1 b1 Zv hrc hpc hex hzs hzv hl0 hl h0 h1 h2 hv hnq hql hb
   obtain ⟨hpreB, hn, hsp, h28, h18, hmidB, hj1, hjn, hbud, hcong⟩ := hrc
   have hK : 240 + kc ≤ s.sp.toNat := sp_K hpreB.h

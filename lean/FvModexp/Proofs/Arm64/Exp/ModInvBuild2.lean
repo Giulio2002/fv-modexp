@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.ModInvAfter
 
+set_option autoImplicit false
+
 /-!
 # `nat.modularInverseModPowerOfTwo` (arm64): `subMod2N`'s precondition inside a round (agent infra)
 
@@ -15,7 +17,7 @@ open FvModexp.Arm64.EvenHyp
 open FvModexp.Arm64.ExpHyp (stWs RdIn WrOut)
 
 section
-variable {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
+variable {R : RtInv} {kc : Nat} {H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
 
 set_option maxRecDepth 20000 in
@@ -36,7 +38,7 @@ theorem held_rt {M : Memory} {L1 : List (Nat × Nat)} {b1 : Nat} (hrt : RtM R kc
     · omega
 
 set_option maxRecDepth 20000 in
-theorem natOne_at (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) (hkc : 4608 ≤ kc) {M : Memory}
+theorem natOne_at (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) (hkc : 4608 ≤ kc) {M : Memory}
     {L1 : List (Nat × Nat)} {b1 : Nat} (hrt : RtM R kc L s zp zc st M L1 b1) {op : Nat}
     (hone : NatOne R L s.mem op (win s (K kc) A) ∧ Apart zp (8 * zc) natOneA 24 ∧ Apart zp (8 * zc) op 8 ∧
       StkApart s.mem st op 8 ∧ StkApart s.mem st natOneA 24) {S' : State}
@@ -68,7 +70,7 @@ theorem natOne_at (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) (hkc 
   · simp only [win, hsp, outside_cons, outside_nil, and_true]; omega
 
 set_option maxRecDepth 20000 in
-theorem subPre_at (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) (hkc : 4608 ≤ kc) {M : Memory}
+theorem subPre_at (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) (hkc : 4608 ≤ kc) {M : Memory}
     {L1 : List (Nat × Nat)} {b1 p l c q ql qc : Nat} (hmid : Mid R kc L s zp zc st xp xl xc n M L1 b1 p l c q ql qc)
     {op : Nat}
     (hone : NatOne R L s.mem op (win s (K kc) A) ∧ Apart zp (8 * zc) natOneA 24 ∧ Apart zp (8 * zc) op 8 ∧

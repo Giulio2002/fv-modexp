@@ -36,8 +36,8 @@ theorem sub2_ofNat (kk : Nat) :
 
 section
 variable {impl : List Segment} {ret0 : BitVec 64} {Q : State → Prop} {R : RtInv} {b : Nat} {L : List (Nat × Nat)}
-    {K g sp st zp zc xp xl xc yp yl lm ret : Nat} {s : State} {r29 : BitVec 64} {sqC : Nat → Nat → Nat}
-    {mlC : Nat → Nat → Nat → Nat} {zzp bp kk cst FV : Nat}
+    {K g sp st zp zc xp xl xc yp yl lm ret : Nat} {s : State} {r29 : BitVec 64} {sqC : Nat → Nat}
+    {mlC : Nat → Nat → Nat} {zzp bp kk cst FV : Nat}
 
 /-- the loop invariant after a body -/
 theorem li10 {i c yi Z : Nat} {u : Bool} {S : State} {M : Memory} {L1 : List (Nat × Nat)}

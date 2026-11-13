@@ -165,7 +165,8 @@ theorem keepC {R : RtInv} {kc : Nat} {L : List (Nat × Nat)} {st pw pl lm : Nat}
     {S' : State} (hsp : S'.sp.toNat = s.sp.toNat - 208) {kC aC : Nat} (hk : kC ≤ kc) (ha : aC ≤ 88)
     {ws : List (Nat × Nat)} (hws : ∀ r ∈ ws, WOK R L s st r) {M' : Memory} {L2 : List (Nat × Nat)} {b2 : Nat}
     (hF : MemFrame M M' (R.rt ++ winA S' kC aC ++ ws)) (hLF : LiveFrame M M' L1 ws) (hrg : M'.regions = M.regions)
-    (hLE : LiveExt R L1 L2) (hinv : R.inv b2 L2 (s.regs 28).toNat (view R.rt L2 M'))
+    (hLE : LiveExt R L1 L2)
+    (hinv : R.inv (b2 + stkR (HP (stLen s.mem st) pl lm) M' st) L2 (s.regs 28).toNat (view R.rt L2 M'))
     (hsa : StkAfter R L L2 st (stLen s.mem st) pl lm s.mem M') (hsap : StkApart M' st bp (8 * NB pl lm))
     (hain : ArrIn L2 st s.mem M') (hbu : BU M' st bp (8 * NB pl lm)) :
     Ctx R kc L st pw pl lm s bp M' L2 b2 := by
