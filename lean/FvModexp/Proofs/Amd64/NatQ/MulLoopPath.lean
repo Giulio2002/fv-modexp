@@ -38,7 +38,7 @@ theorem mloop (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progr
       Kept s s' ∧ MPost R b H L W zp zc st.toNat xp.toNat xl.toNat xc.toNat yp.toNat yl.toNat yc.toNat s s' := by
   have hμk : 8 * yl.toNat + 2 < n0 := by
     have hn : ¬ xl.toNat < yl.toNat := by omega
-    simp only [μl, Nat.max_eq_left (Nat.le_of_lt hyx), hn, if_false] at hμ; omega
+    simp only [μl, Nat.max_eq_left (Nat.le_of_lt hyx), hn, ite_false] at hμ; omega
   refine karLt impl R n0 S hJ ihK hA h40 hyx hμk hx150 hdf0 fun Lk bk S1 hka => ?_
   refine lclr impl hap R hmc S1 hka hx150 hdf0 fun P hlp => ?_
   refine lnat impl hap R hgr hmc hwb hlp hx150 hdf0 fun Lk' bk' tp tl tc S2 hH => ?_
