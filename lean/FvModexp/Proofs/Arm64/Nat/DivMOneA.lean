@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Arm64.Nat.DivMDefs
+import FvModexp.Proofs.Arm64.Nat.DivMBase
 import FvModexp.Proofs.Arm64.Nat.DivOneB
 
 set_option autoImplicit false
