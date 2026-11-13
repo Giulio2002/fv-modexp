@@ -1563,3 +1563,19 @@ only the numeric hypotheses, instantiated after the run; the post-return run in 
 | Arm64/Exp/IExpCl (ensCl, cost facts proved) | 1.4 s / 4.1 GB | 1.4 s / 4.0 GB |
 | Arm64/Exp/W4Wit `bud` (path-MAX budget) | omega on unfolded nested max: >200k heartbeats (timeout) | structural `bud_c` split: < 15 s |
 | Amd64/Exp/W4Defs, W4MC (new) | — | 1.7 s, 3.1 s / 2.3 GB |
+
+## divmc s37 (2026-11-13) — amd64 BasicSqrRow trim (dev, J=2, load ~17)
+| module | before | after | change |
+|---|---|---|---|
+| Common/MulCostQB (closed mul/sqr bounds) | — | 3.2 s / 2.1 GB | new |
+| Common/BudQ (BudOK skeleton) | — | 1.6 s / 2.0 GB | new |
+| Amd64/Nat/BasicSqrPro (`pro2`, both cap cases) | 108 s / 3.9 GB | removed | split into ProA (`cap > 0`) 70 s / 3.6 GB and ProB (`cap = 0`) 62 s / 3.7 GB, compiled in PARALLEL, dispatched in BasicSqr (17 s) |
+| Amd64/Nat/BasicSqrPro3 | 78 s / 6.2 GB, imported Clr (→ Fin → VV → End, Body → Loop) | 80 s / 6.2 GB, imports Env only | takes the clr continuation `ClrK` (defined in Env) as a premise |
+| Amd64/Nat/BasicSqrFin | imported Body | imports Env | `HeadK` moved Body → Env |
+* DAG: before, one chain Defs → Step → Body → Fin → Clr → Pro3 → Pro → BasicSqr (≈ 2+24+73+49+24+78+108+17 = 375 s);
+  after, three independent branches after Step+Env: {Body → Loop}, {Dfr → End → VV → Fin}, {Pro3 → ProA ∥ ProB}, joined
+  at Clr / BasicSqr: critical path ≈ 2 + 24 + 1 + max(80+34, 3+16+52+67, 80+70) + 26 + 17 ≈ 220 s.
+* A single janus64_run for both cap cases (implication fact `0 < cap → …` in context) FAILS: janus's call-pre discharger
+  intros the branch hypothesis and wants the NatLive conclusions as plain facts (and the failing run cost 327 s): keep
+  the case split, but in separate modules.
+* Row (s37, janus v0.3.1, cache-divmc warm deps, load ~20, a J=1 dev build alongside): **amd64 BasicSqrRow PASS 319 s / 6.1 GB** (was FAIL 902 s).
