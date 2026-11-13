@@ -33,7 +33,7 @@ namespace FvModexp.Amd64.Q.NatDiv
 
 theorem PreM.f {R : RtInv} {b : Nat} {dc : Nat → Nat → Nat} {L : List (Nat × Nat)} {u ul uc v vl vc : Nat}
     {s : State} (h : PreM R b dc L u ul uc v vl vc s) : PFM R b dc L u ul uc v vl vc s := by
-  obtain ⟨h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11, h12, h13, h14, h15, h16, h17, h18, h19, h20, h21, h22⟩ := h
-  exact ⟨h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11, h12, h13, h14, h15, h16, h17, h18, h19, h20, h21, h22⟩
+  obtain ⟨h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11, h12, h13, h14, h15, h16, h17, h18, h19, h20, h21, hA, h22⟩ := h
+  exact ⟨h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11, h12, h13, h14, h15, h16, h17, h18, h19, h20, h21, hA, h22⟩
 
 end FvModexp.Amd64.Q.NatDiv

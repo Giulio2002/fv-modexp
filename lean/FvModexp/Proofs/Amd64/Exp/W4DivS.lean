@@ -175,6 +175,7 @@ theorem divStep {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.pro
   -- the division
   refine divCall hap hDiv hnsD hnsW S1 hpre hst64 hqp hrrp fpc fsp w0 (q0.trans h0) (q3.trans h3) (q1.trans h1)
     q7 q6 q8 q9 q5 (q14.trans h14) (by rw [qfs]; exact hfs) (qx.trans hx15) (qdf.trans hdf)
+    (by obtain ⟨-, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, hx⟩ := hC.1; rw [hacw]; exact hx)
     (fun S2 L' b' rp rl rc f4 f0 f5 f14 ffs fx15 fdf f7 f6 f8 hD => ?_)
   have hD0 := hD
   obtain ⟨-, hxD, hb', hinv', ⟨⟨-, hlen', hst'⟩, -⟩, -, hF2, -, -⟩ := hD0

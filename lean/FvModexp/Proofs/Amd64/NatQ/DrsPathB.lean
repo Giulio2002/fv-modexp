@@ -191,7 +191,7 @@ theorem db_pre {R : RtInv} {b H : Nat} {L : List (Nat × Nat)} {c W qp ql qc st 
   obtain ⟨hce, hsv, hgl, hqlc, hqc, hulc, huc, hvlc, hvc, hv2, ⟨hvl9, hql9⟩, htop, -, hU2,
     ⟨hqa, hq48, hqh, hqo, hqg⟩, ⟨hua, hu48, huh, huo, hug⟩, ⟨hva, hv48, hvh, hvo, -, -, -⟩, hqu, hqv, huv,
     hsti, ⟨hstl, hcap0, -⟩, ⟨hqs, hqf⟩, ⟨hus, huf⟩, ⟨hvs, hvf⟩, hswb, hsf, hfo, -, hcq, hinv, -, -, -,
-    ⟨htq, htu, htst, htf⟩⟩ := hpre
+    ⟨htq, htu, htst, htf⟩, -⟩ := hpre
   have hce' := hce
   obtain ⟨-, ⟨hb', ha, hw⟩, -, -, hout, -, -, hLs, -⟩ := hce'
   simp only [regSP] at hb' ha hw

@@ -78,6 +78,7 @@ structure PFG (R : RtInv) (b H : Nat) (dc : Nat → Nat → Nat) (L : List (Nat 
       (0 < ul → Apart p (8 * c) u (8 * ul)) ∧ Apart p (8 * c) v (8 * vl) ∧ Apart p (8 * c) st 24 ∧
       Apart p (8 * c) (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st))
   cost : stLen s.mem st + 16 * ul + 64 ≤ H ∧ costQ dc ul vl + stkR H s.mem st ≤ b
+  adx : s.mem.accessible Callees.adxAddr 1 false = true
   inv : R.inv b L (s.regs 14).toNat (view R.rt L s.mem)
 
 theorem PreG.f {R : RtInv} {b : Nat} {dc : Nat → Nat → Nat} {L : List (Nat × Nat)}
@@ -85,18 +86,18 @@ theorem PreG.f {R : RtInv} {b : Nat} {dc : Nat → Nat → Nat} {L : List (Nat �
     (h : PreG R b H dc L zp zl zc st z2 z2l z2c u ul uc v vl vc s) :
     PFG R b H dc L zp zl zc st z2 z2l z2c u ul uc v vl vc s := by
   obtain ⟨r1, r2, r3, r4, r5, r6, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11, h12, h13, h14, h15, h16, h17, h18,
-    h19, h20, h22, h23, h0, hH, hT, h24, h25, h26, h27, h28, h29, h30, h31⟩ := h
+    h19, h20, h22, h23, h0, hH, hT, h24, h25, h26, h27, h28, h29, h30, hA, h31⟩ := h
   exact ⟨r1, r2, r3, r4, r5, r6, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11, h12, h13, h14, h15, h16, h17, h18,
-    h19, h20, h22, h23, h0, hH, hT, h24, h25, h26, h27, h28, h29, h30, h31⟩
+    h19, h20, h22, h23, h0, hH, hT, h24, h25, h26, h27, h28, h29, h30, hA, h31⟩
 
 theorem Pre.toG {R : RtInv} {b : Nat} {dc : Nat → Nat → Nat} {L : List (Nat × Nat)}
     {zp zl zc st z2 z2l z2c u ul uc v vl vc : Nat} {s : State}
     (h : Pre R b H dc L zp zl zc st z2 z2l z2c u ul uc v vl vc s) :
     PreG R b H dc L zp zl zc st z2 z2l z2c u ul uc v vl vc s := by
   obtain ⟨r1, r2, r3, r4, r5, r6, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11, h12, h13, h14, h15, h16, h17, h18,
-    h19, h20, h21, h22, h23, h0, hH, hT, h24, h25, h26, h27, h28, h29, h30, h31⟩ := h
+    h19, h20, h21, h22, h23, h0, hH, hT, h24, h25, h26, h27, h28, h29, h30, hA, h31⟩ := h
   refine ⟨r1, r2, r3, r4, r5, r6, h1, h2, h3, h4, h5, h6, h7, h8.toRdIn0, h9, h10, h11, h12, h13, h14, h15, h16, h17,
-    h18, h19, fun _ => ⟨h20, h21⟩, h22, h23, h0, hH, hT, h24, h25, h26, h27, h28, fun p c hm hc => ?_, h30, h31⟩
+    h18, h19, fun _ => ⟨h20, h21⟩, h22, h23, h0, hH, hT, h24, h25, h26, h27, h28, fun p c hm hc => ?_, h30, hA, h31⟩
   obtain ⟨a1, a2, a3, a4⟩ := h29 p c hm hc
   exact ⟨fun _ => a1, a2, a3, a4⟩
 
@@ -106,10 +107,10 @@ theorem PreG.toPre {R : RtInv} {b : Nat} {dc : Nat → Nat → Nat} {L : List (N
     (h : PreG R b H dc L zp zl zc st z2 z2l z2c u ul uc v vl vc s) (hu : 0 < ul) :
     Pre R b H dc L zp zl zc st z2 z2l z2c u ul uc v vl vc s := by
   obtain ⟨r1, r2, r3, r4, r5, r6, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11, h12, h13, h14, h15, h16, h17, h18,
-    h19, h20, h22, h23, h0, hH, hT, h24, h25, h26, h27, h28, h29, h30, h31⟩ := h
+    h19, h20, h22, h23, h0, hH, hT, h24, h25, h26, h27, h28, h29, h30, hA, h31⟩ := h
   refine ⟨r1, r2, r3, r4, r5, r6, h1, h2, h3, h4, h5, h6, h7, h8.toRdIn hu, h9, h10, h11, h12, h13, h14, h15, h16,
     h17, h18, h19, (h20 hu).1, (h20 hu).2, h22, h23, h0, hH, hT, h24, h25, h26, h27, h28, fun p c hm hc => ?_, h30,
-    h31⟩
+    hA, h31⟩
   obtain ⟨a1, a2, a3, a4⟩ := h29 p c hm hc
   exact ⟨a1 hu, a2, a3, a4⟩
 

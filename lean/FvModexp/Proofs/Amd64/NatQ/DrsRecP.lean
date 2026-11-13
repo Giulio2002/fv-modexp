@@ -129,7 +129,7 @@ theorem rec_pre {R : RtInv} {c : Cx} {s X : State} {Lk : List (Nat × Nat)} {bk 
     by rw [hsp, show (s.regs 4).toNat - 400 + 16 = (s.regs 4).toNat - 384 by omega]; exact a2,
     by rw [hsp, show (s.regs 4).toNat - 400 + 24 = (s.regs 4).toNat - 376 by omega]; exact a3,
     ⟨by rw [hfs]; exact t0fs, by rw [hfs]; exact apL hutl (by omega) (by omega), by rw [hfs]; exact hstl',
-      by rw [hfs]; exact ffs⟩⟩
+      by rw [hfs]; exact ffs⟩, by rw [hacc]; exact hpre.adx⟩
   case cost =>
     have hcq := hpre.cost.1
     refine ⟨by rw [hlen]; simp only [Cx.l1, StackNat.rnd]; omega,

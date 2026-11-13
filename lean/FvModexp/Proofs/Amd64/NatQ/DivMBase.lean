@@ -47,6 +47,7 @@ structure PFM (R : RtInv) (b : Nat) (dc : Nat → Nat → Nat) (L : List (Nat ×
   ug : 0 < uc → Apart u (8 * uc) v (8 * vl) ∧ Apart u (8 * uc) RunIface.gA 32
   pg : RunIface.PoolG R s.mem (win s 41512 112)
   cost : costMQ dc ul vl ≤ b
+  adx : s.mem.accessible Callees.adxAddr 1 false = true
   inv : R.inv b L (s.regs 14).toNat (view R.rt L s.mem)
 
 /-- `ul > 0` ⇒ `u` is a readable input -/

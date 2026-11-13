@@ -1873,3 +1873,11 @@ Util → IcDefs → IcHL → Ic → Og → Pre → Seg → FinA → Fin → Row 
   Split: janus64_run alone 5.5 s kernel / 2 s tactic; value closer ~9 s kernel / ~4 s tactic; dl_close ~3 s kernel.
   Dropping the 28 `Util.rd2_lt` facts still proves (tactic 10.7 → 7.0 s, kernel unchanged). The lever for amd64 RG
   (33 cases ≈ 660 s compile + ~560 s replay CPU) is the value closer's kernel term (per-word fromBE lemma), not the run.
+
+## infra s53 (2026-11-13) — amd64 RequiredGas: SetBytes value closers → generic lemmas
+* New `Amd64/RG/SbVal` (5.8 s): `word` (byte-reversed 8-byte load = `fromBE` of 8 bytes), `as1/as2/as3` (k words under
+  a head), nine head lemmas `hd1..hd7, hd6b, hd7b` (the compiled head shapes; 14/15/30/31 use the second OR order).
+  Every Sb case's value goal is now ONE `exact SbVal.as<k> … (SbVal.hd<h> …) (by omega)… rfl` (generator updated).
+* SbF (cases 29, 30): 41.0 s → 15.8 s dev (same load). Sb A..G dev: 70 / 40 / 30 / 19 / 21 / 16 / 15 s.
+* Targeted row run (s51/rgrow2.sh amd64 b23b839b, warm-up-only cache, row alone): **amd64 RequiredGas 448 s**, peak
+  3258 MB, load 30.7 (was 538 s / 3520 MB at load 34.6) — target ≤ 450 s met.

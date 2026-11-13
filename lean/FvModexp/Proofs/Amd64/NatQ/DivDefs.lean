@@ -100,6 +100,7 @@ structure PF (R : RtInv) (b H : Nat) (dc : Nat → Nat → Nat) (L : List (Nat �
       Apart p (8 * c) u (8 * ul) ∧ Apart p (8 * c) v (8 * vl) ∧ Apart p (8 * c) st 24 ∧
       Apart p (8 * c) (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st))
   cost : stLen s.mem st + 16 * ul + 64 ≤ H ∧ costQ dc ul vl + stkR H s.mem st ≤ b
+  adx : s.mem.accessible Callees.adxAddr 1 false = true
   inv : R.inv b L (s.regs 14).toNat (view R.rt L s.mem)
 
 theorem Pre.f {R : RtInv} {b : Nat} {dc : Nat → Nat → Nat} {L : List (Nat × Nat)}
@@ -107,9 +108,9 @@ theorem Pre.f {R : RtInv} {b : Nat} {dc : Nat → Nat → Nat} {L : List (Nat ×
     (h : Pre R b H dc L zp zl zc st z2 z2l z2c u ul uc v vl vc s) :
     PF R b H dc L zp zl zc st z2 z2l z2c u ul uc v vl vc s := by
   obtain ⟨r1, r2, r3, r4, r5, r6, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11, h12, h13, h14, h15, h16, h17, h18,
-    h19, h20, h21, h22, h23, h0, hH, hT, h24, h25, h26, h27, h28, h29, h30, h31⟩ := h
+    h19, h20, h21, h22, h23, h0, hH, hT, h24, h25, h26, h27, h28, h29, h30, hA, h31⟩ := h
   exact ⟨r1, r2, r3, r4, r5, r6, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11, h12, h13, h14, h15, h16, h17, h18,
-    h19, h20, h21, h22, h23, h0, hH, hT, h24, h25, h26, h27, h28, h29, h30, h31⟩
+    h19, h20, h21, h22, h23, h0, hH, hT, h24, h25, h26, h27, h28, h29, h30, hA, h31⟩
 
 /-! ## Return addresses inside `nat.div`'s segment (`seg13`, base `0x5edf20`, `0x545` bytes) -/
 

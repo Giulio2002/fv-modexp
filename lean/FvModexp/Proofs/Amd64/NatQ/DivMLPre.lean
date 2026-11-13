@@ -118,7 +118,7 @@ theorem l_preM {R : RtInv} {b : Nat} {dc : Nat → Nat → Nat} {L : List (Nat �
     fun h => absurd h (by decide), fun h => absurd h (by decide), fun hc => (hp.ug hc).1, Or.inl rfl, ?stk,
     by rw [hlen]; have := hp.ul9; omega, fun h => absurd h (by decide), ?uS, hUap, hVap,
     ?wb, ?hfree, hc0, by omega, ⟨fun h => absurd h (by decide), fun hc => (hp.ug hc).2, ?sg, ?fg⟩, ?cost, ?inv,
-    ?i0, ?i1, ?i3, ?i4, ?stt, ?stft⟩
+    ?i0, ?i1, ?i3, ?i4, ?stt, ?stft, by rw [hacc]; exact hp.adx⟩
   case ce =>
     have e : L1 = L ++ stkRs X.mem st := hL1
     obtain ⟨c1, c2, c3, c4, c5, c6, c7, c8, c9, c10⟩ := hce1
