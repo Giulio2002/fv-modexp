@@ -7,6 +7,9 @@ Rows of the fv-modexp project: machine code of geth v1.17.10 (`github.com/ethere
 `verified` (or `partial`) is verified, `todo` / `in progress` fails the run as MISSING, `n/a` is skipped. The proof module of a row is
 `lean/FvModexp/Proofs/<Arm64|Amd64>/<Fn>.lean` (or `<Fn>Main.lean` when it holds `theorem correctness`), with `<Fn>` = the last symbol component
 with its first letter upper-cased. Every `verified` row has a kernel-checked `Witness.nonvacuous` (non-vacuity rule).
+**Release order (top s43):** before this table's rows, `verify-all` runs every Run-extraction row listed in `scripts/release-rows.txt`
+(`ISA DIR/ROW`, the summaries' rows of the section below), in that dependency order with the Top rows last; a row of this table that is
+also listed there runs at its listed place. Owners add/delete lines there when they add/retire a row (`LIST_ONLY=1` prints the order).
 
 Sanity caps for every row (fixed in `scripts/verify-all.sh`): `memcap 16G`, `timeout 900`. Per-row time and peak RSS of the last run: `build/rows.tsv`;
 module elaboration profiles: `docs/PERF.md`.
