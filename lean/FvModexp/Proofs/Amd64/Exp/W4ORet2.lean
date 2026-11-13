@@ -69,7 +69,7 @@ theorem oneRet {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.prog
     (hyS : Apart yp (8 * ylen) st 24) (hyF : Apart yp (8 * ylen) (stFree M st).1 (stFree M st).2)
     (hbud : blockSize (8 * n) true + stackNatCost (stLen M st) (17 * n) + 2 * blockSize (8 * (2 * n + 4)) true ≤ b)
     (hinv : R.inv b L g (view R.rt L M))
-    {rrc : Nat} (hrc : rrc < 2 ^ 64) (hzp : zzp < 2 ^ 64) (hzc' : zzc < 2 ^ 64)
+    (hrc : rrc < 2 ^ 64) (hzp : zzp < 2 ^ 64) (hzc' : zzc < 2 ^ 64)
     (s3d8 : M.readLE (sp + 0x3d8) 8 = st) (hacc3 : M.accessible (sp + 0x3d8) 8 false = true)
     (hokone : 4 < n → R.ok (Extracted.program.contractAddr "runtime.makeslice") [wT, n, n])
     (S : State) (hpc : S.rip = BitVec.ofNat 64 rrJ) (hsp : S.regs 4 = BitVec.ofNat 64 sp) (hmem : S.mem = M)
