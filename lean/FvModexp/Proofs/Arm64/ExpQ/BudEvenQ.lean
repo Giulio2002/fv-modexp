@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Arm64.ExpQ.BudClQR
+import FvModexp.Proofs.Arm64.ExpQ.BudClQ8
 
 set_option autoImplicit false
 set_option linter.unusedSimpArgs false
@@ -430,5 +431,9 @@ theorem budClQ_ofP (hP : PBound)
     (hp2 : ∀ xl yl n lm, xl ≤ 128 → yl ≤ 128 → 0 < n → n ≤ 128 → lm < 64 * n →
       IExp.clP 0 xl yl lm ≤ 6 * BudQ.opC (max xl n) + yl * (64 * BudQ.opC (max xl n))) : IExp.BudClQ :=
   IExp.budClQ_of_ep (heven hP) hp2
+
+/-- **TIGHT COSTS: `IExp.BudClQ` CLOSED (arm64)** — `heven` (this module) on divmc's `Q.BudP2.pBound`, through
+`IExp.budClQ_of_e` (ExpQ/BudClQ8: P target 8 W) -/
+theorem budClQ : IExp.BudClQ := IExp.budClQ_of_e (heven Q.BudP2.pBound)
 
 end FvModexp.Arm64.Q.BudE
