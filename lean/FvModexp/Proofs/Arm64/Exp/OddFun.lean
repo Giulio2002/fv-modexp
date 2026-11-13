@@ -29,8 +29,22 @@ theorem hypSumO {impl : List Segment} (hap : ImplApart Extracted.program impl) {
   rw [← LibOdd.eq_only] at hS
   exact hS
 
-set_option maxHeartbeats 64000000 in
-theorem w_sub : ∀ x, LibW.names.contains x = true → LibOdd.names.contains x = true := MontW.sub_of_all (by decide)
+/-- `LibOdd.names` = `LibW.names` with `nat.expNNOdd` inserted at index 15 (no string `decide`: s65 trim) -/
+theorem names_split : LibOdd.names = LibW.names.take 15 ++ fn :: LibW.names.drop 15 := by
+  simp only [LibOdd.names, LibW.names, fn, List.take, List.drop, List.cons_append, List.nil_append]
+
+theorem w_sub : ∀ x, LibW.names.contains x = true → LibOdd.names.contains x = true := by
+  intro x hx
+  rw [names_split]
+  rw [← List.take_append_drop 15 LibW.names] at hx
+  simp only [List.contains_iff_mem, List.mem_append, List.mem_cons] at hx ⊢
+  rcases hx with h | h
+  · exact Or.inl h
+  · exact Or.inr (Or.inr h)
+
+theorem fn_seg : Extracted.seg21.name = fn := by decide
+
+theorem fn_notW : LibW.names.contains Extracted.seg21.name = false := by rw [fn_seg]; simp [LibW.names, fn]
 
 theorem tN {v : Nat} (h : v < 2 ^ 64) : (BitVec.ofNat 64 v).toNat = v := by
   rw [BitVec.toNat_ofNat]; exact Nat.mod_eq_of_lt h
@@ -38,13 +52,13 @@ theorem tN {v : Nat} (h : v < 2 ^ 64) : (BitVec.ofNat 64 v).toNat = v := by
 theorem ra4 (impl : List Segment) (hap : ImplApart Extracted.program impl) :
     RetAddr ((Extracted.program.onlySegments LibW.names).link impl) 1798404 :=
   CallW.retAddr_restrict hap (cs := Extracted.seg21)
-    (by simp only [Extracted.program, Extracted.segments, List.mem_cons, true_or, or_true]) (by decide) 13
+    (by simp only [Extracted.program, Extracted.segments, List.mem_cons, true_or, or_true]) fn_notW 13
     (by decide) (by decide) (by decide)
 
 theorem ra2 (impl : List Segment) (hap : ImplApart Extracted.program impl) :
     RetAddr ((Extracted.program.onlySegments LibW.names).link impl) 1798420 :=
   CallW.retAddr_restrict hap (cs := Extracted.seg21)
-    (by simp only [Extracted.program, Extracted.segments, List.mem_cons, true_or, or_true]) (by decide) 17
+    (by simp only [Extracted.program, Extracted.segments, List.mem_cons, true_or, or_true]) fn_notW 17
     (by decide) (by decide) (by decide)
 
 set_option maxRecDepth 20000 in

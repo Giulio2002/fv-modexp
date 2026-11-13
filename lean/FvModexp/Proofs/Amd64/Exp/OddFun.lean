@@ -32,8 +32,20 @@ theorem hypSumO {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.pro
   rw [← LibOdd.eq_only] at hS
   exact hS
 
-set_option maxHeartbeats 64000000 in
-theorem w_sub : ∀ x, LibW.names.contains x = true → LibOdd.names.contains x = true := MontW.sub_of_all (by decide)
+/-- `LibOdd.names` = `LibW.names` with `nat.expNNOdd` inserted at index 15 (no string `decide`: s65 trim, 6.8 GB → see PERF) -/
+theorem names_split : LibOdd.names = LibW.names.take 15 ++ fn :: LibW.names.drop 15 := by
+  simp only [LibOdd.names, LibW.names, fn, List.take, List.drop, List.cons_append, List.nil_append]
+
+theorem w_sub : ∀ x, LibW.names.contains x = true → LibOdd.names.contains x = true := by
+  intro x hx
+  rw [names_split]
+  rw [← List.take_append_drop 15 LibW.names] at hx
+  simp only [List.contains_iff_mem, List.mem_append, List.mem_cons] at hx ⊢
+  rcases hx with h | h
+  · exact Or.inl h
+  · exact Or.inr (Or.inr h)
+
+theorem fn_notW : LibW.names.contains fn = false := by simp [LibW.names, fn]
 
 theorem fn_seg : Extracted.seg21.name = fn := by decide
 
@@ -42,7 +54,7 @@ theorem ra_of {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
     RetAddr ((Extracted.program.onlySegments LibW.names).link impl) (6205248 + i) := by
   have := CallW.retAddr_restrict hap (cs := Extracted.seg21) (ns := LibW.names)
     (by simp only [Extracted.program, Extracted.segments, List.mem_cons, true_or, or_true])
-    (by rw [fn_seg]; decide) i (Nat.lt_of_lt_of_le hi (by decide)) (by show 0x5eaf40 + i < 2 ^ 47; omega)
+    (by rw [fn_seg]; exact fn_notW) i (Nat.lt_of_lt_of_le hi (by decide)) (by show 0x5eaf40 + i < 2 ^ 47; omega)
   simpa only [Extracted.seg21] using this
 
 theorem tN {v : Nat} (h : v < 2 ^ 64) : (BitVec.ofNat 64 v).toNat = v := by
