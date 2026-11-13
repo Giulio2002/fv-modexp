@@ -88,7 +88,7 @@ open FvModexp.Amd64.EvenHyp (RdIn WrOut)
     (∀ p c, (p, c) ∈ [(zp, zc), (z2, z2c)] → 0 < c →
       Apart p (8 * c) u (8 * ul) ∧ Apart p (8 * c) v (8 * vl) ∧ Apart p (8 * c) st 24 ∧
       Apart p (8 * c) (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st))) ∧
-    (stLen s.mem st + 16 * ul + 64 ≤ H ∧ c ≤ b) ∧ R.inv b L (s.regs 14).toNat (view R.rt L s.mem)
+    (stLen s.mem st + 16 * ul + 64 ≤ H ∧ c ≤ b) ∧ s.mem.accessible Callees.adxAddr 1 false = true ∧ R.inv b L (s.regs 14).toNat (view R.rt L s.mem)
 
 /-- `DivPostL` in the Q-form (`c` the interface cost, `r'` the reserve after the call) -/
 @[reducible] def DivPostLQ (R : RtInv) (b c r' : Nat) (L : List (Nat × Nat))
@@ -157,7 +157,7 @@ def fnRem : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.nat.rem"
     (0 < zc → Apart zp (8 * zc) st 24 ∧ Apart zp (8 * zc) (freeOf s.mem st).1 (freeOf s.mem st).2 ∧
       Apart zp (8 * zc) RunIface.gA 32) ∧
     Apart st 24 RunIface.gA 32 ∧ Apart (freeOf s.mem st).1 (freeOf s.mem st).2 RunIface.gA 32 ∧
-    cst ≤ b ∧ R.inv b L (s.regs 14).toNat (view R.rt L s.mem) ∧
+    cst ≤ b ∧ s.mem.accessible Callees.adxAddr 1 false = true ∧ R.inv b L (s.regs 14).toNat (view R.rt L s.mem) ∧
   0 < vl ∧ NoAlias zp zc up uc ∧ 0 < st ∧ stLen s.mem st + need ≤ H
 
 /-- `CPostR` in the Q-form (amd64: result `RAX,RBX,RCX`; `c` the interface cost, `r'` the reserve after the call) -/

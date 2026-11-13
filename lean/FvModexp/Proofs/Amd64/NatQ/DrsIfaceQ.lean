@@ -19,7 +19,7 @@ open FvModexp.Amd64.RunIface (Serves)
 namespace FvModexp.Amd64.Q.DivLarge
 open FvModexp.Amd64.DivLarge
 
-/-- The precondition of `divRecursiveStep` with the stack window `W` (register args `z = (qp, ql, qc)`, `st`, `u = (up, ul, uc)`, `depth` in `R10`; the stack args `v = (vp, vl, vc)` at `RSP + 8, + 16, + 24`); a plain conjunction (conjuncts in order: ce, sv, gl, qlc, qc40, ulc, uc40, vlc, vc40, v2, v9, vtop, q0, room, qa, ua, va, qu, qv, uv, sti, stl, sq, su, sv2, wbap, hf, fw, ga, cost, inv, vpS, vlS, vcS, tl; accessors `DrsPreW.<name>`). -/
+/-- The precondition of `divRecursiveStep` with the stack window `W` (register args `z = (qp, ql, qc)`, `st`, `u = (up, ul, uc)`, `depth` in `R10`; the stack args `v = (vp, vl, vc)` at `RSP + 8, + 16, + 24`); a plain conjunction (conjuncts in order: ce, sv, gl, qlc, qc40, ulc, uc40, vlc, vc40, v2, v9, vtop, q0, room, qa, ua, va, qu, qv, uv, sti, stl, sq, su, sv2, wbap, hf, fw, ga, cost, inv, vpS, vlS, vcS, tl, adx; accessors `DrsPreW.<name>`). -/
 def DrsPreW (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (H cost W : Nat) (qp ql qc st up ul uc vp vl vc : Nat)
     (s : State) : Prop :=
   (CallEnv R L s W 96) ∧
@@ -56,7 +56,8 @@ def DrsPreW (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (H cost W : Nat) (qp q
   (s.mem.readLE ((s.regs 4).toNat + 8) 8 = vp) ∧
   (s.mem.readLE ((s.regs 4).toNat + 16) 8 = vl) ∧
   (s.mem.readLE ((s.regs 4).toNat + 24) 8 = vc) ∧
-  (Apart qp (8 * ql) (s.fsBase.toNat - 8) 8 ∧ Apart up (8 * ul) (s.fsBase.toNat - 8) 8 ∧ Apart st 24 (s.fsBase.toNat - 8) 8 ∧ Apart (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st)) (s.fsBase.toNat - 8) 8)
+  (Apart qp (8 * ql) (s.fsBase.toNat - 8) 8 ∧ Apart up (8 * ul) (s.fsBase.toNat - 8) 8 ∧ Apart st 24 (s.fsBase.toNat - 8) 8 ∧ Apart (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st)) (s.fsBase.toNat - 8) 8) ∧
+  (s.mem.accessible Callees.adxAddr 1 false = true)
 
 theorem DrsPreW.ce {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {H cost W : Nat} {qp ql qc st up ul uc vp vl vc : Nat} {s : State}
     (h : DrsPreW R b L H cost W qp ql qc st up ul uc vp vl vc s) : CallEnv R L s W 96 := h.1
@@ -127,7 +128,9 @@ theorem DrsPreW.vlS {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {H cost W : Na
 theorem DrsPreW.vcS {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {H cost W : Nat} {qp ql qc st up ul uc vp vl vc : Nat} {s : State}
     (h : DrsPreW R b L H cost W qp ql qc st up ul uc vp vl vc s) : s.mem.readLE ((s.regs 4).toNat + 24) 8 = vc := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
 theorem DrsPreW.tl {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {H cost W : Nat} {qp ql qc st up ul uc vp vl vc : Nat} {s : State}
-    (h : DrsPreW R b L H cost W qp ql qc st up ul uc vp vl vc s) : Apart qp (8 * ql) (s.fsBase.toNat - 8) 8 ∧ Apart up (8 * ul) (s.fsBase.toNat - 8) 8 ∧ Apart st 24 (s.fsBase.toNat - 8) 8 ∧ Apart (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st)) (s.fsBase.toNat - 8) 8 := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2
+    (h : DrsPreW R b L H cost W qp ql qc st up ul uc vp vl vc s) : Apart qp (8 * ql) (s.fsBase.toNat - 8) 8 ∧ Apart up (8 * ul) (s.fsBase.toNat - 8) 8 ∧ Apart st 24 (s.fsBase.toNat - 8) 8 ∧ Apart (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st)) (s.fsBase.toNat - 8) 8 := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+theorem DrsPreW.adx {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {H cost W : Nat} {qp ql qc st up ul uc vp vl vc : Nat} {s : State}
+    (h : DrsPreW R b L H cost W qp ql qc st up ul uc vp vl vc s) : s.mem.accessible Callees.adxAddr 1 false = true := h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2
 
 /-- the precondition of `divRecursiveStep` (window `40960`) -/
 abbrev DrsPre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (H cost : Nat) (qp ql qc st up ul uc vp vl vc : Nat)

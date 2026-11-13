@@ -2,6 +2,7 @@ import FvModexp.Proofs.Amd64.Exp.EvenHyp
 import FvModexp.Proofs.Common.ExpHypVal
 import FvModexp.Proofs.Common.StackScr
 import FvModexp.Proofs.Amd64.Nat.StackNatDefs
+import FvModexp.Proofs.Amd64.Nat.Callees
 
 /-!
 # Callee premises of the exponentiation layer (amd64) — twin of `FvModexp.Arm64.ExpHyp` (+ `ExpHypL`)
@@ -73,7 +74,8 @@ stack's free part) -/
     (∀ p c, (p, c) ∈ [(zp, zc), (z2, z2c)] → 0 < c →
       Apart p (8 * c) u (8 * ul) ∧ Apart p (8 * c) v (8 * vl) ∧ Apart p (8 * c) st 24 ∧
       Apart p (8 * c) (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st))) ∧
-    cost (stLen s.mem st) ul vl ≤ b ∧ R.inv b L (s.regs 14).toNat (view R.rt L s.mem)
+    cost (stLen s.mem st) ul vl ≤ b ∧ s.mem.accessible Callees.adxAddr 1 false = true ∧
+    R.inv b L (s.regs 14).toNat (view R.rt L s.mem)
 
 /-- the postcondition, `StackBack` form -/
 @[reducible] def DivPost (R : RtInv) (b : Nat) (cost : Nat → Nat → Nat → Nat) (L : List (Nat × Nat))

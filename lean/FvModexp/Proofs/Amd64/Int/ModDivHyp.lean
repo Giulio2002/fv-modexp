@@ -38,7 +38,7 @@ open FvModexp.Amd64.RunIface (Serves Globals PoolG)
     ul ≤ 2 ^ 9 ∧ 0 < vl ∧ vl ≤ 2 ^ 9 ∧ NatNorm s.mem u ul ∧ NatNorm s.mem v vl ∧
     (0 < uc → Apart u (8 * uc) v (8 * vl) ∧ Apart u (8 * uc) RunIface.gA 32) ∧
     PoolG R s.mem (win s stk above) ∧
-    cost ul vl ≤ b ∧ R.inv b L (s.regs 14).toNat (view R.rt L s.mem)
+    cost ul vl ≤ b ∧ s.mem.accessible Callees.adxAddr 1 false = true ∧ R.inv b L (s.regs 14).toNat (view R.rt L s.mem)
 
 /-- `nat.div`'s postcondition there: the remainder `(r, rl, rc)` (RDI, RSI, R8) holds `u mod v`, normalised, in `u`'s
 array or a fresh one; the quotient (RAX, RBX, RCX) is unconstrained; memory changes only in the runtime, the window and

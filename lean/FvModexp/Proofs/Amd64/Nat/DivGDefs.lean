@@ -49,7 +49,8 @@ open FvModexp.Amd64.ExpHyp (NatOF StackOK' stWs fnDiv)
     (∀ p c, (p, c) ∈ [(zp, zc), (z2, z2c)] → 0 < c →
       (0 < ul → Apart p (8 * c) u (8 * ul)) ∧ Apart p (8 * c) v (8 * vl) ∧ Apart p (8 * c) st 24 ∧
       Apart p (8 * c) (stW s.mem st + 8 * stLen s.mem st) (8 * (stCap s.mem st - stLen s.mem st))) ∧
-    cost (stLen s.mem st) ul vl ≤ b ∧ R.inv b L (s.regs 14).toNat (view R.rt L s.mem)
+    cost (stLen s.mem st) ul vl ≤ b ∧ s.mem.accessible Callees.adxAddr 1 false = true ∧
+    R.inv b L (s.regs 14).toNat (view R.rt L s.mem)
 
 /-- `ExpHyp.DivPostL` + the two results apart when both non-empty + a fresh quotient apart from the stack's final
 array (as the remainder's clause) -/
