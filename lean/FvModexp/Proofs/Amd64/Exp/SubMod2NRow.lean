@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Amd64.Exp.SubMod2NGEns
+import FvModexp.Proofs.Amd64.Exp.SubMod2NGR
 import FvModexp.Proofs.Amd64.Nat.Trunc
 import FvModexp.Proofs.Amd64.Nat.RowLink
 import FvModexp.Proofs.Amd64.Witness.Sites
@@ -12,7 +12,7 @@ set_option autoImplicit false
 `correctness` = `SubMod2N.ensG` (general form: any capacity of `z`, empty / `nil` operands) with the PROVED callees
 `nat.trunc` (asm `Trunc.ens`), `nat.sub` (divmc `NatSub.ensR0`) and `nat.add` (divmc `NatAdd.ensR`, inside `ensG`) and
 asm's `nat.cmp`, moved to `Extracted.program.link impl` (`Ensures.full64`). Runtime premises: the live `makeslice`,
-`memmove` and `growslice` contracts. `n` is the tenth argument, passed on the stack (`[RSP + 8]`, `PreG`'s `Ent`).
+`memmove` and `growslice` contracts. `n` is the tenth argument, passed on the stack (`[RSP + 8]`, `PreGR`'s `EntR`).
 `Witness.nonvacuous`: the shared witness runtime, the toy allocator invariant, `natOne` (header outside the extracted
 data, its word in the `OB` object), the call `z.subMod2N(z, y, 64)` with `z = [5]` (cap 1), `y = [3]`, `n = 64` at
 `SP0 + 8`; one call-site state per contract.
@@ -32,7 +32,7 @@ theorem trW_fn : Trunc.names.contains SubMod2N.fn = false := by decide
 
 /-- **`nat.subMod2N`** (amd64): `z.subMod2N(z, y, n)` returns a normalised nat holding `(Z − Y) mod 2^n`
 (`Exp.subMod2N`), in `z`'s array or a fresh one, for every runtime meeting the live `makeslice` / `memmove` /
-`growslice` contracts (`PreG` / `PostG`). -/
+`growslice` contracts (`PreGR` / `PostG`; no constraint on the return address beyond the ABI). -/
 theorem correctness (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
     (hmk : MakesliceLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice")
       4096 R)
@@ -43,10 +43,10 @@ theorem correctness (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted
     Ensures (Extracted.program.link impl) (segAddr Extracted.program SubMod2N.fn)
       [BitVec.ofNat 64 zp, BitVec.ofNat 64 zl, BitVec.ofNat 64 zc, BitVec.ofNat 64 zp, BitVec.ofNat 64 zl,
         BitVec.ofNat 64 zc, BitVec.ofNat 64 yp, BitVec.ofNat 64 yl, BitVec.ofNat 64 yc]
-      (PreG R b L op zp zl zc yp yl yc n) (PostG R b L zp zl zc yp yl n) :=
+      (PreGR R b L op zp zl zc yp yl yc n) (PostG R b L zp zl zc yp yl n) :=
   Ensures.full64 hap (by simp [numIntRegs])
-    (SubMod2N.ensG impl hap R trW_sub trW_fn (by omega) (by omega) (Trunc.ens impl hap R hmk hmv) hmk hmv hgr
-      b L op zp zl zc yp yl yc n)
+    (ensGR_of (SubMod2N.ensG impl hap R trW_sub trW_fn (by omega) (by omega) (Trunc.ens impl hap R hmk hmv) hmk hmv
+      hgr) b L op zp zl zc yp yl yc n)
 
 end FvModexp.Amd64.SubMod2NRow
 
@@ -125,11 +125,11 @@ theorem one0 : NatOne R [] s0.mem OP (win s0 K A) := by
 theorem bud : cost 64 ≤ 0x1000 := by decide +kernel
 
 set_option maxHeartbeats 64000000 in
-/-- the witness state satisfies `PreG` (`z.subMod2N(z, y, 64)`, `z = [5]` cap 1, `y = [3]`) -/
-theorem pre : PreG R 0x1000 [] OP OA 1 1 YP 1 1 64 s0 := by
+/-- the witness state satisfies `PreGR` (`z.subMod2N(z, y, 64)`, `z = [5]` cap 1, `y = [3]`) -/
+theorem pre : PreGR R 0x1000 [] OP OA 1 1 YP 1 1 64 s0 := by
   have hm : s0.mem = mem0 := rfl
   have hone := one0
-  unfold PreG
+  unfold PreGR
   refine ⟨?_, WStubs.serves [], ?_, hone, ?_⟩
   · refine ⟨?_, ?_, by decide, dataLoaded _ _, ?_, ?_, ?_, fun r hr => by simp at hr, roOut, ⟨?_, ?_, ?_⟩⟩
     all_goals first
@@ -174,7 +174,7 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : 
     CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program SubMod2N.fn)
       [BitVec.ofNat 64 zp, BitVec.ofNat 64 zl, BitVec.ofNat 64 zc, BitVec.ofNat 64 zp, BitVec.ofNat 64 zl,
         BitVec.ofNat 64 zc, BitVec.ofNat 64 yp, BitVec.ofNat 64 yl, BitVec.ofNat 64 yc] s ∧
-    PreG R b L op zp zl zc yp yl yc n s ∧
+    PreGR R b L op zp zl zc yp yl yc n s ∧
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.rip = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.makeslice") ∧
       mkSite R (Extracted.program.contractAddr "runtime.makeslice") L b s_c) ∧
