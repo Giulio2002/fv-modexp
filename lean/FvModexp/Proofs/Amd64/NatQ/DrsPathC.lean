@@ -72,11 +72,17 @@ theorem pathC (impl : List Amd64.Segment) (R : RtInv) (a : Args) (s : State) (hE
   have hacc8 : P.mem.accessible ((s.regs 4).toNat - 8) 16 false = true := by
     rw [hF.fr.accessible]; exact Janus.Arm64.Memory.accessible_mono _ (Janus.Arm64.Memory.accessible_read_of_write _ hw) (by omega) (by omega)
   janus64_run [h8, h11, hth', hne, hsub, BitVec.msb_eq_decide] until [epC]
-  refine epi impl s _ epC (Or.inl rfl) rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ hdf hra (by omega) (by omega) ?_ _
-    fun s' ⟨e1, e2, e3, e4⟩ => ⟨e1, post_frame hpre hW (by rw [e4]; exact hF.fr) e2 e3 ?_ ?_⟩
-  all_goals try (janus64_simp; done)
-  all_goals first
-    | exact hF.sp | exact hF.r14 | exact hF.fs | exact hF.df | exact hF.ra | exact hF.bp | exact hacc8
-    | (rw [hx0, hx15]) | (rw [hq0, Nat.div_eq_of_lt hlt']) | exact (Nat.mod_eq_of_lt hlt').symm
+  refine epi impl s _ epC (Or.inl rfl) rfl ?sp ?r14 ?fs ?df ?ra ?bp ?x hdf hra (by omega) (by omega) ?acc _
+    fun s' ⟨e1, e2, e3, e4⟩ => ⟨e1, post_frame hpre hW (by rw [e4]; exact hF.fr) e2 e3 ?q ?u⟩
+  case sp => first | exact hF.sp | (janus64_simp; exact hF.sp)
+  case r14 => first | exact hF.r14 | (janus64_simp; exact hF.r14)
+  case fs => first | exact hF.fs | (janus64_simp; exact hF.fs)
+  case df => first | exact hF.df | (janus64_simp; exact hF.df)
+  case ra => first | exact hF.ra | (janus64_simp; exact hF.ra)
+  case bp => first | exact hF.bp | (janus64_simp; exact hF.bp)
+  case x => first | (rw [hx0, hx15]) | (janus64_simp; rw [hx0, hx15])
+  case acc => first | exact hacc8 | (janus64_simp; exact hacc8)
+  case q => rw [hq0, Nat.div_eq_of_lt hlt']
+  case u => exact (Nat.mod_eq_of_lt hlt').symm
 
 end FvModexp.Amd64.Q.DivRec

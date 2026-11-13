@@ -103,12 +103,18 @@ theorem pathA (impl : List Amd64.Segment) (R : RtInv)
   · -- `len z == 0`: nothing to clear
     rw [hz] at h3
     janus64_run until [epZ]
-    refine epi impl s _ epZ (Or.inr (Or.inr rfl)) rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ hdf hra (by omega) (by omega) ?_ _
-      fun s' ⟨e1, e2, e3, e4⟩ => ⟨e1, post_frame hpre (by omega) (by rw [e4]; exact hF.fr) e2 e3 ?_ ?_⟩
-    all_goals try (janus64_simp; done)
-    all_goals first
-      | exact hF.sp | exact hF.r14 | exact hF.fs | exact hF.df | exact hF.ra | exact hF.bp | exact hacc8
-      | (rw [hx0, hx15]) | (rw [hq0, hU0]; simp) | (rw [hU0]; simp)
+    refine epi impl s _ epZ (Or.inr (Or.inr rfl)) rfl ?sp ?r14 ?fs ?df ?ra ?bp ?x hdf hra (by omega) (by omega) ?acc _
+      fun s' ⟨e1, e2, e3, e4⟩ => ⟨e1, post_frame hpre (by omega) (by rw [e4]; exact hF.fr) e2 e3 ?q ?u⟩
+    case sp => first | exact hF.sp | (janus64_simp; exact hF.sp)
+    case r14 => first | exact hF.r14 | (janus64_simp; exact hF.r14)
+    case fs => first | exact hF.fs | (janus64_simp; exact hF.fs)
+    case df => first | exact hF.df | (janus64_simp; exact hF.df)
+    case ra => first | exact hF.ra | (janus64_simp; exact hF.ra)
+    case bp => first | exact hF.bp | (janus64_simp; exact hF.bp)
+    case x => first | (rw [hx0, hx15]) | (janus64_simp; rw [hx0, hx15])
+    case acc => first | exact hacc8 | (janus64_simp; exact hacc8)
+    case q => rw [hq0, hU0]; simp
+    case u => rw [hU0]; simp
   · have hne : (BitVec.ofNat 64 a.ql.toNat = 0#64) = False := by
       simp only [eq_iff_iff, iff_false]; intro e
       have := congrArg BitVec.toNat e; simp only [BitVec.toNat_ofNat] at this; omega

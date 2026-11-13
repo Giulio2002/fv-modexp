@@ -1781,3 +1781,9 @@ Util → IcDefs → IcHL → Ic → Og → Pre → Seg → FinA → Fin → Row 
   FinA last at 417 s) + kernel replay 267 s (own modules; leanchecker sum ≈ 462 s CPU: Util 54, FinA 23, SbA 22, FinD 16, Blk3* 15, …).
 * `Common/Util` (3259 lines, adapted fv-uint256 grab-bag): 234 of its 296 theorems are referenced nowhere (any worktree, any script
   except the kept `ow2_self_iff`): removed (528 lines). Util compile 76-100 s → 4.4 s; its replay 54 s → ~few s.
+## asm s44 (2026-11-13)
+* arm64 DivRowQ trim (dev, load ~40): NatQ/DivLargeNat 82 s → DivLargeNatP 73 s ∥ DivLargeNatN 40 s (+ wrapper 1.3 s);
+  DivLessC → DivLessC0 16 s ∥ DivLessC 68 s.
+* amd64 Q drs (dev): DrsPathC 134 s → 7.8 s, DrsPathA 124 s → 9.5 s — the closing `all_goals first | exact … | (rw …; simp)`
+  chain over the epilogue's holes replaced by named holes (`?sp ?r14 … ?q ?u`) with one closer each. New: DrsPathB 28 s,
+  DrsPathBR 13 s, DrsPro2d 23 s (2.5-3.3 GB).
