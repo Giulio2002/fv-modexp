@@ -29,7 +29,7 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- `z ≠ nil`, `cap z ≠ 0`: `z[0] = 1` in place -/
 theorem r1a {impl : List Segment} (hap : ImplApart Extracted.program impl)
-    (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (hw : WC R L K g sp st zp zc s.mem M L1 b1 ℓ)
+    (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (hw : WC R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem M L1 b1 ℓ)
     (hsl : ESl M sp st (s.regs 29) (s.regs 30).toNat zp zc xp xl xc yp yl lm (stLen s.mem st))
     (hr4 : (s.regs 30).toNat % 4 = 0) (hr48 : (s.regs 30).toNat < 2 ^ 48) {cst : Nat} (hb : b - cst ≤ b1)
     (hzp : zp ≠ 0) (hzc : 0 < zc)
@@ -54,7 +54,7 @@ theorem r1a {impl : List Segment} (hap : ImplApart Extracted.program impl)
   have hF1 : MemFrame S.mem (S.mem.writeLE zp 8 1) [(zp, zp + 8)] :=
     (MemFrame.refl _ _).writeLE_inRanges _ ⟨(zp, zp + 8), by simp, by simp only; omega, by simp only; omega⟩
   have hzH : InRanges zp (8 * zc) L1 ∨ Outside zp (8 * zc) R.rt := hw.le.held hzO1
-  have hw' : WC R L K g sp st zp zc s.mem (S.mem.writeLE zp 8 1) L1 b1 ℓ := by
+  have hw' : WC R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem (S.mem.writeLE zp 8 1) L1 b1 ℓ := by
     refine hw.frame hF1 (by simp only [Memory.regions_writeLE]) (fun a k ho => ?_) (fun a k _ ho => ?_) ?_ ?_
     · simp only [ZS, outside_append, outside_cons, outside_nil, and_true] at ho ⊢; omega
     · simp only [ZS, outside_append, outside_cons, outside_nil, and_true] at ho ⊢; omega

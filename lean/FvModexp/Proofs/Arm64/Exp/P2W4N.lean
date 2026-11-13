@@ -21,10 +21,10 @@ namespace FvModexp.Arm64.P2W4
 open P2W2 (grE mcE wbE wTy grE_eq mcE_eq wbE_eq)
 
 /-- the continuation at the table's entry -/
-@[reducible] def KPs (impl : List Segment) (R : RtInv) (stkN aboveN b1 : Nat) (L1 : List (Nat × Nat))
+@[reducible] def KPs (impl : List Segment) (R : RtInv) (H stkN aboveN b1 : Nat) (L1 : List (Nat × Nat))
     (g sp st lm xp xl xc : Nat) (M : Memory) (r18 r29 : BitVec 64) (ret0 : BitVec 64) (Q : State → Prop) : Prop :=
   ∀ (S1 s' S2 : State), S1.sp = BitVec.ofNat 64 sp → S1.regs 28 = BitVec.ofNat 64 g → S1.mem = M →
-    StackNat.PostL R b1 L1 stkN aboveN st (2 * W lm) S1 s' → s'.mem.regions = M.regions →
+    StackNatX.PostQ R b1 L1 H stkN aboveN st (2 * W lm) S1 s' → s'.mem.regions = M.regions →
     S2.pc = BitVec.ofNat 64 1790928 → S2.sp = BitVec.ofNat 64 sp →
     S2.regs 0 = BitVec.ofNat 64 st → S2.regs 1 = BitVec.ofNat 64 (sp + 320) → S2.regs 2 = 16#64 →
     S2.regs 3 = 16#64 → S2.regs 4 = 4#64 → S2.regs 5 = BitVec.ofNat 64 lm → S2.regs 6 = BitVec.ofNat 64 xp →
@@ -41,9 +41,9 @@ set_option maxHeartbeats 64000000 in
 /-- from the `(*stack).nat` entry (`R30 = 1793340`) -/
 theorem segN1 {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
-    {stkN aboveN : Nat} (hsn : StackNat.HypL impl R ns stkN aboveN) (haN : aboveN ≤ 88)
+    {stkN aboveN : Nat} (hsn : StackNatX.HypQ impl R ns stkN aboveN) (haN : aboveN ≤ 88)
     (ret0 : BitVec 64) (Q : State → Prop)
-    (b1 : Nat) (L1 : List (Nat × Nat)) (g sp st lm xp xl xc : Nat) (M : Memory) (r18 r29 : BitVec 64)
+    (H b1 : Nat) (L1 : List (Nat × Nat)) (g sp st lm xp xl xc : Nat) (M : Memory) (r18 r29 : BitVec 64)
     (hal : sp % 16 = 0) (hsp1 : 8 ≤ sp) (hsp2 : sp + 848 ≤ 2 ^ 48) (hst : st < 2 ^ 48) (hlm2 : 2 ≤ lm) (hlm : lm ≤ 2 ^ 13)
     (hO : ∀ a k, sp + 88 ≤ a → a + k ≤ sp + 848 → Outside a k (R.rt ++ stkWs M st))
     (r784 : M.readLE (sp + 784) 8 = st) (r840 : M.readLE (sp + 840) 8 = lm) (r792 : M.readLE (sp + 792) 8 = xp)
@@ -53,12 +53,12 @@ theorem segN1 {impl : List Segment} (hap : ImplApart Extracted.program impl) {R 
     (h0 : S1.regs 0 = BitVec.ofNat 64 st) (h1 : S1.regs 1 = BitVec.ofNat 64 (2 * W lm))
     (h30 : S1.regs 30 = BitVec.ofNat 64 1793340)
     (h28 : S1.regs 28 = BitVec.ofNat 64 g) (h18 : S1.regs 18 = r18) (h29 : S1.regs 29 = r29) (hmem : S1.mem = M)
-    (hpre : StackNat.Pre R b1 L1 stkN aboveN st (2 * W lm) S1)
-    (KP : KPs impl R stkN aboveN b1 L1 g sp st lm xp xl xc M r18 r29 ret0 Q) :
+    (hpre : StackNatX.PreQ R b1 L1 H stkN aboveN st (2 * W lm) S1)
+    (KP : KPs impl R H stkN aboveN b1 L1 g sp st lm xp xl xc M r18 r29 ret0 Q) :
     ReachesRet (LibW.program.link impl) ret0 S1 Q := by
   have hW : W lm ≤ 128 := by simp only [W]; omega
   have hspN : S1.sp.toNat = sp := by rw [hsp, BitVec.toNat_ofNat]; omega
-  refine LibCalls.stkNatCallL hap hns hsn (b := b1) (L := L1) (ra_w4 hap hnf 103 (by decide)) (by rw [hpc]; decide)
+  refine LibCalls.stkNatCallQ hap hns hsn H (b := b1) (L := L1) (ra_w4 hap hnf 103 (by decide)) (by rw [hpc]; decide)
     h30 h0 h1 (by omega) (by omega) (by decide) hpre fun s' hpc' hsp' h28' h29' h18' hrg' hpost => ?_
   have hz := hpost.1 (by simp only [W]; omega)
   obtain ⟨-, -, -, -, -, -, -, -, -, -, hF', -, -⟩ := id hpost
@@ -83,7 +83,7 @@ theorem segN1 {impl : List Segment} (hap : ImplApart Extracted.program impl) {R 
   have hz2 := hpost.2.2.1
   generalize e0 : s'.regs 0 = z0 at hz
   have hz0 : z0.toNat < 2 ^ 64 := z0.isLt
-  have hH : P2Pre.Hide (StackNat.PostL R b1 L1 stkN aboveN st (2 * W lm) S1 s') := ⟨hpost⟩
+  have hH : P2Pre.Hide (StackNatX.PostQ R b1 L1 H stkN aboveN st (2 * W lm) S1 s') := ⟨hpost⟩
   clear hpost hF' hk
   janus_run [q784, q840, q792, q800, q808, hacc1, hacc2, hacc3, hacc4] until [1790928]
   refine KP S1 s' _ hsp h28 hmem hH.h (hrg'.trans (by rw [hmem])) ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
@@ -108,9 +108,9 @@ set_option maxHeartbeats 64000000 in
 /-- **from `rsE`** (after the reserve): `zz := stk.nat(2w)` → the table's entry -/
 theorem segN {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
-    {stkN aboveN : Nat} (hsn : StackNat.HypL impl R ns stkN aboveN) (haN : aboveN ≤ 88)
+    {stkN aboveN : Nat} (hsn : StackNatX.HypQ impl R ns stkN aboveN) (haN : aboveN ≤ 88)
     (ret0 : BitVec 64) (Q : State → Prop)
-    (b1 : Nat) (L1 : List (Nat × Nat)) (g sp st lm xp xl xc : Nat) (M : Memory)
+    (H b1 : Nat) (L1 : List (Nat × Nat)) (g sp st lm xp xl xc : Nat) (M : Memory)
     (hal : sp % 16 = 0) (hsp1 : 8 ≤ sp) (hsp2 : sp + 848 ≤ 2 ^ 48) (hst : st < 2 ^ 48) (hlm2 : 2 ≤ lm)
     (hlm : lm ≤ 2 ^ 13)
     (hO : ∀ a k, sp + 88 ≤ a → a + k ≤ sp + 848 → Outside a k (R.rt ++ stkWs M st))
@@ -121,8 +121,8 @@ theorem segN {impl : List Segment} (hap : ImplApart Extracted.program impl) {R :
     (h3 : S.regs 3 = BitVec.ofNat 64 st) (h9 : S.regs 9 = BitVec.ofNat 64 (W lm))
     (h28 : S.regs 28 = BitVec.ofNat 64 g) (hmem : S.mem = M)
     (hpre : ∀ S1 : State, S1.sp = BitVec.ofNat 64 sp → S1.regs 28 = BitVec.ofNat 64 g → S1.mem = M →
-      StackNat.Pre R b1 L1 stkN aboveN st (2 * W lm) S1)
-    (KP : KPs impl R stkN aboveN b1 L1 g sp st lm xp xl xc M (S.regs 18) (S.regs 29) ret0 Q) :
+      StackNatX.PreQ R b1 L1 H stkN aboveN st (2 * W lm) S1)
+    (KP : KPs impl R H stkN aboveN b1 L1 g sp st lm xp xl xc M (S.regs 18) (S.regs 29) ret0 Q) :
     ReachesRet (LibW.program.link impl) ret0 S Q := by
   have hW : W lm ≤ 128 := by simp only [W]; omega
   have e2w : BitVec.ofNat 64 (W lm) + BitVec.ofNat 64 (W lm) = BitVec.ofNat 64 (2 * W lm) := by
@@ -130,7 +130,7 @@ theorem segN {impl : List Segment} (hap : ImplApart Extracted.program impl) {R :
   generalize e18 : S.regs 18 = x18 at KP
   generalize e29 : S.regs 29 = x29 at KP
   janus_run [e2w] until [1784176]
-  refine segN1 hap hns hnf hsn haN ret0 Q b1 L1 g sp st lm xp xl xc M x18 x29 hal hsp1 hsp2 hst hlm2 hlm hO r784 r840
+  refine segN1 hap hns hnf hsn haN ret0 Q H b1 L1 g sp st lm xp xl xc M x18 x29 hal hsp1 hsp2 hst hlm2 hlm hO r784 r840
     r792 r800 r808 hacc _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ (hpre _ ?_ ?_ ?_) KP
   all_goals first | (janus_simp; done) | skip
   all_goals first | exact hmem | skip

@@ -23,8 +23,8 @@ variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc
     {M : Memory} {L1 : List (Nat × Nat)} {b1 ℓ : Nat}
 
 /-- `ResSep` for the fresh one-word result of `return 1` -/
-theorem rs_fresh1 (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (hw : WC R L K g sp st zp zc s.mem M L1 b1 ℓ)
-    {m : Memory} {p r : Nat} (hA : AllocR R L K g sp st zp zc s.mem M L1 b1 ℓ m p r 8) :
+theorem rs_fresh1 (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (hw : WC R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem M L1 b1 ℓ)
+    {m : Memory} {p r : Nat} (hA : AllocR R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem M L1 b1 ℓ m p r 8) :
     ResSep s.mem (m.writeLE p 8 1) st p 1 := by
   have hK := hP.1.2.2.2.2.2.2.2.1
   have hK1 := hP.1.2.2.2.2.2.2.2.2.1
@@ -48,7 +48,7 @@ set_option maxHeartbeats 64000000 in
 /-- `z ≠ nil`, `cap z = 0`: `makeslice(Word, 1, 1)`, `[0] = 1` -/
 theorem r1b {impl : List Segment} (hap : ImplApart Extracted.program impl)
     (hmk : MakesliceLiveContract (LibW.program.link impl) mkE 4096 R)
-    (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (hw : WC R L K g sp st zp zc s.mem M L1 b1 ℓ)
+    (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (hw : WC R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem M L1 b1 ℓ)
     (hsl : ESl M sp st (s.regs 29) (s.regs 30).toNat zp zc xp xl xc yp yl lm (stLen s.mem st))
     (hr4 : (s.regs 30).toNat % 4 = 0) (hr48 : (s.regs 30).toNat < 2 ^ 48) {cst : Nat}
     (hbc : allocCost 8 ≤ b1) (hb : b - cst ≤ b1 - allocCost 8)
@@ -90,7 +90,7 @@ set_option maxHeartbeats 64000000 in
 /-- `z == nil`: `newobject([1]Word)`, `[0] = 1` -/
 theorem r1c {impl : List Segment} (hap : ImplApart Extracted.program impl)
     (hno : NewobjectLiveContract (LibW.program.link impl) noE 4096 R)
-    (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (hw : WC R L K g sp st zp zc s.mem M L1 b1 ℓ)
+    (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (hw : WC R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem M L1 b1 ℓ)
     (hsl : ESl M sp st (s.regs 29) (s.regs 30).toNat zp zc xp xl xc yp yl lm (stLen s.mem st))
     (hr4 : (s.regs 30).toNat % 4 = 0) (hr48 : (s.regs 30).toNat < 2 ^ 48) {cst : Nat}
     (hbc : allocCost 8 ≤ b1) (hb : b - cst ≤ b1 - allocCost 8)
@@ -131,7 +131,7 @@ theorem r1c {impl : List Segment} (hap : ImplApart Extracted.program impl)
 theorem r1all {impl : List Segment} (hap : ImplApart Extracted.program impl)
     (hmk : MakesliceLiveContract (LibW.program.link impl) mkE 4096 R)
     (hno : NewobjectLiveContract (LibW.program.link impl) noE 4096 R)
-    (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (hw : WC R L K g sp st zp zc s.mem M L1 b1 ℓ)
+    (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (hw : WC R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem M L1 b1 ℓ)
     (hsl : ESl M sp st (s.regs 29) (s.regs 30).toNat zp zc xp xl xc yp yl lm (stLen s.mem st))
     (hr4 : (s.regs 30).toNat % 4 = 0) (hr48 : (s.regs 30).toNat < 2 ^ 48) {cst : Nat}
     (hbc : allocCost 8 ≤ b1) (hb : b - cst ≤ b1 - allocCost 8)

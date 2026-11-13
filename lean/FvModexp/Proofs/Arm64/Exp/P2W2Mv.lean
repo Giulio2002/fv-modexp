@@ -19,7 +19,7 @@ set_option maxRecDepth 20000 in
 window below the saved FP, `dst`), the live frame, the invariant and the copy -/
 theorem mvCallW {impl : List Segment} (hmv : MemmoveLive (LibW.program.link impl) P2Pre.mvE 4096 R)
     (ret0 : BitVec 64) (Q : State → Prop)
-    (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ)
+    (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem M L1 b1 ℓ)
     {dst src n ra : Nat} (hra4 : ra % 4 = 0) (hra : ra < 2 ^ 48) (hn : n ≤ 2 ^ 20)
     (hd48 : dst + n ≤ 2 ^ 48) (hdacc : M.accessible dst n true = true) (hdh : Held R L1 dst n)
     (hdw : Apart dst n (sp - K) (K + 560))
@@ -29,7 +29,7 @@ theorem mvCallW {impl : List Segment} (hmv : MemmoveLive (LibW.program.link impl
     (h1 : T.regs 1 = BitVec.ofNat 64 src) (h2 : T.regs 2 = BitVec.ofNat 64 n) (h30 : T.regs 30 = BitVec.ofNat 64 ra)
     (KC : ∀ (junk : Nat → W64) (f : Flags) (v : Nat → BitVec 128) (m : Memory) (ex : Option (Nat × Nat))
       (ep : Nat → Bool), MemFrame M m (R.rt ++ [(sp - 4096, sp - 8), (sp + 8, sp + 32)] ++ [(dst, dst + n)]) →
-      LiveFrame M m L1 [(dst, dst + n)] → R.inv b1 L1 g (view R.rt L1 m) → Mem.Copied M m dst src n →
+      LiveFrame M m L1 [(dst, dst + n)] → R.inv (b1 + stkR (HW (stLen s.mem st) lm) M st) L1 g (view R.rt L1 m) → Mem.Copied M m dst src n →
       m.regions = M.regions → ReachesRet (LibW.program.link impl) ret0 (retStateX T junk [] f v m ex ep) Q) :
     ReachesRet (LibW.program.link impl) ret0 T Q := by
   have hK := hP.1.2.2.2.2.2.2.2.1
@@ -49,7 +49,7 @@ theorem mvCallW {impl : List Segment} (hmv : MemmoveLive (LibW.program.link impl
     intro q hq; simp only [calleeStack, esp, List.mem_cons, List.mem_nil_iff, or_false] at hq
     rcases hq with rfl | rfl <;> simp only <;> omega
   unfold Apart at hdw hsw
-  refine ReachesRet.call_regions (hmv L1 b1) hpc ⟨⟨(guardOK_iff T 4096).1 hgd, hco, hgo⟩, ⟨hok, hinv, hLs, hrt⟩,
+  refine ReachesRet.call_regions (hmv L1 (b1 + stkR (HW (stLen s.mem st) lm) M st)) hpc ⟨⟨(guardOK_iff T 4096).1 hgd, hco, hgo⟩, ⟨hok, hinv, hLs, hrt⟩,
     ⟨by rw [t1, t2]; exact hs48, by rw [t1, t2, hm]; exact hsacc, ?_⟩,
     ⟨by rw [t0, t2]; exact hd48, by rw [t0, t2, hm]; exact hdacc, ?_, by rw [t0, t2]; exact hdh⟩⟩ ?_
   · rw [t1, t2]; refine outside_of_forall fun q hq => ?_; have := hcs q hq; omega
@@ -96,14 +96,15 @@ theorem mv_rdW (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {M M' : Mem
 
 set_option maxRecDepth 20000 in
 /-- **`WC` through a `memmove` into `[d, d + n)`** (held, apart from the header, inside what the function may write) -/
-theorem WC.mv (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ)
+theorem WC.mv (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem M L1 b1 ℓ)
     {M' : Memory} {d n : Nat}
     (hF : MemFrame M M' (R.rt ++ [(sp - 4096, sp - 8), (sp + 8, sp + 32)] ++ [(d, d + n)]))
-    (hLF : LiveFrame M M' L1 [(d, d + n)]) (hrg : M'.regions = M.regions) (hinv : R.inv b1 L1 g (view R.rt L1 M'))
+    (hLF : LiveFrame M M' L1 [(d, d + n)]) (hrg : M'.regions = M.regions)
+    (hinv : R.inv (b1 + stkR (HW (stLen s.mem st) lm) M st) L1 g (view R.rt L1 M'))
     (hdhd : Apart d n st 24)
     (hdo : ∀ a k, Outside a k (R.rt ++ WN sp K ++ ZS zp zc st s.mem) → Outside a k [(d, d + n)])
     (hdL : ∀ a k, InRanges a k L → Outside a k (ZS zp zc st s.mem) → Outside a k [(d, d + n)]) :
-    WC R L K g sp st zp zc s.mem M' L1 b1 ℓ := by
+    WC R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem M' L1 b1 ℓ := by
   have hK := hP.1.2.2.2.2.2.2.2.1
   have hK1 := hP.1.2.2.2.2.2.2.2.2.1
   have hstw : Apart st 24 (sp - K) (K + 560) := hP.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
@@ -114,7 +115,7 @@ theorem WC.mv (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R L 
   have e1 : stLen M' st = stLen M st := hhd 8 (by omega)
   have e2 : stCap M' st = stCap M st := hhd 16 (by omega)
   rw [List.append_assoc] at hF
-  refine h.call hF hLF hrg (fun a k o1 o2 o3 o4 => ?_) hdL (LiveExt.refl R L1) hinv
+  refine h.call hF hLF hrg (fun a k o1 o2 o3 o4 => ?_) hdL (LiveExt.refl R L1) (by rw [stkR_congr e2]; exact hinv)
     (stkOK_hdr h.sok hF e0 e1 e2 (LiveExt.refl R L1)) (e1.trans h.len) (Nat.le_refl _) (Or.inl ⟨e0, e2⟩)
     (fun hn => absurd ⟨e0, e2⟩ hn)
   have := hdo a k (by rw [outside_append, outside_append]; exact ⟨⟨o1, o2⟩, o4⟩)

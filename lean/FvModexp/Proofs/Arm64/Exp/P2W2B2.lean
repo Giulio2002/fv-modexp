@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.P2W2BJ
 
+set_option autoImplicit false
+
 /-!
 # `expNNPowerOfTwoWindowSize2` (arm64): loop body segment B2 — `J2` → second `sqr` → `J3` (agent infra)
 
@@ -15,15 +17,15 @@ open FvModexp.Arm64.EvenHyp
 
 section
 variable {impl : List Segment} {ret0 : BitVec 64} {Q : State → Prop} {R : RtInv} {b : Nat} {L : List (Nat × Nat)}
-    {K g sp st zp zc xp xl xc yp yl lm ret : Nat} {s : State} {r29 : BitVec 64} {sqC : Nat → Nat → Nat}
-    {mlC : Nat → Nat → Nat → Nat} {zzp bp kk cst FV : Nat}
+    {K g sp st zp zc xp xl xc yp yl lm ret : Nat} {s : State} {r29 : BitVec 64} {sqC : Nat → Nat}
+    {mlC : Nat → Nat → Nat} {zzp bp kk cst FV : Nat}
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
 theorem callB2 (hap : ImplApart Extracted.program impl) {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
-    {stkS aboveS : Nat} (hsq : SqrHypX impl R ns stkS aboveS sqC) (hkS : stkS ≤ K) (haS : aboveS ≤ 88)
-    (hsm : ∀ ℓ a a', a ≤ a' → sqC ℓ a ≤ sqC ℓ a') (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s)
+    {stkS aboveS : Nat} (hsq : SqrHypQ impl R ns stkS aboveS sqC) (hkS : stkS ≤ K) (haS : aboveS ≤ 88)
+    (hsm : ∀ a a', a ≤ a' → sqC a ≤ sqC a') (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s)
     {i c yi Z : Nat} {u : Bool}
     (K3 : KJ impl ret0 Q (J3 R b L K g sp st zp zc xp xl xc yp yl lm ret s r29 zzp bp kk cst FV sqC mlC i c yi Z u))
     {S0 : State} {M0 : Memory} {L1 : List (Nat × Nat)} {b1 pA lA cA p1 l1 c1 : Nat}
@@ -54,10 +56,10 @@ theorem callB2 (hap : ImplApart Extracted.program impl) {ns : List String}
   obtain ⟨hA, -⟩ := hkeep u pA cA h.ca h.ca0
   obtain ⟨hZ1, hZ1k⟩ := hkeep (!u) p1 c1 h.r1 hc1
   have hZn : NV T.mem p1 l1 c1 (Z1 lm Z) := NV.keep h.n1 hZ1k
-  have hmono := hsm (lvlL (stLen s.mem st) lm) l1 (W lm) hl1
+  have hmono := hsm l1 (W lm) hl1
   have hb := h.hb
   have hcb := hjc.hcb
-  have hcst : sqC (lvlL (stLen s.mem st) lm) l1 ≤ b1 := by simp only [bodyB, SQ, ML] at hb hmono; omega
+  have hcst : sqC l1 ≤ b1 := by simp only [bodyB, SQ, ML] at hb hmono; omega
   refine sqrB hap hns hnf hsq hkS haS hP hB (v := u) hA h.ca0 h.lac hZ1 hZn hl1 hcst (by decide) T hpc hsp h28 rfl h30
     h0 h1 h2 h3 h4 h5 h6 ?_
   intro s' L2 b2 p' l' c' hpc' hsp' h28' h29' h18' e0 e1 e2 hB' hslot hres hnv hl' hx hxn hbud
@@ -79,8 +81,8 @@ set_option maxHeartbeats 16000000 in
 /-- **B2** -/
 theorem segB2 (hap : ImplApart Extracted.program impl) {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
-    {stkS aboveS : Nat} (hsq : SqrHypX impl R ns stkS aboveS sqC) (hkS : stkS ≤ K) (haS : aboveS ≤ 88)
-    (hsm : ∀ ℓ a a', a ≤ a' → sqC ℓ a ≤ sqC ℓ a') (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s)
+    {stkS aboveS : Nat} (hsq : SqrHypQ impl R ns stkS aboveS sqC) (hkS : stkS ≤ K) (haS : aboveS ≤ 88)
+    (hsm : ∀ a a', a ≤ a' → sqC a ≤ sqC a') (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s)
     {i c yi Z : Nat} {u : Bool}
     (K3 : KJ impl ret0 Q (J3 R b L K g sp st zp zc xp xl xc yp yl lm ret s r29 zzp bp kk cst FV sqC mlC i c yi Z u)) :
     KJ impl ret0 Q (J2 R b L K g sp st zp zc xp xl xc yp yl lm ret s r29 zzp bp kk cst FV sqC mlC i c yi Z u) := by

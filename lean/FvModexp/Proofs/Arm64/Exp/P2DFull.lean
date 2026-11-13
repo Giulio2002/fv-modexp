@@ -21,12 +21,12 @@ namespace FvModexp.Arm64.P2D
 open FvModexp.Arm64.ExpHyp FvModexp.Arm64.EvenHyp
 
 /-- the budget on any positive base -/
-@[reducible] def cP (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat) (ℓ xl yl lm : Nat) : Nat :=
-  costP (P2W2.cost sqC mlC) (P2W4.cost sqC mlC) ℓ xl yl lm
+@[reducible] def cP (sqC : Nat → Nat) (mlC : Nat → Nat → Nat) (ℓ xl yl lm : Nat) : Nat :=
+  costP (P2W2.costB sqC mlC) (P2W4.costB sqC mlC) ℓ xl yl lm
 
-theorem cO_le_cP (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat) (ℓ xl yl lm lm1 : Nat) (h : lm1 ≤ lm) :
+theorem cO_le_cP (sqC : Nat → Nat) (mlC : Nat → Nat → Nat) (ℓ xl yl lm lm1 : Nat) (h : lm1 ≤ lm) :
     cO sqC mlC ℓ yl lm1 ≤ cP sqC mlC ℓ xl yl lm :=
-  Nat.le_trans (le_supTo (costO (P2W2.cost sqC mlC) (P2W4.cost sqC mlC) ℓ yl) lm lm1 h)
+  Nat.le_trans (le_supTo (costO (P2W2.costB sqC mlC) (P2W4.costB sqC mlC) ℓ yl) lm lm1 h)
     (Nat.le_trans (Nat.le_add_right _ _) (Nat.le_add_right _ _))
 
 theorem postD_mono {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {stk A zp zc st v c c' : Nat} {s s' : State}
@@ -88,11 +88,11 @@ theorem sumF {impl : List Segment} (hap : ImplApart Extracted.program impl) {R :
     (hno : NewobjectLiveContract (LibW.program.link impl) P2W2.noE 4096 R)
     (hwb : WbLiveContract (LibW.program.link impl) P2W2.wbE 4096 R 2)
     {kcP : Nat} (hkc : 4608 ≤ kcP)
-    {stkN aboveN : Nat} (hsn : StackNat.HypL impl R ns stkN aboveN) (hkN : stkN ≤ kcP) (haN : aboveN ≤ 88)
-    {stkS aboveS : Nat} {sqC : Nat → Nat → Nat} (hsq : SqrHypX impl R ns stkS aboveS sqC)
-    (hkS : stkS ≤ kcP) (haS : aboveS ≤ 88) (hsm : ∀ ℓ a a', a ≤ a' → sqC ℓ a ≤ sqC ℓ a')
-    {stkM aboveM : Nat} {mlC : Nat → Nat → Nat → Nat} (hmu : MulHypX impl R ns stkM aboveM mlC)
-    (hkM : stkM ≤ kcP) (haM : aboveM ≤ 88) (hmm : ∀ ℓ a a' c c', a ≤ a' → c ≤ c' → mlC ℓ a c ≤ mlC ℓ a' c')
+    {stkN aboveN : Nat} (hsn : StackNatX.HypQ impl R ns stkN aboveN) (hkN : stkN ≤ kcP) (haN : aboveN ≤ 88)
+    {stkS aboveS : Nat} {sqC : Nat → Nat} (hsq : SqrHypQ impl R ns stkS aboveS sqC)
+    (hkS : stkS ≤ kcP) (haS : aboveS ≤ 88) (hsm : ∀ a a', a ≤ a' → sqC a ≤ sqC a')
+    {stkM aboveM : Nat} {mlC : Nat → Nat → Nat} (hmu : MulHypQ impl R ns stkM aboveM mlC)
+    (hkM : stkM ≤ kcP) (haM : aboveM ≤ 88) (hmm : ∀ a a' c c', a ≤ a' → c ≤ c' → mlC a c ≤ mlC a' c')
     {stkT aboveT : Nat} (htr : Trunc.Hyp2 impl R ns stkT aboveT) (hkT : stkT ≤ kcP) (haT : aboveT ≤ 88)
     {stkR aboveR : Nat} (hrh : Rsh.Hyp impl R ns stkR aboveR) (haR : aboveR ≤ 88)
     {stkL aboveL : Nat} (hlh : Lsh.Hyp2 impl R ns stkL aboveL) (haL : aboveL ≤ 88)
@@ -203,12 +203,12 @@ theorem sumF {impl : List Segment} (hap : ImplApart Extracted.program impl) {R :
       have hlo0 : 0 < Exp.tz X * Y := Nat.mul_pos (tz_pos hX0 hXe) hY0
       have hneed : makeCost (Rsh.need xl (Exp.tz X)) ≤ makeCost (xl + 2) :=
         mk_mono (by simp only [Rsh.need]; omega) (by omega)
-      have hsup := le_supTo (costO (P2W2.cost sqC mlC) (P2W4.cost sqC mlC) (stLen s.mem st) 1) lm
+      have hsup := le_supTo (costO (P2W2.costB sqC mlC) (P2W4.costB sqC mlC) (stLen s.mem st) 1) lm
         (lm - Exp.tz X * Y) (by omega)
-      have hcst : cP sqC mlC (stLen s.mem st) xl 1 lm = supTo (costO (P2W2.cost sqC mlC) (P2W4.cost sqC mlC)
+      have hcst : cP sqC mlC (stLen s.mem st) xl 1 lm = supTo (costO (P2W2.costB sqC mlC) (P2W4.costB sqC mlC)
           (stLen s.mem st) 1) lm + makeCost (xl + 2) + makeCost (lm / 64 + 2) := rfl
       have hcOe : cO sqC mlC (stLen s.mem st) 1 (lm - Exp.tz X * Y) =
-          costO (P2W2.cost sqC mlC) (P2W4.cost sqC mlC) (stLen s.mem st) 1 (lm - Exp.tz X * Y) := rfl
+          costO (P2W2.costB sqC mlC) (P2W4.costB sqC mlC) (stLen s.mem st) 1 (lm - Exp.tz X * Y) := rfl
       rw [← hcOe] at hsup
       obtain ⟨hb1, hb2, hb3⟩ := bud3 hneed hsup hcst
       have hodd := (Exp.tz_spec hX0).2

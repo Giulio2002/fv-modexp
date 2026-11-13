@@ -31,7 +31,7 @@ variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc
 
 set_option maxRecDepth 20000 in
 /-- the entry `z` (`0 < cap z`) is a U-class buffer -/
-theorem ub_z (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ)
+theorem ub_z (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem M L1 b1 ℓ)
     {zzp bp X : Nat} (htz : TZ R L s.mem M L1 st sp zzp bp lm X) :
     UB R L K g sp st zp zc M L1 zzp bp lm zp zc := by
   have hzc40 : zc < 2 ^ 40 := hP.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
@@ -45,9 +45,9 @@ theorem ub_z (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R L K
 
 set_option maxRecDepth 20000 in
 /-- a fresh allocation `[p, p + r)` (cap `c`, `8 c ≤ r`) is a U-class buffer -/
-theorem ub_fresh (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ)
+theorem ub_fresh (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem M L1 b1 ℓ)
     (hl : 0 < ℓ) {m : Memory} {p r n : Nat}
-    (hA : AllocR R L K g sp st zp zc s.mem M L1 b1 ℓ m p r n) {zzp bp X : Nat}
+    (hA : AllocR R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem M L1 b1 ℓ m p r n) {zzp bp X : Nat}
     (htz : TZ R L s.mem M L1 st sp zzp bp lm X) {c : Nat} (hc0 : 0 < c) (hc : 8 * c ≤ r) (hc40 : c < 2 ^ 40) :
     UB R L K g sp st zp zc m (L1 ++ [(p, p + r)]) zzp bp lm p c := by
   have hin : InRanges p (8 * c) R.rt := hA.rin.sub (Nat.le_refl _) (by omega)

@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.P2Q
 import FvModexp.Proofs.Arm64.Exp.P2W4Pre
 import FvModexp.Proofs.Arm64.Exp.NHyp
 
@@ -49,8 +50,9 @@ set_option maxHeartbeats 16000000 in
 theorem epre_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {stk cst : Nat}
     {zp zl zc st xp xl xc yp yl lm : Nat} {s : State}
     (hP : PreC R b L stk cst zp zl zc st xp xl yp yl lm s)
-    (hk1 : 5056 ≤ stk) (hk2 : stk ≤ 2 ^ 20 + 752) (hzp : zp < 2 ^ 64) (hxc : xc < 2 ^ 64) :
-    EPre R b L (stk - 752) (s.regs 28).toNat (s.sp.toNat - 752) st zp zc xp xl xc yp yl lm s := by
+    (hk1 : 5056 ≤ stk) (hk2 : stk ≤ 2 ^ 20 + 752) (hzp : zp < 2 ^ 64) (hxc : xc < 2 ^ 64)
+    (hr : stkR (HW (stLen s.mem st) lm) s.mem st ≤ b) :
+    EPre R (b - stkR (HW (stLen s.mem st) lm) s.mem st) L (stk - 752) (s.regs 28).toNat (s.sp.toNat - 752) st zp zc xp xl xc yp yl lm s := by
   obtain ⟨⟨hce, hsv, hgl, hro, hwT, hzl, hwo, hins, hsok, hstw, hstg, harr, hcap0, hneed, hwba, hstwb, hstf, hzs,
     hstgA, hfgA, hcst, hinv⟩, hX, hY, hlm2, hlm, hst0, op, hone, hsa⟩ := hP
   obtain ⟨hgd, hsok', hd, hwrt, hgw, hgrt, hLs, -⟩ := hce
@@ -77,7 +79,7 @@ theorem epre_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {stk cst : Nat}
     hy.2.2.1, hyl0, by have := hy.2.1; omega, oe_ofC hS (by omega) hle hx.1 hx.2.2.2.1 hx.2.2.2.2.1, hx.1.2.1,
     hx.1.2.2.1, hx.2.2.1, by have := hx.2.1; omega, by have := hx.1.2.2.1; omega, hxc, hzp, hwo1, fun hz => ?_, ?_,
     hsok, ap_wC hstw (by omega) hle, hstg, fun hc => ⟨ap_wC (harr hc).1 (by omega) hle, (harr hc).2⟩, hwba, hstwb,
-    hstf, by omega, by omega, ⟨op, ?_, hsa⟩, hinv⟩
+    hstf, by omega, by omega, ⟨op, ?_, hsa⟩, P2Q.inv_eff hinv hr⟩
   · simp only [outside_cons] at hgw ⊢
     refine ⟨?_, hgrt⟩
     unfold Apart at hgw; omega

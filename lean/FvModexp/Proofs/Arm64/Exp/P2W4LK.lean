@@ -20,7 +20,7 @@ open P2W2 (grE mcE wbE wTy grE_eq mcE_eq wbE_eq)
 
 /-- the hypotheses of `KL` at one state -/
 structure KS (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl lm ret : Nat) (s : State)
-    (r29 : BitVec 64) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat) (zzp bp kk cst FV : Nat)
+    (r29 : BitVec 64) (sqC : Nat → Nat) (mlC : Nat → Nat → Nat) (zzp bp kk cst FV : Nat)
     (S : State) (M : Memory) (L1 : List (Nat × Nat)) (b1 i c yi Z pA lA cA pB lB cB : Nat) (u : Bool) : Prop where
   epc : S.pc = BitVec.ofNat 64 LT
   esp : S.sp = BitVec.ofNat 64 sp
@@ -124,13 +124,13 @@ end
 
 section
 variable {impl : List Segment} {ret0 : BitVec 64} {Q : State → Prop} {R : RtInv} {b : Nat} {L : List (Nat × Nat)}
-    {K g sp st zp zc xp xl xc yp yl lm ret : Nat} {s : State} {r29 : BitVec 64} {sqC : Nat → Nat → Nat}
-    {mlC : Nat → Nat → Nat → Nat} {zzp bp kk cst FV : Nat}
+    {K g sp st zp zc xp xl xc yp yl lm ret : Nat} {s : State} {r29 : BitVec 64} {sqC : Nat → Nat}
+    {mlC : Nat → Nat → Nat} {zzp bp kk cst FV : Nat}
 
 /-- the continuation at the loop test for fixed `i`, `c` -/
 @[reducible] def KI (impl : List Segment) (ret0 : BitVec 64) (Q : State → Prop) (R : RtInv) (b : Nat)
     (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl lm ret : Nat) (s : State) (r29 : BitVec 64)
-    (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat) (zzp bp kk cst FV i c : Nat) : Prop :=
+    (sqC : Nat → Nat) (mlC : Nat → Nat → Nat) (zzp bp kk cst FV i c : Nat) : Prop :=
   ∀ (S : State) (M : Memory) (L1 : List (Nat × Nat)) (b1 yi Z pA lA cA pB lB cB : Nat) (u : Bool),
     KS R b L K g sp st zp zc xp xl xc yp yl lm ret s r29 sqC mlC zzp bp kk cst FV S M L1 b1 i c yi Z pA lA cA pB lB cB u →
     ReachesRet (LibW.program.link impl) ret0 S Q

@@ -12,7 +12,7 @@ set_option autoImplicit false
 `sumO`: a `Summary` on `LibW` at `fnE` for an ODD base `X` (no recursion): `entP`, then `logM = 1` → `oneP`;
 otherwise `winR` → `winCall` with `P2W2.fullC` / `P2W4.fullC` (callee window `[SP - 112 - (stk - 112), SP - 16)`).
 Generic in the window top `A` (`72 ≤ A`): the recursive call of the even case uses `A = 96`, `NHyp.P2Hyp` `A = 112`.
-Budget `costO (P2W2.cost sqC mlC) (P2W4.cost sqC mlC) (stLen …) yl lm`.
+Budget `costO (P2W2.costB sqC mlC) (P2W4.costB sqC mlC) (stLen …) yl lm`.
 -/
 
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvModexp
@@ -22,8 +22,8 @@ namespace FvModexp.Arm64.P2D
 open FvModexp.Arm64.ExpHyp FvModexp.Arm64.EvenHyp
 
 /-- the odd-base budget -/
-@[reducible] def cO (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat) (ℓ yl lm : Nat) : Nat :=
-  costO (P2W2.cost sqC mlC) (P2W4.cost sqC mlC) ℓ yl lm
+@[reducible] def cO (sqC : Nat → Nat) (mlC : Nat → Nat → Nat) (ℓ yl lm : Nat) : Nat :=
+  costO (P2W2.costB sqC mlC) (P2W4.costB sqC mlC) ℓ yl lm
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in
@@ -38,11 +38,11 @@ theorem sumO {impl : List Segment} (hap : ImplApart Extracted.program impl) {R :
     (hno : NewobjectLiveContract (LibW.program.link impl) P2W2.noE 4096 R)
     (hwb : WbLiveContract (LibW.program.link impl) P2W2.wbE 4096 R 2)
     {kcP : Nat} (hkc : 4608 ≤ kcP)
-    {stkN aboveN : Nat} (hsn : StackNat.HypL impl R ns stkN aboveN) (hkN : stkN ≤ kcP) (haN : aboveN ≤ 88)
-    {stkS aboveS : Nat} {sqC : Nat → Nat → Nat} (hsq : SqrHypX impl R ns stkS aboveS sqC)
-    (hkS : stkS ≤ kcP) (haS : aboveS ≤ 88) (hsm : ∀ ℓ a a', a ≤ a' → sqC ℓ a ≤ sqC ℓ a')
-    {stkM aboveM : Nat} {mlC : Nat → Nat → Nat → Nat} (hmu : MulHypX impl R ns stkM aboveM mlC)
-    (hkM : stkM ≤ kcP) (haM : aboveM ≤ 88) (hmm : ∀ ℓ a a' c c', a ≤ a' → c ≤ c' → mlC ℓ a c ≤ mlC ℓ a' c')
+    {stkN aboveN : Nat} (hsn : StackNatX.HypQ impl R ns stkN aboveN) (hkN : stkN ≤ kcP) (haN : aboveN ≤ 88)
+    {stkS aboveS : Nat} {sqC : Nat → Nat} (hsq : SqrHypQ impl R ns stkS aboveS sqC)
+    (hkS : stkS ≤ kcP) (haS : aboveS ≤ 88) (hsm : ∀ a a', a ≤ a' → sqC a ≤ sqC a')
+    {stkM aboveM : Nat} {mlC : Nat → Nat → Nat} (hmu : MulHypQ impl R ns stkM aboveM mlC)
+    (hkM : stkM ≤ kcP) (haM : aboveM ≤ 88) (hmm : ∀ a a' c c', a ≤ a' → c ≤ c' → mlC a c ≤ mlC a' c')
     {stkT aboveT : Nat} (htr : Trunc.Hyp2 impl R ns stkT aboveT) (hkT : stkT ≤ kcP) (haT : aboveT ≤ 88)
     (b : Nat) (L : List (Nat × Nat)) (stk A : Nat) (hk1 : 1072 + kcP ≤ stk) (hk2 : stk ≤ 2 ^ 20 + 576)
     (hA : 72 ≤ A) (zp zl zc st xp xl xc yp yl yc lm : Nat) (hzp : zp < 2 ^ 64) (hxp : xp < 2 ^ 64)
@@ -89,12 +89,12 @@ theorem sumO {impl : List Segment} (hap : ImplApart Extracted.program impl) {R :
         s1.regs 9 = BitVec.ofNat 64 yc ∧ s1.regs 10 = BitVec.ofNat 64 lm ∧ P s1 :=
       fun _ ⟨⟨a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10⟩, h⟩ => ⟨a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, h⟩
     rcases hc with ⟨rfl, -⟩ | ⟨rfl, -⟩
-    · exact winCall (cW := fun ℓ => P2W2.cost sqC mlC ℓ yl lm) hP (by omega) hA hXo (by omega)
+    · exact winCall (cW := fun ℓ => P2W2.costB sqC mlC ℓ yl lm) hP (by omega) hA hXo (by omega)
         (Nat.le_trans (Nat.le_max_left _ _) (Nat.le_add_right _ _)) hr4 hr48
         (Summary.mono (P2W2.fullC hap hns hnf2 hnfP hgr hmc hmv hmk hno hwb hkc hsn hkN haN hsq hkS haS hsm hmu hkM haM hmm
           htr hkT haT b L (stk - 112) (by omega) (by omega) zp zl zc st xp xl xc yp yl yc lm hzp hxc) reg (fun _ _ _ h => h))
         (Or.inl rfl) S1 h1pc (h1sp.trans esp) hR1 (h18.trans e18) (h128.trans e28) h130 (h1m.trans hm)
-    · exact winCall (cW := fun ℓ => P2W4.cost sqC mlC ℓ yl lm) hP (by omega) hA hXo (by omega)
+    · exact winCall (cW := fun ℓ => P2W4.costB sqC mlC ℓ yl lm) hP (by omega) hA hXo (by omega)
         (Nat.le_trans (Nat.le_max_right _ _) (Nat.le_add_right _ _)) hr4 hr48
         (Summary.mono (P2W4.fullC hap hns hnf4 hnfP hgr hmc hmv hmk hno hwb hkc hsn hkN haN hsq hkS haS hsm hmu hkM haM hmm
           htr hkT haT b L (stk - 112) (by omega) (by omega) zp zl zc st xp xl xc yp yl yc lm hzp hxc) reg (fun _ _ _ h => h))

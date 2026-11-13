@@ -34,7 +34,7 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
 /-- **the loop invariant after the first copy** (see the module doc) -/
 theorem li_first (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {M : Memory} {L1 : List (Nat × Nat)} {b1 : Nat}
-    (hw : WC R L K g sp st zp zc s.mem M L1 b1 (lvlL (stLen s.mem st) lm)) {ret : Nat}
+    (hw : WC R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem M L1 b1 (lvlL (stLen s.mem st) lm)) {ret : Nat}
     (hsl : ESl M sp st (s.regs 29) ret zp zc xp xl xc yp yl lm (stLen s.mem st)) {zzp bp : Nat}
     (htz : TZ R L s.mem M L1 st sp zzp bp lm (natVal s.mem xp xl)) {dp dc n d kk i : Nat}
     (hub : UB R L K g sp st zp zc M L1 zzp bp lm dp dc) (hnd : n ≤ dc) (hn1 : 0 < n) (hd : d < 16) (hZo : Exp.p2Pow lm (natVal s.mem xp xl) d % 2 = 1)
@@ -43,7 +43,8 @@ theorem li_first (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {M : Memo
     (hF1 : MemFrame M M1 [(sp + 136, sp + 144), (sp + 152, sp + 160), (sp + 296, sp + 304)])
     (hrg1 : M1.regions = M.regions)
     (hF2 : MemFrame M1 m (R.rt ++ [(sp - 4096, sp - 8), (sp + 8, sp + 32)] ++ [(dp, dp + 8 * n)]))
-    (hLF2 : LiveFrame M1 m L1 [(dp, dp + 8 * n)]) (hinv2 : R.inv b1 L1 g (view R.rt L1 m))
+    (hLF2 : LiveFrame M1 m L1 [(dp, dp + 8 * n)])
+    (hinv2 : R.inv (b1 + stkR (HW (stLen s.mem st) lm) M1 st) L1 g (view R.rt L1 m))
     (hcp : Mem.Copied M1 m dp (bp + 8 * (d * W lm)) (8 * n)) (hrg2 : m.regions = M1.regions)
     (hF3 : MemFrame m M' [(sp + 200, sp + 208), (sp + 208, sp + 216)]) (hrg3 : M'.regions = m.regions)
     (r200 : M'.readLE (sp + 200) 8 = (BitVec.ofNat 64 kk - 2#64).toNat) (r208 : M'.readLE (sp + 208) 8 = i) :

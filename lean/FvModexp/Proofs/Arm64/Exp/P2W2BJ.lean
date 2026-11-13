@@ -1,6 +1,8 @@
 import FvModexp.Proofs.Arm64.Exp.P2W2BMu
 import FvModexp.Proofs.Arm64.Exp.P2W2BTr
 
+set_option autoImplicit false
+
 /-!
 # `expNNPowerOfTwoWindowSize2` (arm64): the loop body's join points `J1 … J6` (agent infra)
 
@@ -19,14 +21,14 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvMod
 namespace FvModexp.Arm64.P2W2
 
 /-- the budget part common to the body: what the loop needs after this body -/
-@[reducible] def bodyB (b : Nat) (s : State) (st lm : Nat) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat)
+@[reducible] def bodyB (b : Nat) (s : State) (st lm : Nat) (sqC : Nat → Nat) (mlC : Nat → Nat → Nat)
     (i c : Nat) : Nat :=
   b + (c + 32 * i) * bc sqC mlC (lvlL (stLen s.mem st) lm) lm + P2Pre.tC lm
 
 /-- the `sqr` / `mul` bounds at the loop level -/
-@[reducible] def SQ (s : State) (st lm : Nat) (sqC : Nat → Nat → Nat) : Nat := sqC (lvlL (stLen s.mem st) lm) (W lm)
-@[reducible] def ML (s : State) (st lm : Nat) (mlC : Nat → Nat → Nat → Nat) : Nat :=
-  mlC (lvlL (stLen s.mem st) lm) (W lm) (W lm)
+@[reducible] def SQ (s : State) (st lm : Nat) (sqC : Nat → Nat) : Nat := sqC (W lm)
+@[reducible] def ML (s : State) (st lm : Nat) (mlC : Nat → Nat → Nat) : Nat :=
+  mlC (W lm) (W lm)
 
 /-- the window `d = yi >> 62` -/
 @[reducible] def dOf (yi : Nat) : Nat := yi / 2 ^ 62
@@ -40,7 +42,7 @@ theorem Z3_eq (lm X Z yi : Nat) : Z3 lm X Z yi = stp lm X Z (yi / 2 ^ (64 - 2)) 
 
 /-- the common facts at every join point of the body -/
 structure JC (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl lm ret : Nat) (s : State)
-    (r29 : BitVec 64) (zzp bp kk cst FV : Nat) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat)
+    (r29 : BitVec 64) (zzp bp kk cst FV : Nat) (sqC : Nat → Nat) (mlC : Nat → Nat → Nat)
     (i c yi Z : Nat) (u : Bool) (S : State) (M : Memory) (L1 : List (Nat × Nat)) (b1 : Nat) : Prop where
   esp : S.sp = BitVec.ofNat 64 sp
   e28 : S.regs 28 = BitVec.ofNat 64 g
@@ -61,7 +63,7 @@ structure JC (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp x
 
 /-- `JC` through a step keeping the slots `[sp + 88, sp + 560)` (a callee) -/
 theorem JC.call {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc yp yl lm ret : Nat}
-    {s : State} {r29 : BitVec 64} {zzp bp kk cst FV : Nat} {sqC : Nat → Nat → Nat} {mlC : Nat → Nat → Nat → Nat}
+    {s : State} {r29 : BitVec 64} {zzp bp kk cst FV : Nat} {sqC : Nat → Nat} {mlC : Nat → Nat → Nat}
     {i c yi Z : Nat} {u : Bool} {S : State} {M : Memory} {L1 : List (Nat × Nat)} {b1 : Nat}
     (h : JC R b L K g sp st zp zc xp xl xc yp yl lm ret s r29 zzp bp kk cst FV sqC mlC i c yi Z u S M L1 b1)
     {S' : State} {M' : Memory} {L2 : List (Nat × Nat)} {b2 : Nat}
@@ -159,7 +161,7 @@ theorem outer_succ (step : Nat → Nat → Nat) (y K i yi c z : Nat) :
 /-- after `zz = zz.sqr(z)` (ra `1796288`): result `(p1, l1, c1)` (class `!u`, `Z²`); `A = (pA, lA, cA)` (class `u`,
 slots `280/112/224`) -/
 structure J1 (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl lm ret : Nat) (s : State)
-    (r29 : BitVec 64) (zzp bp kk cst FV : Nat) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat)
+    (r29 : BitVec 64) (zzp bp kk cst FV : Nat) (sqC : Nat → Nat) (mlC : Nat → Nat → Nat)
     (i c yi Z : Nat) (u : Bool) (S : State) (M : Memory) (L1 : List (Nat × Nat)) (b1 pA lA cA p1 l1 c1 : Nat) :
     Prop where
   jc : JC R b L K g sp st zp zc xp xl xc yp yl lm ret s r29 zzp bp kk cst FV sqC mlC i c yi Z u S M L1 b1
@@ -180,7 +182,7 @@ structure J1 (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp x
 
 /-- after the first `trunc` (ra `1796308`): `(p1, l1, c1)` holds `Z1`, `l1 ≤ w` -/
 structure J2 (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl lm ret : Nat) (s : State)
-    (r29 : BitVec 64) (zzp bp kk cst FV : Nat) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat)
+    (r29 : BitVec 64) (zzp bp kk cst FV : Nat) (sqC : Nat → Nat) (mlC : Nat → Nat → Nat)
     (i c yi Z : Nat) (u : Bool) (S : State) (M : Memory) (L1 : List (Nat × Nat)) (b1 pA lA cA p1 l1 c1 : Nat) :
     Prop where
   jc : JC R b L K g sp st zp zc xp xl xc yp yl lm ret s r29 zzp bp kk cst FV sqC mlC i c yi Z u S M L1 b1
@@ -202,7 +204,7 @@ structure J2 (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp x
 /-- after the second `sqr` (ra `1796352`): result `(p2, l2, c2)` (class `u`, `Z1²`); `Z1` in `(p1, l1, c1)` (class
 `!u`, slots `440/232/120`) -/
 structure J3 (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl lm ret : Nat) (s : State)
-    (r29 : BitVec 64) (zzp bp kk cst FV : Nat) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat)
+    (r29 : BitVec 64) (zzp bp kk cst FV : Nat) (sqC : Nat → Nat) (mlC : Nat → Nat → Nat)
     (i c yi Z : Nat) (u : Bool) (S : State) (M : Memory) (L1 : List (Nat × Nat)) (b1 p1 l1 c1 p2 l2 c2 : Nat) :
     Prop where
   jc : JC R b L K g sp st zp zc xp xl xc yp yl lm ret s r29 zzp bp kk cst FV sqC mlC i c yi Z u S M L1 b1
@@ -223,7 +225,7 @@ structure J3 (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp x
 
 /-- after the second `trunc` (ra `1796372`): `(p2, l2, c2)` holds `Z2`, `l2 ≤ w` -/
 structure J4 (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl lm ret : Nat) (s : State)
-    (r29 : BitVec 64) (zzp bp kk cst FV : Nat) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat)
+    (r29 : BitVec 64) (zzp bp kk cst FV : Nat) (sqC : Nat → Nat) (mlC : Nat → Nat → Nat)
     (i c yi Z : Nat) (u : Bool) (S : State) (M : Memory) (L1 : List (Nat × Nat)) (b1 p1 l1 c1 p2 l2 c2 : Nat) :
     Prop where
   jc : JC R b L K g sp st zp zc xp xl xc yp yl lm ret s r29 zzp bp kk cst FV sqC mlC i c yi Z u S M L1 b1
@@ -245,7 +247,7 @@ structure J4 (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp x
 /-- after the `mul` (ra `1796460`): result `(p3, l3, c3)` (class `!u`, `Z2·powers[d]`); `Z2` in `(p2, l2, c2)`
 (class `u`, slots `280/112/216`) -/
 structure J5 (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl lm ret : Nat) (s : State)
-    (r29 : BitVec 64) (zzp bp kk cst FV : Nat) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat)
+    (r29 : BitVec 64) (zzp bp kk cst FV : Nat) (sqC : Nat → Nat) (mlC : Nat → Nat → Nat)
     (i c yi Z : Nat) (u : Bool) (S : State) (M : Memory) (L1 : List (Nat × Nat)) (b1 p2 l2 c2 p3 l3 c3 : Nat) :
     Prop where
   jc : JC R b L K g sp st zp zc xp xl xc yp yl lm ret s r29 zzp bp kk cst FV sqC mlC i c yi Z u S M L1 b1
@@ -266,7 +268,7 @@ structure J5 (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp x
 
 /-- after the third `trunc` (ra `1796480`): `(p3, l3, c3)` holds `Z3 = stp Z d`, `l3 ≤ w` -/
 structure J6 (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl lm ret : Nat) (s : State)
-    (r29 : BitVec 64) (zzp bp kk cst FV : Nat) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat)
+    (r29 : BitVec 64) (zzp bp kk cst FV : Nat) (sqC : Nat → Nat) (mlC : Nat → Nat → Nat)
     (i c yi Z : Nat) (u : Bool) (S : State) (M : Memory) (L1 : List (Nat × Nat)) (b1 p2 l2 c2 p3 l3 c3 : Nat) :
     Prop where
   jc : JC R b L K g sp st zp zc xp xl xc yp yl lm ret s r29 zzp bp kk cst FV sqC mlC i c yi Z u S M L1 b1

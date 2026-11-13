@@ -23,12 +23,12 @@ open FvModexp.Arm64.EvenHyp
 
 /-- the continuation after the table -/
 @[reducible] def KT (impl : List Segment) (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc : Nat) (m0 M : Memory)
-    (L2 : List (Nat × Nat)) (kcP : Nat) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat) (b2 ℓ lm X : Nat)
+    (L2 : List (Nat × Nat)) (kcP : Nat) (sqC : Nat → Nat) (mlC : Nat → Nat → Nat) (b2 ℓ lm X : Nat)
     (r18 r29 : BitVec 64) (ret0 : BitVec 64) (Q : State → Prop) : Prop :=
   ∀ (s' : State) (L3 : List (Nat × Nat)) (b3 bp : Nat),
     s'.pc = BitVec.ofNat 64 1793424 → s'.sp = BitVec.ofNat 64 sp → s'.regs 28 = BitVec.ofNat 64 g →
     s'.regs 29 = r29 → s'.regs 18 = r18 →
-    WC R L K g sp st zp zc m0 s'.mem L3 b3 (ℓ + StackNat.rnd (P2Pre.NB 16 lm)) →
+    WC R (HW (stLen m0 st) lm) L K g sp st zp zc m0 s'.mem L3 b3 (ℓ + StackNat.rnd (P2Pre.NB 16 lm)) →
     b2 - P2Pre.cost sqC mlC ℓ 16 lm ≤ b3 →
     (∀ j, j < 16 → P2Pre.PwD s'.mem (sp + 320) bp lm X j) →
     Scr R L L3 m0 s'.mem st bp (P2Pre.NB 16 lm) → P2Pre.BU s'.mem st bp (8 * P2Pre.NB 16 lm) →
@@ -47,16 +47,16 @@ theorem segPC {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns
     (hmv : MemmoveLive (LibW.program.link impl) (cA "runtime.memmove") 4096 R)
     (hwb : WbLiveContract (LibW.program.link impl) wbE 4096 R 2)
     {kcP : Nat} (hkc : 4608 ≤ kcP)
-    {stkN aboveN : Nat} (hsn : StackNat.HypL impl R ns stkN aboveN) (hkN : stkN ≤ kcP) (haN : aboveN ≤ 88)
-    {stkS aboveS : Nat} {sqC : Nat → Nat → Nat} (hsq : SqrHypX impl R ns stkS aboveS sqC)
-    (hkS : stkS ≤ kcP) (haS : aboveS ≤ 88) (hsm : ∀ ℓ a a', a ≤ a' → sqC ℓ a ≤ sqC ℓ a')
-    {stkM aboveM : Nat} {mlC : Nat → Nat → Nat → Nat} (hmu : MulHypX impl R ns stkM aboveM mlC)
-    (hkM : stkM ≤ kcP) (haM : aboveM ≤ 88) (hmm : ∀ ℓ a a' c c', a ≤ a' → c ≤ c' → mlC ℓ a c ≤ mlC ℓ a' c')
+    {stkN aboveN : Nat} (hsn : StackNatX.HypQ impl R ns stkN aboveN) (hkN : stkN ≤ kcP) (haN : aboveN ≤ 88)
+    {stkS aboveS : Nat} {sqC : Nat → Nat} (hsq : SqrHypQ impl R ns stkS aboveS sqC)
+    (hkS : stkS ≤ kcP) (haS : aboveS ≤ 88) (hsm : ∀ a a', a ≤ a' → sqC a ≤ sqC a')
+    {stkM aboveM : Nat} {mlC : Nat → Nat → Nat} (hmu : MulHypQ impl R ns stkM aboveM mlC)
+    (hkM : stkM ≤ kcP) (haM : aboveM ≤ 88) (hmm : ∀ a a' c c', a ≤ a' → c ≤ c' → mlC a c ≤ mlC a' c')
     {stkT aboveT : Nat} (htr : Trunc.Hyp2 impl R ns stkT aboveT) (hkT : stkT ≤ kcP) (haT : aboveT ≤ 88)
     (ret0 : BitVec 64) (Q : State → Prop)
     (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {M : Memory} {L2 : List (Nat × Nat)} {b2 ℓ : Nat}
-    (h : WC R L K g sp st zp zc s.mem M L2 b2 ℓ) (hkK : 208 + kcP ≤ K) (hℓ : ℓ + 2 ^ 12 ≤ 2 ^ 16)
-    (hcost : P2Pre.cost sqC mlC ℓ 16 lm ≤ b2)
+    (h : WC R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem M L2 b2 ℓ) (hkK : 208 + kcP ≤ K) (hℓ : ℓ + 2 ^ 12 ≤ 2 ^ 16)
+    (hcost : P2Pre.cost sqC mlC ℓ 16 lm ≤ b2) (hℓZ : ℓ = stLen s.mem st + 20 * W lm + StackNat.rnd (2 * W lm))
     (S2 : State) (hpc : S2.pc = BitVec.ofNat 64 1790928) (hsp : S2.sp = BitVec.ofNat 64 sp)
     (h28 : S2.regs 28 = BitVec.ofNat 64 g) (hm : S2.mem = M)
     (h0 : S2.regs 0 = BitVec.ofNat 64 st) (h1 : S2.regs 1 = BitVec.ofNat 64 (sp + 320)) (h2 : S2.regs 2 = 16#64)
@@ -66,7 +66,7 @@ theorem segPC {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns
     (KT' : KT impl R L K g sp st zp zc s.mem M L2 kcP sqC mlC b2 ℓ lm (natVal s.mem xp xl) (S2.regs 18) (S2.regs 29)
       ret0 Q) :
     ReachesRet (LibW.program.link impl) ret0 S2 Q := by
-  have hpre := ppre hP h (kcP := kcP) (sqC := sqC) (mlC := mlC) hkK hℓ hsp h28 hm h30 hcost
+  have hpre := ppre hP h (kcP := kcP) (sqC := sqC) (mlC := mlC) hkK hℓ hsp h28 hm h30 hcost hℓZ
   have hce := h.cenv hP
   have hsN : S2.sp.toNat = sp := by rw [hsp, BitVec.toNat_ofNat]; have := hce.2.2.1; omega
   have hgN : (S2.regs 28).toNat = g := by rw [h28, BitVec.toNat_ofNat]; have := hce.2.2.2.2.1; omega
@@ -82,15 +82,17 @@ theorem segPC {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns
   refine ReachesRet.call_regions (P2Pre.full hap hns hnf hmv hwb hkc hsn hkN haN hsq hkS haS hsm hmu hkM haM hmm htr
     hkT haT b2 L2 st (sp + 320) 16 16 4 lm xp xl xc) hpc ⟨h0, h1, h2, h3, h4, h5, h6, h7, h8, hpre⟩
     fun s' hr ⟨⟨e1, e2, e3, e4⟩, hq⟩ hrg => ?_
-  obtain ⟨bp, hd, L3, b3, hx, hb, hinv, hscr, hsap, hsa, hF, hLF, hain, hbu⟩ := hq
+  obtain ⟨bp, hd, L3, b3', hx, hb', hinv', hscr, hsap, hsa, hF, hLF, hain, hbu⟩ := hq
   subst hm
-  rw [hgN] at hinv
-  rw [hlen] at hb hsa
+  rw [hgN] at hinv'
+  rw [hlen] at hb' hsa
+  obtain ⟨b3, hinv, hb⟩ := P2Q.effP hinv' hb'
+  rw [hℓZ] at hinv
   have hF' : MemFrame S2.mem s'.mem (R.rt ++ ([(sp - (208 + kcP), sp - 8), (sp + 8, sp + 80)] ++
       ([(sp + 320, sp + 320 + 24 * 16)] ++ stkWs S2.mem st))) := by
     have := hF; simp only [P2Pre.AW, P2Pre.LW, winA, P2Pre.K, P2Pre.A, hsN, ExpHyp.stWs] at this
     rwa [List.append_assoc] at this
-  have hw : WC R L K g sp st zp zc s.mem s'.mem L3 b3 (ℓ + StackNat.rnd (P2Pre.NB 16 lm)) := by
+  have hw : WC R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem s'.mem L3 b3 (ℓ + StackNat.rnd (P2Pre.NB 16 lm)) := by
     refine h.call hF' hLF hrg ?_ ?_ hx hinv hsa.1 hsa.2.1 (by omega) hsa.2.2 hain
     · intro a k o1 o2 o3 o4
       rw [outside_append, outside_append]

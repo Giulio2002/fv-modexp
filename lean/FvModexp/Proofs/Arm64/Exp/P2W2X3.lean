@@ -23,7 +23,7 @@ set_option maxRecDepth 20000 in
 /-- `BF` through a live allocation -/
 theorem BF.alloc (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {M : Memory} {L1 : List (Nat × Nat)}
     {b1 zzp bp : Nat} (h : BF R L K g sp st zp zc xp xl xc yp yl lm ret s M L1 b1 zzp bp) {m : Memory} {p r n : Nat}
-    (hA : AllocR R L K g sp st zp zc s.mem M L1 b1 (lvlL (stLen s.mem st) lm) m p r n) :
+    (hA : AllocR R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem M L1 b1 (lvlL (stLen s.mem st) lm) m p r n) :
     BF R L K g sp st zp zc xp xl xc yp yl lm ret s m (L1 ++ [(p, p + r)]) (b1 - r) zzp bp := by
   have hK := hP.1.2.2.2.2.2.2.2.1
   have hK1 := hP.1.2.2.2.2.2.2.2.2.1
@@ -47,7 +47,7 @@ set_option maxRecDepth 20000 in
 /-- after an exit allocation: the context, the fresh U buffer, the source and the window slots -/
 theorem xAft (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {M : Memory} {L1 : List (Nat × Nat)}
     {b1 zzp bp : Nat} (hB : BF R L K g sp st zp zc xp xl xc yp yl lm ret s M L1 b1 zzp bp) {m : Memory} {p c : Nat}
-    (hA : AllocR R L K g sp st zp zc s.mem M L1 b1 (lvlL (stLen s.mem st) lm) m p (blockSize (8 * c) true) (8 * c))
+    (hA : AllocR R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem M L1 b1 (lvlL (stLen s.mem st) lm) m p (blockSize (8 * c) true) (8 * c))
     (hc0 : 0 < c) (hc40 : c < 2 ^ 40) {n Z : Nat} (hsrc : NV M zzp n (2 * W lm) Z) :
     BF R L K g sp st zp zc xp xl xc yp yl lm ret s m (L1 ++ [(p, p + blockSize (8 * c) true)])
       (b1 - blockSize (8 * c) true) zzp bp ∧

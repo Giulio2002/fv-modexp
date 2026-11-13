@@ -48,8 +48,8 @@ structure UB (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc : Nat) (M : Me
   fun z d => Exp.iter (fun z => z * z % 2 ^ lm) 4 z * Exp.p2Pow lm X d % 2 ^ lm
 
 /-- one loop body's budget: four `sqr`s, one `mul`, five `trunc`s -/
-@[reducible] def bc (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat) (ℓ lm : Nat) : Nat :=
-  4 * sqC ℓ (W lm) + mlC ℓ (W lm) (W lm) + 5 * P2Pre.tC lm
+@[reducible] def bc (sqC : Nat → Nat) (mlC : Nat → Nat → Nat) (ℓ lm : Nat) : Nat :=
+  4 * sqC (W lm) + mlC (W lm) (W lm) + 5 * P2Pre.tC lm
 
 /-- the table (`powers[j]`, `j < 16`, headers at `sp + 320`, words in `buf`) and `zz`'s stack buffer -/
 structure TZ (R : RtInv) (L : List (Nat × Nat)) (m0 M : Memory) (L1 : List (Nat × Nat)) (st sp zzp bp lm X : Nat) :
@@ -93,7 +93,7 @@ theorem TZ.keep {R : RtInv} {L : List (Nat × Nat)} {m0 M M' : Memory} {L1 L2 : 
 /-- the memory facts at the loop test (see the module doc) -/
 structure LI (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl lm ret : Nat) (s : State)
     (M : Memory) (L1 : List (Nat × Nat)) (b1 zzp bp kk i : Nat) (u : Bool) (pA lA cA pB lB cB Z : Nat) : Prop where
-  wc : WC R L K g sp st zp zc s.mem M L1 b1 (lvlL (stLen s.mem st) lm)
+  wc : WC R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem M L1 b1 (lvlL (stLen s.mem st) lm)
   esl : ESl M sp st (s.regs 29) ret zp zc xp xl xc yp yl lm (stLen s.mem st)
   s200 : M.readLE (sp + 200) 8 = (BitVec.ofNat 64 kk - 2#64).toNat
   s208 : M.readLE (sp + 208) 8 = i
@@ -112,7 +112,7 @@ structure LI (R : RtInv) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl
 `b + (c + 32 i)·bc + tC ≤ b1 + cst` and the model `outerLoop … i yi c Z = FV` reaches `Q` -/
 @[reducible] def KL (impl : List Segment) (ret0 : BitVec 64) (Q : State → Prop) (R : RtInv) (b : Nat)
     (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl lm ret : Nat) (s : State) (r29 : BitVec 64)
-    (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat) (zzp bp kk cst FV : Nat) : Prop :=
+    (sqC : Nat → Nat) (mlC : Nat → Nat → Nat) (zzp bp kk cst FV : Nat) : Prop :=
   ∀ (S : State) (M : Memory) (L1 : List (Nat × Nat)) (b1 i c yi Z pA lA cA pB lB cB : Nat) (u : Bool),
     S.pc = BitVec.ofNat 64 LT → S.sp = BitVec.ofNat 64 sp → S.regs 28 = BitVec.ofNat 64 g → S.regs 29 = r29 →
     S.regs 18 = s.regs 18 → S.mem = M →
