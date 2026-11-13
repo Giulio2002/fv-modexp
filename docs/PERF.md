@@ -1676,3 +1676,6 @@ SubMod2NRow 12 s.
   (first draft hung > 5 min: a fallback `decide | rfl` on a goal with a wrong return-address constant — fixed constant),
   DivMStk 3 s, DivMGet 8 s. TIGHT COSTS edit set (arm64): ModFun 108 s / 5.7 GB, IExpP 65 s, BudEvenQ 41 s / 5.4 GB,
   RunSucc 3 s / 4.7 GB.
+* Dev (amd64, top s41, load ~70): NatQ/DivMJoin 24 s / 2.8 GB, NatQ/DivMNew 6 s / 2.4 GB, NatQ/DivMLPre 116 s / 6.0 GB
+  (one `unfold DivLarge.Pre` + 34-conjunct refine; arm64 twin is the same shape — trim candidate: split the stack/apart
+  conjuncts into a small lemma if the DivM row gets tight).
