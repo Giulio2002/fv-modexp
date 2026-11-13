@@ -1,4 +1,5 @@
-import FvModexp.Proofs.Arm64.Top.RunOkRowM
+import FvModexp.Proofs.Arm64.Top.RunModC
+import FvModexp.Proofs.Arm64.Top.RunOkRow
 import FvModexp.Proofs.Arm64.Exp.IExpCl
 import FvModexp.Proofs.Arm64.Nat.DivCG
 import FvModexp.Proofs.Common.NCostU
@@ -10,8 +11,9 @@ set_option autoImplicit false
 
 `correctness_okC` = `Run.correctness_ok` (`ensOkLib`: Run's own code, `(*Int).Bytes` = `IntBytes.bytesSpec_at`) with
 * `(*Int).Mod` (`hM`) = `modSpecM_C` (divmc's `IMod.ens` + `IMod.bud`, asm's `NatDiv.ensMC`);
-* `(*Int).exp` (`hE`) = `expC` below = expmc's `IExp.ensCl` composition (IExpCl.lean) with
-  - `nat.expNNSlow`'s `div` premise `hdv` discharged by asm's `NatDiv.ensCLG` (`ExpSlow.DivHypLG`, closed),
+* `(*Int).exp` (`hE`) = `expC` below = expmc's `IExp.ensCl` body (IExpCl.lean: `IExp.dhyps` with every callee proved)
+  EXCEPT the cost-dominating bounds (ensCl's `hNB`/`hNC` are monotonicity of `NBudE`/`NCost` in the modulus length,
+  FALSE per Common/NCostU — so ensCl itself cannot be applied):
   - `nat.expNNEven`'s dominating cost bounds `bU`/`cU` := `Exp.supU` of `NBudE`/`NCost` (expmc's `Common/NCostU`:
     `NBudE`/`NCost` are NOT monotone in the modulus length, so `IExp.ensCl`'s `hNB`/`hNC` with `bU := NBudE` are not
     provable; `Exp.dom` discharges the `supU` form for every function),
@@ -71,8 +73,6 @@ theorem need_bounds : ∀ xl yl n lm, xl ≤ 128 → yl ≤ 128 → 0 < n → n 
     if_pos (And.intro hx hn)]
   omega
 
-theorem libW_fn : LibDiv.names.contains ExpSlow.fn = false := by decide
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- **`(*Int).exp`** (arm64) as `Run` calls it, every machine-code callee proved; premise `hbud : BudOK` (cost
@@ -89,11 +89,8 @@ theorem expC (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     (hput : PoolPutLive (Extracted.program.ofImpl impl) (cA "sync.(*Pool).Put") 4096 R Free.stkT StkSh)
     (hbud : BudOK) {stk above : Nat} (hK : 72944 ≤ stk) (hab : 48 ≤ above) :
     RunIface.ExpSpec impl R stk above := by
-  have hdv := NatDiv.ensCLG impl hap R hgr hmc hwb hmk hmv hmz
-  have hDN := IExp.dhyps hap hmk hgr hmc hmv hmz hno hwb hdv DivInst.ns_sub libW_fn (by decide) (by decide)
-    (K := 70720) (Nat.le_refl _)
-  have hD := IExp.dhyps hap hmk hgr hmc hmv hmz hno hwb hdv DivInst.ns_sub libW_fn (by decide) (by decide)
-    (K := 71312) (by decide)
+  have hDN := IExp.dhyps hap hmk hgr hmc hmv hmz hno hwb (K := 70720) (Nat.le_refl _)
+  have hD := IExp.dhyps hap hmk hgr hmc hmv hmz hno hwb (K := 71312) (by decide)
   have hRem : NHyp.RemHyp impl R LibRem.names 41712 112 NatRem.need cR :=
     NatRem.ensC impl hap R hgr hmc hwb hmk hmv hmz
   have hNE : EvenHyp.ExpNNHypNE impl R 70720 cF NatRem.need cR ExpSlow.need P2D.needP cS cP :=
