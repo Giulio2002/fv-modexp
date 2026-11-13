@@ -64,7 +64,7 @@ def Ctx (R : RtInv) (L : List (Nat × Nat)) (g fs sp K n mp mc Mv xp Xv yp ylen 
   M.readLE (sp + 0x3a8) 8 = mp ∧ M.readLE (sp + 0x3b0) 8 = n ∧ M.readLE (sp + 0x3b8) 8 = mc ∧
   M.readLE (sp + 0x3d0) 8 = zc ∧ M.readLE (sp + 0x3c0) 8 = zp ∧ M.readLE (sp + 0x398) 8 = ylen ∧
   M.readLE (sp + 0x390) 8 = yp ∧ M.readLE (sp + 0x3d8) 8 = st ∧
-  M.readLE (sp + 0x370) 8 = xp ∧ M.readLE (sp + 0x138) 8 = n
+  M.readLE (sp + 0x370) 8 = xp ∧ M.readLE (sp + 0x138) 8 = n ∧ st ≠ 0
 
 /-- what a step `M → M'` (live set `L → L'`) of the `RR` section keeps -/
 def Keeps (R : RtInv) (L L' : List (Nat × Nat)) (g fs sp K st l0 : Nat) (ex : List (Nat × Nat)) (M M' : Memory) :
@@ -182,7 +182,7 @@ theorem Ctx.keep {R : RtInv} {L L' : List (Nat × Nat)}
     Ctx R L' g fs sp K n mp mc Mv xp Xv yp ylen Y yi zp zc st n0 l0 fbp r ex M' := by
   obtain ⟨he, hce, hK, hK20, hn, hn128, hmc, hmc', hm, hmO, hmv, hnm, hx, hxO, hxv, hy, hyO, hY, hyi, hyi0, hyl, hyl',
     hzc, hz, hfe, hsth, hstw, hsok, hn0, hl0, hcap, harr, hug, huf, huw, hsu, hstg, hstf, hgl, hgO, hstwb, hwba,
-    hcacc, hcrt, hcO, r3a8, r3b0, r3b8, r3d0, r3c0, r398, r390, r3d8, r370, r138⟩ := h
+    hcacc, hcrt, hcO, r3a8, r3b0, r3b8, r3d0, r3c0, r398, r390, r3d8, r370, r138, hstnz⟩ := h
   have hk0 := hk
   obtain ⟨hx', hacc, hce', hrd, rs, hgr, hfr, hsok', hlen, hst, hcp, -⟩ := hk0
   have hcap' : 0 < stCap M' st := hcp hcap
@@ -206,7 +206,7 @@ theorem Ctx.keep {R : RtInv} {L L' : List (Nat × Nat)}
     by rw [show sp + 0x3c0 = sp + 0x3c0 + 0 by omega, rc 0 (by omega)]; exact r3c0,
     by rw [rs 0x398 (by simp only [KeptJ]; omega)]; exact r398, by rw [rs 0x390 (by simp only [KeptJ]; omega)]; exact r390,
     by rw [show sp + 0x3d8 = sp + 0x3c0 + 24 by omega, rc 24 (by omega)]; exact r3d8,
-    by rw [rs 0x370 (by simp only [KeptJ]; omega)]; exact r370, by rw [rs 0x138 (by simp only [KeptJ]; omega)]; exact r138⟩
+    by rw [rs 0x370 (by simp only [KeptJ]; omega)]; exact r370, by rw [rs 0x138 (by simp only [KeptJ]; omega)]; exact r138, hstnz⟩
   · -- NatNorm
     rcases hnm with h | h
     · exact Or.inl h

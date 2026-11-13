@@ -64,7 +64,7 @@ theorem rrRetC {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.prog
           Mv Xv (M.readLE rp (8 * rl)) M2 s') := by
   obtain ⟨he, hce, hK, hK20, hn, hn128, hmc, hmc', hm, hmO, hmV, hnm, hx, hxO, hxv, hy, hyO, hY, hyi, hyi0, hyl, hyl',
     hzc, hz, hfe, hsth, hstw, hsok, hn0, hl0, hcap, harr, hug, huf, huw, hsu, hstg, hstf, hgl, hgO, hstwb, hwba,
-    hcacc, hcrt, hcO, r3a8, r3b0, r3b8, r3d0, r3c0, r398, r390, r3d8, r370, r138⟩ := hC
+    hcacc, hcrt, hcO, r3a8, r3b0, r3b8, r3d0, r3c0, r398, r390, r3d8, r370, r138, -⟩ := hC
   obtain ⟨hzz, hzz8, hzzm, hzzy, hzzx, hzzc, hzzs, hzzU, hzzz⟩ := hZ
   have hlc := hsok.2.2.2.2.2.1
   have hd : Extracted.program.DataLoaded M := hce.2.2.2.2.2.2.2.2.2.2.2.1

@@ -63,6 +63,11 @@ theorem toDiv {impl : List Amd64.Segment} {ret : W64} {Q : State → Prop}
   · simp only [Janus.Arm64.Memory.regions_writeLE]
   all_goals
     simp (disch := omega) only [readLE_writeLE_disjoint, readLE_writeLE_same]
-  all_goals exact Nat.mod_eq_of_lt (by assumption)
+  · exact Nat.mod_eq_of_lt b1
+  · exact Nat.mod_eq_of_lt b2
+  · exact Nat.mod_eq_of_lt b3
+  · exact Nat.mod_eq_of_lt b4
+  · exact Nat.mod_eq_of_lt b5
+  · exact Nat.mod_eq_of_lt b6
 
 end FvModexp.Amd64.W4Pro
