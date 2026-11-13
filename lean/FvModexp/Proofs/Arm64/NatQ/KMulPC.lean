@@ -45,8 +45,7 @@ theorem kmPC (impl : List Segment) {R : RtInv} {b : Nat} {L : List (Nat × Nat)}
     (hK : ∀ P : State, KPm R b H L W st zp zc xp n xc yp yc s lx0 lx1 ly0 ly1 P →
       ReachesRet (LibMul.program.link impl) ret P Q) :
     ReachesRet (LibMul.program.link impl) ret S Q := by
-  have hpre := hQ.pre
-  have F := hpre.F
+  have F := hQ.pre.F
   obtain ⟨-, ⟨hal, hb', ha, hw⟩, -⟩ := F.env
   have hW := F.hW; have hW' := kW_ge n
   have h40 := F.n40; have hyc := F.ycn; have hyc40 := F.yc40; have hn12 := F.n12

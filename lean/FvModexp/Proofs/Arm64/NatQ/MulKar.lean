@@ -46,6 +46,16 @@ theorem kar_keeps {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp x
   rw [eW, eL, eC]
   exact ⟨⟨hout.of_sub (by omega) (by omega), by omega, by omega⟩, by omega, by omega, by omega⟩
 
+private theorem kK {x a n : Nat} (h : 264 ≤ x)
+    (hx : (x - 264 ≤ a ∧ a + n ≤ x - 248) ∨ (x - 184 ≤ a ∧ a + n ≤ x + 88)) :
+    (x - 256 - 8 ≤ a ∧ a + n ≤ x - 256 + 8) ∨ (x - 256 + 72 ≤ a ∧ a + n ≤ x + 88) := by omega
+private theorem kOL {x d n : Nat} (h : 264 ≤ x) (h1 : 248 + n ≤ d) (h2 : d ≤ 264) :
+    (x - 264 ≤ x - d ∧ x - d + n ≤ x - 248) ∨ (x - 184 ≤ x - d ∧ x - d + n ≤ x + 88) := Or.inl ⟨by omega, by omega⟩
+private theorem kOM {x d n : Nat} (h : 264 ≤ x) (h1 : n ≤ d + 88) (h2 : d ≤ 184) :
+    (x - 264 ≤ x - d ∧ x - d + n ≤ x - 248) ∨ (x - 184 ≤ x - d ∧ x - d + n ≤ x + 88) := Or.inr ⟨by omega, by omega⟩
+private theorem kOH {x d n : Nat} (h1 : d + n ≤ 88) :
+    (x - 264 ≤ x + d ∧ x + d + n ≤ x - 248) ∨ (x - 184 ≤ x + d ∧ x + d + n ≤ x + 88) := Or.inr ⟨by omega, by omega⟩
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
@@ -75,6 +85,7 @@ theorem karEq2 (impl : List Segment) (R : RtInv) (n0 : Nat) (ih : ∀ a, IH impl
   have hpre := hJ.pre
   obtain ⟨⟨-, ⟨hal0, hb0, ha0, hw0⟩, -, hout0, -, -, -, -⟩, hmw, -, -, -, -, hstk, -⟩ := hpre
   have hW : 4608 ≤ W := Nat.le_trans (mulW_ge _ _) hmw
+  have h264 : 264 ≤ s.sp.toNat := Nat.le_trans (by decide) (Nat.le_trans hW hb0)
   have hkw := kW_call h40 (Nat.le_of_eq hmn.symm)
   have hkg := kW_ge yl.toNat
   have hsp' : S.sp.toNat = s.sp.toNat - 256 := by rw [hsp]; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
@@ -118,12 +129,12 @@ theorem karEq2 (impl : List Segment) (R : RtInv) (n0 : Nat) (ih : ∀ a, IH impl
         (by rw [hm]; exact eW) (by rw [hm]; exact eL) (by rw [hm]; exact eC) hpwin hMF
       have k1 : ∀ a n, (s.sp.toNat - 264 ≤ a ∧ a + n ≤ s.sp.toNat - 248) ∨
           (s.sp.toNat - 184 ≤ a ∧ a + n ≤ s.sp.toNat + 88) → s2.mem.readLE a n = S.mem.readLE a n := by
-        intro a n h; rw [hkp a n (by omega), hm]
+        intro a n h; rw [hkp a n (by rw [hsp1]; exact kK h264 h), hm]
       exact ⟨hk, by rw [hMF.accessible, hm, hF.accessible, hJ.F.accessible]; exact Memory.accessible_mono _ hw0 (by omega) (by omega),
-        by rw [k1 _ _ (by omega)]; exact mlr, by rw [k1 _ _ (by omega)]; exact mfp,
-        by rw [k1 _ _ (by omega)]; exact m144, by rw [k1 _ _ (by omega)]; exact m120,
-        by rw [k1 _ _ (by omega)]; exact m96, by rw [k1 _ _ (by omega)]; exact m94,
-        by rw [k1 _ _ (by omega)]; exact m304, by rw [k1 _ _ (by omega)]; exact m328, ⟨⟨s1, hm, hs, hg, hq'⟩⟩⟩)
+        by rw [k1 _ _ (kOL (d := 256) (n := 8) h264 (by decide) (by decide))]; exact mlr, by rw [k1 _ _ (kOL (d := 264) (n := 8) h264 (by decide) (by decide))]; exact mfp,
+        by rw [k1 _ _ (kOM (d := 112) (n := 8) h264 (by decide) (by decide))]; exact m144, by rw [k1 _ _ (kOM (d := 136) (n := 8) h264 (by decide) (by decide))]; exact m120,
+        by rw [k1 _ _ (kOM (d := 160) (n := 8) h264 (by decide) (by decide))]; exact m96, by rw [k1 _ _ (kOM (d := 162) (n := 1) h264 (by decide) (by decide))]; exact m94,
+        by rw [k1 _ _ (kOH (x := s.sp.toNat) (d := 48) (n := 8) (by decide))]; exact m304, by rw [k1 _ _ (kOH (x := s.sp.toNat) (d := 72) (n := 8) (by decide))]; exact m328, ⟨⟨s1, hm, hs, hg, hq'⟩⟩⟩)
   janus_run until [0x1bb03c] calls [hBS]
   rename_i ea er1 er2 er144 er120 er96 er94 er304 er328 hbox
   obtain ⟨⟨S1, hm1, hs1, hg1, hq⟩⟩ := hbox
