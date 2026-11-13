@@ -1,5 +1,6 @@
 import FvModexp.Proofs.Arm64.Exp.ExpWit
 import FvModexp.Proofs.Arm64.Exp.ModInv
+import FvModexp.Proofs.Arm64.Exp.ModInvQR
 import FvModexp.Proofs.Arm64.Exp.CalleeInstQ
 import FvModexp.Proofs.Arm64.Nat.NatSub0
 import FvModexp.Proofs.Arm64.Nat.NatAdd
@@ -30,7 +31,7 @@ set_option maxHeartbeats 64000000 in
 theorem nfS : nsQ.contains SubMod2N.fn = false := by decide
 
 /-- **`nat.modularInverseModPowerOfTwo`** (arm64): `z.modularInverseModPowerOfTwo(stk, x, n)` returns the inverse of
-odd `x` modulo `2^n` (`Exp.modularInverseModPowerOfTwo`, Q-form `ModInv.PreQ` / `PostQ`: cost
+odd `x` modulo `2^n` (`Exp.modularInverseModPowerOfTwo`, Q-form `ModInv.PreQR` (`PreQ` without the `X30` conjuncts, re-derived from the ABI) / `PostQ`: cost
 `ModInv.cost sqrCQ mulCQ xl n + stkR H s.mem st`), for every runtime meeting the live
 allocation / copy / clear / write-barrier contracts. -/
 theorem correctness (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
@@ -47,14 +48,14 @@ theorem correctness (impl : List Segment) (hap : ImplApart Extracted.program imp
     Ensures (Extracted.program.link impl) (segAddr Extracted.program ModInv.fn)
       [BitVec.ofNat 64 zp, BitVec.ofNat 64 zl, BitVec.ofNat 64 zc, BitVec.ofNat 64 st, BitVec.ofNat 64 xp,
         BitVec.ofNat 64 xl, BitVec.ofNat 64 xc, BitVec.ofNat 64 n]
-      (ModInv.PreQ R NatSqr.sqrWX H sqrCQ mulCQ B L zp zl zc st xp xl xc n)
+      (ModInv.PreQR R NatSqr.sqrWX H sqrCQ mulCQ B L zp zl zc st xp xl xc n)
       (ModInv.PostQ R NatSqr.sqrWX H sqrCQ mulCQ B L zp zc st xp xl n) := by
   have hW := CalleeInst.sqrWX_eq
   have hsub : SubMod2N.SubHypR0 impl R := fun b L zp zl zc xp xl xc yp yl yc =>
     NatSub.ensR0 impl hap R hmk hmv b L zp zl zc xp xl xc yp yl yc
   have hadd : SubMod2N.AddHypR impl R := fun b L zp zl zc xp xl xc yp yl yc =>
     NatAdd.ensR impl hap R hmk hmv b L zp zl zc xp xl xc yp yl yc
-  exact Ensures.full hap (ModInv.ensQ hap sub nfM nfS hmk (by omega) (sq hap hgr hmc hmv hmk hwb) (Nat.le_refl _)
+  exact RAx30.ens_drop (fun _ hp h1 h2 => hp.toQ h1 h2) <| Ensures.full hap (ModInv.ensQ hap sub nfM nfS hmk (by omega) (sq hap hgr hmc hmv hmk hwb) (Nat.le_refl _)
     (by omega) (tr hap hmv hmk) (by omega) (by omega) (mu hap hgr hmc hmv hmk hwb)
     (by rw [CalleeInst.mulWX_eq]; omega)
     (by omega) (lh hap hmc hmv hmk) (by omega) (by omega) (by omega) hsub hadd hgr sqm mum
@@ -82,11 +83,11 @@ theorem g0 : (s0.regs 28).toNat = G0 := by decide
 theorem bud : ModInv.cost sqrCQ mulCQ 1 64 + (stkRes 80 - potK * 4) ≤ BW := by decide +kernel
 
 set_option maxHeartbeats 64000000 in
-/-- the witness state satisfies `PreQ` (`x = 3`, `n = 64`, `z` a 2-word array) at `H = 80` (`= 0 + D 64`) -/
-theorem pre : ModInv.PreQ R NatSqr.sqrWX 80 sqrCQ mulCQ BW [] ZP 0 2 ST XP 1 1 64 s0 := by
+/-- the witness state satisfies `PreQR` (`x = 3`, `n = 64`, `z` a 2-word array) at `H = 80` (`= 0 + D 64`) -/
+theorem pre : ModInv.PreQR R NatSqr.sqrWX 80 sqrCQ mulCQ BW [] ZP 0 2 ST XP 1 1 64 s0 := by
   have hm : s0.mem = mem0 := rfl
   have hW := CalleeInst.sqrWX_eq
-  unfold ModInv.PreQ
+  unfold ModInv.PreQR
   rw [hm, stLen0, hW]
   simp only [CallEnv, winA, win, WrOut, RdIn, StkIn, StkApart, OneIn, PX, OpX, CapIn, frP, frN, StackOK', stWs, stkWs,
     g0, mkS_sp, stW0, stLen0, stCap0, K, A, stkR]
@@ -146,7 +147,7 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (H B : Nat) (L : List
     CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program ModInv.fn)
       [BitVec.ofNat 64 zp, BitVec.ofNat 64 zl, BitVec.ofNat 64 zc, BitVec.ofNat 64 st, BitVec.ofNat 64 xp,
         BitVec.ofNat 64 xl, BitVec.ofNat 64 xc, BitVec.ofNat 64 n] s ∧
-    ModInv.PreQ R NatSqr.sqrWX H sqrCQ mulCQ B L zp zl zc st xp xl xc n s ∧
+    ModInv.PreQR R NatSqr.sqrWX H sqrCQ mulCQ B L zp zl zc st xp xl xc n s ∧
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.growslice") ∧
       grSite R (Extracted.program.contractAddr "runtime.growslice") L b s_c) ∧
