@@ -1745,3 +1745,22 @@ amd64 karatsuba (dev, LEAN_NUM_THREADS=4, load ~50): KMulRel 15 s / 2.6 GB, KMul
   owns 59 (Run C/D segments, IntBytes), Top/RunErr owns 36 (SetBytes*, Run H/L). The real numbers come from the
   fresh-cache release-order run (cache-top/rel43, log cache-top/snap43/rel43.out).
 * Dev (amd64, top s43): NatQ/DivMFull (fullM + ensML) 4.4 s / 2.5 GB.
+
+## infra s50/s51 (2026-11-13) — arm64 release-order run `rel50` (Janus v0.3.2, fresh cache-infra/rel50, JANUS_REPLAY_THREADS=1, load ~45-70, infra dev builds running alongside)
+Warm-up then (wall s / peak MB): StackNat 229/2474, MulAddWW 278/948, BasicMul 227/3500, BasicSqr 679/3374 (divmc, old form),
+**Sqr FAIL 900 (timeout; 479 at s47, divmc)**, Mul 758/2216 (divmc/asm, old form), Trunc 202/892, Rsh 164/858, Lsh 131/918, IntAS 50/388,
+Mont FAIL 338 (expmc, as before), BasicSqrQ 390/2872, SqrQ 346/2182, MulQ 660/2212 (divmc), **SubMod2N 431/2841** (RA-fixed),
+**ModInv 656/2906** (518 at s45; over the 600 s margin), **W2 FAIL 901, W4 FAIL 901** (timeouts, expmc), **P2W2 519/3139, P2W4 397/2115,
+P2D 520/2753**, then (ev50, same cache) **EvenRow FAIL 900** (first run with the witness; timeout).
+
+## infra s51 — RequiredGas row trim (target ≤ 450 s both ISAs at load ≤ 50)
+Profile (arm64, dev `lean` per module, J=2, load ~50): Util 76, IcHL 80, FinA 116 (janus_run 82 s of it), Row file 76 (entry segment
++ witness), Blk2Lt/Ge/Blk3Lt/Ge 61-73, FinD 64, IcLL 56, Mv 51, SbA 41, other Sb 23-30; sum ≈ 1180 s. Critical path before:
+Util → IcDefs → IcHL → Ic → Og → Pre → Seg → FinA → Fin → Row ≈ 373 s (every segment waited for the Ic/Og chain via Pre).
+* 4b169ef7/7a414b12 (both ISAs): segments (Head/Blk*/Fin*) take the callee summaries as hypotheses (`OgDefs`: `SbSum`/`MvSum`/`OgSum`),
+  Pre imports no callee proof, the entry segment moved from the row file to `Head`, witness facts to `Wit`; row file 76 s → 1.7 s.
+  Critical path ≈ Util → Pre → Seg → FinA → row ≈ 205 s.
+* Targeted run a1 (snapshot 4b169ef7, warm-up-only cache, arm64 alone, load ~55): **699 s** = compile phase 419 s (Util done at 111 s,
+  FinA last at 417 s) + kernel replay 267 s (own modules; leanchecker sum ≈ 462 s CPU: Util 54, FinA 23, SbA 22, FinD 16, Blk3* 15, …).
+* `Common/Util` (3259 lines, adapted fv-uint256 grab-bag): 234 of its 296 theorems are referenced nowhere (any worktree, any script
+  except the kept `ow2_self_iff`): removed (528 lines). Util compile 76-100 s → 4.4 s; its replay 54 s → ~few s.
