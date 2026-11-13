@@ -1480,3 +1480,7 @@ compiled all three P2 chains), **P2W4Row PASS 41 s**, **P2DRow PASS 94 s / 1.6 G
 **SubMod2NRow PASS 22 s** (closure inside ModInvRow's). Fix for P2W2Row > 600 s: `Exp/P2Nf` (the four name facts on the
 `fn` defs only); P2W2Row/P2W4Row import P2Nf + their own `…E` module (dev: 7.6 / 7.5 s) — re-measure in `cache-infra/rel2`.
 Dev compile after the cost edits: P2W2Cp5 1.9 s, P2DFull 25 s / 3.0 GB, ModInvL0 9.6 s, EvFull 2.5 s, P2DRow 50 s / 3.8 GB.
+**Re-measure after the P2Nf split (s45, fresh cache `cache-infra/rel2`, same order, load ~45-55):** warm-up 1077 s;
+StackNatRow 136, MulAddWWRow 166, BasicMulRow 153, BasicSqrRow 434, SqrRow 581, MulRow 486, TruncRow 145, RshRow 135,
+LshRow 124, IntASRow 34 s (all PASS), MontRow audit-FAIL 245 s (no witness); **P2W2Row PASS 430 s / 3.2 GB** (was 631),
+**P2W4Row PASS 233 s / 1.5 GB**, **P2DRow PASS 303 s / 2.2 GB** — each row now compiles only its own chain; all ≤ 600 s.
