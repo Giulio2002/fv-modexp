@@ -23,7 +23,7 @@ theorem sub8 {sp : Nat} (h1 : 8 ≤ sp) (h2 : sp < 2 ^ 64) :
   apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
 
 /-- read-after-write closer for concrete frame offsets -/
-macro "rdw" : tactic => `(tactic| (
+macro "rdwP" : tactic => `(tactic| (
   simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint, Arm64.Memory.readLE_writeLE_self,
     show (256 : Nat) ^ 8 = 2 ^ 64 from rfl, Nat.mod_eq_of_lt]))
 
@@ -114,7 +114,7 @@ theorem powStep {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.pro
   have hk0 : k0 < 2 ^ 64 := hs.2.2.2.2.2.1
   refine callP hap hclr hmv (b := b) hs (d := i) (by omega) hxI.c hyI.c (by unfold Apart; omega)
     (by unfold Apart; omega) hra (by rw [montE']) (by simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact sub8 (by omega) (by omega))
-    (by rdw) (by simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte])
+    (by rdwP) (by simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte])
     (by simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte] <;> rfl)
     (by simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte])
     (by simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte])
@@ -124,15 +124,15 @@ theorem powStep {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.pro
     (by simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte])
     (by simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte] <;> rfl)
     (by simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact h14) hfs hx15 (by first | rfl | exact hdf)
-    ?fp ?inv (by rdw) (by rdw) (by rdw) (by rdw) (by rdw) ?K
+    ?fp ?inv (by rdwP) (by rdwP) (by rdwP) (by rdwP) (by rdwP) ?K
   case fp =>
     repeat (first | exact hF | refine FP.write ?_ hLs hsp1 _ (by omega))
   case inv =>
     repeat (first | exact hinv | refine FvModexp.Expmc.inv_writeLE (Or.inr (hwrt.of_sub (by omega) (by omega))) ?_)
   case K =>
     intro s' hrip e4 e5 e14 efs e15 edf r0 r3 r1 hF' hinv' hrg' hsl hheld hval
-    have m138 : s'.mem.readLE (sp + 312) 8 = i + i * 2 := by rw [hsl _ (by omega) (by omega)]; rdw
-    have m140 : s'.mem.readLE (sp + 320) 8 = i + 1 := by rw [hsl _ (by omega) (by omega)]; rdw
+    have m138 : s'.mem.readLE (sp + 312) 8 = i + i * 2 := by rw [hsl _ (by omega) (by omega)]; rdwP
+    have m140 : s'.mem.readLE (sp + 320) 8 = i + 1 := by rw [hsl _ (by omega) (by omega)]; rdwP
     have hfs' : s'.fsBase.toNat = fs := by rw [efs]; exact hfs
     have hacc' : s'.mem.accessible (sp - 4296) (4296 + 0x3c0) true = true := by
       rw [hF'.1.accessible]; exact he.2.2.2.1
