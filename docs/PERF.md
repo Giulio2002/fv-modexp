@@ -1818,3 +1818,8 @@ Util → IcDefs → IcHL → Ic → Og → Pre → Seg → FinA → Fin → Row 
 |---|---|---|---|
 | Amd64/NatQ/DrsSN (callN, snH) | 104 s / 5.1 GB | 14 s / 2.9 GB | after the callee's post is destructured (big disjunctive context) every `omega` is expensive: `hMFP`'s window inclusion 73 s → pure lemma `out_sub`; `hst`/`eW`/`hSacc` (9 s + 13 s) moved before `ReachesRet.call_regions`; `sl_init`/`head_mk` split into DrsSNH (5 s) |
 | Amd64/NatQ/DrsRel, DrsSNP, DrsSNI, DrsNat (new) | — | 4 / 6 / 11 / 5 s | — |
+
+### asm s46 (2026-11-13, dev builds at load ~36)
+| module | before | after | fix |
+|---|---|---|---|
+| Amd64/NatQ/DrsBd, DrsB1, DrsEnv, DrsRecP (new) | — | 6 s / 28 s / 4 s / 19 s (≤ 3.2 GB) | DrsRecP 65 s → 19 s: stack-argument offsets stated directly (`r - 392` …) instead of `rw [hsp]` into `r - 400 + 8` (recursion-depth blowup) |
