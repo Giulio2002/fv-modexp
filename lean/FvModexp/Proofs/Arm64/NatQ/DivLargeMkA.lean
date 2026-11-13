@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.NatQ.DivBasicRec
 import FvModexp.Proofs.Arm64.NatQ.DivLargeMem
 
 set_option autoImplicit false
@@ -13,7 +14,7 @@ open Janus Janus.Arm64 Janus.GoABI Janus.GoABI0 Janus.Tactic Janus.Spec Janus.Co
 open Janus.Contracts.EqHashModel
 open FvModexp.Arm64.NatAdd (outside_of_inRanges)
 open FvModexp (Held.readLE2 liveFrame_of_frame)
-open FvModexp.Arm64.DivBasic (LiveFrame.trans')
+open FvModexp.Arm64.Q.DivBasic (LiveFrame.trans')
 
 set_option linter.janusRenameI false
 

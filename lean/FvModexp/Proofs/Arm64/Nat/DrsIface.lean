@@ -1,6 +1,8 @@
 import FvModexp.Proofs.Arm64.Nat.LibDrs
-import FvModexp.Proofs.Arm64.Nat.DivBasic
 import FvModexp.Proofs.Arm64.Exp.MulHyp
+import FvModexp.Proofs.Arm64.Nat.DivBasicDefs
+import FvModexp.Proofs.Common.DivmcLsl
+import FvModexp.Proofs.Common.ExpmcFrame
 
 set_option autoImplicit false
 
@@ -8,6 +10,7 @@ set_option autoImplicit false
 # `divRecursiveStep`'s statement as `divLarge` calls it (arm64): `DrsPreW` / `DrsPostW` / `DrsHyp`
 
 Split out of `DivLargeDefs` (asm s37) so that the drs proof chain does not import `LibDivL` (the divLarge program);
+(asm s42: nor `Nat.DivBasic` — the Q drs chain imports this module; importers that need divBasic import it themselves);
 `DivLargeDefs` imports this module, so every name stays `FvModexp.Arm64.DivLarge.*`.
 -/
 

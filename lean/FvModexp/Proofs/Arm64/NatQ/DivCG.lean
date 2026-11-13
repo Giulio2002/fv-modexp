@@ -1,6 +1,6 @@
 import FvModexp.Proofs.Arm64.NatQ.DivLG
 import FvModexp.Proofs.Arm64.NatQ.DrsStep
-import FvModexp.Proofs.Arm64.NatQ.MulE
+import FvModexp.Proofs.Arm64.NatQ.MulHypD
 
 set_option autoImplicit false
 
@@ -8,8 +8,8 @@ set_option autoImplicit false
 # `nat.div` (arm64) CLOSED, Q-form (TIGHT COSTS, asm s39): `Q.NatDiv.ensCLG : ExpSlow.DivHypLGQ … (costQ drsCQ)`
 
 Q twin of Arm64/Nat/DivCG.lean. `ensRLG` = `ensDLG` with the Q `divRecursiveStep` (`Q.DivRec.hyp`, modulo the
-`nat.mul` premise `Q.DivRec.MulHypQE`); `ensCLG` = `ensRLG` with divmc's `Q.NatMul.hypQE` (`EvenHyp.MulHypQE`, the
-same statement as asm's `Q.DivRec.MulHypQE`: `ExactE` and `ExactR` have the same body, `mulE`). Only the live runtime
+`nat.mul` premise `Q.DivRec.MulHypQE`); `ensCLG` = `ensRLG` with `Q.DivRec.mulHyp` (NatQ/MulHypD: divmc's `Q.NatMul.ens`
+in the premise's shape, without the old `nat.mul` chain's import). Only the live runtime
 contracts on `Extracted.program.ofImpl impl` remain. `ensCL` (`DivHypLQ`) = `ensCLG.toL`.
 -/
 
@@ -50,7 +50,7 @@ theorem ensCLG (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     (hmz0 : MemmoveZeroLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R) :
     ExpSlow.DivHypLGQ impl R names 41504 112 (costQ drsCQ) :=
   ensRLG impl hap R NatMul.names mul_ns (mul_code impl hap)
-    (mulE (Q.NatMul.hypQE impl hap R hmk0 hgr hmc hmv0 hwb)) (Nat.le_refl _) (Nat.le_refl _) hgr hmc hwb hmk0 hmv0
+    (Q.DivRec.mulHyp impl hap R hmk0 hgr hmc hmv0 hwb) (Nat.le_refl _) (Nat.le_refl _) hgr hmc hwb hmk0 hmv0
     hmz0
 
 /-- `ensCLG` in the `ExpHyp.DivHypLQ` form -/

@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Nat.DivBasic
 import FvModexp.Proofs.Arm64.Nat.DrsDefs
 import FvModexp.Proofs.Arm64.Nat.DivDefs
 import FvModexp.Proofs.Common.MulCostB2
