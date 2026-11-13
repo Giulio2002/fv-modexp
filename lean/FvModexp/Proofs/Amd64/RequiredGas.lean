@@ -1,13 +1,13 @@
 import Extracted
-import FvModexp.Proofs.Amd64.RequiredGas.Blk2
-import FvModexp.Proofs.Amd64.RequiredGas.Blk3
-import FvModexp.Proofs.Amd64.RequiredGas.Fin1
-import FvModexp.Proofs.Amd64.RequiredGas.Fin
-import FvModexp.Proofs.Amd64.RequiredGas.Head
-import FvModexp.Proofs.Amd64.RequiredGas.Wit
-import FvModexp.Proofs.Amd64.RequiredGas.Sb
-import FvModexp.Proofs.Amd64.RequiredGas.Mv
-import FvModexp.Proofs.Amd64.RequiredGas.Og
+import FvModexp.Proofs.Amd64.RG.Blk2
+import FvModexp.Proofs.Amd64.RG.Blk3
+import FvModexp.Proofs.Amd64.RG.Fin1
+import FvModexp.Proofs.Amd64.RG.Fin
+import FvModexp.Proofs.Amd64.RG.Head
+import FvModexp.Proofs.Amd64.RG.Wit
+import FvModexp.Proofs.Amd64.RG.Sb
+import FvModexp.Proofs.Amd64.RG.Mv
+import FvModexp.Proofs.Amd64.RG.Og
 
 /-!
 # `(*bigModExp).RequiredGas(input []byte) uint64` (amd64), go-ethereum v1.17.10 core/vm/contracts.go:606-646
