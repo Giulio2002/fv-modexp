@@ -112,6 +112,7 @@ theorem s4bG (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat ×
   all_goals first
     | (janus64_simp; done) | exact h14 | exact hfs | exact hx15 | exact hdf
     | (have := natVal_lt S.mem p 0; rw [Nat.mul_zero, Nat.pow_zero] at this; omega)
+    | (simp [natVal]; done)
     | janus64_simp
 
 end FvModexp.Amd64.SubMod2N

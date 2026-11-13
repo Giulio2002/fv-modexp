@@ -163,7 +163,7 @@ theorem appIterG (impl : List Amd64.Segment) {R : RtInv}
     · have hcl : c = l := by omega
       have hs136 : (s.regs 4).toNat - 128 - 8 = (s.regs 4).toNat - 136 := by omega
       janus64_run [hc, hsh, hcap, hs136] until [cA "runtime.growslice"]
-      refine gstep impl hgr hpre _ ?_ ?_ ⟨?_, ?_, ?_, ?_⟩ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ hcur hp64 hcl
+      refine gstep impl hgr hpre (L3 := L3) (b3 := b3) _ ?_ ?_ ⟨?_, ?_, ?_, ?_⟩ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ hcur hp64 hcl
         (by simp only [W]; omega) hg hgz ?_
         fun S' p' c' L' b' hpc' hI' => KL S' p' c' (g + 1) L' b' (by simp only [W]; omega) hpc' hI'
       all_goals try janus64_simp
