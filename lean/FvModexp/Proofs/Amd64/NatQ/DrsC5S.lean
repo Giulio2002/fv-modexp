@@ -54,7 +54,7 @@ theorem c5s (impl : List Amd64.Segment) (R : RtInv) (c : Cx) (s : State) (Lk : L
   have r9 := hmc.bs.uptr; have r10 := hmc.bs.ucap; have r11 := hmc.bs.vptr; have r12 := hmc.bs.vlen
   have r13 := hmc.bs.vcap
   have e1 : BitVec.ofNat 64 (c.u1 - (j - c.vl / 2)) - BitVec.ofNat 64 (c.vl / 2) + 1#64 =
-      BitVec.ofNat 64 (c.u1 - j + 1) := by rw [bvA (by omega) (by omega)]; congr 1; omega
+      BitVec.ofNat 64 (c.u1 - j + 1) := by exact (bvA (by omega) (by omega)).trans (congrArg (BitVec.ofNat 64) (by omega))
   have t7 := tN (by omega : c.u1 - (j - c.vl / 2) < 2 ^ 64)
   have t8 := tN (by omega : c.vl / 2 - 1 < 2 ^ 64)
   have hB1 : Box (Bx R c s Lk bk T j Z U qv i stb (stC (c.V s) (c.vl / 2 - 1) (c.P s j U).length stb)) := ⟨hbx⟩
