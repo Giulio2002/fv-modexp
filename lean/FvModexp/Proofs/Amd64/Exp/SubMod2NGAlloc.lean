@@ -150,7 +150,7 @@ theorem rt_alloc {R : RtInv} {B B' : Nat} {L : List (Nat × Nat)} {s : State} {z
     fun a q h => hLE0.inRanges_old h, hLE0.trans (LiveExt.single (by simpa using hin) (by simpa using hap)), hb, hinv,
     fun hc => ?_⟩
   · simp only [outside_append, win, K, A, outside_cons, outside_nil, and_true] at h ⊢
-    exact ⟨h.1.1, by omega, by omega⟩
+    exact ⟨h, h.1.1, by omega, by omega⟩
   · obtain ⟨c1, c2, c3, c4⟩ := hlv hc
     exact ⟨c1, (LiveExt.single (by simpa using hin) (by simpa using hap)).held c2, by rw [hMF.accessible]; exact c3, c4⟩
 
