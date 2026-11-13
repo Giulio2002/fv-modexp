@@ -20,7 +20,7 @@ set_option linter.janusRenameI false
 namespace FvModexp.Amd64.Q.DivRec
 
 open FvModexp.Amd64.Q.DivLarge (DrsPreW DrsPostW)
-open FvModexp.Amd64.Callees (VVLPre SubVVLQ SubVVHyp)
+open FvModexp.Amd64.Callees (VVLPre SubVVLQ SubVVHyp subVVHyp)
 
 /-- the model after `qhatv[:s] -= v[:s]` -/
 @[reducible] def stV (V : List Nat) (s0 : Nat) (st : Mdl.St) : Mdl.St :=
@@ -111,7 +111,10 @@ theorem c4 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program 
   have hspn : (X.regs 4).toNat = (s.regs 4).toNat - 400 := by
     rw [hsp, BitVec.toNat_sub_of_le (by simp only [BitVec.le_def, BitVec.toNat_ofNat]; omega)]; rfl
   have hce' : CallEnv R Lk X 0 88 := Ev.callEnv hcr hmc.ev hspn h14 hfs (by omega) (by omega)
-  obtain ⟨-, -, -, -, -, -, -, hLs, -⟩ := hce'
+  obtain ⟨-, -, -, -, -, -, -, hLs, -, ⟨htlX, -, -⟩⟩ := hce'
+  have hfa : (18446744073709551608 + X.fsBase.toNat) % 18446744073709551616 = X.fsBase.toNat - 8 := by
+    have := htlX.base; omega
+  have hfrd := htlX.readable
   have hext : LiveExt R c.L Lk := hcr.ext1.trans hmc.ev.ext
   have hrg := hmc.rg
   have hqa := hmc.qa
@@ -142,7 +145,7 @@ theorem c4 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program 
     · have := hrg.g; rw [h14]; unfold Apart at this ⊢; simp only [grd] at this; omega
     · rw [h14]; unfold Apart at hga ⊢; omega
     · have := hrg.fs; rw [hfs]; unfold Apart at this ⊢; simp only [tls] at this; omega
-    · have htw := hpre.ce.2.2.2.2.2.2.2.2.2.2.2; rw [hfs]; unfold Apart at htw ⊢; simp only [regSP] at htw; omega
+    · have htw := hpre.ce.2.2.2.2.2.2.2.2.2.2.2; rw [hfs]; unfold Apart at htw ⊢; omega
   refine ReachesRet.call_regions (svvD impl hap R bk Lk) hpc hpreV fun T' hT hq hrgT => ?_
   obtain ⟨junk, f, v, vh, mx, m, z, rfl, -, ⟨hval, hcar, hfr⟩, hinv, -, htls⟩ := hq
   simp only [ez', en', ex', ey', e80] at hval hcar hfr
@@ -199,12 +202,9 @@ theorem c4 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program 
     simp only [outside_cons, outside_nil, and_true]; omega)
   have hv4 := hbx.v4
   have hv4m : V4 c s m qv (c.P s j U).length :=
-    ⟨by rw [o _ (by omega) (by omega) (by omega), hF.readLE _ _ (by simp only [isA, outside_cons, outside_nil, and_true]; omega)]
-        exact hv4.s328,
-      by rw [o _ (by omega) (by omega) (by omega), hF.readLE _ _ (by simp only [isA, outside_cons, outside_nil, and_true]; omega)]
-        exact hv4.s152,
-      by rw [o _ (by omega) (by omega) (by omega), hF.readLE _ _ (by simp only [isA, outside_cons, outside_nil, and_true]; omega)]
-        exact hv4.s168⟩
+    ⟨(by rw [o _ (by omega) (by omega) (by omega), hF.readLE _ _ (by simp only [isA, outside_cons, outside_nil, and_true]; omega)]; exact hv4.s328),
+      (by rw [o _ (by omega) (by omega) (by omega), hF.readLE _ _ (by simp only [isA, outside_cons, outside_nil, and_true]; omega)]; exact hv4.s152),
+      (by rw [o _ (by omega) (by omega) (by omega), hF.readLE _ _ (by simp only [isA, outside_cons, outside_nil, and_true]; omega)]; exact hv4.s168)⟩
   have hsim : m.readLE ((s.regs 4).toNat - 176) 8 = i := by
     rw [o _ (by omega) (by omega) (by omega), hF.readLE _ _ (by simp only [isA, outside_cons, outside_nil, and_true]; omega)]
     exact hbx.si
@@ -217,18 +217,19 @@ theorem c4 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program 
     have e := Ev.tls hcr hmc.ev
     simp only [tls] at e
     rw [e]; simp only [regG] at htg; exact htg
+  have hfrm : m.accessible (X.fsBase.toNat - 8) 8 false = true := by rw [hfr.accessible]; exact hfrd
   have hraX : X.mem.readLE (X.regs 4).toNat 8 = rV1 := by rw [hspn]; exact hra
   have hB1 : Box (Mc R c s Lk bk m j Z U qv (stV (c.V s) (c.vl / 2 - 1) st)) := ⟨hmcT⟩
   have hB2 : Box (V4 c s m qv (c.P s j U).length) := ⟨hv4m⟩
   have hbi := hbx.hi; have hbp := hbx.pos; have hbv := hbx.inv
   clear hmcT hv4m hmc hmc0 hbx hF' hL' rk kT kW hval hcar hfr hinv
-  janus64_run [hraX, htg'] until [rV2]
+  janus64_run [hraX, htg', hfa, hfrm] until [rV2]
   refine k _ rfl ⟨?sp, ?r5, ?r14, ?fs, ?df, ?x15, hB1.h, hB2.h, hsim, hbi, hbp, hbv⟩ hcm
   case sp => simp only [Janus.Amd64.Tactic.setRegF_apply, regs0, Nat.reduceEqDiff, ↓reduceIte, regSP]; rw [hsp]; bv_omega
   case r5 => simp only [Janus.Amd64.Tactic.setRegF_apply, regs0, Nat.reduceEqDiff, ↓reduceIte, regSP, regFP]; exact h5
   case r14 => simp only [Janus.Amd64.Tactic.setRegF_apply, Nat.reduceEqDiff, ↓reduceIte, BitVec.ofNat_toNat, BitVec.setWidth_eq]
   case fs => exact hfs
-  case df => exact hdf
-  case x15 => simp
+  case df => dsimp only
+  case x15 => simp only [Janus.Amd64.Tactic.setXmmF_apply, ↓reduceIte]
 
 end FvModexp.Amd64.Q.DivRec
