@@ -160,4 +160,75 @@ theorem dr2 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
         Nat.reducePow]; omega)
     | skip
 
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 64000000 in
+set_option janus.callRegions true in
+/-- `n ≥ divRecursiveThreshold`: from `joinQ` (q stored, threshold compared, `JG` not taken, spills) over `memclr(q)`,
+then `dr2` -/
+theorem dr (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
+    (hmc : MemclrNoHeapPointersLive64 (LibDivL.program.link impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
+    (dc : Nat → Nat → Nat → Nat) (hD : DrsHyp impl R dc)
+    (b : Nat) (L : List (Nat × Nat)) (zp zc st up uc ip il vp vl : Nat) (s : State)
+    (t w1 c1 : Nat) (L1 : List (Nat × Nat)) (b1 : Nat) (Lq : List (Nat × Nat)) (bq P C sh qp qc : Nat)
+    (hE : Env R b L (cost dc (stLen s.mem st) il vl) zp zc st up uc ip il vp vl s t L1 b1 w1 c1) (S : State)
+    (hS : AtJ R b L zp zc st up uc ip il vp vl s t w1 c1 L1 b1 Lq bq P C sh qp qc S) (hv40 : 40 ≤ vl)
+    (Q : State → Prop)
+    (k : ∀ L2 b2 w2 c2 T, AtD R b L (cost dc (stLen s.mem st) il vl) zp zc st up uc ip il vp vl s t w1 c1 L1 Lq P
+      C sh qp qc L2 b2 w2 c2 T → ReachesRet (LibDivL.program.link impl) (retAddrOf s) T Q) :
+    ReachesRet (LibDivL.program.link impl) (retAddrOf s) S Q := by
+  have hl := hE.lay
+  have hsp0 := hl.sp0; have hsp1 := hl.sp1; have hil9 := hl.il9; have hvil := hl.vil
+  have hMU := hS.mem
+  have hM := hMU.mem
+  obtain ⟨g1, g2, hgw⟩ := Mem.thr hE hM
+  have hpc := hS.pc; have hsp := hS.sp; have h5 := hS.r5; have h14 := hS.r14; have hfs := hS.fs
+  have hx := hS.x15; have hdf := hS.df
+  have hr9 := hS.r9; have hr11 := hS.r11; have hr13 := hS.r13; have hr15 := hS.r15
+  have hQ := hS.qa
+  have hqcap := hQ.cap; have hq48 := hQ.p48; have hq40 := hQ.c40; have hqw := hQ.pw
+  have hti := FvModexp.toInt_small (BitVec.ofNat 64 vl) (by simp; omega)
+  have hne : (BitVec.ofNat 64 (il - vl + 1) = 0#64) = False := by
+    simp only [eq_iff_iff, iff_false]; intro e
+    have := congrArg BitVec.toNat e; simp only [BitVec.toNat_ofNat] at this; omega
+  have hsh : BitVec.ofNat 64 (il - vl + 1) <<< 3 = BitVec.ofNat 64 (8 * (il - vl + 1)) := by
+    apply BitVec.eq_of_toNat_eq; rw [BitVec.toNat_shiftLeft]; simp only [BitVec.toNat_ofNat, Nat.shiftLeft_eq]; omega
+  have hout : Outside ((s.regs 4).toNat - 41272) (41272 + 112) R.rt := hE.pre.ce.2.2.2.2.1
+  obtain ⟨⟨htb, htr, htg⟩, htrt, htw⟩ := hE.pre.ce.2.2.2.2.2.2.2.2.2
+  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -⟩ := hE.pre.ce
+  simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw htg hal
+  have hSacc : ∀ a n v, S.mem.accessible a n v = s.mem.accessible a n v := fun a n v => hM.fr.accessible a n v
+  have hwacc : S.mem.accessible ((s.regs 4).toNat - 41272) (41272 + 112) true = true := by rw [hSacc]; exact hw
+  have hgacc : S.mem.accessible ((s.regs 14).toNat + 16) 8 false = true := by rw [hSacc]; exact hg2
+  have hgrd := hMU.grd
+  have htS : S.mem.readLE (s.fsBase.toNat - 8) 8 = (s.regs 14).toNat := hM.tls
+  have hok : R.ok (cA "runtime.memclrNoHeapPointers") [qp, 8 * (il - vl + 1)] :=
+    hE.pre.sv.2.2.1 _ _ (by omega)
+  have hLs := lsep_of hE hS.ext3
+  have hdh : InRanges qp (8 * (il - vl + 1)) Lq ∨ Outside qp (8 * (il - vl + 1)) R.rt :=
+    hQ.pheld.sub (Nat.le_refl _) (by omega)
+  have hdacc : S.mem.accessible qp (8 * (il - vl + 1)) true = true :=
+    Janus.Arm64.Memory.accessible_mono _ hQ.pacc (Nat.le_refl _) (by omega)
+  have hinv := hM.inv
+  have hga := hE.pre.ce.2.2.2.2.2.1
+  unfold Apart at hga
+  janus64_run [g1, hti, hne, hsh, hgrd, htS, BitVec.msb_eq_decide]
+    until [segAddr Extracted.program fn + 0x5db] calls [hmc Lq bq]
+  rename_i m _ _ hF2 hLF2 hinv2 hz
+  refine dr2 impl hap R dc hD b L zp zc st up uc ip il vp vl s t w1 c1 L1 b1 Lq bq P C sh qp qc hE S hS _ ?hZ
+    ?z0 ?z1 ?z2 ?z3 ?z4 ?z5 m hF2 ?hcs hLF2 hinv2 hz _ ?pc ?sp ?r5 ?r14 ?fs ?x15 ?df rfl ?hreg Q k
+  case hZ => simp only [scrB]; janus_frame
+  case hcs =>
+    intro r hr
+    simp only [List.mem_cons, List.not_mem_nil, or_false] at hr
+    rcases hr with rfl | rfl <;> simp only <;> omega
+  all_goals (try janus64_simp)
+  case hreg =>
+    rename_i hrg1
+    rw [hrg1]; (try simp only [Janus.Arm64.Memory.regions_writeLE]); exact hS.reg
+  all_goals first
+    | exact h5 | exact h14 | exact hfs | exact hx | exact hdf | rfl | bv_omega
+    | (simp (disch := omega) only [FvModexp.Expmc.readLE_writeLE_same, Janus.Arm64.Memory.readLE_writeLE_of_disjoint,
+        Nat.reducePow]; omega)
+    | skip
+
 end FvModexp.Amd64.DivLarge
