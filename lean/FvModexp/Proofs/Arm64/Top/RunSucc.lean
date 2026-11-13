@@ -36,23 +36,28 @@ theorem correctness (impl : List Segment) (hap : ImplApart Extracted.program imp
     (hmc : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hwb : WbLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 4096 R 2)
+    (S : PoolShape)
     (hget : PoolGetLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "sync.(*Pool).Get") 4096 R
-      Free.stkT StkSh)
+      Free.stkT S)
     (hput : PoolPutLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "sync.(*Pool).Put") 4096 R
-      Free.stkT StkSh)
+      Free.stkT S)
     (hwb4 : WbLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier4") 4096 R 4)
     (hbud : Run.Closed.BudOK)
     (W : Nat) (hW : 624 + 72944 ≤ W) (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64) :
     Ensures (Extracted.program.link impl) (segAddr Extracted.program RunArm64.fn) [c, p, len, cp]
-      (fun s => RunArm64.EnvW R L s W ∧ RunArm64.Input R L c p len cp s ∧ OsakaReceiver s.mem c.toNat ∧
+      (fun s => S = StkSh ∧ RunArm64.EnvW R L s W ∧ RunArm64.Input R L c p len cp s ∧ OsakaReceiver s.mem c.toNat ∧
         R.inv b L (s.regs 28).toNat (view R.rt L s.mem) ∧ RunArm64.OkReqs R ∧
         RunArm64.Globals R s.mem (RunArm64.windowW s W) ∧ RunArm64.NatOne R s.mem (RunArm64.windowW s W) ∧
         RunArm64.StackPool R s.mem (RunArm64.windowW s W) ∧
         RunArm64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat)) ≤ b ∧
         LengthsPass (bytesAt s.mem p.toNat len.toNat))
       (fun s s' => RunArm64.OkRet (bytesAt s.mem p.toNat len.toNat) s' ∧
-        RunArm64.FrameW R b (RunArm64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat))) L W s s') :=
-  Run.correctness_okC impl hap R hmk hmkz hmv hmz hno hgr hmc hwb hget hput hwb4 hbud W hW b L c p len cp
+        RunArm64.FrameW R b (RunArm64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat))) L W s s') := by
+  -- the Pool shape is a row binder fixed by the precondition (Janus's PoolShape row pattern; audit, v0.3.1)
+  intro ret hret s hs ⟨hS, hpre⟩
+  subst hS
+  exact Run.correctness_okC impl hap R hmk hmkz hmv hmz hno hgr hmc hwb hget hput hwb4 hbud W hW b L c p len cp ret
+    hret s hs hpre
 
 end FvModexp.Arm64.RunSucc
 
@@ -96,15 +101,15 @@ theorem returnsC (hbud : Run.Closed.BudOK) :
       ABIReturn s1 s' ∧ (RunArm64.OkRet (bytesAt s1.mem p1.toNat (99 : BitVec 64).toNat) s' ∧
         RunArm64.FrameW R bW (RunArm64.okBudget (parseLengths (bytesAt s1.mem p1.toNat (99 : BitVec 64).toNat)))
           [] WW s1 s') :=
-  correctness implAt hap R m_mk m_mkz m_mv m_mvz m_no m_gr m_cl m_wb2 m_get m_put m_wb4 hbud WW (by decide) bW []
-    c1 p1 99 99 ret hret s1 setup pre
+  correctness implAt hap R m_mk m_mkz m_mv m_mvz m_no m_gr m_cl m_wb2 StkSh m_get m_put m_wb4 hbud WW (by decide) bW []
+    c1 p1 99 99 ret hret s1 setup ⟨rfl, pre⟩
 
 /-- Every hypothesis of `correctness` (the eleven runtime contracts, `BudOK`, the window) and every conjunct of its
 precondition hold together, with one call-site state per contract, and the call returns: the shared witness runtime,
 budget `bW`, window `WW`, empty live set, `Run(c, p, 99, 99)` on 99 zero bytes (lengths `0, 0, 0`). Becomes `Witness.nonvacuous`
 (no premise) when `Run.Closed.BudOK` is proved. -/
 theorem sat_of (hbud : Run.Closed.BudOK) : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat))
-    (c p len cp : BitVec 64) (ret : Nat) (s : State) (W : Nat),
+    (c p len cp : BitVec 64) (ret : Nat) (s : State) (W : Nat) (S : PoolShape),
     ImplApart Extracted.program impl ∧
     MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R ∧
     MakesliceZeroLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R ∧
@@ -116,14 +121,14 @@ theorem sat_of (hbud : Run.Closed.BudOK) : ∃ (impl : List Segment) (R : RtInv)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R ∧
     WbLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 4096 R 2 ∧
     PoolGetLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "sync.(*Pool).Get") 4096 R
-      Free.stkT StkSh ∧
+      Free.stkT S ∧
     PoolPutLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "sync.(*Pool).Put") 4096 R
-      Free.stkT StkSh ∧
+      Free.stkT S ∧
     WbLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier4") 4096 R 4 ∧
     Run.Closed.BudOK ∧ 624 + 72944 ≤ W ∧
     RetAddr (Extracted.program.link impl) ret ∧
     CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program RunArm64.fn) [c, p, len, cp] s ∧
-    RunArm64.EnvW R L s W ∧ RunArm64.Input R L c p len cp s ∧ OsakaReceiver s.mem c.toNat ∧
+    S = StkSh ∧ RunArm64.EnvW R L s W ∧ RunArm64.Input R L c p len cp s ∧ OsakaReceiver s.mem c.toNat ∧
     R.inv b L (s.regs 28).toNat (view R.rt L s.mem) ∧ RunArm64.OkReqs R ∧
     RunArm64.Globals R s.mem (RunArm64.windowW s W) ∧ RunArm64.NatOne R s.mem (RunArm64.windowW s W) ∧
     RunArm64.StackPool R s.mem (RunArm64.windowW s W) ∧
@@ -172,8 +177,8 @@ theorem sat_of (hbud : Run.Closed.BudOK) : ∃ (impl : List Segment) (R : RtInv)
     Returns ((Extracted.program.link impl).withExit ret) s fun s' =>
       ABIReturn s s' ∧ (RunArm64.OkRet (bytesAt s.mem p.toNat len.toNat) s' ∧
         RunArm64.FrameW R b (RunArm64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat))) L W s s') :=
-  ⟨implAt, R, bW, [], c1, p1, 99, 99, ret, s1, WW, hap, m_mk, m_mkz, m_mv, m_mvz, m_no, m_gr, m_cl, m_wb2, m_get, m_put,
-    m_wb4, hbud, by decide, hret, setup,
+  ⟨implAt, R, bW, [], c1, p1, 99, 99, ret, s1, WW, StkSh, hap, m_mk, m_mkz, m_mv, m_mvz, m_no, m_gr, m_cl, m_wb2, m_get, m_put,
+    m_wb4, hbud, by decide, hret, setup, rfl,
     pre.1, pre.2.1, pre.2.2.1, pre.2.2.2.1, pre.2.2.2.2.1, pre.2.2.2.2.2.1, pre.2.2.2.2.2.2.1, pre.2.2.2.2.2.2.2.1,
     pre.2.2.2.2.2.2.2.2.1, pre.2.2.2.2.2.2.2.2.2, compute1,
     ⟨[], 0x1000, callS WStubs.mkA Extracted.dataAddr.«type:big.Word#51b931e8» 1 1, by rw [WStubs.addr_mk]; rfl,

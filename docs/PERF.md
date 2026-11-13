@@ -1509,3 +1509,12 @@ CHAIN (critical path 670 s: LibDivL 54 → DivLarge{Pro,Mem,RelB,…,DRel 54,TN}
 DrsD6 68 → … → DrsRow 27). Minimal imports (exact constant-level module deps from a probe) only cut the path to 566 s (the deps
 are real: segment modules use earlier segments' relations). Trim plan (next): speed DrsC6/DrsD6/DrsPathB/LibDivL on the path +
 minimal imports; generated `Lib*` modules spend ~1.5 s per `decide +kernel` mask (kernel String compares) — 14 masks ≈ 54 s.
+
+### top s30 (2026-11-13), amd64 divLarge divBasic branch (dev builds, load ~30, LEAN_NUM_THREADS=4)
+| module | time | mem |
+|---|---|---|
+| Amd64/Nat/DivLargeDRel (Mem.frameS, frameX, MemU.frameS, AtD) | 26.5 s | — |
+| Amd64/Nat/DivLargeDBP (dl_at, w1_facts, db_pre) | < 60 s | < 8 GB |
+| Amd64/Nat/DivLargeDB (divPost, dbPost) | 17.0 s | 3.2 GB |
+| Amd64/Nat/DivLargeDBR (Mem.thr, ra_dl, db2) | < 60 s | < 8 GB |
+| Amd64/Nat/DivLargeDBS (db run) | 15.1 s | 2.5 GB |
