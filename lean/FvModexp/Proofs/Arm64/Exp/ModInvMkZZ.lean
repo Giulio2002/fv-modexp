@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.ModInvJ2
 
+set_option autoImplicit false
+
 /-!
 # `nat.modularInverseModPowerOfTwo` (arm64): `JM` → `J2` (nat.go:1322-1325) (agent infra)
 
@@ -17,9 +19,9 @@ open FvModexp.Arm64.EvenHyp
 
 set_option maxRecDepth 20000 in
 /-- stack-slot stores keep an owned array owned -/
-theorem own_stk {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
+theorem own_stk {R : RtInv} {kc : Nat} {H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
-    (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M M' : Memory} {L1 : List (Nat × Nat)} {p c : Nat}
+    (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) {M M' : Memory} {L1 : List (Nat × Nat)} {p c : Nat}
     (h : Own R kc L L1 s zp zc st xp xl M p c) (hF : MemFrame M M' (winA s (K kc) A)) :
     Own R kc L L1 s zp zc st xp xl M' p c := by
   obtain ⟨⟨-, ⟨-, hal, -, -⟩, -⟩, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, ⟨-, hstw, -, -⟩, -⟩ := hpre
@@ -35,9 +37,9 @@ theorem own_stk {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat 
   ((M.writeLE (sp + 192) 8 v1).writeLE (sp + 88) 8 v2).writeLE (sp + 208) 8 v3
 
 set_option maxRecDepth 20000 in
-theorem stk3 {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
+theorem stk3 {R : RtInv} {kc : Nat} {H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State} (hkc : 4608 ≤ kc)
-    (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory} {L1 : List (Nat × Nat)} {b1 p c k : Nat}
+    (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory} {L1 : List (Nat × Nat)} {b1 p c k : Nat}
     (hfw : Fw1 s M st xp xl xc n k) (hrt : RtM R kc L s zp zc st M L1 b1) (hown : Own R kc L L1 s zp zc st xp xl M p c)
     (v1 v2 v3 : Nat) :
     Fw1 s (mem3 M (s.sp.toNat - 240) v1 v2 v3) st xp xl xc n k ∧
@@ -72,15 +74,19 @@ theorem stk3 {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat →
   · rw [hr _ (by omega) (by omega) (by omega)]; exact f9
   · rw [hr _ (by omega) (by omega) (by omega)]; exact f10
 
+/-- (s45) hides a fact from `janus_run`'s context splitting -/
+structure BoxZ (P : Prop) : Prop where
+  h : P
+
 set_option maxRecDepth 20000 in
 set_option janus.callRegions true in
 set_option maxHeartbeats 64000000 in
 theorem mkzz (impl : List Segment) (R : RtInv)
     (hmk : MakesliceLiveContract (LibW.program.link impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
-    (kc : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat) (L : List (Nat × Nat))
+    (kc H : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat) (L : List (Nat × Nat))
     (zp zl zc st xp xl xc n : Nat) (s : State) (hkc : 4608 ≤ kc)
-    (kJ : J2 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s) :
-    JM impl R kc sqrC mulC b L zp zl zc st xp xl xc n s := by
+    (kJ : J2 impl R kc H sqrC mulC b L zp zl zc st xp xl xc n s) :
+    JM impl R kc H sqrC mulC b L zp zl zc st xp xl xc n s := by
   intro S zp' zc' L1 b1 hpre hn hpc hsp h28 h18 h0 h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 hfw hrt hb hown hcap
   unfold Goal
   have hn2 := hpre.2.2.2.2.1
@@ -110,6 +116,19 @@ theorem mkzz (impl : List Segment) (R : RtInv)
   have hadd : BitVec.ofNat 64 (NW n) + BitVec.ofNat 64 (NW n) = BitVec.ofNat 64 (2 * NW n) := by
     apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega
   rw [show (1797104 + 0x15c : Nat) = 1797452 from rfl] at hpc
+  -- (s45) the budget fact at the memory after the three spills (`stkR_congr`; kept boxed through the run)
+  have hso : st + 24 ≤ s.sp.toNat - (240 + kc) ∨ s.sp.toNat + 72 ≤ st := by
+    have hpre' := hpre
+    obtain ⟨-, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, ⟨-, hstw, -, -⟩, -⟩ := hpre'
+    simp only [win, outside_cons, outside_nil, and_true, K, A] at hstw
+    omega
+  have ec3 : stCap (mem3 S.mem (s.sp.toNat - 240) zc' (NW n + 1) zp') st = stCap S.mem st := by
+    simp only [mem3, stCap]
+    rw [Memory.readLE_writeLE_of_disjoint _ _ (by omega), Memory.readLE_writeLE_of_disjoint _ _ (by omega),
+      Memory.readLE_writeLE_of_disjoint _ _ (by omega)]
+  have hb3 : BoxZ (b - makeCost (NW n + 1) + stkR H (mem3 S.mem (s.sp.toNat - 240) zc' (NW n + 1) zp') st ≤ b1) :=
+    ⟨by rw [stkR_congr ec3]; exact hb⟩
+  clear hb ec3
   janus_run [hadd] until [1797584]
   obtain ⟨hfw3, hrt3, hown3⟩ := stk3 hkc hpre hfw hrt hown zc' (NW n + 1) zp'
   have hd3 := dl_rt hpre hrt3
@@ -150,7 +169,7 @@ theorem mkzz (impl : List Segment) (R : RtInv)
     refine setw impl _ _ zp' zc' (k0 s xp xl n) (s.sp.toNat - 240) m hk0p hk0 hzc0 (by omega) hzp' hacc S' k1 k2 k0'
       k2' k10 kmem ?KS
     intro S'' f1 f2 f3 f4 fr fm
-    obtain ⟨g1, g2, g3, g4, g5, g6, g7⟩ := zz_j2 hkc hpre hn hfw3 hrt3 hb hown3 hcap hk0 hap
+    obtain ⟨g1, g2, g3, g4, g5, g6, g7⟩ := zz_j2 hkc hpre hn hfw3 hrt3 hb3.h hown3 hcap hk0 hap
     have fr' : ∀ i, i ≠ 0 → i ≠ 14 → i < 31 → S''.regs i = S'.regs i := fr
     have hz0i := Exp.z0_inv _ _ hx1 (show natVal (m.writeLE zp' 8 (k0 s xp xl n)) zp' (NW n + 1) % Exp.B = _ by
       rw [g7, k0, Nat.min_eq_left (by omega)])
@@ -163,8 +182,8 @@ theorem mkzz (impl : List Segment) (R : RtInv)
       (by rw [fr' 5 (by decide) (by decide) (by decide), k5]) (by rw [fr' 6 (by decide) (by decide) (by decide), k6])
       (by rw [fr' 7 (by decide) (by decide) (by decide), k7]) (by rw [fr' 8 (by decide) (by decide) (by decide), k8])
       (by rw [fr' 9 (by decide) (by decide) (by decide), k9])
-      (by rw [fm]; exact g1) (by rw [fm]; exact g2) g3 (by rw [fm]; exact g4) (by rw [fm]; exact g5) hcap
-      (Nat.le_refl _) hcap (by omega) (by omega) (Nat.le_refl _) (by rw [Nat.sub_self, Nat.pow_zero]; omega) g6 (by rw [fm]; exact hz0i)
+      (by rw [fm]; exact g1) (by rw [fm]; exact g2) (by rw [fm]; exact g3) (by rw [fm]; exact g4) (by rw [fm]; exact g5) hcap
+      (Nat.le_of_eq (zB_one n).symm) hcap (by omega) (by omega) (Nat.le_refl _) (by rw [Nat.sub_self, Nat.pow_zero]; omega) g6 (by rw [fm]; exact hz0i)
     case q28 =>
       rw [fr' 28 (by decide) (by decide) (by decide), k28, BitVec.ofNat_toNat, BitVec.setWidth_eq]
     case q18 => rw [fr' 18 (by decide) (by decide) (by decide), k18, h18]

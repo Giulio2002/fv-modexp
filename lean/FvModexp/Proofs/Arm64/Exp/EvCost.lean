@@ -18,16 +18,16 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvMod
 
 namespace FvModexp.Arm64.ExpEven
 
-open StackNat (rnd)
+-- (s45) `rnd` is written `StackNat.rnd`: Common/MulCost's `FvModexp.rnd` (same body) shadows the opened name
 
-@[reducible] def wL2 (ℓ0 ml : Nat) : Nat := ℓ0 + rnd ml + rnd ml
-@[reducible] def wL3 (ℓ0 ml : Nat) : Nat := wL2 ℓ0 ml + rnd (2 * ml)
-@[reducible] def wL4 (ℓ0 ml : Nat) : Nat := wL3 ℓ0 ml + rnd (2 * ml)
+@[reducible] def wL2 (ℓ0 ml : Nat) : Nat := ℓ0 + StackNat.rnd ml + StackNat.rnd ml
+@[reducible] def wL3 (ℓ0 ml : Nat) : Nat := wL2 ℓ0 ml + StackNat.rnd (2 * ml)
+@[reducible] def wL4 (ℓ0 ml : Nat) : Nat := wL3 ℓ0 ml + StackNat.rnd (2 * ml)
 
 /-- the stack need (words above the entry level) -/
 def needE (needR : Nat → Nat → Nat) (needS needP : Nat → Nat → Nat → Nat) (xl yl ml : Nat) : Nat :=
-  2 * rnd ml + 2 * rnd (2 * ml) +
-    (rnd (23 * ml) + rnd (xl + 1) + 2 * rnd ml + 16 * xl + 2 * rnd (2 * ml) + 32 * ml + 80 +
+  2 * StackNat.rnd ml + 2 * StackNat.rnd (2 * ml) +
+    (StackNat.rnd (23 * ml) + StackNat.rnd (xl + 1) + 2 * StackNat.rnd ml + 16 * xl + 2 * StackNat.rnd (2 * ml) + 32 * ml + 80 +
       needR xl ml + needS xl yl ml + needP xl yl (64 * ml) + 8 * ml + 72 + 2 * ml + 3)
 
 /-- the first `nat.expNN` call (`z1`, level `l`): its worst COST only — its budget premise is covered by the
@@ -39,22 +39,25 @@ COSTS: was `bU + cU` for each call) -/
 @[reducible] def eC2 (bU cU : Nat → Nat → Nat → Nat → Nat → Nat) (xl yl ml l : Nat) : Nat :=
   max (bU xl yl ml l (64 * ml)) (cU xl yl ml l (64 * ml))
 
-/-- the budget (entry stack level `ℓ0`) -/
+/-- the budget (entry stack level `ℓ0`). TIGHT COSTS (infra s45): `nat.modularInverseModPowerOfTwo` is consumed in its
+bridged Q-form (`ModInv.ens`): level-free `sqQ` / `mlQ` (divmc's `sqrCQ` / `mulCQ`) at `len x ≤ ml`, `n ≤ 64 ml`, plus
+ONE reserve `stkRes (level + D n)` -/
 def costE (costF : Nat → Nat → Nat → Nat) (costR : Nat → Nat → Nat → Nat)
-    (costS costP : Nat → Nat → Nat → Nat → Nat) (bU cU : Nat → Nat → Nat → Nat → Nat → Nat) (sqC : Nat → Nat → Nat)
-    (mlC mlG : Nat → Nat → Nat → Nat) (ℓ0 xl yl ml : Nat) : Nat :=
-  stackNatCost ℓ0 ml + makeB (ml + 1) + stackNatCost (ℓ0 + rnd ml) ml + makeB ml +
+    (costS costP : Nat → Nat → Nat → Nat → Nat) (bU cU : Nat → Nat → Nat → Nat → Nat → Nat) (sqQ : Nat → Nat)
+    (mlQ : Nat → Nat → Nat) (mlG : Nat → Nat → Nat → Nat) (ℓ0 xl yl ml : Nat) : Nat :=
+  stackNatCost ℓ0 ml + makeB (ml + 1) + stackNatCost (ℓ0 + StackNat.rnd ml) ml + makeB ml +
     stackNatCost (wL2 ℓ0 ml) (2 * ml) + eC1 cU xl yl ml (wL3 ℓ0 ml) +
     stackNatCost (wL3 ℓ0 ml) (2 * ml) + eC2 bU cU xl yl ml (wL4 ℓ0 ml) +
     allocCost (8 * (ml + 4)) + SubMod2N.costG (64 * ml) +
-    ModInv.cost (sqC (wL4 ℓ0 ml)) (mlC (wL4 ℓ0 ml)) (64 * ml) + mlG (wL4 ℓ0 ml) ml ml + makeB (2 * ml) +
+    (ModInv.cost sqQ mlQ ml (64 * ml) + stkRes (wL4 ℓ0 ml + ModInv.D (64 * ml))) + mlG (wL4 ℓ0 ml) ml ml +
+    makeB (2 * ml) +
     mlG (wL4 ℓ0 ml) ml ml + makeB (ml + 1)
 
 theorem makeCost_monoE {a b : Nat} (h : a ≤ b) (hb : 2 ≤ b) : makeCost a ≤ makeCost b := by
   unfold makeCost makeCap allocCost
   split <;> split <;> omega
 
-theorem rnd_mono {a b : Nat} (h : a ≤ b) : rnd a ≤ rnd b := by unfold rnd; omega
+theorem rnd_mono {a b : Nat} (h : a ≤ b) : StackNat.rnd a ≤ StackNat.rnd b := by unfold StackNat.rnd; omega
 
 theorem makeB_mono {a b : Nat} (h : a ≤ b) : makeB a ≤ makeB b := by unfold makeB allocCost; omega
 
@@ -68,9 +71,32 @@ theorem costG_mono {n n' : Nat} (h : n ≤ n') : SubMod2N.costG n ≤ SubMod2N.c
     omega)
   omega
 
-theorem miCost_mono {s1 s2 : Nat → Nat} {m1 m2 : Nat → Nat → Nat} (hs : ∀ a a', a ≤ a' → s1 a ≤ s2 a')
-    (hm : ∀ a a' c c', a ≤ a' → c ≤ c' → m1 a c ≤ m2 a' c') {n n' : Nat} (h1 : 1 ≤ n) (h : n ≤ n') :
-    ModInv.cost s1 m1 n ≤ ModInv.cost s2 m2 n' := by
+theorem roundCost_mono {s1 : Nat → Nat} {m1 : Nat → Nat → Nat} (hs : ∀ a a', a ≤ a' → s1 a ≤ s1 a')
+    (hm : ∀ a a' c c', a ≤ a' → c ≤ c' → m1 a c ≤ m1 a' c') {xl xl' n n' : Nat} (hx : xl ≤ xl') (h : n ≤ n')
+    (j k : Nat) : ModInv.roundCost s1 m1 xl n j k ≤ ModInv.roundCost s1 m1 xl' n' j k := by
+  have c6 := hs _ _ (ModInv.zB_mono h j)
+  have hW : ModInv.NW n ≤ ModInv.NW n' := by unfold ModInv.NW; omega
+  have c3 := makeCost_monoE (a := 2 * ModInv.NW n + 2) (b := 2 * ModInv.NW n' + 2) (by omega) (by omega)
+  have c4 := makeCost_monoE (a := ModInv.NW n + 2) (b := ModInv.NW n' + 2) (by omega) (by omega)
+  have c5 : SubMod2N.cost n ≤ SubMod2N.cost n' := by
+    unfold SubMod2N.cost SubMod2N.wCost SubMod2N.W allocCost; omega
+  have c7 := hm k k (min k xl) (min k xl') (Nat.le_refl _) (by omega)
+  unfold ModInv.roundCost; omega
+
+theorem sumR_le {s1 : Nat → Nat} {m1 : Nat → Nat → Nat} (hs : ∀ a a', a ≤ a' → s1 a ≤ s1 a')
+    (hm : ∀ a a' c c', a ≤ a' → c ≤ c' → m1 a c ≤ m1 a' c') {xl xl' n n' : Nat} (hx : xl ≤ xl') (h : n ≤ n') :
+    ∀ r, ModInv.sumR s1 m1 xl n r ≤ ModInv.sumR s1 m1 xl' n' r
+  | 0 => Nat.le_refl _
+  | r + 1 => by
+    rw [ModInv.sumR_succ, ModInv.sumR_succ]
+    have := sumR_le hs hm hx h r
+    have := roundCost_mono hs hm hx h (r + 1) (2 ^ (r + 1))
+    omega
+
+/-- `ModInv.cost` is monotone in `len x` and `n` (TIGHT COSTS s45: per-round sizes, `xl`-dependent) -/
+theorem miCost_mono {s1 : Nat → Nat} {m1 : Nat → Nat → Nat} (hs : ∀ a a', a ≤ a' → s1 a ≤ s1 a')
+    (hm : ∀ a a' c c', a ≤ a' → c ≤ c' → m1 a c ≤ m1 a' c') {xl xl' n n' : Nat} (hx : xl ≤ xl') (h1 : 1 ≤ n)
+    (h : n ≤ n') : ModInv.cost s1 m1 xl n ≤ ModInv.cost s1 m1 xl' n' := by
   have hW : ModInv.NW n ≤ ModInv.NW n' := by unfold ModInv.NW; omega
   have hW1 : 1 ≤ ModInv.NW n := by unfold ModInv.NW; omega
   have c1 := makeCost_monoE (a := ModInv.NW n + 1) (b := ModInv.NW n' + 1) (by omega) (by omega)
@@ -80,14 +106,23 @@ theorem miCost_mono {s1 s2 : Nat → Nat} {m1 m2 : Nat → Nat → Nat} (hs : �
   have c5 : SubMod2N.cost n ≤ SubMod2N.cost n' := by
     unfold SubMod2N.cost SubMod2N.wCost SubMod2N.W allocCost; omega
   have c6 := hs (ModInv.NW n + 1) (ModInv.NW n' + 1) (by omega)
-  have c7 := hm (2 * ModInv.NW n + 2) (2 * ModInv.NW n' + 2) (ModInv.NW n) (ModInv.NW n') (by omega) hW
-  have hr : ModInv.roundCost s1 m1 n ≤ ModInv.roundCost s2 m2 n' := by
-    unfold ModInv.roundCost; omega
+  have c7 := hm (ModInv.NW n) (ModInv.NW n') (min (ModInv.NW n) xl) (min (ModInv.NW n') xl') hW (by omega)
   have hW0 : ModInv.NW n' ≠ 0 := by omega
   have hlg : Nat.log2 (ModInv.NW n) ≤ Nat.log2 (ModInv.NW n') :=
     (Nat.le_log2 hW0).2 (Nat.le_trans (Nat.log2_self_le (by omega)) hW)
-  unfold ModInv.cost
-  have := Nat.mul_le_mul (show ModInv.rounds n ≤ ModInv.rounds n' by simp only [ModInv.rounds]; omega) hr
+  have c8 := sumR_le hs hm hx h (Nat.log2 (ModInv.NW n))
+  have c9 := ModInv.sumR_mono s1 m1 xl' n' hlg
+  unfold ModInv.cost; omega
+
+/-- the bridged `ModInv.ens` charge (cost + one reserve) is monotone -/
+theorem miB_mono {s1 : Nat → Nat} {m1 : Nat → Nat → Nat} (hs : ∀ a a', a ≤ a' → s1 a ≤ s1 a')
+    (hm : ∀ a a' c c', a ≤ a' → c ≤ c' → m1 a c ≤ m1 a' c') {xl xl' n n' l l' : Nat} (hx : xl ≤ xl') (h1 : 1 ≤ n)
+    (h : n ≤ n') (hl : l ≤ l') :
+    ModInv.cost s1 m1 xl n + stkRes (l + ModInv.D n) ≤ ModInv.cost s1 m1 xl' n' + stkRes (l' + ModInv.D n') := by
+  have := miCost_mono hs hm hx h1 h
+  have hD : l + ModInv.D n ≤ l' + ModInv.D n' := by unfold ModInv.D ModInv.NW; omega
+  have : stkRes (l + ModInv.D n) ≤ stkRes (l' + ModInv.D n') := by
+    simp only [stkRes_eq]; omega
   omega
 
 /-! ### the arithmetic side conditions of the composition (small contexts) -/

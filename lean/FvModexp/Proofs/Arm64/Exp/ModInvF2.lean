@@ -1,6 +1,8 @@
 import FvModexp.Proofs.Arm64.Exp.ModInvPostM
 import FvModexp.Proofs.Common.BitLemmas
 
+set_option autoImplicit false
+
 /-!
 # `nat.modularInverseModPowerOfTwo` (arm64): final round, `S2` → `zz = zz.mul(stk, zz, x[:min(numWords, len x)])`
 → `S3` (agent infra)
@@ -19,14 +21,13 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem segF2 {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
-    {stkM aboveM : Nat} {mlC : Nat → Nat → Nat → Nat} (hmu : MulHypX impl R ns stkM aboveM mlC) {kc : Nat}
-    (hkc : 4608 ≤ kc) (hkM : stkM ≤ kc) (haM : aboveM ≤ 88) {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
+    {stkM aboveM : Nat} {mulC : Nat → Nat → Nat} (hmu : MulHypQ impl R ns stkM aboveM mulC) {kc : Nat}
+    (hkc : 4608 ≤ kc) (hkM : stkM ≤ kc) (haM : aboveM ≤ 88) {H : Nat} {sqrC : Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
-    (hml : ∀ x y, mlC (stLen s.mem st) x y = mulC x y)
     (hmm : ∀ a a' c c', a ≤ a' → c ≤ c' → mulC a c ≤ mulC a' c')
-    (k3 : S3 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s 1798180 (ExF n) (eF n) (kF n)) :
-    S2 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s 1798132 (ExF n) (eF n) (kF n) := by
-  intro S j p l c q ql qc L1 b1 Zv hrc hpc hex hzs hzv hl0 hl h0 h1 h2 hv hnq hql hb
+    (k3 : S3 impl R kc H sqrC mulC b L zp zl zc st xp xl xc n s 1798180 (ExF n) (eF n) (kF n)) :
+    S2 impl R kc H sqrC mulC b L zp zl zc st xp xl xc n s 1798132 (ExF n) (eF n) (kF n) := by
+  intro S j p l c q ql qc L1 b1 Zv hrc hpc hex hzs hzv hl0 hl h0 h1 h2 hv hnq hql hqK hb
   obtain ⟨hpreB, hn, hsp, h28, h18, hmidB, hj1, hjn, hbud, hcong⟩ := hrc
   have hK : 240 + kc ≤ s.sp.toNat := sp_K hpreB.h
   obtain ⟨hal, hb', ha, hw⟩ := hpreB.h.1.2.1
@@ -64,14 +65,14 @@ theorem segF2 {impl : List Segment} (hap : ImplApart Extracted.program impl) {R 
   by_cases hc : xl < NW n
   · have hk : min (kF n j) xl = xl := Nat.min_eq_right (by simp only [kF]; omega)
     janus_run [r288, r272, r280, r296, r200, r128, h9a, hnw, hc] until [1814128]
-    refine callMul hap hns hnf hmu hkc hkM haM hml hmm 269 (by decide) rfl k3 hpreB.h hn hmidB.h hj1 hjn hbud hcong
-      (fun _ _ => hex) hzs hzv hl0 hl hv hql (by simp only [kF]; omega) (by simp only [kF, NW]; omega) hb _ ?_ ?_ ?_
+    refine callMul hap hns hnf hmu hkc hkM haM hmm 269 (by decide) rfl k3 hpreB.h hn hmidB.h hj1 hjn hbud hcong
+      (fun _ _ => hex) hzs hzv hl0 hl hv hql (by simp only [kF]; omega) (by simp only [kF, NW]; omega) hqK hb _ ?_ ?_ ?_
       rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ (by rw [hk]; janus_simp; rw [hss]; simp [hc]) ?_
     all_goals janus_simp
   · have hk : min (kF n j) xl = NW n := Nat.min_eq_left (by simp only [kF]; omega)
     janus_run [r288, r272, r280, r296, r200, r128, h9a, hnw, hc] until [1814128]
-    refine callMul hap hns hnf hmu hkc hkM haM hml hmm 269 (by decide) rfl k3 hpreB.h hn hmidB.h hj1 hjn hbud hcong
-      (fun _ _ => hex) hzs hzv hl0 hl hv hql (by simp only [kF]; omega) (by simp only [kF, NW]; omega) hb _ ?_ ?_ ?_
+    refine callMul hap hns hnf hmu hkc hkM haM hmm 269 (by decide) rfl k3 hpreB.h hn hmidB.h hj1 hjn hbud hcong
+      (fun _ _ => hex) hzs hzv hl0 hl hv hql (by simp only [kF]; omega) (by simp only [kF, NW]; omega) hqK hb _ ?_ ?_ ?_
       rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ (by rw [hk]; janus_simp; rw [hss]; simp [hc]) ?_
     all_goals janus_simp
 

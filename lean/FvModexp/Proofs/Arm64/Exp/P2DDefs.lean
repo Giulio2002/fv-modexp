@@ -47,8 +47,10 @@ theorem le_supTo (f : Nat → Nat) : ∀ n j, j ≤ n → f j ≤ supTo f n := b
     · exact Nat.le_trans (ih j (by omega)) (Nat.le_max_left _ _)
     · rw [show j = n + 1 by omega]; exact Nat.le_max_right _ _
 
-/-- the budget on an odd base (`c2`/`c4`: the window costs at stack level `ℓ`) -/
-@[reducible] def costO (c2 c4 : Nat → Nat → Nat → Nat) (ℓ yl lm : Nat) : Nat := c2 ℓ yl lm + c4 ℓ yl lm + allocCost 8
+/-- the budget on an odd base (`c2`/`c4`: the window costs at stack level `ℓ`). TIGHT COSTS (infra s45): Go calls
+exactly ONE window (nat.go:1105-1109), so the path MAX of the two (was their sum) -/
+@[reducible] def costO (c2 c4 : Nat → Nat → Nat → Nat) (ℓ yl lm : Nat) : Nat :=
+  max (c2 ℓ yl lm) (c4 ℓ yl lm) + allocCost 8
 
 /-- the budget on any positive base -/
 @[reducible] def costP (c2 c4 : Nat → Nat → Nat → Nat) (ℓ xl yl lm : Nat) : Nat :=

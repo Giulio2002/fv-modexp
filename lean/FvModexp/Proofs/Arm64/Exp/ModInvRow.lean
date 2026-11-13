@@ -1,5 +1,6 @@
 import FvModexp.Proofs.Arm64.Exp.ExpWit
 import FvModexp.Proofs.Arm64.Exp.ModInv
+import FvModexp.Proofs.Arm64.Exp.CalleeInstQ
 import FvModexp.Proofs.Arm64.Nat.NatSub0
 import FvModexp.Proofs.Arm64.Nat.NatAdd
 
@@ -8,27 +9,29 @@ set_option autoImplicit false
 /-!
 # Row: `nat.modularInverseModPowerOfTwo` (arm64) on the Run extraction (agent infra)
 
-`correctness` = `ModInv.ens` with the PROVED callees of `CalleeInst` (`nat.sqr`, `nat.mul`, `nat.trunc`, `nat.lsh`),
+`correctness` = the Q-form `ModInv.ensQ` (TIGHT COSTS s45: per-round sizes, one reserve level `H`) with the PROVED
+callees of `CalleeInstQ` (divmc's Q-form `nat.sqr` / `nat.mul`, asm's `nat.trunc`, `nat.lsh`),
 `nat.sub` (divmc `NatSub.ensR0`), `nat.add` (divmc `NatAdd.ensR`), and `nat.subMod2N` (inside `ModInv.ens`), callee
 frame bound `kc = sqrWX`, moved to `Extracted.program.link impl` (`Ensures.full`). Runtime premises: the live
 `growslice`, `memclrNoHeapPointers`, `memmove`, `makeslice`, `gcWriteBarrier2` contracts.
 `Witness.nonvacuous`: the shared witness memory `ExpWit` (`x = [3]`, the stack `{w, 0, 4}`, `natOne`), `z` = an
-all-zero 2-word array, `n = 64`; one call-site state per contract.
+all-zero 2-word array, `n = 64`, reserve level `H = D 64 = 80`; one call-site state per contract.
 -/
 
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvModexp
 
 namespace FvModexp.Arm64.ModInvRow
 
-open FvModexp.Arm64.CalleeInst
+open FvModexp.Arm64.CalleeInstQ
 
 set_option maxHeartbeats 64000000 in
-theorem nfM : nsP.contains ModInv.fn = false := by decide
+theorem nfM : nsQ.contains ModInv.fn = false := by decide
 set_option maxHeartbeats 64000000 in
-theorem nfS : nsP.contains SubMod2N.fn = false := by decide
+theorem nfS : nsQ.contains SubMod2N.fn = false := by decide
 
 /-- **`nat.modularInverseModPowerOfTwo`** (arm64): `z.modularInverseModPowerOfTwo(stk, x, n)` returns the inverse of
-odd `x` modulo `2^n` (`Exp.modularInverseModPowerOfTwo`, `ModInv.PreL` / `Post`), for every runtime meeting the live
+odd `x` modulo `2^n` (`Exp.modularInverseModPowerOfTwo`, Q-form `ModInv.PreQ` / `PostQ`: cost
+`ModInv.cost sqrCQ mulCQ xl n + stkR H s.mem st`), for every runtime meeting the live
 allocation / copy / clear / write-barrier contracts. -/
 theorem correctness (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hgr : GrowsliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.growslice")
@@ -40,21 +43,22 @@ theorem correctness (impl : List Segment) (hap : ImplApart Extracted.program imp
       4096 R)
     (hwb : WbLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2")
       4096 R 2)
-    (ℓ b : Nat) (L : List (Nat × Nat)) (zp zl zc st xp xl xc n : Nat) :
+    (H B : Nat) (L : List (Nat × Nat)) (zp zl zc st xp xl xc n : Nat) :
     Ensures (Extracted.program.link impl) (segAddr Extracted.program ModInv.fn)
       [BitVec.ofNat 64 zp, BitVec.ofNat 64 zl, BitVec.ofNat 64 zc, BitVec.ofNat 64 st, BitVec.ofNat 64 xp,
         BitVec.ofNat 64 xl, BitVec.ofNat 64 xc, BitVec.ofNat 64 n]
-      (ModInv.PreL R NatSqr.sqrWX sqrC mulC ℓ b L zp zl zc st xp xl xc n)
-      (ModInv.Post R NatSqr.sqrWX (sqrC ℓ) (mulC ℓ) b L zp zc st xp xl n) := by
-  have hW := sqrWX_eq
+      (ModInv.PreQ R NatSqr.sqrWX H sqrCQ mulCQ B L zp zl zc st xp xl xc n)
+      (ModInv.PostQ R NatSqr.sqrWX H sqrCQ mulCQ B L zp zc st xp xl n) := by
+  have hW := CalleeInst.sqrWX_eq
   have hsub : SubMod2N.SubHypR0 impl R := fun b L zp zl zc xp xl xc yp yl yc =>
     NatSub.ensR0 impl hap R hmk hmv b L zp zl zc xp xl xc yp yl yc
   have hadd : SubMod2N.AddHypR impl R := fun b L zp zl zc xp xl xc yp yl yc =>
     NatAdd.ensR impl hap R hmk hmv b L zp zl zc xp xl xc yp yl yc
-  exact Ensures.full hap (ModInv.ens hap sub nfM nfS hmk (by omega) (sq hap hgr hmc hmv hmk hwb) (Nat.le_refl _)
-    (by omega) (tr hap hmv hmk) (by omega) (by omega) (mu hap hgr hmc hmv hmk hwb) (by rw [mulWX_eq]; omega)
+  exact Ensures.full hap (ModInv.ensQ hap sub nfM nfS hmk (by omega) (sq hap hgr hmc hmv hmk hwb) (Nat.le_refl _)
+    (by omega) (tr hap hmv hmk) (by omega) (by omega) (mu hap hgr hmc hmv hmk hwb)
+    (by rw [CalleeInst.mulWX_eq]; omega)
     (by omega) (lh hap hmc hmv hmk) (by omega) (by omega) (by omega) hsub hadd hgr sqm mum
-    ℓ b L zp zl zc st xp xl xc n)
+    H B L zp zl zc st xp xl xc n)
 
 end FvModexp.Arm64.ModInvRow
 
@@ -75,18 +79,17 @@ abbrev s0 : State := mkS (segAddr Extracted.program ModInv.fn) args
 
 theorem g0 : (s0.regs 28).toNat = G0 := by decide
 
-theorem bud : ModInv.cost (sqrC 0) (mulC 0) 64 ≤ BW := by decide +kernel
+theorem bud : ModInv.cost sqrCQ mulCQ 1 64 + (stkRes 80 - potK * 4) ≤ BW := by decide +kernel
 
 set_option maxHeartbeats 64000000 in
-/-- the witness state satisfies `PreL` (`x = 3`, `n = 64`, `z` a 2-word array) at `ℓ = 0` -/
-theorem pre : ModInv.PreL R NatSqr.sqrWX sqrC mulC 0 BW [] ZP 0 2 ST XP 1 1 64 s0 := by
+/-- the witness state satisfies `PreQ` (`x = 3`, `n = 64`, `z` a 2-word array) at `H = 80` (`= 0 + D 64`) -/
+theorem pre : ModInv.PreQ R NatSqr.sqrWX 80 sqrCQ mulCQ BW [] ZP 0 2 ST XP 1 1 64 s0 := by
   have hm : s0.mem = mem0 := rfl
   have hW := CalleeInst.sqrWX_eq
-  unfold ModInv.PreL ModInv.Pre
+  unfold ModInv.PreQ
   rw [hm, stLen0, hW]
   simp only [CallEnv, winA, win, WrOut, RdIn, StkIn, StkApart, OneIn, PX, OpX, CapIn, frP, frN, StackOK', stWs, stkWs,
-    g0, mkS_sp, stW0, stLen0, stCap0, K, A]
-  refine ⟨?_, trivial⟩
+    g0, mkS_sp, stW0, stLen0, stCap0, K, A, stkR]
   repeat' apply And.intro
   all_goals first
     | decide
@@ -130,7 +133,7 @@ theorem pre : ModInv.PreL R NatSqr.sqrWX sqrC mulC 0 BW [] ZP 0 2 ST XP 1 1 64 s
 /-- Every hypothesis of `correctness` and every conjunct of its precondition hold together: the shared witness runtime,
 budget `BW`, empty live set, the call `z.modularInverseModPowerOfTwo(stk, 3, 64)` with a 2-word `z` and the stack
 `{w, 0, 4}`; one call-site state per runtime contract. -/
-theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (ℓ b : Nat) (L : List (Nat × Nat))
+theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (H B : Nat) (L : List (Nat × Nat))
     (zp zl zc st xp xl xc n : Nat) (ret : Nat) (s : State),
     ImplApart Extracted.program impl ∧
     GrowsliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.growslice") 4096 R ∧
@@ -143,7 +146,7 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (ℓ b : Nat) (L : Li
     CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program ModInv.fn)
       [BitVec.ofNat 64 zp, BitVec.ofNat 64 zl, BitVec.ofNat 64 zc, BitVec.ofNat 64 st, BitVec.ofNat 64 xp,
         BitVec.ofNat 64 xl, BitVec.ofNat 64 xc, BitVec.ofNat 64 n] s ∧
-    ModInv.PreL R NatSqr.sqrWX sqrC mulC ℓ b L zp zl zc st xp xl xc n s ∧
+    ModInv.PreQ R NatSqr.sqrWX H sqrCQ mulCQ B L zp zl zc st xp xl xc n s ∧
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.growslice") ∧
       grSite R (Extracted.program.contractAddr "runtime.growslice") L b s_c) ∧
@@ -160,8 +163,8 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (ℓ b : Nat) (L : Li
       s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.gcWriteBarrier2") ∧
       wbSite R (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 2 L b s_c) ∧
     Returns ((Extracted.program.link impl).withExit ret) s fun s' =>
-      ABIReturn s s' ∧ ModInv.Post R NatSqr.sqrWX (sqrC ℓ) (mulC ℓ) b L zp zc st xp xl n s s' :=
-  ⟨WStubs.impl, R, 0, BW, [], ZP, 0, 2, ST, XP, 1, 1, 64, RET, s0, WStubs.hap,
+      ABIReturn s s' ∧ ModInv.PostQ R NatSqr.sqrWX H sqrCQ mulCQ B L zp zc st xp xl n s s' :=
+  ⟨WStubs.impl, R, 80, BW, [], ZP, 0, 2, ST, XP, 1, 1, 64, RET, s0, WStubs.hap,
     by rw [WStubs.addr_gr]; exact WStubs.gr [] (by intro t ht; simp at ht) _,
     by rw [WStubs.addr_cl]; exact WStubs.cl R,
     by rw [WStubs.addr_mv]; exact WStubs.mv R,
@@ -177,7 +180,7 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (ℓ b : Nat) (L : Li
     correctness WStubs.impl WStubs.hap R (by rw [WStubs.addr_gr]; exact WStubs.gr [] (by intro t ht; simp at ht) _)
       (by rw [WStubs.addr_cl]; exact WStubs.cl R) (by rw [WStubs.addr_mv]; exact WStubs.mv R)
       (by rw [WStubs.addr_mk]; exact WStubs.mk [] (by intro t ht; simp at ht) _)
-      (by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] (by intro t ht; simp at ht) _) 0 BW [] ZP 0 2 ST XP 1 1 64
+      (by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] (by intro t ht; simp at ht) _) 80 BW [] ZP 0 2 ST XP 1 1 64
       RET hret s0 (setup _ args (by decide)) pre⟩
 
 end FvModexp.Arm64.ModInvRow.Witness

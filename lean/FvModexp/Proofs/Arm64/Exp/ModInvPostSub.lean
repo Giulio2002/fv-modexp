@@ -1,6 +1,8 @@
 import FvModexp.Proofs.Arm64.Exp.SubMod2N
 import FvModexp.Proofs.Arm64.Exp.ModInvSegC
 
+set_option autoImplicit false
+
 /-!
 # `nat.modularInverseModPowerOfTwo` (arm64): `z = z.subMod2N(z, zz, e)` (agent infra)
 
@@ -22,8 +24,8 @@ theorem callSub {impl : List Segment} (hap : ImplApart Extracted.program impl) {
     {stkT aboveT : Nat} (hkT : stkT ≤ 4464) (haT : aboveT ≤ 88) (htr : Trunc.Hyp2 impl R ns stkT aboveT)
     (hsub : SubMod2N.SubHypR0 impl R) (hadd : SubMod2N.AddHypR impl R)
     (hgr : GrowsliceLiveContract (LibW.program.link impl) (Extracted.program.contractAddr "runtime.growslice") 4096 R) {kc : Nat} (hkc : 4608 ≤ kc)
-    {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat} {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat}
-    {s : State} (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {p l c q ql qc : Nat}
+    {H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat} {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat}
+    {s : State} (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) {p l c q ql qc : Nat}
     {L1 : List (Nat × Nat)} {b1 : Nat} {M : Memory}
     (hmid : Mid R kc L s zp zc st xp xl xc n M L1 b1 p l c q ql qc) {e : Nat} (he1 : 1 ≤ e) (he : e ≤ n)
     (hl : l ≤ NW n + 2) (hql : ql ≤ NW n) (hnz : NatNorm M p l) (hnq : NatNorm M q ql)
@@ -41,7 +43,7 @@ theorem callSub {impl : List Segment} (hap : ImplApart Extracted.program impl) {
       Mid R kc L s zp zc st xp xl xc n s'.mem L' b' p l' c q ql qc →
       natVal s'.mem p l' = Exp.subMod2N (natVal M p l) (natVal M q ql) e → NatNorm s'.mem p l' →
       natVal s'.mem q ql = natVal M q ql → NatNorm s'.mem q ql →
-      b1 - SubMod2N.cost e ≤ b' → SlotsKept s M s'.mem → ReachesRet (LibW.program.link impl) ret s' Q) :
+      b1 - SubMod2N.cost e ≤ b' → SlotsKept s M s'.mem → stCap s'.mem st = stCap M st → ReachesRet (LibW.program.link impl) ret s' Q) :
     ReachesRet (LibW.program.link impl) ret S' Q := by
   have hK := sp_K hpre
   have hS' := sp'_eq hsp
@@ -70,7 +72,7 @@ theorem callSub {impl : List Segment} (hap : ImplApart Extracted.program impl) {
     have hqlc : ql ≤ qc := hmid.2.2.2.2.2.2.1
     refine K s' l' L' b' (hr.trans h30) (e1.trans hsp) (e2.trans h28) (e4.trans h18) (by rw [← f0, BitVec.ofNat_toNat, BitVec.setWidth_eq])
       (by rw [← f1, BitVec.ofNat_toNat, BitVec.setWidth_eq]) (by rw [← f2, BitVec.ofNat_toNat, BitVec.setWidth_eq])
-      mid2 hv hn' (hqv ql hqlc) ?_ hbud hsl
+      mid2 hv hn' (hqv ql hqlc) ?_ hbud hsl se2
     exact norm_keep hqv hqlc hnq
 
 end FvModexp.Arm64.ModInv

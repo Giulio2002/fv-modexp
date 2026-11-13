@@ -27,7 +27,7 @@ abbrev bUC : Nat → Nat → Nat → Nat → Nat → Nat := Exp.supU (ExpEven.NB
 abbrev cUC : Nat → Nat → Nat → Nat → Nat → Nat := Exp.supU (ExpN.NCost cF cR cS cP)
 /-- `nat.expNNEven`'s stack need and cost -/
 abbrev nE : Nat → Nat → Nat → Nat := ExpEven.needE NatRem.need ExpSlow.need P2D.needP
-abbrev cE : Nat → Nat → Nat → Nat → Nat := ExpEven.costE cF cR cS cP bUC cUC sqrC mulC mulC
+abbrev cE : Nat → Nat → Nat → Nat → Nat := ExpEven.costE cF cR cS cP bUC cUC sqrCQ mulCQ mulC
 
 /-- (copied from top's `Run.Closed.rem_mono`) -/
 theorem rem_mono : ∀ x a a', a ≤ a' → NatRem.need x a ≤ NatRem.need x a' := fun _ _ _ _ => by

@@ -2,6 +2,8 @@ import FvModexp.Proofs.Arm64.Exp.ModInvBuild
 import FvModexp.Proofs.Arm64.Exp.ModInvBuild2
 import FvModexp.Proofs.Common.ModInvRound
 
+set_option autoImplicit false
+
 /-!
 # `nat.modularInverseModPowerOfTwo` (arm64): the joins inside a Hensel round (agent infra)
 
@@ -25,15 +27,15 @@ open FvModexp.Arm64.EvenHyp
 structure Box (P : Prop) : Prop where
   h : P
 
-/-- the round's budget pieces, in call order -/
-@[reducible] def P1 (sqrC : Nat → Nat) (n : Nat) : Nat := sqrC (NW n + 1)
-@[reducible] def P2 (sqrC : Nat → Nat) (n : Nat) : Nat := P1 sqrC n + makeCost (2 * NW n + 2)
-@[reducible] def P3 (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (n : Nat) : Nat :=
-  P2 sqrC n + mulC (2 * NW n + 2) (NW n)
-@[reducible] def P4 (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (n : Nat) : Nat :=
-  P3 sqrC mulC n + makeCost (2 * NW n + 2)
-@[reducible] def P5 (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (n : Nat) : Nat :=
-  P4 sqrC mulC n + makeCost (NW n + 2)
+/-- the round's budget pieces, in call order (round `j`, `zz`'s bound / `x` prefix `k`) -/
+@[reducible] def P1 (sqrC : Nat → Nat) (n j : Nat) : Nat := sqrC (zB n j)
+@[reducible] def P2 (sqrC : Nat → Nat) (n j : Nat) : Nat := P1 sqrC n j + makeCost (2 * NW n + 2)
+@[reducible] def P3 (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (xl n j k : Nat) : Nat :=
+  P2 sqrC n j + mulC k (min k xl)
+@[reducible] def P4 (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (xl n j k : Nat) : Nat :=
+  P3 sqrC mulC xl n j k + makeCost (2 * NW n + 2)
+@[reducible] def P5 (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (xl n j k : Nat) : Nat :=
+  P4 sqrC mulC xl n j k + makeCost (NW n + 2)
 
 /-- `z`'s slots (`SP - 16 / - 48 / - 56`) -/
 @[reducible] def ZS (s : State) (M : Memory) (p l c : Nat) : Prop :=
@@ -45,78 +47,78 @@ structure Box (P : Prop) : Prop where
 
 /-- the facts at every join of round `j` (state `S`, live set `L1`, budget `b1`, `z = (p, l, c)`, `zz = (q, ql, qc)`,
 `Zv` the value of `z` at the round's start) -/
-@[reducible] def RC (R : RtInv) (kc : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
-    (L : List (Nat × Nat)) (zp zl zc st xp xl xc n : Nat) (s S : State) (j : Nat) (L1 : List (Nat × Nat))
+@[reducible] def RC (R : RtInv) (kc H : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
+    (L : List (Nat × Nat)) (zp zl zc st xp xl xc n : Nat) (Kx : Nat → Nat) (s S : State) (j : Nat) (L1 : List (Nat × Nat))
     (b1 p l c q ql qc Zv : Nat) : Prop :=
-  Box (Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) ∧ 64 < n ∧
+  Box (Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) ∧ 64 < n ∧
     S.sp = BitVec.ofNat 64 (s.sp.toNat - 240) ∧ S.regs 28 = s.regs 28 ∧ S.regs 18 = s.regs 18 ∧
     Box (Mid R kc L s zp zc st xp xl xc n S.mem L1 b1 p l c q ql qc) ∧
-    1 ≤ j ∧ 2 ^ (j - 1) < NW n ∧ spent sqrC mulC n j + roundCost sqrC mulC n ≤ b ∧
+    1 ≤ j ∧ 2 ^ (j - 1) < NW n ∧ spent sqrC mulC xl n j + roundCost sqrC mulC xl n j (Kx j) ≤ b ∧
     natVal s.mem xp xl * Zv % 2 ^ (2 ^ j * 32) = 1 % 2 ^ (2 ^ j * 32)
 
 /-- after `zz = zz.sqr(stk, z)` -/
-def S1 (impl : List Segment) (R : RtInv) (kc : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
+def S1 (impl : List Segment) (R : RtInv) (kc H : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
     (L : List (Nat × Nat)) (zp zl zc st xp xl xc n : Nat) (s : State) (pcv : Nat) (Ex : Nat → Memory → Prop)
     (E Kx : Nat → Nat) : Prop :=
   ∀ (S : State) (j p l c q ql qc : Nat) (L1 : List (Nat × Nat)) (b1 Zv : Nat),
-    RC R kc sqrC mulC b L zp zl zc st xp xl xc n s S j L1 b1 p l c q ql qc Zv → S.pc = BitVec.ofNat 64 pcv →
-    Ex j S.mem → ZS s S.mem p l c → natVal S.mem p l = Zv → 0 < l → l ≤ NW n + 1 →
+    RC R kc H sqrC mulC b L zp zl zc st xp xl xc n Kx s S j L1 b1 p l c q ql qc Zv → S.pc = BitVec.ofNat 64 pcv →
+    Ex j S.mem → ZS s S.mem p l c → natVal S.mem p l = Zv → 0 < l → l ≤ zB n j →
     S.regs 0 = BitVec.ofNat 64 q → S.regs 1 = BitVec.ofNat 64 ql → S.regs 2 = BitVec.ofNat 64 qc →
     natVal S.mem q ql = Zv * Zv → NatNorm S.mem q ql → ql ≤ 2 * NW n + 2 →
-    b - spent sqrC mulC n j - P1 sqrC n ≤ b1 →
-    Goal impl R kc sqrC mulC b L zp zc st xp xl n s S
+    b - spent sqrC mulC xl n j - P1 sqrC n j + stkR H S.mem st ≤ b1 →
+    Goal impl R kc H sqrC mulC b L zp zc st xp xl n s S
 
 /-- after the first `zz = zz.trunc(zz, e)` -/
-def S2 (impl : List Segment) (R : RtInv) (kc : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
+def S2 (impl : List Segment) (R : RtInv) (kc H : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
     (L : List (Nat × Nat)) (zp zl zc st xp xl xc n : Nat) (s : State) (pcv : Nat) (Ex : Nat → Memory → Prop)
     (E Kx : Nat → Nat) : Prop :=
   ∀ (S : State) (j p l c q ql qc : Nat) (L1 : List (Nat × Nat)) (b1 Zv : Nat),
-    RC R kc sqrC mulC b L zp zl zc st xp xl xc n s S j L1 b1 p l c q ql qc Zv → S.pc = BitVec.ofNat 64 pcv →
-    Ex j S.mem → ZS s S.mem p l c → natVal S.mem p l = Zv → 0 < l → l ≤ NW n + 1 →
+    RC R kc H sqrC mulC b L zp zl zc st xp xl xc n Kx s S j L1 b1 p l c q ql qc Zv → S.pc = BitVec.ofNat 64 pcv →
+    Ex j S.mem → ZS s S.mem p l c → natVal S.mem p l = Zv → 0 < l → l ≤ zB n j →
     S.regs 0 = BitVec.ofNat 64 q → S.regs 1 = BitVec.ofNat 64 ql → S.regs 2 = BitVec.ofNat 64 qc →
-    natVal S.mem q ql = Zv * Zv % 2 ^ E j → NatNorm S.mem q ql → ql ≤ NW n →
-    b - spent sqrC mulC n j - P2 sqrC n ≤ b1 →
-    Goal impl R kc sqrC mulC b L zp zc st xp xl n s S
+    natVal S.mem q ql = Zv * Zv % 2 ^ E j → NatNorm S.mem q ql → ql ≤ NW n → ql ≤ Kx j →
+    b - spent sqrC mulC xl n j - P2 sqrC n j + stkR H S.mem st ≤ b1 →
+    Goal impl R kc H sqrC mulC b L zp zc st xp xl n s S
 
 /-- after `zz = zz.mul(stk, zz, x[:k])` -/
-def S3 (impl : List Segment) (R : RtInv) (kc : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
+def S3 (impl : List Segment) (R : RtInv) (kc H : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
     (L : List (Nat × Nat)) (zp zl zc st xp xl xc n : Nat) (s : State) (pcv : Nat) (Ex : Nat → Memory → Prop)
     (E Kx : Nat → Nat) : Prop :=
   ∀ (S : State) (j p l c q ql qc : Nat) (L1 : List (Nat × Nat)) (b1 Zv : Nat),
-    RC R kc sqrC mulC b L zp zl zc st xp xl xc n s S j L1 b1 p l c q ql qc Zv → S.pc = BitVec.ofNat 64 pcv →
-    Ex j S.mem → ZS s S.mem p l c → natVal S.mem p l = Zv → 0 < l → l ≤ NW n + 1 →
+    RC R kc H sqrC mulC b L zp zl zc st xp xl xc n Kx s S j L1 b1 p l c q ql qc Zv → S.pc = BitVec.ofNat 64 pcv →
+    Ex j S.mem → ZS s S.mem p l c → natVal S.mem p l = Zv → 0 < l → l ≤ zB n j →
     S.regs 0 = BitVec.ofNat 64 q → S.regs 1 = BitVec.ofNat 64 ql → S.regs 2 = BitVec.ofNat 64 qc →
     natVal S.mem q ql = Zv * Zv % 2 ^ E j * natVal s.mem xp (min (Kx j) xl) → NatNorm S.mem q ql →
     ql ≤ 2 * NW n →
-    b - spent sqrC mulC n j - P3 sqrC mulC n ≤ b1 →
-    Goal impl R kc sqrC mulC b L zp zc st xp xl n s S
+    b - spent sqrC mulC xl n j - P3 sqrC mulC xl n j (Kx j) + stkR H S.mem st ≤ b1 →
+    Goal impl R kc H sqrC mulC b L zp zc st xp xl n s S
 
 /-- after the second `zz = zz.trunc(zz, e)` -/
-def S4 (impl : List Segment) (R : RtInv) (kc : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
+def S4 (impl : List Segment) (R : RtInv) (kc H : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
     (L : List (Nat × Nat)) (zp zl zc st xp xl xc n : Nat) (s : State) (pcv : Nat) (Ex : Nat → Memory → Prop)
     (E Kx : Nat → Nat) : Prop :=
   ∀ (S : State) (j p l c q ql qc : Nat) (L1 : List (Nat × Nat)) (b1 Zv : Nat),
-    RC R kc sqrC mulC b L zp zl zc st xp xl xc n s S j L1 b1 p l c q ql qc Zv → S.pc = BitVec.ofNat 64 pcv →
-    Ex j S.mem → ZS s S.mem p l c → natVal S.mem p l = Zv → 0 < l → l ≤ NW n + 1 →
+    RC R kc H sqrC mulC b L zp zl zc st xp xl xc n Kx s S j L1 b1 p l c q ql qc Zv → S.pc = BitVec.ofNat 64 pcv →
+    Ex j S.mem → ZS s S.mem p l c → natVal S.mem p l = Zv → 0 < l → l ≤ zB n j →
     S.regs 0 = BitVec.ofNat 64 q → S.regs 1 = BitVec.ofNat 64 ql → S.regs 2 = BitVec.ofNat 64 qc →
     natVal S.mem q ql = Zv * Zv % 2 ^ E j * natVal s.mem xp (min (Kx j) xl) % 2 ^ E j → NatNorm S.mem q ql →
     ql ≤ NW n →
-    b - spent sqrC mulC n j - P4 sqrC mulC n ≤ b1 →
-    Goal impl R kc sqrC mulC b L zp zc st xp xl n s S
+    b - spent sqrC mulC xl n j - P4 sqrC mulC xl n j (Kx j) + stkR H S.mem st ≤ b1 →
+    Goal impl R kc H sqrC mulC b L zp zc st xp xl n s S
 
 /-- after `z = z.lsh(z, 1)` (`zz` in its slots, the new `z` in `X0 … X2`) -/
-def S5 (impl : List Segment) (R : RtInv) (kc : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
+def S5 (impl : List Segment) (R : RtInv) (kc H : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
     (L : List (Nat × Nat)) (zp zl zc st xp xl xc n : Nat) (s : State) (pcv : Nat) (Ex : Nat → Memory → Prop)
     (E Kx : Nat → Nat) : Prop :=
   ∀ (S : State) (j p l c q ql qc : Nat) (L1 : List (Nat × Nat)) (b1 Zv : Nat),
-    RC R kc sqrC mulC b L zp zl zc st xp xl xc n s S j L1 b1 p l c q ql qc Zv → S.pc = BitVec.ofNat 64 pcv →
+    RC R kc H sqrC mulC b L zp zl zc st xp xl xc n Kx s S j L1 b1 p l c q ql qc Zv → S.pc = BitVec.ofNat 64 pcv →
     Ex j S.mem → QS s S.mem q ql qc →
     S.regs 0 = BitVec.ofNat 64 p → S.regs 1 = BitVec.ofNat 64 l → S.regs 2 = BitVec.ofNat 64 c →
     natVal S.mem p l = Zv * 2 → NatNorm S.mem p l → l ≤ NW n + 2 →
     natVal S.mem q ql = Zv * Zv % 2 ^ E j * natVal s.mem xp (min (Kx j) xl) % 2 ^ E j → NatNorm S.mem q ql →
     ql ≤ NW n →
-    b - spent sqrC mulC n j - P5 sqrC mulC n ≤ b1 →
-    Goal impl R kc sqrC mulC b L zp zc st xp xl n s S
+    b - spent sqrC mulC xl n j - P5 sqrC mulC xl n j (Kx j) + stkR H S.mem st ≤ b1 →
+    Goal impl R kc H sqrC mulC b L zp zc st xp xl n s S
 
 /-! ## The loop round's and the final round's instances -/
 

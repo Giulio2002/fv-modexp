@@ -10,6 +10,8 @@ import FvModexp.Proofs.Arm64.Exp.ModInvF3
 import FvModexp.Proofs.Arm64.Exp.ModInvF4
 import FvModexp.Proofs.Arm64.Exp.ModInvF5
 
+set_option autoImplicit false
+
 /-!
 # `nat.modularInverseModPowerOfTwo` (arm64): the Hensel loop (agent infra)
 
@@ -25,19 +27,19 @@ namespace FvModexp.Arm64.ModInv
 open FvModexp.Arm64.EvenHyp
 
 /-- `J2j` holds vacuously for a round that cannot reach the loop head -/
-theorem j2_vac {impl : List Segment} {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
+theorem j2_vac {impl : List Segment} {R : RtInv} {kc : Nat} {H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State} {J : Nat}
-    (h : 1 ≤ J → 2 ^ (J - 1) < NW n → False) : J2j impl R kc sqrC mulC b L zp zl zc st xp xl xc n s J := by
+    (h : 1 ≤ J → 2 ^ (J - 1) < NW n → False) : J2j impl R kc H sqrC mulC b L zp zl zc st xp xl xc n s J := by
   intro S p l c q ql qc L1 b1 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ hj1 hjn
   exact (h hj1 hjn).elim
 
 /-- termination: `J2j J` for every round from the round step -/
-theorem j2_all {impl : List Segment} {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
+theorem j2_all {impl : List Segment} {R : RtInv} {kc : Nat} {H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
-    (step : ∀ J, 1 ≤ J → J2j impl R kc sqrC mulC b L zp zl zc st xp xl xc n s (J + 1) →
-      J2j impl R kc sqrC mulC b L zp zl zc st xp xl xc n s J) :
-    J2 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s := by
-  have key : ∀ m J, NW n - 2 ^ (J - 1) ≤ m → J2j impl R kc sqrC mulC b L zp zl zc st xp xl xc n s J := by
+    (step : ∀ J, 1 ≤ J → J2j impl R kc H sqrC mulC b L zp zl zc st xp xl xc n s (J + 1) →
+      J2j impl R kc H sqrC mulC b L zp zl zc st xp xl xc n s J) :
+    J2 impl R kc H sqrC mulC b L zp zl zc st xp xl xc n s := by
+  have key : ∀ m J, NW n - 2 ^ (J - 1) ≤ m → J2j impl R kc H sqrC mulC b L zp zl zc st xp xl xc n s J := by
     intro m
     induction m with
     | zero => intro J h; exact j2_vac fun _ h' => by omega
@@ -59,26 +61,25 @@ set_option maxRecDepth 20000 in
 theorem loop {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
     (hnfS : ns.contains SubMod2N.fn = false) {kc : Nat} (hkc : 4608 ≤ kc)
-    {stkS aboveS : Nat} {sqC : Nat → Nat → Nat} (hsq : SqrHypX impl R ns stkS aboveS sqC)
+    {H : Nat} {sqrC : Nat → Nat} {stkS aboveS : Nat} (hsq : SqrHypQ impl R ns stkS aboveS sqrC)
     (hkS : stkS ≤ kc) (haS : aboveS ≤ 88)
     {stkT aboveT : Nat} (htr : Trunc.Hyp2 impl R ns stkT aboveT) (hkT : stkT ≤ kc) (haT : aboveT ≤ 88)
-    {stkM aboveM : Nat} {mlC : Nat → Nat → Nat → Nat} (hmu : MulHypX impl R ns stkM aboveM mlC)
+    {stkM aboveM : Nat} {mulC : Nat → Nat → Nat} (hmu : MulHypQ impl R ns stkM aboveM mulC)
     (hkM : stkM ≤ kc) (haM : aboveM ≤ 88)
     {stkL aboveL : Nat} (hls : Lsh.Hyp2 impl R ns stkL aboveL) (hkL : stkL ≤ kc) (haL : aboveL ≤ 88)
     (hkT4 : stkT ≤ 4464)
     (hsub : SubMod2N.SubHypR0 impl R) (hadd : SubMod2N.AddHypR impl R)
     (hgr : GrowsliceLiveContract (LibW.program.link impl) (Extracted.program.contractAddr "runtime.growslice") 4096 R)
-    {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat} {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat}
-    {s : State} (hsc : ∀ x, sqC (stLen s.mem st) x = sqrC x) (hsm : ∀ a a', a ≤ a' → sqrC a ≤ sqrC a')
-    (hml : ∀ x y, mlC (stLen s.mem st) x y = mulC x y)
+    {b : Nat} {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat}
+    {s : State} (hsm : ∀ a a', a ≤ a' → sqrC a ≤ sqrC a')
     (hmm : ∀ a a' c c', a ≤ a' → c ≤ c' → mulC a c ≤ mulC a' c') :
-    J2 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s := by
-  have fin : S1 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s 1798112 (ExF n) (eF n) (kF n) :=
-    segF1 hap hns hnf htr hkc hkT haT (segF2 hap hns hnf hmu hkc hkM haM hml hmm
+    J2 impl R kc H sqrC mulC b L zp zl zc st xp xl xc n s := by
+  have fin : S1 impl R kc H sqrC mulC b L zp zl zc st xp xl xc n s 1798112 (ExF n) (eF n) (kF n) :=
+    segF1 hap hns hnf htr hkc hkT haT (segF2 hap hns hnf hmu hkc hkM haM hmm
       (segF3 hap hns hnf htr hkc hkT haT (segF4 hap hns hnf hls hkc hkL haL
-        (segF5 hap hns hnfS hkT4 haT htr hsub hadd hgr hkc))))
-  refine j2_all fun J _ ih => segL0 hap hns hnf hsq hkc hkS haS hsc hsm J ?_ fin
-  exact segL1 hap hns hnf htr hkc hkT haT (segL2 hap hns hnf hmu hkc hkM haM hml hmm
+        (segF5 hap hns hnfS hkT4 haT htr hsub hadd hgr hkc hsm))))
+  refine j2_all fun J _ ih => segL0 hap hns hnf hsq hkc hkS haS hsm J ?_ fin
+  exact segL1 hap hns hnf htr hkc hkT haT (segL2 hap hns hnf hmu hkc hkM haM hmm
     (segL3 hap hns hnf htr hkc hkT haT (segL4 hap hns hnf hls hkc hkL haL
       (segL5 hap hns hnfS hkT4 haT htr hsub hadd hgr hkc ih))))
 

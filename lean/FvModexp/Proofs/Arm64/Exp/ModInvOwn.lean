@@ -2,6 +2,8 @@ import FvModexp.Proofs.Arm64.Exp.ModInvKeep
 import FvModexp.Proofs.Arm64.Exp.ModInvKeep2
 import FvModexp.Proofs.Arm64.Exp.ModInvPre
 
+set_option autoImplicit false
+
 /-!
 # `nat.modularInverseModPowerOfTwo` (arm64): a callee's result is owned; the round facts after a call (agent infra)
 
@@ -18,12 +20,12 @@ open FvModexp.Arm64.EvenHyp
 open FvModexp.Arm64.ExpHyp (stWs RdIn WrOut)
 
 section
-variable {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
+variable {R : RtInv} {kc : Nat} {H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
 
 set_option maxRecDepth 20000 in
 /-- the result array of a callee is owned -/
-theorem own_new (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M M' : Memory} {L1 L2 : List (Nat × Nat)}
+theorem own_new (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) {M M' : Memory} {L1 L2 : List (Nat × Nat)}
     {b1 : Nat} (hrt : RtM R kc L s zp zc st M L1 b1) (hsb : StackBack R L1 L2 st M M')
     {t tc p' c' : Nat} (ht : Own R kc L L1 s zp zc st xp xl M t tc) (hlive : NatLive M' R L2 p' c')
     (hc40 : c' < 2 ^ 40) (hp : p' < 2 ^ 64)
