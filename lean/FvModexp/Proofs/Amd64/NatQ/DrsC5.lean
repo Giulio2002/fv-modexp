@@ -137,7 +137,7 @@ theorem c5 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program 
   -- the buffer
   have hbf : Asm.limbs T'.mem qv (3 * c.vl) = (stC (c.V s) (c.vl / 2 - 1) (c.P s j U).length stb).buf := by
     have hz := (Asm.subVW_model Y.mem T'.mem (qv + 8 * (c.vl / 2 - 1)) (qv + 8 * (c.vl / 2 - 1))
-      ((c.P s j U).length - (c.vl / 2 - 1)) _ _ hcy hval rfl).1
+      ((c.P s j U).length - (c.vl / 2 - 1)) _ _ (by omega) hval rfl).1
     rw [Asm.limbs_upd (m := Y.mem) (j := c.vl / 2 - 1) (k := (c.P s j U).length - (c.vl / 2 - 1)) (by omega)
       (fun i hi hi2 => rk _ _ (hrg.h.sub (by omega) (by omega)) (hrg.w.of_sub (by omega) (by omega))
         (by simp only [outside_cons, outside_nil, and_true]; omega)), hz,

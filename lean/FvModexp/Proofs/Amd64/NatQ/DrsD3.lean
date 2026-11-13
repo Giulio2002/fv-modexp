@@ -76,6 +76,8 @@ theorem d3 (impl : List Amd64.Segment) (R : RtInv) (c : Cx) (s : State) (Lk : Li
   have r4 := hmc.bd.sup; have r5 := hmc.bd.suc
   have hqv : qv < 2 ^ 48 := by have := Janus.Arm64.Memory.accessible_bound _ hmc.qa; omega
   have huP : c.uuP j < 2 ^ 48 := by simp only [Cx.uuP]; omega
+  have huPe : c.uuP j = c.up + 8 * (j - c.vl / 2) := rfl
+  have hucE : c.uuC j = c.uc - (j - c.vl / 2) := rfl
   clear hmc hv4 hpre hcr
   rcases natCmp_range (st.buf.take (c.P s j U).length) (Mdl.norm st.w) with hq | hq | hq
   · have h0' : T.regs 0 = 18446744073709551615#64 := by

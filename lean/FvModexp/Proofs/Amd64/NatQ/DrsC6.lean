@@ -93,6 +93,7 @@ theorem c6 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program 
   have hmc0 := hby.mc
   have hcr := hmc0.cr
   have hpre := hcr.pre
+  have hup8 : c.up % 8 = 0 := hpre.stl.2.2.2.2.1
   obtain ⟨-, ⟨hb', ha, hw⟩, -, -, hout, -⟩ := hpre.ce
   simp only [regSP] at hb' ha hw
   obtain ⟨hua, hu48, huh, huw, hug⟩ := hpre.ua
