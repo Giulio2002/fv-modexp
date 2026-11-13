@@ -14,7 +14,7 @@ cd "$root"
 readonly ROW_MEMCAP=16G ROW_TIMEOUT=900
 # Janus binary: until the Janus PR fix/own-compile-module-data (olean provenance of Lean `module` files, which EthLib uses) is merged and
 # released, the default is the fixed v0.2.0 build; the Lean framework is unchanged (lakefile pin 9ff22946). Override with JANUS=...
-JANUS_FIXED=/srv/janus-ops/v031/bin/janus
+JANUS_FIXED=/srv/janus-ops/v032/bin/janus
 if [ -z "${JANUS:-}" ]; then if [ -x "$JANUS_FIXED" ]; then JANUS="$JANUS_FIXED"; else JANUS=janus; fi; fi
 export LEAN_NUM_THREADS="${LEAN_NUM_THREADS:-4}" JANUS_JOBS="${JANUS_JOBS:-2}"
 # Kernel replay of a row's own modules (leanchecker, one process per module): under the row's memcap 16G Janus sizes the
