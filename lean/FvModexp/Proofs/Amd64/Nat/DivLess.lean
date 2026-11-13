@@ -79,6 +79,6 @@ theorem lessR (impl : List Amd64.Segment) (R : RtInv) {b : Nat} {dc : Nat → Na
       q2 := ?_
       s8 := ?_ }
   all_goals try (janus64_simp; done)
-  all_goals first | exact hx15 | exact hdf | exact hfs | (janus64_simp; omega) | (trace_state; sorry)
+  all_goals first | exact hx15 | exact hdf | exact hfs | (janus64_simp; omega)
 
 end FvModexp.Amd64.NatDiv

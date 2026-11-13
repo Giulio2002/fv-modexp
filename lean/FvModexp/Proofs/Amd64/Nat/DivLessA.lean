@@ -173,6 +173,6 @@ theorem lessA (impl : List Amd64.Segment) (R : RtInv)
                    simp (disch := omega) only [Janus.Arm64.Memory.readLE_writeLE_of_disjoint,
                      FvModexp.Expmc.readLE_writeLE_same, m0, m1, m7]
                    done)
-    all_goals first | exact hx15 | exact hdf | exact hfs | (janus64_simp; omega) | (trace_state; sorry)
+    all_goals first | exact hx15 | exact hdf | exact hfs | (janus64_simp; omega)
 
 end FvModexp.Amd64.NatDiv
