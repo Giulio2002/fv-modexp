@@ -3,6 +3,7 @@ import FvModexp.Proofs.Arm64.Exp.DivInst
 import FvModexp.Proofs.Arm64.Nat.RowLink
 import FvModexp.Proofs.Arm64.Witness.Sites
 import FvModexp.Proofs.Arm64.Witness.StubsMvz
+import FvModexp.Proofs.Arm64.Int.ModRowW
 
 set_option autoImplicit false
 
@@ -100,6 +101,11 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
       s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.memmove") ∧
       mvSite R (Extracted.program.contractAddr "runtime.memmove") L b s_c) ∧
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
+      s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.memmove") ∧
+      (s_c.regs 2).toNat = 0 ∧ Mem.EqPre 4096 3 s_c ∧
+      LiveMemAt R (Extracted.program.contractAddr "runtime.memmove") [(s_c.regs 0).toNat, (s_c.regs 1).toNat,
+        (s_c.regs 2).toNat] L b s_c (calleeStack s_c 4096 3)) ∧
+    (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.gcWriteBarrier2") ∧
       wbSite R (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 2 L b s_c) ∧
     Returns ((Extracted.program.link impl).withExit ret) s fun s' =>
@@ -117,6 +123,7 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
       by rw [WStubs.addr_gr]; exact site_gr _⟩,
     ⟨[], 0x1000, callS WStubs.clA OA 8 0, by rw [WStubs.addr_cl]; rfl, by rw [WStubs.addr_cl]; exact site_cl _⟩,
     ⟨[], 0x1000, callS WStubs.mvA OA OB 8, by rw [WStubs.addr_mv]; rfl, by rw [WStubs.addr_mv]; exact site_mv _⟩,
+    ⟨[], 0x1000, callS WStubs.mvA OA OB 0, by rw [WStubs.addr_mv]; rfl, by rw [WStubs.addr_mv]; exact AsmWit.site_mz _⟩,
     ⟨[], 0x1000, callS WStubs.wb2A 0 0 0, by rw [WStubs.addr_wb2]; rfl, by rw [WStubs.addr_wb2]; exact site_wb _ _⟩,
     correctness WStubs.impl WStubs.hap R (by rw [WStubs.addr_cl]; exact WStubs.cl R)
       (by rw [WStubs.addr_mv]; exact WStubs.mv R) (by rw [WStubs.addr_mv]; exact WStubs.mvz R)
