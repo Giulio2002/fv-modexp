@@ -104,8 +104,9 @@ An exponentiating witness needs cost envelopes ≥ 2x tighter at one-word operan
 the stack-level bound `2^16`).
 **RELEASE GATE "TIGHT COSTS" (coordinator decision 2026-11-15): the `2^32 · min w 1` factor is TEMPORARY and is NOT
 accepted for the release.** Release requires (a) `RunIface.ExpBudget` / Spec `okBudget` ≤ `2^34` bytes over the whole spec
-range (operands and exponent ≤ 128 words; the factor-free formula above gives `ExpBudget 128 128 = 65664 · opCost 128 ≈
-2^34`), and (b) success witnesses on BOTH ISAs that run a real exponentiation (`3^5 mod 7`) inside the toy runtime's
+range (operands and exponent ≤ 128 words; the factor-free formula above gives `ExpBudget 128 128 = 65664 · opCost 128 ≈ 1.73e10 ≈
+2^34.01` with `opCost 128 ≈ 2.64e5` from divmc's mirror — so the allowance formula itself must also shrink slightly, e.g. the
+per-bit 8 requests or `opCost`'s doubling, to meet the gate), and (b) success witnesses on BOTH ISAs that run a real exponentiation (`3^5 mod 7`) inside the toy runtime's
 `2^22` budget. Owners tighten the cost envelopes to the bytes actually allocated as functions of the real lengths
 (divmc: StackNat/mul/sqr/karatsuba + BudOK; expmc: NCost/supU/windows/slow/expNN; infra: P2/Even/SubMod2N/ModInv;
 asm: div/rem); top then removes the factor (both ISAs) and restores the `3^5 mod 7` witnesses. Until then any success-row
