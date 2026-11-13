@@ -2,6 +2,7 @@ import FvModexp.Proofs.Arm64.Nat.DrsFD5R
 import FvModexp.Proofs.Arm64.Nat.DrsD5
 import FvModexp.Proofs.Arm64.Nat.DrsDG
 import FvModexp.Proofs.Arm64.Nat.DrsC3
+import FvModexp.Proofs.Arm64.Nat.DrsWs
 
 /-!
 # `divRecursiveStep` (arm64), final block: `c = subVW(u[ql:], u[ql:], c)`; `if c != 0 { panic }` (natdiv.go:886-888)
@@ -175,10 +176,8 @@ theorem d5F (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   have hloc := hmc.qloc.out
   have hmcT : McF R c s L' b' T.mem j Z U qv (c.sGF s U) :=
     McF.callN hmc hspn (by omega) (by omega) hMF hLF hx hinv hreg hb
-      (fun x n h => by
-        simp only [Cx.ws, stkWs, outside_append, outside_cons, outside_nil, and_true] at h ⊢; omega)
-      (fun x n _ h => by
-        simp only [Cx.ws, stkWs, outside_append, outside_cons, outside_nil, and_true] at h ⊢; omega)
+      (fun _ _ h => ws_up h (by omega) (by omega))
+      (fun _ _ _ h => ws_up0 h (by omega) (by omega))
       (by simp only [win, outside_cons, outside_nil, and_true]; omega)
       (by unfold Apart at hus ⊢; omega)
       (by unfold Apart at huv ⊢; omega)

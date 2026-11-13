@@ -1,5 +1,6 @@
 import FvModexp.Proofs.Arm64.Nat.DrsFRel3
 import FvModexp.Proofs.Arm64.Nat.DrsCN
+import FvModexp.Proofs.Arm64.Nat.WinIn
 
 /-!
 # `divRecursiveStep` (arm64), final block segment 4–5: relations of the product and the correction loop (pure)
@@ -109,8 +110,8 @@ theorem McF.callN {R : RtInv} {c : Cx} {s X : State} {Lk L' : List (Nat × Nat)}
   have hWg := drsW_ge c.vl; have hW := hcr.hW; have hu1 := hcr.u1ul
   have h0' : 408 ≤ s.sp.toNat := by omega
   have hext : LiveExt R c.L Lk := hcr.ext1.trans hev.ext
-  have hS : ∀ x m, Outside x m (winA s c.W 96) → Outside x m (winA X k a) := fun x m ho => by
-    simp only [winA, outside_cons, outside_nil, and_true] at ho ⊢; rw [hX]; omega
+  have hS : ∀ x m, Outside x m (winA s c.W 96) → Outside x m (winA X k a) := fun _ _ ho =>
+    winA_in ho hX (by omega) (by omega) (by omega)
   have hst' : Outside c.st 24 [(p, p + n)] := by
     unfold Apart at hst; simp only [outside_cons, outside_nil, and_true]; omega
   have hF' : MemFrame M M' (R.rt ++ winA X k a ++ [(p, p + n)] ++ stkWs M c.st) :=

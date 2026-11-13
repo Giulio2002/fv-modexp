@@ -1,5 +1,4 @@
 import FvModexp.Proofs.Arm64.Nat.DrsDefs
-import FvModexp.Proofs.Arm64.Nat.DivLargeTN
 
 /-!
 # `divRecursiveStep` (arm64): the inlined `norm()` loops (natdiv.go:754/755/817/…; nat.go:51)
@@ -11,9 +10,14 @@ memory, `SP`, `X28/X29/X18` and every register other than `Rl, Ra, Rb` are uncha
 
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
 
+set_option autoImplicit false
 set_option linter.janusRenameI false
 
 namespace FvModexp.Arm64.DivRec
+
+/-- (= `drsNatVal_drop_zero`, restated here so that drs does not import the divLarge chain) -/
+theorem drsNatVal_drop_zero {M : Memory} {p i : Nat} (h : M.readLE (p + 8 * i) 8 = 0) :
+    natVal M p (i + 1) = natVal M p i := by rw [natVal_succ, h]; simp
 
 /-- every register but `a`, `b`, `c` is as in `S` -/
 @[reducible] def Same3 (a b c : Nat) (S s' : State) : Prop := ∀ k, k ≠ a → k ≠ b → k ≠ c → s'.regs k = S.regs k
@@ -51,7 +55,7 @@ theorem norm1 (impl : List Segment) (r : W64) (M : Memory) (p n0 V : Nat) (S0 : 
       apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
     janus_run [hm, key] until [nHead1, nExit1]
     · have hz : M.readLE (p + 8 * i) 8 = 0 := by rw [show p + 8 * i = p + i * 8 by omega]; janus_assumption
-      refine ih _ (by omega) rfl (by janus_simp) (by janus_simp) ?_ rfl ((DivLarge.natVal_drop_zero' hz).symm.trans hv)
+      refine ih _ (by omega) rfl (by janus_simp) (by janus_simp) ?_ rfl ((drsNatVal_drop_zero hz).symm.trans hv)
       intro k h1 h2 h3; rw [← hS k h1 h2 h3]; try simp only [setReg, h1, h2, h3, ite_false]
     · have hz : ¬M.readLE (p + i * 8) 8 = 0 := by janus_assumption
       refine hfin _ (i + 1) rfl rfl ?_ ?_ ?_ hi hv (Or.inr ?_)
@@ -90,7 +94,7 @@ theorem norm2 (impl : List Segment) (r : W64) (M : Memory) (p n0 V : Nat) (S0 : 
       apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
     janus_run [hm, key] until [nHead2, nExit2]
     · have hz : M.readLE (p + 8 * i) 8 = 0 := by rw [show p + 8 * i = p + i * 8 by omega]; janus_assumption
-      refine ih _ (by omega) rfl (by janus_simp) (by janus_simp) ?_ rfl ((DivLarge.natVal_drop_zero' hz).symm.trans hv)
+      refine ih _ (by omega) rfl (by janus_simp) (by janus_simp) ?_ rfl ((drsNatVal_drop_zero hz).symm.trans hv)
       intro k h1 h2 h3; rw [← hS k h1 h2 h3]; try simp only [setReg, h1, h2, h3, ite_false]
     · have hz : ¬M.readLE (p + i * 8) 8 = 0 := by janus_assumption
       refine hfin _ (i + 1) rfl rfl ?_ ?_ ?_ hi hv (Or.inr ?_)
@@ -129,7 +133,7 @@ theorem norm3 (impl : List Segment) (r : W64) (M : Memory) (p n0 V : Nat) (S0 : 
       apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
     janus_run [hm, key] until [nHead3, nExit3]
     · have hz : M.readLE (p + 8 * i) 8 = 0 := by rw [show p + 8 * i = p + i * 8 by omega]; janus_assumption
-      refine ih _ (by omega) rfl (by janus_simp) (by janus_simp) ?_ rfl ((DivLarge.natVal_drop_zero' hz).symm.trans hv)
+      refine ih _ (by omega) rfl (by janus_simp) (by janus_simp) ?_ rfl ((drsNatVal_drop_zero hz).symm.trans hv)
       intro k h1 h2 h3; rw [← hS k h1 h2 h3]; try simp only [setReg, h1, h2, h3, ite_false]
     · have hz : ¬M.readLE (p + i * 8) 8 = 0 := by janus_assumption
       refine hfin _ (i + 1) rfl rfl ?_ ?_ ?_ hi hv (Or.inr ?_)
@@ -168,7 +172,7 @@ theorem norm4 (impl : List Segment) (r : W64) (M : Memory) (p n0 V : Nat) (S0 : 
       apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
     janus_run [hm, key] until [nHead4, nExit4]
     · have hz : M.readLE (p + 8 * i) 8 = 0 := by rw [show p + 8 * i = p + i * 8 by omega]; janus_assumption
-      refine ih _ (by omega) rfl (by janus_simp) (by janus_simp) ?_ rfl ((DivLarge.natVal_drop_zero' hz).symm.trans hv)
+      refine ih _ (by omega) rfl (by janus_simp) (by janus_simp) ?_ rfl ((drsNatVal_drop_zero hz).symm.trans hv)
       intro k h1 h2 h3; rw [← hS k h1 h2 h3]; try simp only [setReg, h1, h2, h3, ite_false]
     · have hz : ¬M.readLE (p + i * 8) 8 = 0 := by janus_assumption
       refine hfin _ (i + 1) rfl rfl ?_ ?_ ?_ hi hv (Or.inr ?_)
@@ -207,7 +211,7 @@ theorem norm5 (impl : List Segment) (r : W64) (M : Memory) (p n0 V : Nat) (S0 : 
       apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
     janus_run [hm, key] until [nHead5, nExit5]
     · have hz : M.readLE (p + 8 * i) 8 = 0 := by rw [show p + 8 * i = p + i * 8 by omega]; janus_assumption
-      refine ih _ (by omega) rfl (by janus_simp) (by janus_simp) ?_ rfl ((DivLarge.natVal_drop_zero' hz).symm.trans hv)
+      refine ih _ (by omega) rfl (by janus_simp) (by janus_simp) ?_ rfl ((drsNatVal_drop_zero hz).symm.trans hv)
       intro k h1 h2 h3; rw [← hS k h1 h2 h3]; try simp only [setReg, h1, h2, h3, ite_false]
     · have hz : ¬M.readLE (p + i * 8) 8 = 0 := by janus_assumption
       refine hfin _ (i + 1) rfl rfl ?_ ?_ ?_ hi hv (Or.inr ?_)
@@ -246,7 +250,7 @@ theorem norm6 (impl : List Segment) (r : W64) (M : Memory) (p n0 V : Nat) (S0 : 
       apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
     janus_run [hm, key] until [nHead6, nExit6]
     · have hz : M.readLE (p + 8 * i) 8 = 0 := by rw [show p + 8 * i = p + i * 8 by omega]; janus_assumption
-      refine ih _ (by omega) rfl (by janus_simp) (by janus_simp) ?_ rfl ((DivLarge.natVal_drop_zero' hz).symm.trans hv)
+      refine ih _ (by omega) rfl (by janus_simp) (by janus_simp) ?_ rfl ((drsNatVal_drop_zero hz).symm.trans hv)
       intro k h1 h2 h3; rw [← hS k h1 h2 h3]; try simp only [setReg, h1, h2, h3, ite_false]
     · have hz : ¬M.readLE (p + i * 8) 8 = 0 := by janus_assumption
       refine hfin _ (i + 1) rfl rfl ?_ ?_ ?_ hi hv (Or.inr ?_)
@@ -285,7 +289,7 @@ theorem norm7 (impl : List Segment) (r : W64) (M : Memory) (p n0 V : Nat) (S0 : 
       apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
     janus_run [hm, key] until [nHead7, nExit7]
     · have hz : M.readLE (p + 8 * i) 8 = 0 := by rw [show p + 8 * i = p + i * 8 by omega]; janus_assumption
-      refine ih _ (by omega) rfl (by janus_simp) (by janus_simp) ?_ rfl ((DivLarge.natVal_drop_zero' hz).symm.trans hv)
+      refine ih _ (by omega) rfl (by janus_simp) (by janus_simp) ?_ rfl ((drsNatVal_drop_zero hz).symm.trans hv)
       intro k h1 h2 h3; rw [← hS k h1 h2 h3]; try simp only [setReg, h1, h2, h3, ite_false]
     · have hz : ¬M.readLE (p + i * 8) 8 = 0 := by janus_assumption
       refine hfin _ (i + 1) rfl rfl ?_ ?_ ?_ hi hv (Or.inr ?_)
@@ -324,7 +328,7 @@ theorem norm8 (impl : List Segment) (r : W64) (M : Memory) (p n0 V : Nat) (S0 : 
       apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
     janus_run [hm, key] until [nHead8, nExit8]
     · have hz : M.readLE (p + 8 * i) 8 = 0 := by rw [show p + 8 * i = p + i * 8 by omega]; janus_assumption
-      refine ih _ (by omega) rfl (by janus_simp) (by janus_simp) ?_ rfl ((DivLarge.natVal_drop_zero' hz).symm.trans hv)
+      refine ih _ (by omega) rfl (by janus_simp) (by janus_simp) ?_ rfl ((drsNatVal_drop_zero hz).symm.trans hv)
       intro k h1 h2 h3; rw [← hS k h1 h2 h3]; try simp only [setReg, h1, h2, h3, ite_false]
     · have hz : ¬M.readLE (p + i * 8) 8 = 0 := by janus_assumption
       refine hfin _ (i + 1) rfl rfl ?_ ?_ ?_ hi hv (Or.inr ?_)
@@ -363,7 +367,7 @@ theorem norm9 (impl : List Segment) (r : W64) (M : Memory) (p n0 V : Nat) (S0 : 
       apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
     janus_run [hm, key] until [nHead9, nExit9]
     · have hz : M.readLE (p + 8 * i) 8 = 0 := by rw [show p + 8 * i = p + i * 8 by omega]; janus_assumption
-      refine ih _ (by omega) rfl (by janus_simp) (by janus_simp) ?_ rfl ((DivLarge.natVal_drop_zero' hz).symm.trans hv)
+      refine ih _ (by omega) rfl (by janus_simp) (by janus_simp) ?_ rfl ((drsNatVal_drop_zero hz).symm.trans hv)
       intro k h1 h2 h3; rw [← hS k h1 h2 h3]; try simp only [setReg, h1, h2, h3, ite_false]
     · have hz : ¬M.readLE (p + i * 8) 8 = 0 := by janus_assumption
       refine hfin _ (i + 1) rfl rfl ?_ ?_ ?_ hi hv (Or.inr ?_)
@@ -402,7 +406,7 @@ theorem norm10 (impl : List Segment) (r : W64) (M : Memory) (p n0 V : Nat) (S0 :
       apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
     janus_run [hm, key] until [nHead10, nExit10]
     · have hz : M.readLE (p + 8 * i) 8 = 0 := by rw [show p + 8 * i = p + i * 8 by omega]; janus_assumption
-      refine ih _ (by omega) rfl (by janus_simp) (by janus_simp) ?_ rfl ((DivLarge.natVal_drop_zero' hz).symm.trans hv)
+      refine ih _ (by omega) rfl (by janus_simp) (by janus_simp) ?_ rfl ((drsNatVal_drop_zero hz).symm.trans hv)
       intro k h1 h2 h3; rw [← hS k h1 h2 h3]; try simp only [setReg, h1, h2, h3, ite_false]
     · have hz : ¬M.readLE (p + i * 8) 8 = 0 := by janus_assumption
       refine hfin _ (i + 1) rfl rfl ?_ ?_ ?_ hi hv (Or.inr ?_)

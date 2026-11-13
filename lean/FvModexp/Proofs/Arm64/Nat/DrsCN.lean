@@ -1,7 +1,7 @@
 import FvModexp.Proofs.Arm64.Nat.DrsCRel
 import FvModexp.Proofs.Arm64.Nat.DrsCallS
 import FvModexp.Proofs.Arm64.Nat.SubVW
-import FvModexp.Proofs.Arm64.Nat.DivOneF
+import FvModexp.Proofs.Arm64.Nat.WinIn
 
 set_option autoImplicit false
 
@@ -21,6 +21,13 @@ set_option linter.janusRenameI false
 
 namespace FvModexp.Arm64.DivRec
 
+/-- (= `NatDiv.natLive_ext`, restated so that drs does not import the nat.div modules) -/
+theorem drsNatLive_ext {R : RtInv} {L L' : List (Nat × Nat)} {m m' : Memory} {p c : Nat} (h : NatLive m R L p c)
+    (hacc : ∀ a n w, m'.accessible a n w = m.accessible a n w) (hext : LiveExt R L L') : NatLive m' R L' p c :=
+  fun hc => by
+    obtain ⟨a1, a2, a3, a4⟩ := h hc
+    exact ⟨a1, hext.held a2, by rw [hacc]; exact a3, a4⟩
+
 /-- a fact hidden from `janus_run` (which destructures every conjunction in the context) -/
 structure Box (P : Prop) : Prop where
   h : P
@@ -35,7 +42,7 @@ theorem stackBack_keep {R : RtInv} {c : Cx} {s : State} {Lk L' : List (Nat × Na
   obtain ⟨eW, eL, eC⟩ := hdr_keep hcr h hF hL hS hst
   have hok := stkOK_moveS h.sok eW eL eC hF.accessible
   obtain ⟨h1, h2, h3, h4, h5, h6, h7⟩ := hok
-  exact ⟨⟨⟨h1, hx.held h2, h3, h4, NatDiv.natLive_ext h5 (fun _ _ _ => rfl) hx, h6, h7⟩, eL, Or.inl ⟨eW, eC⟩⟩,
+  exact ⟨⟨⟨h1, hx.held h2, h3, h4, drsNatLive_ext h5 (fun _ _ _ => rfl) hx, h6, h7⟩, eL, Or.inl ⟨eW, eC⟩⟩,
     fun hn => absurd ⟨eW, eC⟩ hn⟩
 
 theorem Rg.ext {R : RtInv} {c : Cx} {s : State} {Lk L' : List (Nat × Nat)} {a n : Nat} (h : Rg R c s Lk a n)
@@ -67,8 +74,8 @@ theorem Mc.callN {R : RtInv} {c : Cx} {s X : State} {Lk L' : List (Nat × Nat)} 
   have hWg := drsW_ge c.vl; have hW := hcr.hW; have hu1 := hcr.u1ul
   have h0' : 408 ≤ s.sp.toNat := by omega
   have hext : LiveExt R c.L Lk := hcr.ext1.trans hev.ext
-  have hS : ∀ x m, Outside x m (winA s c.W 96) → Outside x m (winA X k a) := fun x m ho => by
-    simp only [winA, outside_cons, outside_nil, and_true] at ho ⊢; rw [hX]; omega
+  have hS : ∀ x m, Outside x m (winA s c.W 96) → Outside x m (winA X k a) := fun _ _ ho =>
+    winA_in ho hX (by omega) (by omega) (by omega)
   have hst' : Outside c.st 24 [(p, p + n)] := by
     unfold Apart at hst; simp only [outside_cons, outside_nil, and_true]; omega
   -- the stack-using form of the callee frame

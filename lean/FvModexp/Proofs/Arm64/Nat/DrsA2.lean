@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Arm64.Nat.DrsRecQ
+import FvModexp.Proofs.Arm64.Nat.WinIn
 
 /-!
 # `divRecursiveStep` (arm64), loop body: after the recursive call (pure)
@@ -158,8 +159,8 @@ theorem rec_post {R : RtInv} {c : Cx} {s X X' : State} {Lk : List (Nat × Nat)} 
       have := hcr.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1; unfold Apart at this; omega) hqs fq.symm
   -- environment
   have hloc := (show Loc R c s c.t0 (8 * (c.vl / 2 + 1)) from hcr.t0loc).out
-  have hS : ∀ x k, Outside x k (winA s c.W 96) → Outside x k (winA X (c.W - 400) 96) := fun x k ho => by
-    simp only [winA, outside_cons, outside_nil, and_true] at ho ⊢; rw [hsp]; omega
+  have hS : ∀ x k, Outside x k (winA s c.W 96) → Outside x k (winA X (c.W - 400) 96) := fun _ _ ho =>
+    winA_in ho hsp (by omega) (by omega) (by omega)
   have hW1 : ∀ x k, Outside x k (R.rt ++ winA s c.W 96 ++ c.ws s) → Outside x k (wsR c j) := fun x k ho => by
     have a1 := hloc.1 x k ho
     simp only [Cx.ws, stkWs, outside_append, outside_cons, outside_nil, and_true] at ho a1 ⊢

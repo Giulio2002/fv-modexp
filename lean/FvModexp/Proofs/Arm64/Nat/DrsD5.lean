@@ -1,6 +1,7 @@
 import FvModexp.Proofs.Arm64.Nat.DrsD5R
 import FvModexp.Proofs.Arm64.Nat.DrsDG
 import FvModexp.Proofs.Arm64.Nat.DrsC3
+import FvModexp.Proofs.Arm64.Nat.DrsWs
 
 /-!
 # `divRecursiveStep` (arm64), after the correction loop: `subVW(uu[ql:], uu[ql:], c)` (natdiv.go:849)
@@ -175,10 +176,8 @@ theorem d5 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : R
   have hloc := hmc.qloc.out
   have hmcT : Mc R c s L' b' T.mem j Z U qv (c.stG s j U) :=
     Mc.callN hmc hspn (by omega) (by omega) hMF hLF hx hinv hreg hb
-      (fun x n h => by
-        simp only [Cx.ws, stkWs, Cx.uuP, Cx.uuL, outside_append, outside_cons, outside_nil, and_true] at h hqlu ⊢; omega)
-      (fun x n _ h => by
-        simp only [Cx.ws, stkWs, Cx.uuP, Cx.uuL, outside_append, outside_cons, outside_nil, and_true] at h hqlu ⊢; omega)
+      (fun _ _ h => ws_up h (by simp only [Cx.uuP]; omega) (by simp only [Cx.uuP, Cx.uuL] at hqlu ⊢; omega))
+      (fun _ _ _ h => ws_up0 h (by simp only [Cx.uuP]; omega) (by simp only [Cx.uuP, Cx.uuL] at hqlu ⊢; omega))
       (by simp only [win, Cx.uuP, Cx.uuL, outside_cons, outside_nil, and_true] at hqlu ⊢; omega)
       (by unfold Apart at hus ⊢; simp only [Cx.uuP, Cx.uuL] at hqlu ⊢; omega)
       (by unfold Apart at huv ⊢; simp only [Cx.uuP, Cx.uuL] at hqlu ⊢; omega)

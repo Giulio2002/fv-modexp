@@ -1,7 +1,8 @@
 import FvModexp.Proofs.Arm64.Nat.DrsFin
 import FvModexp.Proofs.Arm64.Nat.DivBasic
-import FvModexp.Proofs.Arm64.Nat.DivLargeCallees
+import FvModexp.Proofs.Arm64.Nat.Callees2
 import FvModexp.Proofs.Common.DivmcNat
+import FvModexp.Proofs.Arm64.Nat.WinIn
 
 set_option autoImplicit false
 
@@ -19,6 +20,18 @@ open FvModexp.Arm64.Callees Janus.Contracts.EqHashModel
 set_option linter.janusRenameI false
 
 namespace FvModexp.Arm64.DivRec
+
+/-- (= `DivLarge.pw_forall`, restated so that drs does not import the divLarge modules) -/
+theorem drsPw_forall {α : Type} {R : α → α → Prop} (hR : ∀ {a b}, R a b → R b a) :
+    ∀ {l : List α}, l.Pairwise R → ∀ {a}, a ∈ l → ∀ {b}, b ∈ l → a ≠ b → R a b
+  | [], _, _, ha, _, _, _ => absurd ha (List.not_mem_nil)
+  | x :: l, h, a, ha, b, hb, hne => by
+    rw [List.pairwise_cons] at h
+    rcases List.mem_cons.1 ha with rfl | ha' <;> rcases List.mem_cons.1 hb with rfl | hb'
+    · exact absurd rfl hne
+    · exact h.1 _ hb'
+    · exact hR (h.1 _ ha')
+    · exact drsPw_forall hR h.2 ha' hb' hne
 
 open FvModexp.Arm64.DivLarge (DrsPreW DrsPostW)
 
@@ -74,7 +87,7 @@ theorem raS (impl : List Segment) (hap : ImplApart Extracted.program impl) (ns :
   by_cases he : seg = Extracted.seg45
   · subst he; rw [hnm, hn] at hc; exact absurd hc (by decide)
   · have hpw := (List.pairwise_append.1 hap.1).1
-    have := FvModexp.Arm64.DivLarge.pw_forall (fun {a b} h => by unfold Segment.Apart at h ⊢; omega) hpw hm hmem he
+    have := drsPw_forall (fun {a b} h => by unfold Segment.Apart at h ⊢; omega) hpw hm hmem he
     unfold Segment.Apart at this; rw [hb, hl] at this; omega
 
 /-- the room condition of `divBasic`: the normalised `u` has at most `len v + len q` words and `U < V·B^(len q)` -/
@@ -195,6 +208,16 @@ theorem natVal_hi_zero {M : Memory} {p n k : Nat} (hk : k ≤ n) (h : natVal M p
   · exact h0
   · have := Nat.mul_le_mul (Nat.succ_le_of_lt this) (Nat.succ_le_of_lt h0); omega
 
+/-- the frame step of `db_postS` (small context; the inline `omega` took 48 s) -/
+theorem frameB {a n qp ql k up ul ul' st : Nat} {m : Memory} {rt wA wB : List (Nat × Nat)}
+    (ho : Outside a n (rt ++ wA ++ [(qp, qp + 8 * ql), (up, up + 8 * ul)] ++ stkWs m st))
+    (hw : Outside a n wA → Outside a n wB) (hk : k ≤ ql) (hu : ul' ≤ ul) :
+    Outside a n (rt ++ wB ++ [(qp, qp + 8 * k), (up, up + 8 * ul'), (st, st + 24),
+      (stW m st + 8 * stLen m st, stW m st + 8 * stCap m st)]) := by
+  simp only [stkWs, outside_append, outside_cons, outside_nil, and_true] at ho ⊢
+  obtain ⟨⟨⟨h1, h2⟩, h3, h4⟩, h5, h6⟩ := ho
+  exact ⟨⟨h1, hw h2⟩, by omega, by omega, h5, h6⟩
+
 set_option maxHeartbeats 16000000 in
 /-- **`DivBasic.Post` → `DrsPostW`** (pure) -/
 theorem db_postS {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c W qp ql qc st up ul uc vp vl vc : Nat}
@@ -280,13 +303,9 @@ theorem db_postS {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c W qp ql qc st 
     · rw [eW, eC] at hor; exact hor
     · intro hn; rw [← eW, ← eC] at hn; exact harr hn
   · refine hF.trans hMF fun a n ho => ⟨?_, ?_⟩
-    · simp only [outside_append, winA, outside_cons, outside_nil, and_true] at ho
-      simp only [fw, winA, outside_cons, outside_nil, and_true]
-      omega
-    · have hrt : Outside a n R.rt := by simp only [outside_append] at ho; exact ho.1.1.1
-      simp only [outside_append, winA, outside_cons, outside_nil, and_true] at ho ⊢
-      simp only [hrt, true_and]
-      rw [hspn]; omega
+    · simp only [outside_append] at ho
+      exact winA_mono ho.1.1.2 (by omega) (Nat.le_refl _)
+    · exact frameB ho (fun h => winA_in h hspn (by omega) (by omega) (by decide)) hqn hle
   · refine ⟨fun a n hin ho => ?_⟩
     simp only [List.cons_append, outside_cons, List.nil_append, outside_nil, and_true] at ho
     rw [hLF.readLE a n hin (by simp only [outside_cons, outside_nil, and_true]; omega)]
