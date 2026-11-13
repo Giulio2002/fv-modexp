@@ -1,0 +1,165 @@
+import FvModexp.Proofs.Amd64.Exp.SubMod2NDefs
+import FvModexp.Proofs.Amd64.NatQ.SqrDefs
+import FvModexp.Proofs.Common.ModInvMath
+import FvModexp.Proofs.Common.StackScr
+import FvModexp.Proofs.Common.StackPot
+
+set_option autoImplicit false
+
+/-!
+# `nat.modularInverseModPowerOfTwo` (go-bigmodexpfix nat.go:1287-1341), amd64 — statement pieces (agent infra s50;
+twin of `FvModexp.Arm64.ModInv` / `ModInvQDefs`, Q-form from the start)
+
+ABIInternal: `z = (RAX, RBX, RCX)`, `stk = RDI`, `x = (RSI, R8, R9)`, `n = R10`. Entry `0x5ea8c0`.
+Frame: `PUSHQ BP; SUBQ $0xd8, SP` (`SP' = RSP - 224`); spills `z.ptr` `0xe8(SP') = RSP + 8`, `stk` `RSP + 32`,
+`x` `RSP + 40 … + 56`, `n` `RSP + 64` (`above = 72`). Callees (`sqr`, `mul`, `trunc`, `lsh`, `subMod2N`, `makeslice`)
+run with `RSP_c = RSP - 232`; the deepest callee window is `kc` (a parameter, `≥ SubMod2N.K + 88`) → `K kc = 232 + kc`.
+
+Same restrictions as arm64 (caller `expNNEven` nat.go:842): `x` normalised and odd, `z`'s array apart from `x`'s,
+`1 ≤ n ≤ 2^15`, `len x ≤ 2^12`, a non-nil `stk`, `cap z > 0`. amd64-specific: the stack object's facts are divmc's
+`Q.NatSqr.StkPre` (header/array/free part vs. guard word, TLS slot, `runtime.writeBarrier`, the threshold globals),
+the operands' `StkSep`, `z` apart from the TLS slot, `hasADX` readable (every `sqr`/`mul` reads it). The precondition
+does NOT constrain the return address (RA-PIN rule): internal pres may add `[RSP] < 2^47` from `CallSetup.ret`.
+-/
+
+open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Spec Janus.Contracts FvModexp
+
+namespace FvModexp.Amd64.ModInv
+
+open FvModexp.Amd64.RunIface (Serves Globals)
+open FvModexp.Amd64.EvenHyp
+open FvModexp.Amd64.Q.NatSqr (StkPre StkSep tls)
+
+def fn : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.nat.modularInverseModPowerOfTwo"
+
+theorem fnBase : segAddr LibW.program fn = 0x5ea8c0 := by decide
+
+/-- bytes above `RSP` (return address + the 8 argument spill words) -/
+abbrev A : Nat := 72
+
+/-- stack bytes below `RSP`: the frame (224), the callee's return-address slot (8), the deepest callee window `kc` -/
+@[reducible] def K (kc : Nat) : Nat := 232 + kc
+
+/-- `numWords = ⌈n / 64⌉` (nat.go:1308) -/
+@[reducible] def NW (n : Nat) : Nat := (n + 63) / 64
+
+/-- the size bound of `z` at the start of round `j` (arm64 `zB`: `numWords + 1` in the first round, nat.go:1323's
+`z.setWord(k0)` result is discarded; `2^(j-1)` afterwards) -/
+def zB (n j : Nat) : Nat := if j = 1 then NW n + 1 else 2 ^ (j - 1)
+
+/-- round `j` at its actual sizes (arm64 `roundCost`, amd64 `SubMod2N.cost`) -/
+@[reducible] def roundCost (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (xl n j k : Nat) : Nat :=
+  sqrC (zB n j) + mulC k (min k xl) + 2 * makeCost (2 * NW n + 2) + makeCost (NW n + 2) + SubMod2N.cost n
+
+/-- the loop rounds `1 … r` -/
+def sumR (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (xl n : Nat) : Nat → Nat
+  | 0 => 0
+  | r + 1 => sumR sqrC mulC xl n r + roundCost sqrC mulC xl n (r + 1) (2 ^ (r + 1))
+
+theorem sumR_succ (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (xl n r : Nat) :
+    sumR sqrC mulC xl n (r + 1) = sumR sqrC mulC xl n r + roundCost sqrC mulC xl n (r + 1) (2 ^ (r + 1)) := rfl
+
+theorem sumR_mono (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (xl n : Nat) {r r' : Nat} (h : r ≤ r') :
+    sumR sqrC mulC xl n r ≤ sumR sqrC mulC xl n r' := by
+  induction h with
+  | refl => exact Nat.le_refl _
+  | step _ ih => rw [sumR_succ]; omega
+
+/-- the budget (arm64 `ModInv.cost`): two `make`s, the loop rounds, the final round at `NW` -/
+@[reducible] def cost (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (xl n : Nat) : Nat :=
+  makeCost (NW n + 1) + makeCost (2 * NW n) + sumR sqrC mulC xl n (Nat.log2 (NW n)) +
+    (sqrC (NW n + 1) + mulC (NW n) (min (NW n) xl) + 2 * makeCost (2 * NW n + 2) + makeCost (NW n + 2) +
+      SubMod2N.cost n)
+
+/-- the reserve level of the Q-form (as arm64) -/
+@[reducible] def D (n : Nat) : Nat := 8 * NW n + 72
+
+/-- the result value -/
+@[reducible] def val (X n : Nat) : Nat := Exp.modularInverseModPowerOfTwo X n
+
+/-- `natOne` (read by `subMod2N`'s final `z.add(z, natOne)`): readable, outside the window, apart from `z`'s array and
+from the stack object's header and free part -/
+@[reducible] def OneIn (R : RtInv) (L : List (Nat × Nat)) (s : State) (kc zp zc st : Nat) : Prop :=
+  ∃ op, NatOne R L s.mem op (win s (K kc) A) ∧ Apart zp (8 * zc) natOneA 24 ∧ Apart zp (8 * zc) op 8 ∧
+    StkSep s.mem st op 8 ∧ StkSep s.mem st natOneA 24
+
+/-- **the Q-form pre** (real budget `B`, reserve level `H`) -/
+@[reducible] def PreQ (R : RtInv) (kc H : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (B : Nat)
+    (L : List (Nat × Nat)) (zp zl zc st xp xl xc n : Nat) (s : State) : Prop :=
+  CallEnv R L s (K kc) A ∧ Serves R ∧
+    (Globals R s.mem (win s (K kc) A) ∧ Outside RunIface.gA 32 ([(zp, zp + 8 * zc)] ++ stkWs s.mem st)) ∧
+    1 ≤ n ∧ n ≤ 2 ^ 15 ∧ zl ≤ zc ∧ zp < 2 ^ 64 ∧ 0 < zc ∧ WrOut R L s (K kc) A zp zc ∧
+    0 < xl ∧ xl ≤ xc ∧ xc < 2 ^ 40 ∧ xl ≤ 2 ^ 12 ∧ RdIn R L s (K kc) A xp xl ∧ NatNorm s.mem xp xl ∧
+    natVal s.mem xp xl % 2 = 1 ∧ (Held R L xp (8 * xc) ∧ xp + 8 * xc ≤ 2 ^ 48) ∧
+    Apart zp (8 * zc) xp (8 * xc) ∧
+    StkPre R L s (K kc) A st ∧ stLen s.mem st + 8 * NW n + 72 ≤ 2 ^ 16 ∧
+    StkSep s.mem st zp (8 * zc) ∧ StkSep s.mem st xp (8 * xl) ∧
+    (stLen s.mem st + D n ≤ H ∧ cost sqrC mulC xl n + stkR H s.mem st ≤ B) ∧
+      R.inv B L (s.regs 14).toNat (view R.rt L s.mem) ∧
+    Outside NatAdd.wordT 16 R.rt ∧ s.mem.accessible Callees.adxAddr 1 false = true ∧
+    OneIn R L s kc zp zc st
+
+/-- the result facts with a budget relation `bud s' b'` -/
+@[reducible] def PostB (R : RtInv) (kc : Nat) (bud : State → Nat → Prop)
+    (L : List (Nat × Nat)) (zp zc st xp xl n : Nat) (s s' : State) : Prop :=
+  s'.fsBase = s.fsBase ∧ s'.df = s.df ∧
+  ∃ p' l' c' : Nat, (s'.regs 0).toNat = p' ∧ (s'.regs 3).toNat = l' ∧ (s'.regs 1).toNat = c' ∧
+    natVal s'.mem p' l' = val (natVal s.mem xp xl) n ∧ NatNorm s'.mem p' l' ∧ l' ≤ c' ∧ c' < 2 ^ 40 ∧
+    ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ bud s' b' ∧
+      R.inv b' L' (s.regs 14).toNat (view R.rt L' s'.mem) ∧ NatLive s'.mem R L' p' c' ∧
+      ((p' = zp ∧ c' = zc) ∨ (InRanges p' (8 * c') R.rt ∧ ApartAll p' (8 * c') L)) ∧
+      StackBackL R L L' st s.mem s'.mem ∧
+      MemFrame s.mem s'.mem (R.rt ++ win s (K kc) A ++ [(zp, zp + 8 * zc)] ++ stkWs s.mem st) ∧
+      LiveFrame s.mem s'.mem L ([(zp, zp + 8 * zc)] ++ stkWs s.mem st) ∧ ResSep s.mem s'.mem st p' c'
+
+/-- **the Q-form post**: `B − (cost + stkR H s.mem st) + stkR H s'.mem st ≤ b'` -/
+@[reducible] def PostQ (R : RtInv) (kc H : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (B : Nat)
+    (L : List (Nat × Nat)) (zp zc st xp xl n : Nat) (s s' : State) : Prop :=
+  PostB R kc (fun s' b' => B - (cost sqrC mulC xl n + stkR H s.mem st) + stkR H s'.mem st ≤ b') L zp zc st xp xl n
+    s s'
+
+/-- the internal pre: `PreQ` at the EFFECTIVE budget `b = B − stkR H s.mem st` (`R.inv (b + stkR H s.mem st)`),
+plus the return address a user address (re-derived from `CallSetup.ret` / `RetAddr.user`, never stated by a row) -/
+@[reducible] def Pre (R : RtInv) (kc H : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
+    (L : List (Nat × Nat)) (zp zl zc st xp xl xc n : Nat) (s : State) : Prop :=
+  CallEnv R L s (K kc) A ∧ Serves R ∧
+    (Globals R s.mem (win s (K kc) A) ∧ Outside RunIface.gA 32 ([(zp, zp + 8 * zc)] ++ stkWs s.mem st)) ∧
+    1 ≤ n ∧ n ≤ 2 ^ 15 ∧ zl ≤ zc ∧ zp < 2 ^ 64 ∧ 0 < zc ∧ WrOut R L s (K kc) A zp zc ∧
+    0 < xl ∧ xl ≤ xc ∧ xc < 2 ^ 40 ∧ xl ≤ 2 ^ 12 ∧ RdIn R L s (K kc) A xp xl ∧ NatNorm s.mem xp xl ∧
+    natVal s.mem xp xl % 2 = 1 ∧ (Held R L xp (8 * xc) ∧ xp + 8 * xc ≤ 2 ^ 48) ∧
+    Apart zp (8 * zc) xp (8 * xc) ∧
+    StkPre R L s (K kc) A st ∧ stLen s.mem st + 8 * NW n + 72 ≤ 2 ^ 16 ∧
+    StkSep s.mem st zp (8 * zc) ∧ StkSep s.mem st xp (8 * xl) ∧
+    (stLen s.mem st + D n ≤ H ∧ cost sqrC mulC xl n ≤ b) ∧
+      R.inv (b + stkR H s.mem st) L (s.regs 14).toNat (view R.rt L s.mem) ∧
+    Outside NatAdd.wordT 16 R.rt ∧ s.mem.accessible Callees.adxAddr 1 false = true ∧
+    OneIn R L s kc zp zc st ∧ (s.mem.readLE (s.regs 4).toNat 8).toNat < 2 ^ 47
+
+/-- the internal post at the effective budget (`b − cost + stkR H s'.mem st ≤ b'`) -/
+@[reducible] def Post (R : RtInv) (kc H : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
+    (L : List (Nat × Nat)) (zp zc st xp xl n : Nat) (s s' : State) : Prop :=
+  PostB R kc (fun s' b' => b - cost sqrC mulC xl n + stkR H s'.mem st ≤ b') L zp zc st xp xl n s s'
+
+section
+variable {R : RtInv} {kc H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {B : Nat}
+    {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
+
+/-- `PreQ` (+ the return-address fact) gives the internal `Pre` at the effective budget -/
+theorem pre_of_Q (h : PreQ R kc H sqrC mulC B L zp zl zc st xp xl xc n s)
+    (hra : (s.mem.readLE (s.regs 4).toNat 8).toNat < 2 ^ 47) :
+    Pre R kc H sqrC mulC (B - stkR H s.mem st) L zp zl zc st xp xl xc n s := by
+  obtain ⟨c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20, c21, c22,
+    c23, ⟨c24, c25⟩, c26, c27, c28, c29⟩ := h
+  refine ⟨c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20, c21, c22,
+    c23, ⟨c24, by omega⟩, ?_, c27, c28, c29, hra⟩
+  rw [Nat.sub_add_cancel (by omega)]; exact c26
+
+/-- the internal `Post` at the effective budget is the Q-form post -/
+theorem post_of_Q {s' : State} (h : Post R kc H sqrC mulC (B - stkR H s.mem st) L zp zc st xp xl n s s') :
+    PostQ R kc H sqrC mulC B L zp zc st xp xl n s s' := by
+  obtain ⟨f1, f2, p', l', c', e0, e1, e2, hv, hN, hlc, hc, L', b', hx, hb, rest⟩ := h
+  exact ⟨f1, f2, p', l', c', e0, e1, e2, hv, hN, hlc, hc, L', b', hx, by omega, rest⟩
+
+end
+
+end FvModexp.Amd64.ModInv
