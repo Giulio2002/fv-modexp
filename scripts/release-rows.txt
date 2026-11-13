@@ -67,6 +67,7 @@ amd64 Nat/DivWRow
 amd64 Nat/DivWVWRow
 amd64 Nat/DivBasicRow
 amd64 NatQ/DivBasicRowQ
+amd64 NatQ/DrsRowQ
 # ---- amd64 Top rows (last) ----
 amd64 Top/RunErr
 amd64 Top/RunOkRow
