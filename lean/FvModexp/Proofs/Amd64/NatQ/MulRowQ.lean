@@ -14,7 +14,8 @@ Arm64/NatQ/MulRowQ.lean; divmc s54)
 `correctness` = `Q.NatMul.ens` (amortised stack budget: level-free cost `mulCQ (len x) (len y)` + the reserve `stkR H`,
 Common/StackPot; `H` a bound of every stack level reached) moved to `Extracted.program.link impl` (`Ensures.full64`).
 Arguments as Go's ABIInternal passes them: `z = (AX, BX, CX)`, `stk = DI`, `x = (SI, R8, R9)` in registers, `y` (which
-no longer fits in the two remaining argument registers) as three stack words at `8(RSP)` (`StackWords s 0 [yp, yl, yc]`).
+no longer fits in the two remaining argument registers) as three stack words, stated as explicit reads at
+`RSP + 8/16/24` (the form the Janus audit's stack-argument rule accepts, JANUS-ISSUES [top s36]; `StackWords` is not).
 Runtime premises: the live `makeslice`, `growslice`, `memclrNoHeapPointers`, `memmove` and `gcWriteBarrier2` contracts.
 `Witness.nonvacuous`: the shared witness runtime, the toy allocator invariant, the Run extraction's read-only data, the
 four threshold globals (`40, 40, 12, 80`), the `runtime.writeBarrier` flag and the `math/big.hasADX` byte in memory, and
@@ -44,14 +45,14 @@ theorem correctness (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted
       4096 R 2)
     (H b : Nat) (L : List (Nat × Nat)) (W : Nat) (zp zl zc st xp xl xc yp yl yc : BitVec 64) :
     Ensures (Extracted.program.link impl) (segAddr Extracted.program Q.NatMul.fn) [zp, zl, zc, st, xp, xl, xc]
-      (fun s => StackWords s 0 [yp, yl, yc] ∧
+      (fun s => s.mem.readLE ((s.regs 4).toNat + 8) 8 = yp.toNat ∧ s.mem.readLE ((s.regs 4).toNat + 16) 8 = yl.toNat ∧
+        s.mem.readLE ((s.regs 4).toNat + 24) 8 = yc.toNat ∧
         Q.NatMul.MPre R b H L W zp.toNat zc.toNat st.toNat xp.toNat xl.toNat xc.toNat yp.toNat yl.toNat yc.toNat s)
       (Q.NatMul.MPost R b H L W zp.toNat zc.toNat st.toNat xp.toNat xl.toNat xc.toNat yp.toNat yl.toNat yc.toNat) :=
-  fun ret hret s hs ⟨hsw, hpre⟩ =>
+  fun ret hret s hs ⟨h8, h16, h24, hpre⟩ =>
     Ensures.full64 hap (by simp [numIntRegs])
       (Q.NatMul.ens impl hap R hmk hgr hmc hmv hwb H b L W zp zl zc st xp xl xc yp.toNat yl.toNat yc.toNat) ret hret s hs
-      ⟨by simpa [stackArgOffset] using hsw 0 (by simp), by simpa [stackArgOffset] using hsw 1 (by simp),
-        by simpa [stackArgOffset] using hsw 2 (by simp), hpre⟩
+      ⟨h8, h16, h24, hpre⟩
 
 end FvModexp.Amd64.MulRowQ
 
@@ -99,10 +100,10 @@ theorem setup : CallSetup ((Extracted.program.link WStubs.impl).withExit RET) (s
     rcases (by omega : i = 0 ∨ i = 1 ∨ i = 2 ∨ i = 3 ∨ i = 4 ∨ i = 5 ∨ i = 6) with
       rfl | rfl | rfl | rfl | rfl | rfl | rfl <;> rfl, rfl⟩
 
-theorem words : StackWords s0 0 [BitVec.ofNat 64 (OB + 8), 1, 1] := by
-  intro i h; simp only [List.length_cons, List.length_nil] at h
-  rcases (by omega : i = 0 ∨ i = 1 ∨ i = 2) with rfl | rfl | rfl <;>
-    simp only [List.getElem_cons_zero, List.getElem_cons_succ] <;> clear h <;> decide +kernel
+theorem words : s0.mem.readLE ((s0.regs 4).toNat + 8) 8 = (BitVec.ofNat 64 (OB + 8)).toNat ∧
+    s0.mem.readLE ((s0.regs 4).toNat + 16) 8 = (1 : BitVec 64).toNat ∧
+    s0.mem.readLE ((s0.regs 4).toNat + 24) 8 = (1 : BitVec 64).toNat :=
+  ⟨by decide +kernel, by decide +kernel, by decide +kernel⟩
 
 theorem acc0 (a n : Nat) (w : Bool) :
     mem0.accessible a n w = (wmem (fun _ => 0) regs).accessible a n w :=
@@ -167,7 +168,8 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (H b : Nat) (L 
     RetAddr (Extracted.program.link impl) ret ∧
     CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program Q.NatMul.fn)
       [zp, zl, zc, st, xp, xl, xc] s ∧
-    (StackWords s 0 [yp, yl, yc] ∧
+    (s.mem.readLE ((s.regs 4).toNat + 8) 8 = yp.toNat ∧ s.mem.readLE ((s.regs 4).toNat + 16) 8 = yl.toNat ∧
+      s.mem.readLE ((s.regs 4).toNat + 24) 8 = yc.toNat ∧
       Q.NatMul.MPre R b H L W zp.toNat zc.toNat st.toNat xp.toNat xl.toNat xc.toNat yp.toNat yl.toNat yc.toNat s) ∧
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.rip = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.makeslice") ∧
@@ -194,7 +196,7 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (H b : Nat) (L 
     by rw [WStubs.addr_gr]; exact WStubs.gr [] (by intro t ht; simp at ht) _,
     by rw [WStubs.addr_cl]; exact WStubs.cl R,
     by rw [WStubs.addr_mv]; exact WStubs.mv R,
-    by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] (by intro t ht; simp at ht) _, hret, setup, ⟨words, pre⟩,
+    by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] (by intro t ht; simp at ht) _, hret, setup, ⟨words.1, words.2.1, words.2.2, pre⟩,
     ⟨[], 0x1000, callS WStubs.mkA Extracted.dataAddr.«type:big.Word#51b931e8» 1 1, by rw [WStubs.addr_mk]; rfl,
       by rw [WStubs.addr_mk]; exact site_mk _⟩,
     ⟨[], 0x1000, callS5 WStubs.grA OA 2 1 1 Extracted.dataAddr.«type:big.Word#51b931e8», by rw [WStubs.addr_gr]; rfl,
@@ -208,6 +210,6 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (H b : Nat) (L 
       (by rw [WStubs.addr_mv]; exact WStubs.mv R)
       (by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] (by intro t ht; simp at ht) _) 72 0x4000 [] (mulW64 1 1)
       (BitVec.ofNat 64 OA) 0 2 (BitVec.ofNat 64 ST) (BitVec.ofNat 64 OB) 1 1 (BitVec.ofNat 64 (OB + 8)) 1 1 RET hret s0
-      setup ⟨words, pre⟩⟩
+      setup ⟨words.1, words.2.1, words.2.2, pre⟩⟩
 
 end FvModexp.Amd64.MulRowQ.Witness
