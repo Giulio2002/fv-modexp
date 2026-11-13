@@ -168,6 +168,9 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (H b : Nat) (L 
     RetAddr (Extracted.program.link impl) ret ∧
     CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program Q.NatMul.fn)
       [zp, zl, zc, st, xp, xl, xc] s ∧
+    -- typing anchor for the stack-argument words (the audit re-elaborates the printed statement, where `yp.toNat`
+    -- alone leaves `yp`'s type unknown): the witness's y = 5 at `OB + 8`, one limb
+    (yp = BitVec.ofNat 64 14680072 ∧ yl = 1#64 ∧ yc = 1#64) ∧
     (s.mem.readLE ((s.regs 4).toNat + 8) 8 = yp.toNat ∧ s.mem.readLE ((s.regs 4).toNat + 16) 8 = yl.toNat ∧
       s.mem.readLE ((s.regs 4).toNat + 24) 8 = yc.toNat ∧
       Q.NatMul.MPre R b H L W zp.toNat zc.toNat st.toNat xp.toNat xl.toNat xc.toNat yp.toNat yl.toNat yc.toNat s) ∧
@@ -196,7 +199,7 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (H b : Nat) (L 
     by rw [WStubs.addr_gr]; exact WStubs.gr [] (by intro t ht; simp at ht) _,
     by rw [WStubs.addr_cl]; exact WStubs.cl R,
     by rw [WStubs.addr_mv]; exact WStubs.mv R,
-    by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] (by intro t ht; simp at ht) _, hret, setup, ⟨words.1, words.2.1, words.2.2, pre⟩,
+    by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] (by intro t ht; simp at ht) _, hret, setup, ⟨rfl, rfl, rfl⟩, ⟨words.1, words.2.1, words.2.2, pre⟩,
     ⟨[], 0x1000, callS WStubs.mkA Extracted.dataAddr.«type:big.Word#51b931e8» 1 1, by rw [WStubs.addr_mk]; rfl,
       by rw [WStubs.addr_mk]; exact site_mk _⟩,
     ⟨[], 0x1000, callS5 WStubs.grA OA 2 1 1 Extracted.dataAddr.«type:big.Word#51b931e8», by rw [WStubs.addr_gr]; rfl,

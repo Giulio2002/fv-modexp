@@ -1891,3 +1891,13 @@ Util → IcDefs → IcHL → Ic → Og → Pre → Seg → FinA → Fin → Row 
 * SbF (cases 29, 30): 41.0 s → 15.8 s dev (same load). Sb A..G dev: 70 / 40 / 30 / 19 / 21 / 16 / 15 s.
 * Targeted row run (s51/rgrow2.sh amd64 b23b839b, warm-up-only cache, row alone): **amd64 RequiredGas 448 s**, peak
   3258 MB, load 30.7 (was 538 s / 3520 MB at load 34.6) — target ≤ 450 s met.
+
+## divmc s60 (2026-11-13): arm64 Nat/DivWRow trim (rel43 801 s, over the 600 s margin)
+* DivWRow's own set (release order) = 27 modules; dev sum 242 s, critical import path 126 s (load ~25). rel40 measured the
+  same row at 210 s and rel44 at 394 s (incl. lower closure), so rel43's 801 s (parallel with ModInvRow, load 25-77) was
+  mostly contention; trimmed anyway (statements unchanged):
+* `genAlloc` (DivWGen, 50 s) split by `m = 1` / `m ≠ 1` into DivWGenA1 (20 s) / DivWGenAN (25 s), DivWGen = dispatch
+  + `genReuse` (4.7 s); `setPath`'s allocating branch (DivWSetE, 38 s) likewise into DivWSetA1 (14 s) / DivWSetAN (16 s),
+  DivWSetE 4.5 s. In each: `Pre` boxed (`BoxW`, DivWMid) before the makeslice `janus_run`, and the disjunctions
+  hga/hwt/hxw cleared after it (omega 20 s → 10 s in the old DivWGen).
+* Critical path 126 → ~106 s (Call → GenAN → Gen 69 → 50 s); module max 50 → 25.5 s.

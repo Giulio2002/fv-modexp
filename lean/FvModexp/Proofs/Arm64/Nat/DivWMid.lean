@@ -12,7 +12,13 @@ non-zero top limb (`x` normalised).
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
 open FvModexp.Arm64.NatAdd (held_keep liveFrame_of_memFrame outside_of_inRanges held_apart_fresh)
 
+set_option autoImplicit false
+
 namespace FvModexp.Arm64.DivW
+
+/-- a fact hidden from `janus_run` (which destructures every conjunction in the context) -/
+structure BoxW (P : Prop) : Prop where
+  h : P
 
 /-- **`Mid` on the reuse path** (`zc ≥ m`): `p = zp`, `c = zc`, nothing allocated. -/
 theorem mid_of_reuse {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl y : BitVec 64} {s : State}
