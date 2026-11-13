@@ -1841,3 +1841,13 @@ Util → IcDefs → IcHL → Ic → Og → Pre → Seg → FinA → Fin → Row 
 |---|---|---|---|
 | Amd64/NatQ/DrsBd, DrsB1, DrsEnv, DrsRecP (new) | — | 6 s / 28 s / 4 s / 19 s (≤ 3.2 GB) | DrsRecP 65 s → 19 s: stack-argument offsets stated directly (`r - 392` …) instead of `rw [hsp]` into `r - 400 + 8` (recursion-depth blowup) |
 | Amd64/NatQ/DrsCallS, DrsA2, DrsB2, DrsA3, DrsSN3, DrsNorm3, DrsB3N, DrsB3T, DrsB3S, DrsB3C, DrsCRel (new, asm s47) | — | 2 / 16 / 49 / 2 / 1.5 / 9 / 12 / 2.4 / 5 / 17 / 2.6 s (≤ 3.5 GB; dev build, load ~40) | runs closed by name (setRegF_apply simp per register, `readLE_writeLE` rw chains); BitVec hints stated in the exact form the run produces (`ofNat a - ofNat b`, `+ 1#64`, masks via `neg_sshr63_and`) |
+
+### divmc s52 (2026-11-13, arm64 MulRowQ trim, prof.sh dev builds vs dev031 oleans, load ~30-37)
+| module | before | after | fix |
+|---|---|---|---|
+| Arm64/NatQ/MulLoopClrJ | 37 s | 15.6 s | memclr stop-at-entry: `lclrPre` (pre via Janus `call_pre`) + `lclrC` (call_regions, continuation over an abstract return state `T`) instead of `janus_run … calls [hmc' Lk bk]` |
+| Arm64/NatQ/MulMakeA1 | 32 s | 18-20 s | the 4 alloc paths stop at the join `0x1baf0c` and share one continuation `alloc_join` (one run to `makeslice`, one set of `AA` closers) |
+| Arm64/NatQ/KMulPC | 61 s | 43-44 s | `kpmOf`: `KPm` from one fine `MemFrame` over the 4 written ranges; lr/fp/s5/s6/x0h/x1h/fr by omega instead of `janus_simp` through ~30 stores |
+| Arm64/NatQ/SqrBM | 59 s | 17.5-24 s | basicMul stop-at-entry: `bmC` proves `BasicMul.Pre` explicitly (`Core.callee`, `RetAddr.of_placement`) and continues from an abstract `T` (bm2 33 s → 5 s) |
+| Amd64/NatQ/KMulPN (new) | — | 13 s / 2.9 GB | port of arm64 KMulPN with amd64 KSqrProD mechanics |
+| Amd64/NatQ/KMulPC (new) | — | 109 s / 4.2 GB | kpmOf-style from the start (`kpmOfX`, 7 written ranges); janus64_run dominates — profile if the row needs it |
