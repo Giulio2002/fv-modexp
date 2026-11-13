@@ -48,8 +48,9 @@ for p, mods in sorted(lint_source.parse_imports(sorted(spec_files + ['lean/FvMod
             print('FAIL: %s imports %s (outside FvModexp.Spec/Extracted/Janus/EthLib/Lean/Std/Init)' % (p, m)); fail = 1
 # and nothing but Spec/Proofs/ root file lives under lean/FvModexp
 for e in os.listdir('lean/FvModexp'):
-    if e not in ('Spec', 'Proofs', 'Spec.lean'):
-        print('FAIL: unexpected lean/FvModexp/%s (only Spec/, Proofs/ and the umbrella Spec.lean allowed)' % e); fail = 1
+    # Legacy/: asm's retired single-function-extraction rows (coordinator 2026-11-15; imported by nothing, not release rows)
+    if e not in ('Spec', 'Proofs', 'Spec.lean', 'Legacy'):
+        print('FAIL: unexpected lean/FvModexp/%s (only Spec/, Proofs/, Legacy/ and the umbrella Spec.lean allowed)' % e); fail = 1
 if structure_only:
     print('check-spec-closure --structure-only: %s (%d Spec files)' % ('FAILED' if fail else 'OK', nspec))
     sys.exit(fail)
