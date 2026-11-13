@@ -146,6 +146,13 @@ theorem Mem.frameS {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp z
     rw [hlf.readLE a n hin (out3 hws.1 hP hq hws.2)]
     exact mlf.readLE a n hin (by rw [outside_append]; exact hws)
 
+/-- the callee window one frame (304) down lies in `scrB`'s first two ranges (small context: frameX's `omega` took 38 s) -/
+theorem scrB_winA {s X : State} {a n K A : Nat} (h : Outside a n (scrB s)) (hspn : X.sp.toNat = s.sp.toNat - 304)
+    (hK : K ≤ 40960) (hA : A ≤ 96) (h0 : 41264 ≤ s.sp.toNat) : Outside a n (winA X K A) := by
+  simp only [scrB, outside_cons] at h
+  obtain ⟨h1, h2, -⟩ := h
+  simp only [winA, outside_cons, outside_nil, and_true]; rw [hspn]; omega
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
 /-- the frames from `joinQ` (`S`) over the call preparation (`X`: `scrB` slots, `q`'s array) and a division callee
@@ -191,9 +198,7 @@ theorem frameX {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st
     · have := outside_of_inRanges h1 hin; omega
   refine ⟨(mfTrans hA hC).mono fun a n ho => ?_, ⟨fun a n hin ho => ?_⟩⟩
   · obtain ⟨hrt, hsc, hws, hP, hq, hst⟩ := out6_parts ho
-    refine outT hrt hsc hq ?_ (by omega) (by omega) (hstk a n hrt hst)
-    simp only [winA, scrB, outside_cons, outside_nil, and_true] at hsc ⊢
-    rw [hspn]; omega
+    exact outT hrt hsc hq (scrB_winA hsc hspn hK hAb hsp0) (by omega) (by omega) (hstk a n hrt hst)
   · obtain ⟨hws, hP, hq, hst⟩ := out3_parts ho
     have hstX : Outside a n (stkWs X.mem st) := by
       simp only [stkWs, hW, hLn, hCp, outside_cons, outside_nil, and_true] at hst ⊢

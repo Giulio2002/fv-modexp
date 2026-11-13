@@ -2,6 +2,7 @@ import FvModexp.Proofs.Arm64.Nat.DrsFin
 import FvModexp.Proofs.Arm64.Nat.DivBasic
 import FvModexp.Proofs.Arm64.Nat.DivLargeCallees
 import FvModexp.Proofs.Common.DivmcNat
+import FvModexp.Proofs.Arm64.Nat.WinIn
 
 set_option autoImplicit false
 
@@ -280,9 +281,8 @@ theorem db_postS {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c W qp ql qc st 
     · rw [eW, eC] at hor; exact hor
     · intro hn; rw [← eW, ← eC] at hn; exact harr hn
   · refine hF.trans hMF fun a n ho => ⟨?_, ?_⟩
-    · simp only [outside_append, winA, outside_cons, outside_nil, and_true] at ho
-      simp only [fw, winA, outside_cons, outside_nil, and_true]
-      omega
+    · simp only [outside_append] at ho
+      exact winA_mono ho.1.1.2 (by omega) (Nat.le_refl _)
     · have hrt : Outside a n R.rt := by simp only [outside_append] at ho; exact ho.1.1.1
       simp only [outside_append, winA, outside_cons, outside_nil, and_true] at ho ⊢
       simp only [hrt, true_and]

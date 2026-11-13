@@ -19,4 +19,9 @@ theorem winA_in {s X : State} {x k W d stk ab : Nat} (ho : Outside x k (winA s W
     Outside x k (winA X stk ab) := by
   simp only [winA, outside_cons, outside_nil, and_true] at ho ⊢; rw [hsp]; omega
 
+/-- a smaller window at the same `SP` -/
+theorem winA_mono {s : State} {x k W a stk ab : Nat} (ho : Outside x k (winA s W a)) (h1 : stk ≤ W) (h2 : ab ≤ a) :
+    Outside x k (winA s stk ab) := by
+  simp only [winA, outside_cons, outside_nil, and_true] at ho ⊢; omega
+
 end FvModexp.Arm64
