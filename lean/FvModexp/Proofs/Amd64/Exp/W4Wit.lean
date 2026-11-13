@@ -9,7 +9,7 @@ set_option autoImplicit false
 
 `z = nil`, `stk` = header `{w: OA + 0x200, len: 0, cap: 4}` at `ST = OA + 0x100`, `x = [3]` at `XP`, `y = [5]` at `YP`,
 `m = [7]` at `MP` (the call `3^5 mod 7`); `y` and `m` (with `n`, `mc`) are the stack arguments at `RSP + 8 …`. The entry
-`RSP = SP0 + 8` (Go's `RSP ≡ 8 mod 16` at entry: the frame `sp = RSP - 0x388` is 16-aligned), the return address
+`RSP = SP0 + 8` (the frame `sp = RSP - 0x388`; amd64 Go keeps only 8-byte stack alignment, so the window-4 chain assumes `sp % 8 = 0` only), the return address
 `RET` at `RSP`, a 64 KiB stack region (window depth `K = 41512`, `nat.div`'s), the four `math/big` thresholds at `gA`,
 the write-barrier flag and the `hasADX` byte. `pre` holds for every `nat.div` cost function bounded by `CD` on the two
 shapes window-4 calls it with (`len u = 3` and `len u = 1`, `len v = 1`).

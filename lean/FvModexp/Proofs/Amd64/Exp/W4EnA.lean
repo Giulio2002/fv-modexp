@@ -18,7 +18,7 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem enA {impl : List Amd64.Segment} {ret : W64} {Q : State → Prop}
     {sp g st zp zl zc xp xl xc yp ylen mp n mc bp r w0 len0 cap0 : Nat} {M : Memory}
-    (hal : sp % 16 = 0) (hsp1 : 8 ≤ sp) (hsp2 : sp + 0x3f8 ≤ 2 ^ 48)
+    (hal : sp % 8 = 0) (hsp1 : 8 ≤ sp) (hsp2 : sp + 0x3f8 ≤ 2 ^ 48)
     (hacc : M.accessible (sp - 8) 0x400 true = true)
     (hg1 : g + 24 ≤ 2 ^ 48) (hg2 : M.accessible (g + 16) 8 false = true) (hg3 : M.readLE (g + 16) 8 < sp + 0x80)
     (hst1 : M.accessible st 24 false = true) (hst2 : st + 24 ≤ 2 ^ 48) (hstw : st + 24 ≤ sp ∨ sp + 0x3f8 ≤ st)
