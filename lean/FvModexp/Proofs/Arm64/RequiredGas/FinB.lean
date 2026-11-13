@@ -10,7 +10,7 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
 set_option maxHeartbeats 64000000 in
 set_option maxRecDepth 100000 in
 /-- From `+0x260` to the return, case `finK2 cap B ∧ finK1 len B E ∧ ¬ finK3 len B`. -/
-theorem rg_fin2_B : Fin2If (fun len cap B E => finK2 cap B ∧ finK1 len B E ∧ ¬ finK3 len B) := by
+theorem rg_fin2_B (hsb : SbSum) (hmv : MvSum) (hog : OgSum) : Fin2If (fun len cap B E => finK2 cap B ∧ finK1 len B E ∧ ¬ finK3 len B) := by
   intro c ptr len cap B E M ret hret s S hpre hpc hsp h0 h1 h2 h18 h28 h29 hf hdl m_ret m_fp m_c m_ptr m_len m_cap hB hE hM ⟨k2, k1, k3⟩
   simp only [finK1, finK2, finK3] at k1 k2 k3
   have hpre' := hpre
@@ -18,7 +18,7 @@ theorem rg_fin2_B : Fin2If (fun len cap B E => finK2 cap B ∧ finK1 len B E ∧
   simp only [Disjoint] at hd1 hd2 hdg
   have hrc : s.mem.readLE (c.toNat + 2) 1 = 1 := by rw [Memory.readLE_one]; exact ho2
   all_goals janus_run [hsp, h0, h1, h2, h18, h28, h29, m_ret, m_fp, m_c, m_ptr, m_len, m_cap, BitArith.and_asr63, BitArith.and_asr63_lit,
-    Nat.lt_add_right_iff_pos, Nat.mod_eq_of_lt, k1, k2, k3, hrc] calls [sb, mv, og_summary]
+    Nat.lt_add_right_iff_pos, Nat.mod_eq_of_lt, k1, k2, k3, hrc] calls [hsb, hmv, hog]
   all_goals
     apply rgPost_of ptr len B E M s _ hB hE hM
     dsimp only
