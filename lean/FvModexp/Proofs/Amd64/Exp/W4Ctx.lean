@@ -33,10 +33,11 @@ open FvModexp.Amd64.W4Loop (Env Inp Buf FinEnv)
   (InRanges a k L ∨ Outside a k R.rt) ∧ AW sp K a k ∧ Apart a k st 24 ∧ Apart a k (stUp M st l0).1 (stUp M st l0).2 ∧
     ∀ e ∈ ex, Apart a k e.1 e.2
 
-/-- the own slots every step of the `RR` section keeps (`sp + j`, 8 bytes) -/
+/-- the own slots every step of the `RR` section keeps (`sp + j`, 8 bytes): `2n` (0x78), `zz` (0x188/0x98/0xa0),
+`RR` (0x190/0xa8), `t` (0xd8), `n`/`xc` (0x138/0x140), the input/defer slots `[0x340, 0x3c0)` -/
 @[reducible] def KeptJ (j : Nat) : Prop :=
-  0x78 ≤ j ∧ j + 8 ≤ 0x80 ∨ 0x98 ≤ j ∧ j + 8 ≤ 0xa8 ∨ 0xd8 ≤ j ∧ j + 8 ≤ 0xe0 ∨ 0x138 ≤ j ∧ j + 8 ≤ 0x148 ∨
-    0x188 ≤ j ∧ j + 8 ≤ 0x190 ∨ 0x340 ≤ j ∧ j + 8 ≤ 0x3c0
+  0x78 ≤ j ∧ j + 8 ≤ 0x80 ∨ 0x98 ≤ j ∧ j + 8 ≤ 0xb0 ∨ 0xd8 ≤ j ∧ j + 8 ≤ 0xe0 ∨ 0x138 ≤ j ∧ j + 8 ≤ 0x148 ∨
+    0x188 ≤ j ∧ j + 8 ≤ 0x198 ∨ 0x340 ≤ j ∧ j + 8 ≤ 0x3c0
 
 /-- the window-4 context (values `Mv` of `m[0:n]`, `Xv` of `x[0:n]`, `Y` of `y`) -/
 def Ctx (R : RtInv) (L : List (Nat × Nat)) (g fs sp K n mp mc Mv xp Xv yp ylen Y yi zp zc st n0 l0 fbp r : Nat)
