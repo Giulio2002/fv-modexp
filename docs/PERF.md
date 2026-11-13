@@ -1745,3 +1745,10 @@ amd64 karatsuba (dev, LEAN_NUM_THREADS=4, load ~50): KMulRel 15 s / 2.6 GB, KMul
   owns 59 (Run C/D segments, IntBytes), Top/RunErr owns 36 (SetBytes*, Run H/L). The real numbers come from the
   fresh-cache release-order run (cache-top/rel43, log cache-top/snap43/rel43.out).
 * Dev (amd64, top s43): NatQ/DivMFull (fullM + ensML) 4.4 s / 2.5 GB.
+
+## asm s44 (2026-11-13)
+* arm64 DivRowQ trim (dev, load ~40): NatQ/DivLargeNat 82 s → DivLargeNatP 73 s ∥ DivLargeNatN 40 s (+ wrapper 1.3 s);
+  DivLessC → DivLessC0 16 s ∥ DivLessC 68 s.
+* amd64 Q drs (dev): DrsPathC 134 s → 7.8 s, DrsPathA 124 s → 9.5 s — the closing `all_goals first | exact … | (rw …; simp)`
+  chain over the epilogue's holes replaced by named holes (`?sp ?r14 … ?q ?u`) with one closer each. New: DrsPathB 28 s,
+  DrsPathBR 13 s, DrsPro2d 23 s (2.5-3.3 GB).
