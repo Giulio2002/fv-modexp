@@ -16,7 +16,7 @@ Here `sp := SP - 1312` (= `expNNOdd`'s `sp`) and the window is `[sp - K, sp + 14
 * `NPre`: as `ExpOdd.OPre` with the larger window, `0 < st` (stack given), `slow = 0`, `0 < len m`, `len z ≤ cap z`,
   the package global `natOne` (read by `expNNPowerOfTwo`'s precomputation), the alias condition
   of `z` (Go `alias(z, x) || alias(z, y)` → `z = nil`; otherwise `z` is apart from `x`, `y`, `m`: `ZOK`), the stack
-  bounds of every callee, the budget `NBud`.
+  bounds of every callee, the budget (PATH MAX of the branches' costs, expmc s44).
 * `Pre` = `NPre` ∧ (`M` odd ∨ `M` a power of two) (`noEven`: `expNNEven` is never called).
 * `Post`: `X0..X2 = (p, l, c)` with value `X ^ Y % M`, normalised, `c = 0` or `z`'s array or a fresh one, `LiveExt`,
   budget `NCost`, `StackBackL`, frame `R.rt ++ winA s (K + 1312) 120 ++ [z] ++ stkWs`, `LiveFrame`.
@@ -87,14 +87,15 @@ def NPre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K : Nat) (costF : Nat �
     2 * StackNat.rnd (2 * n) + 32 * n + 80 ≤ 2 ^ 16 ∧
   stLen s.mem st + needR xl n ≤ 2 ^ 16 ∧ stLen s.mem st + needS xl yl n ≤ 2 ^ 16 ∧
   stLen s.mem st + needP xl yl (Nat.log2 (natVal s.mem mp n)) ≤ 2 ^ 16 ∧
-  makeCost 1 + makeCost n + costR (stLen s.mem st) xl n + costS (stLen s.mem st) xl yl n +
-    costP (stLen s.mem st) xl yl (Nat.log2 (natVal s.mem mp n)) + ExpOdd.OBud costF n xl yl (stLen s.mem st) ≤ b ∧
+  makeCost 1 + max (costR (stLen s.mem st) xl n) (makeCost n + max (costS (stLen s.mem st) xl yl n)
+    (max (costP (stLen s.mem st) xl yl (Nat.log2 (natVal s.mem mp n))) (ExpOdd.OBud costF n xl yl (stLen s.mem st)))) ≤ b ∧
   R.inv b L g (view R.rt L s.mem)
 
-/-- the cost the postcondition charges (an upper bound of every path's) -/
+/-- the cost the postcondition charges (an upper bound of every path's; PATH MAX, expmc s44: Go runs `setWord`, or
+`z.rem` (y = 1), or `z.make(len m)` and ONE of Slow / Odd / P2 / Even, nat.go:639-720) -/
 def NCost (costF : Nat → Nat → Nat → Nat) (costR : Nat → Nat → Nat → Nat) (costS costP : Nat → Nat → Nat → Nat → Nat)
     (xl yl n l lm : Nat) : Nat :=
-  makeCost 1 + makeCost n + costR l xl n + costS l xl yl n + costP l xl yl lm + ExpOdd.OCost costF n xl yl l
+  makeCost 1 + max (costR l xl n) (makeCost n + max (costS l xl yl n) (max (costP l xl yl lm) (ExpOdd.OCost costF n xl yl l)))
 
 /-- the precondition (entry state `s`; arguments `[z, zl, zc, st, x, xl, xc, y, yl, yc, m, n, mc, slow]`) -/
 def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K : Nat) (costF : Nat → Nat → Nat → Nat)

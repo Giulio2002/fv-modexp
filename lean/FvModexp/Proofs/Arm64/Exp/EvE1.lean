@@ -55,7 +55,7 @@ variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc
 /-- the precondition budget of `nat.expNN` at level `l`, modulus length `lm`, `log2 m = n` -/
 @[reducible] def NBudE (costF : Nat → Nat → Nat → Nat) (costR : Nat → Nat → Nat → Nat)
     (costS costP : Nat → Nat → Nat → Nat → Nat) (xl yl lm l n : Nat) : Nat :=
-  makeCost 1 + makeCost lm + costR l xl lm + costS l xl yl lm + costP l xl yl n + ExpOdd.OBud costF lm xl yl l
+  makeCost 1 + max (costR l xl lm) (makeCost lm + max (costS l xl yl lm) (max (costP l xl yl n) (ExpOdd.OBud costF lm xl yl l)))
 
 /-- `nat.expNN`'s stack bounds at level `l`, modulus length `lm`, `log2 m = n` -/
 @[reducible] def NStkE (needR : Nat → Nat → Nat) (needS needP : Nat → Nat → Nat → Nat) (xl yl lm l n : Nat) : Prop :=

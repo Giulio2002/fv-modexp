@@ -25,6 +25,9 @@ def addN (f g : Nat → Nat → Nat → Nat) : Nat → Nat → Nat → Nat := fu
 /-- pointwise sum of two cost functions -/
 def addC (f g : Nat → Nat → Nat → Nat → Nat) : Nat → Nat → Nat → Nat → Nat := fun l a b c => f l a b c + g l a b c
 
+/-- pointwise max of two cost functions (the slow slot at the top: `expNNSlow` OR `expNNEven`, PATH MAX, expmc s44) -/
+def maxC (f g : Nat → Nat → Nat → Nat → Nat) : Nat → Nat → Nat → Nat → Nat := fun l a b c => max (f l a b c) (g l a b c)
+
 /-- `DHyps` with a larger slow need/cost -/
 theorem DHyps.monoS {impl : List Segment} {R : RtInv} {K : Nat} {costF : Nat → Nat → Nat → Nat}
     {needS needS' needP : Nat → Nat → Nat → Nat} {costS costS' costP : Nat → Nat → Nat → Nat → Nat}
@@ -68,20 +71,20 @@ theorem ensNilF (impl : List Segment) (hap : ImplApart Extracted.program impl) (
       [BitVec.ofNat 64 zp, BitVec.ofNat 64 zl, BitVec.ofNat 64 zc, BitVec.ofNat 64 st, BitVec.ofNat 64 xp,
         BitVec.ofNat 64 xl, BitVec.ofNat 64 xc, BitVec.ofNat 64 yp, BitVec.ofNat 64 yl, BitVec.ofNat 64 yc,
         BitVec.ofNat 64 mp, BitVec.ofNat 64 n, BitVec.ofNat 64 mc, BitVec.ofNat 64 slow]
-      (PreNF R b L K costF needR costR (addN needS needE) needP (addC costS costE) costP zp zl zc st xp xl xc yp yl yc
+      (PreNF R b L K costF needR costR (addN needS needE) needP (maxC costS costE) costP zp zl zc st xp xl xc yp yl yc
         mp n mc slow)
-      (PostN R b L K costF costR (addC costS costE) costP zp zc xp xl yp yl mp n) := by
+      (PostN R b L K costF costR (maxC costS costE) costP zp zc xp xl yp yl mp n) := by
   rw [← LibNE.eq_only, show segAddr Extracted.program fn = fnN by decide]
   intro ret hret s hs hpre
   janus_intro hs
-  have hP : PreNil R b L K costF needR costR (addN needS needE) needP (addC costS costE) costP (s.regs 28).toNat
+  have hP : PreNil R b L K costF needR costR (addN needS needE) needP (maxC costS costE) costP (s.regs 28).toNat
       (s.sp.toNat - 1312) zp zl zc st xp xl xc yp yl yc mp n mc slow s := hpre.1
   have hX : NHyp.XFacts R L xp xl xc := hpre.2
   clear hpre
-  have hevB : EvH impl R K (addN needS needE) (addC costS costE) xl yl n :=
-    ⟨stkE, needE, costE, hEv, hstkE, by unfold addN; omega, fun l => by unfold addC; omega⟩
-  have H' := H.monoS (needS' := addN needS needE) (costS' := addC costS costE) (fun _ _ _ => by unfold addN; omega)
-    (fun _ _ _ _ => by unfold addC; omega)
+  have hevB : EvH impl R K (addN needS needE) (maxC costS costE) xl yl n :=
+    ⟨stkE, needE, costE, hEv, hstkE, by unfold addN; omega, fun l => by unfold maxC; omega⟩
+  have H' := H.monoS (needS' := addN needS needE) (costS' := maxC costS costE) (fun _ _ _ => by unfold addN; omega)
+    (fun _ _ _ _ => by unfold maxC; omega)
   have hP' := hP
   obtain ⟨⟨hs1, hs28, hg1, hg2, hg3, -, hal, hK4, hKs, hsp2, hacc, -, -, -, -⟩, -, -, -, -, -,
     -, -, -, -, -, -, -, -, -, -, -, -, hy48, hyc, -, -, -, -, -, hxp, hxc, hzp, hzlc, hzc, -, hali, -⟩ := hP'
@@ -93,7 +96,7 @@ theorem ensNilF (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (by omega) hyc.1 s h_pc hs1 h_x0 h_x2 h_x4 h_x6 h_x7 h_x9 hs28 rfl h_lr rfl ?Kk ?K0)
   case Kk =>
     intro hk S M c1 c2 d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d18 d28 cm hF hrg q29 q30 _ _
-    refine fromJ1NE impl hap R H' hget hno hput hRem hnsR hn11R hKR ret hret (fun s' => ABIReturn s s' ∧ PostNil R b L K costF costR (addC costS costE) costP zp zc xp xl yp yl mp n s s') hP hX hevB (zp' := zp) (zl' := zl) (zc' := zc)
+    refine fromJ1NE impl hap R H' hget hno hput hRem hnsR hn11R hKR ret hret (fun s' => ABIReturn s s' ∧ PostNil R b L K costF costR (maxC costS costE) costP zp zc xp xl yp yl mp n s s') hP hX hevB (zp' := zp) (zl' := zl) (zc' := zc)
       (Or.inl ⟨rfl, rfl, rfl, zok_of_keep hali hk⟩) (noAlias_keep hk) S M c1 c2 (d0.trans h_x0) (d1.trans h_x1) (d2.trans h_x2)
       (d3.trans h_x3) (d4.trans h_x4) (d5.trans h_x5) (d6.trans h_x6) (d7.trans h_x7) (d8.trans h_x8)
       (d9.trans h_x9) (d10.trans h_x10) (d11.trans h_x11) (d12.trans h_x12) (d13.trans h_x13) d28 cm hF hrg q29 q30
@@ -101,7 +104,7 @@ theorem ensNilF (impl : List Segment) (hap : ImplApart Extracted.program impl) (
         a3.trans d18⟩, hq⟩
   case K0 =>
     intro hz0 hk S M c1 c2 d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d18 d28 cm hF hrg q29 q30 _ _
-    refine fromJ1NE impl hap R H' hget hno hput hRem hnsR hn11R hKR ret hret (fun s' => ABIReturn s s' ∧ PostNil R b L K costF costR (addC costS costE) costP zp zc xp xl yp yl mp n s s') hP hX hevB (zp' := 0) (zl' := 0) (zc' := 0)
+    refine fromJ1NE impl hap R H' hget hno hput hRem hnsR hn11R hKR ret hret (fun s' => ABIReturn s s' ∧ PostNil R b L K costF costR (maxC costS costE) costP zp zc xp xl yp yl mp n s s') hP hX hevB (zp' := 0) (zl' := 0) (zc' := 0)
       (Or.inr ⟨rfl, rfl, rfl⟩) (noAlias_nil _ _) S M c1 c2 d0 d1 d2 (d3.trans h_x3) (d4.trans h_x4) (d5.trans h_x5) (d6.trans h_x6)
       (d7.trans h_x7) (d8.trans h_x8) (d9.trans h_x9) (d10.trans h_x10) (d11.trans h_x11) (d12.trans h_x12)
       (d13.trans h_x13) d28 cm hF hrg q29 q30

@@ -98,8 +98,8 @@ theorem preNF_of {R : RtInv} {b B : Nat} {L : List (Nat × Nat)} {stk above K : 
     (em24 : s.mem.readLE (mA + 24) 8 = mc)
     (hnR : needR zl n ≤ 2 ^ 16) (hnS : needS zl yl n ≤ 2 ^ 16)
     (hnP : needP zl yl (Nat.log2 (natVal s.mem mp n)) ≤ 2 ^ 16)
-    (hbud : 24 + (makeCost 1 + makeCost n + costR 0 zl n + costS 0 zl yl n +
-      costP 0 zl yl (Nat.log2 (natVal s.mem mp n)) + ExpOdd.OBud costF n zl yl 0) ≤ B)
+    (hbud : 24 + (makeCost 1 + max (costR 0 zl n) (makeCost n + max (costS 0 zl yl n)
+      (max (costP 0 zl yl (Nat.log2 (natVal s.mem mp n))) (ExpOdd.OBud costF n zl yl 0)))) ≤ B)
     {S3 : State} (hsp : S3.sp = BitVec.ofNat 64 (s.sp.toNat - 320)) (h28 : S3.regs 28 = s.regs 28)
     (hF : MemFrame s.mem S3.mem [(s.sp.toNat - 328, s.sp.toNat + 48)]) (hrg : S3.mem.regions = s.mem.regions) :
     ExpN.PreNF R b L K costF needR costR needS needP costS costP zp zl zc 0 zp zl zc yp yl yc mp n mc 0 S3 := by
