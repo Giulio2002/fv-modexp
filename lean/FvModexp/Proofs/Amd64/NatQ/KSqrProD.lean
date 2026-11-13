@@ -143,4 +143,138 @@ theorem kNatPre {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n x
     simp only [List.mem_cons, List.not_mem_nil, or_false] at hr
     rcases hr with rfl | rfl <;> left <;> exact hout.of_sub (by simp only; omega) (by simp only; omega)
 
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 64000000 in
+/-- **`KB1` from `stk.nat`'s postcondition** (the L form: a grown array is an element of the new live set) -/
+theorem kmOf {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State}
+    {lx0 lx1 : Nat} {P : State} (h : KP R b H L W st zp zc xp n xc s lx0 lx1 P) {S : State}
+    (hpc : S.rip = BitVec.ofNat 64 0x5f2578) (hreg : S.mem.regions = P.mem.regions)
+    (hk : S.regs 4 = P.regs 4 + 8 ∧ S.regs 5 = P.regs 5 ∧ S.regs 14 = P.regs 14 ∧ S.xmm 15 = P.xmm 15)
+    (hq : StackNatX.PostQ R b L H 4192 24 st (kT n) P S) :
+    ∃ (Lk : List (Nat × Nat)) (bk : Nat),
+      KB1 R b H L W st zp zc xp n xc s lx0 lx1 (stW S.mem st + 8 * stLen s.mem st) S Lk bk := by
+  obtain ⟨hW, hWs, hal, ha48, h80, hn12, hxc, hxc40, hzl, hzc40, hout, hgr, hga⟩ := h.lay
+  obtain ⟨efs, edf, hr0, hr1, hr2, Lk, bk, ⟨hext, hbud, hinv⟩, hok, hlen, hsame, hgrow, hF, hLF, hmem⟩ := hq
+  have hspP := h.sp
+  obtain ⟨⟨-, -, -, -, -, -, -, hLs, -⟩, -, -, hglb, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, hsp, -⟩ := h.pre
+  obtain ⟨-, hsok, hstw, -, -, -, hfw, hsf, -, -, -, hfgA, -, -, -⟩ := hsp
+  obtain ⟨-, -, -, -, -, -, -, -, hgArt, -, -, -, -⟩ := hglb
+  have hsth : Held R L st 24 := hsok.2.1
+  have hlc0 : stLen s.mem st ≤ stCap s.mem st := hsok.2.2.2.2.2.1
+  simp only [win, outside_cons, outside_nil, and_true] at hstw hfw
+  simp only [BasicSqr.freeP, BasicSqr.freeN] at hfw hsf hfgA
+  have eW : stW P.mem st = stW s.mem st := h.rd (by omega)
+  have eL : stLen P.mem st = stLen s.mem st := h.rd (by omega)
+  have eC : stCap P.mem st = stCap s.mem st := h.rd (by omega)
+  rw [eL, eC] at hsame hgrow hmem
+  rw [eL] at hlen
+  rw [eW] at hsame
+  rw [stkR_congr eC] at hbud; rw [eL] at hr0
+  have hkT : 0 < kT n := by simp only [kT]; omega
+  have hscr := Scr.of_post (m0 := s.mem) (k := kT n) hok hlen hkT hsame hgrow rfl
+  have hacc : ∀ a k w, S.mem.accessible a k w = s.mem.accessible a k w := fun a k w => by
+    rw [hF.accessible, h.fr.accessible]
+  have hscr' : Scr R L Lk s.mem s.mem st (stW S.mem st + 8 * stLen s.mem st) (kT n) :=
+    ⟨hscr.b48, by rw [← hacc]; exact hscr.acc, hscr.al, hscr.held, hscr.loc⟩
+  have hlS : stLen S.mem st = stLen s.mem st + StackNat.rnd (kT n) := hlen
+  -- reads of the frame after the call (the callee's window ends at `SP - 296`)
+  have hrd2 : ∀ a k, (s.regs 4).toNat - 296 ≤ a → a + k ≤ (s.regs 4).toNat + 48 → S.mem.readLE a k = P.mem.readLE a k := by
+    intro a k h1 h2
+    refine hF.readLE _ _ ?_
+    simp only [win, stkWs, outside_append, outside_cons, outside_nil, and_true]
+    rw [hspP, eW, eL, eC]
+    exact ⟨⟨hout.of_sub (by omega) (by omega), by omega⟩, by omega, by omega⟩
+  have hws : stkWs P.mem st = stkWs s.mem st := by simp only [stkWs]; rw [eW, eL, eC]
+  refine ⟨Lk, bk, ⟨⟨hpc, by rw [hk.1]; exact sp_add8 hspP (by omega), by rw [hk.2.2.1, h.g], by rw [hk.2.1, h.fpr],
+    efs.trans h.fs, edf.trans h.df, by rw [hk.2.2.2, h.x15]⟩,
+    ?km, hr0 hkT, hr1, hr2, IntAt.keep h.z0h fun x m h1 h2 => hrd2 x m (by omega) (by omega), ?z2⟩⟩
+  case z2 => exact IntAt.keep h.z2h fun x m h1 h2 => hrd2 x m (by omega) (by omega)
+  case km =>
+  exact
+    { pre := h.pre, l0 := h.l0, v0 := h.v0, nn0 := h.nn0, l1 := h.l1, v1 := h.v1, nn1 := h.nn1,
+      scr := hscr',
+      tsep := ⟨(hscr'.apart hsth fun _ => hsf).symm, by
+          simp only [BasicSqr.freeP, BasicSqr.freeN]; rw [hlS]; unfold Apart
+          simp only [StackNat.rnd, kT]; omega,
+        hscr'.apart (Or.inr hgArt) fun _ => hfgA.symm⟩,
+      ext := hext, bud := by unfold kc1; rw [Nat.zero_add]; exact hbud,
+      spk := by unfold kc1; exact Nat.zero_le _, inv := by rw [h.g] at hinv; exact hinv,
+      reg := hreg.trans h.reg,
+      fr := h.fr.trans hF fun a k ho => by
+        simp only [win, kws, stkWs, outside_append, outside_cons, outside_nil, and_true] at ho ⊢
+        rw [hspP, eW, eL, eC]
+        obtain ⟨⟨hrt, hw1⟩, hz, hs1, hs2⟩ := ho
+        exact ⟨⟨by omega, by omega⟩, ⟨hrt, by omega⟩, hs1, hs2⟩,
+      lf := LiveFrame.trans
+        ⟨fun a k hin _ => h.fr.readLE a k (by
+          have := outside_of_liveSep hin hLs
+          simp only [win, outside_cons, outside_nil, and_true] at this ⊢; omega)⟩
+        (FvModexp.LiveFrame.mono_ws (hws ▸ hLF) fun a k ho => by
+          simp only [kws, outside_cons] at ho; exact ho.2) fun _ _ h => h,
+      sok := hok, slen := hlS,
+      sarr := by
+        by_cases hc : stLen s.mem st + StackNat.rnd (kT n) ≤ stCap s.mem st
+        · exact Or.inl (hsame hc)
+        · exact Or.inr (hgrow (by omega)),
+      smem := ArrIn.of_nat hok.2.2.2.2.2.1 hlS hsame hmem,
+      lr := (hrd2 _ _ (by omega) (by omega)).trans (h.rd (by omega)),
+      fp := (hrd2 _ _ (by omega) (by omega)).trans h.fp,
+      bit := (hrd2 _ _ (by omega) (by omega)).trans h.bit,
+      n2s := (hrd2 _ _ (by omega) (by omega)).trans h.n2s,
+      n1s := (hrd2 _ _ (by omega) (by omega)).trans h.n1s,
+      dfn := (hrd2 _ _ (by omega) (by omega)).trans h.dfn,
+      dst := (hrd2 _ _ (by omega) (by omega)).trans h.dst,
+      dln := (hrd2 _ _ (by omega) (by omega)).trans h.dln,
+      dpt := (hrd2 _ _ (by omega) (by omega)).trans h.dpt,
+      s1 := (hrd2 _ _ (by omega) (by omega)).trans h.s1,
+      s2 := (hrd2 _ _ (by omega) (by omega)).trans h.s2,
+      s3 := (hrd2 _ _ (by omega) (by omega)).trans h.s3,
+      s4 := (hrd2 _ _ (by omega) (by omega)).trans h.s4,
+      s5 := (hrd2 _ _ (by omega) (by omega)).trans h.s5,
+      x0h := IntAt.keep h.x0h fun x m h1 h2 => hrd2 x m (by omega) (by omega),
+      x1h := IntAt.keep h.x1h fun x m h1 h2 => hrd2 x m (by omega) (by omega) }
+
+/-- `(*stack).nat` (`StackNatX.ensQ`) as a summary in `LibSqr.program` -/
+theorem ksNatSum (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
+    (hgr : GrowsliceLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.growslice") 4096 R)
+    (hmc : MemclrNoHeapPointersLive64 (Extracted.program.ofImpl impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
+    (hwb : WbLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2)
+    (H b : Nat) (L : List (Nat × Nat)) (st k : BitVec 64) :
+    Summary (LibSqr.program.link impl) stkNatA
+      (fun s => RetAddr ((Extracted.program.onlySegments StackNat.names).link impl) (s.mem.readLE (s.regs regSP).toNat 8) ∧
+        s.xmm xmmZero = 0 ∧ ArgsFrom64 s 0 [st, k] ∧ s.df = false ∧ StackNatX.PreQ R b L H 4192 24 st.toNat k.toNat s)
+      (fun s s' => (s'.regs 4 = s.regs 4 + 8 ∧ s'.regs 5 = s.regs 5 ∧ s'.regs 14 = s.regs 14 ∧ s'.xmm 15 = s.xmm 15) ∧
+        StackNatX.PostQ R b L H 4192 24 st.toNat k.toNat s s') := by
+  have hS := StackNatX.sumQ impl hap R hgr hmc hwb H b L st k LibSqr.names (IntAS.sub_of_all (by decide))
+  rw [← LibSqr.eq_only, stkNat_entry] at hS
+  exact hS
+
+set_option maxRecDepth 20000 in
+/-- **The `z1 := stk.nat(2·n2 + 1)` call** from the prologue state `P` (callee entry, return `0x5f2578`) -/
+theorem ks_natcall (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
+    (hgr : GrowsliceLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.growslice") 4096 R)
+    (hmc : MemclrNoHeapPointersLive64 (Extracted.program.ofImpl impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
+    (hwb : WbLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2)
+    {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n xc : Nat} {s : State} {lx0 lx1 : Nat} {P : State}
+    (h : KP R b H L W st zp zc xp n xc s lx0 lx1 P) (hx150 : s.xmm 15 = 0#128) (hdf0 : s.df = false)
+    {ret : W64} {Q : State → Prop}
+    (hK : ∀ (S : State) (Lk : List (Nat × Nat)) (bk : Nat),
+      KB1 R b H L W st zp zc xp n xc s lx0 lx1 (stW S.mem st + 8 * stLen s.mem st) S Lk bk →
+      ReachesRet (LibSqr.program.link impl) ret S Q) :
+    ReachesRet (LibSqr.program.link impl) ret P Q := by
+  have hb := h.lay
+  have hst : st < 2 ^ 64 := by
+    have := (h.pre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1 : StkPre R L s W 48 st).2.1.2.2.2.1; omega
+  have hkt : kT n < 2 ^ 64 := by simp only [kT, kn2]; omega
+  have hrd : P.mem.readLE (P.regs 4).toNat 8 = 0x5f2380 + 504 := by rw [h.sp, h.ra]
+  refine ReachesRet.call_regions (ksNatSum impl hap R hgr hmc hwb H b L (BitVec.ofNat 64 st) (BitVec.ofNat 64 (kT n)))
+    h.pc ⟨?_, h.x15.trans hx150, by simp [ArgsFrom64, argReg, intArgRegs, h.r0, h.r1], h.df.trans hdf0, ?_⟩
+    fun s2 hr hq hreg => ?_
+  · simp only [regSP]; rw [hrd]; exact ks_ra hap (by decide) 504 (by decide)
+  · rw [tN' hst, tN' hkt]; exact kNatPre h
+  · obtain ⟨hk, hq⟩ := hq
+    rw [tN' hst, tN' hkt] at hq
+    obtain ⟨Lk, bk, hB⟩ := kmOf h (by rw [hr, retAddrOf, hrd]) hreg hk hq
+    exact hK s2 Lk bk hB
+
 end FvModexp.Amd64.Q.NatSqr
