@@ -1,6 +1,6 @@
 import FvModexp.Proofs.Arm64.Nat.DrsFin
 import FvModexp.Proofs.Arm64.Nat.DivBasic
-import FvModexp.Proofs.Arm64.Nat.DivLargeCallees
+import FvModexp.Proofs.Arm64.Nat.Callees2
 import FvModexp.Proofs.Common.DivmcNat
 import FvModexp.Proofs.Arm64.Nat.WinIn
 
@@ -20,6 +20,18 @@ open FvModexp.Arm64.Callees Janus.Contracts.EqHashModel
 set_option linter.janusRenameI false
 
 namespace FvModexp.Arm64.DivRec
+
+/-- (= `DivLarge.pw_forall`, restated so that drs does not import the divLarge modules) -/
+theorem drsPw_forall {α : Type} {R : α → α → Prop} (hR : ∀ {a b}, R a b → R b a) :
+    ∀ {l : List α}, l.Pairwise R → ∀ {a}, a ∈ l → ∀ {b}, b ∈ l → a ≠ b → R a b
+  | [], _, _, ha, _, _, _ => absurd ha (List.not_mem_nil)
+  | x :: l, h, a, ha, b, hb, hne => by
+    rw [List.pairwise_cons] at h
+    rcases List.mem_cons.1 ha with rfl | ha' <;> rcases List.mem_cons.1 hb with rfl | hb'
+    · exact absurd rfl hne
+    · exact h.1 _ hb'
+    · exact hR (h.1 _ ha')
+    · exact drsPw_forall hR h.2 ha' hb' hne
 
 open FvModexp.Arm64.DivLarge (DrsPreW DrsPostW)
 
@@ -75,7 +87,7 @@ theorem raS (impl : List Segment) (hap : ImplApart Extracted.program impl) (ns :
   by_cases he : seg = Extracted.seg45
   · subst he; rw [hnm, hn] at hc; exact absurd hc (by decide)
   · have hpw := (List.pairwise_append.1 hap.1).1
-    have := FvModexp.Arm64.DivLarge.pw_forall (fun {a b} h => by unfold Segment.Apart at h ⊢; omega) hpw hm hmem he
+    have := drsPw_forall (fun {a b} h => by unfold Segment.Apart at h ⊢; omega) hpw hm hmem he
     unfold Segment.Apart at this; rw [hb, hl] at this; omega
 
 /-- the room condition of `divBasic`: the normalised `u` has at most `len v + len q` words and `U < V·B^(len q)` -/

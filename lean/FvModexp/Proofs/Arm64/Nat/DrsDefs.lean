@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Arm64.Nat.DivLargeDefs
+import FvModexp.Proofs.Arm64.Nat.DrsIface
 import FvModexp.Proofs.Arm64.Nat.SqrMulX
 import FvModexp.Proofs.Common.MulCost
 import FvModexp.Proofs.Common.DivRec
