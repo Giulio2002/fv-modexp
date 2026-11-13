@@ -86,6 +86,7 @@ theorem exCmp {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
       S'.regs 14 = BitVec.ofNat 64 g → S'.fsBase.toNat = fs → S'.xmm 15 = 0 → S'.df = false →
       S'.regs 7 = BitVec.ofNat 64 zzp → S'.regs 6 = BitVec.ofNat 64 n → S'.regs 8 = BitVec.ofNat 64 zzc →
       Mem R b L g sp M0 S'.mem zp zc zzp zzc → S'.mem.readLE zzp (8 * n) = S.mem.readLE zzp (8 * n) →
+      MemFrame S.mem S'.mem [(sp - 4296, sp + 0x60)] → S'.mem.regions = S.mem.regions →
       S.mem.readLE zzp (8 * n) < M0.readLE mp (8 * n) → ReachesRet (LibW.program.link impl) ret S' Q)
     (KGe : ∀ S' : State, S'.rip = BitVec.ofNat 64 subE → S'.regs 4 = BitVec.ofNat 64 (sp - 8) →
       S'.mem.readLE (sp - 8) 8 = fnE + 0x1130 → S'.regs 5 = r5 →
@@ -96,6 +97,7 @@ theorem exCmp {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
       Mem R b L g sp M0 S'.mem zp zc zzp zzc →
       S'.mem.readLE (sp + 0x188) 8 = zzp → S'.mem.readLE (sp + 0x98) 8 = n → S'.mem.readLE (sp + 0xa0) 8 = zzc →
       S'.mem.readLE zzp (8 * n) = S.mem.readLE zzp (8 * n) →
+      MemFrame S.mem S'.mem [(sp - 4296, sp + 0x60)] → S'.mem.regions = S.mem.regions →
       M0.readLE mp (8 * n) ≤ S.mem.readLE zzp (8 * n) → ReachesRet (LibW.program.link impl) ret S' Q) :
     ReachesRet (LibW.program.link impl) ret S Q := by
   have he := hst.1
@@ -130,6 +132,10 @@ theorem exCmp {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
     simp only [CmpSum.frame, tsp, List.mem_cons, List.not_mem_nil, or_false] at hr
     rcases hr with rfl | rfl | rfl <;> simp only <;> omega
   have hM' := Mem.frameW hM he hf hws hrg
+  have hfw : MemFrame S.mem S'.mem [(sp - 4296, sp + 0x60)] := by
+    refine hf.mono fun a k ho => ?_
+    simp only [CmpSum.frame, tsp, outside_cons, outside_nil, and_true] at ho ⊢
+    omega
   have hrd : ∀ a, sp + 0x60 ≤ a → a + 8 ≤ sp + 0x3c0 → S'.mem.readLE a 8 = S.mem.readLE a 8 := by
     intro a h1 h2
     refine hf.readLE _ _ ?_
@@ -159,7 +165,7 @@ theorem exCmp {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
     have hm1 : (18446744073709551615#64 : BitVec 64).msb = true := by decide
     clear hf eo hws hrd
     janus64_run [hm1, q188, q98, qa0, BitVec.msb_eq_decide] until [njoin]
-    refine KLt _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ hlt
+    refine KLt _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ hfw hrg hlt
     · rw [show njoin = 6210131 by simp only [njoin, fnE_eq]]
     · exact e4'
     · exact e5
@@ -175,7 +181,7 @@ theorem exCmp {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
   · have hge := cmp_ge (n := n) hlt
     clear hf eo hws hrd
     janus64_run [hge, q188, q98, qa0, q8, q0, qb] until [subE]
-    refine KGe _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ (by omega)
+    refine KGe _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ (by omega)
     · rfl
     · simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact bv_sub8 (by omega) (by omega)
     · rdw; rw [fnE_eq]
@@ -191,5 +197,7 @@ theorem exCmp {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
     · rdw; exact qa0
     · have := hzzI.2.2.2; unfold Apart at this
       simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint]; exact hzz'
+    · exact hfw.writeLE _ (List.mem_cons_self ..) (by dsimp only; omega) (by dsimp only; omega)
+    · simp only [Arm64.Memory.regions_writeLE]; exact hrg
 
 end FvModexp.Amd64.W4Loop
