@@ -24,7 +24,7 @@ abbrev dTest : Nat := 0x5ef910
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 8000000 in
 /-- `u.norm()`'s exit → `v.norm()`'s head: `DX = [SP + 0x190]`, `R11 = [SP + 0x198]`, everything else kept -/
-theorem pro1 (impl : List Amd64.Segment) (r : Nat) (P : State) (Q : State → Prop)
+theorem pro1 (impl : List Amd64.Segment) (r : W64) (P : State) (Q : State → Prop)
     (hpc : P.rip = BitVec.ofNat 64 nExit1) (hle : (P.regs 8).toNat ≤ (P.regs 9).toNat)
     (hacc : P.mem.accessible ((P.regs 4).toNat + 0x190) 16 false = true)
     (hsp : (P.regs 4).toNat + 0x1a0 ≤ 2 ^ 48)
@@ -43,7 +43,7 @@ theorem pro1 (impl : List Amd64.Segment) (r : Nat) (P : State) (Q : State → Pr
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 8000000 in
 /-- `v.norm()`'s exit → the dispatch: `R12 = [SP + 0x1a0]`, the bound check `R11 ≤ R12` passes -/
-theorem pro2 (impl : List Amd64.Segment) (r : Nat) (P : State) (Q : State → Prop)
+theorem pro2 (impl : List Amd64.Segment) (r : W64) (P : State) (Q : State → Prop)
     (hpc : P.rip = BitVec.ofNat 64 nExit2)
     (hle : (P.regs 11).toNat ≤ P.mem.readLE ((P.regs 4).toNat + 0x1a0) 8)
     (hacc : P.mem.accessible ((P.regs 4).toNat + 0x1a0) 8 false = true)
