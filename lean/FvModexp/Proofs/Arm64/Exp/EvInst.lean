@@ -1,5 +1,6 @@
 import FvModexp.Proofs.Arm64.Exp.EvSum
 import FvModexp.Proofs.Arm64.Exp.EvMulG
+import FvModexp.Proofs.Arm64.Exp.EvMulQ
 import FvModexp.Proofs.Arm64.Exp.EnsWiden
 import FvModexp.Proofs.Arm64.Exp.ModInv
 import FvModexp.Proofs.Arm64.Exp.SubMod2NGEns
@@ -131,7 +132,7 @@ theorem fullI {impl : List Segment} (hap : ImplApart Extracted.program impl) {R 
     (hNC : ∀ x y a a' l l' k k', a ≤ a' → l ≤ l' → k ≤ k' →
       ExpN.NCost costF costR costS costP x y a l k ≤ cU x y a' l' k')
     {stk : Nat} (hk1 : 71168 ≤ stk) (hk2 : stk ≤ 2 ^ 20 + 336) (hk3 : KN + 1648 ≤ stk) :
-    EvenSum impl R stk 112 (needE needR needS needP) (costE costF costR costS costP bU cU sqrCQ mulCQ mulC) := by
+    EvenSum impl R stk 112 (needE needR needS needP) (costE costF costR costS costP bU cU sqrCQ mulCQ (mulBrE mulCQ)) := by
   obtain ⟨e1, e2, e3, e4, e5⟩ := sub_e
   have hc : CodeIn (Extracted.program.ofImpl impl) (LibNE.program.link impl) := by
     rw [LibNE.eq_only]; exact codeIn_ofImpl_restrict_of_apart hap LibNE.names
@@ -150,8 +151,9 @@ theorem fullI {impl : List Segment} (hap : ImplApart Extracted.program impl) {R 
     ens_widen hap e2 (Lsh.ens impl hap R hmk hmv hmc b L z zl zc x xl xc sh)
   have hrh : Rsh.Hyp impl R nsE 4240 64 := fun b L z zl zc x xl xc sh =>
     ens_widen hap e3 (Rsh.ens impl hap R hmk hmv b L z zl zc x xl xc sh)
-  have hmu : MulHypG impl R nsE mulWX 88 mulC := fun b L z zl zc st x xl xc y yl yc =>
-    ens_widen hap e4 (NatMulG.hypG impl hap R hmk hgr hmc hmv hwb b L z zl zc st x xl xc y yl yc)
+  -- TIGHT COSTS (s46): the two products on divmc's Q-form `nat.mul`, bridged (`mulBrE mulCQ`)
+  have hmu : MulHypG impl R nsE mulWX 88 (mulBrE mulCQ) := mulG_of_Q fun H b L z zl zc st x xl xc y yl yc =>
+    ens_widen hap e4 (Q.ExpSlow.mulGQ impl hap R hmk hgr hmc hmv hwb H b L z zl zc st x xl xc y yl yc)
   have htr : TrHyp0 impl R nsE 4208 64 := fun b L z zl zc x xl xc n =>
     ens_widen hap e5 (Trunc.ens0 impl hap R hmk hmv b L z zl zc x xl xc n)
   have hadd : AddHypR0 impl R := fun b L zp zl zc xp xl xc yp yl yc =>
@@ -166,7 +168,7 @@ theorem fullI {impl : List Segment} (hap : ImplApart Extracted.program impl) {R 
   exact full hap nsE_sub nsE_fn hsn (by omega) hlh (by omega) hrh (by omega) hE hKN hKN2 hmvE hmzE hmkE hSE hMi
     (by omega) hmu (by omega) htr hadd hRm hSm hPm hNB hNC
     (fun a a' h => sqrCQ_mono h) (fun a a' c c' h1 h2 => mulCQ_mono h1 h2)
-    (fun ℓ ℓ' a a' c c' h1 h2 h3 => mulC_mono h1 h2 h3) (by omega) hk2
+    (fun ℓ ℓ' a a' c c' h1 h2 h3 => mulBrE_mono (fun a a' c c' h2 h3 => mulCQ_mono h2 h3) h1 h2 h3) (by omega) hk2
     ⟨by omega, by omega, by omega, by omega, by omega, by omega, by omega⟩
 
 end FvModexp.Arm64.ExpEven

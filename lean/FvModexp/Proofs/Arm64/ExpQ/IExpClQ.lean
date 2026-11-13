@@ -39,7 +39,7 @@ abbrev clBUQ : Nat → Nat → Nat → Nat → Nat → Nat := Exp.supU (ExpEven.
 /-- the dominating bound of `expNNEven`'s inner cost -/
 abbrev clCUQ : Nat → Nat → Nat → Nat → Nat → Nat := Exp.supU (ExpN.NCost clFQ clRQ clSQ clP)
 /-- `nat.expNNEven`'s cost -/
-abbrev clEQ : Nat → Nat → Nat → Nat → Nat := ExpEven.costE clFQ clRQ clSQ clP clBUQ clCUQ sqrCQ mulCQ mulC
+abbrev clEQ : Nat → Nat → Nat → Nat → Nat := ExpEven.costE clFQ clRQ clSQ clP clBUQ clCUQ sqrCQ mulCQ (ExpEven.mulBrE mulCQ)
 
 /-- the closed allocation-budget bound of `(*Int).exp` at the TIGHT-COSTS instances (the text of `BudCl`; PATH MAX) -/
 def BudClQ : Prop :=
