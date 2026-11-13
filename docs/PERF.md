@@ -1810,6 +1810,16 @@ amd64 karatsuba (dev, LEAN_NUM_THREADS=4, load ~50): KMulRel 15 s / 2.6 GB, KMul
 * Targeted verifies (top s44, snapT44 = agent/top b5fa5db8, gc'd rel43 cache, timeout raised to 3600 s: AUDIT checks, not release
   times): Top_RunSucc cold FAIL 3601 s (chain compile) then warm **PASS 86 s / 5.0 GB**; Int/ModRow PASS 760 s / 2.7 GB;
   RunOkRowC FAIL 2078 s (audit), RunOkRow FAIL 16 s (audit) — both retired.
+* **rel44 FINAL (top s45; arm64 release order, fresh cache-top/rel44, snapshot main aab0b76c, Janus v0.3.2, ROWS=2, MAX_LOAD=80,
+  load ~15-25; total wall 12192 s, 30 PASS / 9 FAIL).** FAIL: Nat/DivWRow cap 900 (silent compile; rel43 801), Exp/W2Row 758 + Exp/W4Row 571
+  (audit: witness lacks MemmoveZeroLive call site), Exp/P2W2Row cap 900, Exp/EvenRow cap 900 / 3.9 GB, Top/RunErr cap 900 / 1.3 GB (rel43 701;
+  snapshot predates 11738b8f), Top/RunOkRow 342 + RunOkRowC 544 (known audit; retired), Top/RunSucc 416 / 5.0 GB (audit: PoolPutLive call site —
+  old RunSucc; fix in rel45). PASS > 600 s: Exp/ModInvRow 802 / 2.5 GB, Exp/MontRow 633 / 3.0 GB. Others PASS 16–495 s (IntAS 396, BasicSqr 444,
+  DivBasic 374, Drs 422, Div 477, Rem 428, DivBasicQ 495, MulQ 392, SqrQ 400, ModRow 332, P2W4 255, P2D 346, RequiredGas 249).
+* RunErr dev profile (top s45, dev OUT against cache-asm WS, J=2, load ~20): own chain sum 823 s, critical path ~240 s (SetBytes 45 → RunLa 60 →
+  RunL 83); RunH3SB 67, RunH3SA 59, RunH2SA 53. ⇒ the 900 s row is NOT own-compile critical-path bound (replay / throughput). RunH3SA: janus_runs
+  10.5 + 18.8 s, refine_18 HdrDone.transport `janus_simp` goals ~13 s; `case rd` omega → omega_only: 59 → 56 s (not committed). RunL `lb` janus_run
+  39.5 s, of which 5 failing discharges ~10 s; boxing hga/hgr/hal or hcacc/hc48 BREAKS the run (needed by discharges).
 
 ## infra s50/s51 (2026-11-13) — arm64 release-order run `rel50` (Janus v0.3.2, fresh cache-infra/rel50, JANUS_REPLAY_THREADS=1, load ~45-70, infra dev builds running alongside)
 Warm-up then (wall s / peak MB): StackNat 229/2474, MulAddWW 278/948, BasicMul 227/3500, BasicSqr 679/3374 (divmc, old form),
