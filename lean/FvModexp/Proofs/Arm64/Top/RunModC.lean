@@ -12,7 +12,6 @@ set_option autoImplicit false
 
 
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts Janus.Contracts.Pool Janus.Contracts.EqHashModel
-open FvModexp.Spec EthLib.Execution.Evm.Precompiles.Modexp
 
 namespace FvModexp.Arm64.Run
 
