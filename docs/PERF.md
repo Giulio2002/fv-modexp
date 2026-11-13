@@ -1711,3 +1711,12 @@ rel42 (snapshot snap42 = 8923cef0, same store, the four rows alone, load 30-46):
   trim/profile); Top_RunErr PASS 493 s / 2.4 GB; Top_RunSucc FAIL 901 s / 1.6 GB = timeout: the row itself compiled ~370
   chain modules (Common, Lib, Arm64/Nat… up to Top/RunC2Lem2) because verify-all's arm64 list has no lower rows that pre-build
   them, so the 900 s cap measured the chain, not the row's own modules. Next: rerun Top_RunSucc on the now-warm cache.
+* RunSucc warm-cache ESTIMATE (arm64, top s43, snapshot of agent/top 2f72c8e6, warm cache-top/rs40, Janus v0.3.2,
+  MAX_LOAD=80, load 60-77): **FAIL 902 s / 1.9 GB = timeout again — no estimate obtained.** Janus stores a row's modules
+  only as they finish; this rerun added 109 chain oleans to the store, so the "warm" cache was still missing a large part
+  of the ~365-module chain. (s42's first rerun never started a row: verify-all's admit() waits for load < 40.)
+  In RELEASE ORDER (scripts/release-rows.txt) Top_RunSucc's OWN modules are only Top/RunSucc + Top/RunSuccW2 (dev 3 s +
+  3.5 s); the chain goes to the rows below it: Top/RunOkRowC owns 36 (ExpQ IExp/Slow/Bud chain, RunModC/I), Top/RunOkRow
+  owns 59 (Run C/D segments, IntBytes), Top/RunErr owns 36 (SetBytes*, Run H/L). The real numbers come from the
+  fresh-cache release-order run (cache-top/rel43, log cache-top/snap43/rel43.out).
+* Dev (amd64, top s43): NatQ/DivMFull (fullM + ensML) 4.4 s / 2.5 GB.
