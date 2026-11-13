@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.NatQ.DivBasicRec
 import FvModexp.Proofs.Arm64.NatQ.DivLargeQAm
 
 set_option autoImplicit false
@@ -10,7 +11,7 @@ from the allocation branch (`fn + 0x2fc`) to `joinQ`
 open Janus Janus.Arm64 Janus.GoABI Janus.GoABI0 Janus.Tactic Janus.Spec Janus.Contracts
 open Janus.Contracts.EqHashModel
 open FvModexp.Arm64.NatAdd (outside_of_inRanges)
-open FvModexp.Arm64.DivBasic (LiveFrame.trans')
+open FvModexp.Arm64.Q.DivBasic (LiveFrame.trans')
 
 set_option linter.janusRenameI false
 

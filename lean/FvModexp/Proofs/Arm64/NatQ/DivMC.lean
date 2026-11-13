@@ -6,7 +6,7 @@ set_option autoImplicit false
 /-! (Q-form copy of Arm64/Nat/DivMC.lean, TIGHT COSTS, asm s38)
 # `nil.div(nil, u, u, v)` (arm64, `stk == nil`, `z2 = u`) CLOSED: `IMod.DivHypM` with every callee discharged
 
-`ensMC` = `ensML` with the Q `DivLarge.ens` (`divRecursiveStep` = `Q.DivRec.hyp`, `nat.mul` = divmc's `Q.NatMul.hypQE`);
+`ensMC` = `ensML` with the Q `DivLarge.ens` (`divRecursiveStep` = `Q.DivRec.hyp`, `nat.mul` = `Q.DivRec.mulHyp`, divmc's `Q.NatMul.ens`);
 cost instance `Q.NatDiv.costMQ Q.drsCQ` (the plain form: the stack is owned, its reserve `stkRes (16·len u + 64)` paid once).
 Remaining hypotheses: only the live runtime contracts on `Extracted.program.ofImpl impl`. Also the program facts
 divmc's `IMod.ens` asks for (`hnsD`, `hnsQ`) for `nsD = LibDiv.names`.
@@ -34,7 +34,7 @@ theorem ensMC (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
   ensML impl hap R hmk0 hmv0 hmz0 hno0 hget0 hput0 drsCQ
     (DivLarge.ens impl hap R hgr hmc hwb hmk0 hmv0 drsCQ
       (Q.DivRec.hyp impl hap R NatMul.names mul_ns (mul_code impl hap)
-        (mulE (Q.NatMul.hypQE impl hap R hmk0 hgr hmc hmv0 hwb)) (Nat.le_refl _) (Nat.le_refl _) hgr hmc hwb hmv0))
+        (Q.DivRec.mulHyp impl hap R hmk0 hgr hmc hmv0 hwb) (Nat.le_refl _) (Nat.le_refl _) hgr hmc hwb hmv0))
 
 /-- divmc's `hnsD` for `nsD = LibDiv.names` -/
 theorem libDiv_sub_mod : ∀ x, LibDiv.names.contains x = true → LibMod.names.contains x = true := by

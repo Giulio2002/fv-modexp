@@ -1,6 +1,6 @@
 import FvModexp.Proofs.Arm64.NatQ.DrsStep
 import FvModexp.Proofs.Arm64.NatQ.DrsRowWQ
-import FvModexp.Proofs.Arm64.NatQ.MulE
+import FvModexp.Proofs.Arm64.NatQ.MulHypD
 import FvModexp.Proofs.Arm64.Nat.RowLink
 
 set_option autoImplicit false
@@ -8,7 +8,7 @@ set_option autoImplicit false
 /-!
 # Row: `nat.divRecursiveStep` (arm64) on the Run extraction, Q-form (TIGHT COSTS) — `Q.DivLarge.DrsHypQ` at `Q.drsCQ`
 
-`correctness` = `DivRec.hyp` with divmc's `NatMul.hypXE` for its `nat.mul` calls (the recursion, `stk.nat`,
+`correctness` = `DivRec.hyp` with `Q.DivRec.mulHyp` (divmc's Q `nat.mul`) for its `nat.mul` calls (the recursion, `stk.nat`,
 `addVV`/`subVW`/`cmp`/`divBasic` all proved) moved to `Extracted.program.link impl` (`Ensures.full`); window `40960`
 below / `96` above `SP`. Statement: `DivLarge.DrsPre` → `DivLarge.DrsPost` (`q[0 : len q] = U / V` with `len q` words,
 `u = U mod V`, the stack restored, `StackBackL`). Split out of the `nat.div` row so that each row's own modules fit
@@ -23,7 +23,6 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvMod
 open FvModexp.Arm64.RunIface
 
 namespace FvModexp.Arm64.DrsRowQ
-open FvModexp.Arm64.DrsRow
 
 open FvModexp.Arm64.Callees Janus.Contracts.EqHashModel
 
@@ -44,14 +43,13 @@ theorem correctness (impl : List Segment) (hap : ImplApart Extracted.program imp
         st.toNat up.toNat ul.toNat uc.toNat vp.toNat vl.toNat vc.toNat s)
       (fun s s' => Q.DivLarge.DrsPost R b L H (Q.drsCQ ul.toNat vl.toNat) qp.toNat ql.toNat
         st.toNat up.toNat ul.toNat vp.toNat vl.toNat s s') :=
-  Ensures.full hap (Q.DivRec.hyp impl hap R NatMul.names mul_ns (mul_code impl hap)
-    (Q.NatDiv.mulE (Q.NatMul.hypQE impl hap R hmk hgr hmc hmv hwb)) (Nat.le_refl _) (Nat.le_refl _) hgr hmc hwb hmv
+  Ensures.full hap (Q.DivRec.hyp impl hap R Q.NatMul.names mul_ns (mul_code impl hap)
+    (Q.DivRec.mulHyp impl hap R hmk hgr hmc hmv hwb) (Nat.le_refl _) (Nat.le_refl _) hgr hmc hwb hmv
     H b L qp ql qc st up ul uc vp vl vc d)
 
 end FvModexp.Arm64.DrsRowQ
 
 namespace FvModexp.Arm64.DrsRowQ.Witness
-open FvModexp.Arm64.DrsRow.Witness
 
 open FvModexp.Arm64.AsmWit Janus.Contracts.Toy
 
