@@ -19,7 +19,7 @@ Stack: the callee `RSP` of every montgomery call is `sp - 8`; its stack argument
 `k0` at `sp + 0xd8`; the power table headers at `sp + 0x1a8 + 24 d`.
 -/
 
-open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Contracts FvModexp
+open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Contracts FvModexp
 
 namespace FvModexp.Amd64.W4Loop
 
@@ -66,6 +66,7 @@ abbrev whi (sp : Nat) : Nat := sp + 96
   Apart (fs - 8) 8 (sp - 4296) (4296 + 0x3c0) ∧ Outside (fs - 8) 8 R.rt ∧
   M0.accessible MontHyp.hasADX 1 false = true
 
+set_option maxRecDepth 20000 in
 theorem mcall_of {R : RtInv} {L : List (Nat × Nat)} {g fs sp n mp mc rp rc xp yp : Nat} {M0 : Memory}
     (he : Env R L g fs sp M0) (hn : 0 < n) (hmc : n ≤ mc) (hmc' : mc < 2 ^ 40) (hr : Buf R L g fs sp n M0 rp rc)
     (hx : Inp R L sp n M0 xp) (hy : Inp R L sp n M0 yp) (hm : Inp R L sp n M0 mp)
@@ -119,7 +120,7 @@ theorem Bufs.swap {R : RtInv} {L : List (Nat × Nat)} {g fs sp n mp yp ylen : Na
 
 /-- the frame ranges the loop writes (callee window + spills), without the two buffers -/
 @[reducible] def fw (sp : Nat) : List (Nat × Nat) :=
-  [(sp - 4296, sp + 0x30), (sp + 0x98, sp + 0xb8), (sp + 0xe0, sp + 0xf0), (sp + 0x110, sp + 0x118),
+  [(sp - 4296, sp + 0x60), (sp + 0x98, sp + 0xb8), (sp + 0xe0, sp + 0xf0), (sp + 0x110, sp + 0x118),
     (sp + 0x138, sp + 0x148), (sp + 0x188, sp + 0x190), (sp + 0x358, sp + 0x360), (sp + 0x370, sp + 0x378)]
 
 /-- everything the loop may change since the anchor `M0` -/
@@ -175,16 +176,6 @@ theorem FL.read {R : RtInv} {L : List (Nat × Nat)} {sp zp zc zzp zzc : Nat} {M0
   unfold Apart at h1 h2 h3
   exact FvModexp.Expmc.held_readLE hh h.1 h.2 (by simp only [fw, outside_cons, outside_nil, and_true]; omega)
     (by simp only [outside_cons, outside_nil, and_true]; omega)
-
-/-- a frame slot the loop never writes reads as at the anchor -/
-theorem FL.slot {R : RtInv} {L : List (Nat × Nat)} {sp zp zc zzp zzc : Nat} {M0 M : Memory} {a : Nat}
-    (h : FL R L sp zp zc zzp zzc M0 M) (hrt : Outside (sp - 4296) (4296 + 0x3c0) R.rt)
-    (hz : Apart zp (8 * zc) (sp - 4296) (4296 + 0x3c0)) (hzz : Apart zzp (8 * zzc) (sp - 4296) (4296 + 0x3c0))
-    (h1 : sp + 0x30 ≤ a) (h2 : a + 8 ≤ sp + 0x3c0) (hw : Outside a 8 (fw sp)) : M.readLE a 8 = M0.readLE a 8 := by
-  refine h.1.readLE a 8 ?_
-  unfold Apart at hz hzz
-  simp only [lw, outside_append, outside_cons, outside_nil, and_true]
-  exact ⟨hrt.of_sub (by omega) (by omega), hw, by omega, by omega⟩
 
 theorem outer_succ (st : Nat → Nat → Nat) (Y i yi c z : Nat) :
     Exp.outerLoop 4 st Y 16 i yi (c + 1) z =

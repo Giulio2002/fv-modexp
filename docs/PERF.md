@@ -1556,3 +1556,10 @@ KSqrAdd1 50 vs 46, KSqrPC 40 vs 42, SqrBM 38 vs 44, BasicSqrSmall 36 vs 39 — t
 LESSON: t1c first took > 10 min (killed): Outside/omega facts proved AFTER a `calls`-run (context holds the big
 write-chain post terms) or `∀`-facts placed in context BEFORE the run. Fix: a standalone pure lemma (`t1_outs`) taking
 only the numeric hypotheses, instantiated after the run; the post-return run in its own lemma (`t1r`) → 76 s.
+
+### expmc s42 (TIGHT COSTS, dev builds on v0.3.1, host load ~25)
+| module | before | after |
+|---|---|---|
+| Arm64/Exp/IExpCl (ensCl, cost facts proved) | 1.4 s / 4.1 GB | 1.4 s / 4.0 GB |
+| Arm64/Exp/W4Wit `bud` (path-MAX budget) | omega on unfolded nested max: >200k heartbeats (timeout) | structural `bud_c` split: < 15 s |
+| Amd64/Exp/W4Defs, W4MC (new) | — | 1.7 s, 3.1 s / 2.3 GB |

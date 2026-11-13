@@ -27,7 +27,7 @@ set_option autoImplicit false
   `DHyps` at `KN` (`ExpNNHypNE.toNE1`).
 NO open callee premise. Remaining premises: the Janus runtime contracts (on `Extracted.program.ofImpl impl`), the window
 depths and the closed budget bound `BudCl` (s42: the monotonicity and stack-need facts are proved here; `BudCl` is
-discharged for `RunIface.ExpBudget` in `IExpClB`).
+owned by divmc (`Run.Closed.BudOK`); the slack-budget discharge is drafted in scripts/gen/IExpClB.lean.draft, waiting for divmc's ExpBud* modules to compile).
 -/
 
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Spec.Pool Janus.Contracts Janus.Contracts.Pool FvModexp
@@ -156,9 +156,7 @@ theorem rem_mono : ∀ x a a', a ≤ a' → NatRem.need x a ≤ NatRem.need x a'
 
 theorem slow_mono : ∀ x y a a', a ≤ a' → ExpSlow.need x y a ≤ ExpSlow.need x y a' := fun x _ a a' h => by
   simp only [ExpSlow.need]
-  by_cases h1 : x ≤ 128 ∧ a' ≤ 128
-  · rw [if_pos h1, if_pos ⟨h1.1, by omega⟩]
-  · rw [if_neg h1]; split <;> omega
+  split <;> split <;> omega
 
 theorem p2_mono : ∀ x y a a', a ≤ a' → P2D.needP x y a ≤ P2D.needP x y a' := fun _ _ _ _ _ => Nat.le_refl _
 

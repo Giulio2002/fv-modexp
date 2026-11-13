@@ -43,11 +43,11 @@ include hS hM
 theorem p2pre_le {ℓ pl lm : Nat} (hl : ℓ ≤ 8192) (hpl : pl ≤ 16) (hlm : lm ≤ 8192) :
     P2Pre.cost sqC mlC ℓ pl lm ≤ 32 * ℓ + 72016 + 7 * (S + M + 4400) := by
   have hW : P2Pre.W lm ≤ 128 := by unfold P2Pre.W; omega
-  have hl1 : P2Pre.ℓ1 ℓ pl lm ≤ 16384 := by
-    unfold P2Pre.ℓ1 P2Pre.NB; simp only [StackNat.rnd]
+  have hl1 : P2Pre.lvl1 ℓ pl lm ≤ 16384 := by
+    unfold P2Pre.lvl1 P2Pre.NB; simp only [StackNat.rnd]
     have := Nat.mul_le_mul (show pl + 1 ≤ 17 by omega) hW; omega
-  have h1 := hS (P2Pre.ℓ1 ℓ pl lm) (P2Pre.W lm) hl1 (by omega)
-  have h2 := hM (P2Pre.ℓ1 ℓ pl lm) (P2Pre.W lm) (P2Pre.W lm) hl1 (by omega) (by omega)
+  have h1 := hS (P2Pre.lvl1 ℓ pl lm) (P2Pre.W lm) hl1 (by omega)
+  have h2 := hM (P2Pre.lvl1 ℓ pl lm) (P2Pre.W lm) (P2Pre.W lm) hl1 (by omega) (by omega)
   have ht := tC_le hlm
   have hrc : P2Pre.rc sqC mlC ℓ pl lm ≤ S + M + 4400 := by unfold P2Pre.rc; omega
   have hQ := Nat.mul_le_mul (show pl / 2 - 1 ≤ 7 by omega) hrc
