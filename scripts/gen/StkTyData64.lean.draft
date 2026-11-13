@@ -1,0 +1,28 @@
+import Extracted
+
+set_option autoImplicit false
+
+/-!
+# The `big.stack` type descriptor (amd64): readable, size word `24`, pointer-data word `8` (top s40)
+
+The facts the `getStack()` `newobject(type:big.stack)` call site of `nat.div`'s `stk == nil` path needs (`stkTy` =
+`type:big.stack` at `0x7043a0`), proved once (as WordTData.lean: `janus64_data` is costly per use).
+-/
+
+open Janus Janus.Amd64 Janus.Amd64.Tactic
+
+namespace FvModexp.Amd64
+
+/-- `type:big.stack` -/
+abbrev stkTy : Nat := Extracted.dataAddr.«type:big.stack#c761f19c»
+
+theorem stkTy_v : stkTy = 7357344 := rfl
+
+set_option maxRecDepth 20000 in
+theorem stkTy_data {m : Janus.Arm64.Memory} (hd : Extracted.program.DataLoaded m) :
+    m.accessible 7357344 16 false = true ∧ m.readLE 7357344 8 = 24 ∧ m.readLE 7357352 8 = 8 := by
+  janus64_data hd
+  exact ⟨Janus.Arm64.Memory.accessible_mono _ h_data1 (by omega) (by omega), by rw [h_rodata _ _ (by decide)]; decide,
+    by rw [h_rodata _ _ (by decide)]; decide⟩
+
+end FvModexp.Amd64
