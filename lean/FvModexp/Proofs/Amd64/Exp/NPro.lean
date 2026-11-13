@@ -1,0 +1,169 @@
+import FvModexp.Proofs.Amd64.Exp.LibN
+import FvModexp.Proofs.Common.BitLemmas
+
+set_option autoImplicit false
+
+/-!
+# `nat.expNN` (amd64): prologue and alias test (fn+0x0 .. `J1` = fn+0xd8) (agent expmc s66; twin of `Arm64.ExpN.pro`)
+
+Entry `RSP = t`. Stack check (`LEAQ -0x88(SP), R12; CMPQ R12, 0x10(R14); JBE` falls through), `PUSHQ BP` (`[t - 8]`),
+`MOVQ SP, BP`, `SUBQ $0x100, SP` (`RSP = t - 0x108`), spills `AX → t + 0x38`, `SI → t + 0x58`, `X15 → t - 0x10` (the
+defer-closure slot), byte `0 → t - 0x99` (open-coded defer bits), result slots `t - 0x58 .. t - 0x40` zeroed; then
+`alias(z, x) || alias(z, y)` (nat.go:228: `cap > 0` on both and the same last-element address `p + 8 cap - 8`, mod
+`2^64`) → `z = nil` (`XORL CX, AX, BX`). At `J1` (fn+0xd8 = 0x5e7078): `DX = cap y`, `R12 = y` (read from
+`t + 0x18`, `t + 8`). Continuation form, one continuation per outcome.
+-/
+
+open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Contracts FvModexp
+
+namespace FvModexp.Amd64.ExpN
+
+/-- the last-element address `p + 8 c - 8` (mod `2^64`) of a nat of capacity `c ≠ 0`, as the code computes it -/
+@[reducible] def lastA (p c : Nat) : Nat := (p + 8 * (c - 1)) % 2 ^ 64
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 64000000 in
+theorem pro (impl : List Amd64.Segment) (ret0 : Nat) (hret : RetAddr (LibN.program.link impl) ret0)
+    (Q : Amd64.Outcome → Prop) (t g zp zc xp xc yp yc : Nat) (M : Janus.Arm64.Memory)
+    (ht1 : 0x110 ≤ t) (ht2 : t + 0x78 ≤ 2 ^ 48) (hacc : M.accessible (t - 0x108) 0x180 true = true)
+    (hg1 : g + 24 ≤ 2 ^ 48) (hg2 : M.accessible (g + 16) 8 false = true) (hg3 : M.readLE (g + 16) 8 + 0x88 < t)
+    (hzp : zp < 2 ^ 64) (hzc : zc < 2 ^ 64) (hxp : xp < 2 ^ 64) (hxc : xc < 2 ^ 64)
+    (r08 : M.readLE (t + 8) 8 = yp) (r18 : M.readLE (t + 0x18) 8 = yc)
+    (S : State) (hpc : S.rip = BitVec.ofNat 64 6188960) (hsp : S.regs 4 = BitVec.ofNat 64 t)
+    (h0 : S.regs 0 = BitVec.ofNat 64 zp) (h1 : S.regs 1 = BitVec.ofNat 64 zc)
+    (h6 : S.regs 6 = BitVec.ofNat 64 xp) (h9 : S.regs 9 = BitVec.ofNat 64 xc)
+    (h14 : S.regs 14 = BitVec.ofNat 64 g) (hx15 : S.xmm 15 = 0) (hmem : S.mem = M)
+    (Kk : (zc = 0 ∨ ((xc = 0 ∨ lastA xp xc ≠ lastA zp zc) ∧ (yc = 0 ∨ lastA yp yc ≠ lastA zp zc))) →
+      ∀ (S' : State) (M' : Janus.Arm64.Memory),
+      S'.rip = BitVec.ofNat 64 6189176 → S'.regs 4 = BitVec.ofNat 64 (t - 0x108) →
+      S'.regs 0 = S.regs 0 → S'.regs 3 = S.regs 3 → S'.regs 1 = S.regs 1 → S'.regs 7 = S.regs 7 →
+      S'.regs 6 = S.regs 6 → S'.regs 8 = S.regs 8 → S'.regs 9 = S.regs 9 → S'.regs 10 = S.regs 10 →
+      S'.regs 2 = BitVec.ofNat 64 yc → S'.regs 12 = BitVec.ofNat 64 yp → S'.regs 5 = BitVec.ofNat 64 (t - 8) →
+      S'.regs 14 = S.regs 14 → S'.fsBase = S.fsBase → S'.df = S.df → S'.xmm 15 = S.xmm 15 → S'.mem = M' →
+      MemFrame M M' [(t - 0x108, t), (t + 0x38, t + 0x60)] → M'.regions = M.regions →
+      M'.readLE (t - 8) 8 = (S.regs 5).toNat → M'.readLE (t + 0x38) 8 = zp → M'.readLE (t + 0x58) 8 = xp →
+      M'.readLE (t - 0x10) 8 = 0 → M'.readLE (t - 0x99) 1 = 0 →
+      Reaches ((LibN.program.link impl).withExit ret0) S' Q)
+    (K0 : zc ≠ 0 → ((xc ≠ 0 ∧ lastA xp xc = lastA zp zc) ∨ (yc ≠ 0 ∧ lastA yp yc = lastA zp zc)) →
+      ∀ (S' : State) (M' : Janus.Arm64.Memory),
+      S'.rip = BitVec.ofNat 64 6189176 → S'.regs 4 = BitVec.ofNat 64 (t - 0x108) →
+      S'.regs 0 = 0#64 → S'.regs 3 = 0#64 → S'.regs 1 = 0#64 → S'.regs 7 = S.regs 7 →
+      S'.regs 6 = S.regs 6 → S'.regs 8 = S.regs 8 → S'.regs 9 = S.regs 9 → S'.regs 10 = S.regs 10 →
+      S'.regs 2 = BitVec.ofNat 64 yc → S'.regs 12 = BitVec.ofNat 64 yp → S'.regs 5 = BitVec.ofNat 64 (t - 8) →
+      S'.regs 14 = S.regs 14 → S'.fsBase = S.fsBase → S'.df = S.df → S'.xmm 15 = S.xmm 15 → S'.mem = M' →
+      MemFrame M M' [(t - 0x108, t), (t + 0x38, t + 0x60)] → M'.regions = M.regions →
+      M'.readLE (t - 8) 8 = (S.regs 5).toNat → M'.readLE (t + 0x38) 8 = zp → M'.readLE (t + 0x58) 8 = xp →
+      M'.readLE (t - 0x10) 8 = 0 → M'.readLE (t - 0x99) 1 = 0 →
+      Reaches ((LibN.program.link impl).withExit ret0) S' Q) :
+    Reaches ((LibN.program.link impl).withExit ret0) S Q := by
+  have hgs : M.readLE (g + 16) 8 < 2 ^ 64 := Janus.Arm64.Memory.readLE_lt _ _ _
+  have hyp : yp < 2 ^ 64 := r08 ▸ Janus.Arm64.Memory.readLE_lt _ _ _
+  have hyc : yc < 2 ^ 64 := r18 ▸ Janus.Arm64.Memory.readLE_lt _ _ _
+  have h5 : (S.regs 5).toNat < 2 ^ 64 := (S.regs 5).isLt
+  have es1 : BitVec.ofNat 64 t - 8#64 = BitVec.ofNat 64 (t - 8) := by
+    apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
+  have es2 : BitVec.ofNat 64 (t - 8) - 256#64 = BitVec.ofNat 64 (t - 0x108) := by
+    apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
+  have a08 : t - 0x108 + 0x110 = t + 8 := by omega
+  have a18 : t - 0x108 + 0x120 = t + 0x18 := by omega
+  have bz : ∀ v : Nat, v < 2 ^ 64 → ((BitVec.ofNat 64 v = 0#64) = (v = 0)) := by
+    intro v hv; apply propext; constructor
+    · intro h; have := congrArg BitVec.toNat h; simp only [BitVec.toNat_ofNat] at this; omega
+    · intro h; subst h; rfl
+  have bl : ∀ a c a' c' : Nat, 0 < c → 0 < c' → ((BitVec.ofNat 64 a + BitVec.ofNat 64 c <<< 3 - 8#64 -
+      (BitVec.ofNat 64 a' + BitVec.ofNat 64 c' <<< 3 - 8#64) = 0#64) = (lastA a c = lastA a' c')) := by
+    intro a c a' c' hc hc'; apply propext
+    simp only [lastA, ← BitVec.toNat_inj, BitVec.toNat_sub, BitVec.toNat_add, BitVec.toNat_shiftLeft,
+      BitVec.toNat_ofNat, Nat.shiftLeft_eq]
+    omega
+  have bzc := bz zc hzc; have bxc := bz xc hxc; have byc := bz yc hyc
+  subst r08 r18 hmem
+  by_cases hz0 : zc = 0
+  · janus64_run [es1, es2, a08, a18, bzc, hz0] until [6189176]
+    all_goals first
+        | (refine Kk (by (try simp only [lastA] at *); omega) _ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?mf ?rg
+            ?r1 ?r2 ?r3 ?r4 ?r5
+           case mf => janus_frame
+           all_goals first | (janus64_simp; done) | skip
+           all_goals first | (simp (disch := omega) only [Janus.Arm64.Memory.readLE_writeLE_of_disjoint,
+             Janus.Arm64.Memory.readLE_writeLE_self, BitVec.toNat_ofNat, Nat.reducePow, Nat.reduceMod]; done) | skip
+           all_goals omega)
+        | (refine K0 (by (try simp only [lastA] at *); omega) (by (try simp only [lastA] at *); omega) _ _ ?_ ?_ ?_ ?_ ?_ ?_
+            ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?mf ?rg ?r1 ?r2 ?r3 ?r4 ?r5
+           case mf => janus_frame
+           all_goals first | (janus64_simp; done) | skip
+           all_goals first | (simp (disch := omega) only [Janus.Arm64.Memory.readLE_writeLE_of_disjoint,
+             Janus.Arm64.Memory.readLE_writeLE_self, BitVec.toNat_ofNat, Nat.reducePow, Nat.reduceMod]; done) | skip
+           all_goals omega)
+  have hzc0 : 0 < zc := Nat.pos_of_ne_zero hz0
+  by_cases hx0 : xc = 0
+  · janus64_run [es1, es2, a08, a18, bzc, hz0, bxc, hx0, byc] until [6189176]
+    all_goals first
+        | (refine Kk (by (try simp only [lastA] at *); omega) _ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?mf ?rg
+            ?r1 ?r2 ?r3 ?r4 ?r5
+           case mf => janus_frame
+           all_goals first | (janus64_simp; done) | skip
+           all_goals first | (simp (disch := omega) only [Janus.Arm64.Memory.readLE_writeLE_of_disjoint,
+             Janus.Arm64.Memory.readLE_writeLE_self, BitVec.toNat_ofNat, Nat.reducePow, Nat.reduceMod]; done) | skip
+           all_goals omega)
+        | (refine K0 (by (try simp only [lastA] at *); omega) (by (try simp only [lastA] at *); omega) _ _ ?_ ?_ ?_ ?_ ?_ ?_
+            ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?mf ?rg ?r1 ?r2 ?r3 ?r4 ?r5
+           case mf => janus_frame
+           all_goals first | (janus64_simp; done) | skip
+           all_goals first | (simp (disch := omega) only [Janus.Arm64.Memory.readLE_writeLE_of_disjoint,
+             Janus.Arm64.Memory.readLE_writeLE_self, BitVec.toNat_ofNat, Nat.reducePow, Nat.reduceMod]; done) | skip
+           all_goals omega)
+  have bx := bl xp xc zp zc (Nat.pos_of_ne_zero hx0) hzc0
+  by_cases hxa : lastA xp xc = lastA zp zc
+  · janus64_run [es1, es2, a08, a18, bzc, hz0, bxc, hx0, bx, hxa] until [6189176]
+    all_goals first
+        | (refine Kk (by (try simp only [lastA] at *); omega) _ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?mf ?rg
+            ?r1 ?r2 ?r3 ?r4 ?r5
+           case mf => janus_frame
+           all_goals first | (janus64_simp; done) | skip
+           all_goals first | (simp (disch := omega) only [Janus.Arm64.Memory.readLE_writeLE_of_disjoint,
+             Janus.Arm64.Memory.readLE_writeLE_self, BitVec.toNat_ofNat, Nat.reducePow, Nat.reduceMod]; done) | skip
+           all_goals omega)
+        | (refine K0 (by (try simp only [lastA] at *); omega) (by (try simp only [lastA] at *); omega) _ _ ?_ ?_ ?_ ?_ ?_ ?_
+            ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?mf ?rg ?r1 ?r2 ?r3 ?r4 ?r5
+           case mf => janus_frame
+           all_goals first | (janus64_simp; done) | skip
+           all_goals first | (simp (disch := omega) only [Janus.Arm64.Memory.readLE_writeLE_of_disjoint,
+             Janus.Arm64.Memory.readLE_writeLE_self, BitVec.toNat_ofNat, Nat.reducePow, Nat.reduceMod]; done) | skip
+           all_goals omega)
+  by_cases hy0 : S.mem.readLE (t + 0x18) 8 = 0
+  · janus64_run [es1, es2, a08, a18, bzc, hz0, bxc, hx0, bx, hxa, byc, hy0] until [6189176]
+    all_goals first
+        | (refine Kk (by (try simp only [lastA] at *); omega) _ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?mf ?rg
+            ?r1 ?r2 ?r3 ?r4 ?r5
+           case mf => janus_frame
+           all_goals first | (janus64_simp; done) | skip
+           all_goals first | (simp (disch := omega) only [Janus.Arm64.Memory.readLE_writeLE_of_disjoint,
+             Janus.Arm64.Memory.readLE_writeLE_self, BitVec.toNat_ofNat, Nat.reducePow, Nat.reduceMod]; done) | skip
+           all_goals omega)
+        | (refine K0 (by (try simp only [lastA] at *); omega) (by (try simp only [lastA] at *); omega) _ _ ?_ ?_ ?_ ?_ ?_ ?_
+            ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?mf ?rg ?r1 ?r2 ?r3 ?r4 ?r5
+           case mf => janus_frame
+           all_goals first | (janus64_simp; done) | skip
+           all_goals first | (simp (disch := omega) only [Janus.Arm64.Memory.readLE_writeLE_of_disjoint,
+             Janus.Arm64.Memory.readLE_writeLE_self, BitVec.toNat_ofNat, Nat.reducePow, Nat.reduceMod]; done) | skip
+           all_goals omega)
+  have by' := bl (S.mem.readLE (t + 8) 8) (S.mem.readLE (t + 0x18) 8) zp zc (Nat.pos_of_ne_zero hy0) hzc0
+  janus64_run [es1, es2, a08, a18, bzc, hz0, bxc, hx0, bx, hxa, byc, hy0, by'] until [6189176]
+  all_goals first
+      | (refine Kk (by (try simp only [lastA] at *); omega) _ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?mf ?rg
+          ?r1 ?r2 ?r3 ?r4 ?r5
+         case mf => janus_frame
+         all_goals first | (janus64_simp; done) | skip
+         all_goals first | (simp (disch := omega) only [Janus.Arm64.Memory.readLE_writeLE_of_disjoint,
+           Janus.Arm64.Memory.readLE_writeLE_self, BitVec.toNat_ofNat, Nat.reducePow, Nat.reduceMod]; done) | skip
+         all_goals omega)
+      | (refine K0 (by (try simp only [lastA] at *); omega) (by (try simp only [lastA] at *); omega) _ _ ?_ ?_ ?_ ?_ ?_ ?_
+          ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?mf ?rg ?r1 ?r2 ?r3 ?r4 ?r5
+         case mf => janus_frame
+         all_goals first | (janus64_simp; done) | skip
+         all_goals first | (simp (disch := omega) only [Janus.Arm64.Memory.readLE_writeLE_of_disjoint,
+           Janus.Arm64.Memory.readLE_writeLE_self, BitVec.toNat_ofNat, Nat.reducePow, Nat.reduceMod]; done) | skip
+         all_goals omega)
+
+end FvModexp.Amd64.ExpN
