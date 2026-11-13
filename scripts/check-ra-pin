@@ -1,0 +1,153 @@
+#!/usr/bin/env python3
+"""check-ra-pin: RA-pin self-audit prep (BRIEF "RETURN-ADDRESS PIN GAP"; top s37).
+
+For every row module (lean/FvModexp/Proofs/**.lean with `theorem correctness`) elaborate scripts/RaPin.lean's
+`#ra_pin_audit` on the row's `correctness`: the precondition of every Janus main-theorem form, with every fv-modexp
+definition/structure unfolded, split into conjuncts and classified against the probe forms of
+/srv/janus-ops/v033/probe/{RspBypass64,LrPin}.lean (FLAG = the manual audit must read it; INFO = listed only).
+This is a CHECKLIST GENERATOR for the final gate's manual audit, not a verdict: the auditor still reads every FLAG line and
+the RSP-REL / STACK-ARG / FRAMEWORK lines of each row.
+
+Usage (from anywhere):  scripts/check-ra-pin [--selftest] [--isa arm64|amd64] [-j N] [ROW_SUBSTRING ...]
+  Imports the dev oleans (lean/.lake/build + build/dev/<isa>/Extracted.olean, RequiredGas: build/dev-<isa>-RequiredGas):
+  run a dev sweep (or `janus verify`) first so they are current. Each row: one `lean` process under memcap 8G.
+  --selftest: run the probe forms (scripts/lint-tests/rapin/Probes{64,Arm}.lean) and check every `-- expect:` verdict.
+Output: build/rapin/report.txt (all rows) + per-row build/rapin/<isa>-<row>.out; exit 1 if any row has a FLAG or fails.
+"""
+import os, re, subprocess, sys, concurrent.futures as cf
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+LEAN = os.path.join(ROOT, 'lean')
+OUT = os.path.join(ROOT, 'build', 'rapin')
+TOOL = open(os.path.join(ROOT, 'scripts', 'RaPin.lean')).read()
+
+
+def rows():
+    res = []
+    base = os.path.join(LEAN, 'FvModexp', 'Proofs')
+    for d, _, fs in os.walk(base):
+        for f in sorted(fs):
+            if not f.endswith('.lean'):
+                continue
+            p = os.path.join(d, f)
+            rel = os.path.relpath(p, LEAN)
+            isa = 'arm64' if '/Arm64/' in rel else 'amd64' if '/Amd64/' in rel else None
+            if isa is None:
+                continue   # Warmup / Common: no row
+            stack, thm = [], None
+            for line in open(p):
+                m = re.match(r'namespace\s+(\S+)', line)
+                if m:
+                    stack.append(m.group(1)); continue
+                m = re.match(r'end\s+(\S+)\s*$', line)
+                if m and stack and stack[-1] == m.group(1):
+                    stack.pop(); continue
+                if re.match(r'theorem\s+correctness(\s|$)', line):
+                    thm = '.'.join(stack + ['correctness'])
+                    break
+            if thm:
+                mod = rel[:-5].replace('/', '.')
+                res.append((isa, mod, thm, rel))
+    return sorted(res)
+
+
+def dev_path(isa, rel):
+    if '/RequiredGas' in rel:
+        return os.path.join(ROOT, 'build', f'dev-{isa}-RequiredGas')
+    return os.path.join(ROOT, 'build', 'dev', isa)
+
+
+def run_one(isa, mod, body, cmds, tag, rel):
+    os.makedirs(OUT, exist_ok=True)
+    src = os.path.join(OUT, f'{tag}.lean')
+    with open(src, 'w') as fh:
+        fh.write('import Lean\nimport ' + mod + '\n' + TOOL + '\n' + body + '\n' + cmds + '\n')
+    dev = dev_path(isa, rel)
+    cmd = ['memcap', '-m', '8G', 'lake', 'env', 'bash', '-c',
+           f'LEAN_PATH=$LEAN_PATH:{dev} exec lean {src}']
+    r = subprocess.run(cmd, cwd=LEAN, capture_output=True, text=True, timeout=900)
+    out = r.stdout + r.stderr
+    with open(os.path.join(OUT, f'{tag}.out'), 'w') as fh:
+        fh.write(out)
+    return r.returncode, out
+
+
+def parse(out):
+    """{theorem: verdict} from RAPIN lines; errors (other than sorry warnings) make the row fail."""
+    v = {}
+    for line in out.splitlines():
+        m = re.match(r'RAPIN \S+ (\S+): (.*)$', line)
+        if m:
+            v[m.group(1)] = m.group(2)
+    errs = [l for l in out.splitlines() if ': error' in l]
+    return v, errs
+
+
+def selftest():
+    ok = True
+    for isa, f, imp in (('amd64', 'Probes64.lean', 'Extracted'), ('arm64', 'ProbesArm.lean', 'Extracted')):
+        p = os.path.join(ROOT, 'scripts', 'lint-tests', 'rapin', f)
+        text = open(p).read()
+        ns = re.search(r'namespace\s+(\S+)', text).group(1)
+        exp = re.findall(r'-- expect: (FLAG|CLEAN)[^\n]*\ntheorem\s+(\S+)', text)
+        cmds = '\n'.join(f'#ra_pin_audit {ns}.{t} "{isa}"' for _, t in exp)
+        rc, out = run_one(isa, imp, text, cmds, f'selftest-{isa}', '')
+        v, errs = parse(out)
+        for e, t in exp:
+            got = v.get(f'{ns}.{t}', 'MISSING')
+            good = (got == 'CLEAN') if e == 'CLEAN' else ('FLAG' in got)
+            ok &= good
+            print(f'selftest {isa} {t}: expect {e}, got {got} {"ok" if good else "WRONG"}')
+        for e in errs:
+            ok = False; print('selftest error:', e)
+    print('SELFTEST', 'PASS' if ok else 'FAIL')
+    return 0 if ok else 1
+
+
+def main():
+    args = sys.argv[1:]
+    if '--selftest' in args:
+        sys.exit(selftest())
+    isa_f, j, pats = None, 2, []
+    i = 0
+    while i < len(args):
+        if args[i] == '--isa':
+            isa_f = args[i + 1]; i += 2
+        elif args[i] == '-j':
+            j = int(args[i + 1]); i += 2
+        else:
+            pats.append(args[i]); i += 1
+    rs = [r for r in rows() if (isa_f is None or r[0] == isa_f) and (not pats or any(p in r[3] for p in pats))]
+
+    def job(r):
+        isa, mod, thm, rel = r
+        tag = f'{isa}-' + rel.split('/Proofs/')[1][:-5].split('/', 1)[1].replace('/', '_')
+        try:
+            rc, out = run_one(isa, mod, '', f'#ra_pin_audit {thm} "{isa}"', tag, rel)
+        except subprocess.TimeoutExpired:
+            return r, 'TIMEOUT', ''
+        v, errs = parse(out)
+        verdict = v.get(thm, 'ERROR') if not errs else 'ERROR: ' + errs[0][:200]
+        return r, verdict, out
+
+    results = []
+    with cf.ThreadPoolExecutor(max_workers=j) as ex:
+        for r, verdict, out in ex.map(job, rs):
+            print(f'{r[0]} {r[3]}: {verdict}', flush=True)
+            results.append((r, verdict, out))
+    os.makedirs(OUT, exist_ok=True)
+    bad = 0
+    with open(os.path.join(OUT, 'report.txt'), 'w') as fh:
+        fh.write('check-ra-pin report (checklist for the final-gate manual RA-pin audit; probe forms: '
+                 '/srv/janus-ops/v033/probe/{RspBypass64,LrPin}.lean)\n\n')
+        for r, verdict, out in results:
+            if verdict != 'CLEAN':
+                bad += 1
+            fh.write(f'=== {r[0]} {r[3]} ({r[2]}): {verdict}\n')
+            fh.write('\n'.join(l for l in out.splitlines() if l.startswith(('RAPIN', ' form', '  '))) + '\n\n')
+    print(f'{len(results)} rows, {len(results) - bad} CLEAN, {bad} need attention; report {OUT}/report.txt')
+    sys.exit(1 if bad else 0)
+
+
+if __name__ == '__main__':
+    main()
