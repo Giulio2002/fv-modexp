@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Arm64.Nat.DivMOneA
+import FvModexp.Proofs.Arm64.Nat.DivMDefs
 import FvModexp.Proofs.Arm64.Nat.DivOneT
 
 set_option autoImplicit false
