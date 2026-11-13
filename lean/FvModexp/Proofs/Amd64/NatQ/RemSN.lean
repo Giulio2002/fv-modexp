@@ -42,6 +42,9 @@ theorem Sl.frame {s : State} {zp zl zc st up ul uc : Nat} {M M' : Memory} {ws : 
   s2 := (hF.readLE _ _ (hws _ _ (by omega) (by omega))).trans h.s2
   s3 := (hF.readLE _ _ (hws _ _ (by omega) (by omega))).trans h.s3
   s4 := (hF.readLE _ _ (hws _ _ (by omega) (by omega))).trans h.s4
+  v1 := (hF.readLE _ _ (hws _ _ (by omega) (by omega))).trans h.v1
+  v2 := (hF.readLE _ _ (hws _ _ (by omega) (by omega))).trans h.v2
+  v3 := (hF.readLE _ _ (hws _ _ (by omega) (by omega))).trans h.v3
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 8000000 in
