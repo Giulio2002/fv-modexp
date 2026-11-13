@@ -8,7 +8,7 @@ set_option autoImplicit false
 
 Mechanical copies of `KeptJ`/`Ctx`/`Keeps`/`obj_keep`/`fin_keep`/`Ctx.keep`/`keeps_of` (W4Ctx): `CtxX` is `Ctx` without
 the two frame slots `[0x370] = xp`, `[0x138] = n` (spilled only by `toSn1`), and `KeptJX` keeps only the input/defer
-slots `[0x340, 0x370) ∪ [0x378, 0x3c0)` (so `toSn1`'s own stores are allowed). `Ctx.ofX` adds the two slots.
+slots `[0x340, 0x358) ∪ [0x378, 0x3c0)` (so `toSn1`'s and the `x` normalisation's own stores are allowed). `Ctx.ofX` adds the two slots.
 -/
 
 open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Contracts FvModexp
@@ -17,9 +17,10 @@ namespace FvModexp.Amd64.W4Pro
 
 open FvModexp.Amd64.W4Loop (Env Inp Buf FinEnv)
 
-/-- the own slots kept before `toSn1`: the input/defer slots `[0x340, 0x3c0)` except `xp`'s slot 0x370 -/
+/-- the own slots kept before `toSn1`: the defer record `[0x340, 0x358)` and the input/defer slots
+`[0x378, 0x3c0)` (the `x` normalisation spills to 0x368, `toSn1` to 0x370) -/
 @[reducible] def KeptJX (j : Nat) : Prop :=
-  0x340 ≤ j ∧ j + 8 ≤ 0x370 ∨ 0x378 ≤ j ∧ j + 8 ≤ 0x3c0
+  0x340 ≤ j ∧ j + 8 ≤ 0x358 ∨ 0x378 ≤ j ∧ j + 8 ≤ 0x3c0
 
 /-- the window-4 context (values `Mv` of `m[0:n]`, `Xv` of `x[0:n]`, `Y` of `y`) -/
 def CtxX (R : RtInv) (L : List (Nat × Nat)) (g fs sp K n mp mc Mv xp Xv yp ylen Y yi zp zc st n0 l0 fbp r : Nat)
