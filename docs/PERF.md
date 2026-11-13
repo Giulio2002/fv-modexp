@@ -1679,3 +1679,9 @@ SubMod2NRow 12 s.
 * Dev (amd64, top s41, load ~70): NatQ/DivMJoin 24 s / 2.8 GB, NatQ/DivMNew 6 s / 2.4 GB, NatQ/DivMLPre 116 s / 6.0 GB
   (one `unfold DivLarge.Pre` + 34-conjunct refine; arm64 twin is the same shape — trim candidate: split the stack/apart
   conjuncts into a small lemma if the DivM row gets tight).
+* Dev (amd64, top s42, load ~70): Nat/DivFreeS 22 s / 2.7 GB; NatQ/DivMEpi 9-15 s / 2.4 GB, DivMBigK 12-17 s / 3.1 GB,
+  DivMBigPost 10-16 s / 2.8 GB, DivMBig 12-14 s / 2.7 GB, DivMBigJ 3 s, DivMGetK 3 s, DivMLPre 72 s / 6.0 GB (rebuild).
+  DivMBig was >9 min / 11 GB (killed) before the fix: ONE `bv_omega` in the big post-call context (hspT: T.regs 4 =
+  sp - 232) → isolated lemma `sp232`; and an `omega` over 3 ranges with many truncated subtractions in context (hst2)
+  → lemma `st3`; budget fact boxed (`hbbB`). Lesson: never `bv_omega`/multi-range `omega` in a context holding the
+  callee post; state the arithmetic as a standalone lemma (also `win240`, `gwin_aux` in DivMBigK).
