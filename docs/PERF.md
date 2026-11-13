@@ -1518,3 +1518,16 @@ minimal imports; generated `Lib*` modules spend ~1.5 s per `decide +kernel` mask
 | Amd64/Nat/DivLargeDB (divPost, dbPost) | 17.0 s | 3.2 GB |
 | Amd64/Nat/DivLargeDBR (Mem.thr, ra_dl, db2) | < 60 s | < 8 GB |
 | Amd64/Nat/DivLargeDBS (db run) | 15.1 s | 2.5 GB |
+
+## top s31 (2026-11-13) — amd64 divLarge DR branch + tail (dev builds, load ~40, memcap 8G)
+| module | time | peak |
+|---|---|---|
+| Amd64/Nat/DivLargeDRP (DrsPre at the drs call, pure) | 51 s | — |
+| Amd64/Nat/DivLargeDRR (dr3: drs call → AtD) | 39 s | — |
+| Amd64/Nat/DivLargeDRM (dr_mem, dr2, dr: joinQ → memclr → drs) | 28 s | 2.9 GB |
+| Amd64/Nat/DivLargeTN (qnorm/rnorm, AtR) | 25 s | 2.4 GB |
+| Amd64/Nat/DivLargeT1 (atR_of, t1_outs, t1r, t1c, t1) | 76 s | 3.8 GB |
+| Amd64/Nat/DivLargeTP (lpost, pure) | 3 s | 2.3 GB |
+LESSON: t1c first took > 10 min (killed): Outside/omega facts proved AFTER a `calls`-run (context holds the big
+write-chain post terms) or `∀`-facts placed in context BEFORE the run. Fix: a standalone pure lemma (`t1_outs`) taking
+only the numeric hypotheses, instantiated after the run; the post-return run in its own lemma (`t1r`) → 76 s.
