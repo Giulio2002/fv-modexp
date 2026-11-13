@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Common.OmegaOnly
 import FvModexp.Proofs.Arm64.Top.RunRel
 import FvModexp.Proofs.Arm64.Top.RunGS
 import FvModexp.Proofs.Arm64.Top.RunSmall
@@ -151,10 +152,10 @@ theorem h2sB (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
           rw [hM] at hcj
           janus_simp
           rw [Memory.readLE_one, hcj, ← Memory.readLE_one, ← Memory.readLE_one]
-          rw [Memory.readLE_writeLE_of_disjoint _ _ (by omega), Memory.readLE_writeLE_of_disjoint _ _ (by omega),
-            Memory.readLE_writeLE_of_disjoint _ _ (by omega), Memory.readLE_writeLE_of_disjoint _ _ (by omega),
-            Memory.readLE_writeLE_of_disjoint _ _ (by omega), Memory.readLE_writeLE_of_disjoint _ _ (by omega),
-            Memory.readLE_writeLE_of_disjoint _ _ (by omega), Memory.readLE_writeLE_of_disjoint _ _ (by omega)]
+          rw [Memory.readLE_writeLE_of_disjoint _ _ (by omega_only [hpw, hb', hjl, hj]), Memory.readLE_writeLE_of_disjoint _ _ (by omega_only [hpw, hb', hjl, hj]),
+            Memory.readLE_writeLE_of_disjoint _ _ (by omega_only [hpw, hb', hjl, hj]), Memory.readLE_writeLE_of_disjoint _ _ (by omega_only [hpw, hb', hjl, hj]),
+            Memory.readLE_writeLE_of_disjoint _ _ (by omega_only [hpw, hb', hjl, hj]), Memory.readLE_writeLE_of_disjoint _ _ (by omega_only [hpw, hb', hjl, hj]),
+            Memory.readLE_writeLE_of_disjoint _ _ (by omega_only [hpw, hb', hjl, hj]), Memory.readLE_writeLE_of_disjoint _ _ (by omega_only [hpw, hb', hjl, hj])]
           rw [Nat.add_assoc]; exact hinS _ _ (by omega) (by omega)
         · rename_i hjl
           janus_simp
