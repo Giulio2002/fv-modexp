@@ -22,10 +22,32 @@ open FvModexp.Amd64.W4Loop (Env Inp Buf OneIn)
 /-- the RR join (after the `len(RR) < numWords` fix-up) -/
 abbrev rrJ : Nat := 6207369
 
-/-- the ranges `rrJ → stk.nat entry` writes besides `R.rt` (makeslice window + return slot, `one` frame buffer,
-  `powers`, `&one`) -/
+/-- the ranges `rrJ → stk.nat entry` writes besides `R.rt` (makeslice window + return slot, spills `0xa0`,
+  `0xf8/0x100`, `0x188`, `0x338`, `one` frame buffer, `powers`, `&one`) -/
 @[reducible] def ow (sp : Nat) : List (Nat × Nat) :=
-  [(sp - 4296, sp + 0x18), (sp + 0x148, sp + 0x168), (sp + 0x1a8, sp + 0x330)]
+  [(sp - 4296, sp + 0x18), (sp + 0xa0, sp + 0xa8), (sp + 0xf8, sp + 0x108), (sp + 0x148, sp + 0x168),
+    (sp + 0x188, sp + 0x190), (sp + 0x1a8, sp + 0x330), (sp + 0x338, sp + 0x340)]
+
+theorem ow_in (sp : Nat) : ∀ q ∈ ow sp, sp - 4296 ≤ q.1 ∧ q.2 ≤ sp - 4296 + (4296 + 0x3c0) := by
+  intro q hq; simp only [ow, List.mem_cons, List.not_mem_nil, or_false] at hq
+  rcases hq with rfl | rfl | rfl | rfl | rfl | rfl | rfl <;> simp only <;> omega
+
+/-- a write into one of the `ow` words keeps the frame -/
+theorem ow_mf {sp : Nat} {M M' : Memory} (h : MemFrame M M' (ow sp)) {a k : Nat} (v : Nat)
+    (hw : (sp - 4296 ≤ a ∧ a + k ≤ sp + 0x18) ∨ (sp + 0xa0 ≤ a ∧ a + k ≤ sp + 0xa8) ∨
+      (sp + 0xf8 ≤ a ∧ a + k ≤ sp + 0x108) ∨ (sp + 0x148 ≤ a ∧ a + k ≤ sp + 0x168) ∨
+      (sp + 0x188 ≤ a ∧ a + k ≤ sp + 0x190) ∨ (sp + 0x1a8 ≤ a ∧ a + k ≤ sp + 0x330) ∨
+      (sp + 0x338 ≤ a ∧ a + k ≤ sp + 0x340)) :
+    MemFrame M (M'.writeLE a k v) (ow sp) := by
+  refine h.writeLE_inRanges v ?_
+  rcases hw with ⟨h1, h2⟩ | ⟨h1, h2⟩ | ⟨h1, h2⟩ | ⟨h1, h2⟩ | ⟨h1, h2⟩ | ⟨h1, h2⟩ | ⟨h1, h2⟩
+  · exact ⟨(sp - 4296, sp + 0x18), by simp [ow], h1, h2⟩
+  · exact ⟨(sp + 0xa0, sp + 0xa8), by simp [ow], h1, h2⟩
+  · exact ⟨(sp + 0xf8, sp + 0x108), by simp [ow], h1, h2⟩
+  · exact ⟨(sp + 0x148, sp + 0x168), by simp [ow], h1, h2⟩
+  · exact ⟨(sp + 0x188, sp + 0x190), by simp [ow], h1, h2⟩
+  · exact ⟨(sp + 0x1a8, sp + 0x330), by simp [ow], h1, h2⟩
+  · exact ⟨(sp + 0x338, sp + 0x340), by simp [ow], h1, h2⟩
 
 /-- the facts at the `stk.nat(17n)` call -/
 @[reducible] def OnePost (R : RtInv) (L L' : List (Nat × Nat)) (b b' g fs sp n : Nat) (M M' : Memory) (onep : Nat) :
@@ -50,5 +72,11 @@ theorem one_val (m : Memory) (p n : Nat) (hn : 0 < n) (h0 : m.readLE p 8 = 1)
     (hz : ∀ j, j < n - 1 → m.readLE (p + 8 + 8 * j) 8 = 0) : m.readLE p (8 * n) = 1 := by
   obtain ⟨k, rfl⟩ : ∃ k, n = k + 1 := ⟨n - 1, by omega⟩
   rw [rd8, h0, rd_zero m k (p + 8) (fun j hj => hz j (by omega))]
+
+theorem ow_out {R : RtInv} {L : List (Nat × Nat)} {sp : Nat} (h : Outside (sp - 4296) (4296 + 0x3c0) R.rt) :
+    ∀ r ∈ ow sp, InRanges r.1 (r.2 - r.1) L ∨ Outside r.1 (r.2 - r.1) R.rt := by
+  intro r hr
+  simp only [ow, List.mem_cons, List.not_mem_nil, or_false] at hr
+  rcases hr with rfl | rfl | rfl | rfl | rfl | rfl | rfl <;> exact Or.inr (h.of_sub (by simp only; omega) (by simp only; omega))
 
 end FvModexp.Amd64.W4Pro
