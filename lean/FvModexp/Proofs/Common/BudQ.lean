@@ -104,6 +104,79 @@ theorem budOK0 {cR : Nat → Nat → Nat} {cS cE cP oB oC : Nat → Nat → Nat 
   have h := budOK T xl yl n lm hx hy hn0 hn hlm
   unfold lhsB lhsC at h; omega
 
+
+/-! ## Path-MAX shape (coordinator 2026-11-15 / "[infra s44]" request 1)
+
+`nat.expNN` takes ONE of its branches (Slow / Even / P2 / the odd windows; `len y = 0` returns `1` before any), so its
+charged cost can be the MAX over the branch costs instead of their sum (shape to be adopted by expmc's `NCost`/`NBudE`).
+Then each branch gets the whole remaining allowance: `TargetsM` (setup: rem `4·W`, each branch `108·W`, reserve
+`14·W`, the makeCosts `1·W`; per exponent word: each branch `512·W`). -/
+
+/-- per-term targets for the path-MAX shape -/
+structure TargetsM (cR : Nat → Nat → Nat) (cS cE cP : Nat → Nat → Nat → Nat) (oB oC : Nat → Nat → Nat → Nat)
+    (Hr : Nat → Nat → Nat) : Prop where
+  rem : ∀ xl n, xl ≤ 128 → 0 < n → n ≤ 128 → cR xl n ≤ 4 * opC (max xl n)
+  slow : ∀ xl yl n, xl ≤ 128 → yl ≤ 128 → 0 < n → n ≤ 128 →
+    cS xl yl n ≤ makeCost xl + 108 * opC (max xl n) + yl * (512 * opC (max xl n))
+  even : ∀ xl yl n, xl ≤ 128 → yl ≤ 128 → 0 < n → n ≤ 128 → cE xl yl n ≤ 108 * opC (max xl n) + yl * (512 * opC (max xl n))
+  p2 : ∀ xl yl n lm, xl ≤ 128 → yl ≤ 128 → 0 < n → n ≤ 128 → lm < 64 * n →
+    cP xl yl lm ≤ 108 * opC (max xl n) + yl * (512 * opC (max xl n))
+  obud : ∀ xl yl n, xl ≤ 128 → yl ≤ 128 → 0 < n → n ≤ 128 → oB n xl yl ≤ 108 * opC (max xl n) + yl * (512 * opC (max xl n))
+  ocost : ∀ xl yl n, xl ≤ 128 → yl ≤ 128 → 0 < n → n ≤ 128 → oC n xl yl ≤ 108 * opC (max xl n) + yl * (512 * opC (max xl n))
+  res : ∀ xl n, xl ≤ 128 → 0 < n → n ≤ 128 → stkRes (Hr xl n) ≤ 14 * opC (max xl n)
+
+/-- the path-MAX budget text: the common prefix (`x mod m`, the result words) + the MAX over the four branches -/
+def lhsM (cR : Nat → Nat → Nat) (cS cE cP : Nat → Nat → Nat → Nat) (oX : Nat → Nat → Nat → Nat)
+    (Hr : Nat → Nat → Nat) (xl yl n lm : Nat) : Nat :=
+  24 + (makeCost 1 + makeCost n + cR xl n + max (max (cS xl yl n) (cE xl yl n)) (max (cP xl yl lm) (oX n xl yl))) +
+    stkRes (Hr xl n)
+
+private theorem sumM_le {xl yl n W W' R S E P O Hs : Nat} (hx : xl ≤ 128) (hn : n ≤ 128) (hW : W = opC (max xl n))
+    (hWW : W ≤ W') (hR : R ≤ 4 * W) (hS : S ≤ makeCost xl + 108 * W + yl * (512 * W))
+    (hE : E ≤ 108 * W + yl * (512 * W)) (hP : P ≤ 108 * W + yl * (512 * W)) (hO : O ≤ 108 * W + yl * (512 * W))
+    (hH : Hs ≤ 14 * W) :
+    24 + (makeCost 1 + makeCost n + R + max (max S E) (max P O)) + Hs ≤ (8 * (64 * yl) + 128) * W' := by
+  have hm : 24 + makeCost 1 + makeCost n + makeCost xl ≤ W := by
+    have := makeCost_le16 1; have := makeCost_le16 n; have := makeCost_le16 xl
+    subst hW; unfold opC allocCost; omega
+  have f1 : yl * (512 * W) = 512 * (yl * W) := Nat.mul_left_comm _ _ _
+  have f4 : (8 * (64 * yl) + 128) * W' = 8 * (64 * (yl * W')) + 128 * W' := by
+    rw [Nat.add_mul, Nat.mul_assoc, Nat.mul_assoc]
+  have f5 : yl * W ≤ yl * W' := Nat.mul_le_mul_left _ hWW
+  rw [f4]; rw [f1] at hS hE hP hO
+  have : max (max S E) (max P O) ≤ makeCost xl + 108 * W + 512 * (yl * W) := by omega
+  omega
+
+/-- **BudOK, path-MAX shape** (both inequalities; `oB` = OBud for the budget premise, `oC` = OCost for the charge) -/
+theorem budOKM {cR : Nat → Nat → Nat} {cS cE cP oB oC : Nat → Nat → Nat → Nat} {Hr : Nat → Nat → Nat}
+    (T : TargetsM cR cS cE cP oB oC Hr) :
+    ∀ xl yl n lm, xl ≤ 128 → yl ≤ 128 → 0 < n → n ≤ 128 → lm < 64 * n →
+      lhsM cR cS cE cP oB Hr xl yl n lm ≤ ExpBudgetF (max (max xl yl) n) yl ∧
+      lhsM cR cS cE cP oC Hr xl yl n lm ≤ ExpBudgetF (max (max xl yl) n) yl := by
+  intro xl yl n lm hx hy hn0 hn hlm
+  have hWW : opC (max xl n) ≤ opC (max (max xl yl) n) := opC_mono (by omega)
+  exact ⟨sumM_le hx hn rfl hWW (T.rem xl n hx hn0 hn) (T.slow xl yl n hx hy hn0 hn) (T.even xl yl n hx hy hn0 hn)
+      (T.p2 xl yl n lm hx hy hn0 hn hlm) (T.obud xl yl n hx hy hn0 hn) (T.res xl n hx hn0 hn),
+    sumM_le hx hn rfl hWW (T.rem xl n hx hn0 hn) (T.slow xl yl n hx hy hn0 hn) (T.even xl yl n hx hy hn0 hn)
+      (T.p2 xl yl n lm hx hy hn0 hn hlm) (T.ocost xl yl n hx hy hn0 hn) (T.res xl n hx hn0 hn)⟩
+
+/-- the sum shape's targets imply the path-MAX ones (so a cost proved against `Targets` also serves `TargetsM`) -/
+theorem Targets.toM {cR : Nat → Nat → Nat} {cS cE cP oB oC : Nat → Nat → Nat → Nat} {Hr : Nat → Nat → Nat}
+    (T : Targets cR cS cE cP oB oC Hr) : TargetsM cR cS cE cP oB oC Hr := by
+  refine ⟨fun xl n a b c => T.rem xl n a b c, fun xl yl n a b c d => ?_, fun xl yl n a b c d => ?_,
+    fun xl yl n lm a b c d e => ?_, fun xl yl n a b c d => ?_, fun xl yl n a b c d => ?_, T.res⟩
+  · have h := T.slow xl yl n a b c d
+    have : yl * (128 * opC (max xl n)) ≤ yl * (512 * opC (max xl n)) := Nat.mul_le_mul_left _ (by omega)
+    omega
+  · have h := T.even xl yl n a b c d
+    have : yl * (320 * opC (max xl n)) ≤ yl * (512 * opC (max xl n)) := Nat.mul_le_mul_left _ (by omega)
+    omega
+  · have h := T.p2 xl yl n lm a b c d e
+    have : yl * (64 * opC (max xl n)) ≤ yl * (512 * opC (max xl n)) := Nat.mul_le_mul_left _ (by omega)
+    omega
+  · have h := T.obud xl yl n a b c d; omega
+  · have h := T.ocost xl yl n a b c d; omega
+
 /-- the gate number: `ExpBudgetF 128 128 ≤ 2 ^ 35` (32 GiB; coordinator 2026-11-15) -/
 theorem gate : ExpBudgetF 128 128 ≤ 2 ^ 35 := by decide
 
