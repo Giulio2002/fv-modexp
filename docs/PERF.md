@@ -1707,6 +1707,15 @@ rel42 (snapshot snap42 = 8923cef0, same store, the four rows alone, load 30-46):
   → lemma `st3`; budget fact boxed (`hbbB`). Lesson: never `bv_omega`/multi-range `omega` in a context holding the
   callee post; state the arithmetic as a standalone lemma (also `win240`, `gwin_aux` in DivMBigK).
 
+### expmc s55 (amd64 window-4 x normalisation, dev builds on v0.3.1, host load ~60)
+* New: W4XnR (xnSplit/xnA1/xnA3/xnJ) 28 s / 2.3 GB, W4XnR2 (xnA2: 7 stores + 10 reads to the div entry) 234 s / 2.4 GB
+  (TRIM TODO: prove its MemFrame/reads in small lemmas outside the janus64_run context), W4XnK 16 s / 2.7 GB,
+  W4XnB (xnB: memmove + memclr → xJ) 76-89 s / 2.9-3.1 GB, W4XnD (divCallG) 7.7 s, W4XnJ (keeps_xb, xnBStep, xnJStep)
+  20 s / 2.8 GB; rebuilt after the KeptJX shrink: W4CtxX 6.2 s, W4Xj 3.6 s.
+* SPEED LESSON (W4XnD > 900 s → 7.7 s): a `by omega` AFTER `ReachesRet.call_regions` + the callee post destructuring
+  (context = summary + DivPostL pieces) never finished; the same facts proved at the top of the proof take ms. Prove
+  every arithmetic side fact BEFORE the call (or in a small lemma) — never omega in a post-call context.
+
 ### expmc s54 (amd64 window-4 RR section + x join, dev builds on v0.3.1, host load ~54)
 * New: W4LshR (toLsh) 25 s / 2.4 GB, W4LshK (Ctx.addEx, keeps_own2, keeps_lsh, zz_of_lsh) 12 s / 2.7 GB,
   W4LshS (lshStep) 3.9 s, W4Sn1 (sn1Step) 3.9 s, W4Sn1R (toSn1) 17 s, W4CtxX 7.4 s, W4XjR (toK) 22 s, W4Xj (xjStep) 4.5 s.
