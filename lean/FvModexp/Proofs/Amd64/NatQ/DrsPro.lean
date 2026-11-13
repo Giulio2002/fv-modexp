@@ -36,11 +36,14 @@ structure Fr (s S : State) : Prop where
   fr : MemFrame s.mem S.mem (fw s)
   ra : S.mem.readLE (s.regs 4).toNat 8 = s.mem.readLE (s.regs 4).toNat 8
   bp : S.mem.readLE ((s.regs 4).toNat - 8) 8 = (s.regs 5).toNat
+  vp : S.mem.readLE ((s.regs 4).toNat + 8) 8 = s.mem.readLE ((s.regs 4).toNat + 8) 8
+  vl : S.mem.readLE ((s.regs 4).toNat + 16) 8 = s.mem.readLE ((s.regs 4).toNat + 16) 8
+  vc : S.mem.readLE ((s.regs 4).toNat + 24) 8 = s.mem.readLE ((s.regs 4).toNat + 24) 8
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 8000000 in
 /-- entry → the head of `u.norm()`: registers `RAX … R10` kept, `z.ptr`, `u.ptr` spilled, defer slots cleared -/
-theorem pro0 {R : RtInv} {L : List (Nat × Nat)} (impl : List Amd64.Segment) (s : State) (W : Nat) (r : Nat)
+theorem pro0 {R : RtInv} {L : List (Nat × Nat)} (impl : List Amd64.Segment) (s : State) (W : Nat) (r : W64)
     (hpc : s.rip = BitVec.ofNat 64 0x5ef880) (hx15 : s.xmm 15 = 0#128) (hdf : s.df = false)
     (hce : CallEnv R L s W 96) (hW : 400 ≤ W) (Q : State → Prop)
     (k : ∀ P, P.rip = BitVec.ofNat 64 nHead1 → Fr s P → P.xmm 15 = 0#128 →
@@ -54,7 +57,7 @@ theorem pro0 {R : RtInv} {L : List (Nat × Nat)} (impl : List Amd64.Segment) (s 
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw
   clear hLs hout hgr
   janus64_run until [nHead1]
-  refine k _ rfl ⟨?_, ?_, ?_, ?_, ?_, ?qR, ?qF, ?_, ?_⟩ ?_ ?qS ?_ ?_ ?_ ?_
+  refine k _ rfl ⟨?_, ?_, ?_, ?_, ?_, ?qR, ?qF, ?_, ?_, ?_, ?_, ?_⟩ ?_ ?qS ?_ ?_ ?_ ?_
   case qF => unfold fw win; janus_frame
   case qR => simp only [Janus.Arm64.Memory.regions_writeLE]
   case qS => intro j h4 h5 h12; simp only [Janus.Amd64.Tactic.setRegF_apply, h4, h5, h12, ite_false]

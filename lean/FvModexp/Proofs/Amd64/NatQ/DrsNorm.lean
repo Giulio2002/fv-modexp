@@ -35,7 +35,7 @@ abbrev nExit1 : Nat := 0x5ef8d1
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- `u = u.norm()` at the entry (natdiv.go:754): pointer `RSI`, length `R8`, scratch `RDX` -/
-theorem norm1 (impl : List Amd64.Segment) (r : Nat) (M : Memory) (p n0 V : Nat) (S0 : State) (Q : State → Prop)
+theorem norm1 (impl : List Amd64.Segment) (r : W64) (M : Memory) (p n0 V : Nat) (S0 : State) (Q : State → Prop)
     (hfin : ∀ (s' : State) (n' : Nat), s'.rip = BitVec.ofNat 64 nExit1 → s'.mem = M →
       s'.regs 8 = BitVec.ofNat 64 n' → Same2 8 2 S0 s' → n' ≤ n0 → natVal M p n' = V → NatNorm M p n' →
       ReachesRet (LibDrs.program.link impl) r s' Q)
@@ -75,7 +75,7 @@ abbrev nExit2 : Nat := 0x5ef8ff
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- `v = v.norm()` at the entry (natdiv.go:755): pointer `RDX`, length `R11`, scratch `R12` -/
-theorem norm2 (impl : List Amd64.Segment) (r : Nat) (M : Memory) (p n0 V : Nat) (S0 : State) (Q : State → Prop)
+theorem norm2 (impl : List Amd64.Segment) (r : W64) (M : Memory) (p n0 V : Nat) (S0 : State) (Q : State → Prop)
     (hfin : ∀ (s' : State) (n' : Nat), s'.rip = BitVec.ofNat 64 nExit2 → s'.mem = M →
       s'.regs 11 = BitVec.ofNat 64 n' → Same2 11 12 S0 s' → n' ≤ n0 → natVal M p n' = V → NatNorm M p n' →
       ReachesRet (LibDrs.program.link impl) r s' Q)
