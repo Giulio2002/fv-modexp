@@ -24,4 +24,16 @@ theorem ensC (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     RemHypNA impl R LibRem.names 41712 112 need (cost (NatDiv.cost DivRec.drsC)) :=
   ens impl hap R hgr hmc hwb (NatDiv.ensCL impl hap R hgr hmc hwb hmk0 hmv0 hmz0)
 
+/-- **`nat.rem`** (arm64), every callee discharged, as expmc's `NHyp.RemHyp` (which now carries `0 < st`: the same
+statement as `RemHypNA`) -/
+theorem ensCR (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+    (hgr : GrowsliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.growslice") 4096 R)
+    (hmc : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
+    (hwb : WbLiveContract (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2)
+    (hmk0 : MakesliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
+    (hmv0 : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
+    (hmz0 : MemmoveZeroLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R) :
+    NHyp.RemHyp impl R LibRem.names 41712 112 need (cost (NatDiv.cost DivRec.drsC)) :=
+  ensC impl hap R hgr hmc hwb hmk0 hmv0 hmz0
+
 end FvModexp.Arm64.NatRem

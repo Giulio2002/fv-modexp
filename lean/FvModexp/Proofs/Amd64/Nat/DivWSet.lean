@@ -2,6 +2,8 @@ import FvModexp.Proofs.Amd64.Nat.DivWMid
 import FvModexp.Proofs.Common.AsmVW
 import FvModexp.Proofs.Common.DivmcBits
 
+set_option autoImplicit false
+
 /-!
 # `nat.divW` (amd64): `case y == 1: q = z.set(x)` (`m > 0`), from `+0x1b2` (after `z.make(m)`)
 
@@ -46,7 +48,7 @@ theorem Mid.setPost {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl :
     simp only [outside_append, win, outside_cons, outside_nil, and_true] at ho ⊢
     obtain ⟨⟨hrt, hw1⟩, hz⟩ := ho
     refine ⟨hrt, by omega, ?_⟩
-    rcases h.ror with ⟨rfl, rfl⟩ | ⟨hin, -⟩
+    rcases h.ror with ⟨rfl, rfl⟩ | ⟨-, -, -, hin, -⟩
     · omega
     · have := outside_of_inRanges hrt hin; omega
   · refine ⟨fun a n hin hz => ?_⟩
@@ -54,7 +56,7 @@ theorem Mid.setPost {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl :
     · exact h.lf.readLE a n hin hz
     · obtain ⟨q, hq, hq1, hq2⟩ := hin
       simp only [outside_cons, outside_nil, and_true] at hz ⊢
-      rcases h.ror with ⟨rfl, rfl⟩ | ⟨-, hap⟩
+      rcases h.ror with ⟨rfl, rfl⟩ | ⟨-, -, -, -, hap⟩
       · omega
       · have := hap q hq; unfold Apart at this; omega
 

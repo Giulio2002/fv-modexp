@@ -2,6 +2,8 @@ import FvModexp.Proofs.Amd64.Nat.LibDivW
 import FvModexp.Proofs.Amd64.Nat.NatAddMid
 import FvModexp.Proofs.Amd64.Nat.DivWVW
 
+set_option autoImplicit false
+
 /-!
 # `nat.divW` (go-bigmodexpfix natdiv.go:550), amd64: statement, callee, segment-boundary facts
 
@@ -51,7 +53,8 @@ def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl y : BitVec 64
     NatNorm s'.mem p' n' ∧ n' ≤ c' ∧ n' ≤ xl.toNat ∧
     ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b - makeCost xl.toNat ≤ b' ∧
       R.inv b' L' (s.regs 14).toNat (view R.rt L' s'.mem) ∧ NatLive s'.mem R L' p' c' ∧
-      ((p' = zp.toNat ∧ c' = zc.toNat) ∨ (InRanges p' (8 * c') R.rt ∧ ApartAll p' (8 * c') L)) ∧
+      ((p' = zp.toNat ∧ c' = zc.toNat) ∨
+        (0 < xl.toNat ∧ xl.toNat ≤ c' ∧ c' ≤ xl.toNat + 4 ∧ InRanges p' (8 * c') R.rt ∧ ApartAll p' (8 * c') L)) ∧
       MemFrame s.mem s'.mem (R.rt ++ win s 4232 64 ++ [(zp.toNat, zp.toNat + 8 * zc.toNat)]) ∧
       LiveFrame s.mem s'.mem L [(zp.toNat, zp.toNat + 8 * zc.toNat)]
 
@@ -65,7 +68,8 @@ def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl y : BitVec 64
     NatNorm s'.mem p' n' ∧ n' ≤ c' ∧ n' ≤ xl.toNat ∧
     ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b - makeCost xl.toNat ≤ b' ∧
       R.inv b' L' (s.regs 14).toNat (view R.rt L' s'.mem) ∧ NatLive s'.mem R L' p' c' ∧
-      ((p' = zp.toNat ∧ c' = zc.toNat) ∨ (InRanges p' (8 * c') R.rt ∧ ApartAll p' (8 * c') L)) ∧
+      ((p' = zp.toNat ∧ c' = zc.toNat) ∨
+        (0 < xl.toNat ∧ xl.toNat ≤ c' ∧ c' ≤ xl.toNat + 4 ∧ InRanges p' (8 * c') R.rt ∧ ApartAll p' (8 * c') L)) ∧
       MemFrame s.mem s'.mem (R.rt ++ win s 4232 64 ++ [(zp.toNat, zp.toNat + 8 * zc.toNat)]) ∧
       LiveFrame s.mem s'.mem L [(zp.toNat, zp.toNat + 8 * zc.toNat)]
 
@@ -153,7 +157,8 @@ structure Mid (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (zp zc xp xl : BitVe
   bud : b - makeCost xl.toNat ≤ b'
   inv : R.inv b' L' (s.regs 14).toNat (view R.rt L' M)
   lsep : LiveSep L' (win s 4232 64)
-  ror : (p = zp.toNat ∧ c = zc.toNat) ∨ (InRanges p (8 * c) R.rt ∧ ApartAll p (8 * c) L)
+  ror : (p = zp.toNat ∧ c = zc.toNat) ∨
+    (0 < xl.toNat ∧ xl.toNat ≤ c ∧ c ≤ xl.toNat + 4 ∧ InRanges p (8 * c) R.rt ∧ ApartAll p (8 * c) L)
   mf : MemFrame s.mem M (R.rt ++ win s 4232 64 ++ [(zp.toNat, zp.toNat + 8 * zc.toNat)])
   lf : LiveFrame s.mem M L [(zp.toNat, zp.toNat + 8 * zc.toNat)]
   mv : ∀ d src k, k ≤ 8 * xl.toNat → R.ok (cA "runtime.memmove") [d, src, k]
@@ -228,7 +233,7 @@ theorem Mid.frame {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl : B
     rcases (hws r hr).2 with h' | h' | h'
     · omega
     · omega
-    · rcases h.ror with ⟨rfl, rfl⟩ | ⟨hin, -⟩
+    · rcases h.ror with ⟨rfl, rfl⟩ | ⟨-, -, -, hin, -⟩
       · omega
       · have := outside_of_inRanges hrt hin; omega
   · refine ⟨fun a n hin hz => ?_⟩
@@ -240,7 +245,7 @@ theorem Mid.frame {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl : B
       rcases (hws r hr).2 with h' | h' | h'
       · omega
       · omega
-      · rcases h.ror with ⟨rfl, rfl⟩ | ⟨-, hap⟩
+      · rcases h.ror with ⟨rfl, rfl⟩ | ⟨-, -, -, -, hap⟩
         · omega
         · have := hap q hq; unfold Apart at this; omega
 

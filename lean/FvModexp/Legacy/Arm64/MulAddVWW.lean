@@ -1,3 +1,4 @@
+-- LEGACY (retired from the release, coordinator 2026-11-15): standalone row on the single-function extraction of `MulAddVWW`; its Run-extraction coverage is `Proofs/Arm64/MulAddVWWSum.lean` via the rows in docs/COVERAGE.md "Legacy standalone rows". Run on demand: scripts/asm-row.sh.
 import Extracted
 import FvModexp.Proofs.Arm64.MulAddVWWSum
 
