@@ -1931,3 +1931,7 @@ Util → IcDefs → IcHL → Ic → Og → Pre → Seg → FinA → Fin → Row 
 * **Exp_W2Row PASS 734 s / 3.1 GB** (load ~34; rel44 758 s FAIL at the cap). Breakdown (JANUS_TIMINGS): own compile 104
   modules 517 s, kernel replay 150 s (115 targets, 4 at once), theorem audit 63 s. Over the 500 s bar → structural trim
   (cut the window-2 continuation chain into independent segments composed last) needed; see NOTES-expmc s66.
+* **JANUS_JOBS experiment (top s46; RunErr targeted, snap44 sources, fresh copies of the rel44 cache, load 13-22, alongside rel45):**
+  JANUS_JOBS=4 PASS **297 s** (own compile 66 mods 218 s / cpu 1037 s, replay 70.5 s, audit 5.6 s) vs JANUS_JOBS=2 PASS **319 s**
+  (own compile 231 s / cpu 948 s, replay 79 s, audit 6.4 s) in the same window ⇒ −7 %, noise-level: the own compile is
+  critical-path bound. The s45 467 s was load. Row peak (summed RSS, J=2) 5.4 GB. verify-all default stays JANUS_JOBS=2.
