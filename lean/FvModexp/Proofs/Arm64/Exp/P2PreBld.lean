@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.P2PreRS
 
+set_option autoImplicit false
+
 /-!
 # `buildPrecomputationWindowModPower2` (arm64): callee precondition pieces from `Pre` and `Ctx` (agent infra)
 
@@ -16,7 +18,7 @@ open FvModexp.Arm64.EvenHyp
 open FvModexp.Arm64.ExpHyp (stWs RdIn WrOut)
 
 section
-variable {R : RtInv} {kc : Nat} {sqC : Nat → Nat → Nat} {mlC : Nat → Nat → Nat → Nat} {b : Nat}
+variable {R : RtInv} {kc : Nat} {sqC : Nat → Nat} {mlC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {st pw pl ws lm x xl : Nat} {s : State}
 
 theorem pf_of (hpre : Pre R kc sqC mlC b L st pw pl ws lm x xl s) (hkc : 8 ≤ kc) : PF R kc L st pw pl s := by

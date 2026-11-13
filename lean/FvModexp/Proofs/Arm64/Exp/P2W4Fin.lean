@@ -57,7 +57,7 @@ theorem res_bytes (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {p c : N
 
 set_option maxRecDepth 20000 in
 /-- **the function's post** from the tail -/
-theorem finQ (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (hw : WC R L K g sp st zp zc s.mem M L1 b1 ℓ)
+theorem finQ (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (hw : WC R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem M L1 b1 ℓ)
     {p l c v cst : Nat} (hres : NatOF R L L1 M zp zc 1 p l c v) (hrs : ResSep s.mem M st p c) (hb : b - cst ≤ b1)
     {s' : State}
     (ht : TPost sp g st (stLen s.mem st) p l c (s.regs 18) (s.regs 29) M s') :
@@ -84,8 +84,8 @@ theorem finQ (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (hw : WC R L 
   obtain ⟨h8, hh, hacc, h48, hlive, hlc, hc40⟩ := hokM
   have hlen := hw.len
   have hlo := hw.lo
-  refine ⟨t1.trans hP.1.1.symm, t2, t3.trans hP.1.2.1.symm, t4, p, l, c, t5, t6, t7, L1, b1, ?nat,
-    ⟨hw.le, hb, ?inv⟩, ⟨⟨?sok, t8, ?kf⟩, hw.ain.congr e0 e2 fun _ hr => hr⟩, ?fr, ?lf,
+  refine ⟨t1.trans hP.1.1.symm, t2, t3.trans hP.1.2.1.symm, t4, p, l, c, t5, t6, t7, L1, b1 + stkR (HW (stLen s.mem st) lm) s'.mem st, ?nat,
+    ⟨hw.le, Nat.le_trans hb (Nat.le_add_right _ _), ?inv⟩, ⟨⟨?sok, t8, ?kf⟩, hw.ain.congr e0 e2 fun _ hr => hr⟩, ?fr, ?lf,
     fun hc hn => by rw [e0, e2] at hn ⊢; exact hrs hc hn⟩
   case nat =>
     refine ⟨?_, ?_, v3, v4, fun hc => ?_, v6⟩
@@ -99,7 +99,7 @@ theorem finQ (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (hw : WC R L 
     · obtain ⟨q1, q2, q3, q4⟩ := v5 hc
       exact ⟨q1, q2, by rw [tF.accessible]; exact q3, q4⟩
   case inv =>
-    rw [hP.1.g]
+    rw [hP.1.g, stkR_congr e2]
     refine Expmc.inv_frame tF (fun r hr => ?_) hw.inv
     simp only [TW, List.mem_cons, List.mem_nil_iff, or_false] at hr
     rcases hr with rfl | rfl | rfl | rfl
@@ -137,7 +137,7 @@ theorem finQ (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (hw : WC R L 
     omega
 
 /-- `ResSep` for the entry `z` (a fresh array is apart from everything held at the entry) -/
-theorem rs_z (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (hw : WC R L K g sp st zp zc s.mem M L1 b1 ℓ) :
+theorem rs_z (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (hw : WC R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem M L1 b1 ℓ) :
     ResSep s.mem M st zp zc := by
   intro hc hn
   rcases hw.kf with h | ⟨hin, hap⟩
@@ -148,7 +148,7 @@ theorem rs_z (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (hw : WC R L 
     · exact (hin.apart hO)
 
 /-- `ResSep` for a result apart from every element of the live set `L1` of `WC` (e.g. allocated at `M`) -/
-theorem rs_live (hw : WC R L K g sp st zp zc s.mem M L1 b1 ℓ) {p c : Nat} (hap : ApartAll p (8 * c) L1) :
+theorem rs_live (hw : WC R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem M L1 b1 ℓ) {p c : Nat} (hap : ApartAll p (8 * c) L1) :
     ResSep s.mem M st p c := by
   intro hc hn
   have := hap _ (hw.ain hn).1
@@ -157,7 +157,7 @@ theorem rs_live (hw : WC R L K g sp st zp zc s.mem M L1 b1 ℓ) {p c : Nat} (hap
 
 set_option maxRecDepth 20000 in
 /-- the tail's environment from `WC` and the slots -/
-theorem tenv_of (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (hw : WC R L K g sp st zp zc s.mem M L1 b1 ℓ)
+theorem tenv_of (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (hw : WC R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem M L1 b1 ℓ)
     {ret : Nat} (hsl : ESl M sp st (s.regs 29) ret zp zc xp xl xc yp yl lm (stLen s.mem st)) (hr4 : ret % 4 = 0)
     (hr48 : ret < 2 ^ 48) : TEnv sp g st (stLen s.mem st) (s.regs 29) ret M := by
   have hgM : M.readLE (g + 16) 8 = s.mem.readLE (g + 16) 8 := MemFrame.bytewise hw.fr hP.g_out

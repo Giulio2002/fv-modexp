@@ -29,11 +29,11 @@ theorem fullC {impl : List Segment} (hap : ImplApart Extracted.program impl) {R 
     (hno : NewobjectLiveContract (LibW.program.link impl) noE 4096 R)
     (hwb : WbLiveContract (LibW.program.link impl) wbE 4096 R 2)
     {kcP : Nat} (hkc : 4608 ≤ kcP)
-    {stkN aboveN : Nat} (hsn : StackNat.HypL impl R ns stkN aboveN) (hkN : stkN ≤ kcP) (haN : aboveN ≤ 88)
-    {stkS aboveS : Nat} {sqC : Nat → Nat → Nat} (hsq : SqrHypX impl R ns stkS aboveS sqC)
-    (hkS : stkS ≤ kcP) (haS : aboveS ≤ 88) (hsm : ∀ ℓ a a', a ≤ a' → sqC ℓ a ≤ sqC ℓ a')
-    {stkM aboveM : Nat} {mlC : Nat → Nat → Nat → Nat} (hmu : MulHypX impl R ns stkM aboveM mlC)
-    (hkM : stkM ≤ kcP) (haM : aboveM ≤ 88) (hmm : ∀ ℓ a a' c c', a ≤ a' → c ≤ c' → mlC ℓ a c ≤ mlC ℓ a' c')
+    {stkN aboveN : Nat} (hsn : StackNatX.HypQ impl R ns stkN aboveN) (hkN : stkN ≤ kcP) (haN : aboveN ≤ 88)
+    {stkS aboveS : Nat} {sqC : Nat → Nat} (hsq : SqrHypQ impl R ns stkS aboveS sqC)
+    (hkS : stkS ≤ kcP) (haS : aboveS ≤ 88) (hsm : ∀ a a', a ≤ a' → sqC a ≤ sqC a')
+    {stkM aboveM : Nat} {mlC : Nat → Nat → Nat} (hmu : MulHypQ impl R ns stkM aboveM mlC)
+    (hkM : stkM ≤ kcP) (haM : aboveM ≤ 88) (hmm : ∀ a a' c c', a ≤ a' → c ≤ c' → mlC a c ≤ mlC a' c')
     {stkT aboveT : Nat} (htr : Trunc.Hyp2 impl R ns stkT aboveT) (hkT : stkT ≤ kcP) (haT : aboveT ≤ 88)
     (b : Nat) (L : List (Nat × Nat)) (stk : Nat) (hk1 : 672 + kcP ≤ stk) (hk2 : stk ≤ 2 ^ 20 + 464)
     (zp zl zc st xp xl xc yp yl yc lm : Nat) (hzp : zp < 2 ^ 64) (hxc : xc < 2 ^ 64) :
@@ -42,19 +42,24 @@ theorem fullC {impl : List Segment} (hap : ImplApart Extracted.program impl) {R 
         s.regs 3 = BitVec.ofNat 64 st ∧ s.regs 4 = BitVec.ofNat 64 xp ∧ s.regs 5 = BitVec.ofNat 64 xl ∧
         s.regs 6 = BitVec.ofNat 64 xc ∧ s.regs 7 = BitVec.ofNat 64 yp ∧ s.regs 8 = BitVec.ofNat 64 yl ∧
         s.regs 9 = BitVec.ofNat 64 yc ∧ s.regs 10 = BitVec.ofNat 64 lm ∧
-        PreC R b L stk (cost sqC mlC (stLen s.mem st) yl lm) zp zl zc st xp xl yp yl lm s ∧
+        PreC R b L stk (costB sqC mlC (stLen s.mem st) yl lm) zp zl zc st xp xl yp yl lm s ∧
         (s.regs 30).toNat % 4 = 0 ∧ (s.regs 30).toNat < 2 ^ 48)
       (fun s s' => s'.sp = s.sp ∧ s'.regs 18 = s.regs 18 ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧
         NHyp.CPostR R b L stk 96 zp zc st (natVal s.mem xp xl ^ natVal s.mem yp yl % 2 ^ lm)
-          (cost sqC mlC (stLen s.mem st) yl lm) s s') := by
+          (costB sqC mlC (stLen s.mem st) yl lm) s s') := by
   intro s hpc ⟨h0, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, hP, hr4, hr48⟩
-  have hE := epre_of hP (by omega) hk2 hzp hxc
-  have hcb : cost sqC mlC (stLen s.mem st) yl lm ≤ b := hP.1.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hcb : costB sqC mlC (stLen s.mem st) yl lm ≤ b := hP.1.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hrl := stkR_le (HW (stLen s.mem st) lm) s.mem st
+  simp only [costB] at hcb
+  have hE := epre_of hP (by omega) hk2 hzp hxc (by omega)
   have e : stk - 464 + 464 = stk := by omega
   have := full hap hns hnf hnfP hgr hmc hmv hmk hno hwb hkc hsn hkN haN hsq hkS haS hsm hmu hkM haM hmm htr hkT haT
-    b L (stk - 464) (by omega) zp zl zc st xp xl xc yp yl yc lm s hpc
-    ⟨h0, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, ⟨hE, hP.2.1, hP.2.2.1, hcb⟩, hr4, hr48⟩
+    (b - stkR (HW (stLen s.mem st) lm) s.mem st) L (stk - 464) (by omega) zp zl zc st xp xl xc yp yl yc lm s hpc
+    ⟨h0, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, ⟨hE, hP.2.1, hP.2.2.1, by omega⟩, hr4, hr48⟩
   simp only [FQ, e] at this
-  exact this
+  obtain ⟨k, s', hs, hr, hq⟩ := this
+  refine ⟨k, s', hs, hr, hq.1, hq.2.1, hq.2.2.1, hq.2.2.2.1, ?_⟩
+  obtain ⟨p, l, cc, r0, r1, r2, L', b', hres, ⟨hx, hb, hinv⟩, rest⟩ := hq.2.2.2.2
+  exact ⟨p, l, cc, r0, r1, r2, L', b', hres, ⟨hx, by simp only [costB]; omega, hinv⟩, rest⟩
 
 end FvModexp.Arm64.P2W2

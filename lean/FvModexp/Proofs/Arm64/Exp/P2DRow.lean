@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Arm64.Exp.P2Wit
+import FvModexp.Proofs.Arm64.Exp.CalleeInstP2Q
 
 set_option autoImplicit false
 
@@ -18,12 +19,12 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvMod
 
 namespace FvModexp.Arm64.P2DRow
 
-open FvModexp.Arm64.CalleeInst FvModexp.Arm64.P2Wit FvModexp.Arm64.NHyp FvModexp.Arm64.ExpHyp
+open FvModexp.Arm64.CalleeInstQ FvModexp.Arm64.P2WitQ FvModexp.Arm64.NHyp FvModexp.Arm64.ExpHyp
 
-/-- the precondition (= `NHyp2.P2HypC`'s, stack need `2^13`, budget `P2D.cP sqrC mulC`) -/
+/-- the precondition (= `NHyp2.P2HypC`'s, stack need `2^13`, budget `P2D.cP sqrCQ mulCQ`) -/
 @[reducible] def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (stk : Nat) (z zl zc st x xl xc y yl lm : Nat)
     (s : State) : Prop :=
-  (CPre R b L stk 112 z zl zc st [(x, xl), (y, yl)] (P2D.needP xl yl lm) (P2D.cP sqrC mulC (stLen s.mem st) xl yl lm) s ∧
+  (CPre R b L stk 112 z zl zc st [(x, xl), (y, yl)] (P2D.needP xl yl lm) (P2D.cP sqrCQ mulCQ (stLen s.mem st) xl yl lm) s ∧
     0 < natVal s.mem x xl ∧ 0 < natVal s.mem y yl ∧ 1 ≤ lm ∧ lm ≤ 2 ^ 13 ∧ 0 < st ∧
     ∃ op, EvenHyp.NatOne R L s.mem op (win s stk 112 ++ [(z, z + 8 * zc)] ++ stWs s.mem st) ∧
       EvenHyp.StkApart s.mem st op 8) ∧ xl ≤ xc ∧ xc < 2 ^ 40
@@ -32,7 +33,7 @@ open FvModexp.Arm64.CalleeInst FvModexp.Arm64.P2Wit FvModexp.Arm64.NHyp FvModexp
 @[reducible] def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (stk : Nat) (z zc st x xl y yl lm : Nat)
     (s s' : State) : Prop :=
   CPostR R b L stk 112 z zc st (natVal s.mem x xl ^ natVal s.mem y yl % 2 ^ lm)
-    (P2D.cP sqrC mulC (stLen s.mem st) xl yl lm) s s'
+    (P2D.cP sqrCQ mulCQ (stLen s.mem st) xl yl lm) s s'
 
 /-- **`nat.expNNPowerOfTwo`** (arm64): `z.expNNPowerOfTwo(stk, x, y, logM)` returns `x^y mod 2^logM` for every
 `x > 0`, `y > 0`, `1 ≤ logM ≤ 2^13` (`Pre` / `Post`), for every runtime meeting the live allocation / copy / clear /
@@ -55,10 +56,10 @@ theorem correctness (impl : List Segment) (hap : ImplApart Extracted.program imp
       [z, zl, zc, st, x, xl, xc, y, yl, yc, lm]
       (Pre R b L stk z.toNat zl.toNat zc.toNat st.toNat x.toNat xl.toNat xc.toNat y.toNat yl.toNat lm.toNat)
       (Post R b L stk z.toNat zc.toNat st.toNat x.toNat xl.toNat y.toNat yl.toNat lm.toNat) := by
-  have hW := sqrWX_eq
+  have hW := CalleeInst.sqrWX_eq
   exact Ensures.full hap (P2D.ens hap sub nf2 nf4 nfP nfD hgr hmc hmv hmk hno hwb (kcP := NatSqr.sqrWX) (by omega)
     (sn hap hgr hmc hwb) (by omega) (by omega) (sq hap hgr hmc hmv hmk hwb) (Nat.le_refl _) (by omega) sqm
-    (mu hap hgr hmc hmv hmk hwb) (by rw [mulWX_eq]; omega) (by omega) mum (tr hap hmv hmk) (by omega) (by omega)
+    (mu hap hgr hmc hmv hmk hwb) (by rw [CalleeInst.mulWX_eq]; omega) (by omega) mum (tr hap hmv hmk) (by omega) (by omega)
     (rh hap hmv hmk) (by omega) (lh hap hmc hmv hmk) (by omega) stk (by omega) hk2 (by omega) (by omega)
     b L z zl zc st x xl xc y yl yc lm)
 
@@ -80,7 +81,7 @@ abbrev s0 : State := mkS (segAddr Extracted.program NHyp.fnP2) args
 
 theorem g0 : (s0.regs 28).toNat = G0 := by decide
 
-theorem bud : P2D.cP sqrC mulC 0 1 1 8 ≤ BW := by decide +kernel
+theorem bud : P2D.cP sqrCQ mulCQ 0 1 1 8 ≤ BW := by decide +kernel
 
 /-- the two inputs `x = [3]`, `y = [5]` are readable, held, outside the window, apart from the stack -/
 theorem insOK : ∀ p n, (p, n) ∈ [(XP, 1), (YP, 1)] → RdIn R [] s0 KW 112 p n ∧ n ≤ 2 ^ 9 ∧ NatNorm s0.mem p n ∧

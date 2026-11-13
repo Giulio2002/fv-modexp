@@ -41,10 +41,10 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem cpM {impl : List Segment} (hmv : MemmoveLive (LibW.program.link impl) P2Pre.mvE 4096 R)
     (ret0 : BitVec 64) (Q : State → Prop) (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s)
-    {sqC : Nat → Nat → Nat} {mlC : Nat → Nat → Nat → Nat} {zzp bp kk cst FV ret : Nat} {r29 : BitVec 64}
+    {sqC : Nat → Nat} {mlC : Nat → Nat → Nat} {zzp bp kk cst FV ret : Nat} {r29 : BitVec 64}
     (KL : KL impl ret0 Q R b L K g sp st zp zc xp xl xc yp yl lm ret s r29 sqC mlC zzp bp kk cst FV)
     {M : Memory} {L1 : List (Nat × Nat)} {b1 : Nat}
-    (hw : WC R L K g sp st zp zc s.mem M L1 b1 (lvlL (stLen s.mem st) lm))
+    (hw : WC R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem M L1 b1 (lvlL (stLen s.mem st) lm))
     (hsl : ESl M sp st (s.regs 29) ret zp zc xp xl xc yp yl lm (stLen s.mem st))
     (htz : TZ R L s.mem M L1 st sp zzp bp lm (natVal s.mem xp xl))
     (z280 : M.readLE (sp + 280) 8 = zzp) (z112 : M.readLE (sp + 112) 8 = 2 * W lm)

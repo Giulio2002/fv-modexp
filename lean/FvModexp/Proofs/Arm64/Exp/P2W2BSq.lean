@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.P2W2BA
 
+set_option autoImplicit false
+
 /-!
 # `expNNPowerOfTwoWindowSize2` (arm64): a loop-body `z = z.sqr(stk, x)` call (agent infra)
 
@@ -31,12 +33,12 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
 theorem sqrB {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
-    {stkS aboveS : Nat} {sqC : Nat → Nat → Nat} (hsq : SqrHypX impl R ns stkS aboveS sqC) (hkS : stkS ≤ K)
+    {stkS aboveS : Nat} {sqC : Nat → Nat} (hsq : SqrHypQ impl R ns stkS aboveS sqC) (hkS : stkS ≤ K)
     (haS : aboveS ≤ 88) (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) {M : Memory} {L1 : List (Nat × Nat)}
     {b1 zzp bp : Nat} (hB : BF R L K g sp st zp zc xp xl xc yp yl lm ret s M L1 b1 zzp bp)
     {v : Bool} {pd ld cd : Nat} (hd : BC R L K g sp st zp zc M L1 zzp bp lm v pd cd) (hcd : 0 < cd) (hld : ld ≤ cd)
     {px lx cx X' : Nat} (hx : BC R L K g sp st zp zc M L1 zzp bp lm (!v) px cx) (hxv : NV M px lx cx X')
-    (hlx : lx ≤ W lm) (hcost : sqC (lvlL (stLen s.mem st) lm) lx ≤ b1)
+    (hlx : lx ≤ W lm) (hcost : sqC lx ≤ b1)
     {ret0 : BitVec 64} {Q : State → Prop} {idx : Nat} (hidx : idx < 480)
     (T : State) (hpc : T.pc = BitVec.ofNat 64 1815584) (hsp : T.sp = BitVec.ofNat 64 sp)
     (h28 : T.regs 28 = BitVec.ofNat 64 g) (hm : T.mem = M) (h30 : T.regs 30 = BitVec.ofNat 64 (1795088 + 4 * idx))
@@ -50,7 +52,7 @@ theorem sqrB {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns 
       (∀ a k, sp + 88 ≤ a → a + k ≤ sp + 560 → s'.mem.readLE a k = M.readLE a k) →
       BC R L K g sp st zp zc s'.mem L2 zzp bp lm v p' c' → NV s'.mem p' l' c' (X' * X') → l' ≤ 2 * W lm →
       BC R L K g sp st zp zc s'.mem L2 zzp bp lm (!v) px cx → NV s'.mem px lx cx X' →
-      b1 - sqC (lvlL (stLen s.mem st) lm) lx ≤ b2 → ReachesRet (LibW.program.link impl) ret0 s' Q) :
+      b1 - sqC lx ≤ b2 → ReachesRet (LibW.program.link impl) ret0 s' Q) :
     ReachesRet (LibW.program.link impl) ret0 T Q := by
   obtain ⟨xlc, xv, xN, xo⟩ := hxv
   have hlx0 : 0 < lx := len_pos xv xo
@@ -72,19 +74,20 @@ theorem sqrB {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns 
   have hxc40 := (BC.facts hP hB hx hcx).1
   have hst48 := hB.wc.sok.2.2.2.1
   have hdWo := dW.2.2 hcd
-  refine LibCalls.sqrCallX hap hns hsq (b := b1) (L := L1) (ra_w2 hap hnf idx hidx) (by rw [hpc, sqr_a])
+  refine LibCalls.sqrCallQ hap hns hsq (HW (stLen s.mem st) lm) (b := b1 + stkR (HW (stLen s.mem st) lm) M st) (L := L1) (ra_w2 hap hnf idx hidx) (by rw [hpc, sqr_a])
     h30 h0 h1 h2 h3 h4 h5 h6 (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)
     ⟨hce, hsv, hgl, hld, dW, xR, by omega, Or.inr fun _ _ => by unfold Apart; omega, hsi,
       by rw [hm, hlen]; have := lL_bd (stLen s.mem st) lm; omega, by rw [hm]; exact dS,
-      by rw [hm]; exact xS, by rw [hm, hlen]; exact hcost, hinv⟩ xC
+      by rw [hm]; exact xS, by rw [hm]; exact Nat.add_le_add_right hcost _, by rw [hm] at hinv ⊢; exact hinv⟩ xC
     ⟨hsx, hdWo.1, fun he => absurd he (by omega), by rw [hm]; exact dO, by rw [hm]; exact xO⟩
+    (by rw [hm]; exact lvl_twin hlen (by omega))
     fun s' hpc' hsp' h28' h29' h18' hrg hpost hreu => ?_
   obtain ⟨p', l', c', e0, e1, e2, L2, b2, ⟨hv', hn', hlc', hc40', hlive', horg⟩, ⟨hLE, hbud', hinv'⟩, hsb, hnew, hF',
     hLF'⟩ := hpost
   simp only [winA, hsN, stWs, hm] at hF' hLF' hsb hnew hbud' hv' hrg
   rw [hgN] at hinv'
-  rw [hlen] at hbud'
-  obtain ⟨hB', hslot, hkeep⟩ := BF.call hP hB hd hcd hkS haS hF' hLF' hrg hLE hinv' hsb
+  obtain ⟨b3, hinv3, hbud3⟩ := P2Q.effQ hinv' hbud' hcost
+  obtain ⟨hB', hslot, hkeep⟩ := BF.call hP hB hd hcd hkS haS hF' hLF' hrg hLE hinv3 hsb
   obtain ⟨hx', hxb⟩ := hkeep (!v) px cx hx hcx hdx.symm
   obtain ⟨xv', xN'⟩ := nv_keep (M := M) (M' := s'.mem) (p := px) (l := lx) fun a k h1 h2 => hxb a k h1 (by omega)
   have hval : natVal s'.mem p' l' = X' * X' := by rw [hv', xv]
@@ -112,8 +115,8 @@ theorem sqrB {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns 
         exact UB.call hd hacc hLE hsb.1
       · obtain ⟨hn2, hin, hap'⟩ := horg.resolve_left heq
         exact ub_res hP hB (by omega) hc40' hin hap' hlive' hLE hsb.1 (hnew heq (by omega))
-  exact KC s' L2 b2 p' l' c' hpc' hsp' h28' h29' h18' e0 e1 e2 hB' hslot hres ⟨hlc', hval, hn', hodd⟩ hl2 hx'
-    ⟨xlc, xv'.trans xv, xN' xN, xo⟩ hbud'
+  exact KC s' L2 b3 p' l' c' hpc' hsp' h28' h29' h18' e0 e1 e2 hB' hslot hres ⟨hlc', hval, hn', hodd⟩ hl2 hx'
+    ⟨xlc, xv'.trans xv, xN' xN, xo⟩ hbud3
 
 end
 

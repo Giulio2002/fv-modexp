@@ -23,14 +23,14 @@ namespace FvModexp.Arm64.P2W4
 open P2W2 (grE mcE wbE wTy grE_eq mcE_eq wbE_eq)
 
 /-- the budget part common to the body: what the loop needs after this body -/
-@[reducible] def bodyB (b : Nat) (s : State) (st lm : Nat) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat)
+@[reducible] def bodyB (b : Nat) (s : State) (st lm : Nat) (sqC : Nat → Nat) (mlC : Nat → Nat → Nat)
     (i c : Nat) : Nat :=
   b + (c + 16 * i) * bc sqC mlC (lvlL (stLen s.mem st) lm) lm + P2Pre.tC lm
 
 /-- the `sqr` / `mul` bounds at the loop level -/
-@[reducible] def SQ (s : State) (st lm : Nat) (sqC : Nat → Nat → Nat) : Nat := sqC (lvlL (stLen s.mem st) lm) (W lm)
-@[reducible] def ML (s : State) (st lm : Nat) (mlC : Nat → Nat → Nat → Nat) : Nat :=
-  mlC (lvlL (stLen s.mem st) lm) (W lm) (W lm)
+@[reducible] def SQ (s : State) (st lm : Nat) (sqC : Nat → Nat) : Nat := sqC (W lm)
+@[reducible] def ML (s : State) (st lm : Nat) (mlC : Nat → Nat → Nat) : Nat :=
+  mlC (W lm) (W lm)
 
 /-- the window `d = yi >> 60` -/
 @[reducible] def dOf (yi : Nat) : Nat := yi / 2 ^ 60
@@ -46,7 +46,7 @@ theorem Z5_eq (lm X Z yi : Nat) : Z5 lm X Z yi = stp lm X Z (yi / 2 ^ (64 - 4)) 
 
 /-- the common facts at every join point of the body -/
 structure JC (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl lm ret : Nat) (s : State)
-    (r29 : BitVec 64) (zzp bp kk cst FV : Nat) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat)
+    (r29 : BitVec 64) (zzp bp kk cst FV : Nat) (sqC : Nat → Nat) (mlC : Nat → Nat → Nat)
     (i c yi Z : Nat) (u : Bool) (S : State) (M : Memory) (L1 : List (Nat × Nat)) (b1 : Nat) : Prop where
   esp : S.sp = BitVec.ofNat 64 sp
   e28 : S.regs 28 = BitVec.ofNat 64 g
@@ -67,7 +67,7 @@ structure JC (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp x
 
 /-- `JC` through a step keeping the slots `[sp + 88, sp + 848)` (a callee) -/
 theorem JC.call {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc yp yl lm ret : Nat}
-    {s : State} {r29 : BitVec 64} {zzp bp kk cst FV : Nat} {sqC : Nat → Nat → Nat} {mlC : Nat → Nat → Nat → Nat}
+    {s : State} {r29 : BitVec 64} {zzp bp kk cst FV : Nat} {sqC : Nat → Nat} {mlC : Nat → Nat → Nat}
     {i c yi Z : Nat} {u : Bool} {S : State} {M : Memory} {L1 : List (Nat × Nat)} {b1 : Nat}
     (h : JC R b L K g sp st zp zc xp xl xc yp yl lm ret s r29 zzp bp kk cst FV sqC mlC i c yi Z u S M L1 b1)
     {S' : State} {M' : Memory} {L2 : List (Nat × Nat)} {b2 : Nat}
@@ -166,7 +166,7 @@ theorem outer_succ (step : Nat → Nat → Nat) (y K i yi c z : Nat) :
 other live buffer `(po, lo, co)` (class `w`, value `Vo`, `lo ≤ w`, spilled at `sp + o1/o2/o3`), the calls still to
 come bounded by `rem` -/
 structure JX (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl lm ret : Nat) (s : State)
-    (r29 : BitVec 64) (zzp bp kk cst FV : Nat) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat)
+    (r29 : BitVec 64) (zzp bp kk cst FV : Nat) (sqC : Nat → Nat) (mlC : Nat → Nat → Nat)
     (i c yi Z : Nat) (u : Bool) (pc : Nat) (v w : Bool) (Vr lrb Vo o1 o2 o3 rem : Nat)
     (S : State) (M : Memory) (L1 : List (Nat × Nat)) (b1 po lo co pr lr cr : Nat) : Prop where
   jc : JC R b L K g sp st zp zc xp xl xc yp yl lm ret s r29 zzp bp kk cst FV sqC mlC i c yi Z u S M L1 b1
@@ -187,7 +187,7 @@ structure JX (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp x
 
 /-- after `sqr` 1 (ra `0x1b605c`): `Z²` (class `!u`); other = `z` = `A` (class `u`, slots `280/112/224`) -/
 @[reducible] def J1 (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl lm ret : Nat)
-    (s : State) (r29 : BitVec 64) (zzp bp kk cst FV : Nat) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat)
+    (s : State) (r29 : BitVec 64) (zzp bp kk cst FV : Nat) (sqC : Nat → Nat) (mlC : Nat → Nat → Nat)
     (i c yi Z : Nat) (u : Bool) :=
   JX R b L K g sp st zp zc xp xl xc yp yl lm ret s r29 zzp bp kk cst FV sqC mlC i c yi Z u
     1794140 (!u) u (Z * Z) (2 * W lm) Z 280 112 224
@@ -195,7 +195,7 @@ structure JX (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp x
 
 /-- after `trunc` 1 (ra `0x1b6070`): `Z1` -/
 @[reducible] def J2 (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl lm ret : Nat)
-    (s : State) (r29 : BitVec 64) (zzp bp kk cst FV : Nat) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat)
+    (s : State) (r29 : BitVec 64) (zzp bp kk cst FV : Nat) (sqC : Nat → Nat) (mlC : Nat → Nat → Nat)
     (i c yi Z : Nat) (u : Bool) :=
   JX R b L K g sp st zp zc xp xl xc yp yl lm ret s r29 zzp bp kk cst FV sqC mlC i c yi Z u
     1794160 (!u) u (Z1 lm Z) (W lm) Z 280 112 224
@@ -203,7 +203,7 @@ structure JX (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp x
 
 /-- after `sqr` 2 (ra `0x1b609c`): `Z1²` (class `u`); other = `Z1` (class `!u`, slots `728/232/120`) -/
 @[reducible] def J3 (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl lm ret : Nat)
-    (s : State) (r29 : BitVec 64) (zzp bp kk cst FV : Nat) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat)
+    (s : State) (r29 : BitVec 64) (zzp bp kk cst FV : Nat) (sqC : Nat → Nat) (mlC : Nat → Nat → Nat)
     (i c yi Z : Nat) (u : Bool) :=
   JX R b L K g sp st zp zc xp xl xc yp yl lm ret s r29 zzp bp kk cst FV sqC mlC i c yi Z u
     1794204 u (!u) (Z1 lm Z * Z1 lm Z) (2 * W lm) (Z1 lm Z) 728 232 120
@@ -211,7 +211,7 @@ structure JX (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp x
 
 /-- after `trunc` 2 (ra `0x1b60b0`): `Z2` -/
 @[reducible] def J4 (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl lm ret : Nat)
-    (s : State) (r29 : BitVec 64) (zzp bp kk cst FV : Nat) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat)
+    (s : State) (r29 : BitVec 64) (zzp bp kk cst FV : Nat) (sqC : Nat → Nat) (mlC : Nat → Nat → Nat)
     (i c yi Z : Nat) (u : Bool) :=
   JX R b L K g sp st zp zc xp xl xc yp yl lm ret s r29 zzp bp kk cst FV sqC mlC i c yi Z u
     1794224 u (!u) (Z2 lm Z) (W lm) (Z1 lm Z) 728 232 120
@@ -219,7 +219,7 @@ structure JX (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp x
 
 /-- after `sqr` 3 (ra `0x1b60dc`): `Z2²` (class `!u`); other = `Z2` (class `u`, slots `280/112/216`) -/
 @[reducible] def J5 (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl lm ret : Nat)
-    (s : State) (r29 : BitVec 64) (zzp bp kk cst FV : Nat) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat)
+    (s : State) (r29 : BitVec 64) (zzp bp kk cst FV : Nat) (sqC : Nat → Nat) (mlC : Nat → Nat → Nat)
     (i c yi Z : Nat) (u : Bool) :=
   JX R b L K g sp st zp zc xp xl xc yp yl lm ret s r29 zzp bp kk cst FV sqC mlC i c yi Z u
     1794268 (!u) u (Z2 lm Z * Z2 lm Z) (2 * W lm) (Z2 lm Z) 280 112 216
@@ -227,7 +227,7 @@ structure JX (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp x
 
 /-- after `trunc` 3 (ra `0x1b60f0`): `Z3` -/
 @[reducible] def J6 (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl lm ret : Nat)
-    (s : State) (r29 : BitVec 64) (zzp bp kk cst FV : Nat) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat)
+    (s : State) (r29 : BitVec 64) (zzp bp kk cst FV : Nat) (sqC : Nat → Nat) (mlC : Nat → Nat → Nat)
     (i c yi Z : Nat) (u : Bool) :=
   JX R b L K g sp st zp zc xp xl xc yp yl lm ret s r29 zzp bp kk cst FV sqC mlC i c yi Z u
     1794288 (!u) u (Z3 lm Z) (W lm) (Z2 lm Z) 280 112 216
@@ -235,7 +235,7 @@ structure JX (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp x
 
 /-- after `sqr` 4 (ra `0x1b611c`): `Z3²` (class `u`); other = `Z3` (class `!u`, slots `728/232/120`) -/
 @[reducible] def J7 (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl lm ret : Nat)
-    (s : State) (r29 : BitVec 64) (zzp bp kk cst FV : Nat) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat)
+    (s : State) (r29 : BitVec 64) (zzp bp kk cst FV : Nat) (sqC : Nat → Nat) (mlC : Nat → Nat → Nat)
     (i c yi Z : Nat) (u : Bool) :=
   JX R b L K g sp st zp zc xp xl xc yp yl lm ret s r29 zzp bp kk cst FV sqC mlC i c yi Z u
     1794332 u (!u) (Z3 lm Z * Z3 lm Z) (2 * W lm) (Z3 lm Z) 728 232 120
@@ -243,7 +243,7 @@ structure JX (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp x
 
 /-- after `trunc` 4 (ra `0x1b6130`): `Z4` -/
 @[reducible] def J8 (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl lm ret : Nat)
-    (s : State) (r29 : BitVec 64) (zzp bp kk cst FV : Nat) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat)
+    (s : State) (r29 : BitVec 64) (zzp bp kk cst FV : Nat) (sqC : Nat → Nat) (mlC : Nat → Nat → Nat)
     (i c yi Z : Nat) (u : Bool) :=
   JX R b L K g sp st zp zc xp xl xc yp yl lm ret s r29 zzp bp kk cst FV sqC mlC i c yi Z u
     1794352 u (!u) (Z4 lm Z) (W lm) (Z3 lm Z) 728 232 120
@@ -251,7 +251,7 @@ structure JX (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp x
 
 /-- after the `mul` (ra `0x1b6188`): `Z4·powers[d]` (class `!u`); other = `Z4` (class `u`, slots `280/112/216`) -/
 @[reducible] def J9 (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl lm ret : Nat)
-    (s : State) (r29 : BitVec 64) (zzp bp kk cst FV : Nat) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat)
+    (s : State) (r29 : BitVec 64) (zzp bp kk cst FV : Nat) (sqC : Nat → Nat) (mlC : Nat → Nat → Nat)
     (i c yi Z : Nat) (u : Bool) :=
   JX R b L K g sp st zp zc xp xl xc yp yl lm ret s r29 zzp bp kk cst FV sqC mlC i c yi Z u
     1794440 (!u) u (Z4 lm Z * Exp.p2Pow lm (natVal s.mem xp xl) (dOf yi)) (2 * W lm) (Z4 lm Z) 280 112 216
@@ -259,7 +259,7 @@ structure JX (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp x
 
 /-- after `trunc` 5 (ra `0x1b619c`): `Z5 = stp Z d` -/
 @[reducible] def J10 (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g sp st zp zc xp xl xc yp yl lm ret : Nat)
-    (s : State) (r29 : BitVec 64) (zzp bp kk cst FV : Nat) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat)
+    (s : State) (r29 : BitVec 64) (zzp bp kk cst FV : Nat) (sqC : Nat → Nat) (mlC : Nat → Nat → Nat)
     (i c yi Z : Nat) (u : Bool) :=
   JX R b L K g sp st zp zc xp xl xc yp yl lm ret s r29 zzp bp kk cst FV sqC mlC i c yi Z u
     1794460 (!u) u (Z5 lm (natVal s.mem xp xl) Z yi) (W lm) (Z4 lm Z) 280 112 216

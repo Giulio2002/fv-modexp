@@ -30,7 +30,7 @@ variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc
     {M : Memory} {L1 : List (Nat × Nat)} {b1 ℓ : Nat}
 
 /-- the words of `y` at a later memory -/
-theorem y_words (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ) :
+theorem y_words (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s) (h : WC R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem M L1 b1 ℓ) :
     ∀ j, j < yl → M.readLE (yp + 8 * j) 8 = Exp.wd (natVal s.mem yp yl) j := by
   intro j hj
   have hyO : OE R L sp K st s.mem yp (8 * yl) := hP.2.2.2.2.2.2.2.1

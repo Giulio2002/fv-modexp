@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.P2PreBld
 
+set_option autoImplicit false
+
 /-!
 # `buildPrecomputationWindowModPower2` (arm64): call helpers of the main loop (agent infra)
 
@@ -54,7 +56,7 @@ theorem pw_sep {lm j k : Nat} (h : j < k) : j * W lm + W lm ≤ k * W lm := by
   rw [Nat.add_mul, Nat.one_mul] at this; exact this
 
 section
-variable {R : RtInv} {kc : Nat} {sqC : Nat → Nat → Nat} {mlC : Nat → Nat → Nat → Nat} {b : Nat}
+variable {R : RtInv} {kc : Nat} {sqC : Nat → Nat} {mlC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {st pw pl ws lm x xl : Nat} {s : State}
 
 set_option maxRecDepth 20000 in

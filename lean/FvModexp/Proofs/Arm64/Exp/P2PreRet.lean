@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.P2PreJ
 
+set_option autoImplicit false
+
 /-!
 # `buildPrecomputationWindowModPower2` (arm64): the loop head at `i = pl` → `RET` (agent infra)
 -/
@@ -10,7 +12,7 @@ namespace FvModexp.Arm64.P2Pre
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 4000000 in
-theorem headRet {impl : List Segment} {R : RtInv} {kc : Nat} {sqC : Nat → Nat → Nat} {mlC : Nat → Nat → Nat → Nat}
+theorem headRet {impl : List Segment} {R : RtInv} {kc : Nat} {sqC : Nat → Nat} {mlC : Nat → Nat → Nat}
     {b : Nat} {L : List (Nat × Nat)} {st pw pl ws lm x xl : Nat} {s : State}
     (hkc : 4608 ≤ kc) (hpre : Pre R kc sqC mlC b L st pw pl ws lm x xl s) :
     HeadJ impl R kc sqC mlC b L st pw pl lm x xl s pl := by
@@ -27,9 +29,11 @@ theorem headRet {impl : List Segment} {R : RtInv} {kc : Nat} {sqC : Nat → Nat 
   have f2 : S.mem.readLE (s.sp.toNat - 208 - 8) 8 = (s.regs 29).toNat := by
     rw [show s.sp.toNat - 208 - 8 = s.sp.toNat - 216 by omega]; exact e1
   have hpl : pl < 2 ^ 63 := by have := hpre.2.2.2.2.1; rcases hpre.2.2.2.1 with rfl | rfl <;> simp_all
+  have hb' : b - cost sqC mlC (stLen s.mem st) pl lm + stkR (HP (stLen s.mem st) pl lm) S.mem st ≤
+      b1 + stkR (HP (stLen s.mem st) pl lm) S.mem st := by simp only [cost]; omega
   unfold Goal
   janus_run [f48, f1, f2]
-  refine ⟨⟨?_, ?_, ?_, ?_⟩, bp, fun j hj => hd j hj, L1, b1, hc.le, hb, hc.inv, hc.scr, hc.sap, hc.sa, hc.fr, hc.lf, hc.ain, hc.bu⟩
+  refine ⟨⟨?_, ?_, ?_, ?_⟩, bp, fun j hj => hd j hj, L1, b1 + stkR (HP (stLen s.mem st) pl lm) S.mem st, hc.le, hb', hc.inv, hc.scr, hc.sap, hc.sa, hc.fr, hc.lf, hc.ain, hc.bu⟩
   · apply BitVec.eq_of_toNat_eq
     simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega
   all_goals janus_simp

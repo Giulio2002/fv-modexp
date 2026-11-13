@@ -1,0 +1,198 @@
+import FvModexp.Proofs.Amd64.Exp.W4PowC
+
+set_option autoImplicit false
+
+/-!
+# window-4 prologue (amd64): one step of the table loop (nat.go:1420-1421), `2 ≤ i < 16` (agent expmc s49)
+
+`powers[i] = buf[i·n:(i+1)·n:(i+2)·n].montgomery(powers[i-1], powers[1], m, k0, numWords)`: from the head
+(`CMPQ AX, $0x10`, `AX = i`) through the bounds checks, the body (+0x9b7), `callP` (return +0xa45), the header store
+`powers[i]` and back to the head with `AX = i + 1`.
+-/
+
+open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Contracts FvModexp
+
+namespace FvModexp.Amd64.W4Pro
+
+open FvModexp.Amd64.W4Loop (Env Inp Buf InpC Inp.c ra_of mont_not)
+
+theorem montE' : segAddr LibW.program MontHyp.fn = 6184288 := by decide
+
+theorem sub8 {sp : Nat} (h1 : 8 ≤ sp) (h2 : sp < 2 ^ 64) :
+    BitVec.ofNat 64 sp - 8#64 = BitVec.ofNat 64 (sp - 8) := by
+  apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
+
+/-- read-after-write closer for concrete frame offsets -/
+macro "rdwP" : tactic => `(tactic| (
+  simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint, Arm64.Memory.readLE_writeLE_self,
+    show (256 : Nat) ^ 8 = 2 ^ 64 from rfl, Nat.mod_eq_of_lt]))
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 64000000 in
+set_option linter.janusRenameI false in
+theorem powStep {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
+    (hclr : MemclrNoHeapPointersLive64 (Extracted.program.ofImpl impl)
+      (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
+    (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
+    {b : Nat} {L : List (Nat × Nat)} {g fs sp n mp mc k0 bp bc : Nat} {M0 : Memory}
+    (hs : PStatic R L g fs sp n mp mc k0 bp bc M0) {tbl : Nat → Nat} {ret : W64} {Q : State → Prop} {r5 : W64}
+    (i : Nat) (S : State) (hi2 : 2 ≤ i) (hi : i < 16)
+    (hpc : S.rip = BitVec.ofNat 64 powHead) (hsp : S.regs 4 = BitVec.ofNat 64 sp) (h0 : S.regs 0 = BitVec.ofNat 64 i)
+    (h5 : S.regs 5 = r5) (h14 : S.regs 14 = BitVec.ofNat 64 g) (hfs : S.fsBase.toNat = fs) (hx15 : S.xmm 15 = 0)
+    (hdf : S.df = false)
+    (hF : FP R L sp bp bc M0 S.mem) (hinv : R.inv b L g (view R.rt L S.mem)) (hrg : S.mem.regions = M0.regions)
+    (hsl : PSl sp n mp mc k0 bp bc S.mem) (hE : ∀ d, d < i → Ent sp n (tp bp n) (tc n) tbl S.mem d)
+    (K : ∀ S' : State, S'.rip = BitVec.ofNat 64 powHead → S'.regs 4 = BitVec.ofNat 64 sp →
+      S'.regs 0 = BitVec.ofNat 64 (i + 1) → S'.regs 5 = r5 → S'.regs 14 = BitVec.ofNat 64 g → S'.fsBase.toNat = fs →
+      S'.xmm 15 = 0 → S'.df = false →
+      FP R L sp bp bc M0 S'.mem → R.inv b L g (view R.rt L S'.mem) → S'.mem.regions = M0.regions →
+      PSl sp n mp mc k0 bp bc S'.mem → (∀ d, d < i → Ent sp n (tp bp n) (tc n) tbl S'.mem d) →
+      Ent sp n (tp bp n) (tc n) (fun _ => Exp.montgomery n (tbl (i - 1)) (tbl 1) (M0.readLE mp (8 * n)) k0) S'.mem i →
+      ReachesRet (LibW.program.link impl) ret S' Q) :
+    ReachesRet (LibW.program.link impl) ret S Q := by
+  have he := hs.1
+  have hn := hs.2.1; have hn16 := hs.2.2.1
+  have hsp1 : 4296 ≤ sp := he.2.1; have hsp2 : sp + 0x3c0 ≤ 2 ^ 48 := he.2.2.1
+  have hbc := hs.2.2.2.2.2.2.2.1; have hbc' := hs.2.2.2.2.2.2.2.2.1
+  have hbb := hs.2.2.2.2.2.2.2.2.2.2.1
+  have hin2 : (i + 2) * n = i * n + 2 * n := by rw [Nat.add_mul]
+  have hin1 : (i + 1) * n = i * n + n := Nat.succ_mul i n
+  have hin16 : i * n + 2 * n ≤ 17 * n := by
+    have := Nat.mul_le_mul_right n (show i + 2 ≤ 17 by omega); rw [Nat.add_mul] at this; omega
+  have hacc : S.mem.accessible (sp - 4296) (4296 + 0x3c0) true = true := by
+    rw [hF.1.accessible]; exact he.2.2.2.1
+  obtain ⟨q3a8, q3b0, q3b8, qd8, q78, qf0, q330⟩ := hsl
+  obtain ⟨-, e1p, e1l, e1c⟩ := hE 1 (by omega)
+  obtain ⟨-, ep, el, ec⟩ := hE (i - 1) (by omega)
+  have h16 : (BitVec.ofNat 64 i).toInt < (16#64 : BitVec 64).toInt := by
+    rw [BitVec.toInt_eq_toNat_of_lt (by simp; omega)]; simp; omega
+  have hp1 : i * n + 2 * n < 2 ^ 64 := by omega
+  have mw2 : (BitVec.ofNat 64 i + 2#64) * BitVec.ofNat 64 n = BitVec.ofNat 64 (i * n + 2 * n) := by
+    apply BitVec.eq_of_toNat_eq
+    simp (disch := omega) only [BitVec.toNat_mul, BitVec.toNat_add, BitVec.toNat_ofNat, Nat.mod_eq_of_lt]
+    exact hin2
+  have mw1 : BitVec.ofNat 64 n * BitVec.ofNat 64 (i + 1) = BitVec.ofNat 64 (i * n + n) := by
+    apply BitVec.eq_of_toNat_eq
+    simp (disch := omega) only [BitVec.toNat_mul, BitVec.toNat_ofNat, Nat.mod_eq_of_lt]
+    rw [Nat.mul_comm, hin1, Nat.mod_eq_of_lt (by omega)]
+  have mw0 : BitVec.ofNat 64 n * BitVec.ofNat 64 i = BitVec.ofNat 64 (i * n) := by
+    apply BitVec.eq_of_toNat_eq
+    simp (disch := omega) only [BitVec.toNat_mul, BitVec.toNat_ofNat, Nat.mod_eq_of_lt]
+    have : i * n < 2 ^ 64 := by omega
+    rw [Nat.mul_comm, Nat.mod_eq_of_lt this]
+  have c1 : (BitVec.ofNat 64 bc < BitVec.ofNat 64 (i * n + 2 * n)) = False := by
+    simp only [BitVec.lt_def, BitVec.toNat_ofNat, eq_iff_iff, iff_false]; omega
+  have c2 : (BitVec.ofNat 64 (i * n + 2 * n) < BitVec.ofNat 64 (i * n + n)) = False := by
+    simp only [BitVec.lt_def, BitVec.toNat_ofNat, eq_iff_iff, iff_false]; omega
+  have c3 : (BitVec.ofNat 64 (i * n + n) < BitVec.ofNat 64 (i * n)) = False := by
+    simp only [BitVec.lt_def, BitVec.toNat_ofNat, eq_iff_iff, iff_false]; omega
+  have rd0 : S.mem.readLE (sp + (i + i * 2) * 8 + 400) 8 = tp bp n (i - 1) := by
+    rw [show sp + (i + i * 2) * 8 + 400 = sp + 424 + 24 * (i - 1) by omega]; exact ep
+  have rd1 : S.mem.readLE (sp + (i + i * 2) * 8 + 408) 8 = n := by
+    rw [show sp + (i + i * 2) * 8 + 408 = sp + 432 + 24 * (i - 1) by omega]; exact el
+  have rd2 : S.mem.readLE (sp + (i + i * 2) * 8 + 416) 8 = tc n (i - 1) := by
+    rw [show sp + (i + i * 2) * 8 + 416 = sp + 440 + 24 * (i - 1) by omega]; exact ec
+  have ar1 : BitVec.ofNat 64 bp + BitVec.ofNat 64 (i * n) <<< 3 = BitVec.ofNat 64 (bp + 8 * (i * n)) := by
+    apply BitVec.eq_of_toNat_eq
+    simp only [BitVec.toNat_add, BitVec.toNat_shiftLeft, BitVec.toNat_ofNat, Nat.shiftLeft_eq, Nat.reducePow]
+    omega
+  janus64_run [q3a8, q3b0, q3b8, qd8, q78, qf0, q330, h16, mw2, mw1, mw0, c1, c2, c3, rd0, rd1, rd2, ar1]
+    until [6184288]
+  have hra : RetAddr ((Extracted.program.onlySegments LibMont.names).link impl) (6205536 + 0xa45) :=
+    ra_of hap mont_not 0xa45 (by decide)
+  have hxI := inp_ent hs (d := i - 1) (by omega)
+  have hyI := inp_ent hs (d := 1) (by omega)
+  have hin0 : (i - 1) * n + n = i * n := by
+    rw [← Nat.succ_mul, Nat.succ_eq_add_one, Nat.sub_add_cancel (by omega)]
+  have hin3 : 2 * n ≤ i * n := Nat.mul_le_mul_right n hi2
+  have hLs := he.2.2.2.2.2.2.2.2.2.2.1
+  have hwrt : Outside (sp - 4296) (4296 + 0x3c0) R.rt := he.2.2.2.2.2.2.2.1
+  have hbw := hs.2.2.2.2.2.2.2.2.2.2.2.2.1
+  unfold Apart at hbw
+  have hmp : mp < 2 ^ 64 := by have := hs.2.2.2.2.2.2.1.2.1; omega
+  have hmc' : mc < 2 ^ 64 := by have := hs.2.2.2.2.1; omega
+  have hk0 : k0 < 2 ^ 64 := hs.2.2.2.2.2.1
+  refine callP hap hclr hmv (b := b) hs (d := i) (by omega) hxI.c hyI.c (by unfold Apart; omega)
+    (by unfold Apart; omega) hra (by rw [montE']) (by simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact sub8 (by omega) (by omega))
+    (by rdwP) (by simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte])
+    (by simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte] <;> rfl)
+    (by simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte])
+    (by simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte])
+    (by simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte])
+    (by simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte] <;> rfl)
+    (by simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte])
+    (by simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte])
+    (by simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte] <;> rfl)
+    (by simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact h14) hfs hx15 (by first | rfl | exact hdf)
+    ?fp ?inv (by rdwP) (by rdwP) (by rdwP) (by rdwP) (by rdwP) ?K
+  case fp =>
+    repeat (first | exact hF | refine FP.write ?_ hLs hsp1 _ (by omega))
+  case inv =>
+    repeat (first | exact hinv | refine FvModexp.Expmc.inv_writeLE (Or.inr (hwrt.of_sub (by omega) (by omega))) ?_)
+  case K =>
+    intro s' hrip e4 e5 e14 efs e15 edf r0 r3 r1 hF' hinv' hrg' hsl hheld hval
+    have m138 : s'.mem.readLE (sp + 312) 8 = i + i * 2 := by rw [hsl _ (by omega) (by omega)]; rdwP
+    have m140 : s'.mem.readLE (sp + 320) 8 = i + 1 := by rw [hsl _ (by omega) (by omega)]; rdwP
+    have hfs' : s'.fsBase.toNat = fs := by rw [efs]; exact hfs
+    have hacc' : s'.mem.accessible (sp - 4296) (4296 + 0x3c0) true = true := by
+      rw [hF'.1.accessible]; exact he.2.2.2.1
+    janus64_run [m138, m140] until [powHead]
+    have sl : ∀ K, 0x60 ≤ K → K + 8 ≤ 0x3c0 → (K + 8 ≤ 0x138 ∨ 0x148 ≤ K) →
+        (K + 8 ≤ 0x1a8 + 24 * i ∨ 0x1a8 + 24 * i + 24 ≤ K) →
+        (((s'.mem.writeLE (sp + (i + i * 2) * 8 + 424) 8 (bp + 8 * (i * n))).writeLE (sp + (i + i * 2) * 8 + 432) 8
+          n).writeLE (sp + (i + i * 2) * 8 + 440) 8 (2 * n)).readLE (sp + K) 8 = S.mem.readLE (sp + K) 8 := by
+      intro K k1 k2 k3 k4
+      simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint]
+      rw [hsl _ (by omega) (by omega)]
+      simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint]
+    refine K _ rfl ?_ ?_ ?_ ?_ hfs' ?_ rfl ?_ ?_ ?_ ?_ ?_ ?_
+    · simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact e4
+    · simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]
+    · simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; rw [e5]
+      simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact h5
+    · simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact e14
+    · exact e15
+    · repeat (first | exact hF' | refine FP.write ?_ hLs hsp1 _ (by omega))
+    · repeat (first | exact hinv' | refine FvModexp.Expmc.inv_writeLE (Or.inr (hwrt.of_sub (by omega) (by omega))) ?_)
+    · simp only [Arm64.Memory.regions_writeLE, hrg', hrg]
+    · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+      · rw [sl 0x3a8 (by omega) (by omega) (by omega) (by omega)]; exact q3a8
+      · rw [sl 0x3b0 (by omega) (by omega) (by omega) (by omega)]; exact q3b0
+      · rw [sl 0x3b8 (by omega) (by omega) (by omega) (by omega)]; exact q3b8
+      · rw [sl 0xd8 (by omega) (by omega) (by omega) (by omega)]; exact qd8
+      · rw [sl 0x78 (by omega) (by omega) (by omega) (by omega)]; exact q78
+      · rw [sl 0xf0 (by omega) (by omega) (by omega) (by omega)]; exact qf0
+      · rw [sl 0x330 (by omega) (by omega) (by omega) (by omega)]; exact q330
+    · intro d hd
+      obtain ⟨f0, f1, f2, f3⟩ := hE d hd
+      have hdn : d * n + n ≤ i * n := by
+        have := Nat.mul_le_mul_right n (show d + 1 ≤ i by omega); rw [Nat.succ_mul] at this; exact this
+      have hdh := (inp_ent hs (d := d) (by omega)).2.2.1
+      refine ⟨?_, ?_, ?_, ?_⟩
+      · simp only [tp]
+        simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint]
+        rw [hheld _ _ hdh (by unfold Apart; omega) (by unfold Apart; omega)]
+        simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint]
+        exact f0
+      · rw [show sp + 0x1a8 + 24 * d = sp + (0x1a8 + 24 * d) by omega, sl _ (by omega) (by omega) (by omega) (by omega),
+          ← Nat.add_assoc]; exact f1
+      · rw [show sp + 0x1b0 + 24 * d = sp + (0x1b0 + 24 * d) by omega, sl _ (by omega) (by omega) (by omega) (by omega),
+          ← Nat.add_assoc]; exact f2
+      · rw [show sp + 0x1b8 + 24 * d = sp + (0x1b8 + 24 * d) by omega, sl _ (by omega) (by omega) (by omega) (by omega),
+          ← Nat.add_assoc]; exact f3
+    · obtain ⟨x0, -, -, -⟩ := hE (i - 1) (by omega)
+      obtain ⟨y0, -, -, -⟩ := hE 1 (by omega)
+      refine ⟨?_, ?_, ?_, ?_⟩
+      · simp only [tp]
+        simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint]
+        rw [hval]
+        simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint]
+        simp only [tp] at x0 y0
+        rw [x0, y0]
+      · simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint]
+        exact rd_w8 (by omega) (by omega)
+      · simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint]
+        exact rd_w8 (by omega) (by omega)
+      · exact rd_w8 (by omega) (by omega)
+
+end FvModexp.Amd64.W4Pro

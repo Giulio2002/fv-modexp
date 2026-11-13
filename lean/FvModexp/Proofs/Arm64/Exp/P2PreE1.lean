@@ -1,6 +1,8 @@
 import FvModexp.Proofs.Arm64.Exp.P2PreX
 import FvModexp.Proofs.Common.StkFrame
 
+set_option autoImplicit false
+
 /-!
 # `buildPrecomputationWindowModPower2` (arm64): the call `buf = stk.nat((len + 1) w)` (nat.go:871) → fill loop
 head `FillJ 0` (agent infra)
@@ -20,7 +22,7 @@ open FvModexp.Arm64.ExpHyp (stWs)
 theorem sn_addr : segAddr Extracted.program StackNat.fn = 1784176 := by decide
 
 section
-variable {impl : List Segment} {R : RtInv} {kc : Nat} {sqC : Nat → Nat → Nat} {mlC : Nat → Nat → Nat → Nat}
+variable {impl : List Segment} {R : RtInv} {kc : Nat} {sqC : Nat → Nat} {mlC : Nat → Nat → Nat}
     {b : Nat} {L : List (Nat × Nat)} {st pw pl ws lm x xl : Nat} {s : State}
 
 set_option maxRecDepth 20000 in
@@ -39,7 +41,8 @@ theorem ctx0 (hpre : Pre R kc sqC mlC b L st pw pl ws lm x xl s) (hkc : 4608 ≤
     (hF : MemFrame s.mem M (winA s (K kc) A)) (hrg : M.regions = s.mem.regions) (hsl : Sl s st pw pl lm M)
     {S' s' : State} (hspN : S'.sp.toNat = s.sp.toNat - 208) (hm : S'.mem = M) {stk above : Nat} (hk : stk ≤ kc)
     (ha : above ≤ 88) (hrg' : s'.mem.regions = S'.mem.regions)
-    {L' : List (Nat × Nat)} {b' : Nat} (hLE : LiveExt R L L') (hinv : R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem))
+    {L' : List (Nat × Nat)} {b' : Nat} (hLE : LiveExt R L L')
+    (hinv : R.inv (b' + stkR (HP (stLen s.mem st) pl lm) s'.mem st) L' (s.regs 28).toNat (view R.rt L' s'.mem))
     (hok : StkOK s'.mem R L' st) (hlen : stLen s'.mem st = stLen S'.mem st + StackNat.rnd (NB pl lm))
     (hsame : stLen S'.mem st + StackNat.rnd (NB pl lm) ≤ stCap S'.mem st →
       stW s'.mem st = stW S'.mem st ∧ stCap s'.mem st = stCap S'.mem st)
@@ -145,7 +148,8 @@ theorem snPre {stkS aboveS : Nat} (hkS : stkS ≤ kc) (haS : aboveS ≤ 88) (hkc
     (hpre : Pre R kc sqC mlC b L st pw pl ws lm x xl s) {M : Memory}
     (hF : MemFrame s.mem M (winA s (K kc) A)) (hrg : M.regions = s.mem.regions)
     {S' : State} (hsp : S'.sp = BitVec.ofNat 64 (s.sp.toNat - 208)) (h28 : S'.regs 28 = s.regs 28) (hm : S'.mem = M) :
-    StackNat.Pre R b L stkS aboveS st (NB pl lm) S' := by
+    StackNatX.PreQ R (b + stkR (HP (stLen s.mem st) pl lm) s.mem st) L (HP (stLen s.mem st) pl lm) stkS aboveS st
+      (NB pl lm) S' := by
   have hsl0 := s.sp.isLt
   have hf := pf_of hpre (by omega)
   have hK := hf.w.sp
@@ -161,13 +165,13 @@ theorem snPre {stkS aboveS : Nat} (hkS : stkS ≤ kc) (haS : aboveS ≤ 88) (hkc
     hinv, -, -⟩ := id hpre
   obtain ⟨-, -, -, -, -, -, -, -, -, -, g11, -, g13⟩ := hgl
   have hrtw : Outside (s.sp.toNat - (208 + kc)) (208 + kc + 80) R.rt := by have := hf.w.rt; simpa only [K, A] using this
-  have hsnc : stackNatCost (stLen s.mem st) (NB pl lm) ≤ b := by
-    have := Nat.le_trans (Nat.le_add_right _ _) hcost; simp only [c0] at this; omega
+  have hsnc : stkR (HP (stLen s.mem st) pl lm) M st ≤ b + stkR (HP (stLen s.mem st) pl lm) s.mem st := by
+    rw [stkR_congr e2]; omega
   subst hm
-  simp only [StackNat.Pre]
+  simp only [StackNatX.PreQ]
   rw [e0, e1, e2]
   refine ⟨CallW.callEnv_of (cenv0 hpre hF hrg) hsp (by rw [h28, BitVec.ofNat_toNat, BitVec.setWidth_eq]) rfl hkS
-      haS, hsv, hok, ?_, fun hc0 => ?_, by omega, by omega, hsnc, ?_, by rw [hF.accessible]; exact g11, ?_, hsfree⟩
+      haS, hsv, hok, ?_, fun hc0 => ?_, by omega, by omega, ⟨by simp only [HP, DPre, StackNat.rnd]; omega, hsnc⟩, ?_, by rw [hF.accessible]; exact g11, ?_, hsfree⟩
   · simp only [win, outside_cons, outside_nil, and_true]; rw [hspN]; omega
   · obtain ⟨o1, o2⟩ := hsta hc0
     refine ⟨?_, by rw [h28]; exact o2⟩
@@ -189,7 +193,7 @@ set_option maxHeartbeats 64000000 in
 /-- **`buf = stk.nat((len+1) w)`** from the callee entry, then the reloads → `FillJ 0` -/
 theorem callSN (hap : ImplApart Extracted.program impl) {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
-    {stkS aboveS : Nat} (hsn : StackNat.HypL impl R ns stkS aboveS) (hkS : stkS ≤ kc) (haS : aboveS ≤ 88)
+    {stkS aboveS : Nat} (hsn : StackNatX.HypQ impl R ns stkS aboveS) (hkS : stkS ≤ kc) (haS : aboveS ≤ 88)
     (hkc : 4608 ≤ kc) (hpre : Pre R kc sqC mlC b L st pw pl ws lm x xl s)
     (kF : FillJ impl R kc sqC mlC b L st pw pl lm x xl s 0) {M : Memory}
     (hF : MemFrame s.mem M (winA s (K kc) A)) (hrg : M.regions = s.mem.regions) (hsl : Sl s st pw pl lm M)
@@ -205,13 +209,20 @@ theorem callSN (hap : ImplApart Extracted.program impl) {ns : List String}
   obtain ⟨hok, e0, e1, e2⟩ := stk_win hpre hF
   have hnb0 : 0 < NB pl lm := Nat.mul_pos (by have := (pl_facts hpre).1; omega) (w_facts hpre).1
   have hnb := nb_le (pl_facts hpre).2.1 (w_facts hpre).2
-  refine LibCalls.stkNatCallL hap hns hsn (b := b) (L := L) (ra_bp hap hnf 31 (by decide)) (by rw [hpc, sn_addr]) h30
+  refine LibCalls.stkNatCallQ hap hns hsn (HP (stLen s.mem st) pl lm) (b := b + stkR (HP (stLen s.mem st) pl lm) s.mem st)
+    (L := L) (ra_bp hap hnf 31 (by decide)) (by rw [hpc, sn_addr]) h30
     h0 h1 (by have := hok.2.2.2.1; omega) (by omega) (by decide) (snPre hkS haS hkc hpre hF hrg hsp h28 hm)
     fun s' hpc' hsp' h28' h29' h18' hrg' hpost => ?_
   obtain ⟨hr0, hr1, hr2, L', b', ⟨hLE, hbud, hinv'⟩, hok', hlen, hsame, hgrow, hF', hLF', hmemb⟩ := hpost
-  have hc := ctx0 hpre hkc hF hrg hsl hspN hm hkS haS hrg' hLE (by rw [h28] at hinv'; exact hinv') hok' hlen hsame
+  rw [hm, stkR_congr e2] at hbud
+  have hle : stkR (HP (stLen s.mem st) pl lm) s'.mem st ≤ b' := by omega
+  have hinv2 := P2Q.inv_eff (r := stkR (HP (stLen s.mem st) pl lm) s'.mem st) (by rw [h28] at hinv'; exact hinv') hle
+  have hbud2 : b ≤ b' - stkR (HP (stLen s.mem st) pl lm) s'.mem st := by omega
+  generalize b' - stkR (HP (stLen s.mem st) pl lm) s'.mem st = b2 at hinv2 hbud2
+  clear hbud hle
+  have hc := ctx0 hpre hkc hF hrg hsl hspN hm hkS haS hrg' hLE hinv2 hok' hlen hsame
     hgrow hF' hLF' hmemb
-  rw [hm, e1] at hr0 hbud
+  rw [hm, e1] at hr0
   have hr0' := hr0 hnb0
   obtain ⟨-, -, -, f3, f4, -, f6, -, -, -, -, -⟩ := hc.sl
   have f224 : s'.mem.readLE (s.sp.toNat - 208 + 224) 8 = pw := by
@@ -227,15 +238,15 @@ theorem callSN (hap : ImplApart Extracted.program impl) {ns : List String}
   have h28' := h28'.trans h28
   have h18' := h18'.trans h18
   have hpreH : Hide (Pre R kc sqC mlC b L st pw pl ws lm x xl s) := ⟨hpre⟩
-  have hcH : Hide (Ctx R kc L st pw pl lm s (stW s'.mem st + 8 * stLen s.mem st) s'.mem L' b') := ⟨hc⟩
-  clear hF' hLF' hF hsame hgrow hpre hc hok hok' hsl hLE hinv' e0 e2 hlen
+  have hcH : Hide (Ctx R kc L st pw pl lm s (stW s'.mem st + 8 * stLen s.mem st) s'.mem L' b2) := ⟨hc⟩
+  clear hF' hLF' hF hsame hgrow hpre hc hok hok' hsl hLE hinv' hinv2 e0 e2 hlen
   have hpc2 : s'.pc = BitVec.ofNat 64 1791052 := hpc'
   obtain ⟨hal, -, ha, -⟩ := hpreH.h.1.2.1
   simp only [K, A] at ha
   clear hpc' hsp'
   janus_run [f224, f232, f144] until [pcF]
-  refine kF _ _ L' b' rfl rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ hcH.h (fun j hj => absurd hj (Nat.not_lt_zero _)) (Nat.zero_le _)
-    hbud
+  refine kF _ _ L' b2 rfl rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ hcH.h (fun j hj => absurd hj (Nat.not_lt_zero _)) (Nat.zero_le _)
+    hbud2
   all_goals janus_simp
 
 end

@@ -45,6 +45,22 @@ A final statement may not use an instance or class of a dependency, so these pla
 * Row 3 `FvModexp.Proofs.Compose.composition` (`Proofs/Common/Compose.lean`): pure Lean. From the guarantees of rows 1 and 2 (hypothesis structure `RowsHold`), geth's `runPrecompiled` agrees with EthLib's
   `modexp fork data gas`: failure iff failure (error length bound, or out of gas), otherwise equal outputs and remaining gas `gas - cost` with `cost` = EthLib's `chargedGas`.
 
+## 2b. Return-address pins (final gate; BRIEF "RETURN-ADDRESS PIN GAP")
+
+No Janus release's audit rejects every precondition that constrains the caller's return address (amd64: the word `[RSP]`;
+arm64: `X30`; probe forms `/srv/janus-ops/v033/probe/{RspBypass64,LrPin}.lean`). The final gate therefore audits every row
+precondition by hand, from the checklist that `scripts/check-ra-pin` generates:
+
+1. `scripts/check-ra-pin --selftest` must print `SELFTEST PASS` (all probe forms c1–c8, d0, e1/e2 + extra spellings are
+   FLAGGED, the controls are CLEAN; `scripts/lint-tests/rapin/`).
+2. After a full dev build (or with the release oleans), `scripts/check-ra-pin -j 2` elaborates every row's `correctness`,
+   unfolds every fv-modexp definition/structure of each Janus form's `pre`, and writes `build/rapin/report.txt`.
+3. Every `FLAG` line is a violation unless the reviewer writes down why it is not (expected: none — no row may constrain
+   `[RSP]` / `X30` beyond the framework ABI predicates). Then read each row's `RSP-REL` / `STACK-ARG` lines (window bounds and
+   stack arguments at `RSP + k`, `k ≥ 8`, are allowed) and its `FRAMEWORK` list (must be Janus ABI/contract predicates only).
+4. The tool over-approximates syntactically after unfolding; it is a checklist, not a proof. Anything the tool cannot
+   classify (`OPAQUE`, `ERROR`, `NO-FORM`) is reviewed directly in the source.
+
 ## 3. Assumptions and limits
 
 * **Toolchain gap.** The binary under verification is built with Go 1.26.10 (Janus-pinned: `GOTOOLCHAIN=go1.26.10`, `CGO_ENABLED=0`, `GOAMD64=v1`, `-trimpath -buildvcs=false`, `scripts/harness.sha256`), because Janus v0.2.0's runtime pins do not

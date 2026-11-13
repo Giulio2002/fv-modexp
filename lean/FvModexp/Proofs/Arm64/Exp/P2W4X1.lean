@@ -30,7 +30,7 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
 /-- **the final `norm` + closure + `RET`** -/
 theorem nmT (hap : ImplApart Extracted.program impl) (hP : EPre R b L K g sp st zp zc xp xl xc yp yl lm s)
-    {M : Memory} {L1 : List (Nat × Nat)} {b1 ℓ : Nat} (hw : WC R L K g sp st zp zc s.mem M L1 b1 ℓ)
+    {M : Memory} {L1 : List (Nat × Nat)} {b1 ℓ : Nat} (hw : WC R (HW (stLen s.mem st) lm) L K g sp st zp zc s.mem M L1 b1 ℓ)
     (hsl : ESl M sp st (s.regs 29) (s.regs 30).toNat zp zc xp xl xc yp yl lm (stLen s.mem st))
     (hr4 : (s.regs 30).toNat % 4 = 0) (hr48 : (s.regs 30).toNat < 2 ^ 48) {zzp bp p l c v cst : Nat}
     (hub : UB R L K g sp st zp zc M L1 zzp bp lm p c) (hv : NV M p l c v) (hbud : b - cst ≤ b1)
