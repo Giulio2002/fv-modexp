@@ -182,7 +182,7 @@ def p2w(l0, lm, wr, pl, rounds, nsq, ntr, yl=None):
     bc = nsq * sqrC(W(lm))(lL) + mulC(W(lm), W(lm))(lL) + ntr * tC(lm)
     it = min(yl, sub(lm, 2) // 64 + 1)  # infra s43: P2W2/P2W4.cost loop rounds over y's words (landed)
     return c0 + alloc(8) + 2 * tC(lm) + rounds * it * bc
-def costO(l, lm, yl=0): return p2w(l, lm, 8, 4, 32, 2, 3, yl) + p2w(l, lm, 20, 16, 16, 4, 5, yl) + alloc(8)
+def costO(l, lm, yl=0): return max(p2w(l, lm, 8, 4, 32, 2, 3, yl), p2w(l, lm, 20, 16, 16, 4, 5, yl)) + alloc(8)  # infra s45: path MAX
 _supTo = {}
 def supToO(l, lm, yl=0):
     key = (l, yl)
@@ -200,17 +200,18 @@ def cPT_table(l):
     """prefix-max table over lm of costO(l, lm, yl) for every yl (int64 [129, 8193])"""
     if l in _cPT: return _cPT[l]
     J = 64 * 128 + 1
-    A = np.zeros(J, dtype=np.int64); B = np.zeros(J, dtype=np.int64); Q = np.zeros(J, dtype=np.int64)
+    # infra s45: costO = path MAX of the two windows + alloc(8) (landed on agent/infra; was their sum)
+    A = np.zeros((2, J), dtype=np.int64); B = np.zeros((2, J), dtype=np.int64); Q = np.zeros(J, dtype=np.int64)
     for j in range(J):
-        a = alloc(8); b = 0
-        for (wr, pl, rounds, nsq, ntr) in ((8, 4, 32, 2, 3), (20, 16, 16, 4, 5)):
+        for w, (wr, pl, rounds, nsq, ntr) in enumerate(((8, 4, 32, 2, 3), (20, 16, 16, 4, 5))):
             lR = l + wr * W(j); lZ = lR + rnd(2 * W(j)); lL = lZ + rnd(NB(pl, j))
-            a += sncN(l, wr * W(j)) + sncN(lR, 2 * W(j)) + p2pre(lZ, pl, j) + alloc(8) + 2 * tC(j)
-            b += rounds * (nsq * sqrC(W(j))(lL) + mulC(W(j), W(j))(lL) + ntr * tC(j))
-        A[j] = a; B[j] = b; Q[j] = sub(j, 2) // 64 + 1
+            A[w][j] = sncN(l, wr * W(j)) + sncN(lR, 2 * W(j)) + p2pre(lZ, pl, j) + alloc(8) + 2 * tC(j)
+            B[w][j] = rounds * (nsq * sqrC(W(j))(lL) + mulC(W(j), W(j))(lL) + ntr * tC(j))
+        Q[j] = sub(j, 2) // 64 + 1
     T = np.zeros((129, J), dtype=np.int64)
     for yl in range(129):
-        T[yl] = np.maximum.accumulate(A + np.minimum(yl, Q) * B)
+        m = np.minimum(yl, Q)
+        T[yl] = np.maximum.accumulate(alloc(8) + np.maximum(A[0] + m * B[0], A[1] + m * B[1]))
     _cPT[l] = T; return T
 def cPv(l, xl, lm):
     """cP for every yl (object array)"""
@@ -248,11 +249,20 @@ def OCost(n, xl, yl, l): return WCost(n, xl, l, 23, 17) if 1 < yl else WCost(n, 
 # ---- expNNEven
 def costG(n):
     return 5 * alloc(8 * (W(n) + 5)) + W(n) * alloc(8 * (2 * W(n) + 2))
-def modInv(l, n):
+def modInv(l, n, xl=None):
+    """infra s45 (landed on agent/infra): ModInv.cost sqrC mulC xl n — round j (i = 2^j, j = 1 .. log2 NW) at its actual
+    sizes: sqr at zB n j (NW + 1 in round 1, 2^(j-1) after), mul (2^j) x min(2^j, xl); final round sqr (NW + 1),
+    mul NW x min(NW, xl); --bridge: + ONE reserve stkRes(l + D n), D n = 8 NW + 72 (ModInv.ens, bridged Q-form)"""
     NW = (n + 63) // 64
-    rc = sqrC(NW + 1)(l) + mulC(2 * NW + 2, NW)(l) + 2 * makeCost(2 * NW + 2) + makeCost(NW + 2) + 5 * alloc(8 * (W(n) + 5))
-    R = NW.bit_length()  # infra s43: ModInv.rounds = Nat.log2 NW + 1 (landed)
-    return makeCost(NW + 1) + makeCost(2 * NW) + R * rc
+    if xl is None: xl = NW
+    fixedR = 2 * makeCost(2 * NW + 2) + makeCost(NW + 2) + 5 * alloc(8 * (W(n) + 5))
+    def zB(j): return NW + 1 if j == 1 else 2 ** (j - 1)
+    tot = makeCost(NW + 1) + makeCost(2 * NW)
+    for j in range(1, NW.bit_length()):          # j = 1 .. log2 NW
+        k = 2 ** j
+        tot = tot + sqrC(zB(j))(l) + mulC(k, min(k, xl))(l) + fixedR
+    tot = tot + sqrC(NW + 1)(l) + mulC(NW, min(NW, xl))(l) + fixedR
+    return tot + (stkRes(l + 8 * NW + 72) if BRIDGE else 0)
 
 def nb_parts(xl, a0, l, ybig):
     """NBudE / NCost at (xl, a0, l) without cS and cP: returns (budget part, cost part)"""
@@ -284,7 +294,7 @@ def costE(xl, ml):
     b3, c3 = supU_vec(xl, ml, w3, 64 * ml)
     b4, c4 = supU_vec(xl, ml, w4, 64 * ml)
     fixed = (sncN(l0, ml) + makeB(ml + 1) + sncN(l0 + rnd(ml), ml) + makeB(ml) + sncN(w2, 2 * ml) + sncN(w3, 2 * ml) +
-             alloc(8 * (ml + 4)) + costG(64 * ml) + modInv(w4, 64 * ml) + 2 * mulC(ml, ml)(w4) + makeB(2 * ml) +
+             alloc(8 * (ml + 4)) + costG(64 * ml) + modInv(w4, 64 * ml, ml) + 2 * mulC(ml, ml)(w4) + makeB(2 * ml) +
              makeB(ml + 1))
     return fixed + c3 + np.maximum(b4, c4)  # infra s43: costE eC1 = cU at wL3, eC2 = max bU cU at wL4 (landed)
 

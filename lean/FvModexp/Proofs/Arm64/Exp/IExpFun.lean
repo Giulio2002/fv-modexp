@@ -80,10 +80,10 @@ theorem nSum (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
         ArgsFrom s 0 [BitVec.ofNat 64 zp, BitVec.ofNat 64 zl, BitVec.ofNat 64 zc, BitVec.ofNat 64 0,
           BitVec.ofNat 64 zp, BitVec.ofNat 64 zl, BitVec.ofNat 64 zc, BitVec.ofNat 64 yp, BitVec.ofNat 64 yl,
           BitVec.ofNat 64 yc, BitVec.ofNat 64 mp, BitVec.ofNat 64 n, BitVec.ofNat 64 mc, BitVec.ofNat 64 0] ∧
-        ExpN.PreNF R b L K costF needR costR (ExpN.addN needS needE) needP (ExpN.addC costS costE) costP
+        ExpN.PreNF R b L K costF needR costR (ExpN.addN needS needE) needP (ExpN.maxC costS costE) costP
           zp zl zc 0 zp zl zc yp yl yc mp n mc 0 s)
       (fun s s' => (s'.sp = s.sp ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧ s'.regs 18 = s.regs 18) ∧
-        ExpN.PostN R b L K costF costR (ExpN.addC costS costE) costP zp zc zp zl yp yl mp n s s') := by
+        ExpN.PostN R b L K costF costR (ExpN.maxC costS costE) costP zp zc zp zl yp yl mp n s s') := by
   have hS := Ensures.toSummaryIn (ExpN.ensNilF impl hap R H hEv hstkE hget hno hput hRem hnsR hn11R hKR b L
     zp zl zc 0 zp zl zc yp yl yc mp n mc 0) (noExit_restrict hap LibNE.names) (codeIn_restrict_mono hap ne_sub)
   rw [← LibExp.eq_only, show segAddr Extracted.program ExpN.fn = fnN by decide] at hS
@@ -116,9 +116,9 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     (hneed : ∀ xl yl n lm, xl ≤ 128 → yl ≤ 128 → 0 < n → n ≤ 128 → lm < 64 * n →
       needR xl n ≤ 2 ^ 16 ∧ ExpN.addN needS needE xl yl n ≤ 2 ^ 16 ∧ needP xl yl lm ≤ 2 ^ 16)
     (hbud : ∀ xl yl n lm, xl ≤ 128 → yl ≤ 128 → 0 < n → n ≤ 128 → lm < 64 * n →
-      24 + (makeCost 1 + makeCost n + costR 0 xl n + ExpN.addC costS costE 0 xl yl n + costP 0 xl yl lm +
-        ExpOdd.OBud costF n xl yl 0) ≤ ExpBudget (max (max xl yl) n) yl ∧
-      24 + ExpN.NCost costF costR (ExpN.addC costS costE) costP xl yl n 0 lm ≤ ExpBudget (max (max xl yl) n) yl) :
+      24 + (makeCost 1 + max (costR 0 xl n) (makeCost n + max (ExpN.maxC costS costE 0 xl yl n)
+        (max (costP 0 xl yl lm) (ExpOdd.OBud costF n xl yl 0)))) ≤ ExpBudget (max (max xl yl) n) yl ∧
+      24 + ExpN.NCost costF costR (ExpN.maxC costS costE) costP xl yl n 0 lm ≤ ExpBudget (max (max xl yl) n) yl) :
     ExpSpecX impl R stk above := by
   intro b L z y mm
   rw [namesExp_eq, ← LibExp.eq_only, show segAddr Extracted.program (RunIface.P ++ "(*Int).exp") = fnI by decide]
@@ -223,7 +223,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
   have hrg3 : S3.mem.regions = s.mem.regions := by rw [cm, hrgC, hrg1]
   have h283 : S3.regs 28 = s.regs 28 := c28.trans (q28.trans a28)
   have hsp3 : S3.sp = BitVec.ofNat 64 (s.sp.toNat - 320) := c2
-  have hP := preNF_of (needS := ExpN.addN needS needE) (costS := ExpN.addC costS costE) hIP hm0 hlz hly hlm hone hx
+  have hP := preNF_of (needS := ExpN.addN needS needE) (costS := ExpN.maxC costS costE) hIP hm0 hlz hly hlm hone hx
     hK hK4 hK20 hab hzp hzl hzc hyp hyl hyc hmp hmn hmc hnR hnS hnP hbP hsp3 h283 hF3' hrg3
   -- the call of `nat.expNN`
   refine Reaches.call_regions ((nSum impl hap R H hEv hstkE hget hno hput hRem hnsR hn11R hKR b L zp zl zc yp yl yc

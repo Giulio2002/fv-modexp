@@ -141,15 +141,15 @@ abbrev clBU : Nat → Nat → Nat → Nat → Nat → Nat := Exp.supU (ExpEven.N
 /-- the dominating bound of `expNNEven`'s inner cost -/
 abbrev clCU : Nat → Nat → Nat → Nat → Nat → Nat := Exp.supU (ExpN.NCost clF clR clS clP)
 /-- `nat.expNNEven`'s cost -/
-abbrev clE : Nat → Nat → Nat → Nat → Nat := ExpEven.costE clF clR clS clP clBU clCU sqrC mulC mulC
+abbrev clE : Nat → Nat → Nat → Nat → Nat := ExpEven.costE clF clR clS clP clBU clCU sqrCQ mulCQ mulC
 
 /-- the closed allocation-budget bound of `(*Int).exp` (`IExp.ens`'s `hbud` for the closed callee costs; the same
 text as top's `Run.Closed.BudOK`) -/
 def BudCl : Prop :=
   ∀ xl yl n lm, xl ≤ 128 → yl ≤ 128 → 0 < n → n ≤ 128 → lm < 64 * n →
-    24 + (makeCost 1 + makeCost n + clR 0 xl n + ExpN.addC clS clE 0 xl yl n + clP 0 xl yl lm +
-      ExpOdd.OBud clF n xl yl 0) ≤ RunIface.ExpBudget (max (max xl yl) n) yl ∧
-    24 + ExpN.NCost clF clR (ExpN.addC clS clE) clP xl yl n 0 lm ≤ RunIface.ExpBudget (max (max xl yl) n) yl
+    24 + (makeCost 1 + max (clR 0 xl n) (makeCost n + max (ExpN.maxC clS clE 0 xl yl n)
+      (max (clP 0 xl yl lm) (ExpOdd.OBud clF n xl yl 0)))) ≤ RunIface.ExpBudget (max (max xl yl) n) yl ∧
+    24 + ExpN.NCost clF clR (ExpN.maxC clS clE) clP xl yl n 0 lm ≤ RunIface.ExpBudget (max (max xl yl) n) yl
 
 theorem rem_mono : ∀ x a a', a ≤ a' → NatRem.need x a ≤ NatRem.need x a' := fun _ _ _ _ => by
   simp only [NatRem.need]; omega

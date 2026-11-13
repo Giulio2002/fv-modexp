@@ -170,8 +170,8 @@ theorem npre_of (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s)
       StackNat.rnd lm + 2 * StackNat.rnd (2 * lm) + 32 * lm + 80 ≤ 2 ^ 16)
     (hs2 : stLen M st + needR xl lm ≤ 2 ^ 16) (hs3 : stLen M st + needS xl yl lm ≤ 2 ^ 16)
     (hs4 : stLen M st + needP xl yl (Nat.log2 (natVal M pm lm)) ≤ 2 ^ 16)
-    (hbud : makeCost 1 + makeCost lm + costR (stLen M st) xl lm + costS (stLen M st) xl yl lm +
-      costP (stLen M st) xl yl (Nat.log2 (natVal M pm lm)) + ExpOdd.OBud costF lm xl yl (stLen M st) ≤ b1) :
+    (hbud : makeCost 1 + max (costR (stLen M st) xl lm) (makeCost lm + max (costS (stLen M st) xl yl lm)
+      (max (costP (stLen M st) xl yl (Nat.log2 (natVal M pm lm))) (ExpOdd.OBud costF lm xl yl (stLen M st)))) ≤ b1) :
     ExpN.NPre R b1 L1 KN costF needR costR needS needP costS costP g (sp - 1312) r k k st xp xl xc yp yl yc pm lm cm 0
       S := by
   have hsN : S.sp.toNat = sp := by rw [hsp, BitVec.toNat_ofNat]; have := hP.1.2.2.2.2.2.2.2.2.2.1; omega

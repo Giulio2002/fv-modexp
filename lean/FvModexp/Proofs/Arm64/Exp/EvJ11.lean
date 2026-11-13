@@ -1,5 +1,5 @@
 import FvModexp.Proofs.Arm64.Exp.EvJ10
-import FvModexp.Proofs.Arm64.Exp.ModInvDefs
+import FvModexp.Proofs.Arm64.Exp.ModInvQDefs
 
 set_option autoImplicit false
 
@@ -17,13 +17,13 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvMod
 namespace FvModexp.Arm64.ExpEven
 
 /-- `ModInv.ens`'s conclusion (every instance) -/
-def MiEns (impl : List Segment) (R : RtInv) (kc : Nat) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat) :
+def MiEns (impl : List Segment) (R : RtInv) (kc : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) :
     Prop :=
   ∀ (ℓ b : Nat) (L : List (Nat × Nat)) (zp zl zc st xp xl xc n : Nat),
     Ensures ((Extracted.program.onlySegments LibW.names).link impl) (segAddr Extracted.program ModInv.fn)
       [BitVec.ofNat 64 zp, BitVec.ofNat 64 zl, BitVec.ofNat 64 zc, BitVec.ofNat 64 st, BitVec.ofNat 64 xp,
         BitVec.ofNat 64 xl, BitVec.ofNat 64 xc, BitVec.ofNat 64 n]
-      (ModInv.PreL R kc sqC mlC ℓ b L zp zl zc st xp xl xc n) (ModInv.Post R kc (sqC ℓ) (mlC ℓ) b L zp zc st xp xl n)
+      (ModInv.PreL R kc sqrC mulC ℓ b L zp zl zc st xp xl xc n) (ModInv.PostL R kc sqrC mulC ℓ b L zp zc st xp xl n)
 
 theorem modInv_a : segAddr Extracted.program ModInv.fn = 1797104 := by decide
 

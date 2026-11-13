@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.ModInvNewton
 
+set_option autoImplicit false
+
 /-!
 # `nat.modularInverseModPowerOfTwo` (arm64): the join-point statements (agent infra)
 
@@ -18,11 +20,11 @@ open FvModexp.Arm64.RunIface (Serves)
 open FvModexp.Arm64.EvenHyp
 
 /-- what the function promises, from a state `S` inside its frame (entry state `s`) -/
-@[reducible] def Goal (impl : List Segment) (R : RtInv) (kc : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat)
+@[reducible] def Goal (impl : List Segment) (R : RtInv) (kc H : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat)
     (b : Nat) (L : List (Nat × Nat)) (zp zc st xp xl n : Nat) (s S : State) : Prop :=
   ReachesRet (LibW.program.link impl) (s.regs 30) S (fun s' =>
     (s'.sp = s.sp ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧ s'.regs 18 = s.regs 18) ∧
-      Post R kc sqrC mulC b L zp zc st xp xl n s s')
+      Post R kc H sqrC mulC b L zp zc st xp xl n s s')
 
 /-- the saved LR / FP -/
 @[reducible] def Fw0 (s : State) (M : Memory) : Prop :=
@@ -33,20 +35,20 @@ open FvModexp.Arm64.EvenHyp
 
 /-- **JS** (`+0x64`, the Newton loop's exit, `n ≤ 64`): `X0 = z.ptr`, `X2 = cap z`, `X7 = n`, `X10 = k0`; only
 stack stores so far -/
-def JS (impl : List Segment) (R : RtInv) (kc : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
+def JS (impl : List Segment) (R : RtInv) (kc H : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
     (L : List (Nat × Nat)) (zp zl zc st xp xl xc n : Nat) (s : State) : Prop :=
-  ∀ S : State, Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s → n ≤ 64 →
+  ∀ S : State, Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s → n ≤ 64 →
     S.pc = BitVec.ofNat 64 (1797104 + 0x64) → S.sp = BitVec.ofNat 64 (s.sp.toNat - 240) →
     S.regs 28 = s.regs 28 → S.regs 18 = s.regs 18 →
     S.regs 0 = BitVec.ofNat 64 zp → S.regs 2 = BitVec.ofNat 64 zc → S.regs 7 = BitVec.ofNat 64 n →
     S.regs 10 = BitVec.ofNat 64 (k0 s xp xl n) →
     MemFrame s.mem S.mem (winA s (K kc) A) → S.mem.regions = s.mem.regions → Fw0 s S.mem →
-    Goal impl R kc sqrC mulC b L zp zc st xp xl n s S
+    Goal impl R kc H sqrC mulC b L zp zc st xp xl n s S
 
 /-- **J0** (`+0x6c`, `n > 64`): the arguments in `X0, X2 … X7`, `X10 = k0`; only stack stores so far -/
-def J0 (impl : List Segment) (R : RtInv) (kc : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
+def J0 (impl : List Segment) (R : RtInv) (kc H : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
     (L : List (Nat × Nat)) (zp zl zc st xp xl xc n : Nat) (s : State) : Prop :=
-  ∀ S : State, Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s → 64 < n →
+  ∀ S : State, Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s → 64 < n →
     S.pc = BitVec.ofNat 64 (1797104 + 0x6c) → S.sp = BitVec.ofNat 64 (s.sp.toNat - 240) →
     S.regs 28 = s.regs 28 → S.regs 18 = s.regs 18 →
     S.regs 0 = BitVec.ofNat 64 zp → S.regs 2 = BitVec.ofNat 64 zc → S.regs 3 = BitVec.ofNat 64 st →
@@ -54,7 +56,7 @@ def J0 (impl : List Segment) (R : RtInv) (kc : Nat) (sqrC : Nat → Nat) (mulC :
     S.regs 7 = BitVec.ofNat 64 n → S.regs 10 = BitVec.ofNat 64 (k0 s xp xl n) →
     MemFrame s.mem S.mem (winA s (K kc) A) → S.mem.regions = s.mem.regions → Fw0 s S.mem →
     S.mem.readLE (s.sp.toNat + 8) 8 = zp → S.mem.readLE (s.sp.toNat + 40) 8 = xp →
-    Goal impl R kc sqrC mulC b L zp zc st xp xl n s S
+    Goal impl R kc H sqrC mulC b L zp zc st xp xl n s S
 
 theorem inv_win {R : RtInv} {b g : Nat} {L : List (Nat × Nat)} {s : State} {kc : Nat} {M : Memory}
     (hal : K kc ≤ s.sp.toNat) (hout : Outside (s.sp.toNat - K kc) (K kc + A) R.rt) (hF : MemFrame s.mem M (winA s (K kc) A))

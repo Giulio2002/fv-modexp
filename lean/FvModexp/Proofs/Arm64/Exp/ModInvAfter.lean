@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.ModInvOwn
 
+set_option autoImplicit false
+
 /-!
 # `nat.modularInverseModPowerOfTwo` (arm64): the round facts after a call (agent infra)
 
@@ -16,12 +18,12 @@ open FvModexp.Arm64.EvenHyp
 open FvModexp.Arm64.ExpHyp (stWs RdIn WrOut)
 
 section
-variable {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
+variable {R : RtInv} {kc : Nat} {H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
 
 set_option maxRecDepth 20000 in
 /-- a callee whose frame misses the stack object leaves it alone -/
-theorem nostk (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M M' : Memory} {L1 L2 : List (Nat × Nat)}
+theorem nostk (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) {M M' : Memory} {L1 L2 : List (Nat × Nat)}
     {b1 : Nat} (hrt : RtM R kc L s zp zc st M L1 b1) {S' : State} (hS' : S'.sp.toNat = s.sp.toNat - 240)
     {stk above : Nat} (hstk : stk ≤ kc) (habove : above ≤ 88) {t tc : Nat}
     (ht : Own R kc L L1 s zp zc st xp xl M t tc)
@@ -55,7 +57,7 @@ theorem nostk (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M M' : M
 set_option maxRecDepth 20000 in
 /-- what a callee writing the owned array `t` leaves: runtime facts, spill slots, the other owned array `o` with its
 words, and its result `t'` owned and apart from `o` -/
-theorem after_core (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) (hkc : 4608 ≤ kc) {M M' : Memory}
+theorem after_core (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) (hkc : 4608 ≤ kc) {M M' : Memory}
     {L1 L2 : List (Nat × Nat)} {b1 b2 : Nat} (hrt : RtM R kc L s zp zc st M L1 b1) {S' : State}
     (hS' : S'.sp.toNat = s.sp.toNat - 240) {stk above : Nat} (hstk : stk ≤ kc) (habove : above ≤ 88) {t tc : Nat}
     (ht : Own R kc L L1 s zp zc st xp xl M t tc) (hreg : M'.regions = M.regions)
@@ -92,7 +94,7 @@ theorem fw2_keep {M M' : Memory} (hs : ∀ a, s.sp.toNat - 248 ≤ a ∧ a + 8 �
 
 set_option maxRecDepth 20000 in
 /-- the round facts after a callee writing `zz` -/
-theorem after_zz (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) (hkc : 4608 ≤ kc) {M M' : Memory}
+theorem after_zz (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) (hkc : 4608 ≤ kc) {M M' : Memory}
     {L1 L2 : List (Nat × Nat)} {b1 b2 p l c q ql qc : Nat}
     (hmid : Mid R kc L s zp zc st xp xl xc n M L1 b1 p l c q ql qc) {S' : State}
     (hS' : S'.sp.toNat = s.sp.toNat - 240) {stk above : Nat} (hstk : stk ≤ kc) (habove : above ≤ 88)
@@ -117,7 +119,7 @@ theorem after_zz (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) (hkc :
 
 set_option maxRecDepth 20000 in
 /-- the round facts after a callee writing `z` -/
-theorem after_z (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) (hkc : 4608 ≤ kc) {M M' : Memory}
+theorem after_z (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) (hkc : 4608 ≤ kc) {M M' : Memory}
     {L1 L2 : List (Nat × Nat)} {b1 b2 p l c q ql qc : Nat}
     (hmid : Mid R kc L s zp zc st xp xl xc n M L1 b1 p l c q ql qc) {S' : State}
     (hS' : S'.sp.toNat = s.sp.toNat - 240) {stk above : Nat} (hstk : stk ≤ kc) (habove : above ≤ 88)

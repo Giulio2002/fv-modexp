@@ -62,8 +62,8 @@ def PreNil (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K : Nat) (costF : Nat 
   StackNat.rnd (23 * n) + StackNat.rnd (xl - n + 1) + StackNat.rnd n + 16 * xl + StackNat.rnd n +
     2 * StackNat.rnd (2 * n) + 32 * n + 80 ≤ 2 ^ 16 ∧
   needR xl n ≤ 2 ^ 16 ∧ needS xl yl n ≤ 2 ^ 16 ∧ needP xl yl (Nat.log2 (natVal s.mem mp n)) ≤ 2 ^ 16 ∧
-  24 + (makeCost 1 + makeCost n + costR 0 xl n + costS 0 xl yl n + costP 0 xl yl (Nat.log2 (natVal s.mem mp n)) +
-    ExpOdd.OBud costF n xl yl 0) ≤ b ∧
+  24 + (makeCost 1 + max (costR 0 xl n) (makeCost n + max (costS 0 xl yl n)
+    (max (costP 0 xl yl (Nat.log2 (natVal s.mem mp n))) (ExpOdd.OBud costF n xl yl 0)))) ≤ b ∧
   s.mem.readLE (Free.poolA + newOffset) 8 = 0 ∧ Outside (Free.poolA + newOffset) 8 [(sp - K, sp + 1432)] ∧
   R.inv b L g (view R.rt L s.mem)
 

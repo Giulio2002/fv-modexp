@@ -31,7 +31,7 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvMod
 
 namespace FvModexp.Arm64.ExpEven
 
-open StackNat (rnd)
+-- (s45) `rnd` is written `StackNat.rnd`: Common/MulCost's `FvModexp.rnd` (same body) shadows the opened name
 
 /-! ### small arithmetic facts (kept out of the big contexts) -/
 
@@ -58,7 +58,7 @@ theorem need1 (hneed : ℓ0 + needE needR needS needP xl yl ml ≤ 2 ^ 16) {a : 
     ℓ0 + a + 3 ≤ 2 ^ 16 := by unfold needE at hneed; omega
 
 theorem need2 (hneed : ℓ0 + needE needR needS needP xl yl ml ≤ 2 ^ 16) {a c : Nat} (ha : a ≤ ml) (hc : c ≤ ml) :
-    ℓ0 + rnd a + c + 3 ≤ 2 ^ 16 := by
+    ℓ0 + StackNat.rnd a + c + 3 ≤ 2 ^ 16 := by
   have := rnd_mono ha; unfold needE at hneed; omega
 
 theorem need3 (hneed : ℓ0 + needE needR needS needP xl yl ml ≤ 2 ^ 16) {l : Nat} (hl : l ≤ wL4 ℓ0 ml) :
@@ -78,15 +78,15 @@ theorem wL2_le (ℓ0 ml : Nat) : wL2 ℓ0 ml ≤ wL4 ℓ0 ml := by simp only [wL
 theorem wL0_le (ℓ0 ml : Nat) : ℓ0 ≤ wL4 ℓ0 ml := by simp only [wL4, wL3, wL2]; omega
 
 theorem costE_eq (costF : Nat → Nat → Nat → Nat) (costR : Nat → Nat → Nat → Nat)
-    (costS costP : Nat → Nat → Nat → Nat → Nat) (bU cU : Nat → Nat → Nat → Nat → Nat → Nat) (sqC : Nat → Nat → Nat) (mlC mlG : Nat → Nat → Nat → Nat)
-    (ℓ0 xl yl ml : Nat) :
-    costE costF costR costS costP bU cU sqC mlC mlG ℓ0 xl yl ml =
-      stackNatCost ℓ0 ml + makeB (ml + 1) + stackNatCost (ℓ0 + rnd ml) ml + makeB ml +
+    (costS costP : Nat → Nat → Nat → Nat → Nat) (bU cU : Nat → Nat → Nat → Nat → Nat → Nat) (sqQ : Nat → Nat) (mlQ : Nat → Nat → Nat)
+    (mlG : Nat → Nat → Nat → Nat) (ℓ0 xl yl ml : Nat) :
+    costE costF costR costS costP bU cU sqQ mlQ mlG ℓ0 xl yl ml =
+      stackNatCost ℓ0 ml + makeB (ml + 1) + stackNatCost (ℓ0 + StackNat.rnd ml) ml + makeB ml +
         stackNatCost (wL2 ℓ0 ml) (2 * ml) + eC1 cU xl yl ml (wL3 ℓ0 ml) +
         stackNatCost (wL3 ℓ0 ml) (2 * ml) + eC2 bU cU xl yl ml (wL4 ℓ0 ml) +
         allocCost (8 * (ml + 4)) + SubMod2N.costG (64 * ml) +
-        ModInv.cost (sqC (wL4 ℓ0 ml)) (mlC (wL4 ℓ0 ml)) (64 * ml) + mlG (wL4 ℓ0 ml) ml ml + makeB (2 * ml) +
-        mlG (wL4 ℓ0 ml) ml ml + makeB (ml + 1) := rfl
+        (ModInv.cost sqQ mlQ ml (64 * ml) + stkRes (wL4 ℓ0 ml + ModInv.D (64 * ml))) + mlG (wL4 ℓ0 ml) ml ml +
+        makeB (2 * ml) + mlG (wL4 ℓ0 ml) ml ml + makeB (ml + 1) := rfl
 
 section
 variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g sp st zp zc xp xl xc yp yl yc mp ml mc ret : Nat}
@@ -108,7 +108,7 @@ theorem body {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns 
     (hmz : MemmoveZeroLive (LibNE.program.link impl) mvE 4096 R)
     (hmk : MakesliceLiveContract (LibNE.program.link impl) mkE 4096 R)
     (hSE : SubMod2N.EnsG impl R) (hK4 : 4608 ≤ K)
-    {kc : Nat} {sqC : Nat → Nat → Nat} {mlC : Nat → Nat → Nat → Nat} (hMi : MiEns impl R kc sqC mlC)
+    {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} (hMi : MiEns impl R kc sqrC mulC)
     (hKc : 240 + kc ≤ K) (hkc : 4608 ≤ kc)
     {stkM aboveM : Nat} {mlG : Nat → Nat → Nat → Nat} (hmu : MulHypG impl R ns stkM aboveM mlG)
     (hkM : stkM ≤ K) (haM : aboveM ≤ 88)
@@ -121,13 +121,13 @@ theorem body {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns 
       NBudE costF costR costS costP x y a l k ≤ bU x y a' l' k')
     (hNC : ∀ x y a a' l l' k k', a ≤ a' → l ≤ l' → k ≤ k' →
       ExpN.NCost costF costR costS costP x y a l k ≤ cU x y a' l' k')
-    (hsm : ∀ ℓ ℓ' a a', ℓ ≤ ℓ' → a ≤ a' → sqC ℓ a ≤ sqC ℓ' a')
-    (hmm : ∀ ℓ ℓ' a a' c c', ℓ ≤ ℓ' → a ≤ a' → c ≤ c' → mlC ℓ a c ≤ mlC ℓ' a' c')
+    (hsm : ∀ a a', a ≤ a' → sqrC a ≤ sqrC a')
+    (hmm : ∀ a a' c c', a ≤ a' → c ≤ c' → mulC a c ≤ mulC a' c')
     (hgm : ∀ ℓ ℓ' a a' c c', ℓ ≤ ℓ' → a ≤ a' → c ≤ c' → mlG ℓ a c ≤ mlG ℓ' a' c')
     (zl : Nat) (hP : EPre R b L K g sp st zp zc xp xl xc yp yl yc mp ml mc s) (hM : 0 < natVal s.mem mp ml)
     (hev : natVal s.mem mp ml % 2 = 0) (hX : NHyp.XFacts R L xp xl xc) (hzw : Outside zp (8 * zc) [(sp - K, sp + 448)])
     (hneed : stLen s.mem st + needE needR needS needP xl yl ml ≤ 2 ^ 16)
-    (hcost : costE costF costR costS costP bU cU sqC mlC mlG (stLen s.mem st) xl yl ml ≤ b)
+    (hcost : costE costF costR costS costP bU cU sqrC mulC mlG (stLen s.mem st) xl yl ml ≤ b)
     (hr4 : ret % 4 = 0) (hr48 : ret < 2 ^ 48) (hzl : zl < 2 ^ 64)
     (hpc : s.pc = BitVec.ofNat 64 fnE)
     (h0 : s.regs 0 = BitVec.ofNat 64 zp) (h1 : s.regs 1 = BitVec.ofNat 64 zl) (h2 : s.regs 2 = BitVec.ofNat 64 zc)
@@ -138,7 +138,7 @@ theorem body {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns 
     (h30 : s.regs 30 = BitVec.ofNat 64 ret) :
     ReachesRet (LibNE.program.link impl) (BitVec.ofNat 64 ret) s
       (FQ R b L K zp zc st (natVal s.mem xp xl ^ natVal s.mem yp yl % natVal s.mem mp ml)
-        (costE costF costR costS costP bU cU sqC mlC mlG (stLen s.mem st) xl yl ml) s) := by
+        (costE costF costR costS costP bU cU sqrC mulC mlG (stLen s.mem st) xl yl ml) s) := by
   obtain ⟨hn0, hn⟩ := nE_bd hP hM hev
   have ha1 : a1 (nE s mp ml) ≤ ml := by simp only [a1]; omega
   have ha2 : a2 ml (nE s mp ml) ≤ ml := by simp only [a2]; omega
@@ -146,15 +146,15 @@ theorem body {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns 
   have hNW : ModInv.NW (nE s mp ml) ≤ ml := by simp only [ModInv.NW]; omega
   have ha11 : a1 (nE s mp ml) + 1 ≤ ml + 1 := Nat.succ_le_succ ha1
   have hml40 : ml < 2 ^ 40 := by have := hP.2.2.2.2.2.2.1; omega
-  have hC := costE_eq costF costR costS costP bU cU sqC mlC mlG (stLen s.mem st) xl yl ml
-  generalize costE costF costR costS costP bU cU sqC mlC mlG (stLen s.mem st) xl yl ml = cE at hC hcost ⊢
+  have hC := costE_eq costF costR costS costP bU cU sqrC mulC mlG (stLen s.mem st) xl yl ml
+  generalize costE costF costR costS costP bU cU sqrC mulC mlG (stLen s.mem st) xl yl ml = cE at hC hcost ⊢
   obtain ⟨r15, e15⟩ : ∃ r, r = b - cE := ⟨_, rfl⟩
   obtain ⟨r14, e14⟩ : ∃ r, r = makeB (ml + 1) + r15 := ⟨_, rfl⟩
   obtain ⟨r13, e13⟩ : ∃ r, r = mlG (wL4 (stLen s.mem st) ml) ml ml + r14 := ⟨_, rfl⟩
   obtain ⟨r12, e12⟩ : ∃ r, r = makeB (2 * ml) + r13 := ⟨_, rfl⟩
   obtain ⟨r11, e11⟩ : ∃ r, r = mlG (wL4 (stLen s.mem st) ml) ml ml + r12 := ⟨_, rfl⟩
-  obtain ⟨r10, e10⟩ : ∃ r, r = ModInv.cost (sqC (wL4 (stLen s.mem st) ml)) (mlC (wL4 (stLen s.mem st) ml))
-    (64 * ml) + r11 := ⟨_, rfl⟩
+  obtain ⟨r10, e10⟩ : ∃ r, r = (ModInv.cost sqrC mulC ml (64 * ml) +
+    stkRes (wL4 (stLen s.mem st) ml + ModInv.D (64 * ml))) + r11 := ⟨_, rfl⟩
   obtain ⟨r9, e9⟩ : ∃ r, r = SubMod2N.costG (64 * ml) + r10 := ⟨_, rfl⟩
   obtain ⟨r8, e8⟩ : ∃ r, r = allocCost (8 * (ml + 4)) + r9 := ⟨_, rfl⟩
   obtain ⟨r7, e7⟩ : ∃ r, r = eC2 bU cU xl yl ml (wL4 (stLen s.mem st) ml) + r8 := ⟨_, rfl⟩
@@ -162,7 +162,7 @@ theorem body {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns 
   obtain ⟨r5, e5⟩ : ∃ r, r = eC1 cU xl yl ml (wL3 (stLen s.mem st) ml) + r6 := ⟨_, rfl⟩
   obtain ⟨r4, e4⟩ : ∃ r, r = stackNatCost (wL2 (stLen s.mem st) ml) (2 * ml) + r5 := ⟨_, rfl⟩
   obtain ⟨r3, e3⟩ : ∃ r, r = makeB ml + r4 := ⟨_, rfl⟩
-  obtain ⟨r2, e2⟩ : ∃ r, r = stackNatCost (stLen s.mem st + rnd ml) ml + r3 := ⟨_, rfl⟩
+  obtain ⟨r2, e2⟩ : ∃ r, r = stackNatCost (stLen s.mem st + StackNat.rnd ml) ml + r3 := ⟨_, rfl⟩
   obtain ⟨r1, e1⟩ : ∃ r, r = makeB (ml + 1) + r2 := ⟨_, rfl⟩
   have hc1 : stackNatCost (stLen s.mem st) (a1 (nE s mp ml)) ≤ stackNatCost (stLen s.mem st) ml :=
     stackNatCost_mono (Nat.le_refl _) ha1
@@ -204,8 +204,7 @@ theorem body {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns 
   intros; rename_i h
   refine segMi hap hMi hKc hkc hP hM hev
     (fun l1 l2 q1 q2 => needMi hneed (ℓ4_le hn q1 q2) hNW) (rk' := r11)
-    (fun l1 l2 q1 q2 => rk_le (miCost_mono (fun a a' ha => hsm _ _ a a' (ℓ4_le hn q1 q2) ha)
-      (fun a a' c c' ha hc => hmm _ _ a a' c c' (ℓ4_le hn q1 q2) ha hc) hn0 hnw) e10) ?_ h
+    (fun l1 l2 q1 q2 => rk_le (miB_mono hsm hmm q2 hn0 hnw (ℓ4_le hn q1 q2)) e10) ?_ h
   intros; rename_i h
   refine segM1 hap hns hnf hmu hkM haM hP hM hev (fun l1 l2 q1 q2 => needM hneed (ℓ4_le hn q1 q2)) (rk' := r12)
     (fun l1 l2 a c q1 q2 qa qc => rk_le (hgm _ _ a ml c ml (ℓ4_le hn q1 q2) qa qc) e11) ?_ h

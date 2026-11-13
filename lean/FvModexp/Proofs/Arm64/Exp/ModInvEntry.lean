@@ -1,6 +1,8 @@
 import FvModexp.Proofs.Arm64.Exp.ModInvSeg
 import FvModexp.Proofs.Common.Util
 
+set_option autoImplicit false
+
 /-!
 # `nat.modularInverseModPowerOfTwo` (arm64): entry → Newton loop → `JS` / `J0` (agent infra)
 -/
@@ -19,16 +21,16 @@ theorem x0_eq (m : Memory) (xp xl : Nat) (hxl : 0 < xl) : m.readLE xp 8 = natVal
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem entry (impl : List Segment) (R : RtInv) (kc : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
+theorem entry (impl : List Segment) (R : RtInv) (kc H : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
     (L : List (Nat × Nat)) (zp zl zc st xp xl xc n : Nat) (s : State) (hkc : 4608 ≤ kc)
     (hpc : s.pc = BitVec.ofNat 64 1797104)
     (h0 : s.regs 0 = BitVec.ofNat 64 zp) (h1 : s.regs 1 = BitVec.ofNat 64 zl) (h2 : s.regs 2 = BitVec.ofNat 64 zc)
     (h3 : s.regs 3 = BitVec.ofNat 64 st) (h4 : s.regs 4 = BitVec.ofNat 64 xp) (h5 : s.regs 5 = BitVec.ofNat 64 xl)
     (h6 : s.regs 6 = BitVec.ofNat 64 xc) (h7 : s.regs 7 = BitVec.ofNat 64 n)
-    (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s)
-    (kS : JS impl R kc sqrC mulC b L zp zl zc st xp xl xc n s)
-    (kB : J0 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s) :
-    Goal impl R kc sqrC mulC b L zp zc st xp xl n s s := by
+    (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s)
+    (kS : JS impl R kc H sqrC mulC b L zp zl zc st xp xl xc n s)
+    (kB : J0 impl R kc H sqrC mulC b L zp zl zc st xp xl xc n s) :
+    Goal impl R kc H sqrC mulC b L zp zc st xp xl n s s := by
   have hpre' := hpre
   obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, -, hout, hga, -, -, -⟩, -, -, hn1, hn2, -, hzp, -, -, hx0, hxc, hxc40, -,
     ⟨-, hxa, hx48, -, hxw⟩, -, -, -, -, -, -, -, -, -, -, -, -⟩ := hpre'

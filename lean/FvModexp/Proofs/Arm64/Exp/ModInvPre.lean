@@ -1,6 +1,8 @@
 import FvModexp.Proofs.Arm64.Exp.ModInvRnd
 import FvModexp.Proofs.Arm64.Exp.ModInvJ2
 
+set_option autoImplicit false
+
 /-!
 # `nat.modularInverseModPowerOfTwo` (arm64): callee preconditions inside a round (agent infra)
 
@@ -17,7 +19,7 @@ open FvModexp.Arm64.EvenHyp
 open FvModexp.Arm64.ExpHyp (stWs RdIn WrOut LshPost)
 
 section
-variable {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
+variable {R : RtInv} {kc : Nat} {H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
 
 theorem sp'_eq {S' : State} (hsp : S'.sp = BitVec.ofNat 64 (s.sp.toNat - 240)) :
@@ -25,7 +27,7 @@ theorem sp'_eq {S' : State} (hsp : S'.sp = BitVec.ofNat 64 (s.sp.toNat - 240)) :
   rw [hsp, BitVec.toNat_ofNat]; exact Nat.mod_eq_of_lt (by have := s.sp.isLt; omega)
 
 set_option maxRecDepth 20000 in
-theorem cenv_at (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory} {L1 : List (Nat × Nat)}
+theorem cenv_at (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory} {L1 : List (Nat × Nat)}
     {b1 : Nat} (hrt : RtM R kc L s zp zc st M L1 b1) {S' : State}
     (hsp : S'.sp = BitVec.ofNat 64 (s.sp.toNat - 240)) (h28 : S'.regs 28 = s.regs 28) (hm : S'.mem = M)
     {stk above : Nat} (hstk : stk ≤ kc) (habove : above ≤ 88) : CallEnv R L1 S' stk above := by
@@ -38,7 +40,7 @@ theorem cenv_at (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M : Me
 
 set_option maxRecDepth 20000 in
 /-- `Globals` (window form) at a callee state `S'` (`SP' = SP - 240`, window `stk ≤ kc`, `above ≤ 88`) -/
-theorem globals_at (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory} {L1 : List (Nat × Nat)}
+theorem globals_at (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory} {L1 : List (Nat × Nat)}
     {b1 : Nat} (hrt : RtM R kc L s zp zc st M L1 b1) {S' : State} (hsp : S'.sp.toNat = s.sp.toNat - 240)
     {stk above : Nat} (hstk : stk ≤ kc) (habove : above ≤ 88) : RunIface.Globals R M (win S' stk above) := by
   have hK : 240 + kc ≤ s.sp.toNat := by have := hpre.1.2.1.2.1; simp only [K] at this; omega
@@ -86,7 +88,7 @@ theorem wrOut_own {L1 : List (Nat × Nat)} {M : Memory} {p c : Nat}
 
 set_option maxRecDepth 20000 in
 /-- `x[:k]` as a callee operand -/
-theorem rdIn_x (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory} {L1 : List (Nat × Nat)}
+theorem rdIn_x (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory} {L1 : List (Nat × Nat)}
     {b1 : Nat} (hrt : RtM R kc L s zp zc st M L1 b1) {k : Nat} (hk : k ≤ xl) {S' : State}
     (hsp : S'.sp.toNat = s.sp.toNat - 240) (hm : S'.mem = M) {stk above : Nat} (hstk : stk ≤ kc)
     (habove : above ≤ 88) : RdIn R L1 S' stk above xp k := by
@@ -101,7 +103,7 @@ theorem rdIn_x (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M : Mem
 
 set_option maxRecDepth 20000 in
 /-- the stack object for a callee -/
-theorem stkIn_at (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory} {L1 : List (Nat × Nat)}
+theorem stkIn_at (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory} {L1 : List (Nat × Nat)}
     {b1 : Nat} (hrt : RtM R kc L s zp zc st M L1 b1) {S' : State}
     (hsp : S'.sp.toNat = s.sp.toNat - 240) (h28 : S'.regs 28 = s.regs 28) (hm : S'.mem = M) {stk above : Nat}
     (hstk : stk ≤ kc) (habove : above ≤ 88) : StkIn R L1 S' stk above st := by

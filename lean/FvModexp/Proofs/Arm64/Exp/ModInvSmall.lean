@@ -2,6 +2,8 @@ import FvModexp.Proofs.Arm64.Exp.ModInvSeg
 import FvModexp.Proofs.Common.GenReg
 import FvModexp.Proofs.Common.StkFrame
 
+set_option autoImplicit false
+
 /-!
 # `nat.modularInverseModPowerOfTwo` (arm64): `n ≤ 64` (nat.go:1301-1304) (agent infra)
 
@@ -41,15 +43,16 @@ theorem outside_winA {s : State} {stk above a n : Nat} (h8 : 8 ≤ stk) (h : Out
   simp only [win, winA, outside_cons, outside_nil, and_true] at h ⊢; omega
 
 set_option maxRecDepth 20000 in
-/-- the post when only the stack (`winA`) and possibly `z`'s array were written, `z` kept (`L' = L`, `b' = b`) -/
-theorem post_keep {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
+/-- the post when only the stack (`winA`) and possibly `z`'s array were written, `z` kept (`L' = L`,
+`b' = b + stkR H s.mem st`: the reserve is refunded, the capacity unchanged) -/
+theorem post_keep {R : RtInv} {kc : Nat} {H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State} (hkc : 4608 ≤ kc)
-    (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) (zr : List (Nat × Nat))
+    (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) (zr : List (Nat × Nat))
     (hzr : zr = [] ∨ (0 < zc ∧ zr = [(zp, zp + 8 * zc)])) (s' : State)
-    (hF : MemFrame s.mem s'.mem (winA s (K kc) A ++ zr)) (hinv : R.inv b L (s.regs 28).toNat (view R.rt L s'.mem))
+    (hF : MemFrame s.mem s'.mem (winA s (K kc) A ++ zr)) (hinv : R.inv (b + stkR H s.mem st) L (s.regs 28).toNat (view R.rt L s'.mem))
     {l' : Nat} (e0 : (s'.regs 0).toNat = zp) (e1 : (s'.regs 1).toNat = l') (e2 : (s'.regs 2).toNat = zc)
     (hv : natVal s'.mem zp l' = val (natVal s.mem xp xl) n) (hn : NatNorm s'.mem zp l') (hlc : l' ≤ zc) :
-    Post R kc sqrC mulC b L zp zc st xp xl n s s' := by
+    Post R kc H sqrC mulC b L zp zc st xp xl n s s' := by
   have hpre' := hpre
   obtain ⟨⟨-, -, -, hout, -, -, hLs, -⟩, -, -, -, -, -, -, -, ⟨hzc40, hzlive, -⟩, -, -, -, -, -, -, -, -,
     ⟨hst, hstw, -⟩, -, hsz, -, -, -, -, -, -⟩ := hpre'
@@ -67,7 +70,8 @@ theorem post_keep {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Na
     · simp
     · have := (hsz (by omega)).1; unfold Apart at this; simp only [outside_cons, outside_nil, and_true]; omega
   obtain ⟨-, k0, -, k2⟩ := stkOK_frame hst hF hst' (LiveExt.refl R L)
-  refine ⟨zp, l', zc, e0, e1, e2, hv, hn, hlc, hzc40, L, b, LiveExt.refl R L, Nat.sub_le _ _, hinv, ?_,
+  refine ⟨zp, l', zc, e0, e1, e2, hv, hn, hlc, hzc40, L, b + stkR H s.mem st, LiveExt.refl R L,
+    by rw [stkR_congr k2]; omega, hinv, ?_,
     Or.inl ⟨rfl, rfl⟩, ⟨stackBack_frame hst hF hst' (LiveExt.refl R L), fun hn => absurd ⟨k0, k2⟩ hn⟩, hFb, ?_,
     fun _ hn => absurd ⟨k0, k2⟩ hn⟩
   · intro hc
@@ -87,9 +91,9 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem small (impl : List Segment) (R : RtInv)
     (hmk : MakesliceLiveContract (LibW.program.link impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
-    (kc : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat) (L : List (Nat × Nat))
+    (kc H : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat) (L : List (Nat × Nat))
     (zp zl zc st xp xl xc n : Nat) (s : State) (hkc : 4608 ≤ kc) :
-    JS impl R kc sqrC mulC b L zp zl zc st xp xl xc n s := by
+    JS impl R kc H sqrC mulC b L zp zl zc st xp xl xc n s := by
   intro S hpre hs hpc hsp h28 h18 h0 h2 h7 h10 hF hrg hfw
   have hpre' := hpre
   obtain ⟨⟨-, ⟨hal, hb', ha, hw⟩, hd, hout, hga, hgrt, hLs, hro⟩, hsv, -, hn1, hn2, hzl, hzp, hzc0, ⟨hzc40, hzlive, hzw⟩,

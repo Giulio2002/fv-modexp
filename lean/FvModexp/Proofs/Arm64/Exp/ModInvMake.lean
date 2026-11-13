@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.ModInvRt
 
+set_option autoImplicit false
+
 /-!
 # `nat.modularInverseModPowerOfTwo` (arm64): `J0` → `JM` (nat.go:1308-1316, nat.go:58-69) (agent infra)
 -/
@@ -16,10 +18,10 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem make (impl : List Segment) (R : RtInv)
     (hmk : MakesliceLiveContract (LibW.program.link impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
-    (kc : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat) (L : List (Nat × Nat))
+    (kc H : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat) (L : List (Nat × Nat))
     (zp zl zc st xp xl xc n : Nat) (s : State) (hkc : 4608 ≤ kc)
-    (kM : JM impl R kc sqrC mulC b L zp zl zc st xp xl xc n s) :
-    J0 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s := by
+    (kM : JM impl R kc H sqrC mulC b L zp zl zc st xp xl xc n s) :
+    J0 impl R kc H sqrC mulC b L zp zl zc st xp xl xc n s := by
   intro S hpre hn hpc hsp h28 h18 h0 h2 h3 h4 h5 h6 h7 h10 hF hrg hfw r8 r40
   have hpre' := hpre
   obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, hd, hout, hga, hgrt, hLs, hro⟩, hsv, -, hn1, hn2, hzl, hzp, hzc0,
@@ -47,8 +49,9 @@ theorem make (impl : List Segment) (R : RtInv)
   have hnwb : NW n + 1 < 2 ^ 63 := by simp only [NW]; omega
   by_cases hr : NW n + 1 ≤ zc
   · janus_run [hr, hnwb] until [1797452]
-    refine kM _ zp zc L b hpre hn ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ (rt0 hkc hpre ?hF ?hR).1
-      (Nat.sub_le _ _) (rt0 hkc hpre ?hF ?hR).2 hr
+    refine kM _ zp zc L (b + stkR H s.mem st) hpre hn ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
+      (rt0 hkc hpre ?hF ?hR).1 ?hbq (rt0 hkc hpre ?hF ?hR).2 hr
+    case hbq => rw [stkR_congr (rt0_cap hpre ?hF)]; omega
     case hF =>
       refine hF.trans (?_ : MemFrame S.mem _ (winA s (K kc) A)) fun a k h => ⟨h, h⟩
       simp only [winA, K, A]; janus_frame
@@ -69,7 +72,8 @@ theorem make (impl : List Segment) (R : RtInv)
     have hmc : makeCost (NW n + 1) = allocCost (8 * (NW n + 5)) := by
       unfold makeCost makeCap; rw [if_neg (show ¬ (NW n + 1 = 1) by simp only [NW]; omega)]
     have hbl := blockSize_le_allocCost (8 * (NW n + 5)) true
-    have hbs : blockSize (8 * (NW n + 5)) true ≤ b := by simp only [cost] at hcost; omega
+    have hbs : blockSize (8 * (NW n + 5)) true ≤ b + stkR H s.mem st := by
+      have := hcost.2; simp only [cost] at this; omega
     have hwt : Apart wT 16 (s.sp.toNat - (240 + kc)) (240 + kc + 72) :=
       apart_of_data hd 1 (by decide) (by decide) hw
     obtain ⟨ht8, ht0, hta⟩ := wT_facts hd
@@ -85,7 +89,7 @@ theorem make (impl : List Segment) (R : RtInv)
       unfold k0 Exp.newton; rw [← Exp.B_def]; exact Exp.newton_lt _ _ _ _ (Nat.mod_lt _ Exp.B_pos)
     clear hcost hinv0 hmc hbl hwt hLs hzx hzlive hxh
     janus_run [hr'] until [1797320]
-    refine zalloc impl R hmk _ _ b L (s.regs 28).toNat (s.sp.toNat - 240) kc (NW n) _ (S.regs 18) (S.regs 29)
+    refine zalloc impl R hmk _ _ (b + stkR H s.mem st) L (s.regs 28).toNat (s.sp.toNat - 240) kc (NW n) _ (S.regs 18) (S.regs 29)
       (env_of hpre ?hF0) hkc (by simp only [NW]; omega) (by simp only [NW]; omega) ?t8 ?t0 ?ta hwt' hty hok1 hbs
       (inv_win (by simp only [K]; omega) hout' ?hF0 hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1)
       st xp xl xc n (n + 63) (NW n) (k0 s xp xl n) ?r3 ?r4 ?r5 ?r6 ?r7 ?r8 ?r9 ?r10 _ ?pc ?sp ?h1 ?h9 ?h18 ?h28 ?h29 rfl ?KZ
@@ -94,9 +98,9 @@ theorem make (impl : List Segment) (R : RtInv)
       simp only [winA, K, A]; janus_frame
     case KZ =>
       intro S' m p r e1 e2 e3 e4 e5 e6 e7 e8 e9 e10 e11 e12 e13 e14 e15 e16 e17 hap
-      refine kM S' p (NW n + 5) (L ++ [(p, p + r)]) (b - r) hpre hn e1 (by rw [e2]; try (congr 1; omega)) ?_ (e14.trans h18) e3 e4 e5
+      refine kM S' p (NW n + 5) (L ++ [(p, p + r)]) (b + stkR H s.mem st - r) hpre hn e1 (by rw [e2]; try (congr 1; omega)) ?_ (e14.trans h18) e3 e4 e5
         e6 e7 e8 e9 e10 e11 e12 e13 (e17 ▸ (alloc_jm hkc hpre ?hF0 ?hrg ?hfw hap).1)
-        (e17 ▸ (alloc_jm hkc hpre ?hF0 ?hrg ?hfw hap).2.1) (alloc_jm hkc hpre ?hF0 ?hrg ?hfw hap).2.2.1
+        (e17 ▸ (alloc_jm hkc hpre ?hF0 ?hrg ?hfw hap).2.1) (e17 ▸ (alloc_jm hkc hpre ?hF0 ?hrg ?hfw hap).2.2.1)
         (e17 ▸ (alloc_jm hkc hpre ?hF0 ?hrg ?hfw hap).2.2.2) (by omega)
       · rw [e15, BitVec.ofNat_toNat, BitVec.setWidth_eq]
       · refine hF.trans (?_ : MemFrame S.mem _ (winA s (K kc) A)) fun a k h => ⟨h, h⟩

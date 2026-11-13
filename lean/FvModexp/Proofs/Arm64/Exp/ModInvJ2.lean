@@ -1,6 +1,8 @@
 import FvModexp.Proofs.Arm64.Exp.ModInvSeg3
 import FvModexp.Proofs.Arm64.Exp.ModInvZZ
 
+set_option autoImplicit false
+
 /-!
 # `nat.modularInverseModPowerOfTwo` (arm64): facts at the loop head after `zz.make` + `setWord` (agent infra)
 
@@ -34,9 +36,9 @@ theorem newton64_pos (x : Nat) (hx : x % 2 = 1) : 0 < Exp.newton 64 (x % Exp.B) 
 
 set_option maxRecDepth 20000 in
 /-- the read-only data is still loaded at a memory the runtime facts describe -/
-theorem dl_rt {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
+theorem dl_rt {R : RtInv} {kc : Nat} {H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
-    (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory} {L1 : List (Nat × Nat)} {b1 : Nat}
+    (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory} {L1 : List (Nat × Nat)} {b1 : Nat}
     (hrt : RtM R kc L s zp zc st M L1 b1) : Extracted.program.DataLoaded M := by
   obtain ⟨⟨-, ⟨-, hb', -, hw⟩, hd, -, -, -, -, hro⟩, -, -, -, -, -, -, hzc0, ⟨-, hzlive, -⟩, -, -, -, -, -, -, -, -,
     ⟨⟨-, -, hsta, -, hstl, -, -⟩, -⟩, -⟩ := hpre
@@ -55,25 +57,26 @@ theorem dl_rt {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat �
   · dsimp only at hlt ⊢
     exact Memory.accessible_mono _ (hstl (by omega)).2.2.1 (by omega) (by omega)
 
-theorem budget_aux {b b1 x y z r a : Nat} (h1 : b - x ≤ b1) (h2 : b1 - y ≤ b1 - r) (h3 : y ≤ a) (h4 : z = a) :
-    b - (x + z) ≤ b1 - r := by omega
+theorem budget_aux {b b1 x y z r a R : Nat} (h1 : b - x + R ≤ b1) (h2 : b1 - y ≤ b1 - r) (h3 : y ≤ a) (h4 : z = a)
+    (h5 : x + z ≤ b) : b - (x + z) + R ≤ b1 - r := by omega
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 4000000 in
 /-- the facts at `J2` after `zz := nat(nil).make(2·numWords)` and the store `z[0] = k0` (pure) -/
-theorem zz_j2 {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
+theorem zz_j2 {R : RtInv} {kc : Nat} {H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
-    (hkc : 4608 ≤ kc) (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) (hn : 64 < n) {M m : Memory}
+    (hkc : 4608 ≤ kc) (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) (hn : 64 < n) {M m : Memory}
     {L1 : List (Nat × Nat)} {b1 zp' zc' q r k : Nat}
-    (hfw : Fw1 s M st xp xl xc n k) (hrt : RtM R kc L s zp zc st M L1 b1) (hb : b - makeCost (NW n + 1) ≤ b1)
+    (hfw : Fw1 s M st xp xl xc n k) (hrt : RtM R kc L s zp zc st M L1 b1) (hb : b - makeCost (NW n + 1) + stkR H M st ≤ b1)
     (hown : Own R kc L L1 s zp zc st xp xl M zp' zc') (hcap : NW n + 1 ≤ zc') (hk : k < 2 ^ 64)
     (hap : AllocPostZ R L1 b1 (s.regs 28).toNat (s.sp.toNat - 240) (NW n) M m q r) :
     Fw2 s (m.writeLE zp' 8 k) st xp xl xc n ∧
       RtM R kc L s zp zc st (m.writeLE zp' 8 k) (L1 ++ [(q, q + r)]) (b1 - r) ∧
-      b - spent sqrC mulC n 1 ≤ b1 - r ∧
+      b - spent sqrC mulC xl n 1 + stkR H (m.writeLE zp' 8 k) st ≤ b1 - r ∧
       Own R kc L (L1 ++ [(q, q + r)]) s zp zc st xp xl (m.writeLE zp' 8 k) zp' zc' ∧
       Own R kc L (L1 ++ [(q, q + r)]) s zp zc st xp xl (m.writeLE zp' 8 k) q (2 * NW n + 4) ∧
       Apart zp' (8 * zc') q (8 * (2 * NW n + 4)) ∧ natVal (m.writeLE zp' 8 k) zp' (NW n + 1) % Exp.B = k := by
+  have hcostQ := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1.2
   have hrt' := hrt
   obtain ⟨⟨-, ⟨-, hal, -, -⟩, -, hout, -, hgrt, hLs, -⟩, -, -, hn1, hn2, -, -, -, -, -, -, -, -,
     ⟨-, -, -, hxh, -⟩, -, -, -, ⟨-, hstw, -, -⟩, -, -, hcost, -, -, -, -⟩ := hpre
@@ -170,10 +173,10 @@ theorem zz_j2 {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat �
   · rw [hrd _ (by omega) (by omega)]; exact g7
   · rw [hrd _ (by omega) (by omega)]; exact g8
   · rw [hrd _ (by omega) (by omega)]; exact g9
-  · have e : spent sqrC mulC n 1 = makeCost (NW n + 1) + makeCost (2 * NW n) := by
-      simp only [spent, Nat.sub_self, Nat.zero_mul, Nat.add_zero]
-    rw [e]
-    exact budget_aux hb hbr hbl hmc
+  · have e : spent sqrC mulC xl n 1 = makeCost (NW n + 1) + makeCost (2 * NW n) := by
+      simp only [spent]; rfl
+    rw [e, stkR_congr (f2.trans e2)]
+    exact budget_aux hb hbr hbl hmc (by simp only [cost] at hcostQ; omega)
   · rw [Exp.natVal_prefix _ _ 1 (NW n + 1) (by omega), Nat.pow_one] at hv; exact hv
 
 end FvModexp.Arm64.ModInv

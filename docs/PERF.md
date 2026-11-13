@@ -1598,6 +1598,21 @@ Dev compile after the cost edits: P2W2Cp5 1.9 s, P2DFull 25 s / 3.0 GB, ModInvL0
 | Amd64/Nat/DivOneF / DivOneT / DivOneTB / DivOneTC | 2 / 7 / 11 / 18 s | ≤ 2.5 GB |
 | Amd64/Nat/DivLessRel / DivLess / DivLessA | 1 / 4 / 19 s | ≤ 2.6 GB |
 
+## divmc s38 (2026-11-13) — TIGHT COSTS rows + BudOK pieces + amd64 Q sqr (dev J=2, load ~25)
+* arm64 release rows on the Q chain (janus v0.3.1, cache-divmc, bottom-up BasicSqrRowQ → SqrRowQ → MulRowQ, REPLAY_THREADS=1):
+  157 s / 2.3 GB, 167 s / 1.4 GB, 187 s / 1.0 GB (the first SqrRowQ/MulRowQ attempts FAILED at 900 s because they ran cold:
+  the whole NatQ chain counted as their own; dev critical paths are only ~130 s, own sums 474 s / 848 s — no DAG change needed).
+* Common/BudQX 1.8 s, Arm64/NatQ/BudRem 1.7 s.
+* Amd64/NatQ/Sqr* (Q copies of the old amd64 front half): max SqrOneA 30 s, SqrNorm 27 s, SqrMakeA1 21 s, SqrBS 18 s; all ≤ 3 GB.
+**Re-measure after the P2Nf split (s45, fresh cache `cache-infra/rel2`, same order, load ~45-55):** warm-up 1077 s;
+StackNatRow 136, MulAddWWRow 166, BasicMulRow 153, BasicSqrRow 434, SqrRow 581, MulRow 486, TruncRow 145, RshRow 135,
+LshRow 124, IntASRow 34 s (all PASS), MontRow audit-FAIL 245 s (no witness); **P2W2Row PASS 430 s / 3.2 GB** (was 631),
+**P2W4Row PASS 233 s / 1.5 GB**, **P2DRow PASS 303 s / 2.2 GB** — each row now compiles only its own chain; all ≤ 600 s.
+
+### divmc s39 (2026-11-13): amd64 Q karatsubaSqr segments (dev, LEAN_NUM_THREADS=4, load ~15-20)
+KSqrB 14 s / 3.0 GB, KSqrS1c 14 s / 2.8, KSqrS1 13 s / 2.6, KSqrS2 11 s / 2.6, KSqrS3 17 s / 2.9, KSqrSub 20 s / 2.9,
+KSqrAdd1 54 s / 3.5, KSqrAdd2 75 s / 4.5 (largest; candidates: the cont's omega context), KSqrEndP 13 s / 2.9,
+KSqrEnd 17 s / 2.6, KSqrProD 12 s / 2.7; Amd64/Nat/AddTo (+ df conjunct) 134 s / 5.5 GB (was 110 s).
 ## top s34 (2026-11-13, dev builds, load ~25, LEAN_NUM_THREADS=4)
 | module | time | peak |
 |---|---|---|

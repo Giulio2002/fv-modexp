@@ -2,6 +2,9 @@ import FvModexp.Proofs.Arm64.Exp.MulHyp
 import FvModexp.Proofs.Arm64.Nat.SqrMulX
 import FvModexp.Proofs.Arm64.Exp.SubMod2NDefs
 import FvModexp.Proofs.Common.ModInvMath
+import FvModexp.Proofs.Arm64.NatQ.SqrMulQ
+
+set_option autoImplicit false
 
 /-!
 # `nat.modularInverseModPowerOfTwo` (go-bigmodexpfix nat.go:1287-1341), arm64 — statement pieces (agent infra)
@@ -39,18 +42,53 @@ abbrev A : Nat := 72
 /-- `numWords = ⌈n / 64⌉` (nat.go:1308) -/
 @[reducible] def NW (n : Nat) : Nat := (n + 63) / 64
 
-/-- one Hensel round's budget bound (at most `NW n + 1`-word `z`, `2·NW n + 2`-word `zz`) -/
-@[reducible] def roundCost (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (n : Nat) : Nat :=
-  sqrC (NW n + 1) + mulC (2 * NW n + 2) (NW n) + 2 * makeCost (2 * NW n + 2) + makeCost (NW n + 2) +
-    SubMod2N.cost n
+/-- (infra s45) the size bound of `z` at the start of round `j`: `numWords + 1` in the first round (`z = z.make(numWords
++ 1)`; `z.setWord(k0)` does not shorten it — its result is discarded, nat.go:1323), `2^(j-1)` afterwards (`subMod2N` mod
+`2^(64·2^(j-1))`) -/
+def zB (n j : Nat) : Nat := if j = 1 then NW n + 1 else 2 ^ (j - 1)
 
-/-- the number of Hensel rounds charged: the loop runs for `i = 2, 4, …, < NW n` (nat.go:1328), plus the final round,
-    i.e. at most `⌊log2 (NW n)⌋ + 1` (infra s43, TIGHT COSTS: was `NW n + 1`) -/
-@[reducible] def rounds (n : Nat) : Nat := Nat.log2 (NW n) + 1
+theorem zB_one (n : Nat) : zB n 1 = NW n + 1 := by simp [zB]
 
-/-- the budget: the two `make`s, then at most `rounds n` rounds (the loop's and the final one) -/
-@[reducible] def cost (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (n : Nat) : Nat :=
-  makeCost (NW n + 1) + makeCost (2 * NW n) + rounds n * roundCost sqrC mulC n
+theorem zB_succ (n : Nat) {j : Nat} (hj : 1 ≤ j) : zB n (j + 1) = 2 ^ j := by
+  simp only [zB]; rw [if_neg (by omega), Nat.add_sub_cancel]
+
+theorem zB_le {n j : Nat} (hj : 2 ^ (j - 1) < NW n) : zB n j ≤ NW n + 1 := by
+  unfold zB; split <;> omega
+
+theorem zB_mono {n n' : Nat} (h : n ≤ n') (j : Nat) : zB n j ≤ zB n' j := by
+  unfold zB; split
+  · simp only [NW]; omega
+  · exact Nat.le_refl _
+
+/-- (infra s44, TIGHT COSTS) round `j` (`i = 2^j`) charged at its ACTUAL sizes: `zz = zz.sqr(stk, z)` with
+`len z ≤ zB n j`, `zz = zz.mul(stk, zz, x[:min(k, len x)])` with `len zz ≤ k` (`k = 2^j` in the loop, `numWords` in the
+final round), two `trunc`s, one `lsh`, one `subMod2N` -/
+@[reducible] def roundCost (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (xl n j k : Nat) : Nat :=
+  sqrC (zB n j) + mulC k (min k xl) + 2 * makeCost (2 * NW n + 2) + makeCost (NW n + 2) + SubMod2N.cost n
+
+/-- the loop rounds `1 … r` (`i = 2, 4, …, 2^r`) -/
+def sumR (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (xl n : Nat) : Nat → Nat
+  | 0 => 0
+  | r + 1 => sumR sqrC mulC xl n r + roundCost sqrC mulC xl n (r + 1) (2 ^ (r + 1))
+
+theorem sumR_succ (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (xl n r : Nat) :
+    sumR sqrC mulC xl n (r + 1) = sumR sqrC mulC xl n r + roundCost sqrC mulC xl n (r + 1) (2 ^ (r + 1)) := rfl
+
+theorem sumR_mono (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (xl n : Nat) {r r' : Nat} (h : r ≤ r') :
+    sumR sqrC mulC xl n r ≤ sumR sqrC mulC xl n r' := by
+  induction h with
+  | refl => exact Nat.le_refl _
+  | step _ ih => rw [sumR_succ]; omega
+
+/-- the budget: the two `make`s, the loop rounds `i = 2, …, < numWords` (at most `⌊log2 numWords⌋` of them), the
+final round at `len z ≤ numWords` (infra s43: `log2 + 1` rounds at the final size; s44: per-round sizes) -/
+@[reducible] def cost (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (xl n : Nat) : Nat :=
+  makeCost (NW n + 1) + makeCost (2 * NW n) + sumR sqrC mulC xl n (Nat.log2 (NW n)) +
+    (sqrC (NW n + 1) + mulC (NW n) (min (NW n) xl) + 2 * makeCost (2 * NW n + 2) + makeCost (NW n + 2) +
+      SubMod2N.cost n)
+
+/-- the reserve level of the Q-form (`sqr` level twin `stLen + 4·(2·len z) + 64` at `len z ≤ NW + 1`; `mul` needs `8·NW + 64`) -/
+@[reducible] def D (n : Nat) : Nat := 8 * NW n + 72
 
 /-- the result value (`k0` masked for `n ≤ 64`) -/
 @[reducible] def val (X n : Nat) : Nat := Exp.modularInverseModPowerOfTwo X n
@@ -69,7 +107,7 @@ def PX (R : RtInv) (L : List (Nat × Nat)) (s : State) (zp zc st xp xl xc : Nat)
     Apart (frP s.mem st) (frN s.mem st) RunIface.gA 32 ∧ (stCap s.mem st = 0 → stW s.mem st = 0) ∧
     CapIn R L xp xl xc ∧ OpX s.mem st zp (8 * zc) ∧ OpX s.mem st xp (8 * xl)
 
-@[reducible] def Pre (R : RtInv) (kc : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
+@[reducible] def Pre (R : RtInv) (kc H : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
     (L : List (Nat × Nat)) (zp zl zc st xp xl xc n : Nat) (s : State) : Prop :=
   CallEnv R L s (K kc) A ∧ Serves R ∧
     (RunIface.Globals R s.mem (winA s (K kc) A) ∧ Outside RunIface.gA 32 ([(zp, zp + 8 * zc)] ++ stWs s.mem st)) ∧
@@ -78,24 +116,20 @@ def PX (R : RtInv) (L : List (Nat × Nat)) (s : State) (zp zc st xp xl xc : Nat)
     natVal s.mem xp xl % 2 = 1 ∧ (0 < zc → Apart zp (8 * zc) xp (8 * xc)) ∧
     StkIn R L s (K kc) A st ∧ stLen s.mem st + 8 * NW n + 72 ≤ 2 ^ 16 ∧
     StkApart s.mem st zp (8 * zc) ∧ StkApart s.mem st xp (8 * xl) ∧
-    cost sqrC mulC n ≤ b ∧ R.inv b L (s.regs 28).toNat (view R.rt L s.mem) ∧
+    (stLen s.mem st + D n ≤ H ∧ cost sqrC mulC xl n ≤ b) ∧
+      R.inv (b + stkR H s.mem st) L (s.regs 28).toNat (view R.rt L s.mem) ∧
     (s.regs 30).toNat % 4 = 0 ∧ (s.regs 30).toNat < 2 ^ 48 ∧ Outside NatAdd.wordT 16 R.rt ∧
     (OneIn R L s kc zp zc st ∧ PX R L s zp zc st xp xl xc)
 
-@[reducible] def Post (R : RtInv) (kc : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
+@[reducible] def Post (R : RtInv) (kc H : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
     (L : List (Nat × Nat)) (zp zc st xp xl n : Nat) (s s' : State) : Prop :=
   ∃ p' l' c' : Nat, (s'.regs 0).toNat = p' ∧ (s'.regs 1).toNat = l' ∧ (s'.regs 2).toNat = c' ∧
     natVal s'.mem p' l' = val (natVal s.mem xp xl) n ∧ NatNorm s'.mem p' l' ∧ l' ≤ c' ∧ c' < 2 ^ 40 ∧
-    ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b - cost sqrC mulC n ≤ b' ∧
+    ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b - cost sqrC mulC xl n + stkR H s'.mem st ≤ b' ∧
       R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem) ∧ NatLive s'.mem R L' p' c' ∧
       ((p' = zp ∧ c' = zc) ∨ (InRanges p' (8 * c') R.rt ∧ ApartAll p' (8 * c') L)) ∧
       StackBackL R L L' st s.mem s'.mem ∧
       MemFrame s.mem s'.mem (R.rt ++ winA s (K kc) A ++ [(zp, zp + 8 * zc)] ++ stWs s.mem st) ∧
       LiveFrame s.mem s'.mem L ([(zp, zp + 8 * zc)] ++ stWs s.mem st) ∧ ResSep s.mem s'.mem st p' c'
-
-/-- the precondition with the stack length fixed: `sqr` / `mul` budgets at `ℓ` -/
-@[reducible] def PreL (R : RtInv) (kc : Nat) (sqC : Nat → Nat → Nat) (mlC : Nat → Nat → Nat → Nat) (ℓ b : Nat)
-    (L : List (Nat × Nat)) (zp zl zc st xp xl xc n : Nat) (s : State) : Prop :=
-  Pre R kc (sqC ℓ) (mlC ℓ) b L zp zl zc st xp xl xc n s ∧ stLen s.mem st = ℓ
 
 end FvModexp.Arm64.ModInv

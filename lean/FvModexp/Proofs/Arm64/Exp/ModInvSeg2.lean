@@ -1,6 +1,8 @@
 import FvModexp.Proofs.Arm64.Exp.ModInvSeg
 import FvModexp.Proofs.Common.StkFrame
 
+set_option autoImplicit false
+
 /-!
 # `nat.modularInverseModPowerOfTwo` (arm64): the `n > 64` joins (agent infra)
 
@@ -50,10 +52,10 @@ def WA (zp zc st : Nat) (M : Memory) (p c : Nat) : Prop :=
 
 /-- **JM** (`+0x15c`, after `z = z.make(numWords + 1)`): `X0 = z'.ptr`, `X1 = numWords + 1`, `X2 = cap z'`, `X3 … X10` =
 `stk, x, n, n + 63, numWords, k0` -/
-def JM (impl : List Segment) (R : RtInv) (kc : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
+def JM (impl : List Segment) (R : RtInv) (kc H : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (b : Nat)
     (L : List (Nat × Nat)) (zp zl zc st xp xl xc n : Nat) (s : State) : Prop :=
   ∀ (S : State) (zp' zc' : Nat) (L1 : List (Nat × Nat)) (b1 : Nat),
-    Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s → 64 < n →
+    Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s → 64 < n →
     S.pc = BitVec.ofNat 64 (1797104 + 0x15c) → S.sp = BitVec.ofNat 64 (s.sp.toNat - 240) →
     S.regs 28 = s.regs 28 → S.regs 18 = s.regs 18 →
     S.regs 0 = BitVec.ofNat 64 zp' → S.regs 1 = BitVec.ofNat 64 (NW n + 1) → S.regs 2 = BitVec.ofNat 64 zc' →
@@ -61,16 +63,16 @@ def JM (impl : List Segment) (R : RtInv) (kc : Nat) (sqrC : Nat → Nat) (mulC :
     S.regs 6 = BitVec.ofNat 64 xc → S.regs 7 = BitVec.ofNat 64 n → S.regs 8 = BitVec.ofNat 64 (n + 63) →
     S.regs 9 = BitVec.ofNat 64 (NW n) → S.regs 10 = BitVec.ofNat 64 (k0 s xp xl n) →
     Fw1 s S.mem st xp xl xc n (k0 s xp xl n) → RtM R kc L s zp zc st S.mem L1 b1 →
-    b - makeCost (NW n + 1) ≤ b1 → Own R kc L L1 s zp zc st xp xl S.mem zp' zc' → NW n + 1 ≤ zc' →
-    Goal impl R kc sqrC mulC b L zp zc st xp xl n s S
+    b - makeCost (NW n + 1) + stkR H S.mem st ≤ b1 → Own R kc L L1 s zp zc st xp xl S.mem zp' zc' → NW n + 1 ≤ zc' →
+    Goal impl R kc H sqrC mulC b L zp zc st xp xl n s S
 
 set_option maxRecDepth 20000 in
 /-- after stack-only stores: the runtime facts with the entry live set and budget, and `z` owned -/
-theorem rt0 {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
+theorem rt0 {R : RtInv} {kc : Nat} {H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State} (hkc : 4608 ≤ kc)
-    (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory}
+    (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory}
     (hF : MemFrame s.mem M (winA s (K kc) A)) (hreg : M.regions = s.mem.regions) :
-    RtM R kc L s zp zc st M L b ∧ Own R kc L L s zp zc st xp xl M zp zc := by
+    RtM R kc L s zp zc st M L (b + stkR H s.mem st) ∧ Own R kc L L s zp zc st xp xl M zp zc := by
   have hpre' := hpre
   obtain ⟨⟨-, ⟨hal, -, -, -⟩, -, hout, -, -, hLs, -⟩, -, -, -, -, -, hzp, hzc0, ⟨hzc40, hzlive, hzw⟩, hx0, hxc, -, -,
     -, -, -, hzx, ⟨hst, hstw, -, -⟩, -, hsz, -, -, hinv, -⟩ := hpre'
@@ -92,5 +94,21 @@ theorem rt0 {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → 
     obtain ⟨a1, a2, a3, a4⟩ := hzlive hc
     exact ⟨a1, a2, by rw [hF.accessible]; exact a3, a4⟩
   · exact ⟨by unfold StkApart; rw [e0, e1, e2]; exact hsz, fun h => absurd ⟨rfl, rfl⟩ h⟩
+
+end FvModexp.Arm64.ModInv
+
+namespace FvModexp.Arm64.ModInv
+
+set_option maxRecDepth 20000 in
+/-- (s44) stack-only stores keep the stack's capacity (the reserve `stkR H · st` is unchanged) -/
+theorem rt0_cap {R : RtInv} {kc : Nat} {H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
+    {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
+    (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory}
+    (hF : MemFrame s.mem M (winA s (K kc) A)) : stCap M st = stCap s.mem st := by
+  have hpre' := hpre
+  obtain ⟨-, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, ⟨hst, hstw, -, -⟩, -⟩ := hpre'
+  have hst' : Outside st 24 (winA s (K kc) A) := by
+    simp only [win, winA, outside_cons, outside_nil, and_true] at hstw ⊢; simp only [K] at hstw ⊢; omega
+  exact (stkOK_frame hst hF hst' (LiveExt.refl R L)).2.2.2
 
 end FvModexp.Arm64.ModInv

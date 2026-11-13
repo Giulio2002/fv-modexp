@@ -122,6 +122,10 @@ theorem opnd_v0 {R : RtInv} {L : List (Nat × Nat)} {sp K p k : Nat} {M M1 : Mem
   · subst hk0; exact ⟨rfl, Or.inl rfl⟩
   · exact opnd_v (h hk0) hLF hF hN
 
+/-- an opaque wrapper (keeps a hypothesis away from `omega`) -/
+structure BoxV (P : Prop) : Prop where
+  un : P
+
 set_option maxRecDepth 20000 in
 /-- a range apart from expNN's window `[sp - K, sp + 1432)` is outside it -/
 theorem out_w_of_apart {sp K a k : Nat} (h : Apart a k (sp - K) (K + 1432)) (hK : K ≤ sp) :
@@ -144,6 +148,9 @@ theorem npreV {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {costF : N
   obtain ⟨⟨hs1, hs28, hg1, hg2, hg3, hgo, hal, hK4, hKs, hsp2, hacc, hwrt, hLs, hd, hsv⟩, hK20, hG, ⟨hro, -⟩, hwT, hslow,
     hn, hn128, hnmc, hmc, hmO, hma, hm48, hmN, hyO, hya, hy48, hyN, hyl, hyc, hxO, hxa, hx48, hxN, hxl, hxp, hxc,
     hzp, ⟨hzlc, hxz, hxlz, hxcz⟩, hzc, ⟨-, hzNE⟩, hali, hgAO, hone0, -, hwb, hb1, hb2, hb3, hb4, hbud, -, -, -⟩ := hP
+  -- omega bug workaround (expmc s44): hide the path-MAX budget (`max` → `if`) from the intermediate omega calls
+  have hbudB : BoxV _ := ⟨hbud⟩
+  clear hbud
   have hzc0 : 0 < zc := by omega
   obtain ⟨op, hone⟩ := hone0 hzc0
   clear hone0
@@ -236,6 +243,7 @@ theorem npreV {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {costF : N
     · exact Or.inr (Or.inl h)
     · exact Or.inr (Or.inr (zokV h hN hacM))
   · simp only [hlen, hmv.1]
+    have hbud := hbudB.un
     exact ⟨by omega, by omega, by omega, by omega, by omega, hinv⟩
 
 end FvModexp.Arm64.ExpN

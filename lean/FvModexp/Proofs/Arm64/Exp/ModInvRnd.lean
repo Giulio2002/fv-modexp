@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.ModInvCall
 
+set_option autoImplicit false
+
 /-!
 # `nat.modularInverseModPowerOfTwo` (arm64): the facts inside a Hensel round, and how a callee keeps them (agent infra)
 
@@ -38,9 +40,9 @@ theorem held_bytes {rt L ws1 ws2 : List (Nat × Nat)} {m m' : Memory} {a n : Nat
 
 set_option maxRecDepth 20000 in
 /-- `x`'s words are unchanged at every memory the runtime facts describe -/
-theorem x_val {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
+theorem x_val {R : RtInv} {kc : Nat} {H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
-    (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory} {L1 : List (Nat × Nat)} {b1 : Nat}
+    (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory} {L1 : List (Nat × Nat)} {b1 : Nat}
     (hrt : RtM R kc L s zp zc st M L1 b1) {k : Nat} (hk : k ≤ xl) :
     M.readLE xp (8 * k) = s.mem.readLE xp (8 * k) := by
   obtain ⟨-, -, -, -, -, -, -, hzc0, -, -, hxc, -, -, ⟨-, -, -, hxh, hxw⟩, -, -, hzx, -, -, -, hsx, -⟩ := hpre

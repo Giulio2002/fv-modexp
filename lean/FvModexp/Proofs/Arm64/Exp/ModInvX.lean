@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.ModInvBuild
 
+set_option autoImplicit false
+
 /-!
 # `nat.modularInverseModPowerOfTwo` (arm64): divmc's extra `sqr` / `mul` facts inside a round (agent infra, s25)
 
@@ -17,14 +19,14 @@ open FvModexp.Arm64.EvenHyp
 open FvModexp.Arm64.ExpHyp (stWs RdIn WrOut)
 
 section
-variable {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
+variable {R : RtInv} {kc : Nat} {H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
 
-theorem px_of (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) : PX R L s zp zc st xp xl xc :=
+theorem px_of (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) : PX R L s zp zc st xp xl xc :=
   hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2
 
 /-- the entry `z` is held at entry (`WrOut`) -/
-theorem z_held (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) : Held R L zp (8 * zc) :=
+theorem z_held (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) : Held R L zp (8 * zc) :=
   (hpre.2.2.2.2.2.2.2.2.1.2.1 hpre.2.2.2.2.2.2.2.1).2.1
 
 /-- a range apart from the stack's whole array at `M` is apart from its free part (also when that part is empty) -/
@@ -44,7 +46,7 @@ theorem opX_held {M : Memory} {L1 : List (Nat × Nat)} {b1 : Nat} (hrt : RtM R k
   · exact free_of_arr hok.2.2.2.2.2.1 (by have := fresh_apart hIn hAp hh; unfold Apart at this ⊢; omega)
 
 /-- `OpX` of an owned array -/
-theorem opX_own (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory} {L1 : List (Nat × Nat)}
+theorem opX_own (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory} {L1 : List (Nat × Nat)}
     {b1 : Nat} (hrt : RtM R kc L s zp zc st M L1 b1) {p c : Nat} (ho : Own R kc L L1 s zp zc st xp xl M p c) :
     OpX M st p (8 * c) := by
   have hpx := px_of hpre
@@ -74,7 +76,7 @@ theorem capIn_own {L1 : List (Nat × Nat)} {M : Memory} {p c l : Nat}
   exact ⟨hl, h1, hh, hb⟩
 
 /-- `CapIn` / `OpX` of the operand `x[:k]` -/
-theorem capIn_x (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory} {L1 : List (Nat × Nat)}
+theorem capIn_x (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory} {L1 : List (Nat × Nat)}
     {b1 : Nat} (hrt : RtM R kc L s zp zc st M L1 b1) {k : Nat} (hk : k ≤ xl) :
     CapIn R L1 xp k xc ∧ OpX M st xp (8 * k) := by
   have hrt' := hrt
@@ -96,7 +98,7 @@ theorem outside_00 : ∀ rs : List (Nat × Nat), Outside 0 0 rs
 
 set_option maxRecDepth 20000 in
 /-- divmc's `StkX` at a callee state -/
-theorem stkX_at (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory} {L1 : List (Nat × Nat)}
+theorem stkX_at (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory} {L1 : List (Nat × Nat)}
     {b1 : Nat} (hrt : RtM R kc L s zp zc st M L1 b1) {S' : State}
     (hsp : S'.sp.toNat = s.sp.toNat - 240) (h28 : S'.regs 28 = s.regs 28) (hm : S'.mem = M) {stk above : Nat}
     (hstk : stk ≤ kc) (habove : above ≤ 88) : StkX R L1 S' stk above st := by
@@ -137,7 +139,7 @@ theorem opX_sub {M : Memory} {p n k : Nat} (h : OpX M st p n) (hk : k ≤ n) : O
 
 set_option maxRecDepth 20000 in
 /-- divmc's `SqrX` for `zz.sqr(stk, z)` inside a round (`zz = (q, qc)`, `z = (p, l, c)`) -/
-theorem sqrX_at (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory} {L1 : List (Nat × Nat)}
+theorem sqrX_at (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory} {L1 : List (Nat × Nat)}
     {b1 p l c q ql qc : Nat} (hmid : Mid R kc L s zp zc st xp xl xc n M L1 b1 p l c q ql qc) {S' : State}
     (hsp : S'.sp = BitVec.ofNat 64 (s.sp.toNat - 240)) (h28 : S'.regs 28 = s.regs 28) (hm : S'.mem = M)
     {stk above : Nat} (hstk : stk ≤ kc) (habove : above ≤ 88) :
@@ -154,7 +156,7 @@ theorem sqrX_at (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M : Me
 
 set_option maxRecDepth 20000 in
 /-- divmc's `MulX` for `zz.mul(stk, zz, x[:k])` inside a round -/
-theorem mulX_at (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory} {L1 : List (Nat × Nat)}
+theorem mulX_at (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory} {L1 : List (Nat × Nat)}
     {b1 p l c q ql qc : Nat} (hmid : Mid R kc L s zp zc st xp xl xc n M L1 b1 p l c q ql qc) {S' : State}
     (hsp : S'.sp = BitVec.ofNat 64 (s.sp.toNat - 240)) (h28 : S'.regs 28 = s.regs 28) (hm : S'.mem = M)
     {stk above : Nat} (hstk : stk ≤ kc) (habove : above ≤ 88) {k : Nat} (hk : k ≤ xl) :

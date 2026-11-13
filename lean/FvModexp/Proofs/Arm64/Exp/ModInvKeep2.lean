@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.ModInvRnd
 
+set_option autoImplicit false
+
 /-!
 # `nat.modularInverseModPowerOfTwo` (arm64): the spill slots and the other owned arrays survive a callee (agent infra)
 
@@ -17,9 +19,9 @@ open FvModexp.Arm64.ExpHyp (stWs RdIn WrOut)
 
 set_option maxRecDepth 20000 in
 /-- the stack's free part at `M` misses the function's window -/
-theorem keep_fp {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
+theorem keep_fp {R : RtInv} {kc : Nat} {H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
-    (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory} {L1 : List (Nat × Nat)}
+    (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) {M : Memory} {L1 : List (Nat × Nat)}
     {b1 : Nat} (hrt : RtM R kc L s zp zc st M L1 b1) (a : Nat) (h1 : s.sp.toNat - (240 + kc) ≤ a)
     (h2 : a + 1 ≤ s.sp.toNat + 72) : Outside a 1 [(stW M st + 8 * stLen M st, stW M st + 8 * stCap M st)] := by
   have hout := hpre.1.2.2.2.1
@@ -38,9 +40,9 @@ theorem keep_fp {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat 
 
 set_option maxRecDepth 20000 in
 /-- the spill slots survive a callee -/
-theorem keep_slots {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
+theorem keep_slots {R : RtInv} {kc : Nat} {H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
-    (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M M' : Memory} {L1 : List (Nat × Nat)}
+    (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) {M M' : Memory} {L1 : List (Nat × Nat)}
     {b1 : Nat} (hrt : RtM R kc L s zp zc st M L1 b1) {S' : State} (hS' : S'.sp.toNat = s.sp.toNat - 240)
     {stk above : Nat} (hkc : 4608 ≤ kc) (hstk : stk ≤ kc) (habove : above ≤ 88) {t tc : Nat}
     (ht : Own R kc L L1 s zp zc st xp xl M t tc)
@@ -66,9 +68,9 @@ theorem keep_slots {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → N
 
 set_option maxRecDepth 20000 in
 /-- an owned array apart from `t` survives a callee, with its words -/
-theorem keep_own {R : RtInv} {kc : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
+theorem keep_own {R : RtInv} {kc : Nat} {H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
-    (hpre : Pre R kc sqrC mulC b L zp zl zc st xp xl xc n s) {M M' : Memory} {L1 L2 : List (Nat × Nat)}
+    (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) {M M' : Memory} {L1 L2 : List (Nat × Nat)}
     {b1 : Nat} (hrt : RtM R kc L s zp zc st M L1 b1) {S' : State} (hS' : S'.sp.toNat = s.sp.toNat - 240)
     {stk above : Nat} (hstk : stk ≤ kc) (habove : above ≤ 88) {t tc : Nat}
     (hF : MemFrame M M' (R.rt ++ winA S' stk above ++ [(t, t + 8 * tc)] ++ stWs M st))

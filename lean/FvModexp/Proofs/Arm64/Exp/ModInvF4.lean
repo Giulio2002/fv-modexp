@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.ModInvPostS
 
+set_option autoImplicit false
+
 /-!
 # `nat.modularInverseModPowerOfTwo` (arm64): final round, `S4` → `z = z.lsh(z, 1)` → `S5` (agent infra)
 
@@ -17,10 +19,10 @@ set_option maxHeartbeats 64000000 in
 theorem segF4 {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv} {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
     {stkL aboveL : Nat} (hls : Lsh.Hyp2 impl R ns stkL aboveL) {kc : Nat} (hkc : 4608 ≤ kc)
-    (hkL : stkL ≤ kc) (haL : aboveL ≤ 88) {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
+    (hkL : stkL ≤ kc) (haL : aboveL ≤ 88) {H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
-    (k5 : S5 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s 1798244 (ExF n) (eF n) (kF n)) :
-    S4 impl R kc sqrC mulC b L zp zl zc st xp xl xc n s 1798200 (ExF n) (eF n) (kF n) := by
+    (k5 : S5 impl R kc H sqrC mulC b L zp zl zc st xp xl xc n s 1798244 (ExF n) (eF n) (kF n)) :
+    S4 impl R kc H sqrC mulC b L zp zl zc st xp xl xc n s 1798200 (ExF n) (eF n) (kF n) := by
   intro S j p l c q ql qc L1 b1 Zv hrc hpc hex hzs hzv hl0 hl h0 h1 h2 hv hnq hql hb
   obtain ⟨hpreB, hn, hsp, h28, h18, hmidB, hj1, hjn, hbud, hcong⟩ := hrc
   have hK : 240 + kc ≤ s.sp.toNat := sp_K hpreB.h
@@ -40,10 +42,19 @@ theorem segF4 {impl : List Segment} (hap : ImplApart Extracted.program impl) {R 
   have hqlc : ql ≤ qc := hmidB.h.2.2.2.2.2.2.1
   have hlc : l ≤ c := hmidB.h.2.2.2.2.2.1
   obtain ⟨m3, hqs, hsl, hpw, hqw⟩ := store_zz hpreB.h hmidB.h hq64 (by omega) (by omega) hkc
+  -- (s45) the budget fact at the memory after `zz`'s spills
+  have ecZZ : stCap (memZZ s S.mem q ql qc) st = stCap S.mem st := by
+    simp only [memZZ]
+    rw [cap_slot hpreB.h _ (a := s.sp.toNat - 240 + 120) _ (by omega) (by omega),
+      cap_slot hpreB.h _ (a := s.sp.toNat - 240 + 112) _ (by omega) (by omega),
+      cap_slot hpreB.h _ (a := s.sp.toNat - 240 + 216) _ (by omega) (by omega)]
+  rw [← stkR_congr ecZZ] at hb
+  have hbB := Box.mk hb
+  clear hb ecZZ
   unfold Goal
   janus_run [r224, r192, r184] until [1784560]
   refine callLsh hap hns hnf hls hkc hkL haL 285 (by decide) rfl k5 hpreB.h hn m3 hj1 hjn hbud hcong
-    (fun _ _ => hex) hqs ((hpw l hlc).trans hzv) hl ((hqw ql hqlc).trans hv) (norm_keep hqw hqlc hnq) hql hb _ ?_ ?_ ?_ ?_ ?_ ?_
+    (fun _ _ => hex) hqs ((hpw l hlc).trans hzv) hl ((hqw ql hqlc).trans hv) (norm_keep hqw hqlc hnq) hql hbB.h _ ?_ ?_ ?_ ?_ ?_ ?_
     ?_ ?_ ?_ ?_ ?_ ?_ ?_
   all_goals try janus_simp
 
