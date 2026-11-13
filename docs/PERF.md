@@ -1563,3 +1563,12 @@ only the numeric hypotheses, instantiated after the run; the post-return run in 
 | Arm64/Exp/IExpCl (ensCl, cost facts proved) | 1.4 s / 4.1 GB | 1.4 s / 4.0 GB |
 | Arm64/Exp/W4Wit `bud` (path-MAX budget) | omega on unfolded nested max: >200k heartbeats (timeout) | structural `bud_c` split: < 15 s |
 | Amd64/Exp/W4Defs, W4MC (new) | — | 1.7 s, 3.1 s / 2.3 GB |
+### infra s43 (2026-11-15, arm64 rows in RELEASE ORDER, Janus v0.3.1, JANUS_REPLAY_THREADS=1, load ~40, after the TIGHT COSTS edits)
+Fresh cache `cache-infra/rel`: warm-up 1081 s; StackNatRow PASS 141 s / 2.5 GB, MulAddWWRow PASS 175 s / 1.0 GB,
+BasicMulRow PASS 126 s / 3.3 GB, BasicSqrRow PASS 352 s / 3.1 GB, SqrRow PASS 500 s / 3.0 GB, MulRow PASS 406 s / 2.2 GB,
+TruncRow PASS 137 s / 0.9 GB, RshRow PASS 127 s, LshRow PASS 104 s, IntASRow PASS 36 s, MontRow audit-FAIL 233 s (no
+witness; modules compiled), then infra: **P2W2Row PASS 631 s / 3.0 GB** (P2Wit imported P2DE + P2W4E, so P2W2Row
+compiled all three P2 chains), **P2W4Row PASS 41 s**, **P2DRow PASS 94 s / 1.6 GB**, **ModInvRow PASS 350 s / 2.7 GB**,
+**SubMod2NRow PASS 22 s** (closure inside ModInvRow's). Fix for P2W2Row > 600 s: `Exp/P2Nf` (the four name facts on the
+`fn` defs only); P2W2Row/P2W4Row import P2Nf + their own `…E` module (dev: 7.6 / 7.5 s) — re-measure in `cache-infra/rel2`.
+Dev compile after the cost edits: P2W2Cp5 1.9 s, P2DFull 25 s / 3.0 GB, ModInvL0 9.6 s, EvFull 2.5 s, P2DRow 50 s / 3.8 GB.
