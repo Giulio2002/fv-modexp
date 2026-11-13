@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Amd64.Nat.DivWDefs
 
+set_option autoImplicit false
+
 /-!
 # `nat.divW` (amd64): `Mid` from the entry facts, on the reuse and on the `makeslice` path of `z.make(m)`
 -/
@@ -131,7 +133,7 @@ theorem mid_of_alloc {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl 
       · exact hLs r hr
       · simp only [List.mem_singleton] at hr; subst hr
         simp only [win, outside_cons, outside_nil, and_true]; omega,
-    ror := Or.inr ⟨hIn.sub (Nat.le_refl _) (by omega), fun r hr => (hAp r hr).mono hsz (Nat.le_refl _)⟩,
+    ror := Or.inr ⟨hx0, hc1, hc2, hIn.sub (Nat.le_refl _) (by omega), fun r hr => (hAp r hr).mono hsz (Nat.le_refl _)⟩,
     mf := (hF.mono fun a n h => by simp only [outside_append] at h; exact h.1.2).trans hMF fun a n h => ⟨h, by
       simp only [outside_append, win, outside_cons, outside_nil, and_true] at h
       exact hcw a n (by omega) h.1.1⟩,
