@@ -68,7 +68,7 @@ theorem snPre {stkS aboveS : Nat} (hkS : stkS ≤ kc) (haS : aboveS ≤ 88)
   obtain ⟨hok, e0, e1, e2⟩ := stk_win hpre hF
   obtain ⟨hce, hsv, hgl, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, hsp0, hlen, -, -, hinv, -⟩ := hpre
   obtain ⟨-, -, hstw, -, harr, -, hfw, hsf, hswb, -⟩ := hsp0
-  obtain ⟨-, -, -, -, -, -, -, -, -, -, -, wacc, -⟩ := hgl
+  obtain ⟨-, -, -, -, -, -, -, -, -, -, wacc, -⟩ := hgl
   have hce0 := hce
   obtain ⟨⟨-, -, -⟩, ⟨hb', -, -⟩, -, -, hout, -⟩ := hce0
   simp only [regSP, K] at hb'
@@ -188,7 +188,7 @@ theorem callSN {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.prog
     (L := L) (ra_bp hap hnf 0xb1 (by decide)) hpc (by rw [hspN]; exact hrd) h0 h3 (by rw [hx15, hx15s])
     (by rw [hdf, hdfs]) hst64 (by omega) (snPre hkS haS hpre hsp h14 hfs hF hrg)
     fun s' hpc' hsp' h5' h14' hx15' hrg' hpost => ?_
-  obtain ⟨-, edf, hr0, -, hr1, L', b', ⟨hLE, hbud, hinv'⟩, hok', hlen, hsame, hgrow, hF', hLF', hmemb⟩ := hpost
+  obtain ⟨efs, edf, hr0, -, hr1, L', b', ⟨hLE, hbud, hinv'⟩, hok', hlen, hsame, hgrow, hF', hLF', hmemb⟩ := hpost
   rw [stkR_congr e2] at hbud
   have hle : stkR (HP (stLen s.mem st) pl lm) s'.mem st ≤ b' := by omega
   have hinv2 : R.inv (b' - stkR (HP (stLen s.mem st) pl lm) s'.mem st + stkR (HP (stLen s.mem st) pl lm) s'.mem st) L'
@@ -201,9 +201,14 @@ theorem callSN {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.prog
   rw [e1] at hr0
   have hr0' := hr0 hnb0
   obtain ⟨-, -, -, f3, -, -, -, -, -, f10, f11⟩ := hc.sl
+  have hRb : 184 + kc ≤ (s.regs 4).toNat := by have := hpre.1.2.1.1; simp only [K, regSP] at this; omega
+  have hR64 := (s.regs 4).isLt
+  have hsp48 : (s.regs 4).toNat + 80 ≤ 2 ^ 48 := by have := hpre.1.2.1.2.1; simpa only [regSP, A] using this
+  have hwm : s'.mem.accessible ((s.regs 4).toNat - (184 + kc)) (184 + kc + 80) true = true := by
+    rw [hc.fr.accessible]; have := hpre.1.2.1.2.2; simpa only [regSP, K, A] using this
   have hsp2 : s'.regs 4 = BitVec.ofNat 64 ((s.regs 4).toNat - 176) := by
     rw [hsp', hsp]; apply BitVec.eq_of_toNat_eq
-    simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega
+    simp only [BitVec.toNat_add, BitVec.toNat_ofNat, show (8 : BitVec 64).toNat = 8 from rfl]; omega
   have g1 : s'.mem.readLE ((s.regs 4).toNat - 176 + 192) 8 = pw := by
     rw [show (s.regs 4).toNat - 176 + 192 = (s.regs 4).toNat + 16 by omega]; exact f3
   have g2 : s'.mem.readLE ((s.regs 4).toNat - 176 + 128) 8 = W lm := by
@@ -219,10 +224,10 @@ theorem callSN {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.prog
   clear hF' hLF' hF hsame hgrow hpre hc hok hok' hsl hLE hinv' hinv2 e0 e2 hlen hr0 hmemb
   have hpc2 : s'.rip = BitVec.ofNat 64 snR := hpc'
   clear hpc' hsp'
-  janus64_run [g1, g2, g3] until [pcF]
+  janus64_run [g1, g2, g3, hwm] until [pcF]
   refine kF _ _ L' b2 hpreH.h rfl ⟨?_, ?_, ?_, ?_, ?_, ?_⟩ ?_ ?_ ?_ ?_ ?_ ?_ hcH.h
     (fun j hj => absurd hj (Nat.not_lt_zero _)) (Nat.zero_le _) hbud2
-  all_goals janus64_simp
+  all_goals first | exact efs.trans hfs | janus64_simp
 
 end
 

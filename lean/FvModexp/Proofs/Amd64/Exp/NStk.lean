@@ -23,8 +23,13 @@ abbrev remA : Nat := 6216864
 /-- the return point of the `rem` call (`0x5e73af`) -/
 abbrev remR : Nat := 6189999
 
+/-- a read of exactly the bytes just written (the addresses equal up to arithmetic) -/
+theorem rd_wr_eq {m : Janus.Arm64.Memory} {a b n v : Nat} (h : a = b) : (m.writeLE a n v).readLE b n = v % 256 ^ n := by
+  subst h; exact Janus.Arm64.Memory.readLE_writeLE_self _ _ _ _
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
+set_option linter.unusedSimpArgs false in
 theorem stk (impl : List Amd64.Segment) (ret0 : Nat) (hret : RetAddr (LibN.program.link impl) ret0)
     (Q : Amd64.Outcome → Prop) (t yp yl mp n mc st : Nat) (M : Janus.Arm64.Memory)
     (ht1 : 0x110 ≤ t) (ht2 : t + 0x78 ≤ 2 ^ 48) (hacc : M.accessible (t - 0x110) 0x188 true = true)
@@ -60,6 +65,7 @@ theorem stk (impl : List Amd64.Segment) (ret0 : Nat) (hret : RetAddr (LibN.progr
       Reaches ((LibN.program.link impl).withExit ret0) S' Q) :
     Reaches ((LibN.program.link impl).withExit ret0) S Q := by
   have hy8 : M.readLE yp 8 < 2 ^ 64 := Janus.Arm64.Memory.readLE_lt _ _ _
+  have hmc8 : mc < 2 ^ 64 := r30 ▸ Janus.Arm64.Memory.readLE_lt _ _ _
   have es1 : BitVec.ofNat 64 (t - 0x108) - 8#64 = BitVec.ofNat 64 (t - 0x110) := by
     apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
   have a30 : t - 0x108 + 0x138 = t + 0x30 := by omega
@@ -71,18 +77,35 @@ theorem stk (impl : List Amd64.Segment) (ret0 : Nat) (hret : RetAddr (LibN.progr
     simp only [BitVec.toNat_ofNat] at this; omega
   subst hmem
   janus64_run [es1, a30, r30, bn, bs] until [remA, 6190084]
-  all_goals first
-    | (refine KR (by omega) (by omega) _ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_)
-    | (refine KD (by omega) _ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_)
-    | (trace_state; sorry)
-  all_goals first | (janus64_simp; done) | (simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; done) | skip
-  all_goals first
-    | janus_frame
-    | rfl
-    | (simp (disch := omega) only [Janus.Arm64.Memory.readLE_writeLE_of_disjoint, Janus.Arm64.Memory.readLE_writeLE_self,
-        BitVec.toNat_ofNat, Nat.reducePow, Nat.reduceMod, h11, h13]; done)
-    | (simp (disch := omega) only [Janus.Arm64.Memory.readLE_writeLE_of_disjoint, Janus.Arm64.Memory.readLE_writeLE_self,
-        BitVec.toNat_ofNat, Nat.reducePow, Nat.reduceMod, h11, h13]; omega)
-    | (trace_state; sorry)
+  · have e1 : yl = 1 := by omega
+    have e2 : S.mem.readLE yp 8 = 1 := by omega
+    refine KR e1 e2 _ _ ?ar0 ?ar1 ?ar2 ?ar3 ?ar4 ?ar5 ?ar6 ?ar7 ?ar8 ?ar9 ?ar10 ?ar11 ?ar12 ?ar13
+      rfl ?amf ?arg ?aq0 ?aq1 ?aq2 ?aq3 ?aq4 ?aq5 ?aq6 ?aq7 ?aq8
+    case amf => janus_frame
+    case arg => simp only [Janus.Arm64.Memory.regions_writeLE]
+    case ar0 | ar1 | ar2 | ar3 | ar4 | ar5 | ar6 | ar7 | ar8 | ar9 |
+        ar10 | ar11 | ar12 | ar13 => rfl
+    all_goals (simp (disch := omega) only [Janus.Arm64.Memory.readLE_writeLE_of_disjoint,
+          rd_wr_eq, BitVec.toNat_ofNat, Nat.reducePow, Nat.reduceMod, h11, h13] <;> omega)
+  · have e2 : ¬S.mem.readLE yp 8 = 1 := by omega
+    refine KD (fun h => e2 h.2) _ _ ?br0 ?br1 ?br2 ?br3 ?br4 ?br5 ?br6 ?br7 ?br8 ?br9
+      ?br10 ?br11 ?br12 ?br13 ?br14 ?br15 ?br16 ?br17 ?br18
+      rfl ?bmf ?brg ?bq0 ?bq1 ?bq2 ?bq3 ?bq4
+    case bmf => janus_frame
+    case brg => simp only [Janus.Arm64.Memory.regions_writeLE]
+    case br0 | br1 | br2 | br3 | br4 | br5 | br6 | br7 | br8 | br9 |
+        br10 | br11 | br12 | br13 | br14 | br15 | br16 | br17 | br18 => rfl
+    all_goals (simp (disch := omega) only [Janus.Arm64.Memory.readLE_writeLE_of_disjoint,
+          rd_wr_eq, BitVec.toNat_ofNat, Nat.reducePow, Nat.reduceMod, h11, h13] <;> omega)
+  · have e1 : ¬yl = 1 := by omega
+    refine KD (fun h => e1 h.1) _ _ ?cr0 ?cr1 ?cr2 ?cr3 ?cr4 ?cr5 ?cr6 ?cr7 ?cr8 ?cr9
+      ?cr10 ?cr11 ?cr12 ?cr13 ?cr14 ?cr15 ?cr16 ?cr17 ?cr18
+      rfl ?cmf ?crg ?cq0 ?cq1 ?cq2 ?cq3 ?cq4
+    case cmf => janus_frame
+    case crg => simp only [Janus.Arm64.Memory.regions_writeLE]
+    case cr0 | cr1 | cr2 | cr3 | cr4 | cr5 | cr6 | cr7 | cr8 | cr9 |
+        cr10 | cr11 | cr12 | cr13 | cr14 | cr15 | cr16 | cr17 | cr18 => rfl
+    all_goals (simp (disch := omega) only [Janus.Arm64.Memory.readLE_writeLE_of_disjoint,
+          rd_wr_eq, BitVec.toNat_ofNat, Nat.reducePow, Nat.reduceMod, h11, h13] <;> omega)
 
 end FvModexp.Amd64.ExpN
