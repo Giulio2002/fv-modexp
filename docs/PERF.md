@@ -2018,3 +2018,8 @@ duplicates are closed by one `all_goals first | … | skip` dispatch instead of 
 | Amd64/Exp/P2W2BTr | 9.3 s | 2.7 GB |
 | Amd64/Exp/P2W2BMu | 51 s | 4.0 GB |
 No `janus64_run` in these (pure callee-pre/post plumbing); BMu's cost is the elaboration of the big `MPre`/`Ops` term.
+### asm s65 (2026-11-14, dev compile, LEAN_NUM_THREADS=4) — amd64 expNNEven export
+EvOB 2.6 s / 2.5 GB; EvCost 2.9 s / 2.7 GB; EvStmt 1.0 s; EvEP 6.0 s / 2.8 GB; EvFull 1.6 s / 2.7 GB (before: >7 min,
+killed — `need_lo … (k := 8 w + 72)` gave `l + (8 w + 72)` where segMi/segM1/segM2 expect `l + 8 w + 72`: the defeq
+check unfolded `lvl4`; fixed with exact-shape lemmas `needMi`/`needM`. LESSON: a side-condition lemma's conclusion must
+match the expected expression SYNTACTICALLY, association included); EvSum 1.3 s / 2.8 GB.

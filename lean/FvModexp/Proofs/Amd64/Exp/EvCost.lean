@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.EvE2
+import FvModexp.Proofs.Amd64.Exp.EvOB
 import FvModexp.Proofs.Amd64.Exp.EvJ11
 import FvModexp.Proofs.Amd64.Exp.SubMod2NG
 import FvModexp.Proofs.Common.SqrCost
@@ -28,7 +29,7 @@ namespace FvModexp.Amd64.ExpEven
 /-- the stack need (words above the entry level) -/
 def needE (needR : Nat → Nat → Nat) (needS needP : Nat → Nat → Nat → Nat) (xl yl ml : Nat) : Nat :=
   2 * StackNat.rnd ml + 2 * StackNat.rnd (2 * ml) +
-    (23 * ml + 3 + needR xl ml + needS xl yl ml + needP xl yl (64 * ml) + 8 * ml + 72 + 2 * ml + 3)
+    (23 * ml + 3 + needR xl ml + needS xl yl ml + needP xl yl (64 * ml) + 8 * ml + 72 + 2 * ml + 3 + needO xl ml)
 
 /-- the first `nat.expNN` call (`z1`, level `l`): its worst COST only (its budget is covered by the second call's) -/
 @[reducible] def eC1 (cU : Nat → Nat → Nat → Nat → Nat → Nat) (xl yl ml l : Nat) : Nat := cU xl yl ml l (64 * ml)
@@ -199,6 +200,14 @@ theorem need2 (hneed : l0 + needE needR needS needP xl yl ml ≤ 2 ^ 16) {a c : 
 
 theorem need3 (hneed : l0 + needE needR needS needP xl yl ml ≤ 2 ^ 16) {l : Nat} (hl : l ≤ wL4 l0 ml) :
     l + 2 * ml + 3 ≤ 2 ^ 16 := by unfold needE at hneed; simp only [wL4, wL3, wL2] at hl; omega
+
+/-- the `expNNOdd` window levels of a recursive `expNN` call (`EvOB.needO`) -/
+theorem needO_of (hneed : l0 + needE needR needS needP xl yl ml ≤ 2 ^ 16) {l lm : Nat} (hl : l ≤ wL4 l0 ml)
+    (hlm : lm ≤ ml) : l + needO xl lm ≤ 2 ^ 16 := by
+  have := rnd_mono (show 23 * lm ≤ 23 * ml by omega)
+  have := rnd_mono hlm
+  have := rnd_mono (show 2 * lm ≤ 2 * ml by omega)
+  unfold needE at hneed; simp only [wL4, wL3, wL2, needO] at hl hneed ⊢; omega
 
 theorem nstkE_of (hRm : ∀ x a a', a ≤ a' → needR x a ≤ needR x a')
     (hSm : ∀ x y a a', a ≤ a' → needS x y a ≤ needS x y a')
