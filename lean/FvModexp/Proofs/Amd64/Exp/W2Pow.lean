@@ -1,5 +1,4 @@
 import FvModexp.Proofs.Amd64.Exp.W2PowC
-import FvModexp.Proofs.Amd64.Exp.W2Seg
 
 set_option autoImplicit false
 
@@ -137,7 +136,6 @@ theorem powStep {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.pro
     have hfs' : s'.fsBase.toNat = fs := by rw [efs]; exact hfs
     have hacc' : s'.mem.accessible (sp - 4296) (4296 + 0x2a8) true = true := by
       rw [hF'.1.accessible]; exact he.2.2.2.1
-    refine SegProg.lift W2Seg.codeIn (r := BitVec.ofNat 64 powHead) ?_
     janus64_run [m138, m140] until [powHead]
     have sl : ∀ K, 0x60 ≤ K → K + 8 ≤ 0x2a8 → (K + 8 ≤ 0x140 ∨ 0x150 ≤ K) →
         (K + 8 ≤ 0x1b0 + 24 * i ∨ 0x1b0 + 24 * i + 24 ≤ K) →

@@ -3,6 +3,7 @@ import FvModexp.Proofs.Amd64.Exp.IExpClD
 import FvModexp.Proofs.Amd64.Exp.BudSlow
 import FvModexp.Proofs.Amd64.Exp.BudWin
 import FvModexp.Proofs.Amd64.Exp.BudP2
+import FvModexp.Proofs.Amd64.Exp.BudEven
 
 set_option autoImplicit false
 
@@ -19,7 +20,7 @@ the windows' division bound `BudW.dW` and the budget `hbudCl` proved from the pe
 | `nat.expNNSlow` (`EvenRow.cS 0`) | `makeCost xl + 8 W + yl·128 W` | BudSlow `Q.ExpSlow.slow_target` |
 | `nat.expNNPowerOfTwo` (`EvenRow.cP 0`, `lm < 64 n`) | `8 W + yl·64 W` | BudP2 `Q.BudP2.hp2Q` |
 | the windows (`OCost` / `OBud` at `dW`) | `32 W` | BudW `ocost` / `obud` |
-| `nat.expNNEven` (`EvenRow.cE 0`) | `96 W + yl·256 W` | premise `EvenT` (to be proved) |
+| `nat.expNNEven` (`EvenRow.cE 0`) | `120 W + yl·256 W` | `evenT` (BudEven `heven`) |
 `nat.expNN` takes ONE branch (path MAX), so each fits the allowance on its own.
 -/
 
@@ -52,7 +53,10 @@ theorem rem_target {xl n : Nat} (hx : xl ≤ 128) (hn : n ≤ 128) :
 /-- **the remaining target**: `nat.expNNEven`'s cost at the top (the even branch of `nat.expNN`) -/
 def EvenT : Prop :=
   ∀ xl yl n, xl ≤ 128 → yl ≤ 128 → 0 < n → n ≤ 128 →
-    EvenRow.cE 0 xl yl n ≤ 96 * BudQ.opC (max xl n) + yl * (256 * BudQ.opC (max xl n))
+    EvenRow.cE 0 xl yl n ≤ 120 * BudQ.opC (max xl n) + yl * (256 * BudQ.opC (max xl n))
+
+/-- **`EvenT`** (BudEven's `heven`, stated on the unfolded `EvenRow.cE`) -/
+theorem evenT : EvenT := fun _ _ _ hx _ hn0 hn => Q.BudE.heven hx hn0 hn
 
 /-- the factor-free allowance at `max xl n` is below `RunIface.ExpBudget` -/
 theorem eb_ge {xl yl n : Nat} :
@@ -132,5 +136,22 @@ theorem ensClE (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.prog
     EvenRow.libRem_libN EvenRow.libRem_nfN (by omega) (evH hap hgr hmc hmv hmz hmk hno hwb hK) hno hget hput
     (WbLiveContract64.of_codeIn hcI hwb) hKs (by omega) hK20 (by omega) hab hneedCl (costD := fun xl _ n => Q.BudW.dW xl n)
     (hbudCl he)
+
+set_option maxRecDepth 20000 in
+/-- **`(*Int).exp`** (amd64), `ExpSpecA`, CLOSED: premises = the 9 live runtime contracts only; any call stack window
+`stk ≥ 43736` (`K = 42248`, `K + 0x5d0`), `above ≥ 0x30` -/
+theorem ensCl (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
+    (hgr : GrowsliceLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.growslice") 4096 R)
+    (hmc : MemclrNoHeapPointersLive64 (Extracted.program.ofImpl impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
+    (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
+    (hmz : MemmoveZeroLive64 (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
+    (hmk : MakesliceLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
+    (hno : NewobjectLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.newobject") 4096 R)
+    (hwb : WbLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2)
+    (hget : PoolGetLive (Extracted.program.ofImpl impl) (cA "sync.(*Pool).Get") 4096 R Free.stkT StkSh)
+    (hput : PoolPutLive (Extracted.program.ofImpl impl) (cA "sync.(*Pool).Put") 4096 R Free.stkT StkSh)
+    {stk above : Nat} (hstk : 43736 ≤ stk) (hab : 0x30 ≤ above) : ExpSpecA impl R stk above :=
+  ensClE impl hap R hgr hmc hmv hmz hmk hno hwb hget hput evenT (K := 42248) (by decide) (by decide)
+    (by omega) hab
 
 end FvModexp.Amd64.IExp
