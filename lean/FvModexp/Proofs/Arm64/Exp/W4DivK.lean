@@ -1,5 +1,5 @@
 import FvModexp.Proofs.Arm64.Exp.W4Div
-import FvModexp.Proofs.Arm64.Exp.W4RRC
+import FvModexp.Proofs.Arm64.Exp.W4Cut
 
 /-!
 # window-4 prologue (arm64): what the `RR` division keeps (`keeps_div`), the remainder facts (`rem_div`), `ZZ.keep`

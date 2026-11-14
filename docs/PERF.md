@@ -1945,3 +1945,13 @@ Util → IcDefs → IcHL → Ic → Og → Pre → Seg → FinA → Fin → Row 
   Top_RunSucc **543 s / 5.3 GB**, Top_RunErr 872, ExpQ_IExpRow 864 / 5.5 GB, P2W2 842, ModInv 796, W2 610 (> 600 s); Mont 567,
   DivBasicRowQ 571, DrsRowQ 522, W4 526, DivRowQ 350. FAIL: Nat_DivWRow cap 900 s at 345 MB (stall, also in rel44), Exp_EvenRow
   cap 901 s / 4.1 GB. MISSING: Run, Bytes, Runbody (COVERAGE todo). No JANUS_TIMINGS (predates 7886616b); rel46 has them.
+
+### expmc s67 — window-2/4 import-chain cut (arm64, statements unchanged)
+* W2: own-module dev critical import path 283 s → ~105 s (segments entry→divRet / divRet→j4 / j4→RET + x-normalisation
+  vs entry, composed in W2Comp/W2FunE; defs hoisted to W2FinDefs/Posts/Cut/FunDefs/XnDefs; heavy proofs split out of defs
+  modules: P01Defs 30 s → 1.4 s (p01post → W2P01Post), Zm 17 → 0.9, One 22 → 1.0, RR 20 → 1.0). W4: same cut, dev crit 233 s
+  at load 40-50 (W4LshS 50 s under load).
+* Targeted W2Row (v0.3.2, rel44 copy, snapshot df8b4095): FAIL(cap) 901 s at load 34→51 with concurrent dev builds (no
+  timing summary). Re-run v67b (same setup, 01:06-01:25 2026-11-14, load ~98 from another session's Janus gate): FAIL(cap)
+  901 s / 3.9 GB, again no timing summary — load-dominated, not conclusive. Not chased further (coordinator): top's rel46
+  (fresh v0.3.3 cache, release order) measures W2Row/W4Row with the cut; trim only if rel46 shows > 600 s.

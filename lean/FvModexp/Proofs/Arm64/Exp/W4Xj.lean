@@ -92,7 +92,7 @@ theorem keeps_ownB {R : RtInv} {L : List (Nat × Nat)}
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem xjStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+theorem xjStep (hRR : FvModexp.Arm64.W4Pro.RRSpec) (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hclr : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
@@ -187,7 +187,7 @@ theorem xjStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     rw [← hl0e]; exact hmf.readLE _ _ (by
       have := hB.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
       simp only [AW, Apart] at this; simp only [outside_cons, outside_nil, and_true]; omega)
-  exact sn1Step impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL hserv ret hret b L
+  exact sn1Step (hRR := hRR) impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL hserv ret hret b L
     g sp K n mp mc Mv xp xc Xv yp ylen Y yi zp zc st n0 l0 (Exp.newton 64 (Mv % Exp.B)) M1 r18 r29 f29 hKD hKL hC hlen1 htl
     q224 q128 (hkk_of hMo) hmB hMo hM1 hslen hcF hbud (FvModexp.Expmc.inv_frame hmf (fun r hr => Or.inr (by
       have := ws_in r hr

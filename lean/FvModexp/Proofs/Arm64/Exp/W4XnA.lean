@@ -132,7 +132,7 @@ theorem rem_xin {R : RtInv} {L L' : List (Nat × Nat)}
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- path A from the return of `z2 := stk.nat(n)` (`aSn2Ret`) to the function's `RET`: the division, `x := r`, the join -/
-theorem xnA2K (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+theorem xnA2K (hRR : FvModexp.Arm64.W4Pro.RRSpec) (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hclr : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
@@ -251,7 +251,7 @@ theorem xnA2K (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
   refine xnA3 impl ret hret _ sp st ylen mp n M5 hal (by omega) hA he5.2.2.2.1 q960 q1000 q1016 q1024 S5 e1 e2 e9
     (fun S6 g1 g2 g3 g4 g5 g6 g7 g8 g9 g10 g11 g12 g13 => ?_)
   have hB6 := CtxB.raise (CtxB.dropEx hB5) (l1 := stLen M5 st) (by omega) (Nat.le_refl _)
-  refine reaches_mono (xnJStep (lu := lu) (hlu := by rw [hlen5, hlen]; omega) impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL
+  refine reaches_mono (xnJStep (hRR := hRR) (lu := lu) (hlu := by rw [hlen5, hlen]; omega) impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL
     hserv ret hret b5 L5 g sp K n mp mc Mv (Xv % Mv) yp ylen Y yi zp zc st n0 (stLen M5 st) r rl rc rc M5 r18 r29 f29
     hKD hKL hB6 rfl hxi (by rw [hval, hxv]) hrln (by have := hxi.2.2.1; omega) hmB hMo hM1
     (by rw [hlen5, hlen]; omega) (cf_eq hcRB (by omega)) (cf_eq hcRC (by omega)) (by rw [hlen5, hlen]; unfold xjBud at hbC ⊢; omega)

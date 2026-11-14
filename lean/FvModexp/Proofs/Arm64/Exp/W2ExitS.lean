@@ -17,20 +17,6 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvMod
 
 namespace FvModexp.Arm64.W2Loop
 
-/-- the written ranges from the first `zz.cmp(m)` to the join: callee windows, spills, `zz`'s array -/
-@[reducible] def jw (R : RtInv) (sp zzp zzc : Nat) : List (Nat × Nat) :=
-  R.rt ++ [(sp - 4304, sp - 8), (sp + 8, sp + 80), (sp + 160, sp + 176), (sp + 400, sp + 408)] ++ [(zzp, zzp + 8 * zzc)]
-
-/-- what holds at the join point `njoin` (memory `M'`, result `(p, l, c)` in `X3..X5`) relative to the memory `M`
-before the final reduction -/
-@[reducible] def JoinPost (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (g sp n zzp zzc V : Nat) (M : Memory)
-    (p l c : Nat) (M' : Memory) : Prop :=
-  ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b - makeCost n ≤ b' ∧ R.inv b' L' g (view R.rt L' M') ∧
-    M'.regions = M.regions ∧ MemFrame M M' (jw R sp zzp zzc) ∧ LiveFrame M M' L [(zzp, zzp + 8 * zzc)] ∧
-    natVal M' p l = V ∧ l ≤ c ∧ (0 < c ∧ c < 2 ^ 40) ∧ NatLive M' R L' p c ∧
-    ((p = zzp ∧ c = zzc) ∨ (InRanges p (8 * c) R.rt ∧ ApartAll p (8 * c) L)) ∧
-    (l = 0 ∨ (p + 8 * l ≤ 2 ^ 48 ∧ M'.accessible p (8 * l) false = true))
-
 /-- the frame of a `nat.cmp` call at `sp` -/
 @[reducible] def cmpF (sp : Nat) : List (Nat × Nat) := [(sp - 24, sp - 8), (sp + 8, sp + 16), (sp + 32, sp + 40)]
 

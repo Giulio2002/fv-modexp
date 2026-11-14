@@ -1,6 +1,6 @@
 import FvModexp.Proofs.Arm64.Exp.LibW
 import FvModexp.Proofs.Arm64.Exp.W2EnCtx
-import FvModexp.Proofs.Arm64.Exp.W2XnS
+import FvModexp.Proofs.Arm64.Exp.W2XnDefs
 
 /-!
 # window-2 entry (arm64): at `xnE` (after the inline `stk.reserve`) → the function's `RET` (= `ctxB_of` + `xnStep`)
@@ -14,7 +14,7 @@ open FvModexp.Arm64.W2Pro (XnPost xjBud xnBudA xnBudAC)
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem atXnE (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+theorem atXnE (hXn : FvModexp.Arm64.W2Pro.XnSpec) (hRR : FvModexp.Arm64.W2Pro.RRSpec) (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hclr : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
@@ -70,7 +70,7 @@ theorem atXnE (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
   have hl0 : stLen s.mem st ≤ stLen M st := by omega
   have hrd := fun {a' k' : Nat} (h1 : xp ≤ a') (h2 : a' + k' ≤ xp + 8 * xl) => rd_of_OE hxO hF hLF h1 h2
   obtain ⟨q1, q2, q3, q4, q5, q6, q7, q8, q9, q10, q11, q12, q13, q14, q15, q16, q17⟩ := hsl
-  refine W2Pro.xnStep (lu := (stLen s.mem st + StackNat.rnd (11 * n) + StackNat.rnd (xl - n + 1) + StackNat.rnd n + StackNat.rnd n)) (hlu := Nat.le_refl _) impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL hsv ret hret b1 L1
+  refine hXn (hRR := hRR) (lu := (stLen s.mem st + StackNat.rnd (11 * n) + StackNat.rnd (xl - n + 1) + StackNat.rnd n + StackNat.rnd n)) (hlu := Nat.le_refl _) impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL hsv ret hret b1 L1
     g sp K n mp mc (s.mem.readLE mp (8 * n)) (s.mem.readLE xp (8 * xl)) yp ylen (s.mem.readLE yp (8 * ylen))
     (s.mem.readLE (yp + 8 * (ylen - 1)) 8) zp zc st (stLen s.mem st) (stLen s.mem st + StackNat.rnd (11 * n)) xp xl xc
     M r18 r29 f29 hKD hKL hC hlen ?_ (by rw [hF.accessible]; exact hxa) hx48 ?_ hxl hxl' hxc

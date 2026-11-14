@@ -1,5 +1,6 @@
 import FvModexp.Proofs.Arm64.Exp.LibWC
 import FvModexp.Proofs.Arm64.Exp.W2Defs
+import FvModexp.Proofs.Arm64.Exp.W2FinDefs
 import FvModexp.Proofs.Arm64.Exp.DeferW
 import FvModexp.Proofs.Common.ExpNorm
 
@@ -12,42 +13,12 @@ stores, the call of the open-coded defer closure (`LibWC.deferSum`) and the retu
 
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvModexp
 
-namespace FvModexp.Arm64.DeferW
-
-/-- the `stk.restore` closure of window-2 -/
-def fnW2 : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.nat.expNNOddMontgomeryWindowSize2.deferwrap1"
-
-end FvModexp.Arm64.DeferW
-
 namespace FvModexp.Arm64.W2Loop
 
 /-- the norm loop test `CMP $0, R4` -/
 abbrev njoin : Nat := segAddr LibW.program fn + 0xb24
 /-- after the norm loop: `CMP R5, R4` -/
 abbrev tailPc : Nat := segAddr LibW.program fn + 0xb38
-
-/-- what the end guarantees (memory relative to the memory `M` at the join point) -/
-@[reducible] def FinPost (sp g st n0 p l c : Nat) (r18 r29 : BitVec 64) (M : Memory) (s' : State) : Prop :=
-  s'.sp = BitVec.ofNat 64 (sp + 640) ∧ s'.regs 18 = r18 ∧ s'.regs 28 = BitVec.ofNat 64 g ∧ s'.regs 29 = r29 ∧
-    s'.regs 0 = BitVec.ofNat 64 p ∧ s'.regs 1 = BitVec.ofNat 64 l ∧ s'.regs 2 = BitVec.ofNat 64 c ∧
-    s'.mem.readLE (st + 8) 8 = n0 ∧
-    MemFrame M s'.mem [(sp - 24, sp - 8), (sp + 127, sp + 128), (sp + 376, sp + 400), (st + 8, st + 16)]
-
-/-- the static facts of the end -/
-@[reducible] def FinEnv (sp g st n0 : Nat) (r29 : BitVec 64) (ret : Nat) (M : Memory) : Prop :=
-  sp % 16 = 0 ∧ 4288 ≤ sp ∧ sp + 752 ≤ 2 ^ 48 ∧ M.accessible (sp - 4288) (4288 + 752) true = true ∧
-    g + 24 ≤ 2 ^ 48 ∧ M.accessible (g + 16) 8 false = true ∧ M.readLE (g + 16) 8 + 4288 < sp ∧
-    Apart (g + 16) 8 (sp - 4288) (4288 + 752) ∧
-    M.readLE (sp + 624) 8 = sp + 552 ∧ M.readLE (sp + 552) 8 = segAddr LibW.program DeferW.fnW2 ∧
-    M.readLE (sp + 560) 8 = st ∧ M.readLE (sp + 568) 8 = n0 ∧
-    (st + 24 ≤ 2 ^ 48 ∧ st ≠ 0) ∧ M.accessible st 24 true = true ∧ n0 ≤ M.readLE (st + 16) 8 ∧
-    Apart st 24 (sp - 4288) (4288 + 752) ∧ Apart st 24 (g + 16) 8 ∧
-    M.readLE (sp - 8) 8 = r29.toNat ∧ M.readLE sp 8 = ret
-
-theorem FinEnv.stnz {sp g st n0 : Nat} {r29 : BitVec 64} {ret : Nat} {M : Memory} (h : FinEnv sp g st n0 r29 ret M) :
-    st ≠ 0 := by
-  obtain ⟨-, -, -, -, -, -, -, -, -, -, -, -, ⟨-, h⟩, -⟩ := h
-  exact h
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in

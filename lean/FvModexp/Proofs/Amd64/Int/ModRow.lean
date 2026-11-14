@@ -1,4 +1,7 @@
 import FvModexp.Proofs.Amd64.Int.ModCA
+import FvModexp.Proofs.Amd64.NatQ.DivMC
+import FvModexp.Proofs.Amd64.NatQ.ModBudQ
+import FvModexp.Proofs.Amd64.Witness.StubsGrow
 import FvModexp.Proofs.Amd64.Int.ModRowW
 import FvModexp.Proofs.Amd64.Witness.Stubs
 import FvModexp.Proofs.Amd64.Nat.RowLink
@@ -6,7 +9,7 @@ import FvModexp.Proofs.Amd64.Nat.RowLink
 set_option autoImplicit false
 
 /-!
-# Row: `(*Int).Mod` (amd64) on the Run extraction — `z.Mod(z, y)` as `Run` calls it (PREMISE FORM)
+# Row: `(*Int).Mod` (amd64) on the Run extraction — `z.Mod(z, y)` as `Run` calls it
 
 Twin of Arm64/Int/ModRow.lean. `correctness` = `IMod.ensCA` moved to `Extracted.program.link impl` (`Ensures.full64`),
 window `41800` below / `16` above `RSP`. Statement: `IMod.ModSpecA`'s pre/post (= `RunIface.ModSpec`'s, plus the
@@ -14,12 +17,12 @@ window `41800` below / `16` above `RSP`. Statement: `IMod.ModSpecA`'s pre/post (
 `ModBudget (max (len z) (len y))`. Runtime premises: the live `makeslice`, `memmove` (+ `MemmoveZeroLive64`),
 `newobject`, `gcWriteBarrier4`, `sync.(*Pool).Get`/`Put` (`*big.stack`, `StkSh`) contracts.
 
-STATUS (premise form): `nat.div`'s large-divisor path enters as the premise `Q.DivLarge.HypG impl R dc` with the
-budget bound `hbud` on its cost `dc`, until asm's amd64 `divLarge` proof lands (then both are discharged as in arm64's
-`IMod.ensC`/`IMod.bud`). `Witness.nonvacuous_of`: for every such `dc` satisfying them on the shared witness runtime,
-every other hypothesis and every precondition conjunct hold together (the shared witness runtime `WStubs.impl`, toy
-allocator, budget `0x80000`, a 64 KiB stack, the threshold globals at their initial values, the `hasADX` byte, the call
-`z.Mod(z, y)` with `z = 7`, `y = 3`, one limb each; one call-site state per contract) and the call returns.
+`nat.div` (as `QuoRem` calls it: `stk == nil`) is top's closed `Q.NatDiv.ensMC` (Amd64/NatQ/DivMC), its cost bound
+`Q.BudM.bud` (Amd64/NatQ/ModBudQ); further runtime premises: `growslice`, `memclrNoHeapPointers`, `gcWriteBarrier2`.
+`Witness.nonvacuous`: every hypothesis and every precondition conjunct hold together (the shared witness runtime
+`WStubs.impl`, toy allocator, budget `0x80000`, a 64 KiB stack, the threshold globals at their initial values, the
+`hasADX` byte, the call `z.Mod(z, y)` with `z = 7`, `y = 3`, one limb each; one call-site state per contract) and the
+call returns.
 -/
 
 open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Spec Janus.Spec.Pool Janus.Contracts
@@ -48,7 +51,7 @@ theorem fn_eq : RunIface.P ++ "(*Int).Mod" = fnModL := by decide
 
 /-- **`(*Int).Mod`** (amd64): `z.Mod(z, y)` (`y > 0`, operands of at most 128 words) returns `z` holding `z mod y`,
 leaves `y` unchanged, writes only `z`, the runtime's memory and the window; for every runtime meeting the live
-contracts — PREMISE FORM: given `nat.div`'s large-divisor summary `Q.DivLarge.HypG impl R dc` and its cost bound. -/
+contracts. -/
 theorem correctness (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
     (hmk : MakesliceLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice")
       4096 R)
@@ -63,16 +66,22 @@ theorem correctness (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted
       (Extracted.program.contractAddr "sync.(*Pool).Get") 4096 R Free.stkT S)
     (hput : Janus.Contracts.PoolAmd64.PoolPutLive (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "sync.(*Pool).Put") 4096 R Free.stkT S)
-    (dc : Nat → Nat → Nat) (hL : Q.DivLarge.HypG impl R dc)
-    (hbud : ∀ ul vl, ul ≤ 128 → vl ≤ 128 → Q.NatDiv.costMQ dc ul vl ≤ ModBudget (max ul vl))
+    (hgr : GrowsliceLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.growslice")
+      4096 R)
+    (hmc : MemclrNoHeapPointersLive64 (Extracted.program.ofImpl impl)
+      (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
+    (hwb : WbLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2")
+      4096 R 2)
     (b : Nat) (L : List (Nat × Nat)) (z y : BitVec 64) :
     Ensures (Extracted.program.link impl) (segAddr Extracted.program fnModL) [z, z, y]
       (Pre R b L S z y) (Post R b L z y) := by
   intro ret hret s hs ⟨hS, hp⟩
   subst hS
   have h := Ensures.full64 hap (by simp [numIntRegs])
-    (IMod.ensCA impl hap R hmk hmv hmz hno hget hput hwb4 dc hL hbud (stk := 41800) (above := 16)
-      (by decide) (by decide) b L z y)
+    (IMod.mod_ensD impl hap R (Q.NatDiv.ensMC impl hap R hgr hmc hwb hmk hmv hmz hno hget hput) IMod.libDiv_sub
+      IMod.libDiv_noQ
+      (WbLiveContract64.of_codeIn (by rw [LibQR.eq_only]; exact codeIn_ofImpl_restrict_of_apart64 hap LibQR.names) hwb4)
+      (stk := 41800) (above := 16) (by omega) (by omega) (by decide) (by decide) Q.BudM.bud b L z y)
   rw [fn_eq] at h
   exact h ret hret s hs hp
 
@@ -181,12 +190,10 @@ theorem pre : Pre R 0x80000 [] StkSh (BitVec.ofNat 64 OA) (BitVec.ofNat 64 (OA +
 
 theorem hty : TysOK [] := by intro t ht; simp at ht
 
-/-- Every hypothesis of `correctness` except the `nat.div` large-divisor premise and its cost bound (still premises,
-taken here for the witness runtime) holds, with every conjunct of its precondition, a call-site state per runtime
+/-- Every hypothesis of `correctness` holds, with every conjunct of its precondition, a call-site state per runtime
 contract, and the returning run: the shared witness runtime, budget `0x80000`, empty live set, `z.Mod(z, y)` with
 `z = 7`, `y = 3`. -/
-theorem nonvacuous_of (dc : Nat → Nat → Nat) (hL : Q.DivLarge.HypG WStubs.impl R dc)
-    (hbud : ∀ ul vl, ul ≤ 128 → vl ≤ 128 → Q.NatDiv.costMQ dc ul vl ≤ ModBudget (max ul vl)) :
+theorem nonvacuous :
     ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (z y : BitVec 64)
       (ret : Nat) (s : State),
     Amd64.ImplApart Extracted.program impl ∧
@@ -199,6 +206,10 @@ theorem nonvacuous_of (dc : Nat → Nat → Nat) (hL : Q.DivLarge.HypG WStubs.im
       (Extracted.program.contractAddr "sync.(*Pool).Get") 4096 R Free.stkT StkSh ∧
     Janus.Contracts.PoolAmd64.PoolPutLive (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "sync.(*Pool).Put") 4096 R Free.stkT StkSh ∧
+    GrowsliceLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.growslice") 4096 R ∧
+    MemclrNoHeapPointersLive64 (Extracted.program.ofImpl impl)
+      (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R ∧
+    WbLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 4096 R 2 ∧
     RetAddr (Extracted.program.link impl) ret ∧
     CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program fnModL) [z, z, y] s ∧
     Pre R b L StkSh z y s ∧
@@ -223,6 +234,15 @@ theorem nonvacuous_of (dc : Nat → Nat → Nat) (hL : Q.DivLarge.HypG WStubs.im
     (∃ (L : List (Nat × Nat)) (b : Nat) (rs : List (Nat × Nat)) (s_c : State),
       s_c.rip = BitVec.ofNat 64 (Extracted.program.contractAddr "sync.(*Pool).Put") ∧
       putSite R (Extracted.program.contractAddr "sync.(*Pool).Put") L b rs s_c) ∧
+    (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
+      s_c.rip = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.growslice") ∧
+      grSite R (Extracted.program.contractAddr "runtime.growslice") L b s_c) ∧
+    (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
+      s_c.rip = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") ∧
+      clSite R (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") L b s_c) ∧
+    (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
+      s_c.rip = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.gcWriteBarrier2") ∧
+      wbSite R (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 2 L b s_c) ∧
     Returns ((Extracted.program.link impl).withExit ret) s fun s' => ABIReturn s s' ∧ Post R b L z y s s' :=
   ⟨WStubs.impl, R, 0x80000, [], BitVec.ofNat 64 OA, BitVec.ofNat 64 (OA + 0x40), RET, s0, WStubs.hap,
     by rw [WStubs.addr_mk]; exact WStubs.mk [] hty _,
@@ -232,6 +252,9 @@ theorem nonvacuous_of (dc : Nat → Nat → Nat) (hL : Q.DivLarge.HypG WStubs.im
     by rw [WStubs.addr_wb4]; exact WStubs.wb4 [] hty _,
     by rw [WStubs.addr_get]; exact WStubs.get [] _ _ _,
     by rw [WStubs.addr_put]; exact WStubs.put [] hty _ _ _,
+    by rw [WStubs.addr_gr]; exact WStubs.gr [] hty _,
+    by rw [WStubs.addr_cl]; exact WStubs.cl R,
+    by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] hty _,
     hret, setup, pre,
     ⟨[], 0x1000, callS WStubs.mkA Extracted.dataAddr.«type:big.Word#51b931e8» 1 1, by rw [WStubs.addr_mk]; rfl,
       by rw [WStubs.addr_mk]; exact site_mk _⟩,
@@ -243,10 +266,15 @@ theorem nonvacuous_of (dc : Nat → Nat → Nat) (hL : Q.DivLarge.HypG WStubs.im
     ⟨[], 0x1000, callS WStubs.getA OA 0 0, by rw [WStubs.addr_get]; rfl, by rw [WStubs.addr_get]; exact site_get _⟩,
     ⟨[(HEAP, HEAP + 24)], 0x1000, [(HEAP, HEAP + 24)], callP WStubs.putA, by rw [WStubs.addr_put]; rfl,
       by rw [WStubs.addr_put]; exact site_put _⟩,
+    ⟨[], 0x1000, callS5 WStubs.grA OA 2 1 1 Extracted.dataAddr.«type:big.Word#51b931e8», by rw [WStubs.addr_gr]; rfl,
+      by rw [WStubs.addr_gr]; exact site_gr _⟩,
+    ⟨[], 0x1000, callS WStubs.clA OA 8 0, by rw [WStubs.addr_cl]; rfl, by rw [WStubs.addr_cl]; exact site_cl _⟩,
+    ⟨[], 0x1000, callS WStubs.wb2A 0 0 0, by rw [WStubs.addr_wb2]; rfl, by rw [WStubs.addr_wb2]; exact site_wb _ _⟩,
     correctness WStubs.impl WStubs.hap R (by rw [WStubs.addr_mk]; exact WStubs.mk [] hty _)
       (by rw [WStubs.addr_mv]; exact WStubs.mv R) (by rw [WStubs.addr_mv]; exact WStubs.mvz R)
       (by rw [WStubs.addr_no]; exact WStubs.no [] hty _) (by rw [WStubs.addr_wb4]; exact WStubs.wb4 [] hty _) StkSh
       (by rw [WStubs.addr_get]; exact WStubs.get [] _ _ _) (by rw [WStubs.addr_put]; exact WStubs.put [] hty _ _ _)
-      dc hL hbud 0x80000 [] (BitVec.ofNat 64 OA) (BitVec.ofNat 64 (OA + 0x40)) RET hret s0 setup pre⟩
+      (by rw [WStubs.addr_gr]; exact WStubs.gr [] hty _) (by rw [WStubs.addr_cl]; exact WStubs.cl R)
+      (by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] hty _) 0x80000 [] (BitVec.ofNat 64 OA) (BitVec.ofNat 64 (OA + 0x40)) RET hret s0 setup pre⟩
 
 end FvModexp.Amd64.ModRow.Witness

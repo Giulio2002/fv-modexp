@@ -1,6 +1,8 @@
+import FvModexp.Proofs.Arm64.Exp.W4OneP
 import FvModexp.Proofs.Arm64.Exp.LibW
 import FvModexp.Proofs.Arm64.Exp.W4P01Ret
 import FvModexp.Proofs.Arm64.Exp.W4Snc
+import FvModexp.Proofs.Arm64.Exp.W4Posts
 
 /-!
 # window-4 (arm64): from `oneJ` (fn+0x524) to the return
@@ -14,7 +16,7 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvMod
 
 namespace FvModexp.Arm64.W4Pro
 
-open FvModexp.Arm64.W4Loop (Env Inp Buf Bufs Mem Static OneIn FinEnv TailPost step)
+open FvModexp.Arm64.W4Loop (Env Inp Buf Bufs Mem Static FinEnv TailPost step)
 
 /-- the whole window-4 frame below `sp + 1040`, including the deepest callee window (`nat.sub`, 4304) -/
 @[reducible] def W4w (sp : Nat) : Nat × Nat := (sp - 4304, 4304 + 1040)
@@ -42,10 +44,6 @@ theorem sn_rd {R : RtInv} {L1 L2 : List (Nat × Nat)} {b1 b2 g sp st k a j : Nat
   have h2 : Outside a j (stkWs M1 st) := by
     simp only [stkWs, outside_cons, outside_nil, and_true]; omega
   exact FvModexp.Expmc.held_readLE hh hF hL (by simp only [outside_cons, outside_nil, and_true]; omega) h2
-
-theorem apart_held' {R : RtInv} {L : List (Nat × Nat)} {p k a n : Nat} (hin : InRanges p k R.rt)
-    (hap : ApartAll p k L) (hh : InRanges a n L ∨ Outside a n R.rt) : Apart a n p k := by
-  have := apart_held hin hap hh; unfold Apart at this ⊢; omega
 
 /-- the table buffer is apart from every held object that is apart from the old free part -/
 theorem buf_apart {R : RtInv} {L1 L2 : List (Nat × Nat)} {b1 b2 g sp st k a j : Nat} {M1 M2 : Memory}
@@ -186,18 +184,6 @@ theorem one_facts {R : RtInv} {L L1 L2 : List (Nat × Nat)} {b1 b2 g sp n st one
     · have := buf_apart hS hlc1 (Or.inl i1) (fun _ => by rw [hFE]; exact hoF)
       rw [e2] at this; unfold Apart at this ⊢; omega
 
-/-- `p01Ret`'s conclusion with the operand values given explicitly -/
-@[reducible] def RetPost (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (g sp n mp mc t bp yp ylen Y yi zp zc zzp zzc st n0 onep : Nat)
-    (r18 r29 : BitVec 64) (Mv xv rv : Nat) (M : Memory) (s' : State) : Prop :=
-  ∃ (Mj M' : Memory) (zp' zc' : Nat) (L' : List (Nat × Nat)) (b' : Nat),
-    MemFrame M Mj (R.rt ++ tw sp bp n) ∧ LiveFrame M Mj L [(bp, bp + 8 * (17 * n))] ∧
-    R.inv b L g (view R.rt L Mj) ∧ Mj.regions = M.regions ∧
-    ZPost R L L' b b' g sp n Mj M' zp zc zp' zc' ∧
-    ZjPost R b' L' g sp n mp mc ((2 ^ 64 - t) % 2 ^ 64) yp ylen bp zp' zc' zzp zzc
-      (Exp.montPow n Mv ((2 ^ 64 - t) % 2 ^ 64) xv rv)
-      (zjVal n Mv ((2 ^ 64 - t) % 2 ^ 64) (Exp.montPow n Mv ((2 ^ 64 - t) % 2 ^ 64) xv rv) Y ylen yi)
-      st n0 onep r18 r29 M' s'
-
 /-- small-context arithmetic for `afterOne` (omega in its ~150-hypothesis context cost > 2 min) -/
 theorem sub2 {b b1 b2 x y : Nat} (h1 : b - x ≤ b1) (h2 : b1 - y ≤ b2) : b - (x + y) ≤ b2 := by omega
 
@@ -215,21 +201,10 @@ theorem go2 {g sp st : Nat} {M : Memory} (hsp : 4304 ≤ sp) (hga4 : Apart (g + 
   unfold Apart at hga4 hstg hfg; simp only at hfg
   simp only [ow, stkWs, List.cons_append, List.nil_append, outside_cons, outside_nil, and_true]; omega
 
-/-- the stack/runtime chain `oneJ → p01` -/
-@[reducible] def OneChain (R : RtInv) (b : Nat) (L L2 : List (Nat × Nat)) (b2 sp n st : Nat) (M0 M2 : Memory) : Prop :=
-  MemFrame M0 M2 (R.rt ++ ow sp ++ [(sp - 4208, sp - 8), (sp + 8, sp + 24)] ++ stkWs M0 st) ∧
-  LiveFrame M0 M2 L (stkWs M0 st) ∧ LiveExt R L L2 ∧
-  b - ((if 4 < n then blockSize (8 * n) true else 0) + stackNatCost (stLen M0 st) (17 * n)) ≤ b2 ∧
-  StkOK M2 R L2 st ∧ stLen M2 st = stLen M0 st + StackNat.rnd (17 * n) ∧
-  (stLen M0 st + StackNat.rnd (17 * n) ≤ stCap M0 st → stW M2 st = stW M0 st ∧ stCap M2 st = stCap M0 st) ∧
-  (stCap M0 st < stLen M0 st + StackNat.rnd (17 * n) → InRanges (stW M2 st) (8 * stCap M2 st) R.rt ∧
-    ApartAll (stW M2 st) (8 * stCap M2 st) L) ∧ M2.regions = M0.regions ∧
-  (stCap M0 st < stLen M0 st + StackNat.rnd (17 * n) → (stW M2 st, stW M2 st + 8 * stCap M2 st) ∈ L2)
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- window-4 from the `stk.nat(17n)` call (after `one`/`powers`) to the return -/
-theorem afterOne (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+theorem afterOne (hP01 : FvModexp.Arm64.W4Pro.P01Spec) (hJ4 : FvModexp.Arm64.W4Pro.J4Spec) (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hclr : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
@@ -457,7 +432,7 @@ theorem afterOne (impl : List Segment) (hap : ImplApart Extracted.program impl) 
     obtain ⟨a1, a2, a3, a4, a5, a6⟩ := hold h
     have hb := (hz h).1
     exact ⟨a1, a2, a3, bapL _ _ hb.2.2.2.2.1 a6, a4, hoA _ _ hb.2.2.2.2.1 hb.2.2.2.2.2.1, a5⟩
-  refine reaches_mono (p01Ret impl hap R hclr hmv hmk hserv ret hret b2 L2 g sp n mp mc t (stW M2 st + 8 * stLen M st)
+  refine reaches_mono (p01Ret (hP01 := hP01) (hJ4 := hJ4) impl hap R hclr hmv hmk hserv ret hret b2 L2 g sp n mp mc t (stW M2 st + 8 * stLen M st)
     onep rrp rrc xp xc yp ylen Y yi zp zc zzp zzc st n0 M2 r18 r29 f29 he2 hce2 hn (by omega) hmc hmc' ht (inpT _ _ hm)
     hba hbb hbh (win_sub hK4 hbw) hbg (flip _ _ _ _ (bapL _ _ hm.2.2.1 hmF)) hone2 hbo hone12
     (inpT _ _ hrr) (flip _ _ _ _ (bapL _ _ hrr.2.2.1 hrF)) (inpT _ _ hx) (flip _ _ _ _ (bapL _ _ hx.2.2.1 hxF))

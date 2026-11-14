@@ -1,5 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.LibWC
 import FvModexp.Proofs.Arm64.Exp.W4Fun
+import FvModexp.Proofs.Arm64.Exp.W4Comp
+import FvModexp.Proofs.Arm64.Exp.W4XnS
 import FvModexp.Proofs.Arm64.Nat.StackNat
 import FvModexp.Proofs.Arm64.Nat.Lsh
 
@@ -51,7 +53,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     rw [← mcE_eq]; exact MemclrNoHeapPointersLive.of_codeIn hc hclr
   have hwb' : WbLiveContract (LibW.program.link impl) wbE 4096 R 2 := by
     rw [← wbE_eq]; exact WbLiveContract.of_codeIn hc hwb
-  refine returns_of_reaches (W4Pro.reaches_mono (W4En.enStep impl hap R hclr hmv hmk
+  refine returns_of_reaches (W4Pro.reaches_mono (W4En.enStep W4Pro.xnStep W4Pro.rrSpec impl hap R hclr hmv hmk
     (StackNat.hypL impl hap R hgr hclr hwb) hgr' hmc' hwb' nsD stkD (divCost costF n xl (stLen s.mem st)) costF hDiv hnsD hnsW Lsh.names 4256
     (Lsh.ens impl hap R hmk hmv hclr) (MontW.sub_of_all (by decide)) (by decide) ret hret b L K
     (s.regs 28).toNat (s.sp.toNat - 928) st zp zc xp xl xc yp ylen mp n mc s hP hstnz hKD hKL hMo hM1 hslen hcs hbC hbB hbA

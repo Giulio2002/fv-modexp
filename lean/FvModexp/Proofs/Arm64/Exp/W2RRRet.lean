@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.W2RRP
 import FvModexp.Proofs.Arm64.Exp.LibW
 import FvModexp.Proofs.Arm64.Exp.W2OneRet2
 import FvModexp.Proofs.Arm64.Exp.W2RR
@@ -13,7 +14,7 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvMod
 
 namespace FvModexp.Arm64.W2Pro
 
-open FvModexp.Arm64.W2Loop (Env Inp Buf Bufs Mem Static OneIn FinEnv TailPost step)
+open FvModexp.Arm64.W2Loop (Env Inp Buf Bufs Mem Static FinEnv TailPost step)
 
 set_option maxRecDepth 20000 in
 /-- a held object apart from the window and from `zz` keeps its bytes `divRet → oneJ` -/
@@ -40,7 +41,7 @@ theorem rr_slot {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {g sp n rp rl rc z
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem rrRet (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+theorem rrRet (hP01 : FvModexp.Arm64.W2Pro.P01Spec) (hJ4 : FvModexp.Arm64.W2Pro.J4Spec) (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hclr : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
@@ -220,7 +221,7 @@ theorem rrRet (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
           by unfold Apart at hzw ⊢; omega⟩, by unfold Apart at hzzs ⊢; omega, by unfold Apart at hzzF ⊢; omega⟩
     obtain ⟨hrr1, hrS1, hrF1⟩ := hrr1
     have hrrv : M1.readLE rrp (8 * n) = M.readLE rp (8 * rl) := hrv
-    refine reaches_mono (oneRet impl hap R hclr hmv hmk hSN hserv ret hret b L g sp n mp mc t rrp rrc xp xc yp ylen Y yi
+    refine reaches_mono (oneRet (hP01 := hP01) (hJ4 := hJ4) impl hap R hclr hmv hmk hSN hserv ret hret b L g sp n mp mc t rrp rrc xp xc yp ylen Y yi
       zp zc zzp zzc st n0 M1 r18 r29 f29 he1 hce1 hn hn128 hmc hmc' ht (inp1 _ _ hm) hrr1 (inp1 _ _ hx)
       (by rw [rs 728 (by omega)]; exact r728) (by rw [rs 736 (by omega)]; exact r736)
       (by rw [rs 744 (by omega)]; exact r744) (by rw [rs 224 (by omega)]; exact r224)
