@@ -60,6 +60,16 @@ operands and the threshold globals -/
     Apart zp (8 * zc) mp (8 * n) ∧ Apart zp (8 * zc) yp (8 * yl) ∧ Apart zp (8 * zc) xp (8 * xc) ∧
     Apart zp (8 * zc) RunIface.gA 32
 
+/-- **the amd64 exp-chain extra entry facts** (coordinator DECISION, NOTES-conventions; divmc's `P2W2.EX` + asm s59):
+(a) `x` apart from the threshold globals `gA` (32 bytes), (b) the `natOne` word apart from `gA`, (c) `hasADX` readable
+(`Callees.adxAddr = MontHyp.hasADX = 0xbb6b8a`), (d) `x`'s full-capacity range: readable, apart from the stack header
+and from the stack's free part. Memory `m` = the entry memory of the function taking it. -/
+@[reducible] def XG (m : Janus.Arm64.Memory) (st xp xl xc : Nat) : Prop :=
+  (0 < xl → Apart xp (8 * xl) RunIface.gA 32) ∧ Apart (m.readLE EvenHyp.natOneA 8) 8 RunIface.gA 32 ∧
+  m.accessible Callees.adxAddr 1 false = true ∧
+  m.accessible xp (8 * xc) false = true ∧ Apart xp (8 * xc) st 24 ∧
+  Apart xp (8 * xc) (W4En.free m st).1 (W4En.free m st).2
+
 /-- the precondition's facts (entry state `s`, `sp = RSP - 0x498`, stack-size and cost parameters of the callees) -/
 def NPre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K : Nat) (costF : Nat → Nat → Nat → Nat) (costD : Nat)
     (needR : Nat → Nat → Nat) (costR : Nat → Nat → Nat → Nat) (needS needP : Nat → Nat → Nat → Nat)
