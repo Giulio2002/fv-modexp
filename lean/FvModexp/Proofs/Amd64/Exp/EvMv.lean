@@ -187,7 +187,8 @@ theorem mkCall {impl : List Amd64.Segment} (hmk : MakesliceLiveContract64 (LibNE
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 4000000 in
-/-- **`memmove(d, src, n)` from `RSP = sp - 8`** (continuation form; `n = 0` asks nothing of `d`, `src`) -/
+/-- **`memmove(d, src, n)` from `RSP = sp - 8`** (continuation form; `n = 0` asks nothing of `d`, `src`, and then the
+written range is reported as the empty `[0, 0)`) -/
 theorem mvCall {impl : List Amd64.Segment} (hmv : MemmoveLive64 (LibNE.program.link impl) mvE 4096 R)
     (hmz : MemmoveZeroLive64 (LibNE.program.link impl) mvE 4096 R) {ret0 : W64} {Q : State → Prop}
     (hP : EPre R b L K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml mc s) (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ)
@@ -199,8 +200,9 @@ theorem mvCall {impl : List Amd64.Segment} (hmv : MemmoveLive64 (LibNE.program.l
     (hx15 : T.xmm 15 = 0) (hdf : T.df = false)
     (h0 : T.regs 0 = BitVec.ofNat 64 d) (h3 : T.regs 3 = BitVec.ofNat 64 src) (h1 : T.regs 1 = BitVec.ofNat 64 n)
     (KC : ∀ (junk : Nat → W64) (f : Flags) (x yh : Nat → BitVec 128) (m : Memory) (zh : Nat → BitVec 256)
-      (kr : Nat → W64), MemFrame M m (R.rt ++ [(sp - 8 - 4096, sp - 8), (sp, sp + 24)] ++ [(d, d + n)]) →
-      LiveFrame M m L1 [(d, d + n)] → R.inv b1 L1 g (view R.rt L1 m) → Mem.Copied M m d src n →
+      (kr : Nat → W64) (dd : Nat), (n = 0 ∧ dd = 0 ∨ dd = d) →
+      MemFrame M m (R.rt ++ [(sp - 8 - 4096, sp - 8), (sp, sp + 24)] ++ [(dd, dd + n)]) →
+      LiveFrame M m L1 [(dd, dd + n)] → R.inv b1 L1 g (view R.rt L1 m) → Mem.Copied M m d src n →
       m.regions = M.regions → ReachesRet (LibNE.program.link impl) ret0 (retState64 T junk [] f x yh m zh kr) Q) :
     ReachesRet (LibNE.program.link impl) ret0 T Q := by
   have hk := hP.kf
@@ -216,6 +218,30 @@ theorem mvCall {impl : List Amd64.Segment} (hmv : MemmoveLive64 (LibNE.program.l
   have hacc : M.accessible (sp - 8 - 4096) (4096 + 8 + 8 * 3) true = true :=
     Janus.Arm64.Memory.accessible_mono _ c4 (by omega) (by omega)
   unfold Apart at c9
+  by_cases hn0 : n = 0
+  · subst hn0
+    refine ReachesRet.call_regions (hmz L1 b1) hpc ?_ ?_
+    · simp only [MemPre64, MemAmd64.EqPre, MemAmd64.CallOK, LiveMemAt64, liveWin64,
+        MapAmd64.calleeStack, calleeStack64, t4, t0, t1, t3, t14, hm, hx15, hdf, List.cons_append, List.nil_append,
+        outside_cons, outside_nil, and_true]
+      refine ⟨trivial, ⟨?_, ⟨by omega, by omega, by omega, hacc, trivial, trivial, hra⟩, by omega⟩, ⟨hok, h.inv, ?_, ?_⟩⟩
+      · exact ⟨by simp only [regG, stackguard0Offset, t14]; omega, by simp only [regG, stackguard0Offset, t14, hm]; exact c6,
+          by simp only [stackguard0, regG, regSP, stackguard0Offset, t14, hm, t4]; omega⟩
+      · intro q hq
+        have := c11 q hq
+        simp only [outside_cons, outside_nil, and_true] at this ⊢
+        omega
+      · intro q hq
+        simp only [List.mem_cons, List.not_mem_nil, or_false] at hq
+        rcases hq with rfl | rfl | rfl <;> exact c8.of_sub (by simp only; omega) (by simp only; omega)
+    intro S2 _ ⟨junk, f2, x2, yh2, m', zh2, kr2, hs2, hfr2, hlf2, hinv2, _⟩ hrg0
+    subst hs2
+    simp only [hm, calleeStack64, t4, t14, List.append_nil] at hfr2 hlf2 hinv2
+    have e8 : sp - 8 + 8 = sp := by omega
+    rw [e8, show sp + 8 * 3 = sp + 24 by omega] at hfr2
+    exact KC junk f2 x2 yh2 m' zh2 kr2 0 (Or.inl ⟨rfl, rfl⟩)
+      (hfr2.mono fun a k ho => by rw [outside_append] at ho; exact ho.1)
+      ⟨fun a k hin _ => hlf2.readLE a k hin trivial⟩ hinv2 (fun i hi => absurd hi (by omega)) (by rw [← hm]; exact hrg0)
   refine ReachesRet.call_regions (hmv.withZero hmz L1 b1) hpc ?_ ?_
   · simp only [MemPre64, MemAmd64.EqPre, MemAmd64.CallOK, LiveMemAt64, liveWin64, MemAmd64.Input, LiveDest64,
       MapAmd64.calleeStack, calleeStack64, t4, t0, t1, t3, t14, hm, hx15, hdf, List.cons_append, List.nil_append,
@@ -240,7 +266,7 @@ theorem mvCall {impl : List Amd64.Segment} (hmv : MemmoveLive64 (LibNE.program.l
   simp only [t0, t1, t3, hm, calleeStack64, t4, t14] at hfr2 hlf2 hinv2 hcp
   have e8 : sp - 8 + 8 = sp := by omega
   rw [e8, show sp + 8 * 3 = sp + 24 by omega] at hfr2
-  exact KC junk f2 x2 yh2 m' zh2 kr2 (by simpa only [List.append_assoc, List.cons_append, List.nil_append] using hfr2)
+  exact KC junk f2 x2 yh2 m' zh2 kr2 d (Or.inr rfl) (by simpa only [List.append_assoc, List.cons_append, List.nil_append] using hfr2)
     hlf2 hinv2 hcp (by rw [← hm]; exact hrg0)
 
 /-- reads of a held range apart from the window and from `d` are kept by a `memmove` -/
