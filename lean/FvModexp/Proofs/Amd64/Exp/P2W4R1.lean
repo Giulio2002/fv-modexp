@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.P2W4Fin
+import FvModexp.Proofs.Amd64.Exp.P2W4Seg
 import FvModexp.Proofs.Amd64.Exp.P2W4Tl2
 import FvModexp.Proofs.Amd64.Exp.P2W4Sk
 
@@ -68,6 +69,7 @@ theorem r1a {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program
   have hc0 : ¬ (zc = 0) := by omega
   unfold Apart at hzO2 hzO3
   subst hm
+  refine SegProg.lift P2W4Seg.codeIn (r := BitVec.ofNat 64 tS) ?_
   janus64_run [r1f0, r200, hzaM, hwaccF, hz0, hc0] until [tS]
   have hF1 : MemFrame S.mem (S.mem.writeLE zp 8 1) [(zp, zp + 8)] :=
     (MemFrame.refl _ _).writeLE_inRanges _ ⟨(zp, zp + 8), by simp, by simp only; omega, by simp only; omega⟩

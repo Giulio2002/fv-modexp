@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.P2W4BJ
+import FvModexp.Proofs.Amd64.Exp.P2W4Seg
 
 set_option autoImplicit false
 
@@ -83,6 +84,7 @@ theorem segB10 (hP : EPre R b L K g fs sp st bp r zp zc xp xl xc yp yl lm s) {i 
       (Z5 lm (natVal s.mem xp xl) Z yi)) := ⟨hli⟩
   clear h hce hesl hli hP
   subst em
+  refine SegProg.lift P2W4Seg.codeIn (r := BitVec.ofNat 64 LT) ?_
   janus64_run [hwaccF, q208, q1d8, q1e0, q228, qc8, qf0, q98, q118, q68, qd0, hsh] until [LT]
   refine KN _ S.mem L1 b1 (yi * 2 ^ 4 % Exp.B) (Z5 lm (natVal s.mem xp xl) Z yi) p3 l3 c3 p2 l2 c2 (!u)
     ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, rfl, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, hLH.h, hi,

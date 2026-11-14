@@ -46,6 +46,8 @@ theorem kIter {impl : List Amd64.Segment} {ret : W64} {Q : State → Prop}
   by_cases hlt : 2 ^ j < 64
   · have hbr : (BitVec.ofNat 64 (2 ^ j)).toInt < (64 : Int) := by
       rw [BitVec.toInt_eq_toNat_cond, e]; split <;> omega
+    janus64_step [hbr]
+    refine SegProg.lift W4Seg.codeIn (r := BitVec.ofNat 64 kHead) ?_
     janus64_run [hbr] until [kHead]
     refine KL _ hlt rfl rfl ?_ ?_ ?_ rfl rfl rfl ?_
     · simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]

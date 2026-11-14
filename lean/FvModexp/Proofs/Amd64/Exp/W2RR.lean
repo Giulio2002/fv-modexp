@@ -131,7 +131,11 @@ theorem rrFix (impl : List Amd64.Segment) {R : RtInv}
     have hsel : (if (rl : Int) < (n : Int) then BitVec.ofNat 64 rl else BitVec.ofNat 64 n).toNat * 8 %
         18446744073709551616 = 8 * rl := by
       rw [ite_eq_left_iff.2 (fun h => absurd (by omega) h)]; simp only [BitVec.toNat_ofNat]; omega
-    janus64_run [s3b0, sa0, s188, hsel] until [6212454] calls [hmv L b]
+    refine SegProg.lift W2Seg.codeIn (r := BitVec.ofNat 64 6212384) ?_
+    janus64_run [s3b0, sa0, s188, hsel] until [6212384]
+    janus64_run [s3b0, sa0, s188, hsel] until [6212389] calls [hmv L b]
+    refine SegProg.lift W2Seg.codeIn (r := BitVec.ofNat 64 6212454) ?_
+    janus64_run [s3b0, sa0, s188, hsel] until [6212454]
     rename_i _ _ _ _ m1 _ _ hF1 hL1 hI1 hC1
     refine KR _ zzp zzc rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ hfs ?_ rfl
       (rrBpost he hrl hrw hzn hzh hzw hzz0 hF1 hL1 hI1 hC1 hrg1)

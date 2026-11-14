@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.P2W2Cp3
+import FvModexp.Proofs.Amd64.Exp.P2W2Seg
 
 set_option autoImplicit false
 
@@ -105,11 +106,13 @@ theorem blH {impl : List Amd64.Segment} (hmv : MemmoveLive64 (LibW.program.link 
   by_cases hk1' : kk = 1
   · have e5 := hD0 hk1'
     subst hk1'
+    refine SegProg.lift P2W2Seg.codeIn (r := BitVec.ofNat 64 TL) ?_
     janus64_run [hwacc, hwaccF, hyz, e1, ek2, hk2, hk2m, e4, hd4'] until [TL]
     refine blH3 hmv hmk ret0 Q hP (KL 1) hwH.h (d := d) (i := i) (yi := yi) _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ hd4 (Nat.le_refl 1)
       (by decide) hi hyi hX hbud htc hFV
     all_goals first | exact hfs | (janus64_simp [e5]; done) | skip
   · have hz : ((kk - 1) * 2 = 0) = False := by simp only [eq_iff_iff, iff_false]; omega
+    refine SegProg.lift P2W2Seg.codeIn (r := BitVec.ofNat 64 TL) ?_
     janus64_run [hwacc, hwaccF, hyz, e1, ek2, hk2, hk2m, e4, hd4', hz] until [TL]
     refine blH3 hmv hmk ret0 Q hP (KL kk) hwH.h (d := d) (i := i) (yi := yi) _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ hd4 hk1
       hk32 hi hyi hX hbud htc hFV

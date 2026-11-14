@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.P2W4BJ
+import FvModexp.Proofs.Amd64.Exp.P2W4Seg
 import FvModexp.Proofs.Amd64.Exp.P2W4Cp3
 
 set_option autoImplicit false
@@ -158,6 +159,7 @@ theorem segB8 (hap : Amd64.ImplApart Extracted.program impl) {ns : List String}
   have hPH : HdM (EPre R b L K g fs sp st bp r zp zc xp xl xc yp yl lm s) := ⟨hP⟩
   clear hP
   subst em
+  refine SegProg.lift P2W4Seg.codeIn (r := BitVec.ofNat 64 6228032) ?_
   janus64_run [q208, q98, q1b8, qd8, q70, hsh, hwacc, hwaccF] until [6228032]
   have rl : ∀ o, o < 24 → S.mem.readLE (sp + (dOf yi + dOf yi * 2) * 8 + (0x148 + o)) 8 =
       S.mem.readLE (sp + 0x148 + 24 * dOf yi + o) 8 := fun o _ => by

@@ -85,6 +85,7 @@ theorem p1 {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program 
   have e3 := sl3 hn16
   have e2 := sl2 hn16
   have es := slc1 (bp := bp) hn hn16 (by omega)
+  refine SegProg.lift W2Seg.codeIn (r := BitVec.ofNat 64 6184288) ?_
   janus64_run [q3a8, q3b0, q3b8, qd8, q78, qf0, q330, s130, s370, s138, s140, s338, sf8, s100, c1, c2, e3, e2, es]
     until [6184288]
   have hra : RetAddr ((Extracted.program.onlySegments LibMont.names).link impl) (6210560 + 0x9d4) :=

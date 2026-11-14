@@ -92,7 +92,9 @@ theorem xnB (impl : List Amd64.Segment) {R : RtInv}
     simp only [outside_append, outside_cons, outside_nil, and_true] at this ⊢
     omega
   subst hmem
-  janus64_run [r3b0, r130, r368, hne, hlt, e8] until [mvRet] calls [hmv L b]
+  refine SegProg.lift W2Seg.codeIn (r := BitVec.ofNat 64 6211464) ?_
+  janus64_run [r3b0, r130, r368, hne, hlt, e8] until [6211464]
+  janus64_run [r3b0, r130, r368, hne, hlt, e8] until [6211469] calls [hmv L b]
   rename_i _ _ _ _ m1 _ _ hF1 hL1 hI1 hC1
   have hsub : (18446744073709551616 - xl + n) % 18446744073709551616 = n - xl := by omega
   have hrr : (rr + 8 * xl) % 18446744073709551616 = rr + 8 * xl := Nat.mod_eq_of_lt (by omega)
@@ -110,7 +112,9 @@ theorem xnB (impl : List Amd64.Segment) {R : RtInv}
     rw [hsr, BitVec.toNat_allOnes, Nat.and_comm, Nat.and_two_pow_sub_one_eq_mod, Nat.mod_eq_of_lt (by omega)]
   have hrr' : (xl * 8 + rr) % 18446744073709551616 = rr + 8 * xl := by omega
   have hn8 : (n - xl) * 8 = 8 * (n - xl) := by omega
-  janus64_run [r3b0, r130, r368, hsub, hrr, hm, hrr', hn8] until [clrRet] calls [hclr L b]
+  refine SegProg.lift W2Seg.codeIn (r := BitVec.ofNat 64 6211542) ?_
+  janus64_run [r3b0, r130, r368, hsub, hrr, hm, hrr', hn8] until [6211542]
+  janus64_run [r3b0, r130, r368, hsub, hrr, hm, hrr', hn8] until [6211547] calls [hclr L b]
   rename_i _ _ _ _ m2 _ _ hF2 hL2 hI2 hZ2
   have u4 := hrc2
   unfold Apart at u4

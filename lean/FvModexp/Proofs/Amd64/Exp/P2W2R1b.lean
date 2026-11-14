@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.P2W2R1
+import FvModexp.Proofs.Amd64.Exp.P2W2Seg
 import FvModexp.Proofs.Amd64.Exp.P2W2Al
 
 set_option autoImplicit false
@@ -152,6 +153,7 @@ theorem r1b {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program
     (stLen s.mem st)) := ⟨hsl1⟩
   have hwH0 : Hd (WC R H L K g sp st zp 0 s.mem S.mem L1 b1 ℓ) := ⟨hw⟩
   clear hw1 hsl1 hsl0 hw
+  refine SegProg.lift P2W2Seg.codeIn (r := BitVec.ofNat 64 mkE) ?_
   janus64_run [r1f0, r200, hwaccF, hz0] until [mkE]
   refine mkCall hmk hP hwH.h (n := 1) (c := 1) (by decide) (by decide) (by decide) hbs _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
     (fun ptr junk f x yh m zh kr hA => ?_)
@@ -170,6 +172,7 @@ theorem r1b {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program
   have hrc : blockSize (8 * 1) true ≤ allocCost 8 := hA.rc
   have hpl := ptr.isLt
   clear hA hwH hsH hwH0
+  refine SegProg.lift P2W2Seg.codeIn (r := BitVec.ofNat 64 tS) ?_
   janus64_run [hacc1] until [tS]
   refine ReachesRet.mono (tailS hap _ sp g st (stLen s.mem st) bp r ptr.toNat 1 s.fsBase (m.writeLE ptr.toNat 8 1)
     ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ (by decide) (by decide) hpl ?_ ?_ (by omega) (tenv_of hP hw' hsl'))
@@ -205,6 +208,7 @@ theorem r1c {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program
     (stLen s.mem st)) := ⟨hsl1⟩
   have hwH0 : Hd (WC R H L K g sp st 0 zc s.mem S.mem L1 b1 ℓ) := ⟨hw⟩
   clear hw1 hsl1 hsl0 hw
+  refine SegProg.lift P2W2Seg.codeIn (r := BitVec.ofNat 64 noE) ?_
   janus64_run [r1f0, hwaccF] until [noE]
   refine noCall hno hP hwH.h hbs _ ?_ ?_ ?_ ?_ ?_ ?_ (fun ptr junk f x yh m zh kr hA _ => ?_)
   all_goals first | (janus64_simp; done) | skip
@@ -222,6 +226,7 @@ theorem r1c {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program
   have hrc : blockSize 8 true ≤ allocCost 8 := hA.rc
   have hpl := ptr.isLt
   clear hA hwH hsH hwH0
+  refine SegProg.lift P2W2Seg.codeIn (r := BitVec.ofNat 64 tN) ?_
   janus64_run [hacc1] until [tN]
   refine ReachesRet.mono (tailN hap _ sp g st (stLen s.mem st) bp r ptr.toNat s.fsBase (m.writeLE ptr.toNat 8 1)
     ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ hpl (tenv_of hP hw' hsl'))

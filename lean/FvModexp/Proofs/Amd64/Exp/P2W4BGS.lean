@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.P2W4BJ
+import FvModexp.Proofs.Amd64.Exp.P2W4Seg
 
 set_option autoImplicit false
 
@@ -151,6 +152,7 @@ theorem segS (hap : Amd64.ImplApart Extracted.program impl) {ns : List String}
   rcases hjp with ⟨rfl, rfl, rfl, rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl, rfl, rfl, rfl⟩ |
     ⟨rfl, rfl, rfl, rfl, rfl, rfl, rfl⟩
   all_goals
+    refine SegProg.lift P2W4Seg.codeIn (r := BitVec.ofNat 64 6229984) ?_
     janus64_run [q330, qo1, qo2, qo3, hwacc, hwaccF] until [6229984]
     refine callS hap hns hnf hsq hkS hkS1 hPH.h hadx hvw (by first | exact Or.inl ⟨rfl, rfl, rfl⟩ | exact Or.inr ⟨rfl, rfl, rfl⟩) hrem (by decide) KS hH.h
       ?hF ?hrg ?r1 ?r2 ?r3 _ ?_ ?hsp ?_ ?_ ?hfs ?_ ?_ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_

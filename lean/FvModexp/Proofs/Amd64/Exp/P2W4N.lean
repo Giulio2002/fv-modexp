@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.P2W4PP
+import FvModexp.Proofs.Amd64.Exp.P2W4Seg
 import FvModexp.Proofs.Amd64.Exp.LibCallsQ
 
 set_option autoImplicit false
@@ -136,6 +137,7 @@ theorem segN1 {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
   have hEH : LibCalls.Hide (ESl s'.mem sp st bp r zp zc xp xl xc yp yl lm (stLen s.mem st)) := ⟨hsl2⟩
   have h8 : 8 ≤ sp := by have := hP.1.2.2.2.2.2.2.1; omega
   clear hpost hF2 hkeep hW2 hscr KP hsl hsl2 h hpre hP hce hwo hpc' hsp' h14' hx15' edf efs
+  refine SegProg.lift P2W4Seg.codeIn (r := BitVec.ofNat 64 6195456) ?_
   janus64_run [q208, q210, q218, q220, q228, a118, a68, a70, a140, am8] until [6195456]
   refine hKH.h s'.mem L2 b2 hb2 hWH.h hSH.h hEH.h _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?mf ?rg ?r0 ?r1 ?r2 ?r3
   case mf => janus_frame
@@ -205,6 +207,7 @@ theorem segN {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progra
   have h8 : 8 ≤ sp := by omega
   subst hm
   clear KP hP h hsl h1 hsl1 hce hwr hLs hrt
+  refine SegProg.lift P2W4Seg.codeIn (r := BitVec.ofNat 64 6186112) ?_
   janus64_run [e2w, hacc] until [6186112]
   refine segN1 hap hns hnf hsn hkN haN hPH.h h1H.h hl0 hH hl16 hsH.h _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ hrd hKH.h
   all_goals first | (janus64_simp; done) | exact hfs | skip

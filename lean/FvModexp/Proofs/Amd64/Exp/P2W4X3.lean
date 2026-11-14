@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.P2W4X2
+import FvModexp.Proofs.Amd64.Exp.P2W4Seg
 
 set_option autoImplicit false
 
@@ -103,6 +104,7 @@ theorem xA2 (hap : Amd64.ImplApart Extracted.program impl) (hmv : MemmoveLive64 
     lm ptr.toNat (n + 4)) := ⟨hub⟩
   clear hB2 hub hA qk hB
   subst hm
+  refine SegProg.lift P2W4Seg.codeIn (r := BitVec.ofNat 64 XJ) ?_
   janus64_run [q118, q68, q58, hwacc3, hwaccF3, rra] until [XJ]
   refine xJ hap hmv hP hBH.h.wc hBH.h.esl hBH.h.tz hubH.h (by omega) hn1 (by omega) hsrc2 (by omega) _ ?_ ?_ ?_ ?_ ?_
     ?_ rfl ?_ ?_ ?_ ?_ ?_

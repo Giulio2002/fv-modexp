@@ -119,6 +119,7 @@ theorem seg5 {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progra
     have hacc' : s'.mem.accessible (sp - 4296) (4296 + 0x3c0) true = true := by
       rw [hM'.1.1.accessible]; exact he.2.2.2.1
     clear hsl
+    refine SegProg.lift W4Seg.codeIn (r := BitVec.ofNat 64 6209681) ?_
     janus64_run [k1, k2, k3, k4, k5, k6, k7, k8, k9, k10, k11] until [test]
     refine K _ ?rip ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?r9 ?_ ?_ ?_ ?_ ?mem2 ?m140 ?me8 ?vz ?vzz
     case rip => rw [show test = 6209681 by simp only [test, fnE_eq]]

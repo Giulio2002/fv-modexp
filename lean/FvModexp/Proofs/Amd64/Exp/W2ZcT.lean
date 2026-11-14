@@ -80,6 +80,8 @@ theorem zcT (impl : List Amd64.Segment) {R : RtInv}
     omega
   have hz8n : InRanges zp (8 * n) L ∨ Outside zp (8 * n) R.rt :=
     z5.imp (fun h => h.sub (Nat.le_refl _) (by omega)) (fun h => h.of_sub (Nat.le_refl _) (by omega))
+  refine SegProg.lift W2Seg.codeIn (r := BitVec.ofNat 64 6213833) ?_
+  janus64_run [e8] until [6213833]
   janus64_run [e8] until [6213838] calls [hmv L b]
   rename_i _ _ _ _ m1 _ _ hF1 hL1 hI1 hC1
   obtain ⟨⟨q168, q138, q88, q390, q370, q118, q120, q398, q140, q3a8, qd8, q3b0, q3b8⟩, qF, qL, qv⟩ :=

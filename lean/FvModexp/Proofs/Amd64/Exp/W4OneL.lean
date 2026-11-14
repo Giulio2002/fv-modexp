@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.W4One
+import FvModexp.Proofs.Amd64.Exp.W4Seg
 
 set_option autoImplicit false
 
@@ -76,7 +77,11 @@ theorem oneLarge (impl : List Amd64.Segment) {R : RtInv}
     simp only [outside_append, outside_cons, outside_nil, and_true] at this ⊢
     omega
   have hgt : ¬ n ≤ 4 := by omega
-  janus64_run [s3b0, s78, s3d8, e17 hn16, hws, hwp, BitVec.msb_eq_decide] until [6186112] calls [hmk.pos]
+  refine SegProg.lift W4Seg.codeIn (r := BitVec.ofNat 64 6207458) ?_
+  janus64_run [s3b0, s78, s3d8, e17 hn16, hws, hwp, BitVec.msb_eq_decide] until [6207458]
+  janus64_run [s3b0, s78, s3d8, e17 hn16, hws, hwp, BitVec.msb_eq_decide] until [6207463] calls [hmk.pos]
+  refine SegProg.lift W4Seg.codeIn (r := BitVec.ofNat 64 6186112) ?_
+  janus64_run [s3b0, s78, s3d8, e17 hn16, hws, hwp, BitVec.msb_eq_decide] until [6186112]
   rename_i ptr _ _ _ _ m _ _ hLF hMF hAp hIn hle hacc h8 _ hz hsz _ hinv' _ _ _
   have hpw := out_inR hwrt hIn
   have hpg := out_inR hgrt hIn

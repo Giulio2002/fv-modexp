@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.P2W2BJ
+import FvModexp.Proofs.Amd64.Exp.P2W2Seg
 
 set_option autoImplicit false
 
@@ -101,6 +102,7 @@ theorem segB5 (hap : Amd64.ImplApart Extracted.program impl) {ns : List String}
   have hPH : HdM (EPre R b L K g fs sp st bp r zp zc xp xl xc yp yl lm s) := ⟨hP⟩
   clear hP
   subst em
+  refine SegProg.lift P2W2Seg.codeIn (r := BitVec.ofNat 64 6188320) ?_
   janus64_run [q228, hwacc, hwaccF] until [6188320]
   refine callB5 hap hns hnf htr hkT haT hPH.h K6 hH.h _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_
   all_goals first

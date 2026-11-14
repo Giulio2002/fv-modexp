@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.P2W4Cp1
+import FvModexp.Proofs.Amd64.Exp.P2W4Seg
 
 set_option autoImplicit false
 
@@ -193,6 +194,7 @@ theorem cpC {impl : List Amd64.Segment} (hmv : MemmoveLive64 (LibW.program.link 
   have hubH : HdM (UB R L K g sp st zp zc M L1 zzp tp lm dp dc) := ⟨hub⟩
   clear hc hw0 hsl0 htz0 hub hbs
   subst hm
+  refine SegProg.lift P2W4Seg.codeIn (r := BitVec.ofNat 64 mvE) ?_
   janus64_run [hne, e8n n (by omega), hwacc, hwaccF] until [mvE]
   have hF1 : MemFrame S.mem ((((S.mem.writeLE (sp + 0x80) 8 n).writeLE (sp + 0x90) 8 dc).writeLE (sp + 0x130) 8 dp).writeLE
       (sp - 0x8) 8 6199399) [(sp + 0x80, sp + 0x88), (sp + 0x90, sp + 0x98), (sp + 0x130, sp + 0x138), (sp - 0x8, sp)] := by
@@ -267,6 +269,7 @@ theorem cpC {impl : List Amd64.Segment} (hmv : MemmoveLive64 (LibW.program.link 
   have hF1H : HdM (MemFrame S.mem M1 [(sp + 0x80, sp + 0x88), (sp + 0x90, sp + 0x98), (sp + 0x130, sp + 0x138),
     (sp - 0x8, sp)]) := ⟨hF1⟩
   clear hF2 hLF2 hinv2 hcp hF1 km k1 hw1
+  refine SegProg.lift P2W4Seg.codeIn (r := BitVec.ofNat 64 LT) ?_
   janus64_run [q228, q0f0, q1d8, q0e8, q1e0, q128, q0c0, q0c8, q090, q208, q070, q068, q080, q118, hwacc2,
     hwaccF2] until [LT]
   all_goals

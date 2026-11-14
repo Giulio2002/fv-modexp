@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.P2W4Cp2
+import FvModexp.Proofs.Amd64.Exp.P2W4Seg
 import FvModexp.Proofs.Amd64.Exp.P2W4Sk
 import FvModexp.Proofs.Common.Util
 
@@ -192,6 +193,7 @@ theorem blH2 {impl : List Amd64.Segment} (hmv : MemmoveLive64 (LibW.program.link
     have hc3H : HdM (CPF R L K g sp st bp r zp zc xp xl xc yp yl lm s m (L1 ++ [(ptr.toNat, ptr.toNat +
       blockSize (8 * 1) true)]) (b1 - blockSize (8 * 1) true) zzp tp) := ⟨hc3⟩
     clear hc3 hc2 hwH hF2 k2 hM2 hA qk
+    refine SegProg.lift P2W4Seg.codeIn (r := BitVec.ofNat 64 CP) ?_
     janus64_run [u0f0, u0e8, u0c0, u0c8, u0a0, u130, u1d8, u1e0, u228, hwacc3, hwaccF3, rret] until [CP]
     refine cpC hmv ret0 Q hP KL hc3H.h hub (Nat.le_refl 1) (by decide) hd4 hZo ulen u0e8 u0c0 u0f0 u0c8 hk1 hk32
       hi hyi (by omega) hFV _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?_ ?_ ?_ ?_ ?_
@@ -274,6 +276,7 @@ theorem blH2 {impl : List Amd64.Segment} (hmv : MemmoveLive64 (LibW.program.link
       have hc3H : HdM (CPF R L K g sp st bp r zp zc xp xl xc yp yl lm s m (L1 ++ [(ptr.toNat, ptr.toNat +
         blockSize (8 * (n + 4)) true)]) (b1 - blockSize (8 * (n + 4)) true) zzp tp) := ⟨hc3⟩
       clear hc3 hc2 hwH hF2 k2 hM2 hA qk p060
+      refine SegProg.lift P2W4Seg.codeIn (r := BitVec.ofNat 64 CP) ?_
       janus64_run [u0f0, u0e8, u0c0, u0c8, u0a0, u060, u130, u1d8, u1e0, u228, hwacc3, hwaccF3, rret] until [CP]
       refine cpC hmv ret0 Q hP KL hc3H.h hub (by omega) hn1 hd4 hZo ulen u0e8 u0c0 u0f0 u0c8 hk1 hk32
         hi hyi (by omega) hFV _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?_ ?_ ?_ ?_ ?_
