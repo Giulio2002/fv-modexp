@@ -45,16 +45,25 @@ theorem tailM {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
   · simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]
   · simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact h14
   · simp only [Arm64.Memory.accessible_writeLE]; exact hacc
-  · rdwP
-  · rdwP; exact r1a8
-  · rdwP; exact r1b0
+  · simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint, Arm64.Memory.readLE_writeLE_self,
+      show (256 : Nat) ^ 8 = 2 ^ 64 from rfl, Nat.mod_eq_of_lt]
+  · simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint, Arm64.Memory.readLE_writeLE_self,
+      show (256 : Nat) ^ 8 = 2 ^ 64 from rfl, Nat.mod_eq_of_lt]; exact r1a8
+  · simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint, Arm64.Memory.readLE_writeLE_self,
+      show (256 : Nat) ^ 8 = 2 ^ 64 from rfl, Nat.mod_eq_of_lt]; exact r1b0
   · simp only [Arm64.Memory.accessible_writeLE]; exact hsta
-  · rdwP; exact hn0
-  · rdwP
-  · rdwP
-  · rdwP
-  · rdwP; exact r1c8
-  · rdwP; exact r1d0
+  · simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint, Arm64.Memory.readLE_writeLE_self,
+      show (256 : Nat) ^ 8 = 2 ^ 64 from rfl, Nat.mod_eq_of_lt]; exact hn0
+  · simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint, Arm64.Memory.readLE_writeLE_self,
+      show (256 : Nat) ^ 8 = 2 ^ 64 from rfl, Nat.mod_eq_of_lt]
+  · simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint, Arm64.Memory.readLE_writeLE_self,
+      show (256 : Nat) ^ 8 = 2 ^ 64 from rfl, Nat.mod_eq_of_lt]
+  · simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint, Arm64.Memory.readLE_writeLE_self,
+      show (256 : Nat) ^ 8 = 2 ^ 64 from rfl, Nat.mod_eq_of_lt]
+  · simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint, Arm64.Memory.readLE_writeLE_self,
+      show (256 : Nat) ^ 8 = 2 ^ 64 from rfl, Nat.mod_eq_of_lt]; exact r1c8
+  · simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint, Arm64.Memory.readLE_writeLE_self,
+      show (256 : Nat) ^ 8 = 2 ^ 64 from rfl, Nat.mod_eq_of_lt]; exact r1d0
   · exact tw_wr (tw_wr (tw_wr (tw_wr (tw_wr (MemFrame.refl _ _) _ (by omega)) _ (by omega)) _ (by omega)) _
       (by omega)) _ (by omega)
 
@@ -85,16 +94,25 @@ theorem tailS {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
   · simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]
   · simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact h14
   · simp only [Arm64.Memory.accessible_writeLE]; exact hacc
-  · rdwP
-  · rdwP; exact r1a8
-  · rdwP; exact r1b0
+  · simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint, Arm64.Memory.readLE_writeLE_self,
+      show (256 : Nat) ^ 8 = 2 ^ 64 from rfl, Nat.mod_eq_of_lt]
+  · simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint, Arm64.Memory.readLE_writeLE_self,
+      show (256 : Nat) ^ 8 = 2 ^ 64 from rfl, Nat.mod_eq_of_lt]; exact r1a8
+  · simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint, Arm64.Memory.readLE_writeLE_self,
+      show (256 : Nat) ^ 8 = 2 ^ 64 from rfl, Nat.mod_eq_of_lt]; exact r1b0
   · simp only [Arm64.Memory.accessible_writeLE]; exact hsta
-  · rdwP; exact hn0
-  · rdwP
-  · rdwP
-  · rdwP
-  · rdwP; exact r1c8
-  · rdwP; exact r1d0
+  · simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint, Arm64.Memory.readLE_writeLE_self,
+      show (256 : Nat) ^ 8 = 2 ^ 64 from rfl, Nat.mod_eq_of_lt]; exact hn0
+  · simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint, Arm64.Memory.readLE_writeLE_self,
+      show (256 : Nat) ^ 8 = 2 ^ 64 from rfl, Nat.mod_eq_of_lt]
+  · simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint, Arm64.Memory.readLE_writeLE_self,
+      show (256 : Nat) ^ 8 = 2 ^ 64 from rfl, Nat.mod_eq_of_lt]
+  · simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint, Arm64.Memory.readLE_writeLE_self,
+      show (256 : Nat) ^ 8 = 2 ^ 64 from rfl, Nat.mod_eq_of_lt]
+  · simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint, Arm64.Memory.readLE_writeLE_self,
+      show (256 : Nat) ^ 8 = 2 ^ 64 from rfl, Nat.mod_eq_of_lt]; exact r1c8
+  · simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint, Arm64.Memory.readLE_writeLE_self,
+      show (256 : Nat) ^ 8 = 2 ^ 64 from rfl, Nat.mod_eq_of_lt]; exact r1d0
   · exact tw_wr (tw_wr (tw_wr (tw_wr (tw_wr (MemFrame.refl _ _) _ (by omega)) _ (by omega)) _ (by omega)) _
       (by omega)) _ (by omega)
 
@@ -120,16 +138,25 @@ theorem tailN {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
   · simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]
   · simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact h14
   · simp only [Arm64.Memory.accessible_writeLE]; exact hacc
-  · rdwP
-  · rdwP; exact r1a8
-  · rdwP; exact r1b0
+  · simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint, Arm64.Memory.readLE_writeLE_self,
+      show (256 : Nat) ^ 8 = 2 ^ 64 from rfl, Nat.mod_eq_of_lt]
+  · simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint, Arm64.Memory.readLE_writeLE_self,
+      show (256 : Nat) ^ 8 = 2 ^ 64 from rfl, Nat.mod_eq_of_lt]; exact r1a8
+  · simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint, Arm64.Memory.readLE_writeLE_self,
+      show (256 : Nat) ^ 8 = 2 ^ 64 from rfl, Nat.mod_eq_of_lt]; exact r1b0
   · simp only [Arm64.Memory.accessible_writeLE]; exact hsta
-  · rdwP; exact hn0
-  · rdwP
-  · rdwP
-  · rdwP
-  · rdwP; exact r1c8
-  · rdwP; exact r1d0
+  · simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint, Arm64.Memory.readLE_writeLE_self,
+      show (256 : Nat) ^ 8 = 2 ^ 64 from rfl, Nat.mod_eq_of_lt]; exact hn0
+  · simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint, Arm64.Memory.readLE_writeLE_self,
+      show (256 : Nat) ^ 8 = 2 ^ 64 from rfl, Nat.mod_eq_of_lt]
+  · simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint, Arm64.Memory.readLE_writeLE_self,
+      show (256 : Nat) ^ 8 = 2 ^ 64 from rfl, Nat.mod_eq_of_lt]
+  · simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint, Arm64.Memory.readLE_writeLE_self,
+      show (256 : Nat) ^ 8 = 2 ^ 64 from rfl, Nat.mod_eq_of_lt]
+  · simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint, Arm64.Memory.readLE_writeLE_self,
+      show (256 : Nat) ^ 8 = 2 ^ 64 from rfl, Nat.mod_eq_of_lt]; exact r1c8
+  · simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint, Arm64.Memory.readLE_writeLE_self,
+      show (256 : Nat) ^ 8 = 2 ^ 64 from rfl, Nat.mod_eq_of_lt]; exact r1d0
   · exact tw_wr (tw_wr (tw_wr (tw_wr (tw_wr (MemFrame.refl _ _) _ (by omega)) _ (by omega)) _ (by omega)) _
       (by omega)) _ (by omega)
 
