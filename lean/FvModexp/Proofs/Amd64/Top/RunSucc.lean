@@ -1,6 +1,4 @@
-import FvModexp.Proofs.Amd64.Top.RunOkRow
-import FvModexp.Proofs.Amd64.Top.RunModA
-import FvModexp.Spec.WitSitesAmd64
+import FvModexp.Proofs.Amd64.Top.RunSuccWit
 
 set_option autoImplicit false
 
@@ -14,7 +12,8 @@ facts `Spec.RunAmd64.CpuOne` (`hasADX` readable, `natOne`'s word apart from the 
 * `(*Int).Mod`: CLOSED (`Run.Closed.modA`: divmc's `IMod.mod_ensD` + asm's `Q.NatDiv.ensMC` + `Q.BudM.bud`).
 * `(*Int).exp`: still the PREMISE `hE : RunIface.ExpSpecA impl R stkM aboveM` (= expmc's `IExp.ExpSpecA` by definition),
   until the closed amd64 `(*Int).exp` lands (expmc: `IExp.ens` with the closed callee instances; open: `DHyps.slow`,
-  amd64 `nat.expNNSlow`). Then `hE` is replaced and `Witness.nonvacuous` (3^5 mod 7, `RunSuccW2`) is added.
+  amd64 `nat.expNNSlow`). Then `hE` is replaced and `Witness.nonvacuous` = `Run.WitnessA.nonvacuous_of` (Top/RunSuccWit; 3^5 mod 7) is added,
+stated inline (literal names only).
 Not a release row yet (`hE` is not a Janus-pinned contract).
 -/
 
@@ -59,12 +58,7 @@ theorem correctness (impl : List Amd64.Segment) (hap : ImplApart Extracted.progr
         RunAmd64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat)) ≤ b ∧
         LengthsPass (bytesAt s.mem p.toNat len.toNat))
       (fun s s' => RunAmd64.OkRet (bytesAt s.mem p.toNat len.toNat) s' ∧
-        RunAmd64.FrameW R b (RunAmd64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat))) L W s s') := by
-  -- the Pool shape is a row binder fixed by the precondition (Janus's PoolShape row pattern)
-  intro ret hret s hs ⟨hS, hpre⟩
-  subst hS
-  exact Run.correctness_ok impl hap R hmk hmkz hmv hmz hno stkM aboveM
-    (RunIface.ModSpecA.mono (Run.Closed.modA impl hap R hmk hmv hmz hno hgr hmc hwb hget hput hwb4) hk ha) hE
-    W hW hW1 hab (by omega) (by omega) b L c p len cp ret hret s hs hpre
+        RunAmd64.FrameW R b (RunAmd64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat))) L W s s') :=
+  Run.okA impl hap R hmk hmkz hmv hmz hno hgr hmc hwb S hget hput hwb4 stkM aboveM hE W hW hW1 hab hk ha b L c p len cp
 
 end FvModexp.Amd64.RunSucc
