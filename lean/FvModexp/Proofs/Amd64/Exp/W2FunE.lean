@@ -1,3 +1,5 @@
+import FvModexp.Proofs.Amd64.Exp.W2RRC
+import FvModexp.Proofs.Amd64.Exp.W2Comp
 import FvModexp.Proofs.Amd64.Exp.W2Fun
 import FvModexp.Proofs.Amd64.Nat.StackNat
 import FvModexp.Proofs.Amd64.Nat.StackNatX
@@ -77,7 +79,7 @@ theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
     rw [← mcE_eq]; exact MemclrNoHeapPointersLive64.of_codeIn hc hclr
   have hwb' : WbLiveContract64 (LibW.program.link impl) wbE 4096 R 2 := by
     rw [← wbE_eq]; exact WbLiveContract64.of_codeIn hc hwb
-  have hE := W2En.enStep hap hclr hmv hmk (StackNat.hypL impl hap R hgr hclr hwb) hgr' hmc' hwb' hDiv hnsD hnsW
+  have hE := W2En.enStep (W2Pro.rrSpec W2Pro.j4Spec W2Pro.p01Spec) hap hclr hmv hmk (StackNat.hypL impl hap R hgr hclr hwb) hgr' hmc' hwb' hDiv hnsD hnsW
     (Lsh.ens impl hap R hmk hmv hclr) lshW_sub lshW_fn hP hstnz hKD hKL hMo hM1 hB hbS (s.regs 3).isLt h_rip h_a0
     (ofNat_self _).symm h_a2 h_a3 h_a4 h_a5 h_a6
   have hsum : Summary (LibW.program.link impl) fnE (fun s0 => s0 = s)

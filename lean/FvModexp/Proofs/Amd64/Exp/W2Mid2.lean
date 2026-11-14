@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Amd64.Exp.W2Posts2
 import FvModexp.Proofs.Amd64.Exp.W2Pre4
 import FvModexp.Proofs.Amd64.Exp.W2Zm
 import FvModexp.Proofs.Amd64.Exp.W2Zm2
@@ -19,12 +20,6 @@ namespace FvModexp.Amd64.W2Pro
 
 open FvModexp.Amd64.W2Loop (Env Inp Buf Bufs Mem Static OneIn FinEnv TailPost step FL)
 
-theorem apart_held {R : RtInv} {L : List (Nat × Nat)} {p k a n : Nat} (hin : InRanges p k R.rt)
-    (hap : ApartAll p k L) (hh : InRanges a n L ∨ Outside a n R.rt) : Apart p k a n := by
-  rcases hh with h | h
-  · exact hap.apart_of_inRanges h
-  · have := out_inR h hin; unfold Apart; omega
-
 /-- a buffer after `make` is apart from a held object: old array (caller's fact) or fresh -/
 theorem ap_or {R : RtInv} {L : List (Nat × Nat)} {n p c p' c' a k : Nat}
     (hor : (p' = p ∧ c' = c) ∨ (InRanges p' (8 * c') R.rt ∧ ApartAll p' (8 * c') L))
@@ -33,17 +28,6 @@ theorem ap_or {R : RtInv} {L : List (Nat × Nat)} {n p c p' c' a k : Nat}
   rcases hor with ⟨rfl, rfl⟩ | ⟨hin, hap⟩
   · exact hold hc
   · exact apart_held hin hap hh
-
-/-- the old-array facts a reused buffer needs (apart from `m`, `y`, the table, `one`, the stack header) -/
-@[reducible] def OldA (n mp yp ylen onep st : Nat) (pp : Nat → Nat) (p c : Nat) : Prop :=
-  Apart p (8 * c) mp (8 * n) ∧ Apart p (8 * c) yp (8 * ylen) ∧ (∀ d, d < 4 → Apart p (8 * c) (pp d) (8 * n)) ∧
-  Apart p (8 * c) onep (8 * n) ∧ Apart p (8 * c) st 24
-
-/-- the held objects `Bufs` needs the buffers apart from -/
-@[reducible] def HeldO (R : RtInv) (L : List (Nat × Nat)) (n mp yp ylen onep st : Nat) (pp : Nat → Nat) : Prop :=
-  (InRanges mp (8 * n) L ∨ Outside mp (8 * n) R.rt) ∧ (InRanges yp (8 * ylen) L ∨ Outside yp (8 * ylen) R.rt) ∧
-  (∀ d, d < 4 → InRanges (pp d) (8 * n) L ∨ Outside (pp d) (8 * n) R.rt) ∧
-  (InRanges onep (8 * n) L ∨ Outside onep (8 * n) R.rt) ∧ (InRanges st 24 L ∨ Outside st 24 R.rt)
 
 theorem HeldO.ext {R : RtInv} {L L' : List (Nat × Nat)} {n mp yp ylen onep st : Nat} {pp : Nat → Nat}
     (h : HeldO R L n mp yp ylen onep st pp) (hx : LiveExt R L L') : HeldO R L' n mp yp ylen onep st pp :=
@@ -68,11 +52,6 @@ theorem bufs_mk {R : RtInv} {L : List (Nat × Nat)} {g fs sp n mp yp ylen onep s
   rcases hq with rfl | rfl
   · exact ⟨oz.2.2.2.1, ozz.2.2.2.1⟩
   · exact ⟨oz.2.2.2.2, ozz.2.2.2.2⟩
-
-theorem buf_ext {R : RtInv} {L L' : List (Nat × Nat)} {g fs sp n p c : Nat} {M M' : Memory} {ws : List (Nat × Nat)}
-    (hx : LiveExt R L L') (h : Buf R L g fs sp n M p c) (hf : MemFrame M M' ws) : Buf R L' g fs sp n M' p c := by
-  obtain ⟨a1, a2, a3, a4, a5, a6, a7, a8⟩ := h
-  exact ⟨a1, a2, by rw [hf.accessible]; exact a3, a4, hx.held a5, a6, a7, a8⟩
 
 theorem acc_of_in {R : RtInv} {L : List (Nat × Nat)} {g fs sp : Nat} {M : Memory} {ws : List (Nat × Nat)}
     (he : Env R L g fs sp M) (hin : ∀ q ∈ ws, sp - 4296 ≤ q.1 ∧ q.2 ≤ sp - 4296 + (4296 + 0x2a8)) :

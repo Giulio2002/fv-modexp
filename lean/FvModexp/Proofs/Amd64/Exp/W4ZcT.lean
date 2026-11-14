@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.LibW
+import FvModexp.Proofs.Amd64.Exp.W4Seg
 import FvModexp.Proofs.Amd64.Exp.W4ZcP
 
 set_option autoImplicit false
@@ -97,12 +98,14 @@ theorem zcT (impl : List Amd64.Segment) {R : RtInv}
   have e1 := eyl ylen hyl hyl'
   by_cases hk0 : k = 0
   · subst hk0
+    refine SegProg.lift W4Seg.codeIn (r := BitVec.ofNat 64 testL) ?_
     janus64_run [q168, q138, q88, q390, q370, q118, q120, q398, q140, q3a8, qd8, q3b0, q3b8, e64, hm64] until [testL]
     obtain ⟨f1, f2, f3, f4, f5, f6, f7⟩ := fin _ rfl
     refine KT _ rfl ?_ ?_ ?_ hfs ?_ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ f1 f2 f3 f4 f5 f6 f7
     all_goals simp only [setRegF_apply, callRegs64_apply, Nat.reduceEqDiff, ↓reduceIte, true_or, or_true]
     all_goals first | exact h5 | exact h14 | exact e1 | exact ey0 yi | exact BitVec.sub_add_cancel _ _ | rfl
-  · janus64_run [q168, q138, q88, q390, q370, q118, q120, q398, q140, q3a8, qd8, q3b0, q3b8, e64, hm64] until [testL]
+  · refine SegProg.lift W4Seg.codeIn (r := BitVec.ofNat 64 testL) ?_
+    janus64_run [q168, q138, q88, q390, q370, q118, q120, q398, q140, q3a8, qd8, q3b0, q3b8, e64, hm64] until [testL]
     obtain ⟨f1, f2, f3, f4, f5, f6, f7⟩ := fin _ rfl
     refine KT _ rfl ?_ ?_ ?_ hfs ?_ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ f1 f2 f3 f4 f5 f6 f7
     all_goals simp only [setRegF_apply, callRegs64_apply, Nat.reduceEqDiff, ↓reduceIte, true_or, or_true]

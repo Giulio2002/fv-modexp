@@ -25,7 +25,8 @@ set_option autoImplicit false
 segFin` with the budget chain `r1 … r15` (each segment consumes its worst-case cost; `costE` = their sum) and the
 stack bounds from `needE`. The two `nat.expNN` calls (`segE1`, `segE2`) need, unlike arm64, the window budget
 `ExpOdd.OBud` separately: `hNB` bounds `NBudO` (= `NBudE` max the window demand, `EvOB`) by `bU`, `obud_rk` +
-`needO_of` (the `needE` part for the window levels) + `hFD` (`costF ≤ costD` on the window divisions) give it.
+`needO_of` (the `needE` part for the window levels) + `hFD` (`costF ≤ cDf xl lm lv` on the window divisions at
+levels `≤ lv + needO xl lm`; asm s73: the division bound depends on the call's level `lv`, amd64 `EvCD.cD`) give it.
 -/
 
 open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Spec Janus.Contracts FvModexp
@@ -76,7 +77,7 @@ theorem e1_rk {costF : Nat → Nat → Nat → Nat} {costD : Nat} {costR : Nat �
     (hC : ExpN.NCost costD costR costS costP xl yl l1 lv n ≤ cU xl yl ml W3 (64 * ml))
     (e5 : r5 = eC1 cU xl yl ml W3 + r6) {x : Nat} (e6 : r6 = x + r7) (e7 : r7 = eC2 bU cU xl yl ml W4 + r8)
     (hl : lv + needO xl l1 ≤ 2 ^ 16)
-    (hF : ∀ l' a, l' ≤ 2 ^ 16 → (a ≤ 2 * l1 + 1 ∨ a ≤ xl) → costF l' a l1 ≤ costD) :
+    (hF : ∀ l' a, l' ≤ lv + needO xl l1 → (a ≤ 2 * l1 + 1 ∨ a ≤ xl) → costF l' a l1 ≤ costD) :
     NBudE costR costS costP xl yl l1 lv n ≤ r5 ∧ ExpOdd.OBud costF l1 costD xl yl lv (r5 - makeCost l1) ∧
       ExpN.NCost costD costR costS costP xl yl l1 lv n + r6 ≤ r5 := by
   have h : NBudO costD costR costS costP xl yl l1 lv n ≤ r5 := by simp only [eC1, eC2] at e5 e7; omega
@@ -89,7 +90,7 @@ theorem e2_rk {costF : Nat → Nat → Nat → Nat} {costD : Nat} {costR : Nat �
     (hB : NBudO costD costR costS costP xl yl l2 lv n ≤ bU xl yl ml W4 (64 * ml))
     (hC : ExpN.NCost costD costR costS costP xl yl l2 lv n ≤ cU xl yl ml W4 (64 * ml))
     (e7 : r7 = eC2 bU cU xl yl ml W4 + r8) (hl : lv + needO xl l2 ≤ 2 ^ 16)
-    (hF : ∀ l' a, l' ≤ 2 ^ 16 → (a ≤ 2 * l2 + 1 ∨ a ≤ xl) → costF l' a l2 ≤ costD) :
+    (hF : ∀ l' a, l' ≤ lv + needO xl l2 → (a ≤ 2 * l2 + 1 ∨ a ≤ xl) → costF l' a l2 ≤ costD) :
     NBudE costR costS costP xl yl l2 lv n ≤ r7 ∧ ExpOdd.OBud costF l2 costD xl yl lv (r7 - makeCost l2) ∧
       ExpN.NCost costD costR costS costP xl yl l2 lv n + r8 ≤ r7 := by
   have h : NBudO costD costR costS costP xl yl l2 lv n ≤ r7 := by simp only [eC2] at e7; omega
@@ -107,9 +108,9 @@ theorem body {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progra
     {stkN aboveN : Nat} (hsn : StackNat.HypL impl R ns stkN aboveN) (hkN : stkN ≤ K) (haN : aboveN ≤ 0x7f)
     {stkL aboveL : Nat} (hlh : Lsh.Hyp2 impl R ns stkL aboveL) (hkL : stkL ≤ K) (haL : aboveL ≤ 0x7f)
     {stkR aboveR : Nat} (hrh : Rsh.Hyp impl R ns stkR aboveR) (hkR : stkR ≤ K) (haR : aboveR ≤ 0x7f)
-    {KN : Nat} {costF : Nat → Nat → Nat → Nat} {costD : Nat} {needR : Nat → Nat → Nat}
+    {KN : Nat} {costF : Nat → Nat → Nat → Nat} {cDf : Nat → Nat → Nat → Nat} {needR : Nat → Nat → Nat}
     {costR : Nat → Nat → Nat → Nat} {needS needP : Nat → Nat → Nat → Nat} {costS costP : Nat → Nat → Nat → Nat → Nat}
-    (hE : EvenHyp.ExpNNHypNE1 impl R KN costF costD needR costR needS needP costS costP)
+    (hE : ∀ costD, EvenHyp.ExpNNHypNE1 impl R KN costF costD needR costR needS needP costS costP)
     (hKN : 41640 ≤ KN) (hKN1 : KN + 0x498 ≤ K) (hKN2 : KN + 0x98 ≤ 2 ^ 20)
     (hmv : MemmoveLive64 (LibNE.program.link impl) mvE 4096 R)
     (hmz : MemmoveZeroLive64 (LibNE.program.link impl) mvE 4096 R)
@@ -123,10 +124,11 @@ theorem body {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progra
     (hPm : ∀ x y a a', a ≤ a' → needP x y a ≤ needP x y a')
     {bU cU : Nat → Nat → Nat → Nat → Nat → Nat}
     (hNB : ∀ x y a a' l l' k k', a ≤ a' → l ≤ l' → k ≤ k' →
-      NBudO costD costR costS costP x y a l k ≤ bU x y a' l' k')
+      NBudO (cDf x a l) costR costS costP x y a l k ≤ bU x y a' l' k')
     (hNC : ∀ x y a a' l l' k k', a ≤ a' → l ≤ l' → k ≤ k' →
-      ExpN.NCost costD costR costS costP x y a l k ≤ cU x y a' l' k')
-    (hFD : ∀ l a n, l ≤ 2 ^ 16 → a ≤ 257 → n ≤ 128 → costF l a n ≤ costD)
+      ExpN.NCost (cDf x a l) costR costS costP x y a l k ≤ cU x y a' l' k')
+    (hFD : ∀ x lm lv l' a, x ≤ 128 → lm ≤ 128 → l' ≤ lv + needO x lm → (a ≤ 2 * lm + 1 ∨ a ≤ x) →
+      costF l' a lm ≤ cDf x lm lv)
     (hsm : ∀ a a', a ≤ a' → sqrC a ≤ sqrC a')
     (hmm : ∀ a a' c c', a ≤ a' → c ≤ c' → mulC a c ≤ mulC a' c')
     (hP : EPre R b L K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml mc s) (hM : 0 < natVal s.mem mp ml)
@@ -148,8 +150,9 @@ theorem body {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progra
   have ha11 : a1 (nE s mp ml) + 1 ≤ ml + 1 := Nat.succ_le_succ ha1
   have hml : ml ≤ 128 := hP.2.2.2.2.2.1
   have hxl : xl ≤ 128 := hP.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
-  have hF : ∀ lm, lm ≤ ml → ∀ l' a, l' ≤ 2 ^ 16 → (a ≤ 2 * lm + 1 ∨ a ≤ xl) → costF l' a lm ≤ costD :=
-    fun lm hlm l' a hl ha => hFD l' a lm hl (by omega) (by omega)
+  have hF : ∀ lm lv, lm ≤ ml → ∀ l' a, l' ≤ lv + needO xl lm → (a ≤ 2 * lm + 1 ∨ a ≤ xl) →
+      costF l' a lm ≤ cDf xl lm lv :=
+    fun lm lv hlm l' a hl ha => hFD xl lm lv l' a hxl (by omega) hl ha
   have hopA := hXG.2.1
   have hC := costE_eq bU cU sqrC mulC (stLen s.mem st) xl yl ml
   generalize costE bU cU sqrC mulC (stLen s.mem st) xl yl ml = cE at hC hcost ⊢
@@ -185,22 +188,22 @@ theorem body {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progra
   refine segN3 hap hns hnf hsn hkN haN hP hM hev (need3 hneed (Nat.le_trans (l2_le hn) (wL2_le _ _)))
     (rk' := r5) (fun l1 l2 q1 q2 => rk_le (stackNatCost_mono (l2_le hn) (max2_le q1 q2)) e4) ?_ h
   intros; rename_i h
-  refine segE1 hap hE hKN hKN1 hKN2 hP hM hev hX hXC hXG
+  refine segE1 hap hE (cDl := cDf xl) hKN hKN1 hKN2 hP hM hev hX hXC hXG
     (fun l1 l2 q1 q2 => nstkE_of hRm hSm hPm hneed (Nat.le_trans (l3_le hn q1 q2) (wL3_le _ _)) q1 hnw)
     (rk' := r6) (fun l1 l2 q1 q2 => e1_rk
       (hNB xl yl l1 ml _ _ _ _ q1 (Nat.le_trans (l3_le hn q1 q2) (wL3_le _ _)) hnw)
       (hNC xl yl l1 ml _ _ _ _ q1 (l3_le hn q1 q2) hnw) e5 e6 e7
-      (needO_of hneed (Nat.le_trans (l3_le hn q1 q2) (wL3_le _ _)) q1) (hF l1 q1)) ?_ h
+      (needO_of hneed (Nat.le_trans (l3_le hn q1 q2) (wL3_le _ _)) q1) (hF l1 _ q1)) ?_ h
   intros; rename_i h
   refine segN4 hap hns hnf hsn hkN haN hP hM hev
     (fun l1 l2 q1 q2 => need3 hneed (Nat.le_trans (l3_le hn q1 q2) (wL3_le _ _))) (rk' := r7)
     (fun l1 l2 q1 q2 => rk_le (stackNatCost_mono (l3_le hn q1 q2) (max2_le q1 q2)) e6) ?_ h
   intros; rename_i h
-  refine segE2 hap hE hKN hKN1 hKN2 hP hM hev hX hXC hXG
+  refine segE2 hap hE (cDl := cDf xl) hKN hKN1 hKN2 hP hM hev hX hXC hXG
     (fun l1 l2 q1 q2 => nstkE_of hRm hSm hPm hneed (l4_le hn q1 q2) q2 (lg2_le s mp ml))
     (rk' := r8) (fun l1 l2 q1 q2 => e2_rk (hNB xl yl l2 ml _ _ _ _ q2 (l4_le hn q1 q2) (lg2_le s mp ml))
       (hNC xl yl l2 ml _ _ _ _ q2 (l4_le hn q1 q2) (lg2_le s mp ml)) e7
-      (needO_of hneed (l4_le hn q1 q2) q2) (hF l2 q2)) ?_ h
+      (needO_of hneed (l4_le hn q1 q2) q2) (hF l2 _ q2)) ?_ h
   intros; rename_i h
   refine segSet hmv hmz hmk hP hM hev (rk' := r9) (fun c hc => rk_le (alloc_le hc) e8) ?_ h
   intros; rename_i h

@@ -1,3 +1,5 @@
+import FvModexp.Proofs.Amd64.Exp.W4Posts
+import FvModexp.Proofs.Amd64.Exp.W4Seg
 import FvModexp.Proofs.Amd64.Exp.W4ExA
 import FvModexp.Proofs.Amd64.Exp.CmpW
 
@@ -16,7 +18,6 @@ open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Contracts Janu
 
 namespace FvModexp.Amd64.W4Loop
 
-abbrev njoin : Nat := fnE + 0x11f3
 abbrev subE : Nat := 6183136
 
 theorem cmpCodeIn (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) :
@@ -180,6 +181,7 @@ theorem exCmp {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
     · exact hzz'
   · have hge := cmp_ge (n := n) hlt
     clear hf eo hws hrd
+    refine SegProg.lift W4Seg.codeIn (r := BitVec.ofNat 64 subE) ?_
     janus64_run [hge, q188, q98, qa0, q8, q0, qb] until [subE]
     refine KGe _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ (by omega)
     · rfl

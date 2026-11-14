@@ -1,4 +1,5 @@
 import FvModexp.Spec
+import FvModexp.Proofs.Common.CacheKey
 
 /-!
 # Row 3: composition of geth's gas and run behaviour (pure Lean)
@@ -8,6 +9,8 @@ Hypotheses are the guarantees of the two machine-code rows (stated here over an 
 * `RequiredGas` row: when the lengths pass, the gas is `requiredGas fork data (parseLengths data)`.
 Conclusion: `runPrecompiled` (geth's `RunPrecompiledContract` logic) agrees with EthLib's `modexp fork data gas`: failure iff failure
 (out of gas or length error, both "fail consuming all gas"), otherwise the same output, and the gas left is `gas - cost` with `cost` = EthLib's `chargedGas`.
+This holds with geth's result cache attached (any `cache` whose entries geth's stores produced, `Spec.CacheStoredBy`; `cache = none`
+is `cache == nil`): a hit returns exactly what `Run` returns for the actual input (`cacheHit_run`, from `CacheKey.cacheKey_eq`).
 -/
 
 namespace FvModexp.Proofs.Compose
@@ -53,13 +56,53 @@ theorem chargedGas_pass {fork : Fork} (hp : PostFusaka fork) {data : ByteArray} 
   dsimp only
   rw [hca]
 
+/-- `cache == nil` trivially meets the store invariant. -/
+theorem cacheStoredBy_none (p : Precompile) : CacheStoredBy p none := by
+  intro lookup h; cases h
+
+/-- **A cache hit is what `Run` returns** (geth's precompile cache is sound for MODEXP): the entry was stored by `Run d'` without
+error for some `d'` with the same key, so `LengthsPass d'` (row 1's error branch) and its output is `compute d'`, which equals
+`compute data` with the same verdict (`CacheKey.cacheKey_eq`); hence `Run data` returns the same output. -/
+theorem cacheHit_run {fork : Fork} {p : Precompile} (H : RowsHold fork p) {cache : Cache} (hc : CacheStoredBy p cache)
+    {data out : ByteArray} (h : cacheHit cache data = some out) : p.run data = some out := by
+  unfold cacheHit at h
+  cases hcache : cache with
+  | none => rw [hcache] at h; cases h
+  | some lookup =>
+    rw [hcache] at h
+    cases hk : cacheKey data with
+    | none => rw [hk] at h; cases h
+    | some key =>
+      rw [hk] at h
+      obtain ⟨d', hk', hr'⟩ := hc lookup hcache key out h
+      have hp' : LengthsPass d' := by
+        refine Classical.byContradiction fun hf => ?_
+        have h0 : p.run d' = none := H.runFail d' hf
+        rw [hr'] at h0; cases h0
+      obtain ⟨hiff, hcomp⟩ := CacheKey.cacheKey_eq data d' key hk hk'
+      have hp : LengthsPass data := hiff.2 hp'
+      have h1 : p.run d' = some (compute d' (parseLengths d')) := H.runOk d' hp'
+      rw [H.runOk data hp, hcomp, ← h1, hr']
+
+/-- With a sound cache, `runPrecompiled` behaves as without one. -/
+theorem runPrecompiled_cache {fork : Fork} {p : Precompile} (H : RowsHold fork p) {cache : Cache} (hc : CacheStoredBy p cache)
+    (data : ByteArray) (gas : Nat) : runPrecompiled p data gas cache = runPrecompiled p data gas := by
+  unfold runPrecompiled
+  cases hh : cacheHit cache data with
+  | none => simp [cacheHit]
+  | some out =>
+    have hr := cacheHit_run H hc hh
+    simp [cacheHit, hr]
+
 /-- **Row 3.** For every fork from Fusaka on, every call data and every gas, geth's `RunPrecompiledContract` logic on a precompile meeting the two
 machine-code rows agrees with the EthLib MODEXP specification: a failed EthLib call (length bound, or out of gas) is a failed geth call, and a successful one is a
-successful geth call with the same output and `gas - cost` left, `cost` being EthLib's `chargedGas`. -/
-theorem composition {fork : Fork} {p : Precompile} (hp : PostFusaka fork) (H : RowsHold fork p) (data : ByteArray) (gas : Nat) :
+successful geth call with the same output and `gas - cost` left, `cost` being EthLib's `chargedGas` — with or without geth's result cache (`cache`, any cache whose entries geth's stores produced). -/
+theorem composition {fork : Fork} {p : Precompile} (hp : PostFusaka fork) (H : RowsHold fork p) {cache : Cache}
+    (hc : CacheStoredBy p cache) (data : ByteArray) (gas : Nat) :
     match modexp fork data gas with
-    | Except.error _ => runPrecompiled p data gas = none
-    | Except.ok out => ∃ cost, chargedGas fork data = Except.ok cost ∧ runPrecompiled p data gas = some (out, gas - cost) := by
+    | Except.error _ => runPrecompiled p data gas cache = none
+    | Except.ok out => ∃ cost, chargedGas fork data = Except.ok cost ∧ runPrecompiled p data gas cache = some (out, gas - cost) := by
+  rw [runPrecompiled_cache H hc]
   by_cases hl : LengthsPass data
   · have hg := H.gas data hl
     have hr := H.runOk data hl
@@ -69,17 +112,18 @@ theorem composition {fork : Fork} {p : Precompile} (hp : PostFusaka fork) (H : R
       unfold runPrecompiled; rw [hg]; simp [hlt]
     · simp only [hlt, if_false]
       refine ⟨_, chargedGas_pass hp hl, ?_⟩
-      unfold runPrecompiled; rw [hg, hr]; simp [hlt]
+      unfold runPrecompiled; rw [hg, hr]; simp [hlt, cacheHit]
   · obtain ⟨e, he⟩ := modexp_fail hp hl gas
     rw [he]
     have hr := H.runFail data hl
     unfold runPrecompiled; rw [hr]
-    by_cases hlt : gas < p.requiredGas data <;> simp [hlt]
+    by_cases hlt : gas < p.requiredGas data <;> simp [hlt, cacheHit]
 
 /-- Converse direction: a failed geth call is a failed EthLib call, so the two outcomes agree exactly. -/
-theorem error_of_fail {fork : Fork} {p : Precompile} (hp : PostFusaka fork) (H : RowsHold fork p) (data : ByteArray) (gas : Nat)
-    (h : runPrecompiled p data gas = none) : ∃ e, modexp fork data gas = Except.error e := by
-  have := composition hp H data gas
+theorem error_of_fail {fork : Fork} {p : Precompile} (hp : PostFusaka fork) (H : RowsHold fork p) {cache : Cache}
+    (hc : CacheStoredBy p cache) (data : ByteArray) (gas : Nat)
+    (h : runPrecompiled p data gas cache = none) : ∃ e, modexp fork data gas = Except.error e := by
+  have := composition hp H hc data gas
   cases hm : modexp fork data gas with
   | error e => exact ⟨e, rfl⟩
   | ok out =>

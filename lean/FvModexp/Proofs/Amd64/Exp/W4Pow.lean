@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.W4PowC
+import FvModexp.Proofs.Amd64.Exp.W4Seg
 
 set_option autoImplicit false
 
@@ -96,6 +97,7 @@ theorem powStep {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.pro
     apply BitVec.eq_of_toNat_eq
     simp only [BitVec.toNat_add, BitVec.toNat_shiftLeft, BitVec.toNat_ofNat, Nat.shiftLeft_eq, Nat.reducePow]
     omega
+  refine SegProg.liftRet W4Seg.codeIn ?_
   janus64_run [q3a8, q3b0, q3b8, qd8, q78, qf0, q330, h16, mw2, mw1, mw0, c1, c2, c3, rd0, rd1, rd2, ar1]
     until [6184288]
   have hra : RetAddr ((Extracted.program.onlySegments LibMont.names).link impl) (6205536 + 0xa45) :=
@@ -136,6 +138,7 @@ theorem powStep {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.pro
     have hfs' : s'.fsBase.toNat = fs := by rw [efs]; exact hfs
     have hacc' : s'.mem.accessible (sp - 4296) (4296 + 0x3c0) true = true := by
       rw [hF'.1.accessible]; exact he.2.2.2.1
+    refine SegProg.lift W4Seg.codeIn (r := BitVec.ofNat 64 powHead) ?_
     janus64_run [m138, m140] until [powHead]
     have sl : ∀ K, 0x60 ≤ K → K + 8 ≤ 0x3c0 → (K + 8 ≤ 0x138 ∨ 0x148 ≤ K) →
         (K + 8 ≤ 0x1a8 + 24 * i ∨ 0x1a8 + 24 * i + 24 ≤ K) →

@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.LibW
+import FvModexp.Proofs.Amd64.Exp.W4Seg
 import FvModexp.Proofs.Amd64.Exp.W4ZcK
 import FvModexp.Proofs.Amd64.Exp.W4ZcK0
 
@@ -69,12 +70,14 @@ theorem zcopy (impl : List Amd64.Segment) {R : RtInv}
   have ry : M.readLE (yp + ylen * 8 - 8) 8 = yi := by rw [← hyi, show yp + ylen * 8 - 8 = yp + 8 * (ylen - 1) by omega]
   have hya := hy.1
   have hyp := hy.2.1
+  refine SegProg.lift W4Seg.codeIn (r := BitVec.ofNat 64 6208585) ?_
   janus64_run [r398, r390, hnz', ry] until [6208585]
   gen_reg 3 as t with hT
   have hts : t = BitLenA64.smearBV (BitVec.ofNat 64 yi) := by rw [← hT, ← smearR_eq]; rfl
   have ht0 : t.toNat ≠ 0 := by
     rw [hts]; exact (BitLenA64.smearBV_log2 _ (by rw [BitVec.toNat_ofNat, Nat.mod_eq_of_lt hyi64]; omega)).1
   have ht0' : (t.toNat = 0) = False := by simp [ht0]
+  refine SegProg.lift W4Seg.codeIn (r := BitVec.ofNat 64 6208603) ?_
   janus64_run [ht0, ht0'] until [6208603]
   have hbs : BitVec.ofNat 64 (63 - Janus.Arm64.clzNat 64 t.toNat) = BitVec.ofNat 64 (Exp.bitLen yi - 1) := by
     rw [hts, BitLenA64.clz_smear, BitVec.toNat_ofNat, Nat.mod_eq_of_lt hyi64]
@@ -91,6 +94,7 @@ theorem zcopy (impl : List Amd64.Segment) {R : RtInv}
     rw [BitVec.msb_eq_decide]; simp only [BitVec.toNat_ofNat]; simp; omega
   have e4 := ed yi k hyi64
   generalize hD : yi / 2 ^ (k * 4) = d at e4 hd16 KT
+  refine SegProg.lift W4Seg.codeIn (r := BitVec.ofNat 64 6208637) ?_
   janus64_run [hbs, e1, e2, e3, hmsb] until [6208637]
   have hzd' := hzb d hd16
   clear hzb

@@ -1,10 +1,6 @@
-import FvModexp.Proofs.Amd64.NatQ.DrsFD5R
+import FvModexp.Proofs.Amd64.NatQ.DrsSegD
 import FvModexp.Proofs.Amd64.NatQ.DrsDG
-import FvModexp.Proofs.Amd64.NatQ.DrsC5
-import FvModexp.Proofs.Amd64.NatQ.DrsC6
-import FvModexp.Proofs.Amd64.NatQ.DrsD5
 import FvModexp.Proofs.Amd64.NatQ.DrsFV
-import FvModexp.Proofs.Amd64.NatQ.DrsFD4
 
 set_option autoImplicit false
 
@@ -24,9 +20,6 @@ set_option linter.janusRenameI false
 namespace FvModexp.Amd64.Q.DivRec
 
 open FvModexp.Amd64.Q.DivLarge (DrsPreW DrsPostW)
-
-/-- the model state after `u -= qhatv` (with the borrow) at the end of the final block -/
-@[reducible] def Cx.sGF (c : Cx) (s : State) (U : List Nat) : Mdl.St := { c.sFF s U with w := (c.sTF s U).1 }
 
 theorem stSF_zero {c : Cx} {s : State} {U : List Nat} (hbl : (c.sFF s U).buf.length = 3 * c.vl)
     (hq : (c.PF s U).length ≤ 3 * c.vl)

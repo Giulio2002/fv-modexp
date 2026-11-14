@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.LibW
+import FvModexp.Proofs.Amd64.Exp.W2Seg
 import FvModexp.Proofs.Amd64.Exp.W2ZcT
 
 set_option autoImplicit false
@@ -75,6 +76,7 @@ theorem zcK0 (impl : List Amd64.Segment) {R : RtInv}
     simp only [eq_iff_iff, iff_false]; intro e; omega
   have htoi : ((BitVec.ofNat 64 n).toInt < (n : Int)) = False := by
     rw [BitVec.toInt_eq_toNat_of_lt (by simp; omega)]; simp; omega
+  refine SegProg.lift W2Seg.codeIn (r := BitVec.ofNat 64 6213783) ?_
   janus64_run [hdm, eh1, eh2, hne, hne', hne'', htoi] until [6213783]
   refine zcT impl hmv b L g fs sp n mp mc k0 yp ylen zp zc zzp zzc d 0 (pp d) (tbl d) M r5 he hn hn16 hz0
     (by omega) hzzc hzzp hyl hyl' hyi64 hpd hzd' eE1 r168 r88 r398 r390 r3a8 rd8 r3b0 r3b8 hok hinv _ rfl ?_ rfl

@@ -1,6 +1,7 @@
 import FvModexp.Proofs.Amd64.Top.RunC2Lem2
 import FvModexp.Proofs.Amd64.Top.LibRun
 import FvModexp.Proofs.Amd64.Top.RunModX
+import FvModexp.Proofs.Amd64.Top.RunIfaceA
 
 set_option autoImplicit false
 
@@ -68,13 +69,14 @@ theorem subBytes : ∀ y, [RunIface.fnBytes].contains y = true → LibRun.names.
 open RunIface in
 /-- `z.Mod(z, y)` at a call state with entry `RSP = sp0`, memory `M`, `R14 = g`, `fsBase = fs`. -/
 theorem modW (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl) (R : RtInv) (stkM aboveM : Nat)
-    (hM : ModSpecM impl R stkM aboveM) (b1 : Nat) (L1 : List (Nat × Nat)) (sp0 g fs : BitVec 64)
+    (hM : ModSpecA impl R stkM aboveM) (b1 : Nat) (L1 : List (Nat × Nat)) (sp0 g fs : BitVec 64)
     (M : Janus.Arm64.Memory) (zA yA : Nat)
     (hRA : RetAddr ((Extracted.program.onlySegments namesMod).link impl) (M.readLE sp0.toNat 8))
     (hIP : ∀ t : State, t.regs 4 = sp0 → t.mem = M → t.regs 14 = g → t.fsBase = fs →
       IntPre R b1 (ModBudget (max (lenW M zA) (lenW M yA))) L1 stkM aboveM [zA, yA] t)
     (hy0 : 0 < IntV M yA) (hzl : IntLenLe M zA maxW) (hyl : IntLenLe M yA maxW)
-    (hPool : ∀ t : State, t.regs 4 = sp0 → PoolG R M (win t stkM aboveM)) (hX : ModX M zA) (z y : BitVec 64) :
+    (hPool : ∀ t : State, t.regs 4 = sp0 → PoolG R M (win t stkM aboveM)) (hX : ModX M zA)
+    (hadx : M.accessible Callees.adxAddr 1 false = true) (z y : BitVec 64) :
     Summary (LibRun.program.link impl)
       (segAddr Extracted.program "github.com/ethereum/go-bigmodexpfix/src/math/big.(*Int).Mod")
       (fun t => t.xmm 15 = 0 ∧ ArgsFrom64 t 0 [z, z, y] ∧ t.df = false ∧ t.regs 4 = sp0 ∧ t.mem = M ∧
@@ -88,8 +90,9 @@ theorem modW (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl
   refine Summary.mono hS.regions ?_ ?_
   · rintro t ⟨hx, ha, hdf, hsp, hm, h14, hfs, hz, hy⟩
     subst hz hy
-    refine ⟨by rw [hm, hsp]; exact hRA, hx, ha, hdf, by rw [hm]; exact hIP t hsp hm h14 hfs, by rw [hm]; exact hy0,
-      by rw [hm]; exact hzl, by rw [hm]; exact hyl, by rw [hm]; exact hPool t hsp, by rw [hm]; exact hX⟩
+    refine ⟨by rw [hm, hsp]; exact hRA, hx, ha, hdf, ⟨by rw [hm]; exact hIP t hsp hm h14 hfs, by rw [hm]; exact hy0,
+      by rw [hm]; exact hzl, by rw [hm]; exact hyl, by rw [hm]; exact hPool t hsp, by rw [hm]; exact hX⟩,
+      by rw [hm]; exact hadx⟩
   · rintro t t' ⟨-, -, -, -, hm, -, -, hz, hy⟩ ⟨⟨hcs, hfs, hdf, h0, hpost, hyv⟩, hreg⟩
     subst hz hy
     rw [hm] at hpost hyv
@@ -105,7 +108,7 @@ theorem expX_ops {sp W : Nat} (hb : W ≤ sp) (hW : 4800 ≤ W) (hw : Outside Ru
 open RunIface in
 /-- `z.exp(z, y, mm, false)` at a call state with entry `RSP = sp0`, memory `M`, `R14 = g`, `fsBase = fs`. -/
 theorem expW (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl) (R : RtInv) (stkM aboveM : Nat)
-    (hE : ExpSpec impl R stkM aboveM) (b1 : Nat) (L1 : List (Nat × Nat)) (sp0 g fs : BitVec 64)
+    (hE : ExpSpecA impl R stkM aboveM) (b1 : Nat) (L1 : List (Nat × Nat)) (sp0 g fs : BitVec 64)
     (M : Janus.Arm64.Memory) (zA yA mA : Nat)
     (hRA : RetAddr ((Extracted.program.onlySegments namesExp).link impl) (M.readLE sp0.toNat 8))
     (hIP : ∀ t : State, t.regs 4 = sp0 → t.mem = M → t.regs 14 = g → t.fsBase = fs →
@@ -114,7 +117,7 @@ theorem expW (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl
     (hm0 : 0 < IntV M mA) (hzl : IntLenLe M zA maxW) (hyl : IntLenLe M yA maxW) (hml : IntLenLe M mA maxW)
     (hOne : ∀ t : State, t.regs 4 = sp0 → OneG R L1 M (win t stkM aboveM) [zA, yA, mA])
     (hPool : ∀ t : State, t.regs 4 = sp0 → PoolG R M (win t stkM aboveM)) (hmA0 : mA ≠ 0) (hzwb : Apart zA 32 wbA 4)
-    (hzX : ModX M zA) (z y mm : BitVec 64) :
+    (hzX : ModX M zA) (hxa : ExpA M) (z y mm : BitVec 64) :
     Summary (LibRun.program.link impl)
       (segAddr Extracted.program "github.com/ethereum/go-bigmodexpfix/src/math/big.(*Int).exp")
       (fun t => t.xmm 15 = 0 ∧ ArgsFrom64 t 0 [z, z, y, mm, 0#64] ∧ t.df = false ∧ t.regs 4 = sp0 ∧ t.mem = M ∧
@@ -128,9 +131,9 @@ theorem expW (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl
   refine Summary.mono hS.regions ?_ ?_
   · rintro t ⟨hx, ha, hdf, hsp, hm, h14, hfs, hz, hy, hmm⟩
     subst hz hy hmm
-    refine ⟨by rw [hm, hsp]; exact hRA, hx, ha, hdf, by rw [hm]; exact hIP t hsp hm h14 hfs, by rw [hm]; exact hm0,
+    refine ⟨by rw [hm, hsp]; exact hRA, hx, ha, hdf, ⟨by rw [hm]; exact hIP t hsp hm h14 hfs, by rw [hm]; exact hm0,
       by rw [hm]; exact hzl, by rw [hm]; exact hyl, by rw [hm]; exact hml, by rw [hm]; exact hOne t hsp,
-      by rw [hm]; exact hPool t hsp, hmA0, hzwb, by rw [hm]; exact hzX⟩
+      by rw [hm]; exact hPool t hsp, hmA0, hzwb, by rw [hm]; exact hzX⟩, by rw [hm]; exact hxa⟩
   · rintro t t' ⟨-, -, -, -, hm, -, -, hz, hy, hmm⟩ ⟨⟨hcs, hfs, hdf, h0, hpost⟩, hreg⟩
     subst hz hy hmm
     rw [hm] at hpost

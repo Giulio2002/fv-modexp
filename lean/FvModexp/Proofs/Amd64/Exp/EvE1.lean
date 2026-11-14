@@ -87,9 +87,9 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- **`J5` → `J6`** (see the module doc) -/
 theorem segE1 {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl)
-    {KN : Nat} {costF : Nat → Nat → Nat → Nat} {costD : Nat} {needR : Nat → Nat → Nat}
+    {KN : Nat} {costF : Nat → Nat → Nat → Nat} {cDl : Nat → Nat → Nat} {needR : Nat → Nat → Nat}
     {costR : Nat → Nat → Nat → Nat} {needS needP : Nat → Nat → Nat → Nat} {costS costP : Nat → Nat → Nat → Nat → Nat}
-    (hE : EvenHyp.ExpNNHypNE1 impl R KN costF costD needR costR needS needP costS costP)
+    (hE : ∀ costD, EvenHyp.ExpNNHypNE1 impl R KN costF costD needR costR needS needP costS costP)
     (hKN : 41640 ≤ KN) (hKN1 : KN + 0x498 ≤ K) (hKN2 : KN + 0x98 ≤ 2 ^ 20)
     (hP : EPre R b L K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml mc s) (hM : 0 < natVal s.mem mp ml)
     (hev : natVal s.mem mp ml % 2 = 0) (hX : NHyp.XFacts R L xp xl xc) (hXC : XC R L sp K st s.mem xp xc)
@@ -98,8 +98,10 @@ theorem segE1 {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
     {rk rk' : Nat}
     (hrk : ∀ l1 l2, l1 ≤ ml → l2 ≤ ml →
       NBudE costR costS costP xl yl l1 (lvl3 s st mp ml l1 l2) (nE s mp ml) ≤ rk ∧
-      ExpOdd.OBud costF l1 costD xl yl (lvl3 s st mp ml l1 l2) (rk - makeCost l1) ∧
-      ExpN.NCost costD costR costS costP xl yl l1 (lvl3 s st mp ml l1 l2) (nE s mp ml) + rk' ≤ rk)
+      ExpOdd.OBud costF l1 (cDl l1 (lvl3 s st mp ml l1 l2))
+        xl yl (lvl3 s st mp ml l1 l2) (rk - makeCost l1) ∧
+      ExpN.NCost (cDl l1 (lvl3 s st mp ml l1 l2))
+        costR costS costP xl yl l1 (lvl3 s st mp ml l1 l2) (nE s mp ml) + rk' ≤ rk)
     {ret0 : W64} {Q : State → Prop}
     (K6 : ∀ (S : State) (L1 : List (Nat × Nat)) (b1 p1 l1 c1 q l2 pz lz cz : Nat),
       J6 R L K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml mc s rk' S L1 b1 p1 l1 c1 q l2 pz lz cz →
@@ -167,12 +169,14 @@ theorem segE1 {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
   obtain ⟨-, -, -, yv⟩ := obj_at hP hwp hoy hay hy48 hyN (Nat.le_trans hyl (by decide))
     (fun h0 => (hz h0).2.2.2.2.2.2.2.1) tsp fm (stk := 0) (above := 0) (Nat.zero_le _) (Nat.zero_le _)
   have hnp := npre_of hP hwp hXC hXG hX (S := S') (f4) (r14.trans h.jx.e14) tfs (rx15.trans h.jx.ex15)
-    (rdf.trans h.jx.edf) fm hKN hKN1 hKN2 (costF := costF) (costD := costD) (needR := needR) (costR := costR)
+    (rdf.trans h.jx.edf) fm hKN hKN1 hKN2 (costF := costF)
+    (costD := cDl l1 (lvl3 s st mp ml l1 l2)) (needR := needR) (costR := costR)
     (needS := needS) (needP := needP) (costS := costS) (costP := costP) hm1p hl1p (Nat.le_trans hl1m hml) hd hk0 h.ap1
     w0 w8 w10 w18 w20 w28 (by rw [hlen]; exact hs1) (by rw [hlen]; exact hs2) (by rw [hlen]; exact hs3)
     (by rw [hlen, hlg]; exact hs4) (by rw [hlen, hlg]; exact Nat.le_trans hrk1 hb1)
     (by rw [hlen]; exact OBud.mono hrk2 (Nat.sub_le_sub_right hb1 _))
-  have hS := Ensures.toSummaryIn (hE b1 L1 t (2 * max l1 l2) (2 * max l1 l2) st xp xl xc yp yl yc p1 l1 c1 0)
+  have hS := Ensures.toSummaryIn (hE (cDl l1 (lvl3 s st mp ml l1 l2))
+      b1 L1 t (2 * max l1 l2) (2 * max l1 l2) st xp xl xc yp yl yc p1 l1 c1 0)
     (A64.noExit_restrict64 hap ExpN.names) (by simp only [numIntRegs, List.length_cons, List.length_nil]; decide)
     (codeIn_NE hap libN_sub)
   rw [expN_a] at hS

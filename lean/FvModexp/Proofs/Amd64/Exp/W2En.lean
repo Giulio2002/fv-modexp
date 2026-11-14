@@ -37,7 +37,7 @@ open FvModexp.Amd64.W2Pro (XnQ)
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- from `xnE` (any memory `M` with the entry segment's frame facts) to `EnPost` -/
-theorem toPost {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
+theorem toPost (hRR : FvModexp.Amd64.W2Pro.RRSpec) {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
     (hclr : MemclrNoHeapPointersLive64 (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
@@ -69,7 +69,7 @@ theorem toPost {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.prog
     (h14 : S.regs 14 = BitVec.ofNat 64 g) (hfs : S.fsBase.toNat = fs) (hx15 : S.xmm 15 = 0) (hdf : S.df = false) :
     ReachesRet (LibW.program.link impl) (BitVec.ofNat 64 r) S
       (EnPost R b L K g fs sp st bp r zp zc xp xl xc yp ylen mp n mc costD s) :=
-  ReachesRet.mono (atXnE hap hclr hmv hmk hSN hDiv hnsD hnsW hLsh hnsL hnsWL hP hstnz hKD hKL hMo hM1 hF hLF hrg hx
+  ReachesRet.mono (atXnE hRR hap hclr hmv hmk hSN hDiv hnsD hnsW hLsh hnsL hnsWL hP hstnz hKD hKL hMo hM1 hF hLF hrg hx
       hkf hlen hcap hc40 hnl hsl h148 (hB.mono hb1) hinv1 S hpc hsp hmem h6 h8 h9 h7 h3 h14 hfs hx15 hdf)
     fun _ h => ⟨M, L1, b1, hF, hLF, hrg, hx, hb1, hkf, hai, hlen, hcap, hc40, hnl, hsl, h148, hinv1, h⟩
 
@@ -84,7 +84,7 @@ set_option maxHeartbeats 64000000 in
 /-- **window-2 from its entry to its `RET`** (amd64): stack-guard check, prologue, defer record, the inline
 `stk.reserve(11n)` (`growslice` + `memclrNoHeapPointers` when the array is too small, the header stores with the write
 barrier), then the rest of the function (`W2Pro.xnStep`) -/
-theorem enStep {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
+theorem enStep (hRR : FvModexp.Amd64.W2Pro.RRSpec) {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
     (hclr : MemclrNoHeapPointersLive64 (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
@@ -175,7 +175,7 @@ theorem enStep {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.prog
       rw [q3] at hc; rw [q1, q3]
       obtain ⟨a1, a2, a3, a4⟩ := k5 hc
       exact ⟨a1, a2, by rw [hF.accessible]; exact a3, a4⟩
-    exact toPost hap hclr hmv hmk hSN hDiv hnsD hnsW hLsh hnsL hnsWL hP hstnz hKD hKL hMo hM1 (hBb.elim id) hF hLF
+    exact toPost hRR hap hclr hmv hmk hSN hDiv hnsD hnsW hLsh hnsL hnsWL hP hstnz hKD hKL hMo hM1 (hBb.elim id) hF hLF
       (hrg3.trans hrg1) (LiveExt.refl R L) (Nat.sub_le _ _) (Or.inl ⟨q1, q3⟩) (W2Pro.arrIn_kept ⟨q1, q3⟩) q2 hcap3
       hc3 hnl3 hsl3 h148 hinv3 S3 d1 d2 dm (d5.trans c5) (d6.trans c6) (d7.trans c7) d3 (d4.trans c8) d9
       (by rw [d10, c15]; exact hfs) (d11.trans c16) (d12.trans (c17.trans hdf))
@@ -264,7 +264,7 @@ theorem enStep {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.prog
       rw [q1, q3]
       exact ⟨hp8, Or.inl ⟨_, List.mem_append_right _ (List.mem_singleton_self _), by simp only; omega,
         by simp only; omega⟩, by rw [hF3.accessible]; exact hpacc, hp48⟩
-    exact toPost hap hclr hmv hmk hSN hDiv hnsD hnsW hLsh hnsL hnsWL hP hstnz hKD hKL hMo hM1 (hBb.elim id) hF hLF
+    exact toPost hRR hap hclr hmv hmk hSN hDiv hnsD hnsW hLsh hnsL hnsWL hP hstnz hKD hKL hMo hM1 (hBb.elim id) hF hLF
       (hrg3.trans (hrg2.trans hrg1)) hx (Nat.sub_le_sub_left hcostG _) hkf hai q2 hcap3 hc3 hnl3 hsl3 h148 hinv3 S3 e1 e2
       em (e5.trans d5) (e6.trans d6) (e7.trans d7) e3 (e4.trans d8) e9 (by rw [e10, d15, c10]; exact hfs)
       (e11.trans d16) (e12.trans (d17.trans (c12.trans hdf)))

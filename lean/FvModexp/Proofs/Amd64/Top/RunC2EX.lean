@@ -1,5 +1,6 @@
 import FvModexp.Proofs.Amd64.Top.RunC2B
 import FvModexp.Proofs.Amd64.Top.RunC2One
+import FvModexp.Proofs.Amd64.Top.RunC2Cpu
 import FvModexp.Proofs.Common.GenReg
 
 set_option autoImplicit false
@@ -15,7 +16,7 @@ namespace FvModexp.Amd64.Run
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem c2eX (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl) (R : RtInv) (stkM aboveM : Nat)
-    (hE : RunIface.ExpSpec impl R stkM aboveM) (hBy : RunIface.BytesSpec impl R stkM aboveM) (hsv : RunIface.Serves R)
+    (hE : RunIface.ExpSpecA impl R stkM aboveM) (hBy : RunIface.BytesSpec impl R stkM aboveM) (hsv : RunIface.Serves R)
     (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64) (ret : Nat)
     (hret : RetAddr (LibRun.program.link impl) ret) (s : State) (hx0 : s.xmm 15 = 0) (hdf0 : s.df = false)
     (Q : Janus.Amd64.Outcome → Prop)
@@ -24,7 +25,7 @@ theorem c2eX (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl
     (hglob : RunIface.Globals R s.mem (win s W 40)) (hgL : ApartAll ((s.regs 14).toNat + 16) 8 L)
     (hfL : ApartAll (s.fsBase.toNat - 8) 8 L)
     (hbB : okB s p len ≤ b) (hone : FvModexp.Spec.RunAmd64.NatOne R s.mem (win s W 40))
-    (hpool : FvModexp.Spec.RunAmd64.StackPool R s.mem (win s W 40))
+    (hpool : FvModexp.Spec.RunAmd64.StackPool R s.mem (win s W 40)) (hca : FvModexp.Spec.RunAmd64.CpuOne s.mem)
     (L1 : List (Nat × Nat)) (b1 : Nat) (T : State) (hrel : RelD R b L c p len cp s ret 3 3 (cstD 3) L1 b1 T)
     (hpc : T.rip = BitVec.ofNat 64 (segAddr Extracted.program fn + 0xb9b)) (hv2 : 0 < opV s p len 2)
     (hk : ∀ V Lk bk, RelV R b L p len s ret W Lk bk V → V.rip = BitVec.ofNat 64 pcCV →
@@ -151,6 +152,7 @@ theorem c2eX (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl
       rw [e24, e8]
       intro hc
       exact (InRanges.apart (hl0 hc).2.2.2.2.1 hglob.2.2.2.2.2.2.2.2.1).symm)
+    (by rw [← hMd]; exact expA_ops hb' hW1 hone hca hMF ⟨by omega, by omega⟩)
   have hz136 : (s.regs 4 - 608#64 + 472#64).toNat = (s.regs 4).toNat - 136 := by
     rw [BitVec.toNat_add, BitVec.toNat_sub]; simp; omega
   have hz168 : (s.regs 4 - 608#64 + 440#64).toNat = (s.regs 4).toNat - 168 := by
@@ -206,7 +208,7 @@ set_option maxHeartbeats 64000000 in
 /-- `C2` with `base ≠ 1`: `base.BitLen() ≠ 1` (len `0`: `JL` taken, bit length `0`; else the top limb's bit length
 via `BSR` of its smear, `blr_one64`), to the exp block, then `c2eX`. -/
 theorem c2e (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl) (R : RtInv) (stkM aboveM : Nat)
-    (hE : RunIface.ExpSpec impl R stkM aboveM) (hBy : RunIface.BytesSpec impl R stkM aboveM) (hsv : RunIface.Serves R)
+    (hE : RunIface.ExpSpecA impl R stkM aboveM) (hBy : RunIface.BytesSpec impl R stkM aboveM) (hsv : RunIface.Serves R)
     (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64) (ret : Nat)
     (hret : RetAddr (LibRun.program.link impl) ret) (s : State) (hx0 : s.xmm 15 = 0) (hdf0 : s.df = false)
     (Q : Janus.Amd64.Outcome → Prop)
@@ -215,14 +217,14 @@ theorem c2e (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
     (hglob : RunIface.Globals R s.mem (win s W 40)) (hgL : ApartAll ((s.regs 14).toNat + 16) 8 L)
     (hfL : ApartAll (s.fsBase.toNat - 8) 8 L)
     (hbB : okB s p len ≤ b) (hone : FvModexp.Spec.RunAmd64.NatOne R s.mem (win s W 40))
-    (hpool : FvModexp.Spec.RunAmd64.StackPool R s.mem (win s W 40))
+    (hpool : FvModexp.Spec.RunAmd64.StackPool R s.mem (win s W 40)) (hca : FvModexp.Spec.RunAmd64.CpuOne s.mem)
     (L1 : List (Nat × Nat)) (b1 : Nat) (T : State) (hrel : RelD R b L c p len cp s ret 3 3 (cstD 3) L1 b1 T)
     (hpc : T.rip = BitVec.ofNat 64 pcC2) (hv0 : opV s p len 0 ≠ 1) (hv2 : 0 < opV s p len 2)
     (hk : ∀ V Lk bk, RelV R b L p len s ret W Lk bk V → V.rip = BitVec.ofNat 64 pcCV →
       Reaches ((LibRun.program.link impl).withExit ret) V Q) :
     Reaches ((LibRun.program.link impl).withExit ret) T Q := by
   have hX := c2eX impl hap R stkM aboveM hE hBy hsv b L c p len cp ret hret s hx0 hdf0 Q W henvW hW hW1 hab ha8 hglob
-    hgL hfL hbB hone hpool L1 b1
+    hgL hfL hbB hone hpool hca L1 b1
   have hrel0 := hrel
   have hb' : W ≤ (s.regs 4).toNat := by have := henvW.2.1.1; simpa only [regSP] using this
   obtain ⟨hsp, h14, h5, hx15, hfs, hdf, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -,

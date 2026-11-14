@@ -1,3 +1,5 @@
+import FvModexp.Proofs.Amd64.Exp.W2Posts
+import FvModexp.Proofs.Amd64.Exp.W2Seg
 import FvModexp.Proofs.Amd64.Exp.W2ExB
 
 set_option autoImplicit false
@@ -14,20 +16,6 @@ length `0 < n` (so the `div` fallback is not taken), the reload of `zz` into `DI
 open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Contracts Janus.Contracts.EqHashModel FvModexp
 
 namespace FvModexp.Amd64.W2Loop
-
-/-- the written ranges from the first `zz.cmp(m)` to the join: callee windows, spills, `zz`'s array -/
-@[reducible] def jw (R : RtInv) (sp zzp zzc : Nat) : List (Nat × Nat) :=
-  R.rt ++ [(sp - 4296, sp + 0x60), (sp + 0x98, sp + 0xa8), (sp + 0x190, sp + 0x198)] ++ [(zzp, zzp + 8 * zzc)]
-
-/-- what holds at the join point `njoin` (memory `M'`, result `(p, l, c)` in `DI, SI, R8`) relative to the memory `M`
-before the final reduction -/
-@[reducible] def JoinPost (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (g sp n zzp zzc V : Nat) (M : Memory)
-    (p l c : Nat) (M' : Memory) : Prop :=
-  ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b - makeCost n ≤ b' ∧ R.inv b' L' g (view R.rt L' M') ∧
-    M'.regions = M.regions ∧ MemFrame M M' (jw R sp zzp zzc) ∧ LiveFrame M M' L [(zzp, zzp + 8 * zzc)] ∧
-    natVal M' p l = V ∧ l ≤ c ∧ (0 < c ∧ c < 2 ^ 40) ∧ NatLive M' R L' p c ∧
-    ((p = zzp ∧ c = zzc) ∨ (InRanges p (8 * c) R.rt ∧ ApartAll p (8 * c) L)) ∧
-    (l = 0 ∨ (p + 8 * l ≤ 2 ^ 48 ∧ M'.accessible p (8 * l) false = true))
 
 /-- the stack ranges written from `nat.sub`'s return to the join -/
 @[reducible] def tw (sp : Nat) : List (Nat × Nat) :=
@@ -133,6 +121,7 @@ theorem exSubT {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.prog
       ReachesRet (LibW.program.link impl) ret S' Q) :
     ReachesRet (LibW.program.link impl) ret S Q := by
   rw [fnE_eq] at hpc
+  refine SegProg.lift W2Seg.codeIn (r := BitVec.ofNat 64 cmpE) ?_
   janus64_run [r3a8, r3b0, r3b8] until [cmpE]
   have u := hmw; unfold Apart at u
   refine exCmp2 hap _ sp g fs p c mp n r5 rfl ?_ ?_ ?_ ?_ ?_ ?_ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ hs1 hs2 ?_ hn hn16 hm48 ?_ hmw ?_

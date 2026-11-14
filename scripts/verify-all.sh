@@ -8,7 +8,9 @@
 #        SKIP_HARNESS=1 (reuse build/harness-*; the hash check still runs), LEAN_NUM_THREADS (default 4), JANUS_JOBS (2).
 # SANITY CAPS (project goal, README.md): every row runs under `memcap 16G` and `timeout 900`. They are constants of this script:
 # there is deliberately NO environment variable, flag or file that changes them. A row that exceeds a cap is a FAILED row: fix the proof, not the cap.
-# Output: build/rows.tsv  (isa fn verdict wall_seconds peak_rss_MB witnesses), build/log-<isa>-<fn>, and a summary.
+# Output: build/rows.tsv  (isa fn verdict wall_seconds peak_rss_MB witnesses load_start load_end load_max), build/log-<isa>-<fn>,
+# and a summary. load_* = host 1-minute load average (/proc/loadavg) at the row's start / end / max over the row (2 s samples;
+# top s50, coordinator request: tells host contention from code regressions); also logged as `verify-all-load:` in the row log.
 set -uo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$root"
@@ -97,8 +99,8 @@ pf_of() {   # pf_of isa fn: the proof module (FnMain.lean, when it exists and ho
   if [ -f "lean/FvModexp/Proofs/$dir/${2}Main.lean" ] && grep -q "theorem correctness" "lean/FvModexp/Proofs/$dir/${2}Main.lean"; then echo "${2}Main"; else echo "$2"; fi
 }
 run_job() {   # run_job isa fn sym mod   (fn = row id; mod = proof-module path below Proofs/<Isa>; contract flags are keyed by the symbol's function name)
-  local isa="$1" fn="$2" sym="$3" mod="$4" cname dir out cflags pf wt mt w r t0 rss tf; export JANUS_MEM_MAX="$ROW_MEMCAP"
-  t0=$(date +%s); tf="build/time-$isa-$fn"; rm -f "$tf"; out="build/ex-$isa-$fn"
+  local isa="$1" fn="$2" sym="$3" mod="$4" cname dir out cflags pf wt mt w r t0 rss tf l0 l1 lm la; export JANUS_MEM_MAX="$ROW_MEMCAP"
+  t0=$(date +%s); l0=$(cut -d' ' -f1 /proc/loadavg); lm=$l0; tf="build/time-$isa-$fn"; rm -f "$tf"; out="build/ex-$isa-$fn"
   dir="$(isa_dir "$isa")"
   cname="${sym%.abi0}"; cname="${cname%.abiinternal}"; cname="${cname##*.}"; cname="${cname^}"
   cflags="$(contract_flags "$cname")"
@@ -119,6 +121,7 @@ run_job() {   # run_job isa fn sym mod   (fn = row id; mod = proof-module path b
       if [ -z "$cg" ]; then p=$(pgrep -f "^$JANUS verify $out " | head -1)
         if [ -n "$p" ]; then c=$(cut -d: -f3 /proc/$p/cgroup 2>/dev/null); case "$c" in */run-*.scope) cg=$c;; esac; fi; fi
       if [ -n "$cg" ] && [ -r "/sys/fs/cgroup$cg/memory.peak" ]; then v=$(cat "/sys/fs/cgroup$cg/memory.peak" 2>/dev/null || echo 0); [ "${v:-0}" -gt "$peak" ] && peak=$v; fi
+      la=$(cut -d' ' -f1 /proc/loadavg); lm=$(awk -v a="$la" -v b="$lm" 'BEGIN{print (a+0 > b+0) ? a : b}')
       sleep 2
     done
     if wait $bg; then r=PASS; fi
@@ -139,7 +142,9 @@ for f in glob.glob(sys.argv[1]+"/verified.json")+glob.glob(sys.argv[1]+"/verifie
     except Exception: pass
 print(b//1048576)' "$out" 2>/dev/null || echo 0)
   [ "${jp:-0}" -gt "$rss" ] && rss=$jp
-  echo "$r $(( $(date +%s) - t0 )) $rss ${#wt[@]}" >"build/res/$isa-$fn"
+  l1=$(cut -d' ' -f1 /proc/loadavg)
+  echo "verify-all-load: start $l0 end $l1 max $lm" >>"build/log-$isa-$fn"
+  echo "$r $(( $(date +%s) - t0 )) $rss ${#wt[@]} $l0 $l1 $lm" >"build/res/$isa-$fn"
 }
 admit() { local l m; l=$(cut -d' ' -f1 /proc/loadavg | cut -d. -f1); m=$(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo); [ "$l" -lt "${MAX_LOAD:-40}" ] && [ "$m" -ge 20 ]; }
 # ---- cache warm-up (outside the row caps): build the Janus framework and the consumer dependency closure into the cache once, so that a
@@ -191,13 +196,14 @@ for i in "${order[@]}"; do
 done
 wait
 # ---- summary and build/rows.tsv ----
-printf 'isa\tfunction\tverdict\twall_s\tpeak_rss_mb\twitnesses\n' > build/rows.tsv
+printf 'isa\tfunction\tverdict\twall_s\tpeak_rss_mb\twitnesses\tload_start\tload_end\tload_max\n' > build/rows.tsv
 for i in "${!jobs_fn[@]}"; do
   isa="${jobs_isa[$i]}"; fn="${jobs_fn[$i]}"
-  if [ -s "build/res/$isa-$fn" ]; then read -r r s m nw <"build/res/$isa-$fn"; else r="FAIL(no-result)"; s=0; m=0; nw=0; fi
+  if [ -s "build/res/$isa-$fn" ]; then read -r r s m nw l0 l1 lm <"build/res/$isa-$fn"; else r="FAIL(no-result)"; s=0; m=0; nw=0; fi
   case "$r" in PASS) ;; *) fail=1;; esac
-  printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$isa" "$fn" "$r" "$s" "$m" "${nw:-0}" >> build/rows.tsv
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$isa" "$fn" "$r" "$s" "$m" "${nw:-0}" "${l0:--}" "${l1:--}" "${lm:--}" >> build/rows.tsv
+  l0=; l1=; lm=
 done
-echo "== rows (build/rows.tsv): isa function verdict wall_s peak_rss_MB witnesses =="; column -t -s$'\t' build/rows.tsv
+echo "== rows (build/rows.tsv): isa function verdict wall_s peak_rss_MB witnesses load_start load_end load_max =="; column -t -s$'\t' build/rows.tsv
 echo "== total wall $(( $(date +%s) - t_start )) s, harness hashes OK, caps memcap $ROW_MEMCAP / timeout $ROW_TIMEOUT s, cache $JANUS_CACHE_DIR =="
 exit $fail

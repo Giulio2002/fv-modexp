@@ -2041,3 +2041,78 @@ match the expected expression SYNTACTICALLY, association included); EvSum 1.3 s 
   cap 900 s / 4.0 GB (own 170 mods 331 s, then killed in replay). **LOCK FINDING**: `ws: cache entry lock, framework base lease`
   waits (rows serialize on the one consumer workspace of the shared Run extraction; the wait counts against the cap): RunErr 590 s,
   P2W2 439, Mont 345, DivWRow 204, RemRow 197, W2 164, DivBasicRowQ 165, RemRowQ 131, ModRow 121, IntAS 95 s.
+
+## divmc s73 (2026-11-14): amd64 P2W2 loop body + outer step (dev compile, LEAN_NUM_THREADS=4, ≤ 2.8 GB each)
+P2W2LK 1.1 s, P2W2BJ 2.9 s, P2W2B0 16.5 s, B1 7.0 s, B2 11.8 s, B3 8.9 s, B4 22.0 s, B5 7.9 s, B6 16.1 s, Bd 0.9 s,
+P2W2LO 15.6 s. Before/after: B0/B2 with a `first | exact efs | (janus64_simp; done) | …` closer over all post-run goals
+342 s each → 16.5 s / 11.8 s with named holes closed individually; LO 149 s → 15.6 s (same fix).
+
+## divmc s74 (2026-11-14): amd64 P2W2 exit + summary (dev compile, LEAN_NUM_THREADS=4, ≤ 3.2 GB each)
+P2W2X1 1.1 s, X2 28.8 s, X3 6.9 s, X4 25.8 s, P2W2 1.1 s, P2W2C 4.1 s. No trims needed. Note: one janus64_run
+over the whole exit (until [XJ, mkE, nH]) with the branch facts left to the run, then closing each branch by its
+`hbr` (bit via `bit0W` + `janus_assumption`) was simpler and as fast as pre-splitting on `u`.
+
+### divmc s75 (amd64 callee-instance layer + P2W2 row; dev-compiled, `scripts/dev-lean-divmc.sh -x amd64`, load ~50)
+EnsWiden 0.9 s / 2.0 GB, CalleeInstQ 24.8 s / 4.6 GB (the `by decide` name-list checks), P2W2E 3.3 s / 2.7 GB,
+P2W2Row 16.8 s / 3.0 GB (witness `pre`: one `repeat' (first | exact … | apply And.intro)` pass so `Serves`/`R.inv`
+are closed by name before splitting), P2W2WS 1.0 s / 2.5 GB. No trims needed.
+## asm s68 (dev compile amd64, load ~17): P2DWS 0.9 s, P2DWinR 17.6 s/2.2 GB, P2DWin 7.8 s/2.3 GB, P2DSumO 1.7 s/2.1 GB, P2DW2 2.7 s/2.6 GB.
+P2DWin trim: 370 s/9.5 GB → 7.8 s. Cause: a top-level disjunction hypothesis (`hr : r = w2R ∨ r = w4R`) in a large
+context made every `omega` case-split (one omega 366 s); stated as `r ∈ [w2R, w4R]` instead (omega ignores it), and the
+tail's side conditions moved into small numeric lemmas (nW/nK/nB/nS). Also: named args `(a := …)` on `Outside.of_sub`
+bind the SOURCE range, not the target — ascribe the result type instead.
+## top s48 (2026-11-14): rel46a = first amd64 release-order audit (Janus v0.3.3, fresh cache, ROWS=1, snapshot main 071500f8, wall 8806 s)
+23 PASS / 4 FAIL / 1 MISSING (28 rows); LOCK 0 everywhere (ROWS=1).
+* PASS (s): StackNat 169, MulAddWW 222, AddVW 79, SubVW 71, BasicSqr 417 (6.1 GB), Trunc 207, Rsh 143, Lsh 131, IntAS 198,
+  BasicSqrQ 267, SqrQ 442, MulQ 440, RequiredGas 298, SubMod2N 519, DivW 163, DivWVW 12, DivBasic 277, DivBasicQ 298,
+  **DrsRowQ 642 (> 600: OWN 639 = compile 139 mods 422 s + replay 192 + audit 22)**, DivRowQ 537, RemRowQ 193, ModRow 333, RunErr 404.
+* FAIL cap: Exp_W4Row 900 s (compile 116 mods 653 s, audit 29 s, killed in replay), Exp_W2Row 901 s (compile 96 mods 456 s, audit 30 s,
+  killed in replay) — owner expmc: trim.
+* FAIL audit: Top_RunOkRow 502 s and Top_RunSucc 11 s — `segAddr` with name `"…/big." ++ "(*Int).Mod"` (not a string literal, Janus
+  round 8 I1): the old amd64 RunOkRow statement; RunSucc amd64 = twin not yet written (top). MISSING: `Run` (amd64 row-1 line, status todo).
+* Dev compile (top s48, amd64 P2W4 entry chain, overlay of divmc dev031): Defs 6 s, EnA 51-61 s, EnG 22 s, EnG2 26 s, EnJ 15 s, EnCtx 1 s,
+  Ent 53 s (4.6 GB).
+
+## asm s71 (dev compile amd64, load ~15): P2DLsh 9.0 s/2.6 GB, P2DFull 2.4 s/2.4 GB, P2DE 1.3 s/2.3 GB, P2DRow 17.6 s/3.2 GB.
+P2DFull trim: 264 s/10.2 GB → 1.7 s/2.3 GB. Cause: ~35 `by omega` side conditions inside `sumF`'s big context (CPre
+destructured, `∨` window facts `hxw`/`hyw`); all moved into four numeric lemmas (`nKF`, `nE`, `nZ`, `tz64`/`m64`/`lm_ab`)
+called once with explicit premises, the rest closed by `Nat.sub_le` / `Nat.sub_pos_of_lt` / named facts.
+P2DRow trim: 72 s → 18 s. Cause: the witness `pre`'s `repeat' (first | exact inv1 _ | …)` tried each failing `exact`
+against the budget goal `P2D.costP … ≤ BW`, and every failed unification unfolded `costP` (supTo over 9 window costs);
+fixed by proving the budget once and `generalize`-ing the `costP` term to a variable before the repeat.
+
+## amd64 NatQ/DrsRowQ chain cut (asm s72, 2026-11-14)
+rel46a: DrsRowQ 642 s (own compile 139 modules 422 s, replay 192, audit 22). The own compile was CHAIN-bound: dev critical
+path 451 s through a 16-deep segment chain DrsB4D → C1 → C2 → C2B → C3 → C4R → C4 → C5R → C6 → D4 → D5R → D5 → D6R → D6 →
+FD6 → FD7 (each segment imported the previous one only for return-address abbrevs, slot lists, model updates and small
+call-instance lemmas). Fix: those shared declarations (moved verbatim, names unchanged) live in ONE new module
+`Amd64/NatQ/DrsSegD.lean` (dev 6.8 s) that every C*/D*/FC*/FD*/B4D segment imports directly; the aggregators DrsCL/DrsDL/
+DrsFCL/DrsFDL import all their segments. Dev critical path 451 → 274 s (now DrsF2 65 s via FRecP ← … ← LibDivL); dev sum
+1334 → 1250 s. Expected janus own compile ≈ 300 s (was 422) → row ≈ 520 s. To be confirmed by top's next release run.
+## divmc s79 (2026-11-14): amd64 Exp/W2Row + W4Row import-chain cut (statements unchanged) + kernel-cost diagnosis
+* Cut (twin of expmc's arm64 s67): RRSpec (W2Cut/W4Cut), P01Spec + J4Spec (W2PSpec/W4PSpec) as Prop hypotheses,
+  defs hoisted into W2Posts/W2Posts2 (W4 alike), composed in W2Comp/W2RRC.rrSpec/W2FunE. The four segments
+  (prologue entry→divRet, divRet→RET section, table p01pow, j4→RET) now compile independently.
+* Dev critical import path (dev-par J=3, load ~17-21, LEAN_NUM_THREADS=4): W2 382 s → ~200 s (now XnR 30 → XnB 72 →
+  XnJ → … → En 30 → FunE); W4 (full chain) → 171 s. SUM of own modules unchanged: W2 1420-1500 s, W4 1367 s
+  ⇒ Janus own compile (4 at once with JANUS_JOBS=2) is SUM-bound: ≈ 350-380 s per window, not crit-bound any more.
+* Kernel replay (leanchecker per module, P=2): W2 97 modules 1062 cpu-s, W4 99 modules 974 cpu-s (≈ 250 s at 4 at once).
+* Diagnosis: these modules are KERNEL-bound (W2EnA: type checking 60.8 s of 63 s; arm64 W2EnA 16.7 s). ~0.9 s per distinct
+  pc: each pc's `stepOK` is a separate `mkAuxLemma` whose kernel check re-walks `seg.bytes.length` of every preceding
+  segment of LibW.program (73 segments). A/B: the same 29-instruction run on a one-segment program 8.4 s vs 30.3 s.
+  Written up in JANUS-ISSUES.md "[divmc s79] PERF … stepOK aux lemma". A framework fix is the lever for the ≤ 500 s target.
+* Targeted row runs (v79b, v0.3.3, warm store from a Warm79 pre-verify, JANUS_JOBS default, load 18-31):
+  W4Row own compile 94 modules 400 s (cpu 1854), audit 33 s, replay 119 targets 415 s, total 851 s → FAIL audit
+  ([RSP]-word rule, see divmc s80). W2Row own compile 96 modules 484 s (cpu 2072), audit 41 s, replay cut by the
+  900 s cap → total 901 s CAP FAIL. Both rows still need ~2x off own compile + replay.
+
+## top s50 (2026-11-14): rel47 arm64 (Janus v0.3.3, fresh cache, ROWS=1, snapshot main 456f856c, wall 11293 s + warm-up 929 s)
+39/40 PASS. FAIL: Exp_EvenRow 900 s / 4.5 GB = cap (own compile 209 mods 538 s ok, kernel replay of the own modules ran past
+900 s; LOCK 0; also capped in rel46). Rows > 600 s (LOCK 0): Nat_DrsRow 674 s (compile 207 mods 429 / replay 218 / audit 21;
+old row, retirement open), Top_RunSucc 784 s / 5.2 GB (compile 65 mods 504 / replay 183 / audit 92; rel46 533 s, higher load).
+Per row (s/MB): StackNat 129/2454, MulAddWW 171/946, AddVW 57/1008, SubVW 59/955, BasicMul 121/3341, BasicSqr 352/3164,
+Trunc 125/863, Rsh 120/860, Lsh 109/915, IntAS 254/1157, IntSub 14/404, BasicSqrQ 292/2811, SqrQ 312/2982, MulQ 352/1714,
+Mont 149/1710, SubMod2N 229/2779, ModInv 199/2318, DivW 153/1205, DivWVW 11/335, DivBasic 250/4382, Drs 674/2186,
+Div 406/2637, DivM 220/3567, Rem 175/4488, DivBasicQ 299/4577, DrsQ 305/1697, DivQ 353/2610, DivMQ 163/3584,
+RemQ 159/4496, IntMod 189/3954, W2 457/2957, W4 488/3028, P2W2 332/3078, P2W4 254/1553, P2D 372/2253, Even FAIL 900/4498,
+IExpQ 591/4618, RequiredGas 285/1757, RunErr 376/1627, RunSucc 784/5215.

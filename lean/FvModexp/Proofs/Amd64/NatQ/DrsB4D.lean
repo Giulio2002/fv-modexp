@@ -1,5 +1,6 @@
 import FvModexp.Proofs.Amd64.NatQ.DrsMulQ
 import FvModexp.Proofs.Amd64.NatQ.DrsSN
+import FvModexp.Proofs.Amd64.NatQ.DrsSegD
 
 set_option autoImplicit false
 
@@ -28,13 +29,6 @@ def mulSum (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program 
   FvModexp.Amd64.Callees.Ensures.toSummaryRegs7
     (fun a0 a1 a2 a3 a4 a5 a6 => hmul H b L a0 a1 a2 a3 a4 a5 a6 yp yl yc)
     (A64.noExit_restrict64 hap ns) hcode
-
-/-- a fact hidden from `janus64_run` (which destructures every conjunction in the context) -/
-structure Box (P : Prop) : Prop where
-  h : P
-
-/-- the return address of the product -/
-abbrev r4 : Nat := 0x5efd25
 
 set_option maxRecDepth 20000 in
 /-- the return site `0x5efd25` (after `CALL nat.mul`) is admissible for `nat.mul`'s program -/

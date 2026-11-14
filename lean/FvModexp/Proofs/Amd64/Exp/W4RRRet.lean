@@ -57,7 +57,7 @@ theorem rr_slot {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {g sp n rp rl rc z
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- window-4 from the return of the `RR` division to the return -/
-theorem rrRet {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
+theorem rrRet (hJ4 : FvModexp.Amd64.W4Pro.J4Spec) (hP01 : FvModexp.Amd64.W4Pro.P01Spec) {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
     (hclr : MemclrNoHeapPointersLive64 (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
@@ -228,7 +228,7 @@ theorem rrRet {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
     obtain ⟨hrr1, hrS1, hrF1, hrc1⟩ := hrr1
     have hbuf1 : ∀ p c, Buf R L g fs sp n M p c → Buf R L g fs sp n M1 p c := fun p c h => buf_frame h hF
     subst hM1
-    refine ReachesRet.mono (oneRet (Y := Y) (Mv := Mv) (yi := yi) hap hclr hmv hmk hmvok hwt hro hSN hserv he1 hd1 hn hn16 hmc hmc' ht (inp1 _ _ hm)
+    refine ReachesRet.mono (oneRet hJ4 hP01 (Y := Y) (Mv := Mv) (yi := yi) hap hclr hmv hmk hmvok hwt hro hSN hserv he1 hd1 hn hn16 hmc hmc' ht (inp1 _ _ hm)
       hrr1 (inp1 _ _ hx) hok (inp1 _ _ hy) (by rw [hyr]; exact hY) hyi1 hyl hyl' hyi0
       (by rw [rs 0x398 (by omega)]; exact s398) (by rw [rs 0x390 (by omega)]; exact s390)
       (by rw [rs 0x3a8 (by omega)]; exact s3a8) (by rw [rs 0x3b0 (by omega)]; exact s3b0)

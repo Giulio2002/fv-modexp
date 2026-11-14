@@ -23,7 +23,34 @@ A final statement may not use an instance or class of a dependency, so these pla
 | `Spec.LengthsPass data` (`Spec/Modexp.lean`) | `checkLengths (parseLengths data) = Except.ok ()`, i.e. EIP-7823: the three length headers are at most 1024. `lengthsPass_iff` gives the explicit form (proved). `LengthsFail = ¬ LengthsPass`. |
 | `Spec.OsakaReceiver m p` | The receiver `*bigModExp` at `p` has `eip2565`, `eip7823`, `eip7883` all `true`: the three bytes at `p`, `p+1`, `p+2` equal 1 (field order of `type bigModExp struct`, `core/vm/contracts.go:419`; Go keeps a `bool` as a byte 0/1). A precondition: the theorem says nothing about other receivers. |
 | `Spec.u64 x` | A `uint64` result register read as a natural number. For `RequiredGas` the statement is `u64 result = requiredGas fork data (parseLengths data)` as an equality in `Nat`, so the value fits in 64 bits (the proof shows it; for lengths at most 1024 no saturation to `MaxUint64` occurs). |
-| `Spec.Precompile`, `Spec.runPrecompiled` (`Spec/Geth.lean`) | geth's `RunPrecompiledContract` logic (`core/vm/contracts.go:272`): `gasCost := RequiredGas(input)`; `gas < gasCost` -> `ErrOutOfGas`; else charge and `Run`; an error from `Run` is passed up. `none` = failed call (the EVM caller then consumes all gas), `some (out, remaining)` = success. Cache and logger paths are not modelled (`cache = nil`, `logger = nil`). |
+| `Spec.Precompile`, `Spec.runPrecompiled p input gas cache` (`Spec/Geth.lean`) | geth's `RunPrecompiledContract` logic (`core/vm/contracts.go:272-304`): `gasCost := RequiredGas(input)`; `gas < gasCost` -> `ErrOutOfGas`; else charge; with a cache attached and a cache key, a stored output is returned (`err == nil`, same gas accounting); otherwise `Run`, and an error from `Run` is passed up (the store on a miss does not change the result). `none` = failed call (the EVM caller then consumes all gas), `some (out, remaining)` = success. `cache` defaults to `none` (`cache == nil`). The logger and the Amsterdam access-list `Touch` do not change the result and are not modelled. |
+| `Spec.normalize`, `Spec.cacheKey` (`Spec/Geth.lean`) | geth's MODEXP cache key: `normalize` transcribes `(*bigModExp).NormalizeInput` (contracts.go:704-732: input of at most 96 bytes unchanged; a length header `≥ 2^64` -> not cacheable; base and modulus lengths 0 -> the 96-byte header; else the input cut to `96 + b + e + m` bytes unless that sum overflows `uint64` or is at least the input size), `cacheKey` adds `precompileCacheKey`'s cap (precompile_cache.go:223-238: key over `maxCacheablePrecompileInput = 8192` bytes -> not cacheable). `getData(input, k, 32)` on an input longer than 96 bytes is `readNat input k 32`; the `uint256` sum of three `< 2^64` values cannot wrap. |
+| `Spec.Cache`, `Spec.cacheHit`, `Spec.CacheStoredBy p cache` (`Spec/Geth.lean`) | `Cache = Option (ByteArray → Option ByteArray)`: `none` = `cache == nil`, `some lookup` = the entries of this call's scope (active precompile set, address), `lookup key` = `cache.load` (a copy). `cacheHit` = the lookup of contracts.go:290-294 (needs a cache AND a key). `CacheStoredBy` (row 3 hypothesis) = what geth's stores guarantee: every entry `key ↦ out` was stored after `p.Run(d')` returned `out` with `err == nil` for some `d'` with `cacheKey d' = some key` (contracts.go:296-299; `store` copies key and output, precompile_cache.go:158-176). Concurrency/eviction only remove entries and keep this invariant. |
+| `Spec.StkShape` (`Spec/Pool.lean`) | The pooled `*big.stack` object shape the row-1 statements fix for Janus's `sync.(*Pool).Get`/`Put` contracts (`PoolShape` row binder, precondition `S = StkShape`): Janus `SliceObj (2^40-1)` (24-byte header `{ptr, len, cap}`, its array when `cap > 0`), `len = 0` (`stk.free()` stores it before the `Put`), `cap = 0 → ptr = 0`. Byte-identical copy of the proof-side `FvModexp.StkSh` (`rfl`). |
+| `Spec.WitSitesArm64.{stkT, mvSite, mkSite, clSite, wbSite, grSite, noSite, getSite, putSite}` (`Spec/WitSitesArm64.lean`) | `stkT`: the `*big.stack` type descriptor (`Extracted.dataAddr`), the `Pool.Put` element type. The `…Site` defs: the call-site premises the arm64 row-1 WITNESS exhibits, one per Janus runtime contract — each the conjunction of that contract's own precondition parts (`…Pre`, `StackRoom`, `LiveAt`/`LiveMemAt`, `LiveDest`, `CallOK`, `R.ok`, `R.inv`, `LiveSep`) at a call. Byte-identical reducible copies of the proof-side `AsmWit` defs (`rfl`). |
+| `Spec.WitSitesAmd64.{stkT, mvSite, mkSite, noSite, clSite, wbSite, getSite, grSite, putSite}` (`Spec/WitSitesAmd64.lean`) | amd64 twins of `Spec.WitSitesArm64`: `stkT` (the `*big.stack` type descriptor) and the call-site premises (amd64 argument registers RAX/RBX/RCX/RDI/RSI, `liveWin64`, `CallOK64`, g in R14) the amd64 row-1 witnesses exhibit, one per Janus runtime contract — `mvSite`/`mkSite`/`noSite` by the error witness, all of them by the success witness. Byte-identical reducible copies of the proof-side `Amd64.AsmWit` defs (`Witness/AsmWit.lean`, `Witness/Sites.lean`) and of `Amd64.ModRowW.putSite` (with `stkT`/`StkShape` for `Free.stkT`/`StkSh`); `rfl`. |
+| `Spec.RunAmd64.CpuOne m` (`Spec/RunAmd64X.lean`) | APPROVED (coordinator review, top s50) as a precondition conjunct of amd64 `RunSucc.correctness` (row 1, success half) only. Two conjuncts about `math/big` package globals at Run's entry: (1) `m.accessible hasADX 1 false = true` — the 1-byte `hasADX` (`arith_amd64.go:11`: `var hasADX = cpu.X86.HasADX && cpu.X86.HasBMI2`, `.noptrbss`) is READABLE; its VALUE is unconstrained (`addMulVVWW` in `arith_amd64.s` branches on it; both code paths are proved); (2) `Apart (m.readLE natOne 8) 8 divRecursiveThreshold 32` — the 8-byte word `natOne[0]` at the data pointer stored in `natOne`'s slice header (`nat.go:39`: `natOne = nat{1}`, a static array) does not overlap the 32 bytes of the four threshold globals that `Spec.RunAmd64.Globals` describes (distinct package variables). No other constraint (in particular nothing on the return address). Needed because amd64 `(*Int).Mod` / `(*Int).exp` (`ModSpecA` / `ExpSpecA`) read `hasADX` / `natOne`, and neither address is in the extraction's data objects; the witness `Run.WitnessOk.cpu2` discharges it (an 8-byte read-only region at 0xbb6b88 covers `hasADX`). |
+| `Spec.RunArm64.fn` (`Spec/RunArm64.lean`) | The literal symbol `github.com/ethereum/go-ethereum/core/vm.(*bigModExp).Run`; `segAddr Extracted.program fn` is its entry in the extraction. |
+| `Spec.RunArm64.window s` | The error row's stack window `[SP-4800, SP+40)`: Run's 624-byte frame + the deepest header-phase callee frame (`nat.setBytes`, 4160) below `SP`, and the return slot + the 4 argument words above. Only the proofs write inside it. |
+| `Spec.RunArm64.Env R L s` | Error-row environment: `GuardOK s 4800` (the stack-growth prologues fall through, see §3 "Stack growth"), `StackOK s 4800 40` (`SP` 16-aligned, window writable), `DataLoaded` (the extraction's 48 data segments, all `.rodata`, hold their bytes: true in every process running the binary), the window and g's `stackguard0` word (`X28+16`) outside the runtime-owned ranges `R.rt` and apart, no caller live object in the window (`LiveSep`), `.rodata` outside `R.rt`. A modelling choice of the runtime invariant `R`; no real allocator invariant concerns these addresses. |
+| `Spec.RunArm64.Held R L a n` | `[a, a+n)` is program memory: inside a live object of `L`, or outside `R.rt`. |
+| `Spec.RunArm64.Input R L c p len cp s` | The receiver's 3 bytes and the `[]byte` `(p, len, cap)` are a real Go slice: `len ≤ cap < 2^48`, readable, `Held`, and not in the window (a caller never passes free stack below its `SP`). |
+| `Spec.RunArm64.blockBound n` | `2n + 24`: the cost the budget charges for one runtime block of `n` bytes (any size class, rounding at most doubles, plus a header allowance). An abstract monotone quantity (Janus RUNTIME-CONTRACTS: no GC credit), not a measurement. |
+| `Spec.RunArm64.wordT`, `errT` | The extraction's addresses of `type:big.Word` (element type of `nat.make`) and `type:errors.errorString` (the `errors.New` object). |
+| `Spec.RunArm64.ErrReqs R b len` | The runtime serves the error path's requests: `makeslice(Word, 4, 8)` (three header `nat.make(4)`), the short-input `memmove` copies `n ≤ 32` (only when `len < 96`), `newobject(errorString)`; budget `b ≥ 3·blockBound 64 + blockBound 16 = 512`. Any real runtime serves these (tiny requests). |
+| `Spec.RunArm64.Grows R L L'` | The live set only grows by runtime-allocated objects (inside `R.rt`, apart from `L` and from each other). |
+| `Spec.RunArm64.Frame R b B L s s'` | Error-row frame: the live set grows, the budget drops by at most `B`, `R.inv` holds again, only `R.rt` and the window changed (`MemFrame`), the caller's live objects are byte-identical (`LiveFrame`). |
+| `Spec.RunArm64.ErrRet s'` | `(nil, err)` with `err ≠ nil`: arm64 ABIInternal results X0..X4 = (ptr, len, cap, itab, data); `X0 = X1 = 0` is the nil `[]byte`, `X3 ≠ 0` a non-nil interface (its type word). |
+| `Spec.RunArm64.windowW s W` | The success row's window `[SP-W, SP+40)`; the theorem needs `W ≥ 624 + 72944 = 73568` (Run's frame + `(*Int).exp`'s proved window, the deepest callee chain: window-4 Montgomery with its `nat` callees). |
+| `Spec.RunArm64.EnvW R L s W` | `Env` with window `W`, plus: g's `stackguard0` word is apart from every caller live object (it lives in the runtime's `g` struct, never in a Go object of the caller). |
+| `Spec.RunArm64.OkReqs R` | "No out-of-memory" for the success path: `makeslice` cap ≤ 2^17 elements, `memmove`/`memclrNoHeapPointers` ≤ 2^20 bytes, `growslice` new length ≤ 2^17; `newobject`, write barriers 2/4 and `Pool.Get/Put` unconstrained (no size). The bounds are ≥ 10× the largest request operands ≤ 1024 bytes can cause (table below); an unbounded version is not satisfiable by any runtime (huge requests throw "out of memory"). |
+| `Spec.RunArm64.Globals R m w` | `math/big`'s writable thresholds at their Go initial values (`karatsubaThreshold = 40`, `basicSqrThreshold = 12`, `karatsubaSqrThreshold = 80` natmul.go:12,68,69; `divRecursiveThreshold = 40` natdiv.go:733; 32 contiguous bytes) and `runtime.writeBarrier`'s flag word (ANY value): readable, outside `R.rt` and the windows. Only `calibrate_test.go` writes the thresholds (no non-test writer, grep). The three address equalities are closed facts about the binary (true, the witness proves them; REDTEAM-arm64 R7 proposes moving them to lemmas). |
+| `Spec.RunArm64.NatOne R m w` | `natOne = nat{1}` (nat.go:39, never written) at its initial value: header `(op, 1, 1)` and `op[0] = 1`, readable, outside `R.rt` and the windows. |
+| `Spec.RunArm64.StackPool R m w` | `var stackPool sync.Pool` (nat.go:282) with `New` never set (word 0), outside `R.rt` and the windows; and address 0 is not runtime memory (page 0 unmapped). `getStack` = `stackPool.Get()`, nil → `new(stack)` (nat.go:286-298). |
+| `Spec.RunArm64.okBudget l` | The success budget from the three lengths: headers + 3 operand reads + `Mod` (64 requests) + `exp` (`8·64·⌈e/8⌉ + 128` requests) + `Bytes` + `LeftPadBytes`, each request charged `blockBound (1024w + 1024)` (`w` = largest operand in words). Factor-free (no `2^32` slack), sound, NOT tight (≈30-60× real allocation volume); `RunGate.okBudget_gate`: ≤ 2^35 for every input passing EIP-7823 (corner value 17 366 406 472). Derivation: "Row 1 budgets" below. |
+| `Spec.RunArm64.OkRet data s'` | `(out, nil)`: `X3 = 0` (nil error type word) and the `X1` bytes at `X0` are exactly `compute data (parseLengths data)` (EthLib). |
+| `Spec.RunArm64.FrameW R b B L W s s'` | `Frame` with window `W`, plus: the output bytes are program memory (`Held` in the grown live set) when non-empty. |
+| `Spec.RunAmd64.*` (`Spec/RunAmd64.lean`) | amd64 twins of every `Spec.RunArm64` definition above, same meaning: SP = `RSP` (`regs 4`), g = `R14`, `StackGuardOK`/`StackWritable` + `RSP % 8 = 0`, ABIInternal results RAX/RBX/RCX/RDI/RSI; `window` 4800/40, Run's frame 616. `okBudget` is the same formula (`Amd64.RunGate.okBudget_gate`). |
 
 ## 2. The main theorem statements
 
@@ -41,9 +68,35 @@ A final statement may not use an instance or class of a dependency, so these pla
   `osakaMultComplexity`, `osakaModexpGas` with uint64 saturation, contracts.go:470-598, proved equal to EthLib `gasCost` under EIP-7823:
   `Geth.osaka_gas_eq`) and `Proofs/Common/RgSpec.lean` (geth's reading of the input: `Uint64()`/`IsUint64()` saturation and `expHead`,
   contracts.go:606-646; `RgSpec.gas_eq` = EthLib `requiredGas`). geth and EthLib agree on every input passing EIP-7823 (no finding).
-* Row 1 `FvModexp.<ISA>.Run.correctness` (agent `top`): see its module header.
-* Row 3 `FvModexp.Proofs.Compose.composition` (`Proofs/Common/Compose.lean`): pure Lean. From the guarantees of rows 1 and 2 (hypothesis structure `RowsHold`), geth's `runPrecompiled` agrees with EthLib's
+* Row 1, arm64 (`Proofs/Arm64/Top/RunSucc.lean`, `Proofs/Arm64/Top/RunErr.lean`; both release rows). Arguments `[c, p, len, cp]` =
+  receiver `*bigModExp` and the input slice; `data = Spec.bytesAt s.mem p len`.
+  * **`FvModexp.Arm64.RunSucc.correctness`** (lengths pass). Premises: `ImplApart` + the 11 runtime-contract instances of §3
+    ("Runtime contracts"), the Pool shape binder `S` (fixed by the pre `S = StkShape`), `W ≥ 624 + 72944`. Pre: `EnvW`, `Input`,
+    `OsakaReceiver`, `R.inv b L g`, `OkReqs`, `Globals`, `NatOne`, `StackPool` (on `windowW s W`), `okBudget (parseLengths data) ≤ b`,
+    `LengthsPass data`. Post (besides the Go ABI, which `Ensures` adds): `OkRet data s'` (`(compute data (parseLengths data), nil)`)
+    and `FrameW … (okBudget …) …`. Witness: `FvModexp.Arm64.RunSucc.Witness.nonvacuous` (toy runtime, heap 2^22, window 0x20000,
+    one call-site state per contract, a real `3^5 mod 7` run, output `[5]`).
+  * **`FvModexp.Arm64.Run.correctness`** (lengths fail). Premises: `ImplApart`, `MakesliceLiveContract`, `MemmoveLive`,
+    `NewobjectLiveContract`. Pre: `Env`, `Input`, `OsakaReceiver`, `R.inv`, `ErrReqs R b len`, `LengthsFail data`. Post: `ErrRet s'`
+    (`(nil, err)`, `err ≠ nil`) and `Frame … 512 …`. Witness: `FvModexp.Arm64.Run.Witness.nonvacuous` (base-length header 1025).
+  * **`FvModexp.Arm64.Run.correctness_total`** (`Proofs/Arm64/Top/RunTotal.lean`, corollary, not a separate row): the BRIEF row-1
+    sentence as ONE theorem. RunSucc's premises and pre without `LengthsPass`, the budget only when the lengths pass
+    (`LengthsPass data → okBudget … ≤ b`) plus `512 ≤ b`; post `(LengthsPass ∧ OkRet ∧ FrameW) ∨ (LengthsFail ∧ ErrRet ∧ Frame)`.
+    Proved by cases from the two rows (`env_of_envW`, `errReqs_of_okReqs`); `TotalWitness.total_nonvacuous` from the success witness.
+  * Release gates on the statement: `FvModexp.Arm64.RunGate.okBudget_gate` (`LengthsPass data → okBudget (parseLengths data) ≤ 2^35`,
+    `Proofs/Arm64/Top/RunGate.lean`; amd64 twin `FvModexp.Amd64.RunGate.okBudget_gate`), `RunSucc.expBudget_gate`
+    (`ExpBudget 128 128 ≤ 2^35`); RA-pin audit CLEAN on both rows (REDTEAM-arm64 R0). Build target: each ISA's `Top/RunSucc`
+    row module imports its `Top/RunGate`, so the release run (`janus verify` of the RunSucc rows) compiles and kernel-checks both gates.
+    `RunTotal` imports RunSucc + RunErr, so no row module can import it; it is compiled only once top promotes it to a row (or a
+    gate step verifies it); the default `lake build FvModexp` is extraction-free and cannot import any `Extracted`-based module.
+* Row 1, amd64 (`Proofs/Amd64/Top/RunErr.lean`, `Proofs/Amd64/Top/RunSucc.lean`): `FvModexp.Amd64.Run.correctness` (lengths fail,
+  release row, `Spec.RunAmd64` twins) and `FvModexp.Amd64.RunSucc.correctness` — STAGING: still the premise
+  `hE : RunIface.ExpSpecA impl R stkM aboveM` (closed amd64 `(*Int).exp` pending), plus `Spec.RunAmd64.CpuOne` (§1b). Not final
+  until `hE` is replaced by the closed theorem and `Witness.nonvacuous` added.
+* Row 3 `FvModexp.Proofs.Compose.composition` (`Proofs/Common/Compose.lean`): pure Lean. From the guarantees of rows 1 and 2 (hypothesis structure `RowsHold`), for every
+  result cache `cache` meeting `CacheStoredBy p cache` (`cacheStoredBy_none`: `cache == nil` does), geth's `runPrecompiled p data gas cache` agrees with EthLib's
   `modexp fork data gas`: failure iff failure (error length bound, or out of gas), otherwise equal outputs and remaining gas `gas - cost` with `cost` = EthLib's `chargedGas`.
+  Cache step: `cacheHit_run` (a hit equals `Run data`, via `CacheKey.cacheKey_eq`) and `runPrecompiled_cache` (with such a cache = without one). Converse: `error_of_fail`.
 
 ## 2b. Return-address pins (final gate; BRIEF "RETURN-ADDRESS PIN GAP")
 
@@ -63,80 +116,89 @@ precondition by hand, from the checklist that `scripts/check-ra-pin` generates:
 
 ## 3. Assumptions and limits
 
-* **Toolchain gap.** The binary under verification is built with Go 1.26.10 (Janus-pinned: `GOTOOLCHAIN=go1.26.10`, `CGO_ENABLED=0`, `GOAMD64=v1`, `-trimpath -buildvcs=false`, `scripts/harness.sha256`), because Janus v0.2.0's runtime pins do not
-  cover Go 1.27.3, which geth's own release binaries use. geth v1.17.10 itself satisfies the module's `go` directive with 1.26. Verified code = geth v1.17.10 source compiled with 1.26.10, not the shipped release binary. amd64 is verified at `GOAMD64=v1` only.
+* **Toolchain gap.** The binary under verification is built with Go 1.26.10 (Janus-pinned: `GOTOOLCHAIN=go1.26.10`, `CGO_ENABLED=0`,
+  `GOAMD64=v1`, `-trimpath -buildvcs=false`, `scripts/harness.sha256`), because the Janus runtime pins (framework **Janus v0.3.3**,
+  tag 6d657522, the lakefile pin; binary `/srv/janus-ops/v033/bin/janus`) do not cover Go 1.27.3, which geth's own release binaries
+  use. geth v1.17.10 itself satisfies the module's `go` directive with 1.26. Verified code = geth v1.17.10 source compiled with
+  1.26.10, not the shipped release binary. amd64 is verified at `GOAMD64=v1` only.
 * **EthLib pin.** The spec is the pinned EthLib revision; if upstream changes the MODEXP spec after `ffd60c4b`, nothing here follows.
-* **Runtime contracts** (Janus-pinned, per row in `scripts/contract-flags.sh`): none for RequiredGas.
-* Single-threaded execution, non-moving heap, the Go ABI, the harness binary (Janus assumptions, SOUNDNESS.md).
+* **Runtime contracts** (Janus-pinned, `scripts/contract-flags.sh`). RequiredGas (row 2): none. Run (row 1): the extraction treats 12
+  runtime functions as contracts (`--contract`): `runtime.gcWriteBarrier{1,2,3,4,6}`, `growslice`, `makeslice`,
+  `memclrNoHeapPointers`, `memmove`, `newobject`, `sync.(*Pool).Get`, `sync.(*Pool).Put`. The theorems assume Janus's pinned
+  contract for each one the proved code calls, at frame size 4096, with one runtime invariant `R`:
+  | premise | Janus contract | why a real runtime satisfies it |
+  |---|---|---|
+  | `hmk` | `MakesliceLiveContract` | `makeslice` returns a fresh zeroed object of `typ.size·cap` bytes in `R.rt`, apart from the live set, or throws (excluded by `OkReqs`) |
+  | `hmkz` | `MakesliceZeroLive` | zero-size request returns the `zerobase` pointer, nothing allocated (malloc.go) |
+  | `hmv` | `MemmoveLive` | `memmove` copies `n` bytes, writes only `[dst, dst+n)` |
+  | `hmz` | `MemmoveZeroLive` | `n = 0` touches nothing |
+  | `hno` | `NewobjectLiveContract` | `newobject(typ)` = `mallocgc(typ.size, typ, true)`: fresh zeroed object |
+  | `hgr` | `GrowsliceLiveContract` | `growslice` returns a fresh array holding the old elements, new cap ≥ new length |
+  | `hmc` | `MemclrNoHeapPointersLive` | clears exactly `[p, p+n)` |
+  | `hwb` / `hwb4` | `WbLiveContract … 2` / `… 4` | the write-barrier buffer slots (2 / 4 pointers) are runtime memory; the barrier changes nothing the program can read |
+  | `hget` / `hput` | `PoolGetLive` / `PoolPutLive` at `PoolShape = StkShape` | `Get` returns nil or an object this package `Put` (always a `*stack` with `len 0`, `cap = 0 → ptr = 0`: `free()` sets len 0, `slices.Grow(nil, 0)` stays nil); `Put` hands the object to the pool |
+  `gcWriteBarrier1/3/6` are contract addresses of the extraction that the proved paths never reach (a call would need their contract).
+* **Stack growth and preemption are NOT modelled (disclosure, REDTEAM-arm64 R2).** Every callee prologue's stack check is proved to
+  fall through; `runtime.morestack` is never executed. The theorems therefore cover only calls where, at entry,
+  `SP − g.stackguard0 > 73 568` bytes (arm64 success: `GuardOK s W`, `W ≥ 624 + 72944`; arm64 error: `> 4 800`, `GuardOK s 4800`) and
+  `stackguard0` is not the `stackPreempt` sentinel (no pending preemption request: `GuardOK` is false then). Row 2 (RequiredGas, arm64): `> 464` bytes (`GuardOK s 464`). amd64: error row
+  `> 4 800` (`StackGuardOK s 4800`); success row (staging) `> 616 + stkM` bytes with `stkM` = the closed amd64 `(*Int).exp` window
+  (`≥ 41 800` = amd64 `(*Int).Mod`'s window, i.e. `≥ 42 416` bytes; the exact figure is fixed when the closed exp lands). A
+  goroutine with less free stack (Go grows stacks on demand: a fresh 8 KiB stack, or a 32/64 KiB stack partly used by the EVM
+  interpreter) or with a pending preemption calls morestack in real geth, which copies the stack / preempts and then continues
+  with the same result; that continuation is outside the claim. Lifting this needs a Janus morestack contract (JANUS-ISSUES wish).
+* **Precompile result cache (row 3 scope, REDTEAM-arm64 R3).** geth v1.17.10 attaches a precompile result cache by default
+  (`core/blockchain.go:417-420`; `RunPrecompiledContract` contracts.go:289-301): on a hit for key `NormalizeInput(input)` it returns
+  the stored output without running `Run` (gas is charged before the lookup, hit or miss). `Spec.runPrecompiled` models
+  this cache (`cache` argument, `Spec.cacheKey` = a transcription of `NormalizeInput` + the 8192-byte cap of `precompileCacheKey`),
+  and row 3 holds for every cache meeting `Spec.CacheStoredBy`. Soundness is proved in pure Lean: `FvModexp.CacheKey.cacheKey_sound` /
+  `cacheKey_eq` (`Proofs/Common/CacheKey.lean`): equal keys give equal `LengthsPass` verdicts and equal `compute` outputs, and only
+  `err == nil` results are stored, so a hit returns exactly what row 1 proves `Run` returns for the actual input
+  (`Compose.cacheHit_run`). Remaining assumption: geth's cache only holds what its stores put there (`CacheStoredBy`, §1).
+* **Single-threaded execution**, non-moving heap, the Go ABI, the harness binary (Janus assumptions, SOUNDNESS.md). Concretely, values
+  another goroutine or the GC could change during the call are assumed stable: `runtime.writeBarrier` (any value at entry, but GC
+  phase changes flip it), `math/big.stackPool` (another goroutine's `Put` between our `Get`/`Put`), and g's `stackguard0` (see
+  "Stack growth").
 * Modeled `RunPrecompiledContract` is abstract (row 3); the stretch goal of verifying its machine code is not part of the claimed result.
 
 ## 4. Non-vacuity
 
-Every main theorem has a kernel-checked `Witness.nonvacuous` (concrete returning run satisfying the precondition) which `janus verify` requires.
+Every main theorem has a kernel-checked `Witness.nonvacuous` (concrete returning run satisfying the precondition) which `janus verify`
+requires: row 2 `RequiredGas.Witness.nonvacuous`, row 1 arm64 `RunSucc.Witness.nonvacuous` (`3^5 mod 7` → `[5]`) and
+`Run.Witness.nonvacuous` (header 1025), amd64 `Run.Witness.nonvacuous`; `Run.correctness_total` has
+`TotalWitness.total_nonvacuous`. Optional extra coverage witnesses (`b = m = 0`, `mod = 0`, `base = 1`) are not required.
 
-## Row 1 runtime assumptions: `RunIface.Serves R` and non-vacuity (agent top, DRAFT 2026-11-11)
+## Row 1 budgets and request sizes (derivation of `OkReqs` and `okBudget`)
 
-`Serves R` (lean/FvModexp/Proofs/Arm64/Top/RunIface.lean) says the runtime serves every request of the Run extraction's
-contracts up to: `makeslice` cap ≤ 2^17 elements, `memmove`/`memclrNoHeapPointers` ≤ 2^20 bytes, `growslice` new length
-≤ 2^17; `newobject`, write barriers, `sync.Pool` Get/Put unconstrained (no size argument). An unbounded version is not
-satisfiable by any Janus stub runtime (the stubs serve fixed / ≤ N sizes) and is not what a real runtime does (huge
-requests throw `out of memory`), so it was rejected.
-
-**Request sizes Run can make** (EIP-7823: each operand ≤ 1024 bytes = 128 words; `m` = len(modulus) ≤ 128 words). From the
-go-bigmodexpfix code (to be confirmed by the `R.ok` needs of divmc's/expmc's summaries; this table is the review target):
+**Request sizes Run can make** (EIP-7823: each operand ≤ 1024 bytes = 128 words). From the go-bigmodexpfix code; the proved
+callee summaries' `R.ok` needs stay within `OkReqs`' bounds (otherwise the proofs would not close):
 
 | request | site | worst case |
 |---|---|---|
 | `make([]byte, n)` | `getData` (Run), `LeftPadBytes` (Run), `(*Int).Bytes` | 1024 B (Bytes: `8·len(abs)` ≤ 1032 B) |
 | `nat.make(n)` = `makeslice(Word, n, n+4)` | setBytes (≤ 128), mul/sqr `z.make(len x + len y)` (≤ 256), div `u.make(len+1)`, `q.make(m-n+1)`, Montgomery `zz.make(2m)`, power table 16 × m | ≤ 260 words |
-| `(*stack).nat(n)` → `growslice` of the pooled `[]Word` | karatsuba/karatsubaSqr scratch (≈ 3·n·log n words for n ≤ 256), divRecursive scratch | ≤ ~ 10 000 words (estimate) |
-| `memmove` | getData/LeftPad copies (≤ 1024 B), `nat.set` / `copy` of nats (≤ 260 words ≈ 2 KiB) | ≤ 2 KiB (stack scratch copies ≤ ~80 KiB) |
+| `(*stack).nat(n)` → `growslice` of the pooled `[]Word` | window-4 `stk.reserve(23·len m)`, karatsuba / divRecursive scratch | ≤ ~10 000 words |
+| `memmove` | getData/LeftPad copies (≤ 1024 B), `nat.set` / `copy` of nats (≤ 2 KiB), stack scratch copies | ≤ ~80 KiB |
 | `memclrNoHeapPointers` | `clear(z)` of scratch nats | ≤ ~80 KiB |
 
-The bounds 2^17 elements (1 MiB of words) and 2^20 bytes leave ≥ 10× margin over these estimates.
+`OkReqs`' 2^17 elements / 2^20 bytes leave ≥ 10× margin.
 
-**Operand bound and budgets of the Int-level callee specs (coordinator decision 2026-11-11, `RunIface` both ISAs).**
-`ModSpec`, `ExpSpec`, `BytesSpec` require every operand to have at most `maxW = 128` words (`IntLenLe m a 128`, i.e.
-`len(abs) ≤ 128`): EIP-7823 caps each Run operand at 1024 bytes = 128 words, and Run's length check establishes it before
-any of these calls (`Run`'s own statement is unaffected). Without the bound the specs are unprovable under the bounded
-`Serves R` and a fixed budget (window-4 exponentiation alone reserves `23 · len m` stack words). The budget `B` of each
-spec is a closed bound in the operands' word counts (read at the call; a callee proof may consume less, never more).
-They are functions of the sizes, not constants for 128 words, so that the `correctness_ok` witness (1-word operands) fits
-the Janus toy runtime's heap (budgets up to 2^22):
+<!-- anchor: "Operand bound and budgets" (cited by Spec.RunArm64.okBudget) -->
+**Operand bound and budgets.** The Int-level callee specs (`RunIface` `ModSpec`, `ExpSpec`, `BytesSpec`, both ISAs; proof-internal)
+require every operand to have at most `maxW = 128` words, which Run's length check establishes before any of these calls. Each
+spec's budget is a closed bound in the operands' word counts:
 
 | constant | value | derivation |
 |---|---|---|
-| `opCost w` | `allocCost (1024 w + 1024)` | a request of a callee with operands of at most `w` words is at most `64 w + 64` words (window-4 `stk.reserve(23 · len m)`, Karatsuba / recursive-division scratch of `2 len m`-word products, `nat.make` results), at most doubled by `growslice`: a block of at most `1024 w + 1024` bytes; `blockSize_le_allocCost` |
-| `ModBudget w` | `64 · opCost w` | `z.Mod(z, y)`, `w = max(len z, len y)`: `nat.make` of `u` (len x + 1), `q`, `z`; `getStack`; `(*stack).nat` scratch of `divLarge` / `divRecursiveStep` (w ≤ 128 ≥ divRecursiveThreshold 40: ≤ 4 blocks, depth ≤ 2) — under 64 requests |
-| `ExpBudget w yW` | `(8 · 64 yW + 128) · opCost w` (= `BudQ.ExpBudgetF`; `RunSucc.expBudget_eq … := rfl`) | `z.exp(z, y, m, false)`, `w = max(len z, len y, len m)`, `yW = len y`: ≤ `64 yW` exponent bits; per bit at most one `sqr`, one `mul`, one reduction (`div` or `montgomery`), each with ≤ 2 allocating requests (its `nat.make` result when the capacity is short, `(*stack).nat` scratch): ≤ 8 per bit; setup ≤ 128 (power table 16 entries, `stk.reserve`, `m1 m2 z1 z2` of `expNNEven`, `lsh`, `getStack`). The per-bit allowance lets a loop invariant charge each iteration a constant without tracking capacities. NO SLACK FACTOR (top s40, commit 3e3c02b): the former temporary `2^32 · min w 1` factor is removed on both ISAs (Spec `okBudget` and `RunIface.ExpBudget`); the proved cost envelopes of the `nat` chain fit this formula (`BudQ.budOK` from the owners' per-term targets; numeric mirror scripts/gen/exp-budget-check.py transcribes the factor-free Lean definitions). CHANGE AT `w = 0`: with `min w 1` gone, the all-zero-lengths case (`Run` returns before any `Mod`/`exp` call) now has the exp allowance `128 · opCost 0` in `okBudget` instead of `0` — a slightly looser (larger) budget premise there; it is still a finite closed bound and no proof consumes it |
-| `BytesBudget w` | `allocCost (8 w)` | `x.Bytes()`, `w = len x`: one `make([]byte, 8 w)` |
+| `opCost w` | `blockBound (1024 w + 1024)` | a request of a callee with operands of at most `w` words is at most `64 w + 64` words (window-4 `stk.reserve(23 · len m)`, `2 len m`-word products, `nat.make` results), at most doubled by `growslice` |
+| `ModBudget w` | `64 · opCost w` | `z.Mod(z, y)`: `nat.make` of `u`, `q`, `z`; `getStack`; `divLarge` / `divRecursiveStep` scratch — under 64 requests |
+| `ExpBudget w yW` | `(8 · 64 yW + 128) · opCost w` (= `BudQ.ExpBudgetF`; `RunSucc.expBudget_eq … := rfl`) | ≤ `64 yW` exponent bits; per bit ≤ one `sqr`, one `mul`, one reduction, each ≤ 2 allocating requests: ≤ 8 per bit; setup ≤ 128. No slack factor (the former `2^32` was removed, top s40). At `w = 0` (all lengths 0) `okBudget` keeps the `128 · opCost 0` exp allowance although Run allocates nothing there: a slightly looser premise, still finite |
+| `BytesBudget w` | `blockBound (8 w)` | one `make([]byte, 8 w)` |
 
-For 128-word operands: `opCost 128 ≈ 2.64e5 ≈ 2^18`, `ExpBudget 128 128 = 65664 · opCost 128 ≈ 1.73e10 ≈ 2^34.01` (`RunSucc.expBudget_gate : RunIface.ExpBudget 128 128 ≤ 2^35`, from `BudQ.gate`). For one-word operands the whole success
-budget fits the Janus toy runtime's heap (`≤ 2^22`), so the success witness runs a real exponentiation.
-**RELEASE GATE "TIGHT COSTS" (coordinator decision 2026-11-15)** requires (a) `RunIface.ExpBudget` / Spec `okBudget` ≤ `2^35`
-bytes (32 GiB) over the whole spec range (operands and exponent ≤ 128 words) and (b) success witnesses on BOTH ISAs that run a
-real exponentiation (`3^5 mod 7`) inside the toy runtime's `2^22` budget.
-* **arm64: MET** (top s40, commit 3e3c02b): factor-free `ExpBudget := BudQ.ExpBudgetF`, Spec/RunArm64 `okBudget` without the
-  `2^32 · min w 1` factor, `RunSucc.correctness` without the former budget premise `hbud`, `RunSucc.expBudget_gate`, and the
-  premise-free `RunSucc.Witness.nonvacuous` running `Run` on `3^5 mod 7` (output `[5]`, budget checked by `decide +kernel`).
-  Janus row verification of `Top_RunSucc` (arm64): see docs/COVERAGE.md.
-* **amd64: PENDING** — the statement side is done (Spec/RunAmd64 `okBudget` and amd64 `RunIface.ExpBudget` factor-free,
-  same commit), but the amd64 `RunSucc` success witness (`3^5 mod 7`) waits for the amd64 `Mod`/`exp` providers (IMod/IExp);
-  until it exists the gate is not met on amd64 and amd64 success-row timings are PROVISIONAL.
-* The `w = 0` change (all three lengths `0`): `okBudget` now includes `128 · opCost 0` for `exp` where the factor made it `0`;
-  the bound is slightly looser there (the code allocates nothing for `Mod`/`exp` on that path).
-If a callee proof finds a request count above an allowance it reports it here and the constant is raised (never the proof
-weakened). Request sizes stay as in the table above.
-
-**Non-vacuity plan (coordinator requirement, open):**
-1. `correctness` (full row-1 statement) — `Witness.nonvacuous` runs the EIP-7823 error path (no `Serves` needed there).
-2. `correctness_ok` (same statement restricted to `LengthsPass data`, `Serves R` in its precondition) — `Witness.correctness_ok`
-   runs a small success input (base 3, exp 5, mod 7 → `0x05`) to the return. Its runtime must satisfy the bounded `Serves R`:
-   this needs witness stubs that serve EVERY size up to the bound (a looping `memmove`/`memclr`, a general `growslice`,
-   bump `makeslice` for any cap ≤ 2^17, `Pool.Get` returning nil, `Pool.Put` dropping), proved against the live contracts —
-   Janus' stub library only has fixed-size / ≤N-size copies. Work item for top (or infra), tracked in NOTES-top.md.
-3. Satisfiability of `Serves R` for the worst case (requirement (a)) follows from 2's stubs: they serve every request up to the
-   bounds, sized with a heap ≥ the Run budget.
+`okBudget` (§1b) adds Run's own requests to `ModBudget` / `ExpBudget` / `BytesBudget` at `w` = the largest operand. TIGHT COSTS
+(coordinator 2026-11-15): (a) `okBudget ≤ 2^35` over the whole spec range — arm64 and amd64 `RunGate.okBudget_gate` (value at the
+corner 17 366 406 472 ≈ 2^34.02); (b) a success witness running a real exponentiation inside the toy `2^22` heap — arm64 MET
+(`RunSucc.Witness.nonvacuous`, `decide +kernel` budget), amd64 PENDING (staging `RunSucc`).
 
 ## 5. Tactic-definition files (`scripts/tactic-whitelist.txt`)
 

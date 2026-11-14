@@ -1,5 +1,5 @@
 import FvModexp.Proofs.Amd64.NatQ.DrsCE
-import FvModexp.Proofs.Amd64.NatQ.DrsB4D
+import FvModexp.Proofs.Amd64.NatQ.DrsSegD
 import FvModexp.Proofs.Amd64.NatQ.DrsNorm3
 
 set_option autoImplicit false
@@ -20,21 +20,6 @@ set_option linter.janusRenameI false
 namespace FvModexp.Amd64.Q.DivRec
 
 open FvModexp.Amd64.Q.DivLarge (DrsPreW DrsPostW)
-
-/-- `nat.cmp`'s entry (`0x5e5cc0`) -/
-abbrev cmpA : Nat := 6184128
-
-/-- the return address of the loop's `nat.cmp` -/
-abbrev rC1 : Nat := 0x5efdf9
-
-/-- `uu`'s pointer / length / capacity in iteration `j` -/
-@[reducible] def Cx.uuP (c : Cx) (j : Nat) : Nat := c.up + 8 * (j - c.vl / 2)
-@[reducible] def Cx.uuL (c : Cx) (j : Nat) : Nat := c.u1 - (j - c.vl / 2)
-@[reducible] def Cx.uuC (c : Cx) (j : Nat) : Nat := c.uc - (j - c.vl / 2)
-
-theorem toIntC {a : Nat} (h : a < 2 ^ 63) : (BitVec.ofNat 64 a).toInt = (a : Int) := by
-  rw [BitVec.toInt_eq_toNat_of_lt (by rw [BitVec.toNat_ofNat, Nat.mod_eq_of_lt (by omega)]; omega),
-    BitVec.toNat_ofNat, Nat.mod_eq_of_lt (by omega)]
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in

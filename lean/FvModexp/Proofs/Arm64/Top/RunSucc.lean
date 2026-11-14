@@ -1,6 +1,8 @@
 import FvModexp.Proofs.Arm64.Top.RunOkRowC
 import FvModexp.Proofs.Arm64.Int.ModRowW
 import FvModexp.Proofs.Arm64.Top.RunSuccW2
+import FvModexp.Spec.WitSitesArm64
+import FvModexp.Proofs.Arm64.Top.RunGate
 
 set_option autoImplicit false
 
@@ -26,6 +28,10 @@ open FvModexp FvModexp.Spec EthLib.Execution.Evm.Precompiles.Modexp
 
 namespace FvModexp.Arm64.RunSucc
 
+/-- the Spec copies (Spec/Pool, Spec/WitSitesArm64) are the proof-side defs -/
+theorem stkShape_eq : StkShape = StkSh := rfl
+theorem stkT_eq : WitSitesArm64.stkT = Free.stkT := rfl
+
 /-- the release gate (BRIEF "TIGHT COSTS"): `ExpBudget` = the factor-free `BudQ.ExpBudgetF` (definitionally), so the
 largest `(*Int).exp` budget of the spec range (128-word operands, 128-word exponent) is at most `2^35` bytes (32 GiB) -/
 theorem expBudget_eq (w yW : Nat) : RunIface.ExpBudget w yW = BudQ.ExpBudgetF w yW := rfl
@@ -45,13 +51,13 @@ theorem correctness (impl : List Segment) (hap : ImplApart Extracted.program imp
     (hwb : WbLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 4096 R 2)
     (S : PoolShape)
     (hget : PoolGetLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "sync.(*Pool).Get") 4096 R
-      Free.stkT S)
+      WitSitesArm64.stkT S)
     (hput : PoolPutLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "sync.(*Pool).Put") 4096 R
-      Free.stkT S)
+      WitSitesArm64.stkT S)
     (hwb4 : WbLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier4") 4096 R 4)
     (W : Nat) (hW : 624 + 72944 ≤ W) (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64) :
     Ensures (Extracted.program.link impl) (segAddr Extracted.program RunArm64.fn) [c, p, len, cp]
-      (fun s => S = StkSh ∧ RunArm64.EnvW R L s W ∧ RunArm64.Input R L c p len cp s ∧ OsakaReceiver s.mem c.toNat ∧
+      (fun s => S = StkShape ∧ RunArm64.EnvW R L s W ∧ RunArm64.Input R L c p len cp s ∧ OsakaReceiver s.mem c.toNat ∧
         R.inv b L (s.regs 28).toNat (view R.rt L s.mem) ∧ RunArm64.OkReqs R ∧
         RunArm64.Globals R s.mem (RunArm64.windowW s W) ∧ RunArm64.NatOne R s.mem (RunArm64.windowW s W) ∧
         RunArm64.StackPool R s.mem (RunArm64.windowW s W) ∧
@@ -73,7 +79,8 @@ namespace FvModexp.Arm64.RunSucc.Witness
 
 open FvModexp.Arm64.Run.Witness (implAt hap R tys0 ok hret ret)
 open FvModexp.Arm64.Run.WitnessOk (s2 c2 p2 WW bW setup2 pre2 sMkz site_mkz sMz site_mz compute2)
-open FvModexp.Arm64.AsmWit (callS callS5 callP OA OB mkSite mvSite noSite grSite clSite wbSite getSite putSite)
+open FvModexp.Arm64.AsmWit (callS callS5 callP OA OB)
+open FvModexp.Spec.WitSitesArm64 (stkT mkSite mvSite noSite grSite clSite wbSite getSite putSite)
 
 set_option maxRecDepth 100000
 /-- Every hypothesis of `correctness` (the eleven runtime contracts, the window) and every conjunct of its
@@ -92,14 +99,14 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R ∧
     WbLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 4096 R 2 ∧
     PoolGetLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "sync.(*Pool).Get") 4096 R
-      Free.stkT StkSh ∧
+      stkT StkShape ∧
     PoolPutLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "sync.(*Pool).Put") 4096 R
-      Free.stkT StkSh ∧
+      stkT StkShape ∧
     WbLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier4") 4096 R 4 ∧
     624 + 72944 ≤ W ∧
     RetAddr (Extracted.program.link impl) ret ∧
     CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program RunArm64.fn) [c, p, len, cp] s ∧
-    StkSh = StkSh ∧ RunArm64.EnvW R L s W ∧ RunArm64.Input R L c p len cp s ∧ OsakaReceiver s.mem c.toNat ∧
+    StkShape = StkShape ∧ RunArm64.EnvW R L s W ∧ RunArm64.Input R L c p len cp s ∧ OsakaReceiver s.mem c.toNat ∧
     R.inv b L (s.regs 28).toNat (view R.rt L s.mem) ∧ RunArm64.OkReqs R ∧
     RunArm64.Globals R s.mem (RunArm64.windowW s W) ∧ RunArm64.NatOne R s.mem (RunArm64.windowW s W) ∧
     RunArm64.StackPool R s.mem (RunArm64.windowW s W) ∧

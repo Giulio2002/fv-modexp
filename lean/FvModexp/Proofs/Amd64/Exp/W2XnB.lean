@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.W2XnR
+import FvModexp.Proofs.Amd64.Exp.W2Seg
 import FvModexp.Proofs.Amd64.Exp.W2Defs
 
 set_option autoImplicit false
@@ -144,6 +145,7 @@ theorem xnB (impl : List Amd64.Segment) {R : RtInv}
   have q3c0 := rk _ _ (by omega) r3c0
   have q3d0 := rk _ _ (by omega) r3d0
   have q3d8 := rk _ _ (by omega) r3d8
+  refine SegProg.lift W2Seg.codeIn (r := BitVec.ofNat 64 xJ) ?_
   janus64_run [q1a0, qc8, q3b0, q3c0, q3d0, q3d8] until [xJ]
   have hw0 : MemFrame S.mem ((S.mem.writeLE (sp + 200) 8 n).writeLE (sp + 424) 8 rr) (R.rt ++ xbW sp rr n) := by
     refine MemFrame.writeLE ?_ _ (r := (sp + 0x1a8, sp + 0x1b0)) (by simp) (by simp only; omega) (by simp only; omega)

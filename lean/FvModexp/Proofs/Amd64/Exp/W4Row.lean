@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.W4Wit
+import FvModexp.Proofs.Amd64.Exp.W4RowPre
 import FvModexp.Proofs.Amd64.Exp.DivInst
 import FvModexp.Proofs.Amd64.Nat.RowLink
 import FvModexp.Proofs.Amd64.Witness.Sites
@@ -15,8 +16,9 @@ set_option autoImplicit false
 `DivInst.divL_of_Q`: program `Q.NatDiv.names`, stack `41512`, cost `DivInst.divC`) moved to `Extracted.program.link impl`
 (`Ensures.full64`). Runtime premises: the live `memclrNoHeapPointers`, `memmove`, `makeslice`, `growslice`,
 `gcWriteBarrier2` contracts and the zero-length `memmove` contract (`MemmoveZeroLive64`). `y`, `m` (with `len m`,
-`cap m`) are the stack arguments at `RSP + 8 …` (`PreD`'s `EPreA`). `costD` bounds `nat.div`'s cost at the levels the
-window calls it on (`PreD`'s `XnB`); `PostD` charges it.
+`cap m`) are the stack arguments at `RSP + 8 …` (`ExpW4.PreR`: `PreD` with the stack-argument reads written
+as `readLE ((RSP).toNat + k)`, the form Janus's `[RSP]`-word audit accepts;
+`preD_of_preR`). `costD` bounds `nat.div`'s cost at the levels the window calls it on (`PreD`'s `XnB`); `PostD` charges it.
 `Witness.nonvacuous`: the window-4 witness state (`ExpW4.Witness.s0`: `z = nil`, `3^5 mod 7`, a 64 KiB stack region,
 window depth `K = 41512`), `costD = CD`, the shared witness runtime, one call-site state per contract.
 -/
@@ -25,7 +27,7 @@ open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Spec Janus.Con
 
 namespace FvModexp.Amd64.W4Row
 
-/-- **window-4** (amd64): `z.expNNOddMontgomeryWindowSize4(stk, x, y, m)` returns `x^y mod m` (`ExpW4.PreD`/`PostD`:
+/-- **window-4** (amd64): `z.expNNOddMontgomeryWindowSize4(stk, x, y, m)` returns `x^y mod m` (`ExpW4.PreR`/`PostD`:
 odd `m`, `len x ≤ len m`, the Montgomery window loop over every word of `y`) for every runtime meeting the live
 allocation / copy / clear / write-barrier contracts; window depth `K ≥ 41512` (`nat.div`'s). -/
 theorem correctness (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
@@ -44,12 +46,13 @@ theorem correctness (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted
     Ensures (Extracted.program.link impl) (segAddr Extracted.program W4Loop.fn)
       [BitVec.ofNat 64 zp, BitVec.ofNat 64 zl, BitVec.ofNat 64 zc, BitVec.ofNat 64 st, BitVec.ofNat 64 xp,
         BitVec.ofNat 64 xl, BitVec.ofNat 64 xc]
-      (ExpW4.PreD R b L K DivInst.divC costD zp zc st xp xl xc yp ylen mp n mc)
+      (ExpW4.PreR R b L K DivInst.divC costD zp zc st xp xl xc yp ylen mp n mc)
       (ExpW4.PostD R b L K costD zp zc st xp xl yp ylen mp n) :=
-  Ensures.full64 hap (by simp [numIntRegs])
+  Ensures.mono (Ensures.full64 hap (by simp [numIntRegs])
     (ExpW4.ens impl hap R hclr hmv hmk hgr hwb Q.NatDiv.names 41512 DivInst.divC
       (DivInst.hyp impl hap R hgr hclr hwb hmk hmv hmz) DivInst.ns_sub DivInst.ns_w4 b L K hK
-      costD zp zl zc st xp xl xc yp ylen mp n mc)
+      costD zp zl zc st xp xl xc yp ylen mp n mc))
+    (fun _ h => ExpW4.preD_of_preR h) (fun _ _ _ h => h)
 
 end FvModexp.Amd64.W4Row
 
@@ -89,7 +92,7 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : 
     CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program W4Loop.fn)
       [BitVec.ofNat 64 zp, BitVec.ofNat 64 zl, BitVec.ofNat 64 zc, BitVec.ofNat 64 st, BitVec.ofNat 64 xp,
         BitVec.ofNat 64 xl, BitVec.ofNat 64 xc] s ∧
-    ExpW4.PreD R b L K DivInst.divC costD zp zc st xp xl xc yp ylen mp n mc s ∧
+    ExpW4.PreR R b L K DivInst.divC costD zp zc st xp xl xc yp ylen mp n mc s ∧
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.rip = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") ∧
       clSite R (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") L b s_c) ∧
@@ -118,7 +121,7 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : 
     by rw [WStubs.addr_mk]; exact WStubs.mk [] hty _,
     by rw [WStubs.addr_gr]; exact WStubs.gr [] hty _,
     by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] hty _, Nat.le_refl _, hret, setup,
-    pre DivInst.divC divc,
+    ExpW4.preR_of_preD (pre DivInst.divC divc),
     ⟨[], 0x1000, callS WStubs.clA OA 8 0, by rw [WStubs.addr_cl]; rfl, by rw [WStubs.addr_cl]; exact site_cl _⟩,
     ⟨[], 0x1000, callS WStubs.mvA OA OB 8, by rw [WStubs.addr_mv]; rfl, by rw [WStubs.addr_mv]; exact site_mv _⟩,
     ⟨[], 0x1000, callS WStubs.mvA OA OB 0, by rw [WStubs.addr_mv]; rfl, by rw [WStubs.addr_mv]; exact DivRowQ.Witness.site_mvz _⟩,
@@ -132,6 +135,6 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : 
       (by rw [WStubs.addr_mk]; exact WStubs.mk [] hty _)
       (by rw [WStubs.addr_gr]; exact WStubs.gr [] hty _)
       (by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] hty _) BW [] KW (Nat.le_refl _)
-      CD 0 0 0 ST XP 1 1 YP 1 MP 1 1 RET hret s0 setup (pre DivInst.divC divc)⟩
+      CD 0 0 0 ST XP 1 1 YP 1 MP 1 1 RET hret s0 setup (ExpW4.preR_of_preD (pre DivInst.divC divc))⟩
 
 end FvModexp.Amd64.W4Row.Witness

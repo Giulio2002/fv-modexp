@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Amd64.NatQ.DrsC4R
+import FvModexp.Proofs.Amd64.NatQ.DrsSegD
 import FvModexp.Proofs.Amd64.Nat.AsmCallees
 
 set_option autoImplicit false
@@ -21,60 +21,6 @@ namespace FvModexp.Amd64.Q.DivRec
 
 open FvModexp.Amd64.Q.DivLarge (DrsPreW DrsPostW)
 open FvModexp.Amd64.Callees (VVLPre SubVVLQ SubVVHyp subVVHyp)
-
-/-- the model after `qhatv[:s] -= v[:s]` -/
-@[reducible] def stV (V : List Nat) (s0 : Nat) (st : Mdl.St) : Mdl.St :=
-  { st with buf := (Mdl.subVV (st.buf.take s0) (V.take s0)).1 ++ st.buf.drop s0 }
-
-/-- the pc after the re-entry sequence of the `subVV.abi0` call -/
-abbrev rV2 : Nat := 0x5efea1
-
-/-- `subVV.abi0` in `LibDrs` with the runtime invariant carried over -/
-theorem svvD (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv) (b : Nat)
-    (L : List (Nat × Nat)) :
-    Summary0 (LibDrs.program.link impl) subVVA (VVLPre R b L) (SubVVLQ R b L) := by
-  have c : CodeIn64 ((Extracted.program.onlySegments [Callees.subVVfn]).link impl) (LibDrs.program.link impl) := by
-    rw [LibDrs.eq_only]; exact A64.codeIn_restrict_mono64 hap (Callees.sub_of_all (by decide))
-  exact SubVVHyp.live (Summary.of_codeIn64 c (subVVHyp impl hap)) R b L
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 8000000 in
-/-- `Mc` across the argument stores (`isA`) -/
-theorem Mc.ownA {R : RtInv} {c : Cx} {s : State} {Lk : List (Nat × Nat)} {bk : Nat} {M M' : Memory} {j : Nat}
-    {Z U : List Nat} {qv : Nat} {st : Mdl.St} (h : Mc R c s Lk bk M j Z U qv st) (hF3 : MemFrame M M' (isA s))
-    (hreg : M'.regions = M.regions) : Mc R c s Lk bk M' j Z U qv st := by
-  have hcr := h.cr
-  have hpre := hcr.pre
-  obtain ⟨-, ⟨hb', -, -⟩, -⟩ := hpre.ce
-  simp only [regSP] at hb'
-  obtain ⟨-, -, -, hqw, -⟩ := hpre.qa
-  obtain ⟨-, -, -, huw, -⟩ := hpre.ua
-  obtain ⟨-, -, -, hvw, -, -, -⟩ := hpre.va
-  have hWg := drsW64_ge c.vl; have hW := hcr.hW; have hu1 := hcr.u1ul
-  have hF : MemFrame M M' (fw s) := hF3.mono fun x n ho => by
-    simp only [fw, win, isA, outside_cons, outside_nil, and_true] at ho ⊢; omega
-  have rd : ∀ x n, Outside x n (win s c.W 96) → M'.readLE x n = M.readLE x n := fun x n ho =>
-    hF3.readLE _ _ (by simp only [win, isA, outside_cons, outside_nil, and_true] at ho ⊢; omega)
-  have ht0 := hcr.t0w
-  have hrw := h.rg.w
-  have rt : ∀ x n, c.t0 ≤ x → x + n ≤ c.t0 + 8 * (c.vl / 2 + 1) → M'.readLE x n = M.readLE x n :=
-    fun x n h1 h2 => rd _ _ (ht0.of_sub h1 h2)
-  have ru : ∀ x n, c.up ≤ x → x + n ≤ c.up + 8 * c.ul → M'.readLE x n = M.readLE x n :=
-    fun x n h1 h2 => rd _ _ (huw.of_sub h1 h2)
-  have hjm : j ≤ c.u1 - c.vl := by have := h.li.2.2.2.2.2.2.2; omega
-  have hql : (c.q0 s j U).length ≤ c.vl / 2 + 1 := q0_len
-  refine ⟨hcr, Ev.own hcr h.ev hF hreg, Fp.own hcr h.fp hF,
-    h.bd.frame hF3 (by simp only [FixOut, isA, outside_cons, outside_nil, and_true]; omega)
-      (by simp only [IOut, isA, outside_cons, outside_nil, and_true]; omega) (rd _ _ hvw)
-      (rd _ _ (huw.of_sub (by omega) (by omega))) (rd _ _ hqw),
-    h.bs.frame hF3 (by simp only [BOut, isA, outside_cons, outside_nil, and_true]; omega), h.jB, h.li,
-    ⟨by rw [hF3.readLE _ _ (by simp only [isA, outside_cons, outside_nil, and_true]; omega)]; exact h.q3.s208,
-      by rw [hF3.readLE _ _ (by simp only [isA, outside_cons, outside_nil, and_true]; omega)]; exact h.q3.s256⟩,
-    h.rg, by rw [limbs_congr (rt _ _ (Nat.le_refl _) (by omega))]; exact h.qk,
-    by rw [limbs_congr (rd _ _ hrw)]; exact h.bf,
-    by rw [limbs_congr (ru _ _ (by omega) (by omega))]; exact h.wk,
-    by rw [limbs_congr (ru _ _ (Nat.le_refl _) (by omega))]; exact h.lk, bud_cap (Cr.capOwn hcr hF) h.bud,
-    by rw [hF3.accessible]; exact h.qa, h.qloc, h.qal, FL.own hcr h.fl rd⟩
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in

@@ -48,7 +48,7 @@ theorem okReach (impl : List Amd64.Segment) (hap : ImplApart Extracted.program i
     (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
     (hmz : MemmoveZeroLive64 (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
     (hno : NewobjectLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.newobject") 4096 R)
-    (stkM aboveM : Nat) (hM : RunIface.ModSpecM impl R stkM aboveM) (hE : RunIface.ExpSpec impl R stkM aboveM)
+    (stkM aboveM : Nat) (hM : RunIface.ModSpecA impl R stkM aboveM) (hE : RunIface.ExpSpecA impl R stkM aboveM)
     (hBy : RunIface.BytesSpec impl R stkM aboveM) (hsv : RunIface.Serves R)
     (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64) (ret : Nat)
     (hret : RetAddr (LibRun.program.link impl) ret) (s : State)
@@ -60,7 +60,7 @@ theorem okReach (impl : List Amd64.Segment) (hap : ImplApart Extracted.program i
     (hglob : RunIface.Globals R s.mem (win s W 40)) (hgL : ApartAll ((s.regs 14).toNat + 16) 8 L)
     (hfL : ApartAll (s.fsBase.toNat - 8) 8 L)
     (hbB : okB s p len ≤ b) (hone : FvModexp.Spec.RunAmd64.NatOne R s.mem (win s W 40))
-    (hpool : FvModexp.Spec.RunAmd64.StackPool R s.mem (win s W 40))
+    (hpool : FvModexp.Spec.RunAmd64.StackPool R s.mem (win s W 40)) (hca : FvModexp.Spec.RunAmd64.CpuOne s.mem)
     (hpass : hdrV s p len 0 ≤ 1024 ∧ hdrV s p len 1 ≤ 1024 ∧ hdrV s p len 2 ≤ 1024)
     (Q : Janus.Amd64.Outcome → Prop)
     (hOk : ∀ S' : State, ABIReturn s S' → OkRet S' (resV s p len) (hdrV s p len 2) →
@@ -107,8 +107,8 @@ theorem okReach (impl : List Amd64.Segment) (hap : ImplApart Extracted.program i
         U Lk' bk' vp vn buf hj hpcU
   by_cases hv0 : opV s p len 0 = 1
   · exact c2m impl hap R stkM aboveM hM hBy hsv' b L c p len cp ret hret s hx0 hdf0 Q W henvW hW hW1 hab ha8 hglob
-      hgL hfL hbB hpool L4 b4 T hrelT hTpc hv0 hV hkV
+      hgL hfL hbB hpool hca L4 b4 T hrelT hTpc hv0 hV hkV
   · exact c2e impl hap R stkM aboveM hE hBy hsv' b L c p len cp ret hret s hx0 hdf0 Q W henvW hW hW1 hab ha8 hglob
-      hgL hfL hbB hone hpool L4 b4 T hrelT hTpc hv0 hV hkV
+      hgL hfL hbB hone hpool hca L4 b4 T hrelT hTpc hv0 hV hkV
 
 end FvModexp.Amd64.Run

@@ -29,7 +29,7 @@ theorem rnd2 (n : Nat) : 2 * n ≤ StackNat.rnd (2 * n) := by simp only [StackNa
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem sn1Step {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
+theorem sn1Step (hRR : FvModexp.Amd64.W4Pro.RRSpec) {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
     (hclr : MemclrNoHeapPointersLive64 (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
@@ -93,7 +93,7 @@ theorem sn1Step {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.pro
     q_live hsok2 hcap2 (Nat.le_add_right _ _) (by omega) (by rw [Nat.add_sub_cancel_left]; exact Nat.mul_mod_right _ _)
   have hlenE : stLen S2.mem st = l0 + StackNat.rnd (2 * n) := hlen2
   have h2r : l0 + StackNat.rnd (2 * n) + StackNat.rnd (2 * n) = l0 + 2 * StackNat.rnd (2 * n) := by omega
-  refine ReachesRet.mono (lshStep hap hclr hmv hmk hwt hro hSN hserv hDiv hnsD hnsW hLsh hnsL hnsWL hKD hKL hC3 hrL
+  refine ReachesRet.mono (lshStep hRR hap hclr hmv hmk hwt hro hSN hserv hDiv hnsD hnsW hLsh hnsL hnsWL hKD hKL hC3 hrL
     (in_stUp huw2.symm hin.1 hin.2).symm (in_stUp hug2.symm hin.1 hin.2).symm (in_stUp huf2.symm hin.1 hin.2).symm
     (in_stUp hsu2 hin.1 hin.2).symm (Or.inl ⟨Nat.le_refl _, by rw [hlenE]; omega⟩)
     ((hk.2.2.2.2.1 0xd8 (by decide)).trans rd8) ((hk.2.2.2.2.1 0x78 (by decide)).trans r78)

@@ -1,3 +1,5 @@
+import FvModexp.Proofs.Amd64.Exp.W2Posts
+import FvModexp.Proofs.Amd64.Exp.W2Seg
 import FvModexp.Proofs.Amd64.Exp.W2ExB
 import FvModexp.Proofs.Amd64.Exp.DeferX
 import FvModexp.Proofs.Common.ExpNorm
@@ -18,30 +20,6 @@ open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Contracts FvMo
 
 namespace FvModexp.Amd64.W2Loop
 
-/-- after the norm loop: `CMPQ SI, R8` -/
-abbrev tailPc : Nat := fnE + 0x114f
-
-def fnD : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.nat.expNNOddMontgomeryWindowSize2.deferwrap1"
-
-theorem dE_eq : segAddr LibW.program fnD = 6215328 := by decide
-
-/-- the static facts of the end (memory `M` at the join point; `bp` the caller's frame pointer, `r` the return
-address) -/
-@[reducible] def FinEnv (sp st n0 bp r : Nat) (M : Memory) : Prop :=
-  sp % 8 = 0 ∧ 4296 ≤ sp ∧ sp + 0x2a8 ≤ 2 ^ 48 ∧ M.accessible (sp - 4296) (4296 + 0x2a8) true = true ∧
-    M.readLE (sp + 0x260) 8 = sp + 0x228 ∧ M.readLE (sp + 0x228) 8 = 6215328 ∧
-    M.readLE (sp + 0x230) 8 = st ∧ M.readLE (sp + 0x238) 8 = n0 ∧
-    st + 24 ≤ 2 ^ 48 ∧ M.accessible st 24 true = true ∧ n0 ≤ M.readLE (st + 16) 8 ∧
-    Apart st 24 (sp - 4296) (4296 + 0x2a8) ∧ M.readLE (sp + 0x268) 8 = bp ∧ M.readLE (sp + 0x270) 8 = r ∧ r < 2 ^ 47
-
-/-- what the end guarantees (memory relative to the memory `M` at the join point) -/
-@[reducible] def FinPost (sp g fs st n0 bp p l c : Nat) (M : Memory) (s' : State) : Prop :=
-  s'.regs 4 = BitVec.ofNat 64 (sp + 0x278) ∧ s'.regs 5 = BitVec.ofNat 64 bp ∧ s'.regs 14 = BitVec.ofNat 64 g ∧
-    s'.fsBase.toNat = fs ∧ s'.xmm 15 = 0 ∧ s'.df = false ∧
-    s'.regs 0 = BitVec.ofNat 64 p ∧ s'.regs 3 = BitVec.ofNat 64 l ∧ s'.regs 1 = BitVec.ofNat 64 c ∧
-    s'.mem.readLE (st + 8) 8 = n0 ∧
-    MemFrame M s'.mem [(sp - 16, sp), (sp + 0x77, sp + 0x78), (sp + 0x178, sp + 0x190), (st + 8, st + 16)]
-
 theorem dPre {s : State} {sp st n0 : Nat} (h4 : s.regs 4 = BitVec.ofNat 64 (sp - 8))
     (h2 : s.regs 2 = BitVec.ofNat 64 (sp + 0x228)) (hs1 : 4296 ≤ sp) (hs2 : sp + 0x2a8 ≤ 2 ^ 48)
     (hal : sp % 8 = 0) (hacc : s.mem.accessible (sp - 4296) (4296 + 0x2a8) true = true)
@@ -57,9 +35,6 @@ theorem dPre {s : State} {sp st n0 : Nat} (h4 : s.regs 4 = BitVec.ofNat 64 (sp -
   refine ⟨⟨by omega, by omega, s.mem.accessible_sub hacc (Or.inr rfl) (by omega) (by omega)⟩, by omega, by omega,
     by omega, s.mem.accessible_sub hacc (Or.inl rfl) (by omega) (by omega), by omega,
     hsta, hn0, by omega, by omega⟩
-
-/-- the stack ranges written by the end before the defer call -/
-@[reducible] def ftw (sp : Nat) : List (Nat × Nat) := [(sp - 16, sp), (sp + 0x77, sp + 0x78), (sp + 0x178, sp + 0x190)]
 
 theorem ftw_wr {M M' : Memory} {sp a k : Nat} (h : MemFrame M M' (ftw sp)) (v : Nat)
     (hw : (sp - 16 ≤ a ∧ a + k ≤ sp) ∨ (sp + 0x77 ≤ a ∧ a + k ≤ sp + 0x78) ∨
@@ -112,6 +87,7 @@ theorem atD {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program
   have e4' : s'.regs 4 = BitVec.ofNat 64 sp := by rw [e4, h4]; exact sp_add8 (by omega) (by omega)
   have hacc' : s'.mem.accessible (sp - 4296) (4296 + 0x2a8) true = true := by rw [hf.accessible]; exact hacc
   clear e4 rd hr
+  refine SegProg.liftRet W2Seg.codeIn ?_
   janus64_run [q170, q178, q180, q380, q388, Nat.mod_eq_of_lt (show r < 2 ^ 64 by omega)]
   refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]
@@ -203,6 +179,7 @@ theorem tail {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progra
   have u := hstw; unfold Apart at u
   have hlt : ¬ (c < l) := by omega
   rw [show tailPc = 6214991 by simp only [tailPc, fnE_eq]] at hpc
+  refine SegProg.lift W2Seg.codeIn (r := BitVec.ofNat 64 6215328) ?_
   janus64_run [r378, r340, hlt] until [6215328]
   refine atD hap _ sp g fs st n0 bp r p l c _ rfl ?_ ?_ ?_ hfs hx15 rfl hs1 hs2 hal ?_ ?_ ?_ ?_ hst1 ?_ ?_ hstw
     ?_ ?_ ?_ ?_ ?_ ?_ ?_

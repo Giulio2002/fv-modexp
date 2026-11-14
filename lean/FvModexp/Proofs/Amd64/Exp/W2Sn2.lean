@@ -81,7 +81,7 @@ theorem bud2 {x y b b2 : Nat} (h : x + y ≤ b) (h2 : b - x ≤ b2) : y ≤ b2 :
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem sn2Step {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
+theorem sn2Step (hRR : FvModexp.Amd64.W2Pro.RRSpec) {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
     (hclr : MemclrNoHeapPointersLive64 (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
@@ -179,7 +179,7 @@ theorem sn2Step {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.pro
     fun j a c => slot_sn hS hrt hK4 hK8 hstw huw1 j a c
   have hlenM : stLen S2.mem st = stLen M st + StackNat.rnd (2 * n) := by rw [hlen2, el]
   rw [el] at hb2
-  refine ReachesRet.mono (divStep hap hclr hmv hmk hwt hro hSN hserv hDiv hnsD hnsW hKD hC2 hZ2 hzzK hzl hzv2
+  refine ReachesRet.mono (divStep hRR hap hclr hmv hmk hwt hro hSN hserv hDiv hnsD hnsW hKD hC2 hZ2 hzzK hzl hzv2
     (norm_of_pow hzv2) hzzr hqin hqL hqr0.symm hrL2 hrW hrG hrF hrS hrB2
     ((sl 0x198 (by decide) (by decide)).trans ((sn2_slot hF 0x198 (Or.inr (Nat.le_refl _))).trans r190))
     ((sl 0xa8 (by decide) (by decide)).trans ((sn2_slot hF 0xa8 (Or.inl ⟨Nat.le_refl _, by decide⟩)).trans ra8))

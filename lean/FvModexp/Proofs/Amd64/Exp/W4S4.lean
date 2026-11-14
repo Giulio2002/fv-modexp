@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.W4S1
+import FvModexp.Proofs.Amd64.Exp.W4Seg
 
 set_option autoImplicit false
 
@@ -50,6 +51,7 @@ theorem seg4 {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progra
   have hacc : S.mem.accessible (sp - 4296) (4296 + 0x3c0) true = true := by
     rw [hM.1.1.accessible]; exact he.2.2.2.1
   obtain ⟨q3a8, q3b0, q3b8, qd8, -, -⟩ := Static.rd hst hM.1 hB.1 hB.2.1
+  refine SegProg.lift W4Seg.codeIn (r := BitVec.ofNat 64 6184288) ?_
   janus64_run [q3a8, q3b0, q3b8, qd8, rP, r140, rC] until [6184288]
   have hra : RetAddr ((Extracted.program.onlySegments LibMont.names).link impl) (6205536 + 0xf29) :=
     ra_of hap mont_not 0xf29 (by decide)

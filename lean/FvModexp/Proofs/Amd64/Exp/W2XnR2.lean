@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.W2XnR
+import FvModexp.Proofs.Amd64.Exp.W2Seg
 
 set_option autoImplicit false
 
@@ -40,6 +41,7 @@ theorem xnA2 {impl : List Amd64.Segment} {ret : W64} {Q : State → Prop}
       ReachesRet (LibW.program.link impl) ret S' Q) :
     ReachesRet (LibW.program.link impl) ret S Q := by
   subst hmem
+  refine SegProg.lift W2Seg.codeIn (r := BitVec.ofNat 64 6217504) ?_
   janus64_run [r3d8, r3b0, r3a8, r3b8, r3e0, r3e8, r3f0, r370, r140, r138] until [6217504]
   refine KD _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
   · rfl

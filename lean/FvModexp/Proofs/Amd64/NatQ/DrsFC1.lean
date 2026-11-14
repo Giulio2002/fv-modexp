@@ -1,5 +1,5 @@
 import FvModexp.Proofs.Amd64.NatQ.DrsFCE
-import FvModexp.Proofs.Amd64.NatQ.DrsC1
+import FvModexp.Proofs.Amd64.NatQ.DrsSegD
 import FvModexp.Proofs.Amd64.NatQ.DrsNormF
 
 set_option autoImplicit false
@@ -20,9 +20,6 @@ set_option linter.janusRenameI false
 namespace FvModexp.Amd64.Q.DivRec
 
 open FvModexp.Amd64.Q.DivLarge (DrsPreW DrsPostW)
-
-/-- the return address of the final loop's `nat.cmp` -/
-abbrev rFC1 : Nat := 0x5f03bc
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in

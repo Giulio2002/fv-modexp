@@ -1,5 +1,5 @@
-import FvModexp.Proofs.Amd64.Exp.W4PowAll
-import FvModexp.Proofs.Amd64.Exp.W4Mid2
+import FvModexp.Proofs.Amd64.Exp.W4Posts2
+import FvModexp.Proofs.Amd64.Exp.W4PSpec
 
 set_option autoImplicit false
 
@@ -18,22 +18,6 @@ open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Contracts FvMo
 namespace FvModexp.Amd64.W4Pro
 
 open FvModexp.Amd64.W4Loop (Env Inp Buf Bufs InpC Inp.c OneIn FinEnv)
-
-/-- `Pre4` without the table and `k0` (the facts at `p01`) -/
-@[reducible] def PreT (R : RtInv) (L : List (Nat × Nat)) (sp n mp mc yp ylen Y yi Mv onep st n0 fbp r : Nat)
-    (M : Memory) : Prop :=
-  Extracted.program.DataLoaded M ∧ Inp R L sp n M mp ∧ Inp R L sp ylen M yp ∧ M.readLE yp (8 * ylen) = Y ∧
-  M.readLE (yp + 8 * (ylen - 1)) 8 = yi ∧
-  M.readLE (sp + 0x398) 8 = ylen ∧ M.readLE (sp + 0x390) 8 = yp ∧ M.readLE (sp + 0x3a8) 8 = mp ∧
-  M.readLE (sp + 0x3b0) 8 = n ∧ M.readLE (sp + 0x3b8) 8 = mc ∧
-  NatNorm M mp n ∧ M.readLE mp (8 * n) = Mv ∧
-  OneIn R L sp n M onep ∧ M.readLE onep (8 * n) = 1 ∧ M.readLE (sp + 0x328) 8 = onep ∧
-  FinEnv sp st n0 fbp r M ∧ (InRanges st 24 L ∨ Outside st 24 R.rt)
-
-/-- the old-array facts with the whole table buffer -/
-@[reducible] def OldB (n mp yp ylen onep st bp bc : Nat) (p c : Nat) : Prop :=
-  Apart p (8 * c) mp (8 * n) ∧ Apart p (8 * c) yp (8 * ylen) ∧ Apart p (8 * c) bp (8 * bc) ∧
-  Apart p (8 * c) onep (8 * n) ∧ Apart p (8 * c) st 24
 
 theorem apart_ent {a k bp bc n d : Nat} (h : Apart a k bp (8 * bc)) (hbc : 17 * n ≤ bc) (hd : d < 16) :
     Apart a k (bp + 8 * (d * n)) (8 * n) := by
@@ -125,18 +109,10 @@ theorem PreT.pre4 {R : RtInv} {L : List (Nat × Nat)} {g fs sp n mp mc k0 bp bc 
       f15⟩
     rw [rsub _ _ _ _ hsth f12 hbs (by omega) (by omega)]; exact f11
 
-/-- the post of `j4Ret` (from the memory `M` at `j4`) -/
-@[reducible] def J4Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (g fs sp n mp yp ylen zp zc zzp zzc k0 : Nat)
-    (pp : Nat → Nat) (V st n0 onep fbp : Nat) (M : Memory) (s' : State) : Prop :=
-  ∃ (M1 M2 : Memory) (zp1 zc1 zzp2 zzc2 : Nat) (L1 L2 : List (Nat × Nat)) (b1 b2 : Nat),
-    ZPost R L L1 b b1 g fs sp n M M1 (zw1 sp) zp zc zp1 zc1 ∧
-    ZPost R L1 L2 b1 b2 g fs sp n M1 M2 (zw2 sp) zzp zzc zzp2 zzc2 ∧
-    ZjPost R b2 L2 g fs sp n mp yp ylen zp1 zc1 zzp2 zzc2 k0 pp V st n0 onep fbp M2 s'
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- window-4 (amd64) from the return of `stk.nat(17n)` (`p01`) to the return -/
-theorem p01Ret {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
+theorem p01Ret (hJ4 : FvModexp.Amd64.W4Pro.J4Spec) (hP01 : FvModexp.Amd64.W4Pro.P01Spec) {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
     (hclr : MemclrNoHeapPointersLive64 (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
@@ -187,7 +163,7 @@ theorem p01Ret {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.prog
   have hbw := hs.2.2.2.2.2.2.2.2.2.2.2.2.1
   have hbg := hs.2.2.2.2.2.2.2.2.2.2.2.2.2.1
   have hbf := hs.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
-  refine p01pow hap hclr hmv hs ht hone hbo hone1 hrr hbr hx hbx s78 s3b0 s3a8 s3b8 sd8 s328 s338 sf8 s100 s370 s138
+  refine hP01 hap hclr hmv hs ht hone hbo hone1 hrr hbr hx hbx s78 s3b0 s3a8 s3b8 sd8 s328 s338 sf8 s100 s370 s138
     hinv S hpc hsp hmem h0 h1 h5 h14 hfs hx15 hdf ?_
   intro Sj c1 c2 c3 c4 c5 c6 c7 hF hinvj hrgj hslj hE
   have rs : ∀ K, 0x60 ≤ K → K + 8 ≤ 0x3c0 → Outside (sp + K) 8 (pw sp) →
@@ -211,7 +187,7 @@ theorem p01Ret {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.prog
     refine hF.1.readLE _ _ ?_
     simp only [pl, pw, outside_append, outside_cons, outside_nil, and_true]
     exact ⟨⟨hca.of_sub (by omega) (by omega), by omega⟩, by omega⟩
-  refine ReachesRet.mono (j4Ret hap hclr hmv hmk hmvok hwt hro hej hPj (hs.2.1) (hs.2.2.1) (hs.2.2.2.1)
+  refine ReachesRet.mono (hJ4 hap hclr hmv hmk hmvok hwt hro hej hPj (hs.2.1) (hs.2.2.1) (hs.2.2.2.1)
     (hs.2.2.2.2.1) (hs.2.2.2.2.2.1) hyl hyl' hyi0 hzc
     (fun h => ⟨buf_frame (hz h).1 hF.1, (hz h).2⟩) hzzc (fun h => ⟨buf_frame (hzz h).1 hF.1, (hzz h).2⟩)
     (fun h => (hoz h).a hbc) (fun h => (hozz h).a hbc) hzzz

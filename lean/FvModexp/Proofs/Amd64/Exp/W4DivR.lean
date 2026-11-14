@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.W4Div
+import FvModexp.Proofs.Amd64.Exp.W4Seg
 
 set_option autoImplicit false
 
@@ -48,6 +49,7 @@ theorem toDiv {impl : List Amd64.Segment} {ret : W64} {Q : State → Prop}
   have b4 : mp < 256 ^ 8 := r3a8 ▸ Janus.Arm64.Memory.readLE_lt _ _ _
   have b5 : n < 256 ^ 8 := r3b0 ▸ Janus.Arm64.Memory.readLE_lt _ _ _
   have b6 : mc < 256 ^ 8 := r3b8 ▸ Janus.Arm64.Memory.readLE_lt _ _ _
+  refine SegProg.lift W4Seg.codeIn (r := BitVec.ofNat 64 divE) ?_
   janus64_run [r3d8, r190, ra8, r188, r98, ra0, r3a8, r3b0, r3b8] until [divE]
   refine KD _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
   · rfl

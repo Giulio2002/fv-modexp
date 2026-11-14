@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Amd64.NatQ.DrsC5R
+import FvModexp.Proofs.Amd64.NatQ.DrsSegD
 
 set_option autoImplicit false
 

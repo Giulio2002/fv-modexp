@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.W2S1
+import FvModexp.Proofs.Amd64.Exp.W2Seg
 
 set_option autoImplicit false
 
@@ -50,6 +51,7 @@ theorem seg2 {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progra
   have hacc : S.mem.accessible (sp - 4296) (4296 + 0x2a8) true = true := by
     rw [hM.1.1.accessible]; exact he.2.2.2.1
   obtain ⟨q3a8, q3b0, q3b8, qd8, -, -⟩ := Static.rd hst hM.1 hB.1 hB.2.1
+  refine SegProg.lift W2Seg.codeIn (r := BitVec.ofNat 64 6184288) ?_
   janus64_run [q3a8, q3b0, q3b8, qd8, rP, r140, rC] until [6184288]
   have hra : RetAddr ((Extracted.program.onlySegments LibMont.names).link impl) (6210560 + 0xe6e) :=
     ra_of hap mont_not 0xe6e (by decide)

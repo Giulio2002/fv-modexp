@@ -150,7 +150,7 @@ theorem rnd_ge (n : Nat) : n ≤ StackNat.rnd n := by simp only [StackNat.rnd]; 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- path B from the entry of `rr := stk.nat(n)` (return `bSnRet`; `M` = the memory before `xnJ`'s spills) to `RET` -/
-theorem xnBStep {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
+theorem xnBStep (hRR : FvModexp.Amd64.W2Pro.RRSpec) {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
     (hclr : MemclrNoHeapPointersLive64 (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
@@ -252,7 +252,7 @@ theorem xnBStep {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.pro
       (hk0.2.2.2.1 _ _ (obj_subk hx.2.2.2.2.2 (Nat.le_refl _) (by omega)))
   have hC5 := CtxX.setX hC4 hrInp hrO (hv.trans hxv)
   have hlenE : stLen S3.mem st = l0 + StackNat.rnd n := by rw [hlen3, hlen2]
-  refine ReachesRet.mono (xjStep hap hclr hmv hmk hwt hro hSN hserv hDiv hnsD hnsW hLsh hnsL hnsWL hKD hKL hC5 hlenE
+  refine ReachesRet.mono (xjStep hRR hap hclr hmv hmk hwt hro hSN hserv hDiv hnsD hnsW hLsh hnsL hnsWL hKD hKL hC5 hlenE
     (by omega) hfbp hmB hMo hM1 hs0 hs1 hs2 hcF (bud2 hbud hb2) hI S3 k1 k2 rfl k3 k4 k5 k6 k7 k8 k9 k10 k11)
     (fun s' h => ⟨S3.mem, L2, b2, (hk0.trans hk2 hcap1).trans hk3 hcap2, hb2, hlenE, h⟩)
 
@@ -265,7 +265,7 @@ theorem xnBStep {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.pro
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- from the `x` join `j300` (`len x ≤ n`) to the function's `RET` -/
-theorem xnJStep {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
+theorem xnJStep (hRR : FvModexp.Amd64.W2Pro.RRSpec) {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
     (hclr : MemclrNoHeapPointersLive64 (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
@@ -301,12 +301,12 @@ theorem xnJStep {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.pro
   · obtain rfl : xl = n := by omega
     obtain ⟨hs0, hs1, hs2, hcF⟩ := hL0
     have hC' := CtxX.ofXIn hC hx
-    refine ReachesRet.mono (xjStep hap hclr hmv hmk hwt hro hSN hserv hDiv hnsD hnsW hLsh hnsL hnsWL hKD hKL hC' hl0e
+    refine ReachesRet.mono (xjStep hRR hap hclr hmv hmk hwt hro hSN hserv hDiv hnsD hnsW hLsh hnsL hnsWL hKD hKL hC' hl0e
       hxc hfbp hmB hMo hM1 hs0 hs1 hs2 hcF hb0 hinv S' e1 (by rw [e3]; exact hsp) e2
       (by rw [e3]; exact h6) (by rw [e3]; exact h8) (by rw [e3]; exact h9) (by rw [e3]; exact h7)
       (by rw [e3]; exact h3) (by rw [e3]; exact h14) (by rw [e4]; exact hfs) (by rw [e5]; exact hx15)
       (by rw [e6]; exact hdf)) (fun s' h => Or.inl h)
-  · refine ReachesRet.mono (xnBStep hap hclr hmv hmk hwt hro hSN hserv hDiv hnsD hnsW hLsh hnsL hnsWL hKD hKL hC hl0e
+  · refine ReachesRet.mono (xnBStep hRR hap hclr hmv hmk hwt hro hSN hserv hDiv hnsD hnsW hLsh hnsL hnsWL hKD hKL hC hl0e
       hx hc hfbp hmB hMo hM1 hL1 hbud hinv S' e1 e2 hmf hrg q8 q130 q368
       e3 e4 (by rw [e6]; exact h14) (by rw [e7]; exact hfs) (by rw [e8]; exact hx15) (by rw [e9]; exact hdf))
       (fun s' h => Or.inr h)

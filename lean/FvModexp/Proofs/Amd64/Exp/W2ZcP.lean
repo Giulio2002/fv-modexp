@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Amd64.Exp.W2Posts
 import FvModexp.Proofs.Amd64.Exp.W2ZcDefs
 
 set_option autoImplicit false
@@ -15,19 +16,6 @@ open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Contracts FvMo
 namespace FvModexp.Amd64.W2Pro
 
 open FvModexp.Amd64.W2Loop (Env Inp Buf)
-
-/-- the spill chain at the first-window `memmove` -/
-@[reducible] def zcW (M : Memory) (sp zzc zzp yi k : Nat) : Memory :=
-  (((((M.writeLE (sp + 288) 8 zzc).writeLE (sp + 600) 8 zzp).writeLE (sp + 280) 8 yi).writeLE (sp + 328) 8 (k + 1)).writeLE
-    (sp + 320) 8 (k * 2)).writeLE (sp - 8) 8 6213838
-
-/-- the slot reads after the copy -/
-@[reducible] def ZcSl (m : Memory) (sp n mp mc k0 yp ylen zp zc zzp zzc yi k : Nat) : Prop :=
-  m.readLE (sp + 0x170) 8 = zp ∧ m.readLE (sp + 0x140) 8 = k * 2 ∧ m.readLE (sp + 0x88) 8 = zc ∧
-  m.readLE (sp + 0x278) 8 = yp ∧ m.readLE (sp + 0x258) 8 = zzp ∧ m.readLE (sp + 0x118) 8 = yi ∧
-  m.readLE (sp + 0x120) 8 = zzc ∧ m.readLE (sp + 0x280) 8 = ylen ∧ m.readLE (sp + 0x148) 8 = k + 1 ∧
-  m.readLE (sp + 0x290) 8 = mp ∧ m.readLE (sp + 0xd8) 8 = k0 ∧ m.readLE (sp + 0x298) 8 = n ∧
-  m.readLE (sp + 0x2a0) 8 = mc
 
 set_option maxHeartbeats 64000000 in
 theorem zcPost {R : RtInv} {L : List (Nat × Nat)} {g fs sp n mp mc k0 yp ylen zp zc zzp zzc yi k pd V : Nat}

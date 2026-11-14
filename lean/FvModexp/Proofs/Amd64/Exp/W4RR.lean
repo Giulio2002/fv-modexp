@@ -1,3 +1,5 @@
+import FvModexp.Proofs.Amd64.Exp.W4Posts2
+import FvModexp.Proofs.Amd64.Exp.W4Seg
 import FvModexp.Proofs.Amd64.Exp.LibW
 import FvModexp.Proofs.Amd64.Exp.W4OneDefs
 
@@ -18,21 +20,6 @@ open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Contracts FvMo
 namespace FvModexp.Amd64.W4Pro
 
 open FvModexp.Amd64.W4Loop (Env Inp Buf)
-
-/-- return of `nat.div` (RR) -/
-abbrev divRet : Nat := 6207045
-
-/-- the frame words `divRet → rrJ` writes (memmove window + return slot, spills) -/
-@[reducible] def rw4 (sp : Nat) : List (Nat × Nat) :=
-  [(sp - 4104, sp + 0x18), (sp + 0x100, sp + 0x108), (sp + 0x128, sp + 0x130), (sp + 0x360, sp + 0x368)]
-
-/-- the facts at `rrJ` -/
-@[reducible] def RRPost (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (g sp n rp rl rc zzp zzc : Nat) (M M' : Memory)
-    (rrp rrc : Nat) : Prop :=
-  MemFrame M M' (R.rt ++ rw4 sp ++ [(zzp, zzp + 8 * n)]) ∧ LiveFrame M M' L [(zzp, zzp + 8 * n)] ∧
-  R.inv b L g (view R.rt L M') ∧ M'.regions = M.regions ∧
-  M'.readLE rrp (8 * n) = M.readLE rp (8 * rl) ∧
-  ((rrp = rp ∧ rrc = rc ∧ rl = n) ∨ (rrp = zzp ∧ rrc = zzc ∧ rl < n))
 
 set_option maxRecDepth 20000 in
 /-- the post of the copy path, from the `memmove` post (pure) -/
@@ -124,6 +111,7 @@ theorem rrFix (impl : List Amd64.Segment) {R : RtInv}
   unfold Apart at u1 u2 u3
   by_cases hA : rl = n
   · subst hA
+    refine SegProg.lift W4Seg.codeIn (r := BitVec.ofNat 64 6207369) ?_
     janus64_run [s3b0] until [6207369]
     refine KR _ rp rc rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ hfs ?_ rfl
       ⟨MemFrame.refl _ _, LiveFrame.refl _ _ _, hinv, rfl, rfl, Or.inl ⟨rfl, rfl, rfl⟩⟩

@@ -34,13 +34,17 @@ def tasks(only, isas):
         c = [x.strip() for x in row.split('|')]
         sym = c[1].strip('`')
         fn = sym.rsplit('.', 1)[-1]; fn = fn[0].upper() + fn[1:]
-        if only and fn not in only:
+        # `module: Dir/Name` in the Notes cell (as scripts/verify-all.sh): proof module Proofs/<Isa>/Dir/Name.lean, row id Dir_Name
+        m = re.search(r'module: *`?([A-Za-z0-9_/]+)', '|'.join(c[5:]))
+        mod = m.group(1) if m else fn
+        rid = mod.replace('/', '_')
+        if only and rid not in only and fn not in only:
             continue
         for isa, st in (('arm64', c[3].replace(' ', '')), ('amd64', c[4].replace(' ', ''))):
             if isas and isa not in isas:
                 continue
-            if st.startswith(('verified', 'partial')):
-                out.append((isa, fn, sym))
+            if st.startswith(('verified', 'partial')) and (isa, rid, sym, mod, fn) not in out:
+                out.append((isa, rid, sym, mod, fn))
     return out
 
 
@@ -108,17 +112,17 @@ def main():
     prepare_ws(ws, pkg)
     ld = layout_dir()
     res = {}
-    for isa, fn, sym in tasks(set(a.fns), set(a.isa or [])):
+    for isa, rid, sym, mod, cname in tasks(set(a.fns), set(a.isa or [])):
         t0 = time.time()
-        key = f'{isa}-{fn}'
+        key = f'{isa}-{rid}'
         d = {'amd64': 'Amd64', 'arm64': 'Arm64'}[isa]
-        pf = fn
-        mf = f'{ld}/{d}/{fn}Main.lean'
+        pf = mod
+        mf = f'{ld}/{d}/{mod}Main.lean'
         if os.path.isfile(mf) and 'theorem correctness' in open(mf).read():
-            pf = fn + 'Main'
+            pf = mod + 'Main'
         harness = f'build/harness-{isa}'
         full = sym
-        flags = contract_flags(fn)
+        flags = contract_flags(cname)
         f = f'{ld}/{d}/{pf}.lean'
         if not os.path.isfile(f):
             res[key] = {'error': f'missing {f}'}; print(key, 'MISSING', f, flush=True); continue
@@ -134,7 +138,8 @@ def main():
         src = open(f).read()
         imports = [m for m in re.findall(r'^import (\S+)', src, re.M)]
         wit = [w for w in sh(['python3', os.path.join(SCRIPTS, 'witness-theorems.py'), f]).stdout.split() if w]
-        roots = [f'FvModexp.{d}.{pf}.correctness'] + wit
+        mains = [w for w in sh(['python3', os.path.join(SCRIPTS, 'witness-theorems.py'), '--mains', f]).stdout.split() if w]
+        roots = (mains or [f'FvModexp.{d}.{pf.replace("/", ".")}.correctness']) + wit
         q = open(os.path.join(ws, 'src', os.path.relpath(f, 'lean'))).read() + '\n#spec_closure ' + ' '.join(roots) + '\n#lint_io\n'
         qf = f'{ws}/q-{key}.lean'
         open(qf, 'w').write(q)
@@ -151,7 +156,7 @@ def main():
                 rr.append(l[4:].strip())
             elif l.startswith('@@C '):
                 p = l[4:].split(' ')
-                consts.append({'name': p[0], 'module': p[1] if p[1] != '<cur>' else f'FvModexp.{d}.{pf}', 'kind': p[2], 'parent': p[3], 'range': p[4]})
+                consts.append({'name': p[0], 'module': p[1] if p[1] != '<cur>' else f'FvModexp.{d}.{pf.replace("/", ".")}', 'kind': p[2], 'parent': p[3], 'range': p[4]})
         stm = {}
         for l in txt.splitlines():
             if l.startswith('@@T '):

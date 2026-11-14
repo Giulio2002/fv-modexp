@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.W4EnDefs
+import FvModexp.Proofs.Amd64.Exp.W4Seg
 
 set_option autoImplicit false
 
@@ -77,6 +78,7 @@ theorem enA {impl : List Amd64.Segment} {ret : W64} {Q : State → Prop}
           true := by rw [hms]; simp only [decide_eq_true_eq]; exact hc3
       have hzs' := hzs.trans (show (len0 + StackNat.rnd (23 * n) = cap0) = False by
         simp only [eq_iff_iff, iff_false]; omega)
+      refine SegProg.lift W4Seg.codeIn (r := BitVec.ofNat 64 enJ) ?_
       janus64_run [hr, hw0, hl0, hc0, r3b0, e5, e6, hmsb, hms', hzs'] until [enJ]
       refine KJ hk _ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?mf ?rg ?sl
       case mf => janus_frame
@@ -91,6 +93,7 @@ theorem enA {impl : List Amd64.Segment} {ret : W64} {Q : State → Prop}
     · have hms' : (BitVec.ofNat 64 (StackNat.rnd (23 * n)) - (BitVec.ofNat 64 cap0 - BitVec.ofNat 64 len0)).msb =
           false := by rw [hms]; simp only [decide_eq_false_iff_not]; omega
       have hzs' := hzs.trans (show (len0 + StackNat.rnd (23 * n) = cap0) = True by simp only [eq_iff_iff, iff_true]; omega)
+      refine SegProg.lift W4Seg.codeIn (r := BitVec.ofNat 64 enJ) ?_
       janus64_run [hr, hw0, hl0, hc0, r3b0, e5, e6, hmsb, hms', hzs'] until [enJ]
       refine KJ hk _ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?mf ?rg ?sl
       case mf => janus_frame
@@ -121,6 +124,7 @@ theorem enA {impl : List Amd64.Segment} {ret : W64} {Q : State → Prop}
     have hz9 : ((len0 + StackNat.rnd (23 * n) - cap0) % 18446744073709551616 = 0) = False := by
       simp only [eq_iff_iff, iff_false]; omega
     have hz9' : (len0 + StackNat.rnd (23 * n) - cap0 = 0) = False := by simp only [eq_iff_iff, iff_false]; omega
+    refine SegProg.lift W4Seg.codeIn (r := BitVec.ofNat 64 grE) ?_
     janus64_run [hr, hw0, hl0, hc0, r3b0, e5, e6, hmsb, hms', hzs', e9, e10, hlt, hlt', hm9, hz9, hz9'] until [grE]
     refine KG (by omega) _ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?mf ?rg ?sl ?q0 ?q1 ?q2 ?q3
     case mf => janus_frame

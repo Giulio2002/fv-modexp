@@ -1,5 +1,6 @@
 import FvModexp.Proofs.Amd64.Exp.W2XjR
-import FvModexp.Proofs.Amd64.Exp.W2One
+import FvModexp.Proofs.Amd64.Exp.W2Seg
+import FvModexp.Proofs.Amd64.Exp.W2Posts2
 
 set_option autoImplicit false
 
@@ -55,10 +56,12 @@ theorem xnSplit {impl : List Amd64.Segment} {ret : W64} {Q : State → Prop}
   by_cases hc : xl ≤ n
   · have hlt : ((BitVec.ofNat 64 n).toInt < (BitVec.ofNat 64 xl).toInt) = False := by
       rw [toInt_lt_iff (by omega) (by omega)]; simp only [eq_iff_iff, iff_false]; omega
+    refine SegProg.lift W2Seg.codeIn (r := BitVec.ofNat 64 j300) ?_
     janus64_run [hlt] until [j300]
     exact KJ hc _ rfl rfl rfl rfl rfl rfl
   · have hlt : ((BitVec.ofNat 64 n).toInt < (BitVec.ofNat 64 xl).toInt) = True := by
       rw [toInt_lt_iff (by omega) (by omega)]; simp only [eq_iff_iff, iff_true]; omega
+    refine SegProg.lift W2Seg.codeIn (r := BitVec.ofNat 64 snE) ?_
     janus64_run [hlt] until [snE]
     refine KA (by omega) _ rfl ?_ ?_ ?_ ?_ ?_ rfl rfl rfl rfl
     · simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]
@@ -92,6 +95,7 @@ theorem xnA1 {impl : List Amd64.Segment} {ret : W64} {Q : State → Prop}
       ReachesRet (LibW.program.link impl) ret S' Q) :
     ReachesRet (LibW.program.link impl) ret S Q := by
   subst hmem
+  refine SegProg.lift W2Seg.codeIn (r := BitVec.ofNat 64 snE) ?_
   janus64_run [r3d8, r3b0] until [snE]
   refine KS _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
   · rfl
@@ -133,6 +137,7 @@ theorem xnA3 {impl : List Amd64.Segment} {ret : W64} {Q : State → Prop}
       ReachesRet (LibW.program.link impl) ret S' Q) :
     ReachesRet (LibW.program.link impl) ret S Q := by
   subst hmem
+  refine SegProg.lift W2Seg.codeIn (r := BitVec.ofNat 64 j300) ?_
   janus64_run [r3d8, r3b0, r3c0, r3d0] until [j300]
   refine KJ _ rfl rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl rfl rfl
   all_goals simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]
@@ -166,10 +171,12 @@ theorem xnJ {impl : List Amd64.Segment} {ret : W64} {Q : State → Prop}
   by_cases hc : n ≤ xl
   · have hlt : ((BitVec.ofNat 64 xl).toInt < (BitVec.ofNat 64 n).toInt) = False := by
       rw [toInt_lt_iff (by omega) (by omega)]; simp only [eq_iff_iff, iff_false]; omega
+    refine SegProg.lift W2Seg.codeIn (r := BitVec.ofNat 64 xJ) ?_
     janus64_run [hlt] until [xJ]
     exact KX hc _ rfl rfl rfl rfl rfl rfl
   · have hlt : ((BitVec.ofNat 64 xl).toInt < (BitVec.ofNat 64 n).toInt) = True := by
       rw [toInt_lt_iff (by omega) (by omega)]; simp only [eq_iff_iff, iff_true]; omega
+    refine SegProg.lift W2Seg.codeIn (r := BitVec.ofNat 64 snE) ?_
     janus64_run [hlt] until [snE]
     refine KB (by omega) _ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
     · simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]

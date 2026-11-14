@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.W4S1
+import FvModexp.Proofs.Amd64.Exp.W4Seg
 
 set_option autoImplicit false
 
@@ -71,6 +72,7 @@ theorem seg5 {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progra
   have hsh : BitVec.ofNat 64 yi >>> 60 = BitVec.ofNat 64 (yi / 2 ^ 60) := by
     apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_ushiftRight, BitVec.toNat_ofNat, Nat.shiftRight_eq_div_pow]
     omega
+  refine SegProg.lift W4Seg.codeIn (r := BitVec.ofNat 64 6184288) ?_
   janus64_run [hsh, q3a8, q3b0, q3b8, qd8, rP, r98, rC, rb0] until [6184288]
   have hra : RetAddr ((Extracted.program.onlySegments LibMont.names).link impl) (6205536 + 0xfc7) :=
     ra_of hap mont_not 0xfc7 (by decide)

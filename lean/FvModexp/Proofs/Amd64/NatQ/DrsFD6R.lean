@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Amd64.NatQ.DrsFD5
+import FvModexp.Proofs.Amd64.NatQ.DrsSegD
 import FvModexp.Proofs.Amd64.NatQ.DrsNormF
 
 set_option autoImplicit false
@@ -18,9 +18,6 @@ set_option linter.janusRenameI false
 namespace FvModexp.Amd64.Q.DivRec
 
 open FvModexp.Amd64.Q.DivLarge (DrsPreW DrsPostW)
-
-/-- the return address of `addTo(z, qhat.norm())` -/
-abbrev rFD6 : Nat := 0x5f0685
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in

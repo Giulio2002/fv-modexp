@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.W4Pow
+import FvModexp.Proofs.Amd64.Exp.W4Seg
 import FvModexp.Proofs.Common.MaskWord
 
 set_option autoImplicit false
@@ -120,6 +121,7 @@ theorem p1 {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program 
     have hfs' : s'.fsBase.toNat = fs := by rw [efs]; exact hfs
     have hacc' : s'.mem.accessible (sp - 4296) (4296 + 0x3c0) true = true := by
       rw [hF'.1.accessible]; exact he.2.2.2.1
+    refine SegProg.lift W4Seg.codeIn (r := BitVec.ofNat 64 powHead) ?_
     janus64_run [] until [powHead]
     have sl : ∀ K, 0x60 ≤ K → K + 8 ≤ 0x3c0 → (K + 8 ≤ 0x1a8 ∨ 0x1d8 ≤ K) →
         (((s'.mem.writeLE (sp + 448) 8 (bp + 8 * n)).writeLE (sp + 456) 8 n).writeLE (sp + 464) 8 (2 * n)).readLE

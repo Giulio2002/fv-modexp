@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.W2Pow
+import FvModexp.Proofs.Amd64.Exp.W2Seg
 
 set_option autoImplicit false
 
@@ -40,6 +41,7 @@ theorem powLoop {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.pro
     subst hi
     have hacc : S.mem.accessible (sp - 4296) (4296 + 0x2a8) true = true := by
       rw [hF.1.accessible]; exact hs.1.2.2.2.1
+    refine SegProg.lift W2Seg.codeIn (r := BitVec.ofNat 64 j4) ?_
     janus64_run [] until [j4]
     exact KX _ rfl hsp h5 h14 hfs hx15 rfl hF hinv hrg hsl hE
   | succ f ih =>

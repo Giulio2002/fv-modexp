@@ -38,7 +38,7 @@ theorem XnB.mono {costF : Nat → Nat → Nat → Nat} {n costD l xl b b' : Nat}
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem atXnE {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
+theorem atXnE (hRR : FvModexp.Amd64.W2Pro.RRSpec) {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
     (hclr : MemclrNoHeapPointersLive64 (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
@@ -81,7 +81,7 @@ theorem atXnE {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
   obtain ⟨-, -, -, -, -, -, -, -, -, q10, q11, q12, -, -, -, -, -⟩ := hsl
   obtain ⟨b1', b2', b3', b4', b5', b6', b7', b8', b9', b10'⟩ := hB
   rw [← hxr]
-  exact W2Pro.xnStep hap hclr hmv hmk (by rw [show NatSub.wordT = wTy from rfl]; exact hwt) hro hSN hsv hDiv hnsD hnsW hLsh hnsL hnsWL (fbp := bp) hKD hKL hC hlen hxi
+  exact W2Pro.xnStep hRR hap hclr hmv hmk (by rw [show NatSub.wordT = wTy from rfl]; exact hwt) hro hSN hsv hDiv hnsD hnsW hLsh hnsL hnsWL (fbp := bp) hKD hKL hC hlen hxi
     hxN (by omega) hxs hacc2 q10 q11 q12 (by rw [← hbp]; exact BitVec.isLt _) (FvModexp.Expmc.readLE_lt_B _ _ _)
     hMo hM1 b1' b2' b3' b4' b5' b6' b7' b8' b9' b10' hinv1 S hpc hsp hmem h6 h8 h9 h7 h3 h14 hfs hx15 hdf
 
