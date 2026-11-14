@@ -22,10 +22,31 @@ open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Spec Janus.Con
 
 namespace FvModexp.Amd64.EvenRow
 
+/-- the stack argument `y` (`RSP + 8 / 16 / 24`), with NUMERAL offsets: the v0.3.3 audit counts a read at `RSP + k` with a
+non-numeral `k` (as in `NHyp.StkArg`'s body) as a read of the return-address word `[RSP]` -/
+@[reducible] def ArgY (s : State) (y yl yc : Nat) : Prop :=
+  s.mem.readLE ((s.regs 4).toNat + 8) 8 = y ∧ s.mem.readLE ((s.regs 4).toNat + 16) 8 = yl ∧
+    s.mem.readLE ((s.regs 4).toNat + 24) 8 = yc
+
+/-- the stack argument `m` (`RSP + 32 / 40 / 48`), numeral offsets (see `ArgY`) -/
+@[reducible] def ArgM (s : State) (m ml mc : Nat) : Prop :=
+  s.mem.readLE ((s.regs 4).toNat + 32) 8 = m ∧ s.mem.readLE ((s.regs 4).toNat + 40) 8 = ml ∧
+    s.mem.readLE ((s.regs 4).toNat + 48) 8 = mc
+
+theorem argY {s : State} {y yl yc : Nat} (h : ArgY s y yl yc) : NHyp.StkArg s 0 y yl yc := by
+  unfold NHyp.StkArg; simp only [Nat.add_zero]; exact h
+
+theorem argM {s : State} {m ml mc : Nat} (h : ArgM s m ml mc) : NHyp.StkArg s 24 m ml mc := by
+  unfold NHyp.StkArg
+  rw [show (s.regs 4).toNat + 24 + 8 = (s.regs 4).toNat + 32 by omega,
+    show (s.regs 4).toNat + 24 + 16 = (s.regs 4).toNat + 40 by omega,
+    show (s.regs 4).toNat + 24 + 24 = (s.regs 4).toNat + 48 by omega]
+  exact h
+
 /-- the precondition: the stack arguments `y`, `m` and `EvenSum`'s entry facts (window `43152` / `0x70`) -/
 @[reducible] def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (z zl zc st x xl xc y yl yc m ml mc : Nat)
     (s : State) : Prop :=
-  NHyp.StkArg s 0 y yl yc ∧ NHyp.StkArg s 24 m ml mc ∧
+  ArgY s y yl yc ∧ ArgM s m ml mc ∧
     ExpEven.Pre R b L 43152 0x70 nE cE z zl zc st x xl y yl m ml mc s ∧ NHyp.XFacts R L x xl xc ∧
     ExpN.XG s.mem st x xl xc ∧ Outside x (8 * xc) (win s 43152 0x70)
 
@@ -79,7 +100,8 @@ theorem correctnessP (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracte
     ⟨hs.zero, hs.df, (hs.args 0 (by simp)).trans (bvN _).symm, (hs.args 1 (by simp)).trans (bvN _).symm,
       (hs.args 2 (by simp)).trans (bvN _).symm, (hs.args 3 (by simp)).trans (bvN _).symm,
       (hs.args 4 (by simp)).trans (bvN _).symm, (hs.args 5 (by simp)).trans (bvN _).symm,
-      (hs.args 6 (by simp)).trans (bvN _).symm, hpre.1, hpre.2.1, hpre.2.2.1, z.isLt, xc.isLt, hpre.1.2.2 ▸ readLE_lt_8 _ _,
+      (hs.args 6 (by simp)).trans (bvN _).symm, argY hpre.1, argM hpre.2.1, hpre.2.2.1, z.isLt, xc.isLt,
+      (argY hpre.1).2.2 ▸ readLE_lt_8 _ _,
       by rw [hr]; exact hret.user, hpre.2.2.2.1, hpre.2.2.2.2.1, hpre.2.2.2.2.2⟩
     fun s' ⟨⟨h1, h2, h3, h4⟩, hp⟩ => ⟨⟨h1, h2, h3, h4⟩, hp⟩
 

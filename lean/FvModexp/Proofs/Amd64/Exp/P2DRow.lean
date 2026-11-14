@@ -30,10 +30,13 @@ namespace FvModexp.Amd64.P2DRow
 open Janus.Contracts.EqHashModel (CodeIn64)
 open FvModexp.Amd64.CalleeInstQ FvModexp.Amd64.ExpHyp
 
-/-- the precondition (= `NHyp.P2Hyp`'s; stack need `2^13`, budget `P2D.costP P2W2.costB P2W4.costB`) -/
+/-- the precondition (= `NHyp.P2Hyp`'s up to defeq; stack need `2^13`, budget `P2D.costP P2W2.costB P2W4.costB`). The stack
+argument `y` is stated with NUMERAL offsets `RSP + 8 / 16 / 24` (`NHyp.StkArg s 0` unfolds to `RSP + 0 + 8 …`, which the
+v0.3.3 audit counts as a read of the return-address word `[RSP]` because the offset is not a numeral in its body). -/
 @[reducible] def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (stk : Nat) (z zl zc st x xl xc y yl yc lm : Nat)
     (s : State) : Prop :=
-  NHyp.StkArg s 0 y yl yc ∧
+  (s.mem.readLE ((s.regs 4).toNat + 8) 8 = y ∧ s.mem.readLE ((s.regs 4).toNat + 16) 8 = yl ∧
+    s.mem.readLE ((s.regs 4).toNat + 24) 8 = yc) ∧
     (NHyp.CPre R b L stk 112 z zl zc st [(x, xl), (y, yl)] (P2D.needP xl yl lm)
         (P2D.costP P2W2.costB P2W4.costB (stLen s.mem st) xl yl lm) s ∧
       0 < natVal s.mem x xl ∧ 0 < natVal s.mem y yl ∧ 1 ≤ lm ∧ lm ≤ 2 ^ 13 ∧ 0 < st ∧
