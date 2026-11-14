@@ -1,4 +1,5 @@
 import FvModexp.Spec.Modexp
+import FvModexp.Spec.Geth
 
 set_option autoImplicit false
 
@@ -13,7 +14,8 @@ key is served from the cache on a hit (gas accounting unchanged), and on a miss 
 (`core/vm/precompile_cache.go:223-238`, `maxCacheablePrecompileInput = 8192`, :40). Loads and stores copy the bytes
 (precompile_cache.go:147,176); the scope is (active precompile set, address).
 
-`cacheKey` transcribes that key (pure Nat/ByteArray level; `getData(input, k, 32)` of an input longer than the 96-byte
+`Spec.cacheKey` / `Spec.normalize` (`Spec/Geth.lean`, moved there in s78 so row 3's `Spec.runPrecompiled` models the cache)
+transcribe that key (pure Nat/ByteArray level; `getData(input, k, 32)` of an input longer than the 96-byte
 header is the plain 32 bytes `readNat input k 32`, `uint256.SetBytes` reads them big-endian, `IsUint64 ↔ < 2^64`, and the
 `uint256` sum `96 + b + e + m` of three `< 2^64` values does not wrap; `input[:n]` = `input.extract 0 n`).
 
@@ -27,24 +29,7 @@ before the lookup, hit or miss (contracts.go:273-276), so row 2 / row 3 are unaf
 
 namespace FvModexp.CacheKey
 
-open EthLib.Base EthLib.Execution.Evm.Precompiles.Modexp
-
-/-- geth's `(*bigModExp).NormalizeInput(input)` (contracts.go:704-732): the input up to the end of the operands the
-header declares; `none` (`ok = false`) when a length header is not a `uint64`. -/
-def normalize (input : ByteArray) : Option ByteArray :=
-  if input.size ≤ 96 then some input
-  else if ¬ (readNat input 0 32 < 2 ^ 64 ∧ readNat input 32 32 < 2 ^ 64 ∧ readNat input 64 32 < 2 ^ 64) then none
-  else if readNat input 0 32 = 0 ∧ readNat input 64 32 = 0 then some (input.extract 0 96)
-  else if ¬ 96 + readNat input 0 32 + readNat input 32 32 + readNat input 64 32 < 2 ^ 64 ∨
-      input.size ≤ 96 + readNat input 0 32 + readNat input 32 32 + readNat input 64 32 then some input
-  else some (input.extract 0 (96 + readNat input 0 32 + readNat input 32 32 + readNat input 64 32))
-
-/-- geth's cache key for MODEXP: `precompileCacheKey(bigModExp, input)` (precompile_cache.go:223-238) = `NormalizeInput`,
-`none` when not cacheable (a length header ≥ 2^64, or a key over `maxCacheablePrecompileInput = 8192` bytes). -/
-def cacheKey (input : ByteArray) : Option ByteArray :=
-  match normalize input with
-  | some k => if k.size > 8192 then none else some k
-  | none => none
+open EthLib.Base EthLib.Execution.Evm.Precompiles.Modexp FvModexp.Spec
 
 theorem normalize_of_cacheKey {d k : ByteArray} (h : cacheKey d = some k) : normalize d = some k := by
   unfold cacheKey at h
