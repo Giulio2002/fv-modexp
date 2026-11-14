@@ -51,7 +51,7 @@ theorem ensOkLib (impl : List Amd64.Segment) (hap : ImplApart Extracted.program 
     (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
     (hmz : MemmoveZeroLive64 (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
     (hno : NewobjectLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.newobject") 4096 R)
-    (stkM aboveM : Nat) (hM : RunIface.ModSpecM impl R stkM aboveM) (hE : RunIface.ExpSpec impl R stkM aboveM)
+    (stkM aboveM : Nat) (hM : RunIface.ModSpecA impl R stkM aboveM) (hE : RunIface.ExpSpecA impl R stkM aboveM)
     (hBy : RunIface.BytesSpec impl R stkM aboveM)
     (W : Nat) (hW : 616 + stkM ≤ W) (hW1 : 4800 ≤ W) (hab : aboveM ≤ 144) (ha8 : 8 ≤ aboveM)
     (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64) :
@@ -59,15 +59,15 @@ theorem ensOkLib (impl : List Amd64.Segment) (hap : ImplApart Extracted.program 
       (fun s => RunAmd64.EnvW R L s W ∧ RunAmd64.Input R L c p len cp s ∧ OsakaReceiver s.mem c.toNat ∧
         R.inv b L (s.regs 14).toNat (view R.rt L s.mem) ∧ RunAmd64.OkReqs R ∧
         RunAmd64.Globals R s.mem (RunAmd64.windowW s W) ∧ RunAmd64.NatOne R s.mem (RunAmd64.windowW s W) ∧
-        RunAmd64.StackPool R s.mem (RunAmd64.windowW s W) ∧
+        RunAmd64.StackPool R s.mem (RunAmd64.windowW s W) ∧ RunAmd64.CpuOne s.mem ∧
         RunAmd64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat)) ≤ b ∧
         LengthsPass (bytesAt s.mem p.toNat len.toNat))
       (fun s s' => RunAmd64.OkRet (bytesAt s.mem p.toNat len.toNat) s' ∧
         RunAmd64.FrameW R b (RunAmd64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat))) L W s s') := by
-  intro ret hret s hs ⟨⟨henvW, hgL, hfL⟩, hin, hrecv, hinv, hsv, hglob, hone, hpool, hbud, hpass⟩
+  intro ret hret s hs ⟨⟨henvW, hgL, hfL⟩, hin, hrecv, hinv, hsv, hglob, hone, hpool, hca, hbud, hpass⟩
   rw [okB_spec] at hbud
   obtain ⟨n, o, hrun, hQ⟩ := okReach impl hap R hmk hmv hmz hno stkM aboveM hM hE hBy hsv b L c p len cp ret hret s hs
-    W henvW hW hW1 hab ha8 hin hinv (osaka_read hrecv) hglob hgL hfL hbud hone hpool (pass_hdr hpass)
+    W henvW hW hW1 hab ha8 hin hinv (osaka_read hrecv) hglob hgL hfL hbud hone hpool hca (pass_hdr hpass)
     (fun o => ∃ s', o = .returned s' ∧ ABIReturn s s' ∧ RunAmd64.OkRet (bytesAt s.mem p.toNat len.toNat) s' ∧
       RunAmd64.FrameW R b (RunAmd64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat))) L W s s')
     (fun S' habi hret' hfr => ⟨S', rfl, habi, okRet_spec hret', by
