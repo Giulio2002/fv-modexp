@@ -1,7 +1,7 @@
 import FvModexp.Proofs.Amd64.Exp.SlowU1
 import FvModexp.Proofs.Amd64.Exp.SlowU2
 import FvModexp.Proofs.Amd64.Exp.SlowUJ
-import FvModexp.Proofs.Amd64.Exp.SlowQStmt
+import FvModexp.Proofs.Amd64.Exp.SlowFQ
 
 set_option autoImplicit false
 
@@ -17,11 +17,6 @@ The exit `KX` is `KT1` at `j = w` (asm's lower loop starts there).
 open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Spec Janus.Contracts FvModexp
 
 namespace FvModexp.Amd64.ExpSlow
-
-/-- the per-body budget bound -/
-@[reducible] def perBQ (sqC : Nat → Nat) (mlC dvC : Nat → Nat → Nat) (xl ml : Nat) : Nat :=
-  Exp.supN sqC (max xl ml) + Exp.supN (fun n => mlC n xl) (2 * max xl ml) +
-    Exp.supN (fun n => dvC n ml) (3 * max xl ml)
 
 section
 variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)}
