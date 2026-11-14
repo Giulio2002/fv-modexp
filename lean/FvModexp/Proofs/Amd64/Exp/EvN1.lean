@@ -20,13 +20,6 @@ open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Spec Janus.Con
 
 namespace FvModexp.Amd64.ExpEven
 
-theorem bv_add8 {sp : Nat} (h1 : 8 ≤ sp) (h2 : sp < 2 ^ 64) :
-    BitVec.ofNat 64 (sp - 8) + 8#64 = BitVec.ofNat 64 sp := by
-  apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega
-
-theorem bv_of_toNat {x : W64} {n : Nat} (h : x.toNat = n) : x = BitVec.ofNat 64 n := by
-  subst h; apply BitVec.eq_of_toNat_eq; rw [BitVec.toNat_ofNat, Nat.mod_eq_of_lt x.isLt]
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- **from the entry to `nat1R`** (see the module doc) -/

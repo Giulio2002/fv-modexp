@@ -527,13 +527,14 @@ theorem out_bytes {a k : Nat} {m0 : Memory}
   omega
 
 set_option maxRecDepth 20000 in
-/-- `natOne` at `M`, outside a callee window at `RSP = sp - 8`, a window range `[lo, hi)` and the stack's writable
+/-- `natOne` at `M`, outside a callee window `[sp - 8 - stk, sp - 8 + above)`, a window range `[lo, hi)` and the stack's writable
 ranges -/
 theorem natOne_at (hP : EPre R b L K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml mc s)
     (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ)
-    {S' : State} (hsp : (S'.regs 4).toNat = sp - 8) {stk above lo hi : Nat} (hstk : stk ≤ K) (habove : above ≤ 0xb8)
+    {stk above lo hi : Nat} (hstk : stk ≤ K) (habove : above ≤ 0xb8)
     (hlo : sp - 8 - K ≤ lo) (hhi : hi ≤ sp + 0x1b8) :
-    ∃ op, EvenHyp.NatOne R L1 M op (win S' stk above ++ ([(lo, hi)] ++ stkWs M st)) ∧ NHyp.StkApart M st op 8 ∧
+    ∃ op, EvenHyp.NatOne R L1 M op ([(sp - 8 - stk, sp - 8 + above)] ++ ([(lo, hi)] ++ stkWs M st)) ∧
+      NHyp.StkApart M st op 8 ∧
       EvenHyp.NatOne R L s.mem op ([(sp - 8 - K, sp + wTop), (zp, zp + 8 * zc)] ++ stkWs s.mem st) ∧
       NHyp.StkApart s.mem st op 8 := by
   have hk := hP.kf
@@ -560,11 +561,11 @@ theorem natOne_at (hP : EPre R b L K g fs sp st bp r zp zc xp xl xc yp yl yc mp 
     fun _ => ⟨?_, fun _ => ?_⟩, hone, hsa⟩
   · rw [outside_append, outside_append]
     refine ⟨?_, ?_, sA⟩ <;>
-      simp only [wTop, win, hsp, List.cons_append, outside_append, outside_cons, outside_nil, and_true] at nwin ⊢ <;>
+      simp only [wTop, List.cons_append, outside_append, outside_cons, outside_nil, and_true] at nwin ⊢ <;>
       omega
   · rw [outside_append, outside_append]
     refine ⟨?_, ?_, sO⟩ <;>
-      simp only [wTop, win, hsp, List.cons_append, outside_append, outside_cons, outside_nil, and_true] at ow ⊢ <;>
+      simp only [wTop, List.cons_append, outside_append, outside_cons, outside_nil, and_true] at ow ⊢ <;>
       omega
   · simp only [stkWs, outside_cons, outside_append] at sO; unfold Apart; omega
   · refine free_apart h oh ?_
