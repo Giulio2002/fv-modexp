@@ -1,6 +1,7 @@
 import FvModexp.Proofs.Amd64.Top.RunErrLib
 import FvModexp.Proofs.Amd64.Witness.Stubs
 import FvModexp.Proofs.Amd64.Witness.Sites
+import FvModexp.Spec.WitSitesAmd64
 
 /-!
 # Row 1, amd64, error path: `Run` on call data that fails EIP-7823 returns `(nil, err)`
@@ -114,13 +115,13 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : 
     LengthsFail (bytesAt s.mem p.toNat len.toNat) ∧
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.rip = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.makeslice") ∧
-      mkSite R (Extracted.program.contractAddr "runtime.makeslice") L b s_c) ∧
+      WitSitesAmd64.mkSite R (Extracted.program.contractAddr "runtime.makeslice") L b s_c) ∧
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.rip = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.memmove") ∧
-      mvSite R (Extracted.program.contractAddr "runtime.memmove") L b s_c) ∧
+      WitSitesAmd64.mvSite R (Extracted.program.contractAddr "runtime.memmove") L b s_c) ∧
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.rip = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.newobject") ∧
-      noSite R (Extracted.program.contractAddr "runtime.newobject") L b s_c) ∧
+      WitSitesAmd64.noSite R (Extracted.program.contractAddr "runtime.newobject") L b s_c) ∧
     Returns ((Extracted.program.link impl).withExit ret) s fun s' =>
       ABIReturn s s' ∧ (RunAmd64.ErrRet s' ∧
         RunAmd64.Frame R b (3 * RunAmd64.blockBound 64 + RunAmd64.blockBound 16) L s s') :=
