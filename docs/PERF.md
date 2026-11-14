@@ -2072,3 +2072,11 @@ bind the SOURCE range, not the target — ascribe the result type instead.
   round 8 I1): the old amd64 RunOkRow statement; RunSucc amd64 = twin not yet written (top). MISSING: `Run` (amd64 row-1 line, status todo).
 * Dev compile (top s48, amd64 P2W4 entry chain, overlay of divmc dev031): Defs 6 s, EnA 51-61 s, EnG 22 s, EnG2 26 s, EnJ 15 s, EnCtx 1 s,
   Ent 53 s (4.6 GB).
+
+## asm s71 (dev compile amd64, load ~15): P2DLsh 9.0 s/2.6 GB, P2DFull 2.4 s/2.4 GB, P2DE 1.3 s/2.3 GB, P2DRow 17.6 s/3.2 GB.
+P2DFull trim: 264 s/10.2 GB → 1.7 s/2.3 GB. Cause: ~35 `by omega` side conditions inside `sumF`'s big context (CPre
+destructured, `∨` window facts `hxw`/`hyw`); all moved into four numeric lemmas (`nKF`, `nE`, `nZ`, `tz64`/`m64`/`lm_ab`)
+called once with explicit premises, the rest closed by `Nat.sub_le` / `Nat.sub_pos_of_lt` / named facts.
+P2DRow trim: 72 s → 18 s. Cause: the witness `pre`'s `repeat' (first | exact inv1 _ | …)` tried each failing `exact`
+against the budget goal `P2D.costP … ≤ BW`, and every failed unification unfolded `costP` (supTo over 9 window costs);
+fixed by proving the budget once and `generalize`-ing the `costP` term to a variable before the repeat.
