@@ -31,6 +31,14 @@ theorem esl_of (hP : EPre R b L K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml 
     (k _ (by omega) (by omega)).trans hm1, (k _ (by omega) (by omega)).trans hm2,
     (k _ (by omega) (by omega)).trans hm3, a2, a3, a4, a5, a6⟩
 
+/-- the stack header's capacity word survives a write to the window ranges `FWp` -/
+theorem capW (hP : EPre R b L K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml mc s) {M : Memory}
+    (hF : MemFrame s.mem M (FWp sp)) : stCap M st = stCap s.mem st := by
+  obtain ⟨hK1, hK2, hK3, hK4, hK5⟩ := hP.kf
+  obtain ⟨hstw, -⟩ := hP.stkF
+  unfold Apart at hstw
+  exact hF.readLE _ _ (by simp only [FWp, outside_cons, outside_nil, and_true]; omega)
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
 /-- the `makeslice(Word, n, c)` call of the prologue and its return run (`runM1` / `runMN`) → `KS` -/
@@ -40,7 +48,7 @@ theorem mkSeg {impl : List Amd64.Segment} (hmk : MakesliceLiveContract64 (LibW.p
     (hn1 : n = xl) (hbud : makeCost xl ≤ b)
     (KSc : ∀ (S : State) (L1 : List (Nat × Nat)) (b1 pZ cZ : Nat),
       KS R L K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml mc s S L1 b1 pZ cZ →
-      b - makeCost xl ≤ b1 → ReachesRet (LibW.program.link impl) ret0 S Q)
+      stCap S.mem st = stCap s.mem st → b - makeCost xl ≤ b1 → ReachesRet (LibW.program.link impl) ret0 S Q)
     (T : State) (M : Memory) (hpc : T.rip = BitVec.ofNat 64 mkE) (h4 : T.regs 4 = BitVec.ofNat 64 (sp - 8))
     (h0 : T.regs 0 = BitVec.ofNat 64 7233184) (h3 : T.regs 3 = BitVec.ofNat 64 n) (h1 : T.regs 1 = BitVec.ofNat 64 c)
     (h14 : T.regs 14 = BitVec.ofNat 64 g) (hfs : T.fsBase = s.fsBase) (hx : T.xmm 15 = s.xmm 15) (hdf : T.df = s.df)
@@ -65,6 +73,10 @@ theorem mkSeg {impl : List Amd64.Segment} (hmk : MakesliceLiveContract64 (LibW.p
   refine mkCall hmk hP hw hn hc0 hc17 hbs T hpc h4 h14 hm (by rw [hra]; split <;> decide) h0 h3 h1
     (fun ptr junk fl x yh m zh kr hA => ?_)
   obtain ⟨t4, t14, tfs, tx, tdf, tpc, tm⟩ := @rs_regs T junk [ptr] fl x yh m zh kr
+  have ecap : stCap m st = stCap s.mem st := by
+    obtain ⟨hstw, -⟩ := hP.stkF
+    unfold Apart at hstw
+    exact (hA.rdH (st + 16) 8 (hw.sok.2.1.sub (by omega) (by omega)) (by unfold Apart; omega)).trans (capW hP hF)
   have kA : ∀ a k, sp + 24 ≤ a → a + k ≤ sp + 0x220 → m.readLE a k = M.readLE a k := fun a k h1 h2 =>
     hA.keep a k (Or.inr ⟨h1, h2⟩)
   have hsl' : ESl m sp st bp r zp xp xl xc yp yl yc mp ml mc :=
@@ -99,7 +111,7 @@ theorem mkSeg {impl : List Amd64.Segment} (hmk : MakesliceLiveContract64 (LibW.p
       hsl'.2.2.2.2.2.2.2.2.2.2.1 hsl'.2.2.2.2.2.2.2.2.2.2.2.1 hsl'.2.2.2.2.2.2.2.2.2.2.2.2 _ (by rw [hrpc]; rfl) hr4 tm ?_
     intro S3 epc e4 em e0 e1 e2 e8 e6 e7 e9 e14 efs ex edf
     refine KSc S3 _ _ ptr.toNat 1 ⟨hjc S3 e4 (e14.trans t14) (efs.trans tfs) (ex.trans tx) (edf.trans tdf) em, epc,
-      by rw [em]; exact hdl, Nat.le_refl _, by rw [e0, rs_r0, hptr], e1, e2, e8, e6, e7, e9⟩ hb'
+      by rw [em]; exact hdl, Nat.le_refl _, by rw [e0, rs_r0, hptr], e1, e2, e8, e6, e7, e9⟩  (by rw [em]; exact ecap) hb'
   · have ec : c = xl + 4 := by rw [hc]; unfold makeCap; rw [if_neg h1x]
     subst ec
     have hn' : n = xl := hn1
@@ -108,7 +120,7 @@ theorem mkSeg {impl : List Amd64.Segment} (hmk : MakesliceLiveContract64 (LibW.p
       ((kA (sp + 0x68) 8 (by omega) (by omega)).trans (r68 h1x)) _ (by rw [hrpc, if_neg h1x]) hr4 tm ?_
     intro S3 epc e4 em e0 e1 e2 e8 e6 e7 e9 e14 efs ex edf
     refine KSc S3 _ _ ptr.toNat (xl + 4) ⟨hjc S3 e4 (e14.trans t14) (efs.trans tfs) (ex.trans tx) (edf.trans tdf) em,
-      epc, by rw [em]; exact hdl, by omega, by rw [e0, rs_r0, hptr], e1, e2, e8, e6, e7, e9⟩ hb'
+      epc, by rw [em]; exact hdl, by omega, by rw [e0, rs_r0, hptr], e1, e2, e8, e6, e7, e9⟩  (by rw [em]; exact ecap) hb'
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
@@ -121,7 +133,7 @@ theorem segE {impl : List Amd64.Segment} (hmk : MakesliceLiveContract64 (LibW.pr
     {ret0 : W64} {Q : State → Prop}
     (KSc : ∀ (S : State) (L1 : List (Nat × Nat)) (b1 pZ cZ : Nat),
       KS R L K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml mc s S L1 b1 pZ cZ →
-      b - makeCost xl ≤ b1 → ReachesRet (LibW.program.link impl) ret0 S Q) :
+      stCap S.mem st = stCap s.mem st → b - makeCost xl ≤ b1 → ReachesRet (LibW.program.link impl) ret0 S Q) :
     ReachesRet (LibW.program.link impl) ret0 s Q := by
   obtain ⟨hK1, hK2, hK3, hK4, hK5⟩ := hP.kf
   have hE := hP.1
@@ -145,7 +157,7 @@ theorem segE {impl : List Amd64.Segment} (hmk : MakesliceLiveContract64 (LibW.pr
     subst mS
     refine KSc S' L b zp zc ⟨⟨spS, e14, by rw [efs]; exact hE.2.2.1, ex.trans hE.2.2.2.1, edf.trans hE.2.2.2.2.1,
       hw, esl_of hP hF a1 a2 a3 a4 a5 a6⟩, pcS, dl_reuse hP hF (by omega), hle, e0, e1, e2, e8, e6, e7, e9⟩
-      (Nat.sub_le _ _)
+      (capW hP hF) (Nat.sub_le _ _)
   · intro S' M' pcS spS hlt h1x e0 e3 e1 e14 efs ex edf mS hF hrg rra a1 a2 a3 a4 a5 a6
     subst h1x
     exact mkSeg hmk hP (n := 1) (c := 1) rfl (Nat.le_refl _) (Nat.le_refl _) rfl hbud KSc S' M' pcS spS e0 e3 e1 e14 efs ex edf mS hF hrg
