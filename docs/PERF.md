@@ -2156,3 +2156,16 @@ RunSucc FAIL 421/978.
   chain (22 modules) dropped from the closure: CalleeInstE no longer imports it). Without the audit bug (JANUS-ISSUES
   "[asm s79] PERF", audit ≈ 31 % of the row) EvenRow would be ≈ 500 s; with it the row is over the 600 s margin.
 * Dev compile: ModInvRow 10.4 s / 3.3 GB, SlowRow 10.9 s / 3.8 GB.
+
+## asm s81 (2026-11-14): arm64 old Nat_DrsRow trim (Janus v0.3.3, ROWS=1, JANUS_TIMINGS=1, snapshot cache-asm/snap81 = agent/asm f1b0e2c1, lower rows StackNat..DivBasicRow warmed in rc81)
+* Diagnosis (dev `lean -o` of the 208 own modules, LEAN_NUM_THREADS=4, 3 at once): sum 1450 s, critical path 185 s → the row's
+  own compile (rel47: 429 s wall / 2335 s cpu) is THROUGHPUT-bound, not chain-bound. 839 s of the 1450 s (58 %) is the old
+  `nat.mul` closure (81 modules Mul*/KMul*/KSqr*: MulBM 63 s, KMulPC 50, MulOne 42, MulKar 39, MulSwap 38, …), which DrsRow owned
+  since divmc s49 retired the old Nat/MulRow (the closure is still imported by DrsRow and by the Exp rows via EvMulG → MulHypX).
+* Changes: (1) chain cut Nat/DrsSegD (52 shared decls moved verbatim; dev crit 185 → 164 s; segment depth 48 → 40, the rest is the
+  B/A/SN/Rel base chain); (2) `arm64 Nat/MulRow` reinstated in release-rows right before `arm64 Nat/DrsRow`.
+| row | own | compile | audit | replay | total |
+|---|---|---|---|---|---|
+| arm64 Nat/MulRow (reinstated) | 81 | 253 s | 14 s | 127 s | **PASS 400 s** |
+| arm64 Nat/DrsRow | 128 (was 207) | 212 s (was 429) | 20 s | 121 s (was 218) | **PASS 357 s** (rel47: 674 s) |
+  Load 10-17. Total release work is unchanged (the mul closure is paid once either way, +1 row overhead ≈ 15 s); both rows ≤ 550 s.
