@@ -1,5 +1,4 @@
-import FvModexp.Proofs.Amd64.Exp.W4One
-import FvModexp.Proofs.Amd64.Exp.W4ExS
+import FvModexp.Proofs.Amd64.Exp.W4Posts2
 import FvModexp.Proofs.Amd64.Nat.StackNatDefs
 import FvModexp.Proofs.Amd64.Nat.Callees2
 
@@ -19,32 +18,6 @@ open Janus.Contracts.EqHashModel
 namespace FvModexp.Amd64.W4Pro
 
 open FvModexp.Amd64.W4Loop (Env Inp Buf OneIn)
-
-/-- the free part of the stack's array -/
-@[reducible] def stFree (M : Memory) (st : Nat) : Nat × Nat :=
-  (stW M st + 8 * stLen M st, 8 * (stCap M st - stLen M st))
-
-/-- a stack-nat call of the window-4 frame: the facts at the call -/
-@[reducible] def SnPre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (g fs sp st k : Nat) (M : Memory) : Prop :=
-  CallW.CEnv R L g fs (sp - 8) 4288 968 M ∧ RunIface.Serves R ∧ StkOK M R L st ∧
-  Apart st 24 (sp - 4296) (4296 + 0x3c0) ∧
-  (0 < stCap M st → Apart (stW M st) (8 * stCap M st) (sp - 4296) (4296 + 0x3c0) ∧
-    Apart (stW M st) (8 * stCap M st) (g + 16) 8) ∧
-  k ≤ 2 ^ 16 ∧ stLen M st + k + 3 ≤ 2 ^ 16 ∧ stackNatCost (stLen M st) k ≤ b ∧ R.inv b L g (view R.rt L M) ∧
-  M.accessible StackNat.wbA 4 false = true ∧ Apart st 24 StackNat.wbA 4 ∧ Apart st 24 (stFree M st).1 (stFree M st).2
-
-/-- the callee's post in memory form -/
-@[reducible] def SnPost (R : RtInv) (b : Nat) (L L' : List (Nat × Nat)) (b' g sp st k : Nat) (M M' : Memory) : Prop :=
-  LiveExt R L L' ∧ b - stackNatCost (stLen M st) k ≤ b' ∧ R.inv b' L' g (view R.rt L' M') ∧ StkOK M' R L' st ∧
-  stLen M' st = stLen M st + StackNat.rnd k ∧
-  (stLen M st + StackNat.rnd k ≤ stCap M st → stW M' st = stW M st ∧ stCap M' st = stCap M st) ∧
-  (stCap M st < stLen M st + StackNat.rnd k → InRanges (stW M' st) (8 * stCap M' st) R.rt ∧
-    ApartAll (stW M' st) (8 * stCap M' st) L) ∧
-  MemFrame M M' (R.rt ++ [(sp - 8 - 4192, sp - 8 + 24)] ++ stkWs M st) ∧ LiveFrame M M' L (stkWs M st) ∧
-  M'.regions = M.regions ∧
-  (stCap M st < stLen M st + StackNat.rnd k → (stW M' st, stW M' st + 8 * stCap M' st) ∈ L')
-
-theorem snE_eq : segAddr Extracted.program StackNat.fn = snE := by decide
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in

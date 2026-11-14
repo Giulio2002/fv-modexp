@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Amd64.Exp.W4Posts2
 import FvModexp.Proofs.Amd64.Exp.W4Loop
 import FvModexp.Proofs.Amd64.Exp.W4Tail
 import FvModexp.Proofs.Amd64.Exp.W4ZcA
@@ -18,32 +19,6 @@ open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Contracts FvMo
 namespace FvModexp.Amd64.W4Pro
 
 open FvModexp.Amd64.W4Loop (Env Inp Buf Bufs Mem Static OneIn FinEnv TailPost step FL)
-
-/-- the window-4 value from the first window: `outerLoop` over the remaining bits of `y` -/
-abbrev zjVal (n Mv k0 : Nat) (tbl : Nat → Nat) (Y ylen yi : Nat) : Nat :=
-  Exp.outerLoop 4 (step n Mv k0 tbl) Y 16 (ylen - 1) ((yi * 2 ^ (64 - kTop yi * 4)) % 2 ^ 64) (kTop yi)
-    (tbl (yi / 2 ^ (kTop yi * 4)))
-
-/-- what `zj → RET` establishes: the anchor `M0` (frame from `M`), the exit buffers and `TailPost` -/
-@[reducible] def ZjPost (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (g fs sp n mp yp ylen zp zc zzp zzc : Nat)
-    (k0 : Nat) (pp : Nat → Nat) (V : Nat) (st n0 onep bp : Nat) (M : Memory) (s' : State) : Prop :=
-  ∃ (M0 : Memory) (zp' zc' zzp' zzc' : Nat) (Mx : Memory),
-    ((zp' = zp ∧ zc' = zc ∧ zzp' = zzp ∧ zzc' = zzc) ∨ (zp' = zzp ∧ zc' = zzc ∧ zzp' = zp ∧ zzc' = zc)) ∧
-    MemFrame M M0 (R.rt ++ cw sp ++ [(zp, zp + 8 * n)]) ∧ LiveFrame M M0 L [(zp, zp + 8 * n)] ∧
-    M0.regions = M.regions ∧
-    Bufs R L g fs sp n mp yp ylen pp [(onep, 8 * n), (st, 24)] M0 zp' zc' zzp' zzc' ∧
-    Mem R b L g sp M0 Mx zp' zc' zzp' zzc' ∧ Mx.readLE zp' (8 * n) = V ∧
-    TailPost R b L g fs sp n mp k0 st n0 bp zp' zc' zzp' zzc' M0 Mx s'
-
-theorem buf_frame {R : RtInv} {L : List (Nat × Nat)} {g fs sp n p c : Nat} {M M' : Memory} {ws : List (Nat × Nat)}
-    (h : Buf R L g fs sp n M p c) (hf : MemFrame M M' ws) : Buf R L g fs sp n M' p c := by
-  obtain ⟨a1, a2, a3, a4⟩ := h
-  exact ⟨a1, a2, by rw [hf.accessible]; exact a3, a4⟩
-
-theorem inp_frame {R : RtInv} {L : List (Nat × Nat)} {sp n p : Nat} {M M' : Memory} {ws : List (Nat × Nat)}
-    (h : Inp R L sp n M p) (hf : MemFrame M M' ws) : Inp R L sp n M' p :=
-  ⟨by rw [hf.accessible]; exact h.1, h.2⟩
-
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in

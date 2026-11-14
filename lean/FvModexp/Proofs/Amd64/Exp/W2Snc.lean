@@ -1,5 +1,4 @@
 import FvModexp.Proofs.Amd64.Exp.W2Posts2
-import FvModexp.Proofs.Amd64.Exp.W2ExS
 import FvModexp.Proofs.Amd64.Nat.StackNatDefs
 import FvModexp.Proofs.Amd64.Nat.Callees2
 

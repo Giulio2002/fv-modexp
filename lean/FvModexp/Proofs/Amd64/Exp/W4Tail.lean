@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Amd64.Exp.W4Posts
 import FvModexp.Proofs.Amd64.Exp.W4ExC
 import FvModexp.Proofs.Amd64.Exp.W4Fin
 import FvModexp.Proofs.Common.ExpFinal
@@ -64,15 +65,6 @@ theorem finEnv_chain {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {g sp n zp zc
     by rw [slot _ (by omega)]; exact r340, by rw [slot _ (by omega)]; exact r348, by rw [slot _ (by omega)]; exact r350,
     hst1, by rw [acc_chain hM hJ]; exact hsta, by rw [stR _ _ (by omega) (by omega)]; exact hn0,
     by unfold Apart; omega, by rw [slot _ (by omega)]; exact r380, by rw [slot _ (by omega)]; exact r388, hr47⟩
-
-/-- what the return state satisfies, from the loop exit (memory `M`) -/
-@[reducible] def TailPost (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (g fs sp n mp k0 st n0 bp zp zc zzp zzc : Nat)
-    (M0 M : Memory) (s' : State) : Prop :=
-  ∃ (M' Mj : Memory) (p l c : Nat), Mem R b L g sp M0 M' zp zc zzp zzc ∧
-    M'.readLE zzp (8 * n) = Exp.montgomery n (M.readLE zp (8 * n)) 1 (M0.readLE mp (8 * n)) k0 ∧
-    JoinPost R b L g sp n zzp zzc
-      (if M0.readLE mp (8 * n) ≤ M'.readLE zzp (8 * n) then 0 else M'.readLE zzp (8 * n)) M' p l c Mj ∧
-    FinPost sp g fs st n0 bp p (Expmc.normL Mj p l) c Mj s'
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in

@@ -71,7 +71,7 @@ theorem bud3 {x y b : Nat} (h : x + y ≤ b) : x ≤ b := by omega
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem lshStep {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
+theorem lshStep (hRR : FvModexp.Amd64.W4Pro.RRSpec) {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
     (hclr : MemclrNoHeapPointersLive64 (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
@@ -145,7 +145,7 @@ theorem lshStep {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.pro
     rw [e0', e1', e2', k0, k1, k2]; exact hrB
   have sl := fun j h1 h2 => slot_lsh (j := j) hD hrt hK8 hKL h1 h2
   have hlenE : stLen S2.mem st = stLen M st := by rw [e1', k1]
-  refine ReachesRet.mono (sn2Step hap hclr hmv hmk hwt hro hSN hserv hDiv hnsD hnsW hKD hC2 hZ hzzK hzl hzv hzzr
+  refine ReachesRet.mono (sn2Step hRR hap hclr hmv hmk hwt hro hSN hserv hDiv hnsD hnsW hKD hC2 hZ hzzK hzl hzv hzzr
     hrL2 hrW hrG hrF hrS hrB2
     ((sl 0x190 (by decide) (by decide)).trans q190) ((sl 0xa8 (by decide) (by decide)).trans qa8)
     ((hk2.2.2.2.2.1 0xd8 (by decide)).trans ((hk1.2.2.2.2.1 0xd8 (by decide)).trans rd8))
