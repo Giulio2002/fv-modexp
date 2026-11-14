@@ -73,6 +73,7 @@ amd64 NatQ/RemRowQ
 amd64 Int/ModRow
 amd64 Exp/W4Row
 amd64 Exp/W2Row
+amd64 Exp/P2W2Row
 # ---- amd64 Top rows (last) ----
 amd64 Top/RunErr
 amd64 Top/RunOkRow
