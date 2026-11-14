@@ -96,6 +96,15 @@ theorem XFacts.ext {R : RtInv} {L L' : List (Nat × Nat)} {x xl xc : Nat} (h : L
   s.mem.readLE ((s.regs 4).toNat + k + 8) 8 = p ∧ s.mem.readLE ((s.regs 4).toNat + k + 16) 8 = l ∧
     s.mem.readLE ((s.regs 4).toNat + k + 24) 8 = c
 
+/-- the amd64 exp-chain extra facts `ExpN.XG` (coordinator DECISION, NOTES-conventions) at a callee entry memory `m`:
+`x` (and the `natOne` word) apart from the threshold globals `gA`, `hasADX` readable, `x`'s full capacity readable and
+apart from the stack header and the stack's free part (`freeOf` ≡ `W4En.free`, same body) -/
+@[reducible] def XGc (m : Memory) (st xp xl xc : Nat) : Prop :=
+  (0 < xl → Apart xp (8 * xl) RunIface.gA 32) ∧ Apart (m.readLE EvenHyp.natOneA 8) 8 RunIface.gA 32 ∧
+  m.accessible Callees.adxAddr 1 false = true ∧
+  m.accessible xp (8 * xc) false = true ∧ Apart xp (8 * xc) st 24 ∧
+  Apart xp (8 * xc) (freeOf m st).1 (freeOf m st).2
+
 /-! ## `z.rem(stk, u, v)` (natdiv.go:505); result `U % V` -/
 
 def RemHyp (impl : List Amd64.Segment) (R : RtInv) (ns : List String) (stk above : Nat)
@@ -144,7 +153,8 @@ def P2Hyp (impl : List Amd64.Segment) (R : RtInv) (ns : List String) (stk above 
         0 < natVal s.mem x.toNat xl.toNat ∧ 0 < natVal s.mem y yl ∧ 1 ≤ lm.toNat ∧ lm.toNat ≤ 2 ^ 13 ∧
         0 < st.toNat ∧
         ∃ op, EvenHyp.NatOne R L s.mem op (win s stk above ++ [(z.toNat, z.toNat + 8 * zc.toNat)] ++
-            stWs s.mem st.toNat) ∧ StkApart s.mem st.toNat op 8) ∧ xl.toNat ≤ xc.toNat ∧ xc.toNat < 2 ^ 40)
+            stWs s.mem st.toNat) ∧ StkApart s.mem st.toNat op 8) ∧ xl.toNat ≤ xc.toNat ∧ xc.toNat < 2 ^ 40 ∧
+        XGc s.mem st.toNat x.toNat xl.toNat xc.toNat)
       (fun s s' => CPostR R b L stk above z.toNat zc.toNat st.toNat
         (natVal s.mem x.toNat xl.toNat ^ natVal s.mem y yl % 2 ^ lm.toNat)
         (cost (stLen s.mem st.toNat) xl.toNat yl lm.toNat) s s')

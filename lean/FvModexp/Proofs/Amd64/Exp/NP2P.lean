@@ -121,7 +121,7 @@ theorem p2Path (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.prog
   have hP' := hP
   obtain ⟨⟨hs4, hs14, hsfs, -, hsdf, hK1, hK2, hce, -⟩, -, -, -, -, -, -, -, -, -, -, -,
     hn, hn128, -, hmc, hmO, hma, hm48, hmN, hyO, -, hy48, hyN, hyl, hyc, hxO, -, hx48, hxN, hxl, hxlc, hxc, -, -, -, -,
-    -, ⟨op, hOne, hSA⟩, hst0, hst48, hsok, hstw, -, -, harr, hc0, -, -, -, -, -, -, -, -, hnP, hbud, -⟩ := hP'
+    -, ⟨op, hOne, hSA⟩, hst0, hst48, hsok, hstw, -, -, harr, hc0, -, -, -, -, -, -, -, -, hnP, hbud, -, -, hXG⟩ := hP'
   obtain ⟨hal, hK0, hA0, hacc, -, -, -, hwrt, -, -, hLs, -⟩ := hce
   have hs : (s.regs 4).toNat = sp + 0x498 := by rw [hs4, BitVec.toNat_ofNat]; omega
   have hrw := rw_of hK0 hwrt
@@ -183,12 +183,13 @@ theorem p2Path (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.prog
   have hS's : (S'.regs 4).toNat = sp + 0x388 := by rw [hS'sp, BitVec.toNat_ofNat]; omega
   have kf : ∀ a k, sp + 0x3f8 ≤ a → S'.mem.readLE a k = S.mem.readLE a k := fun a k ha =>
     hMF.readLE a k (by simp only [outside_cons, outside_nil, and_true]; omega)
+  have hOne' := natOne_at hOne hSA hF0' hLF0' hx1 hS's hstk hK0 hZA (by omega) ew el ec
   refine callC impl hap hns hnf ret0 hret F (bp := bp) hs hK0 (by omega) hA0 hLs hrw hsok hstw hF0' hLF0' hx1
     hb1 hZA hstk (e14.trans h14) (efs.trans hfsS) (edf.trans hdfS) ?_ ?_
     (Or.inr (Or.inr (Or.inr (Or.inl rfl)))) (by simp [numIntRegs]) hE
     (by rw [e_rip, show segAddr Extracted.program NHyp.fnP2 = p2A by decide]) hS'sp
     (by rw [← show sp + 0x498 - 0x110 = sp + 0x388 by omega]; exact hra') (ex15.trans hx15)
-    (edf.trans (hdfS.trans hsdf)) ?_ ⟨?_, ⟨?_, ?_, ?_, by omega, by omega, by omega, ?_⟩, hxlc, hxc⟩
+    (edf.trans (hdfS.trans hsdf)) ?_ ⟨?_, ⟨?_, ?_, ?_, by omega, by omega, by omega, ?_⟩, hxlc, hxc, ?_⟩
     (fun s' h => ⟨h.1, h.2.1, cpostG_of hzq h⟩)
     (by rw [ec, ew]; intro hc; exact (harr hc).1) (by rw [ec, ew]; exact hc0)
     (by rw [el, ec]; exact hsok.2.2.2.2.2.1)
@@ -213,6 +214,10 @@ theorem p2Path (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.prog
       (by rw [← hlog]; exact hnP) (by rw [el, ← hlog]; omega)
   · rw [hrdx]; exact val_pos hxN hxl0
   · rw [hrdy]; exact val_pos hyN hyl0
-  · exact ⟨op, natOne_at hOne hSA hF0' hLF0' hx1 hS's hstk hK0 hZA (by omega) ew el ec⟩
+  · exact ⟨op, hOne'⟩
+  · obtain ⟨xa, xn, xd, xacc, xst, xfr⟩ := hXG
+    refine ⟨xa, by rw [hOne'.1.1, ← hOne.1]; exact xn, by rw [hF0'.accessible]; exact xd,
+      by rw [hF0'.accessible]; exact xacc, xst, ?_⟩
+    simp only [NHyp.freeOf, ew, el, ec]; exact xfr
 
 end FvModexp.Amd64.ExpN
