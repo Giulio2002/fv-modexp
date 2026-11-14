@@ -2051,3 +2051,8 @@ P2W2LO 15.6 s. Before/after: B0/B2 with a `first | exact efs | (janus64_simp; do
 P2W2X1 1.1 s, X2 28.8 s, X3 6.9 s, X4 25.8 s, P2W2 1.1 s, P2W2C 4.1 s. No trims needed. Note: one janus64_run
 over the whole exit (until [XJ, mkE, nH]) with the branch facts left to the run, then closing each branch by its
 `hbr` (bit via `bit0W` + `janus_assumption`) was simpler and as fast as pre-splitting on `u`.
+
+### divmc s75 (amd64 callee-instance layer + P2W2 row; dev-compiled, `scripts/dev-lean-divmc.sh -x amd64`, load ~50)
+EnsWiden 0.9 s / 2.0 GB, CalleeInstQ 24.8 s / 4.6 GB (the `by decide` name-list checks), P2W2E 3.3 s / 2.7 GB,
+P2W2Row 16.8 s / 3.0 GB (witness `pre`: one `repeat' (first | exact … | apply And.intro)` pass so `Serves`/`R.inv`
+are closed by name before splitting), P2W2WS 1.0 s / 2.5 GB. No trims needed.
