@@ -115,6 +115,9 @@ theorem spent_succ (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (xl n j : N
   simp only [spent, Nat.add_sub_cancel, sumR_succ]
   omega
 
+theorem zB_le {n j : Nat} (hj : 2 ^ (j - 1) < NW n) : zB n j ≤ NW n + 1 := by
+  unfold zB; split <;> omega
+
 /-! ## Slot stores -/
 
 /-- the slots `[RSP - 144, RSP + 72)` unchanged -/
