@@ -2089,3 +2089,15 @@ call-instance lemmas). Fix: those shared declarations (moved verbatim, names unc
 `Amd64/NatQ/DrsSegD.lean` (dev 6.8 s) that every C*/D*/FC*/FD*/B4D segment imports directly; the aggregators DrsCL/DrsDL/
 DrsFCL/DrsFDL import all their segments. Dev critical path 451 → 274 s (now DrsF2 65 s via FRecP ← … ← LibDivL); dev sum
 1334 → 1250 s. Expected janus own compile ≈ 300 s (was 422) → row ≈ 520 s. To be confirmed by top's next release run.
+## divmc s79 (2026-11-14): amd64 Exp/W2Row + W4Row import-chain cut (statements unchanged) + kernel-cost diagnosis
+* Cut (twin of expmc's arm64 s67): RRSpec (W2Cut/W4Cut), P01Spec + J4Spec (W2PSpec/W4PSpec) as Prop hypotheses,
+  defs hoisted into W2Posts/W2Posts2 (W4 alike), composed in W2Comp/W2RRC.rrSpec/W2FunE. The four segments
+  (prologue entry→divRet, divRet→RET section, table p01pow, j4→RET) now compile independently.
+* Dev critical import path (dev-par J=3, load ~17-21, LEAN_NUM_THREADS=4): W2 382 s → ~200 s (now XnR 30 → XnB 72 →
+  XnJ → … → En 30 → FunE); W4 (full chain) → 171 s. SUM of own modules unchanged: W2 1420-1500 s, W4 1367 s
+  ⇒ Janus own compile (4 at once with JANUS_JOBS=2) is SUM-bound: ≈ 350-380 s per window, not crit-bound any more.
+* Kernel replay (leanchecker per module, P=2): W2 97 modules 1062 cpu-s, W4 99 modules 974 cpu-s (≈ 250 s at 4 at once).
+* Diagnosis: these modules are KERNEL-bound (W2EnA: type checking 60.8 s of 63 s; arm64 W2EnA 16.7 s). ~0.9 s per distinct
+  pc: each pc's `stepOK` is a separate `mkAuxLemma` whose kernel check re-walks `seg.bytes.length` of every preceding
+  segment of LibW.program (73 segments). A/B: the same 29-instruction run on a one-segment program 8.4 s vs 30.3 s.
+  Written up in JANUS-ISSUES.md "[divmc s79] PERF … stepOK aux lemma". A framework fix is the lever for the ≤ 500 s target.
