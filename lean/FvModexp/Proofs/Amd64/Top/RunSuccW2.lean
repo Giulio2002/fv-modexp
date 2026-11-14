@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Top.RunOkRow
+import FvModexp.Spec.RunAmd64X
 
 set_option autoImplicit false
 
@@ -6,8 +7,9 @@ set_option autoImplicit false
 # A real-exponentiation witness state for the amd64 success row (`3^5 mod 7`), prepared for TIGHT COSTS (top s36)
 
 Twin of `Arm64/Top/RunSuccW2.lean`: `Run(c, p, 99, 99)` on the call data with lengths `1, 1, 1`, `B = 3`, `E = 5`,
-`M = 7`, same runtime/window/budget/layout as `Run.WitnessOk`; every precondition conjunct proved except the cost bound
-(`pre2`'s premise `budget2`, discharged once the budget is restored); `compute2`: the EthLib output is `[5]`.
+`M = 7`, same runtime/window/budget/layout as `Run.WitnessOk`, plus a read-only 8-byte region `adxW` covering
+`math/big.hasADX` (`Spec.RunAmd64.CpuOne`, `cpu2`); every precondition conjunct proved except the cost bound
+(`pre2`'s premise `budget2`); `compute2`: the EthLib output is `[5]`.
 -/
 
 open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Spec Janus.Contracts
@@ -29,10 +31,15 @@ def g2 (a : Nat) : Byte :=
   if a = OB + 31 then 1 else if a = OB + 63 then 1 else if a = OB + 95 then 1 else
   if a = OB + 96 then 3 else if a = OB + 97 then 5 else if a = OB + 98 then 7 else 0
 
+/-- `math/big.hasADX` (1 byte, `.noptrbss`) and the read-only 8-byte region of the witness covering it -/
+def adxA : Nat := 0xbb6b8a
+def adxW : Nat := 0xbb6b88
+theorem adx_eq : Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.hasADX» = adxA := by decide
+
 /-- `stdRegs` with the stack region grown to the window `WW` and the globals' regions. -/
 def regs2 : List Janus.Arm64.Region :=
   [⟨SP0 - WW, WW + 0x100, true⟩, ⟨G0, 0x100, false⟩, ⟨T0, 8, false⟩, ⟨OA, 0x1000, true⟩, ⟨OB, 0x1000, true⟩,
-    ⟨BUMP, 0x200, true⟩, ⟨HEAP, HSIZE, true⟩, ⟨gAw, 32, true⟩, ⟨wbAw, 16, true⟩, ⟨nAw, 24, true⟩, ⟨opw, 8, true⟩]
+    ⟨BUMP, 0x200, true⟩, ⟨HEAP, HSIZE, true⟩, ⟨gAw, 32, true⟩, ⟨wbAw, 16, true⟩, ⟨nAw, 24, true⟩, ⟨opw, 8, true⟩, ⟨adxW, 8, false⟩]
 
 abbrev mem2 : Janus.Arm64.Memory := wmem (toyBytes g2) regs2
 
@@ -93,11 +100,19 @@ theorem pool2 : RunAmd64.StackPool R s2.mem (RunAmd64.windowW s2 WW) := by
   · rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide
   · simp only [RunAmd64.windowW, outside_cons, outside_nil, and_true]; decide +kernel
 
+/-- `hasADX` is readable; `natOne`'s word (`opw`) is apart from the thresholds at `gAw` -/
+theorem cpu2 : RunAmd64.CpuOne s2.mem := by
+  dsimp only [RunAmd64.CpuOne]
+  rw [adx_eq, show Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.natOne» = RunIface.natOneA from rfl,
+    op2, show Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.divRecursiveThreshold» = RunIface.gA
+      from rfl, gA_eq]
+  exact ⟨by rw [show s2.mem = wmem (toyBytes g2) regs2 from rfl, acc_eq]; decide +kernel, by simp only [Apart]; decide⟩
+
 theorem pre2 (budget2 : RunAmd64.okBudget (parseLengths (bytesAt s2.mem p2.toNat (99 : BitVec 64).toNat)) ≤ bW) :
     RunAmd64.EnvW R [] s2 WW ∧ RunAmd64.Input R [] c2 p2 99 99 s2 ∧ OsakaReceiver s2.mem c2.toNat ∧
     R.inv bW [] (s2.regs 14).toNat (view R.rt [] s2.mem) ∧ RunAmd64.OkReqs R ∧
     RunAmd64.Globals R s2.mem (RunAmd64.windowW s2 WW) ∧ RunAmd64.NatOne R s2.mem (RunAmd64.windowW s2 WW) ∧
-    RunAmd64.StackPool R s2.mem (RunAmd64.windowW s2 WW) ∧
+    RunAmd64.StackPool R s2.mem (RunAmd64.windowW s2 WW) ∧ RunAmd64.CpuOne s2.mem ∧
     RunAmd64.okBudget (parseLengths (bytesAt s2.mem p2.toNat (99 : BitVec 64).toNat)) ≤ bW ∧
     LengthsPass (bytesAt s2.mem p2.toNat (99 : BitVec 64).toNat) := by
   refine ⟨⟨⟨⟨?_, ?_, ?_⟩, ⟨?_, ?_, ?_⟩, by decide, dataLoaded _ _, ?_, ?_, ?_, fun r hr => by simp at hr, roOut,
@@ -106,7 +121,7 @@ theorem pre2 (budget2 : RunAmd64.okBudget (parseLengths (bytesAt s2.mem p2.toNat
     ⟨by decide +kernel, by decide +kernel, by decide +kernel⟩, inv2 _,
     ⟨fun _ _ _ _ => trivial, fun _ _ _ _ => trivial, fun _ _ _ => trivial, fun _ _ _ _ _ _ => trivial,
       fun _ => trivial, fun _ => trivial, fun _ => trivial, fun _ => trivial, fun _ => trivial⟩,
-    globals2, one2, pool2, budget2, pass2⟩
+    globals2, one2, pool2, cpu2, budget2, pass2⟩
   all_goals first
     | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
     | (simp only [RunAmd64.window, outside_cons, outside_nil, and_true]; decide +kernel)
