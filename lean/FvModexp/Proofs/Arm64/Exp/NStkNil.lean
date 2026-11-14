@@ -1,6 +1,4 @@
-import FvModexp.Proofs.Arm64.Exp.NDefs
-import FvModexp.Proofs.Common.BitLemmas
-import FvModexp.Proofs.Arm64.Nat.Free
+import FvModexp.Proofs.Arm64.Exp.NStkNilD
 
 /-!
 # `nat.expNN` (arm64), `stk == nil`: `J2` = fn+0x114 → `sync.(*Pool).Get` entry (`getStack()`)
@@ -13,9 +11,6 @@ and of `z` (`SP' + 208, 152, 168`), then `CALL sync.(*Pool).Get(&stackPool)` (st
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvModexp
 
 namespace FvModexp.Arm64.ExpN
-
-/-- `sync.(*Pool).Get` -/
-abbrev getA : Nat := Extracted.program.contractAddr "sync.(*Pool).Get"
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in

@@ -1,6 +1,5 @@
 import FvModexp.Proofs.Arm64.Exp.NNilC
 import FvModexp.Proofs.Arm64.Exp.NNilG
-import FvModexp.Proofs.Arm64.Exp.NNilJ
 
 /-!
 # `nat.expNN` (arm64), `stk == nil`: from the `Get` return to the downstream chain

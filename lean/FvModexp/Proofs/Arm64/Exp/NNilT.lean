@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Arm64.Exp.NGet
+import FvModexp.Proofs.Arm64.Exp.NNilTD
 
 /-!
 # `nat.expNN` (arm64), `stk == nil`, the pool gave a stack: `Get`'s return fn+0x234 → `nat.rem` entry | `J5`
@@ -13,9 +13,6 @@ else `J5`. Continuation form.
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvModexp
 
 namespace FvModexp.Arm64.ExpN
-
-/-- `nat.expNN.deferwrap1`'s entry (the closure's code word, `SP' + 216`) -/
-abbrev dwA : Nat := 1788272
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
@@ -75,8 +72,8 @@ theorem getT (impl : List Segment) (ret0 : Nat) (hret : RetAddr (LibN.program.li
   janus_run [r208, r152, r168, r296, r304, r312, r320, r328, r336, r344, r352, r360, r368] until [1806400, 1787348]
   all_goals (try simp (disch := omega) only [Memory.readLE_writeLE_of_disjoint] at *)
   all_goals first
-    | (refine KR (by omega) (by janus_assumption) _ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_)
     | (refine KD (by omega) _ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_)
+    | (refine KR (by omega) (by janus_assumption) _ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_)
   all_goals first | (janus_simp; done) | skip
   all_goals first
     | (repeat (first

@@ -1,5 +1,5 @@
 import FvModexp.Proofs.Arm64.Exp.NEpi
-import FvModexp.Proofs.Arm64.Exp.NNilT
+import FvModexp.Proofs.Arm64.Exp.NNilTD
 
 /-!
 # `nat.expNN` (arm64), `stk == nil`: the epilogue with the deferred `stk.free()` (defer flag byte `SP' + 126` = 1)

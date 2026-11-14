@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Arm64.Exp.NFunN
+import FvModexp.Proofs.Arm64.Exp.NFunNFD
 import FvModexp.Proofs.Arm64.Exp.NJ1NE
 import FvModexp.Proofs.Arm64.Exp.NProE
 import FvModexp.Proofs.Arm64.Exp.NHypMono
@@ -38,14 +39,6 @@ theorem DHyps.monoS {impl : List Segment} {R : RtInv} {K : Nat} {costF : Nat →
   { mkN := H.mkN, clr := H.clr, mv := H.mv, mkO := H.mkO, gr := H.gr, wb := H.wb, div := H.div, hnsD := H.hnsD,
     hnsW4 := H.hnsW4, hnsW2 := H.hnsW2, hKD := H.hKD, slow := H.slow.mono hn hc, hnsS := H.hnsS, hn11S := H.hn11S,
     hKS := H.hKS, p2 := H.p2, hnsP := H.hnsP, hn11P := H.hn11P, hKP := H.hKP }
-
-/-- the precondition, `stk == nil`, every modulus (arguments `[z, zl, zc, st, x, xl, xc, y, yl, yc, m, n, mc, slow]`) -/
-def PreNF (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K : Nat) (costF : Nat → Nat → Nat → Nat)
-    (needR : Nat → Nat → Nat) (costR : Nat → Nat → Nat → Nat) (needS needP : Nat → Nat → Nat → Nat)
-    (costS costP : Nat → Nat → Nat → Nat → Nat)
-    (zp zl zc st xp xl xc yp yl yc mp n mc slow : Nat) (s : State) : Prop :=
-  PreNil R b L K costF needR costR needS needP costS costP (s.regs 28).toNat (s.sp.toNat - 1312) zp zl zc st xp xl xc
-    yp yl yc mp n mc slow s ∧ NHyp.XFacts R L xp xl xc
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in

@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Arm64.Exp.NNilSN
+import FvModexp.Proofs.Arm64.Exp.NNilS
 import FvModexp.Proofs.Arm64.Exp.NNilNE
 import FvModexp.Proofs.Arm64.Exp.NNilJE
 import FvModexp.Proofs.Arm64.Exp.NNilCE
