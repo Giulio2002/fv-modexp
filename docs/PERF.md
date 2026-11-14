@@ -2051,3 +2051,9 @@ P2W2LO 15.6 s. Before/after: B0/B2 with a `first | exact efs | (janus64_simp; do
 P2W2X1 1.1 s, X2 28.8 s, X3 6.9 s, X4 25.8 s, P2W2 1.1 s, P2W2C 4.1 s. No trims needed. Note: one janus64_run
 over the whole exit (until [XJ, mkE, nH]) with the branch facts left to the run, then closing each branch by its
 `hbr` (bit via `bit0W` + `janus_assumption`) was simpler and as fast as pre-splitting on `u`.
+
+## asm s68 (dev compile amd64, load ~17): P2DWS 0.9 s, P2DWinR 17.6 s/2.2 GB, P2DWin 7.8 s/2.3 GB, P2DSumO 1.7 s/2.1 GB, P2DW2 2.7 s/2.6 GB.
+P2DWin trim: 370 s/9.5 GB → 7.8 s. Cause: a top-level disjunction hypothesis (`hr : r = w2R ∨ r = w4R`) in a large
+context made every `omega` case-split (one omega 366 s); stated as `r ∈ [w2R, w4R]` instead (omega ignores it), and the
+tail's side conditions moved into small numeric lemmas (nW/nK/nB/nS). Also: named args `(a := …)` on `Outside.of_sub`
+bind the SOURCE range, not the target — ascribe the result type instead.
