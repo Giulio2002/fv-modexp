@@ -186,10 +186,23 @@ theorem rd4a0 {M : Memory} {sp o v : Nat} (hs : 0x4a0 ≤ sp) (h : M.readLE (sp 
   rw [show sp - 0x4a0 + (0x4a0 + o) = sp + o by omega]; exact h
 
 set_option maxRecDepth 20000 in
+/-- `ExpN.XG` at a call memory `M` (a `WC` point) from the entry's -/
+theorem xg_at (hP : EPre R b L K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml mc s)
+    (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ) (hXC : XC R L sp K st s.mem xp xc)
+    (hXG : ExpN.XG s.mem st xp xl xc) : ExpN.XG M st xp xl xc := by
+  have hk := hP.kf
+  obtain ⟨op, ⟨n0, -⟩, -, ⟨e0, -⟩, -⟩ :=
+    natOne_at hP h (stk := 0) (above := 0) (lo := sp) (hi := sp) (Nat.zero_le _) (by decide) (by omega) (by omega)
+  obtain ⟨xa, xn, xd, xacc, xst, xfr⟩ := hXG
+  exact ⟨xa, by rw [n0, ← e0]; exact xn, by rw [h.fr.accessible]; exact xd, by rw [h.fr.accessible]; exact xacc, xst,
+    free_apart h hXC.1.1 xfr⟩
+
+set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
 /-- **`ExpN.NPre` at a recursive call** (see the module doc) -/
 theorem npre_of (hP : EPre R b L K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml mc s)
     (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ) (hXC : XC R L sp K st s.mem xp xc)
+    (hXG : ExpN.XG s.mem st xp xl xc)
     (hX : NHyp.XFacts R L xp xl xc) {S : State} (hsp : S.regs 4 = BitVec.ofNat 64 (sp - 8))
     (h14 : S.regs 14 = BitVec.ofNat 64 g) (hfs : S.fsBase.toNat = fs) (hx15 : S.xmm 15 = 0) (hdf : S.df = false)
     (hm : S.mem = M) {KN : Nat} (hKN : 41640 ≤ KN) (hKN1 : KN + 0x498 ≤ K) (hKN2 : KN + 0x98 ≤ 2 ^ 20)
@@ -207,6 +220,7 @@ theorem npre_of (hP : EPre R b L K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml
     (hob : ExpOdd.OBud costF lm costD xl yl (stLen M st) (b1 - makeCost lm)) :
     ExpN.NPre R b1 L1 KN costF costD needR costR needS needP costS costP g fs (sp - 0x4a0) t k k st xp xl xc yp yl
       yc pm lm cm 0 S := by
+  have hxg := xg_at hP h hXC hXG
   revert hs1 hs2 hs3 hs4 hbud hob
   have hk0 := hP.kf
   have h4a0 : 0x4a0 ≤ sp := by omega
@@ -262,7 +276,7 @@ theorem npre_of (hP : EPre R b L K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml
     ne_oe hP h hKN1 hogA, ⟨op, hone, hsa⟩, hstk.1, hstk.2.1, hstk.2.2.1, hstk.2.2.2.1, hstk.2.2.2.2.1,
     hstk.2.2.2.2.2.1, hstk.2.2.2.2.2.2.1, hstk.2.2.2.2.2.2.2.1, hstk.2.2.2.2.2.2.2.2.1, hstk.2.2.2.2.2.2.2.2.2.1,
     hstk.2.2.2.2.2.2.2.2.2.2.1, hstk.2.2.2.2.2.2.2.2.2.2.2.1, hstk.2.2.2.2.2.2.2.2.2.2.2.2, hs1, hs2, hs3, hs4,
-    hbud, hob, h.inv⟩
+    hbud, hob, h.inv, hxg⟩
 
 end
 

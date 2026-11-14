@@ -93,6 +93,7 @@ theorem segE1 {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
     (hKN : 41640 ≤ KN) (hKN1 : KN + 0x498 ≤ K) (hKN2 : KN + 0x98 ≤ 2 ^ 20)
     (hP : EPre R b L K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml mc s) (hM : 0 < natVal s.mem mp ml)
     (hev : natVal s.mem mp ml % 2 = 0) (hX : NHyp.XFacts R L xp xl xc) (hXC : XC R L sp K st s.mem xp xc)
+    (hXG : ExpN.XG s.mem st xp xl xc)
     (hst : ∀ l1 l2, l1 ≤ ml → l2 ≤ ml → NStkE needR needS needP xl yl l1 (lvl3 s st mp ml l1 l2) (nE s mp ml))
     {rk rk' : Nat}
     (hrk : ∀ l1 l2, l1 ≤ ml → l2 ≤ ml →
@@ -165,7 +166,7 @@ theorem segE1 {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
     (fun h0 => (hz h0).2.2.2.2.2.2.1) tsp fm (stk := 0) (above := 0) (Nat.zero_le _) (Nat.zero_le _)
   obtain ⟨-, -, -, yv⟩ := obj_at hP hwp hoy hay hy48 hyN (Nat.le_trans hyl (by decide))
     (fun h0 => (hz h0).2.2.2.2.2.2.2.1) tsp fm (stk := 0) (above := 0) (Nat.zero_le _) (Nat.zero_le _)
-  have hnp := npre_of hP hwp hXC hX (S := S') (f4) (r14.trans h.jx.e14) tfs (rx15.trans h.jx.ex15)
+  have hnp := npre_of hP hwp hXC hXG hX (S := S') (f4) (r14.trans h.jx.e14) tfs (rx15.trans h.jx.ex15)
     (rdf.trans h.jx.edf) fm hKN hKN1 hKN2 (costF := costF) (costD := costD) (needR := needR) (costR := costR)
     (needS := needS) (needP := needP) (costS := costS) (costP := costP) hm1p hl1p (Nat.le_trans hl1m hml) hd hk0 h.ap1
     w0 w8 w10 w18 w20 w28 (by rw [hlen]; exact hs1) (by rw [hlen]; exact hs2) (by rw [hlen]; exact hs3)

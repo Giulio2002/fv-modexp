@@ -108,7 +108,8 @@ def NPre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K : Nat) (costF : Nat �
   makeCost 1 + max (costR (stLen s.mem st) xl n) (makeCost n + max (costS (stLen s.mem st) xl yl n)
     (costP (stLen s.mem st) xl yl (Nat.log2 (natVal s.mem mp n)))) ≤ b ∧
   ExpOdd.OBud costF n costD xl yl (stLen s.mem st) (b - makeCost n) ∧
-  R.inv b L g (view R.rt L s.mem)
+  R.inv b L g (view R.rt L s.mem) ∧
+  XG s.mem st xp xl xc
 
 /-- the cost the postcondition charges (an upper bound of every path's; PATH MAX, expmc s44: Go runs `setWord`, or
 `z.rem` (y = 1), or `z.make(len m)` and ONE of Slow / Odd / P2 / Even, nat.go:639-720) -/
