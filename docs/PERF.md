@@ -2034,3 +2034,9 @@ EvOB 2.6 s / 2.5 GB; EvCost 2.9 s / 2.7 GB; EvStmt 1.0 s; EvEP 6.0 s / 2.8 GB; E
 killed — `need_lo … (k := 8 w + 72)` gave `l + (8 w + 72)` where segMi/segM1/segM2 expect `l + 8 w + 72`: the defeq
 check unfolded `lvl4`; fixed with exact-shape lemmas `needMi`/`needM`. LESSON: a side-condition lemma's conclusion must
 match the expected expression SYNTACTICALLY, association included); EvSum 1.3 s / 2.8 GB.
+* **rel46 arm64 (top s46; main 071500f8, Janus v0.3.3, fresh cache, ROWS=2, JANUS_TIMINGS, wall 10334 s): 39 PASS / 1 FAIL / 3 MISSING.**
+  Top_RunSucc **535 s / 5.3 GB** (≤ 600 s reproduced on v0.3.3), Top_RunErr 883, ExpQ_IExpRow 854 / 5.4 GB (own 90 mods 525 s +
+  replay 259 targets 264 s), P2W2 747, DrsRow 619 (> 600 s); DivWRow 366 (rel45 cap), ModInv 207, Mont 493, W2 587. FAIL: Exp_EvenRow
+  cap 900 s / 4.0 GB (own 170 mods 331 s, then killed in replay). **LOCK FINDING**: `ws: cache entry lock, framework base lease`
+  waits (rows serialize on the one consumer workspace of the shared Run extraction; the wait counts against the cap): RunErr 590 s,
+  P2W2 439, Mont 345, DivWRow 204, RemRow 197, W2 164, DivBasicRowQ 165, RemRowQ 131, ModRow 121, IntAS 95 s.
