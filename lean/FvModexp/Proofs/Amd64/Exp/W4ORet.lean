@@ -1,3 +1,6 @@
+import FvModexp.Proofs.Amd64.Exp.W4Snc
+import FvModexp.Proofs.Amd64.Exp.W4P01Ret
+import FvModexp.Proofs.Amd64.Exp.W4Posts2
 import FvModexp.Proofs.Amd64.Exp.W4ORDefs
 
 set_option autoImplicit false
@@ -15,25 +18,6 @@ open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Contracts FvMo
 namespace FvModexp.Amd64.W4Pro
 
 open FvModexp.Amd64.W4Loop (Env Inp Buf OneIn FinEnv)
-
-/-- `p01Ret`'s conclusion with the operand values given explicitly -/
-@[reducible] def RetQ (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (g fs sp n mp yp ylen Y yi zp zc zzp zzc t bp bc st n0
-    onep fbp Mv xv rv : Nat) (M : Memory) (s' : State) : Prop :=
-  ∃ Mj : Memory, FP R L sp bp bc M Mj ∧ R.inv b L g (view R.rt L Mj) ∧ Mj.regions = M.regions ∧
-    J4Post R b L g fs sp n mp yp ylen zp zc zzp zzc ((2 ^ 64 - t) % 2 ^ 64) (tp bp n)
-      (zjVal n Mv ((2 ^ 64 - t) % 2 ^ 64) (Exp.montPow n Mv ((2 ^ 64 - t) % 2 ^ 64) xv rv) Y ylen yi)
-      st n0 onep fbp Mj s'
-
-/-- the stack/runtime chain `rrJ → p01` -/
-@[reducible] def OneChain (R : RtInv) (b : Nat) (L L2 : List (Nat × Nat)) (b2 sp n st : Nat) (M0 M2 : Memory) : Prop :=
-  MemFrame M0 M2 (R.rt ++ (ow sp ++ [(sp - 8 - 4192, sp - 8 + 24)] ++ stkWs M0 st)) ∧
-  LiveFrame M0 M2 L (stkWs M0 st) ∧ LiveExt R L L2 ∧
-  b - ((if 4 < n then blockSize (8 * n) true else 0) + stackNatCost (stLen M0 st) (17 * n)) ≤ b2 ∧
-  StkOK M2 R L2 st ∧ stLen M2 st = stLen M0 st + StackNat.rnd (17 * n) ∧
-  (stLen M0 st + StackNat.rnd (17 * n) ≤ stCap M0 st → stW M2 st = stW M0 st ∧ stCap M2 st = stCap M0 st) ∧
-  (stCap M0 st < stLen M0 st + StackNat.rnd (17 * n) → InRanges (stW M2 st) (8 * stCap M2 st) R.rt ∧
-    ApartAll (stW M2 st) (8 * stCap M2 st) L) ∧ M2.regions = M0.regions ∧
-  (stCap M0 st < stLen M0 st + StackNat.rnd (17 * n) → (stW M2 st, stW M2 st + 8 * stCap M2 st) ∈ L2)
 
 theorem sub2 {b b1 b2 x y : Nat} (h1 : b - x ≤ b1) (h2 : b1 - y ≤ b2) : b - (x + y) ≤ b2 := by omega
 
@@ -157,7 +141,7 @@ theorem ws_acc {R : RtInv} {L : List (Nat × Nat)} {g fs sp st : Nat} {M : Memor
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- window-4 from the `stk.nat(17n)` call (after `one` / `powers`) to the return -/
-theorem afterOne {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
+theorem afterOne (hJ4 : FvModexp.Amd64.W4Pro.J4Spec) (hP01 : FvModexp.Amd64.W4Pro.P01Spec) {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
     (hclr : MemclrNoHeapPointersLive64 (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
@@ -344,7 +328,7 @@ theorem afterOne {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.pr
     exact ⟨a1, a2, bapL _ _ hB.2.2.2.2.1 a4, hoA _ _ hB.2.2.2.2.1 hB.2.2.2.2.2.1, a3⟩
   have hSl2 := hSl
   obtain ⟨q338, q100, qf8, qa0, q188, -⟩ := hSl2
-  refine ReachesRet.mono (p01Ret hap hclr hmv hmk hmvok hwt hro hs2 ht hP2 hbo (inpT _ _ hrr)
+  refine ReachesRet.mono (p01Ret hJ4 hP01 hap hclr hmv hmk hmvok hwt hro hs2 ht hP2 hbo (inpT _ _ hrr)
     (flip _ _ _ _ (bapL _ _ hrr.2.2.1 hrF)) (inpT _ _ hx) (flip _ _ _ _ (bapL _ _ hx.2.2.1 hxF))
     (bapL _ _ hy.2.2.1 hyF) (bapL _ _ hsth hstf)
     (by rw [rs 0x78 (by simp only [ow, outside_cons, outside_nil, and_true]; omega) (by omega) (by omega)]; exact s78)

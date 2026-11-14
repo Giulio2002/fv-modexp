@@ -1,5 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.W4Div
-import FvModexp.Proofs.Amd64.Exp.W4RRC
+import FvModexp.Proofs.Amd64.Exp.W4Cut
 
 set_option autoImplicit false
 set_option linter.unusedSimpArgs false

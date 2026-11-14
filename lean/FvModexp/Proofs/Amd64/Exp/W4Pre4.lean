@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Amd64.Exp.W4Posts2
 import FvModexp.Proofs.Amd64.Exp.W4Mid
 
 set_option autoImplicit false
@@ -16,22 +17,6 @@ open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Contracts FvMo
 namespace FvModexp.Amd64.W4Pro
 
 open FvModexp.Amd64.W4Loop (Env Inp Buf Bufs Mem Static OneIn FinEnv)
-
-/-- the memory facts of `zjRet` besides the buffers -/
-@[reducible] def Pre4 (R : RtInv) (L : List (Nat × Nat)) (sp n mp mc k0 yp ylen Y yi Mv : Nat) (pp tbl : Nat → Nat)
-    (onep st n0 bp r : Nat) (M : Memory) : Prop :=
-  Extracted.program.DataLoaded M ∧ Inp R L sp n M mp ∧ Inp R L sp ylen M yp ∧ M.readLE yp (8 * ylen) = Y ∧
-  M.readLE (yp + 8 * (ylen - 1)) 8 = yi ∧
-  (∀ d, d < 16 → Ent sp n pp (fun _ => 2 * n) tbl M d) ∧ (∀ d, d < 16 → Inp R L sp n M (pp d)) ∧
-  M.readLE (sp + 0x398) 8 = ylen ∧ M.readLE (sp + 0x390) 8 = yp ∧ M.readLE (sp + 0x3a8) 8 = mp ∧
-  M.readLE (sp + 0xd8) 8 = k0 ∧ M.readLE (sp + 0x3b0) 8 = n ∧ M.readLE (sp + 0x3b8) 8 = mc ∧
-  NatNorm M mp n ∧ M.readLE mp (8 * n) = Mv ∧
-  OneIn R L sp n M onep ∧ M.readLE onep (8 * n) = 1 ∧ M.readLE (sp + 0x328) 8 = onep ∧
-  FinEnv sp st n0 bp r M ∧ (InRanges st 24 L ∨ Outside st 24 R.rt)
-
-/-- the frame words the two `make`s may write -/
-@[reducible] def LowW (sp : Nat) (ws : List (Nat × Nat)) : Prop :=
-  ∀ q ∈ ws, (sp - 4296 ≤ q.1 ∧ q.2 ≤ sp + 0xd8) ∨ (sp + 0x168 ≤ q.1 ∧ q.2 ≤ sp + 0x170)
 
 theorem out_low {a k sp : Nat} (h : Apart a k (sp - 4296) (4296 + 0x3c0)) (hs : 4296 ≤ sp) :
     ∀ ws, LowW sp ws → Outside a k ws

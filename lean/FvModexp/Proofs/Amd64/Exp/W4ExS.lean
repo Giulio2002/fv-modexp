@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Amd64.Exp.W4Posts2
 import FvModexp.Proofs.Amd64.Exp.W4ExT
 import FvModexp.Proofs.Amd64.Exp.CallW
 import FvModexp.Proofs.Amd64.Nat.NatSub
@@ -49,17 +50,6 @@ theorem norm_of_eq {m m' : Memory} {p q n : Nat} (h : m.readLE p (8 * n) = m'.re
   · exact Or.inl h0
   · right
     rw [top_limb m p n hn, h, ← top_limb m' q n hn]; exact h1
-
-/-- the loop's environment as the callee environment `CEnv` of a call at `RSP = sp - 8` (window = the whole frame) -/
-theorem Env.cenv {R : RtInv} {L : List (Nat × Nat)} {g fs sp : Nat} {M0 : Memory} (he : Env R L g fs sp M0)
-    (hd : Extracted.program.DataLoaded M0) (hro : RoOut R) : CallW.CEnv R L g fs (sp - 8) 4288 968 M0 := by
-  obtain ⟨h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11, h12, h13, h14, h15, h16, -⟩ := he
-  have e1 : sp - 8 - 4288 = sp - 4296 := by omega
-  have e2 : sp - 8 + 968 = sp + 0x3c0 := by omega
-  unfold CallW.CEnv
-  rw [e1, e2]
-  exact ⟨by omega, by omega, by omega, h4, h5, h6, by omega, h8, h9, h10, h11, hd, hro, h12.1, h12.2, h13, h14, h16,
-    h15⟩
 
 /-- `CEnv` at a loop state (memory `M`, frame `FL` since the anchor) -/
 theorem Env.cenvM {R : RtInv} {L : List (Nat × Nat)} {g fs sp : Nat} {M0 M : Memory} {zp zc zzp zzc : Nat}

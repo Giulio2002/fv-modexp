@@ -17,7 +17,7 @@ open FvModexp.Amd64.W4Loop (Env Inp Buf OneIn FinEnv)
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- window-4 from the RR join (`one`, `powers`, `stk.nat(17n)`, table, …) to the return -/
-theorem oneRet {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
+theorem oneRet (hJ4 : FvModexp.Amd64.W4Pro.J4Spec) (hP01 : FvModexp.Amd64.W4Pro.P01Spec) {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
     (hclr : MemclrNoHeapPointersLive64 (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
@@ -97,7 +97,7 @@ theorem oneRet {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.prog
           RetQ R b2 L2 g fs sp n mp yp ylen Y yi zp zc zzp zzc t (stW M2 st + 8 * stLen M st) (17 * n) st n0 onep fbp
             Mv (M.readLE xp (8 * n)) (M.readLE rrp (8 * n)) M2 s') :=
     fun S' onep L' b' c1 c2 c3 c4 c5 c6 c7 c8 c9 hO hSl =>
-      ReachesRet.mono (afterOne hap hclr hmv hmk hmvok hwt hro hSN hserv he hd hn hn16 hmc hmc' ht hm hrr hx hok hy hY hyi
+      ReachesRet.mono (afterOne hJ4 hP01 hap hclr hmv hmk hmvok hwt hro hSN hserv he hd hn hn16 hmc hmc' ht hm hrr hx hok hy hY hyi
         hyl hyl' hyi0 s398 s390 s3a8 s3b0 s3b8 hnm hMv s78 sd8 s370 s138 hfe hsth hzc hz hzzc hzz hoz hozz hzzz r3d0
         r3c0 hacc2 hca hcF hcS hokm hkk hmB hfbp hsok hn0 hcap hstw hstg hstf8 hfg hff harr hfw hslen hwba hstwb hstf
         hmS hmF hrS hrF hxS hxF hyS hyF hbud hinv S' hO hSl c1 c2 c3 c4 c5 c6 c7 c8 c9) (fun s h => ⟨onep, h⟩)
