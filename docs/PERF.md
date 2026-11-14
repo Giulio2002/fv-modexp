@@ -1996,3 +1996,15 @@ P2W2Tl imports DeferX (→ MontW chain: MontLoop 113 s dev) — already in the W
 | Amd64/Exp/P2W2LI | 1.5 s | 2.3 GB |
 | Amd64/Exp/P2W2UB | 1.3 s | 2.3 GB |
 R1b: the WC/ESl facts at the pushed memory are wrapped in a local `Hd` before `janus64_run … until [mkE/noE]` (no run splitting).
+
+## divmc s71 (2026-11-14): amd64 P2W2 first window (dev compile, LEAN_NUM_THREADS=4, host load ~12)
+| module | wall | peak RSS |
+|---|---|---|
+| Amd64/Exp/P2W2Mv | 3.0 s | 2.4 GB |
+| Amd64/Exp/P2W2Cp1 | 15 s | 3.0 GB |
+| Amd64/Exp/P2W2Cp2 | 51 s | 3.0 GB |
+| Amd64/Exp/P2W2Cp3 | 56 s | 3.0 GB |
+| Amd64/Exp/P2W2Cp4 | 19 s | 2.7 GB |
+| Amd64/Exp/P2W2Cp5 | 1.5 s | 2.4 GB |
+Cp2/Cp3: every frame fact is `HdM`-wrapped before each `janus64_run` (no context splitting); the JE/flag branch
+duplicates are closed by one `all_goals first | … | skip` dispatch instead of per-goal bullets.
