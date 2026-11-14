@@ -26,7 +26,7 @@ theorem rdw_eq {m : Janus.Arm64.Memory} {a b n v : Nat} (h : a = b) : (m.writeLE
 set_option pp.deepTerms false
 set_option maxRecDepth 20000 in
 set_option janus.callRegions true in
-set_option maxHeartbeats 3000000 in
+set_option maxHeartbeats 64000000 in
 set_option linter.janusRenameI false in
 /-- `z.make(len m)` from `J4` (`RSP = t - 0x108`, `CX = cap z`, `DI = st`, `R11 = len m`) -/
 theorem mk (impl : List Amd64.Segment) (R : RtInv)
@@ -159,7 +159,7 @@ theorem mk (impl : List Amd64.Segment) (R : RtInv)
         simp (disch := omega) only [Janus.Arm64.Memory.readLE_writeLE_of_disjoint, rdw_eq]; omega
       refine KA hr' _ ptr.toNat _ m ?dj2 ?_ ?_ ?_ ?_ ?_ ?_ ?_ hrs (hLw.trans hLF fun _ _ h => h) hF hrg1
         hAp hIn (by omega) hacc (h8 (Or.inr (by omega))) (Janus.Contracts.AllocSat.le_blockSize _ _) rfl hinv'
-      case dj2 => exact (Or.inr ⟨rfl, hn1, by
+      case dj2 => exact (Or.inr ⟨by janus64_simp, hn1, by
               rw [hMF.readLE _ _ (hout (t - 0x90) (by omega) (by omega))]
               simp (disch := omega) only [Janus.Arm64.Memory.readLE_writeLE_of_disjoint, rdw_eq]; omega⟩)
       all_goals first | (janus64_simp; done) | (simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; done) | rfl
