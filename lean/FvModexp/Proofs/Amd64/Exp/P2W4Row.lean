@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.CalleeInstQ
+import FvModexp.Proofs.Amd64.Exp.StkArgR
 import FvModexp.Proofs.Amd64.Exp.P2W4E
 import FvModexp.Proofs.Amd64.Nat.RowLink
 import FvModexp.Proofs.Amd64.Witness.Sites
@@ -45,15 +46,16 @@ theorem correctness (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted
     Ensures (Extracted.program.link impl) (segAddr Extracted.program P2W4.fn)
       [BitVec.ofNat 64 zp, BitVec.ofNat 64 zl, BitVec.ofNat 64 zc, BitVec.ofNat 64 st, BitVec.ofNat 64 xp,
         BitVec.ofNat 64 xl, BitVec.ofNat 64 xc, BitVec.ofNat 64 lm]
-      (fun s => NHyp.StkArg s 0 yp yl yc ∧
+      (fun s => NHyp.StkArg0 s yp yl yc ∧
         P2W4.PreC R b L stk (P2W4.costB (stLen s.mem st) yl lm) zp zl zc st xp xl yp yl lm s ∧ P2W4.EX xp xl s)
       (fun s s' => NHyp.CPostR R b L stk 0x60 zp zc st (natVal s.mem xp xl ^ natVal s.mem yp yl % 2 ^ lm)
         (P2W4.costB (stLen s.mem st) yl lm) s s') :=
-  Ensures.full64 hap (by simp [numIntRegs])
+  Ensures.mono (Ensures.full64 hap (by simp [numIntRegs])
     (P2W4.ens hap sub nf4 nfP hgr hmc hmv hmk hno hwb (kc := mulWX64) (by decide)
       (sn hap hgr hmc hwb) (by decide) (by decide) (sq hap hgr hmc hmv hmk hwb _) (by decide) (Nat.le_refl _)
       (mu hap hgr hmc hmv hmk hwb _) (Nat.le_refl _) (Nat.le_refl _) (tr hap hmv hmk) (by decide) (by decide)
-      b L stk (by omega) (by simp only [P2Pre.K, mulWX64]; omega) hk2 zp zl zc st xp xl xc yp yl yc lm hzp hxc)
+      b L stk (by omega) (by simp only [P2Pre.K, mulWX64]; omega) hk2 zp zl zc st xp xl xc yp yl yc lm hzp hxc))
+    (fun _ h => ⟨h.1.toStkArg, h.2⟩) (fun _ _ _ h => h)
 
 end FvModexp.Amd64.P2W4Row
 
@@ -212,6 +214,11 @@ theorem pre : NHyp.StkArg s0 0 YP 1 1 ∧
   · simp only [P2W4.EX, hm, nA_eq, gA_eq, Apart]
     refine ⟨fun _ => by decide, by decide +kernel, by rw [acc0]; decide +kernel⟩
 
+/-- `pre` with the stack arguments in the row (audit) form `StkArg0` -/
+theorem pre0 : NHyp.StkArg0 s0 YP 1 1 ∧
+    P2W4.PreC R BW [] KW (P2W4.costB (stLen s0.mem ST) 1 8) 0 0 0 ST XP 1 YP 1 8 s0 ∧ P2W4.EX XP 1 s0 :=
+  ⟨NHyp.StkArg0.of_stkArg pre.1, pre.2⟩
+
 theorem hty : TysOK [] := by intro t ht; simp at ht
 
 /-- Every hypothesis of `correctness` and every conjunct of its precondition hold together: the shared witness runtime,
@@ -232,7 +239,7 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : 
     CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program P2W4.fn)
       [BitVec.ofNat 64 zp, BitVec.ofNat 64 zl, BitVec.ofNat 64 zc, BitVec.ofNat 64 st, BitVec.ofNat 64 xp,
         BitVec.ofNat 64 xl, BitVec.ofNat 64 xc, BitVec.ofNat 64 lm] s ∧
-    (NHyp.StkArg s 0 yp yl yc ∧
+    (NHyp.StkArg0 s yp yl yc ∧
       P2W4.PreC R b L stk (P2W4.costB (stLen s.mem st) yl lm) zp zl zc st xp xl yp yl lm s ∧ P2W4.EX xp xl s) ∧
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.rip = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.growslice") ∧
@@ -262,7 +269,7 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : 
     by rw [WStubs.addr_mk]; exact WStubs.mk [] hty _,
     by rw [WStubs.addr_no]; exact WStubs.no [] hty _,
     by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] hty _, Nat.le_refl _, by decide, by decide, by decide, hret,
-    setup, pre,
+    setup, pre0,
     ⟨[], 0x1000, callS5 WStubs.grA OA 2 1 1 Extracted.dataAddr.«type:big.Word#51b931e8», by rw [WStubs.addr_gr]; rfl,
       by rw [WStubs.addr_gr]; exact site_gr _⟩,
     ⟨[], 0x1000, callS WStubs.clA OA 8 0, by rw [WStubs.addr_cl]; rfl, by rw [WStubs.addr_cl]; exact site_cl _⟩,
@@ -276,6 +283,6 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : 
       (by rw [WStubs.addr_cl]; exact WStubs.cl R) (by rw [WStubs.addr_mv]; exact WStubs.mv R)
       (by rw [WStubs.addr_mk]; exact WStubs.mk [] hty _) (by rw [WStubs.addr_no]; exact WStubs.no [] hty _)
       (by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] hty _) BW [] KW (Nat.le_refl _) (by decide)
-      0 0 0 ST XP 1 1 YP 1 1 8 (by decide) (by decide) RET hret s0 setup pre⟩
+      0 0 0 ST XP 1 1 YP 1 1 8 (by decide) (by decide) RET hret s0 setup pre0⟩
 
 end FvModexp.Amd64.P2W4Row.Witness
