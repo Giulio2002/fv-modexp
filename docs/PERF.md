@@ -2154,3 +2154,15 @@ Mont 145/1692, SubMod2N 220/2748, ModInv 190/2333, DivW 157/1213, DivWVW 13/324,
 Div 373/2595, DivM 208/3555, Rem 165/4547, DivBasicQ 276/4497, DrsQ 295/1718, DivQ 343/2582, DivMQ 138/3570,
 RemQ 127/4487, IntMod 164/4028, W2 414/2981, W4 422/2996, P2W2 280/3121, P2W4 209/1597, P2D 287/2152, N 458/4936,
 Even 367/3934, IExpQ 337/4564, RequiredGas 238/1642, RunErr 272/1654, RunSucc 464/5147.
+
+## top s51 (2026-11-14): rel48 amd64 (Janus v0.3.3, fresh cache, ROWS=1, snapshot main 437c5b14, wall 9868 s + warm-up 823 s)
+28/31 PASS; host load (max per row) min 3.9 / median 9.2 / max 12.4. FAIL (all fixed on main after the snapshot):
+Exp_P2W2Row 548 s + Exp_P2W4Row 390 s = audit `[RSP]` (row pre `NHyp.StkArg s 0`; divmc 68dbc9a9 StkArg0), Exp_EvenRow 901 s cap
+(own compile 215 mods 591 s + audit 189 s, replay cut; lower rows amd64 SlowRow/ModInvRow now on main). Rows > 600 s (LOCK 0):
+Exp_W4Row 723 s (compile 124 mods 444 / replay 244 / audit 29), Exp_IExpRow 708 s (compile 41 mods 152 / replay 476 / audit 47).
+Top_RunSucc (final amd64) **PASS 557 s / 5.0 GB**.
+Per row (s/MB): StackNat 146/983, MulAddWW 189/1185, AddVW 61/1095, SubVW 59/1023, BasicSqr 363/6127, Trunc 182/1213,
+Rsh 129/1290, Lsh 111/1199, IntAS 164/1303, BasicSqrQ 224/6145, SqrQ 371/4262, MulQ 367/2204, SubMod2N 418/5653,
+DivW 139/1300, DivWVW 15/417, DivBasic 238/3523, DivBasicQ 226/3639, DrsQ 448/2058, DivQ 398/5231, RemQ 155/2082,
+IntMod 279/3849, W4 723/3696, W2 547/4049, P2W2 FAIL 548/2990, P2W4 FAIL 390/2943, P2D 204/2024, Even FAIL 901/4497,
+IExp 708/5093, RequiredGas 241/3138, RunErr 311/1268, RunSucc 557/4961.
