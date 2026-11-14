@@ -55,12 +55,16 @@ theorem j2_all {impl : List Amd64.Segment} {R : RtInv} {kc : Nat} {H : Nat} {sqr
 set_option maxRecDepth 20000 in
 /-- **the loop**: `J2` at every round, from the callees' summaries -/
 theorem loop {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
-    {ns : List String} (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true)
-    (hnf : ns.contains fn = false) (hnfS : ns.contains SubMod2N.fn = false) {kc : Nat} (hkc : SubMod2N.K ≤ kc)
-    {kS : Nat} (hsq : SqrE impl R ns kS) (hkS : kS ≤ kc) (hkS1 : sqrW 513 ≤ kS)
-    {stkT aboveT : Nat} (htr : Trunc.Hyp2 impl R ns stkT aboveT) (hkT : stkT ≤ 4440) (haT : aboveT ≤ 80)
-    {kM : Nat} (hmu : Q.DivRec.MulHypQE impl R ns kM) (hkM : kM ≤ kc) (hkM1 : mulWX64 ≤ kM)
-    {stkL aboveL : Nat} (hls : Lsh.Hyp2 impl R ns stkL aboveL) (hkL : stkL ≤ kc) (haL : aboveL ≤ 88)
+    {nsS nsT nsM nsL : List String} (hnsS : ∀ x, nsS.contains x = true → LibW.names.contains x = true)
+    (hnsT : ∀ x, nsT.contains x = true → LibW.names.contains x = true)
+    (hnsM : ∀ x, nsM.contains x = true → LibW.names.contains x = true)
+    (hnsL : ∀ x, nsL.contains x = true → LibW.names.contains x = true)
+    (hnfS : nsS.contains fn = false) (hnfT : nsT.contains fn = false) (hnfM : nsM.contains fn = false)
+    (hnfL : nsL.contains fn = false) (hnfTS : nsT.contains SubMod2N.fn = false) {kc : Nat} (hkc : SubMod2N.K ≤ kc)
+    {kS : Nat} (hsq : SqrE impl R nsS kS) (hkS : kS ≤ kc) (hkS1 : sqrW 513 ≤ kS)
+    {stkT aboveT : Nat} (htr : Trunc.Hyp2 impl R nsT stkT aboveT) (hkT : stkT ≤ 4440) (haT : aboveT ≤ 80)
+    {kM : Nat} (hmu : Q.DivRec.MulHypQE impl R nsM kM) (hkM : kM ≤ kc) (hkM1 : mulWX64 ≤ kM)
+    {stkL aboveL : Nat} (hls : Lsh.Hyp2 impl R nsL stkL aboveL) (hkL : stkL ≤ kc) (haL : aboveL ≤ 88)
     (hsub : SubMod2N.SubHypR0 impl R) (hadd : SubMod2N.AddHypR impl R)
     (hgr : GrowsliceLiveContract64 (LibW.program.link impl) (cA "runtime.growslice") 4096 R)
     {H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat} {L : List (Nat × Nat)}
@@ -72,12 +76,12 @@ theorem loop {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progra
     have : 4440 ≤ SubMod2N.K := by decide
     omega
   have fin : S1 impl R kc H sqrC mulC b L zp zl zc st xp xl xc n s 6204903 (ExF n) (eF n) (kF n) :=
-    segF2 hap hns hnf htr hkT' (by omega) hx0 hdf0 (segF3 hap hns hnf hmu hkM hkM1 hmm hx0 hdf0
-      (segF4 hap hns hnf htr hkT' (by omega) hx0 hdf0 (segF5a hap hns hnf hls hkL haL hx0 hdf0
-        (segF5 hap hns hnfS hkT haT htr hsub hadd hgr hkc hx0 hdf0 hsm'))))
-  refine j2_all fun J _ ih => segL0 hap hns hnf hsq hkS hkS1 hsm hsm' hx0 hdf0 J ?_ fin
-  exact segL1 hap hns hnf htr hkT' (by omega) hx0 hdf0 J (segL2 hap hns hnf hmu hkM hkM1 hmm hx0 hdf0 J
-    (segL3 hap hns hnf htr hkT' (by omega) hx0 hdf0 J (segL4 hap hns hnf hls hkL haL hx0 hdf0 J
-      (segL5 hap hns hnfS hkT haT htr hsub hadd hgr hkc hx0 hdf0 ih))))
+    segF2 hap hnsT hnfT htr hkT' (by omega) hx0 hdf0 (segF3 hap hnsM hnfM hmu hkM hkM1 hmm hx0 hdf0
+      (segF4 hap hnsT hnfT htr hkT' (by omega) hx0 hdf0 (segF5a hap hnsL hnfL hls hkL haL hx0 hdf0
+        (segF5 hap hnsT hnfTS hkT haT htr hsub hadd hgr hkc hx0 hdf0 hsm'))))
+  refine j2_all fun J _ ih => segL0 hap hnsS hnfS hsq hkS hkS1 hsm hsm' hx0 hdf0 J ?_ fin
+  exact segL1 hap hnsT hnfT htr hkT' (by omega) hx0 hdf0 J (segL2 hap hnsM hnfM hmu hkM hkM1 hmm hx0 hdf0 J
+    (segL3 hap hnsT hnfT htr hkT' (by omega) hx0 hdf0 J (segL4 hap hnsL hnfL hls hkL haL hx0 hdf0 J
+      (segL5 hap hnsT hnfTS hkT haT htr hsub hadd hgr hkc hx0 hdf0 ih))))
 
 end FvModexp.Amd64.ModInv

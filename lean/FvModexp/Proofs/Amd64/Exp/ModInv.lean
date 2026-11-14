@@ -29,14 +29,18 @@ open FvModexp.Amd64.EvenHyp
 set_option maxRecDepth 20000 in
 /-- the whole function from its entry, as a `Summary` on the exp layer's program (internal budget form) -/
 theorem full {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
-    {ns : List String} (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true)
-    (hnf : ns.contains fn = false) (hnfS : ns.contains SubMod2N.fn = false)
+    {nsS nsT nsM nsL : List String} (hnsS : ∀ x, nsS.contains x = true → LibW.names.contains x = true)
+    (hnsT : ∀ x, nsT.contains x = true → LibW.names.contains x = true)
+    (hnsM : ∀ x, nsM.contains x = true → LibW.names.contains x = true)
+    (hnsL : ∀ x, nsL.contains x = true → LibW.names.contains x = true)
+    (hnfS : nsS.contains fn = false) (hnfT : nsT.contains fn = false) (hnfM : nsM.contains fn = false)
+    (hnfL : nsL.contains fn = false) (hnfTS : nsT.contains SubMod2N.fn = false)
     (hmk : MakesliceLiveContract64 (LibW.program.link impl) (cA "runtime.makeslice") 4096 R)
     {kc : Nat} (hkc : SubMod2N.K ≤ kc)
-    {kS : Nat} (hsq : SqrE impl R ns kS) (hkS : kS ≤ kc) (hkS1 : sqrW 513 ≤ kS)
-    {stkT aboveT : Nat} (htr : Trunc.Hyp2 impl R ns stkT aboveT) (hkT : stkT ≤ 4440) (haT : aboveT ≤ 80)
-    {kM : Nat} (hmu : Q.DivRec.MulHypQE impl R ns kM) (hkM : kM ≤ kc) (hkM1 : mulWX64 ≤ kM)
-    {stkL aboveL : Nat} (hls : Lsh.Hyp2 impl R ns stkL aboveL) (hkL : stkL ≤ kc) (haL : aboveL ≤ 88)
+    {kS : Nat} (hsq : SqrE impl R nsS kS) (hkS : kS ≤ kc) (hkS1 : sqrW 513 ≤ kS)
+    {stkT aboveT : Nat} (htr : Trunc.Hyp2 impl R nsT stkT aboveT) (hkT : stkT ≤ 4440) (haT : aboveT ≤ 80)
+    {kM : Nat} (hmu : Q.DivRec.MulHypQE impl R nsM kM) (hkM : kM ≤ kc) (hkM1 : mulWX64 ≤ kM)
+    {stkL aboveL : Nat} (hls : Lsh.Hyp2 impl R nsL stkL aboveL) (hkL : stkL ≤ kc) (haL : aboveL ≤ 88)
     (hsub : SubMod2N.SubHypR0 impl R) (hadd : SubMod2N.AddHypR impl R)
     (hgr : GrowsliceLiveContract64 (LibW.program.link impl) (cA "runtime.growslice") 4096 R)
     {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat}
@@ -55,7 +59,7 @@ theorem full {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progra
     have : 4096 ≤ SubMod2N.K := by decide
     omega
   have kL : J2 impl R kc H sqrC mulC b L zp zl zc st xp xl xc n s :=
-    loop hap hns hnf hnfS hkc hsq hkS hkS1 htr hkT haT hmu hkM hkM1 hls hkL haL hsub hadd hgr hsm hsm' hmm hx0 hdf0
+    loop hap hnsS hnsT hnsM hnsL hnfS hnfT hnfM hnfL hnfTS hkc hsq hkS hkS1 htr hkT haT hmu hkM hkM1 hls hkL haL hsub hadd hgr hsm hsm' hmm hx0 hdf0
   have kM := mkzz impl R hmk kc H _ _ b L zp zl zc st xp xl xc n s hkc4 kL
   exact entry impl R kc H sqrC mulC b L zp zl zc st xp xl xc n s hpc h0 h3 h1 h7 h6 h8 h9 h10 hpre
     (small impl R kc H _ _ b L zp zl zc st xp xl xc n s)
@@ -71,14 +75,18 @@ normalised nat holding `x⁻¹ mod 2^n` (`Exp.modularInverseModPowerOfTwo`), in 
 kept. Budget: one reserve level `H ≥ stLen + D n`, cost `cost sqrC mulC xl n + stkR H s.mem st`, refund
 `stkR H s'.mem st`. -/
 theorem ens {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
-    {ns : List String} (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true)
-    (hnf : ns.contains fn = false) (hnfS : ns.contains SubMod2N.fn = false)
+    {nsS nsT nsM nsL : List String} (hnsS : ∀ x, nsS.contains x = true → LibW.names.contains x = true)
+    (hnsT : ∀ x, nsT.contains x = true → LibW.names.contains x = true)
+    (hnsM : ∀ x, nsM.contains x = true → LibW.names.contains x = true)
+    (hnsL : ∀ x, nsL.contains x = true → LibW.names.contains x = true)
+    (hnfS : nsS.contains fn = false) (hnfT : nsT.contains fn = false) (hnfM : nsM.contains fn = false)
+    (hnfL : nsL.contains fn = false) (hnfTS : nsT.contains SubMod2N.fn = false)
     (hmk : MakesliceLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
     {kc : Nat} (hkc : SubMod2N.K ≤ kc)
-    {kS : Nat} (hsq : SqrE impl R ns kS) (hkS : kS ≤ kc) (hkS1 : sqrW 513 ≤ kS)
-    {stkT aboveT : Nat} (htr : Trunc.Hyp2 impl R ns stkT aboveT) (hkT : stkT ≤ 4440) (haT : aboveT ≤ 80)
-    {kM : Nat} (hmu : Q.DivRec.MulHypQE impl R ns kM) (hkM : kM ≤ kc) (hkM1 : mulWX64 ≤ kM)
-    {stkL aboveL : Nat} (hls : Lsh.Hyp2 impl R ns stkL aboveL) (hkL : stkL ≤ kc) (haL : aboveL ≤ 88)
+    {kS : Nat} (hsq : SqrE impl R nsS kS) (hkS : kS ≤ kc) (hkS1 : sqrW 513 ≤ kS)
+    {stkT aboveT : Nat} (htr : Trunc.Hyp2 impl R nsT stkT aboveT) (hkT : stkT ≤ 4440) (haT : aboveT ≤ 80)
+    {kM : Nat} (hmu : Q.DivRec.MulHypQE impl R nsM kM) (hkM : kM ≤ kc) (hkM1 : mulWX64 ≤ kM)
+    {stkL aboveL : Nat} (hls : Lsh.Hyp2 impl R nsL stkL aboveL) (hkL : stkL ≤ kc) (haL : aboveL ≤ 88)
     (hsub : SubMod2N.SubHypR0 impl R) (hadd : SubMod2N.AddHypR impl R)
     (hgr : GrowsliceLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.growslice") 4096 R)
     {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat}
@@ -97,7 +105,7 @@ theorem ens {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program
   have hdf := hs.df
   janus64_intro hs
   have hra : s.mem.readLE (s.regs 4).toNat 8 < 2 ^ 47 := by rw [h_ret]; exact hret.user
-  refine Summary.returns (full hap hns hnf hnfS hmkL hkc hsq hkS hkS1 htr hkT haT hmu hkM hkM1 hls hkL haL hsub
+  refine Summary.returns (full hap hnsS hnsT hnsM hnsL hnfS hnfT hnfM hnfL hnfTS hmkL hkc hsq hkS hkS1 htr hkT haT hmu hkM hkM1 hls hkL haL hsub
     hadd (SubMod2N.growslice_of_codeIn hc hgr) hsm hsm' hmm H (B - stkR H s.mem st) L zp zl zc st xp xl xc n) hret
     (by rw [h_rip]) (by rw [retAddrOf, h_ret])
     ⟨h_a0, h_a1, h_a2, h_a3, h_a4, h_a5, h_a6, h_a7, h_x15, hdf, pre_of_Q hpre hra⟩
