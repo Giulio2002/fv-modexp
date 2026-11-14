@@ -1,6 +1,6 @@
 import FvModexp.Proofs.Arm64.NatQ.NatSqr
 import FvModexp.Proofs.Arm64.NatQ.SqrMulQ
-import FvModexp.Proofs.Arm64.Nat.SqrHypX
+import FvModexp.Proofs.Arm64.Nat.SqrWX
 
 set_option autoImplicit false
 
