@@ -2,6 +2,7 @@ import FvModexp.Proofs.Amd64.Top.RunC2RA
 import FvModexp.Proofs.Amd64.Top.RunC2Lem
 import FvModexp.Proofs.Amd64.Top.RunC2B
 import FvModexp.Proofs.Amd64.Top.RunC2One
+import FvModexp.Proofs.Amd64.Top.RunC2Cpu
 
 set_option autoImplicit false
 
@@ -21,7 +22,7 @@ theorem clz_one : clzNat 64 1 = 63 := by decide
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem c2m (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl) (R : RtInv) (stkM aboveM : Nat)
-    (hM : RunIface.ModSpecM impl R stkM aboveM) (hBy : RunIface.BytesSpec impl R stkM aboveM) (hsv : RunIface.Serves R)
+    (hM : RunIface.ModSpecA impl R stkM aboveM) (hBy : RunIface.BytesSpec impl R stkM aboveM) (hsv : RunIface.Serves R)
     (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64) (ret : Nat)
     (hret : RetAddr (LibRun.program.link impl) ret) (s : State) (hx0 : s.xmm 15 = 0) (hdf0 : s.df = false)
     (Q : Janus.Amd64.Outcome → Prop)
@@ -30,6 +31,7 @@ theorem c2m (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
     (hglob : RunIface.Globals R s.mem (win s W 40)) (hgL : ApartAll ((s.regs 14).toNat + 16) 8 L)
     (hfL : ApartAll (s.fsBase.toNat - 8) 8 L)
     (hbB : okB s p len ≤ b) (hpool : FvModexp.Spec.RunAmd64.StackPool R s.mem (win s W 40))
+    (hca : FvModexp.Spec.RunAmd64.CpuOne s.mem)
     (L1 : List (Nat × Nat)) (b1 : Nat) (T : State) (hrel : RelD R b L c p len cp s ret 3 3 (cstD 3) L1 b1 T)
     (hpc : T.rip = BitVec.ofNat 64 pcC2)
     (hv0 : opV s p len 0 = 1) (hv2 : 0 < opV s p len 2)
@@ -153,6 +155,7 @@ theorem c2m (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
         show (s.regs 4).toNat - 136 + 8 = (s.regs 4).toNat - 128 by omega]
       intro hc
       exact (InRanges.apart (hlive0 hc).2.2.2.2.1 hglob.2.2.2.2.2.2.2.2.1).symm)
+    (by rw [← hMd]; exact adx_ops hca hMF)
   have hz136 : (s.regs 4 - 608#64 + 472#64).toNat = (s.regs 4).toNat - 136 := by
     rw [BitVec.toNat_add, BitVec.toNat_sub]; simp; omega
   have hz200 : (s.regs 4 - 608#64 + 408#64).toNat = (s.regs 4).toNat - 200 := by

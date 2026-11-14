@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Amd64.NatQ.DrsC5R
+import FvModexp.Proofs.Amd64.NatQ.DrsSegD
 
 set_option autoImplicit false
 
@@ -17,13 +17,6 @@ set_option linter.janusRenameI false
 namespace FvModexp.Amd64.Q.DivRec
 
 open FvModexp.Amd64.Q.DivLarge (DrsPreW DrsPostW)
-
-theorem subVVc_le1 : ∀ (x y : List Nat) (c : Nat), c ≤ 1 → (Mdl.subVVc x y c).2 ≤ 1
-  | x :: xs, y :: ys, c, _ => by
-    simp only [Mdl.subVVc]
-    exact subVVc_le1 xs ys _ (by show (if x < y + c then 1 else 0) ≤ 1; split <;> omega)
-  | [], _, c, h => by simp only [Mdl.subVVc]; exact h
-  | _ :: _, [], c, h => by simp only [Mdl.subVVc]; exact h
 
 set_option maxRecDepth 20000 in
 /-- the return site `0x5eff0b` is admissible for `subVW`'s program -/

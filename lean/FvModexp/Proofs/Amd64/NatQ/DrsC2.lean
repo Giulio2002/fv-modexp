@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Amd64.NatQ.DrsC1
+import FvModexp.Proofs.Amd64.NatQ.DrsSegD
 import FvModexp.Proofs.Amd64.CmpSum
 
 set_option autoImplicit false
@@ -18,31 +18,6 @@ set_option linter.janusRenameI false
 namespace FvModexp.Amd64.Q.DivRec
 
 open FvModexp.Amd64.Q.DivLarge (DrsPreW DrsPostW)
-
-/-- `nat.cmp` (segment 15) in `LibDrs.program` -/
-theorem csumD (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) :
-    Summary (LibDrs.program.link impl) cmpA CmpSum.Pre CmpSum.Post := by
-  have hc : CodeIn64 FvModexp.Lib.CmpAmd64.program (LibDrs.program.link impl) := by
-    rw [LibDrs.eq_only]
-    exact Callees.codeIn_single hap (seg := Extracted.seg15) rfl
-      (by simp only [Extracted.program, Extracted.segments, List.mem_cons, true_or, or_true]) (by decide)
-  exact Summary.of_codeIn64 hc CmpSum.cmp_summary
-
-/-- the invariant survives writes inside a callee's window outside the runtime's ranges -/
-theorem inv_win {R : RtInv} {b g : Nat} {L : List (Nat × Nat)} {X : State} {m m' : Memory} {k a : Nat}
-    (hF : MemFrame m m' (win X k a)) (hout : Outside ((X.regs 4).toNat - k) (k + a) R.rt)
-    (hsp : k ≤ (X.regs 4).toNat) (hi : R.inv b L g (view R.rt L m)) : R.inv b L g (view R.rt L m') := by
-  refine RtInv.inv_frame' hF (fun r hr => ?_) hi
-  simp only [win, List.mem_cons, List.not_mem_nil, or_false] at hr
-  subst hr; left; exact hout.of_sub (Nat.le_refl _) (by simp; omega)
-
-/-- the window-only frame keeps the live objects -/
-theorem lf_winC {L : List (Nat × Nat)} {X : State} {k a : Nat} {m m' : Memory} (ws : List (Nat × Nat))
-    (h : MemFrame m m' (win X k a)) (hs : LiveSep L (win X k a)) : LiveFrame m m' L ws :=
-  ⟨fun x n hin _ => h.readLE x n (by
-    obtain ⟨r, hr, h1, h2⟩ := hin
-    have := hs r hr
-    simp only [win, outside_cons, outside_nil, and_true] at this ⊢; omega)⟩
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in

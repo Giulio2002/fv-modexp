@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Amd64.NatQ.DrsD5
+import FvModexp.Proofs.Amd64.NatQ.DrsSegD
 import FvModexp.Proofs.Amd64.NatQ.DrsDV
 import FvModexp.Proofs.Common.MaskWord
 

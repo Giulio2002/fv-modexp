@@ -1,6 +1,5 @@
-import FvModexp.Proofs.Amd64.NatQ.DrsFC2
+import FvModexp.Proofs.Amd64.NatQ.DrsSegD
 import FvModexp.Proofs.Amd64.NatQ.DrsFC6R
-import FvModexp.Proofs.Amd64.NatQ.DrsC2B
 
 set_option autoImplicit false
 
@@ -20,9 +19,6 @@ set_option linter.janusRenameI false
 namespace FvModexp.Amd64.Q.DivRec
 
 open FvModexp.Amd64.Q.DivLarge (DrsPreW DrsPostW)
-
-/-- `subVW(qhat, qhat, 1)`'s return address (final loop) -/
-abbrev rFW1 : Nat := 0x5f03f5
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in

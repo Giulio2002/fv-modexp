@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Amd64.NatQ.DrsC2
+import FvModexp.Proofs.Amd64.NatQ.DrsSegD
 
 set_option autoImplicit false
 
@@ -20,40 +20,6 @@ namespace FvModexp.Amd64.Q.DivRec
 open FvModexp.Amd64.Q.DivLarge (DrsPreW DrsPostW)
 
 -- (ISA-free; copied from Arm64/NatQ/DrsC2.lean)
-theorem cmpInt_range (a b : Nat) : Mdl.cmpInt a b = -1 ∨ Mdl.cmpInt a b = 0 ∨ Mdl.cmpInt a b = 1 := by
-  unfold Mdl.cmpInt; split
-  · exact Or.inl rfl
-  · split
-    · exact Or.inr (Or.inr rfl)
-    · exact Or.inr (Or.inl rfl)
-
-theorem cmpRev_range : ∀ (a b : List Nat), Mdl.cmpRev a b = -1 ∨ Mdl.cmpRev a b = 0 ∨ Mdl.cmpRev a b = 1
-  | [], _ => by simp [Mdl.cmpRev]
-  | [a], [] => by simp [Mdl.cmpRev]
-  | [a], [b] => by simp only [Mdl.cmpRev]; exact cmpInt_range a b
-  | [a], _ :: _ :: _ => by simp [Mdl.cmpRev]
-  | _ :: _ :: _, [] => by simp [Mdl.cmpRev]
-  | _ :: _ :: _, [_] => by simp [Mdl.cmpRev]
-  | a :: a' :: xs, b :: b' :: ys => by
-    simp only [Mdl.cmpRev]; split
-    · exact cmpRev_range (a' :: xs) (b' :: ys)
-    · exact cmpInt_range a b
-
-theorem natCmp_range (x y : List Nat) : Mdl.natCmp x y = -1 ∨ Mdl.natCmp x y = 0 ∨ Mdl.natCmp x y = 1 := by
-  unfold Mdl.natCmp; split
-  · split
-    · exact Or.inl rfl
-    · split
-      · exact Or.inr (Or.inr rfl)
-      · exact Or.inr (Or.inl rfl)
-  · exact cmpRev_range _ _
-
-/-- `subVW(qhat, qhat, 1)`'s return address -/
-abbrev rW1 : Nat := 0x5efe35
-
-/-- the return slot of a loop call -/
-@[reducible] def isR (s : State) : List (Nat × Nat) := [((s.regs 4).toNat - 400, (s.regs 4).toNat - 392)]
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in
 /-- **the break test** after the loop's `nat.cmp` -/

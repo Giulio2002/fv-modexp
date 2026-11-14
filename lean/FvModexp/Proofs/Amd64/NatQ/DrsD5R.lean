@@ -1,5 +1,4 @@
-import FvModexp.Proofs.Amd64.NatQ.DrsD4
-import FvModexp.Proofs.Amd64.NatQ.DrsC5R
+import FvModexp.Proofs.Amd64.NatQ.DrsSegD
 import FvModexp.Proofs.Common.MaskWord
 
 set_option autoImplicit false
@@ -19,23 +18,6 @@ set_option linter.janusRenameI false
 namespace FvModexp.Amd64.Q.DivRec
 
 open FvModexp.Amd64.Q.DivLarge (DrsPreW DrsPostW)
-
-/-- the join after `subVW(uu[ql:], uu[ql:], 1)` (natdiv.go:851) -/
-abbrev rJ6 : Nat := 0x5f003f
-
-theorem bvS2 {a u : Nat} (h : a ≤ u) (hu : u < 2 ^ 64) :
-    BitVec.ofNat 64 u - BitVec.ofNat 64 a = BitVec.ofNat 64 (u - a) := by
-  apply BitVec.eq_of_toNat_eq
-  simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]
-  omega
-
-theorem bvM2 {q a x : Nat} (h : a < x) (hx : x < 2 ^ 63) (hq : q + 8 * a < 2 ^ 64) :
-    BitVec.ofNat 64 q + ((0#64 - BitVec.ofNat 64 (x - a)).sshiftRight 63 &&& BitVec.ofNat 64 a <<< 3) =
-      BitVec.ofNat 64 (q + 8 * a) := by
-  have hsh : BitVec.ofNat 64 a <<< 3 = BitVec.ofNat 64 (8 * a) := by
-    apply BitVec.eq_of_toNat_eq; rw [BitVec.toNat_shiftLeft]; simp only [BitVec.toNat_ofNat, Nat.shiftLeft_eq]; omega
-  rw [hsh]
-  exact bvM (by omega) (by omega) (by omega) (by omega)
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in
