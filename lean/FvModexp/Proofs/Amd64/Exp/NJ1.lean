@@ -53,7 +53,8 @@ theorem fromJ1 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.prog
     (hrg : M.regions = s.mem.regions)
     (hbp : M.readLE (sp + 0x490) 8 = bp) (hrv : M.readLE (sp + 0x498) 8 = ret0)
     (hK' : ∀ s'' : State, s''.regs 4 = BitVec.ofNat 64 (sp + 0x498 + 8) → s''.regs 5 = BitVec.ofNat 64 bp →
-      s''.regs 14 = S.regs 14 → Post R b L K costD costR costS costP zp zc st xp xl yp yl mp n s s'' → F s'') :
+      s''.regs 14 = S.regs 14 → s''.xmm 15 = 0 →
+      Post R b L K costD costR costS costP zp zc st xp xl yp yl mp n s s'' → F s'') :
     Reaches ((LibN.program.link impl).withExit ret0) S (IsReturn F) := by
   have hP' := hP
   obtain ⟨⟨hs4, hs14, hsfs, -, hsdf, hK1, hK2, hce, hsv⟩, -, hty, -, -, hslow, hry, hryl, hryc, hrm, hrn, hrmc,
@@ -91,8 +92,8 @@ theorem fromJ1 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.prog
     (by rw [rda (by omega) (by omega), show sp + 0x498 + 0x28 = sp + 0x4c0 by omega]; exact hrn)
     S hpc hsp' h6 h8 hmem ?F0 ?K1 ?K2
   case F0 =>
-    intro hc s' e4 e5 e0 e3 e1 e14 efs edf _ hF2 _
-    refine hK' s' e4 e5 e14 (post_triv hs hK0 hLs hwrt hsok hstw hinvs ?_ hzc hzp ?_
+    intro hc s' e4 e5 e0 e3 e1 e14 efs edf ex hF2 _
+    refine hK' s' e4 e5 e14 (ex.trans hx15) (post_triv hs hK0 hLs hwrt hsok hstw hinvs ?_ hzc hzp ?_
       (hFw.trans hF2 fun a k ho => ⟨ho, by simp only [wN, outside_cons, outside_nil, and_true] at ho ⊢; omega⟩)
       (e0.trans h0) e3 (e1.trans h1) (efs.trans hfs) (edf.trans hdf))
     · rcases hz with ⟨rfl, -, rfl, hk⟩ | ⟨rfl, -, rfl⟩
@@ -134,17 +135,17 @@ theorem fromJ1 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.prog
           by rw [show sp + 0x498 - 0x498 = sp by omega]; exact Apart.mono hw (by omega) (Nat.le_refl _)⟩
       · omega
     case FA =>
-      intro hc s' f4 f5 f0 f3 f1 f14 ffs fdf _ hF2 hv1 _
+      intro hc s' f4 f5 f0 f3 f1 f14 ffs fdf fx hF2 hv1 _
       rcases hz with ⟨rfl, -, rfl, hk⟩ | ⟨-, -, rfl⟩
       · obtain ⟨⟨hH, -, hzs, -⟩, -, -, -, hzL, -⟩ := hk hc
-        refine hK' s' f4 f5 (f14.trans hS14.symm) (post_oneA hs hK0 hLs hwrt hsok hstw hinvs hc hzc hH hzs hzL hv ?_
+        refine hK' s' f4 f5 (f14.trans hS14.symm) (fx.trans (ex15.trans hx15)) (post_oneA hs hK0 hLs hwrt hsok hstw hinvs hc hzc hH hzs hzL hv ?_
           hv1 f0 f3 f1 (by rw [ffs, efs, hfs]) (by rw [fdf, edf, hdf]))
         exact hFw.trans hF2 fun a k ho => ⟨by rw [List.cons_append, outside_cons] at ho; exact ho.2,
           by simp only [wN, List.cons_append, List.nil_append, outside_cons, outside_nil, and_true] at ho ⊢; omega⟩
       · omega
     case FB =>
-      intro hc s' p r m hLF hMF hrg' hAp hIn hp48 haccp hp8 hr8 hr hinv' f4 f5 f0 f3 f1 f14 ffs fdf _ hF2 hv1 _
-      exact hK' s' f4 f5 (f14.trans hS14.symm) (post_oneB hs hK1 hK0 hLs hwrt hsok hstw hv hFw hLF hMF hAp hIn hp48
+      intro hc s' p r m hLF hMF hrg' hAp hIn hp48 haccp hp8 hr8 hr hinv' f4 f5 f0 f3 f1 f14 ffs fdf fx hF2 hv1 _
+      exact hK' s' f4 f5 (f14.trans hS14.symm) (fx.trans (ex15.trans hx15)) (post_oneB hs hK1 hK0 hLs hwrt hsok hstw hv hFw hLF hMF hAp hIn hp48
         haccp hp8 hr8 hr (by rw [hg]; exact hinv') hF2 hv1 f0 f3 f1 (by rw [ffs, efs, hfs]) (by rw [fdf, edf, hdf]))
   case K2 =>
     intro hm1 hy0 hx0 hx1 T tpc tsp t0 t3 t1 t7 t6 t8 t9 t10 t2 t12 t5 t15 t13 t11 t14 tfs tdf tx15 tm
@@ -174,7 +175,7 @@ theorem fromJ1 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.prog
         (by rw [show sp + 0x3a0 = sp + 0x498 - 0xf8 by omega]; exact q2)
         (by rw [kf (Or.inl rfl)]; exact hbp) (by rw [kf (Or.inr rfl)]; exact hrv) (SlotEq.refl _ _)
         (epiK0 impl ret0 hret F (sp + 0x498) bp _ U.mem _ (by omega) (by omega) hfl
-          fun s'' a1 a2 a3 hq => hK' s'' a1 a2 (a3.trans (u14.trans t14)) hq)
+          fun s'' a1 a2 a3 a4 hq => hK' s'' a1 a2 (a3.trans (u14.trans t14)) a4 hq)
     case KD =>
       intro hny U M2 upc usp u0 u3 u1 u7 u6 u8 u9 u10 u11 u12 u13 u15 u5 u2 u14 ufs udf ux15 um hF2 hrg2 hfl
         q58 q60 q68 q70
@@ -206,7 +207,7 @@ theorem fromJ1 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.prog
         (ux15.trans (tx15.trans hx15)) rfl hFU (by rw [hrg2, hrg]) hspl
         (by rw [kf ⟨by omega, by omega⟩]; exact hbp) (by rw [kf ⟨by omega, by omega⟩]; exact hrv) (SlotEq.refl _ _)
         (epiK0 impl ret0 hret F (sp + 0x498) bp _ U.mem _ (by omega) (by omega) hfl
-          fun s'' a1 a2 a3 hq => hK' s'' a1 a2 (a3.trans (u14.trans t14)) hq)
+          fun s'' a1 a2 a3 a4 hq => hK' s'' a1 a2 (a3.trans (u14.trans t14)) a4 hq)
       rw [← hy0M (by omega)]; exact hny
 
 end FvModexp.Amd64.ExpN
