@@ -2116,3 +2116,13 @@ Mont 149/1710, SubMod2N 229/2779, ModInv 199/2318, DivW 153/1205, DivWVW 11/335,
 Div 406/2637, DivM 220/3567, Rem 175/4488, DivBasicQ 299/4577, DrsQ 305/1697, DivQ 353/2610, DivMQ 163/3584,
 RemQ 159/4496, IntMod 189/3954, W2 457/2957, W4 488/3028, P2W2 332/3078, P2W4 254/1553, P2D 372/2253, Even FAIL 900/4498,
 IExpQ 591/4618, RequiredGas 285/1757, RunErr 376/1627, RunSucc 784/5215.
+
+## asm s79 (2026-11-14): amd64 Exp/EvenRow targeted verify (Janus v0.3.3, ROWS=1, JANUS_TIMINGS=1, snapshot cache-asm/snap79)
+* Warm-up (outside caps): snapshot-only module importing the 1076-module frontier of EvenRow's lower rows: own compile +
+  replay 2716 s (replay of 1080 targets 2672 s).
+* Fresh own closure: EvenRow owns **209 modules** (Ev*, ModInv*, N*, Slow*, SubMod2NS*): own compile hit the 900 s cap
+  at 193/209 (load ~30). Needs lower rows owning those chains (proposal in NOTES-conventions "[asm s79]").
+* With the own closure cached: **PASS 262-270 s / 4.0 GB**: own compile 20 s (EvenRow 15 s / 4.4 GB dev), audit 236 s,
+  replay 9.5 s (1 target). Replay of the 209 own modules (separate run): 542 s at 4 jobs.
+* Audit 236 s = Janus bug (JANUS-ISSUES "[asm s79] PERF"): ~92 % in `EnvironmentHeader.moduleNames` rebuilds
+  (O(1285 modules) per constant lookup); the statement reaches 2168 constants (P2DRow: 2093).
