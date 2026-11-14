@@ -71,7 +71,7 @@ theorem segM {impl : List Amd64.Segment} (hmv : MemmoveLive64 (LibW.program.link
     {ret0 : W64} {Q : State → Prop} {S : State} {L1 : List (Nat × Nat)} {b1 pZ cZ : Nat}
     (hk : KS R L K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml mc s S L1 b1 pZ cZ)
     (KV' : ∀ S' : State, KV R L K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml mc s S' L1 b1 pZ cZ →
-      ReachesRet (LibW.program.link impl) ret0 S' Q) :
+      stCap S'.mem st = stCap S.mem st → ReachesRet (LibW.program.link impl) ret0 S' Q) :
     ReachesRet (LibW.program.link impl) ret0 S Q := by
   obtain ⟨hK1, hK2, hK3, hK4, hK5⟩ := hP.kf
   have hsp64 : sp < 2 ^ 64 := by omega
@@ -159,7 +159,10 @@ theorem segM {impl : List Amd64.Segment} (hmv : MemmoveLive64 (LibW.program.link
     (efs.trans (tfs.trans ffs)) (ex.trans (tx.trans fx)) (edf.trans (tdf.trans fdf)) (by rw [m3]; exact hw3)
     (fun a k h1 h2 => by rw [m3]; exact (kW a k (Or.inr ⟨by omega, h2⟩)).trans (kF a k h1 h2))
   rw [← m3] at hd3
-  exact KV' S3 ⟨hj3, pc3, ⟨hd3, hlz, hv, hn⟩, e0, e1, e2, e10, e6, e7, e9⟩
+  have ecap2 : stCap S2.mem st = stCap S.mem st := by
+    unfold Apart at hstw
+    exact hF.readLE _ _ (by simp only [FM, outside_cons, outside_nil, and_true]; omega)
+  exact KV' S3 ⟨hj3, pc3, ⟨hd3, hlz, hv, hn⟩, e0, e1, e2, e10, e6, e7, e9⟩ (by rw [m3, g2]; exact ecap2)
 
 end
 

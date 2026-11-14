@@ -28,7 +28,7 @@ theorem rdU3 {m m' : Memory} {sp : Nat} (hF : MemFrame m m' (wsU3 sp)) (h8 : 8 �
   refine ⟨fun a k h1 h2 => hF.readLE _ _ ?_, fun a k h1 h2 => hF.readLE _ _ ?_, fun a k h1 h2 => hF.readLE _ _ ?_⟩ <;>
   simp only [wsU3, outside_cons, outside_nil, and_true] <;> omega
 
-theorem rd160 {m m' : Memory} {sp : Nat} (hF : MemFrame m m' [(sp + 0x160, sp + 0x168)]) :
+theorem rd160U {m m' : Memory} {sp : Nat} (hF : MemFrame m m' [(sp + 0x160, sp + 0x168)]) :
     ∀ a k, (a + k ≤ sp + 0x160 ∨ sp + 0x168 ≤ a) → m'.readLE a k = m.readLE a k := fun a k h =>
   hF.readLE _ _ (by simp only [outside_cons, outside_nil, and_true]; omega)
 
@@ -99,7 +99,7 @@ theorem segU3 {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
   obtain ⟨hw2, hdl2, hln2⟩ := WC.own hP hj'.wc t2F t2rg (fun r hr => by
     simp only [List.mem_cons, List.not_mem_nil, or_false] at hr
     subst hr; simp only [OwnR]; omega)
-  have k160 := rd160 t2F
+  have k160 := rd160U t2F
   have hj2 := hj'.call (S' := T2) (t24.trans hj'.esp.symm) t214 t2fs t2x t2df hw2
     (fun a k h1 _ => k160 a k (Or.inr (by omega)))
   obtain ⟨hstw, -⟩ := hP.stkF
