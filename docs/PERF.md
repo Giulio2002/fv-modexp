@@ -2169,3 +2169,29 @@ RunSucc FAIL 421/978.
 | arm64 Nat/MulRow (reinstated) | 81 | 253 s | 14 s | 127 s | **PASS 400 s** |
 | arm64 Nat/DrsRow | 128 (was 207) | 212 s (was 429) | 20 s | 121 s (was 218) | **PASS 357 s** (rel47: 674 s) |
   Load 10-17. Total release work is unchanged (the mul closure is paid once either way, +1 row overhead ≈ 15 s); both rows ≤ 550 s.
+
+## divmc s81 (2026-11-14): remaining amd64 W2/W4 runs + P2W2/P2W4 on one-segment programs; two slow tactics fixed
+* Dev compile (amd64 vs dev031, LEAN_NUM_THREADS=4, 2 jobs, host load 11-14). Statements unchanged.
+* `calls [...]` runs (14: W{2,4} OneL, RR, XnB x2, ZcT, Zm, Zm2) are split at their CALL pc (from `go tool objdump`):
+  one-segment run to the call (`SegProg.lift`), a full-program run call -> call+5 with the callee summary, one-segment
+  run on to the old stop. Loop-head runs (stop pc = start pc, K0) do one `janus64_step` on the full program first.
+  Def-valued stop targets (`njoin`, `test` = `fnE + k`) are passed as numerals. Multi-line `until` handled.
+| module (W2) | before | after |  | module (W2) | before | after |
+|---|---|---|---|---|---|---|
+| OneL | 40.4 | 17.8 | | ZcT | 23.4 | 17.0 |
+| RR | 35.6 | 14.2 | | Zm / Zm2 | 18.7 / 28.6 | 7.4 / 11.2 |
+| XnB | 41.8 | 21.9 | | S3 | 33.9 | 25.3 |
+| P1 | 48.3 | 20.2 | | Pow | 68.4 | 40.7 |
+| ExB / ExT | 16.8 / 13.0 | 11.6 / 8.5 | | K0 | 9.0 | 4.3 |
+  W2 converted set 427 -> 249 module-s (W4 twins alike). Not converted: W{2,4}Loop (the lifted run diverges), the
+  multi-target runs (`until [a, b]`: EnJ, Fin; P2W{2,4} Cp3/EnJ/Sk/Tl2/X4 one or more each) — Janus stops only at ONE
+  return address, so a lifted run cannot end at two pcs.
+* NEW Exp/P2W2Seg (seg37 = expNNPowerOfTwoWindowSize2), P2W4Seg (seg36): 28 + 28 single-target P2W runs converted
+  (all that qualify), e.g. P2W2Cp3 32 s, EnA 19 s, R1b 16 s after conversion.
+* Profile-and-fix: W{2,4}P0 `congr 1` on two big `readLE` memory terms (37 s) -> explicit `congrArg ... |>.trans`:
+  44 -> 15 s. P2W{2,4}BMu: one omega over the full context (32 s) -> lemma `sp8_mod` (two facts): 41 -> 13 s.
+* Seen, not fixed: P2W{2,4}Ent omegas under `ESl.keep`'s 4-way disjunction (24 + 7 s; a span-wide keep is too coarse
+  for P2W2's F2 case and W4's slot ranges), P2W{2,4}Sk `first | exact yiC … | exact yiA …` (4 failing alternatives,
+  ~10 s each, failing big-context omegas). Kernel time (per-pc `stepOK`) is now the bulk of W2Pow (31 s) and S3 (24 s).
+* Dev sums (modules rebuilt after the change, not the whole own set): W2 50 mods 491 s, W4 50 mods 479 s, P2W2 38 mods
+  477 s, P2W4 37 mods 486 s (before the P0/BMu fixes, -30 s each). Row numbers: pending (top's rel48 has s80 only).
