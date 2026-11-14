@@ -1987,3 +1987,12 @@ yiC before yiA/yiB: 47 s (janus64_run itself ~27 s).
 | Amd64/Exp/P2W2Fin | 7 s | 2.5 GB |
 | Amd64/Exp/P2W2Al | 7 s | 2.5 GB |
 P2W2Tl imports DeferX (→ MontW chain: MontLoop 113 s dev) — already in the W2/W4 rows' store; P2W2Row reuses it.
+
+## divmc s70 (2026-11-14): amd64 P2W2 `return 1` + loop-invariant defs (dev compile, LEAN_NUM_THREADS=4)
+| module | wall | peak RSS |
+|---|---|---|
+| Amd64/Exp/P2W2R1 | 17 s | 2.4 GB |
+| Amd64/Exp/P2W2R1b | 21 s | 2.7 GB |
+| Amd64/Exp/P2W2LI | 1.5 s | 2.3 GB |
+| Amd64/Exp/P2W2UB | 1.3 s | 2.3 GB |
+R1b: the WC/ESl facts at the pushed memory are wrapped in a local `Hd` before `janus64_run … until [mkE/noE]` (no run splitting).
