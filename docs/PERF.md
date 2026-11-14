@@ -2142,3 +2142,17 @@ BasicSqrQ 318/6127, SqrQ 507/4419, MulQ 571/2261, RequiredGas 332/3462, SubMod2N
 DivWVW 15/421, DivBasic 274/3609, DivBasicQ 278/3583, DrsQ 585/2069, DivQ 535/5231, RemQ 191/2098, IntMod 376/3836,
 W4 FAIL 900/3605, W2 FAIL 901/3489, P2W2 FAIL 782/2996, P2W4 FAIL 465/3072, P2D FAIL 227/2041, RunErr 360/1314,
 RunSucc FAIL 421/978.
+
+## asm s80 (2026-11-14): amd64 lower rows ModInvRow / SlowRow + EvenRow re-cut (Janus v0.3.3, ROWS=1, JANUS_TIMINGS=1, snapshot cache-asm/snap80b, f460d3ce)
+* Warm-up (outside caps, JANUS_JOBS=6): snapshot-only module importing all amd64 release rows up to P2DRow (1172 modules):
+  5047 s (compile + replay), load ~15-25.
+* Then, in release order on that cache (each row's lower rows cached = the fresh-cache release situation):
+  | row | own modules | total | own compile | audit | replay | peak |
+  |---|---|---|---|---|---|---|
+  | amd64 Exp/ModInvRow (new) | 53 | **341 s PASS** | 171 s | 22 s | 111 s | 3.8 GB |
+  | amd64 Exp/SlowRow (new) | 53 | **222 s PASS** | 111 s | 32 s | 74 s | 3.0 GB |
+  | amd64 Exp/EvenRow | 95 (was 209) | **730 s PASS** | 314 s | **228 s** | 182 s | 4.2 GB |
+* EvenRow's own set: 209 → 95 modules (ModInv* + Slow* moved to the new rows; the unused old `SubMod2N`/`SubMod2NS*`
+  chain (22 modules) dropped from the closure: CalleeInstE no longer imports it). Without the audit bug (JANUS-ISSUES
+  "[asm s79] PERF", audit ≈ 31 % of the row) EvenRow would be ≈ 500 s; with it the row is over the 600 s margin.
+* Dev compile: ModInvRow 10.4 s / 3.3 GB, SlowRow 10.9 s / 3.8 GB.
