@@ -121,7 +121,7 @@ def Globals (R : RtInv) (m : Memory) (w : List (Nat × Nat)) : Prop :=
   m.accessible gA 32 false = true ∧ Outside gA 32 R.rt ∧ Outside gA 32 w ∧
   m.accessible wbA 4 false = true ∧ Outside wbA 4 R.rt ∧ Outside wbA 4 w
 
-/-- `math/big`'s package global `natOne` (`nat.go:30`, `var natOne = nat{1}`, in `.data`) at its initial Go value: the
+/-- `math/big`'s package global `natOne` (`nat.go:39`, `var natOne = nat{1}`, in `.data`) at its initial Go value: the
 slice header `(op, 1, 1)` at its address and the word `op[0] = 1` of its (statically allocated) backing array, both
 readable, outside the runtime-owned ranges and outside the stack ranges `w`. (`(*Int).exp` reads it: `nat.go` `set(natOne)`
 / `lsh(natOne, n)` / `add(z, natOne)` on the power-of-two and even-modulus paths.) -/
