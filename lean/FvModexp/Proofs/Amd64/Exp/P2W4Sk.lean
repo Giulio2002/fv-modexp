@@ -7,10 +7,10 @@ set_option autoImplicit false
 # `expNNPowerOfTwoWindowSize4` (amd64): `mmask`, `mtop`, the first word and the skip-zero loop (nat.go:1163-1196)
 (agent divmc s76, port of divmc s68; amd64 twin of agent infra's `Arm64.P2W4Sk`)
 
-From the table's return (fn+0x289): `mmask` (R10; `-1` when `(logM-1) % 64 = 0`), `mtop = (logM-2) >> 6` (R11),
-`i = min(len y - 1, mtop)` (R11), `yi = y[i]` (R15, `& mmask` iff `i == mtop`), then the loop at `skH` (fn+0x30a,
+From the table's return (fn+0x295): `mmask` (R10; `-1` when `(logM-1) % 64 = 0`), `mtop = (logM-2) >> 6` (R11),
+`i = min(len y - 1, mtop)` (R11), `yi = y[i]` (R15, `& mmask` iff `i == mtop`), then the loop at `skH` (fn+0x320,
 `TESTQ R15, R15`; `for yi == 0 { if i == 0 { return 1 }; i--; yi = y[i] }`). Model: `Exp.skipZero y i yi`. Exits:
-`blE` (fn+0x3d8, `bitLen`; `skipZero = some (i, yi)`) and `r1E` (fn+0x32a, return 1; `skipZero = none`). Pure segment:
+`blE` (fn+0x3eb, `bitLen`; `skipZero = some (i, yi)`) and `r1E` (fn+0x33c, return 1; `skipZero = none`). Pure segment:
 memory unchanged. Registers at the exits: `AX = logM`, `R11 = i`, `R12 = len y`, `R13 = y`, `R15 = yi`.
 -/
 
@@ -18,11 +18,11 @@ open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Spec Janus.Con
 
 namespace FvModexp.Amd64.P2W4
 
-/-- the skip loop's head `TESTQ R15, R15` (fn+0x30a) -/
+/-- the skip loop's head `TESTQ R15, R15` (fn+0x320) -/
 abbrev skH : Nat := 6198752
-/-- `bitLen(yi)` (fn+0x3d8, the loop's exit with `yi ≠ 0`) -/
+/-- `bitLen(yi)` (fn+0x3eb, the loop's exit with `yi ≠ 0`) -/
 abbrev blE : Nat := 6198955
-/-- `return 1` (fn+0x32a) -/
+/-- `return 1` (fn+0x33c) -/
 abbrev r1E : Nat := 6198780
 
 /-- the registers this pure segment keeps -/
