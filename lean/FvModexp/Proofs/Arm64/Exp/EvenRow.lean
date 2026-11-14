@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Arm64.Exp.IExpClE
+import FvModexp.Proofs.Arm64.Exp.NRow
 import FvModexp.Proofs.Arm64.Exp.EvInst
 import FvModexp.Proofs.Arm64.Exp.NCap
 import FvModexp.Proofs.Arm64.NatQ.RemC
@@ -15,7 +15,8 @@ set_option autoImplicit false
 `modularInverseModPowerOfTwo`, two `mul`s, `trunc`, `add`) with EVERY callee proved: the inner `nat.expNN` is expmc's
 `ExpN.ens_noEven` (window 70720) on the closed TIGHT-COSTS callee shapes `IExp.dhypsQ` (asm's `Q.NatDiv.ensCLG`,
 expmc's Q-form `expNNSlow`, infra's `expNNPowerOfTwo`; expmc s69: no old `nat.sqr` SCC) and asm's `Q.NatRem.ensCR`; the cost bounds `bU`/`cU` are the dominating box maxima `Exp.supUF` (= expmc's `Exp.supU` in fold form, infra s59 audit-size fix; expmc's
-`Common/NCostU`, as top's `Run.Closed.expC`); the need monotonicity facts are proved here (copied from top's RunOkRowC).
+`Common/NCostU`, as top's `Run.Closed.expC`); the closed inner `nat.expNN` is the lower row Exp/NRow's `NRow.hNE`
+(infra s60 own-set cut: EvenRow no longer compiles the expNN / expNNSlow chains); the need monotonicity facts are proved here (copied from top's RunOkRowC).
 Window `[SP - 72368, SP + 112)`. Runtime premises: the live `makeslice`, `growslice`, `memclrNoHeapPointers`,
 `memmove` (+ zero-length), `newobject`, `gcWriteBarrier2` contracts.
 -/
@@ -61,14 +62,7 @@ theorem sum (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     (hno : NewobjectLiveContract (Extracted.program.ofImpl impl) (cA "runtime.newobject") 4096 R)
     (hwb : WbLiveContract (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2) :
     ExpEven.EvenSum impl R 72368 112 nE cE := by
-  have hDN := IExp.dhypsQ hap hmk hgr hmc hmv hno hwb (Q.NatDiv.ensCLG impl hap R hgr hmc hwb hmk hmv hmz)
-    (K := 70720) (Nat.le_refl _)
-  have hRem : NHyp.RemHyp impl R LibRem.names 41712 112 NatRem.need cR :=
-    Q.rem_of_Q (Q.NatRem.ensCR impl hap R hgr hmc hwb hmk hmv hmz)
-  have hNE : EvenHyp.ExpNNHypNE impl R 70720 cF NatRem.need cR ExpSlow.need P2D.needP cS cP :=
-    fun b L zp zl zc st xp xl xc yp yl yc mp n mc slow =>
-      ExpN.ens_noEven impl hap R hDN hRem IExp.rem_n IExp.rem_11 (by decide) b L zp zl zc st xp xl xc yp yl yc mp n
-        mc slow
+  have hNE := NRow.hNE impl hap R hmk hgr hmc hmv hmz hno hwb
   exact ExpEven.fullI hap hmk hgr hmc hmv hmz hwb (EvenHyp.ExpNNHypNE.toNE1 hNE) (by decide) (by decide)
     rem_mono slow_mono p2_mono (bU := bUC) (cU := cUC) (Exp.domF _) (Exp.domF _) (stk := 72368) (by decide) (by decide)
     (by decide)
