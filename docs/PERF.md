@@ -2126,3 +2126,17 @@ IExpQ 591/4618, RequiredGas 285/1757, RunErr 376/1627, RunSucc 784/5215.
   replay 9.5 s (1 target). Replay of the 209 own modules (separate run): 542 s at 4 jobs.
 * Audit 236 s = Janus bug (JANUS-ISSUES "[asm s79] PERF"): ~92 % in `EnvironmentHeader.moduleNames` rebuilds
   (O(1285 modules) per constant lookup); the statement reaches 2168 constants (P2DRow: 2093).
+
+## asm s80 (2026-11-14): amd64 lower rows ModInvRow / SlowRow + EvenRow re-cut (Janus v0.3.3, ROWS=1, JANUS_TIMINGS=1, snapshot cache-asm/snap80b, f460d3ce)
+* Warm-up (outside caps, JANUS_JOBS=6): snapshot-only module importing all amd64 release rows up to P2DRow (1172 modules):
+  5047 s (compile + replay), load ~15-25.
+* Then, in release order on that cache (each row's lower rows cached = the fresh-cache release situation):
+  | row | own modules | total | own compile | audit | replay | peak |
+  |---|---|---|---|---|---|---|
+  | amd64 Exp/ModInvRow (new) | 53 | **341 s PASS** | 171 s | 22 s | 111 s | 3.8 GB |
+  | amd64 Exp/SlowRow (new) | 53 | **222 s PASS** | 111 s | 32 s | 74 s | 3.0 GB |
+  | amd64 Exp/EvenRow | 95 (was 209) | **730 s PASS** | 314 s | **228 s** | 182 s | 4.2 GB |
+* EvenRow's own set: 209 → 95 modules (ModInv* + Slow* moved to the new rows; the unused old `SubMod2N`/`SubMod2NS*`
+  chain (22 modules) dropped from the closure: CalleeInstE no longer imports it). Without the audit bug (JANUS-ISSUES
+  "[asm s79] PERF", audit ≈ 31 % of the row) EvenRow would be ≈ 500 s; with it the row is over the 600 s margin.
+* Dev compile: ModInvRow 10.4 s / 3.3 GB, SlowRow 10.9 s / 3.8 GB.
