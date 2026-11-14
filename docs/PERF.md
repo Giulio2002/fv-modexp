@@ -1961,3 +1961,7 @@ P2W2Defs 3 s, P2W2EnA 48 s / 2.5 GB (before: >280 s — `first | omega | exact r
 `exact` unfolded `readLE` (6 s each) and omega ran on `x % 2^64 = x` goals; fix: `m_* : x % 2^64 = x` and the
 stack-arg reads `r1d0/r1d8/r1e0` in the simp set, no fallbacks; the 16-byte `MOVUPS X15` result slot stated as one
 16-byte read), P2W2EnG 22 s, P2W2EnG2 22 s, P2W2EnJ 15 s, P2W2EnCtx/P2QG ~1 s, P2W2Ent 52 s / 4.6 GB.
+
+## divmc s67 (2026-11-14): amd64 shared P2 helpers + P2W2 context/stk.nat(2w) (dev compile)
+LibCallsQ 5 s / 2.5 GB, P2W2WC 7.5 s / 2.5 GB, P2W2PP 2-8 s / 2.2 GB, P2W2N 27 s / 2.9 GB (two janus64_runs with the
+big context hidden in `LibCalls.Hide`; WC transported outside the runs).
