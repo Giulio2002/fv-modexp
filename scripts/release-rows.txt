@@ -75,5 +75,5 @@ amd64 Exp/W4Row
 amd64 Exp/W2Row
 # ---- amd64 Top rows (last) ----
 amd64 Top/RunErr
-amd64 Top/RunOkRow
+# amd64 Top/RunOkRow RETIRED (top s48, coordinator): old form (segAddr name not a literal, rel46a audit FAIL); Top/RunSucc twin replaces it, as on arm64
 amd64 Top/RunSucc
