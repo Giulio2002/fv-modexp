@@ -72,7 +72,7 @@ theorem CtxX.ra {R : RtInv} {L : List (Nat × Nat)}
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- path A from `aSn2Ret` to the function's `RET`: the division, `x := r`, the join -/
-theorem xnA2K {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
+theorem xnA2K (hRR : FvModexp.Amd64.W2Pro.RRSpec) {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
     (hclr : MemclrNoHeapPointersLive64 (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
@@ -159,7 +159,7 @@ theorem xnA2K {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
   have hC6 := CtxX.raise (CtxX.dropEx hC5) (l1 := stLen M st) hl0M (by rw [hlen5, eL]; exact Nat.le_refl _)
   have hxi' : XIn R L5 sp K st (stLen M st) S5.mem r' rl rc := by rw [hlen5, eL] at hxi; exact hxi
   have hb5 : b - costD ≤ b5 := hD.2.2.1
-  refine ReachesRet.mono (xnJStep hap hclr hmv hmk hwt hro hSN hserv hDiv hnsD hnsW hLsh hnsL hnsWL hKD hKL hC6
+  refine ReachesRet.mono (xnJStep hRR hap hclr hmv hmk hwt hro hSN hserv hDiv hnsD hnsW hLsh hnsL hnsWL hKD hKL hC6
     (by rw [hlen5, eL]) hxi' hrln (by have := hxi.2.2.1; omega) hfbp hmB hMo hM1 hL0 hL1 (ble hb0 hb5)
     (ble hbud hb5) hD.2.2.2.1 S6 g1 g3 g2 (g4.trans e8) (g5.trans e9) (g6.trans e10) g8 g7 (g10.trans e4)
     (by rw [g11]; exact e5) (by rw [g12]; exact e6) (by rw [g13]; exact e7))

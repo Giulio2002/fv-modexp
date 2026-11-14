@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Amd64.Exp.W2Posts2
 import FvModexp.Proofs.Amd64.Exp.LibW
 import FvModexp.Proofs.Amd64.Exp.W2OneDefs
 
@@ -18,21 +19,6 @@ open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Contracts FvMo
 namespace FvModexp.Amd64.W2Pro
 
 open FvModexp.Amd64.W2Loop (Env Inp Buf)
-
-/-- return of `nat.div` (RR) -/
-abbrev divRet : Nat := 6212127
-
-/-- the frame words `divRet → rrJ` writes (memmove window + return slot, spills) -/
-@[reducible] def rw4 (sp : Nat) : List (Nat × Nat) :=
-  [(sp - 4104, sp + 0x18), (sp + 0x100, sp + 0x108), (sp + 0x128, sp + 0x130), (sp + 0x248, sp + 0x250)]
-
-/-- the facts at `rrJ` -/
-@[reducible] def RRPost (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (g sp n rp rl rc zzp zzc : Nat) (M M' : Memory)
-    (rrp rrc : Nat) : Prop :=
-  MemFrame M M' (R.rt ++ rw4 sp ++ [(zzp, zzp + 8 * n)]) ∧ LiveFrame M M' L [(zzp, zzp + 8 * n)] ∧
-  R.inv b L g (view R.rt L M') ∧ M'.regions = M.regions ∧
-  M'.readLE rrp (8 * n) = M.readLE rp (8 * rl) ∧
-  ((rrp = rp ∧ rrc = rc ∧ rl = n) ∨ (rrp = zzp ∧ rrc = zzc ∧ rl < n))
 
 set_option maxRecDepth 20000 in
 /-- the post of the copy path, from the `memmove` post (pure) -/

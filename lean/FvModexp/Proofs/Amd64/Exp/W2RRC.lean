@@ -1,4 +1,5 @@
-import FvModexp.Proofs.Amd64.Exp.W2Ctx
+import FvModexp.Proofs.Amd64.Exp.W2Cut
+import FvModexp.Proofs.Amd64.Exp.W2RRRet
 
 set_option autoImplicit false
 
@@ -16,20 +17,9 @@ namespace FvModexp.Amd64.W2Pro
 
 open FvModexp.Amd64.W2Loop (Env Inp Buf FinEnv)
 
-/-- the `zz` buffer -/
-@[reducible] def ZZ (R : RtInv) (L : List (Nat × Nat)) (g fs sp n mp xp yp ylen zp zc st zzp zzc : Nat) (M : Memory) :
-    Prop :=
-  Buf R L g fs sp n M zzp zzc ∧ zzp % 8 = 0 ∧ Apart zzp (8 * zzc) mp (8 * n) ∧ Apart zzp (8 * zzc) yp (8 * ylen) ∧
-  Apart zzp (8 * zzc) xp (8 * n) ∧ Apart zzp (8 * zzc) (sp + 0x2a8) 0x20 ∧ Apart zzp (8 * zzc) st 24 ∧
-  Apart zzp (8 * zzc) (stW M st) (8 * stCap M st) ∧ (2 * n ≤ zc → Apart zp (8 * zc) zzp (8 * zzc))
-
-/-- the context's window `[sp - 8 - K, sp + 0x2a8)` contains the loop's frame `[sp - 4296, sp + 0x2a8)` -/
-theorem aw_w4 {sp K a k : Nat} (hK : 41512 ≤ K) (h : AW sp K a k) : Apart a k (sp - 4296) (4296 + 0x2a8) := by
-  simp only [AW, Apart] at h ⊢; omega
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem rrRetC {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
+theorem rrRetC (hJ4 : FvModexp.Amd64.W2Pro.J4Spec) (hP01 : FvModexp.Amd64.W2Pro.P01Spec) {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
     (hclr : MemclrNoHeapPointersLive64 (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
@@ -81,7 +71,7 @@ theorem rrRetC {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.prog
   have hacc3 : M.accessible (sp + 0x2c0) 8 false = true :=
     M.accessible_sub hcacc (Or.inl rfl) (by omega) (by omega)
   rw [← hxv]
-  exact rrRet hap hclr hmv hmk (fun d src k hk => hserv.2.1 d src k hk) hwt hro hSN hserv (Y := Y) (Mv := Mv) (yi := yi)
+  exact rrRet hJ4 hP01 hap hclr hmv hmk (fun d src k hk => hserv.2.1 d src k hk) hwt hro hSN hserv (Y := Y) (Mv := Mv) (yi := yi)
     (he := he) (hd := hd) (hn := hn) (hn16 := by omega) (hmc := hmc) (hmc' := hmc') (ht := ht) (hm := hm) (hx := hx)
     (hok := fun p => ⟨hserv.2.2.1 _ _ (by omega), hserv.2.1 _ _ _ (by omega)⟩) (hy := hy) (hY := hY) (hyi := hyi)
     (hyl := hyl) (hyl' := hyl') (hyi0 := hyi0) (s398 := r398) (s390 := r390) (s3a8 := r3a8) (s3b0 := r3b0)
@@ -99,5 +89,8 @@ theorem rrRetC {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.prog
     (hokone := fun _ => hserv.1 _ _ _ (by omega)) (s1a0 := s1a0) (s188 := s188) (hrl0 := hrl0) (hrln := hrln)
     (hrc := hrc) (hra := hra) (hr48 := hr48) (hrh := hrh) (hrw := hrw) (hrS := hrS) (hrF := hrF) (hzr := hzr)
     (hzz0 := hzz0) S hpc hsp hmem h7 h6 h8 h5 h14 hfs hx15 hdf
+
+/-- `rrRetC` as the cut statement `RRSpec` (divmc s79; discharged at the top, `W2FunE`) -/
+theorem rrSpec (hJ4 : FvModexp.Amd64.W2Pro.J4Spec) (hP01 : FvModexp.Amd64.W2Pro.P01Spec) : RRSpec := @rrRetC hJ4 hP01
 
 end FvModexp.Amd64.W2Pro

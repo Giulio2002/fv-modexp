@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Amd64.Exp.W2RRRet
+import FvModexp.Proofs.Amd64.Exp.W2ORDefs
 import FvModexp.Proofs.Amd64.Exp.W2ZmDefs
 
 set_option autoImplicit false

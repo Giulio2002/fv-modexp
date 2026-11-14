@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Amd64.Exp.W2Posts
 import FvModexp.Proofs.Amd64.Exp.W2ExA
 import FvModexp.Proofs.Amd64.Exp.CmpW
 
@@ -16,7 +17,6 @@ open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Contracts Janu
 
 namespace FvModexp.Amd64.W2Loop
 
-abbrev njoin : Nat := fnE + 0x1140
 abbrev subE : Nat := 6183136
 
 theorem cmpCodeIn (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) :
