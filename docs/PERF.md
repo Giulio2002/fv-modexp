@@ -2080,3 +2080,12 @@ called once with explicit premises, the rest closed by `Nat.sub_le` / `Nat.sub_p
 P2DRow trim: 72 s → 18 s. Cause: the witness `pre`'s `repeat' (first | exact inv1 _ | …)` tried each failing `exact`
 against the budget goal `P2D.costP … ≤ BW`, and every failed unification unfolded `costP` (supTo over 9 window costs);
 fixed by proving the budget once and `generalize`-ing the `costP` term to a variable before the repeat.
+
+## amd64 NatQ/DrsRowQ chain cut (asm s72, 2026-11-14)
+rel46a: DrsRowQ 642 s (own compile 139 modules 422 s, replay 192, audit 22). The own compile was CHAIN-bound: dev critical
+path 451 s through a 16-deep segment chain DrsB4D → C1 → C2 → C2B → C3 → C4R → C4 → C5R → C6 → D4 → D5R → D5 → D6R → D6 →
+FD6 → FD7 (each segment imported the previous one only for return-address abbrevs, slot lists, model updates and small
+call-instance lemmas). Fix: those shared declarations (moved verbatim, names unchanged) live in ONE new module
+`Amd64/NatQ/DrsSegD.lean` (dev 6.8 s) that every C*/D*/FC*/FD*/B4D segment imports directly; the aggregators DrsCL/DrsDL/
+DrsFCL/DrsFDL import all their segments. Dev critical path 451 → 274 s (now DrsF2 65 s via FRecP ← … ← LibDivL); dev sum
+1334 → 1250 s. Expected janus own compile ≈ 300 s (was 422) → row ≈ 520 s. To be confirmed by top's next release run.

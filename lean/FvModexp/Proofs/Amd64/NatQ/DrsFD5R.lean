@@ -1,5 +1,4 @@
-import FvModexp.Proofs.Amd64.NatQ.DrsFD4
-import FvModexp.Proofs.Amd64.NatQ.DrsD5R
+import FvModexp.Proofs.Amd64.NatQ.DrsSegD
 import FvModexp.Proofs.Common.MaskWord
 
 set_option autoImplicit false
@@ -19,12 +18,6 @@ set_option linter.janusRenameI false
 namespace FvModexp.Amd64.Q.DivRec
 
 open FvModexp.Amd64.Q.DivLarge (DrsPreW DrsPostW)
-
-/-- after the `if c > 0 { panic }` test (natdiv.go:886-887): `0x5f0630` -/
-abbrev rJF6 : Nat := 0x5f0630
-
-/-- the return address of the final block's `subVW(u[ql:], u[ql:], 1)` (`MOVQ AX, R9`) -/
-abbrev rFD5W : Nat := 0x5f0628
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in

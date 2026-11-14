@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Amd64.NatQ.DrsC2B
+import FvModexp.Proofs.Amd64.NatQ.DrsSegD
 import FvModexp.Proofs.Common.DrsCorrVal
 
 set_option autoImplicit false
@@ -18,23 +18,6 @@ set_option linter.janusRenameI false
 namespace FvModexp.Amd64.Q.DivRec
 
 open FvModexp.Amd64.Q.DivLarge (DrsPreW DrsPostW)
-
-theorem tN {n : Nat} (h : n < 2 ^ 64) : (BitVec.ofNat 64 n).toNat = n := by
-  rw [BitVec.toNat_ofNat]; exact Nat.mod_eq_of_lt h
-
-/-- `subVW` as a summary in `LibDrs` -/
-theorem vwSum (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
-    (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
-    (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc y : BitVec 64) :
-    Summary (LibDrs.program.link impl) SubVW.entry
-      (fun s => RetAddr ((Extracted.program.onlySegments [SubVW.fn]).link impl)
-          (s.mem.readLE (s.regs regSP).toNat 8) ∧ s.xmm xmmZero = 0 ∧
-        ArgsFrom64 s 0 [zp, zl, zc, xp, xl, xc, y] ∧ s.df = false ∧ (xl = zl ∧ SubVW.Pre R b L zp zl zc xp xc s))
-      (fun s s' => (s'.regs 4 = s.regs 4 + 8 ∧ s'.regs 5 = s.regs 5 ∧ s'.regs 14 = s.regs 14 ∧
-        s'.xmm 15 = s.xmm 15) ∧ SubVW.Post R b L zp zl xp y s s') := by
-  have h := SubVW.sum impl hap R hmv b L zp zl zc xp xl xc y LibDrs.names (Callees.sub_of_all (by decide))
-  rw [← LibDrs.eq_only] at h
-  exact h
 
 set_option maxRecDepth 20000 in
 /-- the return site `0x5efe35` (after `CALL subVW(qhat, qhat, 1)`) is admissible for `subVW`'s program -/

@@ -1,5 +1,4 @@
-import FvModexp.Proofs.Amd64.NatQ.DrsD2
-import FvModexp.Proofs.Amd64.NatQ.DrsC4R
+import FvModexp.Proofs.Amd64.NatQ.DrsSegD
 
 set_option autoImplicit false
 
@@ -18,21 +17,6 @@ set_option linter.janusRenameI false
 namespace FvModexp.Amd64.Q.DivRec
 
 open FvModexp.Amd64.Q.DivLarge (DrsPreW DrsPostW)
-
-/-- the return address of the `subVV.abi0` after the correction loop -/
-abbrev rD4 : Nat := 0x5effd9
-
-/-- `|P| ≤ 2B ≤ n` -/
-theorem P_len_le2 {c : Cx} {s : State} {j : Nat} {U : List Nat} (hB : 1 ≤ c.vl / 2) :
-    (c.P s j U).length ≤ 2 * (c.vl / 2) := by
-  have h1 := Mdl.length_norm_le (Mdl.toL (Mdl.val (c.q0 s j U) * Mdl.val ((c.V s).take (c.vl / 2 - 1)))
-    ((c.q0 s j U).length + ((c.V s).take (c.vl / 2 - 1)).length))
-  rw [Mdl.length_toL, List.length_take] at h1
-  have h2 := q0_len (c := c) (s := s) (j := j) (U := U)
-  have h3 : min (c.vl / 2 - 1) (c.V s).length ≤ c.vl / 2 - 1 := Nat.min_le_left _ _
-  show (Mdl.norm _).length ≤ _
-  rw [List.length_take]
-  omega
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in

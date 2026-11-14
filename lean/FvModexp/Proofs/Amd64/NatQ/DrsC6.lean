@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Amd64.NatQ.DrsC5R
+import FvModexp.Proofs.Amd64.NatQ.DrsSegD
 import FvModexp.Proofs.Amd64.Nat.AddTo
 
 set_option autoImplicit false
@@ -19,35 +19,6 @@ namespace FvModexp.Amd64.Q.DivRec
 
 open FvModexp.Amd64.Q.DivLarge (DrsPreW DrsPostW)
 
-theorem addTo_entryD : segAddr Extracted.program AddTo.fn = addToC := by decide
-
-/-- `addTo` as a summary in `LibDrs.program` -/
-theorem atSum (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
-    (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
-    (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc : BitVec 64) :
-    Summary (LibDrs.program.link impl) addToC
-      (fun s => RetAddr ((Extracted.program.onlySegments AddTo.names).link impl) (s.mem.readLE (s.regs regSP).toNat 8) ∧
-        s.xmm xmmZero = 0 ∧ ArgsFrom64 s 0 [zp, zl, zc, xp, xl, xc] ∧ s.df = false ∧
-        (CallEnv R L s 4232 48 ∧ xl.toNat ≤ zl.toNat ∧ zl.toNat ≤ zc.toNat ∧ zl.toNat < 2 ^ 40 ∧
-          NatLive s.mem R L zp.toNat zl.toNat ∧ Outside zp.toNat (8 * zl.toNat) (win s 4232 48) ∧ zc.toNat < 2 ^ 63 ∧
-          s.mem.accessible xp.toNat (8 * xl.toNat) false = true ∧ xp.toNat + 8 * xl.toNat ≤ 2 ^ 48 ∧
-          Held R L xp.toNat (8 * xl.toNat) ∧ Outside xp.toNat (8 * xl.toNat) (win s 4232 48) ∧
-          (0 < xl.toNat → Apart zp.toNat (8 * zl.toNat) xp.toNat (8 * xl.toNat)) ∧
-          Apart zp.toNat (8 * zl.toNat) ((s.regs 14).toNat + 16) 8 ∧ Apart zp.toNat (8 * zl.toNat) (s.fsBase.toNat - 8) 8 ∧
-          R.inv b L (s.regs 14).toNat (view R.rt L s.mem)))
-      (fun s s' => (s'.regs 4 = s.regs 4 + 8 ∧ s'.regs 5 = s.regs 5 ∧ s'.regs 14 = s.regs 14 ∧ s'.xmm 15 = s.xmm 15) ∧
-        (s'.fsBase = s.fsBase ∧ s'.df = s.df ∧ natVal s'.mem zp.toNat zl.toNat =
-          (natVal s.mem zp.toNat zl.toNat + natVal s.mem xp.toNat xl.toNat) % 2 ^ (64 * zl.toNat) ∧
-        ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b ≤ b' ∧
-          R.inv b' L' (s.regs 14).toNat (view R.rt L' s'.mem) ∧
-          MemFrame s.mem s'.mem (R.rt ++ win s 4232 48 ++ [(zp.toNat, zp.toNat + 8 * zl.toNat)]) ∧
-          LiveFrame s.mem s'.mem L [(zp.toNat, zp.toNat + 8 * zl.toNat)])) := by
-  have hS := Ensures.toSummaryIn (AddTo.ens impl hap R hmv b L zp zl zc xp xl xc)
-    (A64.noExit_restrict64 hap AddTo.names) (by simp [numIntRegs])
-    (A64.codeIn_restrict_mono64 hap (IntAS.sub_of_all (ms := LibDrs.names) (by decide)))
-  rw [← LibDrs.eq_only, addTo_entryD] at hS
-  exact hS
-
 set_option maxRecDepth 20000 in
 /-- the return site `0x5efd85` is admissible for `addTo`'s program -/
 theorem raA (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) :
@@ -57,15 +28,6 @@ theorem raA (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
     (by rw [show Extracted.seg45.name = DivLarge.drsFn from rfl]; decide) 0x505 (by decide) (by decide)
   rw [show Extracted.seg45.base = 0x5ef880 from rfl] at this
   exact this
-
-theorem ws_up0 {c : Cx} {s : State} {x k p n : Nat} (h : Outside x k (c.ws s)) (h1 : c.up ≤ p)
-    (h2 : p + n ≤ c.up + 8 * c.ul) : Outside x k [(p, p + n)] := by
-  simp only [Cx.ws, outside_append, outside_cons] at h
-  simp only [outside_cons, outside_nil, and_true]; omega
-
-theorem ws_up {c : Cx} {s : State} {rs : List (Nat × Nat)} {x k p n : Nat} (h : Outside x k (rs ++ c.ws s))
-    (h1 : c.up ≤ p) (h2 : p + n ≤ c.up + 8 * c.ul) : Outside x k [(p, p + n)] :=
-  ws_up0 ((outside_append _ _ _ _).mp h).2 h1 h2
 
 theorem limbs_eq2 {m : Memory} {a a' n n' : Nat} (h1 : a = a') (h2 : n = n') : Asm.limbs m a n = Asm.limbs m a' n' := by
   subst h1; subst h2; rfl
