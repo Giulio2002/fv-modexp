@@ -1,6 +1,4 @@
-import FvModexp.Proofs.Amd64.NatQ.DrsFD3
-import FvModexp.Proofs.Amd64.NatQ.DrsFC4
-import FvModexp.Proofs.Amd64.NatQ.DrsD4
+import FvModexp.Proofs.Amd64.NatQ.DrsSegD
 
 set_option autoImplicit false
 
@@ -21,9 +19,6 @@ namespace FvModexp.Amd64.Q.DivRec
 
 open FvModexp.Amd64.Q.DivLarge (DrsPreW DrsPostW)
 open FvModexp.Amd64.Callees (VVLPre SubVVLQ SubVVHyp subVVHyp)
-
-/-- the pc after the re-entry sequence of the second `subVV.abi0` call -/
-abbrev rFD5 : Nat := 0x5f05cc
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in

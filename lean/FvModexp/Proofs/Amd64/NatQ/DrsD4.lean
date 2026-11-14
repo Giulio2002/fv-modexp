@@ -1,5 +1,4 @@
-import FvModexp.Proofs.Amd64.NatQ.DrsD3
-import FvModexp.Proofs.Amd64.NatQ.DrsC6
+import FvModexp.Proofs.Amd64.NatQ.DrsSegD
 
 set_option autoImplicit false
 
@@ -20,17 +19,6 @@ namespace FvModexp.Amd64.Q.DivRec
 
 open FvModexp.Amd64.Q.DivLarge (DrsPreW DrsPostW)
 open FvModexp.Amd64.Callees (VVLPre SubVVLQ SubVVHyp subVVHyp)
-
-/-- the model after `uu[:ql] -= qhatv[:ql]` -/
-@[reducible] def stS (ql : Nat) (st : Mdl.St) : Mdl.St :=
-  { st with w := (Mdl.subVV (st.w.take ql) (st.buf.take ql)).1 ++ st.w.drop ql }
-
-/-- the pc after the re-entry sequence of the second `subVV.abi0` call -/
-abbrev rD5 : Nat := 0x5effe6
-
-/-- `2·B ≤ len uu` -/
-theorem uuL_ge {c : Cx} {j : Nat} (h : j ≤ c.u1 - c.vl) (hv : c.vl ≤ c.u1) : 2 * (c.vl / 2) ≤ c.uuL j := by
-  simp only [Cx.uuL]; omega
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in

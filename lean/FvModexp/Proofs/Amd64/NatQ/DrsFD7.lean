@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Amd64.NatQ.DrsFD6
+import FvModexp.Proofs.Amd64.NatQ.DrsSegD
 import FvModexp.Proofs.Amd64.NatQ.DrsFin
 import FvModexp.Proofs.Amd64.Nat.Restore
 import FvModexp.Proofs.Common.ExpmcFrame

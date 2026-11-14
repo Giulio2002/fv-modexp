@@ -1,3 +1,5 @@
+import FvModexp.Proofs.Amd64.NatQ.DrsD6R
+import FvModexp.Proofs.Amd64.NatQ.DrsD5R
 import FvModexp.Proofs.Amd64.NatQ.DrsD1
 import FvModexp.Proofs.Amd64.NatQ.DrsD2
 import FvModexp.Proofs.Amd64.NatQ.DrsD3

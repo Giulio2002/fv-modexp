@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Amd64.NatQ.DrsD6R
+import FvModexp.Proofs.Amd64.NatQ.DrsSegD
 import FvModexp.Proofs.Amd64.NatQ.DrsCallS
 
 set_option autoImplicit false
@@ -17,15 +17,6 @@ set_option linter.janusRenameI false
 namespace FvModexp.Amd64.Q.DivRec
 
 open FvModexp.Amd64.Q.DivLarge (DrsPreW DrsPostW)
-
-theorem ws_qp0 {c : Cx} {s : State} {x k p n : Nat} (h : Outside x k (c.ws s)) (h1 : c.qp ≤ p)
-    (h2 : p + n ≤ c.qp + 8 * c.ql) : Outside x k [(p, p + n)] := by
-  simp only [Cx.ws, outside_append, outside_cons] at h
-  simp only [outside_cons, outside_nil, and_true]; omega
-
-theorem ws_qp {c : Cx} {s : State} {rs : List (Nat × Nat)} {x k p n : Nat} (h : Outside x k (rs ++ c.ws s))
-    (h1 : c.qp ≤ p) (h2 : p + n ≤ c.qp + 8 * c.ql) : Outside x k [(p, p + n)] :=
-  ws_qp0 ((outside_append _ _ _ _).mp h).2 h1 h2
 
 set_option maxRecDepth 20000 in
 /-- the return site `0x5f00ad` is admissible for `addTo`'s program -/

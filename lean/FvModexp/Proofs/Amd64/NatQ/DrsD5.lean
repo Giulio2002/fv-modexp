@@ -1,7 +1,5 @@
-import FvModexp.Proofs.Amd64.NatQ.DrsD5R
+import FvModexp.Proofs.Amd64.NatQ.DrsSegD
 import FvModexp.Proofs.Amd64.NatQ.DrsDG
-import FvModexp.Proofs.Amd64.NatQ.DrsC5
-import FvModexp.Proofs.Amd64.NatQ.DrsC6
 
 set_option autoImplicit false
 
@@ -19,10 +17,6 @@ set_option linter.janusRenameI false
 namespace FvModexp.Amd64.Q.DivRec
 
 open FvModexp.Amd64.Q.DivLarge (DrsPreW DrsPostW)
-
-theorem upd_app_full (A D X : List Nat) (h : X.length = D.length) : Mdl.upd (A ++ D) A.length X = A ++ X := by
-  unfold Mdl.upd
-  rw [List.take_left, List.drop_eq_nil_of_le (by simp; omega)]; simp
 
 theorem stS_zero {c : Cx} {s : State} {j : Nat} {U : List Nat} (hbl : (c.stF s j U).buf.length = 3 * c.vl)
     (hq : (c.P s j U).length ≤ 3 * c.vl)

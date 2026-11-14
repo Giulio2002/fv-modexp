@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Amd64.NatQ.DrsC3
+import FvModexp.Proofs.Amd64.NatQ.DrsSegD
 
 set_option autoImplicit false
 
@@ -17,15 +17,6 @@ set_option linter.janusRenameI false
 namespace FvModexp.Amd64.Q.DivRec
 
 open FvModexp.Amd64.Q.DivLarge (DrsPreW DrsPostW)
-
-/-- `subVV.abi0`'s entry -/
-abbrev subVVA : Nat := segAddr Extracted.program Callees.subVVfn
-
-/-- `subVV.abi0`'s return address -/
-abbrev rV1 : Nat := 0x5efe94
-
-/-- the return slot and the argument words of the `subVV.abi0` call (`[r-400, r-320)`) -/
-@[reducible] def isA (s : State) : List (Nat × Nat) := [((s.regs 4).toNat - 400, (s.regs 4).toNat - 320)]
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in
