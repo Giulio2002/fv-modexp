@@ -1,34 +1,13 @@
-import FvModexp.Proofs.Arm64.Nat.DrsFC4
-import FvModexp.Proofs.Arm64.Nat.DrsC5R
-
+import FvModexp.Proofs.Arm64.Nat.DrsSegD
 /-!
 # `divRecursiveStep` (arm64), final correction loop: after `subVV` (natdiv.go:873-875)
-
 `c5rF`: from `subVV.abi0`'s return `0x1bab64`: `len(qhatv) ≤ s` → the `addTo` setup `0x1babb0` (`BxF` at `stC`);
 otherwise → `CALL subVW(qhatv[s:], qhatv[s:], c)` (`0x1babac`, return `0x1babb0`). Adapted from DrsC5R.
 -/
-
 set_option autoImplicit false
-
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
-
 set_option linter.janusRenameI false
-
 namespace FvModexp.Arm64.DivRec
-
-/-- the `addTo(u[s:], v[s:])` setup of the final correction loop -/
-abbrev rFA : Nat := 0x1babb0
-
-theorem PF_len_le {c : Cx} {s : State} {U : List Nat} (h2v : 2 ≤ c.vl) : (c.PF s U).length ≤ 3 * c.vl := by
-  have h1 := Mdl.length_norm_le (Mdl.toL (Mdl.val (c.qF s U) * Mdl.val ((c.V s).take (c.vl / 2 - 1)))
-    ((c.qF s U).length + ((c.V s).take (c.vl / 2 - 1)).length))
-  rw [Mdl.length_toL, List.length_take] at h1
-  have h2 := qF_len (c := c) (s := s) (U := U)
-  have h3 : min (c.vl / 2 - 1) (c.V s).length ≤ c.vl / 2 - 1 := Nat.min_le_left _ _
-  show (Mdl.norm _).length ≤ _
-  rw [List.length_take]
-  omega
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in
 theorem c5rF (impl : List Segment) (R : RtInv) (c : Cx) (s : State) (Lk : List (Nat × Nat)) (bk : Nat)

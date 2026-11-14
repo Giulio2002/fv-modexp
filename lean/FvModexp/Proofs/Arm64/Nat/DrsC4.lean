@@ -1,77 +1,17 @@
-import FvModexp.Proofs.Arm64.Nat.DrsC4R
+import FvModexp.Proofs.Arm64.Nat.DrsSegD
 import FvModexp.Proofs.Arm64.Nat.AsmCallees
 import FvModexp.Proofs.Common.DivBasicMem
-
 /-!
 # `divRecursiveStep` (arm64), correction loop: `c := subVV(qhatv[:s], qhatv[:s], v[:s])` (natdiv.go:838)
-
 `c4`: from `c4r`'s call state (`0x1ba7a4`, the nine argument words stored) → `subVV.abi0` (`SubVVSum` on `LibDrs`) → its
 return `0x1ba7a8` with `Bx … stb (stV V s st)` and the borrow `c` at `SP'+80` (model: `buf := (subVV buf[:s] v[:s]).1 ++
 buf[s:]`).
 -/
-
 set_option autoImplicit false
-
 open Janus Janus.Arm64 Janus.GoABI Janus.GoABI0 Janus.Tactic Janus.Spec Janus.Contracts
 open FvModexp.Arm64.Callees Janus.Contracts.EqHashModel
-
 set_option linter.janusRenameI false
-
 namespace FvModexp.Arm64.DivRec
-
-/-- the model after `qhatv[:s] -= v[:s]` -/
-@[reducible] def stV (V : List Nat) (s0 : Nat) (st : Mdl.St) : Mdl.St :=
-  { st with buf := (Mdl.subVV (st.buf.take s0) (V.take s0)).1 ++ st.buf.drop s0 }
-
-/-- `subVV.abi0` in `LibDrs` with the runtime invariant carried over -/
-theorem svvD (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv) (b : Nat)
-    (L : List (Nat × Nat)) :
-    Summary0 (LibDrs.program.link impl) subVVA (VVLPre R b L) (SubVVLQ R b L) := by
-  have c : CodeIn ((Extracted.program.onlySegments [subVVfn]).link impl) (LibDrs.program.link impl) := by
-    rw [LibDrs.eq_only]; exact codeIn_restrict_mono hap (sub_of_all (by decide))
-  exact SubVVHyp.live (Summary.of_codeIn c (subVVHyp impl hap)) R b L
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 8000000 in
-/-- `Mc` across the argument stores (`isA`) -/
-theorem Mc.ownA {R : RtInv} {c : Cx} {s : State} {Lk : List (Nat × Nat)} {bk : Nat} {M M' : Memory} {j : Nat}
-    {Z U : List Nat} {qv : Nat} {st : Mdl.St} (h : Mc R c s Lk bk M j Z U qv st) (hF3 : MemFrame M M' (isA s))
-    (hreg : M'.regions = M.regions) : Mc R c s Lk bk M' j Z U qv st := by
-  have hcr := h.cr
-  obtain ⟨hce, -, -, -, -, -, -, -, -, -, -, -, -, -, ⟨-, -, -, hqw, -⟩, ⟨-, -, -, huw, -⟩,
-    ⟨-, -, -, hvw, -, -, -⟩, -⟩ := hcr.pre
-  obtain ⟨-, ⟨-, hb', -, -⟩, -⟩ := hce
-  have hWg := drsW_ge c.vl; have hW := hcr.hW; have hu1 := hcr.u1ul
-  have hF : MemFrame M M' (fw s) := hF3.mono fun x n ho => by
-    simp only [fw, winA, isA, outside_cons, outside_nil, and_true] at ho ⊢; omega
-  have rd : ∀ x n, Outside x n (win s c.W 96) → M'.readLE x n = M.readLE x n := fun x n ho =>
-    hF3.readLE _ _ (by simp only [win, isA, outside_cons, outside_nil, and_true] at ho ⊢; omega)
-  have ht0 := hcr.t0w
-  have hrw := h.rg.w
-  have rt : ∀ x n, c.t0 ≤ x → x + n ≤ c.t0 + 8 * (c.vl / 2 + 1) → M'.readLE x n = M.readLE x n :=
-    fun x n h1 h2 => rd _ _ (ht0.of_sub h1 h2)
-  have ru : ∀ x n, c.up ≤ x → x + n ≤ c.up + 8 * c.ul → M'.readLE x n = M.readLE x n :=
-    fun x n h1 h2 => rd _ _ (huw.of_sub h1 h2)
-  have hjm : j ≤ c.u1 - c.vl := by have := h.li.2.2.2.2.2.2.2; omega
-  have hql : (c.q0 s j U).length ≤ c.vl / 2 + 1 := q0_len
-  refine ⟨hcr, Ev.own hcr h.ev hF hreg, Fp.own hcr h.fp hF,
-    h.bd.frame hF3 (by simp only [FixOut, isA, outside_cons, outside_nil, and_true]; omega)
-      (by simp only [IOut, isA, outside_cons, outside_nil, and_true]; omega) (rd _ _ hvw)
-      (rd _ _ (huw.of_sub (by omega) (by omega))) (rd _ _ hqw),
-    h.bs.frame hF3 (by simp only [BOut, isA, outside_cons, outside_nil, and_true]; omega), h.jB, h.li,
-    ⟨by rw [hF3.readLE _ _ (by simp only [isA, outside_cons, outside_nil, and_true]; omega)]; exact h.q3.s208,
-      by rw [hF3.readLE _ _ (by simp only [isA, outside_cons, outside_nil, and_true]; omega)]; exact h.q3.s256⟩,
-    h.rg, by rw [limbs_congr (rt _ _ (Nat.le_refl _) (by omega))]; exact h.qk,
-    by rw [limbs_congr (rd _ _ hrw)]; exact h.bf,
-    by rw [limbs_congr (ru _ _ (by omega) (by omega))]; exact h.wk,
-    by rw [limbs_congr (ru _ _ (Nat.le_refl _) (by omega))]; exact h.lk, h.bud,
-    by rw [hF3.accessible]; exact h.qa, h.qloc, h.qal, FL.own hcr h.fl rd⟩
-
-theorem ret0_r (X : State) (junk : Nat → W64) (f : Flags) (v : Nat → BitVec 128) (fpsr : BitVec 32) (m : Memory)
-    (i : Nat) (hi : i = 18 ∨ i = 28 ∨ i = 29) : (retState0 X junk f v fpsr m).regs i = X.regs i := by
-  simp only [retState0, regs0, regPlatform, regG, regFP]
-  rw [if_pos hi]
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in
 /-- **`c := subVV(qhatv[:s], qhatv[:s], v[:s])`** from its call state -/

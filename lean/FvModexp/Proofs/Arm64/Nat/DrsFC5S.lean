@@ -1,23 +1,13 @@
-import FvModexp.Proofs.Arm64.Nat.DrsFC5
-
+import FvModexp.Proofs.Arm64.Nat.DrsSegD
 /-!
 # `divRecursiveStep` (arm64), final correction loop: to `CALL addTo(u[s:], v[s:])` (natdiv.go:876)
-
 `c5sF`: from `0x1babb0` (both branches of the `len(qhatv) > s` test) → the six argument loads (`u[s:]`, `v[s:]` from the
 final block's slots) → `CALL addTo` (`0x1babc8`, return `0x1babcc`). Adapted from DrsC5S.
 -/
-
 set_option autoImplicit false
-
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
-
 set_option linter.janusRenameI false
-
 namespace FvModexp.Arm64.DivRec
-
-/-- `addTo(u[s:], v[s:])`'s return address in the final block -/
-abbrev rFA2 : Nat := 0x1babcc
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in
 theorem c5sF (impl : List Segment) (R : RtInv) (c : Cx) (s : State) (Lk : List (Nat × Nat)) (bk : Nat)

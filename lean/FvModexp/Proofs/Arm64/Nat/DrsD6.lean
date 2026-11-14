@@ -1,25 +1,18 @@
 import FvModexp.Proofs.Arm64.Nat.DrsDG
-import FvModexp.Proofs.Arm64.Nat.DrsC6
+import FvModexp.Proofs.Arm64.Nat.DrsSegD
 import FvModexp.Proofs.Arm64.Nat.DrsWs
 import FvModexp.Proofs.Arm64.Nat.WinIn
-
 /-!
 # `divRecursiveStep` (arm64), end of a loop iteration: `addTo(z[j-B:], qhat)` (natdiv.go:851)
-
 `d6`: from the `CALL addTo` state (`0x1ba90c`, `Mc` at `Cx.stG`: `uu` holds the step's remainder) → `addTo`
 (`atSum`) → its return `0x1ba910` = `G` (quotient `upd Z (j-B) (addTo Z[j-B:] qhat)` = `(Cx.BS …).1`, dividend
 `(Cx.BS …).2`). The callee writes `z[j-B:]`, so `Mc` is not kept; its environment parts are rebuilt as in `Mc.callN`.
 -/
-
 set_option autoImplicit false
-
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
 open FvModexp.Arm64.Callees Janus.Contracts.EqHashModel
-
 set_option linter.janusRenameI false
-
 namespace FvModexp.Arm64.DivRec
-
 /-- the dividend after the step, from `uu`'s and `u[:j-B]`'s memory -/
 theorem uk_step {R : RtInv} {c : Cx} {s : State} {j : Nat} {Z U : List Nat} {M : Memory} (hcr : Cr R c s)
     (hli : c.LI s j Z U) (hjB : c.vl / 2 < j)

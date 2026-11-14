@@ -1,29 +1,17 @@
-import FvModexp.Proofs.Arm64.Nat.DrsD5R
+import FvModexp.Proofs.Arm64.Nat.DrsSegD
 import FvModexp.Proofs.Arm64.Nat.DrsDG
-import FvModexp.Proofs.Arm64.Nat.DrsC3
 import FvModexp.Proofs.Arm64.Nat.DrsWs
-
 /-!
 # `divRecursiveStep` (arm64), after the correction loop: `subVW(uu[ql:], uu[ql:], c)` (natdiv.go:849)
-
 `d5`: from `d5r`'s `CALL subVW` state (borrow `c = 1`, `Mc` at `stS ql stF`) → `subVW` (`vwSum`) → its return
 `0x1ba8d4` with `Mc` at `Cx.stG` (`uu` = `(subToC …).1`); `stS_zero`: with borrow `0` the state `stS ql stF` already
 is `Cx.stG`.
 -/
-
 set_option autoImplicit false
-
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
 open FvModexp.Arm64.Callees Janus.Contracts.EqHashModel
-
 set_option linter.janusRenameI false
-
 namespace FvModexp.Arm64.DivRec
-
-theorem upd_app_full (A D X : List Nat) (h : X.length = D.length) : Mdl.upd (A ++ D) A.length X = A ++ X := by
-  unfold Mdl.upd
-  rw [List.take_left, List.drop_eq_nil_of_le (by simp; omega)]; simp
-
 theorem stS_zero {c : Cx} {s : State} {j : Nat} {U : List Nat} (hbl : (c.stF s j U).buf.length = 3 * c.vl)
     (hq : (c.P s j U).length ≤ 3 * c.vl)
     (h0 : (Mdl.subVV ((c.stF s j U).w.take (c.P s j U).length) ((c.stF s j U).buf.take (c.P s j U).length)).2 = 0) :

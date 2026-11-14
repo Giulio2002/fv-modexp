@@ -3,6 +3,12 @@ import FvModexp.Proofs.Arm64.Nat.DrsC5
 import FvModexp.Proofs.Arm64.Nat.DrsC5S
 import FvModexp.Proofs.Arm64.Nat.DrsC6
 import FvModexp.Proofs.Arm64.Nat.DrsC6R
+import FvModexp.Proofs.Arm64.Nat.DrsC1
+import FvModexp.Proofs.Arm64.Nat.DrsC2
+import FvModexp.Proofs.Arm64.Nat.DrsC3
+import FvModexp.Proofs.Arm64.Nat.DrsC4
+import FvModexp.Proofs.Arm64.Nat.DrsC4R
+import FvModexp.Proofs.Arm64.Nat.DrsC5R
 
 /-!
 # `divRecursiveStep` (arm64): the whole correction loop (natdiv.go:832-843)

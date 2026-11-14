@@ -1,26 +1,15 @@
-import FvModexp.Proofs.Arm64.Nat.DrsFC2
+import FvModexp.Proofs.Arm64.Nat.DrsSegD
 import FvModexp.Proofs.Arm64.Nat.DrsFC6R
-import FvModexp.Proofs.Arm64.Nat.DrsC2B
 import FvModexp.Proofs.Arm64.Nat.SubVW
-
 /-!
 # `divRecursiveStep` (arm64), final correction loop: the test `e > 0` after `nat.cmp` (natdiv.go:870)
-
 `c2bF`: `e ≤ 0` → the back edge `0x1baaa4` (`c6rF`, model state unchanged: `CF.skip`); `e = 1` → `CALL subVW(qhat, qhat,
 1)` (`0x1bab2c`) with `BxF` at the base state. Adapted from DrsC2B.
 -/
-
 set_option autoImplicit false
-
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
-
 set_option linter.janusRenameI false
-
 namespace FvModexp.Arm64.DivRec
-
-/-- `subVW(qhat, qhat, 1)`'s return address in the final block -/
-abbrev rFW1 : Nat := 0x1bab30
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in
 /-- **the test** after the final loop's `nat.cmp` -/

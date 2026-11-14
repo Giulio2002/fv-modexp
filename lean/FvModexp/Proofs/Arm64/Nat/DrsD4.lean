@@ -1,27 +1,15 @@
-import FvModexp.Proofs.Arm64.Nat.DrsD3
-import FvModexp.Proofs.Arm64.Nat.DrsC4
+import FvModexp.Proofs.Arm64.Nat.DrsSegD
 import FvModexp.Proofs.Arm64.Nat.DrsWs
-
 /-!
 # `divRecursiveStep` (arm64), after the correction loop: `c := subVV(uu[:ql], uu[:ql], qhatv)` (natdiv.go:847)
-
 `d4`: from `d3`'s call state → `subVV.abi0` (`svvD`) → its return `0x1ba884` with `Mc` at `stS ql st` (`uu[:ql] -= qhatv`)
 and the borrow at `SP'+80`.
 -/
-
 set_option autoImplicit false
-
 open Janus Janus.Arm64 Janus.GoABI Janus.GoABI0 Janus.Tactic Janus.Spec Janus.Contracts
 open FvModexp.Arm64.Callees
-
 set_option linter.janusRenameI false
-
 namespace FvModexp.Arm64.DivRec
-
-/-- the model after `uu[:ql] -= qhatv` -/
-@[reducible] def stS (ql : Nat) (st : Mdl.St) : Mdl.St :=
-  { st with w := (Mdl.subVV (st.w.take ql) (st.buf.take ql)).1 ++ st.w.drop ql }
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in
 /-- **`c := subVV(uu[:ql], uu[:ql], qhatv)`** from its call state -/

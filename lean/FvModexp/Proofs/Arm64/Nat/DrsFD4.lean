@@ -1,26 +1,16 @@
-import FvModexp.Proofs.Arm64.Nat.DrsFD3
-import FvModexp.Proofs.Arm64.Nat.DrsFC4
-import FvModexp.Proofs.Arm64.Nat.DrsD4
+import FvModexp.Proofs.Arm64.Nat.DrsSegD
 import FvModexp.Proofs.Arm64.Nat.DrsWs
-
 /-!
 # `divRecursiveStep` (arm64), final block: `c := subVV(u[:len(qhatv)], u[:len(qhatv)], qhatv)` (natdiv.go:884)
-
 `d4F`: the call (`svvD`) → its return `0x1bac4c` with `McF` at `stS |PF| st` and the borrow at `SP'+80`.
 Adapted from DrsD4.
 -/
-
 set_option autoImplicit false
-
 set_option autoImplicit false
-
 open Janus Janus.Arm64 Janus.GoABI Janus.GoABI0 Janus.Tactic Janus.Spec Janus.Contracts
 open FvModexp.Arm64.Callees
-
 set_option linter.janusRenameI false
-
 namespace FvModexp.Arm64.DivRec
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in
 /-- **`c := subVV(uu[:ql], uu[:ql], qhatv)`** from its call state -/

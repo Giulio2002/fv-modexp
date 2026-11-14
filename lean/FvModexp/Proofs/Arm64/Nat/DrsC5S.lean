@@ -1,21 +1,14 @@
-import FvModexp.Proofs.Arm64.Nat.DrsC5R
-
+import FvModexp.Proofs.Arm64.Nat.DrsSegD
 /-!
 # `divRecursiveStep` (arm64), correction loop: from `subVW(qhatv[s:], …)`'s return to `CALL addTo(uu[s:], v[s:])`
-
 `c5s`: `0x1ba7f4` (`Bx … stb (stC …)`) → `CMP len(uu), s` (`s ≤ len(uu)`, no panic) → the argument loads → the
 `addTo` call state (`0x1ba6e8`, `X30 = 0x1ba6ec`), the same continuation shape as `c5r`'s first branch.
 -/
-
 set_option autoImplicit false
-
 open Janus Janus.Arm64 Janus.GoABI Janus.GoABI0 Janus.Tactic Janus.Spec Janus.Contracts
 open FvModexp.Arm64.Callees
-
 set_option linter.janusRenameI false
-
 namespace FvModexp.Arm64.DivRec
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in
 theorem c5s (impl : List Segment) (R : RtInv) (c : Cx) (s : State) (Lk : List (Nat × Nat)) (bk : Nat)

@@ -1,20 +1,14 @@
+import FvModexp.Proofs.Arm64.Nat.DrsSegD
 import FvModexp.Proofs.Arm64.Nat.DrsCE
-
 /-!
 # `divRecursiveStep` (arm64), correction loop: `i++` back to the head (natdiv.go:832)
-
 `c6r`: from `addTo`'s return (`0x1ba6ec`, `Bx … stb (corrOnce stb)`) → `R3 = i + 1`, reload `qhatv` → the head `C`
 (`0x1ba700`) after `i + 1` corrections (`Bx.next`).
 -/
-
 set_option autoImplicit false
-
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
-
 set_option linter.janusRenameI false
-
 namespace FvModexp.Arm64.DivRec
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in
 theorem c6r (impl : List Segment) (R : RtInv) (c : Cx) (s : State) (Lk : List (Nat × Nat)) (bk : Nat)

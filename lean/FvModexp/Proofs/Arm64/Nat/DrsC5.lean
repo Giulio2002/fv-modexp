@@ -1,29 +1,14 @@
-import FvModexp.Proofs.Arm64.Nat.DrsC5R
-import FvModexp.Proofs.Arm64.Nat.DrsC3
-
+import FvModexp.Proofs.Arm64.Nat.DrsSegD
 /-!
 # `divRecursiveStep` (arm64), correction loop: `subVW(qhatv[s:], qhatv[s:], c)` (natdiv.go:840)
-
 `c5`: from `c5r`'s `CALL subVW` state (`0x1ba7f0`, `len(qhatv) > s`, `Bx … stb (stV V s (stQ stb))`) → `subVW` (in place on
 `qhatv[s:len(qhatv)]`) → its return `0x1ba7f4` with `Bx … stb (stC V s ql stb)` (model: `corrSub`'s `then`).
 -/
-
 set_option autoImplicit false
-
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
 open FvModexp.Arm64.Callees Janus.Contracts.EqHashModel
-
 set_option linter.janusRenameI false
-
 namespace FvModexp.Arm64.DivRec
-
-theorem subVVc_le1 : ∀ (x y : List Nat) (c : Nat), c ≤ 1 → (Mdl.subVVc x y c).2 ≤ 1
-  | x :: xs, y :: ys, c, _ => by
-    simp only [Mdl.subVVc]
-    exact subVVc_le1 xs ys _ (by show (if x < y + c then 1 else 0) ≤ 1; split <;> omega)
-  | [], _, c, h => by simp only [Mdl.subVVc]; exact h
-  | _ :: _, [], c, h => by simp only [Mdl.subVVc]; exact h
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in
 /-- **`subVW(qhatv[s:], qhatv[s:], c)`** from its call state -/

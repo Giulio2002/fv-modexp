@@ -1,58 +1,17 @@
-import FvModexp.Proofs.Arm64.Nat.DrsFC4R
-import FvModexp.Proofs.Arm64.Nat.DrsC4
+import FvModexp.Proofs.Arm64.Nat.DrsSegD
 import FvModexp.Proofs.Arm64.Nat.AsmCallees
 import FvModexp.Proofs.Common.DivBasicMem
-
 /-!
 # `divRecursiveStep` (arm64), final correction loop: `c := subVV(qhatv[:s], qhatv[:s], v[:s])` (natdiv.go:872)
-
 `McF.ownA` (the argument words), `c4F`: the `subVV.abi0` call (`svvD`) → its return `0x1bab64` with `BxF` at
 `stV … st` and the borrow at `SP'+80`. Adapted from DrsC4.
 -/
-
 set_option autoImplicit false
-
 set_option autoImplicit false
-
 open Janus Janus.Arm64 Janus.GoABI Janus.GoABI0 Janus.Tactic Janus.Spec Janus.Contracts
 open FvModexp.Arm64.Callees Janus.Contracts.EqHashModel
-
 set_option linter.janusRenameI false
-
 namespace FvModexp.Arm64.DivRec
-
-set_option maxRecDepth 20000 in
-set_option maxHeartbeats 8000000 in
-/-- `Mc` across the argument stores (`isA`) -/
-theorem McF.ownA {R : RtInv} {c : Cx} {s : State} {Lk : List (Nat × Nat)} {bk : Nat} {M M' : Memory} {j : Nat}
-    {Z U : List Nat} {qv : Nat} {st : Mdl.St} (h : McF R c s Lk bk M j Z U qv st) (hF3 : MemFrame M M' (isA s))
-    (hreg : M'.regions = M.regions) : McF R c s Lk bk M' j Z U qv st := by
-  have hcr := h.cr
-  obtain ⟨hce, -, -, -, -, -, -, -, -, -, -, -, -, -, ⟨-, -, -, hqw, -⟩, ⟨-, -, -, huw, -⟩,
-    ⟨-, -, -, hvw, -, -, -⟩, -⟩ := hcr.pre
-  obtain ⟨-, ⟨-, hb', -, -⟩, -⟩ := hce
-  have hWg := drsW_ge c.vl; have hW := hcr.hW; have hu1 := hcr.u1ul
-  have hF : MemFrame M M' (fw s) := hF3.mono fun x n ho => by
-    simp only [fw, winA, isA, outside_cons, outside_nil, and_true] at ho ⊢; omega
-  have rd : ∀ x n, Outside x n (win s c.W 96) → M'.readLE x n = M.readLE x n := fun x n ho =>
-    hF3.readLE _ _ (by simp only [win, isA, outside_cons, outside_nil, and_true] at ho ⊢; omega)
-  have ht0 := hcr.t0w
-  have hrw := h.rg.w
-  have rt : ∀ x n, c.t0 ≤ x → x + n ≤ c.t0 + 8 * (c.vl / 2 + 1) → M'.readLE x n = M.readLE x n :=
-    fun x n h1 h2 => rd _ _ (ht0.of_sub h1 h2)
-  have ru : ∀ x n, c.up ≤ x → x + n ≤ c.up + 8 * c.ul → M'.readLE x n = M.readLE x n :=
-    fun x n h1 h2 => rd _ _ (huw.of_sub h1 h2)
-  have hql : (c.qF s U).length ≤ c.vl / 2 + 1 := qF_len
-  refine ⟨hcr, Ev.own hcr h.ev hF hreg, Fp.own hcr h.fp hF,
-    h.bd.frame hF3 (by simp only [FixOut, isA, outside_cons, outside_nil, and_true]; omega)
-      (by simp only [FOut, isA, outside_cons, outside_nil, and_true]; omega) (rd _ _ hvw)
-      (rd _ _ (huw.of_sub (by omega) (by omega))) (rd _ _ hqw), h.jB, h.li,
-    ⟨by rw [hF3.readLE _ _ (by simp only [isA, outside_cons, outside_nil, and_true]; omega)]; exact h.q3.s200⟩,
-    h.rg, by rw [limbs_congr (rt _ _ (Nat.le_refl _) (by omega))]; exact h.qk,
-    by rw [limbs_congr (rd _ _ hrw)]; exact h.bf,
-    by rw [limbs_congr (ru _ _ (Nat.le_refl _) (by omega))]; exact h.wk, h.bud,
-    by rw [hF3.accessible]; exact h.qa, h.qloc, h.qal, FL.own hcr h.fl rd⟩
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in
 /-- **`c := subVV(qhatv[:s], qhatv[:s], v[:s])`** from its call state -/

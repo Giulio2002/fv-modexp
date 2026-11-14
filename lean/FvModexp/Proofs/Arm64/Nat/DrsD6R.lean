@@ -1,33 +1,14 @@
-import FvModexp.Proofs.Arm64.Nat.DrsD5
-import FvModexp.Proofs.Arm64.Nat.DrsC6
+import FvModexp.Proofs.Arm64.Nat.DrsSegD
 import FvModexp.Proofs.Common.MaskWord
-
 /-!
 # `divRecursiveStep` (arm64), end of a loop iteration: to `CALL addTo(z[j-B:], qhat)` (natdiv.go:851)
-
 `d6r`: from `0x1ba8d4` (`Mc` at `Cx.stG`) → `z[j-B:]` bounds check (`BCC` panic excluded: `j - B ≤ len z`; the
 `cap = 0` pointer mask is all ones) → the `CALL addTo` state (`0x1ba90c`, return `0x1ba910`). No stores.
 -/
-
 set_option autoImplicit false
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
 set_option linter.janusRenameI false
 namespace FvModexp.Arm64.DivRec
-
-theorem bvS1 {b u : Nat} (h : b ≤ u) (hu : u < 2 ^ 64) :
-    BitVec.ofNat 64 u - BitVec.ofNat 64 b = BitVec.ofNat 64 (u - b) := by
-  apply BitVec.eq_of_toNat_eq
-  simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]
-  omega
-
-theorem bvM1 {q a x : Nat} (h : a < x) (hx : x < 2 ^ 63) (hq : q + 8 * a < 2 ^ 64) :
-    BitVec.ofNat 64 q + (BitVec.ofNat 64 a &&& (BitVec.ofNat 64 a - BitVec.ofNat 64 x).sshiftRight 63) <<< 3 =
-      BitVec.ofNat 64 (q + 8 * a) := by
-  rw [FvModexp.sshr63_allOnes _ (by simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega), BitVec.and_allOnes]
-  apply BitVec.eq_of_toNat_eq
-  simp only [BitVec.toNat_add, BitVec.toNat_shiftLeft, BitVec.toNat_ofNat, Nat.shiftLeft_eq]
-  omega
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in
 theorem d6r (impl : List Segment) (R : RtInv) (c : Cx) (s : State) (Lk : List (Nat × Nat)) (bk : Nat)

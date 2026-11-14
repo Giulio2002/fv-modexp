@@ -1,38 +1,14 @@
-import FvModexp.Proofs.Arm64.Nat.DrsD2
-import FvModexp.Proofs.Arm64.Nat.DrsC4R
-
+import FvModexp.Proofs.Arm64.Nat.DrsSegD
 /-!
 # `divRecursiveStep` (arm64), after the correction loop: the `panic("impossible")` test → `CALL subVV.abi0` (natdiv.go:844-847)
-
 `d3`: from `nat.cmp`'s return (`0x1ba848`) with `X0 = cmpQ |P| st ≤ 0` (the caller supplies `e ≤ 0` from the model,
 `e_le`) → `BGT` panic not taken → `uu[:len(qhatv)]` bounds check (`BHI` panic excluded: `|P| ≤ cap uu`) → the nine
 argument words of `subVV.abi0(uu[:ql], uu[:ql], qhatv)` at `SP'+8 … SP'+72` → its call state (`0x1ba880`, `X30 = 0x1ba884`).
 -/
-
 set_option autoImplicit false
-
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
-
 set_option linter.janusRenameI false
-
 namespace FvModexp.Arm64.DivRec
-
-/-- `2·B ≤ len uu` (small context, for the `hqlu` facts of D4/D5) -/
-theorem uuL_ge {c : Cx} {j : Nat} (h : j ≤ c.u1 - c.vl) (hv : c.vl ≤ c.u1) : 2 * (c.vl / 2) ≤ c.uuL j := by
-  simp only [Cx.uuL]; omega
-
-/-- `|P| ≤ 2B ≤ n` -/
-theorem P_len_le2 {c : Cx} {s : State} {j : Nat} {U : List Nat} (hB : 1 ≤ c.vl / 2) :
-    (c.P s j U).length ≤ 2 * (c.vl / 2) := by
-  have h1 := Mdl.length_norm_le (Mdl.toL (Mdl.val (c.q0 s j U) * Mdl.val ((c.V s).take (c.vl / 2 - 1)))
-    ((c.q0 s j U).length + ((c.V s).take (c.vl / 2 - 1)).length))
-  rw [Mdl.length_toL, List.length_take] at h1
-  have h2 := q0_len (c := c) (s := s) (j := j) (U := U)
-  have h3 : min (c.vl / 2 - 1) (c.V s).length ≤ c.vl / 2 - 1 := Nat.min_le_left _ _
-  show (Mdl.norm _).length ≤ _
-  rw [List.length_take]
-  omega
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in
 theorem d3 (impl : List Segment) (R : RtInv) (c : Cx) (s : State) (Lk : List (Nat × Nat)) (bk : Nat)

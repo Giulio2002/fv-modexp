@@ -1,27 +1,15 @@
-import FvModexp.Proofs.Arm64.Nat.DrsFC3
-import FvModexp.Proofs.Arm64.Nat.DrsC4R
-
+import FvModexp.Proofs.Arm64.Nat.DrsSegD
 /-!
 # `divRecursiveStep` (arm64), final correction loop: to `CALL subVV.abi0(qhatv[:s], qhatv[:s], v[:s])` (natdiv.go:872)
-
 `c4rF`: from `subVW(qhat)`'s return `0x1bab30`: the `s ≤ cap(qhatv)` check (`BCC` panic excluded), the nine argument
 words `SP'+8 … SP'+72` → `CALL subVV.abi0` (`0x1bab60`, return `0x1bab64`). Adapted from DrsC4R.
 -/
-
 set_option autoImplicit false
-
 set_option autoImplicit false
-
 open Janus Janus.Arm64 Janus.GoABI Janus.GoABI0 Janus.Tactic Janus.Spec Janus.Contracts
 open FvModexp.Arm64.Callees
-
 set_option linter.janusRenameI false
-
 namespace FvModexp.Arm64.DivRec
-
-/-- `subVV.abi0`'s return address in the final block -/
-abbrev rFVV : Nat := 0x1bab64
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in
 theorem c4rF (impl : List Segment) (R : RtInv) (c : Cx) (s : State) (Lk : List (Nat × Nat)) (bk : Nat)

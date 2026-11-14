@@ -1,38 +1,16 @@
+import FvModexp.Proofs.Arm64.Nat.DrsSegD
 import FvModexp.Proofs.Arm64.Nat.DrsCE
 import FvModexp.Proofs.Common.DrsCorrVal
-
 /-!
 # `divRecursiveStep` (arm64), correction loop: `subVW(qhat, qhat, 1)` (natdiv.go:837)
-
 `c3`: from the `CALL subVW` state (`0x1ba770`, `Bx … stb stb`) → `subVW` (`SubVW.ens` on `LibDrs`, in place) → its
 return `0x1ba774` with `Bx … stb (stQ stb)` (model: `qhat := (Mdl.subVW qhat 1).1`).
 -/
-
 set_option autoImplicit false
-
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
 open FvModexp.Arm64.Callees Janus.Contracts.EqHashModel
-
 set_option linter.janusRenameI false
-
 namespace FvModexp.Arm64.DivRec
-
-theorem tN {n : Nat} (h : n < 2 ^ 64) : (BitVec.ofNat 64 n).toNat = n := by
-  rw [BitVec.toNat_ofNat]; exact Nat.mod_eq_of_lt h
-
-/-- `subVW` as a summary in `LibDrs` -/
-theorem vwSum (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
-    (hmv : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
-    (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc y : BitVec 64) :
-    Summary (LibDrs.program.link impl) SubVW.entry
-      (fun s => RetAddr ((Extracted.program.onlySegments [SubVW.fn]).link impl) (s.regs 30).toNat ∧
-        ArgsFrom s 0 [zp, zl, zc, xp, xl, xc, y] ∧ (xl = zl ∧ SubVW.Pre R b L zp zl zc xp xc s))
-      (fun s s' => (s'.sp = s.sp ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧ s'.regs 18 = s.regs 18) ∧
-        SubVW.Post R b L zp zl xp y s s') := by
-  have h := SubVW.sum impl hap R hmv b L zp zl zc xp xl xc y LibDrs.names (sub_of_all (by decide))
-  rw [← LibDrs.eq_only] at h
-  exact h
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in
 /-- **`subVW(qhat, qhat, 1)`** from its call state -/

@@ -1,27 +1,18 @@
 import FvModexp.Proofs.Arm64.Nat.DrsFG
-import FvModexp.Proofs.Arm64.Nat.DrsFD6R
+import FvModexp.Proofs.Arm64.Nat.DrsSegD
 import FvModexp.Proofs.Arm64.Nat.DrsFin
 import FvModexp.Proofs.Arm64.Nat.Restore
-
 /-!
 # `divRecursiveStep` (arm64), final block: the deferred `stk.restore(stk.save())` and the return (natdiv.go:892)
-
 * `dsumR`: the closure `nat.divRecursiveStep.deferwrap1` (`0x1bae20`) on `LibDrs` (`Restore.sum`'s proof re-run).
 * `d7aF`: from `GF` (`0x1bacdc`): `MOVB ZR, 103(RSP)` (defer bit), `R26 = &closure` (`SP'+384`), `R6 = closure.fn`,
-  `CALL (R6)` → the closure's entry.
 * `d7F`: `GF` → `d7aF` → `dsumR` (`len(stk.w) := len at entry`) → `epiF` → `Kept ∧ DrsPostW` (`postF`).
 -/
-
 set_option autoImplicit false
-
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
-
 set_option linter.janusRenameI false
-
 namespace FvModexp.Arm64.DivRec
-
 open FvModexp.Arm64.DivLarge (DrsPreW DrsPostW)
-
 /-- the deferred closure of `divRecursiveStep` -/
 abbrev dfnR : Nat := 0x1bae20
 

@@ -1,23 +1,14 @@
-import FvModexp.Proofs.Arm64.Nat.DrsFC5R
-import FvModexp.Proofs.Arm64.Nat.DrsC5
-
+import FvModexp.Proofs.Arm64.Nat.DrsSegD
 /-!
 # `divRecursiveStep` (arm64), final correction loop: `subVW(qhatv[s:], qhatv[s:], c)` (natdiv.go:874)
-
 `c5F`: the call (`vwSum`) → its return `0x1babb0` with `BxF` at `stC` (`corrSub`'s then-branch). Adapted from DrsC5.
 -/
-
 set_option autoImplicit false
-
 set_option autoImplicit false
-
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
 open FvModexp.Arm64.Callees Janus.Contracts.EqHashModel
-
 set_option linter.janusRenameI false
-
 namespace FvModexp.Arm64.DivRec
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in
 /-- **`subVW(qhatv[s:], qhatv[s:], c)`** from its call state -/

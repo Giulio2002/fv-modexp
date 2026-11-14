@@ -1,57 +1,15 @@
+import FvModexp.Proofs.Arm64.Nat.DrsSegD
 import FvModexp.Proofs.Arm64.Nat.DrsCE
-
 /-!
 # `divRecursiveStep` (arm64), correction loop: to `CALL subVV.abi0(qhatv[:s], qhatv[:s], v[:s])` (natdiv.go:838)
-
 `c4r`: from `subVW`'s return (`0x1ba774`, `Bx … stb st`) → `CMP/BCC` (`s ≤ cap qhatv = 3n`) → the nine argument words at
 `SP'+8 … SP'+72` → the call state of `subVV.abi0` (`0x1ba7a4`, `X30 = 0x1ba7a8`).
 -/
-
 set_option autoImplicit false
-
 open Janus Janus.Arm64 Janus.GoABI Janus.GoABI0 Janus.Tactic Janus.Spec Janus.Contracts
 open FvModexp.Arm64.Callees
-
 set_option linter.janusRenameI false
-
 namespace FvModexp.Arm64.DivRec
-
-/-- `subVV.abi0`'s entry -/
-abbrev subVVA : Nat := segAddr Extracted.program subVVfn
-
-/-- the argument words of the `subVV.abi0` call (`SP'+8 … SP'+80`) -/
-@[reducible] def isA (s : State) : List (Nat × Nat) := [(s.sp.toNat - 392, s.sp.toNat - 320)]
-
-/-- the nine argument stores read back (`z`, `len z`, `x`, `y`) -/
-theorem rd9 (M : Memory) (p a b c d e f g h i : Nat) (hp : 392 ≤ p) (ha : a < 2 ^ 64) (hb : b < 2 ^ 64)
-    (hd : d < 2 ^ 64) (hg : g < 2 ^ 64) :
-    let W := ((((((((M.writeLE (p - 392) 8 a).writeLE (p - 384) 8 b).writeLE (p - 376) 8 c).writeLE (p - 368) 8 d).writeLE
-      (p - 360) 8 e).writeLE (p - 352) 8 f).writeLE (p - 344) 8 g).writeLE (p - 336) 8 h).writeLE (p - 328) 8 i
-    W.readLE (p - 392) 8 = a ∧ W.readLE (p - 384) 8 = b ∧ W.readLE (p - 368) 8 = d ∧ W.readLE (p - 344) 8 = g := by
-  intro W
-  have e : (256 : Nat) ^ 8 = 2 ^ 64 := by decide
-  refine ⟨?_, ?_, ?_, ?_⟩
-  · simp only [W]
-    rw [Memory.readLE_writeLE_of_disjoint _ _ (by omega), Memory.readLE_writeLE_of_disjoint _ _ (by omega),
-      Memory.readLE_writeLE_of_disjoint _ _ (by omega), Memory.readLE_writeLE_of_disjoint _ _ (by omega),
-      Memory.readLE_writeLE_of_disjoint _ _ (by omega), Memory.readLE_writeLE_of_disjoint _ _ (by omega),
-      Memory.readLE_writeLE_of_disjoint _ _ (by omega), Memory.readLE_writeLE_of_disjoint _ _ (by omega),
-      Memory.readLE_writeLE_self, e, Nat.mod_eq_of_lt ha]
-  · simp only [W]
-    rw [Memory.readLE_writeLE_of_disjoint _ _ (by omega), Memory.readLE_writeLE_of_disjoint _ _ (by omega),
-      Memory.readLE_writeLE_of_disjoint _ _ (by omega), Memory.readLE_writeLE_of_disjoint _ _ (by omega),
-      Memory.readLE_writeLE_of_disjoint _ _ (by omega), Memory.readLE_writeLE_of_disjoint _ _ (by omega),
-      Memory.readLE_writeLE_of_disjoint _ _ (by omega),
-      Memory.readLE_writeLE_self, e, Nat.mod_eq_of_lt hb]
-  · simp only [W]
-    rw [Memory.readLE_writeLE_of_disjoint _ _ (by omega), Memory.readLE_writeLE_of_disjoint _ _ (by omega),
-      Memory.readLE_writeLE_of_disjoint _ _ (by omega), Memory.readLE_writeLE_of_disjoint _ _ (by omega),
-      Memory.readLE_writeLE_of_disjoint _ _ (by omega),
-      Memory.readLE_writeLE_self, e, Nat.mod_eq_of_lt hd]
-  · simp only [W]
-    rw [Memory.readLE_writeLE_of_disjoint _ _ (by omega), Memory.readLE_writeLE_of_disjoint _ _ (by omega),
-      Memory.readLE_writeLE_self, e, Nat.mod_eq_of_lt hg]
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in
 theorem c4r (impl : List Segment) (R : RtInv) (c : Cx) (s : State) (Lk : List (Nat × Nat)) (bk : Nat)

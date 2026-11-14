@@ -1,30 +1,17 @@
-import FvModexp.Proofs.Arm64.Nat.DrsFD5R
-import FvModexp.Proofs.Arm64.Nat.DrsD5
+import FvModexp.Proofs.Arm64.Nat.DrsSegD
 import FvModexp.Proofs.Arm64.Nat.DrsDG
-import FvModexp.Proofs.Arm64.Nat.DrsC3
 import FvModexp.Proofs.Arm64.Nat.DrsWs
-
 /-!
 # `divRecursiveStep` (arm64), final block: `c = subVW(u[ql:], u[ql:], c)`; `if c != 0 { panic }` (natdiv.go:886-888)
-
 `Cx.sGF` (the model after `u -= qhatv`), `stSF_zero`, `sTF_one`; `d5F`: the call (`vwSum`) → `McF` at `sGF`; its
 carry is `0` (`hc0`, from `c_zeroF`), so the `CBNZ` falls through to `0x1bac98`. Adapted from DrsD5.
 -/
-
 set_option autoImplicit false
-
 set_option autoImplicit false
-
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
 open FvModexp.Arm64.Callees Janus.Contracts.EqHashModel
-
 set_option linter.janusRenameI false
-
 namespace FvModexp.Arm64.DivRec
-
-/-- the model state after `u -= qhatv` (with the borrow) at the end of the final block -/
-@[reducible] def Cx.sGF (c : Cx) (s : State) (U : List Nat) : Mdl.St := { c.sFF s U with w := (c.sTF s U).1 }
-
 theorem stSF_zero {c : Cx} {s : State} {U : List Nat} (hbl : (c.sFF s U).buf.length = 3 * c.vl)
     (hq : (c.PF s U).length ≤ 3 * c.vl)
     (h0 : (Mdl.subVV ((c.sFF s U).w.take (c.PF s U).length) ((c.sFF s U).buf.take (c.PF s U).length)).2 = 0) :

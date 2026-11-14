@@ -1,68 +1,15 @@
-import FvModexp.Proofs.Arm64.Nat.DrsC4
+import FvModexp.Proofs.Arm64.Nat.DrsSegD
 import FvModexp.Proofs.Common.MaskWord
-
 /-!
 # `divRecursiveStep` (arm64), correction loop: `if len(qhatv) > s { subVW(qhatv[s:], qhatv[s:], c) }` test (natdiv.go:839)
-
 `c5r`: from `subVV.abi0`'s return (`0x1ba7a8`): `len(qhatv) ≤ s` → the `addTo(uu[s:], v[s:])` call state (`0x1ba6e8`,
 model `stC`, via `corrSub`'s `else`); `len(qhatv) > s` → the `CALL subVW(qhatv[s:], qhatv[s:], c)` state (`0x1ba7f0`).
 -/
-
 set_option autoImplicit false
-
 open Janus Janus.Arm64 Janus.GoABI Janus.GoABI0 Janus.Tactic Janus.Spec Janus.Contracts
 open FvModexp.Arm64.Callees
-
 set_option linter.janusRenameI false
-
 namespace FvModexp.Arm64.DivRec
-
-/-- `addTo`'s entry -/
-abbrev addToA : Nat := 0x1b37f0
-
-/-- the model after `qhat--` and `qhatv -= v[:s]` (with the borrow into `qhatv[s:]`) -/
-@[reducible] def stC (V : List Nat) (s0 ql : Nat) (stb : Mdl.St) : Mdl.St :=
-  { stQ stb with buf := Mdl.corrSub stb.buf (V.take s0) s0 ql }
-
-theorem stC_le {V : List Nat} {s0 ql : Nat} {stb : Mdl.St} (h : ¬ s0 < ql) :
-    stV V s0 (stQ stb) = stC V s0 ql stb := by
-  simp only [stC, stV, stQ, Mdl.corrSub, if_neg h]
-
-theorem bvA {u j : Nat} (hj : j ≤ u) (hu : u < 2 ^ 64) :
-    BitVec.ofNat 64 u - BitVec.ofNat 64 j + 1#64 = BitVec.ofNat 64 (u - j + 1) := by
-  apply BitVec.eq_of_toNat_eq
-  simp only [BitVec.toNat_add, BitVec.toNat_sub, BitVec.toNat_ofNat]
-  omega
-
-theorem bvB {a n : Nat} (h : n / 2 ≤ a) (ha : a < 2 ^ 63) (hn : n < 2 ^ 63) :
-    BitVec.ofNat 64 a - BitVec.ofNat 64 n >>> 1 + 1#64 = BitVec.ofNat 64 (a - n / 2 + 1) := by
-  apply BitVec.eq_of_toNat_eq
-  simp only [BitVec.toNat_add, BitVec.toNat_sub, BitVec.toNat_ofNat, BitVec.toNat_ushiftRight, Nat.shiftRight_eq_div_pow]
-  omega
-
-theorem bvC {q k x : Nat} (hx0 : 0 < x) (hx : x < 2 ^ 63) (hk : k < 2 ^ 60) (hq : q + 8 * k < 2 ^ 64) :
-    BitVec.ofNat 64 q + (BitVec.ofNat 64 k &&& (0#64 - BitVec.ofNat 64 x).sshiftRight 63) <<< 3 =
-      BitVec.ofNat 64 (q + 8 * k) := by
-  rw [FvModexp.sshr63_allOnes _ (by rw [BitVec.toNat_sub]; simp only [BitVec.toNat_ofNat]; omega),
-    BitVec.and_allOnes]
-  apply BitVec.eq_of_toNat_eq
-  simp only [BitVec.toNat_add, BitVec.toNat_shiftLeft, BitVec.toNat_ofNat, Nat.shiftLeft_eq]
-  omega
-
-theorem toInt_small {n : Nat} (h : n < 2 ^ 63) : (BitVec.ofNat 64 n).toInt = n := by
-  rw [BitVec.toInt_eq_toNat_cond]; simp only [BitVec.toNat_ofNat]
-  rw [if_pos (by omega)]; congr 1; omega
-
-theorem P_len_le {c : Cx} {s : State} {j : Nat} {U : List Nat} (h2v : 2 ≤ c.vl) : (c.P s j U).length ≤ 3 * c.vl := by
-  have h1 := Mdl.length_norm_le (Mdl.toL (Mdl.val (c.q0 s j U) * Mdl.val ((c.V s).take (c.vl / 2 - 1)))
-    ((c.q0 s j U).length + ((c.V s).take (c.vl / 2 - 1)).length))
-  rw [Mdl.length_toL, List.length_take] at h1
-  have h2 := q0_len (c := c) (s := s) (j := j) (U := U)
-  have h3 : min (c.vl / 2 - 1) (c.V s).length ≤ c.vl / 2 - 1 := Nat.min_le_left _ _
-  show (Mdl.norm _).length ≤ _
-  rw [List.length_take]
-  omega
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in
 theorem c5r (impl : List Segment) (R : RtInv) (c : Cx) (s : State) (Lk : List (Nat × Nat)) (bk : Nat)

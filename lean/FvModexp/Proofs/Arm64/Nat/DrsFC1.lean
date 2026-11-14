@@ -1,26 +1,16 @@
 import FvModexp.Proofs.Arm64.Nat.DrsFCE
-import FvModexp.Proofs.Arm64.Nat.DrsC1
+import FvModexp.Proofs.Arm64.Nat.DrsSegD
 import FvModexp.Proofs.Arm64.Nat.DrsNorm
-
 /-!
 # `divRecursiveStep` (arm64), final correction loop: the head (natdiv.go:869-870)
-
 `c1F`: from the head `CF` (`0x1baab8`): `i = 2` → the exit `EF` (`0x1babd0`); otherwise `u.norm()` (`norm8`, nat.go:51),
 the `len ≤ cap` check (`BCC` panic excluded), the spill of `i` (`SP'+232`) → `CALL nat.cmp(qhatv, u.norm())` (`0x1bab04`).
 Adapted from DrsC1.
 -/
-
 set_option autoImplicit false
-
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
-
 set_option linter.janusRenameI false
-
 namespace FvModexp.Arm64.DivRec
-
-/-- the return address of the final loop's `nat.cmp` -/
-abbrev rFC1 : Nat := 0x1bab08
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in
 /-- from `norm8`'s exit to the `CALL nat.cmp` -/
