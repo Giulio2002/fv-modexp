@@ -1,5 +1,6 @@
 import FvModexp.Proofs.Amd64.Exp.EvDefs
 import FvModexp.Proofs.Amd64.Exp.NHyp
+import FvModexp.Proofs.Amd64.Exp.NDefs
 
 set_option autoImplicit false
 
@@ -14,7 +15,10 @@ amd64 `NHyp`'s (window `win s stk above`, which holds the return-address slot an
 * pre: the Summary entry facts (`X15 = 0`, `DF = 0`), the arguments, `NHyp.CPre … [x, y, m] (need xl yl ml)
   (cost ℓ xl yl ml)` (`ℓ` = the stack length at the entry) ∧ `0 < X` ∧ `2 ≤ Y` ∧ `0 < M` ∧ `M` even ∧ `xl ≤ 128` ∧
   `ml ≤ 128` ∧ `0 < st` ∧ `ml ≤ mc < 2^40` ∧ `z`'s range outside the window even when `cap z = 0` ∧ the package global
-  `natOne` ∧ `zp, xc, yc < 2^64` ∧ the return address word below `2^47` ∧ `NHyp.XFacts` (as arm64);
+  `natOne` ∧ `zp, xc, yc < 2^64` ∧ the return address word below `2^47` (the `RetAddr` user-space bound) ∧
+  `NHyp.XFacts` (as arm64) ∧ `ExpN.XG` (amd64 `nat.expNN`'s extra `x`/`natOne`/`hasADX` facts: `x` apart from the
+  threshold globals, `natOne`'s word apart from them, `hasADX` readable, `x`'s full capacity readable and apart from
+  the stack header and its free part; coordinator decision, asm s65) ∧ `x`'s capacity range outside the window;
 * post: `RSP + 8`, `RBP`, `R14`, `X15` (the Summary exit) ∧ `NHyp.CPostR … (X ^ Y % M) (cost ℓ xl yl ml)`.
 -/
 
@@ -50,7 +54,7 @@ def EvenSum (impl : List Amd64.Segment) (R : RtInv) (stk above : Nat) (need : Na
         s.regs 9 = BitVec.ofNat 64 xc ∧ NHyp.StkArg s 0 yp yl yc ∧ NHyp.StkArg s 24 mp ml mc ∧
         Pre R b L stk above need cost zp zl zc st xp xl yp yl mp ml mc s ∧
         zp < 2 ^ 64 ∧ xc < 2 ^ 64 ∧ yc < 2 ^ 64 ∧ s.mem.readLE (s.regs 4).toNat 8 < 2 ^ 47 ∧
-        NHyp.XFacts R L xp xl xc)
+        NHyp.XFacts R L xp xl xc ∧ ExpN.XG s.mem st xp xl xc ∧ Outside xp (8 * xc) (win s stk above))
       (fun s s' => (s'.regs 4 = s.regs 4 + 8 ∧ s'.regs 5 = s.regs 5 ∧ s'.regs 14 = s.regs 14 ∧
         s'.xmm 15 = s.xmm 15) ∧ Post R b L stk above cost zp zc st xp xl yp yl mp ml s s')
 
