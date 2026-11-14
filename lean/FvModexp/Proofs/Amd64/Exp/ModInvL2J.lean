@@ -15,8 +15,6 @@ namespace FvModexp.Amd64.ModInv
 
 open FvModexp.Amd64.EvenHyp
 
-theorem sp8 {sp : Nat} (h : 232 ≤ sp) : sp - 224 - 8 + 8 = sp - 224 := by omega
-
 section
 variable {impl : List Amd64.Segment} {R : RtInv} {kc : Nat} {H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat}
     {b : Nat} {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
