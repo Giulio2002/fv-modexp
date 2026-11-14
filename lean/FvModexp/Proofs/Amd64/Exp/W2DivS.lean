@@ -105,7 +105,7 @@ theorem lt64_of_live {M : Memory} {R : RtInv} {L : List (Nat × Nat)} {p n : Nat
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem divStep {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
+theorem divStep (hRR : FvModexp.Amd64.W2Pro.RRSpec) {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
     (hclr : MemclrNoHeapPointersLive64 (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
@@ -190,7 +190,7 @@ theorem divStep {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.pro
   have sl' : ∀ j, 104 ≤ j → j + 8 ≤ 0x2a8 → S2.mem.readLE (sp + j) 8 = M.readLE (sp + j) 8 :=
     fun j h1 h2 => (slot_div hCw hqinw hrW hD j h1 h2).trans (own_slot hF j (Nat.le_trans (by decide) h1))
   have hlen : stLen S2.mem st = stLen M st := hlen'.trans el
-  refine ReachesRet.mono (rrRetC hap hclr hmv hmk hwt hro hSN hserv hC' hZ' ht hfbp
+  refine ReachesRet.mono (hRR hap hclr hmv hmk hwt hro hSN hserv hC' hZ' ht hfbp
     ((sl 0xd8 (by decide) (by decide) (by decide)).trans rd8) ((sl 0x78 (by decide) (by decide) (by decide)).trans r78)
     ((sl' 0xa0 (by decide) (by decide)).trans ra0) ((sl' 0x190 (by decide) (by decide)).trans r188)
     hkk hmB (by rw [hlen]; exact hsl2) (by rw [hlen]; exact bud_sub hbud hb') hinv' hrl0 hrln hrc hra hr48 hrh hrw

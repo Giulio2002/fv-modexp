@@ -1,5 +1,4 @@
-import FvModexp.Proofs.Amd64.Exp.W2Snc
-import FvModexp.Proofs.Amd64.Exp.W2P01Ret
+import FvModexp.Proofs.Amd64.Exp.W2Posts2
 
 set_option autoImplicit false
 

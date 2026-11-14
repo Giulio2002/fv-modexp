@@ -109,7 +109,7 @@ theorem sn1_inv {R : RtInv} {b g sp K : Nat} {L : List (Nat × Nat)} {M M1 : Mem
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem xjStep {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
+theorem xjStep (hRR : FvModexp.Amd64.W2Pro.RRSpec) {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
     (hclr : MemclrNoHeapPointersLive64 (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
@@ -176,7 +176,7 @@ theorem xjStep {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.prog
     simp only [AW, Apart] at hstw
     exact hmf.readLE _ _ (outside_ws_of_win (lo := sp - 8) (hi := sp + 0x2a8) (by omega) (sn1_in sp))
   have hinv1 := sn1_inv hmf hrt hK8 hinv
-  refine ReachesRet.mono (sn1Step hap hclr hmv hmk hwt hro hSN hserv hDiv hnsD hnsW hLsh hnsL hnsWL hKD hKL hC1
+  refine ReachesRet.mono (sn1Step hRR hap hclr hmv hmk hwt hro hSN hserv hDiv hnsD hnsW hLsh hnsL hnsWL hKD hKL hC1
     (by rw [hlen1, hl0e]) qd8 q78 htl hfbp (hkk_of hMo) hmB hMo hM1 hsl0 hsl1 hsl2 hcF hbud hinv1
     S3 c1 c2 rfl q8 c3 c4
     (by rw [c6, rg 14 (by decide) (by decide) (by decide) (by decide) (by decide) (by decide), h14])

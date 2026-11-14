@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Amd64.Exp.W2Posts2
 import FvModexp.Proofs.Amd64.Exp.LibW
 import FvModexp.Proofs.Amd64.Exp.W2OneDefs
 import FvModexp.Proofs.Amd64.Exp.W2PowDefs
@@ -19,17 +20,9 @@ namespace FvModexp.Amd64.W2Pro
 
 open FvModexp.Amd64.W2Loop (Env Inp Buf OneIn)
 
-/-- entry of `(*stack).nat` -/
-abbrev snE : Nat := 6186112
-
 theorem subE8 {sp : Nat} (h1 : 8 ≤ sp) (h2 : sp < 2 ^ 64) :
     BitVec.ofNat 64 sp - 8#64 = BitVec.ofNat 64 (sp - 8) := by
   apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
-
-/-- the slot facts `rrJ → snE` adds (spills and the return address) -/
-@[reducible] def OneSl (sp rrp rrl rrc zzp zzc : Nat) (M : Memory) : Prop :=
-  M.readLE (sp + 0x220) 8 = rrp ∧ M.readLE (sp + 0x100) 8 = rrc ∧ M.readLE (sp + 0xf8) 8 = rrl ∧
-  M.readLE (sp + 0xa0) 8 = zzc ∧ M.readLE (sp + 0x190) 8 = zzp ∧ M.readLE (sp - 8) 8 = p01
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
