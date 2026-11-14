@@ -48,10 +48,10 @@ theorem itS {impl : List Amd64.Segment} (hP : EPre R b L K g fs sp st bp r zp zc
     (e12 : S.regs 12 = BitVec.ofNat 64 yp) (e11 : S.regs 11 = BitVec.ofNat 64 t - 1#64)
     (KXE : ∀ S' : State, t = 0 →
       KE R L K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml mc s S' L1 b1 z zl zc' Zv zz zzl zzc rr rl rc q ql qc →
-      ReachesRet (LibW.program.link impl) ret0 S' Q)
+      stCap S'.mem st = stCap S.mem st → ReachesRet (LibW.program.link impl) ret0 S' Q)
     (KX2 : ∀ (S' : State) (i : Nat) (v : BitVec 64), t = i + 1 → v.toNat = Exp.wd (natVal s.mem yp yl) i →
       KT2 R L K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml mc s S' L1 b1 i 0 v z zl zc' Zv zz zzl zzc
-        rr rl rc q ql qc → ReachesRet (LibW.program.link impl) ret0 S' Q) :
+        rr rl rc q ql qc → stCap S'.mem st = stCap S.mem st → ReachesRet (LibW.program.link impl) ret0 S' Q) :
     ReachesRet (LibW.program.link impl) ret0 S Q := by
   obtain ⟨hK1, hK2, hK3, hK4, hK5⟩ := hP.kf
   have hyl : yl ≤ 2 ^ 9 := hP.2.2.2.2.2.2.2.2.2.2.2.1
@@ -59,7 +59,7 @@ theorem itS {impl : List Amd64.Segment} (hP : EPre R b L K g fs sp st bp r zp zc
   · have e11' : S.regs 11 = BitVec.ofNat 64 18446744073709551615 := by rw [e11]; decide
     refine runEX ret0 Q S hpc e11' fun S' pc' hm hr hf hx hd => KXE S' rfl
       ⟨hj.keepM hm (congrFun hr 4) (congrFun hr 14) hf hx hd, by rw [hm]; exact hB, pc', hzl,
-        by rw [hr]; exact e0, by rw [hr]; exact e10, by rw [hr]; exact e8⟩
+        by rw [hr]; exact e0, by rw [hr]; exact e10, by rw [hr]; exact e8⟩ (by rw [hm])
   · have e11' : S.regs 11 = BitVec.ofNat 64 i := by
       rw [e11]; apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
     have hw := hj.wc
@@ -98,6 +98,10 @@ theorem itS {impl : List Amd64.Segment} (hP : EPre R b L K g fs sp st bp r zp zc
       (gk 1 (by decide)).trans e1, (gk 2 (by decide)).trans e2, (hF.readLE _ _ (hFo _ _ (by omega))).trans s168,
       (gk 13 (by decide)).trans e13, (gk 15 (by decide)).trans e15, g9, (gk 11 (by decide)).trans e11',
       (gk 3 (by decide)).trans e3, (gk 6 (by decide)).trans e6, (gk 7 (by decide)).trans e7⟩
+      (by
+        obtain ⟨hstw, -⟩ := hP.stkF
+        unfold Apart at hstw
+        exact hF.readLE _ _ (by simp only [FI, outside_cons, outside_nil, and_true]; omega))
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
@@ -133,7 +137,8 @@ theorem exitU {impl : List Amd64.Segment} (hP : EPre R b L K g fs sp st bp r zp 
     (by rw [g13, hk.sa0]) (by rw [g15, hk.sa8]) ((gk 3 (by decide) (by decide) (by decide) (by decide)).trans hk.e3)
     ((gk 6 (by decide) (by decide) (by decide) (by decide)).trans hk.e6)
     ((gk 7 (by decide) (by decide) (by decide) (by decide)).trans hk.e7)
-    ((gk 12 (by decide) (by decide) (by decide) (by decide)).trans hk.e12) g11 KXE KX2
+    ((gk 12 (by decide) (by decide) (by decide) (by decide)).trans hk.e12) g11 (fun S' h0 hke _ => KXE S' h0 hke)
+    (fun S' i v h1 h2 hk2 _ => KX2 S' i v h1 h2 hk2)
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
@@ -145,10 +150,10 @@ theorem exitL {impl : List Amd64.Segment} (hP : EPre R b L K g fs sp st bp r zp 
       rr rl rc q ql qc)
     (KXE : ∀ S' : State, i = 0 →
       KE R L K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml mc s S' L1 b1 z zl zc' Zv zz zzl zzc rr rl rc q ql qc →
-      ReachesRet (LibW.program.link impl) ret0 S' Q)
+      stCap S'.mem st = stCap S.mem st → ReachesRet (LibW.program.link impl) ret0 S' Q)
     (KX2 : ∀ (S' : State) (i' : Nat) (v : BitVec 64), i = i' + 1 → v.toNat = Exp.wd (natVal s.mem yp yl) i' →
       KT2 R L K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml mc s S' L1 b1 i' 0 v z zl zc' Zv zz zzl zzc
-        rr rl rc q ql qc → ReachesRet (LibW.program.link impl) ret0 S' Q) :
+        rr rl rc q ql qc → stCap S'.mem st = stCap S.mem st → ReachesRet (LibW.program.link impl) ret0 S' Q) :
     ReachesRet (LibW.program.link impl) ret0 S Q := by
   obtain ⟨hK1, hK2, hK3, hK4, hK5⟩ := hP.kf
   have hyl : yl ≤ 2 ^ 9 := hP.2.2.2.2.2.2.2.2.2.2.2.1
@@ -169,7 +174,8 @@ theorem exitL {impl : List Amd64.Segment} (hP : EPre R b L K g fs sp st bp r zp 
     (by rw [hm]; exact hk.s168) ((gk 13 (by decide) (by decide) (by decide)).trans hk.e13)
     ((gk 15 (by decide) (by decide) (by decide)).trans hk.e15) ((gk 3 (by decide) (by decide) (by decide)).trans hk.e3)
     ((gk 6 (by decide) (by decide) (by decide)).trans hk.e6) ((gk 7 (by decide) (by decide) (by decide)).trans hk.e7)
-    (by rw [g12, hk.jc.esl.2.2.1]) g11 KXE KX2
+    (by rw [g12, hk.jc.esl.2.2.1]) g11 (fun S' h0 hke hc => KXE S' h0 hke (by rw [hc, hm]))
+    (fun S' i' v h1 h2 hk2 hc => KX2 S' i' v h1 h2 hk2 (by rw [hc, hm]))
 
 end
 
