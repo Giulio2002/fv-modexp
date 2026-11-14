@@ -61,6 +61,32 @@ section
 variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)}
     {K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml mc : Nat} {s : State}
 
+/-- the callee's keep range `[sp - 8 + above, sp + 0x1b8)` covers the slots -/
+theorem kc_slot {M M' : Memory} {ab : Nat} (hsp : 8 ≤ sp) (hab : ab ≤ 0x7f)
+    (hkc : ∀ a k, sp - 8 + ab ≤ a → a + k ≤ sp + 0x1b8 → M'.readLE a k = M.readLE a k) :
+    ∀ a k, SlotR sp a k → M'.readLE a k = M.readLE a k := fun a k ha =>
+  hkc a k (by simp only [SlotR] at ha; omega) (by simp only [SlotR] at ha; omega)
+
+/-- the callee's keep range at a fixed slot `sp + o` -/
+theorem kc_at {M M' : Memory} {ab : Nat} (hsp : 8 ≤ sp) (hab : ab ≤ 0x7f)
+    (hkc : ∀ a k, sp - 8 + ab ≤ a → a + k ≤ sp + 0x1b8 → M'.readLE a k = M.readLE a k) (o k : Nat)
+    (h1 : 0x77 ≤ o) (h2 : o + k ≤ 0x1b8) : M'.readLE (sp + o) k = M.readLE (sp + o) k :=
+  hkc _ _ (by omega) (by omega)
+
+/-- the frame `FN2` leaves the slots -/
+theorem fn2_slot {M M' : Memory} (hF : MemFrame M M' (FN2 sp)) :
+    ∀ a k, SlotR sp a k → M'.readLE a k = M.readLE a k := fun a k ha => hF.readLE a k (by
+  simp only [SlotR] at ha; simp only [FN2, outside_cons, outside_nil, and_true]; omega)
+
+theorem lvl2_ge : stLen s.mem st + StackNat.rnd (a1 (nE s mp ml)) + a2 ml (nE s mp ml) ≤ lvl2 s st mp ml := by
+  have := rnd_ge (a2 ml (nE s mp ml)); simp only [lvl2]; omega
+
+end
+
+section
+variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)}
+    {K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml mc : Nat} {s : State}
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- **`J2` → `J3`** (see the module doc) -/
@@ -84,6 +110,8 @@ theorem segN2 {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
   obtain ⟨hn0, hnl⟩ := nE_bd hP hM hev
   have hml := hP.2.2.2.2.2.1
   have ha2 : 0 < a2 ml (nE s mp ml) ∧ a2 ml (nE s mp ml) ≤ 128 := by simp only [a2]; omega
+  have ha40 : a2 ml (nE s mp ml) < 2 ^ 40 := Nat.lt_of_le_of_lt ha2.2 (by decide)
+  have hsp8 : 8 ≤ sp := by omega
   have hw := h.jx.wc
   have hm1 := h.m1
   have hc1 := h.c1p
@@ -100,8 +128,7 @@ theorem segN2 {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
     simp only [FN2, List.mem_cons, List.not_mem_nil, or_false] at hq
     rcases hq with rfl | rfl | rfl <;> simp only [OwnR] <;> omega)
   have hm1' := hown _ _ _ _ hm1
-  have hesl := h.jx.esl.keep (fun a k ha => hF.readLE a k (by
-    simp only [SlotR] at ha; simp only [FN2, outside_cons, outside_nil, and_true]; omega))
+  have hesl := h.jx.esl.keep (fn2_slot hF)
   have tsp : (S2.regs 4).toNat = sp - 8 := by rw [f4, BitVec.toNat_ofNat]; omega
   have tg : (S2.regs 14).toNat = g := by rw [f14, h.jx.e14, BitVec.toNat_ofNat]; omega
   have tfs : S2.fsBase.toNat = fs := by rw [ffs]; exact h.jx.efs
@@ -120,13 +147,13 @@ theorem segN2 {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
   have hS4 : s'.regs 4 = BitVec.ofNat 64 sp := by rw [g2, f4]; exact bv_add8 (by omega) (by omega)
   refine K3 s' L2 b2 p1 l1 c1 _ ⟨⟨hS4, by rw [g4, f14]; exact h.jx.e14, by rw [hfs3, ffs]; exact h.jx.efs,
       by rw [g5, fx]; exact h.jx.ex15, by rw [hdf3, fdf]; exact h.jx.edf, hw3,
-      hesl.keep (fun a k ha => hkc a k (by simp only [SlotR] at ha; omega) (by simp only [SlotR] at ha; omega)),
+      hesl.keep (kc_slot hsp8 haN hkc),
       bud_step hb1 hrk hb2⟩, g1, hz0, hz1, hz2, ?_, ?_, ?_, hm1'', hc1,
-    DL.of_scr hw3 hscE rfl (by have := rnd_ge (a2 ml (nE s mp ml)); omega) (by omega),
+    DL.of_scr hw3 hscE rfl lvl2_ge ha40,
     Scr.apartLN hscC hlc hm1' hc1⟩
-  · rw [hkc _ _ (by omega) (by omega)]; exact r118
-  · rw [hkc _ _ (by omega) (by omega)]; exact rc8
-  · rw [hkc _ _ (by omega) (by omega)]; exact rd0
+  · rw [kc_at hsp8 haN hkc 0x118 8 (by decide) (by decide)]; exact r118
+  · rw [kc_at hsp8 haN hkc 0xc8 8 (by decide) (by decide)]; exact rc8
+  · rw [kc_at hsp8 haN hkc 0xd0 8 (by decide) (by decide)]; exact rd0
 
 end
 
