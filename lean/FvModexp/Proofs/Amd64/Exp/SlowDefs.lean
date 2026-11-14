@@ -77,6 +77,10 @@ abbrev sq2R : Nat := fnE + 0x5fb
 abbrev ml2R : Nat := fnE + 0x693
 abbrev dv2R : Nat := fnE + 0x765
 
+/-- `runtime.makeslice` / `runtime.memmove` contract addresses -/
+abbrev mkE : Nat := 4739904
+abbrev mvE : Nat := 4763104
+
 /-- the top of the window above `sp` (`RSP_entry + 0x70`) -/
 abbrev wTop : Nat := 0x220
 

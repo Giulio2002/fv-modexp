@@ -16,7 +16,7 @@ stack's array). Callees run at `RSP = sp - 8` with window `win = [sp - 8 - stk, 
 
 Every segment module imports this module directly (ROW-TIME rule). Contents: `ra_slow`; `WC` and its transport
 (`WC.frame`, `WC.call`, `WC.stkNat`, `stepC`, `nonStk`); reads (`WC.read`, `WC.readB`, `oe_bytes`, `obj_at`,
-`WC.globals`); callee preconditions (`WC.cenv`, `snPre`); the local-nat layer `Loc`/`Ob`/`DL`/`LN`.
+`WC.globals`); callee preconditions (`WC.cenv`, `snPre`). The local-buffer layer (`Ob`/`Loc`/`DL`/`LN`, arm64 SlowLN's form) is `SlowLN`.
 -/
 
 open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Spec Janus.Contracts FvModexp
@@ -528,287 +528,6 @@ theorem out_bytes {a k : Nat} {m0 : Memory}
 
 end
 
-/-! ## Local nats: `Ob`, `Loc`, `DL`, `LN` and the generic callee step -/
-
-/-- a nat array the function keeps using: held, in the used part of the current stack array or apart from it -/
-@[reducible] def Ob (R : RtInv) (L1 : List (Nat × Nat)) (st : Nat) (M : Memory) (t k : Nat) : Prop :=
-  Held R L1 t (8 * k) ∧
-    ((stW M st ≤ t ∧ t + 8 * k ≤ stW M st + 8 * stLen M st) ∨ Apart t (8 * k) (stW M st) (8 * stCap M st))
-
-theorem Ob.mono {R : RtInv} {L1 L2 : List (Nat × Nat)} {st : Nat} {M M' : Memory} {t k : Nat}
-    (h : Ob R L1 st M t k) (hx : LiveExt R L1 L2) (hl : stLen M st ≤ stLen M' st)
-    (harr : (stW M' st = stW M st ∧ stCap M' st = stCap M st) ∨
-      (InRanges (stW M' st) (8 * stCap M' st) R.rt ∧ ApartAll (stW M' st) (8 * stCap M' st) L1)) :
-    Ob R L2 st M' t k := by
-  refine ⟨hx.held h.1, ?_⟩
-  rcases harr with ⟨e1, e2⟩ | ⟨hin, hap⟩
-  · rw [e1, e2]
-    rcases h.2 with ⟨a1, a2⟩ | a
-    · exact Or.inl ⟨a1, by omega⟩
-    · exact Or.inr a
-  · exact Or.inr (hfresh h.1 hap hin).symm
-
-theorem Ob.back {R : RtInv} {L1 L2 : List (Nat × Nat)} {st : Nat} {M M' : Memory} {t k : Nat}
-    (h : Ob R L1 st M t k) (hx : LiveExt R L1 L2) (hsb : StackBack R L1 L2 st M M') : Ob R L2 st M' t k :=
-  h.mono hx (by rw [hsb.2.1]; exact Nat.le_refl _) hsb.2.2
-
-theorem Ob.free {R : RtInv} {L1 : List (Nat × Nat)} {st : Nat} {M : Memory} {t k : Nat} (h : Ob R L1 st M t k)
-    (hlc : stLen M st ≤ stCap M st) : Apart t (8 * k) (free M st).1 (free M st).2 := by
-  show Apart t (8 * k) (stW M st + 8 * stLen M st) (8 * (stCap M st - stLen M st))
-  rcases h.2 with ⟨a1, a2⟩ | a
-  · unfold Apart; omega
-  · unfold Apart at a ⊢; omega
-
-theorem Ob.out {R : RtInv} {L1 : List (Nat × Nat)} {st : Nat} {M : Memory} {t k : Nat} (h : Ob R L1 st M t k)
-    (hlc : stLen M st ≤ stCap M st) (hst : Apart t (8 * k) st 24) : Outside t (8 * k) (stkWs M st) := by
-  have := h.free hlc
-  simp only [free, Apart] at this hst
-  simp only [stkWs, outside_cons, outside_nil, and_true]
-  omega
-
-/-- a held range outside a callee's explicit writes keeps its bytes -/
-theorem keepH {R : RtInv} {L1 : List (Nat × Nat)} {M M' : Memory} {cw zs ws : List (Nat × Nat)} {a k : Nat}
-    (hF : MemFrame M M' (R.rt ++ cw ++ zs ++ ws)) (hLF : LiveFrame M M' L1 (zs ++ ws))
-    (hh : Held R L1 a k) (h1 : Outside a k cw) (h2 : Outside a k zs) (h3 : Outside a k ws) :
-    M'.readLE a k = M.readLE a k := by
-  rcases hh with hin | hrt
-  · exact hLF.readLE a k hin (by rw [outside_append]; exact ⟨h2, h3⟩)
-  · exact hF.readLE a k (by rw [outside_append, outside_append, outside_append]; exact ⟨⟨⟨hrt, h1⟩, h2⟩, h3⟩)
-
-/-- entry-relative location of a local array: in the entry free part of the stack, or fresh -/
-@[reducible] def Loc (R : RtInv) (L : List (Nat × Nat)) (m0 : Memory) (st t k : Nat) : Prop :=
-  (0 < stCap m0 st ∧ stW m0 st + 8 * stLen m0 st ≤ t ∧ t + 8 * k ≤ stW m0 st + 8 * stCap m0 st) ∨
-    (InRanges t (8 * k) R.rt ∧ ApartAll t (8 * k) L)
-
-/-- a destination array `p[0:c]` at memory `M` (live set `L1`) -/
-@[reducible] def DL (R : RtInv) (L : List (Nat × Nat)) (m0 : Memory) (st : Nat) (M : Memory) (L1 : List (Nat × Nat))
-    (p c : Nat) : Prop :=
-  c < 2 ^ 40 ∧ NatLive M R L1 p c ∧ (0 < c → Loc R L m0 st p c ∧ Ob R L1 st M p c)
-
-/-- a live local nat `p[0:l]` (cap `c`) of value `v` -/
-@[reducible] def LN (R : RtInv) (L : List (Nat × Nat)) (m0 : Memory) (st : Nat) (M : Memory) (L1 : List (Nat × Nat))
-    (p l c v : Nat) : Prop :=
-  DL R L m0 st M L1 p c ∧ l ≤ c ∧ natVal M p l = v ∧ NatNorm M p l
-
-section
-variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)}
-    {K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml mc : Nat} {s : State}
-
-/-- the apartness facts of a located array -/
-theorem Loc.ap (hP : EPre R b L K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml mc s) {t k : Nat}
-    (h : Loc R L s.mem st t k) :
-    Apart t (8 * k) (sp - 8 - K) (K + 0x228) ∧ Apart t (8 * k) st 24 ∧ Apart t (8 * k) (g + 16) 8 ∧
-      Apart t (8 * k) (fs - 8) 8 ∧ (0 < zc → Apart t (8 * k) zp (8 * zc)) := by
-  have hout := hP.win_rt
-  have hc := hP.cenv0
-  obtain ⟨-, -, -, harr, -, -, hsf⟩ := hP.stkF
-  have hz := hP.zF
-  have hsok := hP.stk0
-  rcases h with ⟨c0, l1, l2⟩ | ⟨hin, hap⟩
-  · obtain ⟨a1, a2, a3⟩ := harr c0
-    simp only [Apart] at a1 a2 a3 hsf ⊢
-    refine ⟨by omega, by omega, by omega, by omega, fun hz0 => ?_⟩
-    have := (hz hz0).1.2.2.2
-    simp only [Apart] at this; omega
-  · exact ⟨(hin.apart hout).symm, hfresh hsok.2.1 hap hin, (hin.apart hc.2.2.2.2.2.2.2.2.2.1).symm,
-      (hin.apart hc.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1).symm, fun hz0 => hfresh (hz hz0).1.1 hap hin⟩
-
-/-- the stack's array is `0` when empty (entry fact, kept or fresh with `0 < cap`) -/
-theorem WC.cap0 (hP : EPre R b L K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml mc s) {M : Memory}
-    {L1 : List (Nat × Nat)} {b1 ℓ : Nat} (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ) :
-    stCap M st = 0 → stW M st = 0 := by
-  intro h0
-  by_cases e : stW M st = stW s.mem st ∧ stCap M st = stCap s.mem st
-  · rw [e.1]; exact hP.cap0 (by rw [← e.2]; exact h0)
-  · have := (h.ain e).2; omega
-
-/-- `WC.call`'s obligations for a callee writing a located array -/
-theorem Loc.sub {t k : Nat} (h : Loc R L s.mem st t k) :
-    ∀ a n, Outside a n R.rt → Outside a n (ZS zp zc st s.mem) → Outside a n [(t, t + 8 * k)] := by
-  intro a n h1 h2
-  simp only [ZS, stkWs, List.cons_append, List.nil_append, outside_cons, outside_nil, and_true] at h2 ⊢
-  rcases h with ⟨-, l1, l2⟩ | ⟨hin, -⟩
-  · omega
-  · have := hin.apart h1; unfold Apart at this; omega
-
-theorem Loc.subL {t k : Nat} (h : Loc R L s.mem st t k) :
-    ∀ a n, InRanges a n L → Outside a n (ZS zp zc st s.mem) → Outside a n [(t, t + 8 * k)] := by
-  intro a n h1 h2
-  simp only [ZS, stkWs, List.cons_append, List.nil_append, outside_cons, outside_nil, and_true] at h2 ⊢
-  rcases h with ⟨-, l1, l2⟩ | ⟨-, hap⟩
-  · omega
-  · have := hap.apart_of_inRanges h1; omega
-
-end
-
-/-- a fresh array (relative to `L1`, apart from the final stack array when that changed) is an `Ob` -/
-theorem ob_fresh {R : RtInv} {L1 L2 : List (Nat × Nat)} {st : Nat} {M M' : Memory} {p c : Nat}
-    (hok : StkOK M R L1 st) (hc0 : stCap M st = 0 → stW M st = 0) (hin : InRanges p (8 * c) R.rt)
-    (hap : ApartAll p (8 * c) L1) (hh : Held R L2 p (8 * c)) (hrs : ResSep M M' st p c) (hc : 0 < c) :
-    Ob R L2 st M' p c := by
-  refine ⟨hh, Or.inr ?_⟩
-  by_cases e : stW M' st = stW M st ∧ stCap M' st = stCap M st
-  · rw [e.1, e.2]
-    rcases Nat.eq_zero_or_pos (stCap M st) with c0 | c0
-    · rw [c0, hc0 c0]; unfold Apart; omega
-    · exact hfresh (hok.2.2.2.2.1 c0).2.1 hap hin |>.symm |> fun h => h.symm
-  · exact hrs hc e
-
-/-- `LN` through a step keeping its bytes -/
-theorem LN.keep {R : RtInv} {L : List (Nat × Nat)} {m0 : Memory} {st : Nat} {M M' : Memory}
-    {L1 L2 : List (Nat × Nat)} {p l c v : Nat} (h : LN R L m0 st M L1 p l c v) (hx : LiveExt R L1 L2)
-    (hacc : ∀ a n w, M'.accessible a n w = M.accessible a n w)
-    (hb : 0 < c → ∀ a k, p ≤ a → a + k ≤ p + 8 * c → M'.readLE a k = M.readLE a k)
-    (hob : 0 < c → Ob R L2 st M' p c) : LN R L m0 st M' L2 p l c v := by
-  obtain ⟨⟨c40, hlv, hlo⟩, hlc, hv, hn⟩ := h
-  refine ⟨⟨c40, fun hc => ?_, fun hc => ⟨(hlo hc).1, hob hc⟩⟩, hlc, ?_, ?_⟩
-  · obtain ⟨a1, a2, a3, a4⟩ := hlv hc
-    exact ⟨a1, hx.held a2, by rw [hacc]; exact a3, a4⟩
-  · rcases Nat.eq_zero_or_pos c with c0 | c0
-    · have : l = 0 := by omega
-      subst this
-      rw [← hv]; exact Janus.Arm64.Memory.readLE_congr fun i hi => absurd hi (by omega)
-    · rw [← hv]; exact hb c0 _ _ (Nat.le_refl _) (by omega)
-  · rcases hn with h0 | hne
-    · exact Or.inl h0
-    · rcases Nat.eq_zero_or_pos c with c0 | c0
-      · exact Or.inl (by omega)
-      · right; rw [hb c0 _ _ (by omega) (by omega)]; exact hne
-
-section
-variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)}
-    {K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml mc : Nat} {s : State}
-
-set_option maxRecDepth 20000 in
-/-- **the generic callee step**: the destination `(pd, cd)` is a located array or `z`'s, or an EMPTY range
-(`cd = 0`); the callee runs at `RSP = sp - 8` with window `[sp - 8 - stk, sp - 8 + above)` -/
-theorem stepC (hP : EPre R b L K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml mc s) {M : Memory}
-    {L1 : List (Nat × Nat)} {b1 ℓ : Nat} (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ) {pd cd : Nat}
-    (hds : ∀ a k, Outside a k R.rt → Outside a k (ZS zp zc st s.mem) → Outside a k [(pd, pd + 8 * cd)])
-    (hdl : ∀ a k, InRanges a k L → Outside a k (ZS zp zc st s.mem) → Outside a k [(pd, pd + 8 * cd)])
-    (hdw : Apart pd (8 * cd) (sp - 8 - K) (K + 0x228))
-    {stk above : Nat} (hstk : stk ≤ K) (habove : above ≤ 0x70)
-    {M' : Memory} {L2 : List (Nat × Nat)} {b2 : Nat}
-    (hF : MemFrame M M' (R.rt ++ [(sp - 8 - stk, sp - 8 + above)] ++ [(pd, pd + 8 * cd)] ++ stkWs M st))
-    (hLF : LiveFrame M M' L1 ([(pd, pd + 8 * cd)] ++ stkWs M st)) (hrg : M'.regions = M.regions)
-    (hx : LiveExt R L1 L2) (hinv : R.inv b2 L2 g (view R.rt L2 M')) (hsb : StackBackL R L1 L2 st M M') :
-    WC R L K g sp st zp zc s.mem M' L2 b2 ℓ ∧
-    (∀ a k, sp - 8 + above ≤ a → a + k ≤ sp + 0x220 → M'.readLE a k = M.readLE a k) ∧
-    (∀ q l c v, LN R L s.mem st M L1 q l c v → (0 < c → Apart q (8 * c) pd (8 * cd)) →
-      LN R L s.mem st M' L2 q l c v) := by
-  have hk := hP.kf
-  have hzs : ∀ a k, sp - 8 - K ≤ a → a + k ≤ sp + 0x220 → Outside a k [(pd, pd + 8 * cd)] := by
-    intro a k h1 h2
-    simp only [outside_cons, outside_nil, and_true]
-    have := hdw; unfold Apart at this; omega
-  have hkc := keepC hP h hF hstk habove hzs
-  have hw : WC R L K g sp st zp zc s.mem M' L2 b2 ℓ := by
-    refine h.call (ws := [(sp - 8 - stk, sp - 8 + above)] ++ [(pd, pd + 8 * cd)] ++ stkWs M st)
-      (by simpa only [List.append_assoc] using hF) hLF hrg ?_ ?_ hx hinv
-      hsb.1.1 (hsb.1.2.1.trans h.len) (Nat.le_refl _) hsb.1.2.2 hsb.2
-    · intro a k o1 o2 o3 o4
-      rw [outside_append, outside_append]
-      refine ⟨⟨?_, hds a k o1 o4⟩, o3⟩
-      simp only [WN, outside_cons, outside_nil, and_true] at o2 ⊢; omega
-    · intro a k hin ho
-      rw [outside_append]
-      exact ⟨hdl a k hin ho, stk_out h (Or.inl hin) ho⟩
-  have hlc := h.sok.2.2.2.2.2.1
-  refine ⟨hw, hkc, fun q l c v hq hqd => hq.keep hx hF.accessible (fun c0 a k h1 h2 => ?_)
-    (fun c0 => ((hq.1.2.2 c0).2).back hx hsb.1)⟩
-  obtain ⟨w1, w2, -, -, -⟩ := Loc.ap hP (hq.1.2.2 c0).1
-  have hob := (hq.1.2.2 c0).2
-  have hout := hob.out hlc w2
-  unfold Apart at w1
-  simp only [stkWs, outside_cons, outside_nil, and_true] at hout
-  refine keepH (cw := [(sp - 8 - stk, sp - 8 + above)]) hF hLF (hob.1.sub h1 h2) ?_ ?_ ?_
-  · simp only [outside_cons, outside_nil, and_true]; omega
-  · simp only [outside_cons, outside_nil, and_true]
-    have := hqd c0; unfold Apart at this; omega
-  · simp only [stkWs, outside_cons, outside_nil, and_true]; omega
-
-/-- the result of a callee (`NatRes`: the destination `(pd, cd)` reused, or fresh) is a live local nat -/
-theorem LN.of_res (hP : EPre R b L K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml mc s) {M : Memory}
-    {L1 : List (Nat × Nat)} {b1 ℓ : Nat} (h : WC R L K g sp st zp zc s.mem M L1 b1 ℓ) {pd cd : Nat}
-    (hd : DL R L s.mem st M L1 pd cd) {M' : Memory} {L2 : List (Nat × Nat)} {need p' l' c' v : Nat}
-    (hr : EvenHyp.NatRes R L1 L2 M' pd cd need p' l' c' v) (hx : LiveExt R L1 L2)
-    (hsb : StackBackL R L1 L2 st M M') (hrs : ResSep M M' st p' c') : LN R L s.mem st M' L2 p' l' c' v := by
-  obtain ⟨hv, hn, hlc, hc40, hlv, hke, hfr⟩ := hr
-  refine ⟨⟨hc40, hlv, fun hc => ?_⟩, hlc, hv, hn⟩
-  rcases Nat.lt_or_ge cd need with hlt | hge
-  · obtain ⟨hin, hap⟩ := hfr hlt hc
-    exact ⟨Or.inr ⟨hin, fun r hr => hap r (h.le.mem_old hr)⟩,
-      ob_fresh h.sok (WC.cap0 hP h) hin hap (hlv hc).2.1 hrs hc⟩
-  · obtain ⟨rfl, rfl⟩ := hke hge
-    obtain ⟨l1, o1⟩ := hd.2.2 hc
-    exact ⟨l1, o1.back hx hsb.1⟩
-
-set_option maxRecDepth 20000 in
-/-- a live local through `stk.nat` (no destination; level up; array kept or fresh) -/
-theorem LN.stkN (hP : EPre R b L K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml mc s) {M M' : Memory}
-    {L1 L2 : List (Nat × Nat)} {stk above : Nat} (hstk : stk ≤ K) (habove : above ≤ 0x70)
-    (hF : MemFrame M M' (R.rt ++ [(sp - 8 - stk, sp - 8 + above)] ++ stkWs M st))
-    (hLF : LiveFrame M M' L1 (stkWs M st)) (hx : LiveExt R L1 L2) (hlc : stLen M st ≤ stCap M st)
-    (hl : stLen M st ≤ stLen M' st)
-    (harr : (stW M' st = stW M st ∧ stCap M' st = stCap M st) ∨
-      (InRanges (stW M' st) (8 * stCap M' st) R.rt ∧ ApartAll (stW M' st) (8 * stCap M' st) L1))
-    {q l c v : Nat} (hq : LN R L s.mem st M L1 q l c v) : LN R L s.mem st M' L2 q l c v := by
-  have hk := hP.kf
-  have hF0 : MemFrame M M' (R.rt ++ [(sp - 8 - stk, sp - 8 + above)] ++ [] ++ stkWs M st) := by
-    simpa only [List.append_nil] using hF
-  have hL0 : LiveFrame M M' L1 ([] ++ stkWs M st) := by simpa only [List.nil_append] using hLF
-  refine hq.keep hx hF.accessible (fun c0 a k h1 h2 => ?_) (fun c0 => ((hq.1.2.2 c0).2).mono hx hl harr)
-  obtain ⟨w1, w2, -, -, -⟩ := Loc.ap hP (hq.1.2.2 c0).1
-  have hob := (hq.1.2.2 c0).2
-  have hout := hob.out hlc w2
-  unfold Apart at w1
-  simp only [stkWs, outside_cons, outside_nil, and_true] at hout
-  refine keepH (cw := [(sp - 8 - stk, sp - 8 + above)]) hF0 hL0 (hob.1.sub h1 h2) ?_
-    (by simp only [outside_nil]) ?_
-  · simp only [outside_cons, outside_nil, and_true]; omega
-  · simp only [stkWs, outside_cons, outside_nil, and_true]; omega
-
-end
-
-/-- a callee that does not touch the stack: the frame in the `stepC` form and `StackBackL` (array and length kept) -/
-theorem nonStk {R : RtInv} {L1 L2 : List (Nat × Nat)} {st : Nat} {M M' : Memory} {cw : List (Nat × Nat)}
-    {pd cd : Nat} (hok : StkOK M R L1 st) (hx : LiveExt R L1 L2)
-    (hF : MemFrame M M' (R.rt ++ cw ++ [(pd, pd + 8 * cd)])) (hLF : LiveFrame M M' L1 [(pd, pd + 8 * cd)])
-    (h1 : Outside st 24 cw) (h2 : Outside st 24 [(pd, pd + 8 * cd)]) :
-    MemFrame M M' (R.rt ++ cw ++ [(pd, pd + 8 * cd)] ++ stkWs M st) ∧
-      LiveFrame M M' L1 ([(pd, pd + 8 * cd)] ++ stkWs M st) ∧ StackBackL R L1 L2 st M M' ∧
-      (stW M' st = stW M st ∧ stCap M' st = stCap M st) := by
-  have hF0 : MemFrame M M' (R.rt ++ cw ++ [(pd, pd + 8 * cd)] ++ []) := by simpa only [List.append_nil] using hF
-  have hL0 : LiveFrame M M' L1 ([(pd, pd + 8 * cd)] ++ []) := by simpa only [List.append_nil] using hLF
-  have hhd : ∀ j, j + 8 ≤ 24 → M'.readLE (st + j) 8 = M.readLE (st + j) 8 := fun j hj =>
-    keepH hF0 hL0 (hok.2.1.sub (by omega) (by omega)) (h1.of_sub (by omega) (by omega))
-      (h2.of_sub (by omega) (by omega)) (by simp only [outside_nil])
-  have e0 : stW M' st = stW M st := by have := hhd 0 (by omega); simpa using this
-  have e1 : stLen M' st = stLen M st := hhd 8 (by omega)
-  have e2 : stCap M' st = stCap M st := hhd 16 (by omega)
-  refine ⟨hF.mono fun a k ho => by rw [outside_append] at ho; exact ho.1,
-    Expmc.liveFrame_widen hLF fun a k ho => by rw [outside_append] at ho; exact ho.1,
-    ⟨⟨stkOK_hdr hok hF e0 e1 e2 hx, e1, Or.inl ⟨e0, e2⟩⟩, fun hn => absurd ⟨e0, e2⟩ hn⟩, e0, e2⟩
-
-section
-variable {R : RtInv} {L : List (Nat × Nat)} {K g sp st zp zc : Nat} {m0 : Memory}
-
-/-- a scratch nat of `stk.nat` (at level `ℓb`, now level `ℓ ≥ ℓb + k`) is a destination -/
-theorem DL.of_scr {M : Memory} {L1 : List (Nat × Nat)} {b1 ℓ : Nat} (h : WC R L K g sp st zp zc m0 M L1 b1 ℓ)
-    {p k ℓb : Nat} (hs : Scr R L L1 m0 M st p k) (hp : p = stW M st + 8 * ℓb) (hl : ℓb + k ≤ ℓ)
-    (hk : k < 2 ^ 40) : DL R L m0 st M L1 p k := by
-  have hlen := h.len
-  exact ⟨hk, fun _ => ⟨hs.al, hs.held, hs.acc, hs.b48⟩, fun _ => ⟨hs.loc, hs.held, Or.inl ⟨by omega, by omega⟩⟩⟩
-
-/-- a new scratch nat (relative to the call memory `M`, live set `L1`) is apart from every live local of `M` -/
-theorem Scr.apartLN {M M' : Memory} {L1 L2 : List (Nat × Nat)} {t k : Nat} (hs : Scr R L1 L2 M M' st t k)
-    (hlc : stLen M st ≤ stCap M st) {q l c v : Nat} (hq : LN R L m0 st M L1 q l c v) (hc : 0 < c) :
-    Apart t (8 * k) q (8 * c) := by
-  have hob := (hq.1.2.2 hc).2
-  exact hs.apart hob.1 fun _ => hob.free hlc
-
-end
-
 /-! ## The context after the entry -/
 
 section
@@ -817,7 +536,7 @@ variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)}
 
 /-- the context after the function's own entry writes (frame `EvEnt.FW sp`, `EvEnt.entA`) at the entry level -/
 theorem wc_init (hP : EPre R b L K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml mc s) {M : Memory}
-    (hF : MemFrame s.mem M [(sp + 0x1a8, sp + 0x1b0), (sp + 0x1e8, sp + 0x220)])
+    (hF : MemFrame s.mem M [(sp - 8, sp + 0x1b0), (sp + 0x1e8, sp + 0x220)])
     (hrg : M.regions = s.mem.regions) :
     WC R L K g sp st zp zc s.mem M L b (stLen s.mem st) := by
   have hk := hP.kf
@@ -829,11 +548,11 @@ theorem wc_init (hP : EPre R b L K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml
     hinv⟩ := hP
   unfold Apart at hstw
   have hFW : ∀ a k, Outside a k (R.rt ++ WN sp K ++ ZS zp zc st s.mem) →
-      Outside a k [(sp + 0x1a8, sp + 0x1b0), (sp + 0x1e8, sp + 0x220)] := by
+      Outside a k [(sp - 8, sp + 0x1b0), (sp + 0x1e8, sp + 0x220)] := by
     intro a k ho
     simp only [WN, outside_append, outside_cons, outside_nil, and_true] at ho ⊢
     omega
-  have hhd : Outside st 24 [(sp + 0x1a8, sp + 0x1b0), (sp + 0x1e8, sp + 0x220)] := by
+  have hhd : Outside st 24 [(sp - 8, sp + 0x1b0), (sp + 0x1e8, sp + 0x220)] := by
     simp only [outside_cons, outside_nil, and_true]; omega
   have e0 : stW M st = stW s.mem st := hF.readLE _ _ (hhd.of_sub (by omega) (by omega))
   have e1 : stLen M st = stLen s.mem st := hF.readLE _ _ (hhd.of_sub (by omega) (by omega))
