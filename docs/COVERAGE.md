@@ -63,6 +63,18 @@ Pure-Lean row 3 (no machine code): `FvModexp.Proofs.Compose.composition` in `lea
 | geth/math-big `(*Int).Mod`, `(*Int).exp`, `(*Int).Bytes` | proved (no sorry; `Int/ModRow`, `Exp/IExpRow`, `Int/IntBytes`; consumed by `Top/RunSucc`) | Mod proved (`Int/ModRow`), exp/Bytes in progress | `Proofs/<Isa>/Int/{ModFun,IntBytes}.lean`, `Proofs/<Isa>/Exp/IExp*.lean` (interfaces: `Top/RunIface.lean` `ModSpec`, `ExpSpec`, `BytesSpec`) |
 | geth `(*bigModExp).Run` body | proved (`Top/RunErr`, `Top/RunSucc`) | error path proved (`Top/RunErr`); success twin todo | `Proofs/<Isa>/Top/Run*.lean` |
 
+## Scope limits of the claim (disclosure; REDTEAM-arm64 R2/R3, docs/HUMAN-REVIEW.md §3)
+
+* **Stack growth / preemption not modelled.** `runtime.morestack` is never executed: every row's precondition makes each stack-check
+  prologue fall through. Covered calls: arm64 row 1 success `SP − g.stackguard0 > 73 568` B (`GuardOK s W`, `W ≥ 624 + 72944`),
+  arm64 row 1 error `> 4 800` B, amd64 row 1 error `> 4 800` B (`StackGuardOK s 4800`), amd64 row 1 success (staging)
+  `> 616 + stkM` B (`stkM ≥ 41 800`, i.e. `≥ 42 416` B; final figure = the closed amd64 `(*Int).exp` window), row 2 arm64 `> 464` B;
+  and `stackguard0 ≠ stackPreempt` (no pending preemption). Calls with less free stack, or a pending preemption, are not covered.
+* **Precompile result cache** (on by default in geth v1.17.10): not part of the row-3 model (`cache = nil`); its soundness for MODEXP
+  is the pure-Lean `FvModexp.CacheKey.cacheKey_eq` (`Proofs/Common/CacheKey.lean`).
+* Corollaries (pure composition, not separate Janus rows): `FvModexp.Arm64.Run.correctness_total` (`Top/RunTotal`, every input in one
+  theorem, `TotalWitness.total_nonvacuous`), `FvModexp.{Arm64,Amd64}.RunGate.okBudget_gate` (`okBudget ≤ 2^35` on the spec range).
+
 ## Legacy standalone rows (retired from the release; coordinator decision 2026-11-15)
 
 asm's session 1–8 rows were stated on SINGLE-FUNCTION extractions (`janus extract <harness> <asm fn>`), so they cannot build against the

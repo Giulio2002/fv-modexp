@@ -45,3 +45,4 @@ import FvModexp.Proofs.Common.Words
 import FvModexp.Proofs.Common.Calldata
 import FvModexp.Proofs.Common.BitArith
 import FvModexp.Proofs.Common.RgSpec
+import FvModexp.Proofs.Common.CacheKey
