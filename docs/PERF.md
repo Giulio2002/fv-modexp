@@ -2008,3 +2008,13 @@ R1b: the WC/ESl facts at the pushed memory are wrapped in a local `Hd` before `j
 | Amd64/Exp/P2W2Cp5 | 1.5 s | 2.4 GB |
 Cp2/Cp3: every frame fact is `HdM`-wrapped before each `janus64_run` (no context splitting); the JE/flag branch
 duplicates are closed by one `all_goals first | … | skip` dispatch instead of per-goal bullets.
+
+## divmc s72 (2026-11-14): amd64 P2W2 loop-body call lemmas (dev compile, LEAN_NUM_THREADS=4)
+| module | wall | peak RSS |
+|---|---|---|
+| Amd64/Exp/P2W2BC | 9.3 s | 2.7 GB |
+| Amd64/Exp/P2W2BA | 10 s | 2.8 GB |
+| Amd64/Exp/P2W2BSq | 17 s | 3.1 GB |
+| Amd64/Exp/P2W2BTr | 9.3 s | 2.7 GB |
+| Amd64/Exp/P2W2BMu | 51 s | 4.0 GB |
+No `janus64_run` in these (pure callee-pre/post plumbing); BMu's cost is the elaboration of the big `MPre`/`Ops` term.
