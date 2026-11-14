@@ -1965,3 +1965,16 @@ stack-arg reads `r1d0/r1d8/r1e0` in the simp set, no fallbacks; the 16-byte `MOV
 ## divmc s67 (2026-11-14): amd64 shared P2 helpers + P2W2 context/stk.nat(2w) (dev compile)
 LibCallsQ 5 s / 2.5 GB, P2W2WC 7.5 s / 2.5 GB, P2W2PP 2-8 s / 2.2 GB, P2W2N 27 s / 2.9 GB (two janus64_runs with the
 big context hidden in `LibCalls.Hide`; WC transported outside the runs).
+
+## divmc s68 (2026-11-14): amd64 P2W2 table call + skip loop (dev compile, LEAN_NUM_THREADS=4, host loaded)
+| module | wall | peak RSS |
+|---|---|---|
+| Amd64/Exp/P2W2PQ | 6.0 s | 2.5 GB |
+| Amd64/Exp/P2W2AT | 1.5 s | 2.3 GB |
+| Amd64/Exp/P2W2PC | 39.6 s | 3.9 GB |
+| Amd64/Exp/P2W2EP | 2.0 s | 2.4 GB |
+| Amd64/Exp/P2W2Sk | 47.2 s | 2.3 GB |
+P2W2PQ.WC.stkPre: first version (all Apart facts unfolded, one omega per goal over 13 goals) hit the 200k-heartbeat
+whnf limit (> 50 s in omega's disjunction splitting); facts kept folded + per-goal unfold → 3.4 s module.
+P2W2Sk.skipHead closers: `first | congrArg _ … | yiA … | yiB … | yiC …` 86 s → `congrArg (BitVec.ofNat 64)` first,
+yiC before yiA/yiB: 47 s (janus64_run itself ~27 s).
