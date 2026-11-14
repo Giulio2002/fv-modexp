@@ -51,6 +51,10 @@ abbrev grE : Nat := P2W2.grE
 abbrev mcE : Nat := P2W2.mcE
 abbrev wbE : Nat := P2W2.wbE
 abbrev wTy : Nat := P2W2.wTy
+theorem grE_eq : Extracted.program.contractAddr "runtime.growslice" = grE := P2W2.grE_eq
+theorem mcE_eq : Extracted.program.contractAddr "runtime.memclrNoHeapPointers" = mcE := P2W2.mcE_eq
+theorem wbE_eq : Extracted.program.contractAddr "runtime.gcWriteBarrier2" = wbE := P2W2.wbE_eq
+theorem wTy_eq : StackNat.wT = wTy := rfl
 /-- `nat.expNNPowerOfTwoWindowSize4.deferwrap1` (0x5e9de0) -/
 abbrev dwE : Nat := 6200800
 theorem dwBase : segAddr LibW.program (fn ++ ".deferwrap1") = dwE := by decide
