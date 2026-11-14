@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Top.RunSuccWit
+import FvModexp.Proofs.Amd64.Top.RunGate
 
 set_option autoImplicit false
 

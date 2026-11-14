@@ -73,7 +73,8 @@ Pure-Lean row 3 (no machine code): `FvModexp.Proofs.Compose.composition` in `lea
 * **Precompile result cache** (on by default in geth v1.17.10): not part of the row-3 model (`cache = nil`); its soundness for MODEXP
   is the pure-Lean `FvModexp.CacheKey.cacheKey_eq` (`Proofs/Common/CacheKey.lean`).
 * Corollaries (pure composition, not separate Janus rows): `FvModexp.Arm64.Run.correctness_total` (`Top/RunTotal`, every input in one
-  theorem, `TotalWitness.total_nonvacuous`), `FvModexp.{Arm64,Amd64}.RunGate.okBudget_gate` (`okBudget ≤ 2^35` on the spec range).
+  theorem, `TotalWitness.total_nonvacuous`), `FvModexp.{Arm64,Amd64}.RunGate.okBudget_gate` (`okBudget ≤ 2^35` on the spec range; imported by each ISA's `Top/RunSucc`,
+  so the RunSucc rows compile them; `RunTotal` is not yet in any build target — needs its own row, HUMAN-REVIEW §2).
 
 ## Legacy standalone rows (retired from the release; coordinator decision 2026-11-15)
 

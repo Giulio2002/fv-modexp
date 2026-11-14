@@ -2,6 +2,7 @@ import FvModexp.Proofs.Arm64.Top.RunOkRowC
 import FvModexp.Proofs.Arm64.Int.ModRowW
 import FvModexp.Proofs.Arm64.Top.RunSuccW2
 import FvModexp.Spec.WitSitesArm64
+import FvModexp.Proofs.Arm64.Top.RunGate
 
 set_option autoImplicit false
 

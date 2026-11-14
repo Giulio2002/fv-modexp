@@ -85,7 +85,10 @@ A final statement may not use an instance or class of a dependency, so these pla
     Proved by cases from the two rows (`env_of_envW`, `errReqs_of_okReqs`); `TotalWitness.total_nonvacuous` from the success witness.
   * Release gates on the statement: `FvModexp.Arm64.RunGate.okBudget_gate` (`LengthsPass data → okBudget (parseLengths data) ≤ 2^35`,
     `Proofs/Arm64/Top/RunGate.lean`; amd64 twin `FvModexp.Amd64.RunGate.okBudget_gate`), `RunSucc.expBudget_gate`
-    (`ExpBudget 128 128 ≤ 2^35`); RA-pin audit CLEAN on both rows (REDTEAM-arm64 R0).
+    (`ExpBudget 128 128 ≤ 2^35`); RA-pin audit CLEAN on both rows (REDTEAM-arm64 R0). Build target: each ISA's `Top/RunSucc`
+    row module imports its `Top/RunGate`, so the release run (`janus verify` of the RunSucc rows) compiles and kernel-checks both gates.
+    `RunTotal` imports RunSucc + RunErr, so no row module can import it; it is compiled only once top promotes it to a row (or a
+    gate step verifies it); the default `lake build FvModexp` is extraction-free and cannot import any `Extracted`-based module.
 * Row 1, amd64 (`Proofs/Amd64/Top/RunErr.lean`, `Proofs/Amd64/Top/RunSucc.lean`): `FvModexp.Amd64.Run.correctness` (lengths fail,
   release row, `Spec.RunAmd64` twins) and `FvModexp.Amd64.RunSucc.correctness` — STAGING: still the premise
   `hE : RunIface.ExpSpecA impl R stkM aboveM` (closed amd64 `(*Int).exp` pending), plus `Spec.RunAmd64.CpuOne` (§1b). Not final
