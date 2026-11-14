@@ -142,6 +142,43 @@ theorem exitU {impl : List Amd64.Segment} (hP : EPre R b L K g fs sp st bp r zp 
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
+/-- **the upper loop's exit** with the stack-capacity fact (`stCap` kept; for the budget's `stkR`) -/
+theorem exitUC {impl : List Amd64.Segment} (hP : EPre R b L K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml mc s)
+    {ret0 : W64} {Q : State → Prop} {S : State} {L1 : List (Nat × Nat)} {b1 w : Nat} {v : BitVec 64}
+    {z zl zc' Zv zz zzl zzc rr rl rc q ql qc : Nat}
+    (hk : KT1 R L K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml mc s S L1 b1 w w v z zl zc' Zv zz zzl zzc
+      rr rl rc q ql qc)
+    (KXE : ∀ S' : State, yl - 1 = 0 →
+      KE R L K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml mc s S' L1 b1 z zl zc' Zv zz zzl zzc rr rl rc q ql qc →
+      stCap S'.mem st = stCap S.mem st → ReachesRet (LibW.program.link impl) ret0 S' Q)
+    (KX2 : ∀ (S' : State) (i : Nat) (v : BitVec 64), yl - 1 = i + 1 → v.toNat = Exp.wd (natVal s.mem yp yl) i →
+      KT2 R L K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml mc s S' L1 b1 i 0 v z zl zc' Zv zz zzl zzc
+        rr rl rc q ql qc → stCap S'.mem st = stCap S.mem st → ReachesRet (LibW.program.link impl) ret0 S' Q) :
+    ReachesRet (LibW.program.link impl) ret0 S Q := by
+  obtain ⟨hK1, hK2, hK3, hK4, hK5⟩ := hP.kf
+  have hyl0 : 0 < yl := hP.2.2.2.2.2.2.2.2.2.2.1
+  have hyl : yl ≤ 2 ^ 9 := hP.2.2.2.2.2.2.2.2.2.2.2.1
+  have hw := hk.jc.wc
+  have hwacc := hP.cenv0.2.2.2.1
+  have hacc : S.mem.accessible (sp - 8) 0x228 true = true := by
+    rw [hw.fr.accessible]; exact Janus.Arm64.Memory.accessible_mono _ hwacc (by omega) (by omega)
+  refine runTX ret0 Q sp yl w S.mem hacc (by omega) hK5 hyl0 hyl hk.w63 S hk.pc hk.jc.esp rfl hk.e1 hk.e15 hk.e11 ?_
+  intro S2 pc2 hm g11 g13 g15 g1 gk gfs gx gdf
+  refine itS hP pc2 (hk.jc.keepM hm (gk 4 (by decide) (by decide) (by decide) (by decide))
+    (gk 14 (by decide) (by decide) (by decide) (by decide)) gfs gx gdf) (by rw [hm]; exact hk.bb) hk.zlb
+    (by omega : yl - 1 < yl) ((gk 0 (by decide) (by decide) (by decide) (by decide)).trans hk.e0)
+    ((gk 10 (by decide) (by decide) (by decide) (by decide)).trans hk.e10)
+    ((gk 8 (by decide) (by decide) (by decide) (by decide)).trans hk.e8) (by rw [hm]; exact hk.s150)
+    (by rw [hm]; exact hk.s70) (by rw [hm]; exact hk.s78) (by rw [hm]; exact hk.s160) (by rw [g1, hk.s90])
+    ((gk 2 (by decide) (by decide) (by decide) (by decide)).trans hk.e2) (by rw [hm]; exact hk.s168)
+    (by rw [g13, hk.sa0]) (by rw [g15, hk.sa8]) ((gk 3 (by decide) (by decide) (by decide) (by decide)).trans hk.e3)
+    ((gk 6 (by decide) (by decide) (by decide) (by decide)).trans hk.e6)
+    ((gk 7 (by decide) (by decide) (by decide) (by decide)).trans hk.e7)
+    ((gk 12 (by decide) (by decide) (by decide) (by decide)).trans hk.e12) g11 (fun S' h0 hke hc => KXE S' h0 hke (by rw [hc, hm]))
+    (fun S' i v h1 h2 hk2 hc => KX2 S' i v h1 h2 hk2 (by rw [hc, hm]))
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 16000000 in
 /-- **the lower loop's exit** (`t2` with `j = 64` → `iS` → `iT`, `t = i`) -/
 theorem exitL {impl : List Amd64.Segment} (hP : EPre R b L K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml mc s)
     {ret0 : W64} {Q : State → Prop} {S : State} {L1 : List (Nat × Nat)} {b1 i : Nat} {v : BitVec 64}

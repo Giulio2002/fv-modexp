@@ -16,7 +16,9 @@ set_option autoImplicit false
   and the budget `B0 + perBQ · (64 - j + n) + stkR ≤ b1`, every path reaches `KX` at `j = 64` (invariant at count 0,
   budget `B0 + perBQ · n`). One body = L1 (`sqr`) → L2 (`mul` if bit 63) → L3 (`div`) → J2.
 * `lower`: from `KT2` at `j = 0` for word `i` (strong induction on `i`; `exitL` → next word or `KE` → `segFin`) to
-  `RET` with `FQS … F cst s` — the target of the upper loop's exit (expmc's `loopU` → `exitU` → here).
+  `RET` with `FQS … F cst s`.
+* `afterU`: the upper loop's exit state (`KT1`, `j = w`, count 0) → `RET` (`exitUC` + `lower` / `segFin`) — expmc's
+  `loopU` continuation `KX` is exactly this.
 -/
 
 open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Spec Janus.Contracts FvModexp
@@ -171,6 +173,35 @@ theorem lower {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
     refine ih i' (by omega) S2 L2 b2 v2 z1 zl1 zc1 Zv1 zz1 zzl1 zzc1 rr1 rl1 rc1 q1 ql1 qc1 hk2
       (by rw [stkR_congr hc2]; exact hb1) ?_
     rw [← hv1, hv2]; rfl
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 16000000 in
+/-- **after the upper loop**: `KT1` with `j = w` (expmc's `loopU` exit state, its invariant at count 0) → `RET`
+with `FQS … F cst s` (`exitUC`; `len y = 1` → `segFin`, else `lower` for word `len y - 2`) -/
+theorem afterU {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {ns : List String}
+    (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) (hnf : ns.contains fn = false)
+    {W1 W2 W3 H : Nat} {dvC : Nat → Nat → Nat}
+    (hsq : SqrE0 impl R ns W1) (hW1K : W1 ≤ K) (hW1 : 7104 ≤ W1)
+    (hml : Q.DivRec.MulHypQE impl R ns W2) (hW2K : W2 ≤ K) (hW2 : mulWX64 ≤ W2)
+    (hdv : DivHypLGQ impl R ns W3 0x70 dvC) (hW3K : W3 ≤ K)
+    (hP : EPre R b L K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml mc s)
+    (hX : NHyp.XFacts R L xp xl xc) (hxl0 : 0 < xl) (hM : 0 < natVal s.mem mp ml)
+    (hH : stLen s.mem st + 48 * max xl ml + 64 ≤ H)
+    {B0 cst F : Nat} (hB0 : b - (cst + stkR H s.mem st) ≤ B0)
+    {S : State} {L1 : List (Nat × Nat)} {b1 w : Nat} {v : BitVec 64} {z zl zc' Zv zz zzl zzc rr rl rc q ql qc : Nat}
+    (hk : KT1 R L K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml mc s S L1 b1 w w v z zl zc' Zv zz zzl zzc
+      rr rl rc q ql qc)
+    (hb : B0 + perBQ sqrCQ mulCQ dvC xl ml * (64 * (yl - 1)) + stkR H S.mem st ≤ b1)
+    (hv : Exp.outerLoop 1 (stepM (natVal s.mem xp xl) (natVal s.mem mp ml)) (natVal s.mem yp yl) 64 (yl - 1)
+      v.toNat 0 Zv = F) :
+    ReachesRet (LibW.program.link impl) (BitVec.ofNat 64 r) S (FQS R b H L K zp zc st F cst s) := by
+  refine exitUC hP hk (fun S5 hi hke hc5 => ?_) (fun S5 i v5 hi hv5 hk5 hc5 => ?_)
+  · rw [hi] at hv
+    exact segFin hP hke (by rw [← hv]; rfl) (finBudL hB0 hb (stkR_congr hc5))
+  · refine lower hap hns hnf hsq hW1K hW1 hml hW2K hW2 hdv hW3K hP hX hxl0 hM hH hB0 i S5 L1 b1 v5 z zl zc' Zv zz
+      zzl zzc rr rl rc q ql qc hk5 ?_ ?_
+    · rw [← hi, stkR_congr hc5]; exact hb
+    · rw [hi] at hv; rw [← hv, hv5]; rfl
 
 end
 
