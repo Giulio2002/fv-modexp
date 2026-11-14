@@ -97,7 +97,6 @@ theorem powStep {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.pro
     apply BitVec.eq_of_toNat_eq
     simp only [BitVec.toNat_add, BitVec.toNat_shiftLeft, BitVec.toNat_ofNat, Nat.shiftLeft_eq, Nat.reducePow]
     omega
-  refine SegProg.liftRet W4Seg.codeIn ?_
   janus64_run [q3a8, q3b0, q3b8, qd8, q78, qf0, q330, h16, mw2, mw1, mw0, c1, c2, c3, rd0, rd1, rd2, ar1]
     until [6184288]
   have hra : RetAddr ((Extracted.program.onlySegments LibMont.names).link impl) (6205536 + 0xa45) :=
