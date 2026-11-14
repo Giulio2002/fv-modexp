@@ -2018,3 +2018,8 @@ duplicates are closed by one `all_goals first | … | skip` dispatch instead of 
 | Amd64/Exp/P2W2BTr | 9.3 s | 2.7 GB |
 | Amd64/Exp/P2W2BMu | 51 s | 4.0 GB |
 No `janus64_run` in these (pure callee-pre/post plumbing); BMu's cost is the elaboration of the big `MPre`/`Ops` term.
+
+## divmc s73 (2026-11-14): amd64 P2W2 loop body + outer step (dev compile, LEAN_NUM_THREADS=4, ≤ 2.8 GB each)
+P2W2LK 1.1 s, P2W2BJ 2.9 s, P2W2B0 16.5 s, B1 7.0 s, B2 11.8 s, B3 8.9 s, B4 22.0 s, B5 7.9 s, B6 16.1 s, Bd 0.9 s,
+P2W2LO 15.6 s. Before/after: B0/B2 with a `first | exact efs | (janus64_simp; done) | …` closer over all post-run goals
+342 s each → 16.5 s / 11.8 s with named holes closed individually; LO 149 s → 15.6 s (same fix).
