@@ -2101,3 +2101,13 @@ DrsFCL/DrsFDL import all their segments. Dev critical path 451 → 274 s (now Dr
   pc: each pc's `stepOK` is a separate `mkAuxLemma` whose kernel check re-walks `seg.bytes.length` of every preceding
   segment of LibW.program (73 segments). A/B: the same 29-instruction run on a one-segment program 8.4 s vs 30.3 s.
   Written up in JANUS-ISSUES.md "[divmc s79] PERF … stepOK aux lemma". A framework fix is the lever for the ≤ 500 s target.
+
+## asm s79 (2026-11-14): amd64 Exp/EvenRow targeted verify (Janus v0.3.3, ROWS=1, JANUS_TIMINGS=1, snapshot cache-asm/snap79)
+* Warm-up (outside caps): snapshot-only module importing the 1076-module frontier of EvenRow's lower rows: own compile +
+  replay 2716 s (replay of 1080 targets 2672 s).
+* Fresh own closure: EvenRow owns **209 modules** (Ev*, ModInv*, N*, Slow*, SubMod2NS*): own compile hit the 900 s cap
+  at 193/209 (load ~30). Needs lower rows owning those chains (proposal in NOTES-conventions "[asm s79]").
+* With the own closure cached: **PASS 262-270 s / 4.0 GB**: own compile 20 s (EvenRow 15 s / 4.4 GB dev), audit 236 s,
+  replay 9.5 s (1 target). Replay of the 209 own modules (separate run): 542 s at 4 jobs.
+* Audit 236 s = Janus bug (JANUS-ISSUES "[asm s79] PERF"): ~92 % in `EnvironmentHeader.moduleNames` rebuilds
+  (O(1285 modules) per constant lookup); the statement reaches 2168 constants (P2DRow: 2093).
