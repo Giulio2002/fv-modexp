@@ -2195,3 +2195,14 @@ RunSucc FAIL 421/978.
   ~10 s each, failing big-context omegas). Kernel time (per-pc `stepOK`) is now the bulk of W2Pow (31 s) and S3 (24 s).
 * Dev sums (modules rebuilt after the change, not the whole own set): W2 50 mods 491 s, W4 50 mods 479 s, P2W2 38 mods
   477 s, P2W4 37 mods 486 s (before the P0/BMu fixes, -30 s each). Row numbers: pending (top's rel48 has s80 only).
+## top s51 (2026-11-14): rel48 arm64 (Janus v0.3.3, fresh cache, ROWS=1, snapshot main 437c5b14, wall 9955 s + warm-up 872 s)
+**41/41 PASS** (first all-green arm64 release run). Host load (max per row) min 8.7 / median 15.5 / max 27.2.
+Rows > 600 s: Nat_DrsRow 617 s / 2.2 GB (LOAD 14.1/9.2/17.7, LOCK 0, OWN 615: compile 207 mods 391 / replay 201 / audit 20;
+old row, retirement question open with asm). Top_RunSucc **464 s** / 5.1 GB (rel47 784 s was load) → the RunC2/okC split is not
+needed. Exp_EvenRow PASS 367 s (rel46/47: cap).
+Per row (s/MB): StackNat 131/2479, MulAddWW 150/990, AddVW 59/973, SubVW 57/986, BasicMul 119/3248, BasicSqr 336/3137,
+Trunc 119/879, Rsh 119/841, Lsh 105/930, IntAS 242/1162, IntSub 14/432, BasicSqrQ 308/2849, SqrQ 324/2955, MulQ 336/1714,
+Mont 145/1692, SubMod2N 220/2748, ModInv 190/2333, DivW 157/1213, DivWVW 13/324, DivBasic 291/4265, Drs 617/2159,
+Div 373/2595, DivM 208/3555, Rem 165/4547, DivBasicQ 276/4497, DrsQ 295/1718, DivQ 343/2582, DivMQ 138/3570,
+RemQ 127/4487, IntMod 164/4028, W2 414/2981, W4 422/2996, P2W2 280/3121, P2W4 209/1597, P2D 287/2152, N 458/4936,
+Even 367/3934, IExpQ 337/4564, RequiredGas 238/1642, RunErr 272/1654, RunSucc 464/5147.

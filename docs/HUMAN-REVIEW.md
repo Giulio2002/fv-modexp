@@ -79,16 +79,16 @@ A final statement may not use an instance or class of a dependency, so these pla
   * **`FvModexp.Arm64.Run.correctness`** (lengths fail). Premises: `ImplApart`, `MakesliceLiveContract`, `MemmoveLive`,
     `NewobjectLiveContract`. Pre: `Env`, `Input`, `OsakaReceiver`, `R.inv`, `ErrReqs R b len`, `LengthsFail data`. Post: `ErrRet s'`
     (`(nil, err)`, `err ≠ nil`) and `Frame … 512 …`. Witness: `FvModexp.Arm64.Run.Witness.nonvacuous` (base-length header 1025).
-  * **`FvModexp.Arm64.Run.correctness_total`** (`Proofs/Arm64/Top/RunTotal.lean`, corollary, not a separate row): the BRIEF row-1
+  * **`FvModexp.Arm64.Run.correctness_total`** (`Proofs/Arm64/Top/RunTotal.lean`, its own release row `arm64 Top/RunTotal`): the BRIEF row-1
     sentence as ONE theorem. RunSucc's premises and pre without `LengthsPass`, the budget only when the lengths pass
     (`LengthsPass data → okBudget … ≤ b`) plus `512 ≤ b`; post `(LengthsPass ∧ OkRet ∧ FrameW) ∨ (LengthsFail ∧ ErrRet ∧ Frame)`.
-    Proved by cases from the two rows (`env_of_envW`, `errReqs_of_okReqs`); `TotalWitness.total_nonvacuous` from the success witness.
+    Proved by cases from the two rows (`env_of_envW`, `errReqs_of_okReqs`); `Run.Witness.correctness_total` from the success witness.
   * Release gates on the statement: `FvModexp.Arm64.RunGate.okBudget_gate` (`LengthsPass data → okBudget (parseLengths data) ≤ 2^35`,
     `Proofs/Arm64/Top/RunGate.lean`; amd64 twin `FvModexp.Amd64.RunGate.okBudget_gate`), `RunSucc.expBudget_gate`
     (`ExpBudget 128 128 ≤ 2^35`); RA-pin audit CLEAN on both rows (REDTEAM-arm64 R0). Build target: each ISA's `Top/RunSucc`
     row module imports its `Top/RunGate`, so the release run (`janus verify` of the RunSucc rows) compiles and kernel-checks both gates.
-    `RunTotal` imports RunSucc + RunErr, so no row module can import it; it is compiled only once top promotes it to a row (or a
-    gate step verifies it); the default `lake build FvModexp` is extraction-free and cannot import any `Extracted`-based module.
+    `RunTotal` imports RunSucc + RunErr, so no row module can import it; it is compiled and checked by its own release row
+    `arm64 Top/RunTotal` (top s51, after `arm64 Top/RunSucc`); the default `lake build FvModexp` is extraction-free and cannot import any `Extracted`-based module.
 * Row 1, amd64 (`Proofs/Amd64/Top/RunErr.lean`, `Proofs/Amd64/Top/RunSucc.lean`): `FvModexp.Amd64.Run.correctness` (lengths fail,
   release row, `Spec.RunAmd64` twins) and `FvModexp.Amd64.RunSucc.correctness` (lengths pass, `Spec.RunAmd64` twins + `Spec.RunAmd64.CpuOne` (§1b); every
   machine-code callee proved: `(*Int).Mod` = `Run.Closed.modA`, `(*Int).exp` = `Run.Closed.expA` = expmc's `IExp.ensCl`
@@ -167,7 +167,7 @@ precondition by hand, from the checklist that `scripts/check-ra-pin` generates:
 Every main theorem has a kernel-checked `Witness.nonvacuous` (concrete returning run satisfying the precondition) which `janus verify`
 requires: row 2 `RequiredGas.Witness.nonvacuous`, row 1 arm64 `RunSucc.Witness.nonvacuous` (`3^5 mod 7` → `[5]`) and
 `Run.Witness.nonvacuous` (header 1025), amd64 `Run.Witness.nonvacuous`; `Run.correctness_total` has
-`TotalWitness.total_nonvacuous`. Optional extra coverage witnesses (`b = m = 0`, `mod = 0`, `base = 1`) are not required.
+`Run.Witness.correctness_total`. Optional extra coverage witnesses (`b = m = 0`, `mod = 0`, `base = 1`) are not required.
 
 ## Row 1 budgets and request sizes (derivation of `OkReqs` and `okBudget`)
 

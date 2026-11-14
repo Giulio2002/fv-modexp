@@ -52,6 +52,7 @@ arm64 ExpQ/IExpRow
 arm64 RequiredGas
 arm64 Top/RunErr
 arm64 Top/RunSucc
+arm64 Top/RunTotal
 # ---- amd64 ----
 amd64 Nat/StackNatRow
 amd64 Nat/MulAddWWRow

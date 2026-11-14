@@ -38,6 +38,7 @@ for k, m in enumerate(ms):
     flat = ''.join(flat)
     # UP3d (03aa338e): strict by-name pairing: `Witness.nonvacuous` pairs with `correctness`; any other `Witness.<X>` needs a main named `<X>`, so only the nonvacuous witnesses are passed to janus verify
     # (the other witness theorems stay in the module and are kernel-checked with it, but are not audited as witnesses)
-    if re.fullmatch(r'nonvacuous(_\w+)?', name) and re.match(r'\s*:\s*∃', flat):
+    # top s51: a witness `Witness.correctness_<x>` pairs (Janus mainsNamed) with the main `correctness_<x>` (e.g. arm64 Run.correctness_total)
+    if re.fullmatch(r'nonvacuous(_\w+)?|correctness_\w+', name) and re.match(r'\s*:\s*∃', flat):
         out.append('.'.join(ns + [name]) if not name.startswith('_root_') else name)
 print('\n'.join(out))

@@ -15,8 +15,9 @@ demand an absurd budget) plus the error path's 512 bytes, `Run` returns, for eve
 * `LengthsFail data` and `(nil, err)`, `err ≠ nil` (`ErrRet`, `Frame`).
 Proof: `by_cases` on `LengthsPass`; the failing case weakens the success environment to `Run.correctness`'s
 (`EnvW … W → Env …` for `W ≥ 4800`: guard, stack, window facts on the sub-window; `OkReqs → ErrReqs`' requests).
-A corollary of the two row theorems (not a separate Janus row); its precondition is satisfiable: `total_nonvacuous`
-(the success witness `RunSucc.Witness.nonvacuous` meets it).
+A corollary of the two row theorems, verified as its own Janus row (`arm64 Top/RunTotal`, top s51); its precondition is
+satisfiable: `Witness.correctness_total` (Janus pairs `Witness.<X>` with the main `<X>`; the success witness
+`RunSucc.Witness.nonvacuous` meets it).
 -/
 
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Spec.Pool Janus.Contracts Janus.Contracts.Pool
@@ -82,14 +83,16 @@ theorem correctness_total (impl : List Segment) (hap : ImplApart Extracted.progr
 
 end FvModexp.Arm64.Run
 
-namespace FvModexp.Arm64.Run.TotalWitness
+namespace FvModexp.Arm64.Run.Witness
+
+open FvModexp.Spec.WitSitesArm64 (mkSite mvSite noSite grSite clSite wbSite getSite putSite)
 
 set_option maxRecDepth 100000
 
-/-- `correctness_total` is not vacuous: every premise and every precondition conjunct hold together and the call
-returns (the success witness `RunSucc.Witness.nonvacuous`: `3^5 mod 7`, output `[5]`; its budget covers the error
+/-- `Run.correctness_total` is not vacuous: every premise and every precondition conjunct hold together and the call
+returns, with one call-site state per contract (U-WITNESS-CALLSITE; the success witness `RunSucc.Witness.nonvacuous`: `3^5 mod 7`, output `[5]`; its budget covers the error
 path's 512 bytes by `RunGate.errBudget_le_okBudget`). -/
-theorem total_nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat))
+theorem correctness_total : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat))
     (c p len cp : BitVec 64) (ret : Nat) (s : State) (W : Nat),
     ImplApart Extracted.program impl ∧
     MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R ∧
@@ -116,6 +119,45 @@ theorem total_nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : 
         (LengthsPass (bytesAt s.mem p.toNat len.toNat) →
           RunArm64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat)) ≤ b) ∧
         3 * RunArm64.blockBound 64 + RunArm64.blockBound 16 ≤ b) ∧
+    (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
+      s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.makeslice") ∧
+      mkSite R (Extracted.program.contractAddr "runtime.makeslice") L b s_c) ∧
+    (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
+      s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.makeslice") ∧
+      ((MakeslicePre 4096 s_c ∧ StackRoom s_c 4096 3 ∧
+        LiveAt R (Extracted.program.contractAddr "runtime.makeslice") [(s_c.regs 0).toNat, (s_c.regs 1).toNat,
+          (s_c.regs 2).toNat] L b 0 (s_c.regs 28).toNat s_c.mem (calleeStack s_c 4096 3)) ∧
+        typSize s_c.mem (s_c.regs 0).toNat * (s_c.regs 2).toNat = 0 ∧
+        Outside (s_c.regs 0).toNat 16 (calleeStack s_c 4096 3))) ∧
+    (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
+      s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.memmove") ∧
+      mvSite R (Extracted.program.contractAddr "runtime.memmove") L b s_c) ∧
+    (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
+      s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.memmove") ∧
+      ((s_c.regs 2).toNat = 0 ∧ Mem.EqPre 4096 3 s_c ∧
+        LiveMemAt R (Extracted.program.contractAddr "runtime.memmove") [(s_c.regs 0).toNat, (s_c.regs 1).toNat,
+          (s_c.regs 2).toNat] L b s_c (calleeStack s_c 4096 3))) ∧
+    (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
+      s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.newobject") ∧
+      noSite R (Extracted.program.contractAddr "runtime.newobject") L b s_c) ∧
+    (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
+      s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.growslice") ∧
+      grSite R (Extracted.program.contractAddr "runtime.growslice") L b s_c) ∧
+    (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
+      s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") ∧
+      clSite R (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") L b s_c) ∧
+    (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
+      s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.gcWriteBarrier2") ∧
+      wbSite R (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 2 L b s_c) ∧
+    (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
+      s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "sync.(*Pool).Get") ∧
+      getSite R (Extracted.program.contractAddr "sync.(*Pool).Get") L b s_c) ∧
+    (∃ (L : List (Nat × Nat)) (b : Nat) (rs : List (Nat × Nat)) (s_c : State),
+      s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "sync.(*Pool).Put") ∧
+      putSite R (Extracted.program.contractAddr "sync.(*Pool).Put") L b rs s_c) ∧
+    (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
+      s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.gcWriteBarrier4") ∧
+      wbSite R (Extracted.program.contractAddr "runtime.gcWriteBarrier4") 4 L b s_c) ∧
     Returns ((Extracted.program.link impl).withExit ret) s fun s' =>
       ABIReturn s s' ∧
         ((LengthsPass (bytesAt s.mem p.toNat len.toNat) ∧ RunArm64.OkRet (bytesAt s.mem p.toNat len.toNat) s' ∧
@@ -123,11 +165,13 @@ theorem total_nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : 
         (LengthsFail (bytesAt s.mem p.toNat len.toNat) ∧ RunArm64.ErrRet s' ∧
           RunArm64.Frame R b (3 * RunArm64.blockBound 64 + RunArm64.blockBound 16) L s s')) := by
   obtain ⟨impl, R, b, L, c, p, len, cp, ret, s, W, hap, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11, hW, hret, hs,
-    hSS, hE, hI, hO, hinv, hR, hG, hN, hP, hB, hL, -, -, -, -, -, -, -, -, -, -, -, -, hRet⟩ :=
+    hSS, hE, hI, hO, hinv, hR, hG, hN, hP, hB, hL, -,
+    x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, hRet⟩ :=
     RunSucc.Witness.nonvacuous
   exact ⟨impl, R, b, L, c, p, len, cp, ret, s, W, hap, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11, hW, hret, hs,
     ⟨hSS, hE, hI, hO, hinv, hR, hG, hN, hP, fun _ => hB,
       Nat.le_trans (RunGate.errBudget_le_okBudget _) hB⟩,
+    x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11,
     hRet.mono fun _ ⟨ha, h1, h2⟩ => ⟨ha, Or.inl ⟨hL, h1, h2⟩⟩⟩
 
-end FvModexp.Arm64.Run.TotalWitness
+end FvModexp.Arm64.Run.Witness
