@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.W2XnDefs
 import FvModexp.Proofs.Arm64.Exp.LibW
 import FvModexp.Proofs.Arm64.Exp.W2XjR
 
@@ -16,7 +17,6 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvMod
 
 namespace FvModexp.Arm64.W2Pro
 
-abbrev xnE : Nat := 1802324
 abbrev aSn1Ret : Nat := 1802348
 abbrev aSn2Ret : Nat := 1802372
 abbrev aDivRet : Nat := 1802428

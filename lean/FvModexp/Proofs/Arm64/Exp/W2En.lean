@@ -45,7 +45,7 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- **window-2 from its entry to its `RET`** (arm64): prologue, defer record, the inline `stk.reserve(23n)`, then the
 rest of the function (`W2Pro.xnStep`). -/
-theorem enStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+theorem enStep (hXn : FvModexp.Arm64.W2Pro.XnSpec) (hRR : FvModexp.Arm64.W2Pro.RRSpec) (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hclr : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
@@ -137,7 +137,7 @@ theorem enStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
       exact ⟨hout.of_sub (by omega) (by omega), by omega, by omega⟩
     have hcap3 : stLen M3 st ≤ stCap M3 st := by simp only [stLen, stCap] at q2 q3 hk ⊢; omega
     have hc3 : stCap M3 st < 2 ^ 40 := by simp only [stCap] at q3 ⊢; rw [q3]; exact k7
-    refine reaches_mono (atXnE impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL ret
+    refine reaches_mono (atXnE (hXn := hXn) (hRR := hRR) impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL ret
       hret b L K g sp
       st zp zc xp xl xc yp ylen mp n mc s (s.regs 18) (s.regs 29) (BitVec.ofNat 64 (sp - 8)) hP hstnz hKD hKL hMo hM1 hslen hcs
       hbC hbB hbA hbAC hbP M3 L b hF hLF (hrg3.trans hrg1) (LiveExt.refl R L) (Or.inl ⟨q1, q3⟩) q2 hcap3 hc3 ?_ hsl3
@@ -218,7 +218,7 @@ theorem enStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
       refine MemFrame.trans hF12p hF3 fun a k ho => ?_
       simp only [outside_append, outside_cons, outside_nil, and_true] at ho ⊢
       exact ⟨⟨ho.1, by omega, by omega⟩, ho.1, ho.2.2.2, by omega⟩
-    refine reaches_mono (atXnE impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL ret
+    refine reaches_mono (atXnE (hXn := hXn) (hRR := hRR) impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL ret
       hret b L K g sp
       st zp zc xp xl xc yp ylen mp n mc s (s.regs 18) (s.regs 29) (BitVec.ofNat 64 (sp - 8)) hP hstnz hKD hKL hMo hM1 hslen hcs
       hbC hbB hbA hbAC hbP M3 _ _ hF hLF (hrg3.trans (hrg2.trans hrg1)) hx hkfG q2 hcap3 hc3 ?_ hsl3

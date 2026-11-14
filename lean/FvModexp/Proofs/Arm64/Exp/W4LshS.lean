@@ -29,7 +29,7 @@ theorem slot_lsh {R : RtInv} {L L' : List (Nat × Nat)} {b b' g sp stkL rrp n p 
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem lshStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+theorem lshStep (hRR : FvModexp.Arm64.W4Pro.RRSpec) (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hclr : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
@@ -128,7 +128,7 @@ theorem lshStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
       M1.readLE (sp + j) 8 = M.readLE (sp + j) 8 := fun j hj hj2 =>
     hmf.readLE _ _ (by simp only [outside_cons, outside_nil, and_true]; omega)
   have hlenE : stLen M2 st = stLen M st := by rw [e1', k1]
-  refine reaches_mono (sn2Step impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW hserv ret hret b2 L2 g sp K n
+  refine reaches_mono (sn2Step (hRR := hRR) impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW hserv ret hret b2 L2 g sp K n
     mp mc Mv xp xc Xv yp ylen Y yi zp zc st n0 l0 t rrp p c M2 r18 r29 f29 hKD hC2 hZ hzzK hzl hzv hzzr hrL2 hrW hrG hrS
     hrB2 (by rw [sl 408 (by omega) (by omega)]; exact q408) (by rw [sl 176 (by omega) (by omega)]; exact q176) ht
     (by rw [sl 224 (by omega) (by omega), rs1 224 (by omega) (by omega)]; exact r224)

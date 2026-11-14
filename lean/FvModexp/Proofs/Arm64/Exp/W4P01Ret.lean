@@ -1,6 +1,5 @@
 import FvModexp.Proofs.Arm64.Exp.LibW
-import FvModexp.Proofs.Arm64.Exp.W4PowAll
-import FvModexp.Proofs.Arm64.Exp.W4Mid2
+import FvModexp.Proofs.Arm64.Exp.W4Posts
 
 /-!
 # window-4 (arm64): from the return of `stk.nat(17n)` (`p01`) to the return of the function
@@ -15,7 +14,7 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvMod
 
 namespace FvModexp.Arm64.W4Pro
 
-open FvModexp.Arm64.W4Loop (Env Inp Buf Bufs Mem Static OneIn FinEnv TailPost step)
+open FvModexp.Arm64.W4Loop (Env Inp Buf Bufs Mem Static FinEnv TailPost step)
 
 theorem apart_ent {a k bp n d : Nat} (h : Apart a k bp (8 * (17 * n))) (hd : d < 16) :
     Apart a k (bp + 8 * (d * n)) (8 * n) := by
@@ -63,7 +62,7 @@ theorem tslot {R : RtInv} {sp n bp K : Nat} {M M' : Memory}
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- window-4 from the return of `stk.nat(17n)` (`p01`) to the return -/
-theorem p01Ret (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+theorem p01Ret (hP01 : FvModexp.Arm64.W4Pro.P01Spec) (hJ4 : FvModexp.Arm64.W4Pro.J4Spec) (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hclr : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
@@ -126,7 +125,7 @@ theorem p01Ret (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
           (zjVal n (M.readLE mp (8 * n)) ((2 ^ 64 - t) % 2 ^ 64)
             (Exp.montPow n (M.readLE mp (8 * n)) ((2 ^ 64 - t) % 2 ^ 64) (M.readLE xp (8 * n)) (M.readLE rrp (8 * n)))
             Y ylen yi) st n0 onep r18 r29 M' s')) := by
-  refine p01pow impl hap R hclr hmv ret hret _ b L g sp n mp mc t bp onep rrp rrc xp xc M r18 f29 he hn hn16 hmc
+  refine hP01 impl hap R hclr hmv ret hret _ b L g sp n mp mc t bp onep rrp rrc xp xc M r18 f29 he hn hn16 hmc
     hmc' ht hm hba hbb hbh hbw hbg hbm hone hbo hone1 hrr hbR hx hbx r1016 r1024 r1032 r224 r128 r816 r832 r256 r264
     r904 r328 r320 hok hinv S hpc hsp h0 h1 h2 h18 h28 h29 hmem ?_
   intro S' Mj c1 c2 c3 c4 c5 c6 hF hL hinvj hrgj m224 hE
@@ -221,7 +220,7 @@ theorem p01Ret (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
       by rw [rsp8]; exact f18, by rw [rsp]; exact f19⟩
     rw [trd hF hL (hsth.imp (fun h => h.sub (by omega) (by omega)) (fun h => h.of_sub (by omega) (by omega)))
       (by unfold Apart; omega) (by unfold Apart; omega)]; exact f15
-  refine reaches_mono (j4Ret impl hap R hclr hmv hmk hserv ret hret b L g sp n mp mc ((2 ^ 64 - t) % 2 ^ 64) yp ylen Y
+  refine reaches_mono (hJ4 impl hap R hclr hmv hmk hserv ret hret b L g sp n mp mc ((2 ^ 64 - t) % 2 ^ 64) yp ylen Y
     yi bp zp zc zzp zzc
     (Exp.montPow n (M.readLE mp (8 * n)) ((2 ^ 64 - t) % 2 ^ 64) (M.readLE xp (8 * n)) (M.readLE rrp (8 * n)))
     Mj r18 r29 f29 onep st n0 he' hce' hn hn16 hmc hmc' (Nat.mod_lt _ (by decide)) hyl hyl' hm' hy' hYr hyi' hyi0 hzc

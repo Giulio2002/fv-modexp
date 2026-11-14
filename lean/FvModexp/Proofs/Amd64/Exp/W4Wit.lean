@@ -32,7 +32,7 @@ abbrev RS : Nat := SP0 + 8
 abbrev WW : Nat := 0x10000
 /-- the budget the witness runtime grants, and the bound on `nat.div`'s cost it covers -/
 abbrev BW : Nat := 0x100000
-abbrev CD : Nat := 0x10000
+abbrev CD : Nat := 0x20000
 abbrev KW : Nat := 41512
 abbrev gAw : Nat := 0xb4ae88
 abbrev wbAw : Nat := 0xbb7040
@@ -101,8 +101,8 @@ theorem globals : RunIface.Globals R mem0 [((SP0 - 0x380) - 8 - KW, (SP0 - 0x380
 
 set_option maxHeartbeats 64000000 in
 /-- the witness state satisfies `PreD` (`z.expNNOddMontgomeryWindowSize4(stk, 3, 5, 7)`, `z = nil`) for every `nat.div`
-cost function bounded by `CD` on window-4's two division shapes -/
-theorem pre (costF : Nat → Nat → Nat → Nat) (hcF : ∀ l, l ≤ 2 ^ 16 → costF l 3 1 ≤ CD ∧ costF l 1 1 ≤ CD) :
+cost function bounded by `CD` on window-4's two division shapes at the stack levels `≤ 0x200` the witness call reaches -/
+theorem pre (costF : Nat → Nat → Nat → Nat) (hcF : ∀ l, l ≤ 0x200 → costF l 3 1 ≤ CD ∧ costF l 1 1 ≤ CD) :
     PreD R BW [] KW costF CD 0 0 ST XP 1 1 YP 1 MP 1 1 s0 := by
   have hm : s0.mem = mem0 := rfl
   have h4 : (s0.regs 4).toNat - 0x388 = SP0 - 0x380 := by decide

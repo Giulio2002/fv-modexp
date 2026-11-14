@@ -1,5 +1,6 @@
 import FvModexp.Proofs.Arm64.Exp.LibWC
 import FvModexp.Proofs.Arm64.Exp.W4Defs
+import FvModexp.Proofs.Arm64.Exp.W4FinDefs
 import FvModexp.Proofs.Arm64.Exp.DeferW
 import FvModexp.Proofs.Common.ExpNorm
 
@@ -18,29 +19,6 @@ namespace FvModexp.Arm64.W4Loop
 abbrev njoin : Nat := segAddr LibW.program fn + 0xbb4
 /-- after the norm loop: `CMP R5, R4` -/
 abbrev tailPc : Nat := segAddr LibW.program fn + 0xbc8
-
-/-- what the end guarantees (memory relative to the memory `M` at the join point) -/
-@[reducible] def FinPost (sp g st n0 p l c : Nat) (r18 r29 : BitVec 64) (M : Memory) (s' : State) : Prop :=
-  s'.sp = BitVec.ofNat 64 (sp + 928) ∧ s'.regs 18 = r18 ∧ s'.regs 28 = BitVec.ofNat 64 g ∧ s'.regs 29 = r29 ∧
-    s'.regs 0 = BitVec.ofNat 64 p ∧ s'.regs 1 = BitVec.ofNat 64 l ∧ s'.regs 2 = BitVec.ofNat 64 c ∧
-    s'.mem.readLE (st + 8) 8 = n0 ∧
-    MemFrame M s'.mem [(sp - 24, sp - 8), (sp + 127, sp + 128), (sp + 376, sp + 400), (st + 8, st + 16)]
-
-/-- the static facts of the end -/
-@[reducible] def FinEnv (sp g st n0 : Nat) (r29 : BitVec 64) (ret : Nat) (M : Memory) : Prop :=
-  sp % 16 = 0 ∧ 4288 ≤ sp ∧ sp + 1040 ≤ 2 ^ 48 ∧ M.accessible (sp - 4288) (4288 + 1040) true = true ∧
-    g + 24 ≤ 2 ^ 48 ∧ M.accessible (g + 16) 8 false = true ∧ M.readLE (g + 16) 8 + 4288 < sp ∧
-    Apart (g + 16) 8 (sp - 4288) (4288 + 1040) ∧
-    M.readLE (sp + 912) 8 = sp + 840 ∧ M.readLE (sp + 840) 8 = segAddr LibW.program DeferW.fnW4 ∧
-    M.readLE (sp + 848) 8 = st ∧ M.readLE (sp + 856) 8 = n0 ∧
-    (st + 24 ≤ 2 ^ 48 ∧ st ≠ 0) ∧ M.accessible st 24 true = true ∧ n0 ≤ M.readLE (st + 16) 8 ∧
-    Apart st 24 (sp - 4288) (4288 + 1040) ∧ Apart st 24 (g + 16) 8 ∧
-    M.readLE (sp - 8) 8 = r29.toNat ∧ M.readLE sp 8 = ret
-
-theorem FinEnv.stnz {sp g st n0 : Nat} {r29 : BitVec 64} {ret : Nat} {M : Memory} (h : FinEnv sp g st n0 r29 ret M) :
-    st ≠ 0 := by
-  obtain ⟨-, -, -, -, -, -, -, -, -, -, -, -, ⟨-, h⟩, -⟩ := h
-  exact h
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in

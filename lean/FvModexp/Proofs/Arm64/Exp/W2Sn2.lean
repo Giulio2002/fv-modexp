@@ -19,7 +19,7 @@ open FvModexp.Arm64.W2Loop (Env Inp Buf FinEnv)
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem sn2Step (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+theorem sn2Step (hRR : FvModexp.Arm64.W2Pro.RRSpec) (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hclr : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
@@ -157,7 +157,7 @@ theorem sn2Step (impl : List Segment) (hap : ImplApart Extracted.program impl) (
   have sl : ∀ j, 24 ≤ j → j + 8 ≤ 752 → M2.readLE (sp + j) 8 = M1.readLE (sp + j) 8 := fun j a b =>
     slot_sn hS hrt4 (by omega) (Apart.sub hstw1 (Nat.le_refl _) (Nat.le_refl _) (by omega) (by omega)) hfw j a b
   have hlenM2 : stLen M2 st = stLen M st + StackNat.rnd (2 * n) := by rw [hlen2, hlen1]
-  refine reaches_mono (divStep impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW hserv ret hret b2 L2 g sp K n mp
+  refine reaches_mono (divStep (hRR := hRR) impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW hserv ret hret b2 L2 g sp K n mp
     mc Mv xp xc Xv yp ylen Y yi zp zc st n0 l0 t (stW M2 st + 8 * stLen M1 st) rrp zzp zzc M2 r18 r29 f29 hKD hC2 hZ2 hzzK
     hzl hzv2 (norm_of_pow hzv2) hzzr hqin hqL hqr0.symm hrL2 hrW hrG hrS hrB2
     (by rw [sl 408 (by omega) (by omega), rs1 408 (by omega)]; exact r408)

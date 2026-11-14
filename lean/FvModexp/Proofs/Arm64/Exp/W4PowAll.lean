@@ -1,6 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.LibW
 import FvModexp.Proofs.Arm64.Exp.W4P01
 import FvModexp.Proofs.Arm64.Exp.W4PowLoop
+import FvModexp.Proofs.Arm64.Exp.W4Posts
 
 /-!
 # window-4 prologue (arm64): the whole table `powers[0..16)` (nat.go:1409-1417), `p01 → j4`
@@ -14,9 +15,6 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvMod
 namespace FvModexp.Arm64.W4Pro
 
 open FvModexp.Arm64.W4Loop (Env Inp Buf)
-
-/-- the ranges `p01 → j4` may write besides `R.rt` -/
-@[reducible] def tw (sp bp n : Nat) : List (Nat × Nat) := qw sp ++ pw sp ++ [(bp, bp + 8 * (17 * n))]
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in

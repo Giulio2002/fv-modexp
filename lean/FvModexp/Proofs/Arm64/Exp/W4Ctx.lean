@@ -1,4 +1,5 @@
-import FvModexp.Proofs.Arm64.Exp.W4OneRet
+import FvModexp.Proofs.Arm64.Exp.W4Posts
+import FvModexp.Proofs.Arm64.Exp.W4Snc
 
 /-!
 # window-4 prologue (arm64): the context of the `RR` section and its transfer through a step

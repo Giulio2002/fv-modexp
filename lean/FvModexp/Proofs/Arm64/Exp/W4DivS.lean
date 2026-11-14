@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.W4XnDefs
 import FvModexp.Proofs.Arm64.Exp.LibW
 import FvModexp.Proofs.Arm64.Exp.W4DivM
 import FvModexp.Proofs.Arm64.Exp.W4DivR
@@ -15,19 +16,6 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvMod
 namespace FvModexp.Arm64.W4Pro
 
 open FvModexp.Arm64.W4Loop (Env Inp Buf FinEnv)
-
-/-- the post of the window-4 function from `divRet` on, with the memory at `divRet` and the remainder abstracted -/
-@[reducible] def DivRetPost (R : RtInv) (L0 : List (Nat × Nat)) (K bA : Nat) (M0 : Memory)
-    (g sp n mp mc Mv Xv t yp ylen Y yi zp zc st n0 zzp zzc lenM : Nat)
-    (r18 r29 : BitVec 64) (s' : State) : Prop :=
-  ∃ (M' : Memory) (L' : List (Nat × Nat)) (b' rp rl rc : Nat) (M1 : Memory) (rrp rrc onep : Nat) (M2 : Memory)
-    (L2 : List (Nat × Nat)) (b2 : Nat),
-    Anc R L0 sp K st M0 L' M' ∧ bA ≤ b' ∧ stLen M' st = lenM ∧
-    (Apart zzp (8 * zzc) (stW M' st) (8 * stCap M' st) ∧ Held R L' zzp (8 * zzc)) ∧
-    M'.readLE rp (8 * rl) = 2 ^ (128 * n) % Mv ∧ RRPost R b' L' g sp n rp rl rc zzp zzc M' M1 rrp rrc ∧
-    OneChain R b' L' L2 b2 sp n st M1 M2 ∧
-    RetPost R b2 L2 g sp n mp mc t (stW M2 st + 8 * lenM) yp ylen Y yi zp zc zzp zzc st n0 onep r18 r29 Mv Xv
-      (2 ^ (128 * n) % Mv) M2 s'
 
 set_option maxRecDepth 20000 in
 /-- the threshold globals as an object of the context (asm s16 DivHyp addendum) -/
@@ -69,7 +57,7 @@ theorem in_stUp {a k p q st l0 : Nat} {M : Memory} (h : Apart a k (stUp M st l0)
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem divStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+theorem divStep (hRR : FvModexp.Arm64.W4Pro.RRSpec) (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hclr : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
@@ -163,7 +151,7 @@ theorem divStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     have := hsok'.2.2.2.2.2.1; simp only [stLen, stCap] at hlen' this hl0 ⊢; omega
   have hZ' := ZZ.keep hZ hx (fun a k w => hF.accessible a k w) hst' hl0'
   have sl := fun j h1 h2 => slot_div (j := j) hC hqin hrW hD h1 h2
-  refine reaches_mono (rrRetC impl hap R hclr hmv hmk hSN hserv ret hret b' L' g sp K n mp mc Mv xp xc Xv yp ylen Y yi
+  refine reaches_mono (hRR impl hap R hclr hmv hmk hSN hserv ret hret b' L' g sp K n mp mc Mv xp xc Xv yp ylen Y yi
     zp zc st n0 l0 t r rl rc zzp zzc M' r18 r29 f29 _ hC' hZ' ht ((sl 224 (by omega) (by omega)).trans r224)
     ((sl 128 (by omega) (by omega)).trans r128) ((sl 168 (by omega) (by omega)).trans r168)
     ((sl 400 (by omega) (by omega)).trans r400) hkk hmB (by rw [hlen']; omega) (by rw [hlen']; omega) hinv' hrl0 hrln hrc hrp hra

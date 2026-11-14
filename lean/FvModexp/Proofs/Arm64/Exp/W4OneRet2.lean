@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.W4OneP
 import FvModexp.Proofs.Arm64.Exp.LibW
 import FvModexp.Proofs.Arm64.Exp.W4OneRet
 
@@ -9,11 +10,11 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvMod
 
 namespace FvModexp.Arm64.W4Pro
 
-open FvModexp.Arm64.W4Loop (Env Inp Buf Bufs Mem Static OneIn FinEnv TailPost step)
+open FvModexp.Arm64.W4Loop (Env Inp Buf Bufs Mem Static FinEnv TailPost step)
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem oneRet (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+theorem oneRet (hP01 : FvModexp.Arm64.W4Pro.P01Spec) (hJ4 : FvModexp.Arm64.W4Pro.J4Spec) (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hclr : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
@@ -86,7 +87,7 @@ theorem oneRet (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
   by_cases h4 : n ≤ 4
   · exact oneSmall impl ret hret _ R b L g sp n st M r18 f29 he hn h4 r1024 r960 hinv S hpc hsp h0 h18 h28 h29 hmem
       (fun S' M' onep L' b' c1 c2 c3 c4 c5 c6 c7 c8 c9 hO =>
-        reaches_mono (afterOne impl hap R hclr hmv hmk hSN hserv ret hret b L g sp n mp mc t rrp rrc xp xc yp ylen Y yi zp
+        reaches_mono (afterOne (hP01 := hP01) (hJ4 := hJ4) impl hap R hclr hmv hmk hSN hserv ret hret b L g sp n mp mc t rrp rrc xp xc yp ylen Y yi zp
         zc zzp zzc st n0 M r18 r29 f29 he hce hn hn128 hmc hmc' ht hm hrr hx r1016 r1024 r1032 r224 r128 r832 r256 r264 r904
         r328 r320 hok hyl hyl' hy hY hyi hyi0 hzc hz hold hzz hzz8 hzzm hzzy hzz4 hzzs hzzF hro hty r952 r936 r168 r400
         r1000 r992 hokz hokM hmw4 hnm hkk hmB hfe hsth hstw4 hsok hn0 hcap hfg harr hfw hslen hwba hstwb hstf hmS hmF hrS
@@ -95,7 +96,7 @@ theorem oneRet (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
   · exact oneLarge impl R hmkL ret hret _ b L g sp n st M r18 f29 he (by omega) (by omega) hd hro hty r1024 r960
       ⟨hokone (by omega), by omega⟩ hinv S hpc hsp h0 h18 h28 h29 hmem
       (fun S' M' onep L' b' c1 c2 c3 c4 c5 c6 c7 c8 c9 hO =>
-        reaches_mono (afterOne impl hap R hclr hmv hmk hSN hserv ret hret b L g sp n mp mc t rrp rrc xp xc yp ylen Y yi zp
+        reaches_mono (afterOne (hP01 := hP01) (hJ4 := hJ4) impl hap R hclr hmv hmk hSN hserv ret hret b L g sp n mp mc t rrp rrc xp xc yp ylen Y yi zp
         zc zzp zzc st n0 M r18 r29 f29 he hce hn hn128 hmc hmc' ht hm hrr hx r1016 r1024 r1032 r224 r128 r832 r256 r264 r904
         r328 r320 hok hyl hyl' hy hY hyi hyi0 hzc hz hold hzz hzz8 hzzm hzzy hzz4 hzzs hzzF hro hty r952 r936 r168 r400
         r1000 r992 hokz hokM hmw4 hnm hkk hmB hfe hsth hstw4 hsok hn0 hcap hfg harr hfw hslen hwba hstwb hstf hmS hmF hrS

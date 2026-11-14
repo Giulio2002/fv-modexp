@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Arm64.Exp.W4FunE
 import FvModexp.Proofs.Arm64.Exp.W4Wit
 import FvModexp.Proofs.Arm64.Exp.DivInst
 import FvModexp.Proofs.Arm64.Nat.RowLink

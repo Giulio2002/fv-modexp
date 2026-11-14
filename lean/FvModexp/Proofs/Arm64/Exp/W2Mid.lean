@@ -17,39 +17,8 @@ namespace FvModexp.Arm64.W2Pro
 
 open FvModexp.Arm64.W2Loop (Env Inp Buf Bufs Mem Static OneIn FinEnv TailPost step)
 
-theorem reaches_mono {p : Program} {s : State} {Q Q' : Outcome → Prop} (h : Reaches p s Q) (hq : ∀ o, Q o → Q' o) :
-    Reaches p s Q' := by
-  obtain ⟨n, o, h1, h2⟩ := h
-  exact ⟨n, o, h1, hq o h2⟩
-
-theorem isReturn_mono {P P' : State → Prop} (hq : ∀ s, P s → P' s) : ∀ o, IsReturn P o → IsReturn P' o := by
-  intro o h
-  cases o <;> simp only [IsReturn] at h ⊢
-  all_goals first | exact hq _ h | exact h
-
 theorem test_eq : W2Loop.test = testL := by
   show segAddr LibW.program W2Loop.fn + 0xa10 = 1804480; rw [fnBase']
-
-/-- the window-2 value from the first window: `outerLoop` over the remaining bits of `y` -/
-abbrev zjVal (n Mv k0 : Nat) (tbl : Nat → Nat) (Y ylen yi : Nat) : Nat :=
-  Exp.outerLoop 2 (step n Mv k0 tbl) Y 32 (ylen - 1) ((yi * 2 ^ (64 - kTop yi * 2)) % 2 ^ 64) (kTop yi)
-    (tbl (yi / 2 ^ (kTop yi * 2)))
-
-/-- what `zj → RET` establishes: the anchor `M0` (frame from `M`), the exit buffers and `TailPost` -/
-@[reducible] def ZjPost (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (g sp n mp mc k0 yp ylen bp zp zc zzp zzc : Nat)
-    (tbl : Nat → Nat) (V : Nat) (st n0 onep : Nat) (r18 r29 : BitVec 64) (M : Memory) (s' : State) : Prop :=
-  ∃ (M0 : Memory) (zp' zc' zzp' zzc' : Nat) (Mx : Memory),
-    ((zp' = zp ∧ zc' = zc ∧ zzp' = zzp ∧ zzc' = zzc) ∨ (zp' = zzp ∧ zc' = zzc ∧ zzp' = zp ∧ zzc' = zc)) ∧
-    MemFrame M M0 (R.rt ++ cw sp ++ [(zp, zp + 8 * n)]) ∧ LiveFrame M M0 L [(zp, zp + 8 * n)] ∧
-    M0.regions = M.regions ∧
-    Bufs R L g sp n mp yp ylen (fun d => bp + 8 * (d * n)) [(onep, 8 * n), (st, 24)] M0 zp' zc' zzp' zzc' ∧
-    Mem R b L g sp M0 Mx zp' zc' zzp' zzc' ∧ Mx.readLE zp' (8 * n) = V ∧
-    TailPost R b L g sp n mp k0 st n0 zp' zc' zzp' zzc' r18 r29 M0 Mx s'
-
-theorem buf_frame {R : RtInv} {L : List (Nat × Nat)} {g sp n p c : Nat} {M M' : Memory} {ws : List (Nat × Nat)}
-    (h : Buf R L g sp n M p c) (hf : MemFrame M M' ws) : Buf R L g sp n M' p c := by
-  obtain ⟨a1, a2, a3, a4⟩ := h
-  exact ⟨a1, a2, by rw [hf.accessible]; exact a3, a4⟩
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in

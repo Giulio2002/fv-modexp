@@ -1941,3 +1941,11 @@ Util → IcDefs → IcHL → Ic → Og → Pre → Seg → FinA → Fin → Row 
   **DivRowQ cap 901 s**: own compile 248 modules (310 from the store) 881 s / cpu 4001 s, ok=true (so the new DivCG/DivMC/DivRowQ
   modules compile under Janus). Its own set includes the whole amd64 drs chain: it needs asm's amd64 DrsRowQ row before it (as on
   arm64) to fit. Re-measure in rel46 (v0.3.3, full amd64 order).
+
+### expmc s67 — window-2/4 import-chain cut (arm64, statements unchanged)
+* W2: own-module dev critical import path 283 s → ~105 s (segments entry→divRet / divRet→j4 / j4→RET + x-normalisation
+  vs entry, composed in W2Comp/W2FunE; defs hoisted to W2FinDefs/Posts/Cut/FunDefs/XnDefs; heavy proofs split out of defs
+  modules: P01Defs 30 s → 1.4 s (p01post → W2P01Post), Zm 17 → 0.9, One 22 → 1.0, RR 20 → 1.0). W4: same cut, dev crit 233 s
+  at load 40-50 (W4LshS 50 s under load).
+* Targeted W2Row (v0.3.2, rel44 copy, snapshot df8b4095): FAIL(cap) 901 s at load 34→51 with concurrent dev builds (no
+  timing summary). Re-run pending (NOTES-expmc s67).

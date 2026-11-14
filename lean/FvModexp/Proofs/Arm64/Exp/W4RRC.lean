@@ -1,6 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.LibW
 import FvModexp.Proofs.Arm64.Exp.W4Ctx
 import FvModexp.Proofs.Arm64.Exp.W4RRRet
+import FvModexp.Proofs.Arm64.Exp.W4Cut
 
 /-!
 # window-4 (arm64): `rrRet` stated over the context `Ctx` (divRet → RET)
@@ -12,16 +13,9 @@ namespace FvModexp.Arm64.W4Pro
 
 open FvModexp.Arm64.W4Loop (Env Inp Buf FinEnv)
 
-/-- the facts about `zz` (the `lsh` result) at `divRet` (s27: apart from the WHOLE stack array, for `ResSep`) -/
-@[reducible] def ZZ (R : RtInv) (L : List (Nat × Nat)) (g sp n mp xp yp ylen zp zc st l0 zzp zzc : Nat) (M : Memory) :
-    Prop :=
-  Buf R L g sp n M zzp zzc ∧ zzp % 8 = 0 ∧ Apart zzp (8 * zzc) mp (8 * n) ∧ Apart zzp (8 * zzc) yp (8 * ylen) ∧
-  Apart zzp (8 * zzc) xp (8 * n) ∧ Apart zzp (8 * zzc) (sp - 4304) 16 ∧ Apart zzp (8 * zzc) st 24 ∧
-  Apart zzp (8 * zzc) (stW M st) (8 * stCap M st) ∧ (2 * n ≤ zc → Apart zp (8 * zc) zzp (8 * zzc))
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem rrRetC (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+theorem rrRetC (hP01 : FvModexp.Arm64.W4Pro.P01Spec) (hJ4 : FvModexp.Arm64.W4Pro.J4Spec) (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hclr : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
@@ -73,7 +67,7 @@ theorem rrRetC (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     obtain ⟨-, -, o, a1, a2⟩ := hz h
     exact ⟨hzzz h, a1, a2, w16 _ _ o.2.1, o.2.2.1, fr _ _ o.2.2.2.1⟩
   have hwba := hgl.2.2.2.2.2.2.2.2.2.2.1
-  refine reaches_mono (rrRet impl hap R hclr hmv hmk hSN hserv ret hret b L g sp n mp mc t rp rl rc xp xc yp ylen Y yi
+  refine reaches_mono (rrRet (hP01 := hP01) (hJ4 := hJ4) impl hap R hclr hmv hmk hSN hserv ret hret b L g sp n mp mc t rp rl rc xp xc yp ylen Y yi
     zp zc zzp zzc st n0 M r18 r29 f29 he (CallW.CEnv.mono hce hK (Nat.le_refl _)) hn hn128 hmc hmc' ht hm hx r1016 r1024
     r1032 r224 r128 r904 r328 r320
     (fun p => ⟨hserv.2.2.1 _ _ (by omega), hserv.2.1 _ _ _ (by omega)⟩) hyl hyl' hy hY hyi hyi0 hzc

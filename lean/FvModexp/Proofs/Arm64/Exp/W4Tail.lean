@@ -69,15 +69,6 @@ theorem finEnv_chain {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {g sp n zp zc
     by unfold Apart; omega, hstg, by rw [slot _ (by omega)]; exact rfp,
     by rw [slot _ (by omega)]; exact rlr⟩
 
-/-- what the return state satisfies, from the loop exit (memory `M`) -/
-@[reducible] def TailPost (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (g sp n mp k0 st n0 zp zc zzp zzc : Nat)
-    (r18 r29 : BitVec 64) (M0 M : Memory) (s' : State) : Prop :=
-  ∃ (M' Mj : Memory) (p l c : Nat), Mem R b L g sp M0 M' zp zc zzp zzc ∧
-    M'.readLE zzp (8 * n) = Exp.montgomery n (M.readLE zp (8 * n)) 1 (M0.readLE mp (8 * n)) k0 ∧
-    JoinPost R b L g sp n zzp zzc
-      (if M0.readLE mp (8 * n) ≤ M'.readLE zzp (8 * n) then 0 else M'.readLE zzp (8 * n)) M' p l c Mj ∧
-    FinPost sp g st n0 p (Expmc.normL Mj p l) c r18 r29 Mj s'
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- window-4 from the main loop's exit to the return -/
