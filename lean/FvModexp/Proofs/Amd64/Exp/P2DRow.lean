@@ -48,10 +48,9 @@ open FvModexp.Amd64.CalleeInstQ FvModexp.Amd64.ExpHyp
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
-/-- **`nat.expNNPowerOfTwo`** (amd64): `z.expNNPowerOfTwo(stk, x, y, logM)` returns `x^y mod 2^logM` for every
-`x > 0`, `y > 0`, `1 ≤ logM ≤ 2^13` (`Pre` / `Post`), for every runtime meeting the live allocation / copy / clear /
-write-barrier contracts. -/
-theorem correctness (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
+/-- the CLOSED callee shape `NHyp.P2Hyp` on `LibW.names` (for `ExpN.DHyps.p2`): only the live runtime contracts of the
+whole extraction remain as premises -/
+theorem hyp (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
     (hgr : GrowsliceLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.growslice")
       4096 R)
     (hmc : MemclrNoHeapPointersLive64 (Extracted.program.ofImpl impl)
@@ -63,11 +62,8 @@ theorem correctness (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted
       4096 R)
     (hwb : WbLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2")
       4096 R 2)
-    (b : Nat) (L : List (Nat × Nat)) (stk : Nat) (hk0 : 42520 ≤ stk) (hk2 : stk ≤ 2 ^ 20 + 0x78)
-    (z zl zc st x xl xc lm : BitVec 64) (y yl yc : Nat) :
-    Ensures (Extracted.program.link impl) (segAddr Extracted.program NHyp.fnP2) [z, zl, zc, st, x, xl, xc, lm]
-      (Pre R b L stk z.toNat zl.toNat zc.toNat st.toNat x.toNat xl.toNat xc.toNat y yl yc lm.toNat)
-      (Post R b L stk z.toNat zc.toNat st.toNat x.toNat xl.toNat y yl lm.toNat) := by
+    (stk : Nat) (hk0 : 42520 ≤ stk) (hk2 : stk ≤ 2 ^ 20 + 0x78) :
+    NHyp.P2Hyp impl R LibW.names stk 112 P2D.needP (P2D.costP P2W2.costB P2W4.costB) := by
   have hc : CodeIn64 (Extracted.program.ofImpl impl) (LibW.program.link impl) := by
     rw [LibW.eq_only]; exact codeIn_ofImpl_restrict_of_apart64 hap LibW.names
   have hgrL : GrowsliceLiveContract64 (LibW.program.link impl) P2W2.grE 4096 R := by
@@ -95,9 +91,33 @@ theorem correctness (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted
   have e4 : max (41512 + 0x300) (P2Pre.K mulWX64 + 0x300) = 42280 := by decide
   rw [e2] at hW2
   rw [e4] at hW4
+  exact P2D.ens hap hmk hW2 hW4 sub nfD (rh hap hmv hmk) (by decide) (lh hap hmc hmv hmk) (by decide) stk (by omega)
+    (by omega) (by omega) hk2 (by omega) (by omega)
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 16000000 in
+/-- **`nat.expNNPowerOfTwo`** (amd64): `z.expNNPowerOfTwo(stk, x, y, logM)` returns `x^y mod 2^logM` for every
+`x > 0`, `y > 0`, `1 ≤ logM ≤ 2^13` (`Pre` / `Post`), for every runtime meeting the live allocation / copy / clear /
+write-barrier contracts. -/
+theorem correctness (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
+    (hgr : GrowsliceLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.growslice")
+      4096 R)
+    (hmc : MemclrNoHeapPointersLive64 (Extracted.program.ofImpl impl)
+      (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
+    (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
+    (hmk : MakesliceLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice")
+      4096 R)
+    (hno : NewobjectLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.newobject")
+      4096 R)
+    (hwb : WbLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2")
+      4096 R 2)
+    (b : Nat) (L : List (Nat × Nat)) (stk : Nat) (hk0 : 42520 ≤ stk) (hk2 : stk ≤ 2 ^ 20 + 0x78)
+    (z zl zc st x xl xc lm : BitVec 64) (y yl yc : Nat) :
+    Ensures (Extracted.program.link impl) (segAddr Extracted.program NHyp.fnP2) [z, zl, zc, st, x, xl, xc, lm]
+      (Pre R b L stk z.toNat zl.toNat zc.toNat st.toNat x.toNat xl.toNat xc.toNat y yl yc lm.toNat)
+      (Post R b L stk z.toNat zc.toNat st.toNat x.toNat xl.toNat y yl lm.toNat) := by
   exact Ensures.full64 hap (by simp [numIntRegs])
-    (P2D.ens hap hmk hW2 hW4 sub nfD (rh hap hmv hmk) (by decide) (lh hap hmc hmv hmk) (by decide) stk (by omega)
-      (by omega) (by omega) hk2 (by omega) (by omega) b L z zl zc st x xl xc lm y yl yc)
+    (hyp impl hap R hgr hmc hmv hmk hno hwb stk hk0 hk2 b L z zl zc st x xl xc lm y yl yc)
 
 end FvModexp.Amd64.P2DRow
 
