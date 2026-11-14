@@ -99,7 +99,7 @@ from the return-point state only by the result stores `[t - 0x58, t - 0x40)`, th
 def EpiK (impl : List Amd64.Segment) (ret0 : Nat) (F : State → Prop) (t bp : Nat) (r14 : BitVec 64)
     (M0 : Janus.Arm64.Memory) (P : State → Prop) : Prop :=
   ∀ (r : Nat) (S : State), RetPt r → S.rip = BitVec.ofNat 64 r → S.regs 4 = BitVec.ofNat 64 (t - 0x108) →
-    S.regs 14 = r14 → S.mem.accessible (t - 0x108) 0x110 true = true → S.mem.readLE (t - 8) 8 = bp →
+    S.regs 14 = r14 → S.xmm 15 = 0 → S.mem.accessible (t - 0x108) 0x110 true = true → S.mem.readLE (t - 8) 8 = bp →
     S.mem.readLE t 8 = ret0 → SlotEq S.mem M0 t →
     (∀ s'' : State, MemFrame S.mem s''.mem [(t - 0x58, t - 0x40)] → s''.mem.regions = S.mem.regions →
       s''.regs 0 = S.regs 0 → s''.regs 3 = S.regs 3 → s''.regs 1 = S.regs 1 → s''.fsBase = S.fsBase →
@@ -111,11 +111,12 @@ theorem epiK0 (impl : List Amd64.Segment) (ret0 : Nat) (hret : RetAddr (LibN.pro
     (F : State → Prop) (t bp : Nat) (r14 : BitVec 64) (M0 : Janus.Arm64.Memory) (P : State → Prop)
     (ht1 : 0x110 ≤ t) (ht2 : t + 0x78 ≤ 2 ^ 48) (hfl : M0.readLE (t - 0x9a) 1 = 0)
     (hK' : ∀ s'' : State, s''.regs 4 = BitVec.ofNat 64 (t + 8) → s''.regs 5 = BitVec.ofNat 64 bp →
-      s''.regs 14 = r14 → P s'' → F s'') :
+      s''.regs 14 = r14 → s''.xmm 15 = 0 → P s'' → F s'') :
     EpiK impl ret0 F t bp r14 M0 P := by
-  intro r S hr hpc hsp h14 hacc hbp hra hsl hP
+  intro r S hr hpc hsp h14 hx0 hacc hbp hra hsl hP
   exact epi0 impl ret0 hret F t bp r S.mem hr ht1 ht2 hacc hbp hra
     ((hsl _ _ (Or.inl ⟨Nat.le_refl _, by omega⟩)).trans hfl) S hpc hsp rfl
-    fun s'' f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 => hK' s'' f1 f2 (f6.trans h14) (hP s'' f10 f11 f3 f4 f5 f7 f8 f9)
+    fun s'' f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 => hK' s'' f1 f2 (f6.trans h14) (f9.trans hx0)
+      (hP s'' f10 f11 f3 f4 f5 f7 f8 f9)
 
 end FvModexp.Amd64.ExpN

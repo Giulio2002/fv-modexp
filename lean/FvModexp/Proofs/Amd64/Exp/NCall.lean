@@ -128,7 +128,7 @@ theorem callC (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progr
   have hrip : s'.rip = BitVec.ofNat 64 r := by rw [hr', retAddrOf_eq, hSs, hra]
   have hsp' : s'.regs 4 = BitVec.ofNat 64 (sp + 0x498 - 0x108) := by
     rw [e4, hSsp, show (8 : BitVec 64) = BitVec.ofNat 64 8 from rfl, BitVec.ofNat_add_ofNat]; congr 1
-  refine hEk r s' hr hrip hsp' e14 (by rw [hFq.accessible, show sp + 0x498 - 0x108 = sp + 0x390 by omega]; exact hacc)
+  refine hEk r s' hr hrip hsp' e14 (ex15.trans hx15) (by rw [hFq.accessible, show sp + 0x498 - 0x108 = sp + 0x390 by omega]; exact hacc)
     (by rw [show sp + 0x498 - 8 = sp + 0x490 by omega, kp ⟨by omega, by omega⟩]; exact hbp)
     (by rw [kp ⟨by omega, by omega⟩]; exact hrv)
     (hsl.of_rd fun a k hs => kp (by unfold Slot at hs; omega))
