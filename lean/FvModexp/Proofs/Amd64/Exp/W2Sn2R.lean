@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.W2DivR
+import FvModexp.Proofs.Amd64.Exp.W2Seg
 
 set_option autoImplicit false
 
@@ -43,6 +44,7 @@ theorem toSn2 {impl : List Amd64.Segment} {ret : W64} {Q : State → Prop}
   subst hmem
   have b1 : st < 256 ^ 8 := r3d8 ▸ Janus.Arm64.Memory.readLE_lt _ _ _
   have b2 : k2 < 256 ^ 8 := r78 ▸ Janus.Arm64.Memory.readLE_lt _ _ _
+  refine SegProg.lift W2Seg.codeIn (r := BitVec.ofNat 64 snE) ?_
   janus64_run [r3d8, r78] until [snE]
   refine KS _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
   · rfl

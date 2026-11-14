@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.W2Posts
+import FvModexp.Proofs.Amd64.Exp.W2Seg
 import FvModexp.Proofs.Amd64.Exp.W2ExB
 
 set_option autoImplicit false
@@ -120,6 +121,7 @@ theorem exSubT {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.prog
       ReachesRet (LibW.program.link impl) ret S' Q) :
     ReachesRet (LibW.program.link impl) ret S Q := by
   rw [fnE_eq] at hpc
+  refine SegProg.lift W2Seg.codeIn (r := BitVec.ofNat 64 cmpE) ?_
   janus64_run [r3a8, r3b0, r3b8] until [cmpE]
   have u := hmw; unfold Apart at u
   refine exCmp2 hap _ sp g fs p c mp n r5 rfl ?_ ?_ ?_ ?_ ?_ ?_ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ hs1 hs2 ?_ hn hn16 hm48 ?_ hmw ?_

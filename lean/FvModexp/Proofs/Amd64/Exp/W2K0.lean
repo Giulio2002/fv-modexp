@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.LibW
+import FvModexp.Proofs.Amd64.Exp.W2Seg
 import FvModexp.Proofs.Common.ExpMont
 
 set_option autoImplicit false
@@ -59,6 +60,7 @@ theorem kIter {impl : List Amd64.Segment} {ret : W64} {Q : State → Prop}
     · intro i a1 a2 a3 a4; simp [setRegF_apply, a1, a2, a3, a4]
   · have hbr : ¬ (BitVec.ofNat 64 (2 ^ j)).toInt < (64 : Int) := by
       rw [BitVec.toInt_eq_toNat_cond, e]; split <;> omega
+    refine SegProg.lift W2Seg.codeIn (r := BitVec.ofNat 64 kExit) ?_
     janus64_run [hbr] until [kExit]
     refine KE _ hlt rfl rfl ?_ rfl rfl rfl ?_
     · simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]; exact h12

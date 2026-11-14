@@ -2101,3 +2101,7 @@ DrsFCL/DrsFDL import all their segments. Dev critical path 451 → 274 s (now Dr
   pc: each pc's `stepOK` is a separate `mkAuxLemma` whose kernel check re-walks `seg.bytes.length` of every preceding
   segment of LibW.program (73 segments). A/B: the same 29-instruction run on a one-segment program 8.4 s vs 30.3 s.
   Written up in JANUS-ISSUES.md "[divmc s79] PERF … stepOK aux lemma". A framework fix is the lever for the ≤ 500 s target.
+* Targeted row runs (v79b, v0.3.3, warm store from a Warm79 pre-verify, JANUS_JOBS default, load 18-31):
+  W4Row own compile 94 modules 400 s (cpu 1854), audit 33 s, replay 119 targets 415 s, total 851 s → FAIL audit
+  ([RSP]-word rule, see divmc s80). W2Row own compile 96 modules 484 s (cpu 2072), audit 41 s, replay cut by the
+  900 s cap → total 901 s CAP FAIL. Both rows still need ~2x off own compile + replay.

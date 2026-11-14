@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.W4Posts2
+import FvModexp.Proofs.Amd64.Exp.W4Seg
 import FvModexp.Proofs.Amd64.Exp.LibW
 import FvModexp.Proofs.Amd64.Exp.W4OneDefs
 
@@ -110,6 +111,7 @@ theorem rrFix (impl : List Amd64.Segment) {R : RtInv}
   unfold Apart at u1 u2 u3
   by_cases hA : rl = n
   · subst hA
+    refine SegProg.lift W4Seg.codeIn (r := BitVec.ofNat 64 6207369) ?_
     janus64_run [s3b0] until [6207369]
     refine KR _ rp rc rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ hfs ?_ rfl
       ⟨MemFrame.refl _ _, LiveFrame.refl _ _ _, hinv, rfl, rfl, Or.inl ⟨rfl, rfl, rfl⟩⟩

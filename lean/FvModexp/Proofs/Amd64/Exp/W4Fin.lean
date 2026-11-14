@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.W4Posts
+import FvModexp.Proofs.Amd64.Exp.W4Seg
 import FvModexp.Proofs.Amd64.Exp.W4ExB
 import FvModexp.Proofs.Amd64.Exp.DeferX
 import FvModexp.Proofs.Common.ExpNorm
@@ -86,6 +87,7 @@ theorem atD {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program
   have e4' : s'.regs 4 = BitVec.ofNat 64 sp := by rw [e4, h4]; exact sp_add8 (by omega) (by omega)
   have hacc' : s'.mem.accessible (sp - 4296) (4296 + 0x3c0) true = true := by rw [hf.accessible]; exact hacc
   clear e4 rd hr
+  refine SegProg.liftRet W4Seg.codeIn ?_
   janus64_run [q170, q178, q180, q380, q388, Nat.mod_eq_of_lt (show r < 2 ^ 64 by omega)]
   refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]
@@ -177,6 +179,7 @@ theorem tail {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progra
   have u := hstw; unfold Apart at u
   have hlt : ¬ (c < l) := by omega
   rw [show tailPc = 6210149 by simp only [tailPc, fnE_eq]] at hpc
+  refine SegProg.lift W4Seg.codeIn (r := BitVec.ofNat 64 6210496) ?_
   janus64_run [r378, r340, hlt] until [6210496]
   refine atD hap _ sp g fs st n0 bp r p l c _ rfl ?_ ?_ ?_ hfs hx15 rfl hs1 hs2 hal ?_ ?_ ?_ ?_ hst1 ?_ ?_ hstw
     ?_ ?_ ?_ ?_ ?_ ?_ ?_

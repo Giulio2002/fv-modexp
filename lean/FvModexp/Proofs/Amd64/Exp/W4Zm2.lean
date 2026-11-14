@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.LibW
+import FvModexp.Proofs.Amd64.Exp.W4Seg
 import FvModexp.Proofs.Amd64.Exp.W4ZmDefs
 
 set_option autoImplicit false
@@ -66,6 +67,7 @@ theorem zm2 (impl : List Amd64.Segment) {R : RtInv}
   · obtain ⟨hB, hz8⟩ := hzz hr
     have hlt' : ((BitVec.ofNat 64 zzc).toInt < (BitVec.ofNat 64 (2 * n)).toInt) = False := by
       simp only [hlt, eq_iff_iff, iff_false]; omega
+    refine SegProg.lift W4Seg.codeIn (r := BitVec.ofNat 64 6208495) ?_
     janus64_run [r3b0, ra0, r188, hlt', hna] until [6208495]
     have hF : MemFrame M ((M.writeLE (sp + 136) 8 zc).writeLE (sp + 360) 8 zp) (R.rt ++ zw2 sp) :=
       hw.mono (fun a k ho => by simp only [zw2, outside_append, outside_cons, outside_nil, and_true] at ho ⊢; omega)

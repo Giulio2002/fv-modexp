@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.W2K0
+import FvModexp.Proofs.Amd64.Exp.W2Seg
 
 set_option autoImplicit false
 
@@ -42,6 +43,7 @@ theorem toK {impl : List Amd64.Segment} {ret : W64} {Q : State → Prop}
     intro h; have := congrArg BitVec.toNat h; simp only [BitVec.toNat_ofNat] at this; omega
   have hn0 : BitVec.ofNat 64 n ≠ 0#64 := by
     intro h; have := congrArg BitVec.toNat h; simp only [BitVec.toNat_ofNat] at this; omega
+  refine SegProg.lift W2Seg.codeIn (r := BitVec.ofNat 64 kHead) ?_
   janus64_run [r398, r3a8, hm0, hy0, hn0] until [kHead]
   have hm64 : m0 < 2 ^ 64 := by have := Janus.Arm64.Memory.readLE_lt S.mem mp 8; rw [hm0] at this; omega
   refine KH _ rfl rfl ?_ ?_ ?_ rfl rfl ?_ ?_

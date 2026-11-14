@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.W2Pow
+import FvModexp.Proofs.Amd64.Exp.W2Seg
 import FvModexp.Proofs.Amd64.Exp.W2ExA
 
 set_option autoImplicit false
@@ -67,6 +68,7 @@ theorem p0 {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program 
   have hrx0 : Apart (bp + 8 * (0 * n)) (8 * (2 * n)) onep (8 * n) := by unfold Apart at hbo ⊢; omega
   have hry0 : Apart (bp + 8 * (0 * n)) (8 * (2 * n)) rrp (8 * n) := by unfold Apart at hbr ⊢; omega
   have hbp : bp < 2 ^ 64 := by have := hs.2.2.2.2.2.2.2.2.2.2.1; omega
+  refine SegProg.lift W2Seg.codeIn (r := BitVec.ofNat 64 6184288) ?_
   janus64_run [s78, s3b0, s3a8, s3b8, sd8, s328, s338, sf8, s100, c1, c2, nk] until [6184288]
   have hra : RetAddr ((Extracted.program.onlySegments LibMont.names).link impl) (6210560 + 0x8ff) :=
     ra_of hap mont_not 0x8ff (by decide)

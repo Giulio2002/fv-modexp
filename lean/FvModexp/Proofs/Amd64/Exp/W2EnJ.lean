@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.W2EnDefs
+import FvModexp.Proofs.Amd64.Exp.W2Seg
 
 set_option autoImplicit false
 
@@ -72,6 +73,7 @@ theorem enJn {impl : List Amd64.Segment} {R : RtInv}
   have hsth' : Outside st 24 R.rt ∨ InRanges st 24 L1 := hsth.symm
   janus64_run [hacc16, hacc8, hacc8', hwbf, e6] until [wbE, enS]
   · -- the barrier is off
+    refine SegProg.lift W2Seg.codeIn (r := BitVec.ofNat 64 xnE) ?_
     janus64_run [hacc16, hacc8] until [xnE]
     refine K _ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?mf ?lf ?rg ?inv ?q1 ?q2 ?q3
     case mf => janus_frame
@@ -143,6 +145,7 @@ theorem enJn {impl : List Amd64.Segment} {R : RtInv}
       apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_add, BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
     have hlt : ¬ BitVec.ofNat 64 c1 < BitVec.ofNat 64 (len0 + StackNat.rnd (11 * n)) := by
       simp only [BitVec.lt_def, BitVec.toNat_ofNat]; omega
+    refine SegProg.lift W2Seg.codeIn (r := BitVec.ofNat 64 xnE) ?_
     janus64_run [hb8a, hb8b, hbuf64, hst8, hst8', sret, hsp8, hsp0, hlt] until [xnE]
     have hbs : MemFrame m' ((m'.writeLE buf.toNat 8 w1).writeLE (buf.toNat + 8) 8 (S.mem.readLE st 8))
         [(buf.toNat, buf.toNat + 16)] := by janus_frame

@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.W2LshR
+import FvModexp.Proofs.Amd64.Exp.W2Seg
 import FvModexp.Proofs.Amd64.Exp.W2K0
 
 set_option autoImplicit false
@@ -41,6 +42,7 @@ theorem toSn1 {impl : List Amd64.Segment} {ret : W64} {Q : State → Prop}
   subst hmem
   have e2 : BitVec.ofNat 64 n + BitVec.ofNat 64 n = BitVec.ofNat 64 (2 * n) := by
     apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega
+  refine SegProg.lift W2Seg.codeIn (r := BitVec.ofNat 64 snE) ?_
   janus64_run [e2] until [snE]
   refine KS _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
   · rfl

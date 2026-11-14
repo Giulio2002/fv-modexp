@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.W2Lsh
+import FvModexp.Proofs.Amd64.Exp.W2Seg
 
 set_option autoImplicit false
 
@@ -52,6 +53,7 @@ theorem toLsh {impl : List Amd64.Segment} {ret : W64} {Q : State → Prop}
   subst hmem
   have hne : BitVec.ofNat 64 (2 * n) ≠ 0#64 := by
     intro h; have := congrArg BitVec.toNat h; simp only [BitVec.toNat_ofNat] at this; omega
+  refine SegProg.lift W2Seg.codeIn (r := BitVec.ofNat 64 lshE) ?_
   janus64_run [r3b0, hne] until [lshE]
   refine KL _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
   · rfl

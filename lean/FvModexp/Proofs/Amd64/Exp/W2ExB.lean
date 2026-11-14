@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.W2Posts
+import FvModexp.Proofs.Amd64.Exp.W2Seg
 import FvModexp.Proofs.Amd64.Exp.W2ExA
 import FvModexp.Proofs.Amd64.Exp.CmpW
 
@@ -180,6 +181,7 @@ theorem exCmp {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
     · exact hzz'
   · have hge := cmp_ge (n := n) hlt
     clear hf eo hws hrd
+    refine SegProg.lift W2Seg.codeIn (r := BitVec.ofNat 64 subE) ?_
     janus64_run [hge, q188, q98, qa0, q8, q0, qb] until [subE]
     refine KGe _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ (by omega)
     · rfl

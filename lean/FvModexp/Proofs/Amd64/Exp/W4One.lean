@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.W4Posts2
+import FvModexp.Proofs.Amd64.Exp.W4Seg
 import FvModexp.Proofs.Amd64.Exp.LibW
 import FvModexp.Proofs.Amd64.Exp.W4OneDefs
 import FvModexp.Proofs.Amd64.Exp.W4PowDefs
@@ -56,6 +57,7 @@ theorem oneSmall (impl : List Amd64.Segment) {R : RtInv} {ret : W64} {Q : State 
   have he0 := he
   obtain ⟨hal, hsp1, hsp2, hwacc, hg1, hg2, hg3, hwrt, hgw, hgrt, hLs, hfs1, hfacc, hfrd, hfw, hfrt, hadx⟩ := he0
   have hn16 : n ≤ 2 ^ 16 := by omega
+  refine SegProg.lift W4Seg.codeIn (r := BitVec.ofNat 64 6186112) ?_
   janus64_run [s3b0, s78, s3d8, e17 hn16] until [6186112]
   refine KA _ (sp + 0x148) L b rfl ?_ ?_ ?_ ?_ ?_ hfs ?_ rfl ⟨?env, LiveExt.refl R L, by
     simp only [show ¬ 4 < n by omega, ite_false]; omega, ?mf, ?lf, ?inv, ?rg, ?r328, ?one, Or.inl ⟨rfl, hn4⟩⟩ ?sl

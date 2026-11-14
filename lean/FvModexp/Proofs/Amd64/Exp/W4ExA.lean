@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.W4Posts
+import FvModexp.Proofs.Amd64.Exp.W4Seg
 import FvModexp.Proofs.Amd64.Exp.W4S1
 
 set_option autoImplicit false
@@ -78,6 +79,7 @@ theorem exA {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program
     rw [FL.slot hM.1 he hB.1 hB.2.1 (by omega) (by omega)
       (by simp only [fw, outside_cons, outside_nil, and_true]; omega)]; exact r328
   have hop : onep + 8 * n ≤ 2 ^ 48 := (OneIn.c he hone).2.1
+  refine SegProg.lift W4Seg.codeIn (r := BitVec.ofNat 64 6184288) ?_
   janus64_run [r140, r3b0, r328M] until [6184288]
   have hra : RetAddr ((Extracted.program.onlySegments LibMont.names).link impl) 6209787 :=
     ra_of hap mont_not 0x109b (by decide)
@@ -115,6 +117,7 @@ theorem exA {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program
       simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint]
       rw [hV, FL.readOne hM.1 he hone hzo hzzo, hone1]
     clear hz hzz hsl
+    refine SegProg.lift W4Seg.codeIn (r := BitVec.ofNat 64 cmpE) ?_
     janus64_run [q8, q0, qb] until [cmpE]
     refine KA _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
     · rfl
