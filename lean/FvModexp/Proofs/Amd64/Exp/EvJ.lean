@@ -304,4 +304,26 @@ structure J5 (R : RtInv) (L : List (Nat × Nat)) (K g fs sp st bp r zp zc xp xl 
   ap1 : Apart t (8 * (2 * max l1 l2)) p1 (8 * c1)
   ap2 : Apart t (8 * (2 * max l1 l2)) q (8 * a2 ml (nE s mp ml))
 
+/-- the callee's keep range `[sp - 8 + above, sp + 0x1b8)` covers the slots -/
+theorem kc_slot {sp : Nat} {M M' : Memory} {ab : Nat} (hsp : 8 ≤ sp) (hab : ab ≤ 0x7f)
+    (hkc : ∀ a k, sp - 8 + ab ≤ a → a + k ≤ sp + 0x1b8 → M'.readLE a k = M.readLE a k) :
+    ∀ a k, SlotR sp a k → M'.readLE a k = M.readLE a k := fun a k ha =>
+  hkc a k (by simp only [SlotR] at ha; omega) (by simp only [SlotR] at ha; omega)
+
+/-- the callee's keep range at a fixed slot `sp + o` -/
+theorem kc_at {sp : Nat} {M M' : Memory} {ab : Nat} (hsp : 8 ≤ sp) (hab : ab ≤ 0x7f)
+    (hkc : ∀ a k, sp - 8 + ab ≤ a → a + k ≤ sp + 0x1b8 → M'.readLE a k = M.readLE a k) (o k : Nat)
+    (h1 : 0x77 ≤ o) (h2 : o + k ≤ 0x1b8) : M'.readLE (sp + o) k = M.readLE (sp + o) k :=
+  hkc _ _ (by omega) (by omega)
+
+theorem lvl2_ge {s : State} {st mp ml : Nat} :
+    stLen s.mem st + StackNat.rnd (a1 (nE s mp ml)) + a2 ml (nE s mp ml) ≤ lvl2 s st mp ml := by
+  have := rnd_ge (a2 ml (nE s mp ml)); simp only [lvl2]; omega
+
+/-- a keep range `[sp + 0x77, sp + 0x1b8)` at a fixed slot `sp + o` -/
+theorem kk_off {sp : Nat} {M M' : Memory}
+    (hkk : ∀ a k, sp + 0x77 ≤ a → a + k ≤ sp + 0x1b8 → M'.readLE a k = M.readLE a k) (o k : Nat)
+    (h1 : 0x77 ≤ o) (h2 : o + k ≤ 0x1b8) : M'.readLE (sp + o) k = M.readLE (sp + o) k :=
+  hkk _ _ (by omega) (by omega)
+
 end FvModexp.Amd64.ExpEven

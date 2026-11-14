@@ -61,25 +61,10 @@ section
 variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)}
     {K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml mc : Nat} {s : State}
 
-/-- the callee's keep range `[sp - 8 + above, sp + 0x1b8)` covers the slots -/
-theorem kc_slot {M M' : Memory} {ab : Nat} (hsp : 8 ≤ sp) (hab : ab ≤ 0x7f)
-    (hkc : ∀ a k, sp - 8 + ab ≤ a → a + k ≤ sp + 0x1b8 → M'.readLE a k = M.readLE a k) :
-    ∀ a k, SlotR sp a k → M'.readLE a k = M.readLE a k := fun a k ha =>
-  hkc a k (by simp only [SlotR] at ha; omega) (by simp only [SlotR] at ha; omega)
-
-/-- the callee's keep range at a fixed slot `sp + o` -/
-theorem kc_at {M M' : Memory} {ab : Nat} (hsp : 8 ≤ sp) (hab : ab ≤ 0x7f)
-    (hkc : ∀ a k, sp - 8 + ab ≤ a → a + k ≤ sp + 0x1b8 → M'.readLE a k = M.readLE a k) (o k : Nat)
-    (h1 : 0x77 ≤ o) (h2 : o + k ≤ 0x1b8) : M'.readLE (sp + o) k = M.readLE (sp + o) k :=
-  hkc _ _ (by omega) (by omega)
-
 /-- the frame `FN2` leaves the slots -/
 theorem fn2_slot {M M' : Memory} (hF : MemFrame M M' (FN2 sp)) :
     ∀ a k, SlotR sp a k → M'.readLE a k = M.readLE a k := fun a k ha => hF.readLE a k (by
   simp only [SlotR] at ha; simp only [FN2, outside_cons, outside_nil, and_true]; omega)
-
-theorem lvl2_ge : stLen s.mem st + StackNat.rnd (a1 (nE s mp ml)) + a2 ml (nE s mp ml) ≤ lvl2 s st mp ml := by
-  have := rnd_ge (a2 ml (nE s mp ml)); simp only [lvl2]; omega
 
 end
 
