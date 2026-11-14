@@ -2041,3 +2041,8 @@ match the expected expression SYNTACTICALLY, association included); EvSum 1.3 s 
   cap 900 s / 4.0 GB (own 170 mods 331 s, then killed in replay). **LOCK FINDING**: `ws: cache entry lock, framework base lease`
   waits (rows serialize on the one consumer workspace of the shared Run extraction; the wait counts against the cap): RunErr 590 s,
   P2W2 439, Mont 345, DivWRow 204, RemRow 197, W2 164, DivBasicRowQ 165, RemRowQ 131, ModRow 121, IntAS 95 s.
+
+## divmc s73 (2026-11-14): amd64 P2W2 loop body + outer step (dev compile, LEAN_NUM_THREADS=4, ≤ 2.8 GB each)
+P2W2LK 1.1 s, P2W2BJ 2.9 s, P2W2B0 16.5 s, B1 7.0 s, B2 11.8 s, B3 8.9 s, B4 22.0 s, B5 7.9 s, B6 16.1 s, Bd 0.9 s,
+P2W2LO 15.6 s. Before/after: B0/B2 with a `first | exact efs | (janus64_simp; done) | …` closer over all post-run goals
+342 s each → 16.5 s / 11.8 s with named holes closed individually; LO 149 s → 15.6 s (same fix).
