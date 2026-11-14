@@ -1,8 +1,7 @@
-import FvModexp.Proofs.Arm64.Exp.IExpCl
-import FvModexp.Proofs.Arm64.ExpQ.SlowSumQ
-import FvModexp.Proofs.Arm64.ExpQ.SlowSqGQ
-import FvModexp.Proofs.Arm64.ExpQ.SlowMuGQ
-import FvModexp.Proofs.Arm64.ExpQ.Bridge
+import FvModexp.Proofs.Arm64.Exp.IExpSpec
+import FvModexp.Proofs.Arm64.Exp.IExpClD
+import FvModexp.Proofs.Arm64.Exp.EvInst
+import FvModexp.Proofs.Arm64.Exp.NCap
 
 set_option autoImplicit false
 
@@ -27,13 +26,6 @@ open FvModexp.Arm64.EnsWiden (ens_widen)
 
 namespace FvModexp.Arm64.IExp
 
-/-- `nat.div`'s bridged cost (the windows' calls) -/
-abbrev clFQ : Nat → Nat → Nat → Nat := Q.divBr (Q.NatDiv.costQ Q.drsCQ)
-/-- `nat.rem`'s bridged cost -/
-abbrev clRQ : Nat → Nat → Nat → Nat := Q.brC (Q.NatDiv.costQ Q.drsCQ) NatRem.need
-/-- `nat.expNNSlow`'s bridged cost (Q-form inside) -/
-abbrev clSQ : Nat → Nat → Nat → Nat → Nat :=
-  Q.slowBr (Q.ExpSlow.costQ sqrCQ mulCQ (Q.NatDiv.costQ Q.drsCQ)) Q.ExpSlow.needH
 /-- the dominating bound of `expNNEven`'s inner budget -/
 abbrev clBUQ : Nat → Nat → Nat → Nat → Nat → Nat := Exp.supU (ExpEven.NBudE clFQ clRQ clSQ clP)
 /-- the dominating bound of `expNNEven`'s inner cost -/
@@ -47,53 +39,6 @@ def BudClQ : Prop :=
     24 + (makeCost 1 + max (clRQ 0 xl n) (makeCost n + max (ExpN.maxC clSQ clEQ 0 xl yl n)
       (max (clP 0 xl yl lm) (ExpOdd.OBud clFQ n xl yl 0)))) ≤ RunIface.ExpBudget (max (max xl yl) n) yl ∧
     24 + ExpN.NCost clFQ clRQ (ExpN.maxC clSQ clEQ) clP xl yl n 0 lm ≤ RunIface.ExpBudget (max (max xl yl) n) yl
-
-/-- **`nat.expNNSlow`** (arm64), Q-form inside, bridged to `NHyp.SlowHyp`, window `71776` -/
-theorem slowClQ {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv}
-    (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
-    (hgr : GrowsliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.growslice") 4096 R)
-    (hmc : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
-    (hmv : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
-    (hwb : WbLiveContract (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2)
-    {nsD : List String} {kD aD : Nat} {dvC : Nat → Nat → Nat} (hdv : ExpSlow.DivHypLGQ impl R nsD kD aD dvC)
-    (hnsD : ∀ x, nsD.contains x = true → LibW.names.contains x = true) (hnfD : nsD.contains ExpSlow.fn = false)
-    (haD : aD ≤ 120) (hkD : kD ≤ 71344) :
-    NHyp.SlowHyp impl R LibW.names 71776 112 ExpSlow.need
-      (Q.slowBr (Q.ExpSlow.costQ sqrCQ mulCQ dvC) Q.ExpSlow.needH) := by
-  have hW := ExpEven.sqrWX_eq
-  have e1 : ∀ x, NatSqr.names.contains x = true → (nsSl nsD).contains x = true := fun x h => by
-    simp only [nsSl, List.contains_append, h, Bool.true_or]
-  have e2 : ∀ x, NatMul.names.contains x = true → (nsSl nsD).contains x = true := fun x h => by
-    simp only [nsSl, List.contains_append, h, Bool.true_or, Bool.or_true]
-  have e3 : ∀ x, nsD.contains x = true → (nsSl nsD).contains x = true := fun x h => by
-    simp only [nsSl, List.contains_append, h, Bool.or_true]
-  have hsq : Q.ExpSlow.SqrHypGQ impl R (nsSl nsD) NatSqr.sqrWX 64 sqrCQ := fun H b L z zl zc st x xl xc =>
-    ens_widen hap e1 (Q.ExpSlow.sqrGQ impl hap R hmk hgr hmc hmv hwb H b L z zl zc st x xl xc)
-  have hmu : Q.ExpSlow.MulHypGQ impl R (nsSl nsD) mulWX 88 mulCQ := fun H b L z zl zc st x xl xc y yl yc =>
-    ens_widen hap e2 (Q.ExpSlow.mulGQ impl hap R hmk hgr hmc hmv hwb H b L z zl zc st x xl xc y yl yc)
-  have hdv' : ExpSlow.DivHypLGQ impl R (nsSl nsD) kD aD dvC := fun H b L z zl zc st z2 z2l z2c u ul uc v vl vc =>
-    ens_widen hap e3 (hdv H b L z zl zc st z2 z2l z2c u ul uc v vl vc)
-  exact Q.slow_of_Q (Q.ExpSlow.hyp hap (nsSl_sub hnsD) (nsSl_fn hnfD) hsq hmu hdv' (by omega) (by omega) haD hmk hmv
-    (by omega) (by omega) (by omega) (by rw [CalleeInst.mulWX_eq]; omega) (by omega))
-
-/-- `nat.expNN`'s callee shapes at window level `K` (`70720 ≤ K`) with the TIGHT-COSTS instances -/
-theorem dhypsQ {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : RtInv}
-    (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
-    (hgr : GrowsliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.growslice") 4096 R)
-    (hmc : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
-    (hmv : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
-    (hno : NewobjectLiveContract (Extracted.program.ofImpl impl) (cA "runtime.newobject") 4096 R)
-    (hwb : WbLiveContract (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2)
-    (hdQ : ExpSlow.DivHypLGQ impl R NatDiv.names 41504 112 (Q.NatDiv.costQ Q.drsCQ))
-    {K : Nat} (hK : 70720 ≤ K) :
-    ExpN.DHyps impl R K clFQ ExpSlow.need P2D.needP clSQ (P2D.cP sqrCQ mulCQ) NatDiv.names 41504 LibW.names 71776
-      LibW.names 71776 :=
-  { mkN := MakesliceLiveContract.of_codeIn (libN_code impl hap) hmk, clr := hmc, mv := hmv, mkO := hmk, gr := hgr,
-    wb := hwb, div := Q.divL_of_Q hdQ.toL, hnsD := DivInst.ns_sub,
-    hnsW4 := DivInst.ns_w4, hnsW2 := DivInst.ns_w2, hKD := by omega,
-    slow := slowClQ hap hmk hgr hmc hmv hwb hdQ DivInst.ns_sub div_fn (by omega) (by omega),
-    hnsS := w_n, hn11S := w_11, hKS := by omega,
-    p2 := p2Cl hap hmk hgr hmc hmv hno hwb, hnsP := w_n, hn11P := w_11, hKP := by omega }
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in

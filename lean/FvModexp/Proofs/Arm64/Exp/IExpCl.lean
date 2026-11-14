@@ -1,5 +1,5 @@
 import FvModexp.Proofs.Arm64.Exp.IExpSpec
-import FvModexp.Proofs.Arm64.Exp.IExpClD
+import FvModexp.Proofs.Arm64.Exp.IExpClDO
 import FvModexp.Proofs.Arm64.Exp.EvInst
 import FvModexp.Proofs.Arm64.Exp.NCap
 import FvModexp.Proofs.Arm64.Nat.RemC
@@ -28,20 +28,12 @@ open Janus.Contracts.EqHashModel (CodeIn)
 
 namespace FvModexp.Arm64.IExp
 
-/-- the slow / even need and cost functions of the closed `(*Int).exp` -/
-abbrev needSE : Nat → Nat → Nat → Nat :=
-  ExpN.addN ExpSlow.need (ExpEven.needE NatRem.need ExpSlow.need P2D.needP)
-
-/-! ### The closed cost functions and the cost facts (expmc s42, TIGHT COSTS; as top's `Run.Closed`) -/
-
 /-- `nat.div`'s cost -/
 abbrev clF : Nat → Nat → Nat → Nat := NatDiv.cost DivRec.drsC
 /-- `nat.rem`'s cost -/
 abbrev clR : Nat → Nat → Nat → Nat := NatRem.cost clF
 /-- `nat.expNNSlow`'s cost -/
 abbrev clS : Nat → Nat → Nat → Nat → Nat := ExpSlow.cost sqrC mulC clF
-/-- `nat.expNNPowerOfTwo`'s cost -/
-abbrev clP : Nat → Nat → Nat → Nat → Nat := P2D.cP sqrCQ mulCQ
 /-- the dominating bound of `expNNEven`'s inner budget (`Exp.supU`: `NBudE` is not monotone in the modulus length) -/
 abbrev clBU : Nat → Nat → Nat → Nat → Nat → Nat := Exp.supU (ExpEven.NBudE clF clR clS clP)
 /-- the dominating bound of `expNNEven`'s inner cost -/
@@ -56,24 +48,6 @@ def BudCl : Prop :=
     24 + (makeCost 1 + max (clR 0 xl n) (makeCost n + max (ExpN.maxC clS clE 0 xl yl n)
       (max (clP 0 xl yl lm) (ExpOdd.OBud clF n xl yl 0)))) ≤ RunIface.ExpBudget (max (max xl yl) n) yl ∧
     24 + ExpN.NCost clF clR (ExpN.maxC clS clE) clP xl yl n 0 lm ≤ RunIface.ExpBudget (max (max xl yl) n) yl
-
-theorem rem_mono : ∀ x a a', a ≤ a' → NatRem.need x a ≤ NatRem.need x a' := fun _ _ _ _ => by
-  simp only [NatRem.need]; omega
-
-theorem slow_mono : ∀ x y a a', a ≤ a' → ExpSlow.need x y a ≤ ExpSlow.need x y a' := fun x _ a a' h => by
-  simp only [ExpSlow.need]
-  split <;> split <;> omega
-
-theorem p2_mono : ∀ x y a a', a ≤ a' → P2D.needP x y a ≤ P2D.needP x y a' := fun _ _ _ _ _ => Nat.le_refl _
-
-/-- the stack-need bound of `IExp.ens` (`hneed`) for the closed needs -/
-theorem need_bounds : ∀ xl yl n lm, xl ≤ 128 → yl ≤ 128 → 0 < n → n ≤ 128 → lm < 64 * n →
-    NatRem.need xl n ≤ 2 ^ 16 ∧ needSE xl yl n ≤ 2 ^ 16 ∧ P2D.needP xl yl lm ≤ 2 ^ 16 := by
-  intro xl yl n lm hx _ _ hn _
-  refine ⟨by simp only [NatRem.need]; omega, ?_, by simp only [P2D.needP]; omega⟩
-  simp only [needSE, ExpN.addN, ExpEven.needE, ExpSlow.need, NatRem.need, P2D.needP, StackNat.rnd,
-    if_pos (And.intro hx hn)]
-  omega
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
