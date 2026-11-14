@@ -28,7 +28,7 @@ abbrev fnExpL : String := "github.com/ethereum/go-bigmodexpfix/src/math/big.(*In
 `z` holding `z ^ y mod m` (`IntPost`), for every runtime meeting the live contracts, given `nat.expNN`'s callee
 shapes -/
 theorem correctnessP (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
-    {K : Nat} {costF : Nat → Nat → Nat → Nat} {costD : Nat} {needR : Nat → Nat → Nat}
+    {K : Nat} {costF : Nat → Nat → Nat → Nat} {costD : Nat → Nat → Nat → Nat} {needR : Nat → Nat → Nat}
     {costR : Nat → Nat → Nat → Nat} {needS needP : Nat → Nat → Nat → Nat} {costS costP : Nat → Nat → Nat → Nat → Nat}
     {nsD : List String} {stkD : Nat} {nsS : List String} {stkS : Nat} {nsP : List String} {stkP : Nat}
     (H : ExpN.DHyps impl R K costF needS needP costS costP nsD stkD nsS stkS nsP stkP)
@@ -46,8 +46,8 @@ theorem correctnessP (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracte
     (hbud : ∀ xl yl n lm, xl ≤ 128 → yl ≤ 128 → 0 < n → n ≤ 128 → lm < 64 * n →
       24 + (makeCost 1 + max (costR 0 xl n) (makeCost n + max (costS 0 xl yl n) (costP 0 xl yl lm))) ≤
         ExpBudget (max (max xl yl) n) yl ∧
-      ExpOdd.OBud costF n costD xl yl 0 (ExpBudget (max (max xl yl) n) yl - 24 - makeCost n) ∧
-      24 + ExpN.NCost costD costR costS costP xl yl n 0 lm ≤ ExpBudget (max (max xl yl) n) yl)
+      ExpOdd.OBud costF n (costD xl yl n) xl yl 0 (ExpBudget (max (max xl yl) n) yl - 24 - makeCost n) ∧
+      24 + ExpN.NCost (costD xl yl n) costR costS costP xl yl n 0 lm ≤ ExpBudget (max (max xl yl) n) yl)
     (b : Nat) (L : List (Nat × Nat)) (z y mm : BitVec 64) :
     Ensures (Extracted.program.link impl) (segAddr Extracted.program fnExpL) [z, z, y, mm, 0#64]
       (fun s => (IntPre R b (ExpBudget (max (max (lenW s.mem z.toNat) (lenW s.mem y.toNat)) (lenW s.mem mm.toNat))

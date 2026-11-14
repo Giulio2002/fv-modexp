@@ -68,9 +68,10 @@ set_option maxHeartbeats 64000000 in
 (`ExpSpecA`). Premises: `nat.expNN`'s callees (`DHyps`: division, slow / power-of-two paths, runtime contracts;
 `hRem`: `nat.rem`; `hEv`: `nat.expNNEven`; the `newobject` / pool contracts), the write barrier, the stack sizes
 (`expNN`'s `K + 0x5d0 ≤ stk`, the barrier's 4096 bytes below `(*Int).exp`'s frame: `0x1138 ≤ stk`) and the callees'
-needs and costs within `RunIface.ExpBudget` for operands of at most 128 words (`hneed`, `hbud`). -/
+needs and costs within `RunIface.ExpBudget` for operands of at most 128 words (`hneed`, `hbud`; the windows' division
+bound `costD xl yl n` is chosen per operand size, TIGHT COSTS). -/
 theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
-    {K : Nat} {costF : Nat → Nat → Nat → Nat} {costD : Nat} {needR : Nat → Nat → Nat}
+    {K : Nat} {costF : Nat → Nat → Nat → Nat} {costD : Nat → Nat → Nat → Nat} {needR : Nat → Nat → Nat}
     {costR : Nat → Nat → Nat → Nat} {needS needP : Nat → Nat → Nat → Nat} {costS costP : Nat → Nat → Nat → Nat → Nat}
     {nsD : List String} {stkD : Nat} {nsS : List String} {stkS : Nat} {nsP : List String} {stkP : Nat}
     (H : ExpN.DHyps impl R K costF needS needP costS costP nsD stkD nsS stkS nsP stkP)
@@ -88,8 +89,8 @@ theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
     (hbud : ∀ xl yl n lm, xl ≤ 128 → yl ≤ 128 → 0 < n → n ≤ 128 → lm < 64 * n →
       24 + (makeCost 1 + max (costR 0 xl n) (makeCost n + max (costS 0 xl yl n) (costP 0 xl yl lm))) ≤
         ExpBudget (max (max xl yl) n) yl ∧
-      ExpOdd.OBud costF n costD xl yl 0 (ExpBudget (max (max xl yl) n) yl - 24 - makeCost n) ∧
-      24 + ExpN.NCost costD costR costS costP xl yl n 0 lm ≤ ExpBudget (max (max xl yl) n) yl) :
+      ExpOdd.OBud costF n (costD xl yl n) xl yl 0 (ExpBudget (max (max xl yl) n) yl - 24 - makeCost n) ∧
+      24 + ExpN.NCost (costD xl yl n) costR costS costP xl yl n 0 lm ≤ ExpBudget (max (max xl yl) n) yl) :
     ExpSpecA impl R stk above := by
   intro b L z y mm
   rw [namesExp_eq, ← LibExpI.eq_only, show segAddr Extracted.program (RunIface.P ++ "(*Int).exp") = fnI by decide]
@@ -200,7 +201,7 @@ theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
   have hrg3 : S3.mem.regions = s.mem.regions := by rw [cm, hrgC, hrg1]
   have h143 : S3.regs 14 = s.regs 14 := c14.trans (q14.trans a14)
   have hsp3 : S3.regs 4 = BitVec.ofNat 64 ((s.regs 4).toNat - 0x138) := by rw [ht]; exact c_sp
-  have hP := preNF_of (costF := costF) (costD := costD) (needR := needR) (costR := costR) (needS := needS)
+  have hP := preNF_of (costF := costF) (costD := costD zl yl n) (needR := needR) (costR := costR) (needS := needS)
     (needP := needP) (costS := costS) (costP := costP) hIP hm0 hlz hly hlm hone hpool hzX hadx hoG
     hK hK4 hK20 hab hzp hzl hzc hyp hyl hyc hmp hmn hmc hnR hnS hnP hbP (by
       have := hbO; rwa [hB] at this ⊢) hsp3 h143 (cfs.trans (qfs.trans afs))
