@@ -35,14 +35,14 @@ theorem correctness_ok (impl : List Amd64.Segment) (hap : ImplApart Extracted.pr
     (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
     (hmz : MemmoveZeroLive64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
     (hno : NewobjectLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.newobject") 4096 R)
-    (stkM aboveM : Nat) (hM : RunIface.ModSpecM impl R stkM aboveM) (hE : RunIface.ExpSpec impl R stkM aboveM)
+    (stkM aboveM : Nat) (hM : RunIface.ModSpecA impl R stkM aboveM) (hE : RunIface.ExpSpecA impl R stkM aboveM)
     (W : Nat) (hW : 616 + stkM ≤ W) (hW1 : 4800 ≤ W) (hab : aboveM ≤ 144) (hk1 : 4160 ≤ stkM) (ha1 : 16 ≤ aboveM)
     (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64) :
     Ensures (Extracted.program.link impl) (segAddr Extracted.program RunAmd64.fn) [c, p, len, cp]
       (fun s => RunAmd64.EnvW R L s W ∧ RunAmd64.Input R L c p len cp s ∧ OsakaReceiver s.mem c.toNat ∧
         R.inv b L (s.regs 14).toNat (view R.rt L s.mem) ∧ RunAmd64.OkReqs R ∧
         RunAmd64.Globals R s.mem (RunAmd64.windowW s W) ∧ RunAmd64.NatOne R s.mem (RunAmd64.windowW s W) ∧
-        RunAmd64.StackPool R s.mem (RunAmd64.windowW s W) ∧
+        RunAmd64.StackPool R s.mem (RunAmd64.windowW s W) ∧ RunAmd64.CpuOne s.mem ∧
         RunAmd64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat)) ≤ b ∧
         LengthsPass (bytesAt s.mem p.toNat len.toNat))
       (fun s s' => RunAmd64.OkRet (bytesAt s.mem p.toNat len.toNat) s' ∧
@@ -213,82 +213,7 @@ theorem site_mkz (addr : Nat) : mkzSite R addr [] 0x1000 (callS addr IntBytes.ui
     | exact ⟨by decide +kernel, by rw [memZ_acc]; decide +kernel⟩
     | (simp only [outside_cons, outside_nil, and_true]; decide +kernel)
 
-/-- The returning run at the witness, from `correctness_ok` (given the callee specs). -/
-theorem returnsF (stkM aboveM : Nat) (hM : RunIface.ModSpecM WStubs.impl R stkM aboveM)
-    (hE : RunIface.ExpSpec WStubs.impl R stkM aboveM)
-    (hW : 616 + stkM ≤ WW) (hab : aboveM ≤ 144) (hk1 : 4160 ≤ stkM) (ha1 : 16 ≤ aboveM) :
-    Returns ((Extracted.program.link WStubs.impl).withExit RET) s1 fun s' =>
-      ABIReturn s1 s' ∧ (RunAmd64.OkRet (bytesAt s1.mem p1.toNat (99 : BitVec 64).toNat) s' ∧
-        RunAmd64.FrameW R bW (RunAmd64.okBudget (parseLengths (bytesAt s1.mem p1.toNat (99 : BitVec 64).toNat)))
-          [] WW s1 s') :=
-  FvModexp.Amd64.Run.correctness_ok WStubs.impl WStubs.hap R (by rw [WStubs.addr_mk]; exact model_mk)
-    (by rw [WStubs.addr_mk]; exact model_mkz) (by rw [WStubs.addr_mv]; exact model_mv)
-    (by rw [WStubs.addr_mv]; exact model_mvz) (by rw [WStubs.addr_no]; exact model_no) stkM aboveM hM hE WW hW
-    (by decide) hab hk1 ha1 bW [] c1 p1 99 99 RET Witness.hret s1 setup pre
-
-/-- The output at the witness is empty (EthLib `compute` on the witness call data, lengths `0, 0, 0`). -/
-theorem compute1 : compute (bytesAt s1.mem p1.toNat (99 : BitVec 64).toNat)
-    (parseLengths (bytesAt s1.mem p1.toNat (99 : BitVec 64).toNat)) = ⟨#[]⟩ := by
-  decide +kernel
-
-/-- All hypotheses of `correctness_ok` except the two callee specs (premises until their proofs land) hold together,
-with every conjunct of its precondition, a call-site state for each runtime contract, and the returning run: the
-shared witness runtime, an empty live set, budget `bW`, window `WW`, and the call `Run(c, p, 99, 99)` on
-99 zero bytes (lengths `0, 0, 0`, empty output). -/
-theorem nonvacuous_of (stkM aboveM : Nat) (hM : RunIface.ModSpecM WStubs.impl R stkM aboveM)
-    (hE : RunIface.ExpSpec WStubs.impl R stkM aboveM)
-    (hW : 616 + stkM ≤ WW) (hab : aboveM ≤ 144) (hk1 : 4160 ≤ stkM) (ha1 : 16 ≤ aboveM) :
-    ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64)
-      (ret : Nat) (s : State) (W : Nat),
-    Amd64.ImplApart Extracted.program impl ∧
-    MakesliceLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R ∧
-    MakesliceZeroLive64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R ∧
-    MemmoveLive64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R ∧
-    MemmoveZeroLive64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R ∧
-    NewobjectLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.newobject") 4096 R ∧
-    616 + stkM ≤ W ∧ 4800 ≤ W ∧ aboveM ≤ 144 ∧ 4160 ≤ stkM ∧ 16 ≤ aboveM ∧
-    RetAddr (Extracted.program.link impl) ret ∧
-    CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program RunAmd64.fn) [c, p, len, cp] s ∧
-    RunAmd64.EnvW R L s W ∧ RunAmd64.Input R L c p len cp s ∧ OsakaReceiver s.mem c.toNat ∧
-    R.inv b L (s.regs 14).toNat (view R.rt L s.mem) ∧ RunAmd64.OkReqs R ∧
-    RunAmd64.Globals R s.mem (RunAmd64.windowW s W) ∧ RunAmd64.NatOne R s.mem (RunAmd64.windowW s W) ∧
-        RunAmd64.StackPool R s.mem (RunAmd64.windowW s W) ∧
-    RunAmd64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat)) ≤ b ∧
-    LengthsPass (bytesAt s.mem p.toNat len.toNat) ∧
-    compute (bytesAt s.mem p.toNat len.toNat) (parseLengths (bytesAt s.mem p.toNat len.toNat)) = ⟨#[]⟩ ∧
-    (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
-      s_c.rip = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.makeslice") ∧
-      mkSite R (Extracted.program.contractAddr "runtime.makeslice") L b s_c) ∧
-    (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
-      s_c.rip = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.makeslice") ∧
-      mkzSite R (Extracted.program.contractAddr "runtime.makeslice") L b s_c) ∧
-    (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
-      s_c.rip = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.memmove") ∧
-      mvSite R (Extracted.program.contractAddr "runtime.memmove") L b s_c) ∧
-    (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
-      s_c.rip = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.memmove") ∧
-      mvzSite R (Extracted.program.contractAddr "runtime.memmove") L b s_c) ∧
-    (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
-      s_c.rip = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.newobject") ∧
-      noSite R (Extracted.program.contractAddr "runtime.newobject") L b s_c) ∧
-    Returns ((Extracted.program.link impl).withExit ret) s fun s' =>
-      ABIReturn s s' ∧ (RunAmd64.OkRet (bytesAt s.mem p.toNat len.toNat) s' ∧
-        RunAmd64.FrameW R b (RunAmd64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat))) L W s s') :=
-  ⟨WStubs.impl, R, bW, [], c1, p1, 99, 99, RET, s1, WW, WStubs.hap,
-    by rw [WStubs.addr_mk]; exact model_mk, by rw [WStubs.addr_mk]; exact model_mkz,
-    by rw [WStubs.addr_mv]; exact model_mv, by rw [WStubs.addr_mv]; exact model_mvz,
-    by rw [WStubs.addr_no]; exact model_no, hW, by decide, hab, hk1, ha1, Witness.hret, setup,
-    pre.1, pre.2.1, pre.2.2.1, pre.2.2.2.1, pre.2.2.2.2.1, pre.2.2.2.2.2.1, pre.2.2.2.2.2.2.1, pre.2.2.2.2.2.2.2.1,
-    pre.2.2.2.2.2.2.2.2.1, pre.2.2.2.2.2.2.2.2.2,
-    compute1,
-    ⟨[], 0x1000, callS WStubs.mkA Extracted.dataAddr.«type:big.Word#51b931e8» 1 1, by rw [WStubs.addr_mk]; rfl,
-      by rw [WStubs.addr_mk]; exact site_mk _⟩,
-    ⟨[], 0x1000, callS WStubs.mkA IntBytes.uint8T 0 0, by rw [WStubs.addr_mk]; rfl,
-      by rw [WStubs.addr_mk]; exact site_mkz _⟩,
-    ⟨[], 0x1000, callS WStubs.mvA OA OB 8, by rw [WStubs.addr_mv]; rfl, by rw [WStubs.addr_mv]; exact site_mv _⟩,
-    ⟨[], 0x1000, callS WStubs.mvA OA OB 0, by rw [WStubs.addr_mv]; rfl, by rw [WStubs.addr_mv]; exact site_mvz _⟩,
-    ⟨[], 0x1000, callS WStubs.noA Extracted.dataAddr.«type:big.Word#51b931e8» 0 0, by rw [WStubs.addr_no]; rfl,
-      by rw [WStubs.addr_no]; exact site_no _⟩,
-    returnsF stkM aboveM hM hE hW hab hk1 ha1⟩
+-- (retired row, top s49: the old witness theorems `returnsF` / `compute1` / `nonvacuous_of` (lengths `0, 0, 0`) were
+-- removed with the move to `ModSpecA` / `ExpSpecA` + `Spec.RunAmd64.CpuOne`; the success witness is `RunSucc.Witness`.)
 
 end FvModexp.Amd64.Run.WitnessOk
