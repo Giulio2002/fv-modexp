@@ -39,11 +39,6 @@ theorem sp_add8 {sp : Nat} (h1 : 8 ≤ sp) (h2 : sp < 2 ^ 64) :
     BitVec.ofNat 64 (sp - 8) + 8#64 = BitVec.ofNat 64 sp := by
   apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega
 
-/-- read-after-write closer for concrete frame offsets -/
-macro "rdwP" : tactic => `(tactic| (
-  simp (disch := omega) only [Arm64.Memory.readLE_writeLE_of_disjoint, Arm64.Memory.readLE_writeLE_self,
-    show (256 : Nat) ^ 8 = 2 ^ 64 from rfl, Nat.mod_eq_of_lt]))
-
 /-- the static facts of the tail at memory `M` (frame `sp`, closure record at `sp + 0x1a0`, entry stack length `n0`) -/
 @[reducible] def TEnv (sp st n0 bp r : Nat) (M : Memory) : Prop :=
   sp % 8 = 0 ∧ 16 ≤ sp ∧ sp + 0x1d8 ≤ 2 ^ 48 ∧ M.accessible (sp - 16) 0x1e8 true = true ∧

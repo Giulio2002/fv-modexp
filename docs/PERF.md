@@ -1978,3 +1978,12 @@ P2W2PQ.WC.stkPre: first version (all Apart facts unfolded, one omega per goal ov
 whnf limit (> 50 s in omega's disjunction splitting); facts kept folded + per-goal unfold → 3.4 s module.
 P2W2Sk.skipHead closers: `first | congrArg _ … | yiA … | yiB … | yiC …` 86 s → `congrArg (BitVec.ofNat 64)` first,
 yiC before yiA/yiB: 47 s (janus64_run itself ~27 s).
+
+## divmc s69 (2026-11-14): amd64 P2W2 exits / post / allocation calls (dev compile, LEAN_NUM_THREADS=4)
+| module | wall | peak RSS |
+|---|---|---|
+| Amd64/Exp/P2W2Tl | 22 s | 2.7 GB |
+| Amd64/Exp/P2W2Tl2 | 40 s | 2.4 GB |
+| Amd64/Exp/P2W2Fin | 7 s | 2.5 GB |
+| Amd64/Exp/P2W2Al | 7 s | 2.5 GB |
+P2W2Tl imports DeferX (→ MontW chain: MontLoop 113 s dev) — already in the W2/W4 rows' store; P2W2Row reuses it.
