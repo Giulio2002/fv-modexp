@@ -2041,3 +2041,15 @@ match the expected expression SYNTACTICALLY, association included); EvSum 1.3 s 
   cap 900 s / 4.0 GB (own 170 mods 331 s, then killed in replay). **LOCK FINDING**: `ws: cache entry lock, framework base lease`
   waits (rows serialize on the one consumer workspace of the shared Run extraction; the wait counts against the cap): RunErr 590 s,
   P2W2 439, Mont 345, DivWRow 204, RemRow 197, W2 164, DivBasicRowQ 165, RemRowQ 131, ModRow 121, IntAS 95 s.
+
+## top s48 (2026-11-14): rel46a = first amd64 release-order audit (Janus v0.3.3, fresh cache, ROWS=1, snapshot main 071500f8, wall 8806 s)
+23 PASS / 4 FAIL / 1 MISSING (28 rows); LOCK 0 everywhere (ROWS=1).
+* PASS (s): StackNat 169, MulAddWW 222, AddVW 79, SubVW 71, BasicSqr 417 (6.1 GB), Trunc 207, Rsh 143, Lsh 131, IntAS 198,
+  BasicSqrQ 267, SqrQ 442, MulQ 440, RequiredGas 298, SubMod2N 519, DivW 163, DivWVW 12, DivBasic 277, DivBasicQ 298,
+  **DrsRowQ 642 (> 600: OWN 639 = compile 139 mods 422 s + replay 192 + audit 22)**, DivRowQ 537, RemRowQ 193, ModRow 333, RunErr 404.
+* FAIL cap: Exp_W4Row 900 s (compile 116 mods 653 s, audit 29 s, killed in replay), Exp_W2Row 901 s (compile 96 mods 456 s, audit 30 s,
+  killed in replay) — owner expmc: trim.
+* FAIL audit: Top_RunOkRow 502 s and Top_RunSucc 11 s — `segAddr` with name `"…/big." ++ "(*Int).Mod"` (not a string literal, Janus
+  round 8 I1): the old amd64 RunOkRow statement; RunSucc amd64 = twin not yet written (top). MISSING: `Run` (amd64 row-1 line, status todo).
+* Dev compile (top s48, amd64 P2W4 entry chain, overlay of divmc dev031): Defs 6 s, EnA 51-61 s, EnG 22 s, EnG2 26 s, EnJ 15 s, EnCtx 1 s,
+  Ent 53 s (4.6 GB).
