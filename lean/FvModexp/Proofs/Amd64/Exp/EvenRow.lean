@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.EvenRowP
+import FvModexp.Proofs.Amd64.Exp.SlowCl
 import FvModexp.Proofs.Amd64.Nat.RowLink
 import FvModexp.Proofs.Amd64.Exp.P2DRow
 import FvModexp.Proofs.Amd64.NatQ.DivRowWitQ
@@ -6,16 +7,15 @@ import FvModexp.Proofs.Amd64.NatQ.DivRowWitQ
 set_option autoImplicit false
 
 /-!
-# Row (staged): `nat.expNNEven` (amd64) on the Run extraction (agent asm s74; twin of infra's Arm64/Exp/EvenRow)
+# Row: `nat.expNNEven` (amd64) on the Run extraction (agent asm s74; twin of infra's Arm64/Exp/EvenRow)
 
 `correctnessP` = `EvenRow.sumP` (the `ExpEven.EvenSum` summary on `LibNE`, frame `stkE 41640 = 43152`, `above = 0x70`)
 moved to `Extracted.program.link impl` (`Summary.of_codeIn64` + `Summary.returns`). Runtime premises: the live
 `growslice`, `memclrNoHeapPointers`, `memmove` (+ zero-length), `makeslice`, `newobject`, `gcWriteBarrier2` contracts.
-The ONLY non-contract premise is `hSQ` (amd64 `nat.expNNSlow`'s closed Q-form, expmc in progress) with its name /
-window side conditions; when it lands, `correctness` = `correctnessP` with `hSQ` discharged, and the row joins
-release-rows after `amd64 Exp/P2DRow`. `y` and `m` are the stack arguments (`RSP + 8 …`, `RSP + 32 …`).
-`Witness` (staged): the call `z.expNNEven(stk, 3, 5, 6)` (`3^5 mod 6`) with `z = nil`, the stack `{w, 0, 4}`;
-`pre` is proved here, `nonvacuous` waits for `hSQ`.
+`correctnessP` takes amd64 `nat.expNNSlow`'s Q-form `hSQ` as a premise; `correctness` (the row) discharges it with
+expmc's closed `Q.ExpSlow.hypCl` (on `LibW.names`, frame 41952 ≤ 41640 + 0x388), so only runtime contracts remain. `y` and `m` are the stack arguments (`RSP + 8 …`, `RSP + 32 …`).
+`Witness`: the call `z.expNNEven(stk, 3, 5, 6)` (`3^5 mod 6`) with `z = nil`, the stack `{w, 0, 4}`;
+`nonvacuous` instantiates every premise of `correctness` and runs it.
 -/
 
 open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Spec Janus.Contracts FvModexp
@@ -82,6 +82,32 @@ theorem correctnessP (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracte
       (hs.args 6 (by simp)).trans (bvN _).symm, hpre.1, hpre.2.1, hpre.2.2.1, z.isLt, xc.isLt, hpre.1.2.2 ▸ readLE_lt_8 _ _,
       by rw [hr]; exact hret.user, hpre.2.2.2.1, hpre.2.2.2.2.1, hpre.2.2.2.2.2⟩
     fun s' ⟨⟨h1, h2, h3, h4⟩, hp⟩ => ⟨⟨h1, h2, h3, h4⟩, hp⟩
+
+
+set_option maxRecDepth 20000 in
+set_option maxHeartbeats 64000000 in
+/-- **`nat.expNNEven`** (amd64, closed): `z.expNNEven(stk, x, y, m)` returns `x^y mod m`
+for every `x > 0`, `y ≥ 2`, even `m > 0` of at most 128 words (`Pre` / `Post`), for every runtime meeting the live
+allocation / copy / clear / write-barrier contracts (`nat.expNNSlow` closed by expmc's `Q.ExpSlow.hypCl`). -/
+theorem correctness (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
+    (hgr : GrowsliceLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.growslice")
+      4096 R)
+    (hmc : MemclrNoHeapPointersLive64 (Extracted.program.ofImpl impl)
+      (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
+    (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
+    (hmz : MemmoveZeroLive64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
+    (hmk : MakesliceLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice")
+      4096 R)
+    (hno : NewobjectLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.newobject")
+      4096 R)
+    (hwb : WbLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2")
+      4096 R 2)
+    (b : Nat) (L : List (Nat × Nat)) (z zl zc st x xl xc : BitVec 64) (y yl yc m ml mc : Nat) :
+    Ensures (Extracted.program.link impl) (segAddr Extracted.program ExpEven.fn) [z, zl, zc, st, x, xl, xc]
+      (Pre R b L z.toNat zl.toNat zc.toNat st.toNat x.toNat xl.toNat xc.toNat y yl yc m ml mc)
+      (Post R b L z.toNat zc.toNat st.toNat x.toNat xl.toNat y yl m ml) :=
+  correctnessP impl hap R hgr hmc hmv hmz hmk hno hwb (Q.ExpSlow.hypCl hap hgr hmc hmv hmz hmk hwb) libW_libN libW_nfN
+    (by decide) b L z zl zc st x xl xc y yl yc m ml mc
 
 end FvModexp.Amd64.EvenRow
 
@@ -247,15 +273,9 @@ theorem preB : Pre R BW [] (0 : BitVec 64).toNat (0 : BitVec 64).toNat (0 : BitV
   have e3 : (1 : BitVec 64).toNat = 1 := by decide
   rw [e0, e1, e2, e3]; exact pre
 
-/-- Every contract hypothesis of the (closed) `correctness` and every conjunct of its precondition hold together, GIVEN
-`nat.expNNSlow`'s Q-form on the witness runtime (`hSQ`; staging: when expmc's closed slow lands, `nonvacuous` is this
-applied to it): the shared witness runtime, budget `BW`, empty live set, the call `z.expNNEven(stk, 3, 5, 6)` with
+/-- Every contract hypothesis of the (closed) `correctness` and every conjunct of its precondition hold together: the shared witness runtime, budget `BW`, empty live set, the call `z.expNNEven(stk, 3, 5, 6)` with
 `z = nil` and the stack `{w, 0, 4}`; one call-site state per runtime contract. -/
-theorem nonvacuous_of {nsS : List String} {stkS : Nat}
-    (hSQ : NHyp.SlowHypQ WStubs.impl R nsS stkS 112 ExpSlow.need Q.ExpSlow.needH
-      (Q.ExpSlow.costQ sqrCQ mulCQ (Q.NatDiv.costQ Q.drsCQ)))
-    (hnsS : ∀ x, nsS.contains x = true → LibN.names.contains x = true) (hnfS : nsS.contains ExpN.fn = false)
-    (hKS : stkS ≤ 41640 + 0x388) :
+theorem nonvacuous :
     ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat))
     (z zl zc st x xl xc : BitVec 64) (y yl yc m ml mc : Nat) (ret : Nat) (s : State),
     Amd64.ImplApart Extracted.program impl ∧
@@ -314,11 +334,11 @@ theorem nonvacuous_of {nsS : List String} {stkS : Nat}
     ⟨[], 0x1000, callS WStubs.noA Extracted.dataAddr.«type:big.Word#51b931e8» 0 0, by rw [WStubs.addr_no]; rfl,
       by rw [WStubs.addr_no]; exact site_no _⟩,
     ⟨[], 0x1000, callS WStubs.wb2A 0 0 0, by rw [WStubs.addr_wb2]; rfl, by rw [WStubs.addr_wb2]; exact site_wb _ _⟩,
-    correctnessP WStubs.impl WStubs.hap R (by rw [WStubs.addr_gr]; exact WStubs.gr [] hty _)
+    correctness WStubs.impl WStubs.hap R (by rw [WStubs.addr_gr]; exact WStubs.gr [] hty _)
       (by rw [WStubs.addr_cl]; exact WStubs.cl R) (by rw [WStubs.addr_mv]; exact WStubs.mv R)
       (by rw [WStubs.addr_mv]; exact WStubs.mvz R)
       (by rw [WStubs.addr_mk]; exact WStubs.mk [] hty _) (by rw [WStubs.addr_no]; exact WStubs.no [] hty _)
-      (by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] hty _) hSQ hnsS hnfS hKS BW []
+      (by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] hty _) BW []
       0 0 0 (BitVec.ofNat 64 ST) (BitVec.ofNat 64 XP) 1 1 YP 1 1 MP 1 1 RET hret s0 setup preB⟩
 
 end FvModexp.Amd64.EvenRow.Witness
