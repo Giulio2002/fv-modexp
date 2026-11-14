@@ -1941,6 +1941,17 @@ Util → IcDefs → IcHL → Ic → Og → Pre → Seg → FinA → Fin → Row 
   **DivRowQ cap 901 s**: own compile 248 modules (310 from the store) 881 s / cpu 4001 s, ok=true (so the new DivCG/DivMC/DivRowQ
   modules compile under Janus). Its own set includes the whole amd64 drs chain: it needs asm's amd64 DrsRowQ row before it (as on
   arm64) to fit. Re-measure in rel46 (v0.3.3, full amd64 order).
+* **rel46 arm64 (top s47; main 071500f8, Janus v0.3.3, fresh cache, ROWS=2, JANUS_TIMINGS, wall 10334 s): 39 PASS / 1 FAIL / 3 MISSING.**
+  LOCK = cache-entry/store lock wait ("ws: cache entry lock, framework base lease"), OWN = janus total - LOCK (coordinator: judge rows on OWN;
+  rel47+ uses ROWS=1). Top_RunSucc **533 s** (LOCK 0; compile 65 mods 325 / replay 134 / audit 72); ExpQ_IExpRow 854 (LOCK 1; compile 90 mods
+  525 / replay 264 / audit 49; predates the s47 trim); Top_RunErr 883 (LOCK 591, OWN 292); P2W2 747 (LOCK 439, OWN 307); W2 587 (LOCK 164,
+  OWN 422); DivW 366 (LOCK 204, OWN 161: the rel45 "345 MB stall" was this lock wait, janus in futex wait); Mont 493 (LOCK 345, OWN 146);
+  Nat_DrsRow 619 (LOCK 0; compile 207 mods 381 / replay 214 / audit 19); ModInv 207, W4 442, P2W4 223, RequiredGas 259.
+  **FAIL Exp_EvenRow cap 900 s / 4.0 GB, LOCK 0: compile 170 mods 331 s ok=true, then the THEOREM AUDIT did not return in ~569 s** (last line
+  "layout check"; other rows audit in 5-72 s). Summaries: cache-top/rel-summary.py SNAP ISA.
+* **IExpRow trim (top s47, 4cc2a506)**: twins import the original's imports + `<M>D` defs modules (not the original), false edges cut, PreNF →
+  NFunNFD; KD-before-KR dispatch in NNilT/NNilJ/NStk (+ twins): janus_assumption's failing 75 s scan gone, 85-88 s → 7 s per module. Dev (J=1):
+  own-set work 934 → ~575 s, critical import path 414 → ~151 s. Row measurement pending (rel47).
 * **rel45 (top s46; arm64 release order, main 951223ee, Janus v0.3.2, fresh cache, ROWS=2, wall 11835 s): 37 PASS / 2 FAIL / 3 MISSING.**
   Top_RunSucc **543 s / 5.3 GB**, Top_RunErr 872, ExpQ_IExpRow 864 / 5.5 GB, P2W2 842, ModInv 796, W2 610 (> 600 s); Mont 567,
   DivBasicRowQ 571, DrsRowQ 522, W4 526, DivRowQ 350. FAIL: Nat_DivWRow cap 900 s at 345 MB (stall, also in rel44), Exp_EvenRow
