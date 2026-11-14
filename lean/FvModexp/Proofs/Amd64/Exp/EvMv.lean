@@ -200,7 +200,7 @@ theorem mvCall {impl : List Amd64.Segment} (hmv : MemmoveLive64 (LibNE.program.l
     (hx15 : T.xmm 15 = 0) (hdf : T.df = false)
     (h0 : T.regs 0 = BitVec.ofNat 64 d) (h3 : T.regs 3 = BitVec.ofNat 64 src) (h1 : T.regs 1 = BitVec.ofNat 64 n)
     (KC : ∀ (junk : Nat → W64) (f : Flags) (x yh : Nat → BitVec 128) (m : Memory) (zh : Nat → BitVec 256)
-      (kr : Nat → W64) (dd : Nat), (n = 0 ∧ dd = 0 ∨ dd = d) →
+      (kr : Nat → W64) (dd : Nat), (n = 0 ∧ dd = 0 ∨ 0 < n ∧ dd = d) →
       MemFrame M m (R.rt ++ [(sp - 8 - 4096, sp - 8), (sp, sp + 24)] ++ [(dd, dd + n)]) →
       LiveFrame M m L1 [(dd, dd + n)] → R.inv b1 L1 g (view R.rt L1 m) → Mem.Copied M m d src n →
       m.regions = M.regions → ReachesRet (LibNE.program.link impl) ret0 (retState64 T junk [] f x yh m zh kr) Q) :
@@ -266,7 +266,7 @@ theorem mvCall {impl : List Amd64.Segment} (hmv : MemmoveLive64 (LibNE.program.l
   simp only [t0, t1, t3, hm, calleeStack64, t4, t14] at hfr2 hlf2 hinv2 hcp
   have e8 : sp - 8 + 8 = sp := by omega
   rw [e8, show sp + 8 * 3 = sp + 24 by omega] at hfr2
-  exact KC junk f2 x2 yh2 m' zh2 kr2 d (Or.inr rfl) (by simpa only [List.append_assoc, List.cons_append, List.nil_append] using hfr2)
+  exact KC junk f2 x2 yh2 m' zh2 kr2 d (Or.inr ⟨Nat.pos_of_ne_zero hn0, rfl⟩) (by simpa only [List.append_assoc, List.cons_append, List.nil_append] using hfr2)
     hlf2 hinv2 hcp (by rw [← hm]; exact hrg0)
 
 /-- reads of a held range apart from the window and from `d` are kept by a `memmove` -/
