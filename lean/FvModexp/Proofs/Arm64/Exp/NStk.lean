@@ -55,8 +55,8 @@ theorem stk (impl : List Segment) (ret0 : Nat) (hret : RetAddr (LibN.program.lin
   janus_run [] until [remA, 1787348]
   all_goals (try simp (disch := omega) only [Memory.readLE_writeLE_of_disjoint] at *)
   all_goals first
-    | (refine KR (by omega) (by janus_assumption) _ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?_ ?_ ?_)
     | (refine KD (by omega) _ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_)
+    | (refine KR (by omega) (by janus_assumption) _ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?_ ?_ ?_)
   all_goals first | (janus_simp; done) | skip
   all_goals first
     | (repeat (first

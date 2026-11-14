@@ -1,6 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.IExpPost
 import FvModexp.Proofs.Arm64.Exp.IExpAtN
 import FvModexp.Proofs.Arm64.Exp.IExpP
+import FvModexp.Proofs.Arm64.Exp.NFunNE
 import FvModexp.Proofs.Arm64.Exp.IExpB
 import FvModexp.Proofs.Arm64.Exp.IExpC
 import FvModexp.Proofs.Arm64.Exp.IExpL

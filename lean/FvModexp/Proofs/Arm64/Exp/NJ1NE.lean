@@ -1,5 +1,6 @@
-import FvModexp.Proofs.Arm64.Exp.NJ1N
+import FvModexp.Proofs.Arm64.Exp.NJ1
 import FvModexp.Proofs.Arm64.Exp.NNilSKE
+import FvModexp.Proofs.Arm64.Exp.NNilQ
 import FvModexp.Proofs.Arm64.Exp.NTrivE
 import FvModexp.Proofs.Arm64.Exp.NLift
 import FvModexp.Proofs.Arm64.Exp.LibNE

@@ -4,8 +4,8 @@
 nat.expNN's `expNNEven` call needs the recursive pair's program LibNE (LibN ∪ {expNNEven}); a path lemma proved on
 `LibN.program.link impl` in continuation form cannot be lifted (its continuations are on LibN), so the modules on the
 way to the even call get a twin `<M>E.lean` on `LibNE.program.link impl`: every theorem of <M> renamed `<name>E`,
-`LibN.program` -> `LibNE.program`, imports of twinned modules -> their twins; definitions are NOT duplicated (the twin
-imports the original module). Usage: scripts/gen-libne-twins.py [--check]  (writes / diffs lean/.../Arm64/Exp/<M>E.lean)
+`LibN.program` -> `LibNE.program`, imports of twinned modules -> their twins; definitions are NOT duplicated (they live in the
+original's `<M>D.lean`, which both import; the twin imports the original's imports, not the original — top s47). Usage: scripts/gen-libne-twins.py [--check]  (writes / diffs lean/.../Arm64/Exp/<M>E.lean)
 """
 import re, sys, os
 D = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'lean', 'FvModexp', 'Proofs', 'Arm64', 'Exp')
@@ -37,6 +37,14 @@ for m in TWINS + list(COMP):
         allnames[n] = n + 'E'
 allnames.update(HAND)
 
+def chunks_decl(body):
+    # the declaration chunks of a module body (everything but comments / set_option-only chunks)
+    out = []
+    for c in re.split(r'\n\s*\n', body):
+        if re.search(r'^(?:private |noncomputable |protected )?(?:theorem|lemma|def|abbrev|structure|instance|inductive|class)\b|^@\[', c, re.M):
+            out.append(c)
+    return out
+
 def gen(m):
     src = open(os.path.join(D, m + '.lean')).read()
     head, _, body = src.partition('\nnamespace FvModexp.Arm64.ExpN\n')
@@ -58,10 +66,16 @@ def gen(m):
             assert a in out, (m, a)
             out = out.replace(a, b)
     imps = re.findall(r'^import (\S+)', head, re.M)
-    newimps = [PFX + m]
+    # top s47: the twin does NOT import the original (that serialised original -> twin in every row's own compile);
+    # it imports the original's imports (twinned ones -> their twins). Definitions/helpers of a twinned original live in
+    # its `<M>D.lean` (imported by both). So <M> and <M>E compile in parallel.
+    # an original with definitions/helpers but no `<M>D.lean` (NDisp, NMk: they sit in a LOWER row, EvenRow, so importing
+    # them is free) is still imported itself
+    has_d = os.path.exists(os.path.join(D, m + 'D.lean'))
+    newimps = [] if has_d or len(keep) == len(chunks_decl(body)) else [PFX + m]
     for i in imps:
         base = i[len(PFX):] if i.startswith(PFX) else None
-        if base in TWINS: newimps.append(PFX + base + 'E')
+        newimps.append(PFX + base + 'E' if base in TWINS or base in COMP else i)
     if m in COMP: newimps += [PFX + e for e in COMP[m][0]]
     newimps.append(PFX + 'LibNE')
     opens = re.findall(r'^open .*$', head, re.M)

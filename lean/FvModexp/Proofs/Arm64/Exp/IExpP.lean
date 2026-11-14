@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Arm64.Exp.NFunNE
+import FvModexp.Proofs.Arm64.Exp.NFunNFD
 import FvModexp.Proofs.Arm64.Top.RunIface
 
 /-!

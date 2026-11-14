@@ -1,3 +1,5 @@
+import FvModexp.Proofs.Arm64.Exp.NStkNil
+import FvModexp.Proofs.Arm64.Exp.NGet
 import FvModexp.Proofs.Arm64.Exp.NNilST
 import FvModexp.Proofs.Arm64.Exp.NNilSN
 

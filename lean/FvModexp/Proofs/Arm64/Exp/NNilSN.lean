@@ -1,4 +1,6 @@
 import FvModexp.Proofs.Arm64.Exp.NNilS
+import FvModexp.Proofs.Arm64.Exp.NNilN
+import FvModexp.Proofs.Arm64.Exp.NNilJ
 
 /-!
 # `nat.expNN` (arm64), `stk == nil`: `Get` returned nil (`k2N`)

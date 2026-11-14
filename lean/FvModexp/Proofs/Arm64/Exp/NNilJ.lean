@@ -1,5 +1,5 @@
 import FvModexp.Proofs.Arm64.Exp.NNilN
-import FvModexp.Proofs.Arm64.Exp.NNilT
+import FvModexp.Proofs.Arm64.Exp.NNilTD
 
 /-!
 # `nat.expNN` (arm64), `stk == nil`, pool empty: `newobject`'s return fn+0x26c → defer record, reloads, join → rem | `J5`
@@ -67,8 +67,8 @@ theorem joinN (impl : List Segment) (ret0 : Nat) (hret : RetAddr (LibN.program.l
   janus_run [r208, r152, r168, r296, r304, r312, r320, r328, r336, r344, r352, r360, r368] until [1806400, 1787348]
   all_goals (try simp (disch := omega) only [Memory.readLE_writeLE_of_disjoint] at *)
   all_goals first
-    | (refine KR (by omega) (by janus_assumption) _ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_)
     | (refine KD (by omega) _ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_)
+    | (refine KR (by omega) (by janus_assumption) _ _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_)
   all_goals first | (janus_simp; done) | skip
   all_goals first
     | (repeat (first
