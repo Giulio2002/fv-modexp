@@ -2116,3 +2116,9 @@ Mont 149/1710, SubMod2N 229/2779, ModInv 199/2318, DivW 153/1205, DivWVW 11/335,
 Div 406/2637, DivM 220/3567, Rem 175/4488, DivBasicQ 299/4577, DrsQ 305/1697, DivQ 353/2610, DivMQ 163/3584,
 RemQ 159/4496, IntMod 189/3954, W2 457/2957, W4 488/3028, P2W2 332/3078, P2W4 254/1553, P2D 372/2253, Even FAIL 900/4498,
 IExpQ 591/4618, RequiredGas 285/1757, RunErr 376/1627, RunSucc 784/5215.
+
+## divmc s80 (2026-11-14): amd64 W2/W4 runs on one-segment programs (Exp/SegProg, W2Seg/W4Seg)
+* `janus64_run` inside window-2/4's own segment now runs on `SegProg.one LibW.program seg35/seg34` and is lifted
+  (`SegProg.lift`/`liftRet`, `CodeIn64` proved once per window, ~2 s). 92/104 runs in 66 modules; statements unchanged.
+* W2EnA (dev, load ~30): 81.1 s → 24.3 s. Converted modules' dev sum (both windows) 1659 s. W4Pow 99 s / W2Pow 79 s
+  (only one of their two runs converted). Fair row numbers: still open (see NOTES-divmc s80).
