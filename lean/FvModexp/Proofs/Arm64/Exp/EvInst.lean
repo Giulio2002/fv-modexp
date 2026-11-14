@@ -12,8 +12,8 @@ import FvModexp.Proofs.Arm64.Nat.TruncE0
 import FvModexp.Proofs.Arm64.Nat.NatAdd
 import FvModexp.Proofs.Arm64.Nat.NatAdd0
 import FvModexp.Proofs.Arm64.Nat.NatSub0
-import FvModexp.Proofs.Arm64.Nat.SqrHypX
-import FvModexp.Proofs.Arm64.Nat.MulHypX
+import FvModexp.Proofs.Arm64.Nat.SqrWX
+import FvModexp.Proofs.Arm64.Nat.MulDefs
 import FvModexp.Proofs.Arm64.NatQ.SqrHypQ
 import FvModexp.Proofs.Arm64.NatQ.MulHypQ
 

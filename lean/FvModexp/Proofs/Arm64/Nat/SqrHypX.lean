@@ -1,5 +1,6 @@
 import FvModexp.Proofs.Arm64.Nat.NatSqr
 import FvModexp.Proofs.Arm64.Nat.SqrMulX
+import FvModexp.Proofs.Arm64.Nat.SqrWX
 
 /-!
 # `nat.sqr` (arm64) in infra's premise form: `NatSqr.hypX : EvenHyp.SqrHypX … LibSqr.names (sqrW 4096) 64 sqrC`
@@ -13,13 +14,6 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
 namespace FvModexp.Arm64.NatSqr
 
 open FvModexp.Arm64.EvenHyp
-
-/-- the window every exported `nat.sqr` call gets -/
-abbrev sqrWX : Nat := sqrW 4096
-
-set_option maxRecDepth 20000 in
-theorem wordT_rt {R : RtInv} (hro : RoOut R) : Outside NatAdd.wordT 16 R.rt :=
-  RoOut.out' hro 1 (by decide) (by decide)
 
 set_option maxRecDepth 20000 in
 theorem x_pre {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zl zc st x xl xc : Nat} {s : State}
