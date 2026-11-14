@@ -15,10 +15,6 @@ namespace FvModexp.Amd64.ModInv
 
 open FvModexp.Amd64.EvenHyp
 
-theorem toNat_232 {sp : Nat} (hsp : 232 ≤ sp) (hsp2 : sp ≤ 2 ^ 48) :
-    (BitVec.ofNat 64 (sp - 232)).toNat = sp - 224 - 8 := by
-  rw [BitVec.toNat_ofNat]; omega
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem segL0 {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}

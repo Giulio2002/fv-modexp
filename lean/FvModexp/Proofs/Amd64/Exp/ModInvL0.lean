@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.ModInvPostS
+import FvModexp.Proofs.Amd64.Exp.ModInvMS
 
 set_option autoImplicit false
 
@@ -88,14 +89,6 @@ theorem runF (impl : List Amd64.Segment) (ra : W64) (Qp : State → Prop) (sp p 
 section
 variable {R : RtInv} {kc : Nat} {H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
-
-/-- a store into the frame window keeps the stack header's capacity word -/
-theorem cap_slot (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) (M : Memory) {a : Nat} (v : Nat)
-    (h1 : (s.regs 4).toNat - (232 + kc) ≤ a) (h2 : a + 8 ≤ (s.regs 4).toNat) :
-    stCap (M.writeLE a 8 v) st = stCap M st := by
-  have hstw := hpre.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1.2.2.1
-  simp only [win, K, A, outside_cons, outside_nil, and_true] at hstw
-  exact slot_other (by omega)
 
 set_option maxRecDepth 20000 in
 /-- the round facts after the loop head's stores (`z`'s spills, `i` (loop only) and the return address) -/
