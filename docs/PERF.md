@@ -1935,3 +1935,11 @@ Util → IcDefs → IcHL → Ic → Og → Pre → Seg → FinA → Fin → Row 
   JANUS_JOBS=4 PASS **297 s** (own compile 66 mods 218 s / cpu 1037 s, replay 70.5 s, audit 5.6 s) vs JANUS_JOBS=2 PASS **319 s**
   (own compile 231 s / cpu 948 s, replay 79 s, audit 6.4 s) in the same window ⇒ −7 %, noise-level: the own compile is
   critical-path bound. The s45 467 s was load. Row peak (summed RSS, J=2) 5.4 GB. verify-all default stays JANUS_JOBS=2.
+
+### expmc s67 — window-2/4 import-chain cut (arm64, statements unchanged)
+* W2: own-module dev critical import path 283 s → ~105 s (segments entry→divRet / divRet→j4 / j4→RET + x-normalisation
+  vs entry, composed in W2Comp/W2FunE; defs hoisted to W2FinDefs/Posts/Cut/FunDefs/XnDefs; heavy proofs split out of defs
+  modules: P01Defs 30 s → 1.4 s (p01post → W2P01Post), Zm 17 → 0.9, One 22 → 1.0, RR 20 → 1.0). W4: same cut, dev crit 233 s
+  at load 40-50 (W4LshS 50 s under load).
+* Targeted W2Row (v0.3.2, rel44 copy, snapshot df8b4095): FAIL(cap) 901 s at load 34→51 with concurrent dev builds (no
+  timing summary). Re-run pending (NOTES-expmc s67).
