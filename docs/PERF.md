@@ -1955,3 +1955,9 @@ Util → IcDefs → IcHL → Ic → Og → Pre → Seg → FinA → Fin → Row 
   timing summary). Re-run v67b (same setup, 01:06-01:25 2026-11-14, load ~98 from another session's Janus gate): FAIL(cap)
   901 s / 3.9 GB, again no timing summary — load-dominated, not conclusive. Not chased further (coordinator): top's rel46
   (fresh v0.3.3 cache, release order) measures W2Row/W4Row with the cut; trim only if rel46 shows > 600 s.
+
+## divmc s66 (2026-11-14): amd64 P2W2 entry chain (dev compile, load ~15-20)
+P2W2Defs 3 s, P2W2EnA 48 s / 2.5 GB (before: >280 s — `first | omega | exact r1d0 …` on the ESl goals: failing
+`exact` unfolded `readLE` (6 s each) and omega ran on `x % 2^64 = x` goals; fix: `m_* : x % 2^64 = x` and the
+stack-arg reads `r1d0/r1d8/r1e0` in the simp set, no fallbacks; the 16-byte `MOVUPS X15` result slot stated as one
+16-byte read), P2W2EnG 22 s, P2W2EnG2 22 s, P2W2EnJ 15 s, P2W2EnCtx/P2QG ~1 s, P2W2Ent 52 s / 4.6 GB.
