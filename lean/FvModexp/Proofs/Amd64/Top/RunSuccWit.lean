@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Top.RunModA
+import FvModexp.Proofs.Amd64.Exp.IExpCl
 import FvModexp.Proofs.Amd64.Top.RunSuccW2
 import FvModexp.Proofs.Amd64.Int.ModRowW
 import FvModexp.Proofs.Amd64.Witness.StubsGrow
@@ -62,6 +63,64 @@ theorem okA (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
   exact correctness_ok impl hap R hmk hmkz hmv hmz hno stkM aboveM
     (RunIface.ModSpecA.mono (Closed.modA impl hap R hmk hmv hmz hno hgr hmc hwb hget hput hwb4) hk ha) hE
     W hW hW1 hab (by omega) (by omega) b L c p len cp ret hret s hs hpre
+
+namespace Closed
+
+/-- **`(*Int).exp`** (amd64) as `Run` calls it, every machine-code callee proved: expmc's `IExp.ensCl` (premises = the
+Janus runtime contracts only), call depth `43736`, `48` bytes above (`RunIface.ExpSpecA` = `IExp.ExpSpecA`, same text). -/
+theorem expA (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+    (hmk : MakesliceLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
+    (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
+    (hmz : MemmoveZeroLive64 (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
+    (hno : NewobjectLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.newobject") 4096 R)
+    (hgr : GrowsliceLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.growslice") 4096 R)
+    (hmc : MemclrNoHeapPointersLive64 (Extracted.program.ofImpl impl) (cA "runtime.memclrNoHeapPointers") 4096 R)
+    (hwb : WbLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2)
+    (hget : Janus.Contracts.PoolAmd64.PoolGetLive (Extracted.program.ofImpl impl) (cA "sync.(*Pool).Get") 4096 R
+      Free.stkT StkSh)
+    (hput : Janus.Contracts.PoolAmd64.PoolPutLive (Extracted.program.ofImpl impl) (cA "sync.(*Pool).Put") 4096 R
+      Free.stkT StkSh) :
+    RunIface.ExpSpecA impl R 43736 48 :=
+  IExp.ensCl impl hap R hgr hmc hmv hmz hmk hno hwb hget hput (Nat.le_refl _) (by decide)
+
+end Closed
+
+set_option maxHeartbeats 64000000 in
+/-- **Row 1, amd64, EIP-7823 success**, every machine-code callee proved (`(*Int).Mod`, `(*Int).exp`, `(*Int).Bytes`);
+premises: the Janus runtime contracts only; the Pool shape `S` is a binder fixed by the precondition. -/
+theorem okC (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+    (hmk : MakesliceLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
+    (hmkz : MakesliceZeroLive64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R)
+    (hmv : MemmoveLive64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
+    (hmz : MemmoveZeroLive64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
+    (hno : NewobjectLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.newobject") 4096 R)
+    (hgr : GrowsliceLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.growslice") 4096 R)
+    (hmc : MemclrNoHeapPointersLive64 (Extracted.program.ofImpl impl)
+      (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
+    (hwb : WbLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2")
+      4096 R 2)
+    (S : PoolShape)
+    (hget : Janus.Contracts.PoolAmd64.PoolGetLive (Extracted.program.ofImpl impl)
+      (Extracted.program.contractAddr "sync.(*Pool).Get") 4096 R WitSitesAmd64.stkT S)
+    (hput : Janus.Contracts.PoolAmd64.PoolPutLive (Extracted.program.ofImpl impl)
+      (Extracted.program.contractAddr "sync.(*Pool).Put") 4096 R WitSitesAmd64.stkT S)
+    (hwb4 : WbLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier4")
+      4096 R 4)
+    (W : Nat) (hW : 616 + 43736 ≤ W) (b : Nat) (L : List (Nat × Nat)) (c p len cp : BitVec 64) :
+    Ensures (Extracted.program.link impl) (segAddr Extracted.program RunAmd64.fn) [c, p, len, cp]
+      (fun s => S = StkShape ∧ RunAmd64.EnvW R L s W ∧ RunAmd64.Input R L c p len cp s ∧ OsakaReceiver s.mem c.toNat ∧
+        R.inv b L (s.regs 14).toNat (view R.rt L s.mem) ∧ RunAmd64.OkReqs R ∧
+        RunAmd64.Globals R s.mem (RunAmd64.windowW s W) ∧ RunAmd64.NatOne R s.mem (RunAmd64.windowW s W) ∧
+        RunAmd64.StackPool R s.mem (RunAmd64.windowW s W) ∧ RunAmd64.CpuOne s.mem ∧
+        RunAmd64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat)) ≤ b ∧
+        LengthsPass (bytesAt s.mem p.toNat len.toNat))
+      (fun s s' => RunAmd64.OkRet (bytesAt s.mem p.toNat len.toNat) s' ∧
+        RunAmd64.FrameW R b (RunAmd64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat))) L W s s') := by
+  intro ret hret s hs ⟨hS, hpre⟩
+  subst hS
+  exact okA impl hap R hmk hmkz hmv hmz hno hgr hmc hwb StkShape hget hput hwb4 43736 48
+    (Closed.expA impl hap R hmk hmv hmz hno hgr hmc hwb hget hput) W hW (by omega) (by decide) (by decide)
+    (by decide) b L c p len cp ret hret s hs ⟨rfl, hpre⟩
 
 end FvModexp.Amd64.Run
 
@@ -131,7 +190,7 @@ def Stmt (stkM : Nat) : Prop :=
     Janus.Contracts.PoolAmd64.PoolPutLive (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "sync.(*Pool).Put") 4096 R WitSitesAmd64.stkT StkShape ∧
     WbLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier4") 4096 R 4 ∧
-    616 + stkM ≤ W ∧ 4800 ≤ W ∧
+    616 + stkM ≤ W ∧
     RetAddr (Extracted.program.link impl) ret ∧
     CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program RunAmd64.fn) [c, p, len, cp] s ∧
     StkShape = StkShape ∧ RunAmd64.EnvW R L s W ∧ RunAmd64.Input R L c p len cp s ∧ OsakaReceiver s.mem c.toNat ∧
@@ -189,7 +248,7 @@ set_option maxHeartbeats 64000000 in
 theorem nonvacuous_of (stkM aboveM : Nat) (hE : RunIface.ExpSpecA WStubs.impl R stkM aboveM)
     (hW : 616 + stkM ≤ WW) (hab : aboveM ≤ 144) (hk : 41800 ≤ stkM) (ha : 16 ≤ aboveM) : Stmt stkM :=
   ⟨WStubs.impl, R, bW, [], c2, p2, 99, 99, RET, s2, WW, WStubs.hap, m_mk, m_mkz, m_mv, m_mvz, m_no, m_gr, m_cl, m_wb2,
-    m_get, m_put, m_wb4, hW, by decide, hret, setup2, rfl,
+    m_get, m_put, m_wb4, hW, hret, setup2, rfl,
     (pre2 budget2).1, (pre2 budget2).2.1, (pre2 budget2).2.2.1, (pre2 budget2).2.2.2.1, (pre2 budget2).2.2.2.2.1,
     (pre2 budget2).2.2.2.2.2.1, (pre2 budget2).2.2.2.2.2.2.1, (pre2 budget2).2.2.2.2.2.2.2.1,
     (pre2 budget2).2.2.2.2.2.2.2.2.1, (pre2 budget2).2.2.2.2.2.2.2.2.2.1, (pre2 budget2).2.2.2.2.2.2.2.2.2.2,
@@ -212,5 +271,11 @@ theorem nonvacuous_of (stkM aboveM : Nat) (hE : RunIface.ExpSpecA WStubs.impl R 
     ⟨[], 0x1000, callS WStubs.wb4A 0 0 0, by rw [WStubs.addr_wb4]; rfl, by rw [WStubs.addr_wb4]; exact site_wb _ _⟩,
     Run.okA WStubs.impl WStubs.hap R m_mk m_mkz m_mv m_mvz m_no m_gr m_cl m_wb2 StkShape m_get m_put m_wb4 stkM aboveM hE
       WW hW (by decide) hab hk ha bW [] c2 p2 99 99 RET hret s2 setup2 ⟨rfl, pre2 budget2⟩⟩
+
+set_option maxHeartbeats 64000000 in
+/-- The witness, every callee closed (`(*Int).exp` = `Run.Closed.expA` at the witness runtime, depth 43736). -/
+theorem nonvacuousC : Stmt 43736 :=
+  nonvacuous_of 43736 48 (Run.Closed.expA WStubs.impl WStubs.hap R m_mk m_mv m_mvz m_no m_gr m_cl m_wb2 m_get m_put)
+    (by decide) (by decide) (by decide) (by decide)
 
 end FvModexp.Amd64.Run.WitnessA

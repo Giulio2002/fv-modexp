@@ -90,9 +90,10 @@ A final statement may not use an instance or class of a dependency, so these pla
     `RunTotal` imports RunSucc + RunErr, so no row module can import it; it is compiled only once top promotes it to a row (or a
     gate step verifies it); the default `lake build FvModexp` is extraction-free and cannot import any `Extracted`-based module.
 * Row 1, amd64 (`Proofs/Amd64/Top/RunErr.lean`, `Proofs/Amd64/Top/RunSucc.lean`): `FvModexp.Amd64.Run.correctness` (lengths fail,
-  release row, `Spec.RunAmd64` twins) and `FvModexp.Amd64.RunSucc.correctness` — STAGING: still the premise
-  `hE : RunIface.ExpSpecA impl R stkM aboveM` (closed amd64 `(*Int).exp` pending), plus `Spec.RunAmd64.CpuOne` (§1b). Not final
-  until `hE` is replaced by the closed theorem and `Witness.nonvacuous` added.
+  release row, `Spec.RunAmd64` twins) and `FvModexp.Amd64.RunSucc.correctness` (lengths pass, `Spec.RunAmd64` twins + `Spec.RunAmd64.CpuOne` (§1b); every
+  machine-code callee proved: `(*Int).Mod` = `Run.Closed.modA`, `(*Int).exp` = `Run.Closed.expA` = expmc's `IExp.ensCl`
+  (depth 43 736), premises = the twelve Janus runtime contracts, the Pool shape binder `S` (pre `S = StkShape`),
+  `W ≥ 616 + 43736 = 44 352`), with `RunSucc.Witness.nonvacuous` (`3^5 mod 7`, output `[5]`).
 * Row 3 `FvModexp.Proofs.Compose.composition` (`Proofs/Common/Compose.lean`): pure Lean. From the guarantees of rows 1 and 2 (hypothesis structure `RowsHold`), for every
   result cache `cache` meeting `CacheStoredBy p cache` (`cacheStoredBy_none`: `cache == nil` does), geth's `runPrecompiled p data gas cache` agrees with EthLib's
   `modexp fork data gas`: failure iff failure (error length bound, or out of gas), otherwise equal outputs and remaining gas `gas - cost` with `cost` = EthLib's `chargedGas`.
@@ -142,8 +143,8 @@ precondition by hand, from the checklist that `scripts/check-ra-pin` generates:
   fall through; `runtime.morestack` is never executed. The theorems therefore cover only calls where, at entry,
   `SP − g.stackguard0 > 73 568` bytes (arm64 success: `GuardOK s W`, `W ≥ 624 + 72944`; arm64 error: `> 4 800`, `GuardOK s 4800`) and
   `stackguard0` is not the `stackPreempt` sentinel (no pending preemption request: `GuardOK` is false then). Row 2 (RequiredGas, arm64): `> 464` bytes (`GuardOK s 464`). amd64: error row
-  `> 4 800` (`StackGuardOK s 4800`); success row (staging) `> 616 + stkM` bytes with `stkM` = the closed amd64 `(*Int).exp` window
-  (`≥ 41 800` = amd64 `(*Int).Mod`'s window, i.e. `≥ 42 416` bytes; the exact figure is fixed when the closed exp lands). A
+  `> 4 800` (`StackGuardOK s 4800`); success row `> 44 352` bytes (`StackGuardOK s W`, `W ≥ 616 + 43736`: Run's 616-byte frame + the closed
+  amd64 `(*Int).exp` window 43 736, which covers `(*Int).Mod`'s 41 800). A
   goroutine with less free stack (Go grows stacks on demand: a fresh 8 KiB stack, or a 32/64 KiB stack partly used by the EVM
   interpreter) or with a pending preemption calls morestack in real geth, which copies the stack / preempts and then continues
   with the same result; that continuation is outside the claim. Lifting this needs a Janus morestack contract (JANUS-ISSUES wish).
@@ -198,7 +199,7 @@ spec's budget is a closed bound in the operands' word counts:
 `okBudget` (§1b) adds Run's own requests to `ModBudget` / `ExpBudget` / `BytesBudget` at `w` = the largest operand. TIGHT COSTS
 (coordinator 2026-11-15): (a) `okBudget ≤ 2^35` over the whole spec range — arm64 and amd64 `RunGate.okBudget_gate` (value at the
 corner 17 366 406 472 ≈ 2^34.02); (b) a success witness running a real exponentiation inside the toy `2^22` heap — arm64 MET
-(`RunSucc.Witness.nonvacuous`, `decide +kernel` budget), amd64 PENDING (staging `RunSucc`).
+(`RunSucc.Witness.nonvacuous`, `decide +kernel` budget), amd64 MET (`RunSucc.Witness.nonvacuous`, `decide +kernel` budget, top s50).
 
 ## 5. Tactic-definition files (`scripts/tactic-whitelist.txt`)
 
