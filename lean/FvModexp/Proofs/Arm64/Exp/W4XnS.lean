@@ -1,3 +1,5 @@
+import FvModexp.Proofs.Arm64.Exp.W4XnDefs
+import FvModexp.Proofs.Arm64.Exp.W4FunDefs
 import FvModexp.Proofs.Arm64.Exp.LibW
 import FvModexp.Proofs.Arm64.Exp.W4XnA
 
@@ -14,32 +16,12 @@ namespace FvModexp.Arm64.W4Pro
 
 open FvModexp.Arm64.W4Loop (Env Inp Buf FinEnv)
 
-/-- the budget of path A from `xnE` (stack level `l0`, `k = len x - n + 1`) -/
-@[reducible] def xnBudA (n costD l0 k : Nat) : Nat :=
-  stackNatCost l0 k + (stackNatCost (l0 + StackNat.rnd k) n + (costD +
-    (stackNatCost (l0 + StackNat.rnd k + StackNat.rnd n) n +
-      xjBud n costD (l0 + StackNat.rnd k + StackNat.rnd n + StackNat.rnd n))))
-
-/-- the same bound for the join's path C (a lower level, no extra `stk.nat`) -/
-@[reducible] def xnBudAC (n costD l0 k : Nat) : Nat :=
-  stackNatCost l0 k + (stackNatCost (l0 + StackNat.rnd k) n + (costD +
-    xjBud n costD (l0 + StackNat.rnd k + StackNat.rnd n)))
-
-/-- the division-cost bounds of the x-normalisation + RR section at entry level `l0` (`k = len x - n + 1`): `x mod m`
-(path A) and the `RR` division on paths A/B, A/C, B, C -/
-@[reducible] def DivCosts (costF : Nat → Nat → Nat → Nat) (costD n xl l0 : Nat) : Prop :=
-  costF (l0 + StackNat.rnd (xl - n + 1) + StackNat.rnd n) xl n ≤ costD ∧
-  costF (l0 + StackNat.rnd (xl - n + 1) + StackNat.rnd n + StackNat.rnd n + 2 * StackNat.rnd (2 * n)) (2 * n + 1) n ≤ costD ∧
-  costF (l0 + StackNat.rnd (xl - n + 1) + StackNat.rnd n + 2 * StackNat.rnd (2 * n)) (2 * n + 1) n ≤ costD ∧
-  costF (l0 + StackNat.rnd n + 2 * StackNat.rnd (2 * n)) (2 * n + 1) n ≤ costD ∧
-  costF (l0 + 2 * StackNat.rnd (2 * n)) (2 * n + 1) n ≤ costD
-
 /-- budget step for `xnAStep` (small context; omega in the step's context cost 15 s each) -/
 theorem bud3 {b b2 b4 x y z : Nat} (h : x + (y + z) ≤ b) (h2 : b - x ≤ b2) (h4 : b2 - y ≤ b4) : z ≤ b4 := by omega
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem xnAStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+theorem xnAStep (hRR : FvModexp.Arm64.W4Pro.RRSpec) (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hclr : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
@@ -192,7 +174,7 @@ theorem xnAStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     rcases hxN with h | h
     · exact Or.inl h
     · exact Or.inr (by rw [rdx _ _ (by omega) (by omega)]; exact h)
-  refine reaches_mono (xnA2K (lu := lu) (hlu := by rw [hkdef]; exact hlu) impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL
+  refine reaches_mono (xnA2K (hRR := hRR) (lu := lu) (hlu := by rw [hkdef]; exact hlu) impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL
     hserv ret hret b4 L4 g sp K n mp mc Mv Xv yp ylen Y yi zp zc st n0 l0 xp xl xc (stW M2 st + 8 * l0) k M4 r18 r29 f29
     hKD hKL hB4 (by rw [hlen4]) hk0 (by omega) (by omega) (hx4.held hqH3)
     (by rw [hk4.2.1, hk3.2.1]; exact M2.accessible_sub qacc (Or.inr rfl) (by omega) (by omega)) (by omega)
@@ -211,7 +193,7 @@ theorem xnAStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- the whole `x` normalisation from `xnE` (fn+0x1a4) to the function's `RET`; the normalised `x` is `≡ x (mod m)` -/
-theorem xnStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+theorem xnStep (hRR : FvModexp.Arm64.W4Pro.RRSpec) (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hclr : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
@@ -257,7 +239,7 @@ theorem xnStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
   · intro hc S' c1 c2 c3 c4
     have hxO' := hxO
     obtain ⟨-, o2, -, -, -⟩ := hxO'
-    refine reaches_mono (xnJStep (lu := lu) (hlu := by omega) impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL
+    refine reaches_mono (xnJStep (hRR := hRR) (lu := lu) (hlu := by omega) impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL
       hserv ret hret b L g sp K n mp mc Mv Xv yp ylen Y yi zp zc st n0 l0 xp xl xl xc M r18 r29 f29 hKD hKL hB hl0e
       ⟨Nat.le_refl _, hxl0, by omega, hxa, hx48, hxO⟩ hxv hc hxc hmB hMo hM1 (by omega) hcs.2.2.2.1 hcs.2.2.2.2 hbC hbB hinv
       L0 bA M0 hAn hbAC' hbAB' hl0A S' c1
@@ -266,7 +248,7 @@ theorem xnStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
       (isReturn_mono fun s' h => ⟨Xv, rfl, by
         rw [← hxv]; exact Nat.lt_of_lt_of_le (FvModexp.Expmc.readLE_lt_B _ _ _) (Nat.pow_le_pow_right Exp.B_pos hc), h⟩)
   · intro hc S' c1 c2 c3 c4 c5 c6 c7 c8 c9
-    refine reaches_mono (xnAStep (lu := lu) (hlu := hlu) impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL
+    refine reaches_mono (xnAStep (hRR := hRR) (lu := lu) (hlu := hlu) impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL
       hserv ret hret b L g sp K n mp mc Mv Xv yp ylen Y yi zp zc st n0 l0 xp xl xc M r18 r29 f29 hKD hKL hB hl0e hxO hxa
       hx48 hxN hc hxl' hxc hxv hmB hMo hM1 hslen hcs hbA hbAC hinv r968 r976 r984 L0 bA M0 hAn hbAAB hbAAA hl0A S' c1 (by rw [c2, hsp]) c4 c5 c6
       (by rw [c7, h18]) (by rw [c8, h28]) (by rw [c9, h29]) (by rw [c3, hmem]))

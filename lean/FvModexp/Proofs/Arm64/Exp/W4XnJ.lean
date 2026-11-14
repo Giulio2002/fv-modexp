@@ -1,3 +1,5 @@
+import FvModexp.Proofs.Arm64.Exp.W4XnDefs
+import FvModexp.Proofs.Arm64.Exp.W4FunDefs
 import FvModexp.Proofs.Arm64.Exp.LibW
 import FvModexp.Proofs.Arm64.Exp.W4Xj
 import FvModexp.Proofs.Arm64.Exp.W4XnB1
@@ -20,20 +22,6 @@ open FvModexp.Arm64.W4Loop (Env Inp Buf FinEnv)
 @[reducible] def XIn (R : RtInv) (L : List (Nat × Nat)) (sp K st l0 : Nat) (M : Memory) (xp xl xr : Nat) : Prop :=
   xl ≤ xr ∧ 0 < xr ∧ xr < 2 ^ 40 ∧ M.accessible xp (8 * xr) false = true ∧ xp + 8 * xr ≤ 2 ^ 48 ∧
     Obj R L sp K st l0 [] M xp (8 * xr)
-
-/-- the budget of window-4 from `xJ` on (stack level `l`) -/
-@[reducible] def xjBud (n costD l : Nat) : Nat :=
-  stackNatCost l (2 * n) + (makeCost (1 + 128 * n / 64 + 1) + (stackNatCost (l + StackNat.rnd (2 * n)) (2 * n) +
-    (costD + (blockSize (8 * n) true + stackNatCost (l + 2 * StackNat.rnd (2 * n)) (17 * n) +
-      blockSize (8 * (2 * n + 4)) true))))
-
-/-- the post of the window from the `x` normalisation on (`l1` = the stack level at `xJ`, at most `lu`: the bound
-of the window's level at its last `stk.nat`, TIGHT COSTS expmc s42) -/
-@[reducible] def XnPost (R : RtInv) (L0 : List (Nat × Nat)) (K bA : Nat) (M0 : Memory)
-    (g sp n mp mc Mv Xv yp ylen Y yi zp zc st n0 l0 lu : Nat) (r18 r29 : BitVec 64) (s' : State) : Prop :=
-  ∃ l1 zzp zzc : Nat, l0 ≤ l1 ∧ l1 ≤ lu ∧ l1 + 2 * StackNat.rnd (2 * n) + 32 * n + 80 ≤ 2 ^ 16 ∧ (2 * n + 1 ≤ zzc ∧ InRanges zzp (8 * zzc) R.rt ∧ ApartAll zzp (8 * zzc) L0) ∧
-    DivRetPost R L0 K bA M0 g sp n mp mc Mv Xv (Exp.newton 64 (Mv % Exp.B)) yp ylen Y yi zp zc st n0
-    zzp zzc (l1 + 2 * StackNat.rnd (2 * n)) r18 r29 s'
 
 theorem XIn.keep {R : RtInv} {L L' : List (Nat × Nat)} {g sp K st l0 xp xl xr : Nat} {M M' : Memory}
     (h : XIn R L sp K st l0 M xp xl xr) (hk : KeepsB R L L' g sp K st l0 [] M M') (hl : l0 ≤ stCap M' st) :
@@ -110,7 +98,7 @@ theorem keeps_xb {R : RtInv} {L : List (Nat × Nat)}
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- path B from the return of `rr := stk.nat(n)` (`bSnRet`) to the function's `RET` -/
-theorem xnBK (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+theorem xnBK (hRR : FvModexp.Arm64.W4Pro.RRSpec) (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hclr : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
@@ -180,7 +168,7 @@ theorem xnBK (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     refine ⟨held_sub lah (by omega) (by omega), by simp only [AW, Apart]; omega, ?_, ?_, fun e he => by simp at he⟩
     · have := hsu; simp only [Apart, stUp] at this ⊢; omega
     · simp only [stUp, Apart]; rw [hW3, hcap3]; omega
-  refine reaches_mono (xjStep impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL hserv
+  refine reaches_mono (xjStep (hRR := hRR) impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL hserv
     ret hret b L g sp K n mp mc Mv (stW M st + 8 * l0) n Xv yp ylen Y yi zp zc st n0 (l0 + StackNat.rnd n) M3 r18 r29 f29
     hKD hKL hB4 (by rw [hlen3, hlen]) hx3 hxO3 (by rw [hv, hxv]) (by omega) hmB hMo hM1 (by omega) (cf_eq hcF (by omega)) hbud hI
     L0 bA M0 hAn3 hbA (Nat.le_trans hl0A (Nat.le_add_right _ _))
@@ -198,7 +186,7 @@ set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- the `x` join `j238` (`len x ≤ n`) to the function's `RET`: path C (`len x = n`, nothing to do) or path B
 (`rr := stk.nat(n)`, copy, clear) -/
-theorem xnJStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
+theorem xnJStep (hRR : FvModexp.Arm64.W4Pro.RRSpec) (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hclr : MemclrNoHeapPointersLive (Extracted.program.ofImpl impl)
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R)
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R)
@@ -250,7 +238,7 @@ theorem xnJStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     have hxO' := hxO
     obtain ⟨o1, o2, -, -, -⟩ := hxO'
     simp only [AW, Apart] at o2
-    refine reaches_mono (xjStep impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL
+    refine reaches_mono (xjStep (hRR := hRR) impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL
       hserv ret hret b L g sp K xl mp mc Mv xp xc Xv yp ylen Y yi zp zc st n0 l0 M r18 r29 f29 hKD hKL hB hl0e
       ⟨M.accessible_sub hxa (Or.inl rfl) (Nat.le_refl _) (by omega), by omega, held_sub o1 (Nat.le_refl _) (by omega),
         by unfold Apart; omega⟩
@@ -314,7 +302,7 @@ theorem xnJStep (impl : List Segment) (hap : ImplApart Extracted.program impl) (
         (Nat.le_refl _) (Nat.le_refl _) (by omega) (by omega)
     have sl : ∀ j, 24 ≤ j → j + 8 ≤ 1040 → M2.readLE (sp + j) 8 = M1.readLE (sp + j) 8 := fun j a b =>
       slot_sn hS hrt4 (by omega) (Apart.sub hstw1 (Nat.le_refl _) (Nat.le_refl _) (by omega) (by omega)) hfw j a b
-    refine reaches_mono (xnBK (lu := lu) (hlu := hlu) impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL hserv
+    refine reaches_mono (xnBK (hRR := hRR) (lu := lu) (hlu := hlu) impl hap R hclr hmv hmk hSN nsD stkD costD costF hDiv hnsD hnsW nsL stkL hLsh hnsL hnsWL hserv
       ret hret b2 L2 g sp K n mp mc Mv Xv yp ylen Y yi zp zc st n0 l0 xp xl xr M2 r18 r29 f29 hKD hKL hB2 hlen2 hxI2 hxv2
       (by omega) hmB hMo hM1 hslen hcF (by omega) hinv2
       (by rw [sl 312 (by omega) (by omega)]; exact q312) (by rw [sl 896 (by omega) (by omega)]; exact q896)
