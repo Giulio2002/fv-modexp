@@ -197,7 +197,7 @@ theorem post_oneB {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K costD : Nat}
     rcases List.mem_cons.mp hq with rfl | hq
     · left; simpa using hin8
     · right
-      have := hw (sp - K, sp + 0x490) (List.mem_cons_self ..)
+      have := hw (sp - K, sp + 0x498) (List.mem_cons_self ..)
       simp only [List.mem_singleton] at hq; subst hq
       exact Outside.of_sub this (by simp only; omega) (by simp only; omega)
   · intro _

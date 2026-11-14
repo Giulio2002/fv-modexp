@@ -56,7 +56,7 @@ theorem stk (impl : List Amd64.Segment) (ret0 : Nat) (hret : RetAddr (LibN.progr
       S'.regs 0 = S.regs 0 → S'.regs 3 = S.regs 3 → S'.regs 1 = S.regs 1 → S'.regs 7 = S.regs 7 →
       S'.regs 6 = S.regs 6 → S'.regs 8 = S.regs 8 → S'.regs 9 = S.regs 9 → S'.regs 10 = S.regs 10 →
       S'.regs 11 = S.regs 11 → S'.regs 12 = S.regs 12 → S'.regs 13 = S.regs 13 → S'.regs 15 = S.regs 15 →
-      S'.regs 5 = S.regs 5 →
+      S'.regs 5 = S.regs 5 → S'.regs 2 = S.regs 2 →
       S'.regs 14 = S.regs 14 → S'.fsBase = S.fsBase → S'.df = S.df → S'.xmm 15 = S.xmm 15 → S'.mem = M' →
       MemFrame M M' [(t - 0x9a, t - 0x99), (t - 0x20, t - 0x18), (t + 0x58, t + 0x78)] → M'.regions = M.regions →
       M'.readLE (t - 0x9a) 1 = 0 →
@@ -89,22 +89,22 @@ theorem stk (impl : List Amd64.Segment) (ret0 : Nat) (hret : RetAddr (LibN.progr
           rd_wr_eq, BitVec.toNat_ofNat, Nat.reducePow, Nat.reduceMod, h11, h13] <;> omega)
   · have e2 : ¬S.mem.readLE yp 8 = 1 := by omega
     refine KD (fun h => e2 h.2) _ _ ?br0 ?br1 ?br2 ?br3 ?br4 ?br5 ?br6 ?br7 ?br8 ?br9
-      ?br10 ?br11 ?br12 ?br13 ?br14 ?br15 ?br16 ?br17 ?br18
+      ?br10 ?br11 ?br12 ?br13 ?br14 ?br15 ?br16 ?br17 ?br18 ?br19
       rfl ?bmf ?brg ?bq0 ?bq1 ?bq2 ?bq3 ?bq4
     case bmf => janus_frame
     case brg => simp only [Janus.Arm64.Memory.regions_writeLE]
     case br0 | br1 | br2 | br3 | br4 | br5 | br6 | br7 | br8 | br9 |
-        br10 | br11 | br12 | br13 | br14 | br15 | br16 | br17 | br18 => rfl
+        br10 | br11 | br12 | br13 | br14 | br15 | br16 | br17 | br18 | br19 => rfl
     all_goals (simp (disch := omega) only [Janus.Arm64.Memory.readLE_writeLE_of_disjoint,
           rd_wr_eq, BitVec.toNat_ofNat, Nat.reducePow, Nat.reduceMod, h11, h13] <;> omega)
   · have e1 : ¬yl = 1 := by omega
     refine KD (fun h => e1 h.1) _ _ ?cr0 ?cr1 ?cr2 ?cr3 ?cr4 ?cr5 ?cr6 ?cr7 ?cr8 ?cr9
-      ?cr10 ?cr11 ?cr12 ?cr13 ?cr14 ?cr15 ?cr16 ?cr17 ?cr18
+      ?cr10 ?cr11 ?cr12 ?cr13 ?cr14 ?cr15 ?cr16 ?cr17 ?cr18 ?cr19
       rfl ?cmf ?crg ?cq0 ?cq1 ?cq2 ?cq3 ?cq4
     case cmf => janus_frame
     case crg => simp only [Janus.Arm64.Memory.regions_writeLE]
     case cr0 | cr1 | cr2 | cr3 | cr4 | cr5 | cr6 | cr7 | cr8 | cr9 |
-        cr10 | cr11 | cr12 | cr13 | cr14 | cr15 | cr16 | cr17 | cr18 => rfl
+        cr10 | cr11 | cr12 | cr13 | cr14 | cr15 | cr16 | cr17 | cr18 | cr19 => rfl
     all_goals (simp (disch := omega) only [Janus.Arm64.Memory.readLE_writeLE_of_disjoint,
           rd_wr_eq, BitVec.toNat_ofNat, Nat.reducePow, Nat.reduceMod, h11, h13] <;> omega)
 

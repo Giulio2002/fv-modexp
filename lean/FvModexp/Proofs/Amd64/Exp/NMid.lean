@@ -90,8 +90,8 @@ theorem fromJ5 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.prog
   obtain ⟨j0, j1, j7, j6, j8, j9, j10, j12, j15, j2, j3, j11, j13⟩ := hJ
   have hZ' := hZ
   obtain ⟨hF1, hLF1, -, hx1, -, -, -, -, -, -, hzq⟩ := hZ'
-  have hW1 : Outside (sp - K) (sp + 0x490 - (sp - K)) R.rt :=
-    wN_rt (rw_of hK0 hwrt) (sp - K, sp + 0x490) (by simp [wN])
+  have hW1 : Outside (sp - K) (sp + 0x498 - (sp - K)) R.rt :=
+    wN_rt (rw_of hK0 hwrt) (sp - K, sp + 0x498) (by simp [wN])
   have hLsW : LiveSep L1 [(sp - K, sp + 0x510)] := hx1.liveSep hLs (fun r hr => by
     simp only [List.mem_singleton] at hr; subst hr; simp only
     rw [show sp + 0x510 - (sp - K) = K + 0x510 by omega]; exact hwrt)

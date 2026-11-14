@@ -116,8 +116,8 @@ theorem post_call {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K costD : Nat}
     hF, hLF, hRS⟩ := hq
   have hw := wN_rt hrw
   have hwrt : Outside (sp - K) (K + 0x490) R.rt := by
-    have := hw (sp - K, sp + 0x490) (List.mem_cons_self ..)
-    simp only at this; rwa [show sp + 0x490 - (sp - K) = K + 0x490 by omega] at this
+    have := hw (sp - K, sp + 0x498) (List.mem_cons_self ..)
+    simp only at this; exact this.of_sub (by omega) (by omega)
   -- the stack header: unchanged from `s` to `S`
   have hH := hsok.2.1
   have rdh : ∀ o, o + 8 ≤ 24 → S.mem.readLE (st + o) 8 = s.mem.readLE (st + o) 8 := fun o ho =>
