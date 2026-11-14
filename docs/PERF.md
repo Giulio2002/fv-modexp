@@ -2131,3 +2131,14 @@ IExpQ 591/4618, RequiredGas 285/1757, RunErr 376/1627, RunSucc 784/5215.
   (`SegProg.lift`/`liftRet`, `CodeIn64` proved once per window, ~2 s). 92/104 runs in 66 modules; statements unchanged.
 * W2EnA (dev, load ~30): 81.1 s → 24.3 s. Converted modules' dev sum (both windows) 1659 s. W4Pow 99 s / W2Pow 79 s
   (only one of their two runs converted). Fair row numbers: still open (see NOTES-divmc s80).
+## top s50 (2026-11-14): rel47 amd64 (Janus v0.3.3, fresh cache, ROWS=1, snapshot main 456f856c, wall 10695 s + warm-up 1302 s)
+23/29 PASS, LOCK 0 everywhere. FAIL: P2W2Row 782 s / P2W4Row 465 s / P2DRow 227 s = AUDIT (correctness pre constrains the
+entry [RSP] word = return-address pin; witnesses verified); W4Row 900 s (compile 116 mods 730 s, audit 38 s, then cap) and
+W2Row 901 s (compile 96 mods 485 s, audit 32 s, then cap) = CAP; Top_RunSucc 421 s = AUDIT (old staging form: `hE`
+brings a non-literal segAddr name; superseded by the final form, agent/top f870cdec). No PASS > 600 s; highest SubMod2N 575,
+DrsRowQ 585 (rel46a 642; asm DrsSegD cut), MulRowQ 571. Per row (s/MB): StackNat 205/1041, MulAddWW 270/1194,
+AddVW 83/1113, SubVW 77/1093, BasicSqr 508/6161, Trunc 221/1163, Rsh 165/1297, Lsh 139/1225, IntAS 205/1335,
+BasicSqrQ 318/6127, SqrQ 507/4419, MulQ 571/2261, RequiredGas 332/3462, SubMod2N 575/5669, DivW 169/1298,
+DivWVW 15/421, DivBasic 274/3609, DivBasicQ 278/3583, DrsQ 585/2069, DivQ 535/5231, RemQ 191/2098, IntMod 376/3836,
+W4 FAIL 900/3605, W2 FAIL 901/3489, P2W2 FAIL 782/2996, P2W4 FAIL 465/3072, P2D FAIL 227/2041, RunErr 360/1314,
+RunSucc FAIL 421/978.
