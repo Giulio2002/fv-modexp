@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Arm64.Exp.IExpClD
+import FvModexp.Proofs.Arm64.Exp.IExpClE
 import FvModexp.Proofs.Arm64.Exp.EvInst
 import FvModexp.Proofs.Arm64.Exp.NCap
 import FvModexp.Proofs.Arm64.NatQ.RemC
