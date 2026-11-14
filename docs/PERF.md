@@ -2056,3 +2056,8 @@ over the whole exit (until [XJ, mkE, nH]) with the branch facts left to the run,
 EnsWiden 0.9 s / 2.0 GB, CalleeInstQ 24.8 s / 4.6 GB (the `by decide` name-list checks), P2W2E 3.3 s / 2.7 GB,
 P2W2Row 16.8 s / 3.0 GB (witness `pre`: one `repeat' (first | exact … | apply And.intro)` pass so `Serves`/`R.inv`
 are closed by name before splitting), P2W2WS 1.0 s / 2.5 GB. No trims needed.
+## asm s68 (dev compile amd64, load ~17): P2DWS 0.9 s, P2DWinR 17.6 s/2.2 GB, P2DWin 7.8 s/2.3 GB, P2DSumO 1.7 s/2.1 GB, P2DW2 2.7 s/2.6 GB.
+P2DWin trim: 370 s/9.5 GB → 7.8 s. Cause: a top-level disjunction hypothesis (`hr : r = w2R ∨ r = w4R`) in a large
+context made every `omega` case-split (one omega 366 s); stated as `r ∈ [w2R, w4R]` instead (omega ignores it), and the
+tail's side conditions moved into small numeric lemmas (nW/nK/nB/nS). Also: named args `(a := …)` on `Outside.of_sub`
+bind the SOURCE range, not the target — ascribe the result type instead.
