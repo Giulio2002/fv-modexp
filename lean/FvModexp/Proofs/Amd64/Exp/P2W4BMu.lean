@@ -22,6 +22,10 @@ open FvModexp.Amd64.Q.NatSqr (StkPre StkSep)
 section
 variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K g fs sp st bp r zp zc xp xl xc yp yl lm : Nat} {s : State}
 
+/-- `(sp - 8) + 8 = sp` modulo `2^64` in a two-fact context (a small-context omega; divmc s81) -/
+theorem sp8_mod {a k : Nat} (h8 : 8 ≤ a) (h : a - 8 + k ≤ 2 ^ 48) : ((a - 8) % 2 ^ 64 + 8) % 2 ^ 64 = a % 2 ^ 64 := by
+  omega
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
 theorem mulB {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {ns : List String}
@@ -139,8 +143,8 @@ theorem mulB {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progra
   have hsp2 : s'.regs 4 = BitVec.ofNat 64 sp := by
     rw [hsp', hsp]; apply BitVec.eq_of_toNat_eq
     have hce' := hB.wc.cenv hP
-    have := hce'.2.2.1; have := hce'.2.1; have := hP.1.2.2.2.2.2.2.1
-    simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; rw [show BitVec.toNat (8 : BitVec 64) = 8 from rfl]; omega
+    simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; rw [show BitVec.toNat (8 : BitVec 64) = 8 from rfl]
+    exact sp8_mod hsp8 hce'.2.2.1
   exact KC s' L2 b3 p' l' c' hpc' hsp2 h5' h14' (hx15'.trans hx15) (hfs'.trans hfs) (hdf'.trans hdf) e0 e3 e1 hB'
     hslot hres ⟨hlc', hval, hn', hodd⟩ (by omega) hx' (NV.keep ⟨xlc, xv, xN, xo⟩ hxb) hbud3
 

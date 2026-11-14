@@ -1,30 +1,15 @@
-import FvModexp.Proofs.Arm64.Nat.DrsFD4
-import FvModexp.Proofs.Arm64.Nat.DrsD6R
+import FvModexp.Proofs.Arm64.Nat.DrsSegD
 import FvModexp.Proofs.Common.MaskWord
-
 /-!
 # `divRecursiveStep` (arm64), final block: `if c > 0 { c = subVW(u[ql:], u[ql:], c) }` test (natdiv.go:885-887)
-
 `d5rF`: from `subVV.abi0`'s return `0x1bac4c`: borrow `0` → `0x1bac98` (through the `CBNZ`, memory unchanged);
 borrow `1` → `CALL subVW(u[ql:], u[ql:], 1)` (`0x1bac8c`, return `0x1bac90`). Adapted from DrsD5R.
 -/
-
 set_option autoImplicit false
-
 set_option autoImplicit false
-
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
-
 set_option linter.janusRenameI false
-
 namespace FvModexp.Arm64.DivRec
-
-/-- after the final borrow test (`0x1bac98`: `qhat.norm()` for `addTo(z, qhat.norm())`) -/
-abbrev rFD5 : Nat := 0x1bac98
-
-/-- `subVW(u[ql:], u[ql:], c)`'s return address -/
-abbrev rFD5W : Nat := 0x1bac90
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in
 theorem d5rF (impl : List Segment) (R : RtInv) (c : Cx) (s : State) (Lk : List (Nat × Nat)) (bk : Nat)

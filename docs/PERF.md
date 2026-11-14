@@ -2143,6 +2143,58 @@ DivWVW 15/421, DivBasic 274/3609, DivBasicQ 278/3583, DrsQ 585/2069, DivQ 535/52
 W4 FAIL 900/3605, W2 FAIL 901/3489, P2W2 FAIL 782/2996, P2W4 FAIL 465/3072, P2D FAIL 227/2041, RunErr 360/1314,
 RunSucc FAIL 421/978.
 
+## asm s80 (2026-11-14): amd64 lower rows ModInvRow / SlowRow + EvenRow re-cut (Janus v0.3.3, ROWS=1, JANUS_TIMINGS=1, snapshot cache-asm/snap80b, f460d3ce)
+* Warm-up (outside caps, JANUS_JOBS=6): snapshot-only module importing all amd64 release rows up to P2DRow (1172 modules):
+  5047 s (compile + replay), load ~15-25.
+* Then, in release order on that cache (each row's lower rows cached = the fresh-cache release situation):
+  | row | own modules | total | own compile | audit | replay | peak |
+  |---|---|---|---|---|---|---|
+  | amd64 Exp/ModInvRow (new) | 53 | **341 s PASS** | 171 s | 22 s | 111 s | 3.8 GB |
+  | amd64 Exp/SlowRow (new) | 53 | **222 s PASS** | 111 s | 32 s | 74 s | 3.0 GB |
+  | amd64 Exp/EvenRow | 95 (was 209) | **730 s PASS** | 314 s | **228 s** | 182 s | 4.2 GB |
+* EvenRow's own set: 209 → 95 modules (ModInv* + Slow* moved to the new rows; the unused old `SubMod2N`/`SubMod2NS*`
+  chain (22 modules) dropped from the closure: CalleeInstE no longer imports it). Without the audit bug (JANUS-ISSUES
+  "[asm s79] PERF", audit ≈ 31 % of the row) EvenRow would be ≈ 500 s; with it the row is over the 600 s margin.
+* Dev compile: ModInvRow 10.4 s / 3.3 GB, SlowRow 10.9 s / 3.8 GB.
+
+## asm s81 (2026-11-14): arm64 old Nat_DrsRow trim (Janus v0.3.3, ROWS=1, JANUS_TIMINGS=1, snapshot cache-asm/snap81 = agent/asm f1b0e2c1, lower rows StackNat..DivBasicRow warmed in rc81)
+* Diagnosis (dev `lean -o` of the 208 own modules, LEAN_NUM_THREADS=4, 3 at once): sum 1450 s, critical path 185 s → the row's
+  own compile (rel47: 429 s wall / 2335 s cpu) is THROUGHPUT-bound, not chain-bound. 839 s of the 1450 s (58 %) is the old
+  `nat.mul` closure (81 modules Mul*/KMul*/KSqr*: MulBM 63 s, KMulPC 50, MulOne 42, MulKar 39, MulSwap 38, …), which DrsRow owned
+  since divmc s49 retired the old Nat/MulRow (the closure is still imported by DrsRow and by the Exp rows via EvMulG → MulHypX).
+* Changes: (1) chain cut Nat/DrsSegD (52 shared decls moved verbatim; dev crit 185 → 164 s; segment depth 48 → 40, the rest is the
+  B/A/SN/Rel base chain); (2) `arm64 Nat/MulRow` reinstated in release-rows right before `arm64 Nat/DrsRow`.
+| row | own | compile | audit | replay | total |
+|---|---|---|---|---|---|
+| arm64 Nat/MulRow (reinstated) | 81 | 253 s | 14 s | 127 s | **PASS 400 s** |
+| arm64 Nat/DrsRow | 128 (was 207) | 212 s (was 429) | 20 s | 121 s (was 218) | **PASS 357 s** (rel47: 674 s) |
+  Load 10-17. Total release work is unchanged (the mul closure is paid once either way, +1 row overhead ≈ 15 s); both rows ≤ 550 s.
+
+## divmc s81 (2026-11-14): remaining amd64 W2/W4 runs + P2W2/P2W4 on one-segment programs; two slow tactics fixed
+* Dev compile (amd64 vs dev031, LEAN_NUM_THREADS=4, 2 jobs, host load 11-14). Statements unchanged.
+* `calls [...]` runs (14: W{2,4} OneL, RR, XnB x2, ZcT, Zm, Zm2) are split at their CALL pc (from `go tool objdump`):
+  one-segment run to the call (`SegProg.lift`), a full-program run call -> call+5 with the callee summary, one-segment
+  run on to the old stop. Loop-head runs (stop pc = start pc, K0) do one `janus64_step` on the full program first.
+  Def-valued stop targets (`njoin`, `test` = `fnE + k`) are passed as numerals. Multi-line `until` handled.
+| module (W2) | before | after |  | module (W2) | before | after |
+|---|---|---|---|---|---|---|
+| OneL | 40.4 | 17.8 | | ZcT | 23.4 | 17.0 |
+| RR | 35.6 | 14.2 | | Zm / Zm2 | 18.7 / 28.6 | 7.4 / 11.2 |
+| XnB | 41.8 | 21.9 | | S3 | 33.9 | 25.3 |
+| P1 | 48.3 | 20.2 | | Pow | 68.4 | 40.7 |
+| ExB / ExT | 16.8 / 13.0 | 11.6 / 8.5 | | K0 | 9.0 | 4.3 |
+  W2 converted set 427 -> 249 module-s (W4 twins alike). Not converted: W{2,4}Loop (the lifted run diverges), the
+  multi-target runs (`until [a, b]`: EnJ, Fin; P2W{2,4} Cp3/EnJ/Sk/Tl2/X4 one or more each) — Janus stops only at ONE
+  return address, so a lifted run cannot end at two pcs.
+* NEW Exp/P2W2Seg (seg37 = expNNPowerOfTwoWindowSize2), P2W4Seg (seg36): 28 + 28 single-target P2W runs converted
+  (all that qualify), e.g. P2W2Cp3 32 s, EnA 19 s, R1b 16 s after conversion.
+* Profile-and-fix: W{2,4}P0 `congr 1` on two big `readLE` memory terms (37 s) -> explicit `congrArg ... |>.trans`:
+  44 -> 15 s. P2W{2,4}BMu: one omega over the full context (32 s) -> lemma `sp8_mod` (two facts): 41 -> 13 s.
+* Seen, not fixed: P2W{2,4}Ent omegas under `ESl.keep`'s 4-way disjunction (24 + 7 s; a span-wide keep is too coarse
+  for P2W2's F2 case and W4's slot ranges), P2W{2,4}Sk `first | exact yiC … | exact yiA …` (4 failing alternatives,
+  ~10 s each, failing big-context omegas). Kernel time (per-pc `stepOK`) is now the bulk of W2Pow (31 s) and S3 (24 s).
+* Dev sums (modules rebuilt after the change, not the whole own set): W2 50 mods 491 s, W4 50 mods 479 s, P2W2 38 mods
+  477 s, P2W4 37 mods 486 s (before the P0/BMu fixes, -30 s each). Row numbers: pending (top's rel48 has s80 only).
 ## top s51 (2026-11-14): rel48 arm64 (Janus v0.3.3, fresh cache, ROWS=1, snapshot main 437c5b14, wall 9955 s + warm-up 872 s)
 **41/41 PASS** (first all-green arm64 release run). Host load (max per row) min 8.7 / median 15.5 / max 27.2.
 Rows > 600 s: Nat_DrsRow 617 s / 2.2 GB (LOAD 14.1/9.2/17.7, LOCK 0, OWN 615: compile 207 mods 391 / replay 201 / audit 20;

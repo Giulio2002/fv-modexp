@@ -97,7 +97,11 @@ theorem zm2 (impl : List Amd64.Segment) {R : RtInv}
       have := hLs r hr
       simp only [outside_append, outside_cons, outside_nil, and_true] at this ⊢
       omega
-    janus64_run [r3b0, ra0, r188, hlt', hna, hws, hwp, BitVec.msb_eq_decide] until [6208495] calls [hmk.pos]
+    refine SegProg.lift W4Seg.codeIn (r := BitVec.ofNat 64 6208455) ?_
+    janus64_run [r3b0, ra0, r188, hlt', hna, hws, hwp, BitVec.msb_eq_decide] until [6208455]
+    janus64_run [r3b0, ra0, r188, hlt', hna, hws, hwp, BitVec.msb_eq_decide] until [6208460] calls [hmk.pos]
+    refine SegProg.lift W4Seg.codeIn (r := BitVec.ofNat 64 6208495) ?_
+    janus64_run [r3b0, ra0, r188, hlt', hna, hws, hwp, BitVec.msb_eq_decide] until [6208495]
     rename_i ptr _ _ _ _ m _ _ hLF hMF hAp hIn hle hacc h8 _ _ hsz _ hinv' _ _
     have hw' : MemFrame M ((((M.writeLE (sp + 136) 8 zc).writeLE (sp + 360) 8 zp).writeLE (sp + 128) 8
         (n + (n + 4))).writeLE (sp - 8) 8 6208460) [(sp + 136, sp + 144), (sp + 360, sp + 368), (sp + 128, sp + 136),

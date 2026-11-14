@@ -120,7 +120,8 @@ theorem p0 {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program 
     · have e0 : bp + 8 * (0 * n) = bp := by simp
       rw [e0] at hval
       rw [hval]
-      congr 1
+      refine (congrArg (fun a => Exp.montgomery n a _ (Arm64.Memory.readLE M mp (8 * n)) ((2 ^ 64 - t) % 2 ^ 64)) ?_).trans
+        (congrArg (fun b => Exp.montgomery n (Arm64.Memory.readLE M onep (8 * n)) b (Arm64.Memory.readLE M mp (8 * n)) ((2 ^ 64 - t) % 2 ^ 64)) ?_)
       · rcases hone with h | ⟨rfl, h4⟩
         · have := h.2.2.2; unfold Apart at this; rdwP
         · rdwP

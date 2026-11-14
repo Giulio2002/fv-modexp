@@ -1,24 +1,15 @@
-import FvModexp.Proofs.Arm64.Nat.DrsFC5S
-import FvModexp.Proofs.Arm64.Nat.DrsC6
+import FvModexp.Proofs.Arm64.Nat.DrsSegD
 import FvModexp.Proofs.Arm64.Nat.DrsWs
-
 /-!
 # `divRecursiveStep` (arm64), final correction loop: `addTo(u[s:], v[s:])` (natdiv.go:876)
-
 `c6F`: the call (`atSum`) → its return `0x1babcc` with `BxF` at `Mdl.corrOnce stb` (adapted from DrsC6).
 -/
-
 set_option autoImplicit false
-
 set_option autoImplicit false
-
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
 open FvModexp.Arm64.Callees Janus.Contracts.EqHashModel
-
 set_option linter.janusRenameI false
-
 namespace FvModexp.Arm64.DivRec
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in
 /-- **`addTo(uu[s:], v[s:])`** from its call state -/

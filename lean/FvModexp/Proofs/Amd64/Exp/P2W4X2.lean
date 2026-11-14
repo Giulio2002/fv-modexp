@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.P2W4X1
+import FvModexp.Proofs.Amd64.Exp.P2W4Seg
 import FvModexp.Proofs.Amd64.Exp.P2W4Cp2
 
 set_option autoImplicit false
@@ -134,6 +135,7 @@ theorem xJ (hap : Amd64.ImplApart Extracted.program impl) (hmv : MemmoveLive64 (
   have hubH : HdM (UB R L K g sp st zp zc M L1 zzp tp lm dp dc) := ⟨hub⟩
   clear hw hsl htz hub hzs
   subst hm
+  refine SegProg.lift P2W4Seg.codeIn (r := BitVec.ofNat 64 mvE) ?_
   janus64_run [hne, e8n n (by omega), hwacc, hwaccF] until [mvE]
   have hF1 : MemFrame S.mem ((((S.mem.writeLE (sp + 0x88) 8 dc).writeLE (sp + 0x78) 8 n).writeLE (sp + 0x128) 8 dp).writeLE
       (sp - 0x8) 8 6200379) [(sp + 0x88, sp + 0x90), (sp + 0x78, sp + 0x80), (sp + 0x128, sp + 0x130), (sp - 0x8, sp)] := by
@@ -187,6 +189,7 @@ theorem xJ (hap : Amd64.ImplApart Extracted.program impl) (hmv : MemmoveLive64 (
   have hslH2 : HdM (ESl m sp st bp r zp zc xp xl xc yp yl lm (stLen s.mem st)) := ⟨hsl2⟩
   have hubH2 : HdM (UB R L K g sp st zp zc m L1 zzp tp lm dp dc) := ⟨hub2⟩
   clear hF1 hM1 r88 r78 r120 hw1 hw2 hsl2 hub2 kW hF2 hLF2 hcp hinv2 hwH hslH htzH hubH
+  refine SegProg.lift P2W4Seg.codeIn (r := BitVec.ofNat 64 nH) ?_
   janus64_run [q88, q78, q120, hwacc2, hwaccF2] until [nH]
   refine nmT hap hP hwH2.h hslH2.h hubH2.h hnd hv2 hbud _ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?_ ?_ ?_
   all_goals first | exact hfs | (janus64_simp; done) | skip

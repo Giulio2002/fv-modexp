@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.P2W2Defs
+import FvModexp.Proofs.Amd64.Exp.P2W2Seg
 import FvModexp.Proofs.Amd64.Exp.DeferX
 
 set_option autoImplicit false
@@ -138,6 +139,7 @@ theorem atD {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program
   clear e4 rd hr efs ex e14 edf hf hF
   rcases hra with rfl | rfl | rfl
   all_goals
+    refine SegProg.liftRet P2W2Seg.codeIn ?_
     janus64_run [q100, q108, q110, q1c8, q1d0, Nat.mod_eq_of_lt (show r < 2 ^ 64 by omega)]
     refine ⟨?_, ?_, ?_, efs', ex', ?_, ?_, ?_, ?_, hst8, hfr⟩
     · simp only [setRegF_apply, Nat.reduceEqDiff, ↓reduceIte]

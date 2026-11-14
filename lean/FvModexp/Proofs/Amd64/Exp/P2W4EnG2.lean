@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.P2W4EnG
+import FvModexp.Proofs.Amd64.Exp.P2W4Seg
 
 set_option autoImplicit false
 
@@ -148,6 +149,7 @@ theorem enG2 {impl : List Amd64.Segment} {R : RtInv}
   have esub : BitVec.ofNat 64 (len0 + 20 * W lm) - BitVec.ofNat 64 (len0 + 20 * W lm - cap0) =
       BitVec.ofNat 64 cap0 := by
     apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
+  refine SegProg.lift P2W4Seg.codeIn (r := BitVec.ofNat 64 mcE) ?_
   janus64_run [q0, q1, q3, q4, sret', sret'', hsp, hsp8, h3, esub] until [mcE]
   generalize hgc : growCap8 (len0 + 20 * W lm) cap0 = gc at *
   generalize hM2 : ((m1.writeLE (sp + 0xb0) 8 gc).writeLE (sp + 0x140) 8 ptr.toNat).writeLE (sp - 0x8) 8 6198303 = M2

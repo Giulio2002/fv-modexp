@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.P2W4Defs
+import FvModexp.Proofs.Amd64.Exp.P2W4Seg
 
 set_option autoImplicit false
 
@@ -143,6 +144,7 @@ theorem enG3 {impl : List Amd64.Segment} {R : RtInv}
     simp only [BitVec.lt_def, BitVec.toNat_ofNat]; omega
   have hsp8 : BitVec.ofNat 64 (sp - 0x8) + 8#64 = BitVec.ofNat 64 sp := by
     apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega
+  refine SegProg.lift P2W4Seg.codeIn (r := BitVec.ofNat 64 enJ) ?_
   janus64_run [q0, q1, q2, q3, q4, q9, hle, sret', sret'', hsp, hsp8] until [enJ]
   refine K' _ m3 ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ rfl ?mf ?lf hrg ?inv
   case mf =>

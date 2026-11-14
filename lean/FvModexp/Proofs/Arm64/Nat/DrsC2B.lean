@@ -1,20 +1,14 @@
-import FvModexp.Proofs.Arm64.Nat.DrsC2
+import FvModexp.Proofs.Arm64.Nat.DrsSegD
 import FvModexp.Proofs.Arm64.Nat.SubVW
-
 /-!
 # `divRecursiveStep` (arm64), correction loop: `if e <= 0 { break }` (natdiv.go:834)
-
 `c2b`: from `nat.cmp`'s return (`0x1ba74c`, `X0 = ofInt (cmpQ |P| st)`): `e ≤ 0` → `0x1bad74` (reload `qhatv`) → the
 exit `E` (`0x1ba80c`, the state is final by `C.brk`); `e > 0` → the loads of `qhat` → `CALL subVW(qhat, qhat, 1)`
 (`0x1ba770`) with `Bx` (base state = the head's).
 -/
-
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
-
 set_option linter.janusRenameI false
-
 namespace FvModexp.Arm64.DivRec
-
 /-- `subVW(qhat, qhat, 1)`'s return address -/
 abbrev rW1 : Nat := 0x1ba774
 

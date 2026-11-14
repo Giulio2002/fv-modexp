@@ -1,52 +1,16 @@
-import FvModexp.Proofs.Arm64.Nat.DrsC5R
-import FvModexp.Proofs.Arm64.Nat.DrsC3
+import FvModexp.Proofs.Arm64.Nat.DrsSegD
 import FvModexp.Proofs.Arm64.Nat.AddTo
 import FvModexp.Proofs.Arm64.Nat.DrsWs
-
 /-!
 # `divRecursiveStep` (arm64), correction loop: `addTo(uu[s:], v[s:])` (natdiv.go:842)
-
 `c6`: from the `CALL addTo` state (`0x1ba6e8`, `Bx … stb (stC V s ql stb)`) → `addTo` (`AddTo.ens` on `LibDrs`) → its
 return `0x1ba6ec` with `Bx … stb (corrOnce V s ql stb)` (model: `w := upd w s (addTo w[s:] v[s:])`, `Mdl.addTo_mod`).
 -/
-
 set_option autoImplicit false
-
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
 open FvModexp.Arm64.Callees Janus.Contracts.EqHashModel
-
 set_option linter.janusRenameI false
-
 namespace FvModexp.Arm64.DivRec
-
-theorem addToA_eq : segAddr Extracted.program AddTo.fn = addToA := by decide
-
-/-- `addTo` as a summary in `LibDrs` -/
-theorem atSum (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
-    (hmv : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
-    (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc : BitVec 64) :
-    Summary (LibDrs.program.link impl) addToA
-      (fun s => RetAddr ((Extracted.program.onlySegments AddTo.names).link impl) (s.regs 30).toNat ∧
-        ArgsFrom s 0 [zp, zl, zc, xp, xl, xc] ∧
-        (CallEnv R L s 4240 48 ∧ xl.toNat ≤ zl.toNat ∧ zl.toNat ≤ zc.toNat ∧ zl.toNat < 2 ^ 40 ∧
-          NatLive s.mem R L zp.toNat zl.toNat ∧ Outside zp.toNat (8 * zl.toNat) (win s 4240 48) ∧ zc.toNat < 2 ^ 63 ∧
-          s.mem.accessible xp.toNat (8 * xl.toNat) false = true ∧ xp.toNat + 8 * xl.toNat ≤ 2 ^ 48 ∧
-          Held R L xp.toNat (8 * xl.toNat) ∧ Outside xp.toNat (8 * xl.toNat) (win s 4240 48) ∧
-          (0 < xl.toNat → Apart zp.toNat (8 * zl.toNat) xp.toNat (8 * xl.toNat)) ∧
-          Apart zp.toNat (8 * zl.toNat) ((s.regs 28).toNat + 16) 8 ∧
-          R.inv b L (s.regs 28).toNat (view R.rt L s.mem)))
-      (fun s s' => (s'.sp = s.sp ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧ s'.regs 18 = s.regs 18) ∧
-        (natVal s'.mem zp.toNat zl.toNat =
-            (natVal s.mem zp.toNat zl.toNat + natVal s.mem xp.toNat xl.toNat) % 2 ^ (64 * zl.toNat) ∧
-          ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧ b ≤ b' ∧
-            R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem) ∧
-            MemFrame s.mem s'.mem (R.rt ++ winA s 4240 48 ++ [(zp.toNat, zp.toNat + 8 * zl.toNat)]) ∧
-            LiveFrame s.mem s'.mem L [(zp.toNat, zp.toNat + 8 * zl.toNat)])) := by
-  have h := Ensures.toSummaryIn (AddTo.ens impl hap R hmv b L zp zl zc xp xl xc) (noExit_restrict hap AddTo.names)
-    (codeIn_restrict_mono hap (sub_of_all (ms := LibDrs.names) (by decide)))
-  rw [← LibDrs.eq_only, addToA_eq] at h
-  exact h
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in
 /-- **`addTo(uu[s:], v[s:])`** from its call state -/

@@ -3,6 +3,18 @@ import FvModexp.Proofs.Arm64.Nat.DrsD6R
 import FvModexp.Proofs.Arm64.Nat.DrsD6
 import FvModexp.Proofs.Arm64.Nat.DrsD7
 import FvModexp.Proofs.Arm64.Nat.DrsC5
+import FvModexp.Proofs.Arm64.Nat.DrsC1
+import FvModexp.Proofs.Arm64.Nat.DrsC2
+import FvModexp.Proofs.Arm64.Nat.DrsC3
+import FvModexp.Proofs.Arm64.Nat.DrsC4
+import FvModexp.Proofs.Arm64.Nat.DrsC4R
+import FvModexp.Proofs.Arm64.Nat.DrsC5R
+import FvModexp.Proofs.Arm64.Nat.DrsC6
+import FvModexp.Proofs.Arm64.Nat.DrsD1
+import FvModexp.Proofs.Arm64.Nat.DrsD2
+import FvModexp.Proofs.Arm64.Nat.DrsD3
+import FvModexp.Proofs.Arm64.Nat.DrsD4
+import FvModexp.Proofs.Arm64.Nat.DrsD5R
 
 /-!
 # `divRecursiveStep` (arm64): the end of a loop iteration, from the correction loop's exit to the loop head

@@ -1,25 +1,15 @@
-import FvModexp.Proofs.Arm64.Nat.DrsFD5
+import FvModexp.Proofs.Arm64.Nat.DrsSegD
 import FvModexp.Proofs.Arm64.Nat.DrsNorm
-
 /-!
 # `divRecursiveStep` (arm64), final block: to `CALL addTo(z, qhat.norm())` (natdiv.go:891)
-
 `d6rF`: from `0x1bac98` (`McF` at `Cx.sGF`) → `qhat.norm()` (`norm10`, nat.go:51, pointer `R3 = t0`, length
 `R1 = len qhat`) → the `len ≤ cap` check (`BCC` panic excluded: `n' ≤ B + 1`) → the `CALL addTo` state (`0x1bacd8`,
 return `0x1bacdc`). No stores.
 -/
-
 set_option autoImplicit false
-
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
-
 set_option linter.janusRenameI false
-
 namespace FvModexp.Arm64.DivRec
-
-/-- the return address of `addTo(z, qhat.norm())` -/
-abbrev rFD6 : Nat := 0x1bacdc
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in
 /-- from `norm10`'s exit to the `CALL addTo` -/

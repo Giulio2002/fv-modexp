@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.P2W4Tl
+import FvModexp.Proofs.Amd64.Exp.P2W4Seg
 import FvModexp.Proofs.Common.ExpNorm
 
 set_option autoImplicit false
@@ -38,6 +39,7 @@ theorem tailM {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
   have u := hstw; unfold Apart at u
   have hlt : ¬ (c < l) := by omega
   rw [show dwE = 6200800 from rfl] at r1a0
+  refine SegProg.lift P2W4Seg.codeIn (r := BitVec.ofNat 64 6200800) ?_
   janus64_run [r1c0, r1a0, hlt] until [6200800]
   refine atD hap _ sp g st n0 bp r p l c 6200478 fsB _ (Or.inr (Or.inr rfl)) rfl ?_ ?_ ?_ hfs hx15 rfl hs1 hs2 hal
     ?_ ?_ ?_ ?_ hst1 ?_ ?_ hstw ?_ ?_ ?_ ?_ ?_ hr47 ?_
@@ -87,6 +89,7 @@ theorem tailS {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
   have ea : p + 1 * 8 - 8 = p := by omega
   rw [show dwE = 6200800 from rfl] at r1a0
   have hm1 : (1#64).msb = false := by decide
+  refine SegProg.lift P2W4Seg.codeIn (r := BitVec.ofNat 64 6200800) ?_
   janus64_run [r1c0, r1a0, hlt, ea, hp1, hpa, hm1] until [6200800]
   refine atD hap _ sp g st n0 bp r p 1 c 6200596 fsB _ (Or.inr (Or.inl rfl)) rfl ?_ ?_ ?_ hfs hx15 rfl hs1 hs2 hal
     ?_ ?_ ?_ ?_ hst1 ?_ ?_ hstw ?_ ?_ ?_ ?_ ?_ hr47 ?_
@@ -131,6 +134,7 @@ theorem tailN {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
   subst hmem
   have u := hstw; unfold Apart at u
   rw [show dwE = 6200800 from rfl] at r1a0
+  refine SegProg.lift P2W4Seg.codeIn (r := BitVec.ofNat 64 6200800) ?_
   janus64_run [r1c0, r1a0] until [6200800]
   refine atD hap _ sp g st n0 bp r p 1 1 6198922 fsB _ (Or.inl rfl) rfl ?_ ?_ ?_ hfs hx15 rfl hs1 hs2 hal
     ?_ ?_ ?_ ?_ hst1 ?_ ?_ hstw ?_ ?_ ?_ ?_ ?_ hr47 ?_

@@ -87,6 +87,7 @@ theorem exCmp2 {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.prog
   have e4' : S'.regs 4 = BitVec.ofNat 64 sp := by rw [e4, hsp]; exact sp_add8 (by omega) (by omega)
   clear e4 hrd eo
   have hm1 : (18446744073709551615#64 : BitVec 64).msb = true := by decide
+  refine SegProg.lift W2Seg.codeIn (r := BitVec.ofNat 64 6214976) ?_
   janus64_run [hm1, q188, q98, qa0, BitVec.msb_eq_decide] until [njoin]
   refine K _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ hf' hrg
   · rw [show njoin = 6214976 by simp only [njoin, fnE_eq]]

@@ -1,39 +1,15 @@
-import FvModexp.Proofs.Arm64.Nat.DrsFD2
-import FvModexp.Proofs.Arm64.Nat.DrsD3
-
+import FvModexp.Proofs.Arm64.Nat.DrsSegD
 /-!
 # `divRecursiveStep` (arm64), final block: `if e > 0 { panic }`, `subVV(u[:len(qhatv)], …, qhatv)` call (natdiv.go:881-884)
-
 `d3F`: from `nat.cmp`'s return `0x1bac10`: the `panic("impossible")` branch is excluded by `he` (`e_leF`), the
 `len(qhatv) ≤ cap(u)` check, the nine argument words → `CALL subVV.abi0` (`0x1bac48`, return `0x1bac4c`).
 Adapted from DrsD3.
 -/
-
 set_option autoImplicit false
-
 set_option autoImplicit false
-
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
-
 set_option linter.janusRenameI false
-
 namespace FvModexp.Arm64.DivRec
-
-/-- the return address of the final `subVV.abi0(u[:ql], u[:ql], qhatv)` -/
-abbrev rFD4 : Nat := 0x1bac4c
-
-/-- `|PF| ≤ 2B ≤ n` -/
-theorem PF_len_le2 {c : Cx} {s : State} {U : List Nat} (hB : 1 ≤ c.vl / 2) :
-    (c.PF s U).length ≤ 2 * (c.vl / 2) := by
-  have h1 := Mdl.length_norm_le (Mdl.toL (Mdl.val (c.qF s U) * Mdl.val ((c.V s).take (c.vl / 2 - 1)))
-    ((c.qF s U).length + ((c.V s).take (c.vl / 2 - 1)).length))
-  rw [Mdl.length_toL, List.length_take] at h1
-  have h2 := qF_len (c := c) (s := s) (U := U)
-  have h3 : min (c.vl / 2 - 1) (c.V s).length ≤ c.vl / 2 - 1 := Nat.min_le_left _ _
-  show (Mdl.norm _).length ≤ _
-  rw [List.length_take]
-  omega
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in
 theorem d3F (impl : List Segment) (R : RtInv) (c : Cx) (s : State) (Lk : List (Nat × Nat)) (bk : Nat)

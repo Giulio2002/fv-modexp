@@ -1,22 +1,14 @@
-import FvModexp.Proofs.Arm64.Nat.DrsD1
-import FvModexp.Proofs.Arm64.Nat.DrsC2
-
+import FvModexp.Proofs.Arm64.Nat.DrsSegD
 /-!
 # `divRecursiveStep` (arm64), after the correction loop: `qhatv.cmp(uu.norm())` (natdiv.go:844)
-
 `d2`: from `d1`'s `CALL nat.cmp` state → `nat.cmp` (`csumD`) → its return `0x1ba848` with `X0 = cmpQ |P| st`
 (as `BitVec.ofInt`), `Mc`/`V4` kept (the `c2` pattern without the loop counter).
 -/
-
 set_option autoImplicit false
-
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
 open Janus.Contracts.EqHashModel
-
 set_option linter.janusRenameI false
-
 namespace FvModexp.Arm64.DivRec
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in
 /-- **the `nat.cmp` after the correction loop**, from `d1`'s call state -/

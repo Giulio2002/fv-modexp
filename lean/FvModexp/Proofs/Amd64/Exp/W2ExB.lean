@@ -165,6 +165,7 @@ theorem exCmp {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
   · rw [cmp_lt hlt] at e0
     have hm1 : (18446744073709551615#64 : BitVec 64).msb = true := by decide
     clear hf eo hws hrd
+    refine SegProg.lift W2Seg.codeIn (r := BitVec.ofNat 64 6214976) ?_
     janus64_run [hm1, q188, q98, qa0, BitVec.msb_eq_decide] until [njoin]
     refine KLt _ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ hfw hrg hlt
     · rw [show njoin = 6214976 by simp only [njoin, fnE_eq]]

@@ -27,6 +27,9 @@ arm64 Exp/ModInvRow
 arm64 Nat/DivWRow
 arm64 Nat/DivWVWRow
 arm64 Nat/DivBasicRow
+# old nat.mul closure (81 modules: Mul*/KMul*/KSqr*) is imported by old Nat/DrsRow and the Exp rows (EvMulG -> MulHypX);
+# reinstated as its own row before DrsRow (asm s81) so DrsRow does not own it (rel47 DrsRow 674 s, 58 % of its compile = old mul)
+arm64 Nat/MulRow
 arm64 Nat/DrsRow
 arm64 Nat/DivRow
 arm64 Nat/DivMRow

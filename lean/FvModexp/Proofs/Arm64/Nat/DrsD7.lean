@@ -1,21 +1,15 @@
+import FvModexp.Proofs.Arm64.Nat.DrsSegD
 import FvModexp.Proofs.Arm64.Nat.DrsDG
-
 /-!
 # `divRecursiveStep` (arm64), end of a loop iteration: `j -= B; stk.restore(mark)` → the loop head (natdiv.go:852-853)
-
 `d7`: from `G` at `0x1ba910`: `mark ≤ cap` (`BCS`; the `panicBounds` is excluded), the header store `len := mark`
 (`0x1ba4f0`), the reloads of `qhat0` and `j - B` → the loop head `H (j - B)` (`0x1ba504`) on the quotient / dividend
 `Cx.BS` (`li_next`).
 -/
-
 set_option autoImplicit false
-
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
-
 set_option linter.janusRenameI false
-
 namespace FvModexp.Arm64.DivRec
-
 theorem bud_next {lo K bk j B : Nat} (hB : 0 < B) (hj : B < j) (h : lo + (j / B) * K ≤ bk) :
     lo + ((j - B) / B + 1) * K ≤ bk := by
   have e : j / B = (j - B) / B + 1 := by rw [← Nat.add_div_right _ hB, Nat.sub_add_cancel (by omega)]

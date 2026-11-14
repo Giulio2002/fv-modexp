@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.P2W2Defs
+import FvModexp.Proofs.Amd64.Exp.P2W2Seg
 import FvModexp.Proofs.Common.ExpPow2
 
 set_option autoImplicit false
@@ -163,6 +164,7 @@ theorem skipHead {impl : List Amd64.Segment} (ret0 : W64) (Q : State → Prop) (
     intro j hj; subst hj; rw [Nat.mul_comm]; exact hy _ (by simp only [i0]; omega)
   have t1 := toInt_small ((lm - 2) / 64) (by omega)
   have t2 := toInt_small (yl - 1) (by omega)
+  refine SegProg.lift P2W2Seg.codeIn (r := BitVec.ofNat 64 skH) ?_
   janus64_run [r1d8, r1e0, r228, a1d8, a228, e1, e2, e3, e4, t1, t2] until [skH]
   all_goals refine (skipLoop ret0 Q sp g lm yp yl Y M r5 fsB dfB hy hacc hy48 hyl _ KB KR (i0 lm yl) _ (yi0 lm yl Y)
     rfl ⟨?_, ?_, ?_, hx15, hfs, rfl, rfl⟩ ?_ ?_ ?_ ?_ ?_ (by simp only [i0]; omega) (yi0_lt lm yl Y) rfl)

@@ -1,25 +1,15 @@
-import FvModexp.Proofs.Arm64.Nat.DrsD4
+import FvModexp.Proofs.Arm64.Nat.DrsSegD
 import FvModexp.Proofs.Common.MaskWord
-
 /-!
 # `divRecursiveStep` (arm64), after the correction loop: `if c > 0 { subVW(uu[ql:], uu[ql:], c) }` test (natdiv.go:848-849)
-
 `d5r`: from `subVV.abi0`'s return (`0x1ba884`): borrow `0` → `0x1ba8d4` (the `addTo(z[j-B:], qhat)` preparation);
 borrow `1` → `uu[len(qhatv):]` (bounds check `BHI` excluded; the `cap = 0` pointer mask is all ones) → the
 `CALL subVW(uu[ql:], uu[ql:], 1)` state (`0x1ba8d0`, return `0x1ba8d4`). No stores.
 -/
-
 set_option autoImplicit false
-
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
-
 set_option linter.janusRenameI false
-
 namespace FvModexp.Arm64.DivRec
-
-/-- the return address of the borrow `subVW` (and the `addTo` preparation) -/
-abbrev rD5 : Nat := 0x1ba8d4
-
 theorem bvS2 {a b u : Nat} (h : a + b ≤ u) (hu : u < 2 ^ 64) :
     BitVec.ofNat 64 u - (BitVec.ofNat 64 a + BitVec.ofNat 64 b) = BitVec.ofNat 64 (u - b - a) := by
   apply BitVec.eq_of_toNat_eq

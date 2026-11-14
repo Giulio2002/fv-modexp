@@ -1,26 +1,18 @@
-import FvModexp.Proofs.Arm64.Nat.DrsFD6R
+import FvModexp.Proofs.Arm64.Nat.DrsSegD
 import FvModexp.Proofs.Arm64.Nat.DrsFG
-import FvModexp.Proofs.Arm64.Nat.DrsD6
 import FvModexp.Proofs.Arm64.Nat.DrsWs
 import FvModexp.Proofs.Arm64.Nat.WinIn
-
 /-!
 # `divRecursiveStep` (arm64), final block: `addTo(z, qhat.norm())` (natdiv.go:891)
-
 `d6F`: from the `CALL addTo` state (`0x1bacd8`, `McF` at `Cx.sGF`, `x = qhat[:n']` with `n'` the normalised length)
 → `addTo` (`atSum`) → its return `0x1bacdc` = `GF` (`z = addTo Z (norm qhat) = (finalBlock …).1`). The callee
 writes `z`, so `McF` is not kept; its environment parts are rebuilt as in DrsD6 (adapted from it).
 -/
-
 set_option autoImplicit false
-
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
 open FvModexp.Arm64.Callees Janus.Contracts.EqHashModel
-
 set_option linter.janusRenameI false
-
 namespace FvModexp.Arm64.DivRec
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in
 /-- **`addTo(z, qhat.norm())`** from its call state → `GF` -/

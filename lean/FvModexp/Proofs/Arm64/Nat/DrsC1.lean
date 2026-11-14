@@ -1,30 +1,14 @@
+import FvModexp.Proofs.Arm64.Nat.DrsSegD
 import FvModexp.Proofs.Arm64.Nat.DrsCE
 import FvModexp.Proofs.Arm64.Nat.DrsNorm
-
 /-!
 # `divRecursiveStep` (arm64), correction loop: the head (natdiv.go:832-833)
-
 `c1`: from the head `C` (`0x1ba700`): `i = 2` → the exit `E` (`0x1ba80c`); otherwise `uu.norm()` (`norm4`, nat.go:51),
 the `len ≤ cap` check (`BHI` panic excluded), the spill of `i` (`SP'+240`) → `CALL nat.cmp(qhatv, uu.norm())` (`0x1ba748`).
 -/
-
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
-
 set_option linter.janusRenameI false
-
 namespace FvModexp.Arm64.DivRec
-
-/-- `nat.cmp`'s entry -/
-abbrev cmpA : Nat := 1782608
-
-/-- the return address of the loop's `nat.cmp` -/
-abbrev rC1 : Nat := 0x1ba74c
-
-/-- `uu`'s pointer / length / capacity in iteration `j` -/
-@[reducible] def Cx.uuP (c : Cx) (j : Nat) : Nat := c.up + 8 * (j - c.vl / 2)
-@[reducible] def Cx.uuL (c : Cx) (j : Nat) : Nat := c.u1 - (j - c.vl / 2)
-@[reducible] def Cx.uuC (c : Cx) (j : Nat) : Nat := c.uc - (j - c.vl / 2)
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in
 /-- from `norm4`'s exit to the `CALL nat.cmp` -/

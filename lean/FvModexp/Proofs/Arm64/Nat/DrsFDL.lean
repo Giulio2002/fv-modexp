@@ -6,6 +6,32 @@ import FvModexp.Proofs.Arm64.Nat.DrsFD6
 import FvModexp.Proofs.Arm64.Nat.DrsFD7
 import FvModexp.Proofs.Arm64.Nat.DrsFC5R
 import FvModexp.Proofs.Arm64.Nat.DrsC5
+import FvModexp.Proofs.Arm64.Nat.DrsC1
+import FvModexp.Proofs.Arm64.Nat.DrsC2
+import FvModexp.Proofs.Arm64.Nat.DrsC2B
+import FvModexp.Proofs.Arm64.Nat.DrsC3
+import FvModexp.Proofs.Arm64.Nat.DrsC4
+import FvModexp.Proofs.Arm64.Nat.DrsC4R
+import FvModexp.Proofs.Arm64.Nat.DrsC5R
+import FvModexp.Proofs.Arm64.Nat.DrsC6
+import FvModexp.Proofs.Arm64.Nat.DrsD1
+import FvModexp.Proofs.Arm64.Nat.DrsD2
+import FvModexp.Proofs.Arm64.Nat.DrsD3
+import FvModexp.Proofs.Arm64.Nat.DrsD4
+import FvModexp.Proofs.Arm64.Nat.DrsD5
+import FvModexp.Proofs.Arm64.Nat.DrsD5R
+import FvModexp.Proofs.Arm64.Nat.DrsD6
+import FvModexp.Proofs.Arm64.Nat.DrsD6R
+import FvModexp.Proofs.Arm64.Nat.DrsFC1
+import FvModexp.Proofs.Arm64.Nat.DrsFC2
+import FvModexp.Proofs.Arm64.Nat.DrsFC2B
+import FvModexp.Proofs.Arm64.Nat.DrsFC3
+import FvModexp.Proofs.Arm64.Nat.DrsFC4
+import FvModexp.Proofs.Arm64.Nat.DrsFC4R
+import FvModexp.Proofs.Arm64.Nat.DrsFC6R
+import FvModexp.Proofs.Arm64.Nat.DrsFD5
+import FvModexp.Proofs.Arm64.Nat.DrsFD5R
+import FvModexp.Proofs.Arm64.Nat.DrsFD6R
 
 /-!
 # `divRecursiveStep` (arm64): the end of the final block, from the final correction loop's exit to the return

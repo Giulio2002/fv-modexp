@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.P2W4BJ
+import FvModexp.Proofs.Amd64.Exp.P2W4Seg
 
 set_option autoImplicit false
 
@@ -119,6 +120,7 @@ theorem segT (hap : Amd64.ImplApart Extracted.program impl) {ns : List String}
   subst em
   rcases hjp with rfl | rfl | rfl | rfl | rfl
   all_goals
+    refine SegProg.lift P2W4Seg.codeIn (r := BitVec.ofNat 64 6188320) ?_
     janus64_run [q350, hwacc, hwaccF] until [6188320]
     refine callT hap hns hnf htr hkT haT hPH.h hvw (Nat.le_refl _) ho hrem (by decide) KT hH.h _ ?_ ?_ ?_ ?_ ?_ ?_
       ?_ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_

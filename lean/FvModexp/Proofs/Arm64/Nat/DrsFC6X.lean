@@ -1,21 +1,14 @@
-import FvModexp.Proofs.Arm64.Nat.DrsFC6
+import FvModexp.Proofs.Arm64.Nat.DrsSegD
 import FvModexp.Proofs.Arm64.Nat.DrsFC6R
-
 /-!
 # `divRecursiveStep` (arm64), final correction loop: after `addTo(u[s:], v[s:])` (natdiv.go:876 → 869)
-
 `c6xF`: from `addTo`'s return `0x1babcc` (`BxF` at `corrOnce stb`): `JMP` → the back edge `0x1baaa4` (`c6rF`) → the
 head `CF (i + 1)` with the invariant `BxF.next`.
 -/
-
 set_option autoImplicit false
-
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
-
 set_option linter.janusRenameI false
-
 namespace FvModexp.Arm64.DivRec
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in
 theorem c6xF (impl : List Segment) (R : RtInv) (c : Cx) (s : State) (Lk : List (Nat × Nat)) (bk : Nat)

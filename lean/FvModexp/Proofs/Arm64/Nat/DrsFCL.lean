@@ -1,6 +1,24 @@
 import FvModexp.Proofs.Arm64.Nat.DrsFC2B
 import FvModexp.Proofs.Arm64.Nat.DrsFC5S
 import FvModexp.Proofs.Arm64.Nat.DrsFC6X
+import FvModexp.Proofs.Arm64.Nat.DrsC1
+import FvModexp.Proofs.Arm64.Nat.DrsC2
+import FvModexp.Proofs.Arm64.Nat.DrsC2B
+import FvModexp.Proofs.Arm64.Nat.DrsC3
+import FvModexp.Proofs.Arm64.Nat.DrsC4
+import FvModexp.Proofs.Arm64.Nat.DrsC4R
+import FvModexp.Proofs.Arm64.Nat.DrsC5
+import FvModexp.Proofs.Arm64.Nat.DrsC5R
+import FvModexp.Proofs.Arm64.Nat.DrsC6
+import FvModexp.Proofs.Arm64.Nat.DrsFC1
+import FvModexp.Proofs.Arm64.Nat.DrsFC2
+import FvModexp.Proofs.Arm64.Nat.DrsFC3
+import FvModexp.Proofs.Arm64.Nat.DrsFC4
+import FvModexp.Proofs.Arm64.Nat.DrsFC4R
+import FvModexp.Proofs.Arm64.Nat.DrsFC5
+import FvModexp.Proofs.Arm64.Nat.DrsFC5R
+import FvModexp.Proofs.Arm64.Nat.DrsFC6
+import FvModexp.Proofs.Arm64.Nat.DrsFC6R
 
 /-!
 # `divRecursiveStep` (arm64): the whole final correction loop (natdiv.go:869-878)

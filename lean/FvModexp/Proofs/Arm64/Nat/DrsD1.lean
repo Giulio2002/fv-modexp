@@ -1,24 +1,14 @@
 import FvModexp.Proofs.Arm64.Nat.DrsDV
-import FvModexp.Proofs.Arm64.Nat.DrsC1
-
+import FvModexp.Proofs.Arm64.Nat.DrsSegD
 /-!
 # `divRecursiveStep` (arm64), after the correction loop: `uu.norm()` → `CALL nat.cmp` (natdiv.go:844)
-
 `d1`: from the loop exit `E` (`0x1ba80c`): `uu.norm()` (`norm5`, nat.go:51), the `len ≤ cap` check (`BHI` panic
 excluded) → `CALL nat.cmp(qhatv, uu.norm())` (`0x1ba844`, return `0x1ba848`). No stores: the memory is unchanged.
 -/
-
 set_option autoImplicit false
-
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
-
 set_option linter.janusRenameI false
-
 namespace FvModexp.Arm64.DivRec
-
-/-- the return address of the `nat.cmp` after the correction loop -/
-abbrev rD2 : Nat := 0x1ba848
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 32000000 in
 /-- from `norm5`'s exit to the `CALL nat.cmp` -/
