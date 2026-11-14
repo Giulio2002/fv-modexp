@@ -1,7 +1,7 @@
 import FvModexp.Proofs.Arm64.Exp.IExpClD
 import FvModexp.Proofs.Arm64.Exp.EvInst
 import FvModexp.Proofs.Arm64.Exp.NCap
-import FvModexp.Proofs.Arm64.Nat.RemC
+import FvModexp.Proofs.Arm64.NatQ.RemC
 import FvModexp.Proofs.Common.NCostU
 import FvModexp.Proofs.Arm64.Witness.StubsMvz
 import FvModexp.Proofs.Arm64.Int.ModRowW
@@ -13,8 +13,8 @@ set_option autoImplicit false
 
 `correctness` = `ExpEven.fullI` (the CRT split `m = 2^n · m2`: two inner `nat.expNN` calls, `subMod2N`,
 `modularInverseModPowerOfTwo`, two `mul`s, `trunc`, `add`) with EVERY callee proved: the inner `nat.expNN` is expmc's
-`ExpN.ens_noEven` (window 70720) on the closed callee shapes `IExp.dhyps` (asm's `nat.div`, expmc's `expNNSlow`, infra's
-`expNNPowerOfTwo`) and asm's `NatRem.ensC`; the cost bounds `bU`/`cU` are the dominating box maxima `Exp.supU` (expmc's
+`ExpN.ens_noEven` (window 70720) on the closed TIGHT-COSTS callee shapes `IExp.dhypsQ` (asm's `Q.NatDiv.ensCLG`,
+expmc's Q-form `expNNSlow`, infra's `expNNPowerOfTwo`; expmc s69: no old `nat.sqr` SCC) and asm's `Q.NatRem.ensCR`; the cost bounds `bU`/`cU` are the dominating box maxima `Exp.supU` (expmc's
 `Common/NCostU`, as top's `Run.Closed.expC`); the need monotonicity facts are proved here (copied from top's RunOkRowC).
 Window `[SP - 72368, SP + 112)`. Runtime premises: the live `makeslice`, `growslice`, `memclrNoHeapPointers`,
 `memmove` (+ zero-length), `newobject`, `gcWriteBarrier2` contracts.
@@ -24,9 +24,9 @@ open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts FvMod
 
 namespace FvModexp.Arm64.EvenRow
 
-abbrev cF : Nat → Nat → Nat → Nat := NatDiv.cost DivRec.drsC
-abbrev cR : Nat → Nat → Nat → Nat := NatRem.cost cF
-abbrev cS : Nat → Nat → Nat → Nat → Nat := ExpSlow.cost sqrC mulC cF
+abbrev cF : Nat → Nat → Nat → Nat := IExp.clFQ
+abbrev cR : Nat → Nat → Nat → Nat := IExp.clRQ
+abbrev cS : Nat → Nat → Nat → Nat → Nat := IExp.clSQ
 abbrev cP : Nat → Nat → Nat → Nat → Nat := P2D.cP sqrCQ mulCQ
 abbrev bUC : Nat → Nat → Nat → Nat → Nat → Nat := Exp.supU (ExpEven.NBudE cF cR cS cP)
 abbrev cUC : Nat → Nat → Nat → Nat → Nat → Nat := Exp.supU (ExpN.NCost cF cR cS cP)
@@ -61,9 +61,10 @@ theorem sum (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     (hno : NewobjectLiveContract (Extracted.program.ofImpl impl) (cA "runtime.newobject") 4096 R)
     (hwb : WbLiveContract (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2) :
     ExpEven.EvenSum impl R 72368 112 nE cE := by
-  have hDN := IExp.dhyps hap hmk hgr hmc hmv hmz hno hwb (K := 70720) (Nat.le_refl _)
+  have hDN := IExp.dhypsQ hap hmk hgr hmc hmv hno hwb (Q.NatDiv.ensCLG impl hap R hgr hmc hwb hmk hmv hmz)
+    (K := 70720) (Nat.le_refl _)
   have hRem : NHyp.RemHyp impl R LibRem.names 41712 112 NatRem.need cR :=
-    NatRem.ensC impl hap R hgr hmc hwb hmk hmv hmz
+    Q.rem_of_Q (Q.NatRem.ensCR impl hap R hgr hmc hwb hmk hmv hmz)
   have hNE : EvenHyp.ExpNNHypNE impl R 70720 cF NatRem.need cR ExpSlow.need P2D.needP cS cP :=
     fun b L zp zl zc st xp xl xc yp yl yc mp n mc slow =>
       ExpN.ens_noEven impl hap R hDN hRem IExp.rem_n IExp.rem_11 (by decide) b L zp zl zc st xp xl xc yp yl yc mp n

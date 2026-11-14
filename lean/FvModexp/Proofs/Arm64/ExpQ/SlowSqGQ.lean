@@ -1,6 +1,5 @@
 import FvModexp.Proofs.Arm64.ExpQ.SlowGQ
 import FvModexp.Proofs.Arm64.NatQ.SqrHypQ
-import FvModexp.Proofs.Arm64.Exp.SlowSqG
 
 set_option autoImplicit false
 

@@ -253,7 +253,7 @@ theorem nostk (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) {M M' :
     (hLF : LiveFrame M M' L1 [(t, t + 8 * tc)]) (hLE : LiveExt R L1 L2) :
     MemFrame M M' (R.rt ++ win S' stk above ++ [(t, t + 8 * tc)] ++ stkWs M st) ∧
       LiveFrame M M' L1 ([(t, t + 8 * tc)] ++ stkWs M st) ∧ StackBack R L1 L2 st M M' ∧ ArrIn L2 st M M' ∧
-      stCap M' st = stCap M st := by
+      stW M' st = stW M st ∧ stCap M' st = stCap M st := by
   have hsp := sp_K hpre
   obtain ⟨-, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, ⟨-, -, hstw, -⟩, -⟩ := hpre
   simp only [win, K, A, outside_cons, outside_nil, and_true] at hstw
@@ -271,7 +271,7 @@ theorem nostk (hpre : Pre R kc H sqrC mulC b L zp zl zc st xp xl xc n s) {M M' :
   have e2 : stCap M' st = stCap M st := hrd 16 (by omega)
   exact ⟨hF.mono fun a k h => by simp only [outside_append] at h ⊢; exact h.1,
     FvModexp.LiveFrame.mono_ws hLF fun a k h => by simp only [outside_append] at h ⊢; exact h.1,
-    stackBack_hdr hok hF e0 e1 e2 hLE, fun h => absurd ⟨e0, e2⟩ h, e2⟩
+    stackBack_hdr hok hF e0 e1 e2 hLE, fun h => absurd ⟨e0, e2⟩ h, e0, e2⟩
 
 end
 
