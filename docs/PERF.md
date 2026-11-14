@@ -2046,3 +2046,8 @@ match the expected expression SYNTACTICALLY, association included); EvSum 1.3 s 
 P2W2LK 1.1 s, P2W2BJ 2.9 s, P2W2B0 16.5 s, B1 7.0 s, B2 11.8 s, B3 8.9 s, B4 22.0 s, B5 7.9 s, B6 16.1 s, Bd 0.9 s,
 P2W2LO 15.6 s. Before/after: B0/B2 with a `first | exact efs | (janus64_simp; done) | …` closer over all post-run goals
 342 s each → 16.5 s / 11.8 s with named holes closed individually; LO 149 s → 15.6 s (same fix).
+
+## divmc s74 (2026-11-14): amd64 P2W2 exit + summary (dev compile, LEAN_NUM_THREADS=4, ≤ 3.2 GB each)
+P2W2X1 1.1 s, X2 28.8 s, X3 6.9 s, X4 25.8 s, P2W2 1.1 s, P2W2C 4.1 s. No trims needed. Note: one janus64_run
+over the whole exit (until [XJ, mkE, nH]) with the branch facts left to the run, then closing each branch by its
+`hbr` (bit via `bit0W` + `janus_assumption`) was simpler and as fast as pre-splitting on `u`.
