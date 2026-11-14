@@ -107,7 +107,8 @@ theorem EEnv.g {R : RtInv} {L : List (Nat × Nat)} {g fs sp K : Nat} {s : State}
   obtain ⟨-, h1, -, -, -, -, -, -, ⟨-, -, -, -, hg, -⟩, -⟩ := h
   rw [h1, BitVec.toNat_ofNat]; omega
 
-/-- the entry facts of `nat.expNNSlow` (asm's amd64 `ExpEven.EPre` layout without `natOne`; `bp` = the caller's `RBP`,
+/-- the entry facts of `nat.expNNSlow` (asm's amd64 `ExpEven.EPre` layout, the `natOne` conjunct replaced by `True` (so asm's EvRel lemmas port
+with the same projections); `bp` = the caller's `RBP`,
 `r` = the return address) -/
 def EPre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml mc : Nat)
     (s : State) : Prop :=
@@ -127,7 +128,7 @@ def EPre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K g fs sp st bp r zp zc 
     Apart (stW s.mem st) (8 * stCap s.mem st) (g + 16) 8 ∧ Apart (stW s.mem st) (8 * stCap s.mem st) (fs - 8) 8) ∧
   s.mem.accessible StackNat.wbA 4 false = true ∧ Apart st 24 StackNat.wbA 4 ∧
   Apart st 24 (free s.mem st).1 (free s.mem st).2 ∧ st ≠ 0 ∧
-  stLen s.mem st + 2 ^ 13 ≤ 2 ^ 16 ∧
+  stLen s.mem st + 2 ^ 13 ≤ 2 ^ 16 ∧ True ∧
   (OE R L sp K st s.mem mp (8 * ml) ∧ s.mem.accessible mp (8 * ml) false = true ∧ mp + 8 * ml ≤ 2 ^ 48 ∧
     NatNorm s.mem mp ml ∧ (0 < zc → Apart zp (8 * zc) mp (8 * ml)) ∧ yp < 2 ^ 64 ∧ yc < 2 ^ 64 ∧ mp < 2 ^ 64 ∧
     mc < 2 ^ 64 ∧ (stCap s.mem st = 0 → stW s.mem st = 0)) ∧

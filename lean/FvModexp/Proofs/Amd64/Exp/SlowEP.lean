@@ -96,7 +96,7 @@ theorem epre_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {stk c : Nat}
     oe_of hS (by omega) hle hyi.1 hyi.2.2.2.1 hyi.2.2.2.2.1, hyi.1.2.1, hyi.1.2.2.1, hyi.2.2.1, hyl0, hyi.2.1,
     oe_of hS (by omega) hle hxi.1 hxi.2.2.2.1 hxi.2.2.2.2.1, hxi.1.2.1, hxi.1.2.2.1, hxi.2.2.1, hxl,
     by have := hxi.1.2.2.1; omega, hxc, hzp, hwo1, fun hz => ?_, ?_, hsok, ap_w hstw (by omega) hle, hstg, hstfs,
-    fun hc => ⟨ap_w (harr hc).1 (by omega) hle, (harr hc).2, harrfs hc⟩, hwba, hstwb, hstf, by omega, hst13,
+    fun hc => ⟨ap_w (harr hc).1 (by omega) hle, (harr hc).2, harrfs hc⟩, hwba, hstwb, hstf, by omega, hst13, trivial,
     ⟨oe_of hS (by omega) hle hmi.1 hmi.2.2.2.1 hmi.2.2.2.2.1, hmi.1.2.1, hmi.1.2.2.1, hmi.2.2.1,
       hmi.2.2.2.2.2, by have := hyi.1.2.2.1; omega, hyc, by have := hmi.1.2.2.1; omega, hmc, hcap0⟩,
     ⟨rfl, by rw [show SP - 0x1b0 + 0x1b0 = SP by omega], hr47, ?_, ?_, ?_, ?_, ?_, ?_⟩, hinv⟩
