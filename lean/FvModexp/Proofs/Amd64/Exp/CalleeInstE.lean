@@ -1,6 +1,6 @@
 import FvModexp.Proofs.Amd64.Exp.CalleeInstQ
 import FvModexp.Proofs.Amd64.Exp.SubMod2NGEns
-import FvModexp.Proofs.Amd64.Exp.SubMod2N
+import FvModexp.Proofs.Amd64.Nat.NatAdd
 import FvModexp.Proofs.Amd64.Exp.SubMod2NGJ
 import FvModexp.Proofs.Amd64.Exp.EvTrD
 import FvModexp.Proofs.Amd64.Exp.LibNE
@@ -58,7 +58,9 @@ include hmv hmk in
 theorem sb : SubMod2N.SubHypR0 impl R := SubMod2N.subHypR0_of impl hap R hmk hmv
 
 include hmv hmk in
-theorem ad : SubMod2N.AddHypR impl R := SubMod2N.addHypR_of impl hap R hmk hmv
+-- asm s80: `SubMod2N.addHypR_of` inlined, so this module no longer imports the old (unused) `SubMod2N` / `SubMod2NS*` chain
+theorem ad : SubMod2N.AddHypR impl R := fun b L zp zl zc xp xl xc yp yl yc =>
+  NatAdd.ensR impl hap R hmk hmv b L zp zl zc xp xl xc yp yl yc
 
 include hmv hmk in
 /-- `nat.trunc` with an empty-tolerant `x` on `nsQ` -/
