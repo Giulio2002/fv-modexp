@@ -14,7 +14,7 @@ set_option autoImplicit false
 inner `nat.expNN` is expmc's `ExpN.hypNE1` on `ExpN.DHyps` with `div` = `DivInst.hyp` (41512), `p2` = `P2DRow.hyp`
 (42520), `slow` = `Q.ExpSlow.slow_of_Q hSQ` (the PREMISE `hSQ : NHyp.SlowHypQ …` at expmc's announced closed shape:
 need `ExpSlow.need`, level twin `Q.ExpSlow.needH`, cost `Q.ExpSlow.costQ sqrCQ mulCQ (Q.NatDiv.costQ Q.drsCQ)`), rem
-= `RemInst.hyp` (41720); inner window `KN = 41640`, frame `stkE 41640 = 43168`. The budget bounds are the box maxima
+= `RemInst.hyp` (41720); inner window `KN = 41640`, frame `stkE 41640 = 43152`. The budget bounds are the box maxima
 `Exp.supU` of `NBudO` / `NCost` at the LEVEL-DEPENDENT division bound `cDE` (asm s73 cost shape; no `2^16`-level
 constant). The cost / need of the statement are plain `def`s (`cE`, `nE`) to keep the printed statement small.
 NOT a release row (the premise is not a Janus contract): `EvenRow` = this with `hSQ` discharged, + the witness.
