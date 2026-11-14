@@ -20,8 +20,9 @@ open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Contracts FvModexp
 
 namespace FvModexp.Amd64.ExpN
 
-/-- expNN's window without the saved `BP` and the return address `[sp + 0x490, sp + 0x4a0)` -/
-@[reducible] def wN (sp K : Nat) : List (Nat × Nat) := [(sp - K, sp + 0x490), (sp + 0x4a0, sp + 0x510)]
+/-- expNN's window without the return address `[sp + 0x498, sp + 0x4a0)` (the saved `BP` slot `[sp + 0x490, sp + 0x498)`
+is written by the prologue's `PUSHQ BP`, so it is inside) -/
+@[reducible] def wN (sp K : Nat) : List (Nat × Nat) := [(sp - K, sp + 0x498), (sp + 0x4a0, sp + 0x510)]
 
 /-- the callee's `z` argument at the call (memory `M`, live set `L1`) -/
 @[reducible] def ZQ (R : RtInv) (L1 : List (Nat × Nat)) (g fs sp K st xp xl yp yl mp n : Nat) (M : Memory)
