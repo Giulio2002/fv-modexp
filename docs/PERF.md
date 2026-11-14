@@ -2206,3 +2206,18 @@ Mont 145/1692, SubMod2N 220/2748, ModInv 190/2333, DivW 157/1213, DivWVW 13/324,
 Div 373/2595, DivM 208/3555, Rem 165/4547, DivBasicQ 276/4497, DrsQ 295/1718, DivQ 343/2582, DivMQ 138/3570,
 RemQ 127/4487, IntMod 164/4028, W2 414/2981, W4 422/2996, P2W2 280/3121, P2W4 209/1597, P2D 287/2152, N 458/4936,
 Even 367/3934, IExpQ 337/4564, RequiredGas 238/1642, RunErr 272/1654, RunSucc 464/5147.
+## expmc s85 (2026-11-14): amd64 Exp/IExpRow — rel48 708 s (compile 152 / audit 47 / REPLAY 476) analysed + LibExpI trim
+* rel48's replay was NOT IExpRow's own work: "replay of 255 target(s)" = IExpRow's 41 own modules + **215 modules of amd64
+  Exp/EvenRow**, which hit the 900 s cap in rel48 (own compile 215, never replayed) and so were replayed by the next row.
+  Since asm s80 (lower rows ModInvRow + SlowRow, EvenRow own 209 -> 95, EvenRow PASS 730 s) EvenRow replays its own closure.
+* Own replay measured per module with the toolchain's `leanchecker` on dev oleans (single-threaded, incl. ~2 s import load each):
+  41 modules sum 229 s cpu; top: LibExpI 37.2, NNilE 20.3, NNilTE 19.9, NMkE 13.3, IExpRow 11.8, NProE 10.1, BudP2 7.5,
+  NTrivE 7.5, IExpFun 7.0, BudWin 6.7, rest < 6. At 4 at once ≈ 60-70 s wall (vs 476 s).
+* FIX: LibExpI (root of the own DAG, so on the compile critical path) regenerated in the new generator INDEX MODE
+  (`IDX=1 scripts/gen-libprog-sub.py`; check-generated recognises ", index mode"): each kept segment's
+  `names.contains seg.name = true` by its index (`names[i]? = some seg.name` by rfl: equal string literals), only the 5 dropped
+  segments are decided; masks by `simp only [hitN]`. LibExpI compile 42.8 -> 8.1 s, leanchecker 39.3 -> 8.6 s. Statements unchanged.
+  The other 52 generated Lib modules are untouched (no rebuild for other rows); owners may opt in (LibNE/LibW/LibRun-style masks).
+* Projection (rel48 numbers, EvenRow replayed by its own row): ≈ compile 118 + audit 47 + replay ≈ 55 + overhead 30 ≈ 250 s
+  (target ≤ 550). A targeted verify on a copy of rel48's cache was NOT possible: rel48's module store holds only 784 entries for a
+  1336-module closure (presumably gc'd), so the copy recompiled lower W2/W4 modules (killed after ~6 min); the real number comes from top's next release run.
