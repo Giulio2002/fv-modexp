@@ -29,9 +29,9 @@ theorem full {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progra
     {stkN aboveN : Nat} (hsn : StackNat.HypL impl R ns stkN aboveN) (haN : aboveN ≤ 0x7f)
     {stkL aboveL : Nat} (hlh : Lsh.Hyp2 impl R ns stkL aboveL) (haL : aboveL ≤ 0x7f)
     {stkR aboveR : Nat} (hrh : Rsh.Hyp impl R ns stkR aboveR) (haR : aboveR ≤ 0x7f)
-    {KN : Nat} {costF : Nat → Nat → Nat → Nat} {costD : Nat} {needR : Nat → Nat → Nat}
+    {KN : Nat} {costF : Nat → Nat → Nat → Nat} {cDf : Nat → Nat → Nat → Nat} {needR : Nat → Nat → Nat}
     {costR : Nat → Nat → Nat → Nat} {needS needP : Nat → Nat → Nat → Nat} {costS costP : Nat → Nat → Nat → Nat → Nat}
-    (hE : EvenHyp.ExpNNHypNE1 impl R KN costF costD needR costR needS needP costS costP)
+    (hE : ∀ costD, EvenHyp.ExpNNHypNE1 impl R KN costF costD needR costR needS needP costS costP)
     (hKN : 41640 ≤ KN) (hKN2 : KN + 0x98 ≤ 2 ^ 20)
     (hmv : MemmoveLive64 (LibNE.program.link impl) mvE 4096 R)
     (hmz : MemmoveZeroLive64 (LibNE.program.link impl) mvE 4096 R)
@@ -65,10 +65,11 @@ theorem full {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progra
     (hPm : ∀ x y a a', a ≤ a' → needP x y a ≤ needP x y a')
     {bU cU : Nat → Nat → Nat → Nat → Nat → Nat}
     (hNB : ∀ x y a a' l l' k k', a ≤ a' → l ≤ l' → k ≤ k' →
-      NBudO costD costR costS costP x y a l k ≤ bU x y a' l' k')
+      NBudO (cDf x a l) costR costS costP x y a l k ≤ bU x y a' l' k')
     (hNC : ∀ x y a a' l l' k k', a ≤ a' → l ≤ l' → k ≤ k' →
-      ExpN.NCost costD costR costS costP x y a l k ≤ cU x y a' l' k')
-    (hFD : ∀ l a n, l ≤ 2 ^ 16 → a ≤ 257 → n ≤ 128 → costF l a n ≤ costD)
+      ExpN.NCost (cDf x a l) costR costS costP x y a l k ≤ cU x y a' l' k')
+    (hFD : ∀ x lm lv l' a, x ≤ 128 → lm ≤ 128 → l' ≤ lv + needO x lm → (a ≤ 2 * lm + 1 ∨ a ≤ x) →
+      costF l' a lm ≤ cDf x lm lv)
     {stk : Nat} (hk1 : 42816 + 0x150 ≤ stk) (hk2 : stk ≤ 2 ^ 20 + 0x150)
     (hK : stkN ≤ stk - 0x150 ∧ stkL ≤ stk - 0x150 ∧ stkR ≤ stk - 0x150 ∧ KN + 0x498 ≤ stk - 0x150 ∧
       232 + kc ≤ stk - 0x150 ∧ W ≤ stk - 0x150) :
