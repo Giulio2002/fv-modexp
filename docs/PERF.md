@@ -2105,3 +2105,14 @@ DrsFCL/DrsFDL import all their segments. Dev critical path 451 → 274 s (now Dr
   W4Row own compile 94 modules 400 s (cpu 1854), audit 33 s, replay 119 targets 415 s, total 851 s → FAIL audit
   ([RSP]-word rule, see divmc s80). W2Row own compile 96 modules 484 s (cpu 2072), audit 41 s, replay cut by the
   900 s cap → total 901 s CAP FAIL. Both rows still need ~2x off own compile + replay.
+
+## top s50 (2026-11-14): rel47 arm64 (Janus v0.3.3, fresh cache, ROWS=1, snapshot main 456f856c, wall 11293 s + warm-up 929 s)
+39/40 PASS. FAIL: Exp_EvenRow 900 s / 4.5 GB = cap (own compile 209 mods 538 s ok, kernel replay of the own modules ran past
+900 s; LOCK 0; also capped in rel46). Rows > 600 s (LOCK 0): Nat_DrsRow 674 s (compile 207 mods 429 / replay 218 / audit 21;
+old row, retirement open), Top_RunSucc 784 s / 5.2 GB (compile 65 mods 504 / replay 183 / audit 92; rel46 533 s, higher load).
+Per row (s/MB): StackNat 129/2454, MulAddWW 171/946, AddVW 57/1008, SubVW 59/955, BasicMul 121/3341, BasicSqr 352/3164,
+Trunc 125/863, Rsh 120/860, Lsh 109/915, IntAS 254/1157, IntSub 14/404, BasicSqrQ 292/2811, SqrQ 312/2982, MulQ 352/1714,
+Mont 149/1710, SubMod2N 229/2779, ModInv 199/2318, DivW 153/1205, DivWVW 11/335, DivBasic 250/4382, Drs 674/2186,
+Div 406/2637, DivM 220/3567, Rem 175/4488, DivBasicQ 299/4577, DrsQ 305/1697, DivQ 353/2610, DivMQ 163/3584,
+RemQ 159/4496, IntMod 189/3954, W2 457/2957, W4 488/3028, P2W2 332/3078, P2W4 254/1553, P2D 372/2253, Even FAIL 900/4498,
+IExpQ 591/4618, RequiredGas 285/1757, RunErr 376/1627, RunSucc 784/5215.
