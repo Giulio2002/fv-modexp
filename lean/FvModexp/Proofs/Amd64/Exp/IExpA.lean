@@ -1,4 +1,4 @@
-import FvModexp.Proofs.Amd64.Exp.LibExp
+import FvModexp.Proofs.Amd64.Exp.LibExpI
 import FvModexp.Proofs.Common.BitLemmas
 
 set_option autoImplicit false
@@ -32,7 +32,7 @@ abbrev pJ : Nat := 0x5e35b6
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem runA (impl : List Amd64.Segment) (ret0 : Nat) (hret : RetAddr (LibExp.program.link impl) ret0)
+theorem runA (impl : List Amd64.Segment) (ret0 : Nat) (hret : RetAddr (LibExpI.program.link impl) ret0)
     (Q : Amd64.Outcome → Prop)
     (t g zA yA mA zp zl zc yp yl yc : Nat) (M : Janus.Arm64.Memory)
     (ht1 : 0x138 ≤ t) (ht2 : t + 0x30 ≤ 2 ^ 48) (hacc : M.accessible (t - 0x130) 0x160 true = true)
@@ -58,8 +58,8 @@ theorem runA (impl : List Amd64.Segment) (ret0 : Nat) (hret : RetAddr (LibExp.pr
       M'.readLE (t - 8) 8 = (S.regs 5).toNat → M'.readLE (t + 8) 8 = zA → M'.readLE (t + 0x10) 8 = zA →
       M'.readLE (t + 0x20) 8 = mA → M'.readLE (t + 0x28) 1 = 0 → M'.readLE (t - 0xa8) 8 = yl →
       M'.readLE (t - 0x68) 8 = yp →
-      Reaches ((LibExp.program.link impl).withExit ret0) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret0) S Q := by
+      Reaches ((LibExpI.program.link impl).withExit ret0) S' Q) :
+    Reaches ((LibExpI.program.link impl).withExit ret0) S Q := by
   have hgs : M.readLE (g + 16) 8 < 2 ^ 64 := Janus.Arm64.Memory.readLE_lt _ _ _
   have hzp : zp < 2 ^ 64 := hz8 ▸ Janus.Arm64.Memory.readLE_lt _ _ _
   have hzl : zl < 2 ^ 64 := hz16 ▸ Janus.Arm64.Memory.readLE_lt _ _ _

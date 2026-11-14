@@ -19,7 +19,7 @@ namespace FvModexp.Amd64.IExp
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
-theorem runB (impl : List Amd64.Segment) (ret0 : Nat) (hret : RetAddr (LibExp.program.link impl) ret0)
+theorem runB (impl : List Amd64.Segment) (ret0 : Nat) (hret : RetAddr (LibExpI.program.link impl) ret0)
     (Q : Amd64.Outcome → Prop)
     (t zA mA zp zc mp mc : Nat) (M : Janus.Arm64.Memory)
     (ht1 : 0x138 ≤ t) (ht2 : t + 0x30 ≤ 2 ^ 48)
@@ -39,8 +39,8 @@ theorem runB (impl : List Amd64.Segment) (ret0 : Nat) (hret : RetAddr (LibExp.pr
       S'.regs 13 = S.regs 13 → S'.regs 14 = S.regs 14 → S'.regs 15 = S.regs 15 →
       S'.regs 2 = BitVec.ofNat 64 mA → S'.regs 8 = S.regs 2 →
       S'.fsBase = S.fsBase → S'.df = S.df → S'.xmm 15 = S.xmm 15 → S'.mem = M →
-      Reaches ((LibExp.program.link impl).withExit ret0) S' Q) :
-    Reaches ((LibExp.program.link impl).withExit ret0) S Q := by
+      Reaches ((LibExpI.program.link impl).withExit ret0) S' Q) :
+    Reaches ((LibExpI.program.link impl).withExit ret0) S Q := by
   have hzp : zp < 2 ^ 64 := hz8 ▸ Janus.Arm64.Memory.readLE_lt _ _ _
   have hzc : zc < 2 ^ 64 := hz24 ▸ Janus.Arm64.Memory.readLE_lt _ _ _
   have hmp : mp < 2 ^ 64 := hm8 ▸ Janus.Arm64.Memory.readLE_lt _ _ _

@@ -30,8 +30,8 @@ abbrev raW : Nat := 0x5e3647
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem runD (impl : List Amd64.Segment) (R : RtInv)
-    (hwb : WbLiveContract64 (LibExp.program.link impl) (cA "runtime.gcWriteBarrier2") 4096 R 2)
-    (ret0 : Nat) (hret : RetAddr (LibExp.program.link impl) ret0) (F : State → Prop)
+    (hwb : WbLiveContract64 (LibExpI.program.link impl) (cA "runtime.gcWriteBarrier2") 4096 R 2)
+    (ret0 : Nat) (hret : RetAddr (LibExpI.program.link impl) ret0) (F : State → Prop)
     (t zA p l c bp : Nat) (b1 : Nat) (L1 : List (Nat × Nat)) (S : State)
     (hal : t % 8 = 0) (ht1 : 0x1140 ≤ t) (ht2 : t + 0x30 ≤ 2 ^ 48)
     (hacc : S.mem.accessible (t - 0x1138) (0x1138 + 0x30) true = true)
@@ -55,7 +55,7 @@ theorem runD (impl : List Amd64.Segment) (R : RtInv)
       s4.mem = (Mw.writeLE (zA + 8) 8 p).writeLE zA 1 0 → s4.regs 4 = BitVec.ofNat 64 (t + 8) →
       s4.regs 0 = BitVec.ofNat 64 zA → s4.regs 5 = BitVec.ofNat 64 bp → s4.regs 14 = S.regs 14 →
       s4.fsBase = S.fsBase → s4.df = S.df → s4.xmm 15 = S.xmm 15 → F s4) :
-    Reaches ((LibExp.program.link impl).withExit ret0) S (IsReturn F) := by
+    Reaches ((LibExpI.program.link impl).withExit ret0) S (IsReturn F) := by
   have es1 : BitVec.ofNat 64 (t - 0x130) - 8#64 = BitVec.ofNat 64 (t - 0x138) := by
     apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
   have es2 : BitVec.ofNat 64 (t - 0x130) + 296#64 = BitVec.ofNat 64 (t - 8) := by
