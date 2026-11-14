@@ -65,7 +65,7 @@ theorem callT (hap : Amd64.ImplApart Extracted.program impl) {ns : List String}
   obtain ⟨eq1, eq2⟩ := hre (Nat.le_trans (Nat.min_le_left _ _) hqlc)
   subst q' qc'
   rw [h14] at hinv'
-  obtain ⟨hF2, hLF2, hsb, hain, hcap⟩ := nostk hpre hrt hS' hkT haT hzz hF' hLF' hLE
+  obtain ⟨hF2, hLF2, hsb, hain, -, hcap⟩ := nostk hpre hrt hS' hkT haT hzz hF' hLF' hLE
   have hlt : ql' ≤ truncNeed ql e := by
     rcases Nat.eq_zero_or_pos ql' with h | h
     · omega
