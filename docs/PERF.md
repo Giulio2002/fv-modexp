@@ -2061,3 +2061,11 @@ P2DWin trim: 370 s/9.5 GB → 7.8 s. Cause: a top-level disjunction hypothesis (
 context made every `omega` case-split (one omega 366 s); stated as `r ∈ [w2R, w4R]` instead (omega ignores it), and the
 tail's side conditions moved into small numeric lemmas (nW/nK/nB/nS). Also: named args `(a := …)` on `Outside.of_sub`
 bind the SOURCE range, not the target — ascribe the result type instead.
+
+## asm s71 (dev compile amd64, load ~15): P2DLsh 9.0 s/2.6 GB, P2DFull 2.4 s/2.4 GB, P2DE 1.3 s/2.3 GB, P2DRow 17.6 s/3.2 GB.
+P2DFull trim: 264 s/10.2 GB → 1.7 s/2.3 GB. Cause: ~35 `by omega` side conditions inside `sumF`'s big context (CPre
+destructured, `∨` window facts `hxw`/`hyw`); all moved into four numeric lemmas (`nKF`, `nE`, `nZ`, `tz64`/`m64`/`lm_ab`)
+called once with explicit premises, the rest closed by `Nat.sub_le` / `Nat.sub_pos_of_lt` / named facts.
+P2DRow trim: 72 s → 18 s. Cause: the witness `pre`'s `repeat' (first | exact inv1 _ | …)` tried each failing `exact`
+against the budget goal `P2D.costP … ≤ BW`, and every failed unification unfolded `costP` (supTo over 9 window costs);
+fixed by proving the budget once and `generalize`-ing the `costP` term to a variable before the repeat.
