@@ -111,7 +111,16 @@ theorem segE2 {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
   have hml := hP.2.2.2.2.2.1
   have ha2 : 0 < a2 ml (nE s mp ml) ∧ a2 ml (nE s mp ml) ≤ ml := by simp only [a2]; omega
   have hsp8 : 8 ≤ sp := by omega
+  have hsp64 : sp < 2 ^ 64 := by omega
+  have h4a0 : sp - 8 - 0x498 = sp - 0x4a0 := by omega
+  have hsp2 : sp + 0x1b8 ≤ 2 ^ 48 := by omega
   have hw := h.jx.wc
+  have hacc0 : S.mem.accessible (sp - 8) 0x1c0 true = true := by
+    rw [hw.fr.accessible]; exact Janus.Arm64.Memory.accessible_mono _ hce0.2.2.2.1 (by omega) (by omega)
+  have hown : ∀ q ∈ [(sp - 8, sp + 0x30)], OwnR sp K q := fun q hq => by
+    simp only [List.mem_singleton] at hq; subst hq; simp only [OwnR]; omega
+  have hs8 : (BitVec.ofNat 64 (sp - 8)).toNat = sp - 8 := by rw [BitVec.toNat_ofNat]; omega
+  have hg' : (BitVec.ofNat 64 g).toNat = g := by rw [← hP.1.2.1]; exact EEnv.g hP.1
   have hm1 := h.m1
   have hm2 := h.m2
   have hd3 := h.d4
@@ -128,27 +137,24 @@ theorem segE2 {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
       exact absurd hv.symm (Nat.pos_iff_ne_zero.1 (Nat.two_pow_pos _))
     · exact h0
   have hl2p : 0 < l2 := (odd_part hM hm2.2.2.1).1
-  have hk0 : 0 < 2 * max l1 l2 := by omega
+  have hk0 : 0 < 2 * max l1 l2 :=
+    Nat.mul_pos (by decide) (Nat.lt_of_lt_of_le hl2p (Nat.le_max_right _ _))
   have hrl := (hd3.2.2 hk0).1
   obtain ⟨dw, -, -, -, -⟩ := Loc.ap hP hrl
   obtain ⟨hs1, hs2, hs3, hs4⟩ := hst l1 l2 hl1m hl2m
   obtain ⟨hrk1, hrk2, hrk3⟩ := hrk l1 l2 hl1m hl2m
-  have hacc0 : S.mem.accessible (sp - 8) 0x1c0 true = true := by
-    rw [hw.fr.accessible]; exact Janus.Arm64.Memory.accessible_mono _ hce0.2.2.2.1 (by omega) (by omega)
   have hesl := h.jx.esl
   refine runE2 ret0 Q sp st xp xl xc yp yl yc q l2 (a2 ml (nE s mp ml)) S.mem hesl.2.2.2.2.2.2.2.2.2.2.2.2.1
     hesl.2.2.2.2.2.2.2.2.2.2.2.2.2.1 hesl.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1 h.s110 h.sb8 h.sc0
     hesl.2.2.2.2.2.2.2.2.1 hesl.2.2.2.2.2.2.2.2.2.1 hesl.2.2.2.2.2.2.2.2.2.2.1 hesl.2.2.2.2.2.2.2.2.2.2.2.1
-    hacc0 hsp8 (by omega) S h.pc h.jx.esp rfl ?_
+    hacc0 hsp8 hsp2 S h.pc h.jx.esp rfl ?_
   intro S' M' f0 f4 fm hFp hrgp frd w0 w8 w10 w18 w20 w28 r0 r3 r1 r7 r6 r8 r9 r10 r5 r14 rfs rx15 rdf
-  have hown : ∀ q ∈ [(sp - 8, sp + 0x30)], OwnR sp K q := fun q hq => by
-    simp only [List.mem_singleton] at hq; subst hq; simp only [OwnR]; omega
   obtain ⟨hwp, hlnp⟩ := WC.own hP hw hFp hrgp hown
   have hd := DL.own hP hd3 hFp hown
   have hm1p := hlnp _ _ _ _ hm1
   have hm2p := hlnp _ _ _ _ hm2
-  have tsp : (S'.regs 4).toNat = sp - 8 := by rw [f4, BitVec.toNat_ofNat]; omega
-  have tg : (S'.regs 14).toNat = g := by rw [r14, h.jx.e14, BitVec.toNat_ofNat]; omega
+  have tsp : (S'.regs 4).toNat = sp - 8 := by rw [f4]; exact hs8
+  have tg : (S'.regs 14).toNat = g := by rw [r14, h.jx.e14]; exact hg'
   have tfs : S'.fsBase.toNat = fs := by rw [rfs]; exact h.jx.efs
   have hv1 : natVal M' q l2 = natVal s.mem mp ml / 2 ^ nE s mp ml := hm2p.2.2.1
   have hlg : Nat.log2 (natVal M' q l2) = lg2 s mp ml := by rw [hv1]
@@ -161,10 +167,10 @@ theorem segE2 {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
     (fun h0 => (hz h0).2.2.2.2.2.2.2.1) tsp fm (stk := 0) (above := 0) (Nat.zero_le _) (Nat.zero_le _)
   have hnp := npre_of hP hwp hXC hX (S := S') (f4) (r14.trans h.jx.e14) tfs (rx15.trans h.jx.ex15)
     (rdf.trans h.jx.edf) fm hKN hKN1 hKN2 (costF := costF) (costD := costD) (needR := needR) (costR := costR)
-    (needS := needS) (needP := needP) (costS := costS) (costP := costP) hm2p hl2p (by omega) hd hk0 h.tm2
+    (needS := needS) (needP := needP) (costS := costS) (costP := costP) hm2p hl2p (Nat.le_trans hl2m hml) hd hk0 h.tm2
     w0 w8 w10 w18 w20 w28 (by rw [hlen]; exact hs1) (by rw [hlen]; exact hs2) (by rw [hlen]; exact hs3)
     (by rw [hlen, hlg]; exact hs4) (by rw [hlen, hlg]; exact Nat.le_trans hrk1 hb1)
-    (by rw [hlen]; exact OBud.mono hrk2 (by omega))
+    (by rw [hlen]; exact OBud.mono hrk2 (Nat.sub_le_sub_right hb1 _))
   have hS := Ensures.toSummaryIn (hE b1 L1 t (2 * max l1 l2) (2 * max l1 l2) st xp xl xc yp yl yc q l2 (a2 ml (nE s mp ml)) 0)
     (A64.noExit_restrict64 hap ExpN.names) (by simp only [numIntRegs, List.length_cons, List.length_nil]; decide)
     (codeIn_NE hap libN_sub)
@@ -176,7 +182,7 @@ theorem segE2 {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
     simp only [ArgsFrom64, argReg, intArgRegs]
     exact ⟨r0.trans h.r0, r3.trans h.r3, r1.trans h.r1, r7, r6, r8, r9, r10, trivial⟩
   case pre =>
-    refine ⟨by rw [tsp, tg, tfs, show sp - 8 - 0x498 = sp - 0x4a0 by omega]; exact hnp,
+    refine ⟨by rw [tsp, tg, tfs, h4a0]; exact hnp,
       Or.inl (by rw [fm]; exact (odd_part hM hv1).2), NHyp.XFacts.ext hw.le hX⟩
   obtain ⟨⟨e4, -, e14, ex15⟩, efs, edf, p, l, c, g0, g3, g1, hv, hN, hlc, ⟨hc40, hp64⟩, L2, b2, hx, hb, hinv, hlv,
     hres, hsb, hF, hLF, hrs⟩ := hq
@@ -186,11 +192,11 @@ theorem segE2 {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
   rw [hlen, hlg] at hb
   rw [xv, yv, hv1] at hv
   obtain ⟨hw', hkc, hkeep⟩ := stepC hP hwp (Loc.sub hrl) (Loc.subL hrl) dw (stk := KN + 0x498) (above := 0x78)
-    (by omega) (by omega) hF hLF hrg hx hinv hsb
+    hKN1 (by decide) hF hLF hrg hx hinv hsb
   have hz2 := LN.of_expN hP hwp hd hv hN hlc hc40 hlv hres hx hsb hrs
   have hm1' := hkeep _ _ _ _ hm1p fun _ => h.tm1.symm
   have hm2' := hkeep _ _ _ _ hm2p fun _ => h.tm2.symm
-  have hS4 : s'.regs 4 = S.regs 4 := by rw [e4, f4, h.jx.esp]; exact bv_add8 (by omega) (by omega)
+  have hS4 : s'.regs 4 = S.regs 4 := by rw [e4, f4, h.jx.esp]; exact bv_add8 hsp8 hsp64
   have hkk := kk_args hsp8 (by decide) hFp hkc
   have hza : ∀ (t' n : Nat), Held R L1 t' n → Apart t (8 * (2 * max l1 l2)) t' n → 0 < c → Apart p (8 * c) t' n := by
     intro t' n hh ht hc0
