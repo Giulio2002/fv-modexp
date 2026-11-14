@@ -121,6 +121,16 @@ theorem hdr_keep (M : Memory) (a1 a2 c v1 v2 a n : Nat) (h1 : a1 = c + 8) (h2 : 
   rw [Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega),
     Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega)]
 
+theorem push_rd (M : Memory) {c a n v : Nat} (h : a + n ≤ c ∨ c + 8 ≤ a) :
+    (M.writeLE c 8 v).readLE a n = M.readLE a n :=
+  Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega)
+
+theorem pw_push {pw pl a n r kc : Nat} (h : pw + 24 * pl ≤ r - 184 - kc ∨ r + 80 ≤ pw) (h1 : pw ≤ a)
+    (h2 : a + n ≤ pw + 24 * pl) : a + n ≤ r - 184 ∨ r - 184 + 8 ≤ a := by omega
+
+theorem three8 (pw i : Nat) : pw + 3 * i * 8 + 8 = pw + 24 * i + 8 := by omega
+theorem three16 (pw i : Nat) : pw + 3 * i * 8 + 16 = pw + 24 * i + 16 := by omega
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem fillB (hwb : WbLiveContract64 (LibW.program.link impl) wbE 4096 R 2) (hkc : 4608 ≤ kc)
@@ -183,11 +193,59 @@ theorem fillB (hwb : WbLiveContract64 (LibW.program.link impl) wbE 4096 R 2) (hk
       ⟨by omega, Or.inr (Or.inr ⟨by omega, by omega⟩)⟩) hf (W lm + W lm) (a := pw + 3 * i * 8 + 16) (k := 8)
         ⟨by omega, Or.inr (Or.inr ⟨by omega, by omega⟩)⟩
     refine fillP hkc hpre k hi _ rfl ⟨?_, ?_, ?_, ?_, ?_, ?_⟩ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ hc2
-      (hd2 _ _ (by omega) (by omega)) hh.1 hh.2 hb
+      (hd2 _ _ (three8 pw i) (three16 pw i)) hh.1 hh.2 hb
     all_goals first | exact hfs | exact hx15 | exact hdf | janus64_simp
   · -- the barrier is on
-    trace_state
-    sorry
+    have hh := hdr_rd S.mem (pw + 3 * i * 8 + 8) (pw + 3 * i * 8 + 16) (pw + 24 * i) (W lm) (by omega) (by omega)
+      (by omega)
+    have hc2 := ctx_own (ctx_own hc hf (W lm) (a := pw + 3 * i * 8 + 8) (k := 8)
+      ⟨by omega, Or.inr (Or.inr ⟨by omega, by omega⟩)⟩) hf (W lm + W lm) (a := pw + 3 * i * 8 + 16) (k := 8)
+        ⟨by omega, Or.inr (Or.inr ⟨by omega, by omega⟩)⟩
+    have hpwF : pw + 24 * pl ≤ (s.regs 4).toNat - 184 - kc ∨ (s.regs 4).toNat + 80 ≤ pw := by
+      have g := hf.pww; simp only [win, K, A, outside_cons, outside_nil, and_true] at g; omega
+    have hc3 := ctx_own hc2 hf 6195795 (a := (s.regs 4).toNat - 184) (k := 8)
+      ⟨by omega, Or.inl ⟨Nat.le_refl _, by omega⟩⟩
+    refine wbCall hwb hpre hkc hc3 rfl (by janus64_simp) (by janus64_simp) rfl ?_ ?_
+    · rw [Janus.Arm64.Memory.readLE_writeLE_self]; decide
+    · intro buf f xm yh m' zh kr hb16 hb8 hbacc hctx hrdW
+      have hb8a : m'.accessible buf.toNat 8 true = true :=
+        Janus.Arm64.Memory.accessible_mono _ hbacc (Nat.le_refl _) (by omega)
+      have hb8b : m'.accessible (buf.toNat + 8) 8 true = true :=
+        Janus.Arm64.Memory.accessible_mono _ hbacc (by omega) (by omega)
+      have hbuf64 : buf.toNat + 8 < 2 ^ 64 := by omega
+      janus64_run [hb8a, hb8b, hbuf64, t184] until [pcS]
+      have hadd8 : BitVec.ofNat 64 ((s.regs 4).toNat - 184) + 8#64 = BitVec.ofNat 64 ((s.regs 4).toNat - 176) := by
+        apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_add, BitVec.toNat_ofNat]; omega
+      have hrd : ∀ v1 v2 a n, 0 < n → pw ≤ a → a + n ≤ pw + 24 * pl →
+          (W2 m' buf.toNat v1 v2).readLE a n = ((S.mem.writeLE (pw + 3 * i * 8 + 8) 8 (W lm)).writeLE
+            (pw + 3 * i * 8 + 16) 8 (W lm + W lm)).readLE a n := fun v1 v2 a n h0 ha hb =>
+        (hrdW _ _ _ _ h0 (Or.inl ⟨ha, hb⟩)).trans (push_rd _ (pw_push hpwF ha hb))
+      have hdW : ∀ j, j < i → PwT (W2 m' buf.toNat (bp + 8 * (i * W lm)) (S.mem.readLE (pw + 3 * i * 8) 8))
+          pw bp lm j := fun j hj => by
+        obtain ⟨f0, f1, f2⟩ := hd2 _ _ (three8 pw i) (three16 pw i) j hj
+        exact ⟨(hrd _ _ (pw + 24 * j) 8 (by decide) (by omega) (by omega)).trans f0,
+          (hrd _ _ (pw + 24 * j + 8) 8 (by decide) (by omega) (by omega)).trans f1,
+          (hrd _ _ (pw + 24 * j + 16) 8 (by decide) (by omega) (by omega)).trans f2⟩
+      have hh1 := (hrd (bp + 8 * (i * W lm)) (S.mem.readLE (pw + 3 * i * 8) 8) (pw + 24 * i + 8) 8 (by decide)
+        (by omega) (by omega)).trans hh.1
+      have hh2 := (hrd (bp + 8 * (i * W lm)) (S.mem.readLE (pw + 3 * i * 8) 8) (pw + 24 * i + 16) 8 (by decide)
+        (by omega) (by omega)).trans hh.2
+      refine fillP hkc hpre k hi _ rfl ⟨?_, ?_, ?_, ?_, ?_, ?_⟩ rfl ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ (hctx _ _) hdW hh1 hh2 hb
+      · janus64_simp <;> exact hadd8
+      · janus64_simp
+      · janus64_simp
+      · exact hfs
+      · janus64_simp
+      · rfl
+      all_goals janus64_simp
+
+theorem fill_all (hwb : WbLiveContract64 (LibW.program.link impl) wbE 4096 R 2) (hkc : 4608 ≤ kc)
+    (kE : FillJ impl R kc b L st pw pl ws lm x xl s pl) :
+    ∀ n i, i + n = pl → FillJ impl R kc b L st pw pl ws lm x xl s i := by
+  intro n
+  induction n with
+  | zero => intro i h; rw [show i = pl by omega]; exact kE
+  | succ n ih => intro i h; exact fillB hwb hkc (ih (i + 1) (by omega)) (by omega)
 
 end
 
