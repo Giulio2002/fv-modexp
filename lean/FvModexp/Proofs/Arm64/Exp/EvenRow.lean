@@ -1,8 +1,8 @@
-import FvModexp.Proofs.Arm64.Exp.IExpClD
+import FvModexp.Proofs.Arm64.Exp.NRow
 import FvModexp.Proofs.Arm64.Exp.EvInst
 import FvModexp.Proofs.Arm64.Exp.NCap
 import FvModexp.Proofs.Arm64.NatQ.RemC
-import FvModexp.Proofs.Common.NCostU
+import FvModexp.Proofs.Common.NCostUF
 import FvModexp.Proofs.Arm64.Witness.StubsMvz
 import FvModexp.Proofs.Arm64.Int.ModRowW
 
@@ -14,8 +14,9 @@ set_option autoImplicit false
 `correctness` = `ExpEven.fullI` (the CRT split `m = 2^n · m2`: two inner `nat.expNN` calls, `subMod2N`,
 `modularInverseModPowerOfTwo`, two `mul`s, `trunc`, `add`) with EVERY callee proved: the inner `nat.expNN` is expmc's
 `ExpN.ens_noEven` (window 70720) on the closed TIGHT-COSTS callee shapes `IExp.dhypsQ` (asm's `Q.NatDiv.ensCLG`,
-expmc's Q-form `expNNSlow`, infra's `expNNPowerOfTwo`; expmc s69: no old `nat.sqr` SCC) and asm's `Q.NatRem.ensCR`; the cost bounds `bU`/`cU` are the dominating box maxima `Exp.supU` (expmc's
-`Common/NCostU`, as top's `Run.Closed.expC`); the need monotonicity facts are proved here (copied from top's RunOkRowC).
+expmc's Q-form `expNNSlow`, infra's `expNNPowerOfTwo`; expmc s69: no old `nat.sqr` SCC) and asm's `Q.NatRem.ensCR`; the cost bounds `bU`/`cU` are the dominating box maxima `Exp.supUF` (= expmc's `Exp.supU` in fold form, infra s59 audit-size fix; expmc's
+`Common/NCostU`, as top's `Run.Closed.expC`); the closed inner `nat.expNN` is the lower row Exp/NRow's `NRow.hNE`
+(infra s60 own-set cut: EvenRow no longer compiles the expNN / expNNSlow chains); the need monotonicity facts are proved here (copied from top's RunOkRowC).
 Window `[SP - 72368, SP + 112)`. Runtime premises: the live `makeslice`, `growslice`, `memclrNoHeapPointers`,
 `memmove` (+ zero-length), `newobject`, `gcWriteBarrier2` contracts.
 -/
@@ -28,8 +29,8 @@ abbrev cF : Nat → Nat → Nat → Nat := IExp.clFQ
 abbrev cR : Nat → Nat → Nat → Nat := IExp.clRQ
 abbrev cS : Nat → Nat → Nat → Nat → Nat := IExp.clSQ
 abbrev cP : Nat → Nat → Nat → Nat → Nat := P2D.cP sqrCQ mulCQ
-abbrev bUC : Nat → Nat → Nat → Nat → Nat → Nat := Exp.supU (ExpEven.NBudE cF cR cS cP)
-abbrev cUC : Nat → Nat → Nat → Nat → Nat → Nat := Exp.supU (ExpN.NCost cF cR cS cP)
+abbrev bUC : Nat → Nat → Nat → Nat → Nat → Nat := Exp.supUF (ExpEven.NBudE cF cR cS cP)
+abbrev cUC : Nat → Nat → Nat → Nat → Nat → Nat := Exp.supUF (ExpN.NCost cF cR cS cP)
 /-- `nat.expNNEven`'s stack need and cost -/
 abbrev nE : Nat → Nat → Nat → Nat := ExpEven.needE NatRem.need ExpSlow.need P2D.needP
 abbrev cE : Nat → Nat → Nat → Nat → Nat := ExpEven.costE cF cR cS cP bUC cUC sqrCQ mulCQ (ExpEven.mulBrE mulCQ)
@@ -61,16 +62,9 @@ theorem sum (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     (hno : NewobjectLiveContract (Extracted.program.ofImpl impl) (cA "runtime.newobject") 4096 R)
     (hwb : WbLiveContract (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2) :
     ExpEven.EvenSum impl R 72368 112 nE cE := by
-  have hDN := IExp.dhypsQ hap hmk hgr hmc hmv hno hwb (Q.NatDiv.ensCLG impl hap R hgr hmc hwb hmk hmv hmz)
-    (K := 70720) (Nat.le_refl _)
-  have hRem : NHyp.RemHyp impl R LibRem.names 41712 112 NatRem.need cR :=
-    Q.rem_of_Q (Q.NatRem.ensCR impl hap R hgr hmc hwb hmk hmv hmz)
-  have hNE : EvenHyp.ExpNNHypNE impl R 70720 cF NatRem.need cR ExpSlow.need P2D.needP cS cP :=
-    fun b L zp zl zc st xp xl xc yp yl yc mp n mc slow =>
-      ExpN.ens_noEven impl hap R hDN hRem IExp.rem_n IExp.rem_11 (by decide) b L zp zl zc st xp xl xc yp yl yc mp n
-        mc slow
+  have hNE := NRow.hNE impl hap R hmk hgr hmc hmv hmz hno hwb
   exact ExpEven.fullI hap hmk hgr hmc hmv hmz hwb (EvenHyp.ExpNNHypNE.toNE1 hNE) (by decide) (by decide)
-    rem_mono slow_mono p2_mono (bU := bUC) (cU := cUC) (Exp.dom _) (Exp.dom _) (stk := 72368) (by decide) (by decide)
+    rem_mono slow_mono p2_mono (bU := bUC) (cU := cUC) (Exp.domF _) (Exp.domF _) (stk := 72368) (by decide) (by decide)
     (by decide)
 
 /-- the precondition (= `EvenSum`'s, window `72368`/`112`) -/
