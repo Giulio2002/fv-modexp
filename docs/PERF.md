@@ -1941,3 +1941,7 @@ Util → IcDefs → IcHL → Ic → Og → Pre → Seg → FinA → Fin → Row 
   **DivRowQ cap 901 s**: own compile 248 modules (310 from the store) 881 s / cpu 4001 s, ok=true (so the new DivCG/DivMC/DivRowQ
   modules compile under Janus). Its own set includes the whole amd64 drs chain: it needs asm's amd64 DrsRowQ row before it (as on
   arm64) to fit. Re-measure in rel46 (v0.3.3, full amd64 order).
+* **rel45 (top s46; arm64 release order, main 951223ee, Janus v0.3.2, fresh cache, ROWS=2, wall 11835 s): 37 PASS / 2 FAIL / 3 MISSING.**
+  Top_RunSucc **543 s / 5.3 GB**, Top_RunErr 872, ExpQ_IExpRow 864 / 5.5 GB, P2W2 842, ModInv 796, W2 610 (> 600 s); Mont 567,
+  DivBasicRowQ 571, DrsRowQ 522, W4 526, DivRowQ 350. FAIL: Nat_DivWRow cap 900 s at 345 MB (stall, also in rel44), Exp_EvenRow
+  cap 901 s / 4.1 GB. MISSING: Run, Bytes, Runbody (COVERAGE todo). No JANUS_TIMINGS (predates 7886616b); rel46 has them.
