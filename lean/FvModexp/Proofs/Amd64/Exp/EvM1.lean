@@ -24,6 +24,14 @@ section
 variable {R : RtInv} {b : Nat} {L : List (Nat × Nat)}
     {K g fs sp st bp r zp zc xp xl xc yp yl yc mp ml mc : Nat} {s : State}
 
+/-- the pushed-frame region `[sp - 8, sp + 0x18)` lies inside the window (small context: PERF s66, was a 28 s omega) -/
+theorem out_m1 {a k sp K : Nat} (h8 : 8 ≤ sp) (h : Apart a k (sp - 8 - K) (K + 0x1c0)) :
+    Outside a k [(sp - 8, sp + 0x18)] := by
+  unfold Apart at h; simp only [outside_cons, outside_nil, and_true]; omega
+
+theorem sp_m1 {sp : Nat} (h8 : 8 ≤ sp) : sp - 8 + 8 = sp ∧ sp - 8 + 16 = sp + 8 ∧ sp - 8 + 24 = sp + 0x10 := by
+  omega
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- **`J11` → `J12`** (see the module doc) -/
@@ -94,8 +102,7 @@ theorem segM1 {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
   have hz3 := hown _ _ _ _ h.z3
   have hmi := hown _ _ _ _ h.mi
   have hzs := LZ.frm hP hw (LiveExt.refl R L1) hF.accessible hhd (d := 0) (n := 0)
-    (fun a k _ hw0 _ => hF.readLE a k (by
-      unfold Apart at hw0; simp only [outside_cons, outside_nil, and_true]; omega)) h.zs
+    (fun a k _ hw0 _ => hF.readLE a k (out_m1 hsp8 hw0)) h.zs
     (fun _ => by unfold Apart; omega)
   have tsp : (S2.regs 4).toNat = sp - 8 := by rw [f4, BitVec.toNat_ofNat]; omega
   have tg : (S2.regs 14).toNat = g := by rw [r14, h.jx.e14, BitVec.toNat_ofNat]; omega
@@ -104,12 +111,12 @@ theorem segM1 {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progr
   have hpre := mulPre hP hw2 hWK tsp tg tfs fm hz2 h.z2e hz3 hmi (fun c0 cw0 => h.tw c0 cw0)
     (fun c0 cw0 => h.iw c0 cw0) hl3x hl4x (Nat.le_trans (mulW64_le_X hl3x hl4x) hWX) (m16 hl3 hl4 hs16')
     (H := lvl4 s st mp ml l1 l2 + 8 * ml + 64) (m16H hl3 hl4) (bud_q1 hb1 hrk' hsr)
-  have hsp' : sp - 8 + 8 = sp := by omega
+  obtain ⟨hsp', hsp16, hsp24⟩ := sp_m1 hsp8
   refine mulCallE hap hns hmu _ (ra := mul1R) (ra_ev hap hnf 1200 (by decide)) f0 (by rw [tsp, fm, frd])
     r0 r3 r1 r7 r6 r8 r9 (by rw [rx15]; exact h.jx.ex15) (by rw [rdf]; exact h.jx.edf) h.pw64 (by omega) hst64
     h.p364 (by omega) (by omega) (by rw [tsp, hsp', fm]; exact ry0)
-    (by rw [tsp, show sp - 8 + 16 = sp + 8 by omega, fm]; exact ry1)
-    (by rw [tsp, show sp - 8 + 24 = sp + 0x10 by omega, fm]; exact ry2) hpre ?_
+    (by rw [tsp, hsp16, fm]; exact ry1)
+    (by rw [tsp, hsp24, fm]; exact ry2) hpre ?_
   intro s' hr e4 e5 e14 ex15 hrg' hq
   obtain ⟨efs, edf, pt, lt, ct, g0, g3, g1, hv, hN, hlc, -, hc40, L2, b2, hx, hb, hinv, hlv, hor, hfa, -, hsb, hF',
     hLF'⟩ := hq

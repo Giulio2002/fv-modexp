@@ -2023,3 +2023,4 @@ EvOB 2.6 s / 2.5 GB; EvCost 2.9 s / 2.7 GB; EvStmt 1.0 s; EvEP 6.0 s / 2.8 GB; E
 killed — `need_lo … (k := 8 w + 72)` gave `l + (8 w + 72)` where segMi/segM1/segM2 expect `l + 8 w + 72`: the defeq
 check unfolded `lvl4`; fixed with exact-shape lemmas `needMi`/`needM`. LESSON: a side-condition lemma's conclusion must
 match the expected expression SYNTACTICALLY, association included); EvSum 1.3 s / 2.8 GB.
+* asm s66: Amd64/Exp/EvM1 108-183 s (two big-context omegas: `sp - 8 + 8 = sp` 150 s, LZ.frm read-frame 28 s) → 2.2 s / 2.7 GB (small lemmas out_m1/sp_m1).
