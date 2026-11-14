@@ -20,6 +20,8 @@ theorem toNat_232 {sp : Nat} (hsp : 232 ≤ sp) (hsp2 : sp ≤ 2 ^ 48) :
     (BitVec.ofNat 64 (sp - 232)).toNat = sp - 224 - 8 := by
   rw [BitVec.toNat_ofNat]; omega
 
+theorem sp8 {sp : Nat} (h : 232 ≤ sp) : sp - 224 - 8 + 8 = sp - 224 := by omega
+
 section
 variable {R : RtInv} {kc : Nat} {H : Nat} {sqrC : Nat → Nat} {mulC : Nat → Nat → Nat} {b : Nat}
     {L : List (Nat × Nat)} {zp zl zc st xp xl xc n : Nat} {s : State}
