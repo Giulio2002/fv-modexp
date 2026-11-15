@@ -33,11 +33,6 @@ open FvModexp.Amd64.W4Pro (XnQ)
       (s.mem.readLE (yp + 8 * (ylen - 1)) 8) zp zc st (stLen s.mem st) (stLen s.mem st + StackNat.rnd (23 * n)) bp xl
       (s.mem.readLE xp (8 * xl)) M s'
 
-/-- `[a, a + k)` inside `[A, A + n)`, which an unfolded `Apart B m A n` keeps apart from `[B, B + m)`: the omega side
-conditions then need no case split on the context's disjunctions -/
-theorem in_or {B m A n a k : Nat} (h : B + m ≤ A ∨ A + n ≤ B) (h1 : A ≤ a) (h2 : a + k ≤ A + n) :
-    a + k ≤ B ∨ B + m ≤ a := by omega
-
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- from `xnE` (any memory `M` with the entry segment's frame facts) to `EnPost` -/
