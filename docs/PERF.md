@@ -2274,6 +2274,31 @@ replay 173 / audit 214). Dev per-module compile of RunSucc's 67 own modules agai
 * Measurement caveat: targeted janus runs from a modified snapshot against a COPY of the rel49 cache recompiled the lower
   closure (store entries not reused across snapshots), so NRow hit the 900 s cap twice; no valid row times yet. Needs a
   warm-up from the SAME snapshot (asm s79 recipe) or the next release run.
+
+## asm s84 (2026-11-15): amd64 Top_RunSucc own modules — dev sum 1435 -> 995 s (statements, costs, axioms unchanged)
+Measured: per-module `lean -o` of RunSucc's 67 own modules (release order, after Top/RunErr) against the rel49 oleans,
+2 modules at a time, host load ~15. Start of session (s83 commit, same setup): sum 1184 s; end: **sum 995 s** (crit path
+101 s). Row not janus-measured (coordinator's next release run; rel49 had compile 455 / replay 133 / audit 61 = 656 s at
+dev sum 1624).
+* Full-program `janus64_data hd` (49 rodata segments) in big contexts: RunDE0-2 (template RunDE64.tmpl) installed it but
+  never used it -> dropped (65 -> 39/45/45 s). IntBytes did it three times for the `uint8` descriptor -> one small lemma
+  `IntBytes.u8B` on `u8ProgB` (the program restricted to data segment 0, the `errProg` trick of RunSmall): 73 -> 15 s.
+  RunU8 on the same restriction (`u8Prog`): 19 -> 1.8 s; RunDKDefs' duplicate `uint8_words`/`uint8_acc` now = RunU8's
+  lemmas: 20 -> 2.3 s.
+* `janus_frame` at call sites (5-14 s each, failed alternatives with full-context omega side goals) -> named closers in
+  RunDJDefs: `frame_w` (one store inside the window), `frame_cs_trans` (window stores, then a runtime call's stack),
+  `frame_csb_trans` (+ a <= 32-byte stack buffer), `frame_copy_fresh` (fresh-buffer memmove); `refine_24` = `hMF.trans hMFm`
+  where the post memory is the call's. RunCP2's four calls: `frame_two_slots` (56 -> 30 s).
+* One `(by omega)` for `min h (l - 96 - a) = min h (l - (96 + a))` cost 51 s in RunDJF2 -> `Nat.sub_sub` (DJF1/DJF2/DJS1/DJS2).
+* `pin_mod` (`(p + inOff len) % 2^64 = p + inOff len`) passed to the DM1/DM2/DP1/DP2 runs: failed `mod64_of_lt` discharges
+  (1-9 s each) gone (DM2 66 -> 58, DP1 50 -> 42, DP2 ~72 -> 61 single runs).
+* RunC2Sum: name-list containment by `decide +kernel` over `contains` (each name compared with every earlier entry,
+  ~50 shared prefix bytes) -> `sub_of_subIdx` with explicit positions (one comparison per name): 51 -> 5 s.
+* Per module before -> after: DJF2 86->28, DJF1 79->43, DM2 78->64, DM1 68->60, IntBytes 73->15, C2Sum 52->5,
+  DE0/1/2 65->39/45/45, CP1 55->47, CP2 56->34, DJF0 45->40, DM0 46->44, DJS0/1/2 23/34/34->21/26/26, C1 31->30,
+  U8 19->2, DKDefs 20->2; top now DP2 73, DM2 64, DM1 60, DP1 52, CP1 47 (all dominated by `janus64_run` itself).
+* Tried, not adopted: `janus.omega.cap 4`/`budget 2000` on DM2 (78 -> 74 s, cap 2 loses a proof).
+
 ## divmc s83 (2026-11-15): amd64 W4Row < 500 s — two new lower rows (MontRow, P2PreRow) + window tactic trims
 Fair targeted runs (Janus v0.3.3, ROWS=1, JANUS_TIMINGS=1, JANUS_REPLAY_THREADS=1, snapshot cache-divmc/s83/snapR = agent/divmc
 dd309007). Lower amd64 rows StackNat..Int/ModRow warmed outside the caps (snapshot-only `Warm83` importing them, `entry = entry`

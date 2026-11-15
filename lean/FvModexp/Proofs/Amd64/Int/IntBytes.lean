@@ -45,15 +45,10 @@ theorem ens (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
   rw [h_u] at hokb
   have hsh : BitVec.ofNat 64 (s.mem.readLE (x.toNat + 16) 8) <<< 3 = BitVec.ofNat 64 (8 * s.mem.readLE (x.toNat + 16) 8) := by
     apply BitVec.eq_of_toNat_eq; rw [BitVec.toNat_shiftLeft]; simp only [BitVec.toNat_ofNat, Nat.shiftLeft_eq]; omega
-  have hU2 : s.mem.readLE 7231264 8 = 1 := by
-    janus64_data hd; rw [h_rodata _ _ (by decide)]; decide
-  have hU3 : s.mem.readLE 7231272 8 = 0 := by
-    janus64_data hd; rw [h_rodata _ _ (by decide)]; decide
+  obtain ⟨hU2, hU3, hU1⟩ := u8B hd
   have hut : Apart 7231264 16 ((s.regs 4).toNat - 4160) (4160 + 16) :=
     apart_of_data (x := 7231264) (l := 16) hd 0 (by decide) (by decide) hw
   unfold Apart at hut
-  have hU1 : s.mem.accessible 7231264 16 false = true := by
-    janus64_data hd; exact Janus.Arm64.Memory.accessible_mono _ h_data0 (by omega) (by omega)
   have hBS : blockSize (8 * s.mem.readLE (x.toNat + 16) 8) true ≤ b :=
     Nat.le_trans (blockSize_le_allocCost _ true) hB
   have hIp := toInt_small (BitVec.ofNat 64 (8 * s.mem.readLE (x.toNat + 16) 8)) (by simp; omega)

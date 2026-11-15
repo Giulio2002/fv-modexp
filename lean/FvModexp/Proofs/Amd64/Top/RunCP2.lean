@@ -10,6 +10,14 @@ open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Spec Janus.Con
 
 namespace FvModexp.Amd64.Run
 
+/-- The two stack-slot stores of `P` (`0x190(SP)` spill, return-address push at `-616`) stay inside the window
+`[sp - W, sp + ab)`: the named closer of the `MemFrame` goals (was `janus_frame`, 46 s over four calls). -/
+theorem frame_two_slots (m : Janus.Arm64.Memory) {sp W k1 k2 : Nat} (v1 v2 ab : Nat) (h1 : 8 ≤ k1) (h1' : k1 ≤ W)
+    (h2 : 8 ≤ k2) (h2' : k2 ≤ W) (hW : W ≤ sp) :
+    MemFrame m ((m.writeLE (sp - k1) 8 v1).writeLE (sp - k2) 8 v2) [(sp - W, sp + ab)] :=
+  ((MemFrame.refl m _).writeLE v1 (List.mem_singleton_self _) (by omega) (by omega)).writeLE v2
+    (List.mem_singleton_self _) (by omega) (by omega)
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem cp2 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
@@ -136,14 +144,14 @@ theorem cp2 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
       case mf =>
         dsimp only
         refine (hMF.trans ?w1 fun a n h => ⟨h, outW_w h⟩).trans hMFm fun a n h => ⟨h, outW_cs2 hW h⟩
-        case w1 => simp only [win]; janus_frame
+        case w1 => exact frame_two_slots _ _ _ _ (by decide) (Nat.le_trans (by decide) hW) (by decide) (Nat.le_trans (by decide) hW) hb'
       case lf =>
         dsimp only
         refine hLF.trans ⟨fun a n hin _ => ?_⟩ (fun _ _ h => h)
         have hin' := hext.inRanges_old hin
         have hU := (LiveFrame.of_win (L := L) (ex := []) (m := U.mem)
           (m' := (U.mem.writeLE ((s.regs 4).toNat - 208) 8 buf).writeLE ((s.regs 4).toNat - 616) 8 6639494)
-          (by simp only [win]; janus_frame) (fun r hr => hLsS r (hext.mem_old hr))).readLE a n hin trivial
+          (frame_two_slots _ _ _ _ (by decide) (Nat.le_trans (by decide) hW) (by decide) (Nat.le_trans (by decide) hW) hb') (fun r hr => hLsS r (hext.mem_old hr))).readLE a n hin trivial
         rw [← hU]
         exact hLFm.readLE a n hin' (by simp only [Janus.outside_nil])
     · obtain ⟨hv48, hvacc, hvap, hvw⟩ := hvf hv0
@@ -218,14 +226,14 @@ theorem cp2 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
       case mf =>
         dsimp only
         refine (hMF.trans ?w1 fun a n h => ⟨h, outW_w h⟩).trans hMFm fun a n h => ⟨h, outW_csd2 hW hdRt h⟩
-        case w1 => simp only [win]; janus_frame
+        case w1 => exact frame_two_slots _ _ _ _ (by decide) (Nat.le_trans (by decide) hW) (by decide) (Nat.le_trans (by decide) hW) hb'
       case lf =>
         dsimp only
         refine hLF.trans ⟨fun a n hin _ => ?_⟩ (fun _ _ h => h)
         have hin' := hext.inRanges_old hin
         have hU := (LiveFrame.of_win (L := L) (ex := []) (m := U.mem)
           (m' := (U.mem.writeLE ((s.regs 4).toNat - 208) 8 buf).writeLE ((s.regs 4).toNat - 616) 8 6639494)
-          (by simp only [win]; janus_frame) (fun r hr => hLsS r (hext.mem_old hr))).readLE a n hin trivial
+          (frame_two_slots _ _ _ _ (by decide) (Nat.le_trans (by decide) hW) (by decide) (Nat.le_trans (by decide) hW) hb') (fun r hr => hLsS r (hext.mem_old hr))).readLE a n hin trivial
         rw [← hU]
         refine hLFm.readLE a n hin' ?_
         obtain ⟨r, hr, h1, h2⟩ := hin

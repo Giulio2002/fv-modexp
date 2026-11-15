@@ -118,7 +118,9 @@ theorem dJS0 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl
     hd48, hdacc, hLs0, hLsL1, hwrt, hsacc, hcacc, hc48, hcheld, hp, hlcp, hcp48, hpacc, hheld, hd, hro, hLs, hgr,
     hfs8, hfsacc, hfsg, hfsrt⟩ := bx.h
   clear hsf2 hsf3 hcf3 hcf4 hga
-  have hMFm : MemFrame S.mem m (R.rt ++ win s stk 40) := by simp only [win, stk]; janus_frame
+  have hMFm : MemFrame S.mem m (R.rt ++ win s stk 40) :=
+    frame_csb_trans hb' (by decide) (by decide) hn32
+      (frame_w _ (frame_w _ (MemFrame.refl _ _) hb' (by decide) (by decide)) hb' (by decide) (by decide)) hMFv
   have hd1 := dataLoaded_frame64 hdS (by simp [hrg1]) hro hMFm (fun r hr _ => by
     simp only [win, stk, List.mem_cons, List.not_mem_nil, or_false] at hr; subst hr
     exact Janus.Arm64.Memory.accessible_mono _ hwS (Nat.le_refl _) (win_len hb'))

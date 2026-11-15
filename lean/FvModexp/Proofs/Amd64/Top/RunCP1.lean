@@ -84,7 +84,8 @@ theorem cp1 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
     janus64_run [hsp, hm1, hm2, hs3', hr0, hr3, hI1, hI5, hn1, hn5, hU2, hU3, BitVec.msb_eq_decide] until [pcP]
       calls [hmkP]
     rename_i ptr _ _ _ _ mk _ _ hLFk hMFk hapk hink hbk hack h8k _ hzk hrk hapSk hinvk
-    have hMFm : MemFrame V.mem mk (R.rt ++ win s W 40) := by simp only [win]; janus_frame
+    have hMFm : MemFrame V.mem mk (R.rt ++ win s W 40) :=
+      frame_cs_trans hW hb' (frame_w _ (frame_w _ (frame_w _ (MemFrame.refl _ _) hb' (by decide) (Nat.le_trans (by decide) hW)) hb' (by decide) (Nat.le_trans (by decide) hW)) hb' (by decide) (Nat.le_trans (by decide) hW)) hMFk
     have hdk := dataLoaded_frame64 hdS (by simp [hrg1]) hro hMFm (fun r hr _ => by
       simp only [win, List.mem_cons, List.not_mem_nil, or_false] at hr; subst hr
       exact Janus.Arm64.Memory.accessible_mono _ hwS (Nat.le_refl _) (by omega))

@@ -104,12 +104,13 @@ theorem dM1 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
     omega
   obtain ⟨hcf1, hcf2, hcf3, hcf4⟩ := frame_call_facts hal hg3 hga
   rw [hx0] at hx15
+  have hpm := pin_mod (p := p.toNat) len hp
   have bx := Box.mk <| And.intro hinS <| And.intro hheld <| And.intro hpacc <| And.intro hp <|
     And.intro hlcp <| And.intro hcp48 <| And.intro hsteq <| And.intro hstv <| And.intro hsrc <| And.intro hop hopA
   clear hinS hheld hpacc hp hlcp hcp48 hsteq hstv hsrc hop hopA
   set_option janus.callRegions true in
   janus64_run [hsp, hm1, hm2, hm3, hm4, hm5, hm6, s1, s2, s4, s5, s6, hsl1, hsl2, hz1', hz2', hz3', hcb, hsubB, hJG, hmB,
-    hc32, hx15, hU2, hU3, toInt_ite, toNat_ite, toInt_small, BitVec.msb_eq_decide] until [pcJ1] calls [hmkP]
+    hc32, hx15, hU2, hU3, hpm, toInt_ite, toNat_ite, toInt_small, BitVec.msb_eq_decide] until [pcJ1] calls [hmkP]
   rename_i ptr _ _ _ _ m _ _ hLFk hMFk hAp hIn hle hacc h8 _ hzk hsz hapW hinvk
   obtain ⟨hinS, hheld, hpacc, hp, hlcp, hcp48, hsteq, hstv, hsrc, hop, hopA⟩ := bx.h
   clear hut hcf1 hcf2 hcf3 hcf4
@@ -118,7 +119,9 @@ theorem dM1 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
     exact hout.of_sub (Nat.le_refl _) (win_len hb')
   have hext' : LiveExt R Lk (Lk ++ [(ptr.toNat, ptr.toNat + blockSize (hdrV s p len 1) true)]) :=
     LiveExt.single (by simpa using hIn) (by simpa using hAp)
-  have hMFm : MemFrame S.mem m (R.rt ++ win s stk 40) := by simp only [win, stk]; janus_frame
+  have hMFm : MemFrame S.mem m (R.rt ++ win s stk 40) :=
+    frame_cs_trans (Nat.le_refl _) hb'
+      (frame_w _ (frame_w _ (frame_w _ (MemFrame.refl _ _) hb' (by decide) (by decide)) hb' (by decide) (by decide)) hb' (by decide) (by decide)) hMFk
   have hLFS : LiveFrame S.mem m Lk [] :=
     (LiveFrame.of_win (by simp only [win, stk]; janus_frame) hLsS).trans hLFk (fun _ _ h => h)
   have hacc' : s.mem.accessible ptr.toNat (hdrV s p len 1) true = true :=
@@ -126,7 +129,7 @@ theorem dM1 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
   have hoL : opLen s p len 1 = hdrV s p len 1 := rfl
   have hoA : opAvail s p len 1 = min (hdrV s p len 1) (len.toNat - 96 - hdrV s p len 0) := rfl
   have hoS : opStart s p len 1 = hdrV s p len 0 := rfl
-  have hbp : (((if st < cp.toNat - inOff len then st else 0) + (p.toNat + inOff len) % 18446744073709551616) %
+  have hbp : (((if st < cp.toNat - inOff len then st else 0) + (p.toNat + inOff len)) %
       18446744073709551616) = p.toNat + inOff len + (if st < cp.toNat - inOff len then st else 0) := by
     clear hinvk hMFk hLFk hMFm hLFS hext' hinv hMF hLF hop hopA hLSm hinS
     unfold inOff; split <;> split <;> omega
@@ -152,7 +155,7 @@ theorem dM1 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
       exact Janus.Arm64.Memory.accessible_mono _ hwS (Nat.le_refl _) (win_len hb'))
   case refine_22 => exact bud_alloc hbk hBA hcst hcb'
   case refine_23 => exact hinvk
-  case refine_24 => dsimp only; simp only [win, stk] at hMF ⊢; janus_frame
+  case refine_24 => exact hMF.trans hMFm (fun _ _ h => ⟨h, h⟩)
   case refine_25 =>
     dsimp only
     exact hLF.trans hLFS (fun _ _ h => hext.inRanges_old h)

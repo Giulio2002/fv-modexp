@@ -82,7 +82,7 @@ def conv(kind):
         ("(k := 520)", "(k := 552)"),
         ("    · simp only [opLen, ↓reduceIte]\n", "    · rfl\n"),
         ("simp only [opV, opStart, opLen, ↓reduceIte, Nat.add_zero]", "simp only [opV, hoS, hoL]"),
-        ("refine padded_val hcp ?_ ?_ rfl", "refine padded_val hcp ?_ ?_ (by omega)"),
+        ("refine padded_val hcp ?_ ?_ rfl", "refine padded_val hcp ?_ ?_ (by rw [Nat.sub_sub])"),
         ("in_rng (p := p.toNat) (st := 0) (by simpa using hi)\n        simp only [Nat.add_zero] at r1 r2",
          "in_rng (p := p.toNat) (st := hdrV s p len 0) hi"),
         ("in_rng (p := p.toNat) (st := 0) (by simpa using hi)", "in_rng (p := p.toNat) (st := hdrV s p len 0) hi"),
