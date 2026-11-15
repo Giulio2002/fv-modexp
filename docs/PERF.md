@@ -2304,3 +2304,11 @@ release order. Before = top's rel49 amd64 (fresh cache, load ~17).
   Every row ≤ 510 s; W4Row's remaining cost is replay (188 s, kernel per-pc `stepOK`) + a now throughput-bound compile.
   The total release work grows by two row overheads (~2 × 15 s extraction/audit setup); the montgomery and table closures are
   paid once either way.
+
+## top s52 (2026-11-15): autoImplicit=false gap check (main 99f61795) — 0 failures, no source change
+The 35 Lean files changed between 87a68769 (base of the full autoImplicit build) and main 99f61795, every module importing them
+(per ISA), and every closure module whose release olean was stale or missing, dev-compiled with `lean -D autoImplicit=false`
+(2 in parallel, LEAN_NUM_THREADS=4) against hard-link farms of the rel49 release oleans (snapshot 0773715a):
+amd64 **335 modules OK** (324 changed/downstream + 11 closure modules absent from the rel49 store), arm64 **310 modules OK**
+(the 242 downstream of Common/DivRec + 68 absent closure modules). No auto-bound implicit anywhere; nothing to fix.
+Slowest: amd64 RunDJF2 80 s, RunDJF1 74 s, RunDM2 72 s, RunDM1 68 s, OddEns 66 s (all under 3 GB). Tools: cache-top/s52/{closure,devpar,pass2}.py.
