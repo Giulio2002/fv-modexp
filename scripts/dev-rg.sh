@@ -16,5 +16,5 @@ for f in "${files[@]}"; do
   rel="${f#$root/lean/}"; mod="${rel%.lean}"
   lib="$root/lean/.lake/build/lib/lean"; mkdir -p "$lib/$(dirname "$mod")"
   echo "== $rel"
-  LEAN_PATH="$out" /usr/bin/time -f "%e s %M KB" memcap -m 8G lake env lean -R "$root/lean" -o "$lib/$mod.olean" "$f"
+  LEAN_PATH="$out" /usr/bin/time -f "%e s %M KB" memcap -m 8G lake env lean -D autoImplicit=false -R "$root/lean" -o "$lib/$mod.olean" "$f"
 done
