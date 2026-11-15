@@ -18,5 +18,5 @@ for f in "$@"; do
   mkdir -p "$OUT/$(dirname "$mod")"
   echo "== $mod ($isa)"
   LEAN_PATH=$LP LEAN_NUM_THREADS=${LEAN_NUM_THREADS:-4} memcap -m ${CAP:-8G} /usr/bin/time -f "   [%e s, %M KB]" \
-    $TC/bin/lean -R $root/lean -o "$OUT/$mod.olean" "$f"
+    $TC/bin/lean -D autoImplicit=false -R $root/lean -o "$OUT/$mod.olean" "$f"
 done
