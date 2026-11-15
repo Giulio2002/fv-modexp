@@ -86,7 +86,7 @@ theorem short_lt (u v : List Nat) (hu : Wd u) (hv : Wd v) (h2 : v ≠ []) (htop 
   omega
 
 /-- bounds from `2·u < β^(n+k)` and `v` with top bit set. -/
-theorem fit_of_H (v u : List Nat) (hv : Wd v) (htop : 2 ^ 63 ≤ topLimb v) (hn : v.length = n) (k : Nat)
+theorem fit_of_H {n : Nat} (v u : List Nat) (hv : Wd v) (htop : 2 ^ 63 ≤ topLimb v) (hn : v.length = n) (k : Nat)
     (hH : 2 * val u < 2 ^ (64 * (n + k))) : val u < val v * 2 ^ (64 * k) := by
   have hne : v ≠ [] := by intro e; subst e; simp [topLimb] at htop
   have h := val_ge_top63 hne htop

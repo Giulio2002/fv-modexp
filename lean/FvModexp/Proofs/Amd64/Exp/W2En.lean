@@ -161,11 +161,11 @@ theorem enStep (hRR : FvModexp.Amd64.W2Pro.RRSpec) {impl : List Amd64.Segment} (
     have hsl3 : ESl M3 sp st bp r zp zc xp xl xc yp ylen mp n mc (stLen s.mem st) := by
       refine ESl.keep hsl1 (fun a ha => hF3.readLE a 8 ?_)
       simp only [outside_append, outside_cons, outside_nil, and_true]
-      exact ⟨hrt.of_sub (by omega) (by omega), by omega, by omega⟩
+      exact ⟨hrt.of_sub (by omega) (by omega), in_or hstw (by omega) (by omega), by omega⟩
     have h148 : M3.readLE (sp + 0x148) 8 = 5 * n := by
       rw [hF3.readLE _ 8 (by
         simp only [outside_append, outside_cons, outside_nil, and_true]
-        exact ⟨hrt.of_sub (by omega) (by omega), by omega, by omega⟩)]
+        exact ⟨hrt.of_sub (by omega) (by omega), in_or hstw (by omega) (by omega), by omega⟩)]
       exact q148
     have hcap3 : stLen M3 st ≤ stCap M3 st := by simp only [stLen, stCap] at q2 q3 hk ⊢; omega
     have hc3 : stCap M3 st < 2 ^ 40 := by simp only [stCap] at q3 ⊢; rw [q3]; exact k7
@@ -243,11 +243,11 @@ theorem enStep (hRR : FvModexp.Amd64.W2Pro.RRSpec) {impl : List Amd64.Segment} (
       · simp only [outside_append, outside_cons, outside_nil, and_true]
         exact ⟨hrt.of_sub (by omega) (by omega), by omega, by omega, by omega⟩
       · simp only [outside_append, outside_cons, outside_nil, and_true]
-        exact ⟨hrt.of_sub (by omega) (by omega), by omega, by omega⟩
+        exact ⟨hrt.of_sub (by omega) (by omega), in_or hstw (by omega) (by omega), by omega⟩
     have h148 : M3.readLE (sp + 0x148) 8 = 5 * n := by
       rw [hF3.readLE _ 8 (by
           simp only [outside_append, outside_cons, outside_nil, and_true]
-          exact ⟨hrt.of_sub (by omega) (by omega), by omega, by omega⟩),
+          exact ⟨hrt.of_sub (by omega) (by omega), in_or hstw (by omega) (by omega), by omega⟩),
         hF2.readLE _ 8 (by
           simp only [outside_append, outside_cons, outside_nil, and_true]
           exact ⟨hrt.of_sub (by omega) (by omega), by omega, by omega, by omega⟩)]

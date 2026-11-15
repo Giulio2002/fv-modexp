@@ -2244,6 +2244,16 @@ Drs 325/1739, Div 339/2573, DivM 178/3576, Rem 145/4585, DivBasicQ 216/4528, Drs
 RemQ 118/4665, IntMod 143/3995, W2 406/3111, W4 419/2981, P2W2 273/2985, P2W4 204/1545, P2D 278/2142, N 442/4574,
 Even 329/3734, IExpQ 317/4391, RequiredGas 210/1622, RunErr 279/1651, RunSucc 466/5157, RunTotal 77/4860.
 
+## top s51 (2026-11-15): rel49 amd64 — RELEASE CANDIDATE (Janus v0.3.3, fresh cache, ROWS=1, snapshot main 0773715a, wall 10574 s + warm-up 917 s)
+**33/33 PASS** (with arm64 43/43: 76/76 rows green, all under the 900 s cap). Host load (max per row) min 12.8 / median 17.8 / max 23.1.
+Rows > 600 s (LOCK 0): Exp_W4Row 720 s (compile 124 mods 467 / replay 214 / audit 34), Exp_EvenRow 702 s (compile 95 mods 309 /
+replay 173 / audit 214 — PASS, rel48 cap), Top_RunSucc 656 s / 5.3 GB (compile 67 mods 455 / replay 133 / audit 61; rel48 557 s at
+half the load). Exp_IExpRow 309 s (rel48 708).
+Per row (s/MB): StackNat 167/1025, MulAddWW 216/1196, AddVW 67/1100, SubVW 67/1058, BasicSqr 406/6194, Trunc 196/1201,
+Rsh 152/1254, Lsh 125/1236, IntAS 194/1332, BasicSqrQ 260/6186, SqrQ 423/4337, MulQ 432/2165, SubMod2N 502/5692,
+DivW 161/1263, DivWVW 13/432, DivBasic 280/3569, DivBasicQ 259/3633, DrsQ 511/2255, DivQ 440/5208, RemQ 162/2123,
+IntMod 313/3843, W4 720/3574, W2 476/3219, P2W2 556/3025, P2W4 326/3008, P2D 230/2371, ModInv 333/2517, Slow 218/3076,
+Even 702/4546, IExp 309/4244, RequiredGas 281/3434, RunErr 374/1290, RunSucc 656/5310.
 ## asm s83 (2026-11-15): amd64 Top_RunSucc + Exp_EvenRow trims (dev-compile numbers; janus row runs NOT yet measured)
 Baseline rel49 (load ~17): RunSucc 656 s (own 67: compile 455 / replay 133 / audit 61), EvenRow 702 s (own 95: compile 309 /
 replay 173 / audit 214). Dev per-module compile of RunSucc's 67 own modules against the rel49 oleans: sum 1624 s (4 parallel).
@@ -2288,3 +2298,42 @@ dev sum 1624).
   DE0/1/2 65->39/45/45, CP1 55->47, CP2 56->34, DJF0 45->40, DM0 46->44, DJS0/1/2 23/34/34->21/26/26, C1 31->30,
   U8 19->2, DKDefs 20->2; top now DP2 73, DM2 64, DM1 60, DP1 52, CP1 47 (all dominated by `janus64_run` itself).
 * Tried, not adopted: `janus.omega.cap 4`/`budget 2000` on DM2 (78 -> 74 s, cap 2 loses a proof).
+
+## divmc s83 (2026-11-15): amd64 W4Row < 500 s — two new lower rows (MontRow, P2PreRow) + window tactic trims
+Fair targeted runs (Janus v0.3.3, ROWS=1, JANUS_TIMINGS=1, JANUS_REPLAY_THREADS=1, snapshot cache-divmc/s83/snapR = agent/divmc
+dd309007). Lower amd64 rows StackNat..Int/ModRow warmed outside the caps (snapshot-only `Warm83` importing them, `entry = entry`
+theorem so it replays; 772 modules, 3512 s, JANUS_JOBS=6), then each run on a fresh hardlink copy of that warm cache, rows in
+release order. Before = top's rel49 amd64 (fresh cache, load ~17).
+* Profile (dev, `-Dprofiler`): W4Row's own set (124 modules, dev sum 1054 s) had the montgomery closure on its critical import
+  path: LibMont 7 → MontHyp → MontLoop 111 → Mont 55 → MontExit 21 → MontW → DeferX → W4DivK … (dev crit 336 s of 1054); rel49's
+  own compile 467 s was crit-path bound. amd64 had no Mont row (arm64 has `Exp/MontRow`).
+* (1) NEW `amd64 Exp/MontRow` (twin of arm64 MontRow: `Mont.ens` on the Run program + `Witness.nonvacuous`
+  montgomery(z, 3, 5, 7, 0, 1), m/k/n as stack args at RSP+8…, `hasADX` region), release row right before `amd64 Exp/W4Row`:
+  W4Row own 124 → 117 modules, dev crit 336 → 149 s.
+* (2) NEW `amd64 Exp/P2PreRow` (`buildPrecomputationWindowModPower2`: `P2Pre.ens` with CalleeInstQ's closed callees,
+  kc = mulWX64; post `PostR` = `P2Pre.Post` with the `Scr` structure spelled out (`ScrF`) — the audit refuses structures in a
+  statement; witness windowSize 2, logM 8, x = [3]), release row right before `amd64 Exp/P2W2Row`: P2W2Row own 95 → 56 modules.
+* (3) Tactic trims (statements unchanged): omegas that case-split the context's unfolded `Apart` disjunctions replaced by
+  sub-range lemmas (`apart_in`/`apart_inF` in W{2,4}ORet, `in_or` in W{2,4}EnCtx, used by W{2,4}En), `congr 1` → `congrArg` in
+  W{2,4}ZcA, name-containment `decide` → `decide +kernel` (DivInst, CalleeInstQ). Dev (s): W4ORet 39.8→14.6, W2ORet 32.3→14.2,
+  W4En 29.7→16.3, W2En 32.2→16.2, W4EnCtx 30.5→17.4, W2EnCtx 34.1→17.5, W4ZcA 30.6→15.1, W2ZcA 29.9→14.6, DivInst 25.7→14.7,
+  CalleeInstQ 24.8→17.8.
+| row (amd64) | rel49 total | s83 run 1 (load 16-22) | s83 run 2 (load 6-20) | run 2: own / compile / audit / replay |
+|---|---|---|---|---|
+| Exp/MontRow (new) | – | PASS 332 s / 3.7 GB | PASS 293 s / 3.6 GB | 8 / 194 / 6 / 58 |
+| Exp/W4Row | 720 s / 3.6 GB (124 / 467 / 34 / 214) | PASS 510 s / 3.1 GB | **PASS 480 s / 3.2 GB** | 117 / 256 / 30 / 188 |
+| Exp/W2Row | 476 s | PASS 464 s / 3.3 GB | **PASS 452 s / 3.1 GB** | 103 / 245 / 33 / 169 |
+| Exp/P2PreRow (new) | – | (audit: Scr, fixed) | PASS 309 s / 3.0 GB | 40 / 155 / 21 / 128 |
+| Exp/P2W2Row | 556 s | – | **PASS 315 s / 3.0 GB** | 56 / 193 / 23 / 94 |
+| Exp/P2W4Row | – | – | PASS 309 s / 3.0 GB | 51 / 193 / 23 / 87 |
+  Every row ≤ 510 s; W4Row's remaining cost is replay (188 s, kernel per-pc `stepOK`) + a now throughput-bound compile.
+  The total release work grows by two row overheads (~2 × 15 s extraction/audit setup); the montgomery and table closures are
+  paid once either way.
+
+## top s52 (2026-11-15): autoImplicit=false gap check (main 99f61795) — 0 failures, no source change
+The 35 Lean files changed between 87a68769 (base of the full autoImplicit build) and main 99f61795, every module importing them
+(per ISA), and every closure module whose release olean was stale or missing, dev-compiled with `lean -D autoImplicit=false`
+(2 in parallel, LEAN_NUM_THREADS=4) against hard-link farms of the rel49 release oleans (snapshot 0773715a):
+amd64 **335 modules OK** (324 changed/downstream + 11 closure modules absent from the rel49 store), arm64 **310 modules OK**
+(the 242 downstream of Common/DivRec + 68 absent closure modules). No auto-bound implicit anywhere; nothing to fix.
+Slowest: amd64 RunDJF2 80 s, RunDJF1 74 s, RunDM2 72 s, RunDM1 68 s, OddEns 66 s; peak RSS 6.0 GB. Tools: cache-top/s52/{closure,devpar,pass2}.py.

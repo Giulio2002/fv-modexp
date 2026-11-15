@@ -43,7 +43,7 @@ theorem sub_of_all {ns ms : List String} (h : ns.all (fun x => ms.contains x) = 
   exact h x (List.contains_iff_mem.1 hx)
 
 set_option maxHeartbeats 64000000 in
-theorem sub : ∀ x, nsQ.contains x = true → LibW.names.contains x = true := sub_of_all (by decide)
+theorem sub : ∀ x, nsQ.contains x = true → LibW.names.contains x = true := sub_of_all (by decide +kernel)
 
 set_option maxHeartbeats 64000000 in
 theorem subs : (∀ x, StackNat.names.contains x = true → nsQ.contains x = true) ∧

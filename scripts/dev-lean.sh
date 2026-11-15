@@ -17,5 +17,5 @@ for f in "$@"; do
   esac
   mkdir -p "$OUT/$(dirname "$mod")"
   echo "== $mod"
-  LEAN_PATH="$LP" LEAN_NUM_THREADS=${LEAN_NUM_THREADS:-4} memcap -m ${CAP:-12G} /usr/bin/time -f "   [%e s, %M KB]" $LEAN --root="$root" -o "$OUT/$mod.olean" "$f"
+  LEAN_PATH="$LP" LEAN_NUM_THREADS=${LEAN_NUM_THREADS:-4} memcap -m ${CAP:-12G} /usr/bin/time -f "   [%e s, %M KB]" $LEAN -D autoImplicit=false --root="$root" -o "$OUT/$mod.olean" "$f"
 done

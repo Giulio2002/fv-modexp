@@ -18,6 +18,11 @@ open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Spec Janus.Con
 
 namespace FvModexp.Amd64.W2En
 
+/-- `[a, a + k)` inside `[A, A + n)`, which an unfolded `Apart B m A n` keeps apart from `[B, B + m)`: the omega side
+conditions then need no case split on the context's disjunctions -/
+theorem in_or {B m A n a k : Nat} (h : B + m ≤ A ∨ A + n ≤ B) (h1 : A ≤ a) (h2 : a + k ≤ A + n) :
+    a + k ≤ B ∨ B + m ≤ a := by omega
+
 open FvModexp.Amd64.W2Pro (Obj AW stUp)
 
 /-- the free part of the stack's array -/
@@ -182,13 +187,14 @@ theorem ctxX_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)}
     inp hmO hma hm48, obj hmO, rd hmO (Nat.le_refl _) (Nat.le_refl _),
     inp hyO hya hy48, obj hyO, rd hyO (Nat.le_refl _) (Nat.le_refl _), ?yi, ?yi0, hyl, hyl', hzc, ?z, ?fin,
     hsthL, by simp only [AW]; unfold Apart; omega, ⟨k1, hsthL, by rw [hacc']; exact k3, k4, hnl, hcap, hc40⟩,
-    by omega, Nat.le_refl _, hcap0, ?arr, ?ug, ?uf, ?uw, ?su, by unfold Apart; omega, by unfold Apart; omega,
+    by omega, Nat.le_refl _, hcap0, ?arr, ?ug, ?uf, ?uw, ?su, hstg, hstfs,
     ?glob, obj hgO, hwbA, ?wbacc, ?sacc, hrt.of_sub (by omega) (by omega), ?sobj, q15, q16, q17, q8, q7, q14, q13, q9,
     h148, hstnz⟩, ?sobj2, ?sacc2, ⟨hxlc, by omega, hxc, by rw [hacc']; exact hxa, hx48, obj hxO⟩, ?xN,
     rd hxO (Nat.le_refl _) (by omega)⟩
   case sobj2 =>
     refine ⟨Or.inr (hrt.of_sub (by omega) (by omega)), by simp only [AW]; unfold Apart; omega,
-      by unfold Apart; omega, by simp only [stUp, Apart]; omega, fun e he => by simp at he⟩
+      by unfold Apart; exact in_or hstw (by omega) (by omega), by simp only [stUp, Apart]; omega,
+      fun e he => by simp at he⟩
   case sacc2 =>
     rw [hacc']; exact Janus.Arm64.Memory.accessible_weaken _
       (Janus.Arm64.Memory.accessible_mono _ hacc (by omega) (by omega))
@@ -248,6 +254,7 @@ theorem ctxX_of {R : RtInv} {b : Nat} {L : List (Nat × Nat)}
       (Janus.Arm64.Memory.accessible_mono _ hacc (by omega) (by omega))
   case sobj =>
     refine ⟨Or.inr (hrt.of_sub (by omega) (by omega)), by simp only [AW]; unfold Apart; omega,
-      by unfold Apart; omega, by simp only [stUp, Apart]; omega, fun e he => by simp at he⟩
+      by unfold Apart; exact in_or hstw (by omega) (by omega), by simp only [stUp, Apart]; omega,
+      fun e he => by simp at he⟩
 
 end FvModexp.Amd64.W2En
