@@ -26,9 +26,34 @@ namespace FvModexp.Amd64.P2PreRow
 
 open FvModexp.Amd64.CalleeInstQ
 
+/-- `Scr` (a `structure`, which the Janus audit does not accept in a row statement) as the plain conjunction of its
+fields -/
+@[reducible] def ScrF (R : RtInv) (L L1 : List (Nat × Nat)) (m0 m : Memory) (st t k : Nat) : Prop :=
+  t + 8 * k ≤ 2 ^ 48 ∧ m.accessible t (8 * k) true = true ∧ t % 8 = 0 ∧ Held R L1 t (8 * k) ∧
+    ((0 < stCap m0 st ∧ stW m0 st + 8 * stLen m0 st ≤ t ∧ t + 8 * k ≤ stW m0 st + 8 * stCap m0 st) ∨
+      (InRanges t (8 * k) R.rt ∧ ApartAll t (8 * k) L))
+
+/-- `P2Pre.Post` with `Scr` spelled out (`ScrF`); otherwise word for word -/
+@[reducible] def PostR (R : RtInv) (kc : Nat) (b : Nat) (L : List (Nat × Nat)) (st pw pl lm x xl : Nat)
+    (s s' : State) : Prop :=
+  s'.fsBase = s.fsBase ∧ s'.df = s.df ∧
+  ∃ bp : Nat, (∀ j, j < pl → P2Pre.PwD s'.mem pw bp lm (natVal s.mem x xl) j) ∧
+    ∃ (L' : List (Nat × Nat)) (b' : Nat), LiveExt R L L' ∧
+      b - P2Pre.cost pl lm + stkR (P2Pre.HP (stLen s.mem st) pl lm) s'.mem st ≤ b' ∧
+      R.inv b' L' (s.regs 14).toNat (view R.rt L' s'.mem) ∧
+      ScrF R L L' s.mem s'.mem st bp (P2Pre.NB pl lm) ∧ Q.NatSqr.StkSep s'.mem st bp (8 * P2Pre.NB pl lm) ∧
+      P2Pre.StkAfter R L L' st (stLen s.mem st) pl lm s.mem s'.mem ∧
+      MemFrame s.mem s'.mem (P2Pre.AW R kc s pw pl st) ∧ LiveFrame s.mem s'.mem L (P2Pre.LW s pw pl st) ∧
+      ArrIn L' st s.mem s'.mem ∧ P2Pre.BU s'.mem st bp (8 * P2Pre.NB pl lm)
+
+theorem postR_of {R : RtInv} {kc b : Nat} {L : List (Nat × Nat)} {st pw pl lm x xl : Nat} {s s' : State}
+    (h : P2Pre.Post R kc b L st pw pl lm x xl s s') : PostR R kc b L st pw pl lm x xl s s' := by
+  obtain ⟨h1, h2, bp, hpw, L', b', hx, hb, hinv, hscr, rest⟩ := h
+  exact ⟨h1, h2, bp, hpw, L', b', hx, hb, hinv, ⟨hscr.b48, hscr.acc, hscr.al, hscr.held, hscr.loc⟩, rest⟩
+
 /-- **`buildPrecomputationWindowModPower2`** (amd64): `buildPrecomputationWindowModPower2(stk, powers, windowSize, logM,
 x)` with `windowSize ∈ {2, 4}`, `len powers = 2^windowSize`, `2 ≤ logM ≤ 2^13`, `x` normalised stores
-`powers[j] = x^j mod 2^logM` (`P2Pre.Post`), for every runtime meeting the live allocation / copy / clear /
+`powers[j] = x^j mod 2^logM` (`P2Pre.Post`, as `PostR`), for every runtime meeting the live allocation / copy / clear /
 write-barrier contracts. -/
 theorem correctness (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
     (hgr : GrowsliceLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.growslice")
@@ -44,11 +69,12 @@ theorem correctness (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted
     Ensures (Extracted.program.link impl) (segAddr Extracted.program P2Pre.fn)
       [BitVec.ofNat 64 st, BitVec.ofNat 64 pw, BitVec.ofNat 64 pl, BitVec.ofNat 64 pc, BitVec.ofNat 64 ws,
         BitVec.ofNat 64 lm, BitVec.ofNat 64 x, BitVec.ofNat 64 xl, BitVec.ofNat 64 xc]
-      (P2Pre.PreE R mulWX64 b L st pw pl ws lm x xl) (P2Pre.Post R mulWX64 b L st pw pl lm x xl) :=
-  Ensures.full64 hap (by simp [numIntRegs])
+      (P2Pre.PreE R mulWX64 b L st pw pl ws lm x xl) (PostR R mulWX64 b L st pw pl lm x xl) :=
+  Ensures.mono (Ensures.full64 hap (by simp [numIntRegs])
     (P2Pre.ens hap sub nfP hmv hwb (kc := mulWX64) (by decide) (sn hap hgr hmc hwb) (by decide) (by decide)
       (sq hap hgr hmc hmv hmk hwb _) (by decide) (Nat.le_refl _) (mu hap hgr hmc hmv hmk hwb _) (Nat.le_refl _)
-      (Nat.le_refl _) (tr hap hmv hmk) (by decide) (by decide) b L st pw pl pc ws lm x xl xc)
+      (Nat.le_refl _) (tr hap hmv hmk) (by decide) (by decide) b L st pw pl pc ws lm x xl xc))
+    (fun _ h => h) (fun _ _ _ h => postR_of h)
 
 end FvModexp.Amd64.P2PreRow
 
@@ -224,7 +250,7 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : 
       s_c.rip = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.gcWriteBarrier2") ∧
       wbSite R (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 2 L b s_c) ∧
     Returns ((Extracted.program.link impl).withExit ret) s fun s' =>
-      ABIReturn s s' ∧ P2Pre.Post R mulWX64 b L st pw pl lm x xl s s' :=
+      ABIReturn s s' ∧ PostR R mulWX64 b L st pw pl lm x xl s s' :=
   ⟨WStubs.impl, R, BW, [], ST, PW, 4, 4, 2, 8, XP, 1, 1, RET, s0, WStubs.hap,
     by rw [WStubs.addr_gr]; exact WStubs.gr [] hty _,
     by rw [WStubs.addr_cl]; exact WStubs.cl R,
