@@ -85,15 +85,19 @@ A final statement may not use an instance or class of a dependency, so these pla
     Proved by cases from the two rows (`env_of_envW`, `errReqs_of_okReqs`); `Run.Witness.correctness_total` from the success witness.
   * Release gates on the statement: `FvModexp.Arm64.RunGate.okBudget_gate` (`LengthsPass data → okBudget (parseLengths data) ≤ 2^35`,
     `Proofs/Arm64/Top/RunGate.lean`; amd64 twin `FvModexp.Amd64.RunGate.okBudget_gate`), `RunSucc.expBudget_gate`
-    (`ExpBudget 128 128 ≤ 2^35`); RA-pin audit CLEAN on both rows (REDTEAM-arm64 R0). Build target: each ISA's `Top/RunSucc`
+    (`ExpBudget 128 128 ≤ 2^35`); RA-pin audit CLEAN on both rows (REDTEAM-arm64 R0) and on the three amd64 rows RunErr/RunSucc/RunTotal (REDTEAM-amd64 A0). Build target: each ISA's `Top/RunSucc`
     row module imports its `Top/RunGate`, so the release run (`janus verify` of the RunSucc rows) compiles and kernel-checks both gates.
     `RunTotal` imports RunSucc + RunErr, so no row module can import it; it is compiled and checked by its own release row
-    `arm64 Top/RunTotal` (top s51, after `arm64 Top/RunSucc`); the default `lake build FvModexp` is extraction-free and cannot import any `Extracted`-based module.
+    `arm64 Top/RunTotal` (top s51, after `arm64 Top/RunSucc`) and `amd64 Top/RunTotal` (asm s82, after `amd64 Top/RunSucc`); the default `lake build FvModexp` is extraction-free and cannot import any `Extracted`-based module.
 * Row 1, amd64 (`Proofs/Amd64/Top/RunErr.lean`, `Proofs/Amd64/Top/RunSucc.lean`): `FvModexp.Amd64.Run.correctness` (lengths fail,
   release row, `Spec.RunAmd64` twins) and `FvModexp.Amd64.RunSucc.correctness` (lengths pass, `Spec.RunAmd64` twins + `Spec.RunAmd64.CpuOne` (§1b); every
   machine-code callee proved: `(*Int).Mod` = `Run.Closed.modA`, `(*Int).exp` = `Run.Closed.expA` = expmc's `IExp.ensCl`
-  (depth 43 736), premises = the twelve Janus runtime contracts, the Pool shape binder `S` (pre `S = StkShape`),
+  (depth 43 736), premises = eleven Janus runtime-contract hypotheses over nine runtime functions (§3 table, `…64` / `PoolAmd64`
+  amd64 variants), the Pool shape binder `S` (pre `S = StkShape`),
   `W ≥ 616 + 43736 = 44 352`), with `RunSucc.Witness.nonvacuous` (`3^5 mod 7`, output `[5]`).
+  **`FvModexp.Amd64.Run.correctness_total`** (`Proofs/Amd64/Top/RunTotal.lean`, release row `amd64 Top/RunTotal`): the twin of the
+  arm64 total theorem (success environment incl. `CpuOne`, budget only under `LengthsPass`, plus `512 ≤ b`; post `(LengthsPass ∧ OkRet ∧
+  FrameW) ∨ (LengthsFail ∧ ErrRet ∧ Frame)`), with `Run.Witness.correctness_total` from the amd64 success witness.
 * Row 3 `FvModexp.Proofs.Compose.composition` (`Proofs/Common/Compose.lean`): pure Lean. From the guarantees of rows 1 and 2 (hypothesis structure `RowsHold`), for every
   result cache `cache` meeting `CacheStoredBy p cache` (`cacheStoredBy_none`: `cache == nil` does), geth's `runPrecompiled p data gas cache` agrees with EthLib's
   `modexp fork data gas`: failure iff failure (error length bound, or out of gas), otherwise equal outputs and remaining gas `gas - cost` with `cost` = EthLib's `chargedGas`.
@@ -166,7 +170,7 @@ precondition by hand, from the checklist that `scripts/check-ra-pin` generates:
 
 Every main theorem has a kernel-checked `Witness.nonvacuous` (concrete returning run satisfying the precondition) which `janus verify`
 requires: row 2 `RequiredGas.Witness.nonvacuous`, row 1 arm64 `RunSucc.Witness.nonvacuous` (`3^5 mod 7` → `[5]`) and
-`Run.Witness.nonvacuous` (header 1025), amd64 `Run.Witness.nonvacuous`; `Run.correctness_total` has
+`Run.Witness.nonvacuous` (header 1025), amd64 `RunSucc.Witness.nonvacuous` (`3^5 mod 7` → `[5]`) and `Run.Witness.nonvacuous` (header 1025); `Run.correctness_total` (both ISAs) has
 `Run.Witness.correctness_total`. Optional extra coverage witnesses (`b = m = 0`, `mod = 0`, `base = 1`) are not required.
 
 ## Row 1 budgets and request sizes (derivation of `OkReqs` and `okBudget`)
