@@ -21,6 +21,17 @@ open FvModexp.Amd64.W2Loop (Env Inp Buf OneIn FinEnv)
 
 theorem sub2 {b b1 b2 x y : Nat} (h1 : b - x ≤ b1) (h2 : b1 - y ≤ b2) : b - (x + y) ≤ b2 := by omega
 
+/-- a sub-range `[a, a + k)` of `[A, A + n)` is apart from what `[A, A + n)` is apart from (both orientations, and the
+stack's free part `(w + 8 l, 8 (c - l))`): keeps the omega side conditions free of the context's `Apart` disjunctions -/
+theorem apart_in {B m A n a k : Nat} (h : Apart B m A n) (h1 : A ≤ a) (h2 : a + k ≤ A + n) :
+    a + k ≤ B ∨ B + m ≤ a := by unfold Apart at h; omega
+theorem apart_in' {A n B m a k : Nat} (h : Apart A n B m) (h1 : A ≤ a) (h2 : a + k ≤ A + n) :
+    a + k ≤ B ∨ B + m ≤ a := by unfold Apart at h; omega
+theorem apart_inF {w l c A n a k : Nat} (h : Apart (w + 8 * l) (8 * (c - l)) A n) (hl : l ≤ c) (h1 : A ≤ a)
+    (h2 : a + k ≤ A + n) : a + k ≤ w + 8 * l ∨ w + 8 * c ≤ a := by unfold Apart at h; omega
+theorem apart_inF' {A n w l c a k : Nat} (h : Apart A n (w + 8 * l) (8 * (c - l))) (hl : l ≤ c) (h1 : A ≤ a)
+    (h2 : a + k ≤ A + n) : a + k ≤ w + 8 * l ∨ w + 8 * c ≤ a := by unfold Apart at h; omega
+
 set_option maxRecDepth 20000 in
 /-- the composite frame `rrJ → p01` -/
 theorem frames2 {R : RtInv} {L L1 L2 : List (Nat × Nat)} {b b1 b2 g fs sp n onep st : Nat} {M M1 M2 : Memory}
@@ -256,21 +267,18 @@ theorem afterOne (hJ4 : FvModexp.Amd64.W2Pro.J4Spec) (hP01 : FvModexp.Amd64.W2Pr
     fun a k hh hw hs hf => rd2 hO hS hsth hstw hlc hsp1 hh hw hs hf
   have rs : ∀ K, Outside (sp + K) 8 (ow sp) → 0x18 ≤ K → K + 8 ≤ 0x2a8 → S2.mem.readLE (sp + K) 8 = M.readLE (sp + K) 8 :=
     fun K hK h1 h2 => slot2 hO hS hsth hstw hfw hlc hwrt hsp1 hK h1 h2
-  have hstw' := hstw; have hfw2 := hfw
-  unfold Apart at hstw' hfw2; simp only at hfw2
   have rs1 : ∀ K, 0x10 ≤ K → K + 8 ≤ 0x2a8 → S2.mem.readLE (sp + K) 8 = S.mem.readLE (sp + K) 8 := by
     intro K h1 h2
     refine hFS.readLE _ _ ?_
     have hro' : Outside (sp + K) 8 R.rt := hwrt.of_sub (by omega) (by omega)
     simp only [stkWs, e1, e2, e3, outside_append, outside_cons, outside_nil, and_true]
-    exact ⟨⟨hro', by omega⟩, by omega, by omega⟩
+    exact ⟨⟨hro', by omega⟩, apart_in hstw (by omega) (by omega), apart_inF hfw hlc (by omega) (by omega)⟩
   have hca0 : ∀ K, K + 8 ≤ 0x20 → S2.mem.readLE (sp + 0x2a8 + K) 8 = M.readLE (sp + 0x2a8 + K) 8 := by
     intro K hK
-    have u1 := hcF; have u2 := hcS; unfold Apart at u1 u2; simp only at u1
     refine fr2.readLE _ _ ?_
     simp only [ow, stkWs, List.cons_append, List.nil_append, outside_append, outside_cons, outside_nil, and_true]
     exact ⟨hca.of_sub (by omega) (by omega), by omega, by omega, by omega, by omega, by omega, by omega, by omega,
-      by omega, by omega, by omega⟩
+      by omega, apart_in' hcS (by omega) (by omega), apart_inF' hcF hlc (by omega) (by omega)⟩
   have bapL : ∀ a k, (InRanges a k L ∨ Outside a k R.rt) → Apart a k (stFree M st).1 (stFree M st).2 →
       Apart a k (stW S2.mem st + 8 * stLen M st) (8 * (5 * n)) := by
     intro a k hh hf
