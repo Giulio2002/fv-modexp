@@ -142,8 +142,6 @@ theorem dM2 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
     fun h => absurd h (by decide), ?zb, hsrc.1, hsrc.2.1, hsrc.2.2.1, ?d48, by rw [hoL]; exact hacc', hext,
     liveSep_of_apartAll hAp, ?op⟩ ⟨Nat.add_le_add_left hsz _, by simpa using hIn, by simpa using fresh_out_win hb' hIn hout⟩
     (by janus64_simp) (by janus64_simp) ?r3 ?r11 (by janus64_simp)
-  all_goals try (janus64_simp; done)
-  all_goals try (first | (dsimp only; rw [hfs]; done) | (dsimp only; exact hdf; done) | (simp only [hfs]; done) | (simp only [hdf]; done))
   case refine_19 =>
     refine ⟨fun _ => ⟨?_, ?_⟩, fun _ => ?_⟩
     · janus64_simp [hsl1]
@@ -184,5 +182,7 @@ theorem dM2 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
   case r11 =>
     simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]
     rw [hoA, BitVec.toNat_ofNat, Nat.mod_eq_of_lt (by omega), opavail_pad hstv.symm hndir]
+  all_goals try (janus64_simp; done)
+  all_goals try (first | (dsimp only; rw [hfs]; done) | (dsimp only; exact hdf; done) | (simp only [hfs]; done) | (simp only [hdf]; done))
 
 end FvModexp.Amd64.Run

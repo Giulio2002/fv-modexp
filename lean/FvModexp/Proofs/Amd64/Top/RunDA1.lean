@@ -73,8 +73,6 @@ theorem dA1 (impl : List Amd64.Segment) (R : RtInv)
   have hLsL1 : LiveSep Lk (win s 4800 40) := hLsS
   refine hE _ ⟨Lk, bk, RelD.mk' hin0 ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ l0 l1 l2 lnz ?_ ?_ ?_ hext ?_
     ?_ hLsS ?_ ?_ ?_ ?_, by janus64_simp, by janus64_simp, by janus64_simp, by janus64_simp, ?buf⟩
-  all_goals try (janus64_simp; done)
-  all_goals try (first | (dsimp only; rw [hfs]; done) | (dsimp only; exact hdf; done) | (simp only [hfs]; done) | (simp only [hdf]; done))
   case refine_19 =>
     refine ⟨fun _ => ⟨?_, ?_⟩, fun _ => ?_⟩
     · rw [hstv]; janus64_simp [hsl1]
@@ -142,5 +140,7 @@ theorem dA1 (impl : List Amd64.Segment) (R : RtInv)
     · omega
     · exact hext.held (hheld.sub hrng.1 hrng.2)
     · first | omega | (simp only [Janus.outside_cons, Janus.outside_nil, and_true]; omega)
+  all_goals try (janus64_simp; done)
+  all_goals try (first | (dsimp only; rw [hfs]; done) | (dsimp only; exact hdf; done) | (simp only [hfs]; done) | (simp only [hdf]; done))
 
 end FvModexp.Amd64.Run

@@ -68,10 +68,10 @@ namespace FvModexp.Amd64.RunSucc.Witness
 
 set_option maxRecDepth 100000
 set_option maxHeartbeats 64000000 in
-/-- Every hypothesis of `correctness` (the twelve runtime contracts, the window) and every conjunct of its
-precondition hold together, with one call-site state per contract, and the call returns: the shared amd64 witness
-runtime, budget `bW`, window `0x20000`, empty live set, `Run(c, p, 99, 99)` on lengths `1, 1, 1`, `3^5 mod 7`
-(output `[5]`). -/
+/-- Every hypothesis of `correctness` (the eleven runtime-contract hypotheses over nine runtime functions, the window)
+and every conjunct of its precondition hold together, with one call-site state per contract, and the call returns: the
+shared amd64 witness runtime, budget `bW`, window `0x20000`, empty live set, `Run(c, p, 99, 99)` on lengths `1, 1, 1`,
+`3^5 mod 7` (output `[5]`). -/
 theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat × Nat))
     (c p len cp : BitVec 64) (ret : Nat) (s : State) (W : Nat),
     ImplApart Extracted.program impl ∧

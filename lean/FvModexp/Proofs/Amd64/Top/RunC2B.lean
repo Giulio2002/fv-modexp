@@ -13,6 +13,12 @@ open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Spec Janus.Con
 
 namespace FvModexp.Amd64.Run
 
+/-- `RSP - 608 + 472 = RSP - 136` (asm s83: a named closer; `omega` in `c2B`'s context took 60 s) -/
+theorem c2B_sp136 (x : BitVec 64) (h : 608 ≤ x.toNat) : (x - 608#64 + 472#64).toNat = x.toNat - 136 := by
+  rw [BitVec.toNat_add, BitVec.toNat_sub]; simp; omega
+
+theorem c2B_le40 (e : Nat) : e - 136 + 32 ≤ e + 40 := by omega
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem c2B (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl) (R : RtInv) (stkM aboveM : Nat)
@@ -136,11 +142,12 @@ theorem c2B (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
   -- facts about `s'` (named before the run shadows it)
   have hMFp : MemFrame s'.mem (s'.mem.writeLE ((s.regs 4).toNat - 616) 8 rs2) (R.rt ++ win sc stkM aboveM) := by
     simp only [win, hsc4, hsp0]; janus_frame
-  have hz136 : (s.regs 4 - 608#64 + 472#64).toNat = (s.regs 4).toNat - 136 := by
-    rw [BitVec.toNat_add, BitVec.toNat_sub]; simp; omega
+  have hz136 : (s.regs 4 - 608#64 + 472#64).toNat = (s.regs 4).toNat - 136 :=
+    c2B_sp136 (s.regs 4) (Nat.le_trans (by decide : 608 ≤ 4800) (Nat.le_trans hW1 hb'))
   have hLsL1 : LiveSep L1 (win s W 40) := liveSep_W hext hLs hout hb'
-  have hz1 : (s.regs 4).toNat - W ≤ (s.regs 4).toNat - 136 := by omega
-  have hz2 : (s.regs 4).toNat - 136 + 32 ≤ (s.regs 4).toNat + 40 := by omega
+  have hz1 : (s.regs 4).toNat - W ≤ (s.regs 4).toNat - 136 :=
+    Nat.sub_le_sub_left (Nat.le_trans (by decide : 136 ≤ 4800) hW1) _
+  have hz2 : (s.regs 4).toNat - 136 + 32 ≤ (s.regs 4).toNat + 40 := c2B_le40 _
   -- the frame from `s` to `sc.mem` (the pushed return address of the first call)
   have hMFT : MemFrame s.mem sc.mem (R.rt ++ win s W 40) := by
     refine (memFrame_win hW1 hMF).trans ?_ fun _ _ h => ⟨h, h⟩

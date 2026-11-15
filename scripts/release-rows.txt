@@ -83,6 +83,7 @@ amd64 Exp/P2W4Row
 amd64 Exp/P2DRow
 amd64 Exp/ModInvRow
 amd64 Exp/SlowRow
+amd64 Exp/NRow
 amd64 Exp/EvenRow
 amd64 Exp/IExpRow
 # ---- amd64 Top rows (last) ----

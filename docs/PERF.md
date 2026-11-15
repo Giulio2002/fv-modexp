@@ -2243,3 +2243,24 @@ MulQ 349/1743, Mont 142/1670, SubMod2N 220/2831, ModInv 185/2393, DivW 144/1214,
 Drs 325/1739, Div 339/2573, DivM 178/3576, Rem 145/4585, DivBasicQ 216/4528, DrsQ 263/1700, DivQ 293/2559, DivMQ 125/3584,
 RemQ 118/4665, IntMod 143/3995, W2 406/3111, W4 419/2981, P2W2 273/2985, P2W4 204/1545, P2D 278/2142, N 442/4574,
 Even 329/3734, IExpQ 317/4391, RequiredGas 210/1622, RunErr 279/1651, RunSucc 466/5157, RunTotal 77/4860.
+
+## asm s83 (2026-11-15): amd64 Top_RunSucc + Exp_EvenRow trims (dev-compile numbers; janus row runs NOT yet measured)
+Baseline rel49 (load ~17): RunSucc 656 s (own 67: compile 455 / replay 133 / audit 61), EvenRow 702 s (own 95: compile 309 /
+replay 173 / audit 214). Dev per-module compile of RunSucc's 67 own modules against the rel49 oleans: sum 1624 s (4 parallel).
+* Profile (trace.profiler): the D-segment modules spend most time in `omega` inside large contexts: failed `janus64_simp`
+  attempts of `all_goals try (janus64_simp; done)` on goals that a later named `case` closes (DM2: 23.5 s, one failure 12.5 s),
+  `janus_frame` (20 s), failed run dischargers (2^k splits over the g-stackguard `Apart` disjunctions).
+* Fix 1 (RunDA1/DA2/DE0-2 (+ scripts/RunDE64.tmpl)/DJF0-2/DJS0-2/DJZ0-2/DM1/DM2/DP1/DP2): the named `case` blocks run BEFORE
+  the catch-all `all_goals try (janus64_simp; done)` (pure reorder, same tactics): these 18 modules 1016 s -> 883 s
+  (DM1 109->76, DM2 112->83, DP2 95->77, DJF2 101->89, DJF1 91->81).
+* Fix 2 (RunC2B): three trivial `omega`s in a huge context (`RSP - 608 + 472 = RSP - 136`, `RSP - W ≤ RSP - 136`, …;
+  60 + 47 + 37 s of omega) replaced by named closers `c2B_sp136` / `Nat.sub_le_sub_left` / `c2B_le40`: 80 s -> 24 s.
+* RunSucc dev sum 1624 -> ~1435 s (-12 %); expected row effect ≈ -50 s compile + a little replay.
+* EvenRow: NEW lower row `amd64 Exp/NRow` (Amd64/Exp/NRow.lean, twin of arm64 Exp/NRow): `nat.expNN` (no even path, m odd /
+  power of two) = expmc's `ExpN.ens_noEven` at K = 41640 with every callee closed (DivInst / Q.ExpSlow.slowCl / P2DRow.hyp /
+  RemInst), `Ensures.full64`; `Witness.nonvacuous` (`3^5 mod 7`, costD = 30000). Dev compile 42 s / 4.4 GB. It takes 33 of
+  EvenRow's 95 own modules (LibN, LibOdd, OddDefs, OddEns, NMk, N* … the old critical path LibOdd → … → NJ1 → NFun → NCap);
+  EvenRow keeps 62 (Ev*, NEvP, NMidE, …). EvenRow's audit (Janus moduleNames bug) is unchanged on v0.3.3.
+* Measurement caveat: targeted janus runs from a modified snapshot against a COPY of the rel49 cache recompiled the lower
+  closure (store entries not reused across snapshots), so NRow hit the 900 s cap twice; no valid row times yet. Needs a
+  warm-up from the SAME snapshot (asm s79 recipe) or the next release run.

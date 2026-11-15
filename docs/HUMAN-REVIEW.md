@@ -148,7 +148,14 @@ precondition by hand, from the checklist that `scripts/check-ra-pin` generates:
   `SP − g.stackguard0 > 73 568` bytes (arm64 success: `GuardOK s W`, `W ≥ 624 + 72944`; arm64 error: `> 4 800`, `GuardOK s 4800`) and
   `stackguard0` is not the `stackPreempt` sentinel (no pending preemption request: `GuardOK` is false then). Row 2 (RequiredGas, arm64): `> 464` bytes (`GuardOK s 464`). amd64: error row
   `> 4 800` (`StackGuardOK s 4800`); success row `> 44 352` bytes (`StackGuardOK s W`, `W ≥ 616 + 43736`: Run's 616-byte frame + the closed
-  amd64 `(*Int).exp` window 43 736, which covers `(*Int).Mod`'s 41 800). A
+  amd64 `(*Int).exp` window 43 736, which covers `(*Int).Mod`'s 41 800). Derivation of 43 736 (REDTEAM-amd64 A5): it is the
+  summary-composition window of amd64 `(*Int).exp`, `IExp.ensCl` (`Proofs/Amd64/Exp/IExpCl.lean`) = `K + 0x5d0` with `K = 42 248`
+  (`K` = the window handed to the inner `nat.expNN` call, `0x5d0` = the stack `(*Int).exp` and its frames use above it);
+  `K ≥ 42 248` is forced by the largest callee window inside `nat.expNN` (`IExp.evH`, `Proofs/Amd64/Exp/IExpClD.lean`: the `expNNEven` call needs `ExpEven.stkE 41 640 = 43 152`
+  bytes; the other callee windows are smaller: div 41 512, expNNSlow 41 952, p2 42 520, rem 41 720), and those windows bottom out in
+  the runtime contracts, each of which reserves a flat 4 096 bytes below its caller's SP. So 43 736 is an upper bound the proof
+  uses, NOT a measured Go stack depth (arm64 needs 72 944 for the same Go code: much of either figure is proof-side margin); a
+  real call with less free stack is outside the claim, as stated below. A
   goroutine with less free stack (Go grows stacks on demand: a fresh 8 KiB stack, or a 32/64 KiB stack partly used by the EVM
   interpreter) or with a pending preemption calls morestack in real geth, which copies the stack / preempts and then continues
   with the same result; that continuation is outside the claim. Lifting this needs a Janus morestack contract (JANUS-ISSUES wish).

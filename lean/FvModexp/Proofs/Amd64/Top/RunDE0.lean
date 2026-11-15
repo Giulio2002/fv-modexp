@@ -96,8 +96,6 @@ theorem dE0 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
     (LiveFrame.of_win (by simp only [win, stk]; janus_frame) hLsL1).trans (LiveFrame.of_empty hLF2 []) (fun _ _ h => h)
   refine hk _ L2 b2 (RelD.mk' hin0 ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ l0 l1 l2 lnz ?_ ?_ ?_ (hext.trans hext2)
     ?_ ?_ (hext2.liveSep hLsL1 hwrt) ?_ ?_ ?_ ?_) (by janus64_simp) (by janus64_simp [hp1, opAt]) (by janus64_simp [hn1, opAt])
-  all_goals try (janus64_simp; done)
-  all_goals try (first | (dsimp only; rw [hfs1]; exact hfs; done) | (dsimp only; rw [hdf1]; exact hdf.trans hdf0.symm; done) | (simp only [hfs1, hfs]; done) | (simp only [hdf1, hdf, hdf0]; done))
   case refine_19 =>
     obtain ⟨hsl1, hsl2⟩ := hsl
     refine ⟨fun h => ?_, fun h => ?_⟩
@@ -148,5 +146,7 @@ theorem dE0 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
         repeat rw [Janus.Arm64.Memory.readLE_writeLE_of_disjoint _ _ (by omega)]
   case refine_27 =>
     exact opsApart_one _ _
+  all_goals try (janus64_simp; done)
+  all_goals try (first | (dsimp only; rw [hfs1]; exact hfs; done) | (dsimp only; rw [hdf1]; exact hdf.trans hdf0.symm; done) | (simp only [hfs1, hfs]; done) | (simp only [hdf1, hdf, hdf0]; done))
 
 end FvModexp.Amd64.Run
