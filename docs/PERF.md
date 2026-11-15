@@ -2311,4 +2311,4 @@ The 35 Lean files changed between 87a68769 (base of the full autoImplicit build)
 (2 in parallel, LEAN_NUM_THREADS=4) against hard-link farms of the rel49 release oleans (snapshot 0773715a):
 amd64 **335 modules OK** (324 changed/downstream + 11 closure modules absent from the rel49 store), arm64 **310 modules OK**
 (the 242 downstream of Common/DivRec + 68 absent closure modules). No auto-bound implicit anywhere; nothing to fix.
-Slowest: amd64 RunDJF2 80 s, RunDJF1 74 s, RunDM2 72 s, RunDM1 68 s, OddEns 66 s (all under 3 GB). Tools: cache-top/s52/{closure,devpar,pass2}.py.
+Slowest: amd64 RunDJF2 80 s, RunDJF1 74 s, RunDM2 72 s, RunDM1 68 s, OddEns 66 s; peak RSS 6.0 GB. Tools: cache-top/s52/{closure,devpar,pass2}.py.
