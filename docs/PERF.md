@@ -2233,3 +2233,13 @@ Rsh 129/1290, Lsh 111/1199, IntAS 164/1303, BasicSqrQ 224/6145, SqrQ 371/4262, M
 DivW 139/1300, DivWVW 15/417, DivBasic 238/3523, DivBasicQ 226/3639, DrsQ 448/2058, DivQ 398/5231, RemQ 155/2082,
 IntMod 279/3849, W4 723/3696, W2 547/4049, P2W2 FAIL 548/2990, P2W4 FAIL 390/2943, P2D 204/2024, Even FAIL 901/4497,
 IExp 708/5093, RequiredGas 241/3138, RunErr 311/1268, RunSucc 557/4961.
+
+## top s51 (2026-11-15): rel49 arm64 — RELEASE CANDIDATE (Janus v0.3.3, fresh cache, ROWS=1, snapshot main 0773715a, wall 9382 s + warm-up 836 s)
+**43/43 PASS, no row > 600 s** (max Top_RunSucc 466 s / 5.2 GB). Host load (max per row) min 3.5 / median 10.2 / max 21.0.
+New/changed: Top_RunTotal PASS 77 s / 4.9 GB, Nat_DrsRow 325 s (rel48 617), Nat_MulRow (reinstated) 343 s.
+Per row (s/MB): StackNat 125/2472, MulAddWW 140/992, AddVW 51/934, SubVW 51/952, BasicMul 107/3288, BasicSqr 300/3125,
+Mul 343/2181, Trunc 109/885, Rsh 105/836, Lsh 89/933, IntAS 206/1188, IntSub 12/412, BasicSqrQ 240/2780, SqrQ 293/2863,
+MulQ 349/1743, Mont 142/1670, SubMod2N 220/2831, ModInv 185/2393, DivW 144/1214, DivWVW 10/373, DivBasic 252/4478,
+Drs 325/1739, Div 339/2573, DivM 178/3576, Rem 145/4585, DivBasicQ 216/4528, DrsQ 263/1700, DivQ 293/2559, DivMQ 125/3584,
+RemQ 118/4665, IntMod 143/3995, W2 406/3111, W4 419/2981, P2W2 273/2985, P2W4 204/1545, P2D 278/2142, N 442/4574,
+Even 329/3734, IExpQ 317/4391, RequiredGas 210/1622, RunErr 279/1651, RunSucc 466/5157, RunTotal 77/4860.
