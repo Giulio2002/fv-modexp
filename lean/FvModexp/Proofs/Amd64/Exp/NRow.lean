@@ -27,6 +27,86 @@ itself (EvenRow own-set cut, asm s83).
 
 open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Spec Janus.Contracts FvModexp
 
+namespace FvModexp.Amd64.ExpN
+
+/-- `NPre` WITHOUT its six stack-argument reads (`sp + 0x4a0 …`, i.e. `RSP + 8 …` through `sp = RSP - 0x498`) and WITHOUT
+`NEnv`'s equation `RSP = sp + 0x498` and `CEnv`'s closed bound `sp + 0x510 ≤ 2^48` (both read as RSP pins by the
+audit probe; they follow from `K ≤ sp` and the window's accessibility): the row states the reads with
+literal `RSP + k` offsets instead (`NRow.ArgY` / `NRow.ArgM`, the v0.3.3 audit rule), asm s83 -/
+def NPreS (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K : Nat) (costF : Nat → Nat → Nat → Nat) (costD : Nat)
+    (needR : Nat → Nat → Nat) (costR : Nat → Nat → Nat → Nat) (needS needP : Nat → Nat → Nat → Nat)
+    (costS costP : Nat → Nat → Nat → Nat → Nat)
+    (g fs sp zp zl zc st xp xl xc yp yl yc mp n mc slow : Nat) (s : State) : Prop :=
+  (s.regs 14 = BitVec.ofNat 64 g ∧ s.fsBase.toNat = fs ∧ s.xmm 15 = 0 ∧ s.df = false ∧ 41640 ≤ K ∧ K + 0x98 ≤ 2 ^ 20 ∧
+    (sp % 8 = 0 ∧ K ≤ sp ∧ s.mem.accessible (sp - K) (K + 0x510) true = true ∧
+    g + 24 ≤ 2 ^ 48 ∧ s.mem.accessible (g + 16) 8 false = true ∧ s.mem.readLE (g + 16) 8 + K < sp ∧ Outside (sp - K) (K + 0x510) R.rt ∧ Apart (g + 16) 8 (sp - K) (K + 0x510) ∧ Outside (g + 16) 8 R.rt ∧ LiveSep L [(sp - K, sp + 0x510)] ∧ Extracted.program.DataLoaded s.mem ∧ RoOut R ∧ 8 ≤ fs ∧ fs ≤ 2 ^ 48 ∧ s.mem.accessible (fs - 8) 8 false = true ∧ s.mem.readLE (fs - 8) 8 = g ∧ Outside (fs - 8) 8 R.rt ∧ Apart (fs - 8) 8 (sp - K) (K + 0x510)) ∧
+    RunIface.Serves R) ∧ RunIface.Globals R s.mem [(sp - K, sp + 0x510)] ∧
+  Outside StackNat.wT 16 R.rt ∧ Outside W4En.wTy 16 R.rt ∧
+  s.mem.accessible MontHyp.hasADX 1 false = true ∧ slow = 0 ∧
+  0 < n ∧ n ≤ 128 ∧ n ≤ mc ∧ mc < 2 ^ 40 ∧
+  NE R L sp K st s.mem mp (8 * n) ∧ s.mem.accessible mp (8 * n) false = true ∧ mp + 8 * n ≤ 2 ^ 48 ∧
+    NatNorm s.mem mp n ∧
+  NE R L sp K st s.mem yp (8 * yl) ∧ s.mem.accessible yp (8 * yl) false = true ∧ yp + 8 * yl ≤ 2 ^ 48 ∧
+    NatNorm s.mem yp yl ∧ yl ≤ 2 ^ 9 ∧ yc < 2 ^ 64 ∧
+  NE R L sp K st s.mem xp (8 * xc) ∧ s.mem.accessible xp (8 * xc) false = true ∧ xp + 8 * xc ≤ 2 ^ 48 ∧
+    NatNorm s.mem xp xl ∧ xl ≤ 128 ∧ xl ≤ xc ∧ xc < 2 ^ 40 ∧
+  zp < 2 ^ 64 ∧ zl ≤ zc ∧ zc < 2 ^ 40 ∧
+  ((0 < zc → (0 < xc ∧ zp + 8 * zc = xp + 8 * xc) ∨ (0 < yc ∧ zp + 8 * zc = yp + 8 * yc) ∨
+    ZOK R L g fs sp K st zp zc xp xc yp yl mp n s.mem) ∧ Outside zp (8 * zc) [(sp - K, sp + 0x510)]) ∧
+  NE R L sp K st s.mem RunIface.gA 32 ∧
+  (∃ op, EvenHyp.NatOne R L s.mem op ([(sp - K, sp + 0x510), (zp, zp + 8 * zc)] ++ ExpHyp.stWs s.mem st) ∧
+    NHyp.StkApart s.mem st op 8) ∧
+  0 < st ∧ st < 2 ^ 48 ∧ StkOK s.mem R L st ∧ Apart st 24 (sp - K) (K + 0x510) ∧ Apart st 24 (g + 16) 8 ∧
+  Apart st 24 (fs - 8) 8 ∧
+  (0 < stCap s.mem st → Apart (stW s.mem st) (8 * stCap s.mem st) (sp - K) (K + 0x510) ∧
+    Apart (stW s.mem st) (8 * stCap s.mem st) (g + 16) 8 ∧ Apart (stW s.mem st) (8 * stCap s.mem st) (fs - 8) 8) ∧
+  (stCap s.mem st = 0 → stW s.mem st = 0) ∧
+  s.mem.accessible StackNat.wbA 4 false = true ∧ Apart st 24 StackNat.wbA 4 ∧
+  Apart st 24 (W4En.free s.mem st).1 (W4En.free s.mem st).2 ∧
+  Apart (W4En.free s.mem st).1 (W4En.free s.mem st).2 RunIface.gA 32 ∧
+  Apart (W4En.free s.mem st).1 (W4En.free s.mem st).2 (fs - 8) 8 ∧
+  stLen s.mem st + 23 * n + 3 ≤ 2 ^ 16 ∧
+  stLen s.mem st + needR xl n ≤ 2 ^ 16 ∧ stLen s.mem st + needS xl yl n ≤ 2 ^ 16 ∧
+  stLen s.mem st + needP xl yl (Nat.log2 (natVal s.mem mp n)) ≤ 2 ^ 16 ∧
+  makeCost 1 + max (costR (stLen s.mem st) xl n) (makeCost n + max (costS (stLen s.mem st) xl yl n)
+    (costP (stLen s.mem st) xl yl (Nat.log2 (natVal s.mem mp n)))) ≤ b ∧
+  ExpOdd.OBud costF n costD xl yl (stLen s.mem st) (b - makeCost n) ∧
+  R.inv b L g (view R.rt L s.mem) ∧
+  XG s.mem st xp xl xc
+
+theorem NPreS.of_NPre {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {costF : Nat → Nat → Nat → Nat} {costD : Nat}
+    {needR : Nat → Nat → Nat} {costR : Nat → Nat → Nat → Nat} {needS needP : Nat → Nat → Nat → Nat}
+    {costS costP : Nat → Nat → Nat → Nat → Nat} {g fs sp zp zl zc st xp xl xc yp yl yc mp n mc slow : Nat} {s : State}
+    (h : NPre R b L K costF costD needR costR needS needP costS costP g fs sp zp zl zc st xp xl xc yp yl yc mp n mc slow s) :
+    NPreS R b L K costF costD needR costR needS needP costS costP g fs sp zp zl zc st xp xl xc yp yl yc mp n mc slow s := by
+  obtain ⟨⟨-, e1, e2, e3, e4, e5, e6, ⟨c1, c2, -, c4, cR⟩, e8⟩, h2, h3, h4, h5, h6, -, -, -, -, -, -, hR⟩ := h
+  exact ⟨⟨e1, e2, e3, e4, e5, e6, ⟨c1, c2, c4, cR⟩, e8⟩, h2, h3, h4, h5, h6, hR⟩
+
+theorem NPre.of_NPreS {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {costF : Nat → Nat → Nat → Nat} {costD : Nat}
+    {needR : Nat → Nat → Nat} {costR : Nat → Nat → Nat → Nat} {needS needP : Nat → Nat → Nat → Nat}
+    {costS costP : Nat → Nat → Nat → Nat → Nat} {g fs sp zp zl zc st xp xl xc yp yl yc mp n mc slow : Nat} {s : State}
+    (h : NPreS R b L K costF costD needR costR needS needP costS costP g fs sp zp zl zc st xp xl xc yp yl yc mp n mc slow s)
+    (r1 : s.mem.readLE (sp + 0x4a0) 8 = yp) (r2 : s.mem.readLE (sp + 0x4a8) 8 = yl) (r3 : s.mem.readLE (sp + 0x4b0) 8 = yc)
+    (r4 : s.mem.readLE (sp + 0x4b8) 8 = mp) (r5 : s.mem.readLE (sp + 0x4c0) 8 = n) (r6 : s.mem.readLE (sp + 0x4c8) 8 = mc)
+    (r0 : s.regs 4 = BitVec.ofNat 64 (sp + 0x498)) :
+    NPre R b L K costF costD needR costR needS needP costS costP g fs sp zp zl zc st xp xl xc yp yl yc mp n mc slow s := by
+  obtain ⟨⟨e1, e2, e3, e4, e5, e6, ⟨c1, c2, c4, cR⟩, e8⟩, h2, h3, h4, h5, h6, hR⟩ := h
+  have c3 : sp + 0x510 ≤ 2 ^ 48 := by
+    have h48 := Janus.Arm64.Memory.accessible_bound s.mem c4
+    rw [← Nat.add_assoc, Nat.sub_add_cancel c2] at h48; exact h48
+  exact ⟨⟨r0, e1, e2, e3, e4, e5, e6, ⟨c1, c2, c3, c4, cR⟩, e8⟩, h2, h3, h4, h5, h6, r1, r2, r3, r4, r5, r6, hR⟩
+
+/-- `NPreS`'s window facts give `RSP ≥ 0x498` (`K ≤ sp`, `41640 ≤ K`) -/
+theorem NPreS.sp {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {K : Nat} {costF : Nat → Nat → Nat → Nat} {costD : Nat}
+    {needR : Nat → Nat → Nat} {costR : Nat → Nat → Nat → Nat} {needS needP : Nat → Nat → Nat → Nat}
+    {costS costP : Nat → Nat → Nat → Nat → Nat} {g fs sp zp zl zc st xp xl xc yp yl yc mp n mc slow : Nat} {s : State}
+    (h : NPreS R b L K costF costD needR costR needS needP costS costP g fs sp zp zl zc st xp xl xc yp yl yc mp n mc slow s) :
+    41640 ≤ sp := by
+  obtain ⟨⟨-, -, -, -, hK, -, ⟨-, hKs, -⟩, -⟩, -⟩ := h
+  exact Nat.le_trans hK hKs
+
+end FvModexp.Amd64.ExpN
+
 namespace FvModexp.Amd64.NRow
 
 /-- `nat.rem`'s bridged cost -/
@@ -62,13 +142,39 @@ theorem libRem_nfN : LibRem.names.contains ExpN.fn = false := by decide +kernel
   s.mem.readLE ((s.regs 4).toNat + 32) 8 = m ∧ s.mem.readLE ((s.regs 4).toNat + 40) 8 = n ∧
     s.mem.readLE ((s.regs 4).toNat + 48) 8 = mc
 
-/-- the precondition: the stack arguments `y`, `m` (numeral offsets) and `ExpN.Pre` at `K = 41640` with the closed
-callee costs -/
+/-- the precondition: the stack arguments `y`, `m` (literal `RSP + k` offsets) and `ExpN.Pre` at `K = 41640` with the
+closed callee costs, its `NPre` part WITHOUT the stack-argument reads (`ExpN.NPreS`); `toPre`: it implies `ExpN.Pre` -/
 @[reducible] def Pre (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (costD : Nat)
     (z zl zc st x xl xc y yl yc m n mc slow : Nat) (s : State) : Prop :=
   ArgY s y yl yc ∧ ArgM s m n mc ∧
-    ExpN.Pre R b L 41640 DivInst.divC costD Q.NatRem.need cR ExpSlow.need P2D.needP cS cP z zl zc st x xl xc y yl yc m
-      n mc slow s
+    ExpN.NPreS R b L 41640 DivInst.divC costD Q.NatRem.need cR ExpSlow.need P2D.needP cS cP (s.regs 14).toNat
+      s.fsBase.toNat ((s.regs 4).toNat - 0x498) z zl zc st x xl xc y yl yc m n mc slow s ∧
+    (natVal s.mem m n % 2 = 1 ∨ ∃ k, natVal s.mem m n = 2 ^ k) ∧ NHyp.XFacts R L x xl xc
+
+theorem sp_add {e : Nat} (h : 41640 ≤ e - 0x498) (k : Nat) : e - 0x498 + (0x498 + k) = e + k := by omega
+
+/-- the row precondition is `ExpN.Pre` (with the stack arguments) -/
+theorem toPre {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {costD : Nat}
+    {z zl zc st x xl xc y yl yc m n mc slow : Nat} {s : State} (h : Pre R b L costD z zl zc st x xl xc y yl yc m n mc slow s) :
+    ExpN.Pre R b L 41640 DivInst.divC costD Q.NatRem.need cR ExpSlow.need P2D.needP cS cP z zl zc st x xl xc y yl yc m n
+      mc slow s := by
+  obtain ⟨⟨y1, y2, y3⟩, ⟨m1, m2, m3⟩, hN, hev, hx⟩ := h
+  have e := sp_add hN.sp
+  refine ⟨ExpN.NPre.of_NPreS hN ?_ ?_ ?_ ?_ ?_ ?_ ?_, hev, hx⟩
+  · rw [e 8]; exact y1
+  · rw [e 16]; exact y2
+  · rw [e 24]; exact y3
+  · rw [e 32]; exact m1
+  · rw [e 40]; exact m2
+  · rw [e 48]; exact m3
+  · rw [show (s.regs 4).toNat - 0x498 + 0x498 = (s.regs 4).toNat by have := e 0; omega]; simp
+
+/-- `ExpN.Pre` with the stack arguments is the row precondition -/
+theorem ofPre {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {costD : Nat}
+    {z zl zc st x xl xc y yl yc m n mc slow : Nat} {s : State} (hy : ArgY s y yl yc) (hm : ArgM s m n mc)
+    (h : ExpN.Pre R b L 41640 DivInst.divC costD Q.NatRem.need cR ExpSlow.need P2D.needP cS cP z zl zc st x xl xc y yl yc m
+      n mc slow s) : Pre R b L costD z zl zc st x xl xc y yl yc m n mc slow s :=
+  ⟨hy, hm, ExpN.NPreS.of_NPre h.1, h.2.1, h.2.2⟩
 
 /-- the postcondition (= `ExpN.Post`): `x^y mod m`, normalised, in `z`'s array or a fresh one -/
 @[reducible] def Post (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (costD : Nat) (z zc st x xl y yl m n : Nat)
@@ -126,7 +232,7 @@ theorem correctness (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted
   simp only [bvN] at hS0
   have h := Ensures.full64 hap (by simp [numIntRegs]) hS0
   intro ret hret s hs hpre
-  exact h ret hret s hs hpre.2.2
+  exact h ret hret s hs (toPre hpre)
 
 end FvModexp.Amd64.NRow
 
@@ -214,7 +320,9 @@ theorem one0 : NatOne R [] mem0 OP ([(SP0 - 1176 - 41640, SP0 - 1176 + 1296), (0
 
 set_option maxHeartbeats 64000000 in
 /-- the witness state satisfies the precondition (`3^5 mod 7`, `z = nil`, `slow = false`) -/
-theorem pre : Pre R BW [] CD 0 0 0 ST XP 1 1 YP 1 1 MP 1 1 0 s0 := by
+theorem preE : ArgY s0 YP 1 1 ∧ ArgM s0 MP 1 1 ∧
+    ExpN.Pre R BW [] 41640 DivInst.divC CD Q.NatRem.need cR ExpSlow.need P2D.needP cS cP 0 0 0 ST XP 1 1 YP 1 1 MP 1 1 0
+      s0 := by
   have hm : s0.mem = mem0 := rfl
   have h4 : (s0.regs 4).toNat = SP0 := by decide
   have h14 : (s0.regs 14).toNat = G0 := by decide
@@ -247,6 +355,9 @@ theorem pre : Pre R BW [] CD 0 0 0 ST XP 1 1 YP 1 1 MP 1 1 0 s0 := by
   · exact Or.inl (by decide +kernel)
   · refine ⟨⟨by decide, by decide, fun _ => ⟨?_, by decide⟩⟩, fun _ => by simp only [gA_eq, Apart]; decide⟩
     simp only [Held, InRanges, rt_eq, outside_cons, outside_nil, and_true]; decide +kernel
+
+/-- the witness state satisfies the row precondition -/
+theorem pre : Pre R BW [] CD 0 0 0 ST XP 1 1 YP 1 1 MP 1 1 0 s0 := ofPre preE.1 preE.2.1 preE.2.2
 
 /-- `pre` at the `BitVec` arguments of `correctness` -/
 theorem preB : Pre R BW [] CD (0 : BitVec 64).toNat (0 : BitVec 64).toNat (0 : BitVec 64).toNat
