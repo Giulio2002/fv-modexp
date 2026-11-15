@@ -2243,3 +2243,34 @@ MulQ 349/1743, Mont 142/1670, SubMod2N 220/2831, ModInv 185/2393, DivW 144/1214,
 Drs 325/1739, Div 339/2573, DivM 178/3576, Rem 145/4585, DivBasicQ 216/4528, DrsQ 263/1700, DivQ 293/2559, DivMQ 125/3584,
 RemQ 118/4665, IntMod 143/3995, W2 406/3111, W4 419/2981, P2W2 273/2985, P2W4 204/1545, P2D 278/2142, N 442/4574,
 Even 329/3734, IExpQ 317/4391, RequiredGas 210/1622, RunErr 279/1651, RunSucc 466/5157, RunTotal 77/4860.
+
+## divmc s83 (2026-11-15): amd64 W4Row < 500 s — two new lower rows (MontRow, P2PreRow) + window tactic trims
+Fair targeted runs (Janus v0.3.3, ROWS=1, JANUS_TIMINGS=1, JANUS_REPLAY_THREADS=1, snapshot cache-divmc/s83/snapR = agent/divmc
+dd309007). Lower amd64 rows StackNat..Int/ModRow warmed outside the caps (snapshot-only `Warm83` importing them, `entry = entry`
+theorem so it replays; 772 modules, 3512 s, JANUS_JOBS=6), then each run on a fresh hardlink copy of that warm cache, rows in
+release order. Before = top's rel49 amd64 (fresh cache, load ~17).
+* Profile (dev, `-Dprofiler`): W4Row's own set (124 modules, dev sum 1054 s) had the montgomery closure on its critical import
+  path: LibMont 7 → MontHyp → MontLoop 111 → Mont 55 → MontExit 21 → MontW → DeferX → W4DivK … (dev crit 336 s of 1054); rel49's
+  own compile 467 s was crit-path bound. amd64 had no Mont row (arm64 has `Exp/MontRow`).
+* (1) NEW `amd64 Exp/MontRow` (twin of arm64 MontRow: `Mont.ens` on the Run program + `Witness.nonvacuous`
+  montgomery(z, 3, 5, 7, 0, 1), m/k/n as stack args at RSP+8…, `hasADX` region), release row right before `amd64 Exp/W4Row`:
+  W4Row own 124 → 117 modules, dev crit 336 → 149 s.
+* (2) NEW `amd64 Exp/P2PreRow` (`buildPrecomputationWindowModPower2`: `P2Pre.ens` with CalleeInstQ's closed callees,
+  kc = mulWX64; post `PostR` = `P2Pre.Post` with the `Scr` structure spelled out (`ScrF`) — the audit refuses structures in a
+  statement; witness windowSize 2, logM 8, x = [3]), release row right before `amd64 Exp/P2W2Row`: P2W2Row own 95 → 56 modules.
+* (3) Tactic trims (statements unchanged): omegas that case-split the context's unfolded `Apart` disjunctions replaced by
+  sub-range lemmas (`apart_in`/`apart_inF` in W{2,4}ORet, `in_or` in W{2,4}EnCtx, used by W{2,4}En), `congr 1` → `congrArg` in
+  W{2,4}ZcA, name-containment `decide` → `decide +kernel` (DivInst, CalleeInstQ). Dev (s): W4ORet 39.8→14.6, W2ORet 32.3→14.2,
+  W4En 29.7→16.3, W2En 32.2→16.2, W4EnCtx 30.5→17.4, W2EnCtx 34.1→17.5, W4ZcA 30.6→15.1, W2ZcA 29.9→14.6, DivInst 25.7→14.7,
+  CalleeInstQ 24.8→17.8.
+| row (amd64) | rel49 total | s83 run 1 (load 16-22) | s83 run 2 (load 6-20) | run 2: own / compile / audit / replay |
+|---|---|---|---|---|
+| Exp/MontRow (new) | – | PASS 332 s / 3.7 GB | PASS 293 s / 3.6 GB | 8 / 194 / 6 / 58 |
+| Exp/W4Row | 720 s / 3.6 GB (124 / 467 / 34 / 214) | PASS 510 s / 3.1 GB | **PASS 480 s / 3.2 GB** | 117 / 256 / 30 / 188 |
+| Exp/W2Row | 476 s | PASS 464 s / 3.3 GB | **PASS 452 s / 3.1 GB** | 103 / 245 / 33 / 169 |
+| Exp/P2PreRow (new) | – | (audit: Scr, fixed) | PASS 309 s / 3.0 GB | 40 / 155 / 21 / 128 |
+| Exp/P2W2Row | 556 s | – | **PASS 315 s / 3.0 GB** | 56 / 193 / 23 / 94 |
+| Exp/P2W4Row | – | – | PASS 309 s / 3.0 GB | 51 / 193 / 23 / 87 |
+  Every row ≤ 510 s; W4Row's remaining cost is replay (188 s, kernel per-pc `stepOK`) + a now throughput-bound compile.
+  The total release work grows by two row overheads (~2 × 15 s extraction/audit setup); the montgomery and table closures are
+  paid once either way.
