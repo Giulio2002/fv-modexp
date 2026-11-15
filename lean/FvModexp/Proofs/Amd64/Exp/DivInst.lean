@@ -69,7 +69,7 @@ theorem hyp (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
   divL_of_Q (Q.NatDiv.ensCL impl hap R hgr hmc hwb hmk0 hmv0 hmz0)
 
 set_option maxHeartbeats 64000000 in
-theorem ns_sub : ∀ x, Q.NatDiv.names.contains x = true → LibW.names.contains x = true := MontW.sub_of_all (by decide)
+theorem ns_sub : ∀ x, Q.NatDiv.names.contains x = true → LibW.names.contains x = true := MontW.sub_of_all (by decide +kernel)
 
 theorem ns_w4 : Q.NatDiv.names.contains W4Loop.fn = false := by decide
 
