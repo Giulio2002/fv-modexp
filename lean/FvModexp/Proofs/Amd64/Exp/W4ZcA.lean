@@ -83,7 +83,7 @@ theorem zcopy (impl : List Amd64.Segment) {R : RtInv}
     rw [hts, BitLenA64.clz_smear, BitVec.toNat_ofNat, Nat.mod_eq_of_lt hyi64]
     have hc := Util.clz_bl 64 yi hyi64
     have hb : Aux.bitLen yi = Exp.bitLen yi := rfl
-    rw [← hb]; congr 1; omega
+    rw [← hb]; exact congrArg (BitVec.ofNat 64) (by omega)
   obtain ⟨hk15, hd16⟩ := kTop_le yi hyi0 hyi64
   have e1 := ek1 yi hyi0 hyi64
   generalize hK : kTop yi = k at e1 hk15 hd16 KT

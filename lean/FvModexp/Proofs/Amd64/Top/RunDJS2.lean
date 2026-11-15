@@ -141,8 +141,6 @@ theorem dJS2 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl
   refine hk _ ⟨L0, bk, RelD.mk' hin0 ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ l0 l1 l2 lnz ?_ ?_ ?_ hext ?_
     ?_ hLs0 ?_ ?_ ?_ ?_, by janus64_simp,
     by janus64_simp, by janus64_simp, by janus64_simp, ?buf⟩
-  all_goals try (janus64_simp; done)
-  all_goals try (first | (dsimp only; rw [hfs]; done) | (dsimp only; exact hdf.trans hdf0.symm; done) | (simp only [hfs]; done) | (simp only [hdf, hdf0]; done))
   case refine_19 =>
     refine ⟨fun _ => ⟨?_, ?_⟩, fun _ => ?_⟩
     · janus64_simp
@@ -201,5 +199,7 @@ theorem dJS2 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl
     · exact Or.inr (hout.of_sub (buf_in_win (k := 456) hb' (by decide) (Nat.le_trans hsz (by decide))).1
         (buf_in_win (k := 456) hb' (by decide) (Nat.le_trans hsz (by decide))).2)
     · exact Or.inr (cw_le hb' (by decide))
+  all_goals try (janus64_simp; done)
+  all_goals try (first | (dsimp only; rw [hfs]; done) | (dsimp only; exact hdf.trans hdf0.symm; done) | (simp only [hfs]; done) | (simp only [hdf, hdf0]; done))
 
 end FvModexp.Amd64.Run

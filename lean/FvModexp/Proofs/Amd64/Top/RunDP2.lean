@@ -97,8 +97,6 @@ theorem dP2 (impl : List Amd64.Segment) (R : RtInv)
     (by rw [List.append_nil]; exact hext) ?_ ?_ hLsL ?_ ?_ ?_ ?_,
     fun h => absurd h (by decide), ?zb, hsrc.1, hsrc.2.1, ?s3, ?d48, ?dacc, hext, fun _ _ => trivial, ?op⟩
     (by janus64_simp) ?r0 ?r3 ?r11 ?r1
-  all_goals try (janus64_simp; done)
-  all_goals try (first | (dsimp only; rw [hfs]; done) | (dsimp only; exact hdf; done) | (simp only [hfs]; done) | (simp only [hdf]; done))
   case refine_19 =>
     refine ⟨fun _ => ⟨?_, ?_⟩, fun _ => ?_⟩
     · janus64_simp [hsl1]
@@ -148,5 +146,7 @@ theorem dP2 (impl : List Amd64.Segment) (R : RtInv)
     exact Janus.Arm64.Memory.accessible_mono _ hw (by omega) (by omega)
   case r3 => simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; rw [hite, hbp]
   case r11 => simp only [setRegF_apply, ↓reduceIte, Nat.reduceEqDiff]; rw [hoA, BitVec.toNat_ofNat, Nat.mod_eq_of_lt (by omega), opavail_pad hstv.symm hndir]
+  all_goals try (janus64_simp; done)
+  all_goals try (first | (dsimp only; rw [hfs]; done) | (dsimp only; exact hdf; done) | (simp only [hfs]; done) | (simp only [hdf]; done))
 
 end FvModexp.Amd64.Run

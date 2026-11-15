@@ -91,8 +91,6 @@ theorem dA2 (impl : List Amd64.Segment) (R : RtInv)
   refine hE _ ⟨Lk, bk, RelD.mk' hin0 ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ l0 l1 l2 lnz
     ⟨fun _ => hsl.1 (by decide), fun _ => hsl.2 (by decide)⟩ ?_ ?_ hext ?_ hinv hLsS hMF hLF hop hopA,
     by janus64_simp, by janus64_simp, by janus64_simp, by janus64_simp, ?buf⟩
-  all_goals try (janus64_simp; done)
-  all_goals try (first | (dsimp only; rw [hfs]; done) | (dsimp only; exact hdf; done) | (simp only [hfs]; done) | (simp only [hdf]; done))
   case refine_19 =>
     intro _
     exact ⟨hz0, hz1, hz2, hz3⟩
@@ -117,5 +115,7 @@ theorem dA2 (impl : List Amd64.Segment) (R : RtInv)
       exact hext.held (hheld.sub hs1 hs2)
     · rw [BitVec.toNat_ofNat, Nat.mod_eq_of_lt (by omega)]
       first | omega | (simp only [Janus.outside_cons, Janus.outside_nil, and_true]; omega)
+  all_goals try (janus64_simp; done)
+  all_goals try (first | (dsimp only; rw [hfs]; done) | (dsimp only; exact hdf; done) | (simp only [hfs]; done) | (simp only [hdf]; done))
 
 end FvModexp.Amd64.Run

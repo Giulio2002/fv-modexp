@@ -2206,6 +2206,21 @@ Mont 145/1692, SubMod2N 220/2748, ModInv 190/2333, DivW 157/1213, DivWVW 13/324,
 Div 373/2595, DivM 208/3555, Rem 165/4547, DivBasicQ 276/4497, DrsQ 295/1718, DivQ 343/2582, DivMQ 138/3570,
 RemQ 127/4487, IntMod 164/4028, W2 414/2981, W4 422/2996, P2W2 280/3121, P2W4 209/1597, P2D 287/2152, N 458/4936,
 Even 367/3934, IExpQ 337/4564, RequiredGas 238/1642, RunErr 272/1654, RunSucc 464/5147.
+## expmc s85 (2026-11-14): amd64 Exp/IExpRow — rel48 708 s (compile 152 / audit 47 / REPLAY 476) analysed + LibExpI trim
+* rel48's replay was NOT IExpRow's own work: "replay of 255 target(s)" = IExpRow's 41 own modules + **215 modules of amd64
+  Exp/EvenRow**, which hit the 900 s cap in rel48 (own compile 215, never replayed) and so were replayed by the next row.
+  Since asm s80 (lower rows ModInvRow + SlowRow, EvenRow own 209 -> 95, EvenRow PASS 730 s) EvenRow replays its own closure.
+* Own replay measured per module with the toolchain's `leanchecker` on dev oleans (single-threaded, incl. ~2 s import load each):
+  41 modules sum 229 s cpu; top: LibExpI 37.2, NNilE 20.3, NNilTE 19.9, NMkE 13.3, IExpRow 11.8, NProE 10.1, BudP2 7.5,
+  NTrivE 7.5, IExpFun 7.0, BudWin 6.7, rest < 6. At 4 at once ≈ 60-70 s wall (vs 476 s).
+* FIX: LibExpI (root of the own DAG, so on the compile critical path) regenerated in the new generator INDEX MODE
+  (`IDX=1 scripts/gen-libprog-sub.py`; check-generated recognises ", index mode"): each kept segment's
+  `names.contains seg.name = true` by its index (`names[i]? = some seg.name` by rfl: equal string literals), only the 5 dropped
+  segments are decided; masks by `simp only [hitN]`. LibExpI compile 42.8 -> 8.1 s, leanchecker 39.3 -> 8.6 s. Statements unchanged.
+  The other 52 generated Lib modules are untouched (no rebuild for other rows); owners may opt in (LibNE/LibW/LibRun-style masks).
+* Projection (rel48 numbers, EvenRow replayed by its own row): ≈ compile 118 + audit 47 + replay ≈ 55 + overhead 30 ≈ 250 s
+  (target ≤ 550). A targeted verify on a copy of rel48's cache was NOT possible: rel48's module store holds only 784 entries for a
+  1336-module closure (presumably gc'd), so the copy recompiled lower W2/W4 modules (killed after ~6 min); the real number comes from top's next release run.
 
 ## top s51 (2026-11-14): rel48 amd64 (Janus v0.3.3, fresh cache, ROWS=1, snapshot main 437c5b14, wall 9868 s + warm-up 823 s)
 28/31 PASS; host load (max per row) min 3.9 / median 9.2 / max 12.4. FAIL (all fixed on main after the snapshot):
@@ -2239,3 +2254,53 @@ Rsh 152/1254, Lsh 125/1236, IntAS 194/1332, BasicSqrQ 260/6186, SqrQ 423/4337, M
 DivW 161/1263, DivWVW 13/432, DivBasic 280/3569, DivBasicQ 259/3633, DrsQ 511/2255, DivQ 440/5208, RemQ 162/2123,
 IntMod 313/3843, W4 720/3574, W2 476/3219, P2W2 556/3025, P2W4 326/3008, P2D 230/2371, ModInv 333/2517, Slow 218/3076,
 Even 702/4546, IExp 309/4244, RequiredGas 281/3434, RunErr 374/1290, RunSucc 656/5310.
+## asm s83 (2026-11-15): amd64 Top_RunSucc + Exp_EvenRow trims (dev-compile numbers; janus row runs NOT yet measured)
+Baseline rel49 (load ~17): RunSucc 656 s (own 67: compile 455 / replay 133 / audit 61), EvenRow 702 s (own 95: compile 309 /
+replay 173 / audit 214). Dev per-module compile of RunSucc's 67 own modules against the rel49 oleans: sum 1624 s (4 parallel).
+* Profile (trace.profiler): the D-segment modules spend most time in `omega` inside large contexts: failed `janus64_simp`
+  attempts of `all_goals try (janus64_simp; done)` on goals that a later named `case` closes (DM2: 23.5 s, one failure 12.5 s),
+  `janus_frame` (20 s), failed run dischargers (2^k splits over the g-stackguard `Apart` disjunctions).
+* Fix 1 (RunDA1/DA2/DE0-2 (+ scripts/RunDE64.tmpl)/DJF0-2/DJS0-2/DJZ0-2/DM1/DM2/DP1/DP2): the named `case` blocks run BEFORE
+  the catch-all `all_goals try (janus64_simp; done)` (pure reorder, same tactics): these 18 modules 1016 s -> 883 s
+  (DM1 109->76, DM2 112->83, DP2 95->77, DJF2 101->89, DJF1 91->81).
+* Fix 2 (RunC2B): three trivial `omega`s in a huge context (`RSP - 608 + 472 = RSP - 136`, `RSP - W ≤ RSP - 136`, …;
+  60 + 47 + 37 s of omega) replaced by named closers `c2B_sp136` / `Nat.sub_le_sub_left` / `c2B_le40`: 80 s -> 24 s.
+* RunSucc dev sum 1624 -> ~1435 s (-12 %); expected row effect ≈ -50 s compile + a little replay.
+* EvenRow: NEW lower row `amd64 Exp/NRow` (Amd64/Exp/NRow.lean, twin of arm64 Exp/NRow): `nat.expNN` (no even path, m odd /
+  power of two) = expmc's `ExpN.ens_noEven` at K = 41640 with every callee closed (DivInst / Q.ExpSlow.slowCl / P2DRow.hyp /
+  RemInst), `Ensures.full64`; `Witness.nonvacuous` (`3^5 mod 7`, costD = 30000). Dev compile 42 s / 4.4 GB. It takes 33 of
+  EvenRow's 95 own modules (LibN, LibOdd, OddDefs, OddEns, NMk, N* … the old critical path LibOdd → … → NJ1 → NFun → NCap);
+  EvenRow keeps 62 (Ev*, NEvP, NMidE, …). EvenRow's audit (Janus moduleNames bug) is unchanged on v0.3.3.
+* Measurement caveat: targeted janus runs from a modified snapshot against a COPY of the rel49 cache recompiled the lower
+  closure (store entries not reused across snapshots), so NRow hit the 900 s cap twice; no valid row times yet. Needs a
+  warm-up from the SAME snapshot (asm s79 recipe) or the next release run.
+## divmc s83 (2026-11-15): amd64 W4Row < 500 s — two new lower rows (MontRow, P2PreRow) + window tactic trims
+Fair targeted runs (Janus v0.3.3, ROWS=1, JANUS_TIMINGS=1, JANUS_REPLAY_THREADS=1, snapshot cache-divmc/s83/snapR = agent/divmc
+dd309007). Lower amd64 rows StackNat..Int/ModRow warmed outside the caps (snapshot-only `Warm83` importing them, `entry = entry`
+theorem so it replays; 772 modules, 3512 s, JANUS_JOBS=6), then each run on a fresh hardlink copy of that warm cache, rows in
+release order. Before = top's rel49 amd64 (fresh cache, load ~17).
+* Profile (dev, `-Dprofiler`): W4Row's own set (124 modules, dev sum 1054 s) had the montgomery closure on its critical import
+  path: LibMont 7 → MontHyp → MontLoop 111 → Mont 55 → MontExit 21 → MontW → DeferX → W4DivK … (dev crit 336 s of 1054); rel49's
+  own compile 467 s was crit-path bound. amd64 had no Mont row (arm64 has `Exp/MontRow`).
+* (1) NEW `amd64 Exp/MontRow` (twin of arm64 MontRow: `Mont.ens` on the Run program + `Witness.nonvacuous`
+  montgomery(z, 3, 5, 7, 0, 1), m/k/n as stack args at RSP+8…, `hasADX` region), release row right before `amd64 Exp/W4Row`:
+  W4Row own 124 → 117 modules, dev crit 336 → 149 s.
+* (2) NEW `amd64 Exp/P2PreRow` (`buildPrecomputationWindowModPower2`: `P2Pre.ens` with CalleeInstQ's closed callees,
+  kc = mulWX64; post `PostR` = `P2Pre.Post` with the `Scr` structure spelled out (`ScrF`) — the audit refuses structures in a
+  statement; witness windowSize 2, logM 8, x = [3]), release row right before `amd64 Exp/P2W2Row`: P2W2Row own 95 → 56 modules.
+* (3) Tactic trims (statements unchanged): omegas that case-split the context's unfolded `Apart` disjunctions replaced by
+  sub-range lemmas (`apart_in`/`apart_inF` in W{2,4}ORet, `in_or` in W{2,4}EnCtx, used by W{2,4}En), `congr 1` → `congrArg` in
+  W{2,4}ZcA, name-containment `decide` → `decide +kernel` (DivInst, CalleeInstQ). Dev (s): W4ORet 39.8→14.6, W2ORet 32.3→14.2,
+  W4En 29.7→16.3, W2En 32.2→16.2, W4EnCtx 30.5→17.4, W2EnCtx 34.1→17.5, W4ZcA 30.6→15.1, W2ZcA 29.9→14.6, DivInst 25.7→14.7,
+  CalleeInstQ 24.8→17.8.
+| row (amd64) | rel49 total | s83 run 1 (load 16-22) | s83 run 2 (load 6-20) | run 2: own / compile / audit / replay |
+|---|---|---|---|---|
+| Exp/MontRow (new) | – | PASS 332 s / 3.7 GB | PASS 293 s / 3.6 GB | 8 / 194 / 6 / 58 |
+| Exp/W4Row | 720 s / 3.6 GB (124 / 467 / 34 / 214) | PASS 510 s / 3.1 GB | **PASS 480 s / 3.2 GB** | 117 / 256 / 30 / 188 |
+| Exp/W2Row | 476 s | PASS 464 s / 3.3 GB | **PASS 452 s / 3.1 GB** | 103 / 245 / 33 / 169 |
+| Exp/P2PreRow (new) | – | (audit: Scr, fixed) | PASS 309 s / 3.0 GB | 40 / 155 / 21 / 128 |
+| Exp/P2W2Row | 556 s | – | **PASS 315 s / 3.0 GB** | 56 / 193 / 23 / 94 |
+| Exp/P2W4Row | – | – | PASS 309 s / 3.0 GB | 51 / 193 / 23 / 87 |
+  Every row ≤ 510 s; W4Row's remaining cost is replay (188 s, kernel per-pc `stepOK`) + a now throughput-bound compile.
+  The total release work grows by two row overheads (~2 × 15 s extraction/audit setup); the montgomery and table closures are
+  paid once either way.

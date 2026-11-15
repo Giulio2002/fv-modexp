@@ -85,15 +85,19 @@ A final statement may not use an instance or class of a dependency, so these pla
     Proved by cases from the two rows (`env_of_envW`, `errReqs_of_okReqs`); `Run.Witness.correctness_total` from the success witness.
   * Release gates on the statement: `FvModexp.Arm64.RunGate.okBudget_gate` (`LengthsPass data → okBudget (parseLengths data) ≤ 2^35`,
     `Proofs/Arm64/Top/RunGate.lean`; amd64 twin `FvModexp.Amd64.RunGate.okBudget_gate`), `RunSucc.expBudget_gate`
-    (`ExpBudget 128 128 ≤ 2^35`); RA-pin audit CLEAN on both rows (REDTEAM-arm64 R0). Build target: each ISA's `Top/RunSucc`
+    (`ExpBudget 128 128 ≤ 2^35`); RA-pin audit CLEAN on both rows (REDTEAM-arm64 R0) and on the three amd64 rows RunErr/RunSucc/RunTotal (REDTEAM-amd64 A0). Build target: each ISA's `Top/RunSucc`
     row module imports its `Top/RunGate`, so the release run (`janus verify` of the RunSucc rows) compiles and kernel-checks both gates.
     `RunTotal` imports RunSucc + RunErr, so no row module can import it; it is compiled and checked by its own release row
-    `arm64 Top/RunTotal` (top s51, after `arm64 Top/RunSucc`); the default `lake build FvModexp` is extraction-free and cannot import any `Extracted`-based module.
+    `arm64 Top/RunTotal` (top s51, after `arm64 Top/RunSucc`) and `amd64 Top/RunTotal` (asm s82, after `amd64 Top/RunSucc`); the default `lake build FvModexp` is extraction-free and cannot import any `Extracted`-based module.
 * Row 1, amd64 (`Proofs/Amd64/Top/RunErr.lean`, `Proofs/Amd64/Top/RunSucc.lean`): `FvModexp.Amd64.Run.correctness` (lengths fail,
   release row, `Spec.RunAmd64` twins) and `FvModexp.Amd64.RunSucc.correctness` (lengths pass, `Spec.RunAmd64` twins + `Spec.RunAmd64.CpuOne` (§1b); every
   machine-code callee proved: `(*Int).Mod` = `Run.Closed.modA`, `(*Int).exp` = `Run.Closed.expA` = expmc's `IExp.ensCl`
-  (depth 43 736), premises = the twelve Janus runtime contracts, the Pool shape binder `S` (pre `S = StkShape`),
+  (depth 43 736), premises = eleven Janus runtime-contract hypotheses over nine runtime functions (§3 table, `…64` / `PoolAmd64`
+  amd64 variants), the Pool shape binder `S` (pre `S = StkShape`),
   `W ≥ 616 + 43736 = 44 352`), with `RunSucc.Witness.nonvacuous` (`3^5 mod 7`, output `[5]`).
+  **`FvModexp.Amd64.Run.correctness_total`** (`Proofs/Amd64/Top/RunTotal.lean`, release row `amd64 Top/RunTotal`): the twin of the
+  arm64 total theorem (success environment incl. `CpuOne`, budget only under `LengthsPass`, plus `512 ≤ b`; post `(LengthsPass ∧ OkRet ∧
+  FrameW) ∨ (LengthsFail ∧ ErrRet ∧ Frame)`), with `Run.Witness.correctness_total` from the amd64 success witness.
 * Row 3 `FvModexp.Proofs.Compose.composition` (`Proofs/Common/Compose.lean`): pure Lean. From the guarantees of rows 1 and 2 (hypothesis structure `RowsHold`), for every
   result cache `cache` meeting `CacheStoredBy p cache` (`cacheStoredBy_none`: `cache == nil` does), geth's `runPrecompiled p data gas cache` agrees with EthLib's
   `modexp fork data gas`: failure iff failure (error length bound, or out of gas), otherwise equal outputs and remaining gas `gas - cost` with `cost` = EthLib's `chargedGas`.
@@ -144,7 +148,14 @@ precondition by hand, from the checklist that `scripts/check-ra-pin` generates:
   `SP − g.stackguard0 > 73 568` bytes (arm64 success: `GuardOK s W`, `W ≥ 624 + 72944`; arm64 error: `> 4 800`, `GuardOK s 4800`) and
   `stackguard0` is not the `stackPreempt` sentinel (no pending preemption request: `GuardOK` is false then). Row 2 (RequiredGas, arm64): `> 464` bytes (`GuardOK s 464`). amd64: error row
   `> 4 800` (`StackGuardOK s 4800`); success row `> 44 352` bytes (`StackGuardOK s W`, `W ≥ 616 + 43736`: Run's 616-byte frame + the closed
-  amd64 `(*Int).exp` window 43 736, which covers `(*Int).Mod`'s 41 800). A
+  amd64 `(*Int).exp` window 43 736, which covers `(*Int).Mod`'s 41 800). Derivation of 43 736 (REDTEAM-amd64 A5): it is the
+  summary-composition window of amd64 `(*Int).exp`, `IExp.ensCl` (`Proofs/Amd64/Exp/IExpCl.lean`) = `K + 0x5d0` with `K = 42 248`
+  (`K` = the window handed to the inner `nat.expNN` call, `0x5d0` = the stack `(*Int).exp` and its frames use above it);
+  `K ≥ 42 248` is forced by the largest callee window inside `nat.expNN` (`IExp.evH`, `Proofs/Amd64/Exp/IExpClD.lean`: the `expNNEven` call needs `ExpEven.stkE 41 640 = 43 152`
+  bytes; the other callee windows are smaller: div 41 512, expNNSlow 41 952, p2 42 520, rem 41 720), and those windows bottom out in
+  the runtime contracts, each of which reserves a flat 4 096 bytes below its caller's SP. So 43 736 is an upper bound the proof
+  uses, NOT a measured Go stack depth (arm64 needs 72 944 for the same Go code: much of either figure is proof-side margin); a
+  real call with less free stack is outside the claim, as stated below. A
   goroutine with less free stack (Go grows stacks on demand: a fresh 8 KiB stack, or a 32/64 KiB stack partly used by the EVM
   interpreter) or with a pending preemption calls morestack in real geth, which copies the stack / preempts and then continues
   with the same result; that continuation is outside the claim. Lifting this needs a Janus morestack contract (JANUS-ISSUES wish).
@@ -166,7 +177,7 @@ precondition by hand, from the checklist that `scripts/check-ra-pin` generates:
 
 Every main theorem has a kernel-checked `Witness.nonvacuous` (concrete returning run satisfying the precondition) which `janus verify`
 requires: row 2 `RequiredGas.Witness.nonvacuous`, row 1 arm64 `RunSucc.Witness.nonvacuous` (`3^5 mod 7` → `[5]`) and
-`Run.Witness.nonvacuous` (header 1025), amd64 `Run.Witness.nonvacuous`; `Run.correctness_total` has
+`Run.Witness.nonvacuous` (header 1025), amd64 `RunSucc.Witness.nonvacuous` (`3^5 mod 7` → `[5]`) and `Run.Witness.nonvacuous` (header 1025); `Run.correctness_total` (both ISAs) has
 `Run.Witness.correctness_total`. Optional extra coverage witnesses (`b = m = 0`, `mod = 0`, `base = 1`) are not required.
 
 ## Row 1 budgets and request sizes (derivation of `OkReqs` and `okBudget`)

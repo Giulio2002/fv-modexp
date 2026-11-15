@@ -1,5 +1,4 @@
 import FvModexp.Proofs.Amd64.Top.RunDEDefs
-import FvModexp.Proofs.Amd64.Top.RunDSlot
 
 /-! # `Run` (amd64): operand 1 — the patched `nat.setBytes` call `pcE1` to `pcD2`
 
@@ -97,8 +96,6 @@ theorem dE1 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
     (LiveFrame.of_win (by simp only [win, stk]; janus_frame) hLsL1).trans (LiveFrame.of_empty hLF2 []) (fun _ _ h => h)
   refine hk _ L2 b2 (RelD.mk' hin0 ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ l0 l1 l2 lnz ?_ ?_ ?_ (hext.trans hext2)
     ?_ ?_ (hext2.liveSep hLsL1 hwrt) ?_ ?_ ?_ ?_) (by janus64_simp) (by janus64_simp [hp1, opAt]) (by janus64_simp [hn1, opAt])
-  all_goals try (janus64_simp; done)
-  all_goals try (first | (dsimp only; rw [hfs1]; exact hfs; done) | (dsimp only; rw [hdf1]; exact hdf.trans hdf0.symm; done) | (simp only [hfs1, hfs]; done) | (simp only [hdf1, hdf, hdf0]; done))
   case refine_19 =>
     obtain ⟨hsl1, hsl2⟩ := hsl
     refine ⟨fun h => ?_, fun h => ?_⟩
@@ -129,10 +126,10 @@ theorem dE1 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
     intro j hj
     dsimp only
     rcases (show j = 0 ∨ j = 1 by omega) with rfl | rfl
-    · refine OpDone.transportS (hop 0 (by omega)) (k := 1) (by omega) ?_
+    · refine OpDone.transport (hop 0 (by omega)) ?_ ?_ ?_ ?_
         ((hLFS.trans (LiveFrame.of_win (by simp only [win, stk]; janus_frame) (hext2.liveSep hLsL1 hwrt))
           (fun _ _ h => hext2.inRanges_old h))) (fun _ _ h => hext2.inRanges_old h)
-      intro a n h1 h2; simp only [opAt] at h1 h2; janus64_simp
+      all_goals (simp only [opAt]; janus64_simp)
     · refine opDone_of (m := s'.mem) (hLc := hext) ?rd
         (hacc := fun a n w => by simp only [Janus.Arm64.Memory.accessible_writeLE, hMF2.accessible, hMF.accessible])
         (by janus64_simp [opAt]) (by janus64_simp [hp1, opAt]) (by janus64_simp [hn1, opAt]) (by janus64_simp [hc1, opAt])
@@ -160,5 +157,7 @@ theorem dE1 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
     rcases hor2 with ⟨-, h⟩ | ⟨-, h⟩
     · simp at h; omega
     · exact h
+  all_goals try (janus64_simp; done)
+  all_goals try (first | (dsimp only; rw [hfs1]; exact hfs; done) | (dsimp only; rw [hdf1]; exact hdf.trans hdf0.symm; done) | (simp only [hfs1, hfs]; done) | (simp only [hdf1, hdf, hdf0]; done))
 
 end FvModexp.Amd64.Run
