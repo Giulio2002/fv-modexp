@@ -2337,3 +2337,26 @@ The 35 Lean files changed between 87a68769 (base of the full autoImplicit build)
 amd64 **335 modules OK** (324 changed/downstream + 11 closure modules absent from the rel49 store), arm64 **310 modules OK**
 (the 242 downstream of Common/DivRec + 68 absent closure modules). No auto-bound implicit anywhere; nothing to fix.
 Slowest: amd64 RunDJF2 80 s, RunDJF1 74 s, RunDM2 72 s, RunDM1 68 s, OddEns 66 s; peak RSS 6.0 GB. Tools: cache-top/s52/{closure,devpar,pass2}.py.
+
+## top s52 (2026-11-15): rel50 — FINAL v0.3.3 RELEASE RUN (Janus v0.3.3 9127bf82, fresh cache per ISA, ROWS=1, JANUS_TIMINGS=1)
+**arm64 43/43 PASS** (snapshot main 3ccbb729; wall 9995 s + warm-up 844 s; load max/row median 14.2, max 31.1) and
+**amd64 37/37 PASS** (snapshot main 5c8f46dd = 3ccbb729 + asm s84 amd64 RunSucc trim + lint fix; nothing outside
+Proofs/Amd64 but docs/scripts changed, so the arm64 leg stands; wall 10815 s + warm-up 894 s; load median 16.6, max 33.5).
+**80/80 rows green, no row > 600 s** (max: arm64 Exp_NRow 538 s at load 31; amd64 NatQ_DrsRowQ 532 s).
+Per row arm64 (s/MB): StackNat 128/2475, MulAddWW 149/961, AddVW 55/1014, SubVW 57/975, BasicMul 115/3220, BasicSqr 311/3131,
+Trunc 113/902, Rsh 115/836, Lsh 93/923, IntAS 218/1154, IntSub 14/450, BasicSqrQ 257/2795, SqrQ 311/2903, MulQ 319/1675,
+Mont 138/1672, SubMod2N 206/2759, ModInv 190/2347, DivW 150/1194, DivWVW 12/319, DivBasic 274/4409, Mul 375/2161, Drs 341/1730,
+Div 357/2537, DivM 204/3582, Rem 163/4471, DivBasicQ 265/4501, DrsQ 291/1714, DivQ 333/2623, DivMQ 140/3598, RemQ 125/4519,
+IntMod 164/3931, W2 424/2944, W4 440/3008, P2W2 299/3088, P2W4 228/1603, P2D 326/2147, N 538/4575, Even 368/3746, IExpQ 310/4417,
+RequiredGas 224/1601, RunErr 243/1624, RunSucc 476/5161, RunTotal 79/4855.
+Per row amd64 (s/MB): StackNat 159/996, MulAddWW 210/1166, AddVW 69/1069, SubVW 63/1050, BasicSqr 376/6085, Trunc 182/1133,
+Rsh 136/1313, Lsh 123/1257, IntAS 170/1313, BasicSqrQ 228/6127, SqrQ 401/4281, MulQ 390/2189, RequiredGas 269/3130,
+SubMod2N 490/5731, DivW 167/1287, DivWVW 15/423, DivBasic 263/3563, DivBasicQ 267/3574, DrsQ 532/2062, DivQ 508/5218,
+RemQ 190/2120, IntMod 317/3849, Mont 284/3577, W4 516/3094, W2 460/3309, P2Pre 314/3089, P2W2 330/2957, P2W4 319/2956,
+P2D 234/2050, ModInv 330/2441, Slow 226/3032, N 424/3745, Even 516/4083, IExp 299/4208, RunErr 379/1306, RunSucc 521/4834
+(rel49 656), RunTotal 83/4713.
+GATES on 5c8f46dd's tree: `RELEASE=1 scripts/no-sorry.sh` **OK** (lint 3486 files OK; check-lean-lint 8 rows OK;
+check-spec-closure **8 of 8 final rows surveyed**, closure 9 Spec modules / 69 definitions). `scripts/check-ra-pin --release`:
+**arm64 43/43 CLEAN, amd64 37/37 CLEAN**, against each leg's release oleans (consumer own/lib/root; the cache keeps only the last
+row's closure, so the 77 arm64 / 60 amd64 missing row and witness modules were compiled with -D autoImplicit=false into a
+hard-link farm over it; RequiredGas via its own consumer). Reports: cache-top/s52/rapin50-{arm64,amd64}-report.txt.
