@@ -76,10 +76,11 @@ theorem dP2 (impl : List Amd64.Segment) (R : RtInv)
   rw [Nat.min_eq_right (Nat.le_of_lt hndir), opavail_pad hstv.symm hndir] at hsrc
   have hwS : S.mem.accessible ((s.regs 4).toNat - 4800) (4800 + 40) true = true := by rw [hMF.accessible]; exact hw
   rw [hx0] at hx15
+  have hpm := pin_mod (p := p.toNat) len hp
   have bx := Box.mk <| And.intro hpw <| And.intro hinS <| And.intro hheld <| And.intro hpacc <| And.intro hp <|
     And.intro hlcp <| And.intro hcp48 <| hstv
   clear hpw hinS hheld hpacc hp hlcp hcp48 hstv
-  janus64_run [hsp, hm1, hm2, hm3, hm4, hm5, hm6, s1, s2, s4, s5, s6, s3, hsl1, hsl2, hsl3, hz1', hz2', hz3', hR9, hadd, hcb, hsubB, hJG, hmB,
+  janus64_run [hpm, hsp, hm1, hm2, hm3, hm4, hm5, hm6, s1, s2, s4, s5, s6, s3, hsl1, hsl2, hsl3, hz1', hz2', hz3', hR9, hadd, hcb, hsubB, hJG, hmB,
     hc32, hx15, toInt_ite, toNat_ite, toInt_small, BitVec.msb_eq_decide] until [pcJ2]
   obtain ⟨hpw, hinS, hheld, hpacc, hp, hlcp, hcp48, hstv⟩ := bx.h
   have hLsL1 : LiveSep Lk (win s 4800 40) := hLsS

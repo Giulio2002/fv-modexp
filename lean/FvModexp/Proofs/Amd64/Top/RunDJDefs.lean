@@ -224,4 +224,54 @@ theorem padded_val {mW m s0 : Janus.Arm64.Memory} {dst src n size pp ll start : 
       Janus.Arm64.Memory.readLE_one]
   · rw [if_neg (by omega), ← Janus.Arm64.Memory.readLE_one, hrest j (by omega) hj]
 
+/-- The frame of a fresh-buffer `memmove` call site, as a named closer (asm s84; `janus_frame` took 5-14 s per call
+in the big contexts): one spill at `sp - k1` and the return-address push at `sp - 616` inside the window, then the
+callee's frame (its stack and the destination `[d, d + n)`, a runtime object). -/
+theorem frame_copy_fresh {rt : List (Nat × Nat)} {M m : Janus.Arm64.Memory} {sp k1 v1 v2 d n e : Nat}
+    (hb : 4800 ≤ sp) (hk1 : 8 ≤ k1) (hk1' : k1 ≤ 4800) (hfe : d + n ≤ e) (hrt : InRanges d (e - d) rt)
+    (hF : MemFrame ((M.writeLE (sp - k1) 8 v1).writeLE (sp - 616) 8 v2) m
+      (rt ++ [(sp - 616 - 4096, sp - 616), (sp - 616 + 8, sp - 616 + 8 + 24)] ++ [(d, d + n)])) :
+    MemFrame M m (rt ++ [(sp - 4800, sp + 40)]) := by
+  refine MemFrame.trans (((MemFrame.refl M [(sp - 4800, sp + 40)]).writeLE v1 (List.mem_singleton_self _)
+    (by omega) (by omega)).writeLE v2 (List.mem_singleton_self _) (by omega) (by omega)) hF ?_
+  intro a k h
+  simp only [Janus.outside_append, Janus.outside_cons, Janus.outside_nil, and_true] at h ⊢
+  have hd := InRanges.apart (hrt.sub (n := n) (Nat.le_refl _) (by omega)) h.1
+  unfold Apart at hd
+  exact ⟨h.2, ⟨h.1, by omega, by omega⟩, by omega⟩
+
+/-- A `w`-byte store at `sp - k` (`w ≤ k ≤ W`) inside the window `[sp - W, sp + 40)` keeps a window frame (asm s84:
+named closers for the call-site `MemFrame` goals that `janus_frame` proved in 5-14 s each in the big contexts). -/
+theorem frame_w {M M' : Janus.Arm64.Memory} {sp k w W : Nat} (v : Nat) (h : MemFrame M M' [(sp - W, sp + 40)])
+    (hb : W ≤ sp) (hk : w ≤ k) (hk' : k ≤ W) : MemFrame M (M'.writeLE (sp - k) w v) [(sp - W, sp + 40)] :=
+  h.writeLE v (List.mem_singleton_self _) (by omega) (by omega)
+
+/-- Stores in the window, then a runtime call (its stack `[sp-616-4096, sp-616) ∪ [sp-608, sp-584)`): a frame of
+`R.rt ++ window`. -/
+theorem frame_cs_trans {rt : List (Nat × Nat)} {M M' m : Janus.Arm64.Memory} {sp W : Nat} (hW : 4800 ≤ W)
+    (hb : W ≤ sp) (hM : MemFrame M M' [(sp - W, sp + 40)])
+    (hF : MemFrame M' m (rt ++ [(sp - 616 - 4096, sp - 616), (sp - 616 + 8, sp - 616 + 8 + 24)])) :
+    MemFrame M m (rt ++ [(sp - W, sp + 40)]) := by
+  refine MemFrame.trans hM hF ?_
+  intro a k h
+  simp only [Janus.outside_append, Janus.outside_cons, Janus.outside_nil, and_true] at h ⊢
+  exact ⟨h.2, h.1, by omega, by omega⟩
+
+/-- `frame_cs_trans` with the callee also writing a stack buffer `[sp - k, sp - k + n)` of at most 32 bytes. -/
+theorem frame_csb_trans {rt : List (Nat × Nat)} {M M' m : Janus.Arm64.Memory} {sp k n : Nat} (hb : 4800 ≤ sp)
+    (hk : 8 ≤ k) (hk' : k ≤ 4800) (hn : n ≤ 32) (hM : MemFrame M M' [(sp - 4800, sp + 40)])
+    (hF : MemFrame M' m (rt ++ [(sp - 616 - 4096, sp - 616), (sp - 616 + 8, sp - 616 + 8 + 24)] ++
+      [(sp - k, sp - k + n)])) :
+    MemFrame M m (rt ++ [(sp - 4800, sp + 40)]) := by
+  refine MemFrame.trans hM hF ?_
+  intro a k' h
+  simp only [Janus.outside_append, Janus.outside_cons, Janus.outside_nil, and_true] at h ⊢
+  exact ⟨h.2, ⟨h.1, by omega, by omega⟩, by omega⟩
+
+/-- The input pointer plus its offset never wraps (a named run lemma: the failed `mod64_of_lt` discharges of
+`(p + inOff len) % 2^64` cost 1-3.5 s each in the `DM` runs; asm s84). -/
+theorem pin_mod {p l : Nat} (len : BitVec 64) (hp : p + l ≤ 2 ^ 48) :
+    (p + inOff len) % 18446744073709551616 = p + inOff len := by
+  unfold inOff; split <;> omega
+
 end FvModexp.Amd64.Run

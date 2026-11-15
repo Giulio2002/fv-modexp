@@ -94,7 +94,9 @@ theorem dM0 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
     exact hout.of_sub (Nat.le_refl _) (win_len hb')
   have hext' : LiveExt R L1 (L1 ++ [(ptr.toNat, ptr.toNat + blockSize (hdrV s p len 0) true)]) :=
     LiveExt.single (by simpa using hIn) (by simpa using hAp)
-  have hMFm : MemFrame S.mem m (R.rt ++ win s stk 40) := by simp only [win, stk]; janus_frame
+  have hMFm : MemFrame S.mem m (R.rt ++ win s stk 40) :=
+    frame_cs_trans (Nat.le_refl _) hb'
+      (frame_w _ (frame_w _ (frame_w _ (frame_w _ (frame_w _ (frame_w _ (frame_w _ (frame_w _ (frame_w _ (frame_w _ (frame_w _ (MemFrame.refl _ _) hb' (by decide) (by decide)) hb' (by decide) (by decide)) hb' (by decide) (by decide)) hb' (by decide) (by decide)) hb' (by decide) (by decide)) hb' (by decide) (by decide)) hb' (by decide) (by decide)) hb' (by decide) (by decide)) hb' (by decide) (by decide)) hb' (by decide) (by decide)) hb' (by decide) (by decide)) hMFk
   have hacc' : s.mem.accessible ptr.toNat (hdrV s p len 0) true = true :=
     Janus.Arm64.Memory.accessible_mono _ hacc (Nat.le_refl _) (Nat.add_le_add_left hsz _)
   refine hk _ (b1 - blockSize (hdrV s p len 0) true) ptr.toNat (ptr.toNat + blockSize (hdrV s p len 0) true)
@@ -122,7 +124,7 @@ theorem dM0 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
       exact Janus.Arm64.Memory.accessible_mono _ hwS (Nat.le_refl _) (win_len hb'))
   case h.refine_21 => exact bud_alloc hbud1 hBA hcst hcb
   case h.refine_22 => exact hinvk
-  case h.refine_23 => dsimp only; simp only [win, stk] at hMF ⊢; janus_frame
+  case h.refine_23 => exact hMF.trans hMFm (fun _ _ h => ⟨h, h⟩)
   case h.refine_24 =>
     dsimp only
     exact hLF.trans ((LiveFrame.of_win (by simp only [win, stk]; janus_frame) hLsS).trans hLFk (fun _ _ h => h))

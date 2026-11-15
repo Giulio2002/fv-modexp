@@ -136,7 +136,8 @@ theorem dJF1 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl
     hd48, hdacc, hLs0, hLsL1, hwrt, hsacc, hcacc, hc48, hcheld, hp, hlcp, hcp48, hpacc, hheld, hd, hro, hLs, hgr,
     hfs8, hfsacc, hfsg, hfsrt⟩ := bx.h
   clear hsf2 hsf3 hcf3 hcf4 hga hdf1 hdf2 hdf3
-  have hMFm : MemFrame S.mem m (R.rt ++ win s stk 40) := by simp only [win, stk]; janus_frame
+  have hMFm : MemFrame S.mem m (R.rt ++ win s stk 40) :=
+    frame_copy_fresh hb' (by decide) (by decide) (Nat.le_trans (Nat.add_le_add_left hnh _) hfe) hfrt hMFv
   have hd1 := dataLoaded_frame64 hdS (by simp [hrg1]) hro hMFm (fun r hr _ => by
     simp only [win, stk, List.mem_cons, List.not_mem_nil, or_false] at hr; subst hr
     exact Janus.Arm64.Memory.accessible_mono _ hwS (Nat.le_refl _) (win_len hb'))
@@ -188,7 +189,7 @@ theorem dJF1 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl
       simp only [opV, hoS, hoL]
       rw [beVal_writeLE_disj (fresh_slot hb' (by decide) (by decide) hfw
         (by have := Nat.le_trans (Nat.le_add_right _ _) hfe; omega))]
-      refine padded_val hcp ?_ ?_ (by omega)
+      refine padded_val hcp ?_ ?_ (by rw [Nat.sub_sub])
       · intro hn i hi
         rw [hsrc2 hn]
         obtain ⟨r1, r2⟩ := in_rng (p := p.toNat) (st := hdrV s p len 0) hi

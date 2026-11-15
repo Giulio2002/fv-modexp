@@ -97,7 +97,8 @@ theorem c1 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl) 
       janus64_run [hsp, hm1, hm2, hs3', hr3, msb_m1', msb_allones, hIp, hpos, hU2, hU3, toInt_small, BitVec.msb_eq_decide]
         until [segAddr Extracted.program fn + 0xad1] calls [hmkP]
       rename_i ptr _ _ _ _ mk _ _ hLFk hMFk hapk hink hbk hack h8k _ hzk hrk hapSk hinvk
-      have hMFm : MemFrame S.mem mk (R.rt ++ win s stk 40) := by simp only [win, stk]; janus_frame
+      have hMFm : MemFrame S.mem mk (R.rt ++ win s stk 40) :=
+        frame_cs_trans (Nat.le_refl _) hb' (frame_w _ (MemFrame.refl _ _) hb' (by decide) (by decide)) hMFk
       have hMF2 : MemFrame s.mem mk (R.rt ++ win s stk 40) := hMF.trans hMFm fun _ _ h => ⟨h, h⟩
       have hLFS : LiveFrame S.mem mk L1 [] :=
         (LiveFrame.of_win (by simp only [win, stk]; janus_frame) hLsS).trans hLFk (fun _ _ h => h)

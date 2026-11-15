@@ -56,7 +56,6 @@ theorem dE1 (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
   have htm : S.mem.readLE (s.fsBase.toNat - 8) 8 = (s.regs 14).toNat := by rw [htS]; simpa [regG] using hfsg
   have hspn : (S.regs 4).toNat = (s.regs 4).toNat - 608 := by rw [hsp, BitVec.toNat_sub]; simp; omega
   simp only [LiveSep, win] at hLsS
-  janus64_data hdS
   have hS := RunCallees.sbFixD impl hap R hmk bk Lk
   have hwT : Outside SetBytes.wordT 16 R.rt := RoOut.out' hro 1 (by decide) (by decide)
   janus_eval_nat h_t : SetBytes.wordT

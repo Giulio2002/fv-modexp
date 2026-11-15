@@ -82,4 +82,20 @@ theorem Inv.store {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {x : BitVec 64} 
   · exact LiveFrame.writeLE (a := q + (N - 1 - t)) (k := 1) hlf v (ApartAll.outside (fun r hr => by
       have := hqA r hr; unfold Apart at this ⊢; omega))
 
+/-- The `Extracted` program restricted to its data segment 0 (holds the `uint8` descriptor at `7231264`): `janus64_data`
+on it installs ONE segment instead of 49 (asm s84: three full calls in `ens`'s context cost ≈ 25 s). -/
+def u8ProgB : Janus.Amd64.Program := { Extracted.program with data := Extracted.program.data.take 1 }
+
+theorem u8ProgB_loaded {m : Janus.Arm64.Memory} (hd : Extracted.program.DataLoaded m) : u8ProgB.DataLoaded m :=
+  fun d h => hd d (List.mem_of_mem_take h)
+
+set_option maxRecDepth 20000 in
+/-- The `uint8` type descriptor (size 1, ptrdata 0, readable) read by `makeslice`. -/
+theorem u8B {m : Janus.Arm64.Memory} (hd : Extracted.program.DataLoaded m) :
+    m.readLE 7231264 8 = 1 ∧ m.readLE 7231272 8 = 0 ∧ m.accessible 7231264 16 false = true := by
+  have hd1 := u8ProgB_loaded hd
+  janus64_data hd1
+  exact ⟨by rw [h_rodata _ _ (by decide)]; decide, by rw [h_rodata _ _ (by decide)]; decide,
+    Janus.Arm64.Memory.accessible_mono _ h_data0 (by omega) (by omega)⟩
+
 end FvModexp.Amd64.IntBytes
