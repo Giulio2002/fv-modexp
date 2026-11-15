@@ -45,7 +45,9 @@ ATTR_OK = {'simp', 'reducible', 'irreducible', 'match_pattern', 'localsimp'}
 ATTR_HARD = {'init', 'builtin_init', 'extern', 'export', 'implemented_by', 'csimp', 'never_extract', 'run_cmd'}
 WHITELIST = 'scripts/tactic-whitelist.txt'
 ALLOWED_LAKE_REQUIRE = {'janus', 'ethlibspec'}
-ALLOWED_LAKE_TOP = {'name', 'defaultTargets', 'require', 'lean_lib'}
+ALLOWED_LAKE_TOP = {'name', 'defaultTargets', 'require', 'lean_lib', 'leanOptions'}
+# [leanOptions] may only tighten elaboration: exactly autoImplicit = false (no other option can slip in)
+ALLOWED_LAKE_LEANOPTIONS = {'autoImplicit': False}
 ALLOWED_LAKE_REQ = {'name', 'git', 'rev'}
 ALLOWED_LAKE_LIB = {'name'}
 ALLOWED_ROOTS = {'FvModexp', 'Extracted', 'Janus', 'EthLib', 'Lean', 'Std', 'Init'}
@@ -129,6 +131,8 @@ def lake_checks():
         print('FAIL: lean/lakefile.toml does not parse: %s' % e); return 1
     for k in t:
         if k not in ALLOWED_LAKE_TOP: print('FAIL: lean/lakefile.toml: top-level key `%s` not allowed' % k); fail = 1
+    if 'leanOptions' in t and t['leanOptions'] != ALLOWED_LAKE_LEANOPTIONS:
+        print('FAIL: lean/lakefile.toml: [leanOptions] must be exactly %s, got %s' % (ALLOWED_LAKE_LEANOPTIONS, t['leanOptions'])); fail = 1
     reqs = t.get('require', [])
     for r in reqs:
         for k in r:
