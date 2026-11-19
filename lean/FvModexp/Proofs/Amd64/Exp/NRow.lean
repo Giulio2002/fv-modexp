@@ -5,6 +5,7 @@ import FvModexp.Proofs.Amd64.Exp.DivInst
 import FvModexp.Proofs.Amd64.Exp.RemInst
 import FvModexp.Proofs.Amd64.Nat.RowLink
 import FvModexp.Proofs.Amd64.NatQ.DivRowWitQ
+import FvModexp.Proofs.Amd64.Exp.NInv
 
 set_option autoImplicit false
 
@@ -226,14 +227,13 @@ theorem correctness (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted
     Ensures (Extracted.program.link impl) (segAddr Extracted.program ExpN.fn) [z, zl, zc, st, x, xl, xc, slow]
       (Pre R b L costD z.toNat zl.toNat zc.toNat st.toNat x.toNat xl.toNat xc.toNat y yl yc m n mc slow.toNat)
       (Post R b L costD z.toNat zc.toNat st.toNat x.toNat xl.toNat y yl m n) := by
-  janus64_ensures_old [FvModexp.Amd64.NRow.Pre, FvModexp.Amd64.NRow.ArgY, FvModexp.Amd64.NRow.ArgM, FvModexp.Amd64.ExpN.NPreS, FvModexp.Amd64.NRow.cS, FvModexp.natVal, FvModexp.Amd64.Q.DivRec.Cx.K, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.StackNat.wT, FvModexp.Amd64.W4En.wTy, FvModexp.Amd64.MontHyp.hasADX, FvModexp.Amd64.ExpN.NE, FvModexp.NatNorm, FvModexp.Amd64.ExpN.ZOK, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.EvenHyp.NatOne, FvModexp.Amd64.ExpHyp.stWs, FvModexp.Amd64.NHyp.StkApart, FvModexp.StkOK, FvModexp.stCap, FvModexp.stW, FvModexp.Amd64.StackNat.wbA, FvModexp.Amd64.W4En.free, FvModexp.stLen, FvModexp.Amd64.ExpN.XG, FvModexp.Mdl.karatsubaThreshold, FvModexp.Mdl.basicSqrThreshold, FvModexp.Mdl.karatsubaSqrThreshold, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.Amd64.EvenHyp.natOneA, FvModexp.stkWs, FvModexp.Amd64.Callees.adxAddr]
   have hS0 := ExpN.ens_noEven impl hap R (dhyps impl hap R hgr hmc hmv hmz hmk hno hwb)
     (RemInst.hyp impl hap R hgr hmc hwb hmk hmv hmz) libRem_libN libRem_nfN (by decide) (costD := costD)
     b L z.toNat zl.toNat zc.toNat st.toNat x.toNat xl.toNat xc.toNat y yl yc m n mc slow.toNat
   simp only [bvN] at hS0
-  have h := Ensures.full64 (hinv := by janus64_pre_setRet [FvModexp.Amd64.NRow.Pre, FvModexp.Amd64.NRow.ArgY, FvModexp.Amd64.NRow.ArgM, FvModexp.Amd64.ExpN.NPreS, FvModexp.Amd64.NRow.cS, FvModexp.natVal, FvModexp.Amd64.Q.DivRec.Cx.K, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.StackNat.wT, FvModexp.Amd64.W4En.wTy, FvModexp.Amd64.MontHyp.hasADX, FvModexp.Amd64.ExpN.NE, FvModexp.NatNorm, FvModexp.Amd64.ExpN.ZOK, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.EvenHyp.NatOne, FvModexp.Amd64.ExpHyp.stWs, FvModexp.Amd64.NHyp.StkApart, FvModexp.StkOK, FvModexp.stCap, FvModexp.stW, FvModexp.Amd64.StackNat.wbA, FvModexp.Amd64.W4En.free, FvModexp.stLen, FvModexp.Amd64.ExpN.XG, FvModexp.Mdl.karatsubaThreshold, FvModexp.Mdl.basicSqrThreshold, FvModexp.Mdl.karatsubaSqrThreshold, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.Amd64.EvenHyp.natOneA, FvModexp.stkWs, FvModexp.Amd64.Callees.adxAddr]) hap (by simp [numIntRegs]) hS0
-  intro ret hret s hs hpre
-  exact h ret hret s hs (toPre hpre)
+  have h := Ensures.full64 (hinv := fun _ ret _ _ hp => ExpN.pre_setRet ret hp) hap (by simp [numIntRegs]) hS0
+  intro s hs hpre
+  exact h s hs (toPre hpre)
 
 end FvModexp.Amd64.NRow
 

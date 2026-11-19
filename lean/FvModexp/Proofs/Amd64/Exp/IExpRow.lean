@@ -70,14 +70,15 @@ theorem correctness (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted
     (b : Nat) (L : List (Nat × Nat)) (z y mm : BitVec 64) :
     Ensures (Extracted.program.link impl) (segAddr Extracted.program fnExpL) [z, z, y, mm, 0#64]
       (Pre R b L S z y mm) (Post R b L z y mm) := by
-  janus64_ensures_old [FvModexp.Amd64.IExpRow.Pre, FvModexp.Amd64.RunIface.IntPre, FvModexp.Amd64.RunIface.lenW, FvModexp.Amd64.RunIface.IntV, FvModexp.Amd64.RunIface.IntLenLe, FvModexp.Amd64.RunIface.maxW, FvModexp.Amd64.RunIface.OneG, FvModexp.Amd64.win, FvModexp.Amd64.RunIface.PoolG, FvModexp.Amd64.RunIface.wbA, FvModexp.Amd64.RunIface.ModX, FvModexp.Amd64.IExp.ExpA, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.RunIface.IntOK, FvModexp.natVal, FvModexp.Amd64.RunIface.natOneA, FvModexp.Amd64.RunIface.stackPoolA, Janus.Spec.Pool.newOffset, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.Callees.adxAddr, FvModexp.Amd64.TlsOK, FvModexp.Mdl.karatsubaThreshold, FvModexp.Mdl.basicSqrThreshold, FvModexp.Mdl.karatsubaSqrThreshold, FvModexp.NatLive, FvModexp.NatNorm]
-  intro ret hret s hs ⟨hS, hp⟩
+  intro s hs ⟨hS, hp⟩
   subst hS
-  have h := Ensures.full64 (hinv := by janus64_pre_setRet [FvModexp.Amd64.IExpRow.Pre, FvModexp.Amd64.RunIface.IntPre, FvModexp.Amd64.RunIface.lenW, FvModexp.Amd64.RunIface.IntV, FvModexp.Amd64.RunIface.IntLenLe, FvModexp.Amd64.RunIface.maxW, FvModexp.Amd64.RunIface.OneG, FvModexp.Amd64.win, FvModexp.Amd64.RunIface.PoolG, FvModexp.Amd64.RunIface.wbA, FvModexp.Amd64.RunIface.ModX, FvModexp.Amd64.IExp.ExpA, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.RunIface.IntOK, FvModexp.natVal, FvModexp.Amd64.RunIface.natOneA, FvModexp.Amd64.RunIface.stackPoolA, Janus.Spec.Pool.newOffset, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.Callees.adxAddr, FvModexp.Amd64.TlsOK, FvModexp.Mdl.karatsubaThreshold, FvModexp.Mdl.basicSqrThreshold, FvModexp.Mdl.karatsubaSqrThreshold, FvModexp.NatLive, FvModexp.NatNorm]) hap (by simp [numIntRegs])
+  have h := Ensures.full64 (hinv := fun _ ret _ _ hp => ⟨RunIface.expPre_setRet ret (by decide) hp.1, by
+      rw [IExp.ExpA, setRet_accessible, RunIface.oneG_natOne (by decide) hp.1.2.2.2.2.2.1]; exact hp.2⟩)
+    hap (by simp [numIntRegs])
     (IExp.ensCl impl hap R hgr hmc hmv hmz hmk hno hwb hget hput (stk := 43736) (above := 48) (Nat.le_refl _)
       (by decide) b L z y mm)
   rw [fn_eq] at h
-  exact h ret hret s hs hp
+  exact h s hs hp
 
 end FvModexp.Amd64.IExpRow
 

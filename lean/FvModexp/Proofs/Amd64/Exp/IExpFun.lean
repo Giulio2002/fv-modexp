@@ -4,6 +4,7 @@ import FvModexp.Proofs.Amd64.Exp.IExpP
 import FvModexp.Proofs.Amd64.Exp.IExpN
 import FvModexp.Proofs.Amd64.Exp.IExpB
 import FvModexp.Proofs.Amd64.Exp.IExpC
+import FvModexp.Proofs.Amd64.Top.IntPreInv
 
 /-!
 # `(*Int).exp` (amd64; agent expmc s77, twin of the arm64 IExpFun): `z.exp(z, y, m, false)` returns `z = z^y mod m`
@@ -51,7 +52,7 @@ def ExpSpecA (impl : List Amd64.Segment) (R : RtInv) (stk above : Nat) : Prop :=
 /-- `ExpSpec` is the stronger contract -/
 theorem ExpSpecA.of_spec {impl : List Amd64.Segment} {R : RtInv} {stk above : Nat}
     (h : RunIface.ExpSpec impl R stk above) : ExpSpecA impl R stk above :=
-  fun b L z y mm ret hret s hs hpre => h b L z y mm ret hret s hs hpre.1
+  fun b L z y mm s hs hpre ret hret => h b L z y mm s hs hpre.1 ret hret
 
 theorem log2_lt64 {m : Janus.Arm64.Memory} {p n : Nat} (hn : 0 < n) : Nat.log2 (natVal m p n) < 64 * n := by
   rcases Nat.eq_zero_or_pos (natVal m p n) with h | h
@@ -94,7 +95,9 @@ theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
     ExpSpecA impl R stk above := by
   intro b L z y mm
   rw [namesExp_eq, ← LibExpI.eq_only, show segAddr Extracted.program (RunIface.P ++ "(*Int).exp") = fnI by decide]
-  janus64_ensures_old [FvModexp.Amd64.RunIface.IntPre, FvModexp.Amd64.RunIface.lenW, FvModexp.Amd64.RunIface.IntV, FvModexp.Amd64.RunIface.IntLenLe, FvModexp.Amd64.RunIface.maxW, FvModexp.Amd64.RunIface.OneG, FvModexp.Amd64.win, FvModexp.Amd64.RunIface.PoolG, FvModexp.Amd64.RunIface.wbA, FvModexp.Amd64.RunIface.ModX, FvModexp.Amd64.IExp.ExpA, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Exp.B, FvModexp.Amd64.RunIface.IntOK, FvModexp.natVal, FvModexp.Amd64.RunIface.natOneA, FvModexp.Amd64.RunIface.stackPoolA, Janus.Spec.Pool.newOffset, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.Callees.adxAddr, FvModexp.Amd64.TlsOK, FvModexp.NatLive, FvModexp.NatNorm]
+  have hab8 : 8 ≤ above := Nat.le_trans (by decide) hab
+  refine Ensures.of_old (fun _ ret _ _ hp => ⟨RunIface.expPre_setRet ret hab8 hp.1, by
+    rw [ExpA, setRet_accessible, RunIface.oneG_natOne hab8 hp.1.2.2.2.2.2.1]; exact hp.2⟩) ?_
   intro ret hret s hs hpre
   janus64_intro hs
   have hr48 := hret.user

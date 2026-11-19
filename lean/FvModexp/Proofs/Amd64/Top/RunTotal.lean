@@ -28,7 +28,7 @@ namespace FvModexp.Amd64.Run
 theorem env_of_envW {R : RtInv} {L : List (Nat × Nat)} {s : State} {W : Nat} (hW : 4800 ≤ W)
     (h : RunAmd64.EnvW R L s W) : RunAmd64.Env R L s := by
   obtain ⟨⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hs1, hs2, hs3⟩, h8, hdl, hor, hap, hgo, hls, hdo, ⟨htl, htlo, htla⟩⟩, _⟩ := h
-  refine ⟨⟨hg1, hg2, by omega⟩, ⟨by omega, hs2, Janus.Arm64.Memory.accessible_mono _ hs3 (by omega) (by omega)⟩, h8, hdl,
+  refine ⟨⟨hg1, hg2, by omega, hg4⟩, ⟨by omega, hs2, Janus.Arm64.Memory.accessible_mono _ hs3 (by omega) (by omega)⟩, h8, hdl,
     Outside.of_sub hor (by omega) (by omega), by unfold Apart at hap ⊢; omega, hgo, ?_, hdo,
     ⟨htl, htlo, by unfold Apart at htla ⊢; omega⟩⟩
   intro r hr
@@ -40,6 +40,7 @@ theorem errReqs_of_okReqs {R : RtInv} {b : Nat} {len : BitVec 64} (h : RunAmd64.
     (hb : 3 * RunAmd64.blockBound 64 + RunAmd64.blockBound 16 ≤ b) : RunAmd64.ErrReqs R b len :=
   ⟨h.1 _ 4 8 (by decide), fun _ d sr n hn => h.2.1 d sr n (by omega), h.2.2.2.2.1 _, hb⟩
 
+set_option maxHeartbeats 8000000 in
 /-- **Row 1, amd64, every input**: `Run` returns `(compute data (parseLengths data), nil)` when the lengths pass
 EIP-7823 and `(nil, err)` with `err ≠ nil` when they fail. -/
 theorem correctness_total (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
@@ -75,7 +76,7 @@ theorem correctness_total (impl : List Amd64.Segment) (hap : ImplApart Extracted
           RunAmd64.FrameW R b (RunAmd64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat))) L W s s') ∨
         (LengthsFail (bytesAt s.mem p.toNat len.toNat) ∧ RunAmd64.ErrRet s' ∧
           RunAmd64.Frame R b (3 * RunAmd64.blockBound 64 + RunAmd64.blockBound 16) L s s')) := by
-  janus64_ensures_old [FvModexp.Spec.RunAmd64.EnvW, FvModexp.Spec.RunAmd64.Input, FvModexp.Spec.OsakaReceiver, FvModexp.Spec.RunAmd64.Globals, FvModexp.Spec.RunAmd64.windowW, FvModexp.Spec.RunAmd64.NatOne, FvModexp.Spec.RunAmd64.StackPool, FvModexp.Spec.RunAmd64.CpuOne, FvModexp.Spec.bytesAt, FvModexp.Spec.RunAmd64.window, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.RunIface.wbA, FvModexp.Mdl.karatsubaThreshold, FvModexp.Mdl.basicSqrThreshold, FvModexp.Mdl.karatsubaSqrThreshold, FvModexp.Amd64.IExp.pA, Janus.Spec.Pool.newOffset, FvModexp.Amd64.MontHyp.hasADX, FvModexp.Spec.byteOf]
+  janus64_ensures_old [FvModexp.Spec.RunAmd64.EnvW, FvModexp.Spec.RunAmd64.CpuOne, FvModexp.Spec.RunAmd64.Input, FvModexp.Spec.OsakaReceiver, FvModexp.Spec.RunAmd64.Globals, FvModexp.Spec.RunAmd64.windowW, FvModexp.Spec.RunAmd64.NatOne, FvModexp.Spec.RunAmd64.StackPool, FvModexp.Amd64.Run.bytesAt_setRet, FvModexp.Spec.RunAmd64.window, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.RunIface.wbA, Janus.Spec.Pool.newOffset]
   intro ret hret s hs ⟨hS, hE, hI, hO, hinv, hR, hG, hN, hP, hC, hB, hB0⟩
   by_cases hL : LengthsPass (bytesAt s.mem p.toNat len.toNat)
   · exact ((RunSucc.correctness impl hap R hmk hmkz hmv hmz hno hgr hmc hwb S hget hput hwb4 W hW b L c p len cp).toOld
@@ -90,6 +91,14 @@ end FvModexp.Amd64.Run
 namespace FvModexp.Amd64.Run.Witness
 
 set_option maxRecDepth 100000
+
+/-- the call data is unchanged by installing the return address (`Input` keeps it outside the window) -/
+theorem bytes_eq {R : RtInv} {L : List (Nat × Nat)} {c p len cp : BitVec 64} {s : State} {ret : Nat}
+    (h : RunAmd64.Input R L c p len cp s) :
+    bytesAt (s.setRet ret).mem p.toNat len.toNat = bytesAt s.mem p.toNat len.toNat := by
+  have ho := h.2.2.2.2.2.2.2.2.2
+  simp only [RunAmd64.window, outside_cons, outside_nil, and_true] at ho
+  exact Run.bytesAt_setRet (Or.inr (by omega))
 
 /-- `Run.correctness_total` is not vacuous: every premise and every precondition conjunct hold together and the call
 returns, with one call-site state per contract (the success witness `RunSucc.Witness.nonvacuous`: `3^5 mod 7`, output
@@ -174,6 +183,6 @@ theorem correctness_total : ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat
     ⟨hSS, hE, hI, hO, hinv, hR, hG, hN, hP, hC, fun _ => hB,
       Nat.le_trans (RunGate.errBudget_le_okBudget _) hB⟩,
     x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11,
-    hRet.mono fun _ ⟨ha, h1, h2⟩ => ⟨ha, Or.inl ⟨hL, h1, h2⟩⟩⟩
+    hRet.mono fun _ ⟨ha, h1, h2⟩ => ⟨ha, Or.inl ⟨by rw [bytes_eq hI]; exact hL, h1, h2⟩⟩⟩
 
 end FvModexp.Amd64.Run.Witness

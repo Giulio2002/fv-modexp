@@ -1,6 +1,7 @@
 import FvModexp.Proofs.Amd64.Exp.NJ1NE
 import FvModexp.Proofs.Amd64.Exp.NProE
 import FvModexp.Proofs.Amd64.Exp.NFun
+import FvModexp.Proofs.Amd64.Exp.NFInv
 
 set_option autoImplicit false
 
@@ -41,7 +42,7 @@ theorem ensNilF (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.pro
         BitVec.ofNat 64 xl, BitVec.ofNat 64 xc, BitVec.ofNat 64 slow]
       (PreNF R b L K costF costD needR costR needS needP costS costP zp zl zc st xp xl xc yp yl yc mp n mc slow)
       (fun s s' => PostNil R b L K costD costR costS costP zp zc xp xl yp yl mp n s s') := by
-  janus64_ensures_old [FvModexp.Amd64.ExpN.PreNF, FvModexp.Amd64.ExpN.PreNil, FvModexp.Amd64.ExpN.NEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.RunIface.PoolG, FvModexp.Amd64.StackNat.wT, FvModexp.Amd64.W4En.wTy, FvModexp.Amd64.MontHyp.hasADX, FvModexp.NatNorm, FvModexp.Amd64.ExpN.ZOK0, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.EvenHyp.NatOne, FvModexp.Amd64.StackNat.wbA, FvModexp.natVal, FvModexp.Amd64.EvenHyp.natOneA, FvModexp.Amd64.CallW.CEnv, FvModexp.Amd64.RunIface.wbA, FvModexp.Amd64.RunIface.stackPoolA, Janus.Spec.Pool.newOffset, FvModexp.NatLive]
+  refine Ensures.of_old (fun _ ret _ _ hp => preNF_setRet ret hp) ?_
   have hcE : CodeIn64 (Extracted.program.ofImpl impl) (LibNE.program.link impl) := by
     rw [LibNE.eq_only]; exact codeIn_ofImpl_restrict_of_apart64 hap LibNE.names
   have hcF : CodeIn64 (Extracted.program.ofImpl impl) (LibFree.program.link impl) := by
@@ -54,7 +55,7 @@ theorem ensNilF (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.pro
   rw [← LibNE.eq_only, show segAddr Extracted.program fn = fnN by decide]
   intro ret hret s hs hpre
   janus64_intro hs
-  obtain ⟨hP, hX⟩ := hpre
+  obtain ⟨hP, hX, -⟩ := hpre
   generalize hspd : (s.regs 4).toNat - 0x498 = sp at hP
   generalize hgd : (s.regs 14).toNat = g at hP
   generalize hfsd : s.fsBase.toNat = fs at hP

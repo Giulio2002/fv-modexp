@@ -3,6 +3,7 @@ import FvModexp.Proofs.Amd64.Exp.SlowCl
 import FvModexp.Proofs.Amd64.Nat.RowLink
 import FvModexp.Proofs.Amd64.Exp.P2DRow
 import FvModexp.Proofs.Amd64.NatQ.DivRowWitQ
+import FvModexp.Proofs.Amd64.Exp.SetRetWinX
 
 set_option autoImplicit false
 
@@ -55,6 +56,35 @@ theorem argM {s : State} {m ml mc : Nat} (h : ArgM s m ml mc) : NHyp.StkArg s 24
     Prop :=
   ExpEven.Post R b L 43152 0x70 cE z zc st x xl y yl m ml s s'
 
+/-- a stack-argument word at `RSP + k` (`8 ≤ k`, above the return slot) survives installing the return address -/
+theorem argS {s : State} {ret k : Nat} (hk : 8 ≤ k) :
+    (s.setRet ret).mem.readLE ((s.regs 4).toNat + k) 8 = s.mem.readLE ((s.regs 4).toNat + k) 8 :=
+  readLE_setRet_of_disjoint (Or.inr (Nat.add_le_add_left hk _))
+
+/-- the row precondition survives installing the return address (Janus v0.4.0 `hinv`; by the frame lemmas
+`SetRetWin` / `SetRetWinX`, top s55) -/
+theorem pre_inv {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {z zl zc st x xl xc y yl yc m ml mc : Nat} {s : State}
+    (ret : Nat) (h : Pre R b L z zl zc st x xl xc y yl yc m ml mc s) :
+    Pre R b L z zl zc st x xl xc y yl yc m ml mc (s.setRet ret) := by
+  obtain ⟨⟨y1, y2, y3⟩, ⟨m1, m2, m3⟩, ⟨hC, hxv, hyv, hmv, hm2, e1, e2, e3, e4, e5, hz, hN⟩, hX,
+    ⟨g1, g2, g3, g4, g5, g6⟩, hxo⟩ := h
+  have hab : 8 ≤ 0x70 := by decide
+  have h10 : Outside st 24 (win s 43152 0x70) := hC.2.2.2.2.2.2.2.2.2.1
+  obtain ⟨hw, hl, hc⟩ := SetRetWin.stHdr (ret := ret) hab h10
+  obtain ⟨hone, hN'⟩ := SetRetWin.natOne (ret := ret) hab h10 hN
+  have hrx := (hC.2.2.2.2.2.2.2.1 x xl (by simp)).1
+  have hry := (hC.2.2.2.2.2.2.2.1 y yl (by simp)).1
+  have hrm := (hC.2.2.2.2.2.2.2.1 m ml (by simp)).1
+  have ex : natVal (s.setRet ret).mem x xl = natVal s.mem x xl := SetRetWin.rd hab hrx.2.2.2.2
+  have ey : natVal (s.setRet ret).mem y yl = natVal s.mem y yl := SetRetWin.rd hab hry.2.2.2.2
+  have em : natVal (s.setRet ret).mem m ml = natVal s.mem m ml := SetRetWin.rd hab hrm.2.2.2.2
+  refine ⟨⟨(argS (by decide)).trans y1, (argS (by decide)).trans y2, (argS (by decide)).trans y3⟩,
+    ⟨(argS (by decide)).trans m1, (argS (by decide)).trans m2, (argS (by decide)).trans m3⟩,
+    ⟨by rw [hl]; exact SetRetWin.cpre hab hC, by rw [ex]; exact hxv, by rw [ey]; exact hyv, by rw [em]; exact hmv,
+      by rw [em]; exact hm2, e1, e2, e3, e4, e5, hz, hN'⟩, hX,
+    ⟨g1, by rw [hone]; exact g2, by rw [setRet_accessible]; exact g3, by rw [setRet_accessible]; exact g4, g5,
+      by simp only [W4En.free, hw, hl, hc]; exact g6⟩, hxo⟩
+
 theorem fnE_eq : segAddr Extracted.program ExpEven.fn = ExpEven.fnE := by decide
 
 theorem bvN (x : BitVec 64) : BitVec.ofNat 64 x.toNat = x := by simp
@@ -86,7 +116,7 @@ theorem correctnessP (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracte
     Ensures (Extracted.program.link impl) (segAddr Extracted.program ExpEven.fn) [z, zl, zc, st, x, xl, xc]
       (Pre R b L z.toNat zl.toNat zc.toNat st.toNat x.toNat xl.toNat xc.toNat y yl yc m ml mc)
       (Post R b L z.toNat zc.toNat st.toNat x.toNat xl.toNat y yl m ml) := by
-  janus64_ensures_old [FvModexp.Amd64.EvenRow.Pre, FvModexp.Amd64.EvenRow.ArgY, FvModexp.Amd64.EvenRow.ArgM, FvModexp.Amd64.ExpN.XG, FvModexp.Amd64.win, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.EvenHyp.natOneA, FvModexp.Amd64.Callees.adxAddr, FvModexp.Amd64.W4En.free, FvModexp.stW, FvModexp.stLen, FvModexp.stCap]
+  refine Ensures.of_old (fun _ ret _ _ hp => pre_inv ret hp) ?_
   have hS0 := sumP impl hap R hgr hmc hmv hmz hmk hno hwb hSQ hnsS hnfS hKS
   have e : ExpEven.stkE 41640 = 43152 := by decide
   rw [e] at hS0

@@ -101,6 +101,11 @@ theorem ne0_sub {R : RtInv} {L : List (Nat × Nat)} {sp K p k k' : Nat} (h : Exp
 structure BoxI (P : Prop) : Prop where
   unbox : P
 
+/-- the `natOne` word outside `nat.expNN`'s window (`ExpN.PreNF`'s last conjunct; top s55) -/
+theorem natOneW {a t stk above K : Nat} (hK : K + 0x5d0 ≤ stk) (hst : stk ≤ t) (hab : 0x30 ≤ above)
+    (h : a + 24 ≤ t - stk ∨ t + above ≤ a) : Outside a 8 [(t - 0x5d0 - K, t - 0x5d0 + 0x510)] := by
+  simp only [outside_cons, outside_nil, and_true]; omega
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- **`nat.expNN`'s precondition** at `(*Int).exp`'s call (`x = z`, `stk = nil`, `slow = false`) -/
@@ -188,6 +193,7 @@ theorem preNF_of {R : RtInv} {b B : Nat} {L : List (Nat × Nat)} {stk above K : 
     have := hn7; simp only [outside_cons, outside_nil, and_true] at this
     have eO : EvenHyp.natOneA = RunIface.natOneA := rfl
     rw [hrd _ _ (by rw [eO]; omega)]; exact hoG
+  have hW3 : Outside EvenHyp.natOneA 8 [(t - 0x5d0 - K, t - 0x5d0 + 0x510)] := natOneW hK hst hab hn7.1
   unfold ExpN.PreNF ExpN.PreNil
   rw [e1, e2, e3]
   have r1 : t - 0x5d0 + 0x4a0 = t - 0x130 := by omega
@@ -210,7 +216,7 @@ theorem preNF_of {R : RtInv} {b B : Nat} {L : List (Nat × Nat)} {stk above K : 
     fun h => (hzP.unbox.1 (by omega)).2.2, hzP.unbox.2.1, by omega, hzlc, hzc40,
     hzp, ⟨hzlc, rfl, rfl, rfl⟩, hzc40, fun h => Or.inl ⟨h, rfl⟩, fun h => ?_, ?_, fun h => ?_, rfl, ?_,
     by omega, hnR, hnS, hnP, by omega,
-    FvModexp.Amd64.ExpN.oBud_mono hob (by omega), ?_, hoG3⟩, hXF⟩
+    FvModexp.Amd64.ExpN.oBud_mono hob (by omega), ?_, hoG3⟩, hXF, hW3⟩
   · -- globals
     have hgw := hG.2.2.2.2.2.2.2.2.2.1
     simp only [outside_cons, outside_nil, and_true] at hgw
