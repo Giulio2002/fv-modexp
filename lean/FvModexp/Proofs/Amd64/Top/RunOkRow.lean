@@ -47,7 +47,7 @@ theorem correctness_ok (impl : List Amd64.Segment) (hap : ImplApart Extracted.pr
         LengthsPass (bytesAt s.mem p.toNat len.toNat))
       (fun s s' => RunAmd64.OkRet (bytesAt s.mem p.toNat len.toNat) s' ∧
         RunAmd64.FrameW R b (RunAmd64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat))) L W s s') :=
-  Ensures.full64 (hinv := by janus64_pre_setRet [FvModexp.Spec.RunAmd64.EnvW, FvModexp.Spec.RunAmd64.Input, FvModexp.Spec.OsakaReceiver, FvModexp.Spec.RunAmd64.Globals, FvModexp.Spec.RunAmd64.windowW, FvModexp.Spec.RunAmd64.NatOne, FvModexp.Spec.RunAmd64.StackPool, FvModexp.Amd64.Run.bytesAt_setRet, FvModexp.Spec.RunAmd64.window, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.RunIface.wbA, Janus.Spec.Pool.newOffset]) hap (ns := LibRun.names) (by simp [numIntRegs])
+  Ensures.full64 (hinv := by janus64_pre_setRet [FvModexp.Spec.RunAmd64.EnvW, FvModexp.Spec.RunAmd64.CpuOne, FvModexp.Spec.RunAmd64.Input, FvModexp.Spec.OsakaReceiver, FvModexp.Spec.RunAmd64.Globals, FvModexp.Spec.RunAmd64.windowW, FvModexp.Spec.RunAmd64.NatOne, FvModexp.Spec.RunAmd64.StackPool, FvModexp.Amd64.Run.bytesAt_setRet, FvModexp.Spec.RunAmd64.window, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.RunIface.wbA, Janus.Spec.Pool.newOffset]) hap (ns := LibRun.names) (by simp [numIntRegs])
     (LibRun.eq_only ▸ ensOkLib impl hap R hmk hmv hmz hno stkM aboveM hM hE
       (IntBytes.bytesSpec_at impl hap R hmk hmkz stkM aboveM hk1 ha1) W hW hW1 hab (by omega) b L c p len cp)
 

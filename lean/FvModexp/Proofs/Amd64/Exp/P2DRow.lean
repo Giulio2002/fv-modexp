@@ -119,7 +119,8 @@ theorem correctness (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted
     Ensures (Extracted.program.link impl) (segAddr Extracted.program NHyp.fnP2) [z, zl, zc, st, x, xl, xc, lm]
       (Pre R b L stk z.toNat zl.toNat zc.toNat st.toNat x.toNat xl.toNat xc.toNat y yl yc lm.toNat)
       (Post R b L stk z.toNat zc.toNat st.toNat x.toNat xl.toNat y yl lm.toNat) := by
-  exact Ensures.full64 (hinv := by janus64_pre_setRet [FvModexp.Amd64.P2DRow.Pre, FvModexp.Amd64.NHyp.CPre, FvModexp.stLen, FvModexp.natVal, FvModexp.Amd64.EvenHyp.NatOne, FvModexp.Amd64.win, FvModexp.Amd64.ExpHyp.stWs, FvModexp.Amd64.NHyp.StkApart, FvModexp.Amd64.NHyp.XGc, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.StackNat.wT, FvModexp.Amd64.EvenHyp.WrOut, FvModexp.Amd64.EvenHyp.RdIn, FvModexp.NatNorm, FvModexp.Amd64.NHyp.freeOf, FvModexp.Amd64.ExpHyp.StackOK', FvModexp.stCap, FvModexp.stW, FvModexp.Amd64.StackNat.wbA, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.Callees.adxAddr, FvModexp.Amd64.EvenHyp.natOneA, FvModexp.stkWs, FvModexp.Amd64.TlsOK, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.StkOK]) hap (by simp [numIntRegs])
+  exact Ensures.full64 (hinv := NHyp.p2pre_inv R b L stk 112 P2D.needP (P2D.costP P2W2.costB P2W4.costB) z zl zc st x xl xc lm y yl yc
+      (by decide) _ _ _) hap (by simp [numIntRegs])
     (hyp impl hap R hgr hmc hmv hmk hno hwb stk hk0 hk2 b L z zl zc st x xl xc lm y yl yc)
 
 end FvModexp.Amd64.P2DRow

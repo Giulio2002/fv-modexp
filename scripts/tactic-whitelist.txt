@@ -1,6 +1,6 @@
 # files that legitimately define tactics / syntax (scripts/lint_source.py, N13 LA1). Format: sha256<TAB>path.  Regenerate with
 # scripts/lint_source.py --update-whitelist AFTER reviewing the diff of every changed file; RELEASE no-sorry fails on any hash mismatch.
-3edc3891564a27f426807f0a9f4b0269ce05dfb56cf6598a9df3d900bc0e4473	lean/FvModexp/Proofs/Amd64/Exp/Mont.lean
+25e0755363a80ff37f12804366d69aefffb242457beffe508eb4ab4d59d0dad7	lean/FvModexp/Proofs/Amd64/Exp/Mont.lean
 805869eb20bf695325ec87de82b34ebadd7a400eba404db3227df5061383a4d3	lean/FvModexp/Proofs/Amd64/Exp/W2Pow.lean
 958bdea592e57d9c0c7333bc5b5bbb11ab53fc7f08d08282f93c5c16ea0cf23a	lean/FvModexp/Proofs/Amd64/Exp/W2S1.lean
 feee5f1c9abf48f7a0f39c46865158f3da1b2a83adde8bfaca028e0a9546f6c6	lean/FvModexp/Proofs/Amd64/Exp/W4Pow.lean
@@ -8,7 +8,7 @@ f8e05a673dfa0d05aa65b9e11391ba2619b275122701ede7b7118b678112ba01	lean/FvModexp/P
 5c151248cd5e83926e5b50a05eb45fc04dd4d464b47836ee794cdbc376ba7a8f	lean/FvModexp/Proofs/Amd64/RG/Defs.lean
 a7c7e6f9e6b3a45825d622cf05bcd375cfa04f1b355f6429656f2a1480281e38	lean/FvModexp/Proofs/Amd64/RG/Pre.lean
 9ebc0cdfab21b9111467c3bbb51a14e4970477e62dfae10b2f8bffe3ca832834	lean/FvModexp/Proofs/Amd64/Witness/StubsGrow.lean
-e06aa02e21f92a50d820150ca65783d8b539af2fb08313785feec36c17b94065	lean/FvModexp/Proofs/Arm64/Exp/Mont.lean
+a456cf3ca68a40ea37bc5002cb9a27ed133a54202dd75f75847d3f91692badb0	lean/FvModexp/Proofs/Arm64/Exp/Mont.lean
 ea9ba519f7f35ddbc0172090e8d31528d2be877c712750a44cf6ed9f209a5f59	lean/FvModexp/Proofs/Arm64/RG/Defs.lean
 0e0997ac2efeac43656e6d47683cc6e480feb39842bd40db098269de52576c8c	lean/FvModexp/Proofs/Arm64/RG/Pre.lean
 50e0cd9c3b871969013faad6e9896cce2a7f34ca6680ea36beb8b10f87619d8a	lean/FvModexp/Proofs/Arm64/Witness/StubsGrow.lean

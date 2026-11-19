@@ -49,7 +49,7 @@ theorem correctness (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted
         BitVec.ofNat 64 xl, BitVec.ofNat 64 xc, BitVec.ofNat 64 n]
       (ModInv.PreQ R mulWX64 H sqrCQ mulCQ B L zp zl zc st xp xl xc n)
       (ModInv.PostQ R mulWX64 H sqrCQ mulCQ B L zp zc st xp xl n) :=
-  Ensures.full64 (hinv := by janus64_pre_setRet [FvModexp.Amd64.ModInv.PreQ, FvModexp.Amd64.mulWX64, FvModexp.Exp.B, FvModexp.Amd64.CallEnv, FvModexp.Amd64.ModInv.A, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.win, FvModexp.Amd64.RunIface.gA, FvModexp.stkWs, FvModexp.Amd64.EvenHyp.WrOut, FvModexp.Amd64.EvenHyp.RdIn, FvModexp.NatNorm, FvModexp.natVal, FvModexp.Amd64.Q.NatSqr.StkPre, FvModexp.stLen, FvModexp.Amd64.Q.NatSqr.StkSep, FvModexp.stkR, FvModexp.Amd64.NatAdd.wordT, FvModexp.Amd64.Callees.adxAddr, FvModexp.Amd64.ModInv.OneIn, FvModexp.Amd64.TlsOK, FvModexp.Amd64.RunIface.wbA, FvModexp.stW, FvModexp.stCap, FvModexp.NatLive, FvModexp.StkOK, FvModexp.Amd64.Q.NatSqr.guard, FvModexp.Amd64.Q.BasicSqr.freeP, FvModexp.Amd64.Q.BasicSqr.freeN, FvModexp.Amd64.StackNat.wbA, FvModexp.Amd64.Q.NatSqr.tls, FvModexp.stkRes, FvModexp.potK, FvModexp.Amd64.EvenHyp.NatOne, FvModexp.Amd64.EvenHyp.natOneA]) hap (by simp [numIntRegs])
+  Ensures.full64 (hinv := ModInv.preQ_inv _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _) hap (by simp [numIntRegs])
     (ModInv.ens hap sub sub sub sub nfM nfM nfM nfM nfS hmk (by decide) (sq hap hgr hmc hmv hmk hwb mulWX64)
       (Nat.le_refl _) (by decide) (tr hap hmv hmk) (by decide) (by decide) (mu hap hgr hmc hmv hmk hwb mulWX64)
       (Nat.le_refl _) (Nat.le_refl _) (lh hap hmc hmv hmk) (by decide) (by decide) (sb hap hmv hmk) (ad hap hmv hmk)

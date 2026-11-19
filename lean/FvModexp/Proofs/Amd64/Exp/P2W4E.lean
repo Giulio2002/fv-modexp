@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.P2W4C
+import FvModexp.Proofs.Amd64.Exp.SetRetWinX
 
 set_option autoImplicit false
 
@@ -19,6 +20,34 @@ namespace FvModexp.Amd64.P2W4
 open Janus.Contracts.EqHashModel (CodeIn64)
 
 def names : List String := LibW.names
+
+/-- `ens`'s precondition survives installing the return address (Janus v0.4.0 `hinv`; top s54: `janus64_ensures_old`'s closer
+cannot see the `natOne` word's apartness under the `∃ op`; by the frame lemmas `SetRetWin` / `SetRetWinX` instead) -/
+theorem pre_setRet {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {stk zp zl zc st xp xl yp yl yc lm : Nat} {s : State}
+    (ret : Nat) (hp : NHyp.StkArg s 0 yp yl yc ∧ PreC R b L stk (costB (stLen s.mem st) yl lm) zp zl zc st xp xl yp yl lm s ∧
+      EX xp xl s) :
+    NHyp.StkArg (s.setRet ret) 0 yp yl yc ∧
+      PreC R b L stk (costB (stLen (s.setRet ret).mem st) yl lm) zp zl zc st xp xl yp yl lm (s.setRet ret) ∧
+      EX xp xl (s.setRet ret) := by
+  have hab : 8 ≤ 0x60 := by decide
+  obtain ⟨⟨y1, y2, y3⟩, ⟨hC, hxv, hyv, hl1, hl2, hst, hO⟩, x1, x2, x3⟩ := hp
+  have h10 : Outside st 24 (win s stk 0x60) := hC.2.2.2.2.2.2.2.2.2.1
+  obtain ⟨-, hl, -⟩ := SetRetWin.stHdr (ret := ret) hab h10
+  have hrx := (hC.2.2.2.2.2.2.2.1 xp xl (by simp)).1
+  have hry := (hC.2.2.2.2.2.2.2.1 yp yl (by simp)).1
+  obtain ⟨hone, hO'⟩ := SetRetWin.natOne (ret := ret) hab h10 hO
+  refine ⟨⟨?_, ?_, ?_⟩, ⟨?_, ?_, ?_, hl1, hl2, hst, hO'⟩, x1, ?_, ?_⟩
+  · exact (readLE_setRet_of_disjoint (s := s) (ret := ret) (a := (s.regs 4).toNat + 0 + 8) (n := 8)
+      (Or.inr (by omega))).trans y1
+  · exact (readLE_setRet_of_disjoint (s := s) (ret := ret) (a := (s.regs 4).toNat + 0 + 16) (n := 8)
+      (Or.inr (by omega))).trans y2
+  · exact (readLE_setRet_of_disjoint (s := s) (ret := ret) (a := (s.regs 4).toNat + 0 + 24) (n := 8)
+      (Or.inr (by omega))).trans y3
+  · rw [hl]; exact SetRetWin.cpre hab hC
+  · show (s.setRet ret).mem.readLE xp (8 * xl) % 2 = 1; rw [SetRetWin.rd hab hrx.2.2.2.2]; exact hxv
+  · show 0 < (s.setRet ret).mem.readLE yp (8 * yl); rw [SetRetWin.rd hab hry.2.2.2.2]; exact hyv
+  · rw [hone]; exact x2
+  · rw [setRet_accessible]; exact x3
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
@@ -47,7 +76,7 @@ theorem ens {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program
         EX xp xl s)
       (fun s s' => NHyp.CPostR R b L stk 0x60 zp zc st (natVal s.mem xp xl ^ natVal s.mem yp yl % 2 ^ lm)
         (costB (stLen s.mem st) yl lm) s s') := by
-  janus64_ensures_old [FvModexp.Amd64.NHyp.StkArg, FvModexp.Amd64.P2W4.PreC, FvModexp.stLen, FvModexp.Amd64.P2W4.EX, FvModexp.Amd64.NHyp.CPre, FvModexp.natVal, FvModexp.Amd64.EvenHyp.NatOne, FvModexp.Amd64.win, FvModexp.Amd64.ExpHyp.stWs, FvModexp.Amd64.NHyp.StkApart, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.EvenHyp.natOneA, FvModexp.Amd64.Callees.adxAddr, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.StackNat.wT, FvModexp.Amd64.EvenHyp.WrOut, FvModexp.Amd64.EvenHyp.RdIn, FvModexp.NatNorm, FvModexp.Amd64.NHyp.freeOf, FvModexp.Amd64.ExpHyp.StackOK', FvModexp.stCap, FvModexp.stW, FvModexp.Amd64.StackNat.wbA, FvModexp.stkWs, FvModexp.Amd64.TlsOK, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.StkOK]
+  refine Ensures.of_old (fun s ret _ _ hp => pre_setRet ret hp) ?_
   have hc : CodeIn64 (Extracted.program.ofImpl impl) (LibW.program.link impl) := by
     rw [LibW.eq_only]; exact codeIn_ofImpl_restrict_of_apart64 hap LibW.names
   have hgrL : GrowsliceLiveContract64 (LibW.program.link impl) grE 4096 R := by

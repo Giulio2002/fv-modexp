@@ -9,7 +9,7 @@ namespace FvModexp.Amd64.NHyp
 open FvModexp.Amd64.ExpHyp (stWs)
 
 /-- `P2Hyp`'s precondition as a named predicate (definitionally the lambda of `P2Hyp`; top s53, for the Janus v0.4.0 `hinv`
-lemmas `P2DEInv*`). -/
+lemma `P2DEInv.p2pre_inv`). -/
 @[reducible] def P2PreS (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (stk above : Nat)
     (need : Nat → Nat → Nat → Nat) (cost : Nat → Nat → Nat → Nat → Nat) (z zl zc st x xl xc lm : BitVec 64) (y yl yc : Nat)
     (s : State) : Prop :=

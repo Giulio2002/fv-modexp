@@ -60,7 +60,7 @@ theorem correctness (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted
     Ensures (Extracted.program.link impl) (segAddr Extracted.program NHyp.fnSlow) [z, zl, zc, st, x, xl, xc]
       (Pre R H b L z.toNat zl.toNat zc.toNat st.toNat x.toNat xl.toNat xc.toNat y yl yc m ml mc)
       (Post R H b L z.toNat zc.toNat st.toNat x.toNat xl.toNat y yl m ml) :=
-  (Ensures.full64 (hinv := by janus64_pre_setRet [FvModexp.Amd64.SlowRow.Pre, FvModexp.Amd64.NHyp.StkArg0, FvModexp.Amd64.NHyp.StkArg24, FvModexp.Amd64.NHyp.CPre, FvModexp.stkR, FvModexp.natVal, FvModexp.stLen, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.win, FvModexp.Amd64.StackNat.wT, FvModexp.Amd64.EvenHyp.WrOut, FvModexp.Amd64.EvenHyp.RdIn, FvModexp.NatNorm, FvModexp.Amd64.NHyp.freeOf, FvModexp.Amd64.ExpHyp.StackOK', FvModexp.stCap, FvModexp.stW, FvModexp.Amd64.StackNat.wbA, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.Callees.adxAddr, FvModexp.stkRes, FvModexp.potK, FvModexp.Amd64.TlsOK, FvModexp.Mdl.karatsubaThreshold, FvModexp.Mdl.basicSqrThreshold, FvModexp.Mdl.karatsubaSqrThreshold, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.StkOK]) hap (by simp [numIntRegs])
+  (Ensures.full64 (hinv := fun _ ret _ _ hp => Q.ExpSlow.pre_setRet ret (by decide) hp) hap (by simp [numIntRegs])
     (Q.ExpSlow.hypCl hap hgr hmc hmv hmz hmk hwb H b L z zl zc st x xl xc y yl yc m ml mc)).mono_ret
     (fun _ h => ⟨⟨h.1.1.toStkArg, h.1.2.toStkArg⟩, h.2⟩) (fun _ _ _ _ h => h)
 

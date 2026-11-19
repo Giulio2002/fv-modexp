@@ -115,7 +115,7 @@ theorem pre2 (budget2 : RunAmd64.okBudget (parseLengths (bytesAt s2.mem p2.toNat
     RunAmd64.StackPool R s2.mem (RunAmd64.windowW s2 WW) ∧ RunAmd64.CpuOne s2.mem ∧
     RunAmd64.okBudget (parseLengths (bytesAt s2.mem p2.toNat (99 : BitVec 64).toNat)) ≤ bW ∧
     LengthsPass (bytesAt s2.mem p2.toNat (99 : BitVec 64).toNat) := by
-  refine ⟨⟨⟨⟨?_, ?_, ?_⟩, ⟨?_, ?_, ?_⟩, by decide, dataLoaded _ _, ?_, ?_, ?_, fun r hr => by simp at hr, roOut,
+  refine ⟨⟨⟨⟨?_, ?_, ?_, ?_⟩, ⟨?_, ?_, ?_⟩, by decide, dataLoaded _ _, ?_, ?_, ?_, fun r hr => by simp at hr, roOut,
       ⟨⟨?_, ?_, ?_⟩, ?_, ?_⟩⟩, fun r hr => by simp at hr, fun r hr => by simp at hr⟩,
     ⟨?_, by decide, Or.inr ?_, ?_, by decide, by decide, by decide, ?_, Or.inr ?_, ?_⟩,
     (by first | exact ⟨by decide +kernel, by decide +kernel, by decide +kernel, by decide⟩ | exact ⟨by decide +kernel, by decide +kernel, by decide +kernel⟩), inv2 _,

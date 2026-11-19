@@ -49,7 +49,7 @@ theorem correctness (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted
         BitVec.ofNat 64 xl, BitVec.ofNat 64 xc]
       (ExpW4.PreR R b L K DivInst.divC costD zp zc st xp xl xc yp ylen mp n mc)
       (ExpW4.PostD R b L K costD zp zc st xp xl yp ylen mp n) :=
-  Ensures.mono_ret (Ensures.full64 (hinv := by janus64_pre_setRet [FvModexp.Amd64.ExpW4.PreD, FvModexp.Amd64.ExpW4.EPreA, FvModexp.natVal, FvModexp.stLen, FvModexp.Amd64.W4En.EEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.W4En.wTy, FvModexp.Amd64.MontHyp.hasADX, FvModexp.Amd64.W4En.OE, FvModexp.Amd64.RunIface.gA, FvModexp.StkOK, FvModexp.stCap, FvModexp.stW, FvModexp.Amd64.StackNat.wbA, FvModexp.Amd64.W4En.free, FvModexp.Amd64.CallW.CEnv, FvModexp.Mdl.karatsubaThreshold, FvModexp.Mdl.basicSqrThreshold, FvModexp.Mdl.karatsubaSqrThreshold, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.Amd64.readLE_setRet_or_zero, FvModexp.Amd64.natNorm_setRet]) hap (by simp [numIntRegs])
+  Ensures.mono_ret (Ensures.full64 (hinv := ExpW4.preD_inv _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _) hap (by simp [numIntRegs])
     (ExpW4.ens impl hap R hclr hmv hmk hgr hwb Q.NatDiv.names 41512 DivInst.divC
       (DivInst.hyp impl hap R hgr hclr hwb hmk hmv hmz) DivInst.ns_sub DivInst.ns_w4 b L K hK
       costD zp zl zc st xp xl xc yp ylen mp n mc))

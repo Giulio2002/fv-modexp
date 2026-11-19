@@ -50,7 +50,7 @@ theorem correctness (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted
         P2W4.PreC R b L stk (P2W4.costB (stLen s.mem st) yl lm) zp zl zc st xp xl yp yl lm s ∧ P2W4.EX xp xl s)
       (fun s s' => NHyp.CPostR R b L stk 0x60 zp zc st (natVal s.mem xp xl ^ natVal s.mem yp yl % 2 ^ lm)
         (P2W4.costB (stLen s.mem st) yl lm) s s') :=
-  Ensures.mono_ret (Ensures.full64 (hinv := by janus64_pre_setRet [FvModexp.Amd64.NHyp.StkArg0, FvModexp.Amd64.P2W4.PreC, FvModexp.stLen, FvModexp.Amd64.P2W4.EX, FvModexp.Amd64.NHyp.CPre, FvModexp.natVal, FvModexp.Amd64.EvenHyp.NatOne, FvModexp.Amd64.win, FvModexp.Amd64.ExpHyp.stWs, FvModexp.Amd64.NHyp.StkApart, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.EvenHyp.natOneA, FvModexp.Amd64.Callees.adxAddr, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.StackNat.wT, FvModexp.Amd64.EvenHyp.WrOut, FvModexp.Amd64.EvenHyp.RdIn, FvModexp.NatNorm, FvModexp.Amd64.NHyp.freeOf, FvModexp.Amd64.ExpHyp.StackOK', FvModexp.stCap, FvModexp.stW, FvModexp.Amd64.StackNat.wbA, FvModexp.stkWs, FvModexp.Amd64.TlsOK, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.StkOK]) hap (by simp [numIntRegs])
+  Ensures.mono_ret (Ensures.full64 (hinv := fun _ ret _ _ hp => P2W4.pre_setRet ret hp) hap (by simp [numIntRegs])
     (P2W4.ens hap sub nf4 nfP hgr hmc hmv hmk hno hwb (kc := mulWX64) (by decide)
       (sn hap hgr hmc hwb) (by decide) (by decide) (sq hap hgr hmc hmv hmk hwb _) (by decide) (Nat.le_refl _)
       (mu hap hgr hmc hmv hmk hwb _) (Nat.le_refl _) (Nat.le_refl _) (tr hap hmv hmk) (by decide) (by decide)

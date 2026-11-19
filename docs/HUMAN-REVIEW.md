@@ -122,8 +122,8 @@ precondition by hand, from the checklist that `scripts/check-ra-pin` generates:
 ## 3. Assumptions and limits
 
 * **Toolchain gap.** The binary under verification is built with Go 1.26.10 (Janus-pinned: `GOTOOLCHAIN=go1.26.10`, `CGO_ENABLED=0`,
-  `GOAMD64=v1`, `-trimpath -buildvcs=false`, `scripts/harness.sha256`), because the Janus runtime pins (framework **Janus v0.3.3**,
-  tag 6d657522, the lakefile pin; binary `/srv/janus-ops/v033/bin/janus`) do not cover Go 1.27.3, which geth's own release binaries
+  `GOAMD64=v1`, `-trimpath -buildvcs=false`, `scripts/harness.sha256`), because the Janus runtime pins (framework **Janus v0.4.0**,
+  tag b5db6432, the lakefile pin; binary `/srv/janus-ops/v040/relbin-b5db6432/janus-linux-amd64`) do not cover Go 1.27.3, which geth's own release binaries
   use. geth v1.17.10 itself satisfies the module's `go` directive with 1.26. Verified code = geth v1.17.10 source compiled with
   1.26.10, not the shipped release binary. amd64 is verified at `GOAMD64=v1` only.
 * **EthLib pin.** The spec is the pinned EthLib revision; if upstream changes the MODEXP spec after `ffd60c4b`, nothing here follows.
