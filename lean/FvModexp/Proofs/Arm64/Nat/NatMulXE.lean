@@ -25,7 +25,7 @@ theorem hypXE (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
     (hwb : WbLiveContract (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2) :
     DivRec.MulHypXE impl R names mulWX 88 mulC := fun b L z zl zc st x xl xc y yl yc =>
-  (hypXE0 impl hap R hmk hgr hmc hmv hwb b L z zl zc st x xl xc y yl yc).mono
-    (fun _ ⟨h1, h2, h3, h4⟩ => ⟨h1.to0, h2, h3, h4⟩) (fun _ _ _ hq => hq)
+  (hypXE0 impl hap R hmk hgr hmc hmv hwb b L z zl zc st x xl xc y yl yc).mono_ret
+    (fun _ ⟨h1, h2, h3, h4⟩ => ⟨h1.to0, h2, h3, h4⟩) (fun _ _ _ _ hq => hq)
 
 end FvModexp.Arm64.NatMul

@@ -2,6 +2,7 @@ import FvModexp.Proofs.Amd64.Int.QRA
 import FvModexp.Proofs.Amd64.Int.QRP
 import FvModexp.Proofs.Amd64.Int.QRPost
 import FvModexp.Proofs.Common.Link
+import FvModexp.Proofs.Amd64.SetRetLemmas
 
 set_option autoImplicit false
 
@@ -99,6 +100,50 @@ theorem bv_toNat {n : Nat} (h : n < 2 ^ 64) : (BitVec.ofNat 64 n).toNat = n := b
 theorem bv_mod (n : Nat) : BitVec.ofNat 64 n = BitVec.ofNat 64 (n % 2 ^ 64) := by
   apply BitVec.eq_of_toNat_eq; simp only [BitVec.toNat_ofNat, Nat.mod_mod]
 
+theorem qrpre_setRet_pp (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (stk above : Nat) (h4224 : 4224 ≤ stk) (hab : 128 ≤ above)
+    (q z y : BitVec 64) {p : Janus.Amd64.Program} {entry : Nat} {args : List W64} (s : State) (ret : Nat)
+    (hs : CallSetup0 entry args s) (hret : RetAddr p ret) (hp : QRPre R b L stk above q.toNat z.toNat y.toNat s)
+    (hcz : 0 < s.mem.readLE (z.toNat + 24) 8) (hcy : 0 < s.mem.readLE (y.toNat + 24) 8) : QRPre R b L stk above q.toNat z.toNat y.toNat (s.setRet ret) := by
+  simp only [FvModexp.Amd64.IMod.QRPre, FvModexp.Amd64.RunIface.IntPre, List.forall_mem_cons, List.forall_mem_nil, List.pairwise_cons, List.mem_cons, List.not_mem_nil, or_false, List.Pairwise.nil, and_true, true_and, forall_eq, List.mem_singleton, forall_eq_or_imp, false_implies, implies_true, forall_const, List.Pairwise.nil] at hp ⊢
+  janus64_pre_setRet_core s ret hs hret hp [FvModexp.Amd64.IMod.QRPre, FvModexp.Amd64.RunIface.IntPre, FvModexp.Amd64.RunIface.lenW, FvModexp.Amd64.RunIface.IntV, FvModexp.Amd64.RunIface.IntLenLe, FvModexp.Amd64.RunIface.maxW, FvModexp.Amd64.RunIface.PoolG, FvModexp.Amd64.win, FvModexp.Amd64.RunIface.ModX, FvModexp.Amd64.Callees.adxAddr, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.RunIface.IntOK, FvModexp.natVal, FvModexp.Amd64.RunIface.stackPoolA, Janus.Spec.Pool.newOffset, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.TlsOK, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.Amd64.readLE_setRet_or_zero, FvModexp.Amd64.natNorm_setRet, hcz, hcy, true_implies]
+
+theorem qrpre_setRet_pn (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (stk above : Nat) (h4224 : 4224 ≤ stk) (hab : 128 ≤ above)
+    (q z y : BitVec 64) {p : Janus.Amd64.Program} {entry : Nat} {args : List W64} (s : State) (ret : Nat)
+    (hs : CallSetup0 entry args s) (hret : RetAddr p ret) (hp : QRPre R b L stk above q.toNat z.toNat y.toNat s)
+    (hcz : 0 < s.mem.readLE (z.toNat + 24) 8) (hcy : ¬ 0 < s.mem.readLE (y.toNat + 24) 8) : QRPre R b L stk above q.toNat z.toNat y.toNat (s.setRet ret) := by
+  simp only [FvModexp.Amd64.IMod.QRPre, FvModexp.Amd64.RunIface.IntPre, List.forall_mem_cons, List.forall_mem_nil, List.pairwise_cons, List.mem_cons, List.not_mem_nil, or_false, List.Pairwise.nil, and_true, true_and, forall_eq, List.mem_singleton, forall_eq_or_imp, false_implies, implies_true, forall_const, List.Pairwise.nil] at hp ⊢
+  janus64_pre_setRet_core s ret hs hret hp [FvModexp.Amd64.IMod.QRPre, FvModexp.Amd64.RunIface.IntPre, FvModexp.Amd64.RunIface.lenW, FvModexp.Amd64.RunIface.IntV, FvModexp.Amd64.RunIface.IntLenLe, FvModexp.Amd64.RunIface.maxW, FvModexp.Amd64.RunIface.PoolG, FvModexp.Amd64.win, FvModexp.Amd64.RunIface.ModX, FvModexp.Amd64.Callees.adxAddr, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.RunIface.IntOK, FvModexp.natVal, FvModexp.Amd64.RunIface.stackPoolA, Janus.Spec.Pool.newOffset, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.TlsOK, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.Amd64.readLE_setRet_or_zero, FvModexp.Amd64.natNorm_setRet, hcz, hcy, false_implies, true_implies]
+
+theorem qrpre_setRet_np (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (stk above : Nat) (h4224 : 4224 ≤ stk) (hab : 128 ≤ above)
+    (q z y : BitVec 64) {p : Janus.Amd64.Program} {entry : Nat} {args : List W64} (s : State) (ret : Nat)
+    (hs : CallSetup0 entry args s) (hret : RetAddr p ret) (hp : QRPre R b L stk above q.toNat z.toNat y.toNat s)
+    (hcz : ¬ 0 < s.mem.readLE (z.toNat + 24) 8) (hcy : 0 < s.mem.readLE (y.toNat + 24) 8) : QRPre R b L stk above q.toNat z.toNat y.toNat (s.setRet ret) := by
+  simp only [FvModexp.Amd64.IMod.QRPre, FvModexp.Amd64.RunIface.IntPre, List.forall_mem_cons, List.forall_mem_nil, List.pairwise_cons, List.mem_cons, List.not_mem_nil, or_false, List.Pairwise.nil, and_true, true_and, forall_eq, List.mem_singleton, forall_eq_or_imp, false_implies, implies_true, forall_const, List.Pairwise.nil] at hp ⊢
+  janus64_pre_setRet_core s ret hs hret hp [FvModexp.Amd64.IMod.QRPre, FvModexp.Amd64.RunIface.IntPre, FvModexp.Amd64.RunIface.lenW, FvModexp.Amd64.RunIface.IntV, FvModexp.Amd64.RunIface.IntLenLe, FvModexp.Amd64.RunIface.maxW, FvModexp.Amd64.RunIface.PoolG, FvModexp.Amd64.win, FvModexp.Amd64.RunIface.ModX, FvModexp.Amd64.Callees.adxAddr, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.RunIface.IntOK, FvModexp.natVal, FvModexp.Amd64.RunIface.stackPoolA, Janus.Spec.Pool.newOffset, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.TlsOK, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.Amd64.readLE_setRet_or_zero, FvModexp.Amd64.natNorm_setRet, hcz, hcy, false_implies, true_implies]
+
+theorem qrpre_setRet_nn (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (stk above : Nat) (h4224 : 4224 ≤ stk) (hab : 128 ≤ above)
+    (q z y : BitVec 64) {p : Janus.Amd64.Program} {entry : Nat} {args : List W64} (s : State) (ret : Nat)
+    (hs : CallSetup0 entry args s) (hret : RetAddr p ret) (hp : QRPre R b L stk above q.toNat z.toNat y.toNat s)
+    (hcz : ¬ 0 < s.mem.readLE (z.toNat + 24) 8) (hcy : ¬ 0 < s.mem.readLE (y.toNat + 24) 8) : QRPre R b L stk above q.toNat z.toNat y.toNat (s.setRet ret) := by
+  simp only [FvModexp.Amd64.IMod.QRPre, FvModexp.Amd64.RunIface.IntPre, List.forall_mem_cons, List.forall_mem_nil, List.pairwise_cons, List.mem_cons, List.not_mem_nil, or_false, List.Pairwise.nil, and_true, true_and, forall_eq, List.mem_singleton, forall_eq_or_imp, false_implies, implies_true, forall_const, List.Pairwise.nil] at hp ⊢
+  janus64_pre_setRet_core s ret hs hret hp [FvModexp.Amd64.IMod.QRPre, FvModexp.Amd64.RunIface.IntPre, FvModexp.Amd64.RunIface.lenW, FvModexp.Amd64.RunIface.IntV, FvModexp.Amd64.RunIface.IntLenLe, FvModexp.Amd64.RunIface.maxW, FvModexp.Amd64.RunIface.PoolG, FvModexp.Amd64.win, FvModexp.Amd64.RunIface.ModX, FvModexp.Amd64.Callees.adxAddr, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.RunIface.IntOK, FvModexp.natVal, FvModexp.Amd64.RunIface.stackPoolA, Janus.Spec.Pool.newOffset, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.TlsOK, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.Amd64.readLE_setRet_or_zero, FvModexp.Amd64.natNorm_setRet, hcz, hcy, false_implies, true_implies]
+
+/-- `QRPre` survives writing the return address (the `hinv` of `qr_ens`). `janus64_pre_setRet` alone times out on it: the `∀ a ∈ [z, y]` facts of
+`IntPre` hide the apartness of the two `*Int` headers from the return slot, and a plain `omega` over the ~40 disjunctive facts of the context is
+exponential for every side condition that is not a single disjunction. The list quantifiers are expanded first, and the guards `0 < cap z` /
+`0 < cap y` (the pointer-array facts of an `*Int` hold under them only) are case-split, one declaration per case. -/
+theorem qr_pre_setRet (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (stk above : Nat) (h4224 : 4224 ≤ stk) (hab : 128 ≤ above)
+    (q z y : BitVec 64) (p : Janus.Amd64.Program) (entry : Nat) (args : List W64) :
+    Ensures.SetRetInv p entry args (fun s => QRPre R b L stk above q.toNat z.toNat y.toNat s) := by
+  intro s ret hs hret hp
+  by_cases hcz : 0 < s.mem.readLE (z.toNat + 24) 8
+  · by_cases hcy : 0 < s.mem.readLE (y.toNat + 24) 8
+    · exact qrpre_setRet_pp R b L stk above h4224 hab q z y s ret hs hret hp hcz hcy
+    · exact qrpre_setRet_pn R b L stk above h4224 hab q z y s ret hs hret hp hcz hcy
+  · by_cases hcy : 0 < s.mem.readLE (y.toNat + 24) 8
+    · exact qrpre_setRet_np R b L stk above h4224 hab q z y s ret hs hret hp hcz hcy
+    · exact qrpre_setRet_nn R b L stk above h4224 hab q z y s ret hs hret hp hcz hcy
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 /-- **`q.QuoRem(z, y, z)`** (amd64) as `(*Int).Mod` calls it (`QRSpec`). Premises: `nat.div` as `QuoRem` calls it
@@ -116,12 +161,13 @@ theorem qr_ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.prog
     QRSpec impl R stk above := by
   intro b L q z y
   rw [← LibQR.eq_only, fnQ_eq]
+  refine Ensures.of_old (qr_pre_setRet R b L stk above h4224 hab q z y _ _ _) ?_
   intro ret hret s hs hpre
   janus64_intro hs
   have hr48 := hret.user
   obtain ⟨hIP, hyv, hlz, hly, hpool, hX, hqA, hq8, hq16, hq24, hadx⟩ := hpre
   have hIP' := hIP
-  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hstk, hab48, hacc⟩, hal, -, hrt, -, -, hLs, -⟩, hsv, hG, -, -, hops, hpw⟩ := hIP'
+  obtain ⟨⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hstk, hab48, hacc⟩, hal, -, hrt, -, -, hLs, -⟩, hsv, hG, -, -, hops, hpw⟩ := hIP'
   simp only [regSP, regG, stackguard0, stackguard0Offset] at hstk hab48 hacc hg1 hg2 hg3
   have hoz := hops z.toNat (by simp)
   have hoy := hops y.toNat (by simp)

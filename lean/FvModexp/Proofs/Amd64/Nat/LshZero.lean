@@ -102,7 +102,7 @@ theorem zeroSh (impl : List Amd64.Segment) (R : RtInv)
     ReachesRet (LibLsh.program.link impl) (retAddrOf s) s fun s' => RegsOK s s' ∧ PostZI R b L zp zc x xl 0 s s' := by
   obtain ⟨hpc, hra, hx15, hdf, h0, h3, h1, h7, h6, h8, h9⟩ := he
   have hpre' := hpre
-  obtain ⟨⟨⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, -, -, -, -⟩, -, -, ⟨hz40, -, -⟩,
+  obtain ⟨⟨⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, -, -, -, -⟩, -, -, ⟨hz40, -, -⟩,
     ⟨hx40, -, -, -, -⟩, hn16, -, -, -⟩, hzx, hzlx, hx0, -⟩ := hpre'
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw
   subst hzx hzlx

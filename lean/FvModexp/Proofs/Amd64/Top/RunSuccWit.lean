@@ -58,11 +58,12 @@ theorem okA (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
         LengthsPass (bytesAt s.mem p.toNat len.toNat))
       (fun s s' => RunAmd64.OkRet (bytesAt s.mem p.toNat len.toNat) s' ∧
         RunAmd64.FrameW R b (RunAmd64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat))) L W s s') := by
+  janus64_ensures_old [FvModexp.Spec.RunAmd64.EnvW, FvModexp.Spec.RunAmd64.Input, FvModexp.Spec.OsakaReceiver, FvModexp.Spec.RunAmd64.Globals, FvModexp.Spec.RunAmd64.windowW, FvModexp.Spec.RunAmd64.NatOne, FvModexp.Spec.RunAmd64.StackPool, FvModexp.Spec.RunAmd64.CpuOne, FvModexp.Spec.bytesAt, FvModexp.Spec.RunAmd64.window, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.RunIface.wbA, FvModexp.Mdl.karatsubaThreshold, FvModexp.Mdl.basicSqrThreshold, FvModexp.Mdl.karatsubaSqrThreshold, FvModexp.Amd64.IExp.pA, Janus.Spec.Pool.newOffset, FvModexp.Amd64.MontHyp.hasADX, FvModexp.Spec.byteOf]
   intro ret hret s hs ⟨hS, hpre⟩
   subst hS
-  exact correctness_ok impl hap R hmk hmkz hmv hmz hno stkM aboveM
+  exact (correctness_ok impl hap R hmk hmkz hmv hmz hno stkM aboveM
     (RunIface.ModSpecA.mono (Closed.modA impl hap R hmk hmv hmz hno hgr hmc hwb hget hput hwb4) hk ha) hE
-    W hW hW1 hab (by omega) (by omega) b L c p len cp ret hret s hs hpre
+    W hW hW1 hab (by omega) (by omega) b L c p len cp).toOld ret hret s hs hpre
 
 namespace Closed
 
@@ -116,11 +117,12 @@ theorem okC (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
         LengthsPass (bytesAt s.mem p.toNat len.toNat))
       (fun s s' => RunAmd64.OkRet (bytesAt s.mem p.toNat len.toNat) s' ∧
         RunAmd64.FrameW R b (RunAmd64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat))) L W s s') := by
+  janus64_ensures_old [FvModexp.Spec.RunAmd64.EnvW, FvModexp.Spec.RunAmd64.Input, FvModexp.Spec.OsakaReceiver, FvModexp.Spec.RunAmd64.Globals, FvModexp.Spec.RunAmd64.windowW, FvModexp.Spec.RunAmd64.NatOne, FvModexp.Spec.RunAmd64.StackPool, FvModexp.Spec.RunAmd64.CpuOne, FvModexp.Spec.bytesAt, FvModexp.Spec.RunAmd64.window, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.RunIface.wbA, FvModexp.Mdl.karatsubaThreshold, FvModexp.Mdl.basicSqrThreshold, FvModexp.Mdl.karatsubaSqrThreshold, FvModexp.Amd64.IExp.pA, Janus.Spec.Pool.newOffset, FvModexp.Amd64.MontHyp.hasADX, FvModexp.Spec.byteOf]
   intro ret hret s hs ⟨hS, hpre⟩
   subst hS
-  exact okA impl hap R hmk hmkz hmv hmz hno hgr hmc hwb StkShape hget hput hwb4 43736 48
+  exact (okA impl hap R hmk hmkz hmv hmz hno hgr hmc hwb StkShape hget hput hwb4 43736 48
     (Closed.expA impl hap R hmk hmv hmz hno hgr hmc hwb hget hput) W hW (by omega) (by decide) (by decide)
-    (by decide) b L c p len cp ret hret s hs ⟨rfl, hpre⟩
+    (by decide) b L c p len cp).toOld ret hret s hs ⟨rfl, hpre⟩
 
 end FvModexp.Amd64.Run
 
@@ -248,7 +250,7 @@ set_option maxHeartbeats 64000000 in
 theorem nonvacuous_of (stkM aboveM : Nat) (hE : RunIface.ExpSpecA WStubs.impl R stkM aboveM)
     (hW : 616 + stkM ≤ WW) (hab : aboveM ≤ 144) (hk : 41800 ≤ stkM) (ha : 16 ≤ aboveM) : Stmt stkM :=
   ⟨WStubs.impl, R, bW, [], c2, p2, 99, 99, RET, s2, WW, WStubs.hap, m_mk, m_mkz, m_mv, m_mvz, m_no, m_gr, m_cl, m_wb2,
-    m_get, m_put, m_wb4, hW, hret, setup2, rfl,
+    m_get, m_put, m_wb4, hW, hret, setup2_at0, rfl,
     (pre2 budget2).1, (pre2 budget2).2.1, (pre2 budget2).2.2.1, (pre2 budget2).2.2.2.1, (pre2 budget2).2.2.2.2.1,
     (pre2 budget2).2.2.2.2.2.1, (pre2 budget2).2.2.2.2.2.2.1, (pre2 budget2).2.2.2.2.2.2.2.1,
     (pre2 budget2).2.2.2.2.2.2.2.2.1, (pre2 budget2).2.2.2.2.2.2.2.2.2.1, (pre2 budget2).2.2.2.2.2.2.2.2.2.2,
@@ -270,7 +272,7 @@ theorem nonvacuous_of (stkM aboveM : Nat) (hE : RunIface.ExpSpecA WStubs.impl R 
       by rw [WStubs.addr_put]; exact site_put _⟩,
     ⟨[], 0x1000, callS WStubs.wb4A 0 0 0, by rw [WStubs.addr_wb4]; rfl, by rw [WStubs.addr_wb4]; exact site_wb _ _⟩,
     Run.okA WStubs.impl WStubs.hap R m_mk m_mkz m_mv m_mvz m_no m_gr m_cl m_wb2 StkShape m_get m_put m_wb4 stkM aboveM hE
-      WW hW (by decide) hab hk ha bW [] c2 p2 99 99 RET hret s2 setup2 ⟨rfl, pre2 budget2⟩⟩
+      WW hW (by decide) hab hk ha bW [] c2 p2 99 99 s2 setup2_at0 ⟨rfl, pre2 budget2⟩ RET hret⟩
 
 set_option maxHeartbeats 64000000 in
 /-- The witness, every callee closed (`(*Int).exp` = `Run.Closed.expA` at the witness runtime, depth 43736). -/

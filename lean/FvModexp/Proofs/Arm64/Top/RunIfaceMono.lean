@@ -51,7 +51,7 @@ theorem intPost_mono {R : RtInv} {b B : Nat} {L : List (Nat × Nat)} {z v : Nat}
 
 theorem BytesSpec.mono {impl : List Segment} {R : RtInv} {k a k' a' : Nat} (h : BytesSpec impl R k a) (hk : k ≤ k')
     (ha : a ≤ a') : BytesSpec impl R k' a' := fun b L x =>
-  (h b L x).mono (fun _ ⟨hp, hl⟩ => ⟨intPre_mono hk ha hp, hl⟩) fun _ _ _ ⟨p, n, c, h0, h1, h2, h3, h4, h5, L', b', h6,
+  (h b L x).mono_ret (fun _ ⟨hp, hl⟩ => ⟨intPre_mono hk ha hp, hl⟩) fun _ _ _ _ ⟨p, n, c, h0, h1, h2, h3, h4, h5, L', b', h6,
     h7, h8, h9, h10, h11⟩ =>
     ⟨p, n, c, h0, h1, h2, h3, h4, h5, L', b', h6, h7, h8, h9,
       (memFrame_winA_mono (ws := []) hk ha (by simpa using h10)).mono fun _ _ hx => by simpa using hx, h11⟩
@@ -62,7 +62,7 @@ theorem poolG_mono {R : RtInv} {m : Memory} {s : State} {k a k' a' : Nat} (hk : 
 
 theorem ModSpec.mono {impl : List Segment} {R : RtInv} {k a k' a' : Nat} (h : ModSpec impl R k a) (hk : k ≤ k')
     (ha : a ≤ a') : ModSpec impl R k' a' := fun b L z y =>
-  (h b L z y).mono (fun _ ⟨hp, h1, h2, h3, h4, h5⟩ => ⟨intPre_mono hk ha hp, h1, h2, h3, poolG_mono hk ha h4, h5⟩) fun _ _ _ ⟨h0, h1, h2⟩ =>
+  (h b L z y).mono_ret (fun _ ⟨hp, h1, h2, h3, h4, h5⟩ => ⟨intPre_mono hk ha hp, h1, h2, h3, poolG_mono hk ha h4, h5⟩) fun _ _ _ _ ⟨h0, h1, h2⟩ =>
     ⟨h0, intPost_mono hk ha h1, h2⟩
 
 theorem oneG_mono {R : RtInv} {L : List (Nat × Nat)} {m : Memory} {xs : List Nat} {s : State} {k a k' a' : Nat}
@@ -72,8 +72,8 @@ theorem oneG_mono {R : RtInv} {L : List (Nat × Nat)} {m : Memory} {xs : List Na
 
 theorem ExpSpec.mono {impl : List Segment} {R : RtInv} {k a k' a' : Nat} (h : ExpSpec impl R k a) (hk : k ≤ k')
     (ha : a ≤ a') : ExpSpec impl R k' a' := fun b L z y mm =>
-  (h b L z y mm).mono (fun _ ⟨hp, h1, h2, h3, h4, h5, h6, h7, h8, h9⟩ =>
+  (h b L z y mm).mono_ret (fun _ ⟨hp, h1, h2, h3, h4, h5, h6, h7, h8, h9⟩ =>
     ⟨intPre_mono hk ha hp, h1, h2, h3, h4, oneG_mono hk ha h5, poolG_mono hk ha h6, h7, h8, h9⟩)
-    fun _ _ _ ⟨h0, h1⟩ => ⟨h0, intPost_mono hk ha h1⟩
+    fun _ _ _ _ ⟨h0, h1⟩ => ⟨h0, intPost_mono hk ha h1⟩
 
 end FvModexp.Arm64.RunIface

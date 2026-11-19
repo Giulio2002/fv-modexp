@@ -29,7 +29,7 @@ theorem correctness (impl : List Segment) (hap : ImplApart Extracted.program imp
       [zp, zl, zc, xp, xl, xc, n]
       (fun s => Trunc.Pre R b L zp.toNat zl.toNat zc.toNat xp.toNat xl.toNat n.toNat s)
       (fun s s' => Trunc.Post R b L zp.toNat zc.toNat xp.toNat xl.toNat n.toNat s s') :=
-  Ensures.full hap (Trunc.ens impl hap R hmk hmv b L zp zl zc xp xl xc n)
+  Ensures.full (hinv := by janus_pre_setRet [FvModexp.Arm64.Trunc.Pre, FvModexp.Arm64.EvenHyp.TruncPre, FvModexp.NatNorm, FvModexp.Arm64.CallEnv, FvModexp.Arm64.ExpHyp.WrOut, FvModexp.Arm64.ExpHyp.RdIn, Janus.Spec.GuardOK, Janus.Spec.StackOK, FvModexp.Arm64.win, FvModexp.NatLive]) hap (Trunc.ens impl hap R hmk hmv b L zp zl zc xp xl xc n)
 
 end FvModexp.Arm64.TruncRow
 
@@ -55,9 +55,9 @@ def s0 : State :=
 
 theorem hret : RetAddr (Extracted.program.link WStubs.impl) RET := RetAddr.of_check (by decide +kernel)
 
-theorem setup : CallSetup ((Extracted.program.link WStubs.impl).withExit RET)
+theorem setup : CallSetup0 
     (segAddr Extracted.program "github.com/ethereum/go-bigmodexpfix/src/math/big.nat.trunc") args s0 :=
-  ⟨rfl, rfl, fun i h => by simp only [s0, dif_pos h]⟩
+  ⟨rfl, by first | decide | simp | omega, fun i h => by simp only [s0, dif_pos h]⟩
 
 theorem bump : mem0.readLE BUMP 8 = HEAP := by decide +kernel
 
@@ -95,7 +95,7 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
     MakesliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R ∧
     MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R ∧
     RetAddr (Extracted.program.link impl) ret ∧
-    CallSetup ((Extracted.program.link impl).withExit ret)
+    CallSetup0 
       (segAddr Extracted.program "github.com/ethereum/go-bigmodexpfix/src/math/big.nat.trunc")
       [zp, zl, zc, xp, xl, xc, n] s ∧
     Trunc.Pre R b L zp.toNat zl.toNat zc.toNat xp.toNat xl.toNat n.toNat s ∧
@@ -105,8 +105,8 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.memmove") ∧
       mvSite R (Extracted.program.contractAddr "runtime.memmove") L b s_c) ∧
-    Returns ((Extracted.program.link impl).withExit ret) s fun s' =>
-      ABIReturn s s' ∧ Trunc.Post R b L zp.toNat zc.toNat xp.toNat xl.toNat n.toNat s s' :=
+    Returns ((Extracted.program.link impl).withExit ret) (s.setRet ret) fun s' =>
+      ABIReturn (s.setRet ret) s' ∧ Trunc.Post R b L zp.toNat zc.toNat xp.toNat xl.toNat n.toNat (s.setRet ret) s' :=
   ⟨WStubs.impl, R, 0x1000, [], BitVec.ofNat 64 OA, 0, 0, BitVec.ofNat 64 OB, 2, 2, 70, RET, s0, WStubs.hap,
     by rw [WStubs.addr_mk]; exact WStubs.mk [] (by intro t ht; simp at ht) _,
     by rw [WStubs.addr_mv]; exact WStubs.mv R, hret, setup, pre,
@@ -114,7 +114,7 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
       by rw [WStubs.addr_mk]; exact site_mk _⟩,
     ⟨[], 0x1000, callS WStubs.mvA OA OB 8, by rw [WStubs.addr_mv]; rfl, by rw [WStubs.addr_mv]; exact site_mv _⟩,
     correctness WStubs.impl WStubs.hap R (by rw [WStubs.addr_mk]; exact WStubs.mk [] (by intro t ht; simp at ht) _)
-      (by rw [WStubs.addr_mv]; exact WStubs.mv R) 0x1000 [] (BitVec.ofNat 64 OA) 0 0 (BitVec.ofNat 64 OB) 2 2 70 RET
-      hret s0 setup pre⟩
+      (by rw [WStubs.addr_mv]; exact WStubs.mv R) 0x1000 [] (BitVec.ofNat 64 OA) 0 0 (BitVec.ofNat 64 OB) 2 2 70 s0 setup pre RET
+      hret⟩
 
 end FvModexp.Arm64.TruncRow.Witness

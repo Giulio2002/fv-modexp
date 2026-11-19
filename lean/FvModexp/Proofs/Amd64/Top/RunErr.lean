@@ -32,7 +32,7 @@ theorem correctness (impl : List Amd64.Segment) (hap : ImplApart Extracted.progr
         R.inv b L (s.regs 14).toNat (view R.rt L s.mem) ∧ RunAmd64.ErrReqs R b len ∧
         LengthsFail (bytesAt s.mem p.toNat len.toNat))
       (fun s s' => RunAmd64.ErrRet s' ∧ RunAmd64.Frame R b (3 * RunAmd64.blockBound 64 + RunAmd64.blockBound 16) L s s') :=
-  Ensures.full64 hap (ns := LibRun.names) (by simp [numIntRegs])
+  Ensures.full64 (hinv := by janus64_pre_setRet [FvModexp.Spec.RunAmd64.Env, FvModexp.Spec.RunAmd64.Input, FvModexp.Spec.OsakaReceiver, FvModexp.Spec.RunAmd64.ErrReqs, FvModexp.Amd64.Run.bytesAt_setRet, FvModexp.Spec.RunAmd64.window, FvModexp.Spec.RunAmd64.wordT, FvModexp.Amd64.Run.errT]) hap (ns := LibRun.names) (by simp [numIntRegs])
     (LibRun.eq_only ▸ ensErrLib impl hap R hmk hmv hno b L c p len cp)
 
 end FvModexp.Amd64.Run
@@ -61,9 +61,9 @@ def s0 : State :=
 
 theorem hret : RetAddr (Extracted.program.link WStubs.impl) RET := RetAddr.of_check (by decide +kernel)
 
-theorem setup : CallSetup ((Extracted.program.link WStubs.impl).withExit RET) (segAddr Extracted.program RunAmd64.fn)
+theorem setup : CallSetup0 (segAddr Extracted.program RunAmd64.fn)
     [c0, p0, 96, 96] s0 :=
-  ⟨rfl, by decide +kernel, rfl, by decide, by
+  ⟨rfl, rfl, by decide, by
     intro i h; simp only [List.length_cons, List.length_nil] at h
     rcases (by omega : i = 0 ∨ i = 1 ∨ i = 2 ∨ i = 3) with rfl | rfl | rfl | rfl <;> rfl, rfl⟩
 
@@ -79,10 +79,10 @@ theorem fail0 : LengthsFail (bytesAt s0.mem p0.toNat (96 : BitVec 64).toNat) := 
 theorem pre : RunAmd64.Env R [] s0 ∧ RunAmd64.Input R [] c0 p0 96 96 s0 ∧ OsakaReceiver s0.mem c0.toNat ∧
     R.inv 0x1000 [] (s0.regs 14).toNat (view R.rt [] s0.mem) ∧ RunAmd64.ErrReqs R 0x1000 96 ∧
     LengthsFail (bytesAt s0.mem p0.toNat (96 : BitVec 64).toNat) := by
-  refine ⟨⟨⟨?_, ?_, ?_⟩, ⟨?_, ?_, ?_⟩, by decide, dataLoaded _ _, ?_, ?_, ?_, fun r hr => by simp at hr, roOut,
+  refine ⟨⟨⟨?_, ?_, ?_, ?_⟩, ⟨?_, ?_, ?_⟩, by decide, dataLoaded _ _, ?_, ?_, ?_, fun r hr => by simp at hr, roOut,
       ⟨⟨?_, ?_, ?_⟩, ?_, ?_⟩⟩,
     ⟨?_, by decide, Or.inr ?_, ?_, by decide, by decide, by decide, ?_, Or.inr ?_, ?_⟩,
-    ⟨by decide +kernel, by decide +kernel, by decide +kernel⟩, inv0 g bump _,
+    (by first | exact ⟨by decide +kernel, by decide +kernel, by decide +kernel, by decide⟩ | exact ⟨by decide +kernel, by decide +kernel, by decide +kernel⟩), inv0 g bump _,
     ⟨trivial, fun h => absurd h (by decide), trivial, by decide⟩, fail0⟩
   all_goals first
     | (rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)
@@ -92,12 +92,12 @@ theorem pre : RunAmd64.Env R [] s0 ∧ RunAmd64.Input R [] c0 p0 96 96 s0 ∧ Os
     | decide +kernel
 
 /-- The returning run, exactly as `correctness` states it at the witness. -/
-theorem returnsF : Returns ((Extracted.program.link WStubs.impl).withExit RET) s0 fun s' =>
-    ABIReturn s0 s' ∧ (RunAmd64.ErrRet s' ∧
-      RunAmd64.Frame R 0x1000 (3 * RunAmd64.blockBound 64 + RunAmd64.blockBound 16) [] s0 s') :=
+theorem returnsF : Returns ((Extracted.program.link WStubs.impl).withExit RET) (s0.setRet RET) fun s' =>
+    ABIReturn (s0.setRet RET) s' ∧ (RunAmd64.ErrRet s' ∧
+      RunAmd64.Frame R 0x1000 (3 * RunAmd64.blockBound 64 + RunAmd64.blockBound 16) [] (s0.setRet RET) s') :=
   FvModexp.Amd64.Run.correctness WStubs.impl WStubs.hap R
     (by rw [WStubs.addr_mk]; exact WStubs.mk [] (by intro t ht; simp at ht) _) (by rw [WStubs.addr_mv]; exact WStubs.mv R)
-    (by rw [WStubs.addr_no]; exact WStubs.no [] (by intro t ht; simp at ht) _) 0x1000 [] c0 p0 96 96 RET hret s0 setup pre
+    (by rw [WStubs.addr_no]; exact WStubs.no [] (by intro t ht; simp at ht) _) 0x1000 [] c0 p0 96 96 s0 setup pre RET hret
 
 /-- All hypotheses of `correctness` hold together, with every conjunct of its precondition, a call-site state for each
 contract, and the returning run: the shared witness runtime, an empty live set, budget `0x1000`, and the call
@@ -109,7 +109,7 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : 
     MemmoveLive64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R ∧
     NewobjectLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.newobject") 4096 R ∧
     RetAddr (Extracted.program.link impl) ret ∧
-    CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program RunAmd64.fn) [c, p, len, cp] s ∧
+    CallSetup0 (segAddr Extracted.program RunAmd64.fn) [c, p, len, cp] s ∧
     RunAmd64.Env R L s ∧ RunAmd64.Input R L c p len cp s ∧ OsakaReceiver s.mem c.toNat ∧
     R.inv b L (s.regs 14).toNat (view R.rt L s.mem) ∧ RunAmd64.ErrReqs R b len ∧
     LengthsFail (bytesAt s.mem p.toNat len.toNat) ∧
@@ -122,9 +122,9 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : 
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.rip = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.newobject") ∧
       WitSitesAmd64.noSite R (Extracted.program.contractAddr "runtime.newobject") L b s_c) ∧
-    Returns ((Extracted.program.link impl).withExit ret) s fun s' =>
-      ABIReturn s s' ∧ (RunAmd64.ErrRet s' ∧
-        RunAmd64.Frame R b (3 * RunAmd64.blockBound 64 + RunAmd64.blockBound 16) L s s') :=
+    Returns ((Extracted.program.link impl).withExit ret) (s.setRet ret) fun s' =>
+      ABIReturn (s.setRet ret) s' ∧ (RunAmd64.ErrRet s' ∧
+        RunAmd64.Frame R b (3 * RunAmd64.blockBound 64 + RunAmd64.blockBound 16) L (s.setRet ret) s') :=
   ⟨WStubs.impl, R, 0x1000, [], c0, p0, 96, 96, RET, s0, WStubs.hap,
     by rw [WStubs.addr_mk]; exact WStubs.mk [] (by intro t ht; simp at ht) _, by rw [WStubs.addr_mv]; exact WStubs.mv R,
     by rw [WStubs.addr_no]; exact WStubs.no [] (by intro t ht; simp at ht) _, hret, setup,

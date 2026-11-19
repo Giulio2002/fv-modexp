@@ -60,9 +60,9 @@ theorem correctness (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted
     Ensures (Extracted.program.link impl) (segAddr Extracted.program NHyp.fnSlow) [z, zl, zc, st, x, xl, xc]
       (Pre R H b L z.toNat zl.toNat zc.toNat st.toNat x.toNat xl.toNat xc.toNat y yl yc m ml mc)
       (Post R H b L z.toNat zc.toNat st.toNat x.toNat xl.toNat y yl m ml) :=
-  (Ensures.full64 hap (by simp [numIntRegs])
-    (Q.ExpSlow.hypCl hap hgr hmc hmv hmz hmk hwb H b L z zl zc st x xl xc y yl yc m ml mc)).mono
-    (fun _ h => ⟨⟨h.1.1.toStkArg, h.1.2.toStkArg⟩, h.2⟩) (fun _ _ _ h => h)
+  (Ensures.full64 (hinv := by janus64_pre_setRet [FvModexp.Amd64.SlowRow.Pre, FvModexp.Amd64.NHyp.StkArg0, FvModexp.Amd64.NHyp.StkArg24, FvModexp.Amd64.NHyp.CPre, FvModexp.stkR, FvModexp.natVal, FvModexp.stLen, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.win, FvModexp.Amd64.StackNat.wT, FvModexp.Amd64.EvenHyp.WrOut, FvModexp.Amd64.EvenHyp.RdIn, FvModexp.NatNorm, FvModexp.Amd64.NHyp.freeOf, FvModexp.Amd64.ExpHyp.StackOK', FvModexp.stCap, FvModexp.stW, FvModexp.Amd64.StackNat.wbA, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.Callees.adxAddr, FvModexp.stkRes, FvModexp.potK, FvModexp.Amd64.TlsOK, FvModexp.Mdl.karatsubaThreshold, FvModexp.Mdl.basicSqrThreshold, FvModexp.Mdl.karatsubaSqrThreshold, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.StkOK]) hap (by simp [numIntRegs])
+    (Q.ExpSlow.hypCl hap hgr hmc hmv hmz hmk hwb H b L z zl zc st x xl xc y yl yc m ml mc)).mono_ret
+    (fun _ h => ⟨⟨h.1.1.toStkArg, h.1.2.toStkArg⟩, h.2⟩) (fun _ _ _ _ h => h)
 
 end FvModexp.Amd64.SlowRow
 
@@ -110,9 +110,9 @@ def s0 : State :=
     flags := ⟨none, none, none, none, none, none⟩,
     xmm := fun _ => 0, mem := mem0, fsBase := BitVec.ofNat 64 (T0 + 8) }
 
-theorem setup : CallSetup ((Extracted.program.link WStubs.impl).withExit RET) (segAddr Extracted.program NHyp.fnSlow)
+theorem setup : CallSetup0 (segAddr Extracted.program NHyp.fnSlow)
     args s0 :=
-  ⟨rfl, by decide +kernel, rfl, by decide, by
+  ⟨rfl, rfl, by decide, by
     intro i h; simp only [args, List.length_cons, List.length_nil] at h
     rcases (by omega : i = 0 ∨ i = 1 ∨ i = 2 ∨ i = 3 ∨ i = 4 ∨ i = 5 ∨ i = 6) with
       rfl | rfl | rfl | rfl | rfl | rfl | rfl <;> rfl, rfl⟩
@@ -138,7 +138,7 @@ theorem bud : Q.ExpSlow.costQ sqrCQ mulCQ (Q.NatDiv.costQ Q.drsCQ) 1 1 1 + stkR 
   decide +kernel
 
 theorem sg0 : StackGuardOK s0 KW :=
-  ⟨by decide, by show mem0.accessible _ 8 false = true; rw [acc0]; decide +kernel, by decide +kernel⟩
+  ⟨by decide, by show mem0.accessible _ 8 false = true; rw [acc0]; decide +kernel, by decide +kernel, by decide +kernel⟩
 
 theorem tls0 : TlsG s0 :=
   ⟨by decide, by show mem0.accessible _ 8 false = true; rw [acc0]; decide +kernel, by decide +kernel⟩
@@ -228,7 +228,7 @@ theorem nonvacuous :
     MakesliceLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R ∧
     WbLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 4096 R 2 ∧
     RetAddr (Extracted.program.link impl) ret ∧
-    CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program NHyp.fnSlow)
+    CallSetup0 (segAddr Extracted.program NHyp.fnSlow)
       [z, zl, zc, st, x, xl, xc] s ∧
     Pre R H b L z.toNat zl.toNat zc.toNat st.toNat x.toNat xl.toNat xc.toNat y yl yc m ml mc s ∧
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
@@ -249,8 +249,8 @@ theorem nonvacuous :
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.rip = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.gcWriteBarrier2") ∧
       wbSite R (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 2 L b s_c) ∧
-    Returns ((Extracted.program.link impl).withExit ret) s fun s' =>
-      ABIReturn s s' ∧ Post R H b L z.toNat zc.toNat st.toNat x.toNat xl.toNat y yl m ml s s' :=
+    Returns ((Extracted.program.link impl).withExit ret) (s.setRet ret) fun s' =>
+      ABIReturn (s.setRet ret) s' ∧ Post R H b L z.toNat zc.toNat st.toNat x.toNat xl.toNat y yl m ml (s.setRet ret) s' :=
   ⟨WStubs.impl, R, HW, BW, [], 0, 0, 0, BitVec.ofNat 64 ST, BitVec.ofNat 64 XP, 1, 1, YP, 1, 1, MP, 1, 1, RET, s0,
     WStubs.hap,
     by rw [WStubs.addr_gr]; exact WStubs.gr [] hty _,
@@ -273,6 +273,6 @@ theorem nonvacuous :
       (by rw [WStubs.addr_mv]; exact WStubs.mvz R)
       (by rw [WStubs.addr_mk]; exact WStubs.mk [] hty _)
       (by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] hty _) HW BW []
-      0 0 0 (BitVec.ofNat 64 ST) (BitVec.ofNat 64 XP) 1 1 YP 1 1 MP 1 1 RET hret s0 setup preB⟩
+      0 0 0 (BitVec.ofNat 64 ST) (BitVec.ofNat 64 XP) 1 1 YP 1 1 MP 1 1 s0 setup preB RET hret⟩
 
 end FvModexp.Amd64.SlowRow.Witness

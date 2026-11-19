@@ -58,6 +58,7 @@ theorem ens {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : 
     rw [← P2W2.wbE_eq]; exact WbLiveContract.of_codeIn hc hwb
   intro b L z zl zc st x xl xc y yl yc lm
   rw [← LibW.eq_only, fnE_eq]
+  janus_ensures_old [FvModexp.Arm64.NHyp.CPre, FvModexp.Arm64.P2Pre.cost, FvModexp.stLen, FvModexp.natVal, FvModexp.Arm64.EvenHyp.NatOne, FvModexp.Arm64.win, FvModexp.Arm64.ExpHyp.stWs, FvModexp.Arm64.EvenHyp.StkApart, FvModexp.Arm64.CallEnv, FvModexp.Arm64.RunIface.Globals, FvModexp.Arm64.StackNat.wT, FvModexp.Arm64.ExpHyp.WrOut, FvModexp.Arm64.ExpHyp.RdIn, FvModexp.NatNorm, FvModexp.Arm64.NHyp.freeOf, FvModexp.Arm64.ExpHyp.StackOK', FvModexp.stCap, FvModexp.stW, FvModexp.Arm64.StackNat.wbA, FvModexp.Arm64.RunIface.gA, FvModexp.Arm64.EvenHyp.natOneA, FvModexp.stkWs, Janus.Spec.GuardOK, Janus.Spec.StackOK, FvModexp.Arm64.RunIface.wbA, FvModexp.NatLive, FvModexp.StkOK]
   intro ret hret s hs hpre
   janus_intro hs
   have hr4 : (s.regs 30).toNat % 4 = 0 := by rw [h_lr, BitVec.toNat_ofNat]; have := hret.user; have := hret.aligned; omega

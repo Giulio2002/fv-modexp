@@ -57,8 +57,8 @@ theorem hypX (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
     (hwb : WbLiveContract (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2) :
     SqrHypX impl R names sqrWX 64 sqrC := fun b L z zl zc st x xl xc =>
-  (ens impl hap R hmk hgr hmc hmv hwb b L sqrWX z zl zc st x xl xc).mono
-    (fun _ ⟨h1, h2, h3⟩ => x_pre h1 h2 h3) (fun _ _ _ hq => x_post hq)
+  (ens impl hap R hmk hgr hmc hmv hwb b L sqrWX z zl zc st x xl xc).mono_ret
+    (fun _ ⟨h1, h2, h3⟩ => x_pre h1 h2 h3) (fun _ _ _ _ hq => x_post hq)
 
 /-- the `SqrHypR` form (`StackBack`) -/
 theorem hypR (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
@@ -74,7 +74,7 @@ theorem hypR (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
         SqrX R L s sqrWX 64 st.toNat z.toNat zc.toNat x.toNat xl.toNat xc.toNat)
       (fun s s' => SqrPost R b (sqrC (stLen s.mem st.toNat) xl.toNat) L sqrWX 64 z.toNat zc.toNat st.toNat x.toNat
         xl.toNat s s' ∧ Reuse (2 * xl.toNat) z.toNat zc.toNat [(x.toNat, xc.toNat)] s') :=
-  (hypX impl hap R hmk hgr hmc hmv hwb b L z zl zc st x xl xc).mono (fun _ h => h)
-    (fun _ _ _ ⟨h1, h2⟩ => ⟨h1.toPost, h2⟩)
+  (hypX impl hap R hmk hgr hmc hmv hwb b L z zl zc st x xl xc).mono_ret (fun _ h => h)
+    (fun _ _ _ _ ⟨h1, h2⟩ => ⟨h1.toPost, h2⟩)
 
 end FvModexp.Arm64.NatSqr

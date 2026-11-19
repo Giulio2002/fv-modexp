@@ -81,6 +81,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     (sub : Bool) (b : Nat) (L : List (Nat × Nat)) (z x y : BitVec 64) :
     Ensures ((Extracted.program.onlySegments names).link impl) (segAddr Extracted.program (fn sub)) [z, x, y]
       (Pre R b L z.toNat x.toNat y.toNat) (Post sub R b L z.toNat x.toNat y.toNat) := by
+  janus_ensures_old [FvModexp.Arm64.IntAS.Pre, FvModexp.Arm64.CallEnv, FvModexp.Arm64.NatAdd.wordT, FvModexp.Arm64.IntAS.OpR, FvModexp.Arm64.win, FvModexp.Arm64.IntAS.wbA, FvModexp.Arm64.IntAS.hC, FvModexp.NatLive, FvModexp.Arm64.IntAS.hP, FvModexp.Arm64.IntAS.hL, Janus.Spec.GuardOK, Janus.Spec.StackOK, FvModexp.Arm64.IntAS.hNeg, FvModexp.NatNorm]
   rw [show names = LibIntAS.names from rfl, ← LibIntAS.eq_only, entry_eq]
   cases sub
   · simp only [entry, Bool.false_eq_true, ↓reduceIte]

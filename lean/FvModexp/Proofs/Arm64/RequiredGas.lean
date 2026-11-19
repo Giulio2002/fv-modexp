@@ -42,16 +42,16 @@ namespace Witness
 
 /-- **Non-vacuity**: a concrete Osaka-receiver call with 96 zero bytes satisfies the precondition (and returns). -/
 theorem nonvacuous : ∃ (ret : Nat) (s : State) (c ptr len cap : BitVec 64), RetAddr Extracted.program ret ∧
-    CallSetup (Extracted.program.withExit ret) Extracted.entry [c, ptr, len, cap] s ∧
+    CallSetup0 Extracted.entry [c, ptr, len, cap] s ∧
     (fun s => GuardOK s 464 ∧ StackOK s 504 40 ∧ Extracted.program.DataLoaded s.mem ∧ len.toNat ≤ cap.toNat ∧
         cap.toNat < 2 ^ 48 ∧ Ptr s.mem ptr len.toNat false ∧ Ptr s.mem c 3 false ∧ Spec.OsakaReceiver s.mem c.toNat ∧
         Disjoint ptr.toNat len.toNat (s.sp.toNat - 504) 544 ∧ Disjoint c.toNat 3 (s.sp.toNat - 504) 544 ∧
         Disjoint ((s.regs 28).toNat + 16) 8 (s.sp.toNat - 504) 544) s ∧
-    Returns (Extracted.program.withExit ret) s fun s' => ABIReturn s s' ∧ (fun s s' => ∀ fork, Spec.PostFusaka fork → Spec.LengthsPass (Spec.bytesAt s.mem ptr.toNat len.toNat) →
+    Returns (Extracted.program.withExit ret) (s.setRet ret) fun s' => ABIReturn (s.setRet ret) s' ∧ (fun s s' => ∀ fork, Spec.PostFusaka fork → Spec.LengthsPass (Spec.bytesAt s.mem ptr.toNat len.toNat) →
         Spec.u64 (s'.regs 0) = EthLib.Execution.Evm.Precompiles.Modexp.requiredGas fork (Spec.bytesAt s.mem ptr.toNat len.toNat)
-          (EthLib.Execution.Evm.Precompiles.Modexp.parseLengths (Spec.bytesAt s.mem ptr.toNat len.toNat))) s s' :=
+          (EthLib.Execution.Evm.Precompiles.Modexp.parseLengths (Spec.bytesAt s.mem ptr.toNat len.toNat))) (s.setRet ret) s' :=
   ⟨RG.Wit.ret, RG.Wit.s0, _, _, _, _, RG.Wit.hret, RG.Wit.setup, RG.Wit.hpre,
-    correctness _ _ _ _ RG.Wit.ret RG.Wit.hret RG.Wit.s0 RG.Wit.setup RG.Wit.hpre⟩
+    correctness _ _ _ _ RG.Wit.s0 RG.Wit.setup RG.Wit.hpre RG.Wit.ret RG.Wit.hret⟩
 
 end Witness
 

@@ -34,6 +34,7 @@ theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
         s.mem.readLE ((s.regs 4).toNat + 24) 8 = yc ∧
         MPre R b H L W zp.toNat zc.toNat st.toNat xp.toNat xl.toNat xc.toNat yp yl yc s)
       (fun s s' => MPost R b H L W zp.toNat zc.toNat st.toNat xp.toNat xl.toNat xc.toNat yp yl yc s s') := by
+  janus64_ensures_old [FvModexp.Amd64.Q.NatMul.MPre, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.win, FvModexp.Amd64.NatAdd.wordT, FvModexp.Amd64.Q.NatMul.Ops, FvModexp.Amd64.Q.NatSqr.tls, FvModexp.Amd64.Q.NatSqr.StkPre, FvModexp.stLen, FvModexp.stkR, FvModexp.Amd64.Callees.adxAddr, FvModexp.Amd64.TlsOK, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.RunIface.wbA, FvModexp.Amd64.Q.BasicSqr.ws, FvModexp.Amd64.Q.NatSqr.StkSep, FvModexp.NatLive, FvModexp.StkOK, FvModexp.Amd64.Q.NatSqr.guard, FvModexp.stCap, FvModexp.stW, FvModexp.Amd64.Q.BasicSqr.freeP, FvModexp.Amd64.Q.BasicSqr.freeN, FvModexp.Amd64.StackNat.wbA, FvModexp.stkRes, FvModexp.potK, FvModexp.stkWs]
   rw [show names = LibMul.names from rfl, ← LibMul.eq_only]
   intro ret hret s hs ⟨hy1, hy2, hy3, hpre⟩
   janus64_intro hs

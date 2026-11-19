@@ -33,6 +33,7 @@ theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
         BitVec.ofNat 64 xl, BitVec.ofNat 64 xc]
       (PreD R b L K costF costD zp zc st xp xl xc yp ylen mp n mc)
       (PostD R b L K costD zp zc st xp xl yp ylen mp n) := by
+  janus64_ensures_old [FvModexp.Amd64.ExpOdd.PreD, FvModexp.Amd64.ExpW4.EPreA, FvModexp.stCap, FvModexp.stW, FvModexp.natVal, FvModexp.stLen, FvModexp.Amd64.W2En.EEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.W4En.wTy, FvModexp.Amd64.MontHyp.hasADX, FvModexp.Amd64.W2En.OE, FvModexp.NatNorm, FvModexp.Amd64.RunIface.gA, FvModexp.StkOK, FvModexp.Amd64.StackNat.wbA, FvModexp.Amd64.W2En.free, FvModexp.Amd64.CallW.CEnv, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive]
   rw [show names = LibOdd.names from rfl, ← LibOdd.eq_only, show segAddr Extracted.program fn = fnO by decide]
   intro ret hret s hs hpre
   janus64_intro hs

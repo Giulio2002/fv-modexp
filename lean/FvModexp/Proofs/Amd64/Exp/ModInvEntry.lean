@@ -32,7 +32,7 @@ theorem entry (impl : List Amd64.Segment) (R : RtInv) (kc H : Nat) (sqrC : Nat �
     (kB : J0 impl R kc H sqrC mulC b L zp zl zc st xp xl xc n s) :
     Goal impl R kc H sqrC mulC b L zp zc st xp xl n s s := by
   have hpre' := hpre
-  obtain ⟨⟨⟨hgN, hgR, hgB⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, -, -, -, -⟩, -, -, hn1, hn2, -, -, -, -, hx0, -, -, -,
+  obtain ⟨⟨⟨hgN, hgR, hgB, _⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, -, -, -, -⟩, -, -, hn1, hn2, -, -, -, -, hx0, -, -, -,
     ⟨-, hxa, hx48, -, hxw⟩, -, -, -, -, -, -, -, -, -, -, -, -, -, hra⟩ := hpre'
   simp only [win, outside_cons, outside_nil, and_true] at hxw hout
   simp only [K, A, regG, regSP, stackguard0Offset, stackguard0] at hw hout hxw hgB hb' ha hga hgN hgR

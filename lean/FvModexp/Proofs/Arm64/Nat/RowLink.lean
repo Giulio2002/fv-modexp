@@ -28,7 +28,8 @@ theorem argsFrom_of {s : State} : ∀ {args : List W64} {k : Nat}, (∀ i (h : i
 
 theorem Ensures.full {P : Program} {impl : List Segment} (hap : ImplApart P impl) {ns : List String} {entry : Nat}
     {args : List W64} {pre : State → Prop} {post : State → State → Prop}
-    (h : Ensures ((P.onlySegments ns).link impl) entry args pre post) : Ensures (P.link impl) entry args pre post := by
+    (h : Ensures ((P.onlySegments ns).link impl) entry args pre post) (hinv : Ensures.SetRetInv (P.link impl) entry args pre := by janus_pre_setRet) [ArgsFit args] : Ensures (P.link impl) entry args pre post := by
+  refine Ensures.of_old hinv ?_
   intro ret hret s hs hpre
   have hS := Ensures.toSummaryIn h (noExit_restrict hap ns) (codeIn_restrict_of_apart hap ns)
   have hlr : s.regs 30 = BitVec.ofNat 64 ret := hs.lr

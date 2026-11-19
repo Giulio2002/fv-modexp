@@ -48,7 +48,7 @@ theorem cenv_in {R : RtInv} {L : List (Nat × Nat)} {s : State} {stk above sp K 
     (h1 : (s.regs 4).toNat - stk ≤ sp - K) (hKs : K ≤ sp) (h2 : sp + A ≤ (s.regs 4).toNat + above)
     (h3 : sp ≤ (s.regs 4).toNat) (hal : sp % 8 = 0) (hst : K + ((s.regs 4).toNat - sp) ≤ stk) :
     CallW.CEnv R L (s.regs 14).toNat s.fsBase.toNat sp K A M := by
-  obtain ⟨⟨hgw, hgr, hgb⟩, ⟨hb', ha, hw⟩, -, hd, hout, hga, hgrt, hLs, hro, ⟨⟨hfb, hfr, hfg⟩, hfrt, hfw⟩⟩ := hce
+  obtain ⟨⟨hgw, hgr, hgb, _⟩, ⟨hb', ha, hw⟩, -, hd, hout, hga, hgrt, hLs, hro, ⟨⟨hfb, hfr, hfg⟩, hfrt, hfw⟩⟩ := hce
   simp only [stackguard0, regG, stackguard0Offset, regSP] at hgw hgr hgb hb' ha hw hfg
   simp only [win] at hF hLs
   generalize (s.regs 4).toNat = t at *

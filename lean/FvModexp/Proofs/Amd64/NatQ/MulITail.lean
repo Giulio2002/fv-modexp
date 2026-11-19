@@ -36,7 +36,7 @@ theorem itail (impl : List Amd64.Segment) (R : RtInv)
     ReachesRet (LibMul.program.link impl) (retAddrOf s) S fun s' => Kept s s' ∧ IPost R b H L W z st x y s s' := by
   have hW4 := h.w4704
   have hpre := h.pre
-  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -, hout, -, -, hLs, -, -⟩, -, hsv, -, -, -,
+  obtain ⟨⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, -, hout, -, -, hLs, -, -⟩, -, hsv, -, -, -,
     ⟨hnx1, hxa, hx48, hxo, -⟩, ⟨hny1, hya, hy48, hyo, -⟩, hza, hz48, hzo, -, -, -, hzwb, hzx, hzy, -, hwbf, -⟩ := hpre
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw
   have hsp := h.sp; have h14 := h.g; have hfs := h.fs; have hdf := h.df; have hx15 := h.x15; have h5 := h.bp

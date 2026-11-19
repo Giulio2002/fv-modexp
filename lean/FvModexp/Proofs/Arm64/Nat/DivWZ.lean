@@ -51,6 +51,7 @@ theorem ens2 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     Ensures ((Extracted.program.onlySegments names).link impl) (segAddr Extracted.program fn)
       [zp, zl, zc, xp, xl, xc, y]
       (Pre2 R b L zp zc xp xl y) (Post R b L zp zc xp xl y) := by
+  janus_ensures_old [FvModexp.Arm64.DivW.Pre2, FvModexp.Arm64.CallEnv, FvModexp.Arm64.DivW.wordT, FvModexp.NatLive, FvModexp.Arm64.win, FvModexp.NatNorm, Janus.Spec.GuardOK, Janus.Spec.StackOK]
   rw [show names = LibDivW.names from rfl, ← LibDivW.eq_only]
   intro ret hret s hs hpre
   janus_intro hs

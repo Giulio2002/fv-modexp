@@ -40,7 +40,7 @@ theorem pro2p (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progr
   have p1 := hP.bp; have p2 := hP.dfn; have p3 := hP.dst; have p4 := hP.dn; have p5 := hP.dp; have p6 := hP.s1
   have p7 := hP.s2; have p8 := hP.s3; have p9 := hP.s4; have p10 := hP.s5; have p11 := hP.s6
   have hce := hpre.ce
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, hdl, hout, hga, hgr, hLs, hro, ⟨htb, htr, htg⟩, htrt, htw⟩ := hce
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, hdl, hout, hga, hgr, hLs, hro, ⟨htb, htr, htg⟩, htrt, htw⟩ := hce
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw htg
   simp only [LiveSep, win, outside_cons, outside_nil, and_true] at hLs
   have hLs' : ∀ r ∈ L, r.1 + (r.2 - r.1) ≤ (s.regs 4).toNat - 200 - 4192 ∨ (s.regs 4).toNat - 200 + 24 ≤ r.1 := by

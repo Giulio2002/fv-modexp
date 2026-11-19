@@ -50,12 +50,12 @@ theorem correctness (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted
         P2W2.PreC R b L stk (P2W2.costB (stLen s.mem st) yl lm) zp zl zc st xp xl yp yl lm s ∧ P2W2.EX xp xl s)
       (fun s s' => NHyp.CPostR R b L stk 0x60 zp zc st (natVal s.mem xp xl ^ natVal s.mem yp yl % 2 ^ lm)
         (P2W2.costB (stLen s.mem st) yl lm) s s') :=
-  Ensures.mono (Ensures.full64 hap (by simp [numIntRegs])
+  Ensures.mono_ret (Ensures.full64 (hinv := by janus64_pre_setRet [FvModexp.Amd64.NHyp.StkArg0, FvModexp.Amd64.P2W2.PreC, FvModexp.stLen, FvModexp.Amd64.P2W2.EX, FvModexp.Amd64.NHyp.CPre, FvModexp.natVal, FvModexp.Amd64.EvenHyp.NatOne, FvModexp.Amd64.win, FvModexp.Amd64.ExpHyp.stWs, FvModexp.Amd64.NHyp.StkApart, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.EvenHyp.natOneA, FvModexp.Amd64.Callees.adxAddr, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.StackNat.wT, FvModexp.Amd64.EvenHyp.WrOut, FvModexp.Amd64.EvenHyp.RdIn, FvModexp.NatNorm, FvModexp.Amd64.NHyp.freeOf, FvModexp.Amd64.ExpHyp.StackOK', FvModexp.stCap, FvModexp.stW, FvModexp.Amd64.StackNat.wbA, FvModexp.stkWs, FvModexp.Amd64.TlsOK, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.StkOK]) hap (by simp [numIntRegs])
     (P2W2.ens hap sub nf2 nfP hgr hmc hmv hmk hno hwb (kc := mulWX64) (by decide)
       (sn hap hgr hmc hwb) (by decide) (by decide) (sq hap hgr hmc hmv hmk hwb _) (by decide) (Nat.le_refl _)
       (mu hap hgr hmc hmv hmk hwb _) (Nat.le_refl _) (Nat.le_refl _) (tr hap hmv hmk) (by decide) (by decide)
       b L stk (by omega) (by simp only [P2Pre.K, mulWX64]; omega) hk2 zp zl zc st xp xl xc yp yl yc lm hzp hxc))
-    (fun _ h => ⟨h.1.toStkArg, h.2⟩) (fun _ _ _ h => h)
+    (fun _ h => ⟨h.1.toStkArg, h.2⟩) (fun _ _ _ _ h => h)
 
 end FvModexp.Amd64.P2W2Row
 
@@ -113,9 +113,9 @@ def s0 : State :=
 
 theorem hret : RetAddr (Extracted.program.link WStubs.impl) RET := RetAddr.of_check (by decide +kernel)
 
-theorem setup : CallSetup ((Extracted.program.link WStubs.impl).withExit RET) (segAddr Extracted.program P2W2.fn)
+theorem setup : CallSetup0 (segAddr Extracted.program P2W2.fn)
     args s0 :=
-  ⟨rfl, by decide +kernel, rfl, by decide, by
+  ⟨rfl, rfl, by decide, by
     intro i h; simp only [args, List.length_cons, List.length_nil] at h
     rcases (by omega : i = 0 ∨ i = 1 ∨ i = 2 ∨ i = 3 ∨ i = 4 ∨ i = 5 ∨ i = 6 ∨ i = 7) with
       rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl <;> rfl, rfl⟩
@@ -151,7 +151,7 @@ theorem one0 : NatOne R [] s0.mem OP (win s0 KW 0x60 ++ [(0, 0 + 8 * 0)] ++ stWs
   · simp only [win, stWs, stkWs, outside_append, outside_cons, outside_nil, and_true]; decide +kernel
 
 theorem sg0 : StackGuardOK s0 KW :=
-  ⟨by decide, by show mem0.accessible _ 8 false = true; rw [acc0]; decide +kernel, by decide +kernel⟩
+  ⟨by decide, by show mem0.accessible _ 8 false = true; rw [acc0]; decide +kernel, by decide +kernel, by decide +kernel⟩
 
 theorem tls0 : TlsG s0 :=
   ⟨by decide, by show mem0.accessible _ 8 false = true; rw [acc0]; decide +kernel, by decide +kernel⟩
@@ -236,7 +236,7 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : 
     WbLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 4096 R 2 ∧
     41984 ≤ stk ∧ stk ≤ 2 ^ 20 + 0x1d8 ∧ zp < 2 ^ 64 ∧ xc < 2 ^ 64 ∧
     RetAddr (Extracted.program.link impl) ret ∧
-    CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program P2W2.fn)
+    CallSetup0 (segAddr Extracted.program P2W2.fn)
       [BitVec.ofNat 64 zp, BitVec.ofNat 64 zl, BitVec.ofNat 64 zc, BitVec.ofNat 64 st, BitVec.ofNat 64 xp,
         BitVec.ofNat 64 xl, BitVec.ofNat 64 xc, BitVec.ofNat 64 lm] s ∧
     (NHyp.StkArg0 s yp yl yc ∧
@@ -259,9 +259,9 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : 
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.rip = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.gcWriteBarrier2") ∧
       wbSite R (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 2 L b s_c) ∧
-    Returns ((Extracted.program.link impl).withExit ret) s fun s' =>
-      ABIReturn s s' ∧ NHyp.CPostR R b L stk 0x60 zp zc st (natVal s.mem xp xl ^ natVal s.mem yp yl % 2 ^ lm)
-        (P2W2.costB (stLen s.mem st) yl lm) s s' :=
+    Returns ((Extracted.program.link impl).withExit ret) (s.setRet ret) fun s' =>
+      ABIReturn (s.setRet ret) s' ∧ NHyp.CPostR R b L stk 0x60 zp zc st (natVal (s.setRet ret).mem xp xl ^ natVal (s.setRet ret).mem yp yl % 2 ^ lm)
+        (P2W2.costB (stLen (s.setRet ret).mem st) yl lm) (s.setRet ret) s' :=
   ⟨WStubs.impl, R, BW, [], KW, 0, 0, 0, ST, XP, 1, 1, YP, 1, 1, 8, RET, s0, WStubs.hap,
     by rw [WStubs.addr_gr]; exact WStubs.gr [] hty _,
     by rw [WStubs.addr_cl]; exact WStubs.cl R,
@@ -283,6 +283,6 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : 
       (by rw [WStubs.addr_cl]; exact WStubs.cl R) (by rw [WStubs.addr_mv]; exact WStubs.mv R)
       (by rw [WStubs.addr_mk]; exact WStubs.mk [] hty _) (by rw [WStubs.addr_no]; exact WStubs.no [] hty _)
       (by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] hty _) BW [] KW (Nat.le_refl _) (by decide)
-      0 0 0 ST XP 1 1 YP 1 1 8 (by decide) (by decide) RET hret s0 setup pre0⟩
+      0 0 0 ST XP 1 1 YP 1 1 8 (by decide) (by decide) s0 setup pre0 RET hret⟩
 
 end FvModexp.Amd64.P2W2Row.Witness

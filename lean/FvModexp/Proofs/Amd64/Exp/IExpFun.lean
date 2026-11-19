@@ -94,12 +94,13 @@ theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
     ExpSpecA impl R stk above := by
   intro b L z y mm
   rw [namesExp_eq, ← LibExpI.eq_only, show segAddr Extracted.program (RunIface.P ++ "(*Int).exp") = fnI by decide]
+  janus64_ensures_old [FvModexp.Amd64.RunIface.IntPre, FvModexp.Amd64.RunIface.lenW, FvModexp.Amd64.RunIface.IntV, FvModexp.Amd64.RunIface.IntLenLe, FvModexp.Amd64.RunIface.maxW, FvModexp.Amd64.RunIface.OneG, FvModexp.Amd64.win, FvModexp.Amd64.RunIface.PoolG, FvModexp.Amd64.RunIface.wbA, FvModexp.Amd64.RunIface.ModX, FvModexp.Amd64.IExp.ExpA, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Exp.B, FvModexp.Amd64.RunIface.IntOK, FvModexp.natVal, FvModexp.Amd64.RunIface.natOneA, FvModexp.Amd64.RunIface.stackPoolA, Janus.Spec.Pool.newOffset, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.Callees.adxAddr, FvModexp.Amd64.TlsOK, FvModexp.NatLive, FvModexp.NatNorm]
   intro ret hret s hs hpre
   janus64_intro hs
   have hr48 := hret.user
   obtain ⟨⟨hIP, hm0, hlz, hly, hlm, hone, hpool, hmA0, hwbz, hzX⟩, hadx, hoG⟩ := hpre
   have hIP' := hIP
-  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hstk0, hab48, hacc⟩, hal, -, hrt, -, -, hLs, -, -⟩, hsv, hG, -, -, hops, hpw⟩ := hIP'
+  obtain ⟨⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hstk0, hab48, hacc⟩, hal, -, hrt, -, -, hLs, -, -⟩, hsv, hG, -, -, hops, hpw⟩ := hIP'
   simp only [regSP, regG, stackguard0, stackguard0Offset] at hstk0 hab48 hacc hg1 hg2 hg3 hal
   have hoz := hops z.toNat (by simp)
   have hoy := hops y.toNat (by simp)

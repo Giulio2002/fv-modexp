@@ -74,17 +74,18 @@ theorem Ev.callEnv {R : RtInv} {c : Cx} {s X : State} {Lk : List (Nat × Nat)} {
   obtain ⟨hsok, -, -, harr0⟩ := hpre.sti
   obtain ⟨-, hc0, -⟩ := hpre.stl
   have hext := hcr.ext1.trans h.ext
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb, ha', hw⟩, hal, hdl, hout, hga, hgr, hLs, hro, ⟨htg, htr, htw⟩⟩ := hpre.ce
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb, ha', hw⟩, hal, hdl, hout, hga, hgr, hLs, hro, ⟨htg, htr, htw⟩⟩ := hpre.ce
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb ha' hw
   unfold Apart at hga htw
   have hgr' : X.mem.readLE ((X.regs 14).toNat + 16) 8 = s.mem.readLE ((s.regs 14).toNat + 16) 8 := by
     rw [hg]; exact h.grd hcr
   obtain ⟨-, -, hsacc, -, hnl, -⟩ := hsok
   obtain ⟨-, -, harr, -⟩ := hnl hc0
-  refine ⟨⟨?_, ?_, ?_⟩, ⟨?_, ?_, ?_⟩, ?_, ?_, ?_, ?_, ?_, ?_, hro, ⟨⟨?_, ?_, ?_⟩, ?_, ?_⟩⟩
+  refine ⟨⟨?_, ?_, ?_, ?_⟩, ⟨?_, ?_, ?_⟩, ?_, ?_, ?_, ?_, ?_, ?_, hro, ⟨⟨?_, ?_, ?_⟩, ?_, ?_⟩⟩
   · simp only [stackguard0Offset, regG, hg]; omega
   · simp only [stackguard0Offset, regG, hg]; rw [h.fr.accessible]; exact hg2
   · simp only [stackguard0, stackguard0Offset, regG, regSP]; rw [hgr', hsp]; omega
+  · first | omega | (simp only [stackguard0Offset, regG, regSP]; omega) | (simp_all only [stackguard0Offset, regG, regSP, Apart]; omega)
   · simp only [regSP]; rw [hsp]; omega
   · simp only [regSP]; rw [hsp]; omega
   · simp only [regSP]; rw [h.fr.accessible, hsp]

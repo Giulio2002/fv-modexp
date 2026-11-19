@@ -86,6 +86,7 @@ theorem correctnessP (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracte
     Ensures (Extracted.program.link impl) (segAddr Extracted.program ExpEven.fn) [z, zl, zc, st, x, xl, xc]
       (Pre R b L z.toNat zl.toNat zc.toNat st.toNat x.toNat xl.toNat xc.toNat y yl yc m ml mc)
       (Post R b L z.toNat zc.toNat st.toNat x.toNat xl.toNat y yl m ml) := by
+  janus64_ensures_old [FvModexp.Amd64.EvenRow.Pre, FvModexp.Amd64.EvenRow.ArgY, FvModexp.Amd64.EvenRow.ArgM, FvModexp.Amd64.ExpN.XG, FvModexp.Amd64.win, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.EvenHyp.natOneA, FvModexp.Amd64.Callees.adxAddr, FvModexp.Amd64.W4En.free, FvModexp.stW, FvModexp.stLen, FvModexp.stCap]
   have hS0 := sumP impl hap R hgr hmc hmv hmz hmk hno hwb hSQ hnsS hnfS hKS
   have e : ExpEven.stkE 41640 = 43152 := by decide
   rw [e] at hS0
@@ -176,9 +177,9 @@ def s0 : State :=
     flags := ⟨none, none, none, none, none, none⟩,
     xmm := fun _ => 0, mem := mem0, fsBase := BitVec.ofNat 64 (T0 + 8) }
 
-theorem setup : CallSetup ((Extracted.program.link WStubs.impl).withExit RET) (segAddr Extracted.program ExpEven.fn)
+theorem setup : CallSetup0 (segAddr Extracted.program ExpEven.fn)
     args s0 :=
-  ⟨rfl, by decide +kernel, rfl, by decide, by
+  ⟨rfl, rfl, by decide, by
     intro i h; simp only [args, List.length_cons, List.length_nil] at h
     rcases (by omega : i = 0 ∨ i = 1 ∨ i = 2 ∨ i = 3 ∨ i = 4 ∨ i = 5 ∨ i = 6) with
       rfl | rfl | rfl | rfl | rfl | rfl | rfl <;> rfl, rfl⟩
@@ -214,7 +215,7 @@ theorem one0 : NatOne R [] s0.mem OP (win s0 KW 0x70 ++ [(0, 0 + 8 * 0)] ++ stWs
   · simp only [win, stWs, stkWs, outside_append, outside_cons, outside_nil, and_true]; decide +kernel
 
 theorem sg0 : StackGuardOK s0 KW :=
-  ⟨by decide, by show mem0.accessible _ 8 false = true; rw [acc0]; decide +kernel, by decide +kernel⟩
+  ⟨by decide, by show mem0.accessible _ 8 false = true; rw [acc0]; decide +kernel, by decide +kernel, by decide +kernel⟩
 
 theorem tls0 : TlsG s0 :=
   ⟨by decide, by show mem0.accessible _ 8 false = true; rw [acc0]; decide +kernel, by decide +kernel⟩
@@ -310,7 +311,7 @@ theorem nonvacuous :
     NewobjectLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.newobject") 4096 R ∧
     WbLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 4096 R 2 ∧
     RetAddr (Extracted.program.link impl) ret ∧
-    CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program ExpEven.fn)
+    CallSetup0 (segAddr Extracted.program ExpEven.fn)
       [z, zl, zc, st, x, xl, xc] s ∧
     Pre R b L z.toNat zl.toNat zc.toNat st.toNat x.toNat xl.toNat xc.toNat y yl yc m ml mc s ∧
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
@@ -334,8 +335,8 @@ theorem nonvacuous :
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.rip = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.gcWriteBarrier2") ∧
       wbSite R (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 2 L b s_c) ∧
-    Returns ((Extracted.program.link impl).withExit ret) s fun s' =>
-      ABIReturn s s' ∧ Post R b L z.toNat zc.toNat st.toNat x.toNat xl.toNat y yl m ml s s' :=
+    Returns ((Extracted.program.link impl).withExit ret) (s.setRet ret) fun s' =>
+      ABIReturn (s.setRet ret) s' ∧ Post R b L z.toNat zc.toNat st.toNat x.toNat xl.toNat y yl m ml (s.setRet ret) s' :=
   ⟨WStubs.impl, R, BW, [], 0, 0, 0, BitVec.ofNat 64 ST, BitVec.ofNat 64 XP, 1, 1, YP, 1, 1, MP, 1, 1, RET, s0,
     WStubs.hap,
     by rw [WStubs.addr_gr]; exact WStubs.gr [] hty _,
@@ -361,6 +362,6 @@ theorem nonvacuous :
       (by rw [WStubs.addr_mv]; exact WStubs.mvz R)
       (by rw [WStubs.addr_mk]; exact WStubs.mk [] hty _) (by rw [WStubs.addr_no]; exact WStubs.no [] hty _)
       (by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] hty _) BW []
-      0 0 0 (BitVec.ofNat 64 ST) (BitVec.ofNat 64 XP) 1 1 YP 1 1 MP 1 1 RET hret s0 setup preB⟩
+      0 0 0 (BitVec.ofNat 64 ST) (BitVec.ofNat 64 XP) 1 1 YP 1 1 MP 1 1 s0 setup preB RET hret⟩
 
 end FvModexp.Amd64.EvenRow.Witness

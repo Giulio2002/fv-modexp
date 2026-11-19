@@ -63,12 +63,13 @@ theorem callEnv_c {R : RtInv} {L L1 : List (Nat × Nat)} {s T : State} {M : Janu
       simp only [win, Janus.outside_append, Janus.outside_cons, Janus.outside_nil, and_true]
       exact ⟨hfrt, by omega⟩)
   unfold CallEnv TlsOK
-  refine ⟨⟨?_, ?_, ?_⟩, ⟨?_, ?_, ?_⟩, ?_, ?_, ?_, ?_, ?_, ?_, hro, ⟨⟨?_, ?_, ?_⟩, ?_, ?_⟩⟩
+  refine ⟨⟨?_, ?_, ?_, ?_⟩, ⟨?_, ?_, ?_⟩, ?_, ?_, ?_, ?_, ?_, ?_, hro, ⟨⟨?_, ?_, ?_⟩, ?_, ?_⟩⟩
   all_goals (try simp only [regSP, Janus.Amd64.GoABI.regG, Janus.Amd64.GoABI.stackguard0Offset,
     Janus.Amd64.GoABI.stackguard0, hT, hTm, hT14, hTfs])
   · exact hg1
   · rw [hMF.accessible]; exact hg2
   · rw [hgM]; omega
+  · first | omega | (simp only [stackguard0Offset, regG, regSP]; omega) | (simp_all only [stackguard0Offset, regG, regSP, Apart]; omega)
   · omega
   · omega
   · rw [hMF.accessible]; exact Janus.Arm64.Memory.accessible_mono _ hw (by omega) (by omega)

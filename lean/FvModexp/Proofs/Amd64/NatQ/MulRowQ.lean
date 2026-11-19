@@ -48,11 +48,12 @@ theorem correctness (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted
       (fun s => s.mem.readLE ((s.regs 4).toNat + 8) 8 = yp.toNat ∧ s.mem.readLE ((s.regs 4).toNat + 16) 8 = yl.toNat ∧
         s.mem.readLE ((s.regs 4).toNat + 24) 8 = yc.toNat ∧
         Q.NatMul.MPre R b H L W zp.toNat zc.toNat st.toNat xp.toNat xl.toNat xc.toNat yp.toNat yl.toNat yc.toNat s)
-      (Q.NatMul.MPost R b H L W zp.toNat zc.toNat st.toNat xp.toNat xl.toNat xc.toNat yp.toNat yl.toNat yc.toNat) :=
-  fun ret hret s hs ⟨h8, h16, h24, hpre⟩ =>
-    Ensures.full64 hap (by simp [numIntRegs])
-      (Q.NatMul.ens impl hap R hmk hgr hmc hmv hwb H b L W zp zl zc st xp xl xc yp.toNat yl.toNat yc.toNat) ret hret s hs
-      ⟨h8, h16, h24, hpre⟩
+      (Q.NatMul.MPost R b H L W zp.toNat zc.toNat st.toNat xp.toNat xl.toNat xc.toNat yp.toNat yl.toNat yc.toNat) := by
+  janus64_ensures_old [FvModexp.Amd64.Q.NatMul.MPre, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.win, FvModexp.Amd64.NatAdd.wordT, FvModexp.Amd64.Q.NatMul.Ops, FvModexp.Amd64.Q.NatSqr.tls, FvModexp.Amd64.Q.NatSqr.StkPre, FvModexp.stLen, FvModexp.stkR, FvModexp.Amd64.Callees.adxAddr, FvModexp.Amd64.TlsOK, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.RunIface.wbA, FvModexp.Amd64.Q.BasicSqr.ws, FvModexp.Amd64.Q.NatSqr.StkSep, FvModexp.NatLive, FvModexp.StkOK, FvModexp.Amd64.Q.NatSqr.guard, FvModexp.stCap, FvModexp.stW, FvModexp.Amd64.Q.BasicSqr.freeP, FvModexp.Amd64.Q.BasicSqr.freeN, FvModexp.Amd64.StackNat.wbA, FvModexp.stkRes, FvModexp.potK, FvModexp.stkWs]
+  exact (fun ret hret s hs ⟨h8, h16, h24, hpre⟩ =>
+    (Ensures.full64 (hinv := by janus64_pre_setRet [FvModexp.Amd64.Q.NatMul.MPre, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.win, FvModexp.Amd64.NatAdd.wordT, FvModexp.Amd64.Q.NatMul.Ops, FvModexp.Amd64.Q.NatSqr.tls, FvModexp.Amd64.Q.NatSqr.StkPre, FvModexp.stLen, FvModexp.stkR, FvModexp.Amd64.Callees.adxAddr, FvModexp.Amd64.TlsOK, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.RunIface.wbA, FvModexp.Amd64.Q.BasicSqr.ws, FvModexp.Amd64.Q.NatSqr.StkSep, FvModexp.NatLive, FvModexp.StkOK, FvModexp.Amd64.Q.NatSqr.guard, FvModexp.stCap, FvModexp.stW, FvModexp.Amd64.Q.BasicSqr.freeP, FvModexp.Amd64.Q.BasicSqr.freeN, FvModexp.Amd64.StackNat.wbA, FvModexp.stkRes, FvModexp.potK, FvModexp.stkWs]) hap (by simp [numIntRegs])
+      (Q.NatMul.ens impl hap R hmk hgr hmc hmv hwb H b L W zp zl zc st xp xl xc yp.toNat yl.toNat yc.toNat)).toOld ret hret s hs
+      ⟨h8, h16, h24, hpre⟩)
 
 end FvModexp.Amd64.MulRowQ
 
@@ -93,9 +94,9 @@ def s0 : State :=
 
 theorem hret : RetAddr (Extracted.program.link WStubs.impl) RET := RetAddr.of_check (by decide +kernel)
 
-theorem setup : CallSetup ((Extracted.program.link WStubs.impl).withExit RET) (segAddr Extracted.program Q.NatMul.fn)
+theorem setup : CallSetup0 (segAddr Extracted.program Q.NatMul.fn)
     args s0 :=
-  ⟨rfl, by decide +kernel, rfl, by decide, by
+  ⟨rfl, rfl, by decide, by
     intro i h; simp only [args, List.length_cons, List.length_nil] at h
     rcases (by omega : i = 0 ∨ i = 1 ∨ i = 2 ∨ i = 3 ∨ i = 4 ∨ i = 5 ∨ i = 6) with
       rfl | rfl | rfl | rfl | rfl | rfl | rfl <;> rfl, rfl⟩
@@ -103,7 +104,7 @@ theorem setup : CallSetup ((Extracted.program.link WStubs.impl).withExit RET) (s
 theorem words : s0.mem.readLE ((s0.regs 4).toNat + 8) 8 = (BitVec.ofNat 64 (OB + 8)).toNat ∧
     s0.mem.readLE ((s0.regs 4).toNat + 16) 8 = (1 : BitVec 64).toNat ∧
     s0.mem.readLE ((s0.regs 4).toNat + 24) 8 = (1 : BitVec 64).toNat :=
-  ⟨by decide +kernel, by decide +kernel, by decide +kernel⟩
+  (by first | exact ⟨by decide +kernel, by decide +kernel, by decide +kernel, by decide⟩ | exact ⟨by decide +kernel, by decide +kernel, by decide +kernel⟩)
 
 theorem acc0 (a n : Nat) (w : Bool) :
     mem0.accessible a n w = (wmem (fun _ => 0) regs).accessible a n w :=
@@ -138,7 +139,9 @@ theorem pre : Q.NatMul.MPre R 0x4000 72 [] (mulW64 1 1) OA 2 ST OB 1 1 (OB + 8) 
         and_true, show s0.mem = mem0 from rfl]; decide +kernel)
     | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
     | (refine ⟨by decide +kernel, ?_, by decide +kernel⟩; rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (refine ⟨by decide +kernel, ?_, by decide +kernel, by decide +kernel⟩; rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
     | (refine ⟨by decide +kernel, by decide +kernel, ?_⟩; rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (refine ⟨by decide +kernel, by decide +kernel, ?_, by decide +kernel⟩; rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
     | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
         show s0.mem = mem0 from rfl, acc0]; decide +kernel)
     | (simp only [NatLive, Held, InRanges, outside_cons, outside_nil, and_true, rt_eq, show s0.mem = mem0 from rfl,
@@ -166,7 +169,7 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (H b : Nat) (L 
     MemmoveLive64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R ∧
     WbLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 4096 R 2 ∧
     RetAddr (Extracted.program.link impl) ret ∧
-    CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program Q.NatMul.fn)
+    CallSetup0 (segAddr Extracted.program Q.NatMul.fn)
       [zp, zl, zc, st, xp, xl, xc] s ∧
     -- typing anchor for the stack-argument words (the audit re-elaborates the printed statement, where `yp.toNat`
     -- alone leaves `yp`'s type unknown): the witness's y = 5 at `OB + 8`, one limb
@@ -189,9 +192,9 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (H b : Nat) (L 
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.rip = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.gcWriteBarrier2") ∧
       wbSite R (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 2 L b s_c) ∧
-    Returns ((Extracted.program.link impl).withExit ret) s fun s' =>
-      ABIReturn s s' ∧ Q.NatMul.MPost R b H L W zp.toNat zc.toNat st.toNat xp.toNat xl.toNat xc.toNat yp.toNat yl.toNat
-        yc.toNat s s' :=
+    Returns ((Extracted.program.link impl).withExit ret) (s.setRet ret) fun s' =>
+      ABIReturn (s.setRet ret) s' ∧ Q.NatMul.MPost R b H L W zp.toNat zc.toNat st.toNat xp.toNat xl.toNat xc.toNat yp.toNat yl.toNat
+        yc.toNat (s.setRet ret) s' :=
   ⟨WStubs.impl, R, 72, 0x4000, [], mulW64 1 1, BitVec.ofNat 64 OA, 0, 2, BitVec.ofNat 64 ST, BitVec.ofNat 64 OB, 1, 1,
     BitVec.ofNat 64 (OB + 8), 1, 1, RET,
     s0, WStubs.hap,
@@ -212,7 +215,7 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (H b : Nat) (L 
       (by rw [WStubs.addr_cl]; exact WStubs.cl R)
       (by rw [WStubs.addr_mv]; exact WStubs.mv R)
       (by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] (by intro t ht; simp at ht) _) 72 0x4000 [] (mulW64 1 1)
-      (BitVec.ofNat 64 OA) 0 2 (BitVec.ofNat 64 ST) (BitVec.ofNat 64 OB) 1 1 (BitVec.ofNat 64 (OB + 8)) 1 1 RET hret s0
-      setup ⟨words.1, words.2.1, words.2.2, pre⟩⟩
+      (BitVec.ofNat 64 OA) 0 2 (BitVec.ofNat 64 ST) (BitVec.ofNat 64 OB) 1 1 (BitVec.ofNat 64 (OB + 8)) 1 1 s0
+      setup ⟨words.1, words.2.1, words.2.2, pre⟩ RET hret⟩
 
 end FvModexp.Amd64.MulRowQ.Witness

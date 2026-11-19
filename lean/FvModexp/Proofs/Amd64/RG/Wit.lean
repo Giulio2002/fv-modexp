@@ -37,9 +37,9 @@ set_option maxRecDepth 100000 in
 theorem hret : RetAddr Extracted.program ret := RetAddr.of_check (by decide)
 
 set_option maxRecDepth 100000 in
-theorem setup : CallSetup (Extracted.program.withExit ret) Extracted.entry
+theorem setup : CallSetup0 Extracted.entry
     [BitVec.ofNat 64 cA, BitVec.ofNat 64 inA, 96, 96] s0 :=
-  ⟨rfl, by decide, rfl, by decide, by
+  ⟨rfl, rfl, by decide, by
     intro i h; simp at h
     rcases (by omega : i = 0 ∨ i = 1 ∨ i = 2 ∨ i = 3) with rfl | rfl | rfl | rfl <;> rfl, rfl⟩
 
@@ -49,8 +49,8 @@ theorem hpre : (fun s => s.mem.accessible (s.regs 4).toNat 8 false = true ∧
         (96 : BitVec 64).toNat ≤ (96 : BitVec 64).toNat ∧ (96 : BitVec 64).toNat < 2 ^ 48 ∧ Buffer s (BitVec.ofNat 64 inA) (96 : BitVec 64).toNat false ∧ Buffer s (BitVec.ofNat 64 cA) 3 false ∧
         Spec.OsakaReceiver s.mem (BitVec.ofNat 64 cA).toNat ∧ Janus.Spec.Disjoint (BitVec.ofNat 64 inA).toNat (96 : BitVec 64).toNat ((s.regs 4).toNat - 496) 536 ∧
         Janus.Spec.Disjoint (BitVec.ofNat 64 cA).toNat 3 ((s.regs 4).toNat - 496) 536 ∧ Janus.Spec.Disjoint ((s.regs 14).toNat + 16) 8 ((s.regs 4).toNat - 496) 536) s0 := by
-  refine ⟨by decide, by decide, ⟨by decide, by decide, by decide⟩, ⟨by decide, by decide, by decide⟩,
+  refine ⟨by decide, by decide, (by first | exact ⟨by decide, by decide, by decide, by decide⟩ | exact ⟨by decide, by decide, by decide⟩), (by first | exact ⟨by decide, by decide, by decide, by decide⟩ | exact ⟨by decide, by decide, by decide⟩),
     by unfold Janus.Amd64.Program.DataLoaded; decide, by decide, by decide, ⟨by decide, by decide⟩, ⟨by decide, by decide⟩,
-    ⟨by decide, by decide, by decide⟩, ?_, ?_, ?_⟩ <;> (unfold Janus.Spec.Disjoint; decide)
+    (by first | exact ⟨by decide, by decide, by decide, by decide⟩ | exact ⟨by decide, by decide, by decide⟩), ?_, ?_, ?_⟩ <;> (unfold Janus.Spec.Disjoint; decide)
 
 end FvModexp.Amd64.RG.Wit

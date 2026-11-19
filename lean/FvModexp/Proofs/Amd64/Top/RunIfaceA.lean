@@ -49,15 +49,15 @@ def ExpSpecA (impl : List Amd64.Segment) (R : RtInv) (stk above : Nat) : Prop :=
 
 theorem ModSpecA.mono {impl : List Janus.Amd64.Segment} {R : RtInv} {k a k' a' : Nat} (h : ModSpecA impl R k a)
     (hk : k ≤ k') (ha : a ≤ a') : ModSpecA impl R k' a' := fun b L z y =>
-  (h b L z y).mono (fun _ ⟨⟨hp, h1, h2, h3, h4, h5⟩, hx⟩ =>
-    ⟨⟨intPre_mono hk ha hp, h1, h2, h3, poolG_mono hk ha h4, h5⟩, hx⟩) fun _ _ _ ⟨hfs, hdf, h0, h1, h2⟩ =>
+  (h b L z y).mono_ret (fun _ ⟨⟨hp, h1, h2, h3, h4, h5⟩, hx⟩ =>
+    ⟨⟨intPre_mono hk ha hp, h1, h2, h3, poolG_mono hk ha h4, h5⟩, hx⟩) fun _ _ _ _ ⟨hfs, hdf, h0, h1, h2⟩ =>
     ⟨hfs, hdf, h0, intPost_mono hk ha h1, h2⟩
 
 theorem ExpSpecA.mono {impl : List Janus.Amd64.Segment} {R : RtInv} {k a k' a' : Nat} (h : ExpSpecA impl R k a)
     (hk : k ≤ k') (ha : a ≤ a') : ExpSpecA impl R k' a' := fun b L z y mm =>
-  (h b L z y mm).mono (fun _ ⟨⟨hp, h1, h2, h3, h4, h5, h6, h7, h8, h9⟩, hx⟩ =>
+  (h b L z y mm).mono_ret (fun _ ⟨⟨hp, h1, h2, h3, h4, h5, h6, h7, h8, h9⟩, hx⟩ =>
     ⟨⟨intPre_mono hk ha hp, h1, h2, h3, h4, oneG_mono hk ha h5, poolG_mono hk ha h6, h7, h8, h9⟩, hx⟩)
-    fun _ _ _ ⟨hfs, hdf, h0, h1⟩ =>
+    fun _ _ _ _ ⟨hfs, hdf, h0, h1⟩ =>
     ⟨hfs, hdf, h0, intPost_mono hk ha h1⟩
 
 end FvModexp.Amd64.RunIface

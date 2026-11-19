@@ -52,7 +52,7 @@ theorem alloc_head (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (
     (hK : ∀ S : State, AA s S W st xp xl xc → ReachesRet (LibSqr.program.link impl) (retAddrOf s) S Q) :
     ReachesRet (LibSqr.program.link impl) (retAddrOf s) s Q := by
   obtain ⟨hce, hsw, -, -, -, hxlc, hxc40, hxl12, -, hxh, -, hzc40, hzl, -, -, -, -, -, -, -, -⟩ := hpre
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, -, -, -⟩ := hce
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, -, -, -⟩ := hce
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw
   have hW : 5056 ≤ W := by unfold sqrW ksqrW at hsw; omega
   obtain ⟨-, hx48⟩ := hxh (by omega)

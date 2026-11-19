@@ -253,7 +253,7 @@ theorem ensures (x xl xc y yl yc : BitVec 64) :
             else if s.mem.readLE y.toNat (8 * yl.toNat) < s.mem.readLE x.toNat (8 * xl.toNat) then 1#64 else 0#64] ∧
         MemFrame s.mem s'.mem [(s.sp.toNat - 24, s.sp.toNat - 8), (s.sp.toNat + 8, s.sp.toNat + 16),
           (s.sp.toNat + 32, s.sp.toNat + 40)]) := by
-  refine FvModexp.AsmDiv.A64.ensures_of_summary _ _ cmp_summary ?_ ?_
+  refine FvModexp.AsmDiv.A64.ensures_of_summary (hinv := by janus_pre_setRet [Janus.Spec.GuardOK, Janus.Spec.StackOK]) _ _ cmp_summary ?_ ?_
   · intro ret hret s hsu ⟨hg, hs, hx, hy⟩
     have h0 : s.regs 0 = x := by have := hsu.args 0 (by simp); simpa using this
     have h1 : s.regs 1 = xl := by have := hsu.args 1 (by simp); simpa using this

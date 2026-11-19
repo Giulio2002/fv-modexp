@@ -197,7 +197,7 @@ theorem Core.callee {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp
     (hF : MemFrame M S1.mem (win s W 64))
     (hreg : S1.mem.regions = s.mem.regions) (hk : 176 + stk1 ≤ W) (ha : above1 ≤ 240) :
     CallEnv R L1 S1 stk1 above1 := by
-  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hb, ha', hw⟩, hal, hdl, hout, hga, hgr, hLs, hro, ⟨htb, htr, htg⟩, htrt, htw⟩, -⟩ := hJ.pre
+  obtain ⟨⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb, ha', hw⟩, hal, hdl, hout, hga, hgr, hLs, hro, ⟨htb, htr, htg⟩, htrt, htw⟩, -⟩ := hJ.pre
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb ha' hw
   have hF1 : MemFrame s.mem S1.mem (R.rt ++ win s W 64) :=
     hJ.F.trans hF fun a n h => ⟨h, by simp only [outside_append] at h; exact h.2⟩
@@ -209,10 +209,11 @@ theorem Core.callee {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W zp zc st xp
     rw [hfs]; exact hF1.readLE _ _ (by
       simp only [win, outside_append, outside_cons, outside_nil, and_true]; exact ⟨htrt, by omega⟩)
   have hLs1 := hJ.lsep
-  refine ⟨⟨?_, ?_, ?_⟩, ⟨?_, ?_, ?_⟩, ?_, ?_, ?_, ?_, ?_, ?_, hro, ⟨?_, ?_, ?_⟩, ?_, ?_⟩
+  refine ⟨⟨?_, ?_, ?_, ?_⟩, ⟨?_, ?_, ?_⟩, ?_, ?_, ?_, ?_, ?_, ?_, hro, ⟨?_, ?_, ?_⟩, ?_, ?_⟩
   · simp only [stackguard0Offset, regG]; rw [hg]; exact hg1
   · simp only [stackguard0Offset, regG]; rw [hg, hF1.accessible]; exact hg2
   · simp only [stackguard0, stackguard0Offset, regG, regSP]; rw [hg] at hgr' ⊢; rw [hgr', hsp]; omega
+  · first | omega | (simp only [stackguard0Offset, regG, regSP]; omega) | (simp_all only [stackguard0Offset, regG, regSP, Apart]; omega)
   · simp only [regSP]; omega
   · simp only [regSP]; omega
   · simp only [regSP]; rw [hF1.accessible, hsp]; exact Janus.Arm64.Memory.accessible_mono _ hw (by omega) (by omega)

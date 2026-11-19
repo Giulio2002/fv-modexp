@@ -101,8 +101,9 @@ theorem correctness (impl : List Segment) (hap : ImplApart Extracted.program imp
         mc.toNat)
       (Post R b L z.toNat zc.toNat st.toNat x.toNat xl.toNat y.toNat yl.toNat m.toNat ml.toNat) := by
   have hS := sum impl hap R hmk hgr hmc hmv hmz hno hwb
-  refine Ensures.full (ns := LibNE.names) hap ?_
+  refine Ensures.full (hinv := by janus_pre_setRet [FvModexp.Arm64.EvenRow.Pre, FvModexp.Arm64.ExpEven.Pre, FvModexp.Arm64.ExpEven.nE, FvModexp.Arm64.NHyp.CPre, FvModexp.Arm64.P2Pre.cost, FvModexp.stLen, FvModexp.natVal, FvModexp.Arm64.win, FvModexp.Arm64.EvenHyp.NatOne, FvModexp.Arm64.ExpHyp.stWs, FvModexp.Arm64.EvenHyp.StkApart, FvModexp.Arm64.CallEnv, FvModexp.Arm64.RunIface.Globals, FvModexp.Arm64.StackNat.wT, FvModexp.Arm64.ExpHyp.WrOut, FvModexp.Arm64.ExpHyp.RdIn, FvModexp.NatNorm, FvModexp.Arm64.NHyp.freeOf, FvModexp.Arm64.ExpHyp.StackOK', FvModexp.stCap, FvModexp.stW, FvModexp.Arm64.StackNat.wbA, FvModexp.Arm64.RunIface.gA, Janus.Contracts.Hash.c0, FvModexp.Arm64.W2Pro.pl, FvModexp.Arm64.EvenHyp.natOneA, FvModexp.stkWs, FvModexp.Asm.top, Janus.Spec.GuardOK, Janus.Spec.StackOK, FvModexp.Mdl.karatsubaThreshold, FvModexp.Mdl.basicSqrThreshold, FvModexp.Mdl.karatsubaSqrThreshold, FvModexp.Arm64.RunIface.wbA, FvModexp.NatLive, FvModexp.StkOK]) (ns := LibNE.names) hap ?_
   rw [← LibNE.eq_only, fnE_eq]
+  janus_ensures_old [FvModexp.Arm64.EvenRow.Pre, FvModexp.Arm64.ExpEven.Pre, FvModexp.Arm64.ExpEven.nE, FvModexp.Arm64.NHyp.CPre, FvModexp.Arm64.P2Pre.cost, FvModexp.stLen, FvModexp.natVal, FvModexp.Arm64.win, FvModexp.Arm64.EvenHyp.NatOne, FvModexp.Arm64.ExpHyp.stWs, FvModexp.Arm64.EvenHyp.StkApart, FvModexp.Arm64.CallEnv, FvModexp.Arm64.RunIface.Globals, FvModexp.Arm64.StackNat.wT, FvModexp.Arm64.ExpHyp.WrOut, FvModexp.Arm64.ExpHyp.RdIn, FvModexp.NatNorm, FvModexp.Arm64.NHyp.freeOf, FvModexp.Arm64.ExpHyp.StackOK', FvModexp.stCap, FvModexp.stW, FvModexp.Arm64.StackNat.wbA, FvModexp.Arm64.RunIface.gA, Janus.Contracts.Hash.c0, FvModexp.Arm64.W2Pro.pl, FvModexp.Arm64.EvenHyp.natOneA, FvModexp.stkWs, FvModexp.Asm.top, Janus.Spec.GuardOK, Janus.Spec.StackOK, FvModexp.Mdl.karatsubaThreshold, FvModexp.Mdl.basicSqrThreshold, FvModexp.Mdl.karatsubaSqrThreshold, FvModexp.Arm64.RunIface.wbA, FvModexp.NatLive, FvModexp.StkOK]
   intro ret hret s hs hpre
   janus_intro hs
   have hr4 : (s.regs 30).toNat % 4 = 0 := by
@@ -211,7 +212,7 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
     NewobjectLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.newobject") 4096 R ∧
     WbLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 4096 R 2 ∧
     RetAddr (Extracted.program.link impl) ret ∧
-    CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program ExpEven.fn)
+    CallSetup0 (segAddr Extracted.program ExpEven.fn)
       [z, zl, zc, st, x, xl, xc, y, yl, yc, m, ml, mc] s ∧
     Pre R b L z.toNat zl.toNat zc.toNat st.toNat x.toNat xl.toNat xc.toNat y.toNat yl.toNat m.toNat ml.toNat mc.toNat s ∧
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
@@ -237,8 +238,8 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.gcWriteBarrier2") ∧
       wbSite R (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 2 L b s_c) ∧
-    Returns ((Extracted.program.link impl).withExit ret) s fun s' =>
-      ABIReturn s s' ∧ Post R b L z.toNat zc.toNat st.toNat x.toNat xl.toNat y.toNat yl.toNat m.toNat ml.toNat s s' :=
+    Returns ((Extracted.program.link impl).withExit ret) (s.setRet ret) fun s' =>
+      ABIReturn (s.setRet ret) s' ∧ Post R b L z.toNat zc.toNat st.toNat x.toNat xl.toNat y.toNat yl.toNat m.toNat ml.toNat (s.setRet ret) s' :=
   ⟨WStubs.impl, R, BW, [], 0, 0, 0, BitVec.ofNat 64 ST, BitVec.ofNat 64 XP, 1, 1, BitVec.ofNat 64 YP, 1, 1,
     BitVec.ofNat 64 MP, 1, 1, RET, s0, WStubs.hap,
     by rw [WStubs.addr_mk]; exact WStubs.mk [] (by intro t ht; simp at ht) _,
@@ -265,7 +266,7 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
       (by rw [WStubs.addr_mv]; exact WStubs.mvz R)
       (by rw [WStubs.addr_no]; exact WStubs.no [] (by intro t ht; simp at ht) _)
       (by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] (by intro t ht; simp at ht) _)
-      BW [] 0 0 0 (BitVec.ofNat 64 ST) (BitVec.ofNat 64 XP) 1 1 (BitVec.ofNat 64 YP) 1 1 (BitVec.ofNat 64 MP) 1 1 RET
-      hret s0 (setup _ args (by decide)) pre⟩
+      BW [] 0 0 0 (BitVec.ofNat 64 ST) (BitVec.ofNat 64 XP) 1 1 (BitVec.ofNat 64 YP) 1 1 (BitVec.ofNat 64 MP) 1 1 s0 (setup _ args (by decide)) pre RET
+      hret⟩
 
 end FvModexp.Arm64.EvenRow.Witness

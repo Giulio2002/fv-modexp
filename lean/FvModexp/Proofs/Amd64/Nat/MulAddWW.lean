@@ -104,6 +104,7 @@ theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
     Ensures ((Extracted.program.onlySegments names).link impl) (segAddr Extracted.program fn)
       [zp, zl, zc, xp, xl, xc, y, r]
       (Pre R b L zp zc xp xl y r) (Post R b L zp zc xp xl y r) := by
+  janus64_ensures_old [FvModexp.Amd64.MulAddWW.Pre, FvModexp.Amd64.CallEnv, FvModexp.Amd64.MulAddWW.wordT, FvModexp.NatLive, FvModexp.Amd64.win, FvModexp.Amd64.TlsOK]
   rw [show names = LibMulAddWW.names from rfl, ← LibMulAddWW.eq_only]
   intro ret hret s hs hpre
   janus64_intro hs

@@ -43,7 +43,7 @@ theorem step (impl : List Amd64.Segment) (R : RtInv)
   have hzxA : Apart zp.toNat (16 * xl.toNat) xp.toNat (8 * xl.toNat) := by unfold Apart; have := hl.zx; omega
   have hpre := hE.pre
   have hce := hpre.ce
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, -, -, ⟨htb, htr, htg⟩, htrt, htw⟩ := hce
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, -, -, ⟨htb, htr, htg⟩, htrt, htw⟩ := hce
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw htg
   have hzlv := hpre.zlive; have hzg := hpre.zg; have hxacc := hpre.xacc; have hx48 := hpre.x48
   obtain ⟨hzal, hzh, hzacc, -⟩ := hzlv (by omega)

@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Amd64.SetRetLemmas
 import FvModexp.Proofs.Amd64.Nat.Trunc
 import FvModexp.Proofs.Amd64.Exp.RdIn0
 
@@ -57,7 +58,7 @@ theorem pre_env0 {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zl zc x xl n 
     s.mem.readLE ((s.regs 14).toNat + 16) 8 + 4192 < (s.regs 4).toNat ∧ 4192 ≤ (s.regs 4).toNat ∧
     (s.regs 4).toNat + 64 ≤ 2 ^ 48 ∧
     s.mem.accessible ((s.regs 4).toNat - 4192) (4192 + 64) true = true ∧ (s.regs 4).toNat % 8 = 0 ∧ TlsG s := by
-  obtain ⟨⟨⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, _, _, _, _, _, _, ⟨htg, _, _⟩⟩, _⟩, _⟩ := hpre
+  obtain ⟨⟨⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, _, _, _, _, _, _, ⟨htg, _, _⟩⟩, _⟩, _⟩ := hpre
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw
   exact ⟨by omega, hg2, hg3, hb', ha, hw, hal, htg⟩
 
@@ -141,6 +142,7 @@ theorem ens0 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
     Hyp0 impl R names 4192 64 := by
   intro b L z zl zc x xl xc n
   rw [show names = LibTrunc.names from rfl, ← LibTrunc.eq_only]
+  janus64_ensures_old [FvModexp.Amd64.Trunc.TruncPre0, FvModexp.Amd64.natNorm_setRet, FvModexp.Amd64.readLE_setRet_or_zero, FvModexp.Amd64.CallEnv, FvModexp.Amd64.EvenHyp.WrOut, FvModexp.Amd64.EvenHyp.RdIn0, FvModexp.Amd64.win, FvModexp.Amd64.TlsOK, FvModexp.NatLive, FvModexp.Amd64.EvenHyp.RdIn]
   intro ret hret s hs hpre
   janus64_intro hs
   refine Summary.returns (full0 impl hap R hmk hmv b L z.toNat zl.toNat zc.toNat x.toNat xl.toNat xc.toNat

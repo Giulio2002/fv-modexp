@@ -121,7 +121,7 @@ theorem lessC1 (impl : List Amd64.Segment) (R : RtInv)
     ReachesRet (LibDiv.program.link impl) (retAddrOf s) S (RQG R b dc L zp zc st z2 z2c u ul v vl s) := by
   have hp := hpre.f
   have hce := hp.ce
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, hLs, hro, ⟨htg, htr, htw⟩⟩ := hp.ce
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, hLs, hro, ⟨htg, htr, htw⟩⟩ := hp.ce
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw hal
   unfold Apart at hga htw
   have hsv := hp.sv
@@ -291,7 +291,7 @@ theorem lessC0 (impl : List Amd64.Segment) (R : RtInv)
     ReachesRet (LibDiv.program.link impl) (retAddrOf s) S (RQG R b dc L zp zc st z2 z2c u 0 v vl s) := by
   have hp := hpre.f
   have hce := hp.ce
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, hLs, hro, ⟨htg, htr, htw⟩⟩ := hp.ce
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, hLs, hro, ⟨htg, htr, htw⟩⟩ := hp.ce
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw hal
   unfold Apart at hga htw
   have hsv := hp.sv

@@ -232,14 +232,15 @@ theorem db_pre {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {c : Nat} {zp zc st
     by rw [hspn, show (s.regs 4).toNat - 312 + 16 = (s.regs 4).toNat - 296 by omega]; exact hlS, ?qtl, ?ptl, by rw [hfs]; exact hpre.stt, ?stft⟩
   case wb => rw [hXacc]; exact hpre.gl.2.2.2.2.2.2.2.2.2.2.1
   case ce =>
-    obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, -, hro, ⟨⟨htb, htr, htg⟩, htrt, htw⟩⟩ := hpre.ce
+    obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, -, hro, ⟨⟨htb, htr, htg⟩, htrt, htw⟩⟩ := hpre.ce
     simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw htb htr htg
     have hLq := lsep_of hE hx3
     unfold Apart at hga htw
-    refine ⟨⟨?_, ?_, ?_⟩, ⟨?_, ?_, ?_⟩, ?_, hdl, ?_, ?_, by rw [h14]; exact hgr, ?_, hro, ⟨⟨?_, ?_, ?_⟩, ?_, ?_⟩⟩
+    refine ⟨⟨?_, ?_, ?_, ?_⟩, ⟨?_, ?_, ?_⟩, ?_, hdl, ?_, ?_, by rw [h14]; exact hgr, ?_, hro, ⟨⟨?_, ?_, ?_⟩, ?_, ?_⟩⟩
     · simp only [regG]; rw [h14]; exact hg1
     · simp only [regG, stackguard0Offset]; rw [h14, hXacc]; exact hg2
     · simp only [stackguard0, stackguard0Offset, regG, regSP]; rw [h14, hgrd, hspn]; omega
+    · first | omega | (simp only [stackguard0Offset, regG, regSP]; omega) | (simp_all only [stackguard0Offset, regG, regSP, Apart]; omega)
     · simp only [regSP]; rw [hspn]; omega
     · simp only [regSP]; rw [hspn]; omega
     · simp only [regSP]; rw [hXacc, hspn]; exact Janus.Arm64.Memory.accessible_mono _ hw (by omega) (by omega)

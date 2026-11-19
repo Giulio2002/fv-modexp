@@ -40,7 +40,7 @@ theorem correctness (impl : List Segment) (hap : ImplApart Extracted.program imp
         uc.toNat v.toNat vl.toNat s)
       (fun s s' => Q.NatRem.Post R b H (Q.NatDiv.costQ Q.drsCQ) L z.toNat zc.toNat st.toNat u.toNat ul.toNat v.toNat
         vl.toNat s s') :=
-  Ensures.full hap (Q.NatRem.ensCR impl hap R hgr hmc hwb hmk hmv hmz H b L z zl zc st u ul uc v vl vc)
+  Ensures.full (hinv := by janus_pre_setRet [FvModexp.Arm64.Q.NatRem.Pre, FvModexp.Arm64.NHyp.CPre, FvModexp.stkR, FvModexp.stLen, FvModexp.Arm64.CallEnv, FvModexp.Arm64.RunIface.Globals, FvModexp.Arm64.win, FvModexp.Arm64.StackNat.wT, FvModexp.Arm64.ExpHyp.WrOut, FvModexp.Arm64.ExpHyp.RdIn, FvModexp.NatNorm, FvModexp.Arm64.NHyp.freeOf, FvModexp.Arm64.ExpHyp.StackOK', FvModexp.stCap, FvModexp.stW, FvModexp.Arm64.StackNat.wbA, FvModexp.Arm64.RunIface.gA, FvModexp.stkRes, FvModexp.potK, Janus.Spec.GuardOK, Janus.Spec.StackOK, FvModexp.Mdl.karatsubaThreshold, FvModexp.Mdl.basicSqrThreshold, FvModexp.Mdl.karatsubaSqrThreshold, FvModexp.Arm64.RunIface.wbA, FvModexp.NatLive, FvModexp.StkOK]) hap (Q.NatRem.ensCR impl hap R hgr hmc hwb hmk hmv hmz H b L z zl zc st u ul uc v vl vc)
 
 end FvModexp.Arm64.RemRowQ
 
@@ -150,9 +150,9 @@ theorem pre : Q.NatRem.Pre R 0x80000 85 (Q.NatDiv.costQ Q.drsCQ) [] 0 0 0 ST OB 
 
 theorem hret : RetAddr (Extracted.program.link WStubs.impl) RET := RetAddr.of_check (by decide +kernel)
 
-theorem setup : CallSetup ((Extracted.program.link WStubs.impl).withExit RET) (segAddr Extracted.program NatRem.fn)
+theorem setup : CallSetup0 (segAddr Extracted.program NatRem.fn)
     args s0 :=
-  ⟨rfl, rfl, fun i h => by simp only [s0, dif_pos h]⟩
+  ⟨rfl, by first | decide | simp | omega, fun i h => by simp only [s0, dif_pos h]⟩
 
 theorem hty : TysOK [] := by intro t ht; simp at ht
 
@@ -170,7 +170,7 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (H b : Nat) (L : List
     MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R ∧
     MemmoveZeroLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R ∧
     RetAddr (Extracted.program.link impl) ret ∧
-    CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program NatRem.fn)
+    CallSetup0 (segAddr Extracted.program NatRem.fn)
       [z, zl, zc, st, u, ul, uc, v, vl, vc] s ∧
     Q.NatRem.Pre R b H (Q.NatDiv.costQ Q.drsCQ) L z.toNat zl.toNat zc.toNat st.toNat u.toNat ul.toNat uc.toNat v.toNat
       vl.toNat s ∧
@@ -194,8 +194,8 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (H b : Nat) (L : List
       (s_c.regs 2).toNat = 0 ∧ Mem.EqPre 4096 3 s_c ∧
       LiveMemAt R (Extracted.program.contractAddr "runtime.memmove") [(s_c.regs 0).toNat, (s_c.regs 1).toNat,
         (s_c.regs 2).toNat] L b s_c (calleeStack s_c 4096 3)) ∧
-    Returns ((Extracted.program.link impl).withExit ret) s fun s' => ABIReturn s s' ∧
-      Q.NatRem.Post R b H (Q.NatDiv.costQ Q.drsCQ) L z.toNat zc.toNat st.toNat u.toNat ul.toNat v.toNat vl.toNat s s' :=
+    Returns ((Extracted.program.link impl).withExit ret) (s.setRet ret) fun s' => ABIReturn (s.setRet ret) s' ∧
+      Q.NatRem.Post R b H (Q.NatDiv.costQ Q.drsCQ) L z.toNat zc.toNat st.toNat u.toNat ul.toNat v.toNat vl.toNat (s.setRet ret) s' :=
   ⟨WStubs.impl, R, 85, 0x80000, [], 0, 0, 0, BitVec.ofNat 64 ST, BitVec.ofNat 64 OB, 1, 1, BitVec.ofNat 64 VP, 1, 1,
     RET, s0, WStubs.hap,
     by rw [WStubs.addr_gr]; exact WStubs.gr [] hty _,
@@ -217,6 +217,6 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (H b : Nat) (L : List
       (by rw [WStubs.addr_cl]; exact WStubs.cl R) (by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] hty _)
       (by rw [WStubs.addr_mk]; exact WStubs.mk [] hty _)
       (by rw [WStubs.addr_mv]; exact WStubs.mv R) (by rw [WStubs.addr_mv]; exact WStubs.mvz R) 85 0x80000 []
-      0 0 0 (BitVec.ofNat 64 ST) (BitVec.ofNat 64 OB) 1 1 (BitVec.ofNat 64 VP) 1 1 RET hret s0 setup pre⟩
+      0 0 0 (BitVec.ofNat 64 ST) (BitVec.ofNat 64 OB) 1 1 (BitVec.ofNat 64 VP) 1 1 s0 setup pre RET hret⟩
 
 end FvModexp.Arm64.RemRowQ.Witness

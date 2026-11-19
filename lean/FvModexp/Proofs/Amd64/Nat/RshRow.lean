@@ -25,7 +25,7 @@ theorem correctness (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted
       (fun s => Rsh.RshPre R b L 4248 64 zp.toNat zl.toNat zc.toNat xp.toNat xl.toNat sh.toNat s ∧
         xl.toNat ≤ xc.toNat ∧ xc.toNat < 2 ^ 40)
       (fun s s' => Rsh.RshPost R b L 4248 64 zp.toNat zc.toNat xp.toNat xl.toNat sh.toNat s s') :=
-  Ensures.full64 hap (by simp [numIntRegs]) (Rsh.ens impl hap R hmk hmv b L zp zl zc xp xl xc sh)
+  Ensures.full64 (hinv := by janus64_pre_setRet [FvModexp.Amd64.Rsh.RshPre, FvModexp.Amd64.CallEnv, FvModexp.Amd64.EvenHyp.WrOut, FvModexp.Amd64.EvenHyp.RdIn, FvModexp.NatNorm, FvModexp.Amd64.win, FvModexp.Amd64.TlsOK, FvModexp.NatLive]) hap (by simp [numIntRegs]) (Rsh.ens impl hap R hmk hmv b L zp zl zc xp xl xc sh)
 
 end FvModexp.Amd64.RshRow
 
@@ -52,9 +52,9 @@ def s0 : State :=
 
 theorem hret : RetAddr (Extracted.program.link WStubs.impl) RET := RetAddr.of_check (by decide +kernel)
 
-theorem setup : CallSetup ((Extracted.program.link WStubs.impl).withExit RET)
+theorem setup : CallSetup0 
     (segAddr Extracted.program "github.com/ethereum/go-bigmodexpfix/src/math/big.nat.rsh") args s0 :=
-  ⟨rfl, by decide +kernel, rfl, by decide, by
+  ⟨rfl, rfl, by decide, by
     intro i h; simp only [args, List.length_cons, List.length_nil] at h
     rcases (by omega : i = 0 ∨ i = 1 ∨ i = 2 ∨ i = 3 ∨ i = 4 ∨ i = 5 ∨ i = 6) with
       rfl | rfl | rfl | rfl | rfl | rfl | rfl <;> rfl, rfl⟩
@@ -75,7 +75,11 @@ theorem pre : Rsh.RshPre R 0x1000 [] 4248 64 OA 0 0 OB 2 3 s0 ∧ 2 ≤ 2 ∧ 2 
     | (rw [show s0.mem = wmem (toyBytes g) stdRegs from rfl, acc_eq]; decide +kernel)
     | (refine ⟨by decide +kernel, ?_, by decide +kernel⟩; rw [show s0.mem = wmem (toyBytes g) stdRegs from rfl, acc_eq];
         decide +kernel)
+    | (refine ⟨by decide +kernel, ?_, by decide +kernel, by decide +kernel⟩; rw [show s0.mem = wmem (toyBytes g) stdRegs from rfl, acc_eq];
+        decide +kernel)
     | (refine ⟨by decide +kernel, by decide +kernel, ?_⟩; rw [show s0.mem = wmem (toyBytes g) stdRegs from rfl, acc_eq];
+        decide +kernel)
+    | (refine ⟨by decide +kernel, by decide +kernel, ?_, by decide +kernel⟩; rw [show s0.mem = wmem (toyBytes g) stdRegs from rfl, acc_eq];
         decide +kernel)
     | decide +kernel
 
@@ -87,7 +91,7 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : 
     MakesliceLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R ∧
     MemmoveLive64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R ∧
     RetAddr (Extracted.program.link impl) ret ∧
-    CallSetup ((Extracted.program.link impl).withExit ret)
+    CallSetup0 
       (segAddr Extracted.program "github.com/ethereum/go-bigmodexpfix/src/math/big.nat.rsh")
       [zp, zl, zc, xp, xl, xc, sh] s ∧
     (Rsh.RshPre R b L 4248 64 zp.toNat zl.toNat zc.toNat xp.toNat xl.toNat sh.toNat s ∧
@@ -98,8 +102,8 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : 
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.rip = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.memmove") ∧
       mvSite R (Extracted.program.contractAddr "runtime.memmove") L b s_c) ∧
-    Returns ((Extracted.program.link impl).withExit ret) s fun s' =>
-      ABIReturn s s' ∧ Rsh.RshPost R b L 4248 64 zp.toNat zc.toNat xp.toNat xl.toNat sh.toNat s s' :=
+    Returns ((Extracted.program.link impl).withExit ret) (s.setRet ret) fun s' =>
+      ABIReturn (s.setRet ret) s' ∧ Rsh.RshPost R b L 4248 64 zp.toNat zc.toNat xp.toNat xl.toNat sh.toNat (s.setRet ret) s' :=
   ⟨WStubs.impl, R, 0x1000, [], BitVec.ofNat 64 OA, 0, 0, BitVec.ofNat 64 OB, 2, 2, 3, RET, s0, WStubs.hap,
     by rw [WStubs.addr_mk]; exact WStubs.mk [] (by intro t ht; simp at ht) _,
     by rw [WStubs.addr_mv]; exact WStubs.mv R, hret, setup, pre,
@@ -107,7 +111,7 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : 
       by rw [WStubs.addr_mk]; exact site_mk _⟩,
     ⟨[], 0x1000, callS WStubs.mvA OA OB 8, by rw [WStubs.addr_mv]; rfl, by rw [WStubs.addr_mv]; exact site_mv _⟩,
     correctness WStubs.impl WStubs.hap R (by rw [WStubs.addr_mk]; exact WStubs.mk [] (by intro t ht; simp at ht) _)
-      (by rw [WStubs.addr_mv]; exact WStubs.mv R) 0x1000 [] (BitVec.ofNat 64 OA) 0 0 (BitVec.ofNat 64 OB) 2 2 3 RET
-      hret s0 setup pre⟩
+      (by rw [WStubs.addr_mv]; exact WStubs.mv R) 0x1000 [] (BitVec.ofNat 64 OA) 0 0 (BitVec.ofNat 64 OB) 2 2 3 s0 setup pre RET
+      hret⟩
 
 end FvModexp.Amd64.RshRow.Witness

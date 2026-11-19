@@ -98,6 +98,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     RemHypNA impl R LibRem.names 41712 112 need (cost cd) := by
   intro b L z zl zc st u ul uc v vl vc
   rw [← LibRem.eq_only]
+  janus_ensures_old [FvModexp.Arm64.NHyp.CPre, FvModexp.stLen, FvModexp.Arm64.CallEnv, FvModexp.Arm64.RunIface.Globals, FvModexp.Arm64.win, FvModexp.Arm64.StackNat.wT, FvModexp.Arm64.ExpHyp.WrOut, FvModexp.Arm64.ExpHyp.RdIn, FvModexp.NatNorm, FvModexp.Arm64.NHyp.freeOf, FvModexp.Arm64.ExpHyp.StackOK', FvModexp.stCap, FvModexp.stW, FvModexp.Arm64.StackNat.wbA, FvModexp.Arm64.RunIface.gA, Janus.Spec.GuardOK, Janus.Spec.StackOK, FvModexp.Arm64.RunIface.wbA, FvModexp.NatLive, FvModexp.StkOK]
   intro ret hret s hs hpre
   janus_intro hs
   have hr48 := hret.user

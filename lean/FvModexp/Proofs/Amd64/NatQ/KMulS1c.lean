@@ -130,7 +130,7 @@ theorem kS1clr (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.prog
   have hzw' : zp + 8 * (2 * n) ≤ (s.regs 4).toNat - W ∨ (s.regs 4).toNat + 72 ≤ zp := by
     simp only [win, outside_cons, outside_nil, and_true] at hzw; omega
   have hgQ := hkm.grd
-  obtain ⟨⟨hg1, hg2, hg3⟩, -⟩ := F.env
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, -⟩ := F.env
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3
   have hg2' : S.mem.accessible ((s.regs 14).toNat + 16) 8 false = true := by rw [hkm.fr.accessible]; exact hg2
   have hg3' : S.mem.readLE ((s.regs 14).toNat + 16) 8 + 4096 < (s.regs 4).toNat - 456 := by rw [hgQ]; omega

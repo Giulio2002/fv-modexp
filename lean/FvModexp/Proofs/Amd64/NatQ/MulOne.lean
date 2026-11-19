@@ -28,8 +28,9 @@ theorem ensXR (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progr
       [zp, zl, zc, xp, xl, xc, y, r]
       (fun s => xl.toNat ≠ 0 ∧ xl.toNat < 2 ^ 39 ∧ r.toNat = 0 ∧ MulAddWW.Pre R b L zp zc xp xl y r s)
       (fun s s' => MulAddWW.Post R b L zp zc xp xl y r s s' ∧ MulAddWW.XQ R L zp zc xp xl y r s s') := by
+  janus64_ensures_old [FvModexp.Amd64.MulAddWW.Pre, FvModexp.Amd64.CallEnv, FvModexp.Amd64.MulAddWW.wordT, FvModexp.NatLive, FvModexp.Amd64.win, FvModexp.Amd64.TlsOK]
   intro ret hret s hs ⟨h1, h2, h3, hpre⟩
-  exact MulAddWW.ensX impl hap R hmk b L zp zl zc xp xl xc y r h1 h2 h3 ret hret s hs hpre
+  exact (MulAddWW.ensX impl hap R hmk b L zp zl zc xp xl xc y r h1 h2 h3).toOld ret hret s hs hpre
 
 /-- adapted from asm's `FvModexp.Amd64.DivW.Ensures.toSummaryRegs8` (Proofs/Amd64/Nat/DivWDefs.lean) -/
 theorem toSummaryRegs8 {p0 P : Amd64.Program} {entry : Nat}
@@ -158,7 +159,7 @@ theorem one (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
       Kept s s' ∧ MPost R b H L W zp.toNat zc.toNat st.toNat xp.toNat xl.toNat xc.toNat yp.toNat yl.toNat yc.toNat s s' := by
   have hpre' := hpre
   obtain ⟨hce, hmw, -, -, -, ⟨⟨-, -, hxl12, -⟩, ⟨-, -, -, hyacc, -, hyw⟩, ⟨-, -, hzw, -⟩, -⟩, -⟩ := hpre'
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, -, -, -⟩ := hce
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, -, -, -⟩ := hce
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw
   have hW : 4608 ≤ W := Nat.le_trans (mulW64_ge _ _) hmw
   have hyw' := (hyw (by omega)).1

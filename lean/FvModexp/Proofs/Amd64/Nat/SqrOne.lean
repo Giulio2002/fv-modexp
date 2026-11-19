@@ -92,7 +92,7 @@ theorem one_reuse (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (N
   obtain ⟨hce, hsw, -, -, -, -, -, -, hxacc, -, hxw, hzc40, hzl, hzw, -, -, -, -, -, -, -⟩ := hpre'
   have hxw := hxw (by omega)
   simp only [win, outside_cons, outside_nil, and_true] at hxw
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, -, -, -⟩ := hce
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, -, -, -⟩ := hce
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw
   have hW : 5056 ≤ W := by unfold sqrW ksqrW at hsw; omega
   obtain ⟨hz8, -, hzacc, hz48⟩ := hzl (by omega)

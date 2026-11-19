@@ -64,6 +64,7 @@ theorem ensOkLib (impl : List Segment) (hap : ImplApart Extracted.program impl) 
         LengthsPass (bytesAt s.mem p.toNat len.toNat))
       (fun s s' => RunArm64.OkRet (bytesAt s.mem p.toNat len.toNat) s' ∧
         RunArm64.FrameW R b (RunArm64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat))) L W s s') := by
+  janus_ensures_old [FvModexp.Spec.RunArm64.EnvW, FvModexp.Spec.RunArm64.Input, FvModexp.Spec.OsakaReceiver, FvModexp.Spec.RunArm64.Globals, FvModexp.Spec.RunArm64.windowW, FvModexp.Spec.RunArm64.NatOne, FvModexp.Spec.RunArm64.StackPool, FvModexp.Spec.bytesAt, Janus.Spec.GuardOK, Janus.Spec.StackOK, FvModexp.Spec.RunArm64.window, FvModexp.Arm64.RunIface.gA, FvModexp.Arm64.RunIface.wbA, Janus.Spec.Pool.newOffset, FvModexp.Spec.byteOf]
   intro ret hret s hs ⟨⟨henvW, hgL⟩, hin, hrecv, hinv, hsv, hglob, hone, hpool, hbud, hpass⟩
   rw [okB_spec] at hbud
   obtain ⟨n, o, hrun, hQ⟩ := okReach impl hap R hmk hmv hmz hno stkM aboveM hM hE hBy hsv b L c p len cp ret hret s hs

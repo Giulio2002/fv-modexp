@@ -78,7 +78,7 @@ theorem mvCall (hmv : MemmoveLive64 (LibW.program.link impl) mvE 4096 R)
       trivial, trivial, hra⟩, by omega⟩, ⟨hok, hc.inv, ?_, ?_⟩, ⟨hs48, hsa, by omega⟩,
       ⟨hd48, hdacc, by omega, hdh, by omega⟩⟩
     · exact ⟨by simp only [regG, stackguard0Offset, h14]; omega, by simp only [regG, stackguard0Offset, h14, hm]; exact hgacc,
-        by simp only [stackguard0, regG, regSP, stackguard0Offset, h14, hm, hsp]; omega⟩
+        by simp only [stackguard0, regG, regSP, stackguard0Offset, h14, hm, hsp]; omega, by simp only [regG, regSP, stackguard0Offset, h14, hm, hsp]; omega⟩
     · intro r' hr'
       have := hLs r' hr'
       simp only [outside_cons, outside_nil, and_true] at this ⊢

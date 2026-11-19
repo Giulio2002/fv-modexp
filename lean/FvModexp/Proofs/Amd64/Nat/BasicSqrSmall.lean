@@ -49,7 +49,7 @@ theorem small (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progr
   have hthA := hpre.thA; have hthV := hpre.thV; have hthO := hpre.thO; have hadx := hpre.adx
   have hinv := hpre.inv
   have hce' := hce
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, hdl, hout, hga, hgr, hLs, hro, ⟨htb, htr, htg⟩, htrt, htw⟩ := hce'
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, hdl, hout, hga, hgr, hLs, hro, ⟨htb, htr, htg⟩, htrt, htw⟩ := hce'
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw htg
   have hfs : (18446744073709551608 + s.fsBase.toNat) % 18446744073709551616 = s.fsBase.toNat - 8 := by omega
   have hLs' : ∀ r ∈ L, r.1 + (r.2 - r.1) ≤ (s.regs 4).toNat - 4424 ∨ (s.regs 4).toNat + 64 ≤ r.1 := by

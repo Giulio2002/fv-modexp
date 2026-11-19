@@ -54,6 +54,7 @@ theorem ens_noEven (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.
         BitVec.ofNat 64 xl, BitVec.ofNat 64 xc, BitVec.ofNat 64 slow]
       (Pre R b L K costF costD needR costR needS needP costS costP zp zl zc st xp xl xc yp yl yc mp n mc slow)
       (Post R b L K costD costR costS costP zp zc st xp xl yp yl mp n) := by
+  janus64_ensures_old [FvModexp.Amd64.ExpN.Pre, FvModexp.Amd64.ExpN.NPre, FvModexp.natVal, FvModexp.Amd64.ExpN.NEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.StackNat.wT, FvModexp.Amd64.W4En.wTy, FvModexp.Amd64.MontHyp.hasADX, FvModexp.Amd64.ExpN.NE, FvModexp.NatNorm, FvModexp.Amd64.ExpN.ZOK, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.EvenHyp.NatOne, FvModexp.Amd64.ExpHyp.stWs, FvModexp.Amd64.NHyp.StkApart, FvModexp.StkOK, FvModexp.stCap, FvModexp.stW, FvModexp.Amd64.StackNat.wbA, FvModexp.Amd64.W4En.free, FvModexp.stLen, FvModexp.Amd64.ExpN.XG, FvModexp.Amd64.CallW.CEnv, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.Amd64.EvenHyp.natOneA, FvModexp.stkWs, FvModexp.Amd64.Callees.adxAddr]
   rw [show names = LibN.names from rfl, ← LibN.eq_only, show segAddr Extracted.program fn = fnN by decide]
   intro ret hret s hs hpre
   janus64_intro hs

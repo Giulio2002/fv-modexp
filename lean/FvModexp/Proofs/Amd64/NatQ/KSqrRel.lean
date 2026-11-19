@@ -342,16 +342,17 @@ theorem KM.callee {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n
     (hsp : (S1.regs 4).toNat = (s.regs 4).toNat - 320) (hg : S1.regs 14 = s.regs 14) (hm : S1.mem = M)
     (hfs : S1.fsBase = s.fsBase)
     (hk : 320 + stk1 ≤ W) (ha : above1 ≤ 64) : CallEnv R Lk S1 stk1 above1 := by
-  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hb, ha', hw⟩, hal, hdl, hout, hga, hgr, hLs, hro, ⟨htb, htr, htg⟩, htrt, htw⟩, -⟩ := h.pre
+  obtain ⟨⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb, ha', hw⟩, hal, hdl, hout, hga, hgr, hLs, hro, ⟨htb, htr, htg⟩, htrt, htw⟩, -⟩ := h.pre
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb ha' hw
   unfold Apart at hga htw
   have hgrd := h.grd
   have htv := h.tlsv
   obtain ⟨ns, hLk, hn, -⟩ := h.ext
-  refine ⟨⟨?_, ?_, ?_⟩, ⟨?_, ?_, ?_⟩, ?_, ?_, ?_, ?_, by rw [hg]; exact hgr, ?_, hro, ⟨?_, ?_, ?_⟩, ?_, ?_⟩
+  refine ⟨⟨?_, ?_, ?_, ?_⟩, ⟨?_, ?_, ?_⟩, ?_, ?_, ?_, ?_, by rw [hg]; exact hgr, ?_, hro, ⟨?_, ?_, ?_⟩, ?_, ?_⟩
   · simp only [stackguard0Offset, regG]; rw [hg]; exact hg1
   · simp only [stackguard0Offset, regG]; rw [hg, hm, h.fr.accessible]; exact hg2
   · simp only [stackguard0, stackguard0Offset, regG, regSP]; rw [hg, hm, hgrd, hsp]; omega
+  · first | omega | (simp only [stackguard0Offset, regG, regSP]; omega) | (simp_all only [stackguard0Offset, regG, regSP, Apart]; omega)
   · simp only [regSP]; omega
   · simp only [regSP]; omega
   · simp only [regSP]; rw [hm, h.fr.accessible, hsp]; exact Janus.Arm64.Memory.accessible_mono _ hw (by omega) (by omega)

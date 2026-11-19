@@ -21,7 +21,7 @@ theorem correctness (impl : List Segment) (hap : ImplApart Extracted.program imp
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xn xp xl xc y : BitVec 64) :
     Ensures (Extracted.program.link impl) (segAddr Extracted.program DivWVW.fn) [zp, zl, zc, xn, xp, xl, xc, y]
       (fun s => xl = zl ∧ DivWVW.Pre R b L zp zl xn xp y s) (fun s s' => DivWVW.Post R b L zp zl xn xp y s s') :=
-  Ensures.full hap (DivWVW.ens impl hap R b L zp zl zc xn xp xl xc y)
+  Ensures.full (hinv := by janus_pre_setRet [FvModexp.Arm64.DivWVW.Pre, FvModexp.Arm64.Callees.CallEnvND, FvModexp.NatLive, FvModexp.Arm64.win, Janus.Spec.GuardOK, Janus.Spec.StackOK]) hap (DivWVW.ens impl hap R b L zp zl zc xn xp xl xc y)
 
 end FvModexp.Arm64.DivWVWRow
 
@@ -46,9 +46,9 @@ def s0 : State :=
 
 theorem hret : RetAddr (Extracted.program.link WStubs.impl) RET := RetAddr.of_check (by decide +kernel)
 
-theorem setup : CallSetup ((Extracted.program.link WStubs.impl).withExit RET) (segAddr Extracted.program DivWVW.fn)
+theorem setup : CallSetup0 (segAddr Extracted.program DivWVW.fn)
     args s0 :=
-  ⟨rfl, rfl, fun i h => by simp only [s0, dif_pos h]⟩
+  ⟨rfl, by first | decide | simp | omega, fun i h => by simp only [s0, dif_pos h]⟩
 
 theorem bump : mem0.readLE BUMP 8 = HEAP := by decide +kernel
 
@@ -74,12 +74,12 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
     (zp zl zc xn xp xl xc y : BitVec 64) (ret : Nat) (s : State),
     ImplApart Extracted.program impl ∧
     RetAddr (Extracted.program.link impl) ret ∧
-    CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program DivWVW.fn)
+    CallSetup0 (segAddr Extracted.program DivWVW.fn)
       [zp, zl, zc, xn, xp, xl, xc, y] s ∧
     (xl = zl ∧ DivWVW.Pre R b L zp zl xn xp y s) ∧
-    Returns ((Extracted.program.link impl).withExit ret) s fun s' => ABIReturn s s' ∧ DivWVW.Post R b L zp zl xn xp y s s' :=
+    Returns ((Extracted.program.link impl).withExit ret) (s.setRet ret) fun s' => ABIReturn (s.setRet ret) s' ∧ DivWVW.Post R b L zp zl xn xp y (s.setRet ret) s' :=
   ⟨WStubs.impl, R, 0x1000, [], BitVec.ofNat 64 OA, 2, 2, 0, BitVec.ofNat 64 OB, 2, 2, 7, RET, s0, WStubs.hap,
     hret, setup, pre,
-    correctness WStubs.impl WStubs.hap R 0x1000 [] (BitVec.ofNat 64 OA) 2 2 0 (BitVec.ofNat 64 OB) 2 2 7 RET hret s0 setup pre⟩
+    correctness WStubs.impl WStubs.hap R 0x1000 [] (BitVec.ofNat 64 OA) 2 2 0 (BitVec.ofNat 64 OB) 2 2 7 s0 setup pre RET hret⟩
 
 end FvModexp.Arm64.DivWVWRow.Witness

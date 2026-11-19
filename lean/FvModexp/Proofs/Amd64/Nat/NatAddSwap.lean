@@ -20,11 +20,12 @@ set_option maxRecDepth 20000 in
 theorem preS_mono {stk stk' : Nat} (hk : stk' ≤ stk) {R : RtInv} {b : Nat} {L : List (Nat × Nat)}
     {zp zc xp xl xc yp yl yc : BitVec 64} {s : State} (h : PreS stk R b L zp zc xp xl xc yp yl yc s) :
     PreS stk' R b L zp zc xp xl xc yp yl yc s := by
-  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, hLs, hro, ⟨htg, htr, htw⟩⟩, h1, h2, h3, h4, h5,
+  obtain ⟨⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, hLs, hro, ⟨htg, htr, htw⟩⟩, h1, h2, h3, h4, h5,
     h6, h7, h8, h9, hzo, hzw, h10, h11, h12, h13, h14, hxw, h15, h16, h17, hyw, h18⟩ := h
-  simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw
+  simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hg4 hb' ha hw
   unfold Apart at hga htw
-  refine ⟨⟨⟨hg1, hg2, by simp only [stackguard0, stackguard0Offset, regG, regSP]; omega⟩,
+  refine ⟨⟨⟨hg1, hg2, by simp only [stackguard0, stackguard0Offset, regG, regSP]; omega,
+      by simp only [stackguard0Offset, regG, regSP]; omega⟩,
     ⟨by simp only [regSP]; omega, by simp only [regSP]; omega,
       by simp only [regSP]; exact Janus.Arm64.Memory.accessible_mono _ hw (by omega) (by omega)⟩, hal, hd,
     hout.of_sub (by omega) (by omega), by unfold Apart; omega, hgr, fun r hr => ?_, hro,
@@ -60,9 +61,9 @@ theorem preS_swap {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl xc 
     (h14 : S1.regs 14 = s.regs 14) (hfs : S1.fsBase = s.fsBase)
     (hF : MemFrame s.mem S1.mem (win s 4440 80)) (hreg : S1.mem.regions = s.mem.regions) :
     PreS 4288 R b L zp zc yp yl yc xp xl xc S1 := by
-  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, hLs, hro, ⟨htg, htr, htw⟩⟩, hty, hxc, hyc, hxc40,
+  obtain ⟨⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, hLs, hro, ⟨htg, htr, htw⟩⟩, hty, hxc, hyc, hxc40,
     hyc40, hx40, hy40, hz40, hzl, hzw', hzw, hxacc, hx48, hxh, hxn, hyn, hxw, hyacc, hy48, hyh, hyw, hinv, hok, hmv⟩ := hpre
-  simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw
+  simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hg4 hb' ha hw
   have e152 : (S1.regs 4).toNat = (s.regs 4).toNat - 152 := by
     rw [hsp]; simp only [BitVec.toNat_sub, BitVec.toNat_ofNat]; omega
   have htw' := htw
@@ -81,7 +82,8 @@ theorem preS_swap {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl xc 
   refine ⟨⟨⟨by simp only [regG, stackguard0Offset]; rw [h14]; omega,
         by simp only [regG, stackguard0Offset]; rw [h14, hF.accessible]; exact hg2,
         by simp only [stackguard0, stackguard0Offset, regG, regSP]; rw [h14, e152,
-          hF.readLE _ _ (hFo _ _ (by omega))]; omega⟩,
+          hF.readLE _ _ (hFo _ _ (by omega))]; omega,
+        by simp only [stackguard0Offset, regG, regSP]; rw [h14, e152]; omega⟩,
       ⟨by simp only [regSP]; rw [e152]; omega, by simp only [regSP]; rw [e152]; omega,
         by simp only [regSP]; rw [e152, hF.accessible]; exact Janus.Arm64.Memory.accessible_mono _ hw (by omega) (by omega)⟩,
       by rw [e152]; omega,

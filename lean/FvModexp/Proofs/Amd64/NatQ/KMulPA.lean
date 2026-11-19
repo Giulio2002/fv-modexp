@@ -38,7 +38,7 @@ theorem kmPA (impl : List Amd64.Segment) {R : RtInv} {b : Nat} {L : List (Nat ×
       ReachesRet (LibMul.program.link impl) ret S1 Q) :
     ReachesRet (LibMul.program.link impl) ret s Q := by
   have F := hpre.F
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, -⟩ := F.env
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, -⟩ := F.env
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw
   obtain ⟨h40v, -, -, -, e40, -, -, hgacc, -, hgw, -⟩ := F.gl
   have hW := F.hW

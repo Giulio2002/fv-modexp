@@ -122,9 +122,9 @@ theorem pre : DivLarge.DrsPre R 0x80000 [] (DivRec.drsC (stLen s0.mem ST) 3 2) O
 
 theorem hret : RetAddr (Extracted.program.link WStubs.impl) RET := RetAddr.of_check (by decide +kernel)
 
-theorem setup : CallSetup ((Extracted.program.link WStubs.impl).withExit RET) (segAddr Extracted.program DivLarge.drsFn)
+theorem setup : CallSetup0 (segAddr Extracted.program DivLarge.drsFn)
     args s0 :=
-  ⟨rfl, rfl, fun i h => by simp only [s0, dif_pos h]⟩
+  ⟨rfl, by first | decide | simp | omega, fun i h => by simp only [s0, dif_pos h]⟩
 
 theorem hty : TysOK [] := by intro t ht; simp at ht
 

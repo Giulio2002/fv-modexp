@@ -105,10 +105,11 @@ theorem correctness_okC (impl : List Segment) (hap : ImplApart Extracted.program
         LengthsPass (bytesAt s.mem p.toNat len.toNat))
       (fun s s' => RunArm64.OkRet (bytesAt s.mem p.toNat len.toNat) s' ∧
         RunArm64.FrameW R b (RunArm64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat))) L W s s') := by
+  janus_ensures_old [FvModexp.Spec.RunArm64.EnvW, FvModexp.Spec.RunArm64.Input, FvModexp.Spec.OsakaReceiver, FvModexp.Spec.RunArm64.Globals, FvModexp.Spec.RunArm64.windowW, FvModexp.Spec.RunArm64.NatOne, FvModexp.Spec.RunArm64.StackPool, FvModexp.Spec.bytesAt, Janus.Spec.GuardOK, Janus.Spec.StackOK, FvModexp.Spec.RunArm64.window, FvModexp.Arm64.RunIface.gA, FvModexp.Arm64.RunIface.wbA, FvModexp.Mdl.karatsubaThreshold, FvModexp.Mdl.basicSqrThreshold, FvModexp.Mdl.karatsubaSqrThreshold, FvModexp.Arm64.IExp.pA, Janus.Spec.Pool.newOffset, FvModexp.Spec.byteOf]
   -- the Pool shape is a row binder fixed by the precondition (Janus's PoolShape row pattern; audit, v0.3.1)
   intro ret hret s hs ⟨hS, hpre⟩
   subst hS
-  exact okC impl hap R hmk hmkz hmv hmz hno hgr hmc hwb hget hput hwb4 W hW b L c p len cp ret
+  exact (okC impl hap R hmk hmkz hmv hmz hno hgr hmc hwb hget hput hwb4 W hW b L c p len cp).toOld ret
     hret s hs hpre
 
 end FvModexp.Arm64.Run
@@ -153,12 +154,12 @@ theorem budget2 : RunArm64.okBudget (parseLengths (bytesAt s2.mem p2.toNat (99 :
 
 /-- The returning run at the witness call. -/
 theorem returnsC :
-    Returns ((Extracted.program.link implAt).withExit ret) s2 fun s' =>
-      ABIReturn s2 s' ∧ (RunArm64.OkRet (bytesAt s2.mem p2.toNat (99 : BitVec 64).toNat) s' ∧
-        RunArm64.FrameW R bW (RunArm64.okBudget (parseLengths (bytesAt s2.mem p2.toNat (99 : BitVec 64).toNat)))
-          [] WW s2 s') :=
-  Run.correctness_okC implAt hap R m_mk m_mkz m_mv m_mvz m_no m_gr m_cl m_wb2 StkSh m_get m_put m_wb4 WW (by decide) bW []
-    c2 p2 99 99 ret hret s2 setup2 ⟨rfl, (pre2 budget2)⟩
+    Returns ((Extracted.program.link implAt).withExit ret) (s2.setRet ret) fun s' =>
+      ABIReturn (s2.setRet ret) s' ∧ (RunArm64.OkRet (bytesAt (s2.setRet ret).mem p2.toNat (99 : BitVec 64).toNat) s' ∧
+        RunArm64.FrameW R bW (RunArm64.okBudget (parseLengths (bytesAt (s2.setRet ret).mem p2.toNat (99 : BitVec 64).toNat)))
+          [] WW (s2.setRet ret) s') :=
+  (Run.correctness_okC implAt hap R m_mk m_mkz m_mv m_mvz m_no m_gr m_cl m_wb2 StkSh m_get m_put m_wb4 WW (by decide) bW []
+    c2 p2 99 99) s2 setup2 ⟨rfl, (pre2 budget2)⟩ ret hret
 
 /-- Every hypothesis of `correctness` (the eleven runtime contracts, the window) and every conjunct of its
 precondition hold together, with one call-site state per contract, and the call returns: the shared witness runtime,
@@ -182,7 +183,7 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
     WbLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier4") 4096 R 4 ∧
     624 + 72944 ≤ W ∧
     RetAddr (Extracted.program.link impl) ret ∧
-    CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program RunArm64.fn) [c, p, len, cp] s ∧
+    CallSetup0 (segAddr Extracted.program RunArm64.fn) [c, p, len, cp] s ∧
     StkSh = StkSh ∧ RunArm64.EnvW R L s W ∧ RunArm64.Input R L c p len cp s ∧ OsakaReceiver s.mem c.toNat ∧
     R.inv b L (s.regs 28).toNat (view R.rt L s.mem) ∧ RunArm64.OkReqs R ∧
     RunArm64.Globals R s.mem (RunArm64.windowW s W) ∧ RunArm64.NatOne R s.mem (RunArm64.windowW s W) ∧
@@ -229,9 +230,9 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.gcWriteBarrier4") ∧
       wbSite R (Extracted.program.contractAddr "runtime.gcWriteBarrier4") 4 L b s_c) ∧
-    Returns ((Extracted.program.link impl).withExit ret) s fun s' =>
-      ABIReturn s s' ∧ (RunArm64.OkRet (bytesAt s.mem p.toNat len.toNat) s' ∧
-        RunArm64.FrameW R b (RunArm64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat))) L W s s') :=
+    Returns ((Extracted.program.link impl).withExit ret) (s.setRet ret) fun s' =>
+      ABIReturn (s.setRet ret) s' ∧ (RunArm64.OkRet (bytesAt (s.setRet ret).mem p.toNat len.toNat) s' ∧
+        RunArm64.FrameW R b (RunArm64.okBudget (parseLengths (bytesAt (s.setRet ret).mem p.toNat len.toNat))) L W (s.setRet ret) s') :=
   ⟨implAt, R, bW, [], c2, p2, 99, 99, ret, s2, WW, hap, m_mk, m_mkz, m_mv, m_mvz, m_no, m_gr, m_cl, m_wb2, m_get, m_put,
     m_wb4, by decide, hret, setup2, rfl,
     (pre2 budget2).1, (pre2 budget2).2.1, (pre2 budget2).2.2.1, (pre2 budget2).2.2.2.1, (pre2 budget2).2.2.2.2.1, (pre2 budget2).2.2.2.2.2.1, (pre2 budget2).2.2.2.2.2.2.1, (pre2 budget2).2.2.2.2.2.2.2.1,

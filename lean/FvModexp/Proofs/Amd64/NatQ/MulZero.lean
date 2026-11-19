@@ -55,7 +55,7 @@ theorem zero (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat ×
       Kept s s' ∧ MPost R b H L W zp.toNat zc.toNat st.toNat xp.toNat xl.toNat xc.toNat yp.toNat yl.toNat yc.toNat s s' := by
   have hpre' := hpre
   obtain ⟨hce, hmw, -, -, -, ⟨⟨-, -, hxl12, -⟩, -⟩, -⟩ := hpre'
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, -, -, -⟩ := hce
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, -, -, -⟩ := hce
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw
   have hW : 4608 ≤ W := Nat.le_trans (mulW64_ge _ _) hmw
   have hxy : natVal s.mem xp.toNat xl.toNat * natVal s.mem yp.toNat yl.toNat = 0 := by rw [hy]; simp

@@ -58,7 +58,7 @@ theorem noPreM {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {s X : State} (hce 
       LiveAt R (cA "runtime.newobject") [(X.regs 0).toNat] L b (newobjectRound64 X) (X.regs 14).toNat X.mem
         (liveWin64 X 4096 1) := by
   obtain ⟨ta, t1, t2, hA⟩ := stkTy_at hce hXF
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, hLs, -, -⟩ := hce
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, hLs, -, -⟩ := hce
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw hal
   unfold Apart at hga hA
   have esp : (X.regs 4).toNat = (s.regs 4).toNat - 240 := sp240' hx4 hb'

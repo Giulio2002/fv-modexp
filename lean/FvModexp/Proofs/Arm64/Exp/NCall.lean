@@ -19,7 +19,7 @@ namespace FvModexp.Arm64.ExpN
 theorem hypSumN {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibN.names.contains x = true) {e : Nat} {args : List (BitVec 64)}
     {pre : State → Prop} {post : State → State → Prop}
-    (h : Ensures ((Extracted.program.onlySegments ns).link impl) e args pre post) :
+    (h : Ensures ((Extracted.program.onlySegments ns).link impl) e args pre post) [ArgsFit args] :
     Summary (LibN.program.link impl) e
       (fun s => RetAddr ((Extracted.program.onlySegments ns).link impl) (s.regs 30).toNat ∧ ArgsFrom s 0 args ∧ pre s)
       (fun s s' => (s'.sp = s.sp ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧ s'.regs 18 = s.regs 18) ∧
@@ -95,7 +95,7 @@ theorem callC (impl : List Segment) (hap : ImplApart Extracted.program impl) {ns
     (hacc : S.mem.accessible (sp + 1048) 256 true = true) (h29v : S.mem.readLE (sp + 1048) 8 = f29)
     (h30v : S.mem.readLE (sp + 1056) 8 = ret0) {M0 : Memory} (hsl : SlotEq S.mem M0 sp)
     (hEk : EpiK impl ret0 F sp f29 (S.regs 18) (S.regs 28) M0
-      (Post R b L K costF costR costS costP zp zc st xp xl yp yl mp n s)) :
+      (Post R b L K costF costR costS costP zp zc st xp xl yp yl mp n s)) [ArgsFit args] :
     Reaches ((LibN.program.link impl).withExit ret0) S (IsReturn F) := by
   have hS := hypSumN hap hns hE
   have hSs : S.sp.toNat = sp + 1056 := by rw [hSsp, BitVec.toNat_ofNat]; omega

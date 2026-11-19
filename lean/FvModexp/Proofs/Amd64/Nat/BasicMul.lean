@@ -200,7 +200,7 @@ theorem loop (impl : List Amd64.Segment) (R : RtInv) (hMV' : ∀ b L, Summary0 (
       Inv R b L zp zl zc xp xl xc yp yl s ret i S.mem →
       Reaches ((LibBasicMul.program.link impl).withExit ret) S
         (IsReturn fun s' => ABIReturn s s' ∧ Post R b L zp xp xl yp yl s s') := by
-  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, hLs, -, ⟨htb, htr, htg⟩, htrt, htw⟩, hxyz, hzc, hz40,
+  obtain ⟨⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, hLs, -, ⟨htb, htr, htg⟩, htrt, htw⟩, hxyz, hzc, hz40,
     hzl, hzw, hzg, hzt, hadx, hxacc, hx48, hxh, hxw, hyacc, hy48, hyh, hyw, hap1, hinv0⟩ := hpre
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw htg
   have hfs : (18446744073709551608 + s.fsBase.toNat) % 18446744073709551616 = s.fsBase.toNat - 8 := by omega
@@ -267,11 +267,12 @@ theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
     Ensures ((Extracted.program.onlySegments names).link impl) (segAddr Extracted.program fn)
       [zp, zl, zc, xp, xl, xc, yp, yl, yc]
       (Pre R b L zp zl zc xp xl yp yl) (Post R b L zp xp xl yp yl) := by
+  janus64_ensures_old [FvModexp.Amd64.BasicMul.Pre, FvModexp.Amd64.CallEnv, FvModexp.NatLive, FvModexp.Amd64.win, FvModexp.Amd64.Callees.adxAddr, FvModexp.Amd64.TlsOK]
   rw [show names = LibBasicMul.names from rfl, ← LibBasicMul.eq_only]
   have hMV := addMulVVWWHyp impl hap
   intro ret hret s hs hpre
   have hpre' := hpre
-  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, hLs, -, ⟨htb, htr, htg⟩, htrt, htw⟩, hxyz, hzc, hz40,
+  obtain ⟨⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, hLs, -, ⟨htb, htr, htg⟩, htrt, htw⟩, hxyz, hzc, hz40,
     hzl, hzw, hzg, hzt, hadx, hxacc, hx48, hxh, hxw, hyacc, hy48, hyh, hyw, hap1, hinv⟩ := hpre'
   have hc1 : CodeIn64 ((Extracted.program.onlySegments [addMulVVWWfn]).link impl) (LibBasicMul.program.link impl) := by
     rw [LibBasicMul.eq_only]; exact A64.codeIn_restrict_mono64 hap (sub_of_all (by decide))

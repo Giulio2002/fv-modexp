@@ -13,8 +13,9 @@ theorem ensures_of_summary64 {p : Janus.Amd64.Program} {entry : Nat} {args : Lis
       Janus.Amd64.GoABI.CallSetup (p.withExit ret) entry args s → pre s → spre s)
     (hpost : ∀ ret s s', Janus.Amd64.GoABI.RetAddr p ret →
       Janus.Amd64.GoABI.CallSetup (p.withExit ret) entry args s → pre s → Q s s' →
-      Janus.Amd64.GoABI.ABIReturn s s' ∧ post s s') :
+      Janus.Amd64.GoABI.ABIReturn s s' ∧ post s s') (hinv : Janus.Amd64.GoABI.Ensures.SetRetInv p entry args pre := by janus64_pre_setRet) :
     Janus.Amd64.GoABI.Ensures p entry args pre post := by
+  refine Janus.Amd64.GoABI.Ensures.of_old hinv ?_
   intro ret hret s hs hp
   obtain ⟨k, s', hst, hr, hq⟩ := hsum s hs.rip (hpre ret s hret hs hp)
   refine Janus.Amd64.GoABI.returns_of_steps (Janus.Amd64.Program.Steps.withExit hst hret.fetch_none) ?_

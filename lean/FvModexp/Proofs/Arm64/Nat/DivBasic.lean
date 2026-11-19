@@ -45,6 +45,7 @@ theorem ensL (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
       [qp, ql, qc, st, up, ul, uc, vp, vl, vc]
       (Pre R b L qp.toNat ql.toNat st.toNat up.toNat ul.toNat uc.toNat vp.toNat vl.toNat)
       (PostL R b L qp.toNat ql.toNat st.toNat up.toNat ul.toNat vp.toNat vl.toNat) := by
+  janus_ensures_old [FvModexp.Arm64.DivBasic.Pre, FvModexp.Arm64.CallEnv, FvModexp.Arm64.StackNat.wbA, FvModexp.Arm64.win, FvModexp.natVal, FvModexp.StkOK, FvModexp.stCap, FvModexp.stW, FvModexp.Arm64.DivBasic.freeP, FvModexp.Arm64.DivBasic.freeN, FvModexp.stLen, Janus.Spec.GuardOK, Janus.Spec.StackOK, FvModexp.NatLive]
   rw [show names = LibDivBasic.names from rfl, ← LibDivBasic.eq_only]
   intro ret hret s hs hpre
   janus_intro hs
@@ -66,7 +67,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
       [qp, ql, qc, st, up, ul, uc, vp, vl, vc]
       (Pre R b L qp.toNat ql.toNat st.toNat up.toNat ul.toNat uc.toNat vp.toNat vl.toNat)
       (Post R b L qp.toNat ql.toNat st.toNat up.toNat ul.toNat vp.toNat vl.toNat) :=
-  (ensL impl hap R hgr hmc hwb b L qp ql qc st up ul uc vp vl vc).mono (fun _ h => h) (fun _ _ _ h => h.toPost)
+  (ensL impl hap R hgr hmc hwb b L qp ql qc st up ul uc vp vl vc).mono_ret (fun _ h => h) (fun _ _ _ _ h => h.toPost)
 
 set_option linter.defProp false in
 /-- `ens` as a callee summary in a caller whose program keeps the functions `ms ⊇ names` (CONVENTIONS §4). -/

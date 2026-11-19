@@ -18,17 +18,18 @@ theorem CallEnv.callee {R : RtInv} {L : List (Nat × Nat)} {s s1 : State} {stk a
     (hfs : s1.fsBase = s.fsBase) (hd8 : d % 8 = 0) (hk : d + stk1 ≤ stk) (ha : above1 ≤ d + above)
     (hF : MemFrame s.mem s1.mem (win s stk above)) (hreg : s1.mem.regions = s.mem.regions) :
     CallEnv R L s1 stk1 above1 := by
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb, ha', hw⟩, hal, hdl, hout, hga, hgr, hLs, hro, ⟨htb, htr, htg⟩, htrt, htw⟩ := h
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb, ha', hw⟩, hal, hdl, hout, hga, hgr, hLs, hro, ⟨htb, htr, htg⟩, htrt, htw⟩ := h
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb ha' hw
   unfold Apart at hga htw
   have hgr' : s1.mem.readLE ((s1.regs 14).toNat + 16) 8 = s.mem.readLE ((s.regs 14).toNat + 16) 8 := by
     rw [hg]; exact hF.readLE _ _ (by simp only [win, outside_cons, outside_nil, and_true]; omega)
   have htls : s1.mem.readLE (s1.fsBase.toNat - 8) 8 = s.mem.readLE (s.fsBase.toNat - 8) 8 := by
     rw [hfs]; exact hF.readLE _ _ (by simp only [win, outside_cons, outside_nil, and_true]; omega)
-  refine ⟨⟨?_, ?_, ?_⟩, ⟨?_, ?_, ?_⟩, ?_, ?_, ?_, ?_, ?_, ?_, hro, ⟨?_, ?_, ?_⟩, ?_, ?_⟩
+  refine ⟨⟨?_, ?_, ?_, ?_⟩, ⟨?_, ?_, ?_⟩, ?_, ?_, ?_, ?_, ?_, ?_, hro, ⟨?_, ?_, ?_⟩, ?_, ?_⟩
   · simp only [stackguard0Offset, regG]; rw [hg]; exact hg1
   · simp only [stackguard0Offset, regG]; rw [hg, hF.accessible]; exact hg2
   · simp only [stackguard0, stackguard0Offset, regG, regSP]; rw [hg] at hgr' ⊢; rw [hgr', hsp]; omega
+  · first | omega | (simp only [stackguard0Offset, regG, regSP]; omega) | (simp_all only [stackguard0Offset, regG, regSP, Apart]; omega)
   · simp only [regSP]; omega
   · simp only [regSP]; omega
   · simp only [regSP]; rw [hF.accessible, hsp]; exact Janus.Arm64.Memory.accessible_mono _ hw (by omega) (by omega)

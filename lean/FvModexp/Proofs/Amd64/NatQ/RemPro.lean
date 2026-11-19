@@ -55,7 +55,7 @@ theorem pro (impl : List Amd64.Segment) (R : RtInv) (L : List (Nat × Nat)) (s :
     (k : ∀ P, AtNat s P z.toNat zl.toNat zc.toNat st.toNat u.toNat ul.toNat uc.toNat vl →
       ReachesRet (LibRem.program.link impl) (retAddrOf s) P Q) :
     ReachesRet (LibRem.program.link impl) (retAddrOf s) s Q := by
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, hLs, -, -⟩ := hce
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, hLs, -, -⟩ := hce
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw
   clear hLs hout hgr
   have hnaH : Hide (NoAlias z.toNat zc.toNat u.toNat uc.toNat) := ⟨hna⟩

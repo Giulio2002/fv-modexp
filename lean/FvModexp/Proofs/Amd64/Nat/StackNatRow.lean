@@ -23,7 +23,7 @@ theorem correctness (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted
     Ensures (Extracted.program.link impl) (segAddr Extracted.program StackNat.fn) [st, n]
       (fun s => StackNat.Pre R b L 4192 24 st.toNat n.toNat s)
       (fun s s' => StackNat.Post R b L 4192 24 st.toNat n.toNat s s') :=
-  Ensures.full64 hap (by simp [numIntRegs]) (StackNat.ens impl hap R hgr hmc hwb b L st n)
+  Ensures.full64 (hinv := by janus64_pre_setRet [FvModexp.Amd64.StackNat.Pre, FvModexp.Amd64.CallEnv, FvModexp.StkOK, FvModexp.Amd64.win, FvModexp.stCap, FvModexp.stW, FvModexp.stLen, FvModexp.Amd64.StackNat.wbA, FvModexp.Amd64.TlsOK, FvModexp.NatLive]) hap (by simp [numIntRegs]) (StackNat.ens impl hap R hgr hmc hwb b L st n)
 
 end FvModexp.Amd64.StackNatRow
 
@@ -51,9 +51,9 @@ def s0 : State :=
 
 theorem hret : RetAddr (Extracted.program.link WStubs.impl) RET := RetAddr.of_check (by decide +kernel)
 
-theorem setup : CallSetup ((Extracted.program.link WStubs.impl).withExit RET) (segAddr Extracted.program StackNat.fn)
+theorem setup : CallSetup0 (segAddr Extracted.program StackNat.fn)
     args s0 :=
-  ⟨rfl, by decide +kernel, rfl, by decide, by
+  ⟨rfl, rfl, by decide, by
     intro i h; simp only [args, List.length_cons, List.length_nil] at h
     rcases (by omega : i = 0 ∨ i = 1) with rfl | rfl <;> rfl, rfl⟩
 
@@ -83,7 +83,9 @@ theorem pre : StackNat.Pre R 0x1000 [] 4192 24 OA 1 s0 := by
     | (simp only [Apart]; decide +kernel)
     | (rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
     | (refine ⟨by decide +kernel, ?_, by decide +kernel⟩; rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (refine ⟨by decide +kernel, ?_, by decide +kernel, by decide +kernel⟩; rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
     | (refine ⟨by decide +kernel, by decide +kernel, ?_⟩; rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
+    | (refine ⟨by decide +kernel, by decide +kernel, ?_, by decide +kernel⟩; rw [show s0.mem = mem0 from rfl, acc0]; decide +kernel)
     | (simp only [StkOK, NatLive, Held, stW, stLen, stCap, InRanges, outside_cons, outside_nil, and_true, rt_eq,
         show s0.mem = mem0 from rfl, acc0]; decide +kernel)
     | decide +kernel
@@ -98,7 +100,7 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : 
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R ∧
     WbLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 4096 R 2 ∧
     RetAddr (Extracted.program.link impl) ret ∧
-    CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program StackNat.fn) [st, n] s ∧
+    CallSetup0 (segAddr Extracted.program StackNat.fn) [st, n] s ∧
     StackNat.Pre R b L 4192 24 st.toNat n.toNat s ∧
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.rip = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.growslice") ∧
@@ -109,8 +111,8 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : 
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.rip = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.gcWriteBarrier2") ∧
       wbSite R (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 2 L b s_c) ∧
-    Returns ((Extracted.program.link impl).withExit ret) s fun s' =>
-      ABIReturn s s' ∧ StackNat.Post R b L 4192 24 st.toNat n.toNat s s' :=
+    Returns ((Extracted.program.link impl).withExit ret) (s.setRet ret) fun s' =>
+      ABIReturn (s.setRet ret) s' ∧ StackNat.Post R b L 4192 24 st.toNat n.toNat (s.setRet ret) s' :=
   ⟨WStubs.impl, R, 0x1000, [], BitVec.ofNat 64 OA, 1, RET, s0, WStubs.hap,
     by rw [WStubs.addr_gr]; exact WStubs.gr [] (by intro t ht; simp at ht) _,
     by rw [WStubs.addr_cl]; exact WStubs.cl R,
@@ -122,6 +124,6 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : 
     correctness WStubs.impl WStubs.hap R (by rw [WStubs.addr_gr]; exact WStubs.gr [] (by intro t ht; simp at ht) _)
       (by rw [WStubs.addr_cl]; exact WStubs.cl R)
       (by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] (by intro t ht; simp at ht) _) 0x1000 [] (BitVec.ofNat 64 OA) 1
-      RET hret s0 setup pre⟩
+      s0 setup pre RET hret⟩
 
 end FvModexp.Amd64.StackNatRow.Witness

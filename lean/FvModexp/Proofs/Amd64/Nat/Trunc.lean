@@ -64,6 +64,7 @@ theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
     Hyp2 impl R names 4192 64 := by
   intro b L z zl zc x xl xc n
   rw [show names = LibTrunc.names from rfl, ← LibTrunc.eq_only]
+  janus64_ensures_old [FvModexp.Amd64.EvenHyp.TruncPre, FvModexp.NatNorm, FvModexp.Amd64.CallEnv, FvModexp.Amd64.EvenHyp.WrOut, FvModexp.Amd64.EvenHyp.RdIn, FvModexp.Amd64.win, FvModexp.Amd64.TlsOK, FvModexp.NatLive]
   intro ret hret s hs hpre
   janus64_intro hs
   refine Summary.returns (full impl hap R hmk hmv b L z.toNat zl.toNat zc.toNat x.toNat xl.toNat xc.toNat

@@ -205,7 +205,7 @@ theorem DivPostLGQ.toL {R : RtInv} {b c r' : Nat} {L : List (Nat × Nat)} {stk a
 theorem DivHypLGQ.toL {impl : List Segment} {R : RtInv} {ns : List String} {stk above : Nat}
     {cost : Nat → Nat → Nat} (h : DivHypLGQ impl R ns stk above cost) : DivHypLQ impl R ns stk above cost :=
   fun H b L z zl zc st z2 z2l z2c u ul uc v vl vc =>
-    (h H b L z zl zc st z2 z2l z2c u ul uc v vl vc).mono (fun _ hp => DivPreQ.toG hp) (fun _ _ _ hq => DivPostLGQ.toL hq)
+    (h H b L z zl zc st z2 z2l z2c u ul uc v vl vc).mono_ret (fun _ hp => DivPreQ.toG hp) (fun _ _ _ _ hq => DivPostLGQ.toL hq)
 
 end FvModexp.Arm64.ExpSlow
 

@@ -33,7 +33,7 @@ theorem two1M (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (dc : Nat → Na
       ReachesRet (LibDiv.program.link impl) (retAddrOf s) X Q) :
     ReachesRet (LibDiv.program.link impl) (retAddrOf s) s Q := by
   have hp := hpre
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -⟩ := hp.ce
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, -⟩ := hp.ce
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw
   have r1 := hp.su; have r2 := hp.sul; have r3 := hp.suc; have r4 := hp.sv; have r5 := hp.svl; have r6 := hp.svc
   have hvl : vl < 2 ^ 40 := hp.vo.1

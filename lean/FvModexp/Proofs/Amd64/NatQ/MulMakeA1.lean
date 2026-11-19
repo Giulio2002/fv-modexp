@@ -61,7 +61,7 @@ theorem alloc_head (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (
     ReachesRet (LibMul.program.link impl) (retAddrOf s) s Q := by
   obtain ⟨hce, hmw, -, -, -, ⟨⟨hxlc, hxc40, hxl12, -, hxh, -⟩, ⟨hylc, hyc40, hyl12, -, hyh, -⟩,
     ⟨hzc40, hzl, -, -, -, -⟩, -⟩, -, -, -, -⟩ := hpre
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, -, -, -⟩ := hce
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, -, -, -⟩ := hce
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw
   have hW : 4608 ≤ W := Nat.le_trans (mulW64_ge _ _) hmw
   obtain ⟨-, hx48⟩ := hxh (by omega)

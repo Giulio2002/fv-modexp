@@ -684,6 +684,7 @@ theorem ens_lib (impl : List Amd64.Segment) (R : RtInv)
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc y : BitVec 64) :
     Ensures (LibAddVW.program.link impl) entry [zp, zl, zc, xp, xl, xc, y]
       (fun s => xl = zl ∧ Pre R b L zp zl zc xp xc s) (fun s s' => Post R b L zp zl xp y s s') := by
+  janus64_ensures_old [FvModexp.Amd64.AddVW.Pre, FvModexp.Amd64.Callees.CallEnvND, FvModexp.NatLive, FvModexp.Amd64.win]
   intro ret hret s hs ⟨hxz, hpre⟩
   have hpre' := hpre
   obtain ⟨⟨hg, ⟨hb', ha, hw⟩, hal, hout, hga, hgr, hLs, htls⟩, hzc, hxc, hzc63, hxc63, hzl, hzw, hzg,

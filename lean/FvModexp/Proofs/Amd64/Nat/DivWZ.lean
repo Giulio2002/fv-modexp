@@ -75,7 +75,7 @@ theorem setZero2 (impl : List Amd64.Segment) (R : RtInv)
     exact setZero impl R hmv b L zp zl zc zp xc s
       ⟨hpc, hra, hx15, hdf, h0, h3, h1, h7, h6, h8, h9⟩ (hpre.toPre fun _ _ => Or.inl rfl)
   have hpre' := hpre
-  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, hLs, -, ⟨htg, htr, htw⟩⟩, -, -, -, hz40, hzl, -, -,
+  obtain ⟨⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, hLs, -, ⟨htg, htr, htw⟩⟩, -, -, -, hz40, hzl, -, -,
     -, -, -, -, hxw, hinv, -, hmv'⟩ := hpre'
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw
   simp only [win, outside_cons, outside_nil, and_true] at hxw
@@ -142,6 +142,7 @@ theorem ens2 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
     Ensures ((Extracted.program.onlySegments names).link impl) (segAddr Extracted.program fn)
       [zp, zl, zc, xp, xl, xc, y]
       (Pre2 R b L zp zc xp xl y) (Post R b L zp zc xp xl y) := by
+  janus64_ensures_old [FvModexp.Amd64.DivW.Pre2, FvModexp.Amd64.CallEnv, FvModexp.Amd64.DivW.wordT, FvModexp.NatLive, FvModexp.Amd64.win, FvModexp.NatNorm, FvModexp.Amd64.TlsOK]
   rw [show names = LibDivW.names from rfl, ← LibDivW.eq_only]
   intro ret hret s hs hpre
   janus64_intro hs

@@ -144,7 +144,7 @@ theorem entP {impl : List Amd64.Segment} (Q : State → Prop) {R : RtInv} {b : N
       ReachesRet (LibW.program.link impl) ret0 S' Q) :
     ReachesRet (LibW.program.link impl) ret0 s Q := by
   obtain ⟨hC, hX, hY, -, hlm, -, -⟩ := hP
-  obtain ⟨⟨⟨g1, g2, g3⟩, ⟨hbel, h48, hacc⟩, -, -, -, -, -, -, -, -⟩, -, -, -, -, -, -, hins, -⟩ := hC
+  obtain ⟨⟨⟨g1, g2, g3, _⟩, ⟨hbel, h48, hacc⟩, -, -, -, -, -, -, -, -⟩, -, -, -, -, -, -, hins, -⟩ := hC
   obtain ⟨⟨-, hxa, hx48, -, hxw⟩, hxn, -⟩ := hins xp xl (by simp)
   obtain ⟨⟨-, hya, hy48, -, hyw⟩, hyn, -⟩ := hins yp yl (by simp)
   obtain ⟨h0, h3, h1, h7, h6, h8, h9, h10, hy1, hy2, -⟩ := hR

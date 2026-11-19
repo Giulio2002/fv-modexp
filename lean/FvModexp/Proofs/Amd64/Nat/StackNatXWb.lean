@@ -32,7 +32,7 @@ theorem joinW (impl : List Amd64.Segment) (R : RtInv)
     ReachesRet (LibStackNat.program.link impl) (retAddrOf s) S fun s' =>
       RegsOK s s' ∧ PostXL R b L 4192 24 st.toNat n.toNat s s' := by
   have hpre := h.pre
-  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, hLs, hro, htls⟩, hsv, hok, hstw, harr, hn16, hln,
+  obtain ⟨⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, hLs, hro, htls⟩, hsv, hok, hstw, harr, hn16, hln,
     hcost, hinv0, hwbf, hwbA, hfa⟩ := hpre
   obtain ⟨hst8, hsth, hstacc, hst48, hnl, hlc, hcb⟩ := hok
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw

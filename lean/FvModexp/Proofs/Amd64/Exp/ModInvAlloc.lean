@@ -53,7 +53,7 @@ theorem zalloc (impl : List Amd64.Segment) (R : RtInv)
       ReachesRet (LibW.program.link impl) (retAddrOf s) S' Q) :
     ReachesRet (LibW.program.link impl) (retAddrOf s) S Q := by
   have hpre' := hpre
-  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgrt, hLs, -, -⟩, hsv, -, hn1, hn2, -, -, -, -, -, -, -,
+  obtain ⟨⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgrt, hLs, -, -⟩, hsv, -, hn1, hn2, -, -, -, -, -, -, -,
     -, -, -, -, -, -, -, -, -, -, ⟨-, hcost⟩, hinv, hty, -, -, hra⟩ := hpre'
   obtain ⟨a14, afs, ax15, adf⟩ := hab
   simp only [stackguard0, stackguard0Offset, regG, regSP, K, A] at hg1 hg2 hg3 hb' ha hw hga hgrt hout

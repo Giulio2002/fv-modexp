@@ -50,6 +50,7 @@ theorem hyp {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program
     rw [show mvE = cA "runtime.memmove" by decide]; exact MemmoveZeroLive64.of_codeIn hc hmz
   intro H b L z zl zc st x xl xc y yl yc m ml mc
   rw [← LibW.eq_only, ← fn_eq, fnBaseX]
+  janus64_ensures_old [FvModexp.Amd64.NHyp.StkArg, FvModexp.Amd64.NHyp.CPre, FvModexp.stkR, FvModexp.natVal, FvModexp.stLen, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.win, FvModexp.Amd64.StackNat.wT, FvModexp.Amd64.EvenHyp.WrOut, FvModexp.Amd64.EvenHyp.RdIn, FvModexp.NatNorm, FvModexp.Amd64.NHyp.freeOf, FvModexp.Amd64.ExpHyp.StackOK', FvModexp.stCap, FvModexp.stW, FvModexp.Amd64.StackNat.wbA, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.Callees.adxAddr, FvModexp.stkRes, FvModexp.potK, FvModexp.Amd64.TlsOK, FvModexp.Mdl.karatsubaThreshold, FvModexp.Mdl.basicSqrThreshold, FvModexp.Mdl.karatsubaSqrThreshold, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.StkOK]
   intro ret hret s hs hp
   janus64_intro hs
   obtain ⟨⟨hy, hm⟩, ⟨hC, hX0, hY, hM, hst⟩, hX, hH0⟩ := hp

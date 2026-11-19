@@ -46,6 +46,7 @@ theorem ens {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : 
         BitVec.ofNat 64 xl, BitVec.ofNat 64 xc, BitVec.ofNat 64 yp, BitVec.ofNat 64 yl, BitVec.ofNat 64 yc,
         BitVec.ofNat 64 lm]
       (Pre R b L K sqC mlC zp zc st xp xl xc yp yl lm) (Post R b L K sqC mlC zp zc st xp xl yp yl lm) := by
+  janus_ensures_old [FvModexp.Arm64.P2W4.Pre, FvModexp.Arm64.P2W4.EPre, FvModexp.natVal, FvModexp.stLen, FvModexp.Arm64.P2W4.EEnv, FvModexp.Arm64.RunIface.Globals, FvModexp.Arm64.StackNat.wT, FvModexp.Arm64.P2W4.OE, FvModexp.NatNorm, FvModexp.Arm64.RunIface.gA, FvModexp.StkOK, FvModexp.stCap, FvModexp.stW, FvModexp.Arm64.StackNat.wbA, FvModexp.Arm64.P2W4.free, FvModexp.Arm64.EvenHyp.NatOne, FvModexp.stkWs, FvModexp.Arm64.EvenHyp.StkApart, FvModexp.stkR, FvModexp.Arm64.RunIface.wbA, FvModexp.NatLive, FvModexp.Arm64.EvenHyp.natOneA, FvModexp.stkRes, FvModexp.potK]
   have hc := codeIn_ofImpl_restrict_of_apart hap LibW.names
   rw [← LibW.eq_only] at hc
   have hgrL : GrowsliceLiveContract (LibW.program.link impl) grE 4096 R := by

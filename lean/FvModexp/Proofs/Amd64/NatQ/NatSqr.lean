@@ -30,6 +30,7 @@ theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
       [zp, zl, zc, st, xp, xl, xc]
       (SPre R b H L W zp.toNat zc.toNat st.toNat xp.toNat xl.toNat xc.toNat)
       (SPost R b H L W zp.toNat zc.toNat st.toNat xp.toNat xl.toNat xc.toNat) := by
+  janus64_ensures_old [FvModexp.Amd64.Q.NatSqr.SPre, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.win, FvModexp.Amd64.NatAdd.wordT, FvModexp.NatLive, FvModexp.Amd64.Q.NatSqr.guard, FvModexp.Amd64.Q.NatSqr.tls, FvModexp.Amd64.Q.NatSqr.StkSep, FvModexp.Amd64.Q.NatSqr.StkPre, FvModexp.stLen, FvModexp.stkR, FvModexp.Amd64.Callees.adxAddr, FvModexp.Amd64.TlsOK, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.RunIface.wbA, FvModexp.Amd64.Q.BasicSqr.freeP, FvModexp.Amd64.Q.BasicSqr.freeN, FvModexp.StkOK, FvModexp.stCap, FvModexp.stW, FvModexp.Amd64.StackNat.wbA, FvModexp.stkRes, FvModexp.potK]
   rw [show names = LibSqr.names from rfl, ← LibSqr.eq_only]
   intro ret hret s hs hpre
   janus64_intro hs

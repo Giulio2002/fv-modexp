@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Amd64.SetRetLemmas
 import FvModexp.Proofs.Amd64.Exp.P2DFull
 
 set_option autoImplicit false
@@ -39,6 +40,21 @@ theorem ens {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program
   have hS := sumF hap hmkL hW2 hW4 hns hnf hrh haR hlh haL b L stk 112 hk1 hkW2 hkW4 hk2 hkR hkL (by decide)
     z.toNat zl.toNat zc.toNat st.toNat x.toNat xl.toNat xc.toNat y yl yc lm.toNat
   rw [← LibW.eq_only, fnE_eq]
+  refine Ensures.of_old (fun s ret hs hret hp => ?_) ?_
+  · -- the precondition's `∃ op` (the `natOne` limb pointer) is pulled out and the operand list expanded first; the guards
+    -- `0 < zc`, `0 < stCap` are case-split (the pilot's `divpre_setRet` pattern); `XGc` reads the `natOne` word, apart from the
+    -- return slot by `NatOne`'s `Outside natOneA 24 (win …)` (under the `∃ op`)
+    have hnA : Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.natOne» + 8 ≤ (s.regs 4).toNat ∨ (s.regs 4).toNat + 8 ≤ Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.natOne» := by
+      obtain ⟨-, ⟨-, -, -, -, -, -, op, hN, -⟩, -⟩ := hp
+      have h := hN.2.2.2.2.2.2.1
+      simp only [EvenHyp.natOneA, win, outside_append, outside_cons, outside_nil, and_true] at h
+      omega
+    by_cases h2 : 0 < zc.toNat <;> by_cases h3 : 0 < stCap s.mem st.toNat <;>
+    (simp only [FvModexp.Amd64.NHyp.StkArg, FvModexp.Amd64.NHyp.CPre, FvModexp.stLen, FvModexp.natVal, FvModexp.Amd64.EvenHyp.NatOne, FvModexp.Amd64.win, FvModexp.Amd64.ExpHyp.stWs, FvModexp.Amd64.NHyp.StkApart, FvModexp.Amd64.NHyp.XGc, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.StackNat.wT, FvModexp.Amd64.EvenHyp.WrOut, FvModexp.Amd64.EvenHyp.RdIn, FvModexp.NatNorm, FvModexp.Amd64.NHyp.freeOf, FvModexp.Amd64.ExpHyp.StackOK', FvModexp.stCap, FvModexp.stW, FvModexp.Amd64.StackNat.wbA, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.Callees.adxAddr, FvModexp.Amd64.EvenHyp.natOneA, FvModexp.stkWs, FvModexp.Amd64.TlsOK, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.StkOK] at hp h3 ⊢
+     simp only [forall_mem_pair2, ← exists_and_left, ← exists_and_right] at hp ⊢
+     obtain ⟨op, hp⟩ := hp
+     refine ⟨op, ?_⟩
+     janus64_pre_setRet_core s ret hs hret hp [FvModexp.Amd64.NHyp.StkArg, FvModexp.Amd64.NHyp.CPre, FvModexp.stLen, FvModexp.natVal, FvModexp.Amd64.EvenHyp.NatOne, FvModexp.Amd64.win, FvModexp.Amd64.ExpHyp.stWs, FvModexp.Amd64.NHyp.StkApart, FvModexp.Amd64.NHyp.XGc, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.StackNat.wT, FvModexp.Amd64.EvenHyp.WrOut, FvModexp.Amd64.EvenHyp.RdIn, FvModexp.NatNorm, FvModexp.Amd64.NHyp.freeOf, FvModexp.Amd64.ExpHyp.StackOK', FvModexp.stCap, FvModexp.stW, FvModexp.Amd64.StackNat.wbA, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.Callees.adxAddr, FvModexp.Amd64.EvenHyp.natOneA, FvModexp.stkWs, FvModexp.Amd64.TlsOK, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.StkOK, FvModexp.Amd64.readLE_setRet_or_zero, FvModexp.Amd64.natNorm_setRet, List.cons_append, List.nil_append, h2, h3, false_implies, true_implies])
   intro ret hret s hs ⟨hy, hP, hxl, hxc, hX1, hX2, hX3, _⟩
   janus64_intro hs
   refine Summary.returns hS hret h_rip (by rw [retAddrOf, h_ret])

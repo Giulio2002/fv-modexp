@@ -5,6 +5,7 @@ import FvModexp.Proofs.Amd64.Witness.StubsGrow
 import FvModexp.Proofs.Amd64.Int.ModRowW
 import FvModexp.Proofs.Amd64.Witness.Stubs
 import FvModexp.Proofs.Amd64.Nat.RowLink
+import FvModexp.Proofs.Amd64.SetRetLemmas
 
 set_option autoImplicit false
 
@@ -49,6 +50,57 @@ theorem fn_eq : RunIface.P ++ "(*Int).Mod" = fnModL := by decide
     IntPost R b (ModBudget (max (lenW s.mem z.toNat) (lenW s.mem y.toNat))) L 41800 16 z.toNat
       (IntV s.mem z.toNat % IntV s.mem y.toNat) s s' ∧ IntV s'.mem y.toNat = IntV s.mem y.toNat
 
+theorem modpre_setRet_pp (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (S : PoolShape) (z y : BitVec 64)  (s : State) (ret : Nat) {p : Janus.Amd64.Program} {entry : Nat} {args : List W64} (hs : CallSetup0 entry args s) (hret : RetAddr p ret) (hg0 : 0 < s.mem.readLE (z.toNat + 24) 8) (hg1 : 0 < s.mem.readLE (y.toNat + 24) 8)
+    (hp : Pre R b L S z y s) :
+    Pre R b L S z y (s.setRet ret) := by
+  simp only [FvModexp.Amd64.ModRow.Pre, FvModexp.Amd64.RunIface.IntPre, List.forall_mem_cons, List.forall_mem_nil, List.pairwise_cons, List.mem_cons, List.not_mem_nil, or_false, List.Pairwise.nil, and_true, true_and, forall_eq, List.mem_singleton, forall_eq_or_imp, false_implies, implies_true, forall_const, List.Pairwise.nil] at hp ⊢
+  janus64_pre_setRet_core s ret hs hret hp [FvModexp.Amd64.ModRow.Pre, FvModexp.Amd64.RunIface.IntPre, FvModexp.Amd64.RunIface.lenW, FvModexp.Amd64.RunIface.IntV, FvModexp.Amd64.RunIface.IntLenLe, FvModexp.Amd64.RunIface.maxW, FvModexp.Amd64.RunIface.PoolG, FvModexp.Amd64.win, FvModexp.Amd64.RunIface.ModX, FvModexp.Amd64.Callees.adxAddr, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Exp.B, FvModexp.Amd64.RunIface.IntOK, FvModexp.natVal, FvModexp.Amd64.RunIface.stackPoolA, Janus.Spec.Pool.newOffset, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.TlsOK, FvModexp.Mdl.karatsubaThreshold, FvModexp.Mdl.basicSqrThreshold, FvModexp.Mdl.karatsubaSqrThreshold, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.Amd64.readLE_setRet_or_zero, FvModexp.Amd64.natNorm_setRet, hg0, hg1, false_implies, true_implies]
+
+theorem modpre_setRet_pn (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (S : PoolShape) (z y : BitVec 64)  (s : State) (ret : Nat) {p : Janus.Amd64.Program} {entry : Nat} {args : List W64} (hs : CallSetup0 entry args s) (hret : RetAddr p ret) (hg0 : 0 < s.mem.readLE (z.toNat + 24) 8) (hg1 : ¬ 0 < s.mem.readLE (y.toNat + 24) 8)
+    (hp : Pre R b L S z y s) :
+    Pre R b L S z y (s.setRet ret) := by
+  simp only [FvModexp.Amd64.ModRow.Pre, FvModexp.Amd64.RunIface.IntPre, List.forall_mem_cons, List.forall_mem_nil, List.pairwise_cons, List.mem_cons, List.not_mem_nil, or_false, List.Pairwise.nil, and_true, true_and, forall_eq, List.mem_singleton, forall_eq_or_imp, false_implies, implies_true, forall_const, List.Pairwise.nil] at hp ⊢
+  janus64_pre_setRet_core s ret hs hret hp [FvModexp.Amd64.ModRow.Pre, FvModexp.Amd64.RunIface.IntPre, FvModexp.Amd64.RunIface.lenW, FvModexp.Amd64.RunIface.IntV, FvModexp.Amd64.RunIface.IntLenLe, FvModexp.Amd64.RunIface.maxW, FvModexp.Amd64.RunIface.PoolG, FvModexp.Amd64.win, FvModexp.Amd64.RunIface.ModX, FvModexp.Amd64.Callees.adxAddr, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Exp.B, FvModexp.Amd64.RunIface.IntOK, FvModexp.natVal, FvModexp.Amd64.RunIface.stackPoolA, Janus.Spec.Pool.newOffset, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.TlsOK, FvModexp.Mdl.karatsubaThreshold, FvModexp.Mdl.basicSqrThreshold, FvModexp.Mdl.karatsubaSqrThreshold, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.Amd64.readLE_setRet_or_zero, FvModexp.Amd64.natNorm_setRet, hg0, hg1, false_implies, true_implies]
+
+theorem modpre_setRet_p (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (S : PoolShape) (z y : BitVec 64)  (s : State) (ret : Nat) {p : Janus.Amd64.Program} {entry : Nat} {args : List W64} (hs : CallSetup0 entry args s) (hret : RetAddr p ret) (hg0 : 0 < s.mem.readLE (z.toNat + 24) 8)
+    (hp : Pre R b L S z y s) :
+    Pre R b L S z y (s.setRet ret) := by
+  by_cases hg1 : 0 < s.mem.readLE (y.toNat + 24) 8
+  · exact modpre_setRet_pp R b L S z y  s ret hs hret hg0 hg1 hp
+  · exact modpre_setRet_pn R b L S z y  s ret hs hret hg0 hg1 hp
+
+theorem modpre_setRet_np (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (S : PoolShape) (z y : BitVec 64)  (s : State) (ret : Nat) {p : Janus.Amd64.Program} {entry : Nat} {args : List W64} (hs : CallSetup0 entry args s) (hret : RetAddr p ret) (hg0 : ¬ 0 < s.mem.readLE (z.toNat + 24) 8) (hg1 : 0 < s.mem.readLE (y.toNat + 24) 8)
+    (hp : Pre R b L S z y s) :
+    Pre R b L S z y (s.setRet ret) := by
+  simp only [FvModexp.Amd64.ModRow.Pre, FvModexp.Amd64.RunIface.IntPre, List.forall_mem_cons, List.forall_mem_nil, List.pairwise_cons, List.mem_cons, List.not_mem_nil, or_false, List.Pairwise.nil, and_true, true_and, forall_eq, List.mem_singleton, forall_eq_or_imp, false_implies, implies_true, forall_const, List.Pairwise.nil] at hp ⊢
+  janus64_pre_setRet_core s ret hs hret hp [FvModexp.Amd64.ModRow.Pre, FvModexp.Amd64.RunIface.IntPre, FvModexp.Amd64.RunIface.lenW, FvModexp.Amd64.RunIface.IntV, FvModexp.Amd64.RunIface.IntLenLe, FvModexp.Amd64.RunIface.maxW, FvModexp.Amd64.RunIface.PoolG, FvModexp.Amd64.win, FvModexp.Amd64.RunIface.ModX, FvModexp.Amd64.Callees.adxAddr, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Exp.B, FvModexp.Amd64.RunIface.IntOK, FvModexp.natVal, FvModexp.Amd64.RunIface.stackPoolA, Janus.Spec.Pool.newOffset, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.TlsOK, FvModexp.Mdl.karatsubaThreshold, FvModexp.Mdl.basicSqrThreshold, FvModexp.Mdl.karatsubaSqrThreshold, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.Amd64.readLE_setRet_or_zero, FvModexp.Amd64.natNorm_setRet, hg0, hg1, false_implies, true_implies]
+
+theorem modpre_setRet_nn (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (S : PoolShape) (z y : BitVec 64)  (s : State) (ret : Nat) {p : Janus.Amd64.Program} {entry : Nat} {args : List W64} (hs : CallSetup0 entry args s) (hret : RetAddr p ret) (hg0 : ¬ 0 < s.mem.readLE (z.toNat + 24) 8) (hg1 : ¬ 0 < s.mem.readLE (y.toNat + 24) 8)
+    (hp : Pre R b L S z y s) :
+    Pre R b L S z y (s.setRet ret) := by
+  simp only [FvModexp.Amd64.ModRow.Pre, FvModexp.Amd64.RunIface.IntPre, List.forall_mem_cons, List.forall_mem_nil, List.pairwise_cons, List.mem_cons, List.not_mem_nil, or_false, List.Pairwise.nil, and_true, true_and, forall_eq, List.mem_singleton, forall_eq_or_imp, false_implies, implies_true, forall_const, List.Pairwise.nil] at hp ⊢
+  janus64_pre_setRet_core s ret hs hret hp [FvModexp.Amd64.ModRow.Pre, FvModexp.Amd64.RunIface.IntPre, FvModexp.Amd64.RunIface.lenW, FvModexp.Amd64.RunIface.IntV, FvModexp.Amd64.RunIface.IntLenLe, FvModexp.Amd64.RunIface.maxW, FvModexp.Amd64.RunIface.PoolG, FvModexp.Amd64.win, FvModexp.Amd64.RunIface.ModX, FvModexp.Amd64.Callees.adxAddr, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Exp.B, FvModexp.Amd64.RunIface.IntOK, FvModexp.natVal, FvModexp.Amd64.RunIface.stackPoolA, Janus.Spec.Pool.newOffset, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.TlsOK, FvModexp.Mdl.karatsubaThreshold, FvModexp.Mdl.basicSqrThreshold, FvModexp.Mdl.karatsubaSqrThreshold, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.Amd64.readLE_setRet_or_zero, FvModexp.Amd64.natNorm_setRet, hg0, hg1, false_implies, true_implies]
+
+theorem modpre_setRet_n (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (S : PoolShape) (z y : BitVec 64)  (s : State) (ret : Nat) {p : Janus.Amd64.Program} {entry : Nat} {args : List W64} (hs : CallSetup0 entry args s) (hret : RetAddr p ret) (hg0 : ¬ 0 < s.mem.readLE (z.toNat + 24) 8)
+    (hp : Pre R b L S z y s) :
+    Pre R b L S z y (s.setRet ret) := by
+  by_cases hg1 : 0 < s.mem.readLE (y.toNat + 24) 8
+  · exact modpre_setRet_np R b L S z y  s ret hs hret hg0 hg1 hp
+  · exact modpre_setRet_nn R b L S z y  s ret hs hret hg0 hg1 hp
+
+theorem modpre_setRet (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (S : PoolShape) (z y : BitVec 64)  (s : State) (ret : Nat) {p : Janus.Amd64.Program} {entry : Nat} {args : List W64} (hs : CallSetup0 entry args s) (hret : RetAddr p ret) 
+    (hp : Pre R b L S z y s) :
+    Pre R b L S z y (s.setRet ret) := by
+  by_cases hg0 : 0 < s.mem.readLE (z.toNat + 24) 8
+  · exact modpre_setRet_p R b L S z y  s ret hs hret  hg0 hp
+  · exact modpre_setRet_n R b L S z y  s ret hs hret  hg0 hp
+
+/-- `Pre` survives writing the return address (the `hinv` of `correctness` and of the `Ensures.full64` it applies). As `IMod.qrpre_setRet`: the list
+quantifier of `IntPre` is expanded and the guards `0 < cap z` / `0 < cap y` are case-split, one declaration per case (`modpre_setRet_<z><y>`). -/
+theorem modpre_inv (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (S : PoolShape) (z y : BitVec 64) (p : Janus.Amd64.Program) (entry : Nat)
+    (args : List W64) : Ensures.SetRetInv p entry args (fun s => Pre R b L S z y s) :=
+  fun s ret hs hret hp => modpre_setRet R b L S z y s ret hs hret hp
+
 /-- **`(*Int).Mod`** (amd64): `z.Mod(z, y)` (`y > 0`, operands of at most 128 words) returns `z` holding `z mod y`,
 leaves `y` unchanged, writes only `z`, the runtime's memory and the window; for every runtime meeting the live
 contracts. -/
@@ -75,15 +127,16 @@ theorem correctness (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted
     (b : Nat) (L : List (Nat × Nat)) (z y : BitVec 64) :
     Ensures (Extracted.program.link impl) (segAddr Extracted.program fnModL) [z, z, y]
       (Pre R b L S z y) (Post R b L z y) := by
+  refine Ensures.of_old (modpre_inv R b L S z y _ _ _) ?_
   intro ret hret s hs ⟨hS, hp⟩
   subst hS
-  have h := Ensures.full64 hap (by simp [numIntRegs])
+  have h := Ensures.full64 (hinv := fun s ret hs hret hq => (modpre_inv R b L StkSh z y _ _ _ s ret hs hret ⟨rfl, hq⟩).2) hap (by simp [numIntRegs])
     (IMod.mod_ensD impl hap R (Q.NatDiv.ensMC impl hap R hgr hmc hwb hmk hmv hmz hno hget hput) IMod.libDiv_sub
       IMod.libDiv_noQ
       (WbLiveContract64.of_codeIn (by rw [LibQR.eq_only]; exact codeIn_ofImpl_restrict_of_apart64 hap LibQR.names) hwb4)
       (stk := 41800) (above := 16) (by omega) (by omega) (by decide) (by decide) Q.BudM.bud b L z y)
   rw [fn_eq] at h
-  exact h ret hret s hs hp
+  exact h.toOld ret hret s hs hp
 
 end FvModexp.Amd64.ModRow
 
@@ -129,9 +182,9 @@ def s0 : State :=
 
 theorem hret : RetAddr (Extracted.program.link WStubs.impl) RET := RetAddr.of_check (by decide +kernel)
 
-theorem setup : CallSetup ((Extracted.program.link WStubs.impl).withExit RET) (segAddr Extracted.program fnModL)
+theorem setup : CallSetup0 (segAddr Extracted.program fnModL)
     args s0 :=
-  ⟨rfl, by decide +kernel, rfl, by decide, by
+  ⟨rfl, rfl, by decide, by
     intro i h; simp only [args, List.length_cons, List.length_nil] at h
     rcases (by omega : i = 0 ∨ i = 1 ∨ i = 2) with rfl | rfl | rfl <;> rfl, rfl⟩
 
@@ -211,7 +264,7 @@ theorem nonvacuous :
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R ∧
     WbLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 4096 R 2 ∧
     RetAddr (Extracted.program.link impl) ret ∧
-    CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program fnModL) [z, z, y] s ∧
+    CallSetup0 (segAddr Extracted.program fnModL) [z, z, y] s ∧
     Pre R b L StkSh z y s ∧
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.rip = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.makeslice") ∧
@@ -243,7 +296,7 @@ theorem nonvacuous :
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.rip = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.gcWriteBarrier2") ∧
       wbSite R (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 2 L b s_c) ∧
-    Returns ((Extracted.program.link impl).withExit ret) s fun s' => ABIReturn s s' ∧ Post R b L z y s s' :=
+    Returns ((Extracted.program.link impl).withExit ret) (s.setRet ret) fun s' => ABIReturn (s.setRet ret) s' ∧ Post R b L z y (s.setRet ret) s' :=
   ⟨WStubs.impl, R, 0x80000, [], BitVec.ofNat 64 OA, BitVec.ofNat 64 (OA + 0x40), RET, s0, WStubs.hap,
     by rw [WStubs.addr_mk]; exact WStubs.mk [] hty _,
     by rw [WStubs.addr_mv]; exact WStubs.mv R,
@@ -275,6 +328,6 @@ theorem nonvacuous :
       (by rw [WStubs.addr_no]; exact WStubs.no [] hty _) (by rw [WStubs.addr_wb4]; exact WStubs.wb4 [] hty _) StkSh
       (by rw [WStubs.addr_get]; exact WStubs.get [] _ _ _) (by rw [WStubs.addr_put]; exact WStubs.put [] hty _ _ _)
       (by rw [WStubs.addr_gr]; exact WStubs.gr [] hty _) (by rw [WStubs.addr_cl]; exact WStubs.cl R)
-      (by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] hty _) 0x80000 [] (BitVec.ofNat 64 OA) (BitVec.ofNat 64 (OA + 0x40)) RET hret s0 setup pre⟩
+      (by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] hty _) 0x80000 [] (BitVec.ofNat 64 OA) (BitVec.ofNat 64 (OA + 0x40)) s0 setup pre RET hret⟩
 
 end FvModexp.Amd64.ModRow.Witness

@@ -55,8 +55,8 @@ def s0 : State :=
 
 theorem hret : RetAddr Extracted.program ret := RetAddr.of_check (by decide)
 
-theorem setup : CallSetup (Extracted.program.withExit ret) Extracted.entry [x, 2, 2, y, 2, 2] s0 :=
-  ⟨rfl, by decide, rfl, by decide, by
+theorem setup : CallSetup0 Extracted.entry [x, 2, 2, y, 2, 2] s0 :=
+  ⟨rfl, rfl, by decide, by
     intro i h
     simp only [List.length_cons, List.length_nil] at h
     rcases (by omega : i = 0 ∨ i = 1 ∨ i = 2 ∨ i = 3 ∨ i = 4 ∨ i = 5) with rfl | rfl | rfl | rfl | rfl | rfl <;> rfl,
@@ -74,22 +74,22 @@ theorem hpre : 8 ≤ (s0.regs 4).toNat ∧ (s0.regs 4).toNat + 40 ≤ 2 ^ 48 ∧
 /-- A concrete call (`x = [5, 7]`, `y = [5, 9]`: equal lengths, the loop runs, `x < y`) satisfies every hypothesis of
 `correctness` and returns. -/
 theorem nonvacuous : ∃ (ret : Nat) (s : State) (x xl xc y yl yc : BitVec 64), RetAddr Extracted.program ret ∧
-    CallSetup (Extracted.program.withExit ret) Extracted.entry [x, xl, xc, y, yl, yc] s ∧
+    CallSetup0 Extracted.entry [x, xl, xc, y, yl, yc] s ∧
     (8 ≤ (s.regs 4).toNat ∧ (s.regs 4).toNat + 40 ≤ 2 ^ 48 ∧
         s.mem.accessible ((s.regs 4).toNat - 8) 48 true = true ∧
         (xl.toNat = 0 ∨ (s.mem.accessible x.toNat (8 * xl.toNat) false = true ∧
           Apart x.toNat (8 * xl.toNat) ((s.regs 4).toNat - 8) 48)) ∧
         (yl.toNat = 0 ∨ (s.mem.accessible y.toNat (8 * yl.toNat) false = true ∧
           Apart y.toNat (8 * yl.toNat) ((s.regs 4).toNat - 8) 48))) ∧
-    Returns (Extracted.program.withExit ret) s
-      (fun s' => ABIReturn s s' ∧
+    Returns (Extracted.program.withExit ret) (s.setRet ret)
+      (fun s' => ABIReturn (s.setRet ret) s' ∧
         (results 1 s' =
           [if xl.toNat < yl.toNat then 18446744073709551615#64 else if yl.toNat < xl.toNat then 1#64
-            else if s.mem.readLE x.toNat (8 * xl.toNat) < s.mem.readLE y.toNat (8 * yl.toNat) then 18446744073709551615#64
-            else if s.mem.readLE y.toNat (8 * yl.toNat) < s.mem.readLE x.toNat (8 * xl.toNat) then 1#64 else 0#64] ∧
-        MemFrame s.mem s'.mem [((s.regs 4).toNat - 8, (s.regs 4).toNat), ((s.regs 4).toNat + 8, (s.regs 4).toNat + 16),
-          ((s.regs 4).toNat + 32, (s.regs 4).toNat + 40)])) :=
-  ⟨ret, s0, x, 2, 2, y, 2, 2, hret, setup, hpre, correctness x 2 2 y 2 2 ret hret s0 setup hpre⟩
+            else if (s.setRet ret).mem.readLE x.toNat (8 * xl.toNat) < (s.setRet ret).mem.readLE y.toNat (8 * yl.toNat) then 18446744073709551615#64
+            else if (s.setRet ret).mem.readLE y.toNat (8 * yl.toNat) < (s.setRet ret).mem.readLE x.toNat (8 * xl.toNat) then 1#64 else 0#64] ∧
+        MemFrame (s.setRet ret).mem s'.mem [(((s.setRet ret).regs 4).toNat - 8, ((s.setRet ret).regs 4).toNat), (((s.setRet ret).regs 4).toNat + 8, ((s.setRet ret).regs 4).toNat + 16),
+          (((s.setRet ret).regs 4).toNat + 32, ((s.setRet ret).regs 4).toNat + 40)])) :=
+  ⟨ret, s0, x, 2, 2, y, 2, 2, hret, setup, hpre, (correctness x 2 2 y 2 2) s0 setup hpre ret hret⟩
 
 end Witness
 

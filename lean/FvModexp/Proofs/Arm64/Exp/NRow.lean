@@ -83,7 +83,7 @@ theorem correctness (impl : List Segment) (hap : ImplApart Extracted.program imp
   have h := hNE impl hap R hmk hgr hmc hmv hmz hno hwb b L z.toNat zl.toNat zc.toNat st.toNat x.toNat xl.toNat
     xc.toNat y.toNat yl.toNat yc.toNat m.toNat n.toNat mc.toNat slow.toNat
   simp only [Expmc.bv_ofNat_toNat] at h
-  exact Ensures.full hap h
+  exact Ensures.full (hinv := by janus_pre_setRet [FvModexp.Arm64.NRow.Pre]) hap h
 
 end FvModexp.Arm64.NRow
 
@@ -164,7 +164,7 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
     NewobjectLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.newobject") 4096 R ∧
     WbLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 4096 R 2 ∧
     RetAddr (Extracted.program.link impl) ret ∧
-    CallSetup ((Extracted.program.link impl).withExit ret)
+    CallSetup0 
       (segAddr Extracted.program "github.com/ethereum/go-bigmodexpfix/src/math/big.nat.expNN")
       [z, zl, zc, st, x, xl, xc, y, yl, yc, m, n, mc, slow] s ∧
     Pre R b L z.toNat zl.toNat zc.toNat st.toNat x.toNat xl.toNat xc.toNat y.toNat yl.toNat yc.toNat m.toNat n.toNat
@@ -192,8 +192,8 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.gcWriteBarrier2") ∧
       wbSite R (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 2 L b s_c) ∧
-    Returns ((Extracted.program.link impl).withExit ret) s fun s' =>
-      ABIReturn s s' ∧ Post R b L z.toNat zc.toNat st.toNat x.toNat xl.toNat y.toNat yl.toNat m.toNat n.toNat s s' :=
+    Returns ((Extracted.program.link impl).withExit ret) (s.setRet ret) fun s' =>
+      ABIReturn (s.setRet ret) s' ∧ Post R b L z.toNat zc.toNat st.toNat x.toNat xl.toNat y.toNat yl.toNat m.toNat n.toNat (s.setRet ret) s' :=
   ⟨WStubs.impl, R, BW, [], 0, 0, 0, BitVec.ofNat 64 ST, BitVec.ofNat 64 XP, 1, 1, BitVec.ofNat 64 YP, 1, 1,
     BitVec.ofNat 64 YP, 1, 1, 0, RET, s0, WStubs.hap,
     by rw [WStubs.addr_mk]; exact WStubs.mk [] (by intro t ht; simp at ht) _,
@@ -220,8 +220,8 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
       (by rw [WStubs.addr_mv]; exact WStubs.mvz R)
       (by rw [WStubs.addr_no]; exact WStubs.no [] (by intro t ht; simp at ht) _)
       (by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] (by intro t ht; simp at ht) _)
-      BW [] 0 0 0 (BitVec.ofNat 64 ST) (BitVec.ofNat 64 XP) 1 1 (BitVec.ofNat 64 YP) 1 1 (BitVec.ofNat 64 YP) 1 1 0 RET
-      hret s0 (setup _ args (by decide)) pre⟩
+      BW [] 0 0 0 (BitVec.ofNat 64 ST) (BitVec.ofNat 64 XP) 1 1 (BitVec.ofNat 64 YP) 1 1 (BitVec.ofNat 64 YP) 1 1 0 s0 (setup _ args (by decide)) pre RET
+      hret⟩
 
 
 end FvModexp.Arm64.NRow.Witness

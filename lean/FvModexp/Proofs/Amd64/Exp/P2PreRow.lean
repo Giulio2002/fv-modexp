@@ -70,11 +70,11 @@ theorem correctness (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted
       [BitVec.ofNat 64 st, BitVec.ofNat 64 pw, BitVec.ofNat 64 pl, BitVec.ofNat 64 pc, BitVec.ofNat 64 ws,
         BitVec.ofNat 64 lm, BitVec.ofNat 64 x, BitVec.ofNat 64 xl, BitVec.ofNat 64 xc]
       (P2Pre.PreE R mulWX64 b L st pw pl ws lm x xl) (PostR R mulWX64 b L st pw pl lm x xl) :=
-  Ensures.mono (Ensures.full64 hap (by simp [numIntRegs])
+  Ensures.mono_ret (Ensures.full64 (hinv := P2Pre.preE_inv _ _ _) hap (by simp [numIntRegs])
     (P2Pre.ens hap sub nfP hmv hwb (kc := mulWX64) (by decide) (sn hap hgr hmc hwb) (by decide) (by decide)
       (sq hap hgr hmc hmv hmk hwb _) (by decide) (Nat.le_refl _) (mu hap hgr hmc hmv hmk hwb _) (Nat.le_refl _)
       (Nat.le_refl _) (tr hap hmv hmk) (by decide) (by decide) b L st pw pl pc ws lm x xl xc))
-    (fun _ h => h) (fun _ _ _ h => postR_of h)
+    (fun _ h => h) (fun _ _ _ _ h => postR_of h)
 
 end FvModexp.Amd64.P2PreRow
 
@@ -132,9 +132,9 @@ def s0 : State :=
 
 theorem hret : RetAddr (Extracted.program.link WStubs.impl) RET := RetAddr.of_check (by decide +kernel)
 
-theorem setup : CallSetup ((Extracted.program.link WStubs.impl).withExit RET) (segAddr Extracted.program P2Pre.fn)
+theorem setup : CallSetup0 (segAddr Extracted.program P2Pre.fn)
     args s0 :=
-  ⟨rfl, by decide +kernel, rfl, by decide, by
+  ⟨rfl, rfl, by decide, by
     intro i h; simp only [args, List.length_cons, List.length_nil] at h
     rcases (by omega : i = 0 ∨ i = 1 ∨ i = 2 ∨ i = 3 ∨ i = 4 ∨ i = 5 ∨ i = 6 ∨ i = 7 ∨ i = 8) with
       rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl <;> rfl, rfl⟩
@@ -170,7 +170,7 @@ theorem one0 : NatOne R [] mem0 OP (win s0 (P2Pre.K mulWX64) P2Pre.A ++ P2Pre.LW
   · simp only [win, P2Pre.LW, stkWs, outside_append, outside_cons, outside_nil, and_true]; decide +kernel
 
 theorem sg0 : StackGuardOK s0 (P2Pre.K mulWX64) :=
-  ⟨by decide, by show mem0.accessible _ 8 false = true; rw [acc0]; decide +kernel, by decide +kernel⟩
+  ⟨by decide, by show mem0.accessible _ 8 false = true; rw [acc0]; decide +kernel, by decide +kernel, by decide +kernel⟩
 
 theorem tls0 : TlsG s0 :=
   ⟨by decide, by show mem0.accessible _ 8 false = true; rw [acc0]; decide +kernel, by decide +kernel⟩
@@ -230,7 +230,7 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : 
     MakesliceLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R ∧
     WbLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 4096 R 2 ∧
     RetAddr (Extracted.program.link impl) ret ∧
-    CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program P2Pre.fn)
+    CallSetup0 (segAddr Extracted.program P2Pre.fn)
       [BitVec.ofNat 64 st, BitVec.ofNat 64 pw, BitVec.ofNat 64 pl, BitVec.ofNat 64 pc, BitVec.ofNat 64 ws,
         BitVec.ofNat 64 lm, BitVec.ofNat 64 x, BitVec.ofNat 64 xl, BitVec.ofNat 64 xc] s ∧
     P2Pre.PreE R mulWX64 b L st pw pl ws lm x xl s ∧
@@ -249,8 +249,8 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : 
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.rip = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.gcWriteBarrier2") ∧
       wbSite R (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 2 L b s_c) ∧
-    Returns ((Extracted.program.link impl).withExit ret) s fun s' =>
-      ABIReturn s s' ∧ PostR R mulWX64 b L st pw pl lm x xl s s' :=
+    Returns ((Extracted.program.link impl).withExit ret) (s.setRet ret) fun s' =>
+      ABIReturn (s.setRet ret) s' ∧ PostR R mulWX64 b L st pw pl lm x xl (s.setRet ret) s' :=
   ⟨WStubs.impl, R, BW, [], ST, PW, 4, 4, 2, 8, XP, 1, 1, RET, s0, WStubs.hap,
     by rw [WStubs.addr_gr]; exact WStubs.gr [] hty _,
     by rw [WStubs.addr_cl]; exact WStubs.cl R,
@@ -267,6 +267,6 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : 
     correctness WStubs.impl WStubs.hap R (by rw [WStubs.addr_gr]; exact WStubs.gr [] hty _)
       (by rw [WStubs.addr_cl]; exact WStubs.cl R) (by rw [WStubs.addr_mv]; exact WStubs.mv R)
       (by rw [WStubs.addr_mk]; exact WStubs.mk [] hty _)
-      (by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] hty _) BW [] ST PW 4 4 2 8 XP 1 1 RET hret s0 setup pre⟩
+      (by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] hty _) BW [] ST PW 4 4 2 8 XP 1 1 s0 setup pre RET hret⟩
 
 end FvModexp.Amd64.P2PreRow.Witness

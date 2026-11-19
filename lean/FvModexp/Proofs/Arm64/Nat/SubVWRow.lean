@@ -22,7 +22,7 @@ theorem correctness (impl : List Segment) (hap : ImplApart Extracted.program imp
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc y : BitVec 64) :
     Ensures (Extracted.program.link impl) (segAddr Extracted.program SubVW.fn) [zp, zl, zc, xp, xl, xc, y]
       (fun s => xl = zl ∧ SubVW.Pre R b L zp zl zc xp xc s) (fun s s' => SubVW.Post R b L zp zl xp y s s') :=
-  Ensures.full hap (SubVW.ens impl hap R hmv b L zp zl zc xp xl xc y)
+  Ensures.full (hinv := by janus_pre_setRet [FvModexp.Arm64.SubVW.Pre, FvModexp.Arm64.Callees.CallEnvND, FvModexp.NatLive, FvModexp.Arm64.win, Janus.Spec.GuardOK, Janus.Spec.StackOK]) hap (SubVW.ens impl hap R hmv b L zp zl zc xp xl xc y)
 
 end FvModexp.Arm64.SubVWRow
 
@@ -47,9 +47,9 @@ def s0 : State :=
 
 theorem hret : RetAddr (Extracted.program.link WStubs.impl) RET := RetAddr.of_check (by decide +kernel)
 
-theorem setup : CallSetup ((Extracted.program.link WStubs.impl).withExit RET) (segAddr Extracted.program SubVW.fn)
+theorem setup : CallSetup0 (segAddr Extracted.program SubVW.fn)
     args s0 :=
-  ⟨rfl, rfl, fun i h => by simp only [s0, dif_pos h]⟩
+  ⟨rfl, by first | decide | simp | omega, fun i h => by simp only [s0, dif_pos h]⟩
 
 theorem bump : mem0.readLE BUMP 8 = HEAP := by decide +kernel
 
@@ -73,16 +73,16 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
     ImplApart Extracted.program impl ∧
     MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R ∧
     RetAddr (Extracted.program.link impl) ret ∧
-    CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program SubVW.fn)
+    CallSetup0 (segAddr Extracted.program SubVW.fn)
       [zp, zl, zc, xp, xl, xc, y] s ∧
     (xl = zl ∧ SubVW.Pre R b L zp zl zc xp xc s) ∧
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.memmove") ∧
       mvSite R (Extracted.program.contractAddr "runtime.memmove") L b s_c) ∧
-    Returns ((Extracted.program.link impl).withExit ret) s fun s' => ABIReturn s s' ∧ SubVW.Post R b L zp zl xp y s s' :=
+    Returns ((Extracted.program.link impl).withExit ret) (s.setRet ret) fun s' => ABIReturn (s.setRet ret) s' ∧ SubVW.Post R b L zp zl xp y (s.setRet ret) s' :=
   ⟨WStubs.impl, R, 0x1000, [], BitVec.ofNat 64 OA, 2, 2, BitVec.ofNat 64 OB, 2, 2, 1, RET, s0, WStubs.hap,
     by rw [WStubs.addr_mv]; exact WStubs.mv R, hret, setup, pre,
     ⟨[], 0x1000, callS WStubs.mvA OA OB 8, by rw [WStubs.addr_mv]; rfl, by rw [WStubs.addr_mv]; exact site_mv _⟩,
-    correctness WStubs.impl WStubs.hap R (by rw [WStubs.addr_mv]; exact WStubs.mv R) 0x1000 [] (BitVec.ofNat 64 OA) 2 2 (BitVec.ofNat 64 OB) 2 2 1 RET hret s0 setup pre⟩
+    correctness WStubs.impl WStubs.hap R (by rw [WStubs.addr_mv]; exact WStubs.mv R) 0x1000 [] (BitVec.ofNat 64 OA) 2 2 (BitVec.ofNat 64 OB) 2 2 1 s0 setup pre RET hret⟩
 
 end FvModexp.Arm64.SubVWRow.Witness

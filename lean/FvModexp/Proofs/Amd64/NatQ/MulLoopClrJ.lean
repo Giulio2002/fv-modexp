@@ -73,7 +73,7 @@ theorem lclr (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
     unfold Apart at hpg ⊢; omega
   simp only [win, outside_cons, outside_nil, and_true] at hpw
   have hgQ := hq.grd
-  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨-, -, hw0⟩, -⟩, -⟩ := hq.core.pre
+  obtain ⟨⟨⟨hg1, hg2, hg3, hg4⟩, ⟨-, -, hw0⟩, -⟩, -⟩ := hq.core.pre
   simp only [Janus.Amd64.GoABI.stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hw0
   have hg2' : S.mem.accessible ((s.regs 14).toNat + 16) 8 false = true := by rw [hq.frE.accessible]; exact hg2
   have hg3' : S.mem.readLE ((s.regs 14).toNat + 16) 8 + 4096 < (s.regs 4).toNat - 264 := by rw [hgQ]; omega

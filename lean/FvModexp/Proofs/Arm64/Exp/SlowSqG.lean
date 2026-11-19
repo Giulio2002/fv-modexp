@@ -102,7 +102,9 @@ theorem sqrG (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
     (hwb : WbLiveContract (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2) :
     SqrHypG impl R NatSqr.names sqrWX 64 sqrC := by
-  intro b L z zl zc st x xl xc ret hret s hs hp
+  intro b L z zl zc st x xl xc
+  janus_ensures_old [FvModexp.Arm64.ExpSlow.SqrPreG, FvModexp.stLen, FvModexp.Arm64.ExpSlow.SqrXG, FvModexp.Arm64.CallEnv, FvModexp.Arm64.RunIface.Globals, FvModexp.Arm64.win, FvModexp.Arm64.ExpHyp.WrOut, FvModexp.Arm64.ExpHyp.RdIn0, FvModexp.Arm64.EvenHyp.StkIn, FvModexp.Arm64.EvenHyp.StkApart, FvModexp.Arm64.EvenHyp.StkX, FvModexp.Arm64.EvenHyp.OpX, Janus.Spec.GuardOK, Janus.Spec.StackOK, FvModexp.Arm64.RunIface.gA, FvModexp.Arm64.RunIface.wbA, FvModexp.NatLive, FvModexp.Arm64.ExpHyp.RdIn, FvModexp.Arm64.ExpHyp.StackOK', FvModexp.stCap, FvModexp.stW, FvModexp.Arm64.StackNat.wbA, FvModexp.Arm64.EvenHyp.frP, FvModexp.Arm64.EvenHyp.frN, FvModexp.StkOK]
+  intro ret hret s hs hp
   by_cases hx : xl.toNat = 0
   · rw [show NatSqr.names = LibSqr.names from rfl, ← LibSqr.eq_only] at hret hs ⊢
     janus_intro hs
@@ -116,7 +118,7 @@ theorem sqrG (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     exact Summary.returns hS hret h_pc h_lr ⟨e4, e48, h_x0, h_x1, h_x2, h_x3, h_x4, h_x5, h_x6, hx, hp.1⟩
       fun s' ⟨⟨a, b, c, d⟩, hq⟩ => ⟨⟨a, b, c, d⟩, hq⟩
   · have hx0 : 0 < xl.toNat := Nat.pos_of_ne_zero hx
-    exact (NatSqr.ens impl hap R hmk hgr hmc hmv hwb b L sqrWX z zl zc st x xl xc ret hret s hs
+    exact ((NatSqr.ens impl hap R hmk hgr hmc hmv hwb b L sqrWX z zl zc st x xl xc).toOld ret hret s hs
       (x_preG hp.1 hp.2.1 hp.2.2 hx0)).mono fun s' hq => ⟨hq.1, (NatSqr.x_post hq.2).1, fun h => absurd h hx⟩
 
 end FvModexp.Arm64.ExpSlow

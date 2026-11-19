@@ -54,6 +54,7 @@ theorem ensErrLib (impl : List Segment) (hap : ImplApart Extracted.program impl)
         R.inv b L (s.regs 28).toNat (view R.rt L s.mem) ∧ RunArm64.ErrReqs R b len ∧
         LengthsFail (bytesAt s.mem p.toNat len.toNat))
       (fun s s' => RunArm64.ErrRet s' ∧ RunArm64.Frame R b (3 * RunArm64.blockBound 64 + RunArm64.blockBound 16) L s s') := by
+  janus_ensures_old [FvModexp.Spec.RunArm64.Env, FvModexp.Spec.RunArm64.Input, FvModexp.Spec.OsakaReceiver, FvModexp.Spec.RunArm64.ErrReqs, FvModexp.Spec.bytesAt, Janus.Spec.GuardOK, Janus.Spec.StackOK, FvModexp.Spec.RunArm64.window, FvModexp.Spec.RunArm64.wordT, FvModexp.Arm64.Run.errT, FvModexp.Spec.byteOf]
   intro ret hret s hs ⟨henv, hin, hrecv, hinv, ⟨hok, hokm, hokn, hcost⟩, hfail⟩
   have hfail' := fail_hdr hfail
   have hcm : makeCost 4 = RunArm64.blockBound 64 := rfl

@@ -106,6 +106,7 @@ theorem ensX0 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
       [zp, zl, zc, xp, xl, xc, yp, yl, yc]
       (Pre0 R b L zp zc xp xl xc yp yl yc)
       (PostX 4304 R b L zp zc xp xl yp yl) := by
+  janus_ensures_old [FvModexp.Arm64.NatSub.Pre0, FvModexp.Arm64.CallEnv, FvModexp.Arm64.NatSub.wordT, FvModexp.natVal, FvModexp.NatLive, FvModexp.Arm64.win, FvModexp.NatNorm, Janus.Spec.GuardOK, Janus.Spec.StackOK]
   rw [show names = LibNatSub.names from rfl, ← LibNatSub.eq_only]
   intro ret hret s hs hpre
   janus_intro hs
@@ -128,7 +129,7 @@ theorem ensR0 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
       (fun s s' => Post R b L zp zc xp xl yp yl s s' ∧
         (xl.toNat ≤ zc.toNat → (s'.regs 0).toNat = zp.toNat ∧ (s'.regs 2).toNat = zc.toNat) ∧
         (xl.toNat < 2 ^ 39 → (s'.regs 2).toNat < 2 ^ 40)) :=
-  Ensures.mono (ensX0 impl hap R hmk hmv b L zp zl zc xp xl xc yp yl yc) (fun _ h => h) (fun _ _ _ h => h.1)
+  Ensures.mono_ret (ensX0 impl hap R hmk hmv b L zp zl zc xp xl xc yp yl yc) (fun _ h => h) (fun _ _ _ _ h => h.1)
 
 /-- (`ensR0` without the extra conjuncts.) -/
 theorem ens0 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
@@ -138,6 +139,6 @@ theorem ens0 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     Ensures ((Extracted.program.onlySegments names).link impl) (segAddr Extracted.program fn)
       [zp, zl, zc, xp, xl, xc, yp, yl, yc]
       (Pre0 R b L zp zc xp xl xc yp yl yc) (Post R b L zp zc xp xl yp yl) :=
-  Ensures.mono (ensR0 impl hap R hmk hmv b L zp zl zc xp xl xc yp yl yc) (fun _ h => h) (fun _ _ _ h => h.1)
+  Ensures.mono_ret (ensR0 impl hap R hmk hmv b L zp zl zc xp xl xc yp yl yc) (fun _ h => h) (fun _ _ _ _ h => h.1)
 
 end FvModexp.Arm64.NatSub

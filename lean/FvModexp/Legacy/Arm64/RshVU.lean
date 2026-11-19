@@ -60,8 +60,8 @@ theorem hret : RetAddr Extracted.program ret := RetAddr.of_check (by decide)
 
 def args : List (BitVec 64) := [BitVec.ofNat 64 dat, 1, 1, BitVec.ofNat 64 (dat + 0x40), 1, 1, 1]
 
-theorem setup : CallSetup0 (Extracted.program.withExit ret) Extracted.entry args 1 s0 :=
-  ⟨rfl, rfl, by
+theorem setup : CallSetupF Extracted.entry args 1 s0 :=
+  ⟨rfl, by
     intro i h
     simp only [args, List.length_cons, List.length_nil] at h
     rcases (by omega : i = 0 ∨ i = 1 ∨ i = 2 ∨ i = 3 ∨ i = 4 ∨ i = 5 ∨ i = 6) with
@@ -82,19 +82,19 @@ theorem hpre : (fun s : State => Ptr s.mem (BitVec.ofNat 64 dat) (8 * (1 : BitVe
 /-- All the hypotheses of `correctness` hold together at a concrete call (`n = 1`, `x[0] = 2^64 - 1`, `s = 1`:
 a bit shifted out), and it returns. -/
 theorem nonvacuous : ∃ (ret : Nat) (s : State) (z zl zc x xl xc sh : BitVec 64), RetAddr Extracted.program ret ∧
-    CallSetup0 (Extracted.program.withExit ret) Extracted.entry [z, zl, zc, x, xl, xc, sh] 1 s ∧
+    CallSetupF Extracted.entry [z, zl, zc, x, xl, xc, sh] 1 s ∧
     (Ptr s.mem z (8 * zl.toNat) true ∧ Ptr s.mem x (8 * zl.toNat) false ∧
         1 ≤ sh.toNat ∧ sh.toNat ≤ 63 ∧
         (z.toNat ≤ x.toNat ∨ Apart z.toNat (8 * zl.toNat) x.toNat (8 * zl.toNat)) ∧
         Apart z.toNat (8 * zl.toNat) (s.sp.toNat + 64) 8 ∧ Apart x.toNat (8 * zl.toNat) (s.sp.toNat + 64) 8) ∧
-    Returns (Extracted.program.withExit ret) s
-      (fun s' => ABIReturn0 s s' ∧
-        (s'.mem.readLE z.toNat (8 * zl.toNat) = s.mem.readLE x.toNat (8 * zl.toNat) / 2 ^ sh.toNat ∧
-        results0 s s' 7 1 =
-          [BitVec.ofNat 64 (s.mem.readLE x.toNat (8 * zl.toNat) % 2 ^ sh.toNat * 2 ^ (64 - sh.toNat))] ∧
-        MemFrame s.mem s'.mem [(z.toNat, z.toNat + 8 * zl.toNat), (s.sp.toNat + 64, s.sp.toNat + 72)])) :=
+    Returns (Extracted.program.withExit ret) (s.setRet ret)
+      (fun s' => ABIReturn0 (s.setRet ret) s' ∧
+        (s'.mem.readLE z.toNat (8 * zl.toNat) = (s.setRet ret).mem.readLE x.toNat (8 * zl.toNat) / 2 ^ sh.toNat ∧
+        results0 (s.setRet ret) s' 7 1 =
+          [BitVec.ofNat 64 ((s.setRet ret).mem.readLE x.toNat (8 * zl.toNat) % 2 ^ sh.toNat * 2 ^ (64 - sh.toNat))] ∧
+        MemFrame (s.setRet ret).mem s'.mem [(z.toNat, z.toNat + 8 * zl.toNat), ((s.setRet ret).sp.toNat + 64, (s.setRet ret).sp.toNat + 72)])) :=
   ⟨ret, s0, _, _, _, _, _, _, _, hret, setup, hpre,
-    correctness _ _ _ _ _ _ _ ret hret s0 setup hpre⟩
+    (correctness _ _ _ _ _ _ _) s0 setup hpre ret hret⟩
 
 end Witness
 

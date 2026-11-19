@@ -33,7 +33,7 @@ theorem one_alloc (impl : List Amd64.Segment) (R : RtInv)
       Kept s s' ∧ SPost R b H L W zp.toNat zc.toNat st.toNat xp.toNat xl.toNat xc.toNat s s' := by
   have hpre' := hpre
   obtain ⟨hce, hsw, hsv, -, hty, -, -, -, hxacc, -, hxw, hzc40, -, -, -, -, -, -, -, hcost, -, hinv⟩ := hpre'
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, hLs, -, -⟩ := hce
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, hLs, -, -⟩ := hce
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw hga hgr
   have hW : 5056 ≤ W := by unfold sqrW ksqrW at hsw; omega
   have hxw := hxw (by omega)

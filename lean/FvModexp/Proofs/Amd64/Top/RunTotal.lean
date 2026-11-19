@@ -27,7 +27,7 @@ namespace FvModexp.Amd64.Run
 /-- the success environment (window `W ≥ 4800`) contains the error path's (window 4800) -/
 theorem env_of_envW {R : RtInv} {L : List (Nat × Nat)} {s : State} {W : Nat} (hW : 4800 ≤ W)
     (h : RunAmd64.EnvW R L s W) : RunAmd64.Env R L s := by
-  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hs1, hs2, hs3⟩, h8, hdl, hor, hap, hgo, hls, hdo, ⟨htl, htlo, htla⟩⟩, _⟩ := h
+  obtain ⟨⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hs1, hs2, hs3⟩, h8, hdl, hor, hap, hgo, hls, hdo, ⟨htl, htlo, htla⟩⟩, _⟩ := h
   refine ⟨⟨hg1, hg2, by omega⟩, ⟨by omega, hs2, Janus.Arm64.Memory.accessible_mono _ hs3 (by omega) (by omega)⟩, h8, hdl,
     Outside.of_sub hor (by omega) (by omega), by unfold Apart at hap ⊢; omega, hgo, ?_, hdo,
     ⟨htl, htlo, by unfold Apart at htla ⊢; omega⟩⟩
@@ -75,12 +75,13 @@ theorem correctness_total (impl : List Amd64.Segment) (hap : ImplApart Extracted
           RunAmd64.FrameW R b (RunAmd64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat))) L W s s') ∨
         (LengthsFail (bytesAt s.mem p.toNat len.toNat) ∧ RunAmd64.ErrRet s' ∧
           RunAmd64.Frame R b (3 * RunAmd64.blockBound 64 + RunAmd64.blockBound 16) L s s')) := by
+  janus64_ensures_old [FvModexp.Spec.RunAmd64.EnvW, FvModexp.Spec.RunAmd64.Input, FvModexp.Spec.OsakaReceiver, FvModexp.Spec.RunAmd64.Globals, FvModexp.Spec.RunAmd64.windowW, FvModexp.Spec.RunAmd64.NatOne, FvModexp.Spec.RunAmd64.StackPool, FvModexp.Spec.RunAmd64.CpuOne, FvModexp.Spec.bytesAt, FvModexp.Spec.RunAmd64.window, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.RunIface.wbA, FvModexp.Mdl.karatsubaThreshold, FvModexp.Mdl.basicSqrThreshold, FvModexp.Mdl.karatsubaSqrThreshold, FvModexp.Amd64.IExp.pA, Janus.Spec.Pool.newOffset, FvModexp.Amd64.MontHyp.hasADX, FvModexp.Spec.byteOf]
   intro ret hret s hs ⟨hS, hE, hI, hO, hinv, hR, hG, hN, hP, hC, hB, hB0⟩
   by_cases hL : LengthsPass (bytesAt s.mem p.toNat len.toNat)
-  · exact (RunSucc.correctness impl hap R hmk hmkz hmv hmz hno hgr hmc hwb S hget hput hwb4 W hW b L c p len cp
+  · exact ((RunSucc.correctness impl hap R hmk hmkz hmv hmz hno hgr hmc hwb S hget hput hwb4 W hW b L c p len cp).toOld
       ret hret s hs ⟨hS, hE, hI, hO, hinv, hR, hG, hN, hP, hC, hB hL, hL⟩).mono
       fun _ ⟨ha, h1, h2⟩ => ⟨ha, Or.inl ⟨hL, h1, h2⟩⟩
-  · exact (correctness impl hap R hmk hmv hno b L c p len cp ret hret s hs
+  · exact ((correctness impl hap R hmk hmv hno b L c p len cp).toOld ret hret s hs
       ⟨env_of_envW (by omega) hE, hI, hO, hinv, errReqs_of_okReqs hR hB0, hL⟩).mono
       fun _ ⟨ha, h1, h2⟩ => ⟨ha, Or.inr ⟨hL, h1, h2⟩⟩
 
@@ -112,7 +113,7 @@ theorem correctness_total : ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat
     WbLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier4") 4096 R 4 ∧
     616 + 43736 ≤ W ∧
     RetAddr (Extracted.program.link impl) ret ∧
-    CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program RunAmd64.fn) [c, p, len, cp] s ∧
+    CallSetup0 (segAddr Extracted.program RunAmd64.fn) [c, p, len, cp] s ∧
     (StkShape = StkShape ∧ RunAmd64.EnvW R L s W ∧ RunAmd64.Input R L c p len cp s ∧ OsakaReceiver s.mem c.toNat ∧
       R.inv b L (s.regs 14).toNat (view R.rt L s.mem) ∧ RunAmd64.OkReqs R ∧
       RunAmd64.Globals R s.mem (RunAmd64.windowW s W) ∧ RunAmd64.NatOne R s.mem (RunAmd64.windowW s W) ∧
@@ -159,12 +160,12 @@ theorem correctness_total : ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.rip = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.gcWriteBarrier4") ∧
       WitSitesAmd64.wbSite R (Extracted.program.contractAddr "runtime.gcWriteBarrier4") 4 L b s_c) ∧
-    Returns ((Extracted.program.link impl).withExit ret) s fun s' =>
-      ABIReturn s s' ∧
-        ((LengthsPass (bytesAt s.mem p.toNat len.toNat) ∧ RunAmd64.OkRet (bytesAt s.mem p.toNat len.toNat) s' ∧
-          RunAmd64.FrameW R b (RunAmd64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat))) L W s s') ∨
-        (LengthsFail (bytesAt s.mem p.toNat len.toNat) ∧ RunAmd64.ErrRet s' ∧
-          RunAmd64.Frame R b (3 * RunAmd64.blockBound 64 + RunAmd64.blockBound 16) L s s')) := by
+    Returns ((Extracted.program.link impl).withExit ret) (s.setRet ret) fun s' =>
+      ABIReturn (s.setRet ret) s' ∧
+        ((LengthsPass (bytesAt (s.setRet ret).mem p.toNat len.toNat) ∧ RunAmd64.OkRet (bytesAt (s.setRet ret).mem p.toNat len.toNat) s' ∧
+          RunAmd64.FrameW R b (RunAmd64.okBudget (parseLengths (bytesAt (s.setRet ret).mem p.toNat len.toNat))) L W (s.setRet ret) s') ∨
+        (LengthsFail (bytesAt (s.setRet ret).mem p.toNat len.toNat) ∧ RunAmd64.ErrRet s' ∧
+          RunAmd64.Frame R b (3 * RunAmd64.blockBound 64 + RunAmd64.blockBound 16) L (s.setRet ret) s')) := by
   obtain ⟨impl, R, b, L, c, p, len, cp, ret, s, W, hap, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11, hW, hret, hs,
     hSS, hE, hI, hO, hinv, hR, hG, hN, hP, hC, hB, hL, -,
     x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, hRet⟩ :=

@@ -83,7 +83,7 @@ theorem mvCallW {impl : List Amd64.Segment} (hmv : MemmoveLive64 (LibW.program.l
     refine ⟨⟨?_, ⟨by omega, by omega, by omega, hacc, trivial, trivial, hra⟩, by omega⟩, ⟨hok, h.inv, ?_, ?_⟩,
       ⟨hs48, hsacc, by omega⟩, ⟨hd48, hdacc, by omega, hdh, by omega⟩⟩
     · exact ⟨by simp only [regG, stackguard0Offset, t14]; omega, by simp only [regG, stackguard0Offset, t14, hm]; exact c6,
-        by simp only [stackguard0, regG, regSP, stackguard0Offset, t14, hm, t4]; omega⟩
+        by simp only [stackguard0, regG, regSP, stackguard0Offset, t14, hm, t4]; omega, by simp only [regG, regSP, stackguard0Offset, t14, hm, t4]; omega⟩
     · intro q hq
       have := c11 q hq
       simp only [outside_cons, outside_nil, and_true] at this ⊢

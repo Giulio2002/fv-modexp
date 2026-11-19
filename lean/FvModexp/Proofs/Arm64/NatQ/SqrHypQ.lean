@@ -59,7 +59,7 @@ theorem hypQ (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
     (hwb : WbLiveContract (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2) :
     SqrHypQ impl R names sqrWX 64 sqrCQ := fun H b L z zl zc st x xl xc =>
-  (ens impl hap R hmk hgr hmc hmv hwb H b L sqrWX z zl zc st x xl xc).mono
-    (fun _ ⟨h1, h2, h3, h4⟩ => q_pre h1 h2 h3 h4) (fun _ _ _ hq => q_post hq)
+  (ens impl hap R hmk hgr hmc hmv hwb H b L sqrWX z zl zc st x xl xc).mono_ret
+    (fun _ ⟨h1, h2, h3, h4⟩ => q_pre h1 h2 h3 h4) (fun _ _ _ _ hq => q_post hq)
 
 end FvModexp.Arm64.Q.NatSqr

@@ -128,6 +128,7 @@ theorem hyp (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
     DrsHypQ impl R drsCQ := by
   intro H b L qp ql qc st up ul uc d vp vl vc
   rw [show DivLarge.drsNames = LibDrs.names from rfl, ← LibDrs.eq_only, entry_drs]
+  janus64_ensures_old [FvModexp.Amd64.Q.DivLarge.DrsPre, FvModexp.Amd64.Q.DivLarge.DrsPreW, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.win, FvModexp.natVal, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.DivLarge.StkIn, FvModexp.stLen, FvModexp.stCap, FvModexp.stW, FvModexp.Amd64.StackNat.wbA, FvModexp.stkR, FvModexp.Amd64.Callees.adxAddr, FvModexp.Amd64.TlsOK, FvModexp.Mdl.karatsubaThreshold, FvModexp.Mdl.basicSqrThreshold, FvModexp.Mdl.karatsubaSqrThreshold, FvModexp.Amd64.RunIface.wbA, FvModexp.StkOK, FvModexp.Asm.top, FvModexp.Amd64.Q.DivRec.Cx.V, FvModexp.Amd64.CmpSum.frame, FvModexp.stkRes, FvModexp.potK, FvModexp.NatLive, FvModexp.limbs]
   intro ret hret s hs hpre
   janus64_intro hs
   have hv9 := hpre.v9.1

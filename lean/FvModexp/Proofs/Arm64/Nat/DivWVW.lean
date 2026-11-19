@@ -665,6 +665,7 @@ theorem ens_lib (impl : List Segment) (hap : ImplApart Extracted.program impl) (
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xn xp xl xc y : BitVec 64) :
     Ensures (LibDivWVW.program.link impl) entry [zp, zl, zc, xn, xp, xl, xc, y]
       (fun s => xl = zl ∧ Pre R b L zp zl xn xp y s) (fun s s' => Post R b L zp zl xn xp y s s') := by
+  janus_ensures_old [FvModexp.Arm64.DivWVW.Pre, FvModexp.Arm64.Callees.CallEnvND, FvModexp.NatLive, FvModexp.Arm64.win, Janus.Spec.GuardOK, Janus.Spec.StackOK]
   intro ret hret s hs ⟨hxz, hpre⟩
   janus_intro hs
   subst hxz

@@ -39,7 +39,7 @@ theorem SlowHyp.mono {impl : List Amd64.Segment} {R : RtInv} {ns : List String} 
     (h : SlowHyp impl R ns stk above need cost) (hn : ∀ a b c, need a b c ≤ need' a b c)
     (hc : ∀ l a b c, cost l a b c ≤ cost' l a b c) : SlowHyp impl R ns stk above need' cost' := by
   intro b L z zl zc st x xl xc y yl yc m ml mc
-  refine (h b L z zl zc st x xl xc y yl yc m ml mc).mono (fun s hs => ?_) (fun s s' _ hq => CPostR0.mono (hc _ _ _ _) hq)
+  refine (h b L z zl zc st x xl xc y yl yc m ml mc).mono_ret (fun s hs => ?_) (fun s _ s' _ hq => CPostR0.mono (hc _ _ _ _) hq)
   obtain ⟨h0, ⟨h1, h2⟩, h3⟩ := hs
   exact ⟨h0, ⟨CPre.mono (hn _ _ _) (hc _ _ _ _) h1, h2⟩, h3⟩
 

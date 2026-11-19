@@ -33,7 +33,7 @@ theorem correctness (impl : List Segment) (hap : ImplApart Extracted.program imp
         R.inv b L (s.regs 28).toNat (view R.rt L s.mem) ∧ RunArm64.ErrReqs R b len ∧
         LengthsFail (bytesAt s.mem p.toNat len.toNat))
       (fun s s' => RunArm64.ErrRet s' ∧ RunArm64.Frame R b (3 * RunArm64.blockBound 64 + RunArm64.blockBound 16) L s s') :=
-  Ensures.full hap (ns := LibRun.names) (LibRun.eq_only ▸ ensErrLib impl hap R hmk hmv hno b L c p len cp)
+  Ensures.full (hinv := by janus_pre_setRet [FvModexp.Spec.RunArm64.Env, FvModexp.Spec.RunArm64.Input, FvModexp.Spec.OsakaReceiver, FvModexp.Spec.RunArm64.ErrReqs, FvModexp.Spec.bytesAt, Janus.Spec.GuardOK, Janus.Spec.StackOK, FvModexp.Spec.RunArm64.window, FvModexp.Spec.RunArm64.wordT, FvModexp.Arm64.Run.errT, FvModexp.Spec.byteOf]) hap (ns := LibRun.names) (LibRun.eq_only ▸ ensErrLib impl hap R hmk hmv hno b L c p len cp)
 
 end FvModexp.Arm64.Run
 
@@ -99,9 +99,9 @@ def s0 : State :=
 
 theorem hret : RetAddr (Extracted.program.link implAt) ret := RetAddr.of_check (by decide +kernel)
 
-theorem setup : CallSetup ((Extracted.program.link implAt).withExit ret) (segAddr Extracted.program RunArm64.fn)
+theorem setup : CallSetup0 (segAddr Extracted.program RunArm64.fn)
     [c0, p0, 96, 96] s0 :=
-  ⟨rfl, rfl, by
+  ⟨rfl, by first | decide | simp | omega, by
     intro r h
     simp only [List.length_cons, List.length_nil] at h
     rcases (by omega : r = 0 ∨ r = 1 ∨ r = 2 ∨ r = 3) with rfl | rfl | rfl | rfl <;> rfl⟩
@@ -228,11 +228,11 @@ theorem site_mv : Mem.EqPre 4096 3 sMv ∧
       Or.inr (by rw [rt_eq]; simp only [outside_cons, outside_nil, and_true]; decide +kernel)⟩⟩
 
 /-- The returning run, exactly as `correctness` states it at the witness. -/
-theorem returnsF : Returns ((Extracted.program.link implAt).withExit ret) s0 fun s' =>
-    ABIReturn s0 s' ∧ (RunArm64.ErrRet s' ∧
-      RunArm64.Frame R 0x1000 (3 * RunArm64.blockBound 64 + RunArm64.blockBound 16) [] s0 s') :=
-  FvModexp.Arm64.Run.correctness implAt hap R (by rw [addr_mk]; exact model_mk) (by rw [addr_mv]; exact model_mv)
-    (by rw [addr_no]; exact model_no) 0x1000 [] c0 p0 96 96 ret hret s0 setup pre
+theorem returnsF : Returns ((Extracted.program.link implAt).withExit ret) (s0.setRet ret) fun s' =>
+    ABIReturn (s0.setRet ret) s' ∧ (RunArm64.ErrRet s' ∧
+      RunArm64.Frame R 0x1000 (3 * RunArm64.blockBound 64 + RunArm64.blockBound 16) [] (s0.setRet ret) s') :=
+  (FvModexp.Arm64.Run.correctness implAt hap R (by rw [addr_mk]; exact model_mk) (by rw [addr_mv]; exact model_mv)
+    (by rw [addr_no]; exact model_no) 0x1000 [] c0 p0 96 96) s0 setup pre ret hret
 
 /-- All hypotheses of `correctness` hold together, with every conjunct of its precondition: the toy runtime, an empty live
 set, budget `0x1000`, and the call `Run(c, p, 96, 96)` on 96 header bytes whose base length is 1025. -/
@@ -243,7 +243,7 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
     MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R ∧
     NewobjectLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.newobject") 4096 R ∧
     RetAddr (Extracted.program.link impl) ret ∧
-    CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program RunArm64.fn) [c, p, len, cp] s ∧
+    CallSetup0 (segAddr Extracted.program RunArm64.fn) [c, p, len, cp] s ∧
     RunArm64.Env R L s ∧ RunArm64.Input R L c p len cp s ∧ OsakaReceiver s.mem c.toNat ∧
     R.inv b L (s.regs 28).toNat (view R.rt L s.mem) ∧ RunArm64.ErrReqs R b len ∧
     LengthsFail (bytesAt s.mem p.toNat len.toNat) ∧
@@ -264,9 +264,9 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
       (NewobjectPre 4096 s_c ∧ StackRoom s_c 4096 1 ∧
         LiveAt R (Extracted.program.contractAddr "runtime.newobject") [(s_c.regs 0).toNat] L b (newobjectRound s_c)
           (s_c.regs 28).toNat s_c.mem (calleeStack s_c 4096 1))) ∧
-    Returns ((Extracted.program.link impl).withExit ret) s fun s' =>
-      ABIReturn s s' ∧ (RunArm64.ErrRet s' ∧
-        RunArm64.Frame R b (3 * RunArm64.blockBound 64 + RunArm64.blockBound 16) L s s') :=
+    Returns ((Extracted.program.link impl).withExit ret) (s.setRet ret) fun s' =>
+      ABIReturn (s.setRet ret) s' ∧ (RunArm64.ErrRet s' ∧
+        RunArm64.Frame R b (3 * RunArm64.blockBound 64 + RunArm64.blockBound 16) L (s.setRet ret) s') :=
   ⟨implAt, R, 0x1000, [], c0, p0, 96, 96, ret, s0, hap, by rw [addr_mk]; exact model_mk, by rw [addr_mv]; exact model_mv,
     by rw [addr_no]; exact model_no, hret, setup, pre.1, pre.2.1, pre.2.2.1, pre.2.2.2.1, pre.2.2.2.2.1, pre.2.2.2.2.2,
     ⟨[], 0x1000, sMk, by rw [addr_mk]; rfl, by rw [addr_mk]; exact site_mk⟩,

@@ -44,7 +44,7 @@ theorem correctness (impl : List Segment) (hap : ImplApart Extracted.program imp
       [BitVec.ofNat 64 zp, BitVec.ofNat 64 zl, BitVec.ofNat 64 zc, BitVec.ofNat 64 zp, BitVec.ofNat 64 zl,
         BitVec.ofNat 64 zc, BitVec.ofNat 64 yp, BitVec.ofNat 64 yl, BitVec.ofNat 64 yc, BitVec.ofNat 64 n]
       (PreGR R b L op zp zl zc yp yl yc n) (PostG R b L zp zl zc yp yl n) :=
-  Ensures.full hap (ensGR_of (SubMod2N.ensG impl hap R trW_sub trW_fn (by omega) (by omega)
+  Ensures.full (hinv := by janus_pre_setRet [FvModexp.Arm64.SubMod2N.PreGR, FvModexp.Arm64.CallEnv, FvModexp.Arm64.SubMod2N.K, FvModexp.Arm64.SubMod2N.A, FvModexp.Arm64.NatAdd.wordT, FvModexp.Arm64.EvenHyp.NatOne, FvModexp.Arm64.win, FvModexp.Arm64.EvenHyp.natOneA, FvModexp.NatLive, FvModexp.NatNorm, FvModexp.Arm64.SubMod2N.costG, Janus.Spec.GuardOK, Janus.Spec.StackOK]) hap (ensGR_of (SubMod2N.ensG impl hap R trW_sub trW_fn (by omega) (by omega)
     (Trunc.ens impl hap R hmk hmv)
     (fun b L zp zl zc xp xl xc yp yl yc => NatSub.ensR0 impl hap R hmk hmv b L zp zl zc xp xl xc yp yl yc)
     hmk hmv hgr) b L op zp zl zc yp yl yc n)
@@ -86,9 +86,9 @@ def s0 : State :=
 
 theorem hret : RetAddr (Extracted.program.link WStubs.impl) RET := RetAddr.of_check (by decide +kernel)
 
-theorem setup : CallSetup ((Extracted.program.link WStubs.impl).withExit RET) (segAddr Extracted.program SubMod2N.fn)
+theorem setup : CallSetup0 (segAddr Extracted.program SubMod2N.fn)
     args s0 :=
-  ⟨rfl, rfl, fun i h => by simp only [s0, dif_pos h]⟩
+  ⟨rfl, by first | decide | simp | omega, fun i h => by simp only [s0, dif_pos h]⟩
 
 theorem acc0 (a n : Nat) (w : Bool) : mem0.accessible a n w = (wmem (fun _ => 0) regs).accessible a n w :=
   Memory.accessible_congr rfl a n w
@@ -157,7 +157,7 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
     MemmoveLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R ∧
     GrowsliceLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.growslice") 4096 R ∧
     RetAddr (Extracted.program.link impl) ret ∧
-    CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program SubMod2N.fn)
+    CallSetup0 (segAddr Extracted.program SubMod2N.fn)
       [BitVec.ofNat 64 zp, BitVec.ofNat 64 zl, BitVec.ofNat 64 zc, BitVec.ofNat 64 zp, BitVec.ofNat 64 zl,
         BitVec.ofNat 64 zc, BitVec.ofNat 64 yp, BitVec.ofNat 64 yl, BitVec.ofNat 64 yc, BitVec.ofNat 64 n] s ∧
     PreGR R b L op zp zl zc yp yl yc n s ∧
@@ -170,8 +170,8 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.growslice") ∧
       grSite R (Extracted.program.contractAddr "runtime.growslice") L b s_c) ∧
-    Returns ((Extracted.program.link impl).withExit ret) s fun s' =>
-      ABIReturn s s' ∧ PostG R b L zp zl zc yp yl n s s' :=
+    Returns ((Extracted.program.link impl).withExit ret) (s.setRet ret) fun s' =>
+      ABIReturn (s.setRet ret) s' ∧ PostG R b L zp zl zc yp yl n (s.setRet ret) s' :=
   ⟨WStubs.impl, R, 0x1000, [], OP, OA, 1, 1, YP, 1, 1, 64, RET, s0, WStubs.hap,
     by rw [WStubs.addr_mk]; exact WStubs.mk [] (by intro t ht; simp at ht) _,
     by rw [WStubs.addr_mv]; exact WStubs.mv R,
@@ -184,6 +184,6 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
     correctness WStubs.impl WStubs.hap R (by rw [WStubs.addr_mk]; exact WStubs.mk [] (by intro t ht; simp at ht) _)
       (by rw [WStubs.addr_mv]; exact WStubs.mv R)
       (by rw [WStubs.addr_gr]; exact WStubs.gr [] (by intro t ht; simp at ht) _) 0x1000 [] OP OA 1 1 YP 1 1 64
-      RET hret s0 setup pre⟩
+      s0 setup pre RET hret⟩
 
 end FvModexp.Arm64.SubMod2NRow.Witness

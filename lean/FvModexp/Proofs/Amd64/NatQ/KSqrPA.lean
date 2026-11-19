@@ -36,7 +36,7 @@ theorem kPA (impl : List Amd64.Segment) {R : RtInv} {b : Nat} {L : List (Nat × 
       ReachesRet (LibSqr.program.link impl) ret S1 Q) :
     ReachesRet (LibSqr.program.link impl) ret s Q := by
   have hpre' := hpre
-  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, -, -, -⟩, hW, -, hglb, -, h80, hxc, hxc40, hn12,
+  obtain ⟨⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, -, -, -⟩, hW, -, hglb, -, h80, hxc, hxc40, hn12,
     -, -, hxp48, -⟩ := hpre'
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw
   obtain ⟨-, -, h80v, -, -, -, e80, hgacc, -, hgw, -⟩ := hglb

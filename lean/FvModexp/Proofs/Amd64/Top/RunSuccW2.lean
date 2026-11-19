@@ -52,9 +52,9 @@ def s2 : State :=
     rip := BitVec.ofNat 64 (segAddr Extracted.program RunAmd64.fn), flags := ⟨none, none, none, none, none, none⟩,
     xmm := fun _ => 0, mem := mem2, fsBase := BitVec.ofNat 64 (T0 + 8) }
 
-theorem setup2 : CallSetup ((Extracted.program.link WStubs.impl).withExit RET) (segAddr Extracted.program RunAmd64.fn)
+theorem setup2 : CallSetup0 (segAddr Extracted.program RunAmd64.fn)
     [c2, p2, 99, 99] s2 :=
-  ⟨rfl, by decide +kernel, rfl, by decide, by
+  ⟨rfl, rfl, by decide, by
     intro i h; simp only [List.length_cons, List.length_nil] at h
     rcases (by omega : i = 0 ∨ i = 1 ∨ i = 2 ∨ i = 3) with rfl | rfl | rfl | rfl <;> rfl, rfl⟩
 
@@ -118,7 +118,7 @@ theorem pre2 (budget2 : RunAmd64.okBudget (parseLengths (bytesAt s2.mem p2.toNat
   refine ⟨⟨⟨⟨?_, ?_, ?_⟩, ⟨?_, ?_, ?_⟩, by decide, dataLoaded _ _, ?_, ?_, ?_, fun r hr => by simp at hr, roOut,
       ⟨⟨?_, ?_, ?_⟩, ?_, ?_⟩⟩, fun r hr => by simp at hr, fun r hr => by simp at hr⟩,
     ⟨?_, by decide, Or.inr ?_, ?_, by decide, by decide, by decide, ?_, Or.inr ?_, ?_⟩,
-    ⟨by decide +kernel, by decide +kernel, by decide +kernel⟩, inv2 _,
+    (by first | exact ⟨by decide +kernel, by decide +kernel, by decide +kernel, by decide⟩ | exact ⟨by decide +kernel, by decide +kernel, by decide +kernel⟩), inv2 _,
     ⟨fun _ _ _ _ => trivial, fun _ _ _ _ => trivial, fun _ _ _ => trivial, fun _ _ _ _ _ _ => trivial,
       fun _ => trivial, fun _ => trivial, fun _ => trivial, fun _ => trivial, fun _ => trivial⟩,
     globals2, one2, pool2, cpu2, budget2, pass2⟩

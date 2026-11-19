@@ -206,7 +206,7 @@ theorem mcL_pre {R : RtInv} {L : List (Nat × Nat)} {s : State} {W : Nat} (hce :
       LiveMemAt64 R (cA "runtime.memclrNoHeapPointers") [(S.regs 0).toNat, (S.regs 3).toNat] Lk bk S
         (liveWin64 S 4096 2) ∧
       LiveDest64 R Lk S 4096 2 (S.regs 0).toNat (S.regs 3).toNat := by
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, hLs, hro, htls⟩ := hce
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, hLs, hro, htls⟩ := hce
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw
   simp only [win, outside_cons, outside_nil, and_true] at hdw
   unfold Apart at hga
@@ -216,11 +216,12 @@ theorem mcL_pre {R : RtInv} {L : List (Nat × Nat)} {s : State} {W : Nat} (hce :
     simp only [liveWin64, calleeStack64, List.cons_append, List.nil_append, List.mem_cons, List.not_mem_nil,
       or_false] at hr
     rcases hr with rfl | rfl | rfl <;> exact hout.of_sub (by simp only; omega) (by simp only; omega)
-  refine ⟨⟨⟨?_, ?_, ?_⟩, ⟨by omega, by omega, by omega, ?_, hx15, hdf, hra⟩, ?_⟩,
+  refine ⟨⟨⟨?_, ?_, ?_, ?_⟩, ⟨by omega, by omega, by omega, ?_, hx15, hdf, hra⟩, ?_⟩,
     ⟨?_, by rw [h14]; exact hinv, hx.liveSep ?_ hwr, hwr⟩, ?_, ?_, ?_, ?_, ?_⟩
   · simp only [stackguard0Offset, regG, h14]; omega
   · simp only [stackguard0Offset, regG, h14]; rw [hacc]; exact hg2
   · simp only [stackguard0, stackguard0Offset, regG, regSP, h14]; rw [hgS]; omega
+  · first | omega | (simp only [stackguard0Offset, regG, regSP]; omega) | (simp_all only [stackguard0Offset, regG, regSP, Apart]; omega)
   · rw [hacc]; exact Janus.Arm64.Memory.accessible_mono _ hw (by omega) (by omega)
   · simp only [MemAmd64.calleeStack, MapAmd64.calleeStack, h14, outside_cons, outside_nil, and_true]; omega
   · rw [h0, h3]; exact hsv.2.2.1 _ _ (by omega)

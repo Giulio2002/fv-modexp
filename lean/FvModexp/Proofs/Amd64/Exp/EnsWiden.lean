@@ -31,18 +31,39 @@ theorem retAddr_narrow {P : Amd64.Program} {impl : List Amd64.Segment} {ns ms : 
     exact List.mem_append_left _ (List.mem_filter.2 ⟨hm, hsub _ hc⟩)
   · exact List.mem_append_right _ h1
 
-/-- **Widening** (amd64): `Ensures` on the functions `ns` gives `Ensures` on any `ms ⊇ ns`. -/
+/-- Installing a return address twice keeps the second one (amd64: the same 8 bytes at `[RSP]` are overwritten). -/
+theorem setRet_setRet_eq (s : State) (r r' : Nat) : (s.setRet r).setRet r' = s.setRet r' := by
+  rw [Janus.Amd64.GoABI.setRet_setRet]
+  show ({ s with mem := (s.mem.writeLE (s.regs regSP).toNat 8 r).writeLE (s.regs regSP).toNat 8 r' } : State) =
+    { s with mem := s.mem.writeLE (s.regs regSP).toNat 8 r' }
+  congr 1
+  simp only [Janus.Arm64.Memory.writeLE]
+  congr 1
+  funext a
+  by_cases h : (s.regs regSP).toNat ≤ a ∧ a < (s.regs regSP).toNat + 8 <;> simp [h]
+
+/-- **Widening** (amd64): `Ensures` on the functions `ns` gives `Ensures` on any `ms ⊇ ns`. (Janus v0.4.0: the precondition
+is evaluated before the return address is installed; the run of `ns`'s theorem is taken at the call state `s.setRet ret`
+through the auxiliary precondition "`s` is some `s0.setRet r` with `pre s0`", so no invariance of `pre` is needed.) -/
 theorem ens_widen {P : Amd64.Program} {impl : List Amd64.Segment} (hap : Amd64.ImplApart P impl) {ns ms : List String}
     (hsub : ∀ x, ns.contains x = true → ms.contains x = true) {entry : Nat} {args : List W64}
     {pre : State → Prop} {post : State → State → Prop}
     (h : Ensures ((P.onlySegments ns).link impl) entry args pre post) :
     Ensures ((P.onlySegments ms).link impl) entry args pre post := by
-  intro ret hret s hcs hpre
-  have hsum := Ensures.toSummaryIn h (A64.noExit_restrict64 hap ns) hcs.len (A64.codeIn_restrict_mono64 hap hsub)
-  have hra : s.mem.readLE (s.regs regSP).toNat 8 = ret := by
+  have h2 : Ensures ((P.onlySegments ns).link impl) entry args
+      (fun s => ∃ s0 r, pre s0 ∧ CallSetup0 entry args s0 ∧ s = s0.setRet r) post := by
+    intro s hs hp ret hret
+    obtain ⟨s0, r, hp0, hs0, rfl⟩ := hp
+    rw [setRet_setRet_eq]
+    exact h s0 hs0 hp0 ret hret
+  intro s0 hs0 hp0 ret hret
+  have hcs : CallSetup (((P.onlySegments ms).link impl).withExit ret) entry args (s0.setRet ret) :=
+    hs0.setRet (by have := hret.user; omega)
+  have hsum := Ensures.toSummaryIn h2 (A64.noExit_restrict64 hap ns) hcs.len (A64.codeIn_restrict_mono64 hap hsub)
+  have hra : (s0.setRet ret).mem.readLE ((s0.setRet ret).regs regSP).toNat 8 = ret := by
     have := hcs.ret; simp only [Amd64.Program.exitAddr_withExit] at this; exact this
   refine Summary.returns hsum hret hcs.rip (by rw [retAddrOf, hra])
-    ⟨?_, hcs.zero, argsFrom_of args 0 fun i hi => by simpa using hcs.args i hi, hcs.df, hpre⟩
+    ⟨?_, hcs.zero, argsFrom_of args 0 fun i hi => by simpa using hcs.args i hi, hcs.df, ⟨s0, ret, hp0, hs0, rfl⟩⟩
     fun s' ⟨⟨a, b, c, d⟩, hq⟩ => ⟨⟨a, b, c, d⟩, hq⟩
   rw [hra]; exact retAddr_narrow hsub hret
 

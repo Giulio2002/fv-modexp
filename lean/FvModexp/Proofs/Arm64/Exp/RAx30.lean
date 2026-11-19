@@ -29,9 +29,10 @@ theorem x30_of {p : Program} {e : Nat} {args : List (BitVec 64)} {s : State} {re
 theorem ens_drop {p : Program} {e : Nat} {args : List (BitVec 64)} {pre pre' : State → Prop}
     {post : State → State → Prop}
     (hpre : ∀ s, pre' s → (s.regs 30).toNat % 4 = 0 → (s.regs 30).toNat < 2 ^ 48 → pre s)
-    (h : Ensures p e args pre post) : Ensures p e args pre' post := by
+    (h : Ensures p e args pre post) (hinv : Ensures.SetRetInv p e args pre' := by janus_pre_setRet) [ArgsFit args] : Ensures p e args pre' post := by
+  refine Ensures.of_old hinv ?_
   intro ret hret s hs hp
   obtain ⟨h1, h2⟩ := x30_of hret hs
-  exact h ret hret s hs (hpre s hp h1 h2)
+  exact (h).toOld ret hret s hs (hpre s hp h1 h2)
 
 end FvModexp.Arm64.RAx30

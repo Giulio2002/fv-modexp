@@ -30,7 +30,7 @@ theorem correctness (impl : List Segment) (hap : ImplApart Extracted.program imp
     Ensures (Extracted.program.link impl) (segAddr Extracted.program BasicSqr.fn) [st, zp, zl, zc, xp, xl, xc]
       (BasicSqr.Pre R b L st.toNat zp.toNat zl.toNat zc.toNat xp.toNat xl.toNat)
       (BasicSqr.Post R b L st.toNat zp.toNat zl.toNat xp.toNat xl.toNat) :=
-  Ensures.full hap (BasicSqr.ens impl hap R hmc 4208 24 (StackNat.hypL impl hap R hgr hmc hwb) (by decide) (by decide)
+  Ensures.full (hinv := by janus_pre_setRet [FvModexp.Arm64.BasicSqr.Pre, FvModexp.Arm64.CallEnv, FvModexp.Arm64.BasicSqr.thrA, FvModexp.Arm64.win, FvModexp.NatLive, FvModexp.StkOK, FvModexp.stCap, FvModexp.stW, FvModexp.Arm64.BasicSqr.freeP, FvModexp.Arm64.BasicSqr.freeN, FvModexp.stLen, FvModexp.Arm64.StackNat.wbA, Janus.Spec.GuardOK, Janus.Spec.StackOK]) hap (BasicSqr.ens impl hap R hmc 4208 24 (StackNat.hypL impl hap R hgr hmc hwb) (by decide) (by decide)
     b L st zp zl zc xp xl xc)
 
 end FvModexp.Arm64.BasicSqrRow
@@ -64,9 +64,9 @@ def s0 : State :=
 
 theorem hret : RetAddr (Extracted.program.link WStubs.impl) RET := RetAddr.of_check (by decide +kernel)
 
-theorem setup : CallSetup ((Extracted.program.link WStubs.impl).withExit RET) (segAddr Extracted.program BasicSqr.fn)
+theorem setup : CallSetup0 (segAddr Extracted.program BasicSqr.fn)
     args s0 :=
-  ⟨rfl, rfl, fun i h => by simp only [s0, dif_pos h]⟩
+  ⟨rfl, by first | decide | simp | omega, fun i h => by simp only [s0, dif_pos h]⟩
 
 theorem acc0 (a n : Nat) (w : Bool) : mem0.accessible a n w = (wmem (fun _ => 0) regs).accessible a n w :=
   Memory.accessible_congr rfl a n w
@@ -113,7 +113,7 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R ∧
     WbLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 4096 R 2 ∧
     RetAddr (Extracted.program.link impl) ret ∧
-    CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program BasicSqr.fn)
+    CallSetup0 (segAddr Extracted.program BasicSqr.fn)
       [st, zp, zl, zc, xp, xl, xc] s ∧
     BasicSqr.Pre R b L st.toNat zp.toNat zl.toNat zc.toNat xp.toNat xl.toNat s ∧
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
@@ -125,8 +125,8 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.gcWriteBarrier2") ∧
       wbSite R (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 2 L b s_c) ∧
-    Returns ((Extracted.program.link impl).withExit ret) s fun s' =>
-      ABIReturn s s' ∧ BasicSqr.Post R b L st.toNat zp.toNat zl.toNat xp.toNat xl.toNat s s' :=
+    Returns ((Extracted.program.link impl).withExit ret) (s.setRet ret) fun s' =>
+      ABIReturn (s.setRet ret) s' ∧ BasicSqr.Post R b L st.toNat zp.toNat zl.toNat xp.toNat xl.toNat (s.setRet ret) s' :=
   ⟨WStubs.impl, R, 0x1000, [], BitVec.ofNat 64 ST, BitVec.ofNat 64 OA, 2, 2, BitVec.ofNat 64 OB, 1, 1, RET, s0,
     WStubs.hap,
     by rw [WStubs.addr_gr]; exact WStubs.gr [] (by intro t ht; simp at ht) _,
@@ -139,6 +139,6 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
     correctness WStubs.impl WStubs.hap R (by rw [WStubs.addr_gr]; exact WStubs.gr [] (by intro t ht; simp at ht) _)
       (by rw [WStubs.addr_cl]; exact WStubs.cl R)
       (by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] (by intro t ht; simp at ht) _) 0x1000 []
-      (BitVec.ofNat 64 ST) (BitVec.ofNat 64 OA) 2 2 (BitVec.ofNat 64 OB) 1 1 RET hret s0 setup pre⟩
+      (BitVec.ofNat 64 ST) (BitVec.ofNat 64 OA) 2 2 (BitVec.ofNat 64 OB) 1 1 s0 setup pre RET hret⟩
 
 end FvModexp.Arm64.BasicSqrRow.Witness

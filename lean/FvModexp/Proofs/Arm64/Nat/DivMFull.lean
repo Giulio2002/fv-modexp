@@ -93,6 +93,7 @@ theorem ensML (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     IMod.DivHypM impl R LibDiv.names 41504 112 (costM dc) := by
   intro b L u ul uc v vl vc
   rw [← LibDiv.eq_only]
+  janus_ensures_old [FvModexp.Arm64.IMod.DivPreM, FvModexp.Arm64.CallEnv, FvModexp.Arm64.RunIface.Globals, FvModexp.Arm64.win, FvModexp.Arm64.ExpHyp.WrOut, FvModexp.Arm64.ExpHyp.RdIn0, FvModexp.Arm64.ExpHyp.RdIn, FvModexp.NatNorm, FvModexp.Arm64.RunIface.gA, FvModexp.Arm64.RunIface.PoolG, Janus.Spec.GuardOK, Janus.Spec.StackOK, FvModexp.Arm64.RunIface.wbA, FvModexp.NatLive, FvModexp.Arm64.RunIface.stackPoolA, Janus.Spec.Pool.newOffset]
   intro ret hret s hs hpre
   janus_intro hs
   have hr48 := hret.user

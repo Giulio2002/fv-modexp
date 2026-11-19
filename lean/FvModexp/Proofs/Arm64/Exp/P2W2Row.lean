@@ -44,7 +44,7 @@ theorem correctness (impl : List Segment) (hap : ImplApart Extracted.program imp
       (P2W2.Pre R b L K sqrCQ mulCQ zp zc st xp xl xc yp yl lm)
       (P2W2.Post R b L K sqrCQ mulCQ zp zc st xp xl yp yl lm) := by
   have hW := CalleeInst.sqrWX_eq
-  exact Ensures.full hap (P2W2.ens hap sub nf2 nfP hgr hmc hmv hmk hno hwb (kcP := NatSqr.sqrWX) (by omega)
+  exact Ensures.full (hinv := by janus_pre_setRet [FvModexp.Arm64.P2W2.Pre, FvModexp.Arm64.P2W2.EPre, FvModexp.natVal, FvModexp.stLen, FvModexp.Arm64.P2W2.EEnv, FvModexp.Arm64.RunIface.Globals, FvModexp.Arm64.StackNat.wT, FvModexp.Arm64.P2W2.OE, FvModexp.NatNorm, FvModexp.Arm64.RunIface.gA, FvModexp.StkOK, FvModexp.stCap, FvModexp.stW, FvModexp.Arm64.StackNat.wbA, FvModexp.Arm64.P2W2.free, FvModexp.Arm64.EvenHyp.NatOne, FvModexp.stkWs, FvModexp.Arm64.EvenHyp.StkApart, FvModexp.stkR, FvModexp.Arm64.RunIface.wbA, FvModexp.NatLive, FvModexp.Arm64.EvenHyp.natOneA, FvModexp.stkRes, FvModexp.potK]) hap (P2W2.ens hap sub nf2 nfP hgr hmc hmv hmk hno hwb (kcP := NatSqr.sqrWX) (by omega)
     (sn hap hgr hmc hwb) (by omega) (by omega) (sq hap hgr hmc hmv hmk hwb) (Nat.le_refl _) (by omega) sqm
     (mu hap hgr hmc hmv hmk hwb) (by rw [CalleeInst.mulWX_eq]; omega) (by omega) mum (tr hap hmv hmk) (by omega) (by omega)
     b L K (by omega) zp zl zc st xp xl xc yp yl yc lm)
@@ -131,7 +131,7 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
     WbLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 4096 R 2 ∧
     70800 ≤ K ∧
     RetAddr (Extracted.program.link impl) ret ∧
-    CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program P2W2.fn)
+    CallSetup0 (segAddr Extracted.program P2W2.fn)
       [BitVec.ofNat 64 zp, BitVec.ofNat 64 zl, BitVec.ofNat 64 zc, BitVec.ofNat 64 st, BitVec.ofNat 64 xp,
         BitVec.ofNat 64 xl, BitVec.ofNat 64 xc, BitVec.ofNat 64 yp, BitVec.ofNat 64 yl, BitVec.ofNat 64 yc,
         BitVec.ofNat 64 lm] s ∧
@@ -154,8 +154,8 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.gcWriteBarrier2") ∧
       wbSite R (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 2 L b s_c) ∧
-    Returns ((Extracted.program.link impl).withExit ret) s fun s' =>
-      ABIReturn s s' ∧ P2W2.Post R b L K sqrCQ mulCQ zp zc st xp xl yp yl lm s s' :=
+    Returns ((Extracted.program.link impl).withExit ret) (s.setRet ret) fun s' =>
+      ABIReturn (s.setRet ret) s' ∧ P2W2.Post R b L K sqrCQ mulCQ zp zc st xp xl yp yl lm (s.setRet ret) s' :=
   ⟨WStubs.impl, R, BWQ, [], KW, 0, 0, 0, ST, XP, 1, 1, YP, 1, 1, 8, RET, s0, WStubs.hap,
     by rw [WStubs.addr_gr]; exact WStubs.gr [] (by intro t ht; simp at ht) _,
     by rw [WStubs.addr_cl]; exact WStubs.cl R,
@@ -178,6 +178,6 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
       (by rw [WStubs.addr_mk]; exact WStubs.mk [] (by intro t ht; simp at ht) _)
       (by rw [WStubs.addr_no]; exact WStubs.no [] (by intro t ht; simp at ht) _)
       (by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] (by intro t ht; simp at ht) _) BWQ [] KW (Nat.le_refl _)
-      0 0 0 ST XP 1 1 YP 1 1 8 RET hret s0 (setup _ args (by decide)) pre⟩
+      0 0 0 ST XP 1 1 YP 1 1 8 s0 (setup _ args (by decide)) pre RET hret⟩
 
 end FvModexp.Arm64.P2W2Row.Witness

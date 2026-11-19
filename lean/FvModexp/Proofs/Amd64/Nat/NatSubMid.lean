@@ -320,7 +320,7 @@ theorem preS_env {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl xc y
     (s.regs 14).toNat + 24 ≤ 2 ^ 48 ∧ s.mem.accessible ((s.regs 14).toNat + 16) 8 false = true ∧
     s.mem.readLE ((s.regs 14).toNat + 16) 8 + 4288 < (s.regs 4).toNat ∧ 4288 ≤ (s.regs 4).toNat ∧ (s.regs 4).toNat + 80 ≤ 2 ^ 48 ∧
     s.mem.accessible ((s.regs 4).toNat - 4288) (4288 + 80) true = true ∧ (s.regs 4).toNat % 8 = 0 ∧ TlsG s := by
-  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, _, _, _, _, _, _, ⟨htg, _, _⟩⟩, _⟩ := hpre
+  obtain ⟨⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, _, _, _, _, _, _, ⟨htg, _, _⟩⟩, _⟩ := hpre
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw
   exact ⟨by omega, hg2, hg3, hb', ha, hw, hal, htg⟩
 

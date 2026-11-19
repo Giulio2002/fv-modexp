@@ -561,6 +561,7 @@ theorem ens_lib (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.pro
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xn xp xl xc y : BitVec 64) :
     Ensures (LibDivWVW.program.link impl) entry [zp, zl, zc, xn, xp, xl, xc, y]
       (fun s => xl = zl ∧ Pre R b L zp zl xn xp y s) (fun s s' => Post R b L zp zl xn xp y s s') := by
+  janus64_ensures_old [FvModexp.Amd64.DivWVW.Pre, FvModexp.Amd64.Callees.CallEnvND, FvModexp.NatLive, FvModexp.Amd64.win]
   intro ret hret s hs ⟨hxz, hpre⟩
   janus64_intro hs
   subst hxz

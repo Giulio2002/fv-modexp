@@ -195,6 +195,7 @@ theorem ensX (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     Ensures ((Extracted.program.onlySegments names).link impl) (segAddr Extracted.program fn)
       [zp, zl, zc, xp, xl, xc, y, r]
       (Pre R b L zp zc xp xl y r) (fun s s' => Post R b L zp zc xp xl y r s s' ∧ XQ R L zp zc xp xl y r s s') := by
+  janus_ensures_old [FvModexp.Arm64.MulAddWW.Pre, FvModexp.Arm64.CallEnv, FvModexp.Arm64.MulAddWW.wordT, FvModexp.NatLive, FvModexp.Arm64.win, Janus.Spec.GuardOK, Janus.Spec.StackOK]
   rw [show names = LibMulAddWW.names from rfl, ← LibMulAddWW.eq_only]
   intro ret hret s hs hpre
   janus_intro hs

@@ -8,6 +8,7 @@ import FvModexp.Proofs.Amd64.Nat.DivLargeDRM
 import FvModexp.Proofs.Amd64.Nat.DivLargeT1
 import FvModexp.Proofs.Amd64.Nat.DivLargeT2
 import FvModexp.Proofs.Amd64.Nat.StackNat
+import FvModexp.Proofs.Amd64.SetRetLemmas
 
 set_option autoImplicit false
 
@@ -120,6 +121,7 @@ theorem ensG (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
     (dc : Nat → Nat → Nat → Nat) (hD : DrsHyp impl R dc) : HypG impl R dc := by
   intro b L zp zl zc st up ul uc ip il vp vl
   rw [show names = LibDivL.names from rfl, ← LibDivL.eq_only]
+  janus64_ensures_old [FvModexp.Amd64.DivLarge.Pre, FvModexp.stLen, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.win, FvModexp.Amd64.EvenHyp.WrOut, FvModexp.Amd64.EvenHyp.RdIn, FvModexp.Amd64.DivLarge.StkIn, FvModexp.stW, FvModexp.stCap, FvModexp.Amd64.StackNat.wbA, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.TlsOK, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.StkOK, FvModexp.Amd64.readLE_setRet_or_zero, FvModexp.Amd64.natNorm_setRet]
   intro ret hret s hs hpre
   janus64_intro hs
   refine Summary.returns (full impl hap R hgr hmc0 hwb hmk0 hmv0 dc hD b L zp zl zc st up ul uc ip il vp vl) hret

@@ -50,6 +50,7 @@ theorem ensL (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
       [qp, ql, qc, st, up, ul, uc]
       (Pre R b H L qp.toNat ql.toNat st.toNat up.toNat ul.toNat uc.toNat vp vl)
       (PostL R b H L qp.toNat ql.toNat st.toNat up.toNat ul.toNat vp vl) := by
+  janus64_ensures_old [FvModexp.Amd64.Q.DivBasic.Pre, FvModexp.Amd64.CallEnv, FvModexp.Amd64.StackNat.wbA, FvModexp.Amd64.win, FvModexp.natVal, FvModexp.StkOK, FvModexp.stCap, FvModexp.stW, FvModexp.Amd64.DivBasic.freeP, FvModexp.Amd64.DivBasic.freeN, FvModexp.stLen, FvModexp.stkR, FvModexp.Amd64.TlsOK, FvModexp.NatLive, FvModexp.stkRes, FvModexp.potK]
   rw [show names = LibDivBasic.names from rfl, ← LibDivBasic.eq_only]
   intro ret hret s hs hpre
   janus64_intro hs
@@ -68,7 +69,7 @@ theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
       [qp, ql, qc, st, up, ul, uc]
       (Pre R b H L qp.toNat ql.toNat st.toNat up.toNat ul.toNat uc.toNat vp vl)
       (Post R b H L qp.toNat ql.toNat st.toNat up.toNat ul.toNat vp vl) :=
-  (ensL impl hap R hgr hmc hwb H b L qp ql qc st up ul uc vp vl).mono (fun _ h => h) (fun _ _ _ h => h.toPost)
+  (ensL impl hap R hgr hmc hwb H b L qp ql qc st up ul uc vp vl).mono_ret (fun _ h => h) (fun _ _ _ _ h => h.toPost)
 
 set_option linter.defProp false in
 /-- `ens` as a callee summary in a caller whose program keeps the functions `ms ⊇ names` (CONVENTIONS §4). -/

@@ -105,6 +105,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
       [st, zp, zl, zc, xp, xl, xc]
       (Pre R b H L st.toNat zp.toNat zl.toNat zc.toNat xp.toNat xl.toNat)
       (Post R b H L st.toNat zp.toNat zl.toNat xp.toNat xl.toNat) := by
+  janus_ensures_old [FvModexp.Arm64.Q.BasicSqr.Pre, FvModexp.Arm64.CallEnv, FvModexp.Arm64.Q.BasicSqr.thrA, FvModexp.Arm64.win, FvModexp.NatLive, FvModexp.StkOK, FvModexp.stCap, FvModexp.stW, FvModexp.Arm64.Q.BasicSqr.freeP, FvModexp.Arm64.Q.BasicSqr.freeN, FvModexp.stLen, FvModexp.stkR, FvModexp.Arm64.StackNat.wbA, Janus.Spec.GuardOK, Janus.Spec.StackOK, FvModexp.stkRes, FvModexp.potK]
   rw [show names = LibBasicSqr.names from rfl, ← LibBasicSqr.eq_only]
   intro ret hret s hs hpre
   janus_intro hs

@@ -40,9 +40,10 @@ theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
           R.inv b' L' (s.regs 14).toNat (view R.rt L' s'.mem) ∧
           MemFrame s.mem s'.mem (R.rt ++ win s 4232 48 ++ [(zp.toNat, zp.toNat + 8 * zl.toNat)]) ∧
           LiveFrame s.mem s'.mem L [(zp.toNat, zp.toNat + 8 * zl.toNat)]) := by
+  janus64_ensures_old [FvModexp.Amd64.CallEnv, FvModexp.NatLive, FvModexp.Amd64.win, FvModexp.Amd64.TlsOK]
   rw [show names = LibAddTo.names from rfl, ← LibAddTo.eq_only]
   have hVV := addVVHyp impl hap
-  intro ret hret s hs ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, _, hout, hga, hgr, hLs, _, ⟨htb, htr, htg⟩, htrt, htw⟩, hxz,
+  intro ret hret s hs ⟨⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, _, hout, hga, hgr, hLs, _, ⟨htb, htr, htg⟩, htrt, htw⟩, hxz,
     hzc, hz40, hzl, hzw, hzc63, hxacc, hx48, hxh, hxw, hzx, hzg, hzt, hinv⟩
   have hc1 : CodeIn64 ((Extracted.program.onlySegments [addVVfn]).link impl) (LibAddTo.program.link impl) := by
     rw [LibAddTo.eq_only]; exact A64.codeIn_restrict_mono64 hap (sub_of_all (by decide))

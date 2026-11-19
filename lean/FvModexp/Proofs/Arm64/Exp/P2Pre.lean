@@ -78,6 +78,7 @@ theorem ens {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : 
       [BitVec.ofNat 64 st, BitVec.ofNat 64 pw, BitVec.ofNat 64 pl, BitVec.ofNat 64 pc, BitVec.ofNat 64 ws,
         BitVec.ofNat 64 lm, BitVec.ofNat 64 x, BitVec.ofNat 64 xl, BitVec.ofNat 64 xc]
       (Pre R kc sqC mlC b L st pw pl ws lm x xl) (Post R kc sqC mlC b L st pw pl lm x xl) := by
+  janus_ensures_old [FvModexp.Arm64.P2Pre.Pre, FvModexp.Arm64.CallEnv, FvModexp.Arm64.P2Pre.A, FvModexp.Arm64.RunIface.Globals, FvModexp.Arm64.winA, FvModexp.Arm64.win, FvModexp.Arm64.EvenHyp.StkApart, FvModexp.Arm64.ExpHyp.RdIn, FvModexp.NatNorm, FvModexp.Arm64.EvenHyp.StkIn, FvModexp.stLen, FvModexp.stW, FvModexp.stCap, FvModexp.Arm64.EvenHyp.NatOne, FvModexp.Arm64.P2Pre.LW, FvModexp.Arm64.P2Pre.cost, FvModexp.stkR, FvModexp.Arm64.RunIface.gA, Janus.Spec.GuardOK, Janus.Spec.StackOK, FvModexp.Arm64.RunIface.wbA, FvModexp.Arm64.ExpHyp.StackOK', FvModexp.Arm64.EvenHyp.natOneA, FvModexp.Arm64.ExpHyp.stWs, FvModexp.stkRes, FvModexp.potK, FvModexp.StkOK, FvModexp.stkWs, FvModexp.NatLive]
   have hc := codeIn_ofImpl_restrict_of_apart hap LibW.names
   rw [← LibW.eq_only] at hc
   have hmvL := MemmoveLive.of_codeIn hc hmv

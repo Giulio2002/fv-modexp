@@ -32,7 +32,7 @@ theorem oneCM (impl : List Amd64.Segment) (R : RtInv)
     ReachesRet (LibDiv.program.link impl) (retAddrOf s) T (RQM R b dc L u ul 0 v 1 s) := by
   have hp := hpre
   have hce := hp.ce
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, -, hro, ⟨htg, htr, htw⟩⟩ := hp.ce
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, -, hro, ⟨htg, htr, htw⟩⟩ := hp.ce
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw hal
   unfold Apart at hga htw
   have hsv := hp.srv

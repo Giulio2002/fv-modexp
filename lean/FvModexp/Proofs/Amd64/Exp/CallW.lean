@@ -99,17 +99,17 @@ theorem retAddr_restrict {P : Amd64.Program} {impl : List Amd64.Segment} (hap : 
 theorem callEnv_of {R : RtInv} {L : List (Nat × Nat)} {g fs sp K A : Nat} {M : Memory}
     (h : CEnv R L g fs sp K A M) {s : State} (hsp : (s.regs 4).toNat = sp) (hg : (s.regs 14).toNat = g)
     (hfs : s.fsBase.toNat = fs) (hm : s.mem = M) {stk above : Nat} (hstk : stk ≤ K) (habove : above ≤ A)
-    (hK : stk ≤ sp) :
+    (hK : stk ≤ sp) (hA8 : 8 ≤ A := by omega) :
     CallEnv R L s stk above := by
   obtain ⟨hal, hK0, hA, hacc, hg1, hg2, hg3, hrt, hga, hgrt, hLs, hd, hro, f1, f2, f3, f4, f5, f6⟩ := h
   unfold CallEnv TlsOK
-  refine ⟨⟨?_, ?_, ?_⟩, ⟨?_, ?_, ?_⟩, ?_, by rw [hm]; exact hd, ?_, ?_, ?_, ?_, hro, ⟨⟨?_, ?_, ?_⟩, ?_, ?_⟩⟩
+  refine ⟨⟨?_, ?_, ?_, ?_⟩, ⟨?_, ?_, ?_⟩, ?_, by rw [hm]; exact hd, ?_, ?_, ?_, ?_, hro, ⟨⟨?_, ?_, ?_⟩, ?_, ?_⟩⟩
   all_goals try simp only [regG, regSP, stackguard0Offset, stackguard0, hsp, hg, hfs, hm, win]
   all_goals first
     | omega | exact hg2 | exact f3 | exact f4 | exact f5 | exact hgrt
     | (exact M.accessible_sub hacc (Or.inr rfl) (by omega) (by omega))
     | (exact hrt.of_sub (by omega) (by omega))
-    | (unfold Apart at hga ⊢; omega) | (unfold Apart at f6 ⊢; omega)
+    | (unfold Apart at hga ⊢; omega) | (unfold Apart at f6 ⊢; omega) | (unfold Apart at hga; omega)
     | (intro r hr; have := hLs r hr; simp only [outside_cons, outside_nil, and_true] at this ⊢; omega)
 
 /-- `CEnv` survives a frame (`R.rt ++ ws`, `ws` writable at the old memory, guard and TLS words outside `ws`) when the

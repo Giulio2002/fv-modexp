@@ -103,6 +103,6 @@ theorem DivPreQ.toG {R : RtInv} {b H c : Nat} {L : List (Nat × Nat)}
 theorem DivHypLGQ.toL {impl : List Amd64.Segment} {R : RtInv} {ns : List String} {stk above : Nat}
     {cost : Nat → Nat → Nat} (h : DivHypLGQ impl R ns stk above cost) : ExpHyp.DivHypLQ impl R ns stk above cost :=
   fun H b L z zl zc st z2 z2l z2c u ul uc v vl vc =>
-    (h H b L z zl zc st z2 z2l z2c u ul uc v vl vc).mono (fun _ hp => DivPreQ.toG hp) (fun _ _ _ hq => DivPostLGQ.toL hq)
+    (h H b L z zl zc st z2 z2l z2c u ul uc v vl vc).mono_ret (fun _ hp => DivPreQ.toG hp) (fun _ _ _ _ hq => DivPostLGQ.toL hq)
 
 end FvModexp.Amd64.ExpSlow

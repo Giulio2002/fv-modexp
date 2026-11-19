@@ -53,7 +53,7 @@ theorem pro0 {R : RtInv} {L : List (Nat × Nat)} (impl : List Amd64.Segment) (s 
       P.mem.readLE ((s.regs 4).toNat - 16) 8 = 0 → P.mem.readLE ((s.regs 4).toNat - 297) 1 = 0 →
       ReachesRet (LibDrs.program.link impl) r P Q) :
     ReachesRet (LibDrs.program.link impl) r s Q := by
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, hLs, -, -⟩ := hce
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, hLs, -, -⟩ := hce
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw
   clear hLs hout hgr
   janus64_run until [nHead1]

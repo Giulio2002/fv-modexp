@@ -47,7 +47,7 @@ theorem correctness_ok (impl : List Amd64.Segment) (hap : ImplApart Extracted.pr
         LengthsPass (bytesAt s.mem p.toNat len.toNat))
       (fun s s' => RunAmd64.OkRet (bytesAt s.mem p.toNat len.toNat) s' ∧
         RunAmd64.FrameW R b (RunAmd64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat))) L W s s') :=
-  Ensures.full64 hap (ns := LibRun.names) (by simp [numIntRegs])
+  Ensures.full64 (hinv := by janus64_pre_setRet [FvModexp.Spec.RunAmd64.EnvW, FvModexp.Spec.RunAmd64.Input, FvModexp.Spec.OsakaReceiver, FvModexp.Spec.RunAmd64.Globals, FvModexp.Spec.RunAmd64.windowW, FvModexp.Spec.RunAmd64.NatOne, FvModexp.Spec.RunAmd64.StackPool, FvModexp.Amd64.Run.bytesAt_setRet, FvModexp.Spec.RunAmd64.window, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.RunIface.wbA, Janus.Spec.Pool.newOffset]) hap (ns := LibRun.names) (by simp [numIntRegs])
     (LibRun.eq_only ▸ ensOkLib impl hap R hmk hmv hmz hno stkM aboveM hM hE
       (IntBytes.bytesSpec_at impl hap R hmk hmkz stkM aboveM hk1 ha1) W hW hW1 hab (by omega) b L c p len cp)
 
@@ -98,9 +98,9 @@ def s1 : State :=
     rip := BitVec.ofNat 64 (segAddr Extracted.program RunAmd64.fn), flags := ⟨none, none, none, none, none, none⟩,
     xmm := fun _ => 0, mem := mem1, fsBase := BitVec.ofNat 64 (T0 + 8) }
 
-theorem setup : CallSetup ((Extracted.program.link WStubs.impl).withExit RET) (segAddr Extracted.program RunAmd64.fn)
+theorem setup : CallSetup0 (segAddr Extracted.program RunAmd64.fn)
     [c1, p1, 99, 99] s1 :=
-  ⟨rfl, by decide +kernel, rfl, by decide, by
+  ⟨rfl, rfl, by decide, by
     intro i h; simp only [List.length_cons, List.length_nil] at h
     rcases (by omega : i = 0 ∨ i = 1 ∨ i = 2 ∨ i = 3) with rfl | rfl | rfl | rfl <;> rfl, rfl⟩
 
@@ -155,10 +155,10 @@ theorem pre : RunAmd64.EnvW R [] s1 WW ∧ RunAmd64.Input R [] c1 p1 99 99 s1 �
     RunAmd64.StackPool R s1.mem (RunAmd64.windowW s1 WW) ∧
     RunAmd64.okBudget (parseLengths (bytesAt s1.mem p1.toNat (99 : BitVec 64).toNat)) ≤ bW ∧
     LengthsPass (bytesAt s1.mem p1.toNat (99 : BitVec 64).toNat) := by
-  refine ⟨⟨⟨⟨?_, ?_, ?_⟩, ⟨?_, ?_, ?_⟩, by decide, dataLoaded _ _, ?_, ?_, ?_, fun r hr => by simp at hr, roOut,
+  refine ⟨⟨⟨⟨?_, ?_, ?_, ?_⟩, ⟨?_, ?_, ?_⟩, by decide, dataLoaded _ _, ?_, ?_, ?_, fun r hr => by simp at hr, roOut,
       ⟨⟨?_, ?_, ?_⟩, ?_, ?_⟩⟩, fun r hr => by simp at hr, fun r hr => by simp at hr⟩,
     ⟨?_, by decide, Or.inr ?_, ?_, by decide, by decide, by decide, ?_, Or.inr ?_, ?_⟩,
-    ⟨by decide +kernel, by decide +kernel, by decide +kernel⟩, inv1 _,
+    (by first | exact ⟨by decide +kernel, by decide +kernel, by decide +kernel, by decide⟩ | exact ⟨by decide +kernel, by decide +kernel, by decide +kernel⟩), inv1 _,
     ⟨fun _ _ _ _ => trivial, fun _ _ _ _ => trivial, fun _ _ _ => trivial, fun _ _ _ _ _ _ => trivial,
       fun _ => trivial, fun _ => trivial, fun _ => trivial, fun _ => trivial, fun _ => trivial⟩,
     globals1, one1, pool1, budget1, pass1⟩

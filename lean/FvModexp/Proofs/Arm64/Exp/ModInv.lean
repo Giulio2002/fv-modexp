@@ -91,6 +91,7 @@ theorem ensQ {impl : List Segment} (hap : ImplApart Extracted.program impl) {R :
       [BitVec.ofNat 64 zp, BitVec.ofNat 64 zl, BitVec.ofNat 64 zc, BitVec.ofNat 64 st, BitVec.ofNat 64 xp,
         BitVec.ofNat 64 xl, BitVec.ofNat 64 xc, BitVec.ofNat 64 n]
       (PreQ R kc H sqrC mulC B L zp zl zc st xp xl xc n) (PostQ R kc H sqrC mulC B L zp zc st xp xl n) := by
+  janus_ensures_old [FvModexp.Arm64.ModInv.PreQ, FvModexp.Exp.B, FvModexp.Arm64.CallEnv, FvModexp.Arm64.ModInv.A, FvModexp.Arm64.RunIface.Globals, FvModexp.Arm64.winA, FvModexp.Arm64.RunIface.gA, FvModexp.Arm64.ExpHyp.stWs, FvModexp.Arm64.ExpHyp.WrOut, FvModexp.Arm64.ExpHyp.RdIn, FvModexp.NatNorm, FvModexp.natVal, FvModexp.Arm64.EvenHyp.StkIn, FvModexp.stLen, FvModexp.Arm64.EvenHyp.StkApart, FvModexp.stkR, FvModexp.Arm64.NatAdd.wordT, FvModexp.Arm64.ModInv.OneIn, FvModexp.Arm64.ModInv.PX, Janus.Spec.GuardOK, Janus.Spec.StackOK, FvModexp.Arm64.win, FvModexp.Arm64.RunIface.wbA, FvModexp.stkWs, FvModexp.Asm.top, FvModexp.NatLive, FvModexp.Arm64.ExpHyp.StackOK', FvModexp.stCap, FvModexp.stW, FvModexp.stkRes, FvModexp.potK, FvModexp.Arm64.EvenHyp.NatOne, FvModexp.Arm64.EvenHyp.natOneA, FvModexp.Arm64.StackNat.wbA, FvModexp.Arm64.EvenHyp.frP, FvModexp.Arm64.EvenHyp.frN, FvModexp.Arm64.EvenHyp.OpX, FvModexp.StkOK]
   have hc := codeIn_ofImpl_restrict_of_apart hap LibW.names
   rw [← LibW.eq_only] at hc
   have hmkL := MakesliceLiveContract.of_codeIn hc hmk
@@ -127,8 +128,8 @@ theorem ens {impl : List Segment} (hap : ImplApart Extracted.program impl) {R : 
       [BitVec.ofNat 64 zp, BitVec.ofNat 64 zl, BitVec.ofNat 64 zc, BitVec.ofNat 64 st, BitVec.ofNat 64 xp,
         BitVec.ofNat 64 xl, BitVec.ofNat 64 xc, BitVec.ofNat 64 n]
       (PreL R kc sqrC mulC ℓ b L zp zl zc st xp xl xc n) (PostL R kc sqrC mulC ℓ b L zp zc st xp xl n) :=
-  (ensQ hap hns hnf hnfS hmk hkc hsq hkS haS htr hkT haT hmu hkM haM hls hkL haL hkT4 hsub hadd hgr hsm hmm (ℓ + D n) b L zp zl zc st xp xl xc n).mono
-    (fun _ h => h.1) (fun _ _ _ h => postL_of_Q h)
+  (ensQ hap hns hnf hnfS hmk hkc hsq hkS haS htr hkT haT hmu hkM haM hls hkL haL hkT4 hsub hadd hgr hsm hmm (ℓ + D n) b L zp zl zc st xp xl xc n).mono_ret
+    (fun _ h => h.1) (fun _ _ _ _ h => postL_of_Q h)
 
 set_option linter.defProp false in
 /-- `ens` as a callee summary in a caller whose program keeps `LibW.names` -/

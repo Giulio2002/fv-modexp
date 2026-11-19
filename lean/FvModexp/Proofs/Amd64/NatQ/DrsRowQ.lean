@@ -38,7 +38,7 @@ theorem correctness (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted
         st.toNat up.toNat ul.toNat uc.toNat vp vl vc s)
       (fun s s' => Q.DivLarge.DrsPost R b L H (Q.drsCQ ul.toNat vl) qp.toNat ql.toNat
         st.toNat up.toNat ul.toNat vp vl s s') :=
-  Ensures.full64 hap (by simp [numIntRegs]) (Q.DivRec.hyp impl hap R Q.NatMul.names mul_ns (mul_code impl hap)
+  Ensures.full64 (hinv := by janus64_pre_setRet [FvModexp.Amd64.Q.DivLarge.DrsPre, FvModexp.Amd64.Q.DivLarge.DrsPreW, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.win, FvModexp.natVal, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.DivLarge.StkIn, FvModexp.stLen, FvModexp.stCap, FvModexp.stW, FvModexp.Amd64.StackNat.wbA, FvModexp.stkR, FvModexp.Amd64.Callees.adxAddr, FvModexp.Amd64.TlsOK, FvModexp.Mdl.karatsubaThreshold, FvModexp.Mdl.basicSqrThreshold, FvModexp.Mdl.karatsubaSqrThreshold, FvModexp.Amd64.RunIface.wbA, FvModexp.StkOK, FvModexp.Asm.top, FvModexp.Amd64.Q.DivRec.Cx.V, FvModexp.Amd64.CmpSum.frame, FvModexp.stkRes, FvModexp.potK, FvModexp.NatLive, FvModexp.limbs]) hap (by simp [numIntRegs]) (Q.DivRec.hyp impl hap R Q.NatMul.names mul_ns (mul_code impl hap)
     (Q.NatMul.hypQE impl hap R hmk hgr hmc hmv hwb _) hgr hmc hwb hmv H b L qp ql qc st up ul uc d vp vl vc)
 end FvModexp.Amd64.DrsRowQ
 
@@ -59,7 +59,7 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (H b : Nat) (L 
     MakesliceLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R ∧
     MemmoveLive64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R ∧
     RetAddr (Extracted.program.link impl) ret ∧
-    CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program DivLarge.drsFn)
+    CallSetup0 (segAddr Extracted.program DivLarge.drsFn)
       [qp, ql, qc, st, up, ul, uc, d] s ∧
     -- typing anchor for the stack-argument words (the audit re-elaborates the printed statement, whose ∃ binders carry
     -- no types; divmc s60): the witness's `v = [0, 2^63]` at `OB + 0x40`, two limbs
@@ -81,8 +81,8 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (H b : Nat) (L 
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.rip = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.memmove") ∧
       mvSite R (Extracted.program.contractAddr "runtime.memmove") L b s_c) ∧
-    Returns ((Extracted.program.link impl).withExit ret) s fun s' => ABIReturn s s' ∧
-      Q.DivLarge.DrsPost R b L H (Q.drsCQ ul.toNat vl) qp.toNat ql.toNat st.toNat up.toNat ul.toNat vp vl s s' :=
+    Returns ((Extracted.program.link impl).withExit ret) (s.setRet ret) fun s' => ABIReturn (s.setRet ret) s' ∧
+      Q.DivLarge.DrsPost R b L H (Q.drsCQ ul.toNat vl) qp.toNat ql.toNat st.toNat up.toNat ul.toNat vp vl (s.setRet ret) s' :=
   ⟨WStubs.impl, R, 88, 0x80000, [], BitVec.ofNat 64 OA, 1, 1, BitVec.ofNat 64 ST, BitVec.ofNat 64 OB, 3, 3, 0,
     VP, 2, 2, RET, s0, WStubs.hap,
     by rw [WStubs.addr_gr]; exact WStubs.gr [] hty _,
@@ -101,6 +101,6 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (H b : Nat) (L 
     correctness WStubs.impl WStubs.hap R (by rw [WStubs.addr_gr]; exact WStubs.gr [] hty _)
       (by rw [WStubs.addr_cl]; exact WStubs.cl R) (by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] hty _)
       (by rw [WStubs.addr_mk]; exact WStubs.mk [] hty _) (by rw [WStubs.addr_mv]; exact WStubs.mv R) 88 0x80000 []
-      (BitVec.ofNat 64 OA) 1 1 (BitVec.ofNat 64 ST) (BitVec.ofNat 64 OB) 3 3 0 VP 2 2 RET hret s0 setup preQ⟩
+      (BitVec.ofNat 64 OA) 1 1 (BitVec.ofNat 64 ST) (BitVec.ofNat 64 OB) 3 3 0 VP 2 2 s0 setup preQ RET hret⟩
 
 end FvModexp.Amd64.DrsRowQ.Witness

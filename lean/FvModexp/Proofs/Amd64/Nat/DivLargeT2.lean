@@ -42,7 +42,7 @@ theorem t2c (impl : List Amd64.Segment) (R : RtInv)
   have hU := hT.ua; have hQ := hT.qa
   have hcap := hU.cap; have hc40 := hU.c40; have hp48 := hU.p48; have hq40 := hQ.c40; have hq48 := hQ.p48
   have hqcap := hQ.cap; have hql := hT.qle
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -⟩ := hpre.ce
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, -⟩ := hpre.ce
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw hal
   have hTacc : ∀ a n v, T.mem.accessible a n v = s.mem.accessible a n v := fun a n v => hM.fr.accessible a n v
   have hwacc : T.mem.accessible ((s.regs 4).toNat - 41272) (41272 + 112) true = true := by rw [hTacc]; exact hw

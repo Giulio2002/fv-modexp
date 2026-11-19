@@ -50,8 +50,8 @@ theorem ExpNNHypNE.toNE0 {impl : List Segment} {R : RtInv} {K : Nat} {costF : Na
     (h : ExpNNHypNE impl R K costF needR costR needS needP costS costP) :
     ExpNNHypNE0 impl R K costF needR costR needS needP costS costP :=
   fun b L zp zl zc st xp xl xc yp yl yc mp n mc slow =>
-    (h b L zp zl zc st xp xl xc yp yl yc mp n mc slow).mono (fun _ hp => hp)
-      (fun _ _ _ hq => ⟨hq, ExpN.cap_of_post hq⟩)
+    (h b L zp zl zc st xp xl xc yp yl yc mp n mc slow).mono_ret (fun _ hp => hp)
+      (fun _ _ _ _ hq => ⟨hq, ExpN.cap_of_post hq⟩)
 
 /-- [infra s33]: `ExpNNHypNE` → infra's `ExpNNHypNE1` (its body spelled out: `ExpNNHypNE0`'s post + the empty-result
 location, `ExpN.loc_of_post`) -/
@@ -61,7 +61,7 @@ theorem ExpNNHypNE.toNE1 {impl : List Segment} {R : RtInv} {K : Nat} {costF : Na
     (h : ExpNNHypNE impl R K costF needR costR needS needP costS costP) :
     ExpNNHypNE1 impl R K costF needR costR needS needP costS costP :=
   fun b L zp zl zc st xp xl xc yp yl yc mp n mc slow =>
-    (h b L zp zl zc st xp xl xc yp yl yc mp n mc slow).mono (fun _ hp => hp)
-      (fun _ _ _ hq => ⟨hq, ExpN.cap_of_post hq, ExpN.loc_of_post hq⟩)
+    (h b L zp zl zc st xp xl xc yp yl yc mp n mc slow).mono_ret (fun _ hp => hp)
+      (fun _ _ _ _ hq => ⟨hq, ExpN.cap_of_post hq, ExpN.loc_of_post hq⟩)
 
 end FvModexp.Arm64.EvenHyp
