@@ -31,7 +31,7 @@ and why the per-row numbers below are not a measure of each function's difficult
 ## Release run
 
 <!-- RELEASE-RUN: update this block when a new release run lands (Janus tag, run id, per-row table). -->
-**rel51**, Janus v0.4.0 (`b5db64328e92cf4a5d5b87c32a9c66844b0d892b`, binary sha256 `b92df613…`), snapshot of main `646a002d`, fresh cache per ISA, one row at a time (`ROWS=1`), witnesses on, `JANUS_TIMINGS=1`, 2026-11-19:
+**rel51**, Janus v0.4.0 (`b5db64328e92cf4a5d5b87c32a9c66844b0d892b`, binary sha256 `b92df613…`), snapshot of main `bef180a8`, fresh cache per ISA, one row at a time (`ROWS=1`), witnesses on, `JANUS_TIMINGS=1`, 2026-11-19:
 
 | ISA | rows | result | wall (rows + warm-up) | sum of row times | slowest row | largest peak memory |
 |---|---|---|---|---|---|---|

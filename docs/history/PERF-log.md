@@ -360,8 +360,8 @@ and `(2^64 - 8 + fsBase) % 2^64 = fsBase - 8` as run lemmas; register reads of a
 | row | Run arm64 error path (`Run.correctness` + `Witness.nonvacuous`), janus-provfix 57c1094c | PASS 271 s wall, 3.8 GiB peak (warm cache-top) |
 ## RequiredGas arm64 row (agent infra), 2026-11-11
 `janus verify` (janus-provfix 57c1094c, fresh cache after the warm-up, JANUS_JOBS=2: Lake build of the closure, janus's own compile
-(4 jobs) and leanchecker replay, i.e. every row module is elaborated twice): da06a30 (chained segments) 748 s, peak 3.9 GiB/job;
-ee8a255 (segments decoupled through `Seg`, Sb/Ic/Fin/Blk split) 824 s, peak 4.9 GiB/job — both under the 900 s cap but measured
+(4 jobs) and leanchecker replay, i.e. every row module is elaborated twice): f0533f3 (chained segments) 748 s, peak 3.9 GiB/job;
+2383a1a (segments decoupled through `Seg`, Sb/Ic/Fin/Blk split) 824 s, peak 4.9 GiB/job — both under the 900 s cap but measured
 on a host with load average ~40 (dev compiles there ran ~2x their idle time). Module dev compiles (same load): SbA 68, SbB 87, SbC 53,
 SbD 116, SbE 27, SbF 33, SbG 60, Mv 63, IcLL 38, IcLN 7, IcHL 68, IcHN 24, Og 14, FinA 57, FinB 19, FinC 23, FinD 33, FinE 11, Fin1 89,
 Blk3Lt 43, Blk3Ge 46, Blk2Lt 35, Blk2Ge 40, RequiredGas 49 s; every module <= 4.3 GB. The row's wall is total work / parallelism, not the
@@ -1457,14 +1457,14 @@ Run 2 (fresh cache, warm-up 1616 s): TruncRow PASS 439 s / 2.4 GB, expmc MontRow
 381 s), **SubMod2NRow PASS 646 s / 2.9 GB** (Mont* now charged to MontRow; remaining own: SubMod2NG*, divmc NatSub*/NatAdd*).
 Dev (arm64, v0.3.1, load ~60): SubMod2NRow 10 s / 2.4 GB, CalleeInst 37 s / 4.6 GB, ExpWit 6.5 s, P2Wit 10 s, P2W2Row 13 s,
 P2W4Row 13 s, P2DRow 84 s / 3.8 GB, ModInvRow 23 s / 3.0 GB.
-After main 462a986 (XFacts): EvE1 7.5 s / 2.6 GB, EvFull 2.8 s, EvSum 1.4 s, EvInst 54 s / 5.1 GB (arm64 dev, load ~60).
+After main e66123f (XFacts): EvE1 7.5 s / 2.6 GB, EvFull 2.8 s, EvSum 1.4 s, EvInst 54 s / 5.1 GB (arm64 dev, load ~60).
 StackNatRow (divmc's, lower row) PASS 169 s / 0.8 GB in the same cache.
 
 ### infra s42 (2026-11-14, arm64 rows, Janus v0.3.1, JANUS_REPLAY_THREADS=1, load ~40-55, two row jobs in parallel)
 Run 3 (same cache as run 2, continued): RshRow PASS 201 s / 0.8 GB, LshRow PASS 139 s / 0.9 GB (asm's), MulRow (divmc's)
 FAIL = timeout 902 s (its whole BasicMul/Karatsuba chain was own: BasicMulRow etc. had not run in this cache), SqrRow
 PASS 374 s / 2.0 GB, **P2W2Row FAIL (audit, not a proof failure): statement uses `P2W2.ℓL` — Janus rejects non-ASCII
-definition names (AUDIT-ROUND6 F1)** → renamed ℓR/ℓZ/ℓL/ℓ1..ℓ4 to `lvlR/lvlZ/lvlL/lvl1..lvl4` (63 files, commit 10e0b8e;
+definition names (AUDIT-ROUND6 F1)** → renamed ℓR/ℓZ/ℓL/ℓ1..ℓ4 to `lvlR/lvlZ/lvlL/lvl1..lvl4` (63 files, commit 62e3f05;
 dev rebuild 158 modules clean: P2W2Row 12 s, P2W4Row 10 s, P2DRow 62 s / 3.8 GB, EvInst 46 s / 5.0 GB);
 **ModInvRow PASS 503 s / 2.2 GB** (48 modules rebuilt).
 **SubMod2NRow in RELEASE ORDER** (fresh cache `cache-infra/rel`: warm-up 1478 s, TruncRow PASS 417 s, IntASRow PASS
@@ -1699,10 +1699,10 @@ BasicSqrQ 536/2899, SqrQ 581/3167, **MulQ 782/2259** (divmc's chain; divmc re-me
 Root cause of the drs/div failures: the Q drs chain imported the OLD chains — `Nat/DrsIface` → `Nat.DivBasic` (27 modules,
 ~570 s), NatQ/MulE → divmc's NatQ/MulHypQ → Nat/MulHypX → old `Nat.NatMul` (86 modules, ~1130 s), DrsRowWQ → old DrsRowW →
 NatMulXE. DrsRowQ's own set after DivBasicRowQ: 253 modules, dev-sum 2509 s, 4-worker schedule 727 s.
-Fix (8923cef0): DrsIface imports only light defs (old importers that use divBasic import it explicitly; every other module's
+Fix (51c84738): DrsIface imports only light defs (old importers that use divBasic import it explicitly; every other module's
 closure unchanged), `NatQ/MulHypD` (`Q.DivRec.mulHyp` from `Q.NatMul.ens`, 2.6 s), DrsRowWQ self-contained (31 s).
 DrsRowQ own set 253 → 140 modules, dev-sum ~900 s, schedule ~340 s.
-rel42 (snapshot snap42 = 8923cef0, same store, the four rows alone, load 30-46): **DrsRowQ 491 s / 1.7 GB, DivRowQ 539 s /
+rel42 (snapshot snap42 = 51c84738, same store, the four rows alone, load 30-46): **DrsRowQ 491 s / 1.7 GB, DivRowQ 539 s /
 2.7 GB, DivMRowQ 199 s / 3.5 GB, RemRowQ 60 s / 1.7 GB** — all PASS. cache-asm gc'd to 6.9 GiB (one pinned entry kept).
 * Dev (amd64, top s42, load ~70): Nat/DivFreeS 22 s / 2.7 GB; NatQ/DivMEpi 9-15 s / 2.4 GB, DivMBigK 12-17 s / 3.1 GB,
   DivMBigPost 10-16 s / 2.8 GB, DivMBig 12-14 s / 2.7 GB, DivMBigJ 3 s, DivMGetK 3 s, DivMLPre 72 s / 6.0 GB (rebuild).
@@ -1785,7 +1785,7 @@ Profile MulBM (arm64, load ~60: 153 s): `bm2`'s single-step `janus_run [e2] unti
 `List.decidableBAll` 4.6 s each). Fix = the amd64 `bmCallM` pattern (stop at the callee entry, `ReachesRet.call_regions` with
 the pre proved by name).
 amd64 karatsuba (dev, LEAN_NUM_THREADS=4, load ~50): KMulRel 15 s / 2.6 GB, KMulB 19-22 s / 3.0 GB, KMulMath 2 s, KMulI 36 s / 3.4 GB.
-* RunSucc warm-cache ESTIMATE (arm64, top s43, snapshot of agent/top 2f72c8e6, warm cache-top/rs40, Janus v0.3.2,
+* RunSucc warm-cache ESTIMATE (arm64, top s43, snapshot of agent/top d7734270, warm cache-top/rs40, Janus v0.3.2,
   MAX_LOAD=80, load 60-77): **FAIL 902 s / 1.9 GB = timeout again — no estimate obtained.** Janus stores a row's modules
   only as they finish; this rerun added 109 chain oleans to the store, so the "warm" cache was still missing a large part
   of the ~365-module chain. (s42's first rerun never started a row: verify-all's admit() waits for load < 40.)
@@ -1794,30 +1794,30 @@ amd64 karatsuba (dev, LEAN_NUM_THREADS=4, load ~50): KMulRel 15 s / 2.6 GB, KMul
   owns 59 (Run C/D segments, IntBytes), Top/RunErr owns 36 (SetBytes*, Run H/L). The real numbers come from the
   fresh-cache release-order run (cache-top/rel43, log cache-top/snap43/rel43.out).
 * Dev (amd64, top s43): NatQ/DivMFull (fullM + ensML) 4.4 s / 2.5 GB.
-* **rel43 FINAL (top s44; arm64 release order, fresh cache-top/rel43, snapshot main 527443a0, Janus v0.3.2, ROWS=2, MAX_LOAD=80,
+* **rel43 FINAL (top s44; arm64 release order, fresh cache-top/rel43, snapshot main c4e7c809, Janus v0.3.2, ROWS=2, MAX_LOAD=80,
   total wall 14776 s incl. 1897 s warm-up; wall s / peak MB):** PASS StackNat 212/2465, MulAddWW 286/944, AddVW 103, SubVW 108,
   BasicMul 319/3266, BasicSqr 605/3482, Trunc 202, Rsh 224, Lsh 190, IntAS 615/1233, IntSub 19, BasicSqrQ 423/2919, SqrQ 515/3094,
   MulRowQ 721/2205, Mont 791/3015, SubMod2N 388/2914, ModInv 551/2932, DivW 801/1186, DivWVW 12, DivBasic 447/4489, Drs 516,
   Div 561, DivM 318, Rem 547, DivBasicQ 553/4501, DrsQ 362, DivRowQ 386/2609, DivMQ 161, RemQ 298, P2W4 390/2873, P2D 435/2275,
   RequiredGas 543/1771, **RunErr 701/2298**. FAIL: **EvenRow 900 timeout / 4330**, P2W2 901 timeout, W2 732 + W4 565 (audit
-  MemmoveZeroLive witness, expmc), Int/ModRow 329 (audit Put site; fixed top 03588c1a), **RunOkRow 404 (audit: segAddr name
+  MemmoveZeroLive witness, expmc), Int/ModRow 329 (audit Put site; fixed top 49ecdd7c), **RunOkRow 404 (audit: segAddr name
   not a literal)**, **RunOkRowC 139 / 5257 (audit: PoolGetLive on closed StkSh — needs PoolShape binder)**, **Top_RunSucc 614 / 5065
   (audit: Put call site not at instantiation S)**; old Nat/SqrRow 903 + Nat/MulRow 503 retired. Over 600 s: Mont, DivW, MulRowQ,
   RunErr, IntAS, BasicSqr. RunSucc's 614 s at least shows the chain compiles within the timeout once lower rows own it.
-* RunErr own set (top s44, release order on main aab0b76c, RequiredGas excluded: own extraction) = 41 modules, dev-compiled
+* RunErr own set (top s44, release order on main 6ae56f3d, RequiredGas excluded: own extraction) = 41 modules, dev-compiled
   sequentially (LEAN_NUM_THREADS=4, load ~25): **sum 856 s**, peak 3.8 GB. Top: RunL 93, RunH3SB 91, RunH2SB 77, RunH3SA 75,
   RunLa 66, RunH1 65, Nat/SetBytes 62, RunH2SA 59, RunH3 56, RunH2 54, SetBytesStd 45 (rest < 20). The row's 701 s ≈ this chain's
   critical path (SetBytes* → RunH1 → RunH2S* → RunH2 → RunH3S* → RunH3 → RunLa → RunL). trace.profiler (top s44): RunL `lb` 75 s, of which one `janus_run [...] until [pcC0 …]` 39.5 s;
   RunH3SB 90 s inside `set_option janus.callRegions` — two janus_run 12 + 24 s, `case v` 41 s, of which the 8×
   `rw [Memory.readLE_writeLE_of_disjoint _ _ (by omega) …]` (line 161) 20 s (omega over the whole context: infra s52 lesson 1 —
   clear the callee post / big hyps first). NEXT (top): trim those two, then RunH2SB (same shape).
-* Targeted verifies (top s44, snapT44 = agent/top b5fa5db8, gc'd rel43 cache, timeout raised to 3600 s: AUDIT checks, not release
+* Targeted verifies (top s44, snapT44 = agent/top 941b1080, gc'd rel43 cache, timeout raised to 3600 s: AUDIT checks, not release
   times): Top_RunSucc cold FAIL 3601 s (chain compile) then warm **PASS 86 s / 5.0 GB**; Int/ModRow PASS 760 s / 2.7 GB;
   RunOkRowC FAIL 2078 s (audit), RunOkRow FAIL 16 s (audit) — both retired.
-* **rel44 FINAL (top s45; arm64 release order, fresh cache-top/rel44, snapshot main aab0b76c, Janus v0.3.2, ROWS=2, MAX_LOAD=80,
+* **rel44 FINAL (top s45; arm64 release order, fresh cache-top/rel44, snapshot main 6ae56f3d, Janus v0.3.2, ROWS=2, MAX_LOAD=80,
   load ~15-25; total wall 12192 s, 30 PASS / 9 FAIL).** FAIL: Nat/DivWRow cap 900 (silent compile; rel43 801), Exp/W2Row 758 + Exp/W4Row 571
   (audit: witness lacks MemmoveZeroLive call site), Exp/P2W2Row cap 900, Exp/EvenRow cap 900 / 3.9 GB, Top/RunErr cap 900 / 1.3 GB (rel43 701;
-  snapshot predates 11738b8f), Top/RunOkRow 342 + RunOkRowC 544 (known audit; retired), Top/RunSucc 416 / 5.0 GB (audit: PoolPutLive call site —
+  snapshot predates 05011a85), Top/RunOkRow 342 + RunOkRowC 544 (known audit; retired), Top/RunSucc 416 / 5.0 GB (audit: PoolPutLive call site —
   old RunSucc; fix in rel45). PASS > 600 s: Exp/ModInvRow 802 / 2.5 GB, Exp/MontRow 633 / 3.0 GB. Others PASS 16–495 s (IntAS 396, BasicSqr 444,
   DivBasic 374, Drs 422, Div 477, Rem 428, DivBasicQ 495, MulQ 392, SqrQ 400, ModRow 332, P2W4 255, P2D 346, RequiredGas 249).
 * RunErr dev profile (top s45, dev OUT against cache-asm WS, J=2, load ~20): own chain sum 823 s, critical path ~240 s (SetBytes 45 → RunLa 60 →
@@ -1836,10 +1836,10 @@ P2D 520/2753**, then (ev50, same cache) **EvenRow FAIL 900** (first run with the
 Profile (arm64, dev `lean` per module, J=2, load ~50): Util 76, IcHL 80, FinA 116 (janus_run 82 s of it), Row file 76 (entry segment
 + witness), Blk2Lt/Ge/Blk3Lt/Ge 61-73, FinD 64, IcLL 56, Mv 51, SbA 41, other Sb 23-30; sum ≈ 1180 s. Critical path before:
 Util → IcDefs → IcHL → Ic → Og → Pre → Seg → FinA → Fin → Row ≈ 373 s (every segment waited for the Ic/Og chain via Pre).
-* 4b169ef7/7a414b12 (both ISAs): segments (Head/Blk*/Fin*) take the callee summaries as hypotheses (`OgDefs`: `SbSum`/`MvSum`/`OgSum`),
+* 33f54fe4/0fdf3504 (both ISAs): segments (Head/Blk*/Fin*) take the callee summaries as hypotheses (`OgDefs`: `SbSum`/`MvSum`/`OgSum`),
   Pre imports no callee proof, the entry segment moved from the row file to `Head`, witness facts to `Wit`; row file 76 s → 1.7 s.
   Critical path ≈ Util → Pre → Seg → FinA → row ≈ 205 s.
-* Targeted run a1 (snapshot 4b169ef7, warm-up-only cache, arm64 alone, load ~55): **699 s** = compile phase 419 s (Util done at 111 s,
+* Targeted run a1 (snapshot 33f54fe4, warm-up-only cache, arm64 alone, load ~55): **699 s** = compile phase 419 s (Util done at 111 s,
   FinA last at 417 s) + kernel replay 267 s (own modules; leanchecker sum ≈ 462 s CPU: Util 54, FinA 23, SbA 22, FinD 16, Blk3* 15, …).
 * `Common/Util` (3259 lines, adapted fv-uint256 grab-bag): 234 of its 296 theorems are referenced nowhere (any worktree, any script
   except the kept `ow2_self_iff`): removed (528 lines). Util compile 76-100 s → 4.4 s; its replay 54 s → ~few s.
@@ -1857,7 +1857,7 @@ Util → IcDefs → IcHL → Ic → Og → Pre → Seg → FinA → Fin → Row 
 | Amd64/NatQ/KMulS3 (new) | 123 s | 31 s / 2.7 GB | frame side conditions `hrd`/`hkz` by `omega_only [layout facts]` instead of `omega` in the full context (39 s + 50 s) |
 | Arm64/NatQ/MulITail | 50 s | 37 s / 2.5 GB | `hmx`/`hmy`/`hmrd` by `omega_only` (the context holds unfolded `Apart` disjunctions) |
 | Arm64/NatQ/KMulPC | 88 s | (no gain) | clearing 24 unrelated hypotheses before `all_goals janus_simp` changed nothing (janus_omega is already sparse): the cost is ~160 read-over-write discharges at ~0.15 s |
-* c5f300f9: segment modules moved `Proofs/<Isa>/RequiredGas/*` → `Proofs/<Isa>/RG/*`: the row module name was a prefix of every
+* 4f65ae11: segment modules moved `Proofs/<Isa>/RequiredGas/*` → `Proofs/<Isa>/RG/*`: the row module name was a prefix of every
   segment module, so Janus replayed them in ONE leanchecker process (a3: "replay of 13 targets" 291 s). Now "48 targets at 4 at once".
 * Targeted runs (snapshot, warm-up-only cache, JANUS_TIMINGS=1): a3 (before the move) arm64 568 s = compile 255 + replay 291 (load ~45);
   **a4 arm64 275 s / 1.7 GB = compile 196 + replay 65 (load ~27-40) — target ≤ 450 s met**;
@@ -1903,7 +1903,7 @@ Util → IcDefs → IcHL → Ic → Og → Pre → Seg → FinA → Fin → Row 
   a head), nine head lemmas `hd1..hd7, hd6b, hd7b` (the compiled head shapes; 14/15/30/31 use the second OR order).
   Every Sb case's value goal is now ONE `exact SbVal.as<k> … (SbVal.hd<h> …) (by omega)… rfl` (generator updated).
 * SbF (cases 29, 30): 41.0 s → 15.8 s dev (same load). Sb A..G dev: 70 / 40 / 30 / 19 / 21 / 16 / 15 s.
-* Targeted row run (s51/rgrow2.sh amd64 b23b839b, warm-up-only cache, row alone): **amd64 RequiredGas 448 s**, peak
+* Targeted row run (s51/rgrow2.sh amd64 12bf7e3d, warm-up-only cache, row alone): **amd64 RequiredGas 448 s**, peak
   3258 MB, load 30.7 (was 538 s / 3520 MB at load 34.6) — target ≤ 450 s met.
 
 ## divmc s60 (2026-11-13): arm64 Nat/DivWRow trim (rel43 801 s, over the 600 s margin)
@@ -1930,7 +1930,7 @@ Util → IcDefs → IcHL → Ic → Og → Pre → Seg → FinA → Fin → Row 
   lost ~25 lower store entries, so this is an upper bound for the own compile. ⇒ rel44's 900 s cap = contention (2 rows + RequiredGas
   at once) on a ~360 s compile, not a hidden serial stage. Replay is parallel (4 at once), not the serial-prefix pattern.
 
-### expmc s66 — v61 targeted row runs (arm64, Janus v0.3.2, snapshot of agent/expmc 951223ee, rel44 cache with the row's own modules purged)
+### expmc s66 — v61 targeted row runs (arm64, Janus v0.3.2, snapshot of agent/expmc 04cbafb8, rel44 cache with the row's own modules purged)
 * **Exp_MontRow PASS 177 s / 1.7 GB** (load ~15; s61 Mont/MontLoop trims: was 245 s in rel43). Under the 550 s bar.
 * **Exp_W2Row PASS 734 s / 3.1 GB** (load ~34; rel44 758 s FAIL at the cap). Breakdown (JANUS_TIMINGS): own compile 104
   modules 517 s, kernel replay 150 s (115 targets, 4 at once), theorem audit 63 s. Over the 500 s bar → structural trim
@@ -1939,13 +1939,13 @@ Util → IcDefs → IcHL → Ic → Og → Pre → Seg → FinA → Fin → Row 
   JANUS_JOBS=4 PASS **297 s** (own compile 66 mods 218 s / cpu 1037 s, replay 70.5 s, audit 5.6 s) vs JANUS_JOBS=2 PASS **319 s**
   (own compile 231 s / cpu 948 s, replay 79 s, audit 6.4 s) in the same window ⇒ −7 %, noise-level: the own compile is
   critical-path bound. The s45 467 s was load. Row peak (summed RSS, J=2) 5.4 GB. verify-all default stays JANUS_JOBS=2.
-* **amd64 targeted d46 (top s46; Janus v0.3.2 → audit PROVISIONAL; agent/top 29047149; fresh cache; StackNat → DivW → MulRowQ →
+* **amd64 targeted d46 (top s46; Janus v0.3.2 → audit PROVISIONAL; agent/top 3ca06d48; fresh cache; StackNat → DivW → MulRowQ →
   DivBasicRowQ → DivRowQ, ROWS=1, alongside rel45):** StackNatRow PASS 165 s, DivWRow PASS 236 s, MulRowQ cap 900 s (fresh cache
   without BasicSqr/Sqr rows before it), DivBasicRowQ FAIL 394 s = v0.3.2 audit RSP-word rule (expected; fixed in v0.3.3),
   **DivRowQ cap 901 s**: own compile 248 modules (310 from the store) 881 s / cpu 4001 s, ok=true (so the new DivCG/DivMC/DivRowQ
   modules compile under Janus). Its own set includes the whole amd64 drs chain: it needs asm's amd64 DrsRowQ row before it (as on
   arm64) to fit. Re-measure in rel46 (v0.3.3, full amd64 order).
-* **rel46 arm64 (top s47; main 071500f8, Janus v0.3.3, fresh cache, ROWS=2, JANUS_TIMINGS, wall 10334 s): 39 PASS / 1 FAIL / 3 MISSING.**
+* **rel46 arm64 (top s47; main 27662b7f, Janus v0.3.3, fresh cache, ROWS=2, JANUS_TIMINGS, wall 10334 s): 39 PASS / 1 FAIL / 3 MISSING.**
   LOCK = cache-entry/store lock wait ("ws: cache entry lock, framework base lease"), OWN = janus total - LOCK (coordinator: judge rows on OWN;
   rel47+ uses ROWS=1). Top_RunSucc **533 s** (LOCK 0; compile 65 mods 325 / replay 134 / audit 72); ExpQ_IExpRow 854 (LOCK 1; compile 90 mods
   525 / replay 264 / audit 49; predates the s47 trim); Top_RunErr 883 (LOCK 591, OWN 292); P2W2 747 (LOCK 439, OWN 307); W2 587 (LOCK 164,
@@ -1953,20 +1953,20 @@ Util → IcDefs → IcHL → Ic → Og → Pre → Seg → FinA → Fin → Row 
   Nat_DrsRow 619 (LOCK 0; compile 207 mods 381 / replay 214 / audit 19); ModInv 207, W4 442, P2W4 223, RequiredGas 259.
   **FAIL Exp_EvenRow cap 900 s / 4.0 GB, LOCK 0: compile 170 mods 331 s ok=true, then the THEOREM AUDIT did not return in ~569 s** (last line
   "layout check"; other rows audit in 5-72 s). Summaries: cache-top/rel-summary.py SNAP ISA.
-* **IExpRow trim (top s47, 4cc2a506)**: twins import the original's imports + `<M>D` defs modules (not the original), false edges cut, PreNF →
+* **IExpRow trim (top s47, 40cd0613)**: twins import the original's imports + `<M>D` defs modules (not the original), false edges cut, PreNF →
   NFunNFD; KD-before-KR dispatch in NNilT/NNilJ/NStk (+ twins): janus_assumption's failing 75 s scan gone, 85-88 s → 7 s per module. Dev (J=1):
   own-set work 934 → ~575 s, critical import path 414 → ~151 s. Row measurement pending (rel47).
-* **rel45 (top s46; arm64 release order, main 951223ee, Janus v0.3.2, fresh cache, ROWS=2, wall 11835 s): 37 PASS / 2 FAIL / 3 MISSING.**
+* **rel45 (top s46; arm64 release order, main 04cbafb8, Janus v0.3.2, fresh cache, ROWS=2, wall 11835 s): 37 PASS / 2 FAIL / 3 MISSING.**
   Top_RunSucc **543 s / 5.3 GB**, Top_RunErr 872, ExpQ_IExpRow 864 / 5.5 GB, P2W2 842, ModInv 796, W2 610 (> 600 s); Mont 567,
   DivBasicRowQ 571, DrsRowQ 522, W4 526, DivRowQ 350. FAIL: Nat_DivWRow cap 900 s at 345 MB (stall, also in rel44), Exp_EvenRow
-  cap 901 s / 4.1 GB. MISSING: Run, Bytes, Runbody (COVERAGE todo). No JANUS_TIMINGS (predates 7886616b); rel46 has them.
+  cap 901 s / 4.1 GB. MISSING: Run, Bytes, Runbody (COVERAGE todo). No JANUS_TIMINGS (predates fd3e440d); rel46 has them.
 
 ### expmc s67 — window-2/4 import-chain cut (arm64, statements unchanged)
 * W2: own-module dev critical import path 283 s → ~105 s (segments entry→divRet / divRet→j4 / j4→RET + x-normalisation
   vs entry, composed in W2Comp/W2FunE; defs hoisted to W2FinDefs/Posts/Cut/FunDefs/XnDefs; heavy proofs split out of defs
   modules: P01Defs 30 s → 1.4 s (p01post → W2P01Post), Zm 17 → 0.9, One 22 → 1.0, RR 20 → 1.0). W4: same cut, dev crit 233 s
   at load 40-50 (W4LshS 50 s under load).
-* Targeted W2Row (v0.3.2, rel44 copy, snapshot df8b4095): FAIL(cap) 901 s at load 34→51 with concurrent dev builds (no
+* Targeted W2Row (v0.3.2, rel44 copy, snapshot 9b3a11d1): FAIL(cap) 901 s at load 34→51 with concurrent dev builds (no
   timing summary). Re-run v67b (same setup, 01:06-01:25 2026-11-14, load ~98 from another session's Janus gate): FAIL(cap)
   901 s / 3.9 GB, again no timing summary — load-dominated, not conclusive. Not chased further (coordinator): top's rel46
   (fresh v0.3.3 cache, release order) measures W2Row/W4Row with the cut; trim only if rel46 shows > 600 s.
@@ -2039,7 +2039,7 @@ killed — `need_lo … (k := 8 w + 72)` gave `l + (8 w + 72)` where segMi/segM1
 check unfolded `lvl4`; fixed with exact-shape lemmas `needMi`/`needM`. LESSON: a side-condition lemma's conclusion must
 match the expected expression SYNTACTICALLY, association included); EvSum 1.3 s / 2.8 GB.
 * asm s66: Amd64/Exp/EvM1 108-183 s (two big-context omegas: `sp - 8 + 8 = sp` 150 s, LZ.frm read-frame 28 s) → 2.2 s / 2.7 GB (small lemmas out_m1/sp_m1).
-* **rel46 arm64 (top s46; main 071500f8, Janus v0.3.3, fresh cache, ROWS=2, JANUS_TIMINGS, wall 10334 s): 39 PASS / 1 FAIL / 3 MISSING.**
+* **rel46 arm64 (top s46; main 27662b7f, Janus v0.3.3, fresh cache, ROWS=2, JANUS_TIMINGS, wall 10334 s): 39 PASS / 1 FAIL / 3 MISSING.**
   Top_RunSucc **535 s / 5.3 GB** (≤ 600 s reproduced on v0.3.3), Top_RunErr 883, ExpQ_IExpRow 854 / 5.4 GB (own 90 mods 525 s +
   replay 259 targets 264 s), P2W2 747, DrsRow 619 (> 600 s); DivWRow 366 (rel45 cap), ModInv 207, Mont 493, W2 587. FAIL: Exp_EvenRow
   cap 900 s / 4.0 GB (own 170 mods 331 s, then killed in replay). **LOCK FINDING**: `ws: cache entry lock, framework base lease`
@@ -2065,7 +2065,7 @@ P2DWin trim: 370 s/9.5 GB → 7.8 s. Cause: a top-level disjunction hypothesis (
 context made every `omega` case-split (one omega 366 s); stated as `r ∈ [w2R, w4R]` instead (omega ignores it), and the
 tail's side conditions moved into small numeric lemmas (nW/nK/nB/nS). Also: named args `(a := …)` on `Outside.of_sub`
 bind the SOURCE range, not the target — ascribe the result type instead.
-## top s48 (2026-11-14): rel46a = first amd64 release-order audit (Janus v0.3.3, fresh cache, ROWS=1, snapshot main 071500f8, wall 8806 s)
+## top s48 (2026-11-14): rel46a = first amd64 release-order audit (Janus v0.3.3, fresh cache, ROWS=1, snapshot main 27662b7f, wall 8806 s)
 23 PASS / 4 FAIL / 1 MISSING (28 rows); LOCK 0 everywhere (ROWS=1).
 * PASS (s): StackNat 169, MulAddWW 222, AddVW 79, SubVW 71, BasicSqr 417 (6.1 GB), Trunc 207, Rsh 143, Lsh 131, IntAS 198,
   BasicSqrQ 267, SqrQ 442, MulQ 440, RequiredGas 298, SubMod2N 519, DivW 163, DivWVW 12, DivBasic 277, DivBasicQ 298,
@@ -2110,7 +2110,7 @@ DrsFCL/DrsFDL import all their segments. Dev critical path 451 → 274 s (now Dr
   ([RSP]-word rule, see divmc s80). W2Row own compile 96 modules 484 s (cpu 2072), audit 41 s, replay cut by the
   900 s cap → total 901 s CAP FAIL. Both rows still need ~2x off own compile + replay.
 
-## top s50 (2026-11-14): rel47 arm64 (Janus v0.3.3, fresh cache, ROWS=1, snapshot main 456f856c, wall 11293 s + warm-up 929 s)
+## top s50 (2026-11-14): rel47 arm64 (Janus v0.3.3, fresh cache, ROWS=1, snapshot main f458b74f, wall 11293 s + warm-up 929 s)
 39/40 PASS. FAIL: Exp_EvenRow 900 s / 4.5 GB = cap (own compile 209 mods 538 s ok, kernel replay of the own modules ran past
 900 s; LOCK 0; also capped in rel46). Rows > 600 s (LOCK 0): Nat_DrsRow 674 s (compile 207 mods 429 / replay 218 / audit 21;
 old row, retirement open), Top_RunSucc 784 s / 5.2 GB (compile 65 mods 504 / replay 183 / audit 92; rel46 533 s, higher load).
@@ -2135,11 +2135,11 @@ IExpQ 591/4618, RequiredGas 285/1757, RunErr 376/1627, RunSucc 784/5215.
   (`SegProg.lift`/`liftRet`, `CodeIn64` proved once per window, ~2 s). 92/104 runs in 66 modules; statements unchanged.
 * W2EnA (dev, load ~30): 81.1 s → 24.3 s. Converted modules' dev sum (both windows) 1659 s. W4Pow 99 s / W2Pow 79 s
   (only one of their two runs converted). Fair row numbers: still open (see NOTES-divmc s80).
-## top s50 (2026-11-14): rel47 amd64 (Janus v0.3.3, fresh cache, ROWS=1, snapshot main 456f856c, wall 10695 s + warm-up 1302 s)
+## top s50 (2026-11-14): rel47 amd64 (Janus v0.3.3, fresh cache, ROWS=1, snapshot main f458b74f, wall 10695 s + warm-up 1302 s)
 23/29 PASS, LOCK 0 everywhere. FAIL: P2W2Row 782 s / P2W4Row 465 s / P2DRow 227 s = AUDIT (correctness pre constrains the
 entry [RSP] word = return-address pin; witnesses verified); W4Row 900 s (compile 116 mods 730 s, audit 38 s, then cap) and
 W2Row 901 s (compile 96 mods 485 s, audit 32 s, then cap) = CAP; Top_RunSucc 421 s = AUDIT (old staging form: `hE`
-brings a non-literal segAddr name; superseded by the final form, agent/top f870cdec). No PASS > 600 s; highest SubMod2N 575,
+brings a non-literal segAddr name; superseded by the final form, agent/top c5b294f2). No PASS > 600 s; highest SubMod2N 575,
 DrsRowQ 585 (rel46a 642; asm DrsSegD cut), MulRowQ 571. Per row (s/MB): StackNat 205/1041, MulAddWW 270/1194,
 AddVW 83/1113, SubVW 77/1093, BasicSqr 508/6161, Trunc 221/1163, Rsh 165/1297, Lsh 139/1225, IntAS 205/1335,
 BasicSqrQ 318/6127, SqrQ 507/4419, MulQ 571/2261, RequiredGas 332/3462, SubMod2N 575/5669, DivW 169/1298,
@@ -2147,7 +2147,7 @@ DivWVW 15/421, DivBasic 274/3609, DivBasicQ 278/3583, DrsQ 585/2069, DivQ 535/52
 W4 FAIL 900/3605, W2 FAIL 901/3489, P2W2 FAIL 782/2996, P2W4 FAIL 465/3072, P2D FAIL 227/2041, RunErr 360/1314,
 RunSucc FAIL 421/978.
 
-## asm s80 (2026-11-14): amd64 lower rows ModInvRow / SlowRow + EvenRow re-cut (Janus v0.3.3, ROWS=1, JANUS_TIMINGS=1, snapshot cache-asm/snap80b, f460d3ce)
+## asm s80 (2026-11-14): amd64 lower rows ModInvRow / SlowRow + EvenRow re-cut (Janus v0.3.3, ROWS=1, JANUS_TIMINGS=1, snapshot cache-asm/snap80b, f4a731ee)
 * Warm-up (outside caps, JANUS_JOBS=6): snapshot-only module importing all amd64 release rows up to P2DRow (1172 modules):
   5047 s (compile + replay), load ~15-25.
 * Then, in release order on that cache (each row's lower rows cached = the fresh-cache release situation):
@@ -2161,7 +2161,7 @@ RunSucc FAIL 421/978.
   "[asm s79] PERF", audit ≈ 31 % of the row) EvenRow would be ≈ 500 s; with it the row is over the 600 s margin.
 * Dev compile: ModInvRow 10.4 s / 3.3 GB, SlowRow 10.9 s / 3.8 GB.
 
-## asm s81 (2026-11-14): arm64 old Nat_DrsRow trim (Janus v0.3.3, ROWS=1, JANUS_TIMINGS=1, snapshot cache-asm/snap81 = agent/asm f1b0e2c1, lower rows StackNat..DivBasicRow warmed in rc81)
+## asm s81 (2026-11-14): arm64 old Nat_DrsRow trim (Janus v0.3.3, ROWS=1, JANUS_TIMINGS=1, snapshot cache-asm/snap81 = agent/asm fc1a4407, lower rows StackNat..DivBasicRow warmed in rc81)
 * Diagnosis (dev `lean -o` of the 208 own modules, LEAN_NUM_THREADS=4, 3 at once): sum 1450 s, critical path 185 s → the row's
   own compile (rel47: 429 s wall / 2335 s cpu) is THROUGHPUT-bound, not chain-bound. 839 s of the 1450 s (58 %) is the old
   `nat.mul` closure (81 modules Mul*/KMul*/KSqr*: MulBM 63 s, KMulPC 50, MulOne 42, MulKar 39, MulSwap 38, …), which DrsRow owned
@@ -2199,7 +2199,7 @@ RunSucc FAIL 421/978.
   ~10 s each, failing big-context omegas). Kernel time (per-pc `stepOK`) is now the bulk of W2Pow (31 s) and S3 (24 s).
 * Dev sums (modules rebuilt after the change, not the whole own set): W2 50 mods 491 s, W4 50 mods 479 s, P2W2 38 mods
   477 s, P2W4 37 mods 486 s (before the P0/BMu fixes, -30 s each). Row numbers: pending (top's rel48 has s80 only).
-## top s51 (2026-11-14): rel48 arm64 (Janus v0.3.3, fresh cache, ROWS=1, snapshot main 437c5b14, wall 9955 s + warm-up 872 s)
+## top s51 (2026-11-14): rel48 arm64 (Janus v0.3.3, fresh cache, ROWS=1, snapshot main 8c5b8ba9, wall 9955 s + warm-up 872 s)
 **41/41 PASS** (first all-green arm64 release run). Host load (max per row) min 8.7 / median 15.5 / max 27.2.
 Rows > 600 s: Nat_DrsRow 617 s / 2.2 GB (LOAD 14.1/9.2/17.7, LOCK 0, OWN 615: compile 207 mods 391 / replay 201 / audit 20;
 old row, retirement question open with asm). Top_RunSucc **464 s** / 5.1 GB (rel47 784 s was load) → the RunC2/okC split is not
@@ -2226,9 +2226,9 @@ Even 367/3934, IExpQ 337/4564, RequiredGas 238/1642, RunErr 272/1654, RunSucc 46
   (target ≤ 550). A targeted verify on a copy of rel48's cache was NOT possible: rel48's module store holds only 784 entries for a
   1336-module closure (presumably gc'd), so the copy recompiled lower W2/W4 modules (killed after ~6 min); the real number comes from top's next release run.
 
-## top s51 (2026-11-14): rel48 amd64 (Janus v0.3.3, fresh cache, ROWS=1, snapshot main 437c5b14, wall 9868 s + warm-up 823 s)
+## top s51 (2026-11-14): rel48 amd64 (Janus v0.3.3, fresh cache, ROWS=1, snapshot main 8c5b8ba9, wall 9868 s + warm-up 823 s)
 28/31 PASS; host load (max per row) min 3.9 / median 9.2 / max 12.4. FAIL (all fixed on main after the snapshot):
-Exp_P2W2Row 548 s + Exp_P2W4Row 390 s = audit `[RSP]` (row pre `NHyp.StkArg s 0`; divmc 68dbc9a9 StkArg0), Exp_EvenRow 901 s cap
+Exp_P2W2Row 548 s + Exp_P2W4Row 390 s = audit `[RSP]` (row pre `NHyp.StkArg s 0`; divmc 6128d6f3 StkArg0), Exp_EvenRow 901 s cap
 (own compile 215 mods 591 s + audit 189 s, replay cut; lower rows amd64 SlowRow/ModInvRow now on main). Rows > 600 s (LOCK 0):
 Exp_W4Row 723 s (compile 124 mods 444 / replay 244 / audit 29), Exp_IExpRow 708 s (compile 41 mods 152 / replay 476 / audit 47).
 Top_RunSucc (final amd64) **PASS 557 s / 5.0 GB**.
@@ -2238,7 +2238,7 @@ DivW 139/1300, DivWVW 15/417, DivBasic 238/3523, DivBasicQ 226/3639, DrsQ 448/20
 IntMod 279/3849, W4 723/3696, W2 547/4049, P2W2 FAIL 548/2990, P2W4 FAIL 390/2943, P2D 204/2024, Even FAIL 901/4497,
 IExp 708/5093, RequiredGas 241/3138, RunErr 311/1268, RunSucc 557/4961.
 
-## top s51 (2026-11-15): rel49 arm64 — RELEASE CANDIDATE (Janus v0.3.3, fresh cache, ROWS=1, snapshot main 0773715a, wall 9382 s + warm-up 836 s)
+## top s51 (2026-11-15): rel49 arm64 — RELEASE CANDIDATE (Janus v0.3.3, fresh cache, ROWS=1, snapshot main f15dbad8, wall 9382 s + warm-up 836 s)
 **43/43 PASS, no row > 600 s** (max Top_RunSucc 466 s / 5.2 GB). Host load (max per row) min 3.5 / median 10.2 / max 21.0.
 New/changed: Top_RunTotal PASS 77 s / 4.9 GB, Nat_DrsRow 325 s (rel48 617), Nat_MulRow (reinstated) 343 s.
 Per row (s/MB): StackNat 125/2472, MulAddWW 140/992, AddVW 51/934, SubVW 51/952, BasicMul 107/3288, BasicSqr 300/3125,
@@ -2248,7 +2248,7 @@ Drs 325/1739, Div 339/2573, DivM 178/3576, Rem 145/4585, DivBasicQ 216/4528, Drs
 RemQ 118/4665, IntMod 143/3995, W2 406/3111, W4 419/2981, P2W2 273/2985, P2W4 204/1545, P2D 278/2142, N 442/4574,
 Even 329/3734, IExpQ 317/4391, RequiredGas 210/1622, RunErr 279/1651, RunSucc 466/5157, RunTotal 77/4860.
 
-## top s51 (2026-11-15): rel49 amd64 — RELEASE CANDIDATE (Janus v0.3.3, fresh cache, ROWS=1, snapshot main 0773715a, wall 10574 s + warm-up 917 s)
+## top s51 (2026-11-15): rel49 amd64 — RELEASE CANDIDATE (Janus v0.3.3, fresh cache, ROWS=1, snapshot main f15dbad8, wall 10574 s + warm-up 917 s)
 **33/33 PASS** (with arm64 43/43: 76/76 rows green, all under the 900 s cap). Host load (max per row) min 12.8 / median 17.8 / max 23.1.
 Rows > 600 s (LOCK 0): Exp_W4Row 720 s (compile 124 mods 467 / replay 214 / audit 34), Exp_EvenRow 702 s (compile 95 mods 309 /
 replay 173 / audit 214 — PASS, rel48 cap), Top_RunSucc 656 s / 5.3 GB (compile 67 mods 455 / replay 133 / audit 61; rel48 557 s at
@@ -2305,7 +2305,7 @@ dev sum 1624).
 
 ## divmc s83 (2026-11-15): amd64 W4Row < 500 s — two new lower rows (MontRow, P2PreRow) + window tactic trims
 Fair targeted runs (Janus v0.3.3, ROWS=1, JANUS_TIMINGS=1, JANUS_REPLAY_THREADS=1, snapshot cache-divmc/s83/snapR = agent/divmc
-dd309007). Lower amd64 rows StackNat..Int/ModRow warmed outside the caps (snapshot-only `Warm83` importing them, `entry = entry`
+ea9b7a4d). Lower amd64 rows StackNat..Int/ModRow warmed outside the caps (snapshot-only `Warm83` importing them, `entry = entry`
 theorem so it replays; 772 modules, 3512 s, JANUS_JOBS=6), then each run on a fresh hardlink copy of that warm cache, rows in
 release order. Before = top's rel49 amd64 (fresh cache, load ~17).
 * Profile (dev, `-Dprofiler`): W4Row's own set (124 modules, dev sum 1054 s) had the montgomery closure on its critical import
@@ -2334,17 +2334,17 @@ release order. Before = top's rel49 amd64 (fresh cache, load ~17).
   The total release work grows by two row overheads (~2 × 15 s extraction/audit setup); the montgomery and table closures are
   paid once either way.
 
-## top s52 (2026-11-15): autoImplicit=false gap check (main 99f61795) — 0 failures, no source change
-The 35 Lean files changed between 87a68769 (base of the full autoImplicit build) and main 99f61795, every module importing them
+## top s52 (2026-11-15): autoImplicit=false gap check (main 290bb8aa) — 0 failures, no source change
+The 35 Lean files changed between 8fcdb21b (base of the full autoImplicit build) and main 290bb8aa, every module importing them
 (per ISA), and every closure module whose release olean was stale or missing, dev-compiled with `lean -D autoImplicit=false`
-(2 in parallel, LEAN_NUM_THREADS=4) against hard-link farms of the rel49 release oleans (snapshot 0773715a):
+(2 in parallel, LEAN_NUM_THREADS=4) against hard-link farms of the rel49 release oleans (snapshot f15dbad8):
 amd64 **335 modules OK** (324 changed/downstream + 11 closure modules absent from the rel49 store), arm64 **310 modules OK**
 (the 242 downstream of Common/DivRec + 68 absent closure modules). No auto-bound implicit anywhere; nothing to fix.
 Slowest: amd64 RunDJF2 80 s, RunDJF1 74 s, RunDM2 72 s, RunDM1 68 s, OddEns 66 s; peak RSS 6.0 GB. Tools: cache-top/s52/{closure,devpar,pass2}.py.
 
 ## top s52 (2026-11-15): rel50 — FINAL v0.3.3 RELEASE RUN (Janus v0.3.3 9127bf82, fresh cache per ISA, ROWS=1, JANUS_TIMINGS=1)
-**arm64 43/43 PASS** (snapshot main 3ccbb729; wall 9995 s + warm-up 844 s; load max/row median 14.2, max 31.1) and
-**amd64 37/37 PASS** (snapshot main 5c8f46dd = 3ccbb729 + asm s84 amd64 RunSucc trim + lint fix; nothing outside
+**arm64 43/43 PASS** (snapshot main d950179d; wall 9995 s + warm-up 844 s; load max/row median 14.2, max 31.1) and
+**amd64 37/37 PASS** (snapshot main 2ce8f5fe = d950179d + asm s84 amd64 RunSucc trim + lint fix; nothing outside
 Proofs/Amd64 but docs/scripts changed, so the arm64 leg stands; wall 10815 s + warm-up 894 s; load median 16.6, max 33.5).
 **80/80 rows green, no row > 600 s** (max: arm64 Exp_NRow 538 s at load 31; amd64 NatQ_DrsRowQ 532 s).
 Per row arm64 (s/MB): StackNat 128/2475, MulAddWW 149/961, AddVW 55/1014, SubVW 57/975, BasicMul 115/3220, BasicSqr 311/3131,
@@ -2359,7 +2359,7 @@ SubMod2N 490/5731, DivW 167/1287, DivWVW 15/423, DivBasic 263/3563, DivBasicQ 26
 RemQ 190/2120, IntMod 317/3849, Mont 284/3577, W4 516/3094, W2 460/3309, P2Pre 314/3089, P2W2 330/2957, P2W4 319/2956,
 P2D 234/2050, ModInv 330/2441, Slow 226/3032, N 424/3745, Even 516/4083, IExp 299/4208, RunErr 379/1306, RunSucc 521/4834
 (rel49 656), RunTotal 83/4713.
-GATES on 5c8f46dd's tree: `RELEASE=1 scripts/no-sorry.sh` **OK** (lint 3486 files OK; check-lean-lint 8 rows OK;
+GATES on 2ce8f5fe's tree: `RELEASE=1 scripts/no-sorry.sh` **OK** (lint 3486 files OK; check-lean-lint 8 rows OK;
 check-spec-closure **8 of 8 final rows surveyed**, closure 9 Spec modules / 69 definitions). `scripts/check-ra-pin --release`:
 **arm64 43/43 CLEAN, amd64 37/37 CLEAN**, against each leg's release oleans (consumer own/lib/root; the cache keeps only the last
 row's closure, so the 77 arm64 / 60 amd64 missing row and witness modules were compiled with -D autoImplicit=false into a
