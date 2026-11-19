@@ -56,7 +56,7 @@ theorem fin3 (impl : List Amd64.Segment) (R : RtInv)
   have hsp0 := hl.sp0; have hsp1 := hl.sp1; have hzl := hl.zl2; have hx0 := hl.x0; have ht48 := hl.t48
   have hz48 := hl.z48
   have hpre := hE.pre
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, -, -, ⟨htb, htr, htg⟩, htrt, htw⟩ := hpre.ce
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, -, -, ⟨htb, htr, htg⟩, htrt, htw⟩ := hpre.ce
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw htg
   have hzlv := hpre.zlive; have hzg := hpre.zg; have hzt := hpre.zt
   obtain ⟨hzal, hzh, hzacc, -⟩ := hzlv (by omega)

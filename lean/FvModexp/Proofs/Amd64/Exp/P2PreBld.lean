@@ -47,7 +47,7 @@ theorem cenv_ctx (hpre : Pre R kc b L st pw pl ws lm x xl s) {bp : Nat} {M : Mem
     {L1 : List (Nat × Nat)} {b1 : Nat} (hc : Ctx R kc L st pw pl lm x xl s bp M L1 b1) :
     CallW.CEnv R L1 (s.regs 14).toNat s.fsBase.toNat ((s.regs 4).toNat - 184) kc 88 M := by
   obtain ⟨hgk, htk⟩ := gt_keep hpre hc.fr
-  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgrt, hLs, hro, ⟨htb, htr, htg⟩, htrt, htw⟩, -, -, -, -,
+  obtain ⟨⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgrt, hLs, hro, ⟨htb, htr, htg⟩, htrt, htw⟩, -, -, -, -,
     -, -, -, -, hacc, -, -, -, -, -, -, -, -, -, -, ⟨-, ⟨-, -, hsta, -, hstl, hlc, -⟩, -, -, -, -, -, -, -, -, -, -, -, -, -⟩,
     -⟩ := hpre
   simp only [K, A, regSP, regG, stackguard0, stackguard0Offset] at hb' ha hw hout hga hg1 hg2 hg3 hLs htw

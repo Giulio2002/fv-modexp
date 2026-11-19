@@ -129,6 +129,7 @@ theorem ensG (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     (dc : Nat → Nat → Nat → Nat) (hD : DrsHyp impl R dc) : HypG impl R dc := by
   intro b L zp zl zc st up ul uc ip il ic vp vl vc
   rw [show names = LibDivL.names from rfl, ← LibDivL.eq_only]
+  janus_ensures_old [FvModexp.Arm64.DivLarge.Pre, FvModexp.stLen, FvModexp.Arm64.CallEnv, FvModexp.Arm64.RunIface.Globals, FvModexp.Arm64.win, FvModexp.Arm64.ExpHyp.WrOut, FvModexp.Arm64.ExpHyp.RdIn, FvModexp.NatNorm, FvModexp.Arm64.EvenHyp.StkIn, FvModexp.stW, FvModexp.stCap, FvModexp.Arm64.StackNat.wbA, FvModexp.Arm64.RunIface.gA, Janus.Spec.GuardOK, Janus.Spec.StackOK, FvModexp.Arm64.RunIface.wbA, FvModexp.NatLive, FvModexp.Arm64.ExpHyp.StackOK', FvModexp.StkOK]
   intro ret hret s hs hpre
   janus_intro hs
   have hr48 := hret.user

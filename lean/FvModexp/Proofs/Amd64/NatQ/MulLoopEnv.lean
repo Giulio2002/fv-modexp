@@ -98,7 +98,7 @@ theorem LB0.tlsv (h : LB0 R b H L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk 
 theorem LB0.callee (h : LB0 R b H L W zp zc st xp xl xc yp yl yc s p c L1 b1 M Lk bk spent Mi) {S1 : State}
     {stk1 above1 : Nat} (hsp : (S1.regs 4).toNat = (s.regs 4).toNat - 264) (hg : S1.regs 14 = s.regs 14) (hm : S1.mem = Mi)
     (hfs : S1.fsBase = s.fsBase) (hk : 264 + stk1 ≤ W) (ha : above1 ≤ 88) : CallEnv R Lk S1 stk1 above1 := by
-  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hb, ha', hw⟩, hal, hdl, hout, hga, hgr, hLs, hro, ⟨htb, htr, htg⟩, htrt, htw⟩, -⟩ :=
+  obtain ⟨⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb, ha', hw⟩, hal, hdl, hout, hga, hgr, hLs, hro, ⟨htb, htr, htg⟩, htrt, htw⟩, -⟩ :=
     h.core.pre
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb ha' hw
   unfold Apart at hga htw
@@ -106,10 +106,11 @@ theorem LB0.callee (h : LB0 R b H L W zp zc st xp xl xc yp yl yc s p c L1 b1 M L
   have htv := h.tlsv
   have hLs1 := h.wsep
   obtain ⟨ns, hLk, hn, -⟩ := h.ext
-  refine ⟨⟨?_, ?_, ?_⟩, ⟨?_, ?_, ?_⟩, ?_, ?_, ?_, ?_, by rw [hg]; exact hgr, ?_, hro, ⟨?_, ?_, ?_⟩, ?_, ?_⟩
+  refine ⟨⟨?_, ?_, ?_, ?_⟩, ⟨?_, ?_, ?_⟩, ?_, ?_, ?_, ?_, by rw [hg]; exact hgr, ?_, hro, ⟨?_, ?_, ?_⟩, ?_, ?_⟩
   · simp only [stackguard0Offset, regG]; rw [hg]; exact hg1
   · simp only [stackguard0Offset, regG]; rw [hg, hm, h.frE.accessible]; exact hg2
   · simp only [stackguard0, stackguard0Offset, regG, regSP]; rw [hg, hm, hgrd, hsp]; omega
+  · first | omega | (simp only [stackguard0Offset, regG, regSP]; omega) | (simp_all only [stackguard0Offset, regG, regSP, Apart]; omega)
   · simp only [regSP]; omega
   · simp only [regSP]; omega
   · simp only [regSP]; rw [hm, h.frE.accessible, hsp]; exact Janus.Arm64.Memory.accessible_mono _ hw (by omega) (by omega)

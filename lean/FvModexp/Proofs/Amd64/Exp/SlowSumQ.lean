@@ -1,5 +1,6 @@
 import FvModexp.Proofs.Amd64.Exp.SlowFunQ
 import FvModexp.Proofs.Amd64.Exp.SlowEP
+import FvModexp.Proofs.Amd64.Exp.SetRetWinX
 
 set_option autoImplicit false
 
@@ -22,6 +23,46 @@ open FvModexp.Amd64.ExpSlow
 open Janus.Contracts.EqHashModel (CodeIn64)
 
 theorem bvT (x : BitVec 64) : BitVec.ofNat 64 x.toNat = x := by simp
+
+/-- `SlowHypQ`'s precondition survives installing the return address (Janus v0.4.0 `hinv`; top s54: `janus64_ensures_old`'s
+closer cannot see the operands' apartness inside `CPre`'s operand list; by the frame lemmas `SetRetWin` / `SetRetWinX`) -/
+theorem pre_setRet {R : RtInv} {b H : Nat} {L : List (Nat × Nat)} {stk above : Nat} {need : Nat → Nat → Nat → Nat}
+    {needH : Nat → Nat → Nat} {cost : Nat → Nat → Nat → Nat} {z zl zc st x xl xc : BitVec 64} {y yl yc m ml mc : Nat}
+    {s : State} (ret : Nat) (hab : 8 ≤ above)
+    (hp : (NHyp.StkArg s 0 y yl yc ∧ NHyp.StkArg s 24 m ml mc) ∧
+        (NHyp.CPre R b L stk above z.toNat zl.toNat zc.toNat st.toNat [(x.toNat, xl.toNat), (y, yl), (m, ml)]
+          (need xl.toNat yl ml) (cost xl.toNat yl ml + stkR H s.mem st.toNat) s ∧
+        0 < natVal s.mem x.toNat xl.toNat ∧ 2 ≤ natVal s.mem y yl ∧ 0 < natVal s.mem m ml ∧
+        0 < st.toNat) ∧ NHyp.XFacts R L x.toNat xl.toNat xc.toNat ∧ stLen s.mem st.toNat + needH xl.toNat ml ≤ H) :
+    (NHyp.StkArg (s.setRet ret) 0 y yl yc ∧ NHyp.StkArg (s.setRet ret) 24 m ml mc) ∧
+        (NHyp.CPre R b L stk above z.toNat zl.toNat zc.toNat st.toNat [(x.toNat, xl.toNat), (y, yl), (m, ml)]
+          (need xl.toNat yl ml) (cost xl.toNat yl ml + stkR H (s.setRet ret).mem st.toNat) (s.setRet ret) ∧
+        0 < natVal (s.setRet ret).mem x.toNat xl.toNat ∧ 2 ≤ natVal (s.setRet ret).mem y yl ∧
+        0 < natVal (s.setRet ret).mem m ml ∧ 0 < st.toNat) ∧ NHyp.XFacts R L x.toNat xl.toNat xc.toNat ∧
+      stLen (s.setRet ret).mem st.toNat + needH xl.toNat ml ≤ H := by
+  obtain ⟨⟨⟨y1, y2, y3⟩, ⟨m1, m2, m3⟩⟩, ⟨hC, hxv, hyv, hmv, hst⟩, hX, hH⟩ := hp
+  have h10 : Outside st.toNat 24 (win s stk above) := hC.2.2.2.2.2.2.2.2.2.1
+  obtain ⟨-, hl, hc⟩ := SetRetWin.stHdr (ret := ret) hab h10
+  have hR : stkR H (s.setRet ret).mem st.toNat = stkR H s.mem st.toNat := by simp only [stkR, hc]
+  have hrx := (hC.2.2.2.2.2.2.2.1 x.toNat xl.toNat (by simp)).1
+  have hry := (hC.2.2.2.2.2.2.2.1 y yl (by simp)).1
+  have hrm := (hC.2.2.2.2.2.2.2.1 m ml (by simp)).1
+  have rs : ∀ k v, s.mem.readLE ((s.regs 4).toNat + k + 8) 8 = v →
+      (s.setRet ret).mem.readLE ((s.regs 4).toNat + k + 8) 8 = v := fun k v h =>
+    (readLE_setRet_of_disjoint (s := s) (ret := ret) (a := (s.regs 4).toNat + k + 8) (n := 8) (Or.inr (by omega))).trans h
+  refine ⟨⟨⟨rs 0 _ y1, ?_, ?_⟩, ⟨rs 24 _ m1, ?_, ?_⟩⟩, ⟨?_, ?_, ?_, ?_, hst⟩, hX, by rw [hl]; exact hH⟩
+  · exact (readLE_setRet_of_disjoint (s := s) (ret := ret) (a := (s.regs 4).toNat + 0 + 16) (n := 8)
+      (Or.inr (by omega))).trans y2
+  · exact (readLE_setRet_of_disjoint (s := s) (ret := ret) (a := (s.regs 4).toNat + 0 + 24) (n := 8)
+      (Or.inr (by omega))).trans y3
+  · exact (readLE_setRet_of_disjoint (s := s) (ret := ret) (a := (s.regs 4).toNat + 24 + 16) (n := 8)
+      (Or.inr (by omega))).trans m2
+  · exact (readLE_setRet_of_disjoint (s := s) (ret := ret) (a := (s.regs 4).toNat + 24 + 24) (n := 8)
+      (Or.inr (by omega))).trans m3
+  · rw [hR]; exact SetRetWin.cpre hab hC
+  · show 0 < (s.setRet ret).mem.readLE x.toNat (8 * xl.toNat); rw [SetRetWin.rd hab hrx.2.2.2.2]; exact hxv
+  · show 2 ≤ (s.setRet ret).mem.readLE y (8 * yl); rw [SetRetWin.rd hab hry.2.2.2.2]; exact hyv
+  · show 0 < (s.setRet ret).mem.readLE m (8 * ml); rw [SetRetWin.rd hab hrm.2.2.2.2]; exact hmv
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 16000000 in
@@ -50,6 +91,7 @@ theorem hyp {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program
     rw [show mvE = cA "runtime.memmove" by decide]; exact MemmoveZeroLive64.of_codeIn hc hmz
   intro H b L z zl zc st x xl xc y yl yc m ml mc
   rw [← LibW.eq_only, ← fn_eq, fnBaseX]
+  refine Ensures.of_old (fun s ret _ _ hp => pre_setRet ret (by decide) hp) ?_
   intro ret hret s hs hp
   janus64_intro hs
   obtain ⟨⟨hy, hm⟩, ⟨hC, hX0, hY, hM, hst⟩, hX, hH0⟩ := hp

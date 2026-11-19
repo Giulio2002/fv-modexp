@@ -5,6 +5,7 @@ import FvModexp.Proofs.Amd64.NatQ.DivMOneTB
 import FvModexp.Proofs.Amd64.NatQ.DivMOneTC
 import FvModexp.Proofs.Amd64.NatQ.DivMLessA
 import FvModexp.Proofs.Amd64.NatQ.DivMLess
+import FvModexp.Proofs.Amd64.SetRetLemmas
 
 set_option autoImplicit false
 
@@ -79,6 +80,54 @@ theorem fullM (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progr
       rw [← hS.r0] at hr0
       exact bigM impl hap R dc hL hget hput hno hp hU hv2 u.isLt hra hx15 hdf hS c hc hr0
 
+theorem divprem_setRet_pp (R : RtInv) (b : Nat) (cost : Nat → Nat → Nat) (L : List (Nat × Nat)) (u ul uc : BitVec 64) (v vl vc : Nat)  (s : State) (ret : Nat) {p : Janus.Amd64.Program} {entry : Nat} {args : List W64} (hs : CallSetup0 entry args s) (hret : RetAddr p ret) (hg0 : 0 < ul.toNat) (hg1 : 0 < uc.toNat)
+    (hp : FvModexp.Amd64.IMod.DivPreM R b cost L 41512 112 u.toNat ul.toNat uc.toNat v vl vc s) :
+    FvModexp.Amd64.IMod.DivPreM R b cost L 41512 112 u.toNat ul.toNat uc.toNat v vl vc (s.setRet ret) := by
+  janus64_pre_setRet_core s ret hs hret hp [FvModexp.Amd64.IMod.DivPreM, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.win, FvModexp.Amd64.EvenHyp.WrOut, FvModexp.Amd64.EvenHyp.RdIn0, FvModexp.Amd64.EvenHyp.RdIn, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.RunIface.PoolG, FvModexp.Amd64.Callees.adxAddr, FvModexp.Amd64.TlsOK, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.Amd64.RunIface.stackPoolA, Janus.Spec.Pool.newOffset, FvModexp.Amd64.readLE_setRet_or_zero, FvModexp.Amd64.natNorm_setRet, hg0, hg1, false_implies, true_implies]
+
+theorem divprem_setRet_pn (R : RtInv) (b : Nat) (cost : Nat → Nat → Nat) (L : List (Nat × Nat)) (u ul uc : BitVec 64) (v vl vc : Nat)  (s : State) (ret : Nat) {p : Janus.Amd64.Program} {entry : Nat} {args : List W64} (hs : CallSetup0 entry args s) (hret : RetAddr p ret) (hg0 : 0 < ul.toNat) (hg1 : ¬ 0 < uc.toNat)
+    (hp : FvModexp.Amd64.IMod.DivPreM R b cost L 41512 112 u.toNat ul.toNat uc.toNat v vl vc s) :
+    FvModexp.Amd64.IMod.DivPreM R b cost L 41512 112 u.toNat ul.toNat uc.toNat v vl vc (s.setRet ret) := by
+  janus64_pre_setRet_core s ret hs hret hp [FvModexp.Amd64.IMod.DivPreM, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.win, FvModexp.Amd64.EvenHyp.WrOut, FvModexp.Amd64.EvenHyp.RdIn0, FvModexp.Amd64.EvenHyp.RdIn, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.RunIface.PoolG, FvModexp.Amd64.Callees.adxAddr, FvModexp.Amd64.TlsOK, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.Amd64.RunIface.stackPoolA, Janus.Spec.Pool.newOffset, FvModexp.Amd64.readLE_setRet_or_zero, FvModexp.Amd64.natNorm_setRet, hg0, hg1, false_implies, true_implies]
+
+theorem divprem_setRet_p (R : RtInv) (b : Nat) (cost : Nat → Nat → Nat) (L : List (Nat × Nat)) (u ul uc : BitVec 64) (v vl vc : Nat)  (s : State) (ret : Nat) {p : Janus.Amd64.Program} {entry : Nat} {args : List W64} (hs : CallSetup0 entry args s) (hret : RetAddr p ret) (hg0 : 0 < ul.toNat)
+    (hp : FvModexp.Amd64.IMod.DivPreM R b cost L 41512 112 u.toNat ul.toNat uc.toNat v vl vc s) :
+    FvModexp.Amd64.IMod.DivPreM R b cost L 41512 112 u.toNat ul.toNat uc.toNat v vl vc (s.setRet ret) := by
+  by_cases hg1 : 0 < uc.toNat
+  · exact divprem_setRet_pp R b cost L u ul uc v vl vc  s ret hs hret hg0 hg1 hp
+  · exact divprem_setRet_pn R b cost L u ul uc v vl vc  s ret hs hret hg0 hg1 hp
+
+theorem divprem_setRet_np (R : RtInv) (b : Nat) (cost : Nat → Nat → Nat) (L : List (Nat × Nat)) (u ul uc : BitVec 64) (v vl vc : Nat)  (s : State) (ret : Nat) {p : Janus.Amd64.Program} {entry : Nat} {args : List W64} (hs : CallSetup0 entry args s) (hret : RetAddr p ret) (hg0 : ul.toNat = 0) (hg1 : 0 < uc.toNat)
+    (hp : FvModexp.Amd64.IMod.DivPreM R b cost L 41512 112 u.toNat ul.toNat uc.toNat v vl vc s) :
+    FvModexp.Amd64.IMod.DivPreM R b cost L 41512 112 u.toNat ul.toNat uc.toNat v vl vc (s.setRet ret) := by
+  janus64_pre_setRet_core s ret hs hret hp [FvModexp.Amd64.IMod.DivPreM, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.win, FvModexp.Amd64.EvenHyp.WrOut, FvModexp.Amd64.EvenHyp.RdIn0, FvModexp.Amd64.EvenHyp.RdIn, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.RunIface.PoolG, FvModexp.Amd64.Callees.adxAddr, FvModexp.Amd64.TlsOK, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.Amd64.RunIface.stackPoolA, Janus.Spec.Pool.newOffset, FvModexp.Amd64.readLE_setRet_or_zero, FvModexp.Amd64.natNorm_setRet, hg0, hg1, false_implies, true_implies]
+
+theorem divprem_setRet_nn (R : RtInv) (b : Nat) (cost : Nat → Nat → Nat) (L : List (Nat × Nat)) (u ul uc : BitVec 64) (v vl vc : Nat)  (s : State) (ret : Nat) {p : Janus.Amd64.Program} {entry : Nat} {args : List W64} (hs : CallSetup0 entry args s) (hret : RetAddr p ret) (hg0 : ul.toNat = 0) (hg1 : ¬ 0 < uc.toNat)
+    (hp : FvModexp.Amd64.IMod.DivPreM R b cost L 41512 112 u.toNat ul.toNat uc.toNat v vl vc s) :
+    FvModexp.Amd64.IMod.DivPreM R b cost L 41512 112 u.toNat ul.toNat uc.toNat v vl vc (s.setRet ret) := by
+  janus64_pre_setRet_core s ret hs hret hp [FvModexp.Amd64.IMod.DivPreM, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.win, FvModexp.Amd64.EvenHyp.WrOut, FvModexp.Amd64.EvenHyp.RdIn0, FvModexp.Amd64.EvenHyp.RdIn, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.RunIface.PoolG, FvModexp.Amd64.Callees.adxAddr, FvModexp.Amd64.TlsOK, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.Amd64.RunIface.stackPoolA, Janus.Spec.Pool.newOffset, FvModexp.Amd64.readLE_setRet_or_zero, FvModexp.Amd64.natNorm_setRet, hg0, hg1, false_implies, true_implies]
+
+theorem divprem_setRet_n (R : RtInv) (b : Nat) (cost : Nat → Nat → Nat) (L : List (Nat × Nat)) (u ul uc : BitVec 64) (v vl vc : Nat)  (s : State) (ret : Nat) {p : Janus.Amd64.Program} {entry : Nat} {args : List W64} (hs : CallSetup0 entry args s) (hret : RetAddr p ret) (hg0 : ul.toNat = 0)
+    (hp : FvModexp.Amd64.IMod.DivPreM R b cost L 41512 112 u.toNat ul.toNat uc.toNat v vl vc s) :
+    FvModexp.Amd64.IMod.DivPreM R b cost L 41512 112 u.toNat ul.toNat uc.toNat v vl vc (s.setRet ret) := by
+  by_cases hg1 : 0 < uc.toNat
+  · exact divprem_setRet_np R b cost L u ul uc v vl vc  s ret hs hret hg0 hg1 hp
+  · exact divprem_setRet_nn R b cost L u ul uc v vl vc  s ret hs hret hg0 hg1 hp
+
+theorem divprem_setRet (R : RtInv) (b : Nat) (cost : Nat → Nat → Nat) (L : List (Nat × Nat)) (u ul uc : BitVec 64) (v vl vc : Nat)  (s : State) (ret : Nat) {p : Janus.Amd64.Program} {entry : Nat} {args : List W64} (hs : CallSetup0 entry args s) (hret : RetAddr p ret) 
+    (hp : FvModexp.Amd64.IMod.DivPreM R b cost L 41512 112 u.toNat ul.toNat uc.toNat v vl vc s) :
+    FvModexp.Amd64.IMod.DivPreM R b cost L 41512 112 u.toNat ul.toNat uc.toNat v vl vc (s.setRet ret) := by
+  by_cases hg0 : 0 < ul.toNat
+  · exact divprem_setRet_p R b cost L u ul uc v vl vc  s ret hs hret  hg0 hp
+  · exact divprem_setRet_n R b cost L u ul uc v vl vc  s ret hs hret  (Nat.eq_zero_of_not_pos hg0) hp
+
+/-- `DivPreM` at `QuoRem`'s call survives writing the return address (the `hinv` of `ensML`): the empty dividend (`ul = 0`) and `0 < uc` are case-split,
+one declaration per case (`divprem_setRet_<ul><uc>`). -/
+theorem divprem_inv (R : RtInv) (b : Nat) (cost : Nat → Nat → Nat) (L : List (Nat × Nat)) (u ul uc : BitVec 64) (v vl vc : Nat)
+    (p : Janus.Amd64.Program) (entry : Nat) (args : List W64) :
+    Ensures.SetRetInv p entry args (fun s => FvModexp.Amd64.IMod.DivPreM R b cost L 41512 112 u.toNat ul.toNat uc.toNat v vl vc s) :=
+  fun s ret hs hret hp => divprem_setRet R b cost L u ul uc v vl vc s ret hs hret hp
+
 /-- **`nat.div`** (amd64) as `(*Int).QuoRem` calls it from `(*Int).Mod`: `q, r = nil.div(nil, u, u, v)` (`stk == nil`,
 `z2 = u`; `v ≠ 0`, `u`, `v` normalised, `len ≤ 2^9`) returns `r = U mod V` normalised, in `u`'s array or a fresh one;
 writes only `u`'s array, the runtime's memory and the window; no panic, no fault (`IMod.DivHypM`, TIGHT COSTS budget
@@ -96,6 +145,7 @@ theorem ensML (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progr
     IMod.DivHypM impl R LibDiv.names 41512 112 (costMQ dc) := by
   intro b L u ul uc v vl vc
   rw [show ExpHyp.fnDiv = fn from rfl, ← LibDiv.eq_only]
+  refine Ensures.of_old (divprem_inv R b (costMQ dc) L u ul uc v vl vc _ _ _) ?_
   intro ret hret s hs hpre
   janus64_intro hs
   refine Summary.returns (fullM impl hap R hmk0 hmv0 hmz0 hno0 hget0 hput0 dc hL b L u ul uc v vl vc) hret

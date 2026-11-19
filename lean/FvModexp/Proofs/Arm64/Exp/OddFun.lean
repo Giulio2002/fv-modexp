@@ -20,7 +20,7 @@ namespace FvModexp.Arm64.ExpOdd
 theorem hypSumO {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibOdd.names.contains x = true) {f : String} {args : List (BitVec 64)}
     {pre : State → Prop} {post : State → State → Prop}
-    (h : Ensures ((Extracted.program.onlySegments ns).link impl) (segAddr Extracted.program f) args pre post) :
+    (h : Ensures ((Extracted.program.onlySegments ns).link impl) (segAddr Extracted.program f) args pre post) [ArgsFit args] :
     Summary (LibOdd.program.link impl) (segAddr Extracted.program f)
       (fun s => RetAddr ((Extracted.program.onlySegments ns).link impl) (s.regs 30).toNat ∧ ArgsFrom s 0 args ∧ pre s)
       (fun s s' => (s'.sp = s.sp ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧ s'.regs 18 = s.regs 18) ∧
@@ -81,6 +81,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
         BitVec.ofNat 64 xl, BitVec.ofNat 64 xc, BitVec.ofNat 64 yp, BitVec.ofNat 64 ylen, BitVec.ofNat 64 yc,
         BitVec.ofNat 64 mp, BitVec.ofNat 64 n, BitVec.ofNat 64 mc]
       (Pre R b L K costF zp zc st xp xl xc yp ylen mp n mc) (Post R b L K costF zp zc st xp xl yp ylen mp n) := by
+  janus_ensures_old [FvModexp.Arm64.ExpOdd.Pre, FvModexp.Arm64.ExpOdd.OPre, FvModexp.natVal, FvModexp.stLen, FvModexp.Arm64.ExpOdd.OEnv, FvModexp.Arm64.RunIface.Globals, FvModexp.Arm64.StackNat.wT, FvModexp.Arm64.ExpOdd.OE, FvModexp.NatNorm, FvModexp.Arm64.RunIface.gA, FvModexp.StkOK, FvModexp.stCap, FvModexp.stW, FvModexp.Arm64.StackNat.wbA, FvModexp.Arm64.W4En.free, FvModexp.Arm64.RunIface.wbA, FvModexp.NatLive]
   rw [show names = LibOdd.names from rfl, ← LibOdd.eq_only, show segAddr Extracted.program fn = fnO by decide]
   intro ret hret s hs hpre
   janus_intro hs

@@ -87,8 +87,9 @@ theorem ens' (impl : List Amd64.Segment) (R : RtInv)
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc yp yl yc : BitVec 64) (mp ml mc k n : Nat) :
     Ensures (LibMont.program.link impl) (segAddr LibMont.program fn) [zp, zl, zc, xp, xl, xc, yp, yl, yc]
       (Pre R b L zp zc xp xl yp yl mp ml mc k n) (Post R b L zp zc xp yp mp k n) := by
+  janus64_ensures_old [FvModexp.Amd64.Mont.Pre, FvModexp.Amd64.Mont.Env, FvModexp.Amd64.MontHyp.hasADX, FvModexp.Amd64.Mont.Input]
   intro ret hret s hs hpre
-  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, hwin, hgw, hgrt, hLs, hx15, hdf, htls, hts, htrt⟩, rmp, rml, rmc, rk, rn,
+  obtain ⟨⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, hwin, hgw, hgrt, hLs, hx15, hdf, htls, hts, htrt⟩, rmp, rml, rmc, rk, rn,
     hxl, hyl, hml, hn, hn2, hzc, hmc, hmc', hzacc, hzp, hzh, hzw, hgz, htz, hadx,
     ⟨hxacc, hxp, hxh, hxw⟩, ⟨hyacc, hyp, hyh, hyw⟩, ⟨hmacc, hmp, hmh, hmw⟩, hzx, hzy, hzm, hinv, hokc, hokm⟩ := hpre
   janus64_intro hs

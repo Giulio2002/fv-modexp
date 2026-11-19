@@ -54,7 +54,7 @@ theorem pre_env0 {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl y : 
     s.mem.readLE ((s.regs 14).toNat + 16) 8 + 4232 < (s.regs 4).toNat ∧ 4232 ≤ (s.regs 4).toNat ∧
     (s.regs 4).toNat + 64 ≤ 2 ^ 48 ∧
     s.mem.accessible ((s.regs 4).toNat - 4232) (4232 + 64) true = true ∧ (s.regs 4).toNat % 8 = 0 ∧ TlsG s := by
-  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, _, _, _, _, _, _, ⟨htg, _, _⟩⟩, _⟩ := hpre
+  obtain ⟨⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, _, _, _, _, _, _, ⟨htg, _, _⟩⟩, _⟩ := hpre
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw
   exact ⟨by omega, hg2, hg3, hb', ha, hw, hal, htg⟩
 
@@ -113,7 +113,7 @@ theorem setZero0 (impl : List Amd64.Segment) (R : RtInv)
     all_goals try janus64_simp
     all_goals first | omega | skip
   have hpre' := hpre
-  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, hLs, -, ⟨htg, htr, htw⟩⟩, -, -, -, hz40, hzl, -, -, -,
+  obtain ⟨⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, hLs, -, ⟨htg, htr, htw⟩⟩, -, -, -, hz40, hzl, -, -, -,
     -, hinv, -, hmv'⟩ := hpre'
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw
   have hmv0 : ∀ d src, R.ok (cA "runtime.memmove") [d, src, 0] := fun d src => hmv' d src 0 (Nat.zero_le _)
@@ -182,6 +182,13 @@ theorem ens0 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
     Ensures ((Extracted.program.onlySegments names).link impl) (segAddr Extracted.program fn)
       [zp, zl, zc, xp, xl, xc, y]
       (Pre0 R b L zp zc xp xl y) (Post R b L zp zc xp xl y) := by
+  refine Ensures.of_old ?_ ?_
+  · by_cases hx : xl.toNat = 0
+    · have hx0 : xl = 0 := BitVec.eq_of_toNat_eq (by simpa using hx)
+      subst hx0
+      janus64_pre_setRet [FvModexp.Amd64.DivW.Pre0, FvModexp.Amd64.CallEnv, FvModexp.Amd64.DivW.wordT, FvModexp.NatLive, FvModexp.Amd64.win, FvModexp.NatNorm, FvModexp.Amd64.TlsOK]
+    · have hxp : 0 < xl.toNat := Nat.pos_of_ne_zero hx
+      janus64_pre_setRet [FvModexp.Amd64.DivW.Pre0, FvModexp.Amd64.CallEnv, FvModexp.Amd64.DivW.wordT, FvModexp.NatLive, FvModexp.Amd64.win, FvModexp.NatNorm, FvModexp.Amd64.TlsOK]
   rw [show names = LibDivW.names from rfl, ← LibDivW.eq_only]
   intro ret hret s hs hpre
   janus64_intro hs

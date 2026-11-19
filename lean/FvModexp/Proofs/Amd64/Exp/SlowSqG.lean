@@ -47,7 +47,7 @@ theorem zpost {R : RtInv} {b H : Nat} {L : List (Nat × Nat)} {W zp zc st xp xc 
     (hdf : s'.df = s.df) (r0 : s'.regs 0 = BitVec.ofNat 64 zp) (r3 : s'.regs 3 = BitVec.ofNat 64 0)
     (r1 : s'.regs 1 = BitVec.ofNat 64 zc) : SPost R b H L W zp zc st xp 0 xc s s' := by
   obtain ⟨hce, hsw, hzc, hzl, hstok, hstw, hcb, hinv⟩ := hP
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, -, -, hout, -, -, hLs, -⟩ := hce
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, -, -, hout, -, -, hLs, -⟩ := hce
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw
   have hW : W ≤ (s.regs 4).toNat := by omega
   have hcap : stCap s'.mem st = stCap s.mem st := hF.readLE _ _ (hstw.of_sub (by omega) (by omega))
@@ -82,7 +82,7 @@ theorem zero0 (impl : List Amd64.Segment) (R : RtInv) (H b : Nat) (L : List (Nat
   intro s hpc ⟨hra, hx15, hdf, h0, h3, h1, h7, h6, h8, h9, hx, hP⟩
   have hce := hP.1
   have hsw := hP.2.1
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -, -, -, -, -, -⟩ := hce
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, -, -, -, -, -, -⟩ := hce
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw
   have hW : 5056 ≤ W := by unfold sqrW ksqrW at hsw; omega
   have hxl0 : xl = 0#64 := BitVec.eq_of_toNat_eq (by simp [hx])
@@ -105,6 +105,7 @@ theorem zeroE (impl : List Amd64.Segment) (R : RtInv) (H b : Nat) (L : List (Nat
       (fun s => xl.toNat = 0 ∧ SPre0 R b H L W zp.toNat zc.toNat st.toNat s)
       (fun s s' => SPost R b H L W zp.toNat zc.toNat st.toNat xp.toNat xl.toNat xc.toNat s s' ∧
         (xl.toNat = 0 → s'.regs 0 = zp ∧ s'.regs 1 = zc)) := by
+  janus64_ensures_old [FvModexp.Amd64.ExpSlow.SPre0, FvModexp.Amd64.CallEnv, FvModexp.NatLive, FvModexp.StkOK, FvModexp.Amd64.win, FvModexp.stkR, FvModexp.Amd64.TlsOK, FvModexp.stW, FvModexp.stCap, FvModexp.stLen, FvModexp.stkRes, FvModexp.potK]
   rw [show Q.NatSqr.names = LibSqr.names from rfl, ← LibSqr.eq_only]
   intro ret hret s hs hpre
   janus64_intro hs
@@ -118,10 +119,10 @@ theorem zeroE (impl : List Amd64.Segment) (R : RtInv) (H b : Nat) (L : List (Nat
 theorem sqG {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
     {ns : List String} (hsub : ∀ x, Q.NatSqr.names.contains x = true → ns.contains x = true) {W : Nat}
     (hsq : P2Pre.SqrE impl R ns W) : SqrE0 impl R ns W := by
-  intro H b L zp zl zc st xp xl xc ret hret s hs hp
+  intro H b L zp zl zc st xp xl xc s hs hp ret hret
   by_cases hx : xl.toNat = 0
-  · exact EnsWiden.ens_widen hap hsub (zeroE impl R H b L W zp zl zc st xp xl xc) ret hret s hs ⟨hx, hp.2 hx⟩
-  · exact (hsq H b L zp zl zc st xp xl xc ret hret s hs (hp.1 (Nat.pos_of_ne_zero hx))).mono
+  · exact EnsWiden.ens_widen hap hsub (zeroE impl R H b L W zp zl zc st xp xl xc) s hs ⟨hx, hp.2 hx⟩ ret hret
+  · exact (hsq H b L zp zl zc st xp xl xc s hs (hp.1 (Nat.pos_of_ne_zero hx)) ret hret).mono
       fun s' ⟨ha, hq⟩ => ⟨ha, hq, fun h => absurd h hx⟩
 
 end FvModexp.Amd64.ExpSlow

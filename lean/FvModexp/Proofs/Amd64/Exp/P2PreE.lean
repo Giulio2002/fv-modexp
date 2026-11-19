@@ -36,7 +36,7 @@ theorem entry (impl : List Amd64.Segment) (R : RtInv) (kc : Nat) (b : Nat) (L : 
     (kN : JN impl R kc b L st pw pl ws lm x xl s) :
     Goal impl R kc b L st pw pl lm x xl s s := by
   have hpre' := hpre
-  obtain ⟨⟨⟨hgN, hgR, hgB⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, -, -, -, -⟩, -, -, hws, hplw, hlm2, hlm, -, hpw48, -,
+  obtain ⟨⟨⟨hgN, hgR, hgB, _⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, -, -, -, -⟩, -, -, hws, hplw, hlm2, hlm, -, hpw48, -,
     -, -, -, -, -, -, ⟨-, -, hx48, -, -⟩, -, -, -, ⟨-, ⟨-, -, -, hst48, -⟩, -⟩, -⟩ := hpre'
   simp only [K, A, regG, regSP, stackguard0Offset, stackguard0] at hw hout hgB hb' ha hga hgN hgR
   have hst64 : st < 2 ^ 64 := by omega

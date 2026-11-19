@@ -68,7 +68,7 @@ theorem tail (impl : List Amd64.Segment) (R : RtInv)
     (hra47 : s.mem.readLE (s.regs 4).toNat 8 < 2 ^ 47) :
     ReachesRet (LibIntAS.program.link impl) (retAddrOf s) S fun s' => RegsOK s s' ∧ Post sub R b L z x y s s' := by
   have hpre := h.pre
-  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -, hout, -, -, hLs, -, -⟩, hsv, -, hx, -, hza, hz48, hzo, hzH, -, -,
+  obtain ⟨⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, -, hout, -, -, hLs, -, -⟩, hsv, -, hx, -, hza, hz48, hzo, hzH, -, -,
     hzwb, -, -, -, -, -, -, hwbf, -, -⟩ := hpre
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw
   have hnx : hNeg s.mem x ≤ 1 := hx.1

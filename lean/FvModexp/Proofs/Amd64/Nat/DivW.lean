@@ -55,6 +55,7 @@ theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
     Ensures ((Extracted.program.onlySegments names).link impl) (segAddr Extracted.program fn)
       [zp, zl, zc, xp, xl, xc, y]
       (Pre R b L zp zc xp xl y) (Post R b L zp zc xp xl y) := by
+  janus64_ensures_old [FvModexp.Amd64.DivW.Pre, FvModexp.Amd64.CallEnv, FvModexp.Amd64.DivW.wordT, FvModexp.NatLive, FvModexp.Amd64.win, FvModexp.NatNorm, FvModexp.Amd64.TlsOK]
   rw [show names = LibDivW.names from rfl, ← LibDivW.eq_only]
   intro ret hret s hs hpre
   janus64_intro hs

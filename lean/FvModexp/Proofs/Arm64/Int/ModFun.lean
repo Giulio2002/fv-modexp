@@ -57,6 +57,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     ModSpecX impl R stk above := by
   intro b L z y
   rw [namesMod_eq, ← LibMod.eq_only, show segAddr Extracted.program (RunIface.P ++ "(*Int).Mod") = fnM by decide]
+  janus_ensures_old [FvModexp.Arm64.RunIface.IntPre, FvModexp.Arm64.RunIface.lenW, FvModexp.Arm64.RunIface.IntV, FvModexp.Arm64.RunIface.IntLenLe, FvModexp.Arm64.RunIface.maxW, FvModexp.Arm64.RunIface.PoolG, FvModexp.Arm64.win, FvModexp.Arm64.IMod.ModX, FvModexp.Arm64.CallEnv, FvModexp.Arm64.RunIface.Globals, FvModexp.Arm64.RunIface.IntOK, FvModexp.natVal, FvModexp.Arm64.RunIface.stackPoolA, Janus.Spec.Pool.newOffset, FvModexp.Arm64.RunIface.gA, Janus.Spec.GuardOK, Janus.Spec.StackOK, FvModexp.Arm64.RunIface.wbA, FvModexp.NatLive, FvModexp.NatNorm]
   intro ret hret s hs hpre
   janus_intro hs
   have hr48 := hret.user

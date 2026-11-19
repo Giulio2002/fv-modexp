@@ -108,7 +108,7 @@ theorem proA (impl : List Amd64.Segment) (R : RtInv) (L : List (Nat × Nat)) (st
     (k : ∀ A, AtA st.toNat zp.toNat zc.toNat up.toNat uc.toNat il vl s A →
       ReachesRet (LibDivL.program.link impl) (retAddrOf s) A Q) :
     ReachesRet (LibDivL.program.link impl) (retAddrOf s) s Q := by
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, hLs, -, -⟩ := hce
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, hLs, -, -⟩ := hce
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw
   clear hLs hout hgr
   janus64_run [hilS, hvlS, hstacc8] until [ptA]
@@ -177,7 +177,7 @@ theorem pro1 (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat ×
     ReachesRet (LibDivL.program.link impl) (retAddrOf s) s Q := by
   have hce := hpre.ce
   have hce' := hce
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, hLs, -, -⟩ := hce'
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, hLs, -, -⟩ := hce'
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw
   obtain ⟨⟨-, -, hstacc, hst48, -, -, -⟩, hsw, -, -⟩ := hpre.sti
   simp only [win, outside_cons, outside_nil, and_true] at hsw

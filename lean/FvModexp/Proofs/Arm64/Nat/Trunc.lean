@@ -58,6 +58,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R) : Hyp2 impl R names 4208 64 := by
   intro b L z zl zc x xl xc n
   rw [show names = LibTrunc.names from rfl, ← LibTrunc.eq_only]
+  janus_ensures_old [FvModexp.Arm64.EvenHyp.TruncPre, FvModexp.NatNorm, FvModexp.Arm64.CallEnv, FvModexp.Arm64.ExpHyp.WrOut, FvModexp.Arm64.ExpHyp.RdIn, Janus.Spec.GuardOK, Janus.Spec.StackOK, FvModexp.Arm64.win, FvModexp.NatLive]
   intro ret hret s hs hpre
   janus_intro hs
   have hr48 := hret.user

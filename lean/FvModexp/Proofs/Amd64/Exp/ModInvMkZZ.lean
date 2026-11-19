@@ -31,7 +31,7 @@ theorem mkzz (impl : List Amd64.Segment) (R : RtInv)
     JM impl R kc H sqrC mulC b L zp zl zc st xp xl xc n s := by
   intro S zp' zc' L1 b1 hpre hn hpc h4 h5 hab h0 h2 h1 h3 h7 h6 h8 h9 h10 h12 hfw hrt hb hown hcap
   have hpre' := hpre
-  obtain ⟨⟨⟨hg1, -, hg3⟩, ⟨hb', hb2, -⟩, hal, -, hout, hga, -, -, -, -⟩, hsv, -, -, -, -, -, -, -, -, -, -, -, -,
+  obtain ⟨⟨⟨hg1, -, hg3, _⟩, ⟨hb', hb2, -⟩, hal, -, hout, hga, -, -, -, -⟩, hsv, -, -, -, -, -, -, -, -, -, -, -, -,
     -, hx1, -, -, -, -, -, -, ⟨-, hcost⟩, -, hty, -⟩ := hpre'
   simp only [stackguard0, stackguard0Offset, regG, regSP, K, A] at hg1 hg3 hb' hb2 hout hga
   simp only [cost] at hcost

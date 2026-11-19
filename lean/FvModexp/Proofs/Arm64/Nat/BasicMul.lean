@@ -253,6 +253,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     Ensures ((Extracted.program.onlySegments names).link impl) (segAddr Extracted.program fn)
       [zp, zl, zc, xp, xl, xc, yp, yl, yc]
       (Pre R b L zp zl zc xp xl yp yl) (Post R b L zp xp xl yp yl) := by
+  janus_ensures_old [FvModexp.Arm64.BasicMul.Pre, FvModexp.Arm64.CallEnv, FvModexp.NatLive, FvModexp.Arm64.win, Janus.Spec.GuardOK, Janus.Spec.StackOK]
   rw [show names = LibBasicMul.names from rfl, ← LibBasicMul.eq_only]
   have hMV := addMulVVWWHyp impl hap
   intro ret hret s hs hpre

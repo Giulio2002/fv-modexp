@@ -92,6 +92,7 @@ theorem hyp (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     DrsHypQ impl R drsCQ := by
   intro H b L qp ql qc st up ul uc vp vl vc d
   rw [show DivLarge.drsNames = LibDrs.names from rfl, ← LibDrs.eq_only, entry_drs]
+  janus_ensures_old [FvModexp.Arm64.Q.DivLarge.DrsPre, FvModexp.Arm64.Q.DivLarge.DrsPreW, FvModexp.Arm64.CallEnv, FvModexp.Arm64.RunIface.Globals, FvModexp.Arm64.win, FvModexp.natVal, FvModexp.Arm64.RunIface.gA, FvModexp.Arm64.EvenHyp.StkIn, FvModexp.stLen, FvModexp.stCap, FvModexp.stW, FvModexp.Arm64.StackNat.wbA, FvModexp.stkR, Janus.Spec.GuardOK, Janus.Spec.StackOK, FvModexp.Mdl.karatsubaThreshold, FvModexp.Mdl.basicSqrThreshold, FvModexp.Mdl.karatsubaSqrThreshold, FvModexp.Arm64.RunIface.wbA, FvModexp.Arm64.ExpHyp.StackOK', FvModexp.stkRes, FvModexp.potK, FvModexp.StkOK, FvModexp.NatLive]
   intro ret hret s hs hpre
   janus_intro hs
   have hr48 := hret.user

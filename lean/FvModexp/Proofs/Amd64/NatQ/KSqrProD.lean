@@ -87,7 +87,7 @@ theorem kNatPre {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n x
     {lx0 lx1 : Nat} {P : State} (h : KP R b H L W st zp zc xp n xc s lx0 lx1 P) :
     StackNatX.PreQ R b L H 4192 24 st (kT n) P := by
   obtain ⟨hW, hWs, hal, ha48, h80, hn12, hxc, hxc40, hzl, hzc40, hout, hgr, hga⟩ := h.lay
-  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨-, -, hw⟩, -, hdl, -, -, -, hLs, hro, ⟨htb, htr, htg⟩, htrt, htw⟩, -, hsv, hglb, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -,
+  obtain ⟨⟨⟨hg1, hg2, hg3, hg4⟩, ⟨-, -, hw⟩, -, hdl, -, -, -, hLs, hro, ⟨htb, htr, htg⟩, htrt, htw⟩, -, hsv, hglb, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -,
     hsp, -, hslen, ⟨hlenH, hcost⟩, -, hinv⟩ := h.pre
   obtain ⟨hst0, hsok, hstw, hstg, hsta, hfg, hfw, hsf, hswb, -, -, -, -, -, -⟩ := hsp
   obtain ⟨-, -, -, -, -, -, -, -, -, -, hwbacc, -, -⟩ := hglb
@@ -110,10 +110,11 @@ theorem kNatPre {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {W st zp zc xp n x
     rcases hr with rfl | rfl <;> exact Janus.Arm64.Memory.accessible_mono _ hw (by simp only; omega) (by simp only; omega)
   simp only [stW, stLen, stCap] at hnl hlc hc40 hstw hfw hsf hsta hslen hlenH
   have hce : CallEnv R L P 4192 24 := by
-    refine ⟨⟨?_, ?_, ?_⟩, ⟨?_, ?_, ?_⟩, ?_, hdlP, ?_, ?_, by rw [h.g]; exact hgr, ?_, hro, ⟨?_, ?_, ?_⟩, ?_, ?_⟩
+    refine ⟨⟨?_, ?_, ?_, ?_⟩, ⟨?_, ?_, ?_⟩, ?_, hdlP, ?_, ?_, by rw [h.g]; exact hgr, ?_, hro, ⟨?_, ?_, ?_⟩, ?_, ?_⟩
     · simp only [stackguard0Offset, regG]; rw [h.g]; exact hg1
     · simp only [stackguard0Offset, regG]; rw [h.g, hacc]; exact hg2
     · simp only [stackguard0, stackguard0Offset, regG, regSP]; rw [h.g, eG, hspP]; omega
+    · simp only [stackguard0Offset, regG, regSP] at hg4 hga ⊢; unfold Apart at hga; rw [h.g, hspP]; omega
     · simp only [regSP]; omega
     · simp only [regSP]; omega
     · simp only [regSP]; rw [hacc, hspP]; exact Janus.Arm64.Memory.accessible_mono _ hw (by omega) (by omega)

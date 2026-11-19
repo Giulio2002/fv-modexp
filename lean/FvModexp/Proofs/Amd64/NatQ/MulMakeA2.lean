@@ -38,7 +38,7 @@ theorem alloc_call (impl : List Amd64.Segment) (R : RtInv)
   have hpre' := hpre
   obtain ⟨hce, hmw, hsv, -, hty, ⟨⟨hxlc, -, hxl12, -, hxh, -⟩, ⟨hylc, -, hyl12, -, hyh, -⟩, -, -⟩, -, ⟨-, hcost⟩, -,
     hinv⟩ := hpre'
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, hLs, -, -⟩ := hce
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, hLs, -, -⟩ := hce
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw hga hgr
   have hW : 4608 ≤ W := Nat.le_trans (mulW64_ge _ _) hmw
   have hxh' := (hxh (by omega)).1

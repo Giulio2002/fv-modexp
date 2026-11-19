@@ -69,7 +69,7 @@ theorem mulGQ (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
     (hwb : WbLiveContract (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2) :
     MulHypGQ impl R NatMul.names mulWX 88 mulCQ := fun H b L z zl zc st x xl xc y yl yc =>
-  (Q.NatMul.ens impl hap R hmk hgr hmc hmv hwb H b L mulWX z zl zc st x xl xc y yl yc).mono
-    (fun _ ⟨h1, h2, h3, h4, h5⟩ => x_preMQ h1 h2 h3 h4 h5) (fun _ _ _ hq => Q.NatMul.q_post hq)
+  (Q.NatMul.ens impl hap R hmk hgr hmc hmv hwb H b L mulWX z zl zc st x xl xc y yl yc).mono_ret
+    (fun _ ⟨h1, h2, h3, h4, h5⟩ => x_preMQ h1 h2 h3 h4 h5) (fun _ _ _ _ hq => Q.NatMul.q_post hq)
 
 end FvModexp.Arm64.Q.ExpSlow

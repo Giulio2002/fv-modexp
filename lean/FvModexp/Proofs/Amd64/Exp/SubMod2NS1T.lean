@@ -29,7 +29,7 @@ theorem s1tr (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
     (hc0 : ¬ 64 * (zl - 1) + Aux.bitLen (s.mem.readLE (zp + 8 * (zl - 1)) 8) ≤ n) (k1 : J1 impl R b L op zp zl zc yp yl yc n s) :
     Goal impl R b L zp zl zc yp yl n s s := by
   have hpre' := hpre
-  obtain ⟨⟨⟨hgN, hgR, hgB⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, -, -, -, -⟩, -, -, -, -, -, hn1, hn2, hzl, hW, hzc, hzl',
+  obtain ⟨⟨⟨hgN, hgR, hgB, _⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, -, -, -, -⟩, -, -, -, -, -, hn1, hn2, hzl, hW, hzc, hzl',
     hyl, hyc, hyl', hzlive, hzw, -⟩ := hpre'
   obtain ⟨hzf, hra, hn8, hx15, hdf⟩ := ent_of hpre
   simp only [W] at hW

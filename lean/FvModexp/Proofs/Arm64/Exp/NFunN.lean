@@ -53,6 +53,7 @@ theorem ensNil (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
         BitVec.ofNat 64 mp, BitVec.ofNat 64 n, BitVec.ofNat 64 mc, BitVec.ofNat 64 slow]
       (PreN R b L K costF needR costR needS needP costS costP zp zl zc st xp xl xc yp yl yc mp n mc slow)
       (PostN R b L K costF costR costS costP zp zc xp xl yp yl mp n) := by
+  janus_ensures_old [FvModexp.Arm64.ExpN.PreN, FvModexp.Arm64.ExpN.PreNil, FvModexp.natVal, FvModexp.Arm64.ExpN.NEnv, FvModexp.Arm64.RunIface.Globals, FvModexp.Arm64.StackNat.wT, FvModexp.NatNorm, FvModexp.Arm64.ExpN.ZOK0, FvModexp.Arm64.RunIface.gA, FvModexp.Arm64.EvenHyp.NatOne, FvModexp.Arm64.StackNat.wbA, FvModexp.Arm64.Free.poolA, Janus.Spec.Pool.newOffset, FvModexp.Arm64.RunIface.wbA, FvModexp.NatLive, FvModexp.Arm64.EvenHyp.natOneA]
   rw [show names = LibN.names from rfl, ← LibN.eq_only, show segAddr Extracted.program fn = fnN by decide]
   intro ret hret s hs hpre
   janus_intro hs

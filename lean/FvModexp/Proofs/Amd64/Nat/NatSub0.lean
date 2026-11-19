@@ -1,6 +1,7 @@
 import FvModexp.Proofs.Amd64.Nat.NatSub
 import FvModexp.Proofs.Amd64.Nat.NatSub0Set
 import FvModexp.Proofs.Amd64.Nat.NatSub0Alloc
+import FvModexp.Proofs.Amd64.SetRetLemmas
 
 set_option autoImplicit false
 
@@ -88,6 +89,9 @@ theorem ensR0 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progr
       (fun s s' => Post R b L zp zc xp xl yp yl s s' ∧
         (xl.toNat ≤ zc.toNat → (s'.regs 0).toNat = zp.toNat ∧ (s'.regs 1).toNat = zc.toNat) ∧
         (xl.toNat < 2 ^ 39 → (s'.regs 1).toNat < 2 ^ 40)) := by
+  -- `Pre0` reads `natVal` / `NatNorm` of operands whose location facts hold under `0 < xl` / `0 < yl` only: the empty-or-apart rewrites of `SetRetLemmas`
+  refine Ensures.of_old (by janus64_pre_setRet [FvModexp.Amd64.NatSub.Pre0, FvModexp.Amd64.CallEnv, FvModexp.Amd64.NatSub.wordT, FvModexp.natVal,
+    FvModexp.NatLive, FvModexp.Amd64.win, FvModexp.Amd64.TlsOK, FvModexp.Amd64.readLE_setRet_or_zero, FvModexp.Amd64.natNorm_setRet]) ?_
   rw [show names = LibNatSub.names from rfl, ← LibNatSub.eq_only]
   intro ret hret s hs hpre
   janus64_intro hs
@@ -103,6 +107,6 @@ theorem ens0 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
     Ensures ((Extracted.program.onlySegments names).link impl) (segAddr Extracted.program fn)
       [zp, zl, zc, xp, xl, xc, yp, yl, yc]
       (Pre0 R b L zp zc xp xl xc yp yl yc) (Post R b L zp zc xp xl yp yl) :=
-  Ensures.mono (ensR0 impl hap R hmk hmv b L zp zl zc xp xl xc yp yl yc) (fun _ h => h) (fun _ _ _ h => h.1)
+  Ensures.mono_ret (ensR0 impl hap R hmk hmv b L zp zl zc xp xl xc yp yl yc) (fun _ h => h) (fun _ _ _ _ h => h.1)
 
 end FvModexp.Amd64.NatSub

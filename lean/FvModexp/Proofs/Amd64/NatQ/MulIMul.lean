@@ -35,7 +35,7 @@ theorem imul_step (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.p
   have hpc' : s.rip = BitVec.ofNat 64 0x5e29e0 := hpc
   have hμ' : μl (hL s.mem a.a2.toNat) (hL s.mem a.a3.toNat) + 4 = n := hμ
   have hpre' := hpre
-  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -, hout, -⟩, hiw, -, -, -, hxy,
+  obtain ⟨⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, -, hout, -⟩, hiw, -, -, -, hxy,
     ⟨-, hxa, hx48, hxo, -⟩, ⟨-, hya, hy48, hyo, -⟩, hza, hz48, hzo, -⟩ := hpre'
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw
   have hW4 : 4704 ≤ a.W := Nat.le_trans (Nat.add_le_add_right (mulW64_ge _ _) 96) hiw

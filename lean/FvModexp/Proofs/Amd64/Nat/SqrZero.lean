@@ -22,7 +22,7 @@ theorem zero (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat ×
       Kept s s' ∧ SPost R b L W zp.toNat zc.toNat st.toNat xp.toNat xl.toNat xc.toNat s s' := by
   have hpre' := hpre
   obtain ⟨hce, hsw, -, -, -, -, -, -, -, -, -, -, -, -, -, -, hstk, -, -, -, -⟩ := hpre'
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, -, -, -⟩ := hce
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, -, -, -⟩ := hce
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw
   obtain ⟨-, hstok, hstw, -, -, -, -, -, -⟩ := hstk
   have hW : 5056 ≤ W := by unfold sqrW ksqrW at hsw; omega

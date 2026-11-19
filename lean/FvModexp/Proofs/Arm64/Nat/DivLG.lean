@@ -73,6 +73,7 @@ theorem ensLG (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     ExpSlow.DivHypLG impl R names 41504 112 (cost dc) := by
   intro b L z zl zc st z2 z2l z2c u ul uc v vl vc
   rw [show names = LibDiv.names from rfl, ← LibDiv.eq_only]
+  janus_ensures_old [FvModexp.Arm64.ExpSlow.DivPreG, FvModexp.Arm64.CallEnv, FvModexp.Arm64.RunIface.Globals, FvModexp.Arm64.win, FvModexp.Arm64.ExpHyp.WrOut, FvModexp.Arm64.ExpHyp.RdIn0, FvModexp.Arm64.ExpHyp.RdIn, FvModexp.NatNorm, FvModexp.Arm64.ExpHyp.StackOK', FvModexp.stCap, FvModexp.stW, FvModexp.stLen, FvModexp.Arm64.StackNat.wbA, FvModexp.Arm64.RunIface.gA, Janus.Spec.GuardOK, Janus.Spec.StackOK, FvModexp.Arm64.RunIface.wbA, FvModexp.NatLive, FvModexp.StkOK]
   intro ret hret s hs hpre
   janus_intro hs
   have hr48 := hret.user

@@ -24,7 +24,7 @@ theorem s1Gz (impl : List Amd64.Segment) (R : RtInv)
     (hpre : PreG R b L op zp zl zc yp yl yc n s) (hz0 : zl = 0) (k1 : J1G impl R b L op zp zl zc yp yl yc n s) :
     GoalG impl R b L zp zl zc yp yl n s s := by
   have hpre' := hpre
-  obtain ⟨⟨⟨hgN, hgR, hgB⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, -, -, -, -⟩, -, -, -, -, -, hn1, hn2, hzl, hW, hzc, hzl',
+  obtain ⟨⟨⟨hgN, hgR, hgB, _⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, -, -, -, -⟩, -, -, -, -, -, hn1, hn2, hzl, hW, hzc, hzl',
     hyl, hyc, hyl', hzlive, hzw, -⟩ := hpre'
   obtain ⟨hzf, hra, hn8, hx15, hdf⟩ := hpre.ent
   simp only [win, outside_cons, outside_nil, and_true] at hzw hout

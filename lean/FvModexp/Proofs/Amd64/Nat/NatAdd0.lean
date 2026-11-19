@@ -1,6 +1,7 @@
 import FvModexp.Proofs.Amd64.Nat.NatAdd
 import FvModexp.Proofs.Amd64.Nat.NatAdd0Set
 import FvModexp.Proofs.Amd64.Nat.NatAdd0Swap
+import FvModexp.Proofs.Amd64.SetRetWin
 
 set_option autoImplicit false
 
@@ -96,7 +97,7 @@ theorem full0 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progr
         s.mem.readLE ((s.regs 14).toNat + 16) 8 + 4440 < (s.regs 4).toNat ∧ 4440 ≤ (s.regs 4).toNat ∧
         (s.regs 4).toNat + 80 ≤ 2 ^ 48 ∧ s.mem.accessible ((s.regs 4).toNat - 4440) (4440 + 80) true = true ∧
         (s.regs 4).toNat % 8 = 0 ∧ TlsG s := by
-      obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, _, _, _, _, _, _, ⟨htg, _, _⟩⟩, _⟩ := hpre
+      obtain ⟨⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, _, _, _, _, _, _, ⟨htg, _, _⟩⟩, _⟩ := hpre
       simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw
       exact ⟨by omega, hg2, hg3, hb', ha, hw, hal, htg⟩
     have hpre' := hpre
@@ -140,6 +141,30 @@ theorem full0 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progr
     all_goals try rw [hx15']
     all_goals try janus64_simp
 
+/-- `Pre0` survives installing the return address (Janus v0.4.0 `hinv` of `ensR0`; top s54: `janus64_ensures_old`'s closer
+cannot see an operand's apartness behind its `0 < len →` guard for `NatNorm`; by the frame lemmas `SetRetWin` instead) -/
+theorem pre0_setRet {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zc xp xl xc yp yl yc : BitVec 64} {s : State}
+    (ret : Nat) (h : Pre0 R b L zp zc xp xl xc yp yl yc s) : Pre0 R b L zp zc xp xl xc yp yl yc (s.setRet ret) := by
+  have hab : 8 ≤ 80 := by decide
+  unfold Pre0 at h ⊢
+  obtain ⟨a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19⟩ := h
+  refine ⟨SetRetWin.callEnv hab a1, a2, a3, a4, a5, a6, a7, a8, a9, SetRetWin.natLive.2 a10, a11, a12, ?_, ?_, ?_, ?_,
+    by rw [view_setRet (CallEnv.slot a1 hab)]; exact a17, a18, a19⟩
+  · intro hx
+    obtain ⟨c1, c2, c3, c4⟩ := a13 hx
+    exact ⟨by rw [setRet_accessible]; exact c1, c2, c3, c4⟩
+  · refine SetRetWin.natNorm (stk := 4440) hab ?_ a14
+    by_cases hx : xl.toNat = 0
+    · exact Or.inl hx
+    · exact Or.inr (a13 (Nat.pos_of_ne_zero hx)).2.2.2
+  · refine SetRetWin.natNorm (stk := 4440) hab ?_ a15
+    by_cases hy : yl.toNat = 0
+    · exact Or.inl hy
+    · exact Or.inr (a16 (Nat.pos_of_ne_zero hy)).2.2.2
+  · intro hy
+    obtain ⟨c1, c2, c3, c4⟩ := a16 hy
+    exact ⟨by rw [setRet_accessible]; exact c1, c2, c3, c4⟩
+
 /-- **`nat.add`** (amd64, empty-tolerant `Pre0`): as `FvModexp.Arm64.NatAdd.ens`. -/
 theorem ensR0 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
     (hmk : MakesliceLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
@@ -151,6 +176,7 @@ theorem ensR0 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progr
       (fun s s' => Post R b L zp zc xp xl yp yl s s' ∧
         (need xl yl ≤ zc.toNat → (s'.regs 0).toNat = zp.toNat ∧ (s'.regs 1).toNat = zc.toNat) ∧
         (mx xl yl < 2 ^ 39 → (s'.regs 1).toNat < 2 ^ 40)) := by
+  refine Ensures.of_old (fun s ret _ _ hp => pre0_setRet ret hp) ?_
   rw [show names = LibNatAdd.names from rfl, ← LibNatAdd.eq_only]
   intro ret hret s hs hpre
   janus64_intro hs
@@ -166,6 +192,6 @@ theorem ens0 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
     Ensures ((Extracted.program.onlySegments names).link impl) (segAddr Extracted.program fn)
       [zp, zl, zc, xp, xl, xc, yp, yl, yc]
       (Pre0 R b L zp zc xp xl xc yp yl yc) (Post R b L zp zc xp xl yp yl) :=
-  Ensures.mono (ensR0 impl hap R hmk hmv b L zp zl zc xp xl xc yp yl yc) (fun _ h => h) (fun _ _ _ h => h.1)
+  Ensures.mono_ret (ensR0 impl hap R hmk hmv b L zp zl zc xp xl xc yp yl yc) (fun _ h => h) (fun _ _ _ _ h => h.1)
 
 end FvModexp.Amd64.NatAdd

@@ -233,7 +233,7 @@ theorem pre_env {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {zp zl zc x xl sh 
     s.mem.readLE ((s.regs 14).toNat + 16) 8 + 4248 < (s.regs 4).toNat ∧ 4248 ≤ (s.regs 4).toNat ∧
     (s.regs 4).toNat + 64 ≤ 2 ^ 48 ∧
     s.mem.accessible ((s.regs 4).toNat - 4248) (4248 + 64) true = true ∧ (s.regs 4).toNat % 8 = 0 ∧ TlsG s := by
-  obtain ⟨⟨⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, _, _, _, _, _, _, ⟨htg, _, _⟩⟩, _⟩, _⟩ := hpre
+  obtain ⟨⟨⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, _, _, _, _, _, _, ⟨htg, _, _⟩⟩, _⟩, _⟩ := hpre
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw
   exact ⟨by omega, hg2, hg3, hb', ha, hw, hal, htg⟩
 

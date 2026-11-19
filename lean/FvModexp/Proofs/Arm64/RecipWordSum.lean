@@ -117,7 +117,7 @@ theorem ensures (d1 : BitVec 64) :
       (fun s => GuardOK s 48 ∧ StackOK s 88 0 ∧ d1.toNat ≠ 0 ∧ Apart ((s.regs 28).toNat + 16) 8 (s.sp.toNat - 88) 88)
       (fun s s' => results 1 s' = [BitVec.ofNat 64 (FvModexp.AsmDiv.recipWord d1.toNat)] ∧
         MemFrame s.mem s'.mem [(s.sp.toNat - 88, s.sp.toNat - 40)]) := by
-  refine FvModexp.AsmDiv.A64.ensures_of_summary _ _ recip_summary ?_ ?_
+  refine FvModexp.AsmDiv.A64.ensures_of_summary (hinv := by janus_pre_setRet [Janus.Spec.GuardOK, Janus.Spec.StackOK]) _ _ recip_summary ?_ ?_
   · intro ret hret s hsu ⟨hg, hst, hy, hgA⟩
     have h0 : s.regs 0 = d1 := by have := hsu.args 0 (by simp); simpa using this
     have h30 : s.regs 30 = BitVec.ofNat 64 ret := hsu.lr

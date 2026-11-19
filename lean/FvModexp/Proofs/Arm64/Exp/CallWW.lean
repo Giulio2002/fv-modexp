@@ -17,7 +17,7 @@ namespace FvModexp.Arm64.CallWW
 theorem hypSum {impl : List Segment} (hap : ImplApart Extracted.program impl) {ns : List String}
     (hns : ∀ x, ns.contains x = true → LibW.names.contains x = true) {f : String} {args : List (BitVec 64)}
     {pre : State → Prop} {post : State → State → Prop}
-    (h : Ensures ((Extracted.program.onlySegments ns).link impl) (segAddr Extracted.program f) args pre post) :
+    (h : Ensures ((Extracted.program.onlySegments ns).link impl) (segAddr Extracted.program f) args pre post) [ArgsFit args] :
     Summary (LibW.program.link impl) (segAddr Extracted.program f)
       (fun s => RetAddr ((Extracted.program.onlySegments ns).link impl) (s.regs 30).toNat ∧ ArgsFrom s 0 args ∧ pre s)
       (fun s s' => (s'.sp = s.sp ∧ s'.regs 28 = s.regs 28 ∧ s'.regs 29 = s.regs 29 ∧ s'.regs 18 = s.regs 18) ∧

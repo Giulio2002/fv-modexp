@@ -45,7 +45,7 @@ theorem correctness (impl : List Segment) (hap : ImplApart Extracted.program imp
         BitVec.ofNat 64 mp, BitVec.ofNat 64 n, BitVec.ofNat 64 mc]
       (ExpW4.Pre R b L K DivInst.divC zp zc st xp xl xc yp ylen mp n mc)
       (ExpW4.Post R b L K DivInst.divC zp zc st xp xl yp ylen mp n) :=
-  Ensures.full hap (ExpW4.ens impl hap R hclr hmv hmk hgr hwb LibDiv.names 41504 DivInst.divC
+  Ensures.full (hinv := by janus_pre_setRet [FvModexp.Arm64.ExpW4.Pre, FvModexp.Arm64.ExpW4.PreD, FvModexp.stLen, FvModexp.Arm64.W4En.EPre, FvModexp.natVal, FvModexp.Arm64.W4En.EEnv, FvModexp.Arm64.RunIface.Globals, FvModexp.Arm64.StackNat.wT, FvModexp.Arm64.W4En.OE, FvModexp.NatNorm, FvModexp.Arm64.RunIface.gA, FvModexp.StkOK, FvModexp.stCap, FvModexp.stW, FvModexp.Arm64.StackNat.wbA, FvModexp.Arm64.W4En.free, FvModexp.Mdl.karatsubaThreshold, FvModexp.Mdl.basicSqrThreshold, FvModexp.Mdl.karatsubaSqrThreshold, FvModexp.Arm64.RunIface.wbA, FvModexp.NatLive]) hap (ExpW4.ens impl hap R hclr hmv hmk hgr hwb LibDiv.names 41504 DivInst.divC
     (DivInst.hyp impl hap R hgr hclr hwb hmk hmv hmz) DivInst.ns_sub DivInst.ns_w4 b L K hK (by omega)
     zp zl zc st xp xl xc yp ylen yc mp n mc)
 
@@ -59,9 +59,9 @@ set_option maxRecDepth 100000
 
 theorem hret : RetAddr (Extracted.program.link WStubs.impl) RET := RetAddr.of_check (by decide +kernel)
 
-theorem setup : CallSetup ((Extracted.program.link WStubs.impl).withExit RET) (segAddr Extracted.program ExpW4.fn)
+theorem setup : CallSetup0 (segAddr Extracted.program ExpW4.fn)
     args s0 :=
-  ⟨rfl, rfl, fun i h => by simp only [s0, dif_pos h]⟩
+  ⟨rfl, by first | decide | simp | omega, fun i h => by simp only [s0, dif_pos h]⟩
 
 /-- the closed `nat.div`'s cost at the witness call (`len m = len x = 1`, empty stack) fits the witness bound -/
 theorem divc : ExpW4.divCost DivInst.divC 1 1 0 ≤ CD := by
@@ -84,7 +84,7 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
     WbLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 4096 R 2 ∧
     41504 ≤ K ∧
     RetAddr (Extracted.program.link impl) ret ∧
-    CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program ExpW4.fn)
+    CallSetup0 (segAddr Extracted.program ExpW4.fn)
       [BitVec.ofNat 64 zp, BitVec.ofNat 64 zl, BitVec.ofNat 64 zc, BitVec.ofNat 64 st, BitVec.ofNat 64 xp,
         BitVec.ofNat 64 xl, BitVec.ofNat 64 xc, BitVec.ofNat 64 yp, BitVec.ofNat 64 ylen, BitVec.ofNat 64 yc,
         BitVec.ofNat 64 mp, BitVec.ofNat 64 n, BitVec.ofNat 64 mc] s ∧
@@ -109,8 +109,8 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.gcWriteBarrier2") ∧
       wbSite R (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 2 L b s_c) ∧
-    Returns ((Extracted.program.link impl).withExit ret) s fun s' =>
-      ABIReturn s s' ∧ ExpW4.Post R b L K DivInst.divC zp zc st xp xl yp ylen mp n s s' :=
+    Returns ((Extracted.program.link impl).withExit ret) (s.setRet ret) fun s' =>
+      ABIReturn (s.setRet ret) s' ∧ ExpW4.Post R b L K DivInst.divC zp zc st xp xl yp ylen mp n (s.setRet ret) s' :=
   ⟨WStubs.impl, R, BW, [], 41504, 0, 0, 0, ST, XP, 1, 1, YP, 1, 1, MP, 1, 1, RET, s0, WStubs.hap,
     by rw [WStubs.addr_cl]; exact WStubs.cl R,
     by rw [WStubs.addr_mv]; exact WStubs.mv R, by rw [WStubs.addr_mv]; exact WStubs.mvz R,
@@ -131,6 +131,6 @@ theorem nonvacuous : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L : List (
       (by rw [WStubs.addr_mk]; exact WStubs.mk [] (by intro t ht; simp at ht) _)
       (by rw [WStubs.addr_gr]; exact WStubs.gr [] (by intro t ht; simp at ht) _)
       (by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] (by intro t ht; simp at ht) _) BW [] 41504 (Nat.le_refl _)
-      0 0 0 ST XP 1 1 YP 1 1 MP 1 1 RET hret s0 setup (pre 41504 DivInst.divC (by decide) (by decide) divc)⟩
+      0 0 0 ST XP 1 1 YP 1 1 MP 1 1 s0 setup (pre 41504 DivInst.divC (by decide) (by decide) divc) RET hret⟩
 
 end FvModexp.Arm64.W4Row.Witness

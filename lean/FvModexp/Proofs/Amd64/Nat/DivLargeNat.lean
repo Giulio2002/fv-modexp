@@ -38,7 +38,7 @@ theorem pro2 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
   have hpc := hP.pc; have hsp := hP.sp; have h5 := hP.r5; have h14 := hP.r14; have hfs := hP.fs; have hx15 := hP.x15
   have hdf := hP.df; have r0 := hP.r0; have r3 := hP.r3; have hF := hP.fr; have hreg := hP.reg
   have hce := hpre.ce
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, hdl, hout, hga, hgr, hLs, hro, ⟨htb, htr, htg⟩, htrt, htw⟩ := hce
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, hdl, hout, hga, hgr, hLs, hro, ⟨htb, htr, htg⟩, htrt, htw⟩ := hce
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw htg
   simp only [LiveSep, win, outside_cons, outside_nil, and_true] at hLs
   have hLs' : ∀ r ∈ L, r.1 + (r.2 - r.1) ≤ (s.regs 4).toNat - 312 - 4192 ∨ (s.regs 4).toNat - 312 + 24 ≤ r.1 := by

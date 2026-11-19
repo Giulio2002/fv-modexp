@@ -4,6 +4,7 @@ import FvModexp.Proofs.Amd64.Exp.SubMod2NS3
 import FvModexp.Proofs.Amd64.Exp.SubMod2NS4A
 import FvModexp.Proofs.Amd64.Exp.SubMod2NS4B
 import FvModexp.Proofs.Amd64.Exp.SubMod2NS4C
+import FvModexp.Proofs.Amd64.SetRetLemmas
 
 /-!
 # **`nat.subMod2N`** (go-bigmodexpfix nat.go:1726), amd64 — the summary (agent infra)
@@ -69,6 +70,7 @@ theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
       [BitVec.ofNat 64 zp, BitVec.ofNat 64 zl, BitVec.ofNat 64 zc, BitVec.ofNat 64 zp, BitVec.ofNat 64 zl,
         BitVec.ofNat 64 zc, BitVec.ofNat 64 yp, BitVec.ofNat 64 yl, BitVec.ofNat 64 yc]
       (Pre R b L op zp zl zc yp yl yc n) (Post R b L zp zl zc yp yl n) := by
+  janus64_ensures_old [FvModexp.Amd64.SubMod2N.Pre, FvModexp.Amd64.CallEnv, FvModexp.Amd64.SubMod2N.K, FvModexp.Amd64.SubMod2N.A, FvModexp.Amd64.NatAdd.wordT, FvModexp.Amd64.EvenHyp.NatOne, FvModexp.Amd64.win, FvModexp.Amd64.EvenHyp.natOneA, FvModexp.NatLive, FvModexp.Amd64.SubMod2N.Ent, FvModexp.Amd64.TlsOK, FvModexp.Amd64.readLE_setRet_or_zero, FvModexp.Amd64.natNorm_setRet]
   rw [show names = LibExp.names from rfl, ← LibExp.eq_only, show segAddr Extracted.program fn = 6215840 by decide]
   intro ret hret s hs hpre
   janus64_intro hs

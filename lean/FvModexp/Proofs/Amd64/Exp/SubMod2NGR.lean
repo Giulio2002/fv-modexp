@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.SubMod2NGEns
+import FvModexp.Proofs.Amd64.SetRetLemmas
 
 set_option autoImplicit false
 
@@ -54,7 +55,9 @@ def EnsGR (impl : List Amd64.Segment) (R : RtInv) : Prop :=
 
 /-- `EnsG` gives `EnsGR`: the return-address bound comes from the ABI (`CallSetup.ret`, `RetAddr.user`) -/
 theorem ensGR_of {impl : List Amd64.Segment} {R : RtInv} (h : EnsG impl R) : EnsGR impl R := by
-  intro b L op zp zl zc yp yl yc n ret hret s hs hpre
-  exact h b L op zp zl zc yp yl yc n ret hret s hs (hpre.toG (by rw [hs.ret]; exact hret.user))
+  intro b L op zp zl zc yp yl yc n
+  janus64_ensures_old [FvModexp.Amd64.SubMod2N.PreGR, FvModexp.Amd64.CallEnv, FvModexp.Amd64.SubMod2N.K, FvModexp.Amd64.SubMod2N.A, FvModexp.Amd64.NatAdd.wordT, FvModexp.Amd64.EvenHyp.NatOne, FvModexp.Amd64.win, FvModexp.Amd64.EvenHyp.natOneA, FvModexp.NatLive, FvModexp.Amd64.SubMod2N.EntR, FvModexp.Amd64.TlsOK, FvModexp.Amd64.readLE_setRet_or_zero, FvModexp.Amd64.natNorm_setRet]
+  intro ret hret s hs hpre
+  exact (h b L op zp zl zc yp yl yc n).toOld ret hret s hs (hpre.toG (by rw [hs.ret]; exact hret.user))
 
 end FvModexp.Amd64.SubMod2N

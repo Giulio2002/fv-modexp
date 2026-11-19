@@ -55,9 +55,9 @@ def s0 : State :=
 
 theorem hret : RetAddr (Extracted.program.link WStubs.impl) RET := RetAddr.of_check (by decide +kernel)
 
-theorem setup : CallSetup ((Extracted.program.link WStubs.impl).withExit RET) (segAddr Extracted.program Q.NatRem.fn)
+theorem setup : CallSetup0 (segAddr Extracted.program Q.NatRem.fn)
     args s0 :=
-  ⟨rfl, by decide +kernel, rfl, by decide, by
+  ⟨rfl, rfl, by decide, by
     intro i h; simp only [args, List.length_cons, List.length_nil] at h
     rcases (by omega : i = 0 ∨ i = 1 ∨ i = 2 ∨ i = 3 ∨ i = 4 ∨ i = 5 ∨ i = 6) with
       rfl | rfl | rfl | rfl | rfl | rfl | rfl <;> rfl, rfl⟩
@@ -88,7 +88,7 @@ theorem len0 : stLen mem0 ST = 0 := by decide +kernel
 theorem words : s0.mem.readLE ((s0.regs 4).toNat + 8) 8 = (BitVec.ofNat 64 VP).toNat ∧
     s0.mem.readLE ((s0.regs 4).toNat + 16) 8 = (1 : BitVec 64).toNat ∧
     s0.mem.readLE ((s0.regs 4).toNat + 24) 8 = (1 : BitVec 64).toNat :=
-  ⟨by decide +kernel, by decide +kernel, by decide +kernel⟩
+  (by first | exact ⟨by decide +kernel, by decide +kernel, by decide +kernel, by decide⟩ | exact ⟨by decide +kernel, by decide +kernel, by decide +kernel⟩)
 
 /-- the row's cost instance (`div`'s with asm's `drsCQ`) fits the witness budget -/
 theorem cost0Q : Q.NatDiv.costQ Q.drsCQ 1 1 + stkR 96 mem0 ST ≤ 0x80000 := by
@@ -138,7 +138,9 @@ theorem pre (cd : Nat → Nat → Nat) (hc : cd 1 1 + stkR 96 mem0 ST ≤ 0x8000
     | (simp only [Apart]; decide +kernel)
     | (simp only [acc0]; decide +kernel)
     | (refine ⟨by decide +kernel, ?_, by decide +kernel⟩; rw [hm, acc0]; decide +kernel)
+    | (refine ⟨by decide +kernel, ?_, by decide +kernel, by decide +kernel⟩; rw [hm, acc0]; decide +kernel)
     | (refine ⟨by decide +kernel, by decide +kernel, ?_⟩; rw [hm, acc0]; decide +kernel)
+    | (refine ⟨by decide +kernel, by decide +kernel, ?_, by decide +kernel⟩; rw [hm, acc0]; decide +kernel)
     | (intros; trivial)
     | decide +kernel
 

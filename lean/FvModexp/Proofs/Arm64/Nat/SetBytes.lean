@@ -22,6 +22,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc bp bl bc : BitVec 64) :
     Ensures ((Extracted.program.onlySegments [fn]).link impl) (segAddr Extracted.program fn) [zp, zl, zc, bp, bl, bc]
       (Pre R b L zp zc bp bl) (Post R b L zp zc bp bl) := by
+  janus_ensures_old [FvModexp.Arm64.SetBytes.Pre, FvModexp.Arm64.CallEnv, FvModexp.Arm64.SetBytes.wordT, FvModexp.NatLive, FvModexp.Arm64.win, Janus.Spec.GuardOK, Janus.Spec.StackOK]
   intro ret hret s hs ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, hd, hout, hga, hgr, hLs, hro⟩, hty, hlive, hbl, hbp, hbacc,
     hheld, hbwin, hzb, hzw, hinv, hok⟩
   have hmk' := MakesliceLiveContract.of_codeIn (codeIn_ofImpl_restrict_of_apart hap [fn]) hmk

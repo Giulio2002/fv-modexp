@@ -123,6 +123,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     ExpSpecX impl R stk above := by
   intro b L z y mm
   rw [namesExp_eq, ← LibExp.eq_only, show segAddr Extracted.program (RunIface.P ++ "(*Int).exp") = fnI by decide]
+  janus_ensures_old [FvModexp.Arm64.RunIface.IntPre, FvModexp.Arm64.RunIface.lenW, FvModexp.Arm64.RunIface.IntV, FvModexp.Arm64.RunIface.IntLenLe, FvModexp.Arm64.RunIface.maxW, FvModexp.Arm64.RunIface.OneG, FvModexp.Arm64.win, FvModexp.Arm64.IExp.ExpX, FvModexp.Arm64.CallEnv, FvModexp.Arm64.RunIface.Globals, FvModexp.Exp.B, FvModexp.Arm64.RunIface.IntOK, FvModexp.natVal, FvModexp.Arm64.RunIface.natOneA, FvModexp.Arm64.IExp.PoolG, FvModexp.Arm64.RunIface.wbA, FvModexp.Arm64.RunIface.ModX, Janus.Spec.GuardOK, Janus.Spec.StackOK, FvModexp.Arm64.RunIface.gA, FvModexp.NatLive, FvModexp.NatNorm, FvModexp.Arm64.Free.poolA, Janus.Spec.Pool.newOffset]
   intro ret hret s hs hpre
   janus_intro hs
   have hr48 := hret.user

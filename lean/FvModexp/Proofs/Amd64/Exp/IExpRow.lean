@@ -70,13 +70,15 @@ theorem correctness (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted
     (b : Nat) (L : List (Nat × Nat)) (z y mm : BitVec 64) :
     Ensures (Extracted.program.link impl) (segAddr Extracted.program fnExpL) [z, z, y, mm, 0#64]
       (Pre R b L S z y mm) (Post R b L z y mm) := by
-  intro ret hret s hs ⟨hS, hp⟩
+  intro s hs ⟨hS, hp⟩
   subst hS
-  have h := Ensures.full64 hap (by simp [numIntRegs])
+  have h := Ensures.full64 (hinv := fun _ ret _ _ hp => ⟨RunIface.expPre_setRet ret (by decide) hp.1, by
+      rw [IExp.ExpA, setRet_accessible, RunIface.oneG_natOne (by decide) hp.1.2.2.2.2.2.1]; exact hp.2⟩)
+    hap (by simp [numIntRegs])
     (IExp.ensCl impl hap R hgr hmc hmv hmz hmk hno hwb hget hput (stk := 43736) (above := 48) (Nat.le_refl _)
       (by decide) b L z y mm)
   rw [fn_eq] at h
-  exact h ret hret s hs hp
+  exact h s hs hp
 
 end FvModexp.Amd64.IExpRow
 
@@ -133,9 +135,9 @@ def s0 : State :=
 
 theorem hret : RetAddr (Extracted.program.link WStubs.impl) RET := RetAddr.of_check (by decide +kernel)
 
-theorem setup : CallSetup ((Extracted.program.link WStubs.impl).withExit RET) (segAddr Extracted.program fnExpL)
+theorem setup : CallSetup0 (segAddr Extracted.program fnExpL)
     args s0 :=
-  ⟨rfl, by decide +kernel, rfl, by decide, by
+  ⟨rfl, rfl, by decide, by
     intro i h; simp only [args, List.length_cons, List.length_nil] at h
     rcases (by omega : i = 0 ∨ i = 1 ∨ i = 2 ∨ i = 3 ∨ i = 4) with rfl | rfl | rfl | rfl | rfl <;> rfl, rfl⟩
 
@@ -237,7 +239,7 @@ theorem nonvacuous :
     PoolPutLive (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "sync.(*Pool).Put") 4096 R
       Free.stkT StkSh ∧
     RetAddr (Extracted.program.link impl) ret ∧
-    CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program fnExpL) [z, z, y, mm, 0#64] s ∧
+    CallSetup0 (segAddr Extracted.program fnExpL) [z, z, y, mm, 0#64] s ∧
     Pre R b L StkSh z y mm s ∧
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.rip = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.growslice") ∧
@@ -266,7 +268,7 @@ theorem nonvacuous :
     (∃ (L : List (Nat × Nat)) (b : Nat) (rs : List (Nat × Nat)) (s_c : State),
       s_c.rip = BitVec.ofNat 64 (Extracted.program.contractAddr "sync.(*Pool).Put") ∧
       putSite R (Extracted.program.contractAddr "sync.(*Pool).Put") L b rs s_c) ∧
-    Returns ((Extracted.program.link impl).withExit ret) s fun s' => ABIReturn s s' ∧ Post R b L z y mm s s' :=
+    Returns ((Extracted.program.link impl).withExit ret) (s.setRet ret) fun s' => ABIReturn (s.setRet ret) s' ∧ Post R b L z y mm (s.setRet ret) s' :=
   ⟨WStubs.impl, R, BW, [], BitVec.ofNat 64 OA, BitVec.ofNat 64 (OA + 0x40), BitVec.ofNat 64 (OA + 0x80), RET, s0,
     WStubs.hap,
     by rw [WStubs.addr_gr]; exact WStubs.gr [] hty _,
@@ -297,6 +299,6 @@ theorem nonvacuous :
       (by rw [WStubs.addr_mv]; exact WStubs.mvz R) (by rw [WStubs.addr_mk]; exact WStubs.mk [] hty _)
       (by rw [WStubs.addr_no]; exact WStubs.no [] hty _) (by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] hty _) StkSh
       (by rw [WStubs.addr_get]; exact WStubs.get [] _ _ _) (by rw [WStubs.addr_put]; exact WStubs.put [] hty _ _ _)
-      BW [] (BitVec.ofNat 64 OA) (BitVec.ofNat 64 (OA + 0x40)) (BitVec.ofNat 64 (OA + 0x80)) RET hret s0 setup pre⟩
+      BW [] (BitVec.ofNat 64 OA) (BitVec.ofNat 64 (OA + 0x40)) (BitVec.ofNat 64 (OA + 0x80)) s0 setup pre RET hret⟩
 
 end FvModexp.Amd64.IExpRow.Witness

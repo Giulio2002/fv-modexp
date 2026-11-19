@@ -50,9 +50,9 @@ def s2 : State :=
     sp := BitVec.ofNat 64 sp0, pc := BitVec.ofNat 64 (segAddr Extracted.program RunArm64.fn),
     flags := ⟨false, false, false, false⟩, mem := mem2 }
 
-theorem setup2 : CallSetup ((Extracted.program.link implAt).withExit ret) (segAddr Extracted.program RunArm64.fn)
+theorem setup2 : CallSetup0 (segAddr Extracted.program RunArm64.fn)
     [c2, p2, 99, 99] s2 :=
-  ⟨rfl, rfl, by
+  ⟨rfl, by first | decide | simp | omega, by
     intro r h
     simp only [List.length_cons, List.length_nil] at h
     rcases (by omega : r = 0 ∨ r = 1 ∨ r = 2 ∨ r = 3) with rfl | rfl | rfl | rfl <;> rfl⟩

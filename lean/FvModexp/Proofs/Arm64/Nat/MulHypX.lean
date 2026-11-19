@@ -40,7 +40,7 @@ def MulHypX0 (impl : List Segment) (R : RtInv) (ns : List String) (stk above : N
 theorem MulHypX0.toX {impl : List Segment} {R : RtInv} {ns : List String} {stk above : Nat}
     {cost : Nat → Nat → Nat → Nat} (h : MulHypX0 impl R ns stk above cost) : MulHypX impl R ns stk above cost :=
   fun b L z zl zc st x xl xc y yl yc =>
-    (h b L z zl zc st x xl xc y yl yc).mono (fun _ ⟨h1, h2, h3, h4⟩ => ⟨h1.to0, h2, h3, h4⟩) (fun _ _ _ hq => hq)
+    (h b L z zl zc st x xl xc y yl yc).mono_ret (fun _ ⟨h1, h2, h3, h4⟩ => ⟨h1.to0, h2, h3, h4⟩) (fun _ _ _ _ hq => hq)
 
 /-- `MulHypX0` with the exact-write clause in the post -/
 def MulHypXE0 (impl : List Segment) (R : RtInv) (ns : List String) (stk above : Nat) (cost : Nat → Nat → Nat → Nat) :
@@ -127,8 +127,8 @@ theorem hypX0 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
     (hwb : WbLiveContract (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2) :
     MulHypX0 impl R names mulWX 88 mulC := fun b L z zl zc st x xl xc y yl yc =>
-  (ens impl hap R hmk hgr hmc hmv hwb b L mulWX z zl zc st x xl xc y yl yc).mono
-    (fun _ ⟨h1, h2, h3, h4⟩ => x_pre h1 h2 h3 h4) (fun _ _ _ hq => x_post hq)
+  (ens impl hap R hmk hgr hmc hmv hwb b L mulWX z zl zc st x xl xc y yl yc).mono_ret
+    (fun _ ⟨h1, h2, h3, h4⟩ => x_pre h1 h2 h3 h4) (fun _ _ _ _ hq => x_post hq)
 
 /-- **`nat.mul`** (arm64) in the `MulHypX` premise form (= `hypX0.toX`) -/
 theorem hypX (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
@@ -148,7 +148,7 @@ theorem hypXE0 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
     (hwb : WbLiveContract (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2) :
     MulHypXE0 impl R names mulWX 88 mulC := fun b L z zl zc st x xl xc y yl yc =>
-  (ens impl hap R hmk hgr hmc hmv hwb b L mulWX z zl zc st x xl xc y yl yc).mono
-    (fun _ ⟨h1, h2, h3, h4⟩ => x_pre h1 h2 h3 h4) (fun _ _ _ hq => ⟨(x_post hq).1, x_exact hq⟩)
+  (ens impl hap R hmk hgr hmc hmv hwb b L mulWX z zl zc st x xl xc y yl yc).mono_ret
+    (fun _ ⟨h1, h2, h3, h4⟩ => x_pre h1 h2 h3 h4) (fun _ _ _ _ hq => ⟨(x_post hq).1, x_exact hq⟩)
 
 end FvModexp.Arm64.NatMul

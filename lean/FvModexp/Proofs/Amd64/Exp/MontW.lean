@@ -105,7 +105,8 @@ theorem sum (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
     rw [hsp, hg, trp, trc, txp, typ, tn]
     unfold MIn at hx hy hm
     refine ⟨⟨⟨by simp only [regG, stackguard0Offset]; omega, by simp only [regG, stackguard0Offset, hg]; exact hg2,
-        by simp only [stackguard0, stackguard0Offset, regG, regSP, hsp, hg, hgv]; omega⟩,
+        by simp only [stackguard0, stackguard0Offset, regG, regSP, hsp, hg, hgv]; omega,
+        by simp only [regG, regSP, stackguard0Offset, hsp, hg]; unfold Apart at hgw; omega⟩,
       ⟨by simp only [regSP, hsp]; omega, by simp only [regSP, hsp]; omega, by simp only [regSP, hsp]; exact hwacc⟩,
       hal, hwrt, hgw, hgrt, hLs, hx15, hdf, ⟨by rw [hfs']; exact hfs, by rw [hfs']; exact htacc,
         by rw [hfs', htg, regG, hg]⟩, by rw [hfs']; exact htw, by rw [hfs']; exact htrt⟩,

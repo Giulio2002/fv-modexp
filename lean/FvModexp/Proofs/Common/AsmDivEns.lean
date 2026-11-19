@@ -36,8 +36,9 @@ theorem ensures_of_summary {p : Program} {entry : Nat} {args : List W64} {pre : 
     (h : Summary p entry pre post)
     (hpre : ∀ ret, RetAddr p ret → ∀ s, CallSetup (p.withExit ret) entry args s → PRE s → pre s)
     (hpost : ∀ ret, RetAddr p ret → ∀ s, CallSetup (p.withExit ret) entry args s → PRE s →
-      ∀ s', post s s' → ABIReturn s s' ∧ POST s s') :
+      ∀ s', post s s' → ABIReturn s s' ∧ POST s s') (hinv : Ensures.SetRetInv p entry args PRE := by janus_pre_setRet) :
     Ensures p entry args PRE POST := by
+  refine Ensures.of_old hinv ?_
   intro ret hret s hsu hP
   have hs := h s hsu.pc (hpre ret hret s hsu hP)
   rw [hsu.lr] at hs

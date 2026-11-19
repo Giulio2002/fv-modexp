@@ -42,8 +42,8 @@ def s0 : State :=
 
 theorem hret : RetAddr Extracted.program ret := RetAddr.of_check (by decide)
 
-theorem setup : CallSetup (Extracted.program.withExit ret) Extracted.entry [d1] s0 :=
-  ⟨rfl, rfl, by
+theorem setup : CallSetup0 Extracted.entry [d1] s0 :=
+  ⟨rfl, by first | decide | simp | omega, by
     intro i h
     simp only [List.length_cons, List.length_nil] at h
     rcases (by omega : i = 0) with rfl; rfl⟩
@@ -54,13 +54,13 @@ theorem hpre : GuardOK s0 48 ∧ StackOK s0 88 0 ∧ d1.toNat ≠ 0 ∧
 
 /-- A concrete call (`d1 = 3`, `nlz = 62`) satisfies the hypotheses of `correctness` and returns. -/
 theorem nonvacuous : ∃ (ret : Nat) (s : State) (d1 : BitVec 64), RetAddr Extracted.program ret ∧
-    CallSetup (Extracted.program.withExit ret) Extracted.entry [d1] s ∧
+    CallSetup0 Extracted.entry [d1] s ∧
     (GuardOK s 48 ∧ StackOK s 88 0 ∧ d1.toNat ≠ 0 ∧ Apart ((s.regs 28).toNat + 16) 8 (s.sp.toNat - 88) 88) ∧
-    Returns (Extracted.program.withExit ret) s
-      (fun s' => ABIReturn s s' ∧
+    Returns (Extracted.program.withExit ret) (s.setRet ret)
+      (fun s' => ABIReturn (s.setRet ret) s' ∧
         (results 1 s' = [BitVec.ofNat 64 ((2 ^ 128 - 1) / (d1.toNat * 2 ^ clzNat 64 d1.toNat) - 2 ^ 64)] ∧
-        MemFrame s.mem s'.mem [(s.sp.toNat - 88, s.sp.toNat - 40)])) :=
-  ⟨ret, s0, d1, hret, setup, hpre, correctness d1 ret hret s0 setup hpre⟩
+        MemFrame (s.setRet ret).mem s'.mem [((s.setRet ret).sp.toNat - 88, (s.setRet ret).sp.toNat - 40)])) :=
+  ⟨ret, s0, d1, hret, setup, hpre, (correctness d1) s0 setup hpre ret hret⟩
 
 end Witness
 

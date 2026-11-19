@@ -27,8 +27,9 @@ theorem ensXR (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
       [zp, zl, zc, xp, xl, xc, y, r]
       (fun s => xl.toNat ≠ 0 ∧ xl.toNat < 2 ^ 39 ∧ r.toNat = 0 ∧ MulAddWW.Pre R b L zp zc xp xl y r s)
       (fun s s' => MulAddWW.Post R b L zp zc xp xl y r s s' ∧ MulAddWW.XQ R L zp zc xp xl y r s s') := by
+  janus_ensures_old [FvModexp.Arm64.MulAddWW.Pre, FvModexp.Arm64.CallEnv, FvModexp.Arm64.MulAddWW.wordT, FvModexp.NatLive, FvModexp.Arm64.win, Janus.Spec.GuardOK, Janus.Spec.StackOK]
   intro ret hret s hs ⟨h1, h2, h3, hpre⟩
-  exact MulAddWW.ensX impl hap R hmk b L zp zl zc xp xl xc y r h1 h2 h3 ret hret s hs hpre
+  exact (MulAddWW.ensX impl hap R hmk b L zp zl zc xp xl xc y r h1 h2 h3).toOld ret hret s hs hpre
 
 theorem toSummaryRegs8 {p0 P : Program} {entry : Nat}
     {pre : BitVec 64 → BitVec 64 → BitVec 64 → BitVec 64 → BitVec 64 → BitVec 64 → BitVec 64 → BitVec 64 → State → Prop}

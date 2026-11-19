@@ -66,7 +66,7 @@ theorem mkA (impl : List Amd64.Segment) (R : RtInv)
   have hga := hpre.ce.2.2.2.2.2.1
   have hgr : Outside ((s.regs 14).toNat + 16) 8 R.rt := hpre.ce.2.2.2.2.2.2.1
   obtain ⟨⟨htb, htr, htg⟩, htrt, htw⟩ := hpre.ce.2.2.2.2.2.2.2.2.2
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -⟩ := hpre.ce
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, -⟩ := hpre.ce
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw htg hal
   have hwacc : S2.mem.accessible ((s.regs 4).toNat - 41272) (41272 + 112) true = true := by rw [hS2acc]; exact hw
   have hsv := hpre.sv

@@ -36,7 +36,7 @@ def ExpSpecM (impl : List Segment) (R : RtInv) (stk above : Nat) : Prop :=
 theorem ExpSpecX.toSpecM {impl : List Segment} {R : RtInv} {stk above : Nat} (h : ExpSpecX impl R stk above) :
     ExpSpecM impl R stk above := by
   intro b L z y mm
-  refine (h b L z y mm).mono (fun s hp => ?_) (fun _ _ _ hq => ⟨hq.1, hq.2.1⟩)
+  refine (h b L z y mm).mono_ret (fun s hp => ?_) (fun _ _ _ _ hq => ⟨hq.1, hq.2.1⟩)
   obtain ⟨hIP, hm, h1, h2, h3, hone, hpg, hmm, hwb, hmx⟩ := hp
   have hc : ∀ a ∈ [z.toNat, y.toNat, mm.toNat], s.mem.readLE (a + 24) 8 < 2 ^ 40 := fun a ha =>
     (hIP.2.2.2.2.2.1 a ha).1.2.2.2.2.2.2.2.2.2

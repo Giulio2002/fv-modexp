@@ -3,6 +3,7 @@ import FvModexp.Proofs.Amd64.Exp.SlowCl
 import FvModexp.Proofs.Amd64.Nat.RowLink
 import FvModexp.Proofs.Amd64.Exp.P2DRow
 import FvModexp.Proofs.Amd64.NatQ.DivRowWitQ
+import FvModexp.Proofs.Amd64.Exp.SetRetWinX
 
 set_option autoImplicit false
 
@@ -55,6 +56,35 @@ theorem argM {s : State} {m ml mc : Nat} (h : ArgM s m ml mc) : NHyp.StkArg s 24
     Prop :=
   ExpEven.Post R b L 43152 0x70 cE z zc st x xl y yl m ml s s'
 
+/-- a stack-argument word at `RSP + k` (`8 ≤ k`, above the return slot) survives installing the return address -/
+theorem argS {s : State} {ret k : Nat} (hk : 8 ≤ k) :
+    (s.setRet ret).mem.readLE ((s.regs 4).toNat + k) 8 = s.mem.readLE ((s.regs 4).toNat + k) 8 :=
+  readLE_setRet_of_disjoint (Or.inr (Nat.add_le_add_left hk _))
+
+/-- the row precondition survives installing the return address (Janus v0.4.0 `hinv`; by the frame lemmas
+`SetRetWin` / `SetRetWinX`, top s55) -/
+theorem pre_inv {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {z zl zc st x xl xc y yl yc m ml mc : Nat} {s : State}
+    (ret : Nat) (h : Pre R b L z zl zc st x xl xc y yl yc m ml mc s) :
+    Pre R b L z zl zc st x xl xc y yl yc m ml mc (s.setRet ret) := by
+  obtain ⟨⟨y1, y2, y3⟩, ⟨m1, m2, m3⟩, ⟨hC, hxv, hyv, hmv, hm2, e1, e2, e3, e4, e5, hz, hN⟩, hX,
+    ⟨g1, g2, g3, g4, g5, g6⟩, hxo⟩ := h
+  have hab : 8 ≤ 0x70 := by decide
+  have h10 : Outside st 24 (win s 43152 0x70) := hC.2.2.2.2.2.2.2.2.2.1
+  obtain ⟨hw, hl, hc⟩ := SetRetWin.stHdr (ret := ret) hab h10
+  obtain ⟨hone, hN'⟩ := SetRetWin.natOne (ret := ret) hab h10 hN
+  have hrx := (hC.2.2.2.2.2.2.2.1 x xl (by simp)).1
+  have hry := (hC.2.2.2.2.2.2.2.1 y yl (by simp)).1
+  have hrm := (hC.2.2.2.2.2.2.2.1 m ml (by simp)).1
+  have ex : natVal (s.setRet ret).mem x xl = natVal s.mem x xl := SetRetWin.rd hab hrx.2.2.2.2
+  have ey : natVal (s.setRet ret).mem y yl = natVal s.mem y yl := SetRetWin.rd hab hry.2.2.2.2
+  have em : natVal (s.setRet ret).mem m ml = natVal s.mem m ml := SetRetWin.rd hab hrm.2.2.2.2
+  refine ⟨⟨(argS (by decide)).trans y1, (argS (by decide)).trans y2, (argS (by decide)).trans y3⟩,
+    ⟨(argS (by decide)).trans m1, (argS (by decide)).trans m2, (argS (by decide)).trans m3⟩,
+    ⟨by rw [hl]; exact SetRetWin.cpre hab hC, by rw [ex]; exact hxv, by rw [ey]; exact hyv, by rw [em]; exact hmv,
+      by rw [em]; exact hm2, e1, e2, e3, e4, e5, hz, hN'⟩, hX,
+    ⟨g1, by rw [hone]; exact g2, by rw [setRet_accessible]; exact g3, by rw [setRet_accessible]; exact g4, g5,
+      by simp only [W4En.free, hw, hl, hc]; exact g6⟩, hxo⟩
+
 theorem fnE_eq : segAddr Extracted.program ExpEven.fn = ExpEven.fnE := by decide
 
 theorem bvN (x : BitVec 64) : BitVec.ofNat 64 x.toNat = x := by simp
@@ -86,6 +116,7 @@ theorem correctnessP (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracte
     Ensures (Extracted.program.link impl) (segAddr Extracted.program ExpEven.fn) [z, zl, zc, st, x, xl, xc]
       (Pre R b L z.toNat zl.toNat zc.toNat st.toNat x.toNat xl.toNat xc.toNat y yl yc m ml mc)
       (Post R b L z.toNat zc.toNat st.toNat x.toNat xl.toNat y yl m ml) := by
+  refine Ensures.of_old (fun _ ret _ _ hp => pre_inv ret hp) ?_
   have hS0 := sumP impl hap R hgr hmc hmv hmz hmk hno hwb hSQ hnsS hnfS hKS
   have e : ExpEven.stkE 41640 = 43152 := by decide
   rw [e] at hS0
@@ -176,9 +207,9 @@ def s0 : State :=
     flags := ⟨none, none, none, none, none, none⟩,
     xmm := fun _ => 0, mem := mem0, fsBase := BitVec.ofNat 64 (T0 + 8) }
 
-theorem setup : CallSetup ((Extracted.program.link WStubs.impl).withExit RET) (segAddr Extracted.program ExpEven.fn)
+theorem setup : CallSetup0 (segAddr Extracted.program ExpEven.fn)
     args s0 :=
-  ⟨rfl, by decide +kernel, rfl, by decide, by
+  ⟨rfl, rfl, by decide, by
     intro i h; simp only [args, List.length_cons, List.length_nil] at h
     rcases (by omega : i = 0 ∨ i = 1 ∨ i = 2 ∨ i = 3 ∨ i = 4 ∨ i = 5 ∨ i = 6) with
       rfl | rfl | rfl | rfl | rfl | rfl | rfl <;> rfl, rfl⟩
@@ -214,7 +245,7 @@ theorem one0 : NatOne R [] s0.mem OP (win s0 KW 0x70 ++ [(0, 0 + 8 * 0)] ++ stWs
   · simp only [win, stWs, stkWs, outside_append, outside_cons, outside_nil, and_true]; decide +kernel
 
 theorem sg0 : StackGuardOK s0 KW :=
-  ⟨by decide, by show mem0.accessible _ 8 false = true; rw [acc0]; decide +kernel, by decide +kernel⟩
+  ⟨by decide, by show mem0.accessible _ 8 false = true; rw [acc0]; decide +kernel, by decide +kernel, by decide +kernel⟩
 
 theorem tls0 : TlsG s0 :=
   ⟨by decide, by show mem0.accessible _ 8 false = true; rw [acc0]; decide +kernel, by decide +kernel⟩
@@ -310,7 +341,7 @@ theorem nonvacuous :
     NewobjectLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.newobject") 4096 R ∧
     WbLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 4096 R 2 ∧
     RetAddr (Extracted.program.link impl) ret ∧
-    CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program ExpEven.fn)
+    CallSetup0 (segAddr Extracted.program ExpEven.fn)
       [z, zl, zc, st, x, xl, xc] s ∧
     Pre R b L z.toNat zl.toNat zc.toNat st.toNat x.toNat xl.toNat xc.toNat y yl yc m ml mc s ∧
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
@@ -334,8 +365,8 @@ theorem nonvacuous :
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.rip = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.gcWriteBarrier2") ∧
       wbSite R (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 2 L b s_c) ∧
-    Returns ((Extracted.program.link impl).withExit ret) s fun s' =>
-      ABIReturn s s' ∧ Post R b L z.toNat zc.toNat st.toNat x.toNat xl.toNat y yl m ml s s' :=
+    Returns ((Extracted.program.link impl).withExit ret) (s.setRet ret) fun s' =>
+      ABIReturn (s.setRet ret) s' ∧ Post R b L z.toNat zc.toNat st.toNat x.toNat xl.toNat y yl m ml (s.setRet ret) s' :=
   ⟨WStubs.impl, R, BW, [], 0, 0, 0, BitVec.ofNat 64 ST, BitVec.ofNat 64 XP, 1, 1, YP, 1, 1, MP, 1, 1, RET, s0,
     WStubs.hap,
     by rw [WStubs.addr_gr]; exact WStubs.gr [] hty _,
@@ -361,6 +392,6 @@ theorem nonvacuous :
       (by rw [WStubs.addr_mv]; exact WStubs.mvz R)
       (by rw [WStubs.addr_mk]; exact WStubs.mk [] hty _) (by rw [WStubs.addr_no]; exact WStubs.no [] hty _)
       (by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] hty _) BW []
-      0 0 0 (BitVec.ofNat 64 ST) (BitVec.ofNat 64 XP) 1 1 YP 1 1 MP 1 1 RET hret s0 setup preB⟩
+      0 0 0 (BitVec.ofNat 64 ST) (BitVec.ofNat 64 XP) 1 1 YP 1 1 MP 1 1 s0 setup preB RET hret⟩
 
 end FvModexp.Amd64.EvenRow.Witness

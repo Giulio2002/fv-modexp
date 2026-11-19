@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.OddFun
+import FvModexp.Proofs.Amd64.Exp.OddInv
 
 set_option autoImplicit false
 
@@ -33,6 +34,7 @@ theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
         BitVec.ofNat 64 xl, BitVec.ofNat 64 xc]
       (PreD R b L K costF costD zp zc st xp xl xc yp ylen mp n mc)
       (PostD R b L K costD zp zc st xp xl yp ylen mp n) := by
+  refine Ensures.of_old (preD_inv R b L K costF costD zp zc st xp xl xc yp ylen mp n mc _ _ _) ?_
   rw [show names = LibOdd.names from rfl, ← LibOdd.eq_only, show segAddr Extracted.program fn = fnO by decide]
   intro ret hret s hs hpre
   janus64_intro hs

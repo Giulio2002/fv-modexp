@@ -64,6 +64,7 @@ theorem ensOkLib (impl : List Amd64.Segment) (hap : ImplApart Extracted.program 
         LengthsPass (bytesAt s.mem p.toNat len.toNat))
       (fun s s' => RunAmd64.OkRet (bytesAt s.mem p.toNat len.toNat) s' ∧
         RunAmd64.FrameW R b (RunAmd64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat))) L W s s') := by
+  janus64_ensures_old [FvModexp.Spec.RunAmd64.EnvW, FvModexp.Spec.RunAmd64.CpuOne, FvModexp.Spec.RunAmd64.Input, FvModexp.Spec.OsakaReceiver, FvModexp.Spec.RunAmd64.Globals, FvModexp.Spec.RunAmd64.windowW, FvModexp.Spec.RunAmd64.NatOne, FvModexp.Spec.RunAmd64.StackPool, FvModexp.Amd64.Run.bytesAt_setRet, FvModexp.Spec.RunAmd64.window, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.RunIface.wbA, Janus.Spec.Pool.newOffset]
   intro ret hret s hs ⟨⟨henvW, hgL, hfL⟩, hin, hrecv, hinv, hsv, hglob, hone, hpool, hca, hbud, hpass⟩
   rw [okB_spec] at hbud
   obtain ⟨n, o, hrun, hQ⟩ := okReach impl hap R hmk hmv hmz hno stkM aboveM hM hE hBy hsv b L c p len cp ret hret s hs

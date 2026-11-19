@@ -55,8 +55,9 @@ theorem correctness_adx (z zl zc x xl xc y yl yc m a : BitVec 64) :
         results0 s s' 11 1 = [BitVec.ofNat 64
           ((s.mem.readLE x.toNat (8 * zl.toNat) + s.mem.readLE y.toNat (8 * zl.toNat) * m.toNat + a.toNat) /
             2 ^ (64 * zl.toNat))] ∧
-        MemFrame s.mem s'.mem [(z.toNat, z.toNat + 8 * zl.toNat), ((s.regs 4).toNat + 96, (s.regs 4).toNat + 104)]) :=
-  fun ret hret s hs ⟨_, hp⟩ => correctness z zl zc x xl xc y yl yc m a ret hret s hs hp
+        MemFrame s.mem s'.mem [(z.toNat, z.toNat + 8 * zl.toNat), ((s.regs 4).toNat + 96, (s.regs 4).toNat + 104)]) := by
+  janus64_ensures_old [Janus.Spec.Ptr]
+  exact (fun ret hret s hs ⟨_, hp⟩ => (correctness z zl zc x xl xc y yl yc m a).toOld ret hret s hs hp)
 
 
 namespace Witness
@@ -88,8 +89,8 @@ def z : BitVec 64 := BitVec.ofNat 64 dat
 def y : BitVec 64 := BitVec.ofNat 64 (dat + 0x40)
 def m : BitVec 64 := BitVec.ofNat 64 (2 ^ 64 - 1)
 
-theorem setup : CallSetup0 (Extracted.program.withExit ret) Extracted.entry [z, 1, 1, z, 1, 1, y, 1, 1, m, 5] 1 s0 :=
-  ⟨rfl, by decide, by
+theorem setup : CallSetupF Extracted.entry [z, 1, 1, z, 1, 1, y, 1, 1, m, 5] 1 s0 :=
+  ⟨rfl, by
     intro i h
     simp only [List.length_cons, List.length_nil] at h
     rcases (by omega : i = 0 ∨ i = 1 ∨ i = 2 ∨ i = 3 ∨ i = 4 ∨ i = 5 ∨ i = 6 ∨ i = 7 ∨ i = 8 ∨ i = 9 ∨ i = 10) with
@@ -109,7 +110,7 @@ theorem hpre : s0.mem.accessible Extracted.dataAddr.«github.com/ethereum/go-big
 `y = [2^64 - 1]`, `m = 2^64 - 1`, `a = 5`), and it returns. -/
 theorem nonvacuous : ∃ (ret : Nat) (s : State) (z zl zc x xl xc y yl yc m a : BitVec 64),
     RetAddr Extracted.program ret ∧
-    CallSetup0 (Extracted.program.withExit ret) Extracted.entry [z, zl, zc, x, xl, xc, y, yl, yc, m, a] 1 s ∧
+    CallSetupF Extracted.entry [z, zl, zc, x, xl, xc, y, yl, yc, m, a] 1 s ∧
     s.mem.readLE Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.hasADX» 1 = 0 ∧
     (s.mem.accessible Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.hasADX» 1 false = true ∧
         Ptr s.mem z (8 * zl.toNat) true ∧ Ptr s.mem x (8 * zl.toNat) false ∧
@@ -117,15 +118,15 @@ theorem nonvacuous : ∃ (ret : Nat) (s : State) (z zl zc x xl xc y yl yc m a : 
         (z.toNat = x.toNat ∨ Apart z.toNat (8 * zl.toNat) x.toNat (8 * zl.toNat)) ∧
         (z.toNat = y.toNat ∨ Apart z.toNat (8 * zl.toNat) y.toNat (8 * zl.toNat)) ∧
         Apart z.toNat (8 * zl.toNat) (s.regs 4).toNat 104) ∧
-    Returns (Extracted.program.withExit ret) s (fun s' => ABIReturn0 s s' ∧ (s'.mem.readLE z.toNat (8 * zl.toNat) =
-          (s.mem.readLE x.toNat (8 * zl.toNat) + s.mem.readLE y.toNat (8 * zl.toNat) * m.toNat + a.toNat) %
+    Returns (Extracted.program.withExit ret) (s.setRet ret) (fun s' => ABIReturn0 (s.setRet ret) s' ∧ (s'.mem.readLE z.toNat (8 * zl.toNat) =
+          ((s.setRet ret).mem.readLE x.toNat (8 * zl.toNat) + (s.setRet ret).mem.readLE y.toNat (8 * zl.toNat) * m.toNat + a.toNat) %
             2 ^ (64 * zl.toNat) ∧
-        results0 s s' 11 1 = [BitVec.ofNat 64
-          ((s.mem.readLE x.toNat (8 * zl.toNat) + s.mem.readLE y.toNat (8 * zl.toNat) * m.toNat + a.toNat) /
+        results0 (s.setRet ret) s' 11 1 = [BitVec.ofNat 64
+          (((s.setRet ret).mem.readLE x.toNat (8 * zl.toNat) + (s.setRet ret).mem.readLE y.toNat (8 * zl.toNat) * m.toNat + a.toNat) /
             2 ^ (64 * zl.toNat))] ∧
-        MemFrame s.mem s'.mem [(z.toNat, z.toNat + 8 * zl.toNat), ((s.regs 4).toNat + 96, (s.regs 4).toNat + 104)])) :=
+        MemFrame (s.setRet ret).mem s'.mem [(z.toNat, z.toNat + 8 * zl.toNat), (((s.setRet ret).regs 4).toNat + 96, ((s.setRet ret).regs 4).toNat + 104)])) :=
   ⟨ret, s0, z, 1, 1, z, 1, 1, y, 1, 1, m, 5, hret, setup, by decide, hpre,
-    correctness z 1 1 z 1 1 y 1 1 m 5 ret hret s0 setup hpre⟩
+    (correctness z 1 1 z 1 1 y 1 1 m 5) s0 setup hpre ret hret⟩
 
 end Witness
 
@@ -158,8 +159,8 @@ def z : BitVec 64 := BitVec.ofNat 64 dat
 def y : BitVec 64 := BitVec.ofNat 64 (dat + 0x40)
 def m : BitVec 64 := BitVec.ofNat 64 (2 ^ 64 - 1)
 
-theorem setup : CallSetup0 (Extracted.program.withExit ret) Extracted.entry [z, 1, 1, z, 1, 1, y, 1, 1, m, 5] 1 s0 :=
-  ⟨rfl, by decide, by
+theorem setup : CallSetupF Extracted.entry [z, 1, 1, z, 1, 1, y, 1, 1, m, 5] 1 s0 :=
+  ⟨rfl, by
     intro i h
     simp only [List.length_cons, List.length_nil] at h
     rcases (by omega : i = 0 ∨ i = 1 ∨ i = 2 ∨ i = 3 ∨ i = 4 ∨ i = 5 ∨ i = 6 ∨ i = 7 ∨ i = 8 ∨ i = 9 ∨ i = 10) with
@@ -179,7 +180,7 @@ theorem hpre : s0.mem.accessible Extracted.dataAddr.«github.com/ethereum/go-big
 `y = [2^64 - 1]`, `m = 2^64 - 1`, `a = 5`), and it returns. -/
 theorem _root_.FvModexp.Amd64.AddMulVVWW.Witness.correctness_adx : ∃ (ret : Nat) (s : State) (z zl zc x xl xc y yl yc m a : BitVec 64),
     RetAddr Extracted.program ret ∧
-    CallSetup0 (Extracted.program.withExit ret) Extracted.entry [z, zl, zc, x, xl, xc, y, yl, yc, m, a] 1 s ∧
+    CallSetupF Extracted.entry [z, zl, zc, x, xl, xc, y, yl, yc, m, a] 1 s ∧
     (s.mem.readLE Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.hasADX» 1 = 1 ∧
     s.mem.accessible Extracted.dataAddr.«github.com/ethereum/go-bigmodexpfix/src/math/big.hasADX» 1 false = true ∧
         Ptr s.mem z (8 * zl.toNat) true ∧ Ptr s.mem x (8 * zl.toNat) false ∧
@@ -187,15 +188,15 @@ theorem _root_.FvModexp.Amd64.AddMulVVWW.Witness.correctness_adx : ∃ (ret : Na
         (z.toNat = x.toNat ∨ Apart z.toNat (8 * zl.toNat) x.toNat (8 * zl.toNat)) ∧
         (z.toNat = y.toNat ∨ Apart z.toNat (8 * zl.toNat) y.toNat (8 * zl.toNat)) ∧
         Apart z.toNat (8 * zl.toNat) (s.regs 4).toNat 104) ∧
-    Returns (Extracted.program.withExit ret) s (fun s' => ABIReturn0 s s' ∧ (s'.mem.readLE z.toNat (8 * zl.toNat) =
-          (s.mem.readLE x.toNat (8 * zl.toNat) + s.mem.readLE y.toNat (8 * zl.toNat) * m.toNat + a.toNat) %
+    Returns (Extracted.program.withExit ret) (s.setRet ret) (fun s' => ABIReturn0 (s.setRet ret) s' ∧ (s'.mem.readLE z.toNat (8 * zl.toNat) =
+          ((s.setRet ret).mem.readLE x.toNat (8 * zl.toNat) + (s.setRet ret).mem.readLE y.toNat (8 * zl.toNat) * m.toNat + a.toNat) %
             2 ^ (64 * zl.toNat) ∧
-        results0 s s' 11 1 = [BitVec.ofNat 64
-          ((s.mem.readLE x.toNat (8 * zl.toNat) + s.mem.readLE y.toNat (8 * zl.toNat) * m.toNat + a.toNat) /
+        results0 (s.setRet ret) s' 11 1 = [BitVec.ofNat 64
+          (((s.setRet ret).mem.readLE x.toNat (8 * zl.toNat) + (s.setRet ret).mem.readLE y.toNat (8 * zl.toNat) * m.toNat + a.toNat) /
             2 ^ (64 * zl.toNat))] ∧
-        MemFrame s.mem s'.mem [(z.toNat, z.toNat + 8 * zl.toNat), ((s.regs 4).toNat + 96, (s.regs 4).toNat + 104)])) :=
+        MemFrame (s.setRet ret).mem s'.mem [(z.toNat, z.toNat + 8 * zl.toNat), (((s.setRet ret).regs 4).toNat + 96, ((s.setRet ret).regs 4).toNat + 104)])) :=
   ⟨ret, s0, z, 1, 1, z, 1, 1, y, 1, 1, m, 5, hret, setup, ⟨by decide, hpre⟩,
-    FvModexp.Amd64.AddMulVVWW.correctness_adx z 1 1 z 1 1 y 1 1 m 5 ret hret s0 setup ⟨by decide, hpre⟩⟩
+    (FvModexp.Amd64.AddMulVVWW.correctness_adx z 1 1 z 1 1 y 1 1 m 5) s0 setup ⟨by decide, hpre⟩ ret hret⟩
 
 end Witness.Adx
 

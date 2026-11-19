@@ -670,7 +670,7 @@ theorem ensures (hi lo y : BitVec 64) :
           [BitVec.ofNat 64 ((hi.toNat * 2 ^ 64 + lo.toNat) / y.toNat),
            BitVec.ofNat 64 ((hi.toNat * 2 ^ 64 + lo.toNat) % y.toNat)] ∧
         MemFrame s.mem s'.mem [(s.sp.toNat - 40, s.sp.toNat - 24)]) := by
-  refine FvModexp.AsmDiv.A64.ensures_of_summary _ _ div64_summary ?_ ?_
+  refine FvModexp.AsmDiv.A64.ensures_of_summary (hinv := by janus_pre_setRet [Janus.Spec.GuardOK, Janus.Spec.StackOK]) _ _ div64_summary ?_ ?_
   · intro ret hret s hsu ⟨hg, hs, hy, hhi⟩
     have h0 : s.regs 0 = hi := by have := hsu.args 0 (by simp); simpa using this
     have h2 : s.regs 2 = y := by have := hsu.args 2 (by simp); simpa using this

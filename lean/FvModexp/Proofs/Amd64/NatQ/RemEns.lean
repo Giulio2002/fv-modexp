@@ -1,5 +1,6 @@
 import FvModexp.Proofs.Amd64.NatQ.RemPost
 import FvModexp.Proofs.Amd64.NatQ.RemPro
+import FvModexp.Proofs.Amd64.SetRetLemmas
 
 set_option autoImplicit false
 
@@ -109,6 +110,126 @@ theorem full (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
     gfs ?_ g0 g3 g1⟩
   rw [gdf, udf, hAt.df, hdf]
 
+theorem rempre_setRet_zpp (R : RtInv) (H b : Nat) (L : List (Nat × Nat)) (z zl zc st u ul uc : BitVec 64) (v vl vc : Nat)
+    (need cost : Nat → Nat → Nat) {p : Janus.Amd64.Program} {entry : Nat} {args : List W64} (s : State) (ret : Nat)
+    (hs : CallSetup0 entry args s) (hret : RetAddr p ret) (hul : ul.toNat = 0) (hzc : 0 < zc.toNat) (hcap : 0 < FvModexp.stCap s.mem st.toNat)
+    (hp : RemPreQ R b H L 41720 112 z.toNat zl.toNat zc.toNat st.toNat u.toNat ul.toNat uc.toNat v vl vc (need ul.toNat vl) (cost ul.toNat vl + FvModexp.stkR H s.mem st.toNat) s) :
+    RemPreQ R b H L 41720 112 z.toNat zl.toNat zc.toNat st.toNat u.toNat ul.toNat uc.toNat v vl vc (need ul.toNat vl) (cost ul.toNat vl + FvModexp.stkR H (s.setRet ret).mem st.toNat) (s.setRet ret) := by
+  have hvl : 0 < vl := hp.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hslot : Outside (s.regs 4).toNat 8 R.rt := Janus.Outside.of_sub hp.2.1.2.2.2.2.1 (by omega) (by omega)
+  simp only [FvModexp.Amd64.NHyp.RemPreQ, FvModexp.Amd64.forall_mem_pair2] at hp ⊢
+  janus64_pre_setRet_core s ret hs hret hp [FvModexp.Amd64.NHyp.RemPreQ, FvModexp.stkR, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.win, FvModexp.Amd64.StackNat.wT, FvModexp.Amd64.EvenHyp.WrOut, FvModexp.Amd64.EvenHyp.RdIn, FvModexp.Amd64.NHyp.freeOf, FvModexp.Amd64.ExpHyp.StackOK', FvModexp.stCap, FvModexp.stW, FvModexp.stLen, FvModexp.Amd64.StackNat.wbA, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.Callees.adxAddr, FvModexp.stkRes, FvModexp.potK, FvModexp.Amd64.TlsOK, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.StkOK, FvModexp.Amd64.readLE_setRet_or_zero, FvModexp.Amd64.natNorm_setRet, hul, hzc, hcap, false_implies, hvl, true_implies]
+
+theorem rempre_setRet_zpn (R : RtInv) (H b : Nat) (L : List (Nat × Nat)) (z zl zc st u ul uc : BitVec 64) (v vl vc : Nat)
+    (need cost : Nat → Nat → Nat) {p : Janus.Amd64.Program} {entry : Nat} {args : List W64} (s : State) (ret : Nat)
+    (hs : CallSetup0 entry args s) (hret : RetAddr p ret) (hul : ul.toNat = 0) (hzc : 0 < zc.toNat) (hcap : ¬ 0 < FvModexp.stCap s.mem st.toNat)
+    (hp : RemPreQ R b H L 41720 112 z.toNat zl.toNat zc.toNat st.toNat u.toNat ul.toNat uc.toNat v vl vc (need ul.toNat vl) (cost ul.toNat vl + FvModexp.stkR H s.mem st.toNat) s) :
+    RemPreQ R b H L 41720 112 z.toNat zl.toNat zc.toNat st.toNat u.toNat ul.toNat uc.toNat v vl vc (need ul.toNat vl) (cost ul.toNat vl + FvModexp.stkR H (s.setRet ret).mem st.toNat) (s.setRet ret) := by
+  have hvl : 0 < vl := hp.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hslot : Outside (s.regs 4).toNat 8 R.rt := Janus.Outside.of_sub hp.2.1.2.2.2.2.1 (by omega) (by omega)
+  simp only [FvModexp.Amd64.NHyp.RemPreQ, FvModexp.Amd64.forall_mem_pair2] at hp ⊢
+  janus64_pre_setRet_core s ret hs hret hp [FvModexp.Amd64.NHyp.RemPreQ, FvModexp.stkR, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.win, FvModexp.Amd64.StackNat.wT, FvModexp.Amd64.EvenHyp.WrOut, FvModexp.Amd64.EvenHyp.RdIn, FvModexp.Amd64.NHyp.freeOf, FvModexp.Amd64.ExpHyp.StackOK', FvModexp.stCap, FvModexp.stW, FvModexp.stLen, FvModexp.Amd64.StackNat.wbA, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.Callees.adxAddr, FvModexp.stkRes, FvModexp.potK, FvModexp.Amd64.TlsOK, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.StkOK, FvModexp.Amd64.readLE_setRet_or_zero, FvModexp.Amd64.natNorm_setRet, hul, hzc, hcap, false_implies, hvl, true_implies]
+
+theorem rempre_setRet_znp (R : RtInv) (H b : Nat) (L : List (Nat × Nat)) (z zl zc st u ul uc : BitVec 64) (v vl vc : Nat)
+    (need cost : Nat → Nat → Nat) {p : Janus.Amd64.Program} {entry : Nat} {args : List W64} (s : State) (ret : Nat)
+    (hs : CallSetup0 entry args s) (hret : RetAddr p ret) (hul : ul.toNat = 0) (hzc : ¬ 0 < zc.toNat) (hcap : 0 < FvModexp.stCap s.mem st.toNat)
+    (hp : RemPreQ R b H L 41720 112 z.toNat zl.toNat zc.toNat st.toNat u.toNat ul.toNat uc.toNat v vl vc (need ul.toNat vl) (cost ul.toNat vl + FvModexp.stkR H s.mem st.toNat) s) :
+    RemPreQ R b H L 41720 112 z.toNat zl.toNat zc.toNat st.toNat u.toNat ul.toNat uc.toNat v vl vc (need ul.toNat vl) (cost ul.toNat vl + FvModexp.stkR H (s.setRet ret).mem st.toNat) (s.setRet ret) := by
+  have hvl : 0 < vl := hp.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hslot : Outside (s.regs 4).toNat 8 R.rt := Janus.Outside.of_sub hp.2.1.2.2.2.2.1 (by omega) (by omega)
+  simp only [FvModexp.Amd64.NHyp.RemPreQ, FvModexp.Amd64.forall_mem_pair2] at hp ⊢
+  janus64_pre_setRet_core s ret hs hret hp [FvModexp.Amd64.NHyp.RemPreQ, FvModexp.stkR, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.win, FvModexp.Amd64.StackNat.wT, FvModexp.Amd64.EvenHyp.WrOut, FvModexp.Amd64.EvenHyp.RdIn, FvModexp.Amd64.NHyp.freeOf, FvModexp.Amd64.ExpHyp.StackOK', FvModexp.stCap, FvModexp.stW, FvModexp.stLen, FvModexp.Amd64.StackNat.wbA, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.Callees.adxAddr, FvModexp.stkRes, FvModexp.potK, FvModexp.Amd64.TlsOK, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.StkOK, FvModexp.Amd64.readLE_setRet_or_zero, FvModexp.Amd64.natNorm_setRet, hul, hzc, hcap, false_implies, hvl, true_implies]
+
+theorem rempre_setRet_znn (R : RtInv) (H b : Nat) (L : List (Nat × Nat)) (z zl zc st u ul uc : BitVec 64) (v vl vc : Nat)
+    (need cost : Nat → Nat → Nat) {p : Janus.Amd64.Program} {entry : Nat} {args : List W64} (s : State) (ret : Nat)
+    (hs : CallSetup0 entry args s) (hret : RetAddr p ret) (hul : ul.toNat = 0) (hzc : ¬ 0 < zc.toNat) (hcap : ¬ 0 < FvModexp.stCap s.mem st.toNat)
+    (hp : RemPreQ R b H L 41720 112 z.toNat zl.toNat zc.toNat st.toNat u.toNat ul.toNat uc.toNat v vl vc (need ul.toNat vl) (cost ul.toNat vl + FvModexp.stkR H s.mem st.toNat) s) :
+    RemPreQ R b H L 41720 112 z.toNat zl.toNat zc.toNat st.toNat u.toNat ul.toNat uc.toNat v vl vc (need ul.toNat vl) (cost ul.toNat vl + FvModexp.stkR H (s.setRet ret).mem st.toNat) (s.setRet ret) := by
+  have hvl : 0 < vl := hp.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hslot : Outside (s.regs 4).toNat 8 R.rt := Janus.Outside.of_sub hp.2.1.2.2.2.2.1 (by omega) (by omega)
+  simp only [FvModexp.Amd64.NHyp.RemPreQ, FvModexp.Amd64.forall_mem_pair2] at hp ⊢
+  janus64_pre_setRet_core s ret hs hret hp [FvModexp.Amd64.NHyp.RemPreQ, FvModexp.stkR, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.win, FvModexp.Amd64.StackNat.wT, FvModexp.Amd64.EvenHyp.WrOut, FvModexp.Amd64.EvenHyp.RdIn, FvModexp.Amd64.NHyp.freeOf, FvModexp.Amd64.ExpHyp.StackOK', FvModexp.stCap, FvModexp.stW, FvModexp.stLen, FvModexp.Amd64.StackNat.wbA, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.Callees.adxAddr, FvModexp.stkRes, FvModexp.potK, FvModexp.Amd64.TlsOK, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.StkOK, FvModexp.Amd64.readLE_setRet_or_zero, FvModexp.Amd64.natNorm_setRet, hul, hzc, hcap, false_implies, hvl, true_implies]
+
+theorem rempre_setRet_ppp (R : RtInv) (H b : Nat) (L : List (Nat × Nat)) (z zl zc st u ul uc : BitVec 64) (v vl vc : Nat)
+    (need cost : Nat → Nat → Nat) {p : Janus.Amd64.Program} {entry : Nat} {args : List W64} (s : State) (ret : Nat)
+    (hs : CallSetup0 entry args s) (hret : RetAddr p ret) (hul : 0 < ul.toNat) (hzc : 0 < zc.toNat) (hcap : 0 < FvModexp.stCap s.mem st.toNat)
+    (hp : RemPreQ R b H L 41720 112 z.toNat zl.toNat zc.toNat st.toNat u.toNat ul.toNat uc.toNat v vl vc (need ul.toNat vl) (cost ul.toNat vl + FvModexp.stkR H s.mem st.toNat) s) :
+    RemPreQ R b H L 41720 112 z.toNat zl.toNat zc.toNat st.toNat u.toNat ul.toNat uc.toNat v vl vc (need ul.toNat vl) (cost ul.toNat vl + FvModexp.stkR H (s.setRet ret).mem st.toNat) (s.setRet ret) := by
+  have hvl : 0 < vl := hp.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hslot : Outside (s.regs 4).toNat 8 R.rt := Janus.Outside.of_sub hp.2.1.2.2.2.2.1 (by omega) (by omega)
+  simp only [FvModexp.Amd64.NHyp.RemPreQ, FvModexp.Amd64.forall_mem_pair2] at hp ⊢
+  janus64_pre_setRet_core s ret hs hret hp [FvModexp.Amd64.NHyp.RemPreQ, FvModexp.stkR, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.win, FvModexp.Amd64.StackNat.wT, FvModexp.Amd64.EvenHyp.WrOut, FvModexp.Amd64.EvenHyp.RdIn, FvModexp.Amd64.NHyp.freeOf, FvModexp.Amd64.ExpHyp.StackOK', FvModexp.stCap, FvModexp.stW, FvModexp.stLen, FvModexp.Amd64.StackNat.wbA, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.Callees.adxAddr, FvModexp.stkRes, FvModexp.potK, FvModexp.Amd64.TlsOK, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.StkOK, FvModexp.Amd64.readLE_setRet_or_zero, FvModexp.Amd64.natNorm_setRet, hul, hzc, hcap, hvl, true_implies]
+
+theorem rempre_setRet_ppn (R : RtInv) (H b : Nat) (L : List (Nat × Nat)) (z zl zc st u ul uc : BitVec 64) (v vl vc : Nat)
+    (need cost : Nat → Nat → Nat) {p : Janus.Amd64.Program} {entry : Nat} {args : List W64} (s : State) (ret : Nat)
+    (hs : CallSetup0 entry args s) (hret : RetAddr p ret) (hul : 0 < ul.toNat) (hzc : 0 < zc.toNat) (hcap : ¬ 0 < FvModexp.stCap s.mem st.toNat)
+    (hp : RemPreQ R b H L 41720 112 z.toNat zl.toNat zc.toNat st.toNat u.toNat ul.toNat uc.toNat v vl vc (need ul.toNat vl) (cost ul.toNat vl + FvModexp.stkR H s.mem st.toNat) s) :
+    RemPreQ R b H L 41720 112 z.toNat zl.toNat zc.toNat st.toNat u.toNat ul.toNat uc.toNat v vl vc (need ul.toNat vl) (cost ul.toNat vl + FvModexp.stkR H (s.setRet ret).mem st.toNat) (s.setRet ret) := by
+  have hvl : 0 < vl := hp.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hslot : Outside (s.regs 4).toNat 8 R.rt := Janus.Outside.of_sub hp.2.1.2.2.2.2.1 (by omega) (by omega)
+  simp only [FvModexp.Amd64.NHyp.RemPreQ, FvModexp.Amd64.forall_mem_pair2] at hp ⊢
+  janus64_pre_setRet_core s ret hs hret hp [FvModexp.Amd64.NHyp.RemPreQ, FvModexp.stkR, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.win, FvModexp.Amd64.StackNat.wT, FvModexp.Amd64.EvenHyp.WrOut, FvModexp.Amd64.EvenHyp.RdIn, FvModexp.Amd64.NHyp.freeOf, FvModexp.Amd64.ExpHyp.StackOK', FvModexp.stCap, FvModexp.stW, FvModexp.stLen, FvModexp.Amd64.StackNat.wbA, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.Callees.adxAddr, FvModexp.stkRes, FvModexp.potK, FvModexp.Amd64.TlsOK, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.StkOK, FvModexp.Amd64.readLE_setRet_or_zero, FvModexp.Amd64.natNorm_setRet, hul, hzc, hcap, false_implies, hvl, true_implies]
+
+theorem rempre_setRet_pnp (R : RtInv) (H b : Nat) (L : List (Nat × Nat)) (z zl zc st u ul uc : BitVec 64) (v vl vc : Nat)
+    (need cost : Nat → Nat → Nat) {p : Janus.Amd64.Program} {entry : Nat} {args : List W64} (s : State) (ret : Nat)
+    (hs : CallSetup0 entry args s) (hret : RetAddr p ret) (hul : 0 < ul.toNat) (hzc : ¬ 0 < zc.toNat) (hcap : 0 < FvModexp.stCap s.mem st.toNat)
+    (hp : RemPreQ R b H L 41720 112 z.toNat zl.toNat zc.toNat st.toNat u.toNat ul.toNat uc.toNat v vl vc (need ul.toNat vl) (cost ul.toNat vl + FvModexp.stkR H s.mem st.toNat) s) :
+    RemPreQ R b H L 41720 112 z.toNat zl.toNat zc.toNat st.toNat u.toNat ul.toNat uc.toNat v vl vc (need ul.toNat vl) (cost ul.toNat vl + FvModexp.stkR H (s.setRet ret).mem st.toNat) (s.setRet ret) := by
+  have hvl : 0 < vl := hp.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hslot : Outside (s.regs 4).toNat 8 R.rt := Janus.Outside.of_sub hp.2.1.2.2.2.2.1 (by omega) (by omega)
+  simp only [FvModexp.Amd64.NHyp.RemPreQ, FvModexp.Amd64.forall_mem_pair2] at hp ⊢
+  janus64_pre_setRet_core s ret hs hret hp [FvModexp.Amd64.NHyp.RemPreQ, FvModexp.stkR, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.win, FvModexp.Amd64.StackNat.wT, FvModexp.Amd64.EvenHyp.WrOut, FvModexp.Amd64.EvenHyp.RdIn, FvModexp.Amd64.NHyp.freeOf, FvModexp.Amd64.ExpHyp.StackOK', FvModexp.stCap, FvModexp.stW, FvModexp.stLen, FvModexp.Amd64.StackNat.wbA, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.Callees.adxAddr, FvModexp.stkRes, FvModexp.potK, FvModexp.Amd64.TlsOK, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.StkOK, FvModexp.Amd64.readLE_setRet_or_zero, FvModexp.Amd64.natNorm_setRet, hul, hzc, hcap, false_implies, hvl, true_implies]
+
+theorem rempre_setRet_pnn (R : RtInv) (H b : Nat) (L : List (Nat × Nat)) (z zl zc st u ul uc : BitVec 64) (v vl vc : Nat)
+    (need cost : Nat → Nat → Nat) {p : Janus.Amd64.Program} {entry : Nat} {args : List W64} (s : State) (ret : Nat)
+    (hs : CallSetup0 entry args s) (hret : RetAddr p ret) (hul : 0 < ul.toNat) (hzc : ¬ 0 < zc.toNat) (hcap : ¬ 0 < FvModexp.stCap s.mem st.toNat)
+    (hp : RemPreQ R b H L 41720 112 z.toNat zl.toNat zc.toNat st.toNat u.toNat ul.toNat uc.toNat v vl vc (need ul.toNat vl) (cost ul.toNat vl + FvModexp.stkR H s.mem st.toNat) s) :
+    RemPreQ R b H L 41720 112 z.toNat zl.toNat zc.toNat st.toNat u.toNat ul.toNat uc.toNat v vl vc (need ul.toNat vl) (cost ul.toNat vl + FvModexp.stkR H (s.setRet ret).mem st.toNat) (s.setRet ret) := by
+  have hvl : 0 < vl := hp.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+  have hslot : Outside (s.regs 4).toNat 8 R.rt := Janus.Outside.of_sub hp.2.1.2.2.2.2.1 (by omega) (by omega)
+  simp only [FvModexp.Amd64.NHyp.RemPreQ, FvModexp.Amd64.forall_mem_pair2] at hp ⊢
+  janus64_pre_setRet_core s ret hs hret hp [FvModexp.Amd64.NHyp.RemPreQ, FvModexp.stkR, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.win, FvModexp.Amd64.StackNat.wT, FvModexp.Amd64.EvenHyp.WrOut, FvModexp.Amd64.EvenHyp.RdIn, FvModexp.Amd64.NHyp.freeOf, FvModexp.Amd64.ExpHyp.StackOK', FvModexp.stCap, FvModexp.stW, FvModexp.stLen, FvModexp.Amd64.StackNat.wbA, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.Callees.adxAddr, FvModexp.stkRes, FvModexp.potK, FvModexp.Amd64.TlsOK, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.StkOK, FvModexp.Amd64.readLE_setRet_or_zero, FvModexp.Amd64.natNorm_setRet, hul, hzc, hcap, false_implies, hvl, true_implies]
+
+theorem rempre_setRet_u0 (R : RtInv) (H b : Nat) (L : List (Nat × Nat)) (z zl zc st u ul uc : BitVec 64) (v vl vc : Nat)
+    (need cost : Nat → Nat → Nat) {p : Janus.Amd64.Program} {entry : Nat} {args : List W64} (s : State) (ret : Nat)
+    (hs : CallSetup0 entry args s) (hret : RetAddr p ret) (hul : ul.toNat = 0)
+    (hp : RemPreQ R b H L 41720 112 z.toNat zl.toNat zc.toNat st.toNat u.toNat ul.toNat uc.toNat v vl vc (need ul.toNat vl) (cost ul.toNat vl + FvModexp.stkR H s.mem st.toNat) s) :
+    RemPreQ R b H L 41720 112 z.toNat zl.toNat zc.toNat st.toNat u.toNat ul.toNat uc.toNat v vl vc (need ul.toNat vl) (cost ul.toNat vl + FvModexp.stkR H (s.setRet ret).mem st.toNat) (s.setRet ret) := by
+  by_cases hzc : 0 < zc.toNat
+  · by_cases hcap : 0 < FvModexp.stCap s.mem st.toNat
+    · exact rempre_setRet_zpp R H b L z zl zc st u ul uc v vl vc need cost s ret hs hret hul hzc hcap hp
+    · exact rempre_setRet_zpn R H b L z zl zc st u ul uc v vl vc need cost s ret hs hret hul hzc hcap hp
+  · by_cases hcap : 0 < FvModexp.stCap s.mem st.toNat
+    · exact rempre_setRet_znp R H b L z zl zc st u ul uc v vl vc need cost s ret hs hret hul hzc hcap hp
+    · exact rempre_setRet_znn R H b L z zl zc st u ul uc v vl vc need cost s ret hs hret hul hzc hcap hp
+
+theorem rempre_setRet_u1 (R : RtInv) (H b : Nat) (L : List (Nat × Nat)) (z zl zc st u ul uc : BitVec 64) (v vl vc : Nat)
+    (need cost : Nat → Nat → Nat) {p : Janus.Amd64.Program} {entry : Nat} {args : List W64} (s : State) (ret : Nat)
+    (hs : CallSetup0 entry args s) (hret : RetAddr p ret) (hul : 0 < ul.toNat)
+    (hp : RemPreQ R b H L 41720 112 z.toNat zl.toNat zc.toNat st.toNat u.toNat ul.toNat uc.toNat v vl vc (need ul.toNat vl) (cost ul.toNat vl + FvModexp.stkR H s.mem st.toNat) s) :
+    RemPreQ R b H L 41720 112 z.toNat zl.toNat zc.toNat st.toNat u.toNat ul.toNat uc.toNat v vl vc (need ul.toNat vl) (cost ul.toNat vl + FvModexp.stkR H (s.setRet ret).mem st.toNat) (s.setRet ret) := by
+  by_cases hzc : 0 < zc.toNat
+  · by_cases hcap : 0 < FvModexp.stCap s.mem st.toNat
+    · exact rempre_setRet_ppp R H b L z zl zc st u ul uc v vl vc need cost s ret hs hret hul hzc hcap hp
+    · exact rempre_setRet_ppn R H b L z zl zc st u ul uc v vl vc need cost s ret hs hret hul hzc hcap hp
+  · by_cases hcap : 0 < FvModexp.stCap s.mem st.toNat
+    · exact rempre_setRet_pnp R H b L z zl zc st u ul uc v vl vc need cost s ret hs hret hul hzc hcap hp
+    · exact rempre_setRet_pnn R H b L z zl zc st u ul uc v vl vc need cost s ret hs hret hul hzc hcap hp
+
+/-- `RemPreQ` survives writing the return address (the `hinv` of `ens`). `janus64_pre_setRet` alone times out on it: the operand quantifier
+`∀ p n, (p, n) ∈ [(up, ul), (vp, vl)] → …` hides the apartness of the operands from the return slot, and every `omega` side condition of a
+precondition with ~15 guarded facts (`0 < ul`, `0 < zc`, `0 < stCap` and the empty-nat reads) splits all of them. The quantifier is expanded
+(`forall_mem_pair2`), the three guards are case-split (one declaration per case: `rempre_setRet_<ul><zc><cap>`, `p` positive / `n` zero), and the
+return slot is outside the runtime-owned ranges by `CallEnv` (`hslot`, found by `assumption` instead of a search over all `Outside` facts). -/
+theorem rempre_setRet (R : RtInv) (H b : Nat) (L : List (Nat × Nat)) (z zl zc st u ul uc : BitVec 64) (v vl vc : Nat)
+    (need cost : Nat → Nat → Nat) (p : Janus.Amd64.Program) (entry : Nat) (args : List W64) :
+    Ensures.SetRetInv p entry args (fun s => RemPreQ R b H L 41720 112 z.toNat zl.toNat zc.toNat st.toNat u.toNat ul.toNat uc.toNat v vl vc
+        (need ul.toNat vl) (cost ul.toNat vl + FvModexp.stkR H s.mem st.toNat) s) := by
+  intro s ret hs hret hp
+  by_cases hul : ul.toNat = 0
+  · exact rempre_setRet_u0 R H b L z zl zc st u ul uc v vl vc need cost s ret hs hret hul hp
+  · exact rempre_setRet_u1 R H b L z zl zc st u ul uc v vl vc need cost s ret hs hret (Nat.pos_of_ne_zero hul) hp
+
 /-- **`nat.rem`** (amd64, Q-form) given `div` (`ExpHyp.DivHypLQ`): `NHyp.RemHypQ` on `LibRem` -/
 theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
     (hgr : GrowsliceLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.growslice") 4096 R)
@@ -118,6 +239,7 @@ theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
     NHyp.RemHypQ impl R LibRem.names 41720 112 need cd := by
   intro H b L z zl zc st u ul uc v vl vc
   rw [show NHyp.fnRem = fn from rfl, ← LibRem.eq_only]
+  refine Ensures.of_old (rempre_setRet R H b L z zl zc st u ul uc v vl vc need cd _ _ _) ?_
   intro ret hret s hs hpre
   janus64_intro hs
   exact Summary.returns (full (H := H) impl hap R hgr hmc hwb hD b L z zl zc st u ul uc v vl vc) hret

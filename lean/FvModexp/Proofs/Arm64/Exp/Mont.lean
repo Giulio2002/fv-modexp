@@ -80,6 +80,7 @@ theorem ens' (impl : List Segment) (R : RtInv)
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc yp yl yc mp ml mc k n : BitVec 64) :
     Ensures (LibMont.program.link impl) (segAddr LibMont.program fn) [zp, zl, zc, xp, xl, xc, yp, yl, yc, mp, ml, mc, k, n]
       (Pre R b L zp zc xp xl yp yl mp ml mc k n) (Post R b L zp zc xp yp mp k n) := by
+  janus_ensures_old [FvModexp.Arm64.Mont.Pre, FvModexp.Arm64.Mont.Env, FvModexp.Arm64.Mont.Input, Janus.Spec.GuardOK, Janus.Spec.StackOK]
   intro ret hret s hs hpre
   obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, hwin, hgw, hgrt, hLs⟩, hxl, hyl, hml, hn, hn2, hzc, hmc, hmc', hzacc, hzp,
     hzh, hzw, hgz, ⟨hxacc, hxp, hxh, hxw⟩, ⟨hyacc, hyp, hyh, hyw⟩, ⟨hmacc, hmp, hmh, hmw⟩, hzx, hzy, hzm, hinv,

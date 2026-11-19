@@ -119,7 +119,8 @@ theorem correctness (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted
     Ensures (Extracted.program.link impl) (segAddr Extracted.program NHyp.fnP2) [z, zl, zc, st, x, xl, xc, lm]
       (Pre R b L stk z.toNat zl.toNat zc.toNat st.toNat x.toNat xl.toNat xc.toNat y yl yc lm.toNat)
       (Post R b L stk z.toNat zc.toNat st.toNat x.toNat xl.toNat y yl lm.toNat) := by
-  exact Ensures.full64 hap (by simp [numIntRegs])
+  exact Ensures.full64 (hinv := NHyp.p2pre_inv R b L stk 112 P2D.needP (P2D.costP P2W2.costB P2W4.costB) z zl zc st x xl xc lm y yl yc
+      (by decide) _ _ _) hap (by simp [numIntRegs])
     (hyp impl hap R hgr hmc hmv hmk hno hwb stk hk0 hk2 b L z zl zc st x xl xc lm y yl yc)
 
 end FvModexp.Amd64.P2DRow
@@ -178,9 +179,9 @@ def s0 : State :=
 
 theorem hret : RetAddr (Extracted.program.link WStubs.impl) RET := RetAddr.of_check (by decide +kernel)
 
-theorem setup : CallSetup ((Extracted.program.link WStubs.impl).withExit RET) (segAddr Extracted.program NHyp.fnP2)
+theorem setup : CallSetup0 (segAddr Extracted.program NHyp.fnP2)
     args s0 :=
-  ⟨rfl, by decide +kernel, rfl, by decide, by
+  ⟨rfl, rfl, by decide, by
     intro i h; simp only [args, List.length_cons, List.length_nil] at h
     rcases (by omega : i = 0 ∨ i = 1 ∨ i = 2 ∨ i = 3 ∨ i = 4 ∨ i = 5 ∨ i = 6 ∨ i = 7) with
       rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl <;> rfl, rfl⟩
@@ -216,7 +217,7 @@ theorem one0 : NatOne R [] s0.mem OP (win s0 KW 112 ++ [(0, 0 + 8 * 0)] ++ stWs 
   · simp only [win, stWs, stkWs, outside_append, outside_cons, outside_nil, and_true]; decide +kernel
 
 theorem sg0 : StackGuardOK s0 KW :=
-  ⟨by decide, by show mem0.accessible _ 8 false = true; rw [acc0]; decide +kernel, by decide +kernel⟩
+  ⟨by decide, by show mem0.accessible _ 8 false = true; rw [acc0]; decide +kernel, by decide +kernel, by decide +kernel⟩
 
 theorem tls0 : TlsG s0 :=
   ⟨by decide, by show mem0.accessible _ 8 false = true; rw [acc0]; decide +kernel, by decide +kernel⟩
@@ -310,7 +311,7 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : 
     WbLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 4096 R 2 ∧
     42520 ≤ stk ∧ stk ≤ 2 ^ 20 + 0x78 ∧
     RetAddr (Extracted.program.link impl) ret ∧
-    CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program NHyp.fnP2)
+    CallSetup0 (segAddr Extracted.program NHyp.fnP2)
       [z, zl, zc, st, x, xl, xc, lm] s ∧
     Pre R b L stk z.toNat zl.toNat zc.toNat st.toNat x.toNat xl.toNat xc.toNat y yl yc lm.toNat s ∧
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
@@ -331,8 +332,8 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : 
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.rip = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.gcWriteBarrier2") ∧
       wbSite R (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 2 L b s_c) ∧
-    Returns ((Extracted.program.link impl).withExit ret) s fun s' =>
-      ABIReturn s s' ∧ Post R b L stk z.toNat zc.toNat st.toNat x.toNat xl.toNat y yl lm.toNat s s' :=
+    Returns ((Extracted.program.link impl).withExit ret) (s.setRet ret) fun s' =>
+      ABIReturn (s.setRet ret) s' ∧ Post R b L stk z.toNat zc.toNat st.toNat x.toNat xl.toNat y yl lm.toNat (s.setRet ret) s' :=
   ⟨WStubs.impl, R, BW, [], KW, 0, 0, 0, BitVec.ofNat 64 ST, BitVec.ofNat 64 XP, 1, 1, 8, YP, 1, 1, RET, s0,
     WStubs.hap,
     by rw [WStubs.addr_gr]; exact WStubs.gr [] hty _,
@@ -355,6 +356,6 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : 
       (by rw [WStubs.addr_cl]; exact WStubs.cl R) (by rw [WStubs.addr_mv]; exact WStubs.mv R)
       (by rw [WStubs.addr_mk]; exact WStubs.mk [] hty _) (by rw [WStubs.addr_no]; exact WStubs.no [] hty _)
       (by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] hty _) BW [] KW (Nat.le_refl _) (by decide)
-      0 0 0 (BitVec.ofNat 64 ST) (BitVec.ofNat 64 XP) 1 1 8 YP 1 1 RET hret s0 setup preB⟩
+      0 0 0 (BitVec.ofNat 64 ST) (BitVec.ofNat 64 XP) 1 1 8 YP 1 1 s0 setup preB RET hret⟩
 
 end FvModexp.Amd64.P2DRow.Witness

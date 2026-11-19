@@ -27,6 +27,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
       [zp, zl, zc, st, xp, xl, xc]
       (SPre R b L W zp.toNat zc.toNat st.toNat xp.toNat xl.toNat xc.toNat)
       (SPost R b L W zp.toNat zc.toNat st.toNat xp.toNat xl.toNat xc.toNat) := by
+  janus_ensures_old [FvModexp.Arm64.NatSqr.SPre, FvModexp.Arm64.CallEnv, FvModexp.Arm64.RunIface.Globals, FvModexp.Arm64.win, FvModexp.Arm64.NatAdd.wordT, FvModexp.NatLive, FvModexp.Arm64.NatSqr.guard, FvModexp.Arm64.NatSqr.StkSep, FvModexp.Arm64.NatSqr.StkPre, FvModexp.stLen, Janus.Spec.GuardOK, Janus.Spec.StackOK, FvModexp.Arm64.RunIface.gA, FvModexp.Arm64.RunIface.wbA, FvModexp.Arm64.BasicSqr.freeP, FvModexp.Arm64.BasicSqr.freeN, FvModexp.StkOK, FvModexp.stCap, FvModexp.stW, FvModexp.Arm64.StackNat.wbA]
   rw [show names = LibSqr.names from rfl, ← LibSqr.eq_only, entry_sqr]
   intro ret hret s hs hpre
   janus_intro hs

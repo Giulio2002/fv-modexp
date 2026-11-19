@@ -44,8 +44,8 @@ def s0 : State :=
 
 theorem hret : RetAddr Extracted.program ret := RetAddr.of_check (by decide)
 
-theorem setup : CallSetup (Extracted.program.withExit ret) Extracted.entry [x1, x0, y, m] s0 :=
-  ⟨rfl, rfl, by
+theorem setup : CallSetup0 Extracted.entry [x1, x0, y, m] s0 :=
+  ⟨rfl, by first | decide | simp | omega, by
     intro i h
     simp only [List.length_cons, List.length_nil] at h
     rcases (by omega : i = 0 ∨ i = 1 ∨ i = 2 ∨ i = 3) with rfl | rfl | rfl | rfl <;> rfl⟩
@@ -57,16 +57,16 @@ theorem hpre : y.toNat ≠ 0 ∧ x1.toNat < y.toNat ∧
 /-- A concrete call (`x1 = 1`, `x0 = 5`, `y = 3`, `m` the reciprocal of `y`: the shifted path, `nlz y = 62`) satisfies
 the hypotheses of `correctness` and returns. -/
 theorem nonvacuous : ∃ (ret : Nat) (s : State) (x1 x0 y m : BitVec 64), RetAddr Extracted.program ret ∧
-    CallSetup (Extracted.program.withExit ret) Extracted.entry [x1, x0, y, m] s ∧
+    CallSetup0 Extracted.entry [x1, x0, y, m] s ∧
     (y.toNat ≠ 0 ∧ x1.toNat < y.toNat ∧
         m.toNat = (2 ^ 128 - 1) / (y.toNat * 2 ^ clzNat 64 y.toNat) - 2 ^ 64) ∧
-    Returns (Extracted.program.withExit ret) s
-      (fun s' => ABIReturn s s' ∧
+    Returns (Extracted.program.withExit ret) (s.setRet ret)
+      (fun s' => ABIReturn (s.setRet ret) s' ∧
         (results 2 s' =
           [BitVec.ofNat 64 ((x1.toNat * 2 ^ 64 + x0.toNat) / y.toNat),
            BitVec.ofNat 64 ((x1.toNat * 2 ^ 64 + x0.toNat) % y.toNat)] ∧
-        MemFrame s.mem s'.mem [])) :=
-  ⟨ret, s0, x1, x0, y, m, hret, setup, hpre, correctness x1 x0 y m ret hret s0 setup hpre⟩
+        MemFrame (s.setRet ret).mem s'.mem [])) :=
+  ⟨ret, s0, x1, x0, y, m, hret, setup, hpre, (correctness x1 x0 y m) s0 setup hpre ret hret⟩
 
 end Witness
 

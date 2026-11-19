@@ -17,7 +17,7 @@ theorem callEnv_mono2 {R : RtInv} {L : List (Nat × Nat)} {s : State} {k a k' a'
     (h : CallEnv R L s k' a') : CallEnv R L s k a := by
   obtain ⟨hg, ⟨hb, hA, hw⟩, hal, hd, hout, hga, hgr, hLs, hro, ⟨htg, htr, hta⟩⟩ := h
   unfold Apart at hga hta
-  refine ⟨⟨hg.noWrap, hg.readable, by have := hg.below; omega⟩, ⟨by omega, by omega,
+  refine ⟨⟨hg.noWrap, hg.readable, by have := hg.below; omega, hg.apart⟩, ⟨by omega, by omega,
     Janus.Arm64.Memory.accessible_mono _ hw (by omega) (by omega)⟩, hal, hd,
     hout.of_sub (by omega) (by omega), by unfold Apart; omega, hgr, fun r hr => outside_win_mono hk ha (hLs r hr), hro,
     ⟨htg, htr, by unfold Apart; omega⟩⟩
@@ -48,7 +48,7 @@ theorem intPost_mono {R : RtInv} {b B : Nat} {L : List (Nat × Nat)} {z v : Nat}
 
 theorem BytesSpec.mono {impl : List Janus.Amd64.Segment} {R : RtInv} {k a k' a' : Nat} (h : BytesSpec impl R k a)
     (hk : k ≤ k') (ha : a ≤ a') : BytesSpec impl R k' a' := fun b L x =>
-  (h b L x).mono (fun _ ⟨hp, hl⟩ => ⟨intPre_mono hk ha hp, hl⟩) fun _ _ _ ⟨hfs, hdf, p, n, c, h0, h1, h2, h3, h4, h5, L', b', h6,
+  (h b L x).mono_ret (fun _ ⟨hp, hl⟩ => ⟨intPre_mono hk ha hp, hl⟩) fun _ _ _ _ ⟨hfs, hdf, p, n, c, h0, h1, h2, h3, h4, h5, L', b', h6,
     h7, h8, h9, h10, h11⟩ =>
     ⟨hfs, hdf, p, n, c, h0, h1, h2, h3, h4, h5, L', b', h6, h7, h8, h9,
       (memFrame_win_mono (ws := []) hk ha (by simpa using h10)).mono fun _ _ hx => by simpa using hx, h11⟩
@@ -59,7 +59,7 @@ theorem poolG_mono {R : RtInv} {m : Janus.Arm64.Memory} {s : State} {k a k' a' :
 
 theorem ModSpec.mono {impl : List Janus.Amd64.Segment} {R : RtInv} {k a k' a' : Nat} (h : ModSpec impl R k a)
     (hk : k ≤ k') (ha : a ≤ a') : ModSpec impl R k' a' := fun b L z y =>
-  (h b L z y).mono (fun _ ⟨hp, h1, h2, h3, h4, h5⟩ => ⟨intPre_mono hk ha hp, h1, h2, h3, poolG_mono hk ha h4, h5⟩) fun _ _ _ ⟨hfs, hdf, h0, h1, h2⟩ =>
+  (h b L z y).mono_ret (fun _ ⟨hp, h1, h2, h3, h4, h5⟩ => ⟨intPre_mono hk ha hp, h1, h2, h3, poolG_mono hk ha h4, h5⟩) fun _ _ _ _ ⟨hfs, hdf, h0, h1, h2⟩ =>
     ⟨hfs, hdf, h0, intPost_mono hk ha h1, h2⟩
 
 theorem oneG_mono {R : RtInv} {L : List (Nat × Nat)} {m : Janus.Arm64.Memory} {xs : List Nat} {s : State}
@@ -69,9 +69,9 @@ theorem oneG_mono {R : RtInv} {L : List (Nat × Nat)} {m : Janus.Arm64.Memory} {
 
 theorem ExpSpec.mono {impl : List Janus.Amd64.Segment} {R : RtInv} {k a k' a' : Nat} (h : ExpSpec impl R k a)
     (hk : k ≤ k') (ha : a ≤ a') : ExpSpec impl R k' a' := fun b L z y mm =>
-  (h b L z y mm).mono (fun _ ⟨hp, h1, h2, h3, h4, h5, h6, h7, h8, h9⟩ =>
+  (h b L z y mm).mono_ret (fun _ ⟨hp, h1, h2, h3, h4, h5, h6, h7, h8, h9⟩ =>
     ⟨intPre_mono hk ha hp, h1, h2, h3, h4, oneG_mono hk ha h5, poolG_mono hk ha h6, h7, h8, h9⟩)
-    fun _ _ _ ⟨hfs, hdf, h0, h1⟩ =>
+    fun _ _ _ _ ⟨hfs, hdf, h0, h1⟩ =>
     ⟨hfs, hdf, h0, intPost_mono hk ha h1⟩
 
 end FvModexp.Amd64.RunIface

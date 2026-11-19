@@ -64,7 +64,7 @@ theorem hypG (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
     (hwb : WbLiveContract (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2) :
     MulHypG impl R names mulWX 88 mulC := fun b L z zl zc st x xl xc y yl yc =>
-  (ens impl hap R hmk hgr hmc hmv hwb b L mulWX z zl zc st x xl xc y yl yc).mono
-    (fun _ ⟨h1, h2, h3, h4⟩ => x_preG h1 h2 h3 h4) (fun _ _ _ hq => x_post hq)
+  (ens impl hap R hmk hgr hmc hmv hwb b L mulWX z zl zc st x xl xc y yl yc).mono_ret
+    (fun _ ⟨h1, h2, h3, h4⟩ => x_preG h1 h2 h3 h4) (fun _ _ _ _ hq => x_post hq)
 
 end FvModexp.Arm64.ExpEven.NatMulG

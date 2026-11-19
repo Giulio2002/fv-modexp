@@ -29,7 +29,7 @@ theorem one1M (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (dc : Nat → Na
     (k : ∀ X : State, AtV zp.toNat zl.toNat zc.toNat z2.toNat z2c.toNat u ul uc v s X →
       ReachesRet (LibDiv.program.link impl) (retAddrOf s) X Q) :
     ReachesRet (LibDiv.program.link impl) (retAddrOf s) s Q := by
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -⟩ := hp.ce
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, -⟩ := hp.ce
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw
   have r1 := hp.su; have r2 := hp.sul; have r3 := hp.suc; have r4 := hp.sv; have r5 := hp.svl; have r6 := hp.svc
   obtain ⟨-, hvacc, hv48, -, hvw⟩ := hp.vo

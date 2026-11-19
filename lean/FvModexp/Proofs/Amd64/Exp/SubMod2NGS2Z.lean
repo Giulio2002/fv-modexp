@@ -20,7 +20,7 @@ theorem s2Gz (impl : List Amd64.Segment) (R : RtInv)
     (k2 : J2G impl R b L op zp zl zc yp yl yc n s) : J1G impl R b L op zp zl zc yp yl yc n s := by
   intro S l1 L1 b1 hpre hpc hsp hab h0 h3 h1 h7 h6 h8 h9 h10 h11 h12 hfw hrt hv hnorm hlc
   have hpre' := hpre
-  obtain ⟨⟨⟨hgN, hgR, hgB⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, -, -, -, -⟩, -, -, -, -, -, hn1, hn2, hzl, hW, hzc, hzl',
+  obtain ⟨⟨⟨hgN, hgR, hgB, _⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, -, -, -, -⟩, -, -, -, -, -, hn1, hn2, hzl, hW, hzc, hzl',
     hyl, hyc, hyl', hzlive, hzw, hzg, -, hya, hy48, hyh, hyw, hyn, hzy, -⟩ := hpre'
   obtain ⟨h14, hfs, hx15, hdf⟩ := hab
   have hent := hpre.ent

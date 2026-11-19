@@ -45,11 +45,12 @@ theorem mpre {R : RtInv} {L : List (Nat × Nat)} {b g fs sp K d k : Nat} {S : St
   have tsp : (S.regs 4).toNat = sp - 8 := by rw [hsp, BitVec.toNat_ofNat]; omega
   have tg : (S.regs 14).toNat = g := by rw [h14, BitVec.toNat_ofNat]; omega
   unfold Apart at hga hdw
-  refine ⟨⟨⟨?_, ?_, ?_⟩, ⟨?_, ?_, ?_, ?_, hx15, hdf, ?_⟩, ?_⟩, ⟨?_, by rw [tg]; exact hinv, ?_, ?_⟩,
+  refine ⟨⟨⟨?_, ?_, ?_, ?_⟩, ⟨?_, ?_, ?_, ?_, hx15, hdf, ?_⟩, ?_⟩, ⟨?_, by rw [tg]; exact hinv, ?_, ?_⟩,
     ?_, ?_, ?_, ?_, ?_⟩
   · simp only [stackguard0Offset, regG, tg]; omega
   · simp only [stackguard0Offset, regG, tg]; exact hg2
   · simp only [stackguard0, stackguard0Offset, regG, regSP, tg, tsp]; omega
+  · simp only [stackguard0Offset, regG, regSP, tg, tsp]; omega
   · rw [tsp]; omega
   · rw [tsp]; omega
   · rw [tsp]; omega

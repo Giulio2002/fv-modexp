@@ -102,9 +102,9 @@ def s1 : State :=
     sp := BitVec.ofNat 64 sp0, pc := BitVec.ofNat 64 (segAddr Extracted.program RunArm64.fn),
     flags := ⟨false, false, false, false⟩, mem := mem1 }
 
-theorem setup : CallSetup ((Extracted.program.link implAt).withExit ret) (segAddr Extracted.program RunArm64.fn)
+theorem setup : CallSetup0 (segAddr Extracted.program RunArm64.fn)
     [c1, p1, 99, 99] s1 :=
-  ⟨rfl, rfl, by
+  ⟨rfl, by first | decide | simp | omega, by
     intro r h
     simp only [List.length_cons, List.length_nil] at h
     rcases (by omega : r = 0 ∨ r = 1 ∨ r = 2 ∨ r = 3) with rfl | rfl | rfl | rfl <;> rfl⟩
@@ -235,14 +235,14 @@ theorem site_mz : (sMz.regs 2).toNat = 0 ∧ Mem.EqPre 4096 3 sMz ∧
 theorem returnsF (stkM aboveM : Nat) (hM : RunIface.ModSpecL implAt R stkM aboveM)
     (hE : RunIface.ExpSpecL implAt R stkM aboveM)
     (hW : 624 + stkM ≤ WW) (hab : aboveM ≤ 160) (hk1 : 4160 ≤ stkM) (ha1 : 16 ≤ aboveM) :
-    Returns ((Extracted.program.link implAt).withExit ret) s1 fun s' =>
-      ABIReturn s1 s' ∧ (RunArm64.OkRet (bytesAt s1.mem p1.toNat (99 : BitVec 64).toNat) s' ∧
-        RunArm64.FrameW R bW (RunArm64.okBudget (parseLengths (bytesAt s1.mem p1.toNat (99 : BitVec 64).toNat)))
-          [] WW s1 s') :=
-  FvModexp.Arm64.Run.correctness_ok implAt hap R (by rw [addr_mk]; exact model_mk) (by rw [addr_mk]; exact model_mkz)
+    Returns ((Extracted.program.link implAt).withExit ret) (s1.setRet ret) fun s' =>
+      ABIReturn (s1.setRet ret) s' ∧ (RunArm64.OkRet (bytesAt (s1.setRet ret).mem p1.toNat (99 : BitVec 64).toNat) s' ∧
+        RunArm64.FrameW R bW (RunArm64.okBudget (parseLengths (bytesAt (s1.setRet ret).mem p1.toNat (99 : BitVec 64).toNat)))
+          [] WW (s1.setRet ret) s') :=
+  (FvModexp.Arm64.Run.correctness_ok implAt hap R (by rw [addr_mk]; exact model_mk) (by rw [addr_mk]; exact model_mkz)
     (by rw [addr_mv]; exact model_mv)
     (by rw [addr_mv]; exact model_mvz) (by rw [addr_no]; exact model_no) stkM aboveM hM hE WW hW (by decide) hab hk1 ha1
-    bW [] c1 p1 99 99 ret hret s1 setup pre
+    bW [] c1 p1 99 99) s1 setup pre ret hret
 
 /-- The output at the witness is empty (EthLib `compute` on the witness call data, lengths `0, 0, 0`). -/
 theorem compute1 : compute (bytesAt s1.mem p1.toNat (99 : BitVec 64).toNat)
@@ -265,7 +265,7 @@ theorem nonvacuous_of (stkM aboveM : Nat) (hM : RunIface.ModSpecL implAt R stkM 
     NewobjectLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.newobject") 4096 R ∧
     624 + stkM ≤ W ∧ 4800 ≤ W ∧ aboveM ≤ 160 ∧ 4160 ≤ stkM ∧ 16 ≤ aboveM ∧
     RetAddr (Extracted.program.link impl) ret ∧
-    CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program RunArm64.fn) [c, p, len, cp] s ∧
+    CallSetup0 (segAddr Extracted.program RunArm64.fn) [c, p, len, cp] s ∧
     RunArm64.EnvW R L s W ∧ RunArm64.Input R L c p len cp s ∧ OsakaReceiver s.mem c.toNat ∧
     R.inv b L (s.regs 28).toNat (view R.rt L s.mem) ∧ RunArm64.OkReqs R ∧
     RunArm64.Globals R s.mem (RunArm64.windowW s W) ∧ RunArm64.NatOne R s.mem (RunArm64.windowW s W) ∧
@@ -285,9 +285,9 @@ theorem nonvacuous_of (stkM aboveM : Nat) (hM : RunIface.ModSpecL implAt R stkM 
           (s_c.regs 2).toNat] L b 0 (s_c.regs 28).toNat s_c.mem (calleeStack s_c 4096 3)) ∧
         typSize s_c.mem (s_c.regs 0).toNat * (s_c.regs 2).toNat = 0 ∧
         Outside (s_c.regs 0).toNat 16 (calleeStack s_c 4096 3))) ∧
-    Returns ((Extracted.program.link impl).withExit ret) s fun s' =>
-      ABIReturn s s' ∧ (RunArm64.OkRet (bytesAt s.mem p.toNat len.toNat) s' ∧
-        RunArm64.FrameW R b (RunArm64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat))) L W s s') :=
+    Returns ((Extracted.program.link impl).withExit ret) (s.setRet ret) fun s' =>
+      ABIReturn (s.setRet ret) s' ∧ (RunArm64.OkRet (bytesAt (s.setRet ret).mem p.toNat len.toNat) s' ∧
+        RunArm64.FrameW R b (RunArm64.okBudget (parseLengths (bytesAt (s.setRet ret).mem p.toNat len.toNat))) L W (s.setRet ret) s') :=
   ⟨implAt, R, bW, [], c1, p1, 99, 99, ret, s1, WW, hap, by rw [addr_mk]; exact model_mk,
     by rw [addr_mk]; exact model_mkz, by rw [addr_mv]; exact model_mv,
     by rw [addr_mv]; exact model_mvz, by rw [addr_no]; exact model_no, hW, by decide, hab, hk1, ha1, hret, setup,

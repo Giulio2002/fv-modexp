@@ -6,6 +6,7 @@ import FvModexp.Proofs.Amd64.Witness.Sites
 import FvModexp.Proofs.Amd64.Witness.StubsMvz
 import FvModexp.Proofs.Amd64.Witness.StubsGrow
 import FvModexp.Proofs.Amd64.NatQ.DivRowWitQ
+import FvModexp.Proofs.Amd64.SetRetLemmas
 
 set_option autoImplicit false
 
@@ -48,11 +49,11 @@ theorem correctness (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted
         BitVec.ofNat 64 xl, BitVec.ofNat 64 xc]
       (ExpW2.PreR R b L K DivInst.divC costD zp zc st xp xl xc yp ylen mp n mc)
       (ExpW2.PostD R b L K costD zp zc st xp xl yp ylen mp n) :=
-  Ensures.mono (Ensures.full64 hap (by simp [numIntRegs])
+  Ensures.mono_ret (Ensures.full64 (hinv := ExpW2.preD_inv _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _) hap (by simp [numIntRegs])
     (ExpW2.ens impl hap R hclr hmv hmk hgr hwb Q.NatDiv.names 41512 DivInst.divC
       (DivInst.hyp impl hap R hgr hclr hwb hmk hmv hmz) DivInst.ns_sub DivInst.ns_w2 b L K hK
       costD zp zl zc st xp xl xc yp ylen mp n mc))
-    (fun _ h => ExpW2.preD_of_preR h) (fun _ _ _ h => h)
+    (fun _ h => ExpW2.preD_of_preR h) (fun _ _ _ _ h => h)
 
 end FvModexp.Amd64.W2Row
 
@@ -89,7 +90,7 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : 
     WbLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 4096 R 2 ∧
     41512 ≤ K ∧
     RetAddr (Extracted.program.link impl) ret ∧
-    CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program W2Loop.fn)
+    CallSetup0 (segAddr Extracted.program W2Loop.fn)
       [BitVec.ofNat 64 zp, BitVec.ofNat 64 zl, BitVec.ofNat 64 zc, BitVec.ofNat 64 st, BitVec.ofNat 64 xp,
         BitVec.ofNat 64 xl, BitVec.ofNat 64 xc] s ∧
     ExpW2.PreR R b L K DivInst.divC costD zp zc st xp xl xc yp ylen mp n mc s ∧
@@ -111,8 +112,8 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : 
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.rip = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.gcWriteBarrier2") ∧
       wbSite R (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 2 L b s_c) ∧
-    Returns ((Extracted.program.link impl).withExit ret) s fun s' =>
-      ABIReturn s s' ∧ ExpW2.PostD R b L K costD zp zc st xp xl yp ylen mp n s s' :=
+    Returns ((Extracted.program.link impl).withExit ret) (s.setRet ret) fun s' =>
+      ABIReturn (s.setRet ret) s' ∧ ExpW2.PostD R b L K costD zp zc st xp xl yp ylen mp n (s.setRet ret) s' :=
   ⟨WStubs.impl, R, BW, [], KW, CD, 0, 0, 0, ST, XP, 1, 1, YP, 1, MP, 1, 1, RET, s0,
     ⟨rfl, rfl, rfl, rfl, rfl⟩, WStubs.hap,
     by rw [WStubs.addr_cl]; exact WStubs.cl R,
@@ -135,6 +136,6 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : 
       (by rw [WStubs.addr_mk]; exact WStubs.mk [] hty _)
       (by rw [WStubs.addr_gr]; exact WStubs.gr [] hty _)
       (by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] hty _) BW [] KW (Nat.le_refl _)
-      CD 0 0 0 ST XP 1 1 YP 1 MP 1 1 RET hret s0 setup (ExpW2.preR_of_preD (pre DivInst.divC divc))⟩
+      CD 0 0 0 ST XP 1 1 YP 1 MP 1 1 s0 setup (ExpW2.preR_of_preD (pre DivInst.divC divc)) RET hret⟩
 
 end FvModexp.Amd64.W2Row.Witness

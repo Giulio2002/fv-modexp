@@ -31,7 +31,7 @@ theorem correctness (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted
     Ensures (Extracted.program.link impl) (segAddr Extracted.program MontHyp.fn)
       [zp, zl, zc, xp, xl, xc, yp, yl, yc]
       (Mont.Pre R b L zp zc xp xl yp yl mp ml mc k n) (Mont.Post R b L zp zc xp yp mp k n) :=
-  Ensures.full64 hap (by simp [numIntRegs]) (Mont.ens impl hap R hclr hmv b L zp zl zc xp xl xc yp yl yc mp ml mc k n)
+  Ensures.full64 (hinv := by janus64_pre_setRet [FvModexp.Amd64.Mont.Pre, FvModexp.Amd64.Mont.Env, FvModexp.Amd64.MontHyp.hasADX, FvModexp.Amd64.Mont.Input]) hap (by simp [numIntRegs]) (Mont.ens impl hap R hclr hmv b L zp zl zc xp xl xc yp yl yc mp ml mc k n)
 
 end FvModexp.Amd64.MontRow
 
@@ -70,9 +70,9 @@ def s0 : State :=
 
 theorem hret : RetAddr (Extracted.program.link WStubs.impl) RET := RetAddr.of_check (by decide +kernel)
 
-theorem setup : CallSetup ((Extracted.program.link WStubs.impl).withExit RET) (segAddr Extracted.program MontHyp.fn)
+theorem setup : CallSetup0 (segAddr Extracted.program MontHyp.fn)
     args s0 :=
-  ⟨rfl, by decide +kernel, rfl, by decide, by
+  ⟨rfl, rfl, by decide, by
     intro i h; simp only [args, List.length_cons, List.length_nil] at h
     rcases (by omega : i = 0 ∨ i = 1 ∨ i = 2 ∨ i = 3 ∨ i = 4 ∨ i = 5 ∨ i = 6 ∨ i = 7 ∨ i = 8) with
       rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl <;> rfl, rfl⟩
@@ -95,7 +95,7 @@ theorem inv1 (gp : Nat) : R.inv 0x1000 [] gp (view R.rt [] mem0) := by
   rw [if_neg (show ¬ i < HEAP from Nat.not_lt.mpr hi)]
 
 theorem sg0 : StackGuardOK s0 4288 :=
-  ⟨by decide, by show mem0.accessible _ 8 false = true; rw [acc0]; decide +kernel, by decide +kernel⟩
+  ⟨by decide, by show mem0.accessible _ 8 false = true; rw [acc0]; decide +kernel, by decide +kernel, by decide +kernel⟩
 
 theorem tls0 : TlsG s0 :=
   ⟨by decide, by show mem0.accessible _ 8 false = true; rw [acc0]; decide +kernel, by decide +kernel⟩
@@ -127,7 +127,7 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : 
       (Extracted.program.contractAddr "runtime.memclrNoHeapPointers") 4096 R ∧
     MemmoveLive64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R ∧
     RetAddr (Extracted.program.link impl) ret ∧
-    CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program MontHyp.fn)
+    CallSetup0 (segAddr Extracted.program MontHyp.fn)
       [zp, zl, zc, xp, xl, xc, yp, yl, yc] s ∧
     Mont.Pre R b L zp zc xp xl yp yl mp ml mc k n s ∧
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
@@ -136,15 +136,15 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : 
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.rip = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.memmove") ∧
       mvSite R (Extracted.program.contractAddr "runtime.memmove") L b s_c) ∧
-    Returns ((Extracted.program.link impl).withExit ret) s fun s' =>
-      ABIReturn s s' ∧ Mont.Post R b L zp zc xp yp mp k n s s' :=
+    Returns ((Extracted.program.link impl).withExit ret) (s.setRet ret) fun s' =>
+      ABIReturn (s.setRet ret) s' ∧ Mont.Post R b L zp zc xp yp mp k n (s.setRet ret) s' :=
   ⟨WStubs.impl, R, 0x1000, [], BitVec.ofNat 64 OA, 2, 2, BitVec.ofNat 64 XP, 1, 1, BitVec.ofNat 64 YP, 1, 1,
     MP, 1, 1, 0, 1, RET, s0, WStubs.hap, by rw [WStubs.addr_cl]; exact WStubs.cl R,
     by rw [WStubs.addr_mv]; exact WStubs.mv R, hret, setup, pre,
     ⟨[], 0x1000, callS WStubs.clA OA 8 0, by rw [WStubs.addr_cl]; rfl, by rw [WStubs.addr_cl]; exact site_cl _⟩,
     ⟨[], 0x1000, callS WStubs.mvA OA OB 8, by rw [WStubs.addr_mv]; rfl, by rw [WStubs.addr_mv]; exact site_mv _⟩,
     correctness WStubs.impl WStubs.hap R (by rw [WStubs.addr_cl]; exact WStubs.cl R) (by rw [WStubs.addr_mv]; exact WStubs.mv R)
-      0x1000 [] (BitVec.ofNat 64 OA) 2 2 (BitVec.ofNat 64 XP) 1 1 (BitVec.ofNat 64 YP) 1 1 MP 1 1 0 1 RET hret s0 setup
-      pre⟩
+      0x1000 [] (BitVec.ofNat 64 OA) 2 2 (BitVec.ofNat 64 XP) 1 1 (BitVec.ofNat 64 YP) 1 1 MP 1 1 0 1 s0 setup
+      pre RET hret⟩
 
 end FvModexp.Amd64.MontRow.Witness

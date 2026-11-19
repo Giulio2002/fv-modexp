@@ -14,6 +14,7 @@ set_option maxHeartbeats 64000000 in
 set_option maxRecDepth 100000 in
 theorem rg_head (hsb : SbSum) (hmv : MvSum) (k : Blk2Stmt) (c ptr len cap : BitVec 64) :
     Ensures Extracted.program Extracted.entry [c, ptr, len, cap] (RgPre c ptr len cap) (fun s s' => RgPost ptr len s s') := by
+  janus64_ensures_old [FvModexp.Amd64.RG.RgPre, FvModexp.Amd64.RG.RA, FvModexp.Spec.OsakaReceiver]
   intro ret hret s hs hpre
   have hpre' := hpre
   obtain ⟨⟨hra, hra2, hra3⟩, hg, ⟨hlow, hnw, hacc⟩, hx15, hd, hlc, hc48, ⟨hp, hp'⟩, ⟨hcr, hcr'⟩, ⟨ho0, ho1, ho2⟩, hd1, hd2, hdg⟩ := hpre

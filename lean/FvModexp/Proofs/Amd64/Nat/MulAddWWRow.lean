@@ -24,7 +24,7 @@ theorem correctness (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc xp xl xc y r : BitVec 64) :
     Ensures (Extracted.program.link impl) (segAddr Extracted.program MulAddWW.fn) [zp, zl, zc, xp, xl, xc, y, r]
       (MulAddWW.Pre R b L zp zc xp xl y r) (MulAddWW.Post R b L zp zc xp xl y r) :=
-  Ensures.full64 hap (by simp [numIntRegs]) (MulAddWW.ens impl hap R hmk b L zp zl zc xp xl xc y r)
+  Ensures.full64 (hinv := by janus64_pre_setRet [FvModexp.Amd64.MulAddWW.Pre, FvModexp.Amd64.CallEnv, FvModexp.Amd64.MulAddWW.wordT, FvModexp.NatLive, FvModexp.Amd64.win, FvModexp.Amd64.TlsOK]) hap (by simp [numIntRegs]) (MulAddWW.ens impl hap R hmk b L zp zl zc xp xl xc y r)
 
 end FvModexp.Amd64.MulAddWWRow
 
@@ -50,9 +50,9 @@ def s0 : State :=
 
 theorem hret : RetAddr (Extracted.program.link WStubs.impl) RET := RetAddr.of_check (by decide +kernel)
 
-theorem setup : CallSetup ((Extracted.program.link WStubs.impl).withExit RET) (segAddr Extracted.program MulAddWW.fn)
+theorem setup : CallSetup0 (segAddr Extracted.program MulAddWW.fn)
     args s0 :=
-  ⟨rfl, by decide +kernel, rfl, by decide, by
+  ⟨rfl, rfl, by decide, by
     intro i h; simp only [args, List.length_cons, List.length_nil] at h
     rcases (by omega : i = 0 ∨ i = 1 ∨ i = 2 ∨ i = 3 ∨ i = 4 ∨ i = 5 ∨ i = 6 ∨ i = 7) with
       rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl <;> rfl, rfl⟩
@@ -71,7 +71,11 @@ theorem pre : MulAddWW.Pre R 0x1000 [] (BitVec.ofNat 64 OA) 0 (BitVec.ofNat 64 O
     | (rw [show s0.mem = wmem (toyBytes g) stdRegs from rfl, acc_eq]; decide +kernel)
     | (refine ⟨by decide +kernel, ?_, by decide +kernel⟩; rw [show s0.mem = wmem (toyBytes g) stdRegs from rfl, acc_eq];
         decide +kernel)
+    | (refine ⟨by decide +kernel, ?_, by decide +kernel, by decide +kernel⟩; rw [show s0.mem = wmem (toyBytes g) stdRegs from rfl, acc_eq];
+        decide +kernel)
     | (refine ⟨by decide +kernel, by decide +kernel, ?_⟩; rw [show s0.mem = wmem (toyBytes g) stdRegs from rfl, acc_eq];
+        decide +kernel)
+    | (refine ⟨by decide +kernel, by decide +kernel, ?_, by decide +kernel⟩; rw [show s0.mem = wmem (toyBytes g) stdRegs from rfl, acc_eq];
         decide +kernel)
     | decide +kernel
 
@@ -83,18 +87,18 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : 
     Amd64.ImplApart Extracted.program impl ∧
     MakesliceLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.makeslice") 4096 R ∧
     RetAddr (Extracted.program.link impl) ret ∧
-    CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program MulAddWW.fn)
+    CallSetup0 (segAddr Extracted.program MulAddWW.fn)
       [zp, zl, zc, xp, xl, xc, y, r] s ∧
     MulAddWW.Pre R b L zp zc xp xl y r s ∧
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.rip = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.makeslice") ∧
       mkSite R (Extracted.program.contractAddr "runtime.makeslice") L b s_c) ∧
-    Returns ((Extracted.program.link impl).withExit ret) s fun s' => ABIReturn s s' ∧ MulAddWW.Post R b L zp zc xp xl y r s s' :=
+    Returns ((Extracted.program.link impl).withExit ret) (s.setRet ret) fun s' => ABIReturn (s.setRet ret) s' ∧ MulAddWW.Post R b L zp zc xp xl y r (s.setRet ret) s' :=
   ⟨WStubs.impl, R, 0x1000, [], BitVec.ofNat 64 OA, 0, 0, BitVec.ofNat 64 OB, 2, 2, 3, 0, RET, s0, WStubs.hap,
     by rw [WStubs.addr_mk]; exact WStubs.mk [] (by intro t ht; simp at ht) _, hret, setup, pre,
     ⟨[], 0x1000, callS WStubs.mkA Extracted.dataAddr.«type:big.Word#51b931e8» 1 1, by rw [WStubs.addr_mk]; rfl,
       by rw [WStubs.addr_mk]; exact site_mk _⟩,
     correctness WStubs.impl WStubs.hap R (by rw [WStubs.addr_mk]; exact WStubs.mk [] (by intro t ht; simp at ht) _) 0x1000
-      [] (BitVec.ofNat 64 OA) 0 0 (BitVec.ofNat 64 OB) 2 2 3 0 RET hret s0 setup pre⟩
+      [] (BitVec.ofNat 64 OA) 0 0 (BitVec.ofNat 64 OB) 2 2 3 0 s0 setup pre RET hret⟩
 
 end FvModexp.Amd64.MulAddWWRow.Witness

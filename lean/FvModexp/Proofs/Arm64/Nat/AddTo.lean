@@ -51,6 +51,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
           R.inv b' L' (s.regs 28).toNat (view R.rt L' s'.mem) ∧
           MemFrame s.mem s'.mem (R.rt ++ winA s 4240 48 ++ [(zp.toNat, zp.toNat + 8 * zl.toNat)]) ∧
           LiveFrame s.mem s'.mem L [(zp.toNat, zp.toNat + 8 * zl.toNat)]) := by
+  janus_ensures_old [FvModexp.Arm64.CallEnv, FvModexp.NatLive, FvModexp.Arm64.win, Janus.Spec.GuardOK, Janus.Spec.StackOK]
   rw [show names = LibAddTo.names from rfl, ← LibAddTo.eq_only]
   have hVV := addVVHyp impl hap
   intro ret hret s hs ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, _, hout, hga, hgr, hLs, _⟩, hxz, hzc, hz40, hzl, hzw, hzc63,

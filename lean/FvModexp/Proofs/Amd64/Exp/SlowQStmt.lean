@@ -1,3 +1,4 @@
+import FvModexp.Proofs.Amd64.SetRetLemmas
 import FvModexp.Proofs.Amd64.Exp.RemInst
 import FvModexp.Proofs.Common.NCostU
 
@@ -70,14 +71,20 @@ end FvModexp.Amd64.NHyp
 
 namespace FvModexp.Amd64.Q.ExpSlow
 
+set_option maxHeartbeats 8000000 in
 set_option maxRecDepth 20000 in
 /-- **`nat.expNNSlow`**: `SlowHypQ` gives `SlowHyp` at the cost `C xl yl ml + stkRes (ℓ + needH xl ml)` -/
 theorem slow_of_Q {impl : List Amd64.Segment} {R : RtInv} {ns : List String} {stk above : Nat}
     {need : Nat → Nat → Nat → Nat} {nH : Nat → Nat → Nat} {C : Nat → Nat → Nat → Nat}
-    (h : NHyp.SlowHypQ impl R ns stk above need nH C) : NHyp.SlowHyp impl R ns stk above need (slowBr C nH) := by
+    (h : NHyp.SlowHypQ impl R ns stk above need nH C) (hab : 8 ≤ above := by omega) : NHyp.SlowHyp impl R ns stk above need (slowBr C nH) := by
   intro b L z zl zc st x xl xc y yl yc m ml mc
   refine RemInst.ens_param (fun H => h H b L z zl zc st x xl xc y yl yc m ml mc)
-    (fun s => stLen s.mem st.toNat + nH xl.toNat ml) (fun s hp => ?_) (fun s s' hq => ?_)
+    (fun s => stLen s.mem st.toNat + nH xl.toNat ml) (fun s hp => ?_) (fun s s' hq => ?_) (hinv := by
+      intro s ret hs hret hp
+      have hslot : Outside (s.regs 4).toNat 8 R.rt := CallEnv.slot hp.2.1.1.1 hab
+      simp only [NHyp.StkArg, NHyp.CPre, NHyp.XFacts, forall_mem_pair3] at hp ⊢
+      by_cases h2 : 0 < zc.toNat <;> by_cases h3 : 0 < stCap s.mem st.toNat <;>
+      janus64_pre_setRet_core s ret hs hret hp [FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.win, FvModexp.Amd64.StackNat.wT, FvModexp.Amd64.EvenHyp.WrOut, FvModexp.Amd64.EvenHyp.RdIn, FvModexp.Amd64.NHyp.freeOf, FvModexp.Amd64.ExpHyp.StackOK', FvModexp.stCap, FvModexp.stW, FvModexp.stLen, FvModexp.Amd64.StackNat.wbA, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.Callees.adxAddr, FvModexp.Amd64.TlsOK, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.StkOK, FvModexp.natVal, FvModexp.Amd64.readLE_setRet_or_zero, FvModexp.Amd64.natNorm_setRet, h2, h3, false_implies, true_implies])
   · obtain ⟨hy, ⟨⟨h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11, h12, h13, h14, h15, h16, h17, h18, h19,
       h20, h21, hc, h23, h24, hinv⟩, hX, hY, hM, hS⟩, hXF⟩ := hp
     exact ⟨hy, ⟨⟨h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11, h12, h13, h14, h15, h16, h17, h18, h19,

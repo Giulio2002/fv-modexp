@@ -67,18 +67,20 @@ theorem callEnv_frame {R : RtInv} {L1 L2 : List (Nat × Nat)} {T t : State} {stk
   have hg3 := hgd.below
   have hg1 := hgd.noWrap
   have hg2 := hgd.readable
+  have hg4 := hgd.apart
   simp only [regSP, Janus.Amd64.GoABI.regG, Janus.Amd64.GoABI.stackguard0Offset,
-    Janus.Amd64.GoABI.stackguard0] at hg3 hg1 hg2 hb' ha hw hout hal hga hgr hfg
+    Janus.Amd64.GoABI.stackguard0] at hg3 hg1 hg2 hg4 hb' ha hw hout hal hga hgr hfg
   have hwr : ∀ r ∈ win T stk above, Outside r.1 (r.2 - r.1) R.rt := fun r hr => by
     simp only [win, List.mem_singleton] at hr; subst hr
     exact hout.of_sub (Nat.le_refl _) (by dsimp only; omega)
   unfold CallEnv TlsOK
-  refine ⟨⟨?_, ?_, ?_⟩, ⟨?_, ?_, ?_⟩, ?_, hd, ?_, ?_, ?_, ?_, hro, ⟨⟨?_, ?_, ?_⟩, ?_, ?_⟩⟩
+  refine ⟨⟨?_, ?_, ?_, ?_⟩, ⟨?_, ?_, ?_⟩, ?_, hd, ?_, ?_, ?_, ?_, hro, ⟨⟨?_, ?_, ?_⟩, ?_, ?_⟩⟩
   all_goals (try simp only [regSP, Janus.Amd64.GoABI.regG, Janus.Amd64.GoABI.stackguard0Offset,
     Janus.Amd64.GoABI.stackguard0, h4, h14, hfs, hacc, hg, hf])
   · exact hg1
   · exact hg2
   · exact hg3
+  · first | omega | (simp_all only [stackguard0Offset, regG, regSP, Apart]; omega)
   · exact hb'
   · exact ha
   · exact hw

@@ -51,6 +51,7 @@ theorem ensX (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     (b : Nat) (L : List (Nat × Nat)) (st n : BitVec 64) :
     Ensures ((Extracted.program.onlySegments names).link impl) (segAddr Extracted.program fn) [st, n]
       (fun s => PreX R b L 4208 24 st.toNat n.toNat s) (fun s s' => PostXL R b L 4208 24 st.toNat n.toNat s s') := by
+  janus_ensures_old [FvModexp.Arm64.StackNatX.PreX, FvModexp.Arm64.CallEnv, FvModexp.StkOK, FvModexp.Arm64.win, FvModexp.stCap, FvModexp.stW, FvModexp.stLen, FvModexp.Arm64.StackNat.wbA, Janus.Spec.GuardOK, Janus.Spec.StackOK, FvModexp.NatLive]
   rw [show names = LibStackNat.names from rfl, ← LibStackNat.eq_only]
   intro ret hret s hs hpre
   janus_intro hs
@@ -70,7 +71,7 @@ theorem ensQ (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
     (H b : Nat) (L : List (Nat × Nat)) (st n : BitVec 64) :
     Ensures ((Extracted.program.onlySegments names).link impl) (segAddr Extracted.program fn) [st, n]
       (fun s => PreQ R b L H 4208 24 st.toNat n.toNat s) (fun s s' => PostQ R b L H 4208 24 st.toNat n.toNat s s') := by
-  refine Ensures.mono (ensX impl hap R hgr hmc hwb b L st n) (fun s h => preX_of_preQ h) ?_
+  refine Ensures.mono (hinv := by janus_pre_setRet [FvModexp.Arm64.StackNatX.PreQ, FvModexp.Arm64.CallEnv, FvModexp.StkOK, FvModexp.Arm64.win, FvModexp.stCap, FvModexp.stW, FvModexp.stLen, FvModexp.stkR, FvModexp.Arm64.StackNat.wbA, Janus.Spec.GuardOK, Janus.Spec.StackOK, FvModexp.NatLive, FvModexp.stkRes, FvModexp.potK]) (ensX impl hap R hgr hmc hwb b L st n) (fun s h => preX_of_preQ h) ?_
   intro s s' hq hp
   exact PostXL.toPostQ hq.2.2.2.2.2.2.2.1.1 hq.2.2.2.2.2.2.2.1.2 hp
 

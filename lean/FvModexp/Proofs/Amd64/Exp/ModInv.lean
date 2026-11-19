@@ -68,6 +68,20 @@ theorem full {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progra
 /-- the exp layer's functions (the program of `ens`) -/
 def names : List String := LibW.names
 
+set_option maxHeartbeats 8000000 in
+/-- `PreQ` survives installing the return address (Janus v0.4.0 `hinv`; shared by `ens` and `ModInvRow`) -/
+theorem preQ_inv (R : RtInv) (kc H : Nat) (sqrC : Nat → Nat) (mulC : Nat → Nat → Nat) (B : Nat) (L : List (Nat × Nat))
+    (zp zl zc st xp xl xc n : Nat) (p : Janus.Amd64.Program) (e : Nat) (args : List W64) :
+    Ensures.SetRetInv p e args (PreQ R kc H sqrC mulC B L zp zl zc st xp xl xc n) := by
+  intro s ret hs hret hp
+  -- the precondition's `∃ op` (the `natOne` limb pointer) is pulled out first; the setRet closer then sees `NatOne … op …`
+  simp only [FvModexp.Amd64.ModInv.PreQ, FvModexp.Exp.B, FvModexp.Amd64.CallEnv, FvModexp.Amd64.ModInv.A, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.win, FvModexp.Amd64.RunIface.gA, FvModexp.stkWs, FvModexp.Amd64.EvenHyp.WrOut, FvModexp.Amd64.EvenHyp.RdIn, FvModexp.NatNorm, FvModexp.natVal, FvModexp.Amd64.Q.NatSqr.StkPre, FvModexp.stLen, FvModexp.Amd64.Q.NatSqr.StkSep, FvModexp.stkR, FvModexp.Amd64.NatAdd.wordT, FvModexp.Amd64.Callees.adxAddr, FvModexp.Amd64.ModInv.OneIn, FvModexp.Amd64.TlsOK, FvModexp.Amd64.RunIface.wbA, FvModexp.stW, FvModexp.stCap, FvModexp.NatLive, FvModexp.StkOK, FvModexp.Amd64.Q.NatSqr.guard, FvModexp.Amd64.Q.BasicSqr.freeP, FvModexp.Amd64.Q.BasicSqr.freeN, FvModexp.Amd64.StackNat.wbA, FvModexp.Amd64.Q.NatSqr.tls, FvModexp.stkRes, FvModexp.potK, FvModexp.Amd64.EvenHyp.NatOne, FvModexp.Amd64.EvenHyp.natOneA] at hp ⊢
+  simp only [← exists_and_left, ← exists_and_right] at hp ⊢
+  obtain ⟨op, hp⟩ := hp
+  refine ⟨op, ?_⟩
+  janus64_pre_setRet_core s ret hs hret hp [FvModexp.Amd64.ModInv.PreQ, FvModexp.Exp.B, FvModexp.Amd64.CallEnv, FvModexp.Amd64.ModInv.A, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.win, FvModexp.Amd64.RunIface.gA, FvModexp.stkWs, FvModexp.Amd64.EvenHyp.WrOut, FvModexp.Amd64.EvenHyp.RdIn, FvModexp.NatNorm, FvModexp.natVal, FvModexp.Amd64.Q.NatSqr.StkPre, FvModexp.stLen, FvModexp.Amd64.Q.NatSqr.StkSep, FvModexp.stkR, FvModexp.Amd64.NatAdd.wordT, FvModexp.Amd64.Callees.adxAddr, FvModexp.Amd64.ModInv.OneIn, FvModexp.Amd64.TlsOK, FvModexp.Amd64.RunIface.wbA, FvModexp.stW, FvModexp.stCap, FvModexp.NatLive, FvModexp.StkOK, FvModexp.Amd64.Q.NatSqr.guard, FvModexp.Amd64.Q.BasicSqr.freeP, FvModexp.Amd64.Q.BasicSqr.freeN, FvModexp.Amd64.StackNat.wbA, FvModexp.Amd64.Q.NatSqr.tls, FvModexp.stkRes, FvModexp.potK, FvModexp.Amd64.EvenHyp.NatOne, FvModexp.Amd64.EvenHyp.natOneA]
+
+set_option maxHeartbeats 8000000 in
 set_option maxRecDepth 20000 in
 /-- **`nat.modularInverseModPowerOfTwo`** (amd64), Q-form: `z.modularInverseModPowerOfTwo(stk, x, n)` returns a
 normalised nat holding `x⁻¹ mod 2^n` (`Exp.modularInverseModPowerOfTwo`), in `z`'s array or a fresh one; writes only
@@ -97,6 +111,7 @@ theorem ens {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program
       [BitVec.ofNat 64 zp, BitVec.ofNat 64 zl, BitVec.ofNat 64 zc, BitVec.ofNat 64 st, BitVec.ofNat 64 xp,
         BitVec.ofNat 64 xl, BitVec.ofNat 64 xc, BitVec.ofNat 64 n]
       (PreQ R kc H sqrC mulC B L zp zl zc st xp xl xc n) (PostQ R kc H sqrC mulC B L zp zc st xp xl n) := by
+  refine Ensures.of_old (preQ_inv R kc H sqrC mulC B L zp zl zc st xp xl xc n _ _ _) ?_
   have hc : CodeIn64 (Extracted.program.ofImpl impl) (LibW.program.link impl) := by
     rw [LibW.eq_only]; exact codeIn_ofImpl_restrict_of_apart64 hap LibW.names
   have hmkL := MakesliceLiveContract64.of_codeIn hc hmk

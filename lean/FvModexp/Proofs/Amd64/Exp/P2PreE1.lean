@@ -70,7 +70,7 @@ theorem snPre {stkS aboveS : Nat} (hkS : stkS ≤ kc) (haS : aboveS ≤ 88)
   obtain ⟨-, -, hstw, -, harr, -, hfw, hsf, hswb, -⟩ := hsp0
   obtain ⟨-, -, -, -, -, -, -, -, -, -, wacc, -⟩ := hgl
   have hce0 := hce
-  obtain ⟨⟨-, -, -⟩, ⟨hb', -, -⟩, -, -, hout, -⟩ := hce0
+  obtain ⟨⟨-, -, -, -⟩, ⟨hb', -, -⟩, -, -, hout, -⟩ := hce0
   simp only [regSP, K] at hb'
   have hspN : (S.regs 4).toNat = (s.regs 4).toNat - 184 := by rw [hsp]; exact tN (by omega)
   simp only [StackNatX.PreQ]
@@ -119,7 +119,7 @@ theorem ctx0 (hpre : Pre R kc b L st pw pl ws lm x xl s) {S s' : State}
   obtain ⟨hce, -, hgl, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, hsp0, -⟩ := hpre
   obtain ⟨-, ⟨-, hsth, -, -, -, hlc, -⟩, hstw, -, harr, -, hfw, hsf, -, -, hsgA, hfgA, -⟩ := hsp0
   obtain ⟨-, -, -, -, -, -, -, -, grt, -⟩ := hgl
-  obtain ⟨⟨-, -, -⟩, ⟨hb', hA', -⟩, -, -, hout, -, -, hLs, -⟩ := hce
+  obtain ⟨⟨-, -, -, -⟩, ⟨hb', hA', -⟩, -, -, hout, -, -, hLs, -⟩ := hce
   simp only [regSP, K, A] at hb' hA' hout
   simp only [win, K, A, Q.BasicSqr.freeP, Q.BasicSqr.freeN, outside_cons, outside_nil, and_true] at hstw hfw
   -- the frame

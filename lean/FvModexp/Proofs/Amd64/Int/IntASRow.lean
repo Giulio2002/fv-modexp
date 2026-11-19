@@ -32,7 +32,7 @@ theorem correctness (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted
     Ensures (Extracted.program.link impl)
       (segAddr Extracted.program "github.com/ethereum/go-bigmodexpfix/src/math/big.(*Int).Add") [z, x, y]
       (IntAS.Pre R b L z.toNat x.toNat y.toNat) (IntAS.Post false R b L z.toNat x.toNat y.toNat) :=
-  Ensures.full64 hap (by simp [numIntRegs]) (IntAS.ens impl hap R hmk hmv hwb false b L z x y)
+  Ensures.full64 (hinv := by janus64_pre_setRet [FvModexp.Amd64.IntAS.Pre, FvModexp.Amd64.CallEnv, FvModexp.Amd64.NatAdd.wordT, FvModexp.Amd64.IntAS.OpR, FvModexp.Amd64.win, FvModexp.Amd64.IntAS.wbA, FvModexp.Amd64.IntAS.hC, FvModexp.NatLive, FvModexp.Amd64.IntAS.hP, FvModexp.Amd64.IntAS.hL, FvModexp.Amd64.TlsOK, FvModexp.Amd64.IntAS.hNeg, FvModexp.NatNorm]) hap (by simp [numIntRegs]) (IntAS.ens impl hap R hmk hmv hwb false b L z x y)
 
 end FvModexp.Amd64.IntASRow
 
@@ -67,9 +67,9 @@ def s0 : State :=
 
 theorem hret : RetAddr (Extracted.program.link WStubs.impl) RET := RetAddr.of_check (by decide +kernel)
 
-theorem setup : CallSetup ((Extracted.program.link WStubs.impl).withExit RET)
+theorem setup : CallSetup0 
     (segAddr Extracted.program "github.com/ethereum/go-bigmodexpfix/src/math/big.(*Int).Add") args s0 :=
-  ⟨rfl, by decide +kernel, rfl, by decide, by
+  ⟨rfl, rfl, by decide, by
     intro i h; simp only [args, List.length_cons, List.length_nil] at h
     rcases (by omega : i = 0 ∨ i = 1 ∨ i = 2) with rfl | rfl | rfl <;> rfl, rfl⟩
 
@@ -104,7 +104,9 @@ theorem pre : IntAS.Pre R 0x1000 [] OA (OA + 0x40) (OA + 0x80) s0 := by
     | (simp only [Apart]; decide +kernel)
     | (rw [hm, acc0]; decide +kernel)
     | (refine ⟨by decide +kernel, ?_, by decide +kernel⟩; rw [hm, acc0]; decide +kernel)
+    | (refine ⟨by decide +kernel, ?_, by decide +kernel, by decide +kernel⟩; rw [hm, acc0]; decide +kernel)
     | (refine ⟨by decide +kernel, by decide +kernel, ?_⟩; rw [hm, acc0]; decide +kernel)
+    | (refine ⟨by decide +kernel, by decide +kernel, ?_, by decide +kernel⟩; rw [hm, acc0]; decide +kernel)
     | (simp only [IntAS.hP, IntAS.hL, IntAS.hC, hm, acc0]; decide +kernel)
     | (unfold NatNorm; decide +kernel)
     | decide +kernel
@@ -119,7 +121,7 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : 
     MemmoveLive64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R ∧
     WbLiveContract64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 4096 R 2 ∧
     RetAddr (Extracted.program.link impl) ret ∧
-    CallSetup ((Extracted.program.link impl).withExit ret)
+    CallSetup0 
       (segAddr Extracted.program "github.com/ethereum/go-bigmodexpfix/src/math/big.(*Int).Add") [z, x, y] s ∧
     IntAS.Pre R b L z.toNat x.toNat y.toNat s ∧
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
@@ -131,8 +133,8 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : 
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.rip = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.gcWriteBarrier2") ∧
       wbSite R (Extracted.program.contractAddr "runtime.gcWriteBarrier2") 2 L b s_c) ∧
-    Returns ((Extracted.program.link impl).withExit ret) s fun s' =>
-      ABIReturn s s' ∧ IntAS.Post false R b L z.toNat x.toNat y.toNat s s' :=
+    Returns ((Extracted.program.link impl).withExit ret) (s.setRet ret) fun s' =>
+      ABIReturn (s.setRet ret) s' ∧ IntAS.Post false R b L z.toNat x.toNat y.toNat (s.setRet ret) s' :=
   ⟨WStubs.impl, R, 0x1000, [], BitVec.ofNat 64 OA, BitVec.ofNat 64 (OA + 0x40), BitVec.ofNat 64 (OA + 0x80),
     RET, s0, WStubs.hap,
     by rw [WStubs.addr_mk]; exact WStubs.mk [] (by intro t ht; simp at ht) _,
@@ -145,6 +147,6 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : 
     correctness WStubs.impl WStubs.hap R (by rw [WStubs.addr_mk]; exact WStubs.mk [] (by intro t ht; simp at ht) _)
       (by rw [WStubs.addr_mv]; exact WStubs.mv R)
       (by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] (by intro t ht; simp at ht) _) 0x1000 []
-      (BitVec.ofNat 64 OA) (BitVec.ofNat 64 (OA + 0x40)) (BitVec.ofNat 64 (OA + 0x80)) RET hret s0 setup pre⟩
+      (BitVec.ofNat 64 OA) (BitVec.ofNat 64 (OA + 0x40)) (BitVec.ofNat 64 (OA + 0x80)) s0 setup pre RET hret⟩
 
 end FvModexp.Amd64.IntASRow.Witness

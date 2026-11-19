@@ -90,7 +90,7 @@ theorem getCallM (impl : List Amd64.Segment) (R : RtInv)
           R.inv b (L ++ rs) (s.regs 14).toNat (view R.rt (L ++ rs) m)) →
       ReachesRet (LibDiv.program.link impl) ret0 S' Q) :
     ReachesRet (LibDiv.program.link impl) ret0 X Q := by
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, hLs, -, -⟩ := hce
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, hLs, -, -⟩ := hce
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw hal
   unfold Apart at hga
   obtain ⟨-, hnw0, -, hnwW⟩ := hpg

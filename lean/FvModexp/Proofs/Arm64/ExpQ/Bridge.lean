@@ -22,8 +22,9 @@ namespace FvModexp.Arm64.Q
 theorem ens_param {p : Program} {e : Nat} {args : List (BitVec 64)} {pre : Nat → State → Prop}
     {post : Nat → State → State → Prop} {pre' : State → Prop} {post' : State → State → Prop}
     (h : ∀ H, Ensures p e args (pre H) (post H)) (f : State → Nat) (hpre : ∀ s, pre' s → pre (f s) s)
-    (hpost : ∀ s s', post (f s) s s' → post' s s') : Ensures p e args pre' post' :=
-  fun ret hret s hs hp => (h (f s) ret hret s hs (hpre s hp)).mono fun _ h' => ⟨h'.1, hpost _ _ h'.2⟩
+    (hpost : ∀ s s', post (f s) s s' → post' s s') (hinv : Ensures.SetRetInv p e args pre' := by janus_pre_setRet) [ArgsFit args] : Ensures p e args pre' post' := by
+  refine Ensures.of_old hinv ?_
+  exact (fun ret hret s hs hp => ((h (f s)).toOld ret hret s hs (hpre s hp)).mono fun _ h' => ⟨h'.1, hpost _ _ h'.2⟩)
 
 /-- the budget step of a bridge: the Q post with the reserve bounded by `stkRes H` -/
 theorem bud_br {b b' C H r r' : Nat} (hr : r ≤ stkRes H) (h : b - (C + r) + r' ≤ b') : b - (C + stkRes H) ≤ b' := by

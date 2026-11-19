@@ -4,6 +4,7 @@ import FvModexp.Proofs.Amd64.Exp.SubMod2NGS3
 import FvModexp.Proofs.Amd64.Exp.SubMod2NGS4A
 import FvModexp.Proofs.Amd64.Exp.SubMod2NGS4B
 import FvModexp.Proofs.Amd64.Exp.SubMod2NGS4Cb
+import FvModexp.Proofs.Amd64.SetRetLemmas
 
 set_option autoImplicit false
 
@@ -64,6 +65,7 @@ theorem ensG (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
   have hc : CodeIn64 (Extracted.program.ofImpl impl) (LibW.program.link impl) := by
     rw [LibW.eq_only]; exact codeIn_ofImpl_restrict_of_apart64 hap LibW.names
   rw [← LibW.eq_only, show segAddr Extracted.program fn = 6215840 by decide]
+  janus64_ensures_old [FvModexp.Amd64.SubMod2N.PreG, FvModexp.Amd64.CallEnv, FvModexp.Amd64.SubMod2N.K, FvModexp.Amd64.SubMod2N.A, FvModexp.Amd64.NatAdd.wordT, FvModexp.Amd64.EvenHyp.NatOne, FvModexp.Amd64.win, FvModexp.Amd64.EvenHyp.natOneA, FvModexp.NatLive, FvModexp.Amd64.SubMod2N.Ent, FvModexp.Amd64.TlsOK, FvModexp.Amd64.readLE_setRet_or_zero, FvModexp.Amd64.natNorm_setRet]
   intro ret hret s hs hpre
   janus64_intro hs
   refine Summary.returns (fullG impl hap R hns hnf hkT haT htr (subHypR0_of impl hap R hmk hmv)
@@ -91,7 +93,7 @@ theorem ens_of_G {impl : List Amd64.Segment} {R : RtInv} (h : EnsG impl R)
       [BitVec.ofNat 64 zp, BitVec.ofNat 64 zl, BitVec.ofNat 64 zc, BitVec.ofNat 64 zp, BitVec.ofNat 64 zl,
         BitVec.ofNat 64 zc, BitVec.ofNat 64 yp, BitVec.ofNat 64 yl, BitVec.ofNat 64 yc]
       (Pre R b L op zp zl zc yp yl yc n) (Post R b L zp zl zc yp yl n) :=
-  (h b L op zp zl zc yp yl yc n).mono (fun _ hp => hp.toG)
-    (fun _ _ hp hq => PostG.toPost hp.2.2.2.2.2.2.2.2.2.1 hq)
+  (h b L op zp zl zc yp yl yc n).mono_ret (fun _ hp => hp.toG)
+    (fun _ _ _ hp hq => PostG.toPost hp.2.2.2.2.2.2.2.2.2.1 hq)
 
 end FvModexp.Amd64.SubMod2N

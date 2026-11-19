@@ -57,9 +57,9 @@ def s0 : State :=
 
 theorem hret : RetAddr (Extracted.program.link WStubs.impl) RET := RetAddr.of_check (by decide +kernel)
 
-theorem setup : CallSetup ((Extracted.program.link WStubs.impl).withExit RET) (segAddr Extracted.program DivLarge.drsFn)
+theorem setup : CallSetup0 (segAddr Extracted.program DivLarge.drsFn)
     args s0 :=
-  ⟨rfl, by decide +kernel, rfl, by decide, by
+  ⟨rfl, rfl, by decide, by
     intro i h; simp only [args, List.length_cons, List.length_nil] at h
     rcases (by omega : i = 0 ∨ i = 1 ∨ i = 2 ∨ i = 3 ∨ i = 4 ∨ i = 5 ∨ i = 6 ∨ i = 7) with
       rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl <;> rfl, rfl⟩
@@ -90,6 +90,7 @@ theorem preQ : Q.DivLarge.DrsPre R 0x80000 [] 88 (Q.drsCQ 3 2) OA 1 1 ST OB 3 3 
   and_intros
   all_goals first
     | (intros; trivial)
+    | (exact ⟨by decide +kernel, by rw [hm, acc0]; decide +kernel, by decide +kernel, by decide⟩)
     | (exact ⟨by decide +kernel, by rw [hm, acc0]; decide +kernel, by decide +kernel⟩)
     | (exact ⟨⟨by decide, by decide⟩, by rw [hm, acc0]; decide +kernel, by decide +kernel⟩)
     | (intro _; exact ⟨by simp only [win, outside_cons, outside_nil, and_true]; decide +kernel,

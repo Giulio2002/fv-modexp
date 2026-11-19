@@ -30,7 +30,7 @@ theorem make_reuse (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (
     ReachesRet (LibSqr.program.link impl) (retAddrOf s) s Q := by
   have hpre' := hpre
   obtain ⟨hce, hsw, -, -, -, hxlc, hxc40, hxl12, -, hxh, -, hzc40, hzl, -, -, hzx, -, -, -, -, -⟩ := hpre'
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, -, -, -⟩ := hce
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, -, -, -⟩ := hce
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw
   have hW : 5056 ≤ W := by unfold sqrW ksqrW at hsw; omega
   have hpx : Apart zp.toNat (8 * zc.toNat) xp.toNat (8 * xl.toNat) := by

@@ -63,7 +63,7 @@ theorem pro1 (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (Nat ×
       R.inv b L (s.regs 14).toNat (view R.rt L P.mem) → ReachesRet (LibDivBasic.program.link impl) (retAddrOf s) P Q) :
     ReachesRet (LibDivBasic.program.link impl) (retAddrOf s) s Q := by
   have hce := hpre.ce
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, hLs, -, -⟩ := hce
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, hLs, -, -⟩ := hce
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw
   have hstok := hpre.stok
   obtain ⟨-, -, hstacc, hst48, -, -, -⟩ := hstok

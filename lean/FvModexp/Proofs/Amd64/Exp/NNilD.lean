@@ -20,7 +20,9 @@ set_option autoImplicit false
   the stack (`x` vs `gA` is in `NHyp.XFacts`).
 * `PostNil`: `NDefs.Post` without the stack conjuncts: value, normalised, `LiveExt` (the stack's ranges, given back to
   the pool, are NOT in the final live set), budget `24 + NCost` at `stLen = 0`, frame `R.rt ++ win ++ [z]`.
-* `PreNF` = `PreNil` at `sp = RSP - 0x498` ∧ `NHyp.XFacts` (every modulus); the stack is `DivNil.NewStk`.
+* `PreNF` = `PreNil` at `sp = RSP - 0x498` ∧ `NHyp.XFacts` (every modulus) ∧ the `natOne` word outside the window (top s55,
+  Janus v0.4.0: the precondition is stated before the return address is installed; for `zc = 0` nothing else keeps
+  the word `natOneA` that `PreNil`'s last conjunct reads apart from the return slot); the stack is `DivNil.NewStk`.
 -/
 
 open Janus Janus.Amd64 Janus.Amd64.GoABI Janus.Amd64.Tactic Janus.Spec Janus.Contracts FvModexp
@@ -94,6 +96,7 @@ def PreNF (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (K : Nat) (costF : Nat �
     (costS costP : Nat → Nat → Nat → Nat → Nat)
     (zp zl zc st xp xl xc yp yl yc mp n mc slow : Nat) (s : State) : Prop :=
   PreNil R b L K costF costD needR costR needS needP costS costP (s.regs 14).toNat s.fsBase.toNat
-    ((s.regs 4).toNat - 0x498) zp zl zc st xp xl xc yp yl yc mp n mc slow s ∧ NHyp.XFacts R L xp xl xc
+    ((s.regs 4).toNat - 0x498) zp zl zc st xp xl xc yp yl yc mp n mc slow s ∧ NHyp.XFacts R L xp xl xc ∧
+  Outside EvenHyp.natOneA 8 [((s.regs 4).toNat - 0x498 - K, (s.regs 4).toNat - 0x498 + 0x510)]
 
 end FvModexp.Amd64.ExpN

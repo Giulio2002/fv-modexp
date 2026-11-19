@@ -4,6 +4,7 @@ import FvModexp.Proofs.Amd64.Nat.DivZOneA
 import FvModexp.Proofs.Amd64.Nat.DivZCmp
 import FvModexp.Proofs.Amd64.Nat.DivZTwo
 import FvModexp.Proofs.Amd64.Nat.DivZLess
+import FvModexp.Proofs.Amd64.SetRetLemmas
 
 set_option autoImplicit false
 
@@ -69,6 +70,15 @@ theorem ensLG (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progr
     ExpSlow.DivHypLG impl R names 41512 112 (cost dc) := by
   intro b L zp zl zc st z2 z2l z2c u ul uc v vl vc
   rw [show ExpHyp.fnDiv = fn from rfl, show names = LibDiv.names from rfl, ← LibDiv.eq_only]
+  refine Ensures.of_old ?_ ?_
+  · -- `DivPreG(Q)` states the location facts of the dividend `u` under `0 < ul` only: an empty `u` (a read of 0 bytes) has no apartness from the return slot,
+    -- so the empty / non-empty cases are split and `0 < ul` is given to the rewriting (a plain `omega` over the ~40 disjunctive facts is exponential)
+    intro s ret hs hret hp
+    by_cases hu : ul = 0
+    · subst hu
+      janus64_pre_setRet_core s ret hs hret hp [FvModexp.Amd64.ExpSlow.DivPreG, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.win, FvModexp.Amd64.EvenHyp.WrOut, FvModexp.Amd64.EvenHyp.RdIn0, FvModexp.Amd64.EvenHyp.RdIn, FvModexp.Amd64.ExpHyp.StackOK', FvModexp.stCap, FvModexp.stW, FvModexp.stLen, FvModexp.Amd64.StackNat.wbA, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.Callees.adxAddr, FvModexp.Amd64.TlsOK, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.StkOK, FvModexp.Amd64.readLE_setRet_or_zero, FvModexp.Amd64.natNorm_setRet]
+    · have hul : 0 < ul := Nat.pos_of_ne_zero hu
+      janus64_pre_setRet_core s ret hs hret hp [FvModexp.Amd64.ExpSlow.DivPreG, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.win, FvModexp.Amd64.EvenHyp.WrOut, FvModexp.Amd64.EvenHyp.RdIn0, FvModexp.Amd64.EvenHyp.RdIn, FvModexp.Amd64.ExpHyp.StackOK', FvModexp.stCap, FvModexp.stW, FvModexp.stLen, FvModexp.Amd64.StackNat.wbA, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.Callees.adxAddr, FvModexp.Amd64.TlsOK, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.StkOK, FvModexp.Amd64.readLE_setRet_or_zero, FvModexp.Amd64.natNorm_setRet, hul, true_implies]
   intro ret hret s hs hpre
   janus64_intro hs
   by_cases hu : ul = 0

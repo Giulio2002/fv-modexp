@@ -33,7 +33,7 @@ theorem alloc_call (impl : List Amd64.Segment) (R : RtInv)
     ReachesRet (LibSqr.program.link impl) (retAddrOf s) S Q := by
   have hpre' := hpre
   obtain ⟨hce, hsw, hsv, -, hty, hxlc, -, hxl12, -, hxh, -, -, -, -, -, -, -, -, -, ⟨-, hcost⟩, -, hinv⟩ := hpre'
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, hLs, -, -⟩ := hce
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, hLs, -, -⟩ := hce
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw hga hgr
   have hW : 5056 ≤ W := by unfold sqrW ksqrW at hsw; omega
   have hxh' := (hxh (by omega)).1

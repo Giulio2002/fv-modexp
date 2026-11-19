@@ -4,6 +4,7 @@ import FvModexp.Proofs.Amd64.NatQ.DivZOneA
 import FvModexp.Proofs.Amd64.NatQ.DivZCmp
 import FvModexp.Proofs.Amd64.NatQ.DivZTwo
 import FvModexp.Proofs.Amd64.NatQ.DivZLess
+import FvModexp.Proofs.Amd64.SetRetLemmas
 
 set_option autoImplicit false
 
@@ -60,6 +61,21 @@ theorem fullZ (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progr
     subst hu
     exact lessC0 impl R hmz hpre hA hU z2.isLt hra hx15 hdf
 
+/-- `DivPreGQ` (with the interface cost `cost ul vl + stkR H s.mem st`) survives writing the return address: the `hinv` of `ensLG` and of the row
+`DivRowQ.correctness`. `DivPreGQ` states the location facts of the dividend `u` under `0 < ul` only: an empty `u` (a read of 0 bytes) has no apartness
+from the return slot, so the empty / non-empty cases are split and `0 < ul` is given to the rewriting (a plain `omega` over the ~40 disjunctive facts of
+the context is exponential for every side condition that is not a single disjunction). -/
+theorem divpregq_setRet (R : RtInv) (H b : Nat) (L : List (Nat × Nat)) (cost : Nat → Nat → Nat) (z zl zc st z2 z2l z2c : BitVec 64)
+    (u ul uc v vl vc : Nat) (p : Janus.Amd64.Program) (entry : Nat) (args : List W64) :
+    Ensures.SetRetInv p entry args (fun s => ExpSlow.DivPreGQ R b H (cost ul vl + FvModexp.stkR H s.mem st.toNat) L 41512 112 z.toNat
+      zl.toNat zc.toNat st.toNat z2.toNat z2l.toNat z2c.toNat u ul uc v vl vc s) := by
+  intro s ret hs hret hp
+  by_cases hu : ul = 0
+  · subst hu
+    janus64_pre_setRet_core s ret hs hret hp [FvModexp.Amd64.ExpSlow.DivPreGQ, FvModexp.stkR, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.win, FvModexp.Amd64.EvenHyp.WrOut, FvModexp.Amd64.EvenHyp.RdIn0, FvModexp.Amd64.EvenHyp.RdIn, FvModexp.Amd64.ExpHyp.StackOK', FvModexp.stCap, FvModexp.stW, FvModexp.stLen, FvModexp.Amd64.StackNat.wbA, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.Callees.adxAddr, FvModexp.stkRes, FvModexp.potK, FvModexp.Amd64.TlsOK, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.StkOK, FvModexp.Amd64.readLE_setRet_or_zero, FvModexp.Amd64.natNorm_setRet]
+  · have hul : 0 < ul := Nat.pos_of_ne_zero hu
+    janus64_pre_setRet_core s ret hs hret hp [FvModexp.Amd64.ExpSlow.DivPreGQ, FvModexp.stkR, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.win, FvModexp.Amd64.EvenHyp.WrOut, FvModexp.Amd64.EvenHyp.RdIn0, FvModexp.Amd64.EvenHyp.RdIn, FvModexp.Amd64.ExpHyp.StackOK', FvModexp.stCap, FvModexp.stW, FvModexp.stLen, FvModexp.Amd64.StackNat.wbA, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.Callees.adxAddr, FvModexp.stkRes, FvModexp.potK, FvModexp.Amd64.TlsOK, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.StkOK, FvModexp.Amd64.readLE_setRet_or_zero, FvModexp.Amd64.natNorm_setRet, hul, true_implies]
+
 /-- **`nat.div`** (amd64) in expmc's empty-tolerant / results-apart form (`ExpSlow.DivHypLG`): premise
 `DivLarge.HypG` and the live runtime contracts -/
 theorem ensLG (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
@@ -70,6 +86,7 @@ theorem ensLG (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progr
     ExpSlow.DivHypLGQ impl R names 41512 112 (costQ dc) := by
   intro H b L zp zl zc st z2 z2l z2c u ul uc v vl vc
   rw [show ExpHyp.fnDiv = fn from rfl, show names = LibDiv.names from rfl, ← LibDiv.eq_only]
+  refine Ensures.of_old (divpregq_setRet R H b L (costQ dc) zp zl zc st z2 z2l z2c u ul uc v vl vc _ _ _) ?_
   intro ret hret s hs hpre
   janus64_intro hs
   by_cases hu : ul = 0

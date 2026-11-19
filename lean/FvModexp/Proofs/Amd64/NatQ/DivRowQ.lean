@@ -2,6 +2,7 @@ import FvModexp.Proofs.Amd64.NatQ.DivCG
 import FvModexp.Proofs.Amd64.NatQ.DivRowWitQ
 import FvModexp.Proofs.Amd64.Nat.RowLink
 import FvModexp.Proofs.Amd64.Witness.StubsGrow
+import FvModexp.Proofs.Amd64.SetRetLemmas
 
 set_option autoImplicit false
 
@@ -44,7 +45,7 @@ theorem correctness (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted
         zl.toNat zc.toNat st.toNat z2.toNat z2l.toNat z2c.toNat u ul uc v vl vc s)
       (fun s s' => ExpSlow.DivPostLGQ R b (Q.NatDiv.costQ Q.drsCQ ul vl + stkR H s.mem st.toNat)
         (stkR H s'.mem st.toNat) L 41512 112 z.toNat zc.toNat st.toNat z2.toNat z2c.toNat u ul v vl s s') :=
-  Ensures.full64 hap (by simp [numIntRegs])
+  Ensures.full64 (hinv := Q.NatDiv.divpregq_setRet R H b L (Q.NatDiv.costQ Q.drsCQ) z zl zc st z2 z2l z2c u ul uc v vl vc _ _ _) hap (by simp [numIntRegs])
     (Q.NatDiv.ensCLG impl hap R hgr hmc hwb hmk hmv hmz H b L z zl zc st z2 z2l z2c u ul uc v vl vc)
 
 end FvModexp.Amd64.DivRowQ
@@ -71,7 +72,7 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (H b : Nat) (L 
     MemmoveLive64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R ∧
     MemmoveZeroLive64 (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.memmove") 4096 R ∧
     RetAddr (Extracted.program.link impl) ret ∧
-    CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program Q.NatDiv.fn)
+    CallSetup0 (segAddr Extracted.program Q.NatDiv.fn)
       [z, zl, zc, st, z2, z2l, z2c] s ∧
     ExpSlow.DivPreGQ R b H (Q.NatDiv.costQ Q.drsCQ ul vl + stkR H s.mem st.toNat) L 41512 112 z.toNat zl.toNat
       zc.toNat st.toNat z2.toNat z2l.toNat z2c.toNat u ul uc v vl vc s ∧
@@ -93,9 +94,9 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (H b : Nat) (L 
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.rip = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.memmove") ∧
       mvzSite R (Extracted.program.contractAddr "runtime.memmove") L b s_c) ∧
-    Returns ((Extracted.program.link impl).withExit ret) s fun s' => ABIReturn s s' ∧
-      ExpSlow.DivPostLGQ R b (Q.NatDiv.costQ Q.drsCQ ul vl + stkR H s.mem st.toNat) (stkR H s'.mem st.toNat) L 41512
-        112 z.toNat zc.toNat st.toNat z2.toNat z2c.toNat u ul v vl s s' :=
+    Returns ((Extracted.program.link impl).withExit ret) (s.setRet ret) fun s' => ABIReturn (s.setRet ret) s' ∧
+      ExpSlow.DivPostLGQ R b (Q.NatDiv.costQ Q.drsCQ ul vl + stkR H (s.setRet ret).mem st.toNat) (stkR H s'.mem st.toNat) L 41512
+        112 z.toNat zc.toNat st.toNat z2.toNat z2c.toNat u ul v vl (s.setRet ret) s' :=
   ⟨WStubs.impl, R, 80, 0x80000, [], 0, 0, 0, BitVec.ofNat 64 ST, 0, 0, 0, OB, 1, 1, VP, 1, 1, RET, s0, WStubs.hap,
     by rw [WStubs.addr_gr]; exact WStubs.gr [] hty _,
     by rw [WStubs.addr_cl]; exact WStubs.cl R,
@@ -116,6 +117,6 @@ theorem nonvacuous : ∃ (impl : List Amd64.Segment) (R : RtInv) (H b : Nat) (L 
       (by rw [WStubs.addr_cl]; exact WStubs.cl R) (by rw [WStubs.addr_wb2]; exact WStubs.wb2 [] hty _)
       (by rw [WStubs.addr_mk]; exact WStubs.mk [] hty _)
       (by rw [WStubs.addr_mv]; exact WStubs.mv R) (by rw [WStubs.addr_mv]; exact WStubs.mvz R) 80 0x80000 []
-      0 0 0 (BitVec.ofNat 64 ST) 0 0 0 OB 1 1 VP 1 1 RET hret s0 setup (pre Q.drsCQ cost0Q)⟩
+      0 0 0 (BitVec.ofNat 64 ST) 0 0 0 OB 1 1 VP 1 1 s0 setup (pre Q.drsCQ cost0Q) RET hret⟩
 
 end FvModexp.Amd64.DivRowQ.Witness

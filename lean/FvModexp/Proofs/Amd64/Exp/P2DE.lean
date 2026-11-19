@@ -1,4 +1,5 @@
 import FvModexp.Proofs.Amd64.Exp.P2DFull
+import FvModexp.Proofs.Amd64.Exp.P2DEInv
 
 set_option autoImplicit false
 
@@ -39,6 +40,7 @@ theorem ens {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program
   have hS := sumF hap hmkL hW2 hW4 hns hnf hrh haR hlh haL b L stk 112 hk1 hkW2 hkW4 hk2 hkR hkL (by decide)
     z.toNat zl.toNat zc.toNat st.toNat x.toNat xl.toNat xc.toNat y yl yc lm.toNat
   rw [← LibW.eq_only, fnE_eq]
+  refine Ensures.of_old (NHyp.p2pre_inv R b L stk 112 needP (costP c2 c4) z zl zc st x xl xc lm y yl yc (by decide) _ _ _) ?_
   intro ret hret s hs ⟨hy, hP, hxl, hxc, hX1, hX2, hX3, _⟩
   janus64_intro hs
   refine Summary.returns hS hret h_rip (by rw [retAddrOf, h_ret])

@@ -72,12 +72,13 @@ theorem correctness_total (impl : List Segment) (hap : ImplApart Extracted.progr
           RunArm64.FrameW R b (RunArm64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat))) L W s s') ∨
         (LengthsFail (bytesAt s.mem p.toNat len.toNat) ∧ RunArm64.ErrRet s' ∧
           RunArm64.Frame R b (3 * RunArm64.blockBound 64 + RunArm64.blockBound 16) L s s')) := by
+  janus_ensures_old [FvModexp.Spec.RunArm64.EnvW, FvModexp.Spec.RunArm64.Input, FvModexp.Spec.OsakaReceiver, FvModexp.Spec.RunArm64.Globals, FvModexp.Spec.RunArm64.windowW, FvModexp.Spec.RunArm64.NatOne, FvModexp.Spec.RunArm64.StackPool, FvModexp.Spec.bytesAt, Janus.Spec.GuardOK, Janus.Spec.StackOK, FvModexp.Spec.RunArm64.window, FvModexp.Arm64.RunIface.gA, FvModexp.Arm64.RunIface.wbA, FvModexp.Mdl.karatsubaThreshold, FvModexp.Mdl.basicSqrThreshold, FvModexp.Mdl.karatsubaSqrThreshold, FvModexp.Arm64.IExp.pA, Janus.Spec.Pool.newOffset, FvModexp.Spec.byteOf]
   intro ret hret s hs ⟨hS, hE, hI, hO, hinv, hR, hG, hN, hP, hB, hB0⟩
   by_cases hL : LengthsPass (bytesAt s.mem p.toNat len.toNat)
-  · exact (RunSucc.correctness impl hap R hmk hmkz hmv hmz hno hgr hmc hwb S hget hput hwb4 W hW b L c p len cp
+  · exact ((RunSucc.correctness impl hap R hmk hmkz hmv hmz hno hgr hmc hwb S hget hput hwb4 W hW b L c p len cp).toOld
       ret hret s hs ⟨hS, hE, hI, hO, hinv, hR, hG, hN, hP, hB hL, hL⟩).mono
       fun _ ⟨ha, h1, h2⟩ => ⟨ha, Or.inl ⟨hL, h1, h2⟩⟩
-  · exact (correctness impl hap R hmk hmv hno b L c p len cp ret hret s hs
+  · exact ((correctness impl hap R hmk hmv hno b L c p len cp).toOld ret hret s hs
       ⟨env_of_envW (by omega) hE, hI, hO, hinv, errReqs_of_okReqs hR hB0, hL⟩).mono
       fun _ ⟨ha, h1, h2⟩ => ⟨ha, Or.inr ⟨hL, h1, h2⟩⟩
 
@@ -111,7 +112,7 @@ theorem correctness_total : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L :
     WbLiveContract (Extracted.program.ofImpl impl) (Extracted.program.contractAddr "runtime.gcWriteBarrier4") 4096 R 4 ∧
     624 + 72944 ≤ W ∧
     RetAddr (Extracted.program.link impl) ret ∧
-    CallSetup ((Extracted.program.link impl).withExit ret) (segAddr Extracted.program RunArm64.fn) [c, p, len, cp] s ∧
+    CallSetup0 (segAddr Extracted.program RunArm64.fn) [c, p, len, cp] s ∧
     (StkShape = StkShape ∧ RunArm64.EnvW R L s W ∧ RunArm64.Input R L c p len cp s ∧ OsakaReceiver s.mem c.toNat ∧
         R.inv b L (s.regs 28).toNat (view R.rt L s.mem) ∧ RunArm64.OkReqs R ∧
         RunArm64.Globals R s.mem (RunArm64.windowW s W) ∧ RunArm64.NatOne R s.mem (RunArm64.windowW s W) ∧
@@ -158,12 +159,12 @@ theorem correctness_total : ∃ (impl : List Segment) (R : RtInv) (b : Nat) (L :
     (∃ (L : List (Nat × Nat)) (b : Nat) (s_c : State),
       s_c.pc = BitVec.ofNat 64 (Extracted.program.contractAddr "runtime.gcWriteBarrier4") ∧
       wbSite R (Extracted.program.contractAddr "runtime.gcWriteBarrier4") 4 L b s_c) ∧
-    Returns ((Extracted.program.link impl).withExit ret) s fun s' =>
-      ABIReturn s s' ∧
-        ((LengthsPass (bytesAt s.mem p.toNat len.toNat) ∧ RunArm64.OkRet (bytesAt s.mem p.toNat len.toNat) s' ∧
-          RunArm64.FrameW R b (RunArm64.okBudget (parseLengths (bytesAt s.mem p.toNat len.toNat))) L W s s') ∨
-        (LengthsFail (bytesAt s.mem p.toNat len.toNat) ∧ RunArm64.ErrRet s' ∧
-          RunArm64.Frame R b (3 * RunArm64.blockBound 64 + RunArm64.blockBound 16) L s s')) := by
+    Returns ((Extracted.program.link impl).withExit ret) (s.setRet ret) fun s' =>
+      ABIReturn (s.setRet ret) s' ∧
+        ((LengthsPass (bytesAt (s.setRet ret).mem p.toNat len.toNat) ∧ RunArm64.OkRet (bytesAt (s.setRet ret).mem p.toNat len.toNat) s' ∧
+          RunArm64.FrameW R b (RunArm64.okBudget (parseLengths (bytesAt (s.setRet ret).mem p.toNat len.toNat))) L W (s.setRet ret) s') ∨
+        (LengthsFail (bytesAt (s.setRet ret).mem p.toNat len.toNat) ∧ RunArm64.ErrRet s' ∧
+          RunArm64.Frame R b (3 * RunArm64.blockBound 64 + RunArm64.blockBound 16) L (s.setRet ret) s')) := by
   obtain ⟨impl, R, b, L, c, p, len, cp, ret, s, W, hap, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11, hW, hret, hs,
     hSS, hE, hI, hO, hinv, hR, hG, hN, hP, hB, hL, -,
     x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, hRet⟩ :=

@@ -58,7 +58,7 @@ theorem pro1 (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
   have hce := hpre.ce; have hthA := hpre.thA; have hthV := hpre.thV; have hthO := hpre.thO
   have hzl := hpre.zl2; have hzc40 := hpre.zcb; have hzc := hpre.zlc
   have hce' := hce
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, hLs, -, ⟨htb, htr, htg⟩, htrt, htw⟩ := hce'
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, hLs, -, ⟨htb, htr, htg⟩, htrt, htw⟩ := hce'
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw htg
   have hstok := hpre.stok
   obtain ⟨-, -, hstacc, hst48, -, -, -⟩ := hstok
@@ -128,6 +128,7 @@ theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
       [st, zp, zl, zc, xp, xl, xc]
       (Pre R b H L st.toNat zp.toNat zl.toNat zc.toNat xp.toNat xl.toNat)
       (Post R b H L st.toNat zp.toNat zl.toNat xp.toNat xl.toNat) := by
+  janus64_ensures_old [FvModexp.Amd64.Q.BasicSqr.Pre, FvModexp.Amd64.CallEnv, FvModexp.Amd64.Q.BasicSqr.thrA, FvModexp.Amd64.win, FvModexp.NatLive, FvModexp.StkOK, FvModexp.stCap, FvModexp.stW, FvModexp.Amd64.Q.BasicSqr.freeP, FvModexp.Amd64.Q.BasicSqr.freeN, FvModexp.stLen, FvModexp.stkR, FvModexp.Amd64.StackNat.wbA, FvModexp.Amd64.Callees.adxAddr, FvModexp.Amd64.TlsOK, FvModexp.stkRes, FvModexp.potK]
   rw [show names = LibBasicSqr.names from rfl, ← LibBasicSqr.eq_only]
   intro ret hret s hs hpre
   janus64_intro hs

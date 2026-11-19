@@ -39,6 +39,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
         BitVec.ofNat 64 xl, BitVec.ofNat 64 xc, BitVec.ofNat 64 yp, BitVec.ofNat 64 ylen, BitVec.ofNat 64 yc,
         BitVec.ofNat 64 mp, BitVec.ofNat 64 n, BitVec.ofNat 64 mc]
       (Pre R b L K costF zp zc st xp xl xc yp ylen mp n mc) (Post R b L K costF zp zc st xp xl yp ylen mp n) := by
+  janus_ensures_old [FvModexp.Arm64.ExpW4.Pre, FvModexp.Arm64.ExpW4.PreD, FvModexp.stLen, FvModexp.Arm64.W4En.EPre, FvModexp.natVal, FvModexp.Arm64.W4En.EEnv, FvModexp.Arm64.RunIface.Globals, FvModexp.Arm64.StackNat.wT, FvModexp.Arm64.W4En.OE, FvModexp.NatNorm, FvModexp.Arm64.RunIface.gA, FvModexp.StkOK, FvModexp.stCap, FvModexp.stW, FvModexp.Arm64.StackNat.wbA, FvModexp.Arm64.W4En.free, FvModexp.Arm64.RunIface.wbA, FvModexp.NatLive]
   rw [show names = LibW.names from rfl, ← LibW.eq_only, show segAddr Extracted.program fn = fnE by decide]
   intro ret hret s hs hpre
   janus_intro hs

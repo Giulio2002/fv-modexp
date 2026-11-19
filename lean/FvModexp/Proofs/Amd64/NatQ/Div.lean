@@ -95,6 +95,7 @@ theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
     (dc : Nat → Nat → Nat) (hL : DivLarge.HypG impl R dc) : HypL impl R dc := by
   intro H b L zp zl zc st z2 z2l z2c u ul uc v vl vc
   rw [show ExpHyp.fnDiv = fn from rfl, show names = LibDiv.names from rfl, ← LibDiv.eq_only]
+  janus64_ensures_old [FvModexp.Amd64.Q.NatDiv.Pre, FvModexp.Amd64.ExpHyp.DivPreQ, FvModexp.AsmDivVW.H, FvModexp.stkR, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.win, FvModexp.Amd64.EvenHyp.WrOut, FvModexp.Amd64.EvenHyp.RdIn, FvModexp.NatNorm, FvModexp.Amd64.ExpHyp.StackOK', FvModexp.stCap, FvModexp.stW, FvModexp.stLen, FvModexp.Amd64.StackNat.wbA, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.Callees.adxAddr, FvModexp.stkRes, FvModexp.potK, FvModexp.Amd64.TlsOK, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.StkOK]
   intro ret hret s hs hpre
   janus64_intro hs
   refine Summary.returns (full impl hap R hmk0 hmv0 hmz0 dc hL b L zp zl zc st z2 z2l z2c u ul uc v vl vc) hret

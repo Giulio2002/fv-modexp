@@ -40,8 +40,8 @@ def MulHypQ0 (impl : List Segment) (R : RtInv) (ns : List String) (stk above : N
 theorem MulHypQ0.toQ {impl : List Segment} {R : RtInv} {ns : List String} {stk above : Nat}
     {cost : Nat → Nat → Nat} (h : MulHypQ0 impl R ns stk above cost) : MulHypQ impl R ns stk above cost :=
   fun H b L z zl zc st x xl xc y yl yc =>
-    (h H b L z zl zc st x xl xc y yl yc).mono (fun _ ⟨h1, h2, h3, h4, h5⟩ => ⟨h1.to0, h2, h3, h4, h5⟩)
-      (fun _ _ _ hq => hq)
+    (h H b L z zl zc st x xl xc y yl yc).mono_ret (fun _ ⟨h1, h2, h3, h4, h5⟩ => ⟨h1.to0, h2, h3, h4, h5⟩)
+      (fun _ _ _ _ hq => hq)
 
 /-- **`MulHypQ0` with the exact-write clause** in the post -/
 def MulHypQE0 (impl : List Segment) (R : RtInv) (ns : List String) (stk above : Nat) (cost : Nat → Nat → Nat) :
@@ -78,8 +78,8 @@ def MulHypQE (impl : List Segment) (R : RtInv) (ns : List String) (stk above : N
 theorem MulHypQE0.toQE {impl : List Segment} {R : RtInv} {ns : List String} {stk above : Nat}
     {cost : Nat → Nat → Nat} (h : MulHypQE0 impl R ns stk above cost) : MulHypQE impl R ns stk above cost :=
   fun H b L z zl zc st x xl xc y yl yc =>
-    (h H b L z zl zc st x xl xc y yl yc).mono (fun _ ⟨h1, h2, h3, h4, h5⟩ => ⟨h1.to0, h2, h3, h4, h5⟩)
-      (fun _ _ _ hq => hq)
+    (h H b L z zl zc st x xl xc y yl yc).mono_ret (fun _ ⟨h1, h2, h3, h4, h5⟩ => ⟨h1.to0, h2, h3, h4, h5⟩)
+      (fun _ _ _ _ hq => hq)
 
 end FvModexp.Arm64.EvenHyp
 
@@ -152,8 +152,8 @@ theorem hypQ0 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R 
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
     (hwb : WbLiveContract (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2) :
     MulHypQ0 impl R names mulWX 88 mulCQ := fun H b L z zl zc st x xl xc y yl yc =>
-  (ens impl hap R hmk hgr hmc hmv hwb H b L mulWX z zl zc st x xl xc y yl yc).mono
-    (fun _ ⟨h1, h2, h3, h4, h5⟩ => q_pre h1 h2 h3 h4 h5) (fun _ _ _ hq => q_post hq)
+  (ens impl hap R hmk hgr hmc hmv hwb H b L mulWX z zl zc st x xl xc y yl yc).mono_ret
+    (fun _ ⟨h1, h2, h3, h4, h5⟩ => q_pre h1 h2 h3 h4 h5) (fun _ _ _ _ hq => q_post hq)
 
 /-- **`nat.mul`** (arm64) in the Q-form premise `MulHypQ` (= `hypQ0.toQ`) -/
 theorem hypQ (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
@@ -173,8 +173,8 @@ theorem hypQE0 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
     (hmv : MemmoveLive (Extracted.program.ofImpl impl) (cA "runtime.memmove") 4096 R)
     (hwb : WbLiveContract (Extracted.program.ofImpl impl) (cA "runtime.gcWriteBarrier2") 4096 R 2) :
     MulHypQE0 impl R names mulWX 88 mulCQ := fun H b L z zl zc st x xl xc y yl yc =>
-  (ens impl hap R hmk hgr hmc hmv hwb H b L mulWX z zl zc st x xl xc y yl yc).mono
-    (fun _ ⟨h1, h2, h3, h4, h5⟩ => q_pre h1 h2 h3 h4 h5) (fun _ _ _ hq => ⟨(q_post hq).1, q_exact hq⟩)
+  (ens impl hap R hmk hgr hmc hmv hwb H b L mulWX z zl zc st x xl xc y yl yc).mono_ret
+    (fun _ ⟨h1, h2, h3, h4, h5⟩ => q_pre h1 h2 h3 h4 h5) (fun _ _ _ _ hq => ⟨(q_post hq).1, q_exact hq⟩)
 
 /-- **`nat.mul`** (arm64) with the exact-write clause, `MulPre` operands (`MulHypQE`, = `hypQE0.toQE`) -/
 theorem hypQE (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)

@@ -106,6 +106,7 @@ theorem ensLG0 (impl : List Segment) (hap : ImplApart Extracted.program impl) (R
       (fun s => Pre R b dc L z.toNat zl.toNat zc.toNat st.toNat z2.toNat z2l.toNat z2c.toNat u.toNat ul.toNat
         v.toNat vl.toNat s)
       (fun s s' => PostLG R b dc L z.toNat zc.toNat st.toNat z2.toNat z2c.toNat u.toNat ul.toNat v.toNat vl.toNat s s') := by
+  janus_ensures_old [FvModexp.Arm64.NatDiv.Pre, FvModexp.Arm64.ExpHyp.DivPre, FvModexp.Arm64.CallEnv, FvModexp.Arm64.RunIface.Globals, FvModexp.Arm64.win, FvModexp.Arm64.ExpHyp.WrOut, FvModexp.Arm64.ExpHyp.RdIn, FvModexp.NatNorm, FvModexp.Arm64.ExpHyp.StackOK', FvModexp.stCap, FvModexp.stW, FvModexp.stLen, FvModexp.Arm64.StackNat.wbA, FvModexp.Arm64.RunIface.gA, Janus.Spec.GuardOK, Janus.Spec.StackOK, FvModexp.Arm64.RunIface.wbA, FvModexp.NatLive, FvModexp.StkOK]
   rw [show names = LibDiv.names from rfl, ← LibDiv.eq_only]
   intro ret hret s hs hpre
   janus_intro hs
@@ -128,8 +129,8 @@ theorem ensL (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
       (fun s => Pre R b dc L z.toNat zl.toNat zc.toNat st.toNat z2.toNat z2l.toNat z2c.toNat u.toNat ul.toNat
         v.toNat vl.toNat s)
       (fun s s' => PostL R b dc L z.toNat zc.toNat st.toNat z2.toNat z2c.toNat u.toNat ul.toNat v.toNat vl.toNat s s') :=
-  (ensLG0 impl hap R hmk0 hmv0 hmz0 dc hL b L z zl zc st z2 z2l z2c u ul uc v vl vc).mono (fun _ h => h)
-    (fun _ _ _ h => ExpSlow.DivPostLG.toL h)
+  (ensLG0 impl hap R hmk0 hmv0 hmz0 dc hL b L z zl zc st z2 z2l z2c u ul uc v vl vc).mono_ret (fun _ h => h)
+    (fun _ _ _ _ h => ExpSlow.DivPostLG.toL h)
 
 /-- `ensL` in the `StackBack` form (`ExpHyp.DivPost`) -/
 theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
@@ -143,8 +144,8 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
       (fun s => Pre R b dc L z.toNat zl.toNat zc.toNat st.toNat z2.toNat z2l.toNat z2c.toNat u.toNat ul.toNat
         v.toNat vl.toNat s)
       (fun s s' => Post R b dc L z.toNat zc.toNat st.toNat z2.toNat z2c.toNat u.toNat ul.toNat v.toNat vl.toNat s s') :=
-  (ensL impl hap R hmk0 hmv0 hmz0 dc hL b L z zl zc st z2 z2l z2c u ul uc v vl vc).mono (fun _ h => h)
-    (fun _ _ _ h => h.toDivPost)
+  (ensL impl hap R hmk0 hmv0 hmz0 dc hL b L z zl zc st z2 z2l z2c u ul uc v vl vc).mono_ret (fun _ h => h)
+    (fun _ _ _ _ h => h.toDivPost)
 
 end FvModexp.Arm64.NatDiv
 
@@ -185,7 +186,7 @@ theorem ensD (impl : List Segment) (hap : ImplApart Extracted.program impl) (R :
       (fun s => Pre R b dc L z.toNat zl.toNat zc.toNat st.toNat z2.toNat z2l.toNat z2c.toNat u.toNat ul.toNat
         v.toNat vl.toNat s)
       (fun s s' => Post R b dc L z.toNat zc.toNat st.toNat z2.toNat z2c.toNat u.toNat ul.toNat v.toNat vl.toNat s s') :=
-  (ensDL impl hap R hgr hmc hwb hmk0 hmv0 hmz0 dc hD b L z zl zc st z2 z2l z2c u ul uc v vl vc).mono (fun _ h => h)
-    (fun _ _ _ h => h.toDivPost)
+  (ensDL impl hap R hgr hmc hwb hmk0 hmv0 hmz0 dc hD b L z zl zc st z2 z2l z2c u ul uc v vl vc).mono_ret (fun _ h => h)
+    (fun _ _ _ _ h => h.toDivPost)
 
 end FvModexp.Arm64.NatDiv

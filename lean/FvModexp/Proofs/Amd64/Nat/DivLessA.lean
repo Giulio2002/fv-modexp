@@ -32,7 +32,7 @@ theorem lessA (impl : List Amd64.Segment) (R : RtInv)
     ReachesRet (LibDiv.program.link impl) (retAddrOf s) S Q := by
   have hp := hpre.f
   have hce := hp.ce
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, hLs, hro, ⟨htg, htr, htw⟩⟩ := hp.ce
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, hLs, hro, ⟨htg, htr, htw⟩⟩ := hp.ce
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw hal
   unfold Apart at hga htw
   have hinv0 := hp.inv

@@ -48,7 +48,7 @@ theorem cenv_in {R : RtInv} {L : List (Nat × Nat)} {s : State} {stk above sp K 
     (h1 : (s.regs 4).toNat - stk ≤ sp - K) (hKs : K ≤ sp) (h2 : sp + A ≤ (s.regs 4).toNat + above)
     (h3 : sp ≤ (s.regs 4).toNat) (hal : sp % 8 = 0) (hst : K + ((s.regs 4).toNat - sp) ≤ stk) :
     CallW.CEnv R L (s.regs 14).toNat s.fsBase.toNat sp K A M := by
-  obtain ⟨⟨hgw, hgr, hgb⟩, ⟨hb', ha, hw⟩, -, hd, hout, hga, hgrt, hLs, hro, ⟨⟨hfb, hfr, hfg⟩, hfrt, hfw⟩⟩ := hce
+  obtain ⟨⟨hgw, hgr, hgb, _⟩, ⟨hb', ha, hw⟩, -, hd, hout, hga, hgrt, hLs, hro, ⟨⟨hfb, hfr, hfg⟩, hfrt, hfw⟩⟩ := hce
   simp only [stackguard0, regG, stackguard0Offset, regSP] at hgw hgr hgb hb' ha hw hfg
   simp only [win] at hF hLs
   generalize (s.regs 4).toNat = t at *
@@ -100,6 +100,11 @@ theorem ne0_sub {R : RtInv} {L : List (Nat × Nat)} {sp K p k k' : Nat} (h : Exp
 /-- an opaque wrapper: hides a fact from `omega`'s case splits -/
 structure BoxI (P : Prop) : Prop where
   unbox : P
+
+/-- the `natOne` word outside `nat.expNN`'s window (`ExpN.PreNF`'s last conjunct; top s55) -/
+theorem natOneW {a t stk above K : Nat} (hK : K + 0x5d0 ≤ stk) (hst : stk ≤ t) (hab : 0x30 ≤ above)
+    (h : a + 24 ≤ t - stk ∨ t + above ≤ a) : Outside a 8 [(t - 0x5d0 - K, t - 0x5d0 + 0x510)] := by
+  simp only [outside_cons, outside_nil, and_true]; omega
 
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
@@ -188,6 +193,7 @@ theorem preNF_of {R : RtInv} {b B : Nat} {L : List (Nat × Nat)} {stk above K : 
     have := hn7; simp only [outside_cons, outside_nil, and_true] at this
     have eO : EvenHyp.natOneA = RunIface.natOneA := rfl
     rw [hrd _ _ (by rw [eO]; omega)]; exact hoG
+  have hW3 : Outside EvenHyp.natOneA 8 [(t - 0x5d0 - K, t - 0x5d0 + 0x510)] := natOneW hK hst hab hn7.1
   unfold ExpN.PreNF ExpN.PreNil
   rw [e1, e2, e3]
   have r1 : t - 0x5d0 + 0x4a0 = t - 0x130 := by omega
@@ -210,7 +216,7 @@ theorem preNF_of {R : RtInv} {b B : Nat} {L : List (Nat × Nat)} {stk above K : 
     fun h => (hzP.unbox.1 (by omega)).2.2, hzP.unbox.2.1, by omega, hzlc, hzc40,
     hzp, ⟨hzlc, rfl, rfl, rfl⟩, hzc40, fun h => Or.inl ⟨h, rfl⟩, fun h => ?_, ?_, fun h => ?_, rfl, ?_,
     by omega, hnR, hnS, hnP, by omega,
-    FvModexp.Amd64.ExpN.oBud_mono hob (by omega), ?_, hoG3⟩, hXF⟩
+    FvModexp.Amd64.ExpN.oBud_mono hob (by omega), ?_, hoG3⟩, hXF, hW3⟩
   · -- globals
     have hgw := hG.2.2.2.2.2.2.2.2.2.1
     simp only [outside_cons, outside_nil, and_true] at hgw

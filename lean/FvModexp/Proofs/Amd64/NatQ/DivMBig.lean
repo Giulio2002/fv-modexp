@@ -55,7 +55,7 @@ theorem bigCallM (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.pr
     (i0 : X.mem.readLE ((s.regs 4).toNat - 232) 8 = u) (i1 : X.mem.readLE ((s.regs 4).toNat - 224) 8 = ul)
     (i3 : X.mem.readLE ((s.regs 4).toNat - 208) 8 = v) (i4 : X.mem.readLE ((s.regs 4).toNat - 200) 8 = vl) :
     ReachesRet (LibDiv.program.link impl) (retAddrOf s) X (RQM R b dc L u ul uc v vl s) := by
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, hLs, -⟩ := hp.ce
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, hLs, -⟩ := hp.ce
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw hal hga
   have hwO : Outside ((s.regs 4).toNat - 41512) (41512 + 112) R.rt := hout
   have hspn : (X.regs 4).toNat = (s.regs 4).toNat - 240 := by

@@ -49,7 +49,7 @@ theorem gcall_pre {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st n : Nat} {s 
     GrowslicePre64 4096 S ∧ StackRoom64 S 4096 5 ∧
       LiveAt R (cA "runtime.growslice") (growsliceArgs64 S) L b (growsliceRound64 S) (S.regs 14).toNat S.mem
         (liveWin64 S 4096 5) := by
-  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, hLs, hro, htls⟩, hsv, hok, hstw, harr, hn16, hln,
+  obtain ⟨⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, hLs, hro, htls⟩, hsv, hok, hstw, harr, hn16, hln,
     hcost, hinv0, -⟩ := hpre
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw
   obtain ⟨-, -, -, -, hnl, hlc, hcb⟩ := hok
@@ -122,7 +122,7 @@ theorem mcall_pre {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st n : Nat} {s 
       LiveMemAt64 R (cA "runtime.memclrNoHeapPointers") [(S.regs 0).toNat, (S.regs 3).toNat] L1 b1 S
         (liveWin64 S 4096 2) ∧
       LiveDest64 R L1 S 4096 2 (S.regs 0).toNat (S.regs 3).toNat := by
-  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, hLs, hro, htls⟩, hsv, hok, hstw, harr, hn16, hln,
+  obtain ⟨⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, hLs, hro, htls⟩, hsv, hok, hstw, harr, hn16, hln,
     hcost, hinv0, -⟩ := hpre
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw
   obtain ⟨-, -, -, -, hnl, hlc, hcb⟩ := hok
@@ -133,11 +133,12 @@ theorem mcall_pre {R : RtInv} {b : Nat} {L : List (Nat × Nat)} {st n : Nat} {s 
   unfold Apart at hpw
   have hgS : S.mem.readLE ((s.regs 14).toNat + 16) 8 = s.mem.readLE ((s.regs 14).toNat + 16) 8 :=
     hF.readLE _ _ (by simp only [outside_append, outside_cons, outside_nil, and_true]; exact ⟨hgr, by omega⟩)
-  refine ⟨⟨⟨?_, ?_, ?_⟩, ⟨by omega, by omega, by omega, ?_, hx15, hdf, hra⟩, ?_⟩, ⟨?_, by rw [h14]; exact hinv, ?_, ?_⟩,
+  refine ⟨⟨⟨?_, ?_, ?_, ?_⟩, ⟨by omega, by omega, by omega, ?_, hx15, hdf, hra⟩, ?_⟩, ⟨?_, by rw [h14]; exact hinv, ?_, ?_⟩,
     ?_, ?_, ?_, ?_, ?_⟩
   · simp only [stackguard0Offset, regG, h14]; omega
   · simp only [stackguard0Offset, regG, h14]; rw [hF.accessible]; exact hg2
   · simp only [stackguard0, stackguard0Offset, regG, regSP, h14]; rw [hgS]; omega
+  · first | omega | (simp only [stackguard0Offset, regG, regSP]; omega) | (simp_all only [stackguard0Offset, regG, regSP, Apart]; omega)
   · rw [hF.accessible]; exact Janus.Arm64.Memory.accessible_mono _ hw (by omega) (by omega)
   · simp only [MemAmd64.calleeStack, MapAmd64.calleeStack, h14, outside_cons, outside_nil, and_true]; omega
   · exact hsv.2.2.1 _ _ (by rw [h3]; omega)

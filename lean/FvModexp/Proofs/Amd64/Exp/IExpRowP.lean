@@ -63,6 +63,6 @@ theorem correctnessP (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracte
     rw [LibExpI.eq_only]; exact codeIn_ofImpl_restrict_of_apart64 hap LibExpI.names
   have hE := IExp.ens impl hap R H hRem hnsR hnfR hKR hEv hno0 hget0 hput0 (WbLiveContract64.of_codeIn hcI hwb0)
     hK hK4 hK20 h1138 hab hneed hbud b L z y mm
-  exact Ensures.full64 hap (by simp [numIntRegs]) hE
+  exact Ensures.full64 (hinv := by janus64_pre_setRet [FvModexp.Amd64.RunIface.IntPre, FvModexp.Amd64.RunIface.lenW, FvModexp.Amd64.RunIface.IntV, FvModexp.Amd64.RunIface.IntLenLe, FvModexp.Amd64.RunIface.maxW, FvModexp.Amd64.RunIface.OneG, FvModexp.Amd64.win, FvModexp.Amd64.RunIface.PoolG, FvModexp.Amd64.RunIface.wbA, FvModexp.Amd64.RunIface.ModX, FvModexp.Amd64.IExp.ExpA, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Exp.B, FvModexp.Amd64.RunIface.IntOK, FvModexp.natVal, FvModexp.Amd64.RunIface.natOneA, FvModexp.Amd64.RunIface.stackPoolA, Janus.Spec.Pool.newOffset, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.Callees.adxAddr, FvModexp.Amd64.TlsOK, FvModexp.NatLive, FvModexp.NatNorm]) hap (by simp [numIntRegs]) hE
 
 end FvModexp.Amd64.IExpRowP

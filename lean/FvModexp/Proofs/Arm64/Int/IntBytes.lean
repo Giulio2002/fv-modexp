@@ -22,6 +22,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
     (b : Nat) (L : List (Nat × Nat)) (x : BitVec 64) :
     Ensures ((Extracted.program.onlySegments [fn]).link impl) (segAddr Extracted.program fn) [x]
       (Pre R b L x) (Post R b L x) := by
+  janus_ensures_old [FvModexp.Arm64.IntBytes.Pre, FvModexp.Arm64.RunIface.IntPre, FvModexp.Arm64.RunIface.lenW, FvModexp.Arm64.RunIface.IntLenLe, FvModexp.Arm64.RunIface.maxW, FvModexp.Arm64.CallEnv, FvModexp.Arm64.RunIface.Globals, FvModexp.Arm64.win, FvModexp.Arm64.RunIface.IntOK, Janus.Spec.GuardOK, Janus.Spec.StackOK, FvModexp.Arm64.RunIface.gA, FvModexp.Arm64.RunIface.wbA, FvModexp.NatLive, FvModexp.NatNorm]
   intro ret hret s hs ⟨⟨⟨⟨hg1, hg2, hg3⟩, ⟨hal, hb', ha, hw⟩, hd, hout, hga, hgr, hLs, hro⟩, hsv, hgl, hB, hinv,
     hints, _⟩, hlen⟩
   obtain ⟨⟨hneg, hx8, hx48, hxacc, hxheld, hlive, hlc, hnorm, hxarr⟩, hxw, harw, hxg, harg⟩ :=

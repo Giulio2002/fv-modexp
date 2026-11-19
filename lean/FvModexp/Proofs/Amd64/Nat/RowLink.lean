@@ -27,7 +27,8 @@ theorem argsFrom_of {s : State} : ∀ {args : List W64} {k : Nat},
 
 theorem Ensures.full64 {P : Amd64.Program} {impl : List Amd64.Segment} (hap : Amd64.ImplApart P impl) {ns : List String} {entry : Nat}
     {args : List W64} {pre : State → Prop} {post : State → State → Prop} (hlen : args.length ≤ numIntRegs)
-    (h : Ensures ((P.onlySegments ns).link impl) entry args pre post) : Ensures (P.link impl) entry args pre post := by
+    (h : Ensures ((P.onlySegments ns).link impl) entry args pre post) (hinv : Ensures.SetRetInv (P.link impl) entry args pre := by janus64_pre_setRet) : Ensures (P.link impl) entry args pre post := by
+  refine Ensures.of_old hinv ?_
   intro ret hret s hs hpre
   have hS := Ensures.toSummaryIn h (FvModexp.A64.noExit_restrict64 hap ns) hlen (codeIn_restrict_of_apart64 hap ns)
   refine Summary.returns hS hret hs.rip (by rw [retAddrOf_eq, hs.ret]; rfl) ⟨?_, hs.zero,

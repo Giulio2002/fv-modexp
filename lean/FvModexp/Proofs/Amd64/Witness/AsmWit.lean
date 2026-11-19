@@ -186,7 +186,7 @@ theorem cs_guard (a x y z : Nat) : GuardOK64 (callS a x y z) 4096 := by
 
 theorem cs_sg (a x y z : Nat) : StackGuardOK (callS a x y z) 4096 := by
   obtain ⟨h1, h2, h3⟩ := cs_guard a x y z
-  exact ⟨h1, h2, h3⟩
+  exact ⟨h1, h2, h3, by simp only [regG, regSP, stackguard0Offset, cs_g, cs_sp, G0, CSP, SP0, BitVec.toNat_ofNat]; omega⟩
 
 theorem cs_room (a x y z n : Nat) (hn : n ≤ 5) : StackRoom64 (callS a x y z) 4096 n := by
   refine ⟨cs_guard a x y z, ?_⟩

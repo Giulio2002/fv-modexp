@@ -1,5 +1,6 @@
 import FvModexp.Proofs.Amd64.Exp.NJ1
 import FvModexp.Proofs.Amd64.Exp.NPro
+import FvModexp.Proofs.Amd64.Exp.NInv
 
 set_option autoImplicit false
 
@@ -54,6 +55,7 @@ theorem ens_noEven (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.
         BitVec.ofNat 64 xl, BitVec.ofNat 64 xc, BitVec.ofNat 64 slow]
       (Pre R b L K costF costD needR costR needS needP costS costP zp zl zc st xp xl xc yp yl yc mp n mc slow)
       (Post R b L K costD costR costS costP zp zc st xp xl yp yl mp n) := by
+  refine Ensures.of_old (fun s ret _ _ hp => pre_setRet ret hp) ?_
   rw [show names = LibN.names from rfl, ← LibN.eq_only, show segAddr Extracted.program fn = fnN by decide]
   intro ret hret s hs hpre
   janus64_intro hs

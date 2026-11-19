@@ -31,7 +31,7 @@ theorem one1G (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (dc : Nat → Na
       ReachesRet (LibDiv.program.link impl) (retAddrOf s) X Q) :
     ReachesRet (LibDiv.program.link impl) (retAddrOf s) s Q := by
   have hp := hpre.f
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -⟩ := hp.ce
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, -⟩ := hp.ce
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw
   have r1 := hp.ru; have r2 := hp.rul; have r3 := hp.ruc; have r4 := hp.rv; have r5 := hp.rvl; have r6 := hp.rvc
   obtain ⟨-, hvacc, hv48, -, hvw⟩ := hp.vo

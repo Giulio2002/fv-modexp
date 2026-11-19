@@ -5,7 +5,11 @@ import FvModexp.Proofs.Amd64.Exp.P2PreX
 import FvModexp.Proofs.Amd64.Exp.P2PreX1
 import FvModexp.Proofs.Amd64.Exp.P2PreXT
 import FvModexp.Proofs.Amd64.Exp.P2PreRnd
-
+import FvModexp.Proofs.Amd64.Exp.P2PreDefE
+import FvModexp.Proofs.Amd64.Exp.P2PreInvPP
+import FvModexp.Proofs.Amd64.Exp.P2PreInvPN
+import FvModexp.Proofs.Amd64.Exp.P2PreInvNP
+import FvModexp.Proofs.Amd64.Exp.P2PreInvNN
 set_option autoImplicit false
 
 /-!
@@ -32,29 +36,6 @@ namespace FvModexp.Amd64.P2Pre
 open FvModexp.Amd64.RunIface (Serves Globals)
 open FvModexp.Amd64.EvenHyp
 open FvModexp.Amd64.Q.NatSqr (StkPre StkSep tls guard)
-
-/-- **the precondition** (effective budget `b`): `Pre` without the call-setup facts -/
-@[reducible] def PreE (R : RtInv) (kc : Nat) (b : Nat) (L : List (Nat × Nat)) (st pw pl ws lm x xl : Nat) (s : State) :
-    Prop :=
-  CallEnv R L s (K kc) A ∧ Serves R ∧ Globals R s.mem (win s (K kc) A ++ [(pw, pw + 24 * pl), (st, st + 24)]) ∧
-    (ws = 2 ∨ ws = 4) ∧ pl = 2 ^ ws ∧ 2 ≤ lm ∧ lm ≤ 2 ^ 13 ∧
-    pw % 8 = 0 ∧ pw + 24 * pl ≤ 2 ^ 48 ∧ s.mem.accessible pw (24 * pl) true = true ∧ Outside pw (24 * pl) R.rt ∧
-    Outside pw (24 * pl) (win s (K kc) A) ∧ Apart pw (24 * pl) (guard s) 8 ∧ Apart pw (24 * pl) (tls s) 8 ∧
-    StkSep s.mem st pw (24 * pl) ∧ (0 < xl → Apart pw (24 * pl) x (8 * xl)) ∧
-    RdIn R L s (K kc) A x xl ∧ NatNorm s.mem x xl ∧ xl ≤ 2 ^ 12 ∧ (0 < xl → StkSep s.mem st x (8 * xl)) ∧
-    StkPre R L s (K kc) A st ∧ stLen s.mem st + 2 ^ 12 ≤ 2 ^ 16 ∧
-    (∃ op, NatOne R L s.mem op (win s (K kc) A ++ LW s pw pl st) ∧ StkSep s.mem st op 8) ∧
-    cost pl lm ≤ b ∧ R.inv (b + stkR (HP (stLen s.mem st) pl lm) s.mem st) L (s.regs 14).toNat (view R.rt L s.mem) ∧
-    Outside NatAdd.wordT 16 R.rt ∧ s.mem.accessible Callees.adxAddr 1 false = true
-
-theorem pre_of {R : RtInv} {kc : Nat} {b : Nat} {L : List (Nat × Nat)} {st pw pl ws lm x xl : Nat} {s : State}
-    (h : PreE R kc b L st pw pl ws lm x xl s) (hr : s.mem.readLE (s.regs 4).toNat 8 < 2 ^ 47)
-    (hx : s.xmm 15 = 0) (hd : s.df = false) : Pre R kc b L st pw pl ws lm x xl s := by
-  obtain ⟨a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23,
-    a24, a25, a26, a27⟩ := h
-  exact ⟨a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23,
-    a24, a25, a26, a27, hr, hx, hd⟩
-
 set_option maxRecDepth 20000 in
 /-- the whole function from its entry, as a `Summary` on the exp layer's program -/
 theorem full {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program impl) {R : RtInv}
@@ -83,6 +64,15 @@ theorem full {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.progra
 
 def names : List String := LibW.names
 
+theorem preE_inv {R : RtInv} {kc b : Nat} {L : List (Nat × Nat)} {st pw pl ws lm x xl : Nat} (p : Janus.Amd64.Program) (e : Nat) (args : List W64) :
+    Ensures.SetRetInv p e args (PreE R kc b L st pw pl ws lm x xl) := by
+  intro s ret hs hret hp
+  by_cases h1 : 0 < xl <;> by_cases h2 : 0 < stCap s.mem st
+  · exact preE_setRet_pp s ret hs hret h1 h2 hp
+  · exact preE_setRet_pn s ret hs hret h1 h2 hp
+  · exact preE_setRet_np s ret hs hret h1 h2 hp
+  · exact preE_setRet_nn s ret hs hret h1 h2 hp
+
 set_option maxRecDepth 20000 in
 /-- **`buildPrecomputationWindowModPower2`** (amd64): the table `powers[j] = X^j mod 2^logM` (`Exp.p2Pow`), see the
 module doc; `Post` (P2PreDefs) states the values, the stack growth, the scratch nat and the frames. -/
@@ -101,6 +91,7 @@ theorem ens {impl : List Amd64.Segment} (hap : Amd64.ImplApart Extracted.program
       [BitVec.ofNat 64 st, BitVec.ofNat 64 pw, BitVec.ofNat 64 pl, BitVec.ofNat 64 pc, BitVec.ofNat 64 ws,
         BitVec.ofNat 64 lm, BitVec.ofNat 64 x, BitVec.ofNat 64 xl, BitVec.ofNat 64 xc]
       (PreE R kc b L st pw pl ws lm x xl) (Post R kc b L st pw pl lm x xl) := by
+  refine Ensures.of_old (preE_inv _ _ _) ?_
   have hc : CodeIn64 (Extracted.program.ofImpl impl) (LibW.program.link impl) := by
     rw [LibW.eq_only]; exact codeIn_ofImpl_restrict_of_apart64 hap LibW.names
   have hmvL : MemmoveLive64 (LibW.program.link impl) mvE 4096 R := by

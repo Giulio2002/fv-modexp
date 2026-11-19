@@ -1,6 +1,7 @@
 import FvModexp.Proofs.Amd64.Int.IntBytesLoop
 import FvModexp.Proofs.Amd64.Int.IntBytesMid
 import FvModexp.Proofs.Amd64.Top.RunIfaceMono
+import FvModexp.Proofs.Amd64.SetRetLemmas
 
 /-!
 # `(*Int).Bytes` (amd64): `ens` (= `RunIface.BytesSpec` at `stk = 4160`, `above = 16`) and `sum`
@@ -13,6 +14,31 @@ open FvModexp.Amd64.RunIface
 
 namespace FvModexp.Amd64.IntBytes
 
+theorem intbytes_setRet_p (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (x : BitVec 64)  (s : State) (ret : Nat) {p : Janus.Amd64.Program} {entry : Nat} {args : List W64} (hs : CallSetup0 entry args s) (hret : RetAddr p ret) (hg0 : 0 < s.mem.readLE (x.toNat + 24) 8)
+    (hp : FvModexp.Amd64.IntBytes.Pre R b L x s) :
+    FvModexp.Amd64.IntBytes.Pre R b L x (s.setRet ret) := by
+  simp only [FvModexp.Amd64.IntBytes.Pre, FvModexp.Amd64.RunIface.IntPre, List.forall_mem_cons, List.forall_mem_nil, List.pairwise_cons, List.mem_cons, List.not_mem_nil, or_false, List.Pairwise.nil, and_true, true_and, forall_eq, List.mem_singleton, forall_eq_or_imp, false_implies, implies_true, forall_const, List.Pairwise.nil] at hp ⊢
+  janus64_pre_setRet_core s ret hs hret hp [FvModexp.Amd64.IntBytes.Pre, FvModexp.Amd64.RunIface.IntPre, FvModexp.Amd64.RunIface.lenW, FvModexp.Amd64.RunIface.IntLenLe, FvModexp.Amd64.RunIface.maxW, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.win, FvModexp.Amd64.RunIface.IntOK, FvModexp.Amd64.TlsOK, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.Amd64.readLE_setRet_or_zero, FvModexp.Amd64.natNorm_setRet, hg0, false_implies, true_implies]
+
+theorem intbytes_setRet_n (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (x : BitVec 64)  (s : State) (ret : Nat) {p : Janus.Amd64.Program} {entry : Nat} {args : List W64} (hs : CallSetup0 entry args s) (hret : RetAddr p ret) (hg0 : ¬ 0 < s.mem.readLE (x.toNat + 24) 8)
+    (hp : FvModexp.Amd64.IntBytes.Pre R b L x s) :
+    FvModexp.Amd64.IntBytes.Pre R b L x (s.setRet ret) := by
+  simp only [FvModexp.Amd64.IntBytes.Pre, FvModexp.Amd64.RunIface.IntPre, List.forall_mem_cons, List.forall_mem_nil, List.pairwise_cons, List.mem_cons, List.not_mem_nil, or_false, List.Pairwise.nil, and_true, true_and, forall_eq, List.mem_singleton, forall_eq_or_imp, false_implies, implies_true, forall_const, List.Pairwise.nil] at hp ⊢
+  janus64_pre_setRet_core s ret hs hret hp [FvModexp.Amd64.IntBytes.Pre, FvModexp.Amd64.RunIface.IntPre, FvModexp.Amd64.RunIface.lenW, FvModexp.Amd64.RunIface.IntLenLe, FvModexp.Amd64.RunIface.maxW, FvModexp.Amd64.CallEnv, FvModexp.Amd64.RunIface.Globals, FvModexp.Amd64.win, FvModexp.Amd64.RunIface.IntOK, FvModexp.Amd64.TlsOK, FvModexp.Amd64.RunIface.gA, FvModexp.Amd64.RunIface.wbA, FvModexp.NatLive, FvModexp.Amd64.readLE_setRet_or_zero, FvModexp.Amd64.natNorm_setRet, hg0, false_implies, true_implies]
+
+theorem intbytes_setRet (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (x : BitVec 64)  (s : State) (ret : Nat) {p : Janus.Amd64.Program} {entry : Nat} {args : List W64} (hs : CallSetup0 entry args s) (hret : RetAddr p ret) 
+    (hp : FvModexp.Amd64.IntBytes.Pre R b L x s) :
+    FvModexp.Amd64.IntBytes.Pre R b L x (s.setRet ret) := by
+  by_cases hg0 : 0 < s.mem.readLE (x.toNat + 24) 8
+  · exact intbytes_setRet_p R b L x  s ret hs hret  hg0 hp
+  · exact intbytes_setRet_n R b L x  s ret hs hret  hg0 hp
+
+/-- `Pre` survives writing the return address (the `hinv` of `ens`): the list quantifier of `IntPre` is expanded and the guard `0 < cap x` is
+case-split (`intbytes_setRet_<x>`). -/
+theorem intbytes_inv (R : RtInv) (b : Nat) (L : List (Nat × Nat)) (x : BitVec 64) (p : Janus.Amd64.Program) (entry : Nat) (args : List W64) :
+    Ensures.SetRetInv p entry args (fun s => Pre R b L x s) :=
+  fun s ret hs hret hp => intbytes_setRet R b L x s ret hs hret hp
+
 set_option maxRecDepth 20000 in
 set_option maxHeartbeats 64000000 in
 theorem ens (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
@@ -21,6 +47,7 @@ theorem ens (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl)
     (b : Nat) (L : List (Nat × Nat)) (x : BitVec 64) :
     Ensures ((Extracted.program.onlySegments [fn]).link impl) (segAddr Extracted.program fn) [x]
       (Pre R b L x) (Post R b L x) := by
+  refine Ensures.of_old (intbytes_inv R b L x _ _ _) ?_
   intro ret hret s hs ⟨⟨⟨hg, ⟨hb', ha, hw⟩, hal, hd, hout, hga, hgr, hLs, hro⟩, hsv, hgl, hB, hinv,
     hints, _⟩, hlen⟩
   obtain ⟨⟨hneg, hx8, hx48, hxacc, hxheld, hlive, hlc, hnorm, hxarr⟩, hxw, harw, hxg, harg, hxt, hart⟩ :=

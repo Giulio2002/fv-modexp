@@ -43,6 +43,26 @@ theorem frame_spec {R : RtInv} {b B B' : Nat} {L : List (Nat × Nat)} {s s' : St
     (h : RunFrame R b B L s s') : RunAmd64.Frame R b B' L s s' := by
   subst hB; exact h
 
+/-- The call data read from memory is unchanged by installing the return address when it is empty or apart from the return slot `[RSP, RSP + 8)`
+(`RunAmd64.Input` keeps `[p, p + len)` outside the stack window, which contains the slot, but says nothing about a zero-length slice: the
+empty case is a separate disjunct). The conditional rewrite `janus64_pre_setRet` needs for the `LengthsFail (bytesAt s.mem p len)` conjunct. -/
+theorem bytesAt_setRet {s : State} {ret p n : Nat}
+    (h : n = 0 ∨ p + n ≤ (s.regs 4).toNat ∨ (s.regs 4).toNat + 8 ≤ p) :
+    bytesAt (s.setRet ret).mem p n = bytesAt s.mem p n := by
+  rcases h with h | h
+  · subst h; rfl
+  · unfold bytesAt
+    have hl : (List.range n).map (fun i => byteOf (s.setRet ret).mem (p + i)) =
+        (List.range n).map (fun i => byteOf s.mem (p + i)) := by
+      apply List.map_congr_left
+      intro i hi
+      have hi' : i < n := List.mem_range.1 hi
+      have hb : (s.setRet ret).mem.bytes (p + i) = s.mem.bytes (p + i) :=
+        Janus.Amd64.GoABI.bytes_setRet_of_outside (by omega)
+      unfold byteOf
+      rw [hb]
+    rw [hl]
+
 set_option maxRecDepth 20000 in
 theorem ensErrLib (impl : List Amd64.Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hmk : MakesliceLiveContract64 (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
@@ -54,6 +74,7 @@ theorem ensErrLib (impl : List Amd64.Segment) (hap : ImplApart Extracted.program
         R.inv b L (s.regs 14).toNat (view R.rt L s.mem) ∧ RunAmd64.ErrReqs R b len ∧
         LengthsFail (bytesAt s.mem p.toNat len.toNat))
       (fun s s' => RunAmd64.ErrRet s' ∧ RunAmd64.Frame R b (3 * RunAmd64.blockBound 64 + RunAmd64.blockBound 16) L s s') := by
+  refine Ensures.of_old (by janus64_pre_setRet [FvModexp.Spec.RunAmd64.Env, FvModexp.Spec.RunAmd64.Input, FvModexp.Spec.OsakaReceiver, FvModexp.Spec.RunAmd64.ErrReqs, FvModexp.Amd64.Run.bytesAt_setRet, FvModexp.Spec.RunAmd64.window, FvModexp.Spec.RunAmd64.wordT, FvModexp.Amd64.Run.errT]) ?_
   intro ret hret s hs ⟨henv, hin, hrecv, hinv, ⟨hok, hokm, hokn, hcost⟩, hfail⟩
   have hfail' := fail_hdr hfail
   have hcm : makeCost 4 = RunAmd64.blockBound 64 := rfl

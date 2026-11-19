@@ -31,7 +31,7 @@ theorem full (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.progra
     rw [LibIntAS.eq_only]; exact codeIn_ofImpl_restrict_of_apart64 hap names
   have hwb' := WbLiveContract64.of_codeIn hc hwb
   have hpre' := hpre
-  obtain ⟨⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, -⟩, -, -, hx, hy, hza, hz48, hzo, -⟩ := hpre'
+  obtain ⟨⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, -⟩, -, -, hx, hy, hza, hz48, hzo, -⟩ := hpre'
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw
   obtain ⟨hnx, hxa, hx48, hxo, -⟩ := hx
   obtain ⟨hny, hya, hy48, hyo, -⟩ := hy
@@ -95,6 +95,7 @@ theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program
     (sub : Bool) (b : Nat) (L : List (Nat × Nat)) (z x y : BitVec 64) :
     Ensures ((Extracted.program.onlySegments names).link impl) (segAddr Extracted.program (fn sub)) [z, x, y]
       (Pre R b L z.toNat x.toNat y.toNat) (Post sub R b L z.toNat x.toNat y.toNat) := by
+  janus64_ensures_old [FvModexp.Amd64.IntAS.Pre, FvModexp.Amd64.CallEnv, FvModexp.Amd64.NatAdd.wordT, FvModexp.Amd64.IntAS.OpR, FvModexp.Amd64.win, FvModexp.Amd64.IntAS.wbA, FvModexp.Amd64.IntAS.hC, FvModexp.NatLive, FvModexp.Amd64.IntAS.hP, FvModexp.Amd64.IntAS.hL, FvModexp.Amd64.TlsOK, FvModexp.Amd64.IntAS.hNeg, FvModexp.NatNorm]
   rw [show names = LibIntAS.names from rfl, ← LibIntAS.eq_only, entry_eq]
   cases sub <;> simp only [entry, Bool.false_eq_true, ↓reduceIte] <;> intro ret hret s hs hpre <;> janus64_intro hs
   · refine Summary.returns (full impl hap R hmk hmv hwb false b L z x y) hret (by rw [h_rip]; rfl)

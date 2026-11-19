@@ -36,7 +36,7 @@ theorem make_reuse (impl : List Amd64.Segment) (R : RtInv) (b : Nat) (L : List (
   have hpre' := hpre
   obtain ⟨hce, hmw, -, -, -, ⟨⟨hxlc, hxc40, -, -, hxh, -⟩, ⟨hylc, hyc40, -, -, hyh, -⟩,
     ⟨hzc40, hzl, -, -, hzx, hzy⟩, -⟩, -, -, -, -⟩ := hpre'
-  obtain ⟨⟨hg1, hg2, hg3⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, -, -, -⟩ := hce
+  obtain ⟨⟨hg1, hg2, hg3, hg4⟩, ⟨hb', ha, hw⟩, hal, -, hout, hga, hgr, -, -, -⟩ := hce
   simp only [stackguard0, stackguard0Offset, regG, regSP] at hg1 hg2 hg3 hb' ha hw
   have hW : 4608 ≤ W := Nat.le_trans (mulW64_ge _ _) hmw
   have hpx : Apart zp.toNat (8 * zc.toNat) xp.toNat (8 * xl.toNat) := by
