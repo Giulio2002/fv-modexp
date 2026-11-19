@@ -1,5 +1,5 @@
 import FvModexp.Proofs.Amd64.Top.RunPre
-import FvModexp.Spec.RunAmd64
+import FvModexp.Spec.Amd64.Run
 import FvModexp.Proofs.Amd64.Nat.RowLink
 
 /-!

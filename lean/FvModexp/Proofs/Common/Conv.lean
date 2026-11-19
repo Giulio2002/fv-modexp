@@ -5,7 +5,7 @@ import FvModexp.Proofs.Common.BitLemmas
 /-!
 # Conventions for function summaries: the ISA-independent vocabulary
 
-See `docs/CONVENTIONS.md`. Everything here is about `Janus.Arm64.Memory` (the memory of both ISAs), the
+See `docs/history/CONVENTIONS-v2.md`. Everything here is about `Janus.Arm64.Memory` (the memory of both ISAs), the
 live runtime `R : RtInv` and the live set `L`; nothing mentions registers or an `Extracted` program.
 
 Values

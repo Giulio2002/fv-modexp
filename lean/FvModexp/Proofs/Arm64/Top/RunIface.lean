@@ -5,7 +5,7 @@ set_option autoImplicit false
 /-!
 # `(*bigModExp).Run` (arm64): the interface of the big callees (DRAFT v1, agent top)
 
-The Int-level callees `Run` makes, stated as the `Ensures` theorems their proofs will have (`docs/CONVENTIONS.md` §3), so
+The Int-level callees `Run` makes, stated as the `Ensures` theorems their proofs will have (`docs/history/CONVENTIONS-v2.md` §3), so
 that `Run`'s body can be proved against them as premises (hypothesis-first) and the premises discharged when the proofs land.
 
 * `IntV m a`: the value of the `*Int` at `a` (`neg` byte at `a`, `abs = (ptr, len, cap)` at `a + 8, + 16, + 24`).

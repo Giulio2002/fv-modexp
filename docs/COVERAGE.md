@@ -7,23 +7,24 @@ fork `.fusaka ≤ fork`. The statements are explained in [`HUMAN-REVIEW.md`](HUM
 [`PERF.md`](PERF.md).
 
 <!-- RELEASE-RUN: update the status cells below when a new release run lands. -->
-Status: **every row verified on both ISAs** in release run **rel50** (Janus v0.3.3, fresh cache, 2026-11-15): arm64 43/43,
-amd64 37/37 rows passed, every main theorem with its kernel-checked non-vacuity witness.
+Status on Janus v0.4.0: release run **rel51 PENDING** (TBD: arm64 —/43, amd64 —/37).
+Previous release run **rel50** (Janus v0.3.3, fresh cache, 2026-11-15, before the v0.4.0 migration): every row verified on both
+ISAs, arm64 43/43 and amd64 37/37, every main theorem with its kernel-checked non-vacuity witness. Times in the table are rel50's.
 <!-- /RELEASE-RUN -->
 
 ## The claim
 
 `scripts/verify-all.sh` reads this table. The Symbol cell is the exact symbol passed to `janus extract`; a per-ISA status
 starting with `verified` (or `partial`) is verified, `todo` / `in progress` fails the run as MISSING, anything else is skipped.
-The proof module is `lean/FvModexp/Proofs/<Arm64|Amd64>/<module>.lean` (`module:` in the Notes cell, else the last symbol
-component). Rows also listed in `scripts/release-rows.txt` run at their place in that list.
+The proof module is the claim module `lean/FvModexp/<Arm64|Amd64>/<module>.lean` (`module:` in the Notes cell, else the
+last symbol component); a summary row's module is `lean/FvModexp/Proofs/<Arm64|Amd64>/<module>.lean`. Rows also listed in `scripts/release-rows.txt` run at their place in that list.
 
 | Symbol | Claim | arm64 | amd64 | Notes |
 |---|---|---|---|---|
-| `github.com/ethereum/go-ethereum/core/vm.(*bigModExp).Run` | row 1, every input | verified (rel50, 79 s) | verified (rel50, 83 s) | `Run.correctness_total`: lengths pass → `(compute data (parseLengths data), nil)`; lengths fail → `(nil, err)`, `err ≠ nil`; module: `Top/RunTotal` |
-| `github.com/ethereum/go-ethereum/core/vm.(*bigModExp).Run` | row 1, lengths pass | verified (rel50, 476 s) | verified (rel50, 521 s) | `RunSucc.correctness`, witness `3^5 mod 7` → `[5]`; module: `Top/RunSucc` |
-| `github.com/ethereum/go-ethereum/core/vm.(*bigModExp).Run` | row 1, lengths fail | verified (rel50, 243 s) | verified (rel50, 379 s) | `Run.correctness`, witness: base-length header 1025; module: `Top/RunErr` |
-| `github.com/ethereum/go-ethereum/core/vm.(*bigModExp).RequiredGas` | row 2 | verified (rel50, 224 s) | verified (rel50, 269 s) | lengths pass → `requiredGas fork data (parseLengths data)` for every `.fusaka ≤ fork`; no panic or fault for any input; no runtime contract |
+| `github.com/ethereum/go-ethereum/core/vm.(*bigModExp).Run` | row 1, every input | verified (rel50: 79 s; rel51: TBD) | verified (rel50: 83 s; rel51: TBD) | `Run.correctness_total`: lengths pass → `(compute data (parseLengths data), nil)`; lengths fail → `(nil, err)`, `err ≠ nil`; module: `RunTotal` |
+| `github.com/ethereum/go-ethereum/core/vm.(*bigModExp).Run` | row 1, lengths pass | verified (rel50: 476 s; rel51: TBD) | verified (rel50: 521 s; rel51: TBD) | `RunSucc.correctness`, witness `3^5 mod 7` → `[5]`; module: `RunSucc` |
+| `github.com/ethereum/go-ethereum/core/vm.(*bigModExp).Run` | row 1, lengths fail | verified (rel50: 243 s; rel51: TBD) | verified (rel50: 379 s; rel51: TBD) | `Run.correctness`, witness: base-length header 1025; module: `RunErr` |
+| `github.com/ethereum/go-ethereum/core/vm.(*bigModExp).RequiredGas` | row 2 | verified (rel50: 224 s; rel51: TBD) | verified (rel50: 269 s; rel51: TBD) | lengths pass → `requiredGas fork data (parseLengths data)` for every `.fusaka ≤ fork`; no panic or fault for any input; no runtime contract |
 
 Row 3 has no machine code: `FvModexp.Proofs.Compose.composition` (`lean/FvModexp/Proofs/Common/Compose.lean`, checked by
 `make build`) proves that geth's `RunPrecompiledContract` logic (gas check, optional result cache, then `Run`) agrees with
@@ -85,7 +86,7 @@ uses for MODEXP.
 | Exp/NRow | `nat.expNN` | ✓ | ✓ |
 | Exp/EvenRow | `nat.expNNEven` | ✓ | ✓ |
 | ExpQ/IExpRow (arm64), Exp/IExpRow (amd64) | `(*Int).exp` | ✓ | ✓ |
-| RequiredGas, Top/RunErr, Top/RunSucc, Top/RunTotal | the claim rows above | ✓ | ✓ |
+| RequiredGas, RunErr, RunSucc, RunTotal | the claim rows above (modules in `lean/FvModexp/<Isa>/`) | ✓ | ✓ |
 
 Per ISA: 43 rows on arm64, 37 on amd64.
 

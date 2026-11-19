@@ -185,7 +185,7 @@ namespace FvModexp.Arm64.Mont
 
 open Janus.Contracts.EqHashModel
 
-/-- `ens'` in the project's statement shape (docs/CONVENTIONS.md §3, agent top): the program is the restricted Run
+/-- `ens'` in the project's statement shape (docs/history/CONVENTIONS-v2.md §3, agent top): the program is the restricted Run
 program of `names`, the runtime contracts are about `Extracted.program.ofImpl impl`, the only premise on `impl` is
 `ImplApart`. The asm kernels `addMulVVWW`/`subVV` are agent asm's verified summaries (`MontAsm`): no premise. -/
 theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)

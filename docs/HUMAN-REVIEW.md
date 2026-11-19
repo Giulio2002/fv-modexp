@@ -30,7 +30,7 @@ A final statement may not use an instance or class of a dependency, so these pla
 | `Spec.WitSitesArm64.{stkT, mvSite, mkSite, clSite, wbSite, grSite, noSite, getSite, putSite}` (`Spec/WitSitesArm64.lean`) | `stkT`: the `*big.stack` type descriptor (`Extracted.dataAddr`), the `Pool.Put` element type. The `…Site` defs: the call-site premises the arm64 row-1 WITNESS exhibits, one per Janus runtime contract — each the conjunction of that contract's own precondition parts (`…Pre`, `StackRoom`, `LiveAt`/`LiveMemAt`, `LiveDest`, `CallOK`, `R.ok`, `R.inv`, `LiveSep`) at a call. Byte-identical reducible copies of the proof-side `AsmWit` defs (`rfl`). |
 | `Spec.WitSitesAmd64.{stkT, mvSite, mkSite, noSite, clSite, wbSite, getSite, grSite, putSite}` (`Spec/WitSitesAmd64.lean`) | amd64 twins of `Spec.WitSitesArm64`: `stkT` (the `*big.stack` type descriptor) and the call-site premises (amd64 argument registers RAX/RBX/RCX/RDI/RSI, `liveWin64`, `CallOK64`, g in R14) the amd64 row-1 witnesses exhibit, one per Janus runtime contract — `mvSite`/`mkSite`/`noSite` by the error witness, all of them by the success witness. Byte-identical reducible copies of the proof-side `Amd64.AsmWit` defs (`Witness/AsmWit.lean`, `Witness/Sites.lean`) and of `Amd64.ModRowW.putSite` (with `stkT`/`StkShape` for `Free.stkT`/`StkSh`); `rfl`. |
 | `Spec.RunAmd64.CpuOne m` (`Spec/RunAmd64X.lean`) | A precondition conjunct of the amd64 row-1 success theorem (`RunSucc.correctness`, and through it `Run.correctness_total`) only. Two conjuncts about `math/big` package globals at Run's entry: (1) `m.accessible hasADX 1 false = true` — the 1-byte `hasADX` (`arith_amd64.go:11`: `var hasADX = cpu.X86.HasADX && cpu.X86.HasBMI2`, `.noptrbss`) is READABLE; its VALUE is unconstrained (`addMulVVWW` in `arith_amd64.s` branches on it; both code paths are proved); (2) `Apart (m.readLE natOne 8) 8 divRecursiveThreshold 32` — the 8-byte word `natOne[0]` at the data pointer stored in `natOne`'s slice header (`nat.go:39`: `natOne = nat{1}`, a static array) does not overlap the 32 bytes of the four threshold globals that `Spec.RunAmd64.Globals` describes (distinct package variables). No other constraint (in particular nothing on the return address). Needed because amd64 `(*Int).Mod` / `(*Int).exp` (`ModSpecA` / `ExpSpecA`) read `hasADX` / `natOne`, and neither address is in the extraction's data objects; the witness `Run.WitnessOk.cpu2` discharges it (an 8-byte read-only region at 0xbb6b88 covers `hasADX`). |
-| `Spec.RunArm64.fn` (`Spec/RunArm64.lean`) | The literal symbol `github.com/ethereum/go-ethereum/core/vm.(*bigModExp).Run`; `segAddr Extracted.program fn` is its entry in the extraction. |
+| `Spec.RunArm64.fn` (`Spec/Arm64/Run.lean`) | The literal symbol `github.com/ethereum/go-ethereum/core/vm.(*bigModExp).Run`; `segAddr Extracted.program fn` is its entry in the extraction. |
 | `Spec.RunArm64.window s` | The error row's stack window `[SP-4800, SP+40)`: Run's 624-byte frame + the deepest header-phase callee frame (`nat.setBytes`, 4160) below `SP`, and the return slot + the 4 argument words above. Only the proofs write inside it. |
 | `Spec.RunArm64.Env R L s` | Error-row environment: `GuardOK s 4800` (the stack-growth prologues fall through, see §3 "Stack growth"), `StackOK s 4800 40` (`SP` 16-aligned, window writable), `DataLoaded` (the extraction's 48 data segments, all `.rodata`, hold their bytes: true in every process running the binary), the window and g's `stackguard0` word (`X28+16`) outside the runtime-owned ranges `R.rt` and apart, no caller live object in the window (`LiveSep`), `.rodata` outside `R.rt`. A modelling choice of the runtime invariant `R`; no real allocator invariant concerns these addresses. |
 | `Spec.RunArm64.Held R L a n` | `[a, a+n)` is program memory: inside a live object of `L`, or outside `R.rt`. |
@@ -50,12 +50,12 @@ A final statement may not use an instance or class of a dependency, so these pla
 | `Spec.RunArm64.okBudget l` | The success budget from the three lengths: headers + 3 operand reads + `Mod` (64 requests) + `exp` (`8·64·⌈e/8⌉ + 128` requests) + `Bytes` + `LeftPadBytes`, each request charged `blockBound (1024w + 1024)` (`w` = largest operand in words). Factor-free (no `2^32` slack), sound, NOT tight (≈30-60× real allocation volume); `RunGate.okBudget_gate`: ≤ 2^35 for every input passing EIP-7823 (corner value 17 366 406 472). Derivation: "Row 1 budgets" below. |
 | `Spec.RunArm64.OkRet data s'` | `(out, nil)`: `X3 = 0` (nil error type word) and the `X1` bytes at `X0` are exactly `compute data (parseLengths data)` (EthLib). |
 | `Spec.RunArm64.FrameW R b B L W s s'` | `Frame` with window `W`, plus: the output bytes are program memory (`Held` in the grown live set) when non-empty. |
-| `Spec.RunAmd64.*` (`Spec/RunAmd64.lean`) | amd64 twins of every `Spec.RunArm64` definition above, same meaning: SP = `RSP` (`regs 4`), g = `R14`, `StackGuardOK`/`StackWritable` + `RSP % 8 = 0`, ABIInternal results RAX/RBX/RCX/RDI/RSI; `window` 4800/40, Run's frame 616. `okBudget` is the same formula (`Amd64.RunGate.okBudget_gate`). |
+| `Spec.RunAmd64.*` (`Spec/Amd64/Run.lean`) | amd64 twins of every `Spec.RunArm64` definition above, same meaning: SP = `RSP` (`regs 4`), g = `R14`, `StackGuardOK`/`StackWritable` + `RSP % 8 = 0`, ABIInternal results RAX/RBX/RCX/RDI/RSI; `window` 4800/40, Run's frame 616. `okBudget` is the same formula (`Amd64.RunGate.okBudget_gate`). |
 
 ## 2. The main theorem statements
 
-* Row 2 `FvModexp.Arm64.RequiredGas.correctness` (`Proofs/Arm64/RequiredGas.lean`) and `FvModexp.Amd64.RequiredGas.correctness`
-  (`Proofs/Amd64/RequiredGas.lean`). Arguments `[c, ptr, len, cap]` = receiver
+* Row 2 `FvModexp.Arm64.RequiredGas.correctness` (`lean/FvModexp/Arm64/RequiredGas.lean`) and `FvModexp.Amd64.RequiredGas.correctness`
+  (`lean/FvModexp/Amd64/RequiredGas.lean`). Arguments `[c, ptr, len, cap]` = receiver
   `*bigModExp` and the input slice. Precondition: the stack-growth check falls through with 464 bytes to spare (`GuardOK s 464`), the stack
   window `[SP-504, SP+40)` is writable (`StackOK s 504 40`; it covers RequiredGas's frame, the callees' frames and the argument spill slots),
   the `SetBytes` jump table is loaded (`DataLoaded`), `len ≤ cap < 2^48`, the `len` input bytes and the 3 receiver bytes are readable and
@@ -71,7 +71,7 @@ A final statement may not use an instance or class of a dependency, so these pla
   `osakaMultComplexity`, `osakaModexpGas` with uint64 saturation, contracts.go:470-598, proved equal to EthLib `gasCost` under EIP-7823:
   `Geth.osaka_gas_eq`) and `Proofs/Common/RgSpec.lean` (geth's reading of the input: `Uint64()`/`IsUint64()` saturation and `expHead`,
   contracts.go:606-646; `RgSpec.gas_eq` = EthLib `requiredGas`). geth and EthLib agree on every input passing EIP-7823 (no finding).
-* Row 1, arm64 (`Proofs/Arm64/Top/RunSucc.lean`, `Proofs/Arm64/Top/RunErr.lean`; both release rows). Arguments `[c, p, len, cp]` =
+* Row 1, arm64 (`lean/FvModexp/Arm64/RunSucc.lean`, `lean/FvModexp/Arm64/RunErr.lean`; both release rows). Arguments `[c, p, len, cp]` =
   receiver `*bigModExp` and the input slice; `data = Spec.bytesAt s.mem p len`.
   * **`FvModexp.Arm64.RunSucc.correctness`** (lengths pass). Premises: `ImplApart` + the 11 runtime-contract instances of §3
     ("Runtime contracts"), the Pool shape binder `S` (fixed by the pre `S = StkShape`), `W ≥ 624 + 72944`. Pre: `EnvW`, `Input`,
@@ -82,23 +82,23 @@ A final statement may not use an instance or class of a dependency, so these pla
   * **`FvModexp.Arm64.Run.correctness`** (lengths fail). Premises: `ImplApart`, `MakesliceLiveContract`, `MemmoveLive`,
     `NewobjectLiveContract`. Pre: `Env`, `Input`, `OsakaReceiver`, `R.inv`, `ErrReqs R b len`, `LengthsFail data`. Post: `ErrRet s'`
     (`(nil, err)`, `err ≠ nil`) and `Frame … 512 …`. Witness: `FvModexp.Arm64.Run.Witness.nonvacuous` (base-length header 1025).
-  * **`FvModexp.Arm64.Run.correctness_total`** (`Proofs/Arm64/Top/RunTotal.lean`, its own release row `arm64 Top/RunTotal`): the row-1
+  * **`FvModexp.Arm64.Run.correctness_total`** (`lean/FvModexp/Arm64/RunTotal.lean`, its own release row `arm64 RunTotal`): the row-1
     sentence as ONE theorem. RunSucc's premises and pre without `LengthsPass`, the budget only when the lengths pass
     (`LengthsPass data → okBudget … ≤ b`) plus `512 ≤ b`; post `(LengthsPass ∧ OkRet ∧ FrameW) ∨ (LengthsFail ∧ ErrRet ∧ Frame)`.
     Proved by cases from the two rows (`env_of_envW`, `errReqs_of_okReqs`); `Run.Witness.correctness_total` from the success witness.
   * Release gates on the statement: `FvModexp.Arm64.RunGate.okBudget_gate` (`LengthsPass data → okBudget (parseLengths data) ≤ 2^35`,
     `Proofs/Arm64/Top/RunGate.lean`; amd64 twin `FvModexp.Amd64.RunGate.okBudget_gate`), `RunSucc.expBudget_gate`
-    (`ExpBudget 128 128 ≤ 2^35`); the return-address pin check (§2b) is clean on every release row. Build target: each ISA's `Top/RunSucc`
+    (`ExpBudget 128 128 ≤ 2^35`); no precondition constrains the return address (§2b). Build target: each ISA's `RunSucc`
     row module imports its `Top/RunGate`, so the release run (`janus verify` of the RunSucc rows) compiles and kernel-checks both gates.
     `RunTotal` imports RunSucc + RunErr, so no row module can import it; it is compiled and checked by its own release row
-    `Top/RunTotal` on each ISA, after `Top/RunSucc`; the default `lake build FvModexp` is extraction-free and cannot import any `Extracted`-based module.
-* Row 1, amd64 (`Proofs/Amd64/Top/RunErr.lean`, `Proofs/Amd64/Top/RunSucc.lean`): `FvModexp.Amd64.Run.correctness` (lengths fail,
+    `RunTotal` on each ISA, after `RunSucc`; the default `lake build FvModexp` is extraction-free and cannot import any `Extracted`-based module.
+* Row 1, amd64 (`lean/FvModexp/Amd64/RunErr.lean`, `lean/FvModexp/Amd64/RunSucc.lean`): `FvModexp.Amd64.Run.correctness` (lengths fail,
   release row, `Spec.RunAmd64` twins) and `FvModexp.Amd64.RunSucc.correctness` (lengths pass, `Spec.RunAmd64` twins + `Spec.RunAmd64.CpuOne` (§1b); every
   machine-code callee proved: `(*Int).Mod` = `Run.Closed.modA`, `(*Int).exp` = `Run.Closed.expA` = `IExp.ensCl`
   (depth 43 736), premises = eleven Janus runtime-contract hypotheses over nine runtime functions (§3 table, `…64` / `PoolAmd64`
   amd64 variants), the Pool shape binder `S` (pre `S = StkShape`),
   `W ≥ 616 + 43736 = 44 352`), with `RunSucc.Witness.nonvacuous` (`3^5 mod 7`, output `[5]`).
-  **`FvModexp.Amd64.Run.correctness_total`** (`Proofs/Amd64/Top/RunTotal.lean`, release row `amd64 Top/RunTotal`): the twin of the
+  **`FvModexp.Amd64.Run.correctness_total`** (`lean/FvModexp/Amd64/RunTotal.lean`, release row `amd64 RunTotal`): the twin of the
   arm64 total theorem (success environment incl. `CpuOne`, budget only under `LengthsPass`, plus `512 ≤ b`; post `(LengthsPass ∧ OkRet ∧
   FrameW) ∨ (LengthsFail ∧ ErrRet ∧ Frame)`), with `Run.Witness.correctness_total` from the amd64 success witness.
 * Row 3 `FvModexp.Proofs.Compose.composition` (`Proofs/Common/Compose.lean`): pure Lean. From the guarantees of rows 1 and 2 (hypothesis structure `RowsHold`), for every
@@ -108,19 +108,19 @@ A final statement may not use an instance or class of a dependency, so these pla
 
 ## 2b. Return-address pins
 
-No Janus release's audit rejects every precondition that constrains the caller's return address (amd64: the word `[RSP]`;
-arm64: `X30`; Janus v0.3.3's probe forms `RspBypass64`, `LrPin`, reproduced in `scripts/lint-tests/rapin/`). The release therefore audits every row
-precondition by hand, from the checklist that `scripts/check-ra-pin` generates:
+A precondition must not constrain the caller's return address (amd64: the word at `[RSP]`; arm64: `X30`): otherwise a
+theorem could hold only for calls that return to one particular place. Since Janus v0.4.0 this is enforced by
+construction. `Ensures` is `∀ s, CallSetup0 entry args s → pre s → ∀ ret, RetAddr p ret → Returns (p.withExit ret) (s.setRet ret) …`:
+the precondition is evaluated on the state before the return address exists, and `State.setRet` installs it afterwards (arm64:
+sets `X30`; amd64: writes the 8-byte word at `[RSP]`). So no precondition can restrict the return address, in any spelling, and
+`post` and the witnesses see the state with the address installed. The proofs discharge the extra obligation
+`pre s → pre (s.setRet ret)`; on amd64 this needs every memory range the precondition reads to be apart from
+`[RSP, RSP + 8)`. That follows from facts the preconditions already state: every input object is outside the stack window,
+and the window contains the return slot. No precondition was changed for v0.4.0, and none states a value of the slot.
 
-1. `scripts/check-ra-pin --selftest` must print `SELFTEST PASS` (all probe forms c1–c8, d0, e1/e2 + extra spellings are
-   FLAGGED, the controls are CLEAN; `scripts/lint-tests/rapin/`).
-2. After a full dev build (or with the release oleans), `scripts/check-ra-pin -j 2` elaborates every row's `correctness`,
-   unfolds every fv-modexp definition/structure of each Janus form's `pre`, and writes `build/rapin/report.txt`.
-3. Every `FLAG` line is a violation unless the reviewer writes down why it is not (expected: none — no row may constrain
-   `[RSP]` / `X30` beyond the framework ABI predicates). Then read each row's `RSP-REL` / `STACK-ARG` lines (window bounds and
-   stack arguments at `RSP + k`, `k ≥ 8`, are allowed) and its `FRAMEWORK` list (must be Janus ABI/contract predicates only).
-4. The tool over-approximates syntactically after unfolding; it is a checklist, not a proof. Anything the tool cannot
-   classify (`OPAQUE`, `ERROR`, `NO-FORM`) is reviewed directly in the source.
+Under Janus v0.3.3 this was a known gap, closed for the rel50 release by a manual audit with `scripts/check-ra-pin` (a
+checklist generator; its probe forms are in `scripts/lint-tests/rapin/`). The script is kept as a review aid but is no
+longer a release gate.
 
 ## 3. Assumptions and limits
 
@@ -161,7 +161,7 @@ precondition by hand, from the checklist that `scripts/check-ra-pin` generates:
   real call with less free stack is outside the claim, as stated below. A
   goroutine with less free stack (Go grows stacks on demand: a fresh 8 KiB stack, or a 32/64 KiB stack partly used by the EVM
   interpreter) or with a pending preemption calls morestack in real geth, which copies the stack / preempts and then continues
-  with the same result; that continuation is outside the claim. Lifting this needs a `morestack` contract, which Janus v0.3.3 does not provide.
+  with the same result; that continuation is outside the claim. Lifting this needs a `morestack` contract, which Janus v0.4.0 does not provide.
 * **Precompile result cache (row 3 scope).** geth v1.17.10 attaches a precompile result cache by default
   (`core/blockchain.go:417-420`; `RunPrecompiledContract` contracts.go:289-301): on a hit for key `NormalizeInput(input)` it returns
   the stored output without running `Run` (gas is charged before the lookup, hit or miss). `Spec.runPrecompiled` models

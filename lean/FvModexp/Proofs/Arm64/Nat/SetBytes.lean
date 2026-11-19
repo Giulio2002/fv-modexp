@@ -6,7 +6,7 @@ set_option autoImplicit false
 /-!
 # PILOT: `nat.setBytes` (go-bigmodexpfix copy), arm64 — the theorem `ens` and the callee summary `sum`
 
-See `docs/CONVENTIONS.md`. Modules: `SetBytesDefs` (statement pieces), `SetBytesNorm`, `SetBytesByte`, `SetBytesWord`
+See `docs/history/CONVENTIONS-v2.md`. Modules: `SetBytesDefs` (statement pieces), `SetBytesNorm`, `SetBytesByte`, `SetBytesWord`
 (one loop each), `SetBytesMid` (the loop-head facts after `nat.make`), this module (prologue, `nat.make` with its
 `makeslice` call, the four paths: empty buffer, reuse, `make(nat, 1)`, `make(nat, n, n+4)`).
 -/
@@ -110,7 +110,7 @@ theorem ens (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : 
 
 set_option linter.defProp false in
 /-- `ens` as a callee summary inside a caller whose program keeps the functions `ms ⊇ [fn]`
-(`docs/CONVENTIONS.md` §4): `janus_run … calls [SetBytes.sum impl hap R hmk b L zp zl zc bp bl bc ms (by decide)]`. -/
+(`docs/history/CONVENTIONS-v2.md` §4): `janus_run … calls [SetBytes.sum impl hap R hmk b L zp zl zc bp bl bc ms (by decide)]`. -/
 def sum (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
     (hmk : MakesliceLiveContract (Extracted.program.ofImpl impl) (cA "runtime.makeslice") 4096 R)
     (b : Nat) (L : List (Nat × Nat)) (zp zl zc bp bl bc : BitVec 64) (ms : List String)

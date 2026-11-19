@@ -4,7 +4,7 @@ import FvModexp.Proofs.Arm64.Top.RunGS
 /-! # `Run` (arm64): program points and join-point relations of the operand segments `D1`..`D3`
 
 Shared by the independent segment modules (`RunD1`, `RunD2`, `RunD2J`, `RunD3`, `RunD3J`, …), so that they do not import
-each other (they compile in parallel; docs/PERF.md "agent top s18"). -/
+each other (they compile in parallel; docs/history/PERF-log.md "agent top s18"). -/
 
 open Janus Janus.Arm64 Janus.GoABI Janus.Tactic Janus.Spec Janus.Contracts
 

@@ -1,4 +1,4 @@
-/-! # Small lemmas of the arm64 `Run` proof, proved once outside the big contexts (docs/PERF.md "agent top s17")
+/-! # Small lemmas of the arm64 `Run` proof, proved once outside the big contexts (docs/history/PERF-log.md "agent top s17")
 
 Budget steps: `omega` over a post-run context costs 10-25 s; these close the same goals in milliseconds. -/
 

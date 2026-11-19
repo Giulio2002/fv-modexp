@@ -50,9 +50,9 @@ arm64 Exp/EvenRow
 arm64 ExpQ/IExpRow
 # ---- arm64 Top rows (last) ----
 arm64 RequiredGas
-arm64 Top/RunErr
-arm64 Top/RunSucc
-arm64 Top/RunTotal
+arm64 RunErr
+arm64 RunSucc
+arm64 RunTotal
 # ---- amd64 ----
 amd64 Nat/StackNatRow
 amd64 Nat/MulAddWWRow
@@ -89,7 +89,7 @@ amd64 Exp/NRow
 amd64 Exp/EvenRow
 amd64 Exp/IExpRow
 # ---- amd64 Top rows (last) ----
-amd64 Top/RunErr
+amd64 RunErr
 # amd64 Top/RunOkRow RETIRED (top s48, coordinator): old form (segAddr name not a literal, rel46a audit FAIL); Top/RunSucc twin replaces it, as on arm64
-amd64 Top/RunSucc
-amd64 Top/RunTotal
+amd64 RunSucc
+amd64 RunTotal

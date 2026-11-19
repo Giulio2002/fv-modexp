@@ -4,7 +4,7 @@ import FvModexp.Proofs.Common.Conv
 /-!
 # Conventions for function summaries (amd64)
 
-See `docs/CONVENTIONS.md`. As `FvModexp.Arm64.CallEnv`, for the amd64 Go ABIInternal: `RSP = s.regs 4`, `g = R14`.
+See `docs/history/CONVENTIONS-v2.md`. As `FvModexp.Arm64.CallEnv`, for the amd64 Go ABIInternal: `RSP = s.regs 4`, `g = R14`.
 The window `[RSP - stk, RSP + above)` includes the return-address slot `[RSP, RSP + 8)` (take `above ≥ 8`).
 -/
 

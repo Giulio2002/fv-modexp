@@ -31,17 +31,25 @@ and why the per-row numbers below are not a measure of each function's difficult
 ## Release run
 
 <!-- RELEASE-RUN: update this block when a new release run lands (Janus tag, run id, per-row table). -->
+**rel51**, Janus v0.4.0 (`b5db64328e92cf4a5d5b87c32a9c66844b0d892b`): **PENDING**. Results, per-row times and gates: TBD.
+<!-- /RELEASE-RUN -->
+
+### Previous release run: rel50 on Janus v0.3.3
+
+Kept as the reference until rel51 lands. The proofs were migrated to Janus v0.4.0 after this run, and the claim rows were
+renamed (`Top/RunErr` → `RunErr`, and the same for `RunSucc` and `RunTotal`); the times below are those of the v0.3.3 tree.
+
 **rel50**, Janus v0.3.3 (`6d65752215a09ceaf88d18e2f11bac7bcf19eb82`, binary sha256 `9127bf82…6c193d9d`), fresh cache per ISA,
 one row at a time (`ROWS=1`), `JANUS_TIMINGS=1`, 2026-11-15:
 
 | ISA | rows | result | wall (rows + warm-up) | sum of row times | slowest row | largest peak memory |
 |---|---|---|---|---|---|---|
-| arm64 | 43 | **43/43 PASS** | 9 995 s + 844 s | 9 938 s | `Exp/NRow` 538 s | 5.2 GB (`Top/RunSucc`) |
+| arm64 | 43 | **43/43 PASS** | 9 995 s + 844 s | 9 938 s | `Exp/NRow` 538 s | 5.2 GB (`RunSucc`) |
 | amd64 | 37 | **37/37 PASS** | 10 815 s + 894 s | 10 760 s | `NatQ/DrsRowQ` 532 s | 6.1 GB (`NatQ/BasicSqrRowQ`) |
 
 No row exceeded 600 s. Host load (1-minute average) during the rows: median 14.2 (arm64) and 16.6 (amd64), maximum 31.1
 and 33.5. The same tree passed `RELEASE=1 scripts/no-sorry.sh` (spec closure: 8 of 8 final rows) and the return-address
-pin check (`scripts/check-ra-pin --release`: 43/43 and 37/37 clean).
+pin audit that v0.3.3 required (`scripts/check-ra-pin --release`: 43/43 and 37/37 clean; not needed since v0.4.0).
 
 Per row, in arm64 release order (seconds / peak MB):
 
@@ -89,13 +97,12 @@ Per row, in arm64 release order (seconds / peak MB):
 | `Exp/EvenRow` | 368 / 3746 | 516 / 4083 |
 | `ExpQ/IExpRow` (arm64), `Exp/IExpRow` (amd64) | 310 / 4417 | 299 / 4208 |
 | `RequiredGas` | 224 / 1601 | 269 / 3130 |
-| `Top/RunErr` | 243 / 1624 | 379 / 1306 |
-| `Top/RunSucc` | 476 / 5161 | 521 / 4834 |
-| `Top/RunTotal` | 79 / 4855 | 83 / 4713 |
+| `RunErr` | 243 / 1624 | 379 / 1306 |
+| `RunSucc` | 476 / 5161 | 521 / 4834 |
+| `RunTotal` | 79 / 4855 | 83 / 4713 |
 
 The table lists rows by name; the exact order of each ISA is `scripts/release-rows.txt` (`LIST_ONLY=1 scripts/verify-all.sh`
 prints it). A dash means the row does not exist on that ISA (see [`COVERAGE.md`](COVERAGE.md)).
-<!-- /RELEASE-RUN -->
 
 ## Techniques that mattered
 

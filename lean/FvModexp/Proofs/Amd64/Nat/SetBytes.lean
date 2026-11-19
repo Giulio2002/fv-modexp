@@ -15,7 +15,7 @@ namespace FvModexp.Amd64.SetBytes
 
 set_option maxRecDepth 20000 in
 /-- The `big.Word` type descriptor `makeslice` reads (size word `8`, pointer-data word `0`), proved once outside the
-big context (docs/PERF.md "agent top s18": `janus64_data` in `ens` cost 22 s). -/
+big context (docs/history/PERF-log.md "agent top s18": `janus64_data` in `ens` cost 22 s). -/
 theorem wordT_data {m : Janus.Arm64.Memory} (hd : Extracted.program.DataLoaded m) :
     m.accessible 7233184 16 false = true ∧ m.readLE 7233184 8 = 8 ∧ m.readLE 7233192 8 = 0 := by
   janus64_data hd

@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """check-ra-pin: RA-pin self-audit prep (BRIEF "RETURN-ADDRESS PIN GAP"; top s37).
 
-For every row module (lean/FvModexp/Proofs/**.lean with `theorem correctness`) elaborate scripts/RaPin.lean's
+NOT a release gate since Janus v0.4.0: `Ensures` evaluates the precondition before the return address is installed
+(`State.setRet`), so no precondition can constrain it. Kept as a review aid.
+For every row module (lean/FvModexp/{Arm64,Amd64,Proofs}/**.lean with `theorem correctness`) elaborate scripts/RaPin.lean's
 `#ra_pin_audit` on the row's `correctness`: the precondition of every Janus main-theorem form, with every fv-modexp
 definition/structure unfolded, split into conjuncts and classified against the probe forms of
 Janus v0.3.3's return-address probe forms (RspBypass64, LrPin; reproduced in scripts/lint-tests/rapin/) (FLAG = the manual audit must read it; INFO = listed only).
@@ -28,8 +30,8 @@ TOOL = open(os.path.join(ROOT, 'scripts', 'RaPin.lean')).read()
 
 def rows():
     res = []
-    base = os.path.join(LEAN, 'FvModexp', 'Proofs')
-    for d, _, fs in os.walk(base):
+    walk = [w for b in ('Proofs', 'Arm64', 'Amd64') for w in os.walk(os.path.join(LEAN, 'FvModexp', b))]
+    for d, _, fs in walk:
         for f in sorted(fs):
             if not f.endswith('.lean'):
                 continue
@@ -46,7 +48,7 @@ def rows():
                 m = re.match(r'end\s+(\S+)\s*$', line)
                 if m and stack and stack[-1] == m.group(1):
                     stack.pop(); continue
-                # main theorems: `correctness` or `correctness_<x>` (Janus mainsNamed; e.g. Top/RunTotal's correctness_total),
+                # main theorems: `correctness` or `correctness_<x>` (Janus mainsNamed; e.g. RunTotal's correctness_total),
                 # never the `Witness.*` existentials
                 m = re.match(r'theorem\s+(correctness(?:_\w+)?)(\s|$)', line)
                 if m and not (stack and stack[-1].endswith('Witness')):
@@ -144,7 +146,9 @@ def main():
         for l in open(os.path.join(ROOT, 'scripts', 'release-rows.txt')):
             p = l.split('#', 1)[0].split()
             if len(p) == 2:
-                rel_rows.add(f"FvModexp/Proofs/{ {'arm64': 'Arm64', 'amd64': 'Amd64'}[p[0]] }/{p[1]}.lean")
+                d = {'arm64': 'Arm64', 'amd64': 'Amd64'}[p[0]]
+                claim = f"FvModexp/{d}/{p[1]}.lean"
+                rel_rows.add(claim if os.path.isfile(os.path.join(LEAN, claim)) else f"FvModexp/Proofs/{d}/{p[1]}.lean")
         missing = sorted(x for x in rel_rows if x not in {r[3] for r in rows()}
                          and (isa_f is None or ('/Arm64/' in x) == (isa_f == 'arm64')))
         for x in missing:
@@ -158,7 +162,7 @@ def main():
 
     def job(r):
         isa, mod, thm, rel = r
-        tag = f'{isa}-' + rel.split('/Proofs/')[1][:-5].split('/', 1)[1].replace('/', '_')
+        tag = f'{isa}-' + rel.replace('/Proofs/', '/')[:-5].split('/', 2)[2].replace('/', '_')
         try:
             rc, out = run_one(isa, mod, '', f'#ra_pin_audit {thm} "{isa}"', tag, rel)
         except subprocess.TimeoutExpired:

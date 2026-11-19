@@ -216,7 +216,7 @@ namespace FvModexp.Amd64.Mont
 
 open Janus.Contracts.EqHashModel
 
-/-- `ens'` in the project's statement shape (docs/CONVENTIONS.md §3): restricted Run program, runtime contracts
+/-- `ens'` in the project's statement shape (docs/history/CONVENTIONS-v2.md §3): restricted Run program, runtime contracts
 about `Extracted.program.ofImpl impl`, `ImplApart`; the asm kernels are agent asm's verified summaries (`MontAsm`). -/
 theorem ens (impl : List Amd64.Segment) (hap : Amd64.ImplApart Extracted.program impl) (R : RtInv)
     (hclr : MemclrNoHeapPointersLive64 (Extracted.program.ofImpl impl)

@@ -4,7 +4,7 @@
 #   JANUS             path of the janus binary (required by verify, audit, lint and check-generated; default: `janus` on PATH)
 #   JANUS_CACHE_DIR   Janus result cache; a release run needs a FRESH EMPTY directory (default: a new build/jcache-<stamp>)
 #   ROWS              rows verified in parallel (default 1); LEAN_NUM_THREADS, JANUS_JOBS: see scripts/verify-all.sh
-#   FN                verify only these rows, e.g. FN=RequiredGas or FN="Top_RunErr Top_RunSucc" (row id = module path, / -> _)
+#   FN                verify only these rows, e.g. FN=RequiredGas or FN="RunErr RunSucc" (row id = module path, / -> _)
 #   ISA               verify only this ISA: arm64 or amd64
 # The per-row caps (memcap 16G, timeout 900 s) are constants of scripts/verify-all.sh and cannot be overridden.
 SHELL := /usr/bin/env bash
@@ -15,12 +15,12 @@ export ROWS
 
 RUN_SYM := github.com/ethereum/go-ethereum/core/vm.(*bigModExp).Run
 
-.PHONY: help build harness verify audit lint check-generated ra-pin clean
+.PHONY: help build harness verify audit lint check-generated clean
 
 help:
 	@sed -n '2,9p' Makefile
 	@echo
-	@echo "targets: build harness verify audit lint check-generated ra-pin clean"
+	@echo "targets: build harness verify audit lint check-generated clean"
 
 # lake build of the FvModexp library (specification and extraction-independent lemmas, incl. the pure-Lean row 3).
 # Env: none beyond the toolchain in lean/lean-toolchain.
@@ -56,12 +56,6 @@ check-generated:
 	  fi; \
 	done
 	python3 scripts/check-generated
-
-# Return-address pin checklist (docs/HUMAN-REVIEW.md section 2b): self-test, then the report build/rapin/report.txt for the
-# release rows. Env: RAPIN_ARGS (e.g. `--isa arm64 --oleans <consumer dir of a release cache>`; see scripts/check-ra-pin).
-ra-pin:
-	scripts/check-ra-pin --selftest
-	scripts/check-ra-pin --release -j 2 $(RAPIN_ARGS)
 
 # Remove build outputs (harness binaries, extractions, caches, logs). Env: none.
 clean:

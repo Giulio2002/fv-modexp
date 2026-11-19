@@ -1,7 +1,7 @@
 /-!
 # `Run` (arm64): small arithmetic facts of the operand phase, proved outside the large segment contexts
 
-PERF (docs/PERF.md): an `omega` inside a segment proof sees every hypothesis of the context (RunD3P: 97 s for one
+PERF (docs/history/PERF-log.md): an `omega` inside a segment proof sees every hypothesis of the context (RunD3P: 97 s for one
 `BitVec` subtraction fact). These lemmas take exactly the facts they need.
 -/
 

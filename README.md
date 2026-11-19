@@ -52,7 +52,7 @@ def bytesAt (m : Memory) (p n : Nat) : ByteArray :=
 def PostFusaka (fork : Fork) : Prop := Fork.fusaka.ctorIdx ≤ fork.ctorIdx
 ```
 
-The arm64 row-2 theorem, `FvModexp.Arm64.RequiredGas.correctness` (`lean/FvModexp/Proofs/Arm64/RequiredGas.lean`), as written:
+The arm64 row-2 theorem, `FvModexp.Arm64.RequiredGas.correctness` (`lean/FvModexp/Arm64/RequiredGas.lean`), as written:
 
 ```lean
 theorem correctness (c ptr len cap : BitVec 64) :
@@ -69,12 +69,13 @@ theorem correctness (c ptr len cap : BitVec 64) :
 ```
 
 (The `--` comments are added here.) `Ensures prog entry args Pre Post` is Janus's total-correctness judgement for a Go
-call: for every return address and every state that sets up this call and satisfies `Pre`, execution of the extracted bytes
-reaches the return address without faulting or panicking, obeys the Go ABI (callee-saved registers, stack pointer), and
-satisfies `Post`. `Extracted.program` holds the instruction bytes that `janus extract` copied out of the linked executable.
+call: for every state that sets up this call and satisfies `Pre`, and then for every return address, execution of the
+extracted bytes from that state with the return address installed reaches the return address without faulting or panicking,
+obeys the Go ABI (callee-saved registers, stack pointer), and satisfies `Post`. Because `Pre` is evaluated before the return
+address exists, no precondition can constrain where the call returns (Janus v0.4.0). `Extracted.program` holds the instruction bytes that `janus extract` copied out of the linked executable.
 Lean decodes and runs them in Janus's ISA model.
 
-Row 1 is stated the same way. Its success postcondition (`Spec/RunArm64.lean`) says the returned slice holds exactly
+Row 1 is stated the same way. Its success postcondition (`Spec/Arm64/Run.lean`) says the returned slice holds exactly
 EthLib's output:
 
 ```lean
@@ -86,7 +87,7 @@ def OkRet (data : ByteArray) (s' : State) : Prop :=
       EthLib.Execution.Evm.Precompiles.Modexp.compute data (EthLib.Execution.Evm.Precompiles.Modexp.parseLengths data)
 ```
 
-The one-theorem form of row 1, `FvModexp.Arm64.Run.correctness_total` (`Proofs/Arm64/Top/RunTotal.lean`), shortened:
+The one-theorem form of row 1, `FvModexp.Arm64.Run.correctness_total` (`lean/FvModexp/Arm64/RunTotal.lean`), shortened:
 
 ```lean
 theorem correctness_total (impl : List Segment) (hap : ImplApart Extracted.program impl) (R : RtInv)
@@ -113,12 +114,14 @@ no final statement depends on anything else (in particular on nothing under `Pro
 ## Result
 
 <!-- RELEASE: update this block on a re-pin or a new release run (Janus tag + commit, run id, counts, slowest row, lint). -->
-**Release run rel50 (2026-11-15): 80/80 rows verified** (arm64 43, amd64 37), with Janus **v0.3.3**
-([`6d657522`](https://github.com/Giulio2002/Janus/commit/6d65752215a09ceaf88d18e2f11bac7bcf19eb82)). Fresh cache, one row at
-a time. Every row finished in under 600 s, inside the hard caps of 900 s and 16 GB; the slowest were arm64 `Exp/NRow` (538 s)
-and amd64 `NatQ/DrsRowQ` (532 s). Wall time 2.8 h (arm64) and 3.0 h (amd64), plus a cache warm-up of about 15 minutes per ISA.
-Release lint (`make lint`) clean, and the return-address pin check is clean on all 80 rows. Janus binary sha256
-`9127bf823f6dea6e2b66b0fb2c5713ac0737aac352ddc1c8a7a9a06e6c193d9d`.
+**Release run rel51 on Janus v0.4.0** ([`b5db6432`](https://github.com/Giulio2002/Janus/commit/b5db64328e92cf4a5d5b87c32a9c66844b0d892b)):
+**PENDING** — rows: TBD (arm64 43, amd64 37 expected), slowest row: TBD, wall time: TBD, release lint: TBD.
+Janus binary sha256 (amd64, built from the tag): `b92df613719f6d2f82b01be636f0801b9f7666540fbd9b5d6faabd1691239050`.
+
+Previous release run, **rel50 on Janus v0.3.3** (2026-11-15), before the v0.4.0 migration: **80/80 rows verified** (arm64 43,
+amd64 37). Fresh cache, one row at a time. Every row finished in under 600 s, inside the hard caps of 900 s and 16 GB; the
+slowest were arm64 `Exp/NRow` (538 s) and amd64 `NatQ/DrsRowQ` (532 s). Release lint clean; the manual return-address audit
+that v0.3.3 required was clean on all 80 rows.
 <!-- /RELEASE -->
 
 The 80 rows are the 4 claim rows per ISA plus the function summaries that row 1 composes (`nat.mul`, `nat.sqr`, Karatsuba,
@@ -132,11 +135,10 @@ Each summary is a verified row of its own. Per-row times are in [`docs/PERF.md`]
 | `make build` | `lake build` of the `FvModexp` library: the specification, the Go-level models, and row 3 (pure Lean) |
 | `make harness` | build `build/harness-{arm64,amd64}` from `go/` and check their hashes against `scripts/harness.sha256` |
 | `make verify` | `scripts/verify-all.sh`: extract and `janus verify` every row, both ISAs, in release order |
-| `make verify FN=RequiredGas ISA=arm64` | one row on one ISA (row id = module path with `/` replaced by `_`, e.g. `Top_RunSucc`) |
+| `make verify FN=RequiredGas ISA=arm64` | one row on one ISA (row id = module path with `/` replaced by `_`, e.g. `RunSucc`, `Nat_DivWRow`) |
 | `make audit` | statement audit and non-vacuity check only, without the kernel replay of the proofs |
 | `make lint` | `RELEASE=1 scripts/no-sorry.sh`: no `sorry`/axioms, source and Lean-level lints, spec closure |
 | `make check-generated` | generated proof modules equal their generator's output |
-| `make ra-pin` | return-address pin checklist (`scripts/check-ra-pin`, [`HUMAN-REVIEW.md` §2b](docs/HUMAN-REVIEW.md#2b-return-address-pins)) |
 
 You need a `janus` binary built from the pinned commit (`go build ./cmd/janus` in the Janus repository), passed as
 `JANUS=/path/to/janus`, plus `lake`, Go (the harness build sets `GOTOOLCHAIN=go1.26.10`), `python3`, GNU `time` and
@@ -149,7 +151,7 @@ Example: `make verify JANUS=$HOME/janus/bin/janus FN=RequiredGas ISA=amd64`.
 | component | version |
 |---|---|
 | Lean | `leanprover/lean4:v4.34.1` (`lean/lean-toolchain`) |
-| Janus | v0.3.3, commit `6d657522`, pinned in `lean/lakefile.toml` and `lean/lake-manifest.json` <!-- RELEASE: Janus pin --> |
+| Janus | v0.4.0, commit `b5db6432`, pinned in `lean/lakefile.toml` and `lean/lake-manifest.json` <!-- RELEASE: Janus pin --> |
 | EthLib | package `ethlibspec` = [Giulio2002/EthLib](https://github.com/Giulio2002/EthLib) `f4756ef5`, byte-identical to `ethereum/EthLib@ffd60c4b` (see its `UPSTREAM.md`), on Lean v4.34.1 |
 | geth | v1.17.10, with `go-bigmodexpfix` `f9e208c548ab` and `holiman/uint256` v1.3.2 (`go/go.mod`, `go/go.sum`) |
 | Go | `go1.26.10`, `CGO_ENABLED=0 GOAMD64=v1 -trimpath -buildvcs=false`; binary hashes in `scripts/harness.sha256` |
@@ -170,9 +172,11 @@ detail):
   theorems take Janus's pinned contract for each one the proved code calls as a hypothesis, all sharing one runtime invariant. Row 2 assumes no contract; even
   `memmove` runs from its extracted machine code.
 * **Janus.** Its ISA models of arm64 and amd64, the Go ABI model, the extractor, and the audit that classifies statements.
+  Since v0.4.0, `Ensures` installs the return address after the precondition is evaluated, so no precondition can pin it
+  ([`HUMAN-REVIEW.md` §2b](docs/HUMAN-REVIEW.md#2b-return-address-pins)).
   See Janus's `SOUNDNESS.md`.
 * **The pinned harness build.** The verified bytes are those of `go/` (geth v1.17.10) compiled by the Janus-pinned
-  **Go 1.26.10**. geth's own release binaries use **Go 1.27.3**, which Janus v0.3.3's runtime pins do not cover, so the
+  **Go 1.26.10**. geth's own release binaries use **Go 1.27.3**, which Janus v0.4.0's runtime pins do not cover, so the
   shipped geth binary is not the verified artefact. amd64 is verified at `GOAMD64=v1` only. The proofs use absolute
   addresses of the pinned binary, which is why `verify-all.sh` checks its hash.
 * **Stack growth and preemption are not modelled.** `runtime.morestack` never runs in the proofs: each precondition requires
@@ -200,7 +204,9 @@ docs/              COVERAGE.md   status of every row
                    history/      development logs kept for provenance
 go/                the harness: links geth's Osaka precompile set (its binaries are pinned by hash)
 lean/              Lake package `fvmodexp`
-  FvModexp/Spec/     the specification side: every definition a final statement depends on (reviewed by a human)
+  FvModexp/Spec/     the specification side: every definition a final statement depends on (reviewed by a human);
+                     Spec/Arm64/Run.lean and Spec/Amd64/Run.lean hold row 1's per-ISA predicates
+  FvModexp/Arm64/, FvModexp/Amd64/   the claim modules: RequiredGas, RunErr, RunSucc, RunTotal (the final theorems)
   FvModexp/Proofs/   proofs and proof-only definitions: Common/ (ISA-independent models and lemmas), Arm64/, Amd64/
   FvModexp/Legacy/   first single-function proofs of the assembly leaves (not part of the release run)
   tests/             differential `#guard` tests of the Go-level models against the real Go code
@@ -208,8 +214,8 @@ scripts/           verify-all.sh, release-rows.txt, lints (no-sorry.sh, lint_sou
 WIP-SORRY.txt      allowlist of unfinished modules for no-sorry.sh; empty at release
 ```
 
-`Spec/` never imports `Proofs/`. A row's proof module is `lean/FvModexp/Proofs/<Isa>/<module>.lean`, with `theorem
-correctness` and `namespace Witness`.
+`Spec/` never imports `Proofs/`. The final theorems of rows 1 and 2 (`theorem correctness`, `namespace Witness`) are in
+`lean/FvModexp/<Isa>/`. Every other release row, one per function summary, is a module under `lean/FvModexp/Proofs/<Isa>/`.
 
 ## More
 

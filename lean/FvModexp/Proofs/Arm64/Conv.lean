@@ -4,7 +4,7 @@ import FvModexp.Proofs.Common.Conv
 /-!
 # Conventions for function summaries (arm64)
 
-See `docs/CONVENTIONS.md`. `CallEnv` is the part of every precondition that talks about the Go call
+See `docs/history/CONVENTIONS-v2.md`. `CallEnv` is the part of every precondition that talks about the Go call
 environment (stack, goroutine, read-only data, runtime-owned memory); the numbers `stk` (bytes below `SP`
 the call may use: its own frame, the deeper frames, the 4096 bytes of every runtime call) and `above`
 (bytes of the caller's argument/spill area above `SP` the function writes) are per function.

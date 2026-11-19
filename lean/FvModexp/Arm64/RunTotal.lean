@@ -1,5 +1,5 @@
-import FvModexp.Proofs.Arm64.Top.RunSucc
-import FvModexp.Proofs.Arm64.Top.RunErr
+import FvModexp.Arm64.RunSucc
+import FvModexp.Arm64.RunErr
 import FvModexp.Proofs.Arm64.Top.RunGate
 
 set_option autoImplicit false

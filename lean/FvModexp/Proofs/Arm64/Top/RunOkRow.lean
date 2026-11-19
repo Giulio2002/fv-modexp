@@ -1,5 +1,5 @@
 import FvModexp.Proofs.Arm64.Top.RunOkLib
-import FvModexp.Proofs.Arm64.Top.RunErr
+import FvModexp.Arm64.RunErr
 import FvModexp.Proofs.Arm64.Witness.StubsMvz
 import FvModexp.Proofs.Arm64.Witness.StubsMkz
 import FvModexp.Proofs.Arm64.Int.IntBytes

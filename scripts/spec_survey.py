@@ -34,7 +34,7 @@ def tasks(only, isas):
         c = [x.strip() for x in row.split('|')]
         sym = c[1].strip('`')
         fn = sym.rsplit('.', 1)[-1]; fn = fn[0].upper() + fn[1:]
-        # `module: Dir/Name` in the Notes cell (as scripts/verify-all.sh): proof module Proofs/<Isa>/Dir/Name.lean, row id Dir_Name
+        # `module: Dir/Name` in the Notes cell (as scripts/verify-all.sh): claim module <Isa>/Dir/Name.lean if it exists, else Proofs/<Isa>/Dir/Name.lean; row id Dir_Name
         m = re.search(r'module: *`?([A-Za-z0-9_/]+)', '|'.join(c[5:]))
         mod = m.group(1) if m else fn
         rid = mod.replace('/', '_')
@@ -124,6 +124,8 @@ def main():
         full = sym
         flags = contract_flags(cname)
         f = f'{ld}/{d}/{pf}.lean'
+        if os.path.isfile(f'lean/FvModexp/{d}/{mod}.lean'):   # claim module: lean/FvModexp/<Isa>/<mod>.lean
+            pf = mod; f = f'lean/FvModexp/{d}/{mod}.lean'
         if not os.path.isfile(f):
             res[key] = {'error': f'missing {f}'}; print(key, 'MISSING', f, flush=True); continue
         ex = f'{ws}/exout/{key}'

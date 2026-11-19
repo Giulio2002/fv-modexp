@@ -2,7 +2,7 @@ import FvModexp.Proofs.Amd64.Top.RunDefs
 
 /-! # `Run` (amd64): return sites of `Run`'s calls are admissible return addresses of the callees' programs
 
-The amd64 twin of the arm64 `RunRA` (docs/PERF.md "top s9": proving the callee summary's `RetAddr` inside `janus64_run`
+The amd64 twin of the arm64 `RunRA` (docs/history/PERF-log.md "top s9": proving the callee summary's `RetAddr` inside `janus64_run`
 makes the kernel re-check the segment filter by name). `raRun` proves it from the layout: `Run` is the extraction's first
 segment (`seg0`, base `0x654340`), the callee program does not keep it, segments are pairwise apart (`ImplApart`).
 `retAddr_restrict` is adapted from agent infra's `Amd64/Exp/CallW.lean`. Return sites: std `nat.setBytes` (headers)

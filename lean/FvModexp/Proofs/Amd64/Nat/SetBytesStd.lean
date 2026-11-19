@@ -13,7 +13,7 @@ namespace FvModexp.Amd64.SetBytesStd
 
 set_option maxRecDepth 20000 in
 /-- The `big.Word` (std `math/big`) type descriptor `makeslice` reads (size word `8`, pointer-data word `0`), proved
-once outside the big context (docs/PERF.md "agent top s18"). -/
+once outside the big context (docs/history/PERF-log.md "agent top s18"). -/
 theorem wordT_data {m : Janus.Arm64.Memory} (hd : Extracted.program.DataLoaded m) :
     m.accessible 7232928 16 false = true ∧ m.readLE 7232928 8 = 8 ∧ m.readLE 7232936 8 = 0 := by
   janus64_data hd

@@ -3,7 +3,7 @@ import FvModexp.Proofs.Arm64.Conv
 /-! # `Run` (arm64): the goroutine's `stackguard0` slot survives a frame change of the `Run` window
 
 Proved once with a three-fact context (it used to be an inline `omega` in every segment module, paying for the whole
-segment context: up to 38 s; docs/PERF.md "agent top s18"). -/
+segment context: up to 38 s; docs/history/PERF-log.md "agent top s18"). -/
 
 open Janus Janus.Arm64
 

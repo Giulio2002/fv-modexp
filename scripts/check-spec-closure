@@ -46,11 +46,11 @@ for p, mods in sorted(lint_source.parse_imports(sorted(spec_files + ['lean/FvMod
             print('FAIL: %s imports %s (Spec modules may import only FvModexp.Spec.*, Janus, Extracted, Lean)' % (p, m)); fail = 1
         elif root not in lint_source.ALLOWED_ROOTS:
             print('FAIL: %s imports %s (outside FvModexp.Spec/Extracted/Janus/EthLib/Lean/Std/Init)' % (p, m)); fail = 1
-# and nothing but Spec/Proofs/ root file lives under lean/FvModexp
+# and nothing else lives under lean/FvModexp: Spec/, Proofs/, the claim modules Arm64/ and Amd64/ (the final theorems), Legacy/
+# (the first single-function proofs of the assembly leaves; imported by nothing, not release rows) and the umbrella Spec.lean
 for e in os.listdir('lean/FvModexp'):
-    # Legacy/: asm's retired single-function-extraction rows (coordinator 2026-11-15; imported by nothing, not release rows)
-    if e not in ('Spec', 'Proofs', 'Spec.lean', 'Legacy'):
-        print('FAIL: unexpected lean/FvModexp/%s (only Spec/, Proofs/, Legacy/ and the umbrella Spec.lean allowed)' % e); fail = 1
+    if e not in ('Spec', 'Proofs', 'Arm64', 'Amd64', 'Spec.lean', 'Legacy'):
+        print('FAIL: unexpected lean/FvModexp/%s (only Spec/, Proofs/, Arm64/, Amd64/, Legacy/ and the umbrella Spec.lean allowed)' % e); fail = 1
 if structure_only:
     print('check-spec-closure --structure-only: %s (%d Spec files)' % ('FAILED' if fail else 'OK', nspec))
     sys.exit(fail)

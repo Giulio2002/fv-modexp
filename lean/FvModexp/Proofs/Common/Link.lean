@@ -3,7 +3,7 @@ import Janus
 /-!
 # Restricted programs: moving a callee's theorem into its caller's program (both ISAs)
 
-See `docs/CONVENTIONS.md` §3. Every function proof of the project is an `Ensures` about
+See `docs/history/CONVENTIONS-v2.md` §3. Every function proof of the project is an `Ensures` about
 `(Extracted.program.onlySegments names).link impl`: the function's own code and the code of every
 extracted function it (transitively) calls, `names`, plus the runtime stand-in `impl`. A caller with
 `names' ⊇ names` uses it through `Ensures.toSummaryIn` with

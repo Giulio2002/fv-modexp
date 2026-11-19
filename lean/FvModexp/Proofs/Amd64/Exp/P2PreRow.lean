@@ -14,7 +14,7 @@ set_option autoImplicit false
 `Extracted.program.link impl` (`Ensures.full64`). Runtime premises: the live `growslice`, `memclrNoHeapPointers`,
 `memmove`, `makeslice`, `newobject`, `gcWriteBarrier2` contracts. A release row of its own, run right before
 `amd64 Exp/P2W2Row`, so the shared table-building closure (P2Pre*, CalleeInstQ, ~420 module-s) is compiled and replayed
-by this row instead of by window-2 (docs/PERF.md "divmc s83").
+by this row instead of by window-2 (docs/history/PERF-log.md "divmc s83").
 `Witness.nonvacuous`: the stack `{w, 0, 4}`, `powers` = 4 nil headers, `windowSize = 2`, `logM = 8`, `x = [3]`,
 `natOne` (header outside the extracted data, its word in the `OB` object), a 64 KiB stack region, the shared witness
 runtime, one call-site state per contract.

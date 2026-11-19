@@ -2,7 +2,7 @@ import FvModexp.Proofs.Amd64.Top.RunDefs
 
 set_option autoImplicit false
 
-/-! # Small lemmas of the amd64 `Run` proof, proved once outside the big contexts (docs/PERF.md "agent top s17")
+/-! # Small lemmas of the amd64 `Run` proof, proved once outside the big contexts (docs/history/PERF-log.md "agent top s17")
 
 * budget steps: `omega` over a post-run context costs 10-25 s; these close the same goals in milliseconds.
 * `errProg`: the program restricted to the `errT` descriptor's data segment (the `*errors.errorString` type, rodata

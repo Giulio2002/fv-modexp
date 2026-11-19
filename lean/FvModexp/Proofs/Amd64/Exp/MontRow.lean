@@ -10,7 +10,7 @@ set_option autoImplicit false
 
 `correctness` = `Mont.ens` moved to `Extracted.program.link impl` (`Ensures.full64`). It is a release row of its own,
 run right before `amd64 Exp/W4Row`, so the montgomery closure (MontLoop/Mont/MontExit/…, ~200 module-s, on window-4's
-critical import path) is compiled and replayed by this row instead of by window-4 (docs/PERF.md "divmc s83").
+critical import path) is compiled and replayed by this row instead of by window-4 (docs/history/PERF-log.md "divmc s83").
 `Witness.nonvacuous`: the shared witness runtime, `montgomery(z, x, y, m, k, n)` with `x = 3`, `y = 5`, `m = 7`,
 `k = 0`, `n = 1`, `len z = cap z = 2`; `m`, `len m`, `cap m`, `k`, `n` are the stack arguments at `RSP + 8 …`;
 the `math/big.hasADX` byte in memory; one call-site state per runtime contract.

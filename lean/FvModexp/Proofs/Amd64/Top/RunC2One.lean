@@ -1,5 +1,5 @@
 import FvModexp.Proofs.Amd64.Top.RunC2Lem
-import FvModexp.Spec.RunAmd64
+import FvModexp.Spec.Amd64.Run
 
 set_option autoImplicit false
 

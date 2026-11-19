@@ -13,12 +13,14 @@ Older working notes are in [`history/`](history/); module comments that cite `do
    `janus extract build/harness-arm64 'github.com/ethereum/go-ethereum/core/vm.(*bigModExp).Run' build/x-Run-arm64 $(contract_flags Run)`
    (after `. scripts/contract-flags.sh`; 84 functions on arm64, 82 on amd64). Row 2 uses its own extraction of
    `(*bigModExp).RequiredGas`, which needs no runtime contract.
-3. Write `lean/FvModexp/Proofs/<Isa>/<Area>/<Name>Row.lean` with `theorem correctness` (an `Ensures` stated with Janus
+3. Write `lean/FvModexp/Proofs/<Isa>/<Area>/<Name>Row.lean` (a summary row; the claim rows live in `lean/FvModexp/<Isa>/`)
+   with `theorem correctness` (an `Ensures` stated with Janus
    vocabulary, `FvModexp.Spec.*` and EthLib) and `namespace Witness` with `nonvacuous` (a concrete returning run satisfying
    the precondition, with one call-site state for every runtime contract). Janus refuses a main theorem without it.
 4. Add the row to `scripts/release-rows.txt` at its dependency position (`python3 scripts/row-order.py --keep-order` checks
    the order) and its flags to `scripts/contract-flags.sh` if it is a new symbol.
-5. `make verify FN=<Area>_<Name>Row ISA=arm64` (the row id is the module path with `/` replaced by `_`).
+5. `make verify FN=<Area>_<Name>Row ISA=arm64` (the row id is the module path with `/` replaced by `_`; the claim rows are
+   `RequiredGas`, `RunErr`, `RunSucc`, `RunTotal`).
 6. Never edit `Spec/` or a `Proofs/Common` module while a `janus verify` that imports it runs: the input goes stale.
 
 For quick iteration outside `janus verify`, `scripts/dev-lean.sh` compiles modules against the Janus/EthLib build of a kept
@@ -32,7 +34,9 @@ bottom-up into the row-1 theorems. Lean vocabulary: `Proofs/Common/{Conv,Link}.l
 with a runtime call, three loops and both the reuse and the allocation branch.
 
 * **Modules and names.** `Proofs/<Isa>/<Area>/<Name>.lean`, namespace `FvModexp.<Isa>.<Name>`, `<Name>` unique per ISA;
-  areas `Nat`, `NatQ`, `Int`, `Exp`, `ExpQ`, `RG` (RequiredGas), `Top` (Run), `Witness`. An `Arm64` module never imports
+  areas `Nat`, `NatQ`, `Int`, `Exp`, `ExpQ`, `RG` (RequiredGas), `Top` (Run), `Witness`. The final theorems of rows 1 and 2
+  are the claim modules `lean/FvModexp/<Isa>/{RequiredGas,RunErr,RunSucc,RunTotal}.lean` (module `FvModexp.<Isa>.<Name>`);
+  nothing but a claim module imports a claim module, apart from the retired `Top/RunOkRow`. An `Arm64` module never imports
   an `Amd64` one; `Proofs/Common` never imports `Extracted`. A function too large for one module is split into
   `<Name>Defs` (pre, post, invariants), one module per loop or segment, and `<Name>` composing them.
 * **Exports.** Each function module exports `fn` (the full symbol), `names` (`fn` and every extracted function it reaches),
@@ -112,7 +116,6 @@ with a runtime call, three loops and both the reuse and the allocation branch.
 | `lint_source.py`, `LintImports.lean`, `tactic-whitelist.txt` | source lint: compile-time commands, import hygiene (Lean's own header parser), metaprogramming only in whitelisted files, lakefile and symlink checks, heartbeat limits |
 | `check-lean-lint`, `SvyTools.lean` | Lean-level lint: no IO, system primitives or initializers in any `FvModexp` declaration |
 | `check-spec-closure`, `spec_survey.py` | every final statement depends only on `FvModexp.Spec`, Janus, `Extracted` and EthLib definitions, and on no EthLib instance |
-| `check-ra-pin`, `RaPin.lean` | return-address pin checklist ([`HUMAN-REVIEW.md` §2b](HUMAN-REVIEW.md#2b-return-address-pins)) |
 | `check-generated`, `gen-libprog-sub.py` | generated restricted-program modules equal the generator's output |
 | `lint-tests/` | bypass attempts the lints must reject (`--selftest` modes) |
 
@@ -148,6 +151,7 @@ generators are kept as a record of how their modules were first produced, and th
 | `crit-path.py` | longest weighted import path of a row's modules (estimates row time from dev compile logs) |
 | `used-imports/` | rewrite a module family's imports to the modules whose constants it uses |
 | `exp-difftest/`, `muldiv-difftest/` | differential tests of the Nat-level models against the real Go code (`lean/tests/*.lean`, [`MODELS.md`](MODELS.md)) |
+| `check-ra-pin`, `RaPin.lean` | return-address checklist; a release gate under Janus v0.3.3 only, a review aid since v0.4.0 ([`HUMAN-REVIEW.md` §2b](HUMAN-REVIEW.md#2b-return-address-pins)) |
 | `asm-row.sh`, `asm-runrow.sh` | run a single-function row: `lean/FvModexp/Legacy/` modules on their own extraction, or a summary row on the Run extraction |
 
 ### `lean/FvModexp/Legacy/`

@@ -2,7 +2,7 @@
 # Build the harness for both ISAs, then extract and `janus verify` every row of docs/COVERAGE.md whose status says `verified` for an ISA.
 # adapted from fv-uint256 scripts/verify-all.sh.
 # Usage: [JANUS=/path/to/janus] scripts/verify-all.sh [FN ...]        (default: all rows in RELEASE ORDER = scripts/release-rows.txt, then the
-#        remaining COVERAGE rows; FN = row id = module path with / -> _, e.g. RequiredGas, Nat_DivWRow, Top_RunSucc; LIST_ONLY=1 prints the order)
+#        remaining COVERAGE rows; FN = row id = module path with / -> _, e.g. RequiredGas, Nat_DivWRow, RunSucc; LIST_ONLY=1 prints the order)
 # Env:   SKIP_WARMUP=1 (skip the cache warm-up), ONLY_ISA=arm64|amd64, ROWS=N (rows in parallel, default 1; the release run uses 6), JANUS_CACHE_DIR (default: a FRESH empty build/jcache-<stamp>;
 #        a non-empty dir is refused unless ALLOW_WARM_CACHE=1, a dev-run convenience that is never used for the release), WITNESS (default 1),
 #        SKIP_HARNESS=1 (reuse build/harness-*; the hash check still runs), LEAN_NUM_THREADS (default 4), JANUS_JOBS (2).
@@ -15,10 +15,8 @@ set -uo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$root"
 readonly ROW_MEMCAP=16G ROW_TIMEOUT=900
-# Janus binary: until the Janus PR fix/own-compile-module-data (olean provenance of Lean `module` files, which EthLib uses) is merged and
-# released, the default is the fixed v0.2.0 build; the Lean framework is unchanged (lakefile pin 9ff22946). Override with JANUS=...
-JANUS_FIXED=/srv/janus-ops/v040/relbin-b5db6432/janus-linux-amd64
-if [ -z "${JANUS:-}" ]; then if [ -x "$JANUS_FIXED" ]; then JANUS="$JANUS_FIXED"; else JANUS=janus; fi; fi
+# Janus binary: JANUS=/path/to/janus (built from the commit pinned in lean/lakefile.toml), default `janus` on PATH.
+JANUS="${JANUS:-janus}"
 export LEAN_NUM_THREADS="${LEAN_NUM_THREADS:-4}" JANUS_JOBS="${JANUS_JOBS:-2}"
 # Kernel replay of a row's own modules (leanchecker, one process per module): under the row's memcap 16G Janus sizes the
 # replay workers by a 5 GiB-per-worker estimate for 2 threads (cmd/janus/replaybudget.go) -> ONE worker, i.e. the row's
@@ -56,7 +54,7 @@ declare -a jobs_isa jobs_fn jobs_sym jobs_mod
 mapfile -t rows < <(grep -E '^\| `' docs/COVERAGE.md)
 fail=0
 # RELEASE ORDER (top s43; NOTES-conventions "[top s43] RELEASE ORDER"): scripts/release-rows.txt lists every Run-extraction row
-# (`ISA DIR/ROW`, proof module lean/FvModexp/Proofs/<Isa>/DIR/ROW.lean) in dependency order, the Top rows last. Those rows run
+# (`ISA DIR/ROW`, proof module lean/FvModexp/<Isa>/DIR/ROW.lean for the claim rows, else lean/FvModexp/Proofs/<Isa>/DIR/ROW.lean) in dependency order, the Top rows last. Those rows run
 # first, in that order; a COVERAGE row not listed there (same ISA + module) runs after them. RUN_SYM = the extraction of every listed row.
 RUN_SYM='github.com/ethereum/go-ethereum/core/vm.(*bigModExp).Run'
 declare -A listed
@@ -75,7 +73,7 @@ for row in "${rows[@]}"; do
   st_arm=$(echo "$row" | cut -d'|' -f4 | tr -d ' '); st_amd=$(echo "$row" | cut -d'|' -f5 | tr -d ' ')
   # proof-module name: `module: Name` in the Notes cell, else the last symbol component (without .abi0/.abiinternal), first letter upper-cased
   notes=$(echo "$row" | cut -d'|' -f6-)
-  # a module may sit in a subdirectory (`module: Top/RunErr` = lean/FvModexp/Proofs/<Isa>/Top/RunErr.lean); the row id (FN, file names) is its path with `/` -> `_`
+  # a module may sit in a subdirectory (`module: Dir/Name` = lean/FvModexp/Proofs/<Isa>/Dir/Name.lean, or the claim module lean/FvModexp/<Isa>/Dir/Name.lean when that exists: pf_of); the row id (FN, file names) is its path with `/` -> `_`
   mod=$(echo "$notes" | grep -oE 'module: *`?[A-Za-z0-9_/]+' | head -1 | sed -E 's/module: *`?//')
   if [ -z "$mod" ]; then mod="${sym%.abi0}"; mod="${mod%.abiinternal}"; mod="${mod##*.}"; mod="${mod^}"; fi
   fn="${mod//\//_}"
@@ -94,11 +92,15 @@ for row in "${rows[@]}"; do
 done
 
 isa_dir() { case "$1" in arm64) echo Arm64;; amd64) echo Amd64;; esac; }
-pf_of() {   # pf_of isa fn: the proof module (FnMain.lean, when it exists and holds `theorem correctness`, is the full-spec proof and wins)
+pf_of() {   # pf_of isa mod: the row's proof module, as a path below lean/FvModexp without `.lean`. Claim modules live in
+  # lean/FvModexp/<Isa>/<mod>.lean; every other row module in lean/FvModexp/Proofs/<Isa>/<mod>.lean (a <mod>Main.lean holding
+  # `theorem correctness` is the full-spec proof and wins there).
   local dir; dir="$(isa_dir "$1")"
-  if [ -f "lean/FvModexp/Proofs/$dir/${2}Main.lean" ] && grep -q "theorem correctness" "lean/FvModexp/Proofs/$dir/${2}Main.lean"; then echo "${2}Main"; else echo "$2"; fi
+  if [ -f "lean/FvModexp/$dir/$2.lean" ]; then echo "$dir/$2"
+  elif [ -f "lean/FvModexp/Proofs/$dir/${2}Main.lean" ] && grep -q "theorem correctness" "lean/FvModexp/Proofs/$dir/${2}Main.lean"; then echo "Proofs/$dir/${2}Main"
+  else echo "Proofs/$dir/$2"; fi
 }
-run_job() {   # run_job isa fn sym mod   (fn = row id; mod = proof-module path below Proofs/<Isa>; contract flags are keyed by the symbol's function name)
+run_job() {   # run_job isa fn sym mod   (fn = row id; mod = module path below <Isa>/ or Proofs/<Isa>/ (pf_of); contract flags are keyed by the symbol's function name)
   local isa="$1" fn="$2" sym="$3" mod="$4" cname dir out cflags pf wt mt w r t0 rss tf l0 l1 lm la; export JANUS_MEM_MAX="$ROW_MEMCAP"
   t0=$(date +%s); l0=$(cut -d' ' -f1 /proc/loadavg); lm=$l0; tf="build/time-$isa-$fn"; rm -f "$tf"; out="build/ex-$isa-$fn"
   dir="$(isa_dir "$isa")"
@@ -106,14 +108,14 @@ run_job() {   # run_job isa fn sym mod   (fn = row id; mod = proof-module path b
   cflags="$(contract_flags "$cname")"
   if ! contract_known "$cname"; then echo "no contract-flags case for $fn: add it to scripts/contract-flags.sh (or scripts/noflags.txt)" >"build/log-$isa-$fn"; echo "FAIL(no-flags-case) 0 0 0" >"build/res/$isa-$fn"; return; fi
   pf="$(pf_of "$isa" "$mod")"
-  if [ ! -f "lean/FvModexp/Proofs/$dir/$pf.lean" ]; then echo "missing proof module lean/FvModexp/Proofs/$dir/$pf.lean" >"build/log-$isa-$fn"; echo "FAIL(no-module) 0 0 0" >"build/res/$isa-$fn"; return; fi
+  if [ ! -f "lean/FvModexp/$pf.lean" ]; then echo "missing proof module lean/FvModexp/$pf.lean" >"build/log-$isa-$fn"; echo "FAIL(no-module) 0 0 0" >"build/res/$isa-$fn"; return; fi
   # every main theorem (`correctness`, `correctness_<x>`) and every existential witness (`Witness.nonvacuous*`, paired by name by Janus)
-  mt=(); while IFS= read -r w; do [ -n "$w" ] && mt+=(--theorem "$w"); done < <(python3 "$root/scripts/witness-theorems.py" --mains "lean/FvModexp/Proofs/$dir/$pf.lean")
+  mt=(); while IFS= read -r w; do [ -n "$w" ] && mt+=(--theorem "$w"); done < <(python3 "$root/scripts/witness-theorems.py" --mains "lean/FvModexp/$pf.lean")
   [ ${#mt[@]} -gt 0 ] || mt=(--theorem "FvModexp.$dir.${pf##*/}.correctness")
-  wt=(); if [ "$WITNESS" != 0 ]; then while IFS= read -r w; do [ -n "$w" ] && wt+=(--theorem "$w"); done < <(python3 "$root/scripts/witness-theorems.py" "lean/FvModexp/Proofs/$dir/$pf.lean"); fi
+  wt=(); if [ "$WITNESS" != 0 ]; then while IFS= read -r w; do [ -n "$w" ] && wt+=(--theorem "$w"); done < <(python3 "$root/scripts/witness-theorems.py" "lean/FvModexp/$pf.lean"); fi
   r=FAIL
   if $JANUS extract "build/harness-$isa" "$sym" "$out" $cflags >"build/log-$isa-$fn" 2>&1; then
-    JANUS_TIMINGS=1 timeout "$ROW_TIMEOUT" memcap -m "$ROW_MEMCAP" $JANUS verify "$out" --proof "lean/FvModexp/Proofs/$dir/$pf.lean" --proof-root lean \
+    JANUS_TIMINGS=1 timeout "$ROW_TIMEOUT" memcap -m "$ROW_MEMCAP" $JANUS verify "$out" --proof "lean/FvModexp/$pf.lean" --proof-root lean \
        "${mt[@]}" "${wt[@]}" >>"build/log-$isa-$fn" 2>&1 &
     local bg=$! peak=0 cg="" p c v
     # peak RSS of the WHOLE row (janus + sandboxed Lean): memory.peak of the memcap cgroup (adapted from asm's scripts/asm-row.sh)
@@ -178,7 +180,7 @@ order=(); declare -A deps_of
 while read -r i d; do order+=("$i"); deps_of[$i]="$d"; done < <(
   for i in "${!jobs_fn[@]}"; do
     [ "${jobs_sym[$i]}" = "-" ] && continue
-    echo "$i FvModexp/Proofs/$(isa_dir "${jobs_isa[$i]}")/$(pf_of "${jobs_isa[$i]}" "${jobs_mod[$i]}").lean"
+    echo "$i FvModexp/$(pf_of "${jobs_isa[$i]}" "${jobs_mod[$i]}").lean"
   done | python3 "$root/scripts/row-order.py" --keep-order)
 deps_done() { local d; [ "${deps_of[$1]}" = "-" ] && return 0
   for d in ${deps_of[$1]//,/ }; do [ -s "build/res/${jobs_isa[$d]}-${jobs_fn[$d]}" ] || return 1; done; }
