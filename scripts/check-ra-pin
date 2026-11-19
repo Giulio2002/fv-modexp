@@ -4,7 +4,7 @@
 For every row module (lean/FvModexp/Proofs/**.lean with `theorem correctness`) elaborate scripts/RaPin.lean's
 `#ra_pin_audit` on the row's `correctness`: the precondition of every Janus main-theorem form, with every fv-modexp
 definition/structure unfolded, split into conjuncts and classified against the probe forms of
-/srv/janus-ops/v033/probe/{RspBypass64,LrPin}.lean (FLAG = the manual audit must read it; INFO = listed only).
+Janus v0.3.3's return-address probe forms (RspBypass64, LrPin; reproduced in scripts/lint-tests/rapin/) (FLAG = the manual audit must read it; INFO = listed only).
 This is a CHECKLIST GENERATOR for the final gate's manual audit, not a verdict: the auditor still reads every FLAG line and
 the RSP-REL / STACK-ARG / FRAMEWORK lines of each row.
 
@@ -176,7 +176,7 @@ def main():
     bad = 0
     with open(os.path.join(OUT, 'report.txt'), 'w') as fh:
         fh.write('check-ra-pin report (checklist for the final-gate manual RA-pin audit; probe forms: '
-                 '/srv/janus-ops/v033/probe/{RspBypass64,LrPin}.lean)\n\n')
+                 'Janus v0.3.3 RspBypass64 / LrPin, see scripts/lint-tests/rapin/)\n\n')
         for r, verdict, out in results:
             if verdict != 'CLEAN':
                 bad += 1

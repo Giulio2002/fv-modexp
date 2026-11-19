@@ -1,3 +1,7 @@
+> **Historical development log**, kept for provenance. Written during development by several parallel proof agents;
+> it uses their internal names (session numbers, agent roles), build-host paths and intermediate numbers that later changed.
+> The maintained documentation is in the parent `docs/` folder; where the two disagree, the parent wins.
+
 # Conventions for function proofs (fv-modexp)
 
 Owner: agent `top`. Status: **v2** (2026-11-11; v2 changes are marked **[v2]**). Every machine-code proof of a function that `(*bigModExp).Run` reaches

@@ -7,7 +7,7 @@ modules), to a fixed point. copy: writes Arm64/NatQ/<MOD>.lean for each copied m
 namespace FvModexp.Amd64.X -> FvModexp.Amd64.Q.X, `open FvModexp.Amd64.X` after it, imports of copied modules -> NatQ.
 """
 import os, re, sys
-pkg = "/srv/fv-modexp-top/lean/FvModexp/Proofs/Amd64"
+pkg = __import__("os").path.abspath(__import__("os").path.join(__import__("os").path.dirname(__file__), "../../..")) + "/lean/FvModexp/Proofs/Amd64"
 DECL = re.compile(r"^(?:@\[[^\]]*\]\s*)?(?:(?:private|protected|noncomputable|nonrec)\s+)*(?:theorem|lemma|def|abbrev|structure|inductive|instance|opaque)\s+([^\s(:{\[]+)", re.M)
 TOK = re.compile(r"[A-Za-z_][A-Za-z0-9_'!?.]*")
 def src(m): return open(f"{pkg}/Nat/{m}.lean").read()

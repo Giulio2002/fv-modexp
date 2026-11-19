@@ -1,8 +1,8 @@
 # transfer single-line arm64 Nat->NatQ changes onto the amd64 NatQ copy when the old line occurs verbatim (stripped)
 import sys, re, difflib
-sys.path.insert(0, "/srv/fv-modexp-top/scripts/gen/q64")
+import os; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from qdiff import norm  # noqa
-A64 = "/srv/fv-modexp-top/lean/FvModexp/Proofs/Arm64"; X64 = "/srv/fv-modexp-top/lean/FvModexp/Proofs/Amd64/NatQ"
+A64 = __import__("os").path.abspath(__import__("os").path.join(__import__("os").path.dirname(__file__), "../../..")) + "/lean/FvModexp/Proofs/Arm64"; X64 = __import__("os").path.abspath(__import__("os").path.join(__import__("os").path.dirname(__file__), "../../..")) + "/lean/FvModexp/Proofs/Amd64/NatQ"
 SKIP = re.compile(r"\s*(import|namespace|end FvModexp|open FvModexp|variable \{H|set_option autoImplicit|/-!)")
 for m in sys.argv[1:]:
     try: A = open(f"{A64}/Nat/{m}.lean").read().splitlines(); B = open(f"{A64}/NatQ/{m}.lean").read().splitlines()

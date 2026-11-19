@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""gen-run-dj1-64.py -- (agent top) generate lean/FvModexp/Proofs/Amd64/Top/RunDJ{S,F,Z}1.lean (exponent operand: the
+"""gen-run-dj1-64.py -- STALE (kept for provenance only; not covered by scripts/check-generated): its output no longer matches the
+committed modules. Original purpose: generate lean/FvModexp/Proofs/Amd64/Top/RunDJ{S,F,Z}1.lean (exponent operand: the
 join J1 -> memmove/skip -> setBytes call pcE1) from the operand-0 files RunDJ{S,F,Z}0.lean by substitution.
 Usage: gen-run-dj1-64.py [S|F|Z ...] (default: F Z; RunDJS1 is kept by hand-checked generation, regenerate with S)."""
 import os, sys

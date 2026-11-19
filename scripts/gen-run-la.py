@@ -123,4 +123,4 @@ def emit(depth, zs):
     s+=f"{ind}· " + emit(depth+1, zs+[False]).lstrip()
     return s
 out=head+emit(1,[])+"\nend FvModexp.Arm64.Run\n"
-open('/srv/fv-modexp-top/lean/FvModexp/Proofs/Arm64/Top/RunLa.lean','w').write(out)
+open(__import__("os").path.dirname(__import__("os").path.dirname(__import__("os").path.abspath(__file__)))+'/lean/FvModexp/Proofs/Arm64/Top/RunLa.lean','w').write(out)

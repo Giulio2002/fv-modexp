@@ -1,5 +1,5 @@
 import re,os,sys
-ROOT='/srv/fv-modexp-expmc/lean/'
+ROOT=__import__("os").path.abspath(__import__("os").path.join(__import__("os").path.dirname(__file__), "../.."))+'/lean/'
 P='FvModexp.Proofs.Arm64.Exp.'
 use={}
 for l in open('dep.out'):

@@ -1,3 +1,7 @@
+> **Historical development log**, kept for provenance. Written during development by several parallel proof agents;
+> it uses their internal names (session numbers, agent roles), build-host paths and intermediate numbers that later changed.
+> The maintained documentation is in the parent `docs/` folder; where the two disagree, the parent wins.
+
 # Leaf routines of `Run`: machine-code summaries (agent asm)
 
 Machine-code SUMMARY theorems for the leaf routines `(*bigModExp).Run` reaches (extraction lists:

@@ -1,4 +1,14 @@
 build/
+bin/
+jcache/
 lean/.lake/
 lean/Scratch/
 lean/FvModexp/Tmp/
+stage/
+logs/
+scratch/
+wip*/
+__pycache__/
+*.pyc
+*.out
+*.time

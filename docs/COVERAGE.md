@@ -1,92 +1,100 @@
 # Coverage
 
-Rows of the fv-modexp project: machine code of geth v1.17.10 (`github.com/ethereum/go-ethereum`, `core/vm`), the Osaka MODEXP precompile
-`PrecompiledContractsOsaka[0x05] = &bigModExp{eip2565: true, eip7823: true, eip7883: true}`, against the EthLib MODEXP specification
-(`EthLib.Execution.Evm.Precompiles.Modexp`, pinned package `ethlibspec`, see README.md), for every fork `.fusaka ≤ fork`.
-`scripts/verify-all.sh` reads this table: the Symbol cell is the exact symbol passed to `janus extract`; a row whose per-ISA status starts with
-`verified` (or `partial`) is verified, `todo` / `in progress` fails the run as MISSING, `n/a` is skipped. The proof module of a row is
-`lean/FvModexp/Proofs/<Arm64|Amd64>/<Fn>.lean` (or `<Fn>Main.lean` when it holds `theorem correctness`), with `<Fn>` = the last symbol component
-with its first letter upper-cased. Every `verified` row has a kernel-checked `Witness.nonvacuous` (non-vacuity rule).
-**Release order (top s43):** before this table's rows, `verify-all` runs every Run-extraction row listed in `scripts/release-rows.txt`
-(`ISA DIR/ROW`, the summaries' rows of the section below), in that dependency order with the Top rows last; a row of this table that is
-also listed there runs at its listed place. Owners add/delete lines there when they add/retire a row (`LIST_ONLY=1` prints the order).
+What is verified: the machine code of geth v1.17.10's Osaka MODEXP precompile (`core/vm`,
+`PrecompiledContractsOsaka[0x05] = &bigModExp{eip2565: true, eip7823: true, eip7883: true}`) on linux/arm64 and linux/amd64,
+against the EthLib MODEXP specification (`EthLib.Execution.Evm.Precompiles.Modexp`, pinned package `ethlibspec`), for every
+fork `.fusaka ≤ fork`. The statements are explained in [`HUMAN-REVIEW.md`](HUMAN-REVIEW.md) §2; the times are in
+[`PERF.md`](PERF.md).
 
-Sanity caps for every row (fixed in `scripts/verify-all.sh`): `memcap 16G`, `timeout 900`. Per-row time and peak RSS of the last run: `build/rows.tsv`;
-module elaboration profiles: `docs/PERF.md`.
+<!-- RELEASE-RUN: update the status cells below when a new release run lands. -->
+Status: **every row verified on both ISAs** in release run **rel50** (Janus v0.3.3, fresh cache, 2026-11-15): arm64 43/43,
+amd64 37/37 rows passed, every main theorem with its kernel-checked non-vacuity witness.
+<!-- /RELEASE-RUN -->
 
-| Symbol | Owner | arm64 | amd64 | Notes |
+## The claim
+
+`scripts/verify-all.sh` reads this table. The Symbol cell is the exact symbol passed to `janus extract`; a per-ISA status
+starting with `verified` (or `partial`) is verified, `todo` / `in progress` fails the run as MISSING, anything else is skipped.
+The proof module is `lean/FvModexp/Proofs/<Arm64|Amd64>/<module>.lean` (`module:` in the Notes cell, else the last symbol
+component). Rows also listed in `scripts/release-rows.txt` run at their place in that list.
+
+| Symbol | Claim | arm64 | amd64 | Notes |
 |---|---|---|---|---|
-| `github.com/ethereum/go-ethereum/core/vm.(*bigModExp).Run` | top | partial (row 1 = the two halves below: `Top/RunErr` (lengths fail) + `Top/RunSucc` (success), both release rows) | todo (amd64 `Top/RunErr` + `Top/RunSucc` twin) | row 1: Osaka receiver; lengths fail -> (nil, error), else (compute data (parseLengths data), nil); contracts: see `scripts/contract-flags.sh`; module: `Top/RunSucc` (with `Top/RunErr` below) |
-| `github.com/ethereum/go-ethereum/core/vm.(*bigModExp).Run` | top | partial (row 1 error path; janus-provfix 859eaa2a, correctness + Witness.nonvacuous, fresh-cache verify-all after the warm-up: 535 s / 6.4 GB at load ~15; s18 re-measure at load 35-60: 751 s / 6.5 GB; s19 after trims + 4-wide replay, load 20-30: 376 s; s20 at REAL load 45-65 (mean 60): 545 s / 2.5 GB) | partial (row 1 error path; same run: 802 s / 6.2 GB; s18 re-measure at load 35-60: TIMEOUT 901 s → amd64 RunErr modules trimmed → amd64-only fresh re-measure at load 45-55: 886 s / 4.9 GB; s19 after trims + 4-wide replay + per-ISA warm-up, load 20-30: 412 s; s20 at load 45-65: 508 s / 1.3 GB) | row 1, error half: `checkLengths (parseLengths data)` fails -> returns (nil, non-nil error), no panic/fault, frame; module: `Top/RunErr`; success half = `Top/RunOkRow` (after the Janus v0.3.1 re-pin) |
-| `github.com/ethereum/go-ethereum/core/vm.(*bigModExp).Run` | top | partial (row 1 success half: `RunIface.ExpBudget` factor-free (TIGHT COSTS: 2^32 slack removed, gate ≤ 2^35 met on arm64); **rel50 FINAL v0.3.3 (main 3ccbb729, fresh cache): arm64 43/43 PASS, RunSucc 476 s / 5.2 GB, RunErr 243 s, RunTotal 79 s; RA pin 43/43 CLEAN**; **rel49 (main 0773715a, release candidate): arm64 43/43 PASS, RunSucc 466 s / 5.2 GB, RunErr 279 s**; **rel48 (main 437c5b14, v0.3.3, s51): RunSucc PASS 464 s / 5.1 GB, RunErr PASS 272 s, arm64 41/41 PASS**; rel47 (main 456f856c, v0.3.3, s50): RunSucc PASS 784 s / 5.2 GB (over the 600 s margin, compile 504 s; rel46 533 s), RunErr PASS 376 s, IExpRow PASS 591 s, EvenRow FAIL cap; arm64 `Top_RunSucc` fresh-cache verify 2026-11-13 (v0.3.2): FAIL = timeout 901 s / 1.6 GB; release-order run rel43 (main 527443a0): FAIL 614 s / 5.1 GB = AUDIT (witness lacks a `PoolPutLive … S` call site), RunOkRow FAIL 404 s (audit: segAddr name not a literal), RunOkRowC FAIL 139 s (audit: PoolGetLive on closed StkSh), RunErr PASS 701 s / 2.3 GB; rel46 (main 071500f8, **Janus v0.3.3**, s47): **RunSucc PASS 533 s** (lock 0; compile 325 / replay 134 / audit 72) = arm64 TIGHT COSTS row milestone MET on v0.3.3; RunErr PASS 883 s (591 s store-lock wait, own 292 s), IExpRow PASS 854 s; rel46 (main 071500f8, **v0.3.3**, s46): **RunSucc PASS 535 s / 5.3 GB**, RunErr PASS 883 s (590 s of it = workspace-lock wait), IExpRow PASS 854 s; FAIL EvenRow cap; rel45 (main 951223ee, v0.3.2, s46): **RunSucc PASS 543 s / 5.3 GB** (≤ 600 s; counts once reproduced on v0.3.3 in rel46), RunErr PASS 872 s (contention; 297-319 s alone), IExpRow PASS 864 s; FAIL caps DivWRow (345 MB: stall), EvenRow; rel44 (main aab0b76c, s45): RunSucc FAIL 416 s (old RunSucc: audit PoolPutLive call site), RunErr FAIL cap 900 s; top s44 fixes (agent/top b5fa5db8): `RunSucc.correctness` RE-EXPORTS `Run.correctness_okC` (Top/RunOkRowC: PoolShape row pattern, proved by `okC`) and `Witness.nonvacuous` = `Run.WitnessC.nonvacuous` (premise-free, `3^5 mod 7`), targeted warm verify **PASS 86 s / 5.0 GB** (audit OK; not a release time); rows Top/RunOkRowC (audit FAIL 2078 s cold) and Top/RunOkRow (conditional on Mod/Exp spec premises; audit FAIL 16 s) RETIRED from release-rows — Top_RunSucc owns their modules; every callee proved, `(*Int).exp` = expmc's `IExp.ensCl`; the closed cost bound `IExp.BudCl` is an explicit premise until the Q-form BudOK lands; dev-compiled, not verified) | partial (**rel50 FINAL v0.3.3 (main 5c8f46dd, fresh cache): amd64 37/37 PASS, RunSucc 521 s / 4.8 GB, RunErr 379 s, RunTotal 83 s**; **rel49 (main 0773715a, release candidate): amd64 33/33 PASS, RunSucc 656 s / 5.3 GB (load ~18), RunErr 374 s**; **rel48 (main 437c5b14, v0.3.3, s51): amd64 RunSucc PASS 557 s / 5.0 GB, RunErr PASS 311 s**; top s50: twin DONE — `RunSucc.correctness` = `Run.okC`, every callee closed (`Run.Closed.modA`, `Run.Closed.expA` = expmc `IExp.ensCl`, depth 43736), `W ≥ 44352`, `Spec.RunAmd64.CpuOne`; `Witness.nonvacuous` 3^5 mod 7 (output [5]); dev-compiled, axioms std; janus verify pending (targeted audit, then rel48); rel47 amd64 (main 456f856c, s50): old staging RunSucc FAIL 421 s = audit (non-literal segAddr via `hE`), RunErr PASS 360 s) | row 1, success half: `checkLengths` passes -> (compute data (parseLengths data), nil), Pool-shape row pattern (`S = StkSh`); `Witness.sat_of` (given `IExp.BudCl`; becomes `Witness.nonvacuous` with 3^5 mod 7 after TIGHT COSTS) on lengths 0,0,0 (toy budget); module: `Top/RunSucc` |
-| `github.com/ethereum/go-ethereum/core/vm.(*bigModExp).Run` | top | partial (row 1 in ONE theorem, release row `arm64 Top/RunTotal` after `Top/RunSucc` (top s51): `Run.correctness_total` (corollary of RunSucc + RunErr by cases on `LengthsPass`) + `Run.Witness.correctness_total` (Janus pairs it by name); rel49 (main 0773715a, v0.3.3, s51): **PASS 77 s / 4.9 GB**; rel50 FINAL (main 3ccbb729): **PASS 79 s / 4.9 GB**) | partial (row 1 in ONE theorem, release row `amd64 Top/RunTotal` after `Top/RunSucc` (asm s82): `Run.correctness_total` + `Run.Witness.correctness_total`; rel50 FINAL (main 5c8f46dd, fresh cache): **PASS 83 s / 4.7 GB**) | row 1 total: every input -> (LengthsPass, OkRet, FrameW) or (LengthsFail, ErrRet, Frame); module: `Top/RunTotal` |
-| `github.com/ethereum/go-ethereum/core/vm.(*bigModExp).RequiredGas` | infra s51 trim (targeted snapshot run, v0.3.2): **275 s / 1.7 GB** (load ~30-40). | verified (janus-provfix 57c1094c, fresh cache, correctness + Witness.nonvacuous, olean provenance checked: da06a30 row 748 s / 3.9 GiB per job; split tree ee8a255 via verify-all: warm-up 807 s, row 824 s / 4.9 GiB per job, host load ~40; **re-verified UNCHANGED on Janus v0.3.1 (s35, top): PASS 422 s / 2.1 GB** (fresh cache after warm-up 813 s, load ~12)) s51 trim: 537 s (load ~30-40; Sb* trim pending, target 450). | verified (janus-provfix 859eaa2a, correctness + Witness.nonvacuous, audit + olean provenance + kernel replay passed: row 423 s / 5.7 GiB with the amd64 modules compiled in-row (warm framework cache), 193 s re-run; ISA=amd64 verify-all; **re-verified UNCHANGED on Janus v0.3.2 (s35/s36, top): PASS 613 s / 3.2 GB** (fresh cache after warm-up 877 s, load ~13; first v0.3.2-binary row: framework-identity check accepts the v0.3.1 pin)) | row 2: lengths pass -> `requiredGas fork data (parseLengths data)` for `.fusaka ≤ fork` (receiver = Osaka flags) |
+| `github.com/ethereum/go-ethereum/core/vm.(*bigModExp).Run` | row 1, every input | verified (rel50, 79 s) | verified (rel50, 83 s) | `Run.correctness_total`: lengths pass → `(compute data (parseLengths data), nil)`; lengths fail → `(nil, err)`, `err ≠ nil`; module: `Top/RunTotal` |
+| `github.com/ethereum/go-ethereum/core/vm.(*bigModExp).Run` | row 1, lengths pass | verified (rel50, 476 s) | verified (rel50, 521 s) | `RunSucc.correctness`, witness `3^5 mod 7` → `[5]`; module: `Top/RunSucc` |
+| `github.com/ethereum/go-ethereum/core/vm.(*bigModExp).Run` | row 1, lengths fail | verified (rel50, 243 s) | verified (rel50, 379 s) | `Run.correctness`, witness: base-length header 1025; module: `Top/RunErr` |
+| `github.com/ethereum/go-ethereum/core/vm.(*bigModExp).RequiredGas` | row 2 | verified (rel50, 224 s) | verified (rel50, 269 s) | lengths pass → `requiredGas fork data (parseLengths data)` for every `.fusaka ≤ fork`; no panic or fault for any input; no runtime contract |
 
-Pure-Lean row 3 (no machine code): `FvModexp.Proofs.Compose.composition` in `lean/FvModexp/Proofs/Common/Compose.lean`, checked by `make build`.
+Row 3 has no machine code: `FvModexp.Proofs.Compose.composition` (`lean/FvModexp/Proofs/Common/Compose.lean`, checked by
+`make build`) proves that geth's `RunPrecompiledContract` logic (gas check, optional result cache, then `Run`) agrees with
+EthLib's `modexp fork data gas` for any precompile meeting rows 1 and 2 (stated as the hypothesis `RowsHold`).
 
-## Function summaries feeding row 1 (owner top unless noted; all about the Run extraction)
+## Release rows
 
-| Function | arm64 | amd64 | Module / theorem |
+The row-1 theorems compose machine-code summaries of every function `Run` reaches. Each summary below is also a release row of
+its own, verified on the same `Run` extraction, with a `correctness` theorem and a kernel-checked `Witness.nonvacuous`. They run
+before the row-1 rows, in the dependency order of `scripts/release-rows.txt`, so that each row compiles mostly its own modules
+(see [`PERF.md`](PERF.md)). A function without its own row (for example arm64 `nat.expNNSlow`, the `deferwrap` closures,
+`nat.setBytes`) is verified inside the rows that call it.
+
+"(Q)": the tight-cost form of the summary (per-call allocation bound small enough that `Run`'s total budget stays below `2^35`
+bytes); the arm64 rows without Q verify the earlier cost form of the same function, which some proofs still import.
+All functions are from `github.com/ethereum/go-bigmodexpfix` (`src/math/big`, f9e208c548ab), the patched `math/big` that geth
+uses for MODEXP.
+
+| Row module | Go function | arm64 | amd64 |
 |---|---|---|---|
-| go-bigmodexpfix `nat.setBytes` | proved (no sorry) | proved (no sorry) | `Proofs/<Isa>/Nat/SetBytes.lean`: `FvModexp.<Isa>.SetBytes.{ens,sum}` |
-| math/big `nat.setBytes` | proved (no sorry) | proved (no sorry) | `Proofs/<Isa>/Nat/SetBytesStd.lean`: `FvModexp.<Isa>.SetBytesStd.{ens,sum}` |
-| go-bigmodexpfix `addTo` (divmc) | proved (no sorry; asm `addVV.abi0`, `addVW` summaries used; premises: live memmove contract) | same | `Proofs/<Isa>/Nat/AddTo.lean`: `FvModexp.<Isa>.AddTo.ens` |
-| go-bigmodexpfix `nat.add` (divmc) | proved (no sorry; all paths incl. self-call swap, `z.set(x)`, reuse/alloc; premises: live makeslice + memmove contracts) | same | `Proofs/<Isa>/Nat/NatAdd*.lean`: `FvModexp.<Isa>.NatAdd.ens` |
-| go-bigmodexpfix `nat.sub` (divmc) | proved (no sorry; Pre: `len y ≤ len x`, `Y ≤ X` (both panics refuted); premises: live makeslice + memmove) | same | `Proofs/<Isa>/Nat/NatSub*.lean`: `FvModexp.<Isa>.NatSub.ens` |
-| go-bigmodexpfix `basicMul` (divmc) | proved (no sorry; hypothesis: asm `addMulVVWW.abi0`; row `BasicMulRow` VERIFIED janus-provfix, correctness + Witness.nonvacuous (s27), 238 s / 3.4 GB, load ~60) | same | `Proofs/<Isa>/Nat/BasicMul.lean`: `FvModexp.<Isa>.BasicMul.ens` |
-| go-bigmodexpfix `nat.add` / `nat.sub`, empty-tolerant operands (`Pre0`, RdIn0 decision) (divmc) | proved (no sorry; derived summaries `ensR0`/`ensX0`/`ens0`; sub: x, y, z-window guarded (= infra's `SubPre0`), `SubMod2N.subHypR0_of`; add: x, y guarded) | proved (no sorry; `ensR0`/`ens0`) | `Proofs/<Isa>/Nat/Nat{Add,Sub}0*.lean`: `FvModexp.<Isa>.Nat{Add,Sub}.ensR0` |
-| go-bigmodexpfix `nat.sqr` (incl. `basicSqr`, `karatsubaSqr`, `(*Int).Add/Sub`) (divmc) | proved (no sorry; `NatSqr.ens`, export `SqrHypX`; row `SqrRow` VERIFIED janus-provfix, correctness + Witness.nonvacuous, 570 s / 3.1 GB at host load ~55 (s27 trims; bottom-up after StackNat/MulAddWW/BasicMul/BasicSqr/IntAS rows in one fresh store, JANUS_REPLAY_THREADS=1; was 815 s)); Q form `NatQ/SqrRowQ` rel44 (s47, Janus v0.3.2, fresh store, load ~30-45) PASS **465 s / 3.1 GB**, `NatQ/BasicSqrRowQ` **396 s / 2.9 GB** | (*Int).Add/Sub amd64 PROVED (`FvModexp.Amd64.IntAS.ens`; row `Int/IntASRow` amd64 VERIFIED (Janus v0.3.1, rowseq32b s33: fresh store, bottom-up after AddVW/SubVW/StackNat/MulAddWW/BasicSqr rows, load ~45-65) **350 s / 2.3 GB** (s32 trim; was 766 s on v0.2.0) — margin met; amd64 `BasicSqrRow` VERIFIED (v0.3.1, s37 trim: parallel DAG + ProA/ProB split) **319 s / 6.1 GB** at load ~20 (warm deps; was FAIL 902 s)); nat.sqr amd64 port in progress (SqrDefs reviewed, SqrRel/Norm/Zero/One/Call/MakeR/BMP done; TIGHT-COSTS Q copies `Amd64/NatQ/Sqr{Defs…BS}` compiled s38; karatsubaSqr/SCC todo). **TIGHT COSTS release rows (arm64, Q chain, s38, cache-divmc bottom-up, load ~25): `NatQ/BasicSqrRowQ` 157 s / 2.3 GB, `NatQ/SqrRowQ` 167 s / 1.4 GB, `NatQ/MulRowQ` 187 s / 1.0 GB — all VERIFIED (v0.3.1), margin met**; **amd64 Q (s41, rowseq s40, cache-divmc, load ~12-18): `Amd64/NatQ/BasicSqrRowQ` 559 s / 6.1 GB (first row of the run: 55 own+dep modules compiled, 347 reused), `Amd64/NatQ/SqrRowQ` 607 s / 4.4 GB — VERIFIED (v0.3.1); SqrRowQ is 7 s over the 600 s margin → trim (KSqrAdd2 74 s / Add1 52 s / PC 53 s)** | `Proofs/Arm64/Nat/{Sqr,KSqr}*.lean`: `FvModexp.Arm64.NatSqr.ens` |
-| go-bigmodexpfix `nat.mul` (incl. `karatsuba`, `(*Int).mul`, `basicMul`, `mulAddWW`) (divmc) | proved (no sorry; `NatMul.ens`, SCC over nat.mul/karatsuba/(*Int).mul; exports `NatMul.hypX0`/`hypX`/`hypXE0`, `NatMulXE.hypXE`; row `MulRow` VERIFIED janus-provfix, correctness + Witness.nonvacuous, 370 s / 2.5 GB at load ~8 (s26); re-run s27 after the bottom-up rows incl. BasicMul/BasicSqr/IntAS/Sqr: 578 s / 2.2 GB at load ~50; Janus v0.3.1 rowseq32b (s33, load ~45-65): **705 s / 2.2 GB — over the 600 s margin, trim pending**; Q form `NatQ/MulRowQ` rel44 (s47, v0.3.2, load ~44-50) PASS **700 s / 2.2 GB — over 600 s, trim pending** (throughput-bound: own sum 873 dev-s, crit path 133 s; MulBM `bm2` janus_callpre 83 s — PERF s47); **s49: `NatQ/MulRowQ` PASS 543 s / 2.1 GB** (targeted snapshot run rel48c, snap 40823a0f, Janus v0.3.2, fresh store, bottom-up lane StackNat…SqrRowQ first, load ~33; SqrRowQ 462 s / 3.0 GB, BasicSqrRowQ 401 s) — ≤ 600 s ⇒ **old `Nat/SqrRow` and `Nat/MulRow` RETIRED** from release-rows.txt (last: SqrRow FAIL 901 s, MulRow 885 s); their modules stay compiled/replayed where still imported (Exp/CalleeInst, Exp/EvMulG via Nat.MulHypX/SqrHypX; NatQ/SqrHypQ via Nat.SqrHypX); arm64 SqrRow v0.3.1 478 s / 3.0 GB, BasicSqrRow 518 s / 3.5 GB, IntASRow 374 s / 1.2 GB, BasicMulRow 211 s / 3.4 GB, StackNatRow 183 s, MulAddWWRow 193 s; `Int/ModRow` ((*Int).Mod) rel43 FAIL 329 s = audit (Put call site at S; witness fixed top s44 03588c1a), targeted verify PASS 760 s / 2.7 GB (cold-ish cache), earlier FAIL 902 s timeout — its own modules still include asm's whole stk==nil div chain: re-measure after asm's DivM/Div rows) | todo (port; LibMul generated) | `Proofs/Arm64/Nat/{Mul,KMul}*.lean`: `FvModexp.Arm64.NatMul.ens` |
-| go-bigmodexpfix `nat.montgomery`, roomy (`cap(z) ≥ 2n`) (expmc) | proved (no sorry; asm's verified `addMulVVWW`/`subVV`; live memclr/memmove contracts); row `Exp_MontRow` PASS 177 s / 1.7 GB (v0.3.2, expmc s66 targeted run) | same; amd64 row `Exp/MontRow` (divmc s83, `Witness.nonvacuous`) PASS 293 s / 3.6 GB (v0.3.3 targeted, release order before `Exp/W4Row`) | `Proofs/<Isa>/Exp/Mont.lean`: `FvModexp.<Isa>.Mont.ens` (= Nat model `Exp.montgomery`) |
-| go-bigmodexpfix `nat.expNNOddMontgomeryWindowSize4/2` (expmc) | proved (no sorry; `ExpW4.ens`, `ExpW2.ens` with the closed `nat.div` via `DivInst.hyp`); rows `Exp/W4Row`, `Exp/W2Row` (W2Row PASS 734 s, v0.3.2, s66 — import-chain cut s67, re-verify pending) | proved (no sorry; `ExpW4.ens`, `ExpW2.ens` + top's closed Q-form `nat.div` via `Amd64/Exp/DivInst`); rows `Exp/W4Row`, `Exp/W2Row` written (dev-built s67; witness `costD = CD = 0x20000`, levels ≤ 0x200), not yet verified | `Proofs/<Isa>/Exp/W{4,2}Row.lean`: `correctness` + `Witness.nonvacuous` |
-| go-bigmodexpfix `nat.{expNNEven,expNNOddMontgomeryWindowSize4/2,expNNPowerOfTwoWindowSize4/2}.deferwrap1` (`stk.restore`) (expmc) | proved (no sorry) | proved (no sorry) | `Proofs/<Isa>/Exp/Defer.lean`: `FvModexp.<Isa>.Defer.sum` |
-| go-bigmodexpfix `nat.subMod2N` (infra) | proved (no sorry; general form `SubMod2N.ensG`: any `cap z` incl. nil, empty `y`; callees asm `nat.trunc`, divmc `nat.sub` (`ensR0`) / `nat.add` (`ensR`), asm `nat.cmp`; premises: live makeslice + memmove + growslice); **row `SubMod2NRow` VERIFIED** (Janus v0.3.1, correctness + Witness.nonvacuous; RELEASE ORDER (fresh cache, warm-up, TruncRow, IntASRow, MontRow — the lower rows covering its closure): **338 s / 2.9 GB**, 35 own modules, load ~45-55) | proved (old form `ens`, `W n ≤ cap z`; general form todo) | `Proofs/Arm64/Exp/SubMod2NGEns.lean`: `FvModexp.Arm64.SubMod2N.ensG`; row `Proofs/Arm64/Exp/SubMod2NRow.lean` |
-| go-bigmodexpfix `nat.modularInverseModPowerOfTwo` (infra) | proved (no sorry; s45 TIGHT COSTS Q-form `ModInv.ensQ` (per-round sizes, one reserve level `H`; callees divmc's Q sqr/mul, trunc/lsh/subMod2N/sub/add) + bridged `ModInv.ens`; ModInvRow now states `ensQ` — **re-VERIFIED on `ensQ`** (infra s47/s49 `rel47`, Janus v0.3.2, release order after StackNat/MulAddWW/BasicMul/BasicSqr/Sqr/Mul/Trunc/Rsh/Lsh/IntAS/BasicSqrQ/SqrQ/MulQ/SubMod2N rows, fresh cache-infra/rel47, load ~60-100: **518 s / 4.4 GB**); older numbers below are the s43 form); **row `ModInvRow` VERIFIED** (Janus v0.3.1, 503 s / 2.2 GB, 48 modules rebuilt, shared cache after Trunc/Mont/SubMod2N/StackNat/Rsh/Lsh/Sqr rows) | todo | `Proofs/Arm64/Exp/ModInv.lean`: `FvModexp.Arm64.ModInv.ens`; row `Proofs/Arm64/Exp/ModInvRow.lean` |
-| go-bigmodexpfix `nat.expNNPowerOfTwoWindowSize2/4`, `buildPrecomputationWindowModPower2` (infra) | proved (no sorry; `P2W2.ens`, `P2W4.ens`, `P2Pre.full`); rows `P2W2Row`, `P2W4Row` written (dev-compiled; verify running) | todo | `Proofs/Arm64/Exp/P2W2E.lean`, `P2W4E.lean`; rows `Proofs/Arm64/Exp/P2W{2,4}Row.lean` |
-| go-bigmodexpfix `nat.expNNPowerOfTwo` (infra) | proved (no sorry; `P2D.ens : NHyp.P2Hyp …`); row `P2DRow` written (dev-compiled; verify running) | todo | `Proofs/Arm64/Exp/P2DE.lean`: `FvModexp.Arm64.P2D.ens`; row `Proofs/Arm64/Exp/P2DRow.lean` |
-| go-bigmodexpfix `nat.expNNEven` (infra) | proved (no sorry; `ExpEven.fullI : EvenSum …` (pre carries `NHyp.XFacts` for x), rebuilt on v0.3.1 (EvInst 54 s / 5.1 GB); premise expmc's `ExpNNHypNE1` = the recursive `nat.expNN`: a standalone row needs expmc's closed expNN) | todo | `Proofs/Arm64/Exp/EvInst.lean`: `FvModexp.Arm64.ExpEven.fullI` |
-| go-bigmodexpfix `nat.div` (`stk ≠ nil`) (asm) | proved (no sorry; expmc's `ExpSlow.DivHypLG` form `NatDiv.ensCLG` — empty/nil dividend, results apart, fresh results apart from the final stack array; also `ensCL : DivHypL`, `ensC : DivHyp`); rows `DrsRow` (divRecursiveStep) VERIFIED v0.3.1 367 s / 1.6 GB (s37, release order, load 29), `DivRow` VERIFIED v0.3.1 256 s / 2.0 GB (s37, release order) | todo (top: port) | `Proofs/Arm64/Nat/DivCG.lean`: `FvModexp.Arm64.NatDiv.ensCLG`; rows `Proofs/Arm64/Nat/{DrsRow,DivRow}.lean` |
-| go-bigmodexpfix `nat.div` (`stk == nil`, `z = nil`, `z2 = u`: `(*Int).Mod`'s call) (asm) | proved (no sorry; `NatDiv.ensMC : IMod.DivHypM`); row `DivMRow` VERIFIED v0.3.1 74 s / 1.7 GB (s37; statement binds `(S : PoolShape)` with pre `S = StkSh`, coordinator RESOLUTION of the Pool-shape audit refusal) | todo | `Proofs/Arm64/Nat/DivMC.lean`; row `Proofs/Arm64/Nat/DivMRow.lean` |
-| go-bigmodexpfix `nat.rem` (asm) | proved (no sorry; `NatRem.ensC : RemHypNA` = `NHyp.RemHyp` + `0 < st`); row `RemRow` VERIFIED v0.3.1 228 s / 4.3 GB (s36, release order) | todo | `Proofs/Arm64/Nat/RemC.lean`; row `Proofs/Arm64/Nat/RemRow.lean` |
-| go-bigmodexpfix `nat.divW` / `nat.divBasic` (asm) | proved; **rows `DivWRow` VERIFIED** (v0.3.1, correctness + Witness.nonvacuous; 409 s / 0.5 GB incl. own modules on the audit-rejected first run, 57 s rerun), **`DivBasicRow` VERIFIED** (v0.3.1, release order in one fresh store (s36): 331 s / 4.5 GB; DivWRow 127 s) | divBasic: top (proved); **amd64 rows (s36, v0.3.2, release order in one fresh store `cache-top/dbr36`): StackNatRow PASS 153 s / 1.0 GB, MulAddWWRow PASS 205 s / 1.2 GB, DivWRow PASS 191 s / 1.3 GB; `DivBasicRow` (Proofs/Amd64/Nat/DivBasicRow) Witness.nonvacuous verified, correctness REFUSED by the audit (stack arguments `readLE (RSP + 8/16)` are classified as `[RSP]` reads: JANUS-ISSUES "[top s36]"), 264 s**; **PROVISIONAL PASS** with the audit fix (Janus PR #4, 5e954613, binary /srv/janus-ops/spfix/janus, throwaway pin): correctness + Witness.nonvacuous, 865 s / 3.6 GB in a fresh cache with NO earlier rows (the whole StackNat/asm/divW chain compiled in-row) at host load 50-75 — final row on the v0.3.3 tag in release order; **Q form `DivBasicRowQ` (Proofs/Amd64/NatQ/DivBasicRowQ, TIGHT COSTS) PROVISIONAL PASS** (s39/s40, same spfix binary + throwaway pin): correctness + Witness.nonvacuous, 806 s / 3.7 GB, fresh cache, no earlier rows (437 modules in-row), load ~80 | `Proofs/Arm64/Nat/{DivWRow,DivBasicRow}.lean`, `Proofs/Amd64/Nat/DivBasicRow.lean` |
-| go-bigmodexpfix `nat.divW` / `nat.divBasic` (asm) | proved; **rows `DivWRow` VERIFIED** (v0.3.1, correctness + Witness.nonvacuous; 409 s / 0.5 GB incl. own modules on the audit-rejected first run, 57 s rerun), **`DivBasicRow` VERIFIED** (v0.3.1, release order in one fresh store (s36): 331 s / 4.5 GB; DivWRow 127 s) | divBasic: top (proved); **amd64 rows (s36, v0.3.2, release order in one fresh store `cache-top/dbr36`): StackNatRow PASS 153 s / 1.0 GB, MulAddWWRow PASS 205 s / 1.2 GB, DivWRow PASS 191 s / 1.3 GB; `DivBasicRow` (Proofs/Amd64/Nat/DivBasicRow) Witness.nonvacuous verified, correctness REFUSED by the audit (stack arguments `readLE (RSP + 8/16)` are classified as `[RSP]` reads: JANUS-ISSUES "[top s36]"), 264 s**; **PROVISIONAL PASS** with the audit fix (Janus PR #4, 5e954613, binary /srv/janus-ops/spfix/janus, throwaway pin): correctness + Witness.nonvacuous, 865 s / 3.6 GB in a fresh cache with NO earlier rows (the whole StackNat/asm/divW chain compiled in-row) at host load 50-75 — final row on the v0.3.3 tag in release order | `Proofs/Arm64/Nat/{DivWRow,DivBasicRow}.lean`, `Proofs/Amd64/Nat/DivBasicRow.lean` |
-| go-bigmodexpfix division, TIGHT COSTS Q-form (arm64) (asm) | proved (no sorry; `Q.DivRec.hyp`, `Q.NatDiv.ensCLG`/`ensMC`, `Q.NatRem.ensCR`; nat.mul premise via `Q.DivRec.mulHyp` (NatQ/MulHypD)). **Rows VERIFIED (Janus v0.3.2, cache-asm, JANUS_REPLAY_THREADS=1)**: rel40 (release order, load 60-100): `NatQ/DivBasicRowQ` 550 s / 4.5 GB, `NatQ/RemRowQ` 504 s / 4.5 GB; DrsRowQ/DivRowQ/DivMRowQ FAIL 900 s (own sets dragged in the OLD divBasic + nat.mul chains). After the s42 import trim (8923cef0), rel42 (same store, rows alone, load 30-46): `NatQ/DrsRowQ` **491 s / 1.7 GB**, `NatQ/DivRowQ` **539 s / 2.7 GB**, `NatQ/DivMRowQ` **199 s / 3.5 GB**, `NatQ/RemRowQ` **60 s / 1.7 GB** — all PASS, ≤ 600 s (DivRowQ close to the margin at load ~50: its own set = LibDiv 55 s + LibDivL 54 s + DivLargeNat 82 s …) | amd64 Q drs in progress (DrsDefs/MulHypQE/DrsNorm/DrsPro/DrsPro1) | `Proofs/Arm64/NatQ/*` |
-| go-bigmodexpfix `nat.subMod2N` (infra) | proved (no sorry; general form `SubMod2N.ensG`: any `cap z` incl. nil, empty `y`; callees asm `nat.trunc`, divmc `nat.sub` (`ensR0`) / `nat.add` (`ensR`), asm `nat.cmp`; premises: live makeslice + memmove + growslice); **row `SubMod2NRow` VERIFIED** (Janus v0.3.1, correctness + Witness.nonvacuous; RELEASE ORDER (fresh cache, warm-up, TruncRow, IntASRow, MontRow — the lower rows covering its closure): **338 s / 2.9 GB**, 35 own modules, load ~45-55; s43 release order after ModInvRow: 22 s — its modules are in ModInvRow's closure) rel50 (s51, arm64, fresh cache, v0.3.2, load ~60): `SubMod2NRow` PASS 431 s / 2.8 GB. | proved (old form `ens`, `W n ≤ cap z`; general form todo) | `Proofs/Arm64/Exp/SubMod2NGEns.lean`: `FvModexp.Arm64.SubMod2N.ensG`; row `Proofs/Arm64/Exp/SubMod2NRow.lean` |
-| go-bigmodexpfix `nat.modularInverseModPowerOfTwo` (infra) | proved (no sorry; s45 TIGHT COSTS Q-form `ModInv.ensQ` (per-round sizes, one reserve level `H`; callees divmc's Q sqr/mul, trunc/lsh/subMod2N/sub/add) + bridged `ModInv.ens`; ModInvRow now states `ensQ` — **re-VERIFIED on `ensQ`** (infra s47/s49 `rel47`, Janus v0.3.2, release order after StackNat/MulAddWW/BasicMul/BasicSqr/Sqr/Mul/Trunc/Rsh/Lsh/IntAS/BasicSqrQ/SqrQ/MulQ/SubMod2N rows, fresh cache-infra/rel47, load ~60-100: **518 s / 4.4 GB**); older numbers below are the s43 form); **row `ModInvRow` VERIFIED** (Janus v0.3.1, tight cost `rounds = log2 NW + 1` (s43); RELEASE ORDER (fresh cache, after StackNat/MulAddWW/BasicMul/BasicSqr/Sqr/Mul/Trunc/Rsh/Lsh/IntAS/Mont/P2W2/P2W4/P2D rows): **350 s / 2.7 GB**) rel50 (s51): `ModInvRow` PASS 656 s / 2.9 GB (over the 600 s margin: trim pending). | todo | `Proofs/Arm64/Exp/ModInv.lean`: `FvModexp.Arm64.ModInv.ens`; row `Proofs/Arm64/Exp/ModInvRow.lean` |
-| go-bigmodexpfix `nat.expNNPowerOfTwoWindowSize2/4`, `buildPrecomputationWindowModPower2` (infra) | proved (no sorry; `P2W2.ens`, `P2W4.ens`, `P2Pre.full`); tight cost: loop rounds `min yl W` (s43); **rows `P2W2Row`, `P2W4Row` VERIFIED** (Janus v0.3.1, release order after the s43 P2Nf split (fresh cache `rel2`, s45): **P2W2Row 430 s / 3.2 GB**, **P2W4Row 233 s / 1.5 GB**; before the split P2W2Row was 631 s because it compiled all three P2 chains) rel50 (s51): `P2W2Row` PASS 519 s / 3.1 GB, `P2W4Row` PASS 397 s / 2.1 GB. | amd64: `P2Pre.ens` / `P2W2.ens` / `P2W4.ens`; rows `Exp/P2PreRow` (divmc s83, new: PASS 309 s), `Exp/P2W2Row` (PASS 315 s), `Exp/P2W4Row` (PASS 309 s) — v0.3.3 targeted release-order runs (docs/PERF.md divmc s83) | `Proofs/Arm64/Exp/P2W2E.lean`, `P2W4E.lean`; rows `Proofs/Arm64/Exp/P2W{2,4}Row.lean` |
-| go-bigmodexpfix `nat.expNNPowerOfTwo` (infra) | proved (no sorry; `P2D.ens : NHyp.P2Hyp …`); **row `P2DRow` VERIFIED** (Janus v0.3.1, release order after P2W2Row/P2W4Row: **303 s / 2.2 GB** (s45 `rel2`; 94 s before the P2Nf split, when P2W2Row had compiled its chain)) rel50 (s51): `P2DRow` PASS 520 s / 2.8 GB. | todo | `Proofs/Arm64/Exp/P2DE.lean`: `FvModexp.Arm64.P2D.ens`; row `Proofs/Arm64/Exp/P2DRow.lean` |
-| go-bigmodexpfix `nat.expNNEven` (infra) | proved (no sorry; `ExpEven.fullI : EvenSum …` (pre carries `NHyp.XFacts` for x), rebuilt on v0.3.1 (EvInst 54 s / 5.1 GB); premise expmc's `ExpNNHypNE1` = the recursive `nat.expNN`; row module `EvenRow` (correctness with expmc's `ExpN.ens_noEven` + asm's `NatRem.ensC`, dev 2.6 s): Witness WAITS for TIGHT COSTS (`cE 0 1 1 1` = 1.5e7 > toy 2^22)) rel50/ev50 (s51, first run with witness): `EvenRow` FAIL — 900 s timeout (trim pending). | todo | `Proofs/Arm64/Exp/EvInst.lean`: `FvModexp.Arm64.ExpEven.fullI` |
-| go-bigmodexpfix `nat.div` (`stk ≠ nil`) (asm) | proved (no sorry; expmc's `ExpSlow.DivHypLG` form `NatDiv.ensCLG` — empty/nil dividend, results apart, fresh results apart from the final stack array; also `ensCL : DivHypL`, `ensC : DivHyp`); rows `DrsRow` (divRecursiveStep), `DivRow` written + dev-built, verify in progress (s35) | todo (top: port) | `Proofs/Arm64/Nat/DivCG.lean`: `FvModexp.Arm64.NatDiv.ensCLG`; rows `Proofs/Arm64/Nat/{DrsRow,DivRow}.lean` |
-| go-bigmodexpfix `nat.div` (`stk == nil`, `z = nil`, `z2 = u`: `(*Int).Mod`'s call) (asm) | proved (no sorry; `NatDiv.ensMC : IMod.DivHypM`); row `DivMRow` written + dev-built, verify in progress | todo | `Proofs/Arm64/Nat/DivMC.lean`; row `Proofs/Arm64/Nat/DivMRow.lean` |
-| go-bigmodexpfix `nat.rem` (asm) | proved (no sorry; `NatRem.ensC : RemHypNA` = `NHyp.RemHyp` + `0 < st`); row `RemRow` written + dev-built, verify in progress | todo | `Proofs/Arm64/Nat/RemC.lean`; row `Proofs/Arm64/Nat/RemRow.lean` |
-| go-bigmodexpfix `nat.divW` / `nat.divBasic` (asm) | proved; **rows `DivWRow` VERIFIED** (v0.3.1, correctness + Witness.nonvacuous; 409 s / 0.5 GB incl. own modules on the audit-rejected first run, 57 s rerun), **`DivBasicRow` VERIFIED** (v0.3.1, 743 s / 4.3 GB at load ~55, own modules incl. StackNat/asm leaf callees not yet cached by earlier rows — remeasure in the release order) | divBasic: top (proved) | `Proofs/Arm64/Nat/{DivWRow,DivBasicRow}.lean` |
-| go-bigmodexpfix `nat.trunc`, empty-tolerant `x` (asm) | proved (`Trunc.ens0 : Hyp0`) | proved (`Trunc.ens0 : Hyp0`, s35, 21 s dev) | `Proofs/<Isa>/Nat/TruncE0.lean` |
-| geth/math-big `(*Int).Mod`, `(*Int).exp`, `(*Int).Bytes` | proved (no sorry; `Int/ModRow`, `Exp/IExpRow`, `Int/IntBytes`; consumed by `Top/RunSucc`) | Mod proved (`Int/ModRow`), exp/Bytes in progress | `Proofs/<Isa>/Int/{ModFun,IntBytes}.lean`, `Proofs/<Isa>/Exp/IExp*.lean` (interfaces: `Top/RunIface.lean` `ModSpec`, `ExpSpec`, `BytesSpec`) |
-| geth `(*bigModExp).Run` body | proved (`Top/RunErr`, `Top/RunSucc`) | error path proved (`Top/RunErr`); success twin todo | `Proofs/<Isa>/Top/Run*.lean` |
+| Nat/StackNatRow | `(*stack).nat` | ✓ | ✓ |
+| Nat/MulAddWWRow | `nat.mulAddWW` | ✓ | ✓ |
+| Nat/AddVWRow | `addVW` | ✓ | ✓ |
+| Nat/SubVWRow | `subVW` | ✓ | ✓ |
+| Nat/BasicMulRow | `basicMul` | ✓ | — |
+| Nat/BasicSqrRow | `basicSqr` | ✓ | ✓ |
+| Nat/TruncRow | `nat.trunc` | ✓ | ✓ |
+| Nat/RshRow | `nat.rsh` | ✓ | ✓ |
+| Nat/LshRow | `nat.lsh` | ✓ | ✓ |
+| Int/IntASRow | `(*Int).Add`, `(*Int).Sub` (reached from `karatsuba`, `karatsubaSqr`) | ✓ | ✓ |
+| Int/IntSubRow | `(*Int).Sub` alone | ✓ | — |
+| NatQ/BasicSqrRowQ | `basicSqr` (Q) | ✓ | ✓ |
+| NatQ/SqrRowQ | `nat.sqr`, incl. `karatsubaSqr` (Q) | ✓ | ✓ |
+| NatQ/MulRowQ | `nat.mul`, incl. `karatsuba`, `(*Int).mul` (Q) | ✓ | ✓ |
+| Exp/MontRow | `nat.montgomery` | ✓ | ✓ |
+| Exp/SubMod2NRow | `nat.subMod2N` | ✓ | ✓ |
+| Exp/ModInvRow | `nat.modularInverseModPowerOfTwo` | ✓ | ✓ |
+| Nat/DivWRow | `nat.divW` | ✓ | ✓ |
+| Nat/DivWVWRow | `divWVW` | ✓ | ✓ |
+| Nat/DivBasicRow | `nat.divBasic` | ✓ | ✓ |
+| Nat/MulRow | `nat.mul` | ✓ | — |
+| Nat/DrsRow | `nat.divRecursiveStep` | ✓ | — |
+| Nat/DivRow | `nat.div` | ✓ | — |
+| Nat/DivMRow | `nat.div` as called by `(*Int).Mod` | ✓ | — |
+| Nat/RemRow | `nat.rem` | ✓ | — |
+| NatQ/DivBasicRowQ | `nat.divBasic` (Q) | ✓ | ✓ |
+| NatQ/DrsRowQ | `nat.divRecursiveStep` (Q) | ✓ | ✓ |
+| NatQ/DivRowQ | `nat.div` (Q) | ✓ | ✓ |
+| NatQ/DivMRowQ | `nat.div` as called by `(*Int).Mod` (Q) | ✓ | — |
+| NatQ/RemRowQ | `nat.rem` (Q) | ✓ | ✓ |
+| Int/ModRow | `(*Int).Mod` | ✓ | ✓ |
+| Exp/W2Row | `nat.expNNOddMontgomeryWindowSize2` | ✓ | ✓ |
+| Exp/W4Row | `nat.expNNOddMontgomeryWindowSize4` | ✓ | ✓ |
+| Exp/P2PreRow | `buildPrecomputationWindowModPower2` | — | ✓ |
+| Exp/P2W2Row | `nat.expNNPowerOfTwoWindowSize2` | ✓ | ✓ |
+| Exp/P2W4Row | `nat.expNNPowerOfTwoWindowSize4` | ✓ | ✓ |
+| Exp/P2DRow | `nat.expNNPowerOfTwo` | ✓ | ✓ |
+| Exp/SlowRow | `nat.expNNSlow` | — | ✓ |
+| Exp/NRow | `nat.expNN` | ✓ | ✓ |
+| Exp/EvenRow | `nat.expNNEven` | ✓ | ✓ |
+| ExpQ/IExpRow (arm64), Exp/IExpRow (amd64) | `(*Int).exp` | ✓ | ✓ |
+| RequiredGas, Top/RunErr, Top/RunSucc, Top/RunTotal | the claim rows above | ✓ | ✓ |
 
-## Scope limits of the claim (disclosure; REDTEAM-arm64 R2/R3, docs/HUMAN-REVIEW.md §3)
+Per ISA: 43 rows on arm64, 37 on amd64.
 
-* **Stack growth / preemption not modelled.** `runtime.morestack` is never executed: every row's precondition makes each stack-check
-  prologue fall through. Covered calls: arm64 row 1 success `SP − g.stackguard0 > 73 568` B (`GuardOK s W`, `W ≥ 624 + 72944`),
-  arm64 row 1 error `> 4 800` B, amd64 row 1 error `> 4 800` B (`StackGuardOK s 4800`), amd64 row 1 success
-  `> 44 352` B (`W ≥ 616 + 43736`: Run's frame + the closed amd64 `(*Int).exp` window), row 2 arm64 `> 464` B;
-  and `stackguard0 ≠ stackPreempt` (no pending preemption). Calls with less free stack, or a pending preemption, are not covered.
-* **Precompile result cache** (on by default in geth v1.17.10): not part of the row-3 model (`cache = nil`); its soundness for MODEXP
-  is the pure-Lean `FvModexp.CacheKey.cacheKey_eq` (`Proofs/Common/CacheKey.lean`).
-* Release row `arm64 Top/RunTotal` (top s51): `FvModexp.Arm64.Run.correctness_total` (every input in one theorem; witness
-  `Run.Witness.correctness_total`). Corollaries (pure composition, not separate Janus rows): `FvModexp.{Arm64,Amd64}.RunGate.okBudget_gate` (`okBudget ≤ 2^35` on the spec range; imported by each ISA's `Top/RunSucc`,
-  so the RunSucc rows compile them).
+## Assembly leaf routines
 
-## Legacy standalone rows (retired from the release; coordinator decision 2026-11-15)
+The vector kernels and word routines are verified inside the release rows through their library summaries
+`Proofs/<Isa>/<Fn>Sum.lean` ([`MODELS.md`](MODELS.md#assembly-leaf-routines)). Rows that reach each one:
 
-asm's session 1–8 rows were stated on SINGLE-FUNCTION extractions (`janus extract <harness> <asm fn>`), so they cannot build against the
-Run extraction. They live in `lean/FvModexp/Legacy/<Isa>/` (not imported by anything; not in `verify-all`; `scripts/asm-row.sh` still
-runs them on demand). Each function's machine code is verified by the Run-extraction rows below through its library summary
-`Proofs/<Isa>/<Fn>Sum.lean`. Coverage checked (asm s36) arm64: by walking the constants of `FvModexp.Arm64.DivRow.correctness`
-(dev oleans: it reaches every `*_summary` below); amd64: constant walk of `DivWRow` / `LshRow` / `RshRow` / `MulAddWWRow`, and for
-`BasicSqrRow` / `IntASRow` (divmc's rows, not in asm's dev store) the source chain (`Nat/AsmCallees`, `Nat/Callees`, `Int/IntASC*`).
-
-| Function (asm summary) | arm64 Run-extraction rows | amd64 Run-extraction rows |
+| Function (library summary) | arm64 Run-extraction rows | amd64 Run-extraction rows |
 |---|---|---|
 | `addVV.abi0` (`AddVVSum.addVV_summary`) | DivRow (via nat.mul / divBasic), BasicMulRow, IntASRow, … | IntASRow (nat.add), BasicSqrRow |
 | `subVV.abi0` (`SubVVSum.subVV_summary`) | DivRow (divBasic), IntASRow, … | IntASRow (nat.sub) |
@@ -98,3 +106,18 @@ runs them on demand). Each function's machine code is verified by the Run-extrac
 | `divWW` (`DivWWSum.divWW_summary`) | DivRow, DivWRow, DivWVWRow | DivWRow, DivWVWRow |
 | `bits.Div64` (`Div64Sum.div64_summary`, arm64 only) | DivRow, DivWRow, DivWVWRow | — (inlined `DIVQ` in divWW) |
 | `reciprocalWord` (`RecipWordSum.recip_summary`, arm64 only) | DivRow, DivWRow, DivWVWRow | — (inlined) |
+
+Their first proofs, on single-function extractions, are kept in `lean/FvModexp/Legacy/` (not part of the release run;
+[`DEVELOPMENT.md`](DEVELOPMENT.md#leanfvmodexplegacy)).
+
+## Scope limits of the claim
+
+* **Stack growth / preemption not modelled.** `runtime.morestack` is never executed: every row's precondition makes each stack-check
+  prologue fall through. Covered calls: arm64 row 1 success `SP − g.stackguard0 > 73 568` B (`GuardOK s W`, `W ≥ 624 + 72944`),
+  arm64 row 1 error `> 4 800` B, amd64 row 1 error `> 4 800` B (`StackGuardOK s 4800`), amd64 row 1 success
+  `> 44 352` B (`W ≥ 616 + 43736`: Run's frame + the closed amd64 `(*Int).exp` window), row 2 arm64 `> 464` B;
+  and `stackguard0 ≠ stackPreempt` (no pending preemption). Calls with less free stack, or a pending preemption, are not covered.
+* **Precompile result cache** (on by default in geth v1.17.10): not part of the row-3 model (`cache = nil`); its soundness for MODEXP
+  is the pure-Lean `FvModexp.CacheKey.cacheKey_eq` (`Proofs/Common/CacheKey.lean`).
+
+See [`HUMAN-REVIEW.md`](HUMAN-REVIEW.md) §3 for every assumption.

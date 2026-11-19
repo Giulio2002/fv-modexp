@@ -3,11 +3,12 @@
 # of a kept `janus verify` workspace (WS = its consumer dir holding janus/ deps/ root/), oleans into $OUT. Prints time + peak RSS.
 # An `Extracted.lean` argument is compiled as module `Extracted`. Not used by verify-all (development only).
 set -e
-WS=${WS:-$(ls -d /srv/fv-modexp-ops/cache-asm/v1/consumer/*/* | grep -v lock | head -1)}
-OUT=${OUT:-/srv/fv-modexp-ops/cache-asm/dev/oleans}
+root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+WS=${WS:-$(ls -d "$root"/build/jcache-dev/v1/consumer/*/* | grep -v lock | head -1)}
+OUT=${OUT:-$root/build/dev-oleans}
 pkg=$(cd "$(dirname "${BASH_SOURCE[0]}")/../lean" && pwd)
 EL=$WS/deps/ethlibspec/.lake/build/lib/lean; [ -d "$WS/own/lib/deps/ethlibspec" ] && EL=$WS/own/lib/deps/ethlibspec  # v0.3.1 layout
-LP="$OUT:$WS/janus/.lake/build/lib/lean:$EL:/root/.elan/toolchains/leanprover--lean4---v4.34.1/lib/lean"
+LP="$OUT:$WS/janus/.lake/build/lib/lean:$EL:$(lean --print-libdir)"
 LEAN=/root/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean
 for f in "$@"; do
   f=$(realpath "$f")

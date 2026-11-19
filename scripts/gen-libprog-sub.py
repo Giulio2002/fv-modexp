@@ -4,7 +4,7 @@ Write the module `FvModexp.<Arm64|Amd64>.NAME`: the restricted program of the fu
 'math/big.') of the pinned Run extraction, as `{ Extracted.program with segments := [Extracted.segI, ...] }` (segments in
 extraction order), and `eq_only : program = Extracted.program.onlySegments names`. Proving on this constant instead of
 `Extracted.program.onlySegments names` avoids re-evaluating the 84-segment `filter` in every fetch fact the kernel checks
-(docs/PERF.md §expmc: 254 s -> 28 s for one montgomery loop iteration). Generated; do not edit.
+(docs/history/PERF-log.md, "Exponentiation-layer machine summaries": 254 s -> 28 s for one montgomery loop iteration). Generated; do not edit.
 IDX=1 (optional env): index mode (kept segments' `contains` facts by index, see below).
 DOC=<text> (optional env): doc lines put before the GENERATED line (scripts/check-generated replays them)."""
 import sys, re

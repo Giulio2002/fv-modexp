@@ -115,7 +115,7 @@ def emit(depth, zs):
     s+=f"{ind}· " + emit(depth+1, zs+[True]).lstrip()
     s+=f"{ind}· " + emit(depth+1, zs+[False]).lstrip()
     return s
-D='/srv/fv-modexp-top/lean/FvModexp/Proofs/Amd64/Top/'
+D=__import__("os").path.dirname(__import__("os").path.dirname(__import__("os").path.abspath(__file__)))+'/lean/FvModexp/Proofs/Amd64/Top/'
 import itertools, os
 for f0 in ('TT','TF','FT','FF'):
     p=D+f'RunLa{f0}.lean'

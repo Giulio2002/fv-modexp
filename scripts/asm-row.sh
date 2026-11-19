@@ -6,9 +6,9 @@
 set -uo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"; cd "$root"
 isa=$1 fn=$2 sym=$3; shift 3
-JANUS=${JANUS:-/srv/fv-modexp/build/janus}
-HB=${HARNESS_DIR:-/srv/fv-modexp/build}
-export JANUS_CACHE_DIR=${JANUS_CACHE_DIR:-/srv/fv-modexp-ops/cache-asm} LEAN_NUM_THREADS=${LEAN_NUM_THREADS:-4} JANUS_MEM_MAX=16G
+JANUS=${JANUS:-janus}
+HB=${HARNESS_DIR:-$root/build}
+export JANUS_CACHE_DIR=${JANUS_CACHE_DIR:-$root/build/jcache-dev} LEAN_NUM_THREADS=${LEAN_NUM_THREADS:-4} JANUS_MEM_MAX=16G
 case $isa in arm64) dir=Arm64;; amd64) dir=Amd64;; esac
 out=build/ex-$isa-$fn; mkdir -p build
 pf=lean/FvModexp/Proofs/$dir/$fn.lean
