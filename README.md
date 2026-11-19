@@ -115,7 +115,8 @@ no final statement depends on anything else (in particular on nothing under `Pro
 
 <!-- RELEASE: update this block on a re-pin or a new release run (Janus tag + commit, run id, counts, slowest row, lint). -->
 **Release run rel51 on Janus v0.4.0** ([`b5db6432`](https://github.com/Giulio2002/Janus/commit/b5db64328e92cf4a5d5b87c32a9c66844b0d892b)):
-**PENDING** — rows: TBD (arm64 43, amd64 37 expected), slowest row: TBD, wall time: TBD, release lint: TBD.
+**80/80 rows verified** (arm64 43/43, amd64 37/37), fresh cache per ISA, one row at a time, 2026-11-19.
+One amd64 row (`NatQ/DrsRowQ`) hit the 900 s cap at a host load of 134 and passed on a single-row rerun (warm cache, load < 46); every other row inside the hard caps of 900 s and 16 GB; slowest arm64 `Exp/W4Row` (838 s), amd64 `NatQ/DivRowQ` (864 s). 11 rows took over 600 s, all at a host load far above normal (shared machine; details in [`docs/PERF.md`](docs/PERF.md)). Release lint clean.
 Janus binary sha256 (amd64, built from the tag): `b92df613719f6d2f82b01be636f0801b9f7666540fbd9b5d6faabd1691239050`.
 
 Previous release run, **rel50 on Janus v0.3.3** (2026-11-15), before the v0.4.0 migration: **80/80 rows verified** (arm64 43,
